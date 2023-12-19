@@ -17,12 +17,17 @@ const { navbar, alert } = layoutUtils;
  * @param {object[]} alerts
  * @returns {string}
  */
-const renderBody = (
-  title: string,
-  body: string | any,
-  alerts: any[],
-  req: any
-): string =>
+const renderBody = ({
+  title,
+  body,
+  alerts,
+  req,
+}: {
+  title: string;
+  body: string | any;
+  alerts: any[];
+  req: any;
+}): string =>
   renderLayout({
     blockDispatch: {},
     req,
@@ -68,7 +73,7 @@ const wrap = ({
   headers,
   req,
 }: WrapParams): string =>
-  navbar(brand, menu, currentUrl) + renderBody(title, body, alerts, req);
+  navbar(brand, menu, currentUrl) + renderBody({ title, body, alerts, req });
 
-const EmergencyLayoutExports = wrap;
+const EmergencyLayoutExports = { wrap, renderBody };
 export = EmergencyLayoutExports;

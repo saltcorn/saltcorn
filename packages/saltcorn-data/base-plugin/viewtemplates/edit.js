@@ -39,6 +39,7 @@ const {
   isOfflineMode,
   mergeIntoWhere,
   dollarizeObject,
+  getSessionId,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -55,6 +56,7 @@ const {
   run_action_column,
   add_free_variables_to_joinfields,
   readState,
+  stateToQueryString,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -169,7 +171,8 @@ const configuration_workflow = (req) =>
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,
-                table
+                table,
+                { mode: "edit" }
               );
             }
           }
@@ -223,9 +226,11 @@ const configuration_workflow = (req) =>
             blockDisplay,
             roles,
             actions,
+            builtInActions,
             fieldViewConfigForms,
             actionConfigForms,
             images,
+            allowMultiStepAction: true,
             min_role: (myviewrow || {}).min_role,
             library,
             mode: "edit",
@@ -552,25 +557,33 @@ const transformForm = async ({
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //TODO check segment.min_role
-
+        if (req.method === "POST") {
+          segment.contents = "";
+          return;
+        }
         //run action
-        const actionResult = await run_action_column({
-          col: { ...segment },
-          referrer: req.get("Referrer"),
-          req,
-          res,
-          row,
-        });
-        segment.type = "blank";
-        segment.style = {};
-        if (actionResult)
-          segment.contents = script(
-            domReady(
-              `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
-            )
-          );
-        else segment.contents = "";
-        return;
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: req.get("Referrer"),
+            req,
+            res,
+            row,
+          });
+          segment.type = "blank";
+          segment.style = {};
+          if (actionResult)
+            segment.contents = script(
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
+            );
+          else segment.contents = "";
+          return;
+        } catch (e) {
+          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
+          throw e;
+        }
       }
       if (segment.action_name === "Delete") {
         if (form.values && form.values.id) {
@@ -622,7 +635,9 @@ const transformForm = async ({
           isWeb(req),
           req.user,
           prefix,
-          req.query
+          req.query,
+          req,
+          viewname
         );
         segment.contents = key(row || {});
       }
@@ -732,14 +747,26 @@ const transformForm = async ({
       const extra_state = segment.extra_state_fml
         ? eval_expression(
             segment.extra_state_fml,
-            { ...dollarizeObject(req.query), ...(row || {}) },
+            {
+              ...dollarizeObject(req.query),
+              session_id: getSessionId(req),
+              ...(row || {}),
+            },
             req.user
           )
         : {};
-      segment.contents = await view.run(
-        { ...state, ...extra_state },
-        { req, res },
-        view.isRemoteTable()
+      const qs = stateToQueryString({ ...state, ...extra_state });
+      segment.contents = div(
+        {
+          class: "d-inline",
+          "data-sc-embed-viewname": view.name,
+          "data-sc-view-source": `/view/${view.name}${qs}`,
+        },
+        await view.run(
+          { ...state, ...extra_state },
+          { req, res },
+          view.isRemoteTable()
+        )
       );
     },
   });
@@ -1011,13 +1038,19 @@ const runPost = async (
             (srow) => `${srow[childTable.pk_name]}`
           )
         );
+        const childFields = new Set(childTable.fields.map((f) => f.name));
         for (const childRow of form.values[field.name]) {
           // set fixed here
           childRow[field.metadata?.relation] = id;
           for (const [k, v] of Object.entries(
             childView?.configuration?.fixed || {}
           )) {
-            if (typeof childRow[k] === "undefined") childRow[k] = v;
+            if (
+              typeof childRow[k] === "undefined" &&
+              !k.startsWith("_block_") &&
+              childFields.has(k)
+            )
+              childRow[k] = v;
           }
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
@@ -1679,8 +1712,21 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       let row = null;
       if (Object.keys(uniques).length > 0) {
+        // add joinfields from certain locations if they are not fields in columns
+        const joinFields = {};
+        const picked = picked_fields_to_query([], fields, layout);
+        const colFields = new Set(
+          columns.map((c) =>
+            c.join_field ? c.join_field.split(".")[0] : c.field_name
+          )
+        );
+
+        Object.entries(picked.joinFields).forEach(([nm, jfv]) => {
+          if (!colFields.has(jfv.ref)) joinFields[nm] = jfv;
+        });
         row = await table.getJoinedRow({
           where: uniques,
+          joinFields,
           forPublic: !req.user,
           forUser: req.user,
         });
@@ -1844,8 +1890,10 @@ module.exports = {
           res,
           referrer: req.get("Referrer"),
         });
+        //console.log("result", result);
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {
+        console.error(e);
         return { json: { error: e.message || e } };
       }
     },

@@ -87,7 +87,10 @@ const whereFTS = (
   const { fields, table, schema } = v;
 
   let fldsArray = fields
-    .filter((f: any) => f.type && f.type.sql_name === "text")
+    .filter(
+      (f: any) =>
+        f.type && f.type.sql_name === "text" && (!f.calculated || f.stored)
+    )
     .map(
       (f: any) =>
         "coalesce(" +
@@ -334,6 +337,10 @@ const whereClause =
   ([k, v]: [string, any | [any, any]]): string =>
     k === "_fts"
       ? whereFTS(v, phs)
+      : typeof (v || {}).not !== "undefined" && v.not.in
+      ? `not (${quote(sqlsanitizeAllowDots(k))} = ${
+          phs.is_sqlite ? "" : "ANY"
+        } (${phs.push(v.not.in)}))`
       : typeof (v || {}).in !== "undefined"
       ? `${quote(sqlsanitizeAllowDots(k))} = ${
           phs.is_sqlite ? "" : "ANY"
@@ -359,6 +366,10 @@ const whereClause =
       ? `${quote(sqlsanitizeAllowDots(k))} ${
           phs.is_sqlite ? "LIKE" : "ILIKE"
         } '%' || ${phs.push(v.ilike)} || '%'`
+      : v instanceof RegExp
+      ? `${quote(sqlsanitizeAllowDots(k))} ${
+          phs.is_sqlite ? "REGEXP" : "~"
+        } ${phs.push(v.source)}`
       : typeof (v || {}).gt !== "undefined"
       ? `${castDate(
           v.day_only,

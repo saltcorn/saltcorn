@@ -241,24 +241,26 @@ const TabsSettings = () => {
           </td>
         </tr>
         {tabsStyle === "Value switch" ? (
-          <tr>
-            <td>
-              <label>Field</label>
-            </td>
-            <td>
-              <select
-                value={field}
-                className="form-control form-select"
-                onChange={setAProp("field")}
-              >
-                {options.fields.map((f, ix) => (
-                  <option key={ix} value={f.name}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </td>
-          </tr>
+          <Fragment>
+            <tr>
+              <td>
+                <label>Field</label>
+              </td>
+              <td>
+                <select
+                  value={field}
+                  className="form-control form-select"
+                  onChange={setAProp("field")}
+                >
+                  {options.fields.map((f, ix) => (
+                    <option key={ix} value={f.name}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          </Fragment>
         ) : (
           <Fragment>
             <tr>

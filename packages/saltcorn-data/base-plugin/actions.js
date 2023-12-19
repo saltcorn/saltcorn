@@ -27,7 +27,7 @@ const {
   eval_expression,
 } = require("../models/expression");
 const { div, code, a, span } = require("@saltcorn/markup/tags");
-const { sleep } = require("../utils");
+const { sleep, getSessionId } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
 const { available_languages } = require("../models/config");
@@ -104,11 +104,13 @@ const run_code = async ({
     URL,
     File,
     User,
+    Buffer,
     setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
     getConfig: (k) => sysState.getConfig(k),
     channel: table ? table.name : channel,
+    session_id: rest.req && getSessionId(rest.req),
     ...(row || {}),
     ...getState().function_context,
     ...rest,
@@ -662,7 +664,6 @@ module.exports = {
       table.getFields();
       delete newRow[table.pk_name];
       await table.insertRow(newRow, user);
-      return { reload_page: true };
     },
   },
 
@@ -769,6 +770,7 @@ module.exports = {
         {
           user,
           console,
+          session_id: rest.req && getSessionId(rest.req),
         }
       );
       const calcrow = await f(row || {}, user);
@@ -790,7 +792,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Modify the triggering row",
-    configFields: async ({ table }) => {
+    configFields: async ({ mode }) => {
       return [
         {
           name: "row_expr",
@@ -799,19 +801,164 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
+        ...(mode === "edit"
+          ? [
+              {
+                name: "where",
+                label: "Modify where",
+                type: "String",
+                required: true,
+                attributes: { options: ["Database", "Form"] },
+              },
+            ]
+          : []),
       ];
     },
     requireRow: true,
-    run: async ({ row, table, configuration: { row_expr }, user, ...rest }) => {
+    run: async ({
+      row,
+      table,
+      configuration: { row_expr, where },
+      user,
+      ...rest
+    }) => {
       const f = get_async_expression_function(row_expr, table.fields, {
         row: row || {},
         user,
       });
       const calcrow = await f(row, user);
+      if (where === "Form") return { set_fields: calcrow };
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;
-      else return { reload_page: true };
+      else return;
+    },
+  },
+
+  /**
+   * @namespace
+   * @category saltcorn-data
+   * @subcategory actions
+   */
+  navigate: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Navigation action",
+    configFields: [
+      {
+        name: "nav_action",
+        label: "Nav Action",
+        type: "String",
+        required: true,
+        attributes: {
+          options: [
+            "Go to URL",
+            "Popup modal",
+            "Back",
+            "Reload page",
+            "Close modal",
+          ],
+        },
+      },
+      {
+        name: "url",
+        label: "URL",
+        type: "String",
+        required: true,
+        showIf: { nav_action: ["Go to URL", "Popup modal"] },
+      },
+    ],
+    run: async ({ configuration: { nav_action, url } }) => {
+      switch (nav_action) {
+        case "Go to URL":
+          return { goto: url };
+        case "Popup modal":
+          return { popup: url };
+        case "Back":
+          return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Close modal":
+          return { eval_js: "close_saltcorn_modal()" };
+        case "Reload page":
+          return { reload_page: true };
+
+        default:
+          break;
+      }
+    },
+  },
+  form_action: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Action on form in Edit view",
+    configFields: [
+      {
+        name: "form_action",
+        label: "Form Action",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["Submit", "Save", "Reset", "Submit with Ajax"],
+        },
+      },
+    ],
+
+    run: async ({ configuration: { form_action } }) => {
+      const jqGet = `$("form[data-viewname="+viewname+"]")`;
+      switch (form_action) {
+        case "Submit":
+          return { eval_js: jqGet + ".submit()" };
+        case "Save":
+          return { eval_js: `return saveAndContinueAsync(${jqGet})` };
+        case "Reset":
+          return { eval_js: jqGet + ".trigger('reset')" };
+        case "Submit with Ajax":
+          return { eval_js: `submitWithAjax(${jqGet})` };
+        default:
+          return { eval_js: jqGet + ".submit()" };
+      }
+    },
+  },
+
+  toast: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Notify the user with a toast",
+    configFields: [
+      {
+        name: "notify_type",
+        label: "Type",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["Notify", "Error", "Success"],
+        },
+      },
+      {
+        name: "text",
+        label: "Text",
+        type: "String",
+        required: true,
+      },
+    ],
+    run: async ({ configuration: { type, notify_type, text } }) => {
+      //type is legacy. this name gave react problems
+      switch (notify_type || type) {
+        case "Error":
+          return { error: text };
+        case "Success":
+          return { notify_success: text };
+        default:
+          return { notify: text };
+      }
     },
   },
 
@@ -1152,6 +1299,24 @@ module.exports = {
             user
           );
       }
+    },
+  },
+  reload_embedded_view: {
+    description: "Reload an embedded view without full page reload",
+    configFields: async () => {
+      const views = await View.find({});
+      return [
+        {
+          name: "view",
+          label: "View to refresh",
+          type: "String",
+          required: true,
+          attributes: { options: views.map((v) => v.select_option) },
+        },
+      ];
+    },
+    run: async ({ configuration: { view } }) => {
+      return { eval_js: `reload_embedded_view('${view}')` };
     },
   },
   notify_user: {

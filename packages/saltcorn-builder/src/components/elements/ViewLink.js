@@ -293,6 +293,19 @@ const ViewLinkSettings = () => {
       <table>
         <tbody>
           <MinRoleSettingRow minRole={minRole} setProp={setProp} />
+          {use_view_name ? (
+            <tr>
+              <td colSpan="2">
+                <a
+                  className="d-block mt-2"
+                  target="_blank"
+                  href={`/viewedit/config/${use_view_name}`}
+                >
+                  Configure this view
+                </a>
+              </td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
     </div>

@@ -169,6 +169,18 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
   });
+  it("should get by regex", async () => {
+    if (!db.isSQLite) {
+      const patients = Table.findOne({ name: "patients" });
+      assertIsSet(patients);
+      const michaels = await patients.getRows(
+        { name: /ouglas/ },
+        { limit: 1, orderBy: "id", offset: 1 }
+      );
+      expect(michaels.length).toStrictEqual(1);
+      expect(michaels[0].name).toStrictEqual("Michael Douglas");
+    }
+  });
   it("should get rows by slug", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
@@ -441,6 +453,30 @@ describe("Table get data", () => {
     });
 
     expect(rows.length).toBe(2);
+  });
+
+  it("should support full text search with calculated", async () => {
+    const table = await Table.create("ftstesttable");
+    await Field.create({
+      table,
+      label: "name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      label: "shortname",
+      type: "String",
+      calculated: true,
+      expression: "name.substr(0,4)",
+      required: true,
+    });
+    await table.insertRow({ name: "Alexander" });
+    const rows = await table.getRows({
+      _fts: { fields: table.fields, searchTerm: "Alexander" },
+    });
+
+    expect(rows.length).toBe(1);
   });
 
   it("should rename", async () => {

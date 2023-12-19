@@ -135,6 +135,29 @@ $(function () {
   });
 });
 
+function reload_embedded_view(viewname) {
+  $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
+    const $e = $(this);
+    const url =
+      $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
+    if (!url) return;
+    const headers = {
+      pjaxpageload: "true",
+      localizedstate: "true", //no admin bar
+    };
+    $.ajax(url, {
+      headers,
+      success: function (res, textStatus, request) {
+        $e.html(res);
+        initialize_page();
+      },
+      error: function (res) {
+        notifyAlert({ type: "danger", text: res.responseText });
+      },
+    });
+  });
+}
+
 function pjax_to(href, e) {
   let $modal = $("#scmodal");
   const inModal = $modal.length && $modal.hasClass("show");
@@ -257,6 +280,7 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
 }
 
 function close_saltcorn_modal() {
+  $("#scmodal").off("hidden.bs.modal");
   var myModalEl = document.getElementById("scmodal");
   if (!myModalEl) return;
   var modal = bootstrap.Modal.getInstance(myModalEl);
@@ -281,6 +305,13 @@ function ensure_modal_exists_and_closed() {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
             </button>
           </div>
+          <div 
+            id="modal-toasts-area"
+            class="toast-container position-fixed top-0 end-0 p-2 "
+            style: "z-index: 7000;"
+            aria-live="polite"
+            aria-atomic="true">           
+          </div>
         </div>
         <div class="modal-body">
           <p>Modal body text goes here.</p>
@@ -292,9 +323,9 @@ function ensure_modal_exists_and_closed() {
     // remove reload handler added by edit, for when we have popup link
     // in autosave edit in popup
     $("#scmodal").off("hidden.bs.modal");
-
     close_saltcorn_modal();
   }
+  $("#modal-toasts-area").empty();
 }
 
 function expand_thumbnail(img_id, filename) {
@@ -308,8 +339,10 @@ function expand_thumbnail(img_id, filename) {
 
 function ajax_modal(url, opts = {}) {
   ensure_modal_exists_and_closed();
+  $("#scmodal").removeClass("no-submit-reload");
+  $("#scmodal").attr("data-on-close-reload-view", opts.reload_view || null);
+
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
-  else $("#scmodal").removeClass("no-submit-reload");
   $.ajax(url, {
     headers: {
       SaltcornModalRequest: "true",
@@ -364,6 +397,11 @@ function submitWithAjax(e) {
       notifyAlert({ type: "danger", text: res.responseJSON.error });
   });
 }
+function saveAndContinueAsync(e) {
+  return new Promise((resolve, reject) => {
+    saveAndContinue(e, (x) => resolve(x));
+  });
+}
 
 function saveAndContinue(e, k) {
   var form = $(e).closest("form");
@@ -389,6 +427,9 @@ function saveAndContinue(e, k) {
       }
       if (res.notify) {
         notifyAlert(res.notify);
+      }
+      if (res.notify_success) {
+        notifyAlert({ type: "success", text: res.notify });
       }
       if (res.reload_page) {
         location.reload(); //TODO notify to cookie if reload or goto
@@ -506,8 +547,15 @@ function ajaxSubmitForm(e) {
     contentType: false,
     success: function (res) {
       var no_reload = $("#scmodal").hasClass("no-submit-reload");
+      const on_close_reload_view = $("#scmodal").attr(
+        "data-on-close-reload-view"
+      );
       $("#scmodal").modal("hide");
-      if (!no_reload) location.reload();
+      if (on_close_reload_view) {
+        const viewE = $(`[data-sc-embed-viewname=${on_close_reload_view}]`);
+        if (viewE.length) reload_embedded_view(on_close_reload_view);
+        else location.reload();
+      } else if (!no_reload) location.reload();
       else common_done(res, form.attr("data-viewname"));
     },
     error: function (request) {

@@ -652,6 +652,7 @@ const ConfigForm = ({
   fields,
   configuration,
   setProp,
+  setter,
   node,
   onChange,
   tableName,
@@ -663,7 +664,7 @@ const ConfigForm = ({
         let noshow = false;
         Object.entries(f.showIf).forEach(([nm, value]) => {
           if (Array.isArray(value))
-            noshow = noshow || value.includes(configuration[nm]);
+            noshow = noshow || !value.includes(configuration[nm]);
           else noshow = noshow || value !== configuration[nm];
         });
         if (noshow) return null;
@@ -684,6 +685,7 @@ const ConfigForm = ({
           ) : null}
           <ConfigField
             field={f}
+            setter={setter}
             configuration={configuration}
             setProp={setProp}
             onChange={onChange}
@@ -734,6 +736,7 @@ const ConfigField = ({
   setProp,
   onChange,
   props,
+  setter,
   isStyle,
 }) => {
   /**
@@ -744,7 +747,8 @@ const ConfigField = ({
 
   const myOnChange = (v) => {
     setProp((prop) => {
-      if (configuration) {
+      if (setter) setter(prop, field.name, v);
+      else if (configuration) {
         if (!prop.configuration) prop.configuration = {};
         prop.configuration[field.name] = v;
       } else if (isStyle) {
@@ -813,11 +817,13 @@ const ConfigField = ({
         onBlur={(e) => e.target && myOnChange(e.target.value)}
       >
         <option value={""}></option>
-        {Object.entries(options.fonts || {}).map(([nm, ff], ix) => (
-          <option key={ix} value={ff}>
-            {nm}
-          </option>
-        ))}
+        {Object.entries(options.fonts || {})
+          .sort()
+          .map(([nm, ff], ix) => (
+            <option key={ix} value={ff}>
+              {nm}
+            </option>
+          ))}
       </select>
     ),
     Integer: () => (
@@ -943,7 +949,7 @@ const ConfigField = ({
             className={`w-${
               styleDim === "auto" ? 100 : 50
             } form-control-sm d-inline dimunit`}
-            vert={true}
+            vert={!field.horiz}
             onChange={(e) => {
               if (!e.target) return;
               const target_value = e.target.value;
@@ -1002,7 +1008,7 @@ const SettingsFromFields =
               let noshow = false;
               Object.entries(f.showIf).forEach(([nm, value]) => {
                 if (Array.isArray(value))
-                  noshow = noshow || value.includes(node[nm]);
+                  noshow = noshow || !value.includes(node[nm]);
                 else noshow = noshow || value !== node[nm];
               });
               if (noshow) return null;
@@ -1332,16 +1338,24 @@ export const bstyleopt = (style) => ({
     ></div>
   ),
 });
+
+export const rand_ident = () =>
+  Math.floor(Math.random() * 16777215).toString(16);
+
 export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
   const { data } = query.node(nodeId).get();
   const { type, props, nodes } = data;
+  const newProps = { ...props };
+  if (newProps.rndid) {
+    newProps.rndid = rand_ident();
+  }
   const children = (nodes || []).map(recursivelyCloneToElems(query));
   if (data.displayName === "Columns") {
     const cols = ntimes(data.props.ncols, (ix) =>
       recursivelyCloneToElems(query)(data.linkedNodes["Col" + ix])
     );
     return React.createElement(Columns, {
-      ...props,
+      ...newProps,
       ...(typeof ix !== "undefined" ? { key: ix } : {}),
       contents: cols,
     });
@@ -1350,7 +1364,7 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
     return React.createElement(
       Element,
       {
-        ...props,
+        ...newProps,
         canvas: true,
         is: type,
         ...(typeof ix !== "undefined" ? { key: ix } : {}),
@@ -1360,7 +1374,7 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
   return React.createElement(
     type,
     {
-      ...props,
+      ...newProps,
       ...(typeof ix !== "undefined" ? { key: ix } : {}),
     },
     children

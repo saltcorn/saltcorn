@@ -595,7 +595,7 @@ const search_or_create = {
               attrs.summary_field
             }+'</option>').join("")
             ${reqd ? "" : `opts = '<option></option>'+opts`}
-            $(elem).parent().find('select').html(opts).prop('selectedIndex', res.success.length${
+            $(elem).prev().html(opts).prop('selectedIndex', res.success.length${
               reqd ? "-1" : ""
             }); 
           }

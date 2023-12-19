@@ -62,6 +62,7 @@ class View implements AbstractView {
   configuration?: any;
   attributes?: any;
   table?: AbstractTable;
+  singleton?: boolean;
   slug?: any;
 
   /**
@@ -93,6 +94,7 @@ class View implements AbstractView {
         : +o.min_role!;
     const { getState } = require("../db/state");
     this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
+    this.singleton = this.viewtemplateObj?.singleton;
     this.default_render_page = o.default_render_page;
     this.table = o.table;
     this.slug = stringToJSON(o.slug);
@@ -126,15 +128,40 @@ class View implements AbstractView {
     where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Array<View>> {
+    const { getState } = require("../db/state");
     if (selectopts.cached) {
-      const { getState } = require("../db/state");
       return getState()
         .views.map((t: View) => new View(t))
         .filter(satisfies(where || {}));
     }
-    const views = await db.select("_sc_views", where, selectopts);
+    const views_db = await db.select("_sc_views", where, selectopts);
+    const views: View[] = views_db.map((v: View) => new View(v));
+    const viewtemplates: ViewTemplate[] = Object.values(
+      getState().viewtemplates
+    );
+    viewtemplates.forEach((vt) => {
+      if (vt.singleton && satisfies(where || {})(vt)) {
+        views.push(
+          new View({
+            name: vt.name,
+            viewtemplate: vt.name,
+            viewtemplateObj: vt,
+            min_role: 1,
+            configuration: {},
+            singleton: true,
+          })
+        );
+      }
+    });
+    const orderBy = (selectopts?.orderBy as string) || "name";
 
-    return views.map((v: View) => new View(v));
+    views.sort((a: any, b: any) =>
+      (a?.[orderBy]?.toLowerCase?.() || a?.[orderBy]) >
+      (b?.[orderBy]?.toLowerCase?.() || b?.[orderBy])
+        ? 1
+        : -1
+    );
+    return views;
   }
 
   /**
@@ -193,6 +220,7 @@ class View implements AbstractView {
       // may fail if incomplete view
       const sfs = await viewrow.get_state_fields();
       if (
+        viewrow.viewtemplateObj &&
         pred({
           viewrow,
           viewtemplate: viewrow.viewtemplateObj,
@@ -234,6 +262,7 @@ class View implements AbstractView {
       // may fail if incomplete view
       const sfs = await viewrow.get_state_fields();
       if (
+        viewrow.viewtemplateObj &&
         pred({
           viewrow,
           viewtemplate: viewrow.viewtemplateObj,
@@ -292,12 +321,14 @@ class View implements AbstractView {
       const existing = View.findOne({ name: newname });
       if (!existing) break;
     }
+
     const createObj: View = {
       ...this,
       name: newname,
     };
     delete createObj.viewtemplateObj;
     delete createObj.id;
+    delete createObj.singleton;
     // very confusing for user if a view with default_render_page is copied
     delete createObj.default_render_page;
     return await View.create(createObj);
@@ -524,7 +555,7 @@ class View implements AbstractView {
     }
 
     // return contents
-    return typeof resp === "string" ? div(resp) : resp;
+    return resp; // typeof resp === "string" ? resp) : resp;
   }
 
   /**
@@ -716,6 +747,11 @@ class View implements AbstractView {
     let action = `/viewedit/config/${encodeURIComponent(this.name)}`;
     if (onDoneRedirect) {
       action = `${action}?on_done_redirect=${onDoneRedirect}`;
+    }
+    if (!this.viewtemplateObj!.configuration_workflow) {
+      const Workflow = require("../models/workflow");
+
+      return new Workflow({ steps: [] });
     }
     const configFlow = this.viewtemplateObj!.configuration_workflow(req);
     configFlow.action = action;

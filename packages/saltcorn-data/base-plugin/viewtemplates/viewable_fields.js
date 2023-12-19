@@ -11,7 +11,12 @@ const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
-const { structuredClone, isWeb, isOfflineMode } = require("../../utils");
+const {
+  structuredClone,
+  isWeb,
+  isOfflineMode,
+  getSessionId,
+} = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
@@ -290,7 +295,9 @@ const view_linker = (
   isWeb = true,
   user,
   targetPrefix = "",
-  state = {}
+  state = {},
+  req,
+  srcViewName
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -299,7 +306,11 @@ const view_linker = (
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
-    const ctx = { ...dollarizeObject(state), ...row };
+    const ctx = {
+      ...dollarizeObject(state),
+      session_id: getSessionId(req),
+      ...row,
+    };
     const o = eval_expression(extra_state_fml, ctx, user);
     return Object.entries(o)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
@@ -313,7 +324,10 @@ const view_linker = (
       label: view,
       key: (r) => {
         const relObj = {
-          srcId: r[idName],
+          srcId:
+            r[idName] === null || r[idName]?.id === null
+              ? null
+              : r[idName]?.id || r[idName],
           relation: relation,
         };
         const target = `/view/${encodeURIComponent(
@@ -324,7 +338,7 @@ const view_linker = (
         return link_view(
           isWeb || in_modal ? target : `javascript:execLink('${target}')`,
           get_label(view, r),
-          in_modal,
+          in_modal && srcViewName && { reload_view: srcViewName },
           link_style,
           link_size,
           link_icon || icon,
@@ -358,7 +372,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(vnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -381,7 +395,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(ivnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -408,7 +422,7 @@ const view_linker = (
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(viewnm, r),
-              in_modal,
+              in_modal && srcViewName && { reload_view: srcViewName },
               link_style,
               link_size,
               link_icon || icon,
@@ -442,7 +456,7 @@ const view_linker = (
                     : summary_field,
                   r
                 ),
-                in_modal,
+                in_modal && srcViewName && { reload_view: srcViewName },
                 link_style,
                 link_size,
                 link_icon || icon,
@@ -505,7 +519,8 @@ const get_viewable_fields = (
   isShow,
   req,
   __,
-  state = {}
+  state = {},
+  srcViewName
 ) => {
   const dropdown_actions = [];
   const checkShowIf = (tFieldGenF) => (column, index) => {
@@ -603,7 +618,9 @@ const get_viewable_fields = (
           isWeb(req),
           req.user,
           "",
-          state
+          state,
+          req,
+          srcViewName
         );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
@@ -991,7 +1008,7 @@ const getForm = async (
   isRemote
 ) => {
   const fields = table.getFields();
-
+  const state = getState();
   const tfields = (columns || [])
     .map((column) => {
       if (column.type === "Field") {
@@ -1001,8 +1018,8 @@ const getForm = async (
           const f = new Field(f0);
           f.fieldview = column.fieldview;
           if (f.type === "Key") {
-            if (getState().keyFieldviews[column.fieldview])
-              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            if (state.keyFieldviews[column.fieldview])
+              f.fieldviewObj = state.keyFieldviews[column.fieldview];
             f.input_type =
               !f.fieldview ||
               !f.fieldviewObj ||
@@ -1012,8 +1029,7 @@ const getForm = async (
           }
           if (f.type === "File") {
             const fvNm = column.fieldview || "upload";
-            if (getState().fileviews[fvNm])
-              f.fieldviewObj = getState().fileviews[fvNm];
+            if (state.fileviews[fvNm]) f.fieldviewObj = state.fileviews[fvNm];
             f.input_type =
               !f.fieldview || !f.fieldviewObj ? "file" : "fromtype";
           }
@@ -1062,6 +1078,8 @@ const getForm = async (
       }
     },
   });
+  if (!req.layout_hints)
+    req.layout_hints = state.getLayout(req.user).hints || {};
   const form = new Form({
     action: action,
     onSubmit:

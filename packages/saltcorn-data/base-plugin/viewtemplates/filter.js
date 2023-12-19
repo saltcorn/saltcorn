@@ -50,6 +50,7 @@ const {
   objectToQueryString,
   removeEmptyStrings,
   asyncMap,
+  getSessionId,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -142,7 +143,8 @@ const configuration_workflow = () =>
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,
-                table
+                table,
+                { mode: "filter" }
               );
             }
           }
@@ -189,6 +191,7 @@ const configuration_workflow = () =>
             tableName: table.name,
             parent_field_list: my_parent_field_list,
             roles,
+            builtInActions: ["Clear"],
             actions,
             actionConstraints,
             views,
@@ -279,7 +282,11 @@ const run = async (
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
       const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, state, extra.req.user)
+        ? eval_expression(
+            segment.extra_state_fml,
+            { session_id: getSessionId(extra.req), ...state },
+            extra.req.user
+          )
         : {};
       if (segment.state === "local") {
         const state1 = { ...extra_state };
@@ -288,13 +295,23 @@ const run = async (
         segment.contents = div(
           {
             class: "d-inline",
+            "data-sc-embed-viewname": view.name,
             "data-sc-local-state": `/view/${view.name}${qs}`,
           },
           await view.run(state1, extra)
         );
       } else {
         const state1 = { ...state, ...extra_state };
-        segment.contents = await view.run(state1, extra);
+        const qs = stateToQueryString(state1);
+
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          await view.run(state1, extra)
+        );
       }
     },
     link: (segment) => {
@@ -530,7 +547,13 @@ const run = async (
   };
   return div(
     { class: "form-namespace" },
-    renderLayout({ blockDispatch, layout, role, req: extra.req })
+    renderLayout({
+      blockDispatch,
+      layout,
+      role,
+      req: extra.req,
+      hints: getState().getLayout(extra.req.user).hints || {},
+    })
   );
 };
 

@@ -487,3 +487,7 @@ table.help-md th:nth-child(2) {
   padding-left: 10px;
   padding-right: 10px;
 }
+
+.progress-bar-radial {
+  color: unset;
+}

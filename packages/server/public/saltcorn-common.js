@@ -160,7 +160,7 @@ function apply_showif() {
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
       if (!dynwhere.required)
-        toAppend.push({ label: dynwhere.neutral_label || "" });
+        toAppend.push({ label: dynwhere.neutral_label || "", value: "" });
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -196,7 +196,7 @@ function apply_showif() {
           .map(
             ({ label, value, selected }) =>
               `<option${selected ? ` selected` : ""}${
-                value ? ` value="${value}"` : ""
+                typeof value !== "undefined" ? ` value="${value}"` : ""
               }>${label || ""}</option>`
           )
           .join("")
@@ -416,6 +416,8 @@ function get_form_record(e_in, select_labels) {
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
+  if (window._sc_loglevel > 4)
+    console.log(`show if fml ${fml} form_record`, rec);
   try {
     return new Function(
       "row",
@@ -423,7 +425,11 @@ function showIfFormulaInputs(e, fml) {
       "return " + fml
     )(rec, rec);
   } catch (e) {
-    throw new Error(`Error in evaluating showIf formula ${fml}: ${e.message}`);
+    throw new Error(
+      `Error in evaluating showIf formula ${fml} with values ${JSON.stringify(
+        rec
+      )}: ${e.message}`
+    );
   }
 }
 
@@ -604,7 +610,7 @@ function initialize_page() {
       schema = JSON.parse(decodeURIComponent(schema));
     }
     if (type === "Date") {
-      console.log("timeelsems", $(this).find("span.current time"));
+      //console.log("timeelsems", $(this).find("span.current time"));
       current =
         $(this).attr("data-inline-edit-current") ||
         $(this).find("span.current time").attr("datetime"); // ||
@@ -1043,7 +1049,10 @@ function notifyAlert(note, spin) {
     type = note.type;
   }
   const { id, html } = buildToast(txt, type, spin);
-  $("#toasts-area").append(html);
+  let $modal = $("#scmodal");
+  if ($modal.length && $modal.hasClass("show"))
+    $("#modal-toasts-area").append(html);
+  else $("#toasts-area").append(html);
   if (type === "success") {
     setTimeout(() => {
       $(`#${id}`).removeClass("show");
@@ -1074,28 +1083,39 @@ function restore_old_button(btnId) {
   btn.removeData("old-text");
 }
 
-function common_done(res, viewname, isWeb = true) {
-  const handle = (element, fn) => {
-    if (Array.isArray(element)) for (const current of element) fn(current);
-    else fn(element);
+async function common_done(res, viewname, isWeb = true) {
+  const handle = async (element, fn) => {
+    if (Array.isArray(element))
+      for (const current of element) await fn(current);
+    else await fn(element);
   };
-  if (res.notify) handle(res.notify, notifyAlert);
+  const eval_it = async (s) => {
+    if (res.row && res.field_names) {
+      const f = new Function(`viewname, row, {${res.field_names}}`, s);
+      const evalres = await f(viewname, res.row, res.row);
+      if (evalres) await common_done(evalres, viewname, isWeb);
+    } else {
+      const f = new Function(`viewname`, s);
+      const evalres = await f(viewname);
+      if (evalres) await common_done(evalres, viewname, isWeb);
+    }
+  };
+  if (res.notify) await handle(res.notify, notifyAlert);
   if (res.error)
-    handle(res.error, (text) => notifyAlert({ type: "danger", text: text }));
-
-  if (res.eval_js && res.row && res.field_names) {
-    const f = new Function(`row, {${res.field_names}}`, res.eval_js);
-    const evalres = f(res.row, res.row);
-    if (evalres) common_done(evalres, viewname, isWeb);
-  } else if (res.eval_js) {
-    handle(res.eval_js, eval);
-  }
+    await handle(res.error, (text) =>
+      notifyAlert({ type: "danger", text: text })
+    );
+  if (res.notify_success)
+    await handle(res.notify_success, (text) =>
+      notifyAlert({ type: "success", text: text })
+    );
+  if (res.eval_js) await handle(res.eval_js, eval_it);
 
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
   }
   if (res.download) {
-    handle(res.download, (download) => {
+    await handle(res.download, (download) => {
       const dataurl = `data:${
         download.mimetype || "application/octet-stream"
       };base64,${download.blob}`;

@@ -1586,9 +1586,17 @@ router.post(
  */
 router.post(
   "/settings",
+  setTenant,
   loggedIn,
   error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
+    const user = await User.findOne({ id: req.user?.id });
+    if (!user) {
+      res.sendWrap(
+        req.__("User settings") || "User settings",
+        "Must be logged in"
+      );
+      return;
+    }
     if (req.body.new_password && user.password) {
       const pwform = changPwForm(req);
 
@@ -1615,12 +1623,24 @@ router.post(
       if (user_settings_form) {
         const view = await View.findOne({ name: user_settings_form });
         if (view) {
+          const fakeRes = {
+            status() {},
+            sendWrap() {},
+            json() {},
+            redirect() {},
+          };
           await view.runPost({ id: user.id }, req.body, {
             req,
-            res,
+            res: fakeRes,
             redirect: "/auth/settings",
           });
-          req.flash("success", req.__("User settings changed"));
+          const u = await User.findForSession({ id: user.id });
+          req.login(u.session_object, function (err) {
+            if (err) req.flash("danger", err);
+            else req.flash("success", req.__("User settings changed"));
+
+            res.redirect("/auth/settings");
+          });
         }
       } else {
         res.redirect("/auth/settings");

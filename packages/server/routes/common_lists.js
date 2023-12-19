@@ -123,40 +123,46 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
       },
       '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
     ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `/viewedit/edit/${encodeURIComponent(
-          view.name
-        )}${on_done_redirect_str}`,
-      },
-      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
-    ),
+    view.id &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/viewedit/edit/${encodeURIComponent(
+            view.name
+          )}${on_done_redirect_str}`,
+        },
+        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      ),
     post_dropdown_item(
-      `/viewedit/add-to-menu/${view.id}${on_done_redirect_str}`,
+      `/viewedit/add-to-menu/${encodeURIComponent(
+        view.name
+      )}${on_done_redirect_str}`,
       '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
       req
     ),
-    post_dropdown_item(
-      `/viewedit/clone/${view.id}${on_done_redirect_str}`,
-      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
-      req
-    ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}')`,
-      },
-      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
-    ),
-    div({ class: "dropdown-divider" }),
-    post_dropdown_item(
-      `/viewedit/delete/${view.id}${on_done_redirect_str}`,
-      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-      req,
-      true,
-      view.name
-    ),
+    view.id &&
+      post_dropdown_item(
+        `/viewedit/clone/${view.id}${on_done_redirect_str}`,
+        '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+        req
+      ),
+    view.id &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}')`,
+        },
+        '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
+      ),
+    view.id && div({ class: "dropdown-divider" }),
+    view.id &&
+      post_dropdown_item(
+        `/viewedit/delete/${view.id}${on_done_redirect_str}`,
+        '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+        req,
+        true,
+        view.name
+      ),
   ]);
 
 const setTableRefs = async (views) => {
@@ -222,17 +228,21 @@ const viewsList = async (
           {
             label: req.__("Role to access"),
             key: (row) =>
-              editViewRoleForm(row, roles, req, on_done_redirect_str),
+              row.id
+                ? editViewRoleForm(row, roles, req, on_done_redirect_str)
+                : "admin",
           },
           {
             label: "",
             key: (r) =>
-              link(
-                `/viewedit/config/${encodeURIComponent(
-                  r.name
-                )}${on_done_redirect_str}`,
-                req.__("Configure")
-              ),
+              r.id && r.viewtemplateObj?.configuration_workflow
+                ? link(
+                    `/viewedit/config/${encodeURIComponent(
+                      r.name
+                    )}${on_done_redirect_str}`,
+                    req.__("Configure")
+                  )
+                : "",
           },
           !tagId
             ? {

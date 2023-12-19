@@ -56,25 +56,26 @@ const makeSegments = (
   alerts: any[],
   isWeb: boolean
 ): any => {
-  const toastSegments = couldHaveAlerts(alerts)
-    ? [
-        {
-          type: "blank",
-          contents: div(
-            {
-              id: "toasts-area",
-              class: `toast-container position-fixed ${
-                isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
-              } `,
-              style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
-              "aria-live": "polite",
-              "aria-atomic": "true",
-            },
-            (alerts || []).map((a: any) => toast(a.type, a.msg))
-          ),
-        },
-      ]
-    : [];
+  const toastSegments =
+    couldHaveAlerts(alerts) && !body.noWrapTop
+      ? [
+          {
+            type: "blank",
+            contents: div(
+              {
+                id: "toasts-area",
+                class: `toast-container position-fixed ${
+                  isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
+                } `,
+                style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
+                "aria-live": "polite",
+                "aria-atomic": "true",
+              },
+              (alerts || []).map((a: any) => toast(a.type, a.msg))
+            ),
+          },
+        ]
+      : [];
 
   if (typeof body === "string")
     return {
@@ -137,6 +138,7 @@ namespace LayoutExports {
     alerts?: any;
     is_owner?: boolean;
     req?: any;
+    hints?: any;
   };
 }
 type RenderOpts = LayoutExports.RenderOpts;
@@ -157,13 +159,14 @@ const render = ({
   alerts,
   is_owner,
   req,
+  hints = {},
 }: RenderOpts): string => {
   //console.log(JSON.stringify(layout, null, 2));
   const isWeb = typeof window === "undefined" && !req?.smr;
-  const hints = blockDispatch?.hints || {};
+  //const hints = blockDispatch?.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
     const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
-    if (isTop && blockDispatch && blockDispatch.wrapTop)
+    if (isTop && blockDispatch && blockDispatch.wrapTop && !layout?.noWrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
       return segment.labelFor
@@ -706,16 +709,21 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      const cardDeck =
-        segment.besides.every((s: any) => s && s.type === "card") &&
-        (!segment.widths || segment.widths.every((w: any) => w === defwidth));
+      const cardDeck = segment.besides.every(
+        (s: any) => s && s.type === "card"
+      );
       let markup;
 
-      if (cardDeck)
+      if (cardDeck) {
+        const sameWidths =
+          !segment.widths || segment.widths.every((w: any) => w === defwidth);
         markup = div(
           {
             class: [
-              `row row-cols-1 row-cols-md-${segment.besides.length} g-4`,
+              "row",
+              sameWidths &&
+                `row-cols-1 row-cols-md-${segment.besides.length} g-4`,
+              "g-4",
               !segment.style?.["margin-bottom"] && `mb-3`,
             ],
             style: segment.style,
@@ -727,10 +735,23 @@ const render = ({
                 ? ["h-100", ...t.class]
                 : t.class + " h-100"
               : "h-100";
-            return div({ class: "col" }, go(newt, false, ixb));
+            return div(
+              {
+                class: sameWidths
+                  ? "col"
+                  : `col-${
+                      segment.breakpoint
+                        ? segment.breakpoint + "-"
+                        : segment.breakpoints && segment.breakpoints[ixb]
+                        ? segment.breakpoints[ixb] + "-"
+                        : ""
+                    }${segment.widths ? segment.widths[ixb] : defwidth}`,
+              },
+              go(newt, false, ixb)
+            );
           })
         );
-      else
+      } else
         markup = div(
           {
             class: [

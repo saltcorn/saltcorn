@@ -16,7 +16,7 @@ const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
   baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
-const { applyAsync } = utils;
+const { applyAsync, mergeActionResults } = utils;
 
 afterAll(db.close);
 
@@ -241,10 +241,10 @@ describe("base plugin actions", () => {
     const result = await modify_row.run({
       row,
       table: patients,
-      configuration: { row_expr: "{favbook:1}" },
+      configuration: { row_expr: "{favbook:1}", where: "Database" },
       user: { id: 1, role_id: 1 },
     });
-    expect(result).toStrictEqual({ reload_page: true });
+    expect(result).toStrictEqual(undefined);
 
     const row1 = await patients.getRow({ name: "Simon1" });
     assertIsSet(row1);
@@ -558,5 +558,26 @@ describe("Validate to create email", () => {
     assertIsSet(u);
     expect(u.username).toBe("tomn19");
     expect(u.email).toBe("tomn19@anonymous.com");
+  });
+});
+
+describe("mergeActionResults", () => {
+  it("it should merge errors", async () => {
+    const result = { error: "Foo" };
+    mergeActionResults(result, { error: "Bar" });
+    expect(result.error).toStrictEqual(["Foo", "Bar"]);
+  });
+
+  it("it should overwrite other keys", async () => {
+    const result = { error0: "Foo" };
+    mergeActionResults(result, { error0: "Bar" });
+    expect(result.error0).toStrictEqual("Bar");
+  });
+
+  it("it should merge set_fields", async () => {
+    const result = {};
+    mergeActionResults(result, { set_fields: { y: 2 } });
+    mergeActionResults(result, { set_fields: { z: 3 } });
+    expect(result).toStrictEqual({ set_fields: { y: 2, z: 3 } });
   });
 });

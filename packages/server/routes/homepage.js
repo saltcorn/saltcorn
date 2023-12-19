@@ -12,8 +12,9 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
+const Plugin = require("@saltcorn/data/models/plugin");
 const { link, mkTable } = require("@saltcorn/markup");
-const { div, a, p, i } = require("@saltcorn/markup/tags");
+const { div, a, p, i, h5, span } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { get_cached_packs } = require("@saltcorn/admin-models/models/pack");
 // const { restore_backup } = require("../markup/admin");
@@ -310,10 +311,80 @@ const packTab = (req, packlist) =>
       { noHeader: true }
     ),
     a(
-      { href: `/plugins?set=packs`, class: "btn btn-primary" },
+      { href: `/plugins?set=packs`, class: "btn btn-sm btn-primary" },
       req.__("Go to pack store »")
     )
   );
+
+const themeCard = (req, roleMap) => {
+  const state_layouts = getState().layouts;
+  const state_layout_names = Object.keys(state_layouts);
+  const layout_by_role = getState().getConfig("layout_by_role");
+  const used_layout_by_role = {};
+  Object.keys(roleMap).forEach((role_id) => {
+    used_layout_by_role[role_id] =
+      layout_by_role[role_id] ||
+      state_layout_names[state_layout_names.length - 1];
+  });
+  const themes_available = Plugin.get_cached_plugins().filter(
+    (p) => p.has_theme && !state_layout_names.includes(p.name)
+  );
+  const layouts = Object.entries(getState().layouts)
+    .filter(([nm, v]) => nm !== "emergency")
+    .map(([name, layout]) => {
+      let plugin = getState().plugins[name];
+      const for_role = Object.entries(used_layout_by_role)
+        .filter(([role, rname]) => rname === name)
+        .map(([role, rname]) =>
+          span({ class: "badge bg-info" }, roleMap[role])
+        );
+
+      return {
+        name,
+        layout,
+        plugin,
+        for_role,
+        edit_cfg_link: plugin?.configuration_workflow
+          ? a(
+              {
+                href: `/plugins/configure/${encodeURIComponent(name)}`,
+              },
+              i({ class: "fa fa-cog ms-2" })
+            )
+          : "",
+      };
+    });
+  const show_installable = themes_available.length > 0 || layouts.length == 1;
+  return div(
+    { class: "pb-3 pt-2 pe-4" },
+    mkTable(
+      [
+        {
+          label: req.__("Installed theme"),
+          key: ({ name, edit_cfg_link }) => `${name}${edit_cfg_link}`,
+        },
+        {
+          label: req.__("Theme for role"),
+          key: ({ for_role }) => for_role.join(" "),
+        },
+      ],
+      layouts
+    ),
+    a({ href: "/roleadmin" }, req.__("Set theme for each user role »")),
+    show_installable && h5({ class: "mt-2" }, req.__("Available themes")),
+    show_installable &&
+      div(
+        themes_available
+          .map((p) => span({ class: "badge bg-secondary" }, p.name))
+          .join(" ")
+      ),
+    show_installable &&
+      a(
+        { href: `/plugins?set=themes`, class: "mt-2" },
+        req.__("Install more themes »")
+      )
+  );
+};
 /**
  * Help Card
  * @param req
@@ -412,10 +483,12 @@ const welcome_page = async (req) => {
               users.length > 4
                 ? {
                     Users: await usersTab(req, users, roleMap),
+                    Theme: themeCard(req, roleMap),
                     Help: helpCard(req),
                   }
                 : {
                     Help: helpCard(req),
+                    Theme: themeCard(req, roleMap),
                     Users: await usersTab(req, users, roleMap),
                   },
           },

@@ -17,11 +17,13 @@ const {
   InvalidConfiguration,
   parseRelationPath,
   buildRelationPath,
+  mergeActionResults,
 } = require("./utils");
 const {
   jsexprToWhere,
   freeVariables,
   add_free_variables_to_joinfields,
+  eval_expression,
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
@@ -69,11 +71,18 @@ const link_view = (
     else url = `${url0}?${extraState}`;
   }
   if (popup) {
+    let ajaxOpts = "";
+    if (typeof popup === "object")
+      ajaxOpts = `, {${Object.entries(popup)
+        .map(([k, v]) => `'${k}': '${v}'`)
+        .join(",")}}`;
     if (!link_style)
       return a(
         {
           href: `javascript:${
-            isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`
+            isNode()
+              ? `ajax_modal('${url}'${ajaxOpts})`
+              : `mobile_modal('${url}'${ajaxOpts})`
           }`,
           style,
           class: [textStyle, link_style, link_size, extraClass],
@@ -94,7 +103,9 @@ const link_view = (
             extraClass,
           ],
           type: "button",
-          onClick: isNode() ? `ajax_modal('${url}')` : `mobile_modal('${url}')`,
+          onClick: isNode()
+            ? `ajax_modal('${url}'${ajaxOpts})`
+            : `mobile_modal('${url}')`,
           style,
         },
         link_icon
@@ -505,19 +516,29 @@ const get_inbound_self_relation_opts = async (source, viewname) => {
  * Get all relations where a many to many relation through a join table is possible
  * @param {Table} source Top view table
  * @param {string} viewname Top view
+ * @param {object} cache lookup cache for tables and views (can be null)
+ * @param {string[]} path path to the current table
  * @returns an array with the relation paths and the matching views
  */
-const get_many_to_many_relation_opts = async (source, viewname, cache) => {
+const get_many_to_many_relation_opts = async (
+  source,
+  viewname,
+  cache,
+  path
+) => {
   const result = [];
   const { tableIdCache, tableNameCache, fieldCache } = cache
     ? cache
     : await tableFieldCache();
   for (const jTblToSource of fieldCache[source.name] || []) {
+    const visitedFks = new Set();
     const joinTbl = tableIdCache[jTblToSource.table_id];
     const jTblFks = joinTbl
       .getForeignKeys()
       .filter((f) => f.id !== jTblToSource.id);
     for (const jTblToTarget of jTblFks) {
+      if (visitedFks.has(jTblToTarget.id)) continue;
+      visitedFks.add(jTblToTarget.id);
       const targetTbl = tableNameCache[jTblToTarget.reftable_name];
       const views = await View.find_table_views_where(
         targetTbl,
@@ -525,9 +546,45 @@ const get_many_to_many_relation_opts = async (source, viewname, cache) => {
           viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
       );
       result.push({
-        path: `.${source.name}.${joinTbl.name}$${jTblToSource.name}.${jTblToTarget.name}`,
+        path: `${path.join(".")}.${joinTbl.name}$${jTblToSource.name}.${
+          jTblToTarget.name
+        }`,
         views,
       });
+
+      const layerFks = fieldCache[targetTbl.name];
+      for (const layerFk of layerFks) {
+        if (visitedFks.has(layerFk.id)) continue;
+        visitedFks.add(layerFk.id);
+        const layerTbl = tableIdCache[layerFk.table_id];
+        const layerViews = await View.find_table_views_where(
+          layerTbl,
+          ({ state_fields, viewrow }) =>
+            viewrow.name !== viewname &&
+            state_fields.every((sf) => !sf.required)
+        );
+        result.push({
+          path: `${path.join(".")}.${joinTbl.name}$${jTblToSource.name}.${
+            jTblToTarget.name
+          }.${layerTbl.name}$${layerFk.name}`,
+          views: layerViews,
+        });
+      }
+    }
+  }
+  if (path.length < 2) {
+    const sourceFks = source.getForeignKeys();
+    for (const sourceFk of sourceFks) {
+      const nextTbl = tableNameCache[sourceFk.reftable_name];
+      path.push(sourceFk.name);
+      result.push(
+        ...(await get_many_to_many_relation_opts(
+          nextTbl,
+          viewname,
+          cache,
+          path
+        ))
+      );
     }
   }
   return result;
@@ -672,7 +729,8 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
   const many_to_many = await get_many_to_many_relation_opts(
     table,
     viewname,
-    cache
+    cache,
+    [`.${table.name}`]
   );
   for (const { path, views } of many_to_many) {
     for (const view of views) {
@@ -693,9 +751,9 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
  * @param {object} table
  * @returns {Promise<object[]>}
  */
-const getActionConfigFields = async (action, table) =>
+const getActionConfigFields = async (action, table, extra = {}) =>
   typeof action.configFields === "function"
-    ? await action.configFields({ table })
+    ? await action.configFields({ table, ...extra })
     : action.configFields || [];
 
 /**
@@ -1581,6 +1639,13 @@ const picked_fields_to_query = (columns, fields, layout) => {
       blank(v) {
         if (v?.isFormula?.text && typeof v.contents === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
+        if (v.isHTML)
+          ((v.contents || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach(
+            (s) => {
+              const s1 = s.replace("{{", "").replace("}}", "").trim();
+              freeVars = new Set([...freeVars, ...freeVariables(s1)]);
+            }
+          );
       },
       container(v) {
         if (v.showIfFormula)
@@ -2263,24 +2328,46 @@ const json_list_to_external_table = (get_json_list, fields0) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
-  let state_action = getState().actions[col.action_name];
-  let configuration;
-  if (state_action) configuration = col.configuration;
-  else {
-    const trigger = await Trigger.findOne({ name: col.action_name });
-    if (trigger) {
-      state_action = getState().actions[trigger.action];
-      configuration = trigger.configuration;
+  const run_action_step = async (action_name, colcfg) => {
+    let state_action = getState().actions[action_name];
+    let configuration;
+    if (state_action) configuration = colcfg;
+    else {
+      const trigger = await Trigger.findOne({ name: action_name });
+      if (trigger) {
+        state_action = getState().actions[trigger.action];
+        configuration = trigger.configuration;
+      }
     }
-  }
-  if (!state_action)
-    throw new Error("Runnable action not found: " + text(col.action_name));
-  return await state_action.run({
-    configuration,
-    user: req.user,
-    req,
-    ...rest,
-  });
+    if (!state_action)
+      throw new Error("Runnable action not found: " + text(action_name));
+    return await state_action.run({
+      configuration,
+      user: req.user,
+      req,
+      ...rest,
+    });
+  };
+  if (col.action_name === "Multi-step action") {
+    const result = {};
+    for (let i = 0; i < col.step_action_names.length; i++) {
+      const action_name = col.step_action_names?.[i];
+      if (!action_name) continue;
+      const only_if = col.step_only_ifs?.[i];
+      const config = col.configuration.steps?.[i] || {};
+      if (only_if && rest.row) {
+        if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
+      }
+      const stepres = await run_action_step(action_name, config);
+      try {
+        mergeActionResults(result, stepres);
+      } catch (error) {
+        console.error(error);
+      }
+      if (result.error) break;
+    }
+    return result;
+  } else return await run_action_step(col.action_name, col.configuration);
 };
 
 const ViewDisplayType = {

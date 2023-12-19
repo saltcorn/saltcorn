@@ -67,6 +67,7 @@ const {
   hashState,
   getSafeBaseUrl,
   dollarizeObject,
+  getSessionId,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -100,10 +101,13 @@ const configuration_workflow = (req) =>
           const stateActions = Object.entries(getState().actions).filter(
             ([k, v]) => !v.disableInBuilder
           );
-          const actions = [
+          const builtInActions = [
             "Delete",
             "GoBack",
             ...boolfields.map((f) => `Toggle ${f.name}`),
+          ];
+          const actions = [
+            ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
           (
@@ -133,7 +137,8 @@ const configuration_workflow = (req) =>
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
                 action,
-                table
+                table,
+                { mode: "show" }
               );
             }
           }
@@ -184,6 +189,7 @@ const configuration_workflow = (req) =>
             fields,
             images,
             actions,
+            builtInActions,
             actionConfigForms,
             fieldViewConfigForms,
             field_view_options: {
@@ -197,6 +203,7 @@ const configuration_workflow = (req) =>
             roles,
             library,
             pages,
+            allowMultiStepAction: true,
             handlesTextStyle,
             mode: "show",
             ownership:
@@ -465,19 +472,27 @@ const renderRows = async (
       } else {
         let state1;
         const pk_name = table.pk_name;
+        const get_row_val = (k) => {
+          //handle expanded joinfields
+          if (row[k] === null) return null;
+          if (row[k]?.id === null) return null;
+          return row[k]?.id || row[k];
+        };
         switch (view.view_select.type) {
           case "RelationPath": {
             const path = view.view_select.path;
             state1 = {
               _inbound_relation_path_: {
                 ...view.view_select,
-                srcId: path[0].fkey ? row[path[0].fkey] : row[pk_name],
+                srcId: path[0].fkey
+                  ? get_row_val(path[0].fkey)
+                  : get_row_val(pk_name),
               },
             };
             break;
           }
           case "Own":
-            state1 = { [pk_name]: row[pk_name] };
+            state1 = { [pk_name]: get_row_val(pk_name) };
             break;
           case "Independent":
             state1 = {};
@@ -487,18 +502,24 @@ const renderRows = async (
             state1 = {
               [view.view_select.through
                 ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
-                : view.view_select.field_name]: row[pk_name],
+                : view.view_select.field_name]: get_row_val(pk_name),
             };
             break;
           case "ParentShow":
             //todo set by pk name of parent tablr
-            state1 = { id: row[view.view_select.field_name] };
+            state1 = {
+              id: get_row_val(view.view_select.field_name),
+            };
             break;
         }
         const extra_state = segment.extra_state_fml
           ? eval_expression(
               segment.extra_state_fml,
-              { ...dollarizeObject(state), ...row },
+              {
+                ...dollarizeObject(state),
+                session_id: getSessionId(extra.req),
+                ...row,
+              },
               extra.req.user
             )
           : {};
@@ -517,12 +538,15 @@ const renderRows = async (
           segment.contents = div(
             {
               class: "d-inline",
+              "data-sc-embed-viewname": view.name,
               "data-sc-local-state": `/view/${view.name}${qs}`,
             },
             await view.run(state2, subviewExtra, view.isRemoteTable())
           );
         } else {
           const state2 = { ...outerState, ...state1, ...extra_state };
+          const qs = stateToQueryString(state2);
+
           if (
             view.name === viewname &&
             JSON.stringify(state) === JSON.stringify(state2)
@@ -530,10 +554,13 @@ const renderRows = async (
             throw new InvalidConfiguration(
               `View ${view.name} embeds itself with same state; inifinite loop detected`
             );
-          segment.contents = await view.run(
-            state2,
-            subviewExtra,
-            view.isRemoteTable()
+          segment.contents = div(
+            {
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-sc-view-source": `/view/${view.name}${qs}`,
+            },
+            await view.run(state2, subviewExtra, view.isRemoteTable())
           );
         }
       }
@@ -821,7 +848,9 @@ const render = (
         isWeb(req),
         req.user,
         prefix,
-        state
+        state,
+        req,
+        viewname
       );
       return key(row);
     },
@@ -853,6 +882,7 @@ const render = (
     role,
     is_owner,
     req,
+    hints: getState().getLayout(req.user).hints || {},
   });
 };
 

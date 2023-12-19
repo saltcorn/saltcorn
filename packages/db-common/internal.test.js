@@ -183,6 +183,21 @@ describe("mkWhere", () => {
       where: `where "name" LIKE '%' || ? || '%'`,
     });
   });
+
+  it("should query string as regexp", () => {
+    expect(mkWhere({ name: /imon/ })).toStrictEqual({
+      values: ["imon"],
+      where: `where "name" ~ $1`,
+    });
+  });
+
+  it("should query regexp on sqlite", () => {
+    expect(mkWhere({ name: /imon/ }, true)).toStrictEqual({
+      values: ["imon"],
+      where: `where "name" REGEXP ?`,
+    });
+  });
+
   it("should query FTS", () => {
     const fld = (name) => ({
       name,
@@ -313,6 +328,10 @@ describe("mkWhere", () => {
       where: 'where not ("id"=$1 and "y"=$2)',
     });
     expect(mkWhere({ not: { y: { in: [1, 2, 3] } } })).toStrictEqual({
+      values: [[1, 2, 3]],
+      where: 'where not ("y" = ANY ($1))',
+    });
+    expect(mkWhere({ y: { not: { in: [1, 2, 3] } } })).toStrictEqual({
       values: [[1, 2, 3]],
       where: 'where not ("y" = ANY ($1))',
     });

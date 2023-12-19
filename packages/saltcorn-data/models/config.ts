@@ -62,6 +62,7 @@ const configTypes: ConfigTypes = {
   base_url: {
     type: "String",
     label: "Base URL",
+    excludeFromSnapshot: true,
     default: "",
     onChange(val: string) {
       const tenant = db.getTenantSchema();
@@ -96,17 +97,27 @@ const configTypes: ConfigTypes = {
   /** @type {object} */
   globalSearch: { type: "hidden", label: "Global search" },
   /** @type {object} */
-  available_packs: { type: "hidden", label: "Available packs" },
+  available_packs: {
+    type: "hidden",
+    label: "Available packs",
+    excludeFromSnapshot: true,
+  },
   /** @type {object} */
   available_packs_fetched_at: {
     type: "Date",
     label: "Available packs fetched",
+    excludeFromSnapshot: true,
   },
   /** @type {object} */
-  available_plugins: { type: "hidden", label: "Available plugins" },
+  available_plugins: {
+    type: "hidden",
+    label: "Available plugins",
+    excludeFromSnapshot: true,
+  },
   /** @type {object} */
   available_plugins_fetched_at: {
     type: "Date",
+    excludeFromSnapshot: true,
     label: "Available plugins fetched",
   },
   /** @type {object} */
@@ -246,6 +257,7 @@ const configTypes: ConfigTypes = {
   log_sql: {
     type: "Bool",
     label: "Log SQL to stdout",
+    excludeFromSnapshot: true,
     default: false,
     onChange(val: boolean) {
       db.set_sql_logging(val);
@@ -256,6 +268,7 @@ const configTypes: ConfigTypes = {
   log_client_errors: {
     type: "Bool",
     label: "Log client errors",
+    excludeFromSnapshot: true,
     default: false,
     root_only: true,
     blurb: "Record all client errors in the crash log",
@@ -280,6 +293,7 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     root_only: true,
     restart_required: true,
+    excludeFromSnapshot: true,
     label: "Multitenancy enabled",
     default: db.is_it_multi_tenant(),
     onChange(val: boolean) {
@@ -342,6 +356,7 @@ const configTypes: ConfigTypes = {
   development_mode: {
     type: "Bool",
     label: "Development mode",
+    excludeFromSnapshot: true,
     default: false,
     blurb:
       "Disable JS/CSS asset caching, show full error to user on crash, enable editing field type",
@@ -401,6 +416,7 @@ const configTypes: ConfigTypes = {
     fieldview: "textarea",
     label: "Custom SSL certificate",
     default: "",
+    excludeFromSnapshot: true,
     hide_value: true,
   },
   /** @type {object} */
@@ -409,6 +425,7 @@ const configTypes: ConfigTypes = {
     fieldview: "textarea",
     label: "Custom SSL private key",
     hide_value: true,
+    excludeFromSnapshot: true,
     default: "",
   },
   /** @type {object} */
@@ -417,6 +434,7 @@ const configTypes: ConfigTypes = {
     default: false,
     type: "hidden",
     root_only: true,
+    excludeFromSnapshot: true,
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
   },
   /** @type {object} */
@@ -432,6 +450,7 @@ const configTypes: ConfigTypes = {
   latest_npm_version: {
     type: "hidden",
     label: "Latest npm version cache",
+    excludeFromSnapshot: true,
     default: {},
   },
   /** @type {object} */
@@ -475,6 +494,7 @@ const configTypes: ConfigTypes = {
   next_hourly_event: {
     type: "Date",
     label: "Next hourly event",
+    excludeFromSnapshot: true,
     default: null,
   },
   /** @type {object} */
@@ -482,11 +502,13 @@ const configTypes: ConfigTypes = {
     type: "Date",
     label: "Next daily event",
     default: null,
+    excludeFromSnapshot: true,
   },
   /** @type {object} */
   next_weekly_event: {
     type: "Date",
     label: "Next weekly event",
+    excludeFromSnapshot: true,
     default: null,
   },
   /** @type {object} */
@@ -529,6 +551,7 @@ const configTypes: ConfigTypes = {
   storage_s3_enabled: {
     type: "Bool",
     label: "Use Amazon S3",
+    excludeFromSnapshot: true,
     default: false,
     sublabel:
       "Use Amazon S3 (or compatible) service to store files. If disabled, Saltcorn uses local disk. WARNING: Changing this may break your uploaded files!",
@@ -536,6 +559,7 @@ const configTypes: ConfigTypes = {
   storage_s3_secure: {
     type: "Bool",
     label: "Use Amazon S3 Secure Connection.",
+    excludeFromSnapshot: true,
     default: true,
     sublabel: "Connect to Amazon S3 (or compatible) securely.",
   },
@@ -543,6 +567,7 @@ const configTypes: ConfigTypes = {
   storage_s3_bucket: {
     type: "String",
     label: "Amazon S3 Bucket",
+    excludeFromSnapshot: true,
     default: "",
     blurb: "Name you selected for your S3 bucket in AWS.",
   },
@@ -550,6 +575,7 @@ const configTypes: ConfigTypes = {
   storage_s3_path_prefix: {
     type: "String",
     label: "Amazon S3 Path Prefix",
+    excludeFromSnapshot: true,
     default: "",
     blurb: "Prefix you selected for your S3 bucket in AWS.",
   },
@@ -557,6 +583,7 @@ const configTypes: ConfigTypes = {
   storage_s3_endpoint: {
     type: "String",
     label: "Amazon S3 Endpoint",
+    excludeFromSnapshot: true,
     default: "s3.amazonaws.com",
     blurb:
       "Hostname of your S3 Compatible Storage provider. Defaults to 's3.amazonaws.com'.",
@@ -565,6 +592,7 @@ const configTypes: ConfigTypes = {
   storage_s3_region: {
     type: "String",
     label: "Amazon S3 Region",
+    excludeFromSnapshot: true,
     default: "us-east-1",
     blurb:
       "AWS region you selected when creating your S3 bucket. Default ti 'us-east-1'.",
@@ -573,6 +601,7 @@ const configTypes: ConfigTypes = {
   storage_s3_access_key: {
     type: "String",
     label: "Amazon S3 Access Key ID",
+    excludeFromSnapshot: true,
     default: "",
     blurb:
       "Only required if you do not want to authenticate to S3 using an IAM role. Enter the Access Key ID provided by your Amazon EC2 administrator.",
@@ -582,6 +611,7 @@ const configTypes: ConfigTypes = {
     type: "String",
     input_type: "password",
     label: "Amazon S3 Secret Access Key",
+    excludeFromSnapshot: true,
     default: "",
     blurb:
       "The secret access key associated with your Amazon S3 Access Key ID.",
@@ -607,20 +637,24 @@ const configTypes: ConfigTypes = {
   auto_backup_frequency: {
     type: "String",
     label: "Auto backup frequency",
+    excludeFromSnapshot: true,
     default: "Never",
   },
   auto_backup_destination: {
     type: "String",
+    excludeFromSnapshot: true,
     label: "Auto backup Destination",
     default: "Saltcorn files",
   },
   auto_backup_directory: {
     type: "String",
+    excludeFromSnapshot: true,
     label: "Auto backup directory",
     default: "",
   },
   auto_backup_expire_days: {
     type: "Integer",
+    excludeFromSnapshot: true,
     label: "Auto backup expiration days",
     default: null,
   },
@@ -670,6 +704,7 @@ const configTypes: ConfigTypes = {
     label: "System logging verbosity",
     default: "1",
 
+    excludeFromSnapshot: true,
     options: [
       { label: "None: Silent", value: "0" },
       { label: "Few: Crashes", value: "1" },

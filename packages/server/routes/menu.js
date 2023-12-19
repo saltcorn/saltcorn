@@ -307,7 +307,16 @@ const menuForm = async (req) => {
         name: "location",
         label: req.__("Location"),
         showIf: {
-          type: ["View", "Page", "Link", "Header", "Dynamic", "Action"],
+          type: [
+            "View",
+            "Page",
+            "Link",
+            "Header",
+            "Dynamic",
+            "Search",
+            "Separator",
+            "Action",
+          ],
         },
         sublabel: req.__("Not all themes support all locations"),
         class: "item-menu",
@@ -317,7 +326,7 @@ const menuForm = async (req) => {
         //default: "Standard",
         attributes: {
           inline: true,
-          options: "Standard, Mobile Bottom",
+          options: "Standard, Mobile Bottom, Secondary Menu",
         },
       },
     ],

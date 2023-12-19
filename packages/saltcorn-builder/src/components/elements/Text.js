@@ -297,6 +297,16 @@ const TextSettings = () => {
             setProp={setProp}
             isStyle={true}
           />
+          <SettingsRow
+            field={{
+              name: "color",
+              label: "Color",
+              type: "Color",
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
         </tbody>
       </table>
       <BlockOrInlineSetting

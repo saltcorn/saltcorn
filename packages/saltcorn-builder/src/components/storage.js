@@ -28,6 +28,7 @@ import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { DropMenu } from "./elements/DropMenu";
+import { rand_ident } from "./elements/utils";
 
 /**
  * @param {object} segment
@@ -167,6 +168,9 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           action_bgcol={segment.action_bgcol || ""}
           action_bordercol={segment.action_bordercol || ""}
           action_textcol={segment.action_textcol || ""}
+          nsteps={segment.nsteps || ""}
+          step_only_ifs={segment.step_only_ifs || ""}
+          step_action_names={segment.step_action_names || ""}
           confirm={segment.confirm}
           configuration={segment.configuration || {}}
           block={segment.block || false}
@@ -344,7 +348,6 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
 /**
  * @returns {number}
  */
-const rand_ident = () => Math.floor(Math.random() * 16777215).toString(16);
 
 export /**
  * @param {object[]} nodes
@@ -555,6 +558,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         action_textcol: node.props.action_textcol,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
+        nsteps: node.props.nsteps,
+        step_only_ifs: node.props.step_only_ifs,
+        step_action_names: node.props.step_action_names,
         configuration: node.props.configuration,
         isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
@@ -578,6 +584,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         action_bgcol: node.props.action_bgcol,
         action_bordercol: node.props.action_bordercol,
         action_textcol: node.props.action_textcol,
+        nsteps: node.props.nsteps,
+        step_only_ifs: node.props.step_only_ifs,
+        step_action_names: node.props.step_action_names,
         minRole: node.props.minRole,
         isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
