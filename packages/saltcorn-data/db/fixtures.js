@@ -524,6 +524,32 @@ module.exports =
       required: false,
       attributes: { summary_field: "name" },
     });
+    await View.create({
+      table_id: participants.id,
+      name: "participants_edit",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          {
+            type: "Field",
+            field_name: "user",
+            fieldview: "select",
+            textStyle: "",
+            block: false,
+            configuration: {},
+          },
+          {
+            type: "Field",
+            field_name: "room",
+            fieldview: "select",
+            textStyle: "",
+            block: false,
+            configuration: {},
+          },
+        ],
+      },
+      min_role: 100,
+    });
     await db.insert("participants", {
       user: 1,
       room: 1,

@@ -48,7 +48,6 @@ const {
   calcfldViewOptions,
   calcfldViewConfig,
   get_parent_views,
-  get_link_view_opts,
   picked_fields_to_query,
   stateFieldsToWhere,
   stateFieldsToQuery,
@@ -176,12 +175,6 @@ const configuration_workflow = (req) =>
               );
             }
           }
-          // const { link_view_opts, view_name_opts, view_relation_opts } =
-          //   await get_link_view_opts(
-          //     table,
-          //     context.viewname,
-          //     (v) => v.viewtemplate !== "Room"
-          //   );
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -238,6 +231,7 @@ const configuration_workflow = (req) =>
               !!table.ownership_field_id ||
               !!table.ownership_formula ||
               table.name === "users",
+            excluded_subview_templates: ["Room"],
           };
         },
       },

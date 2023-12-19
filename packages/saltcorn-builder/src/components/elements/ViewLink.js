@@ -150,7 +150,11 @@ const ViewLinkSettings = () => {
     (name &&
       ((names) => (names.length > 1 ? names[1] : names[0]))(name.split(":")));
   const [relations, setRelations] = React.useState(
-    finder.findRelations(options.tableName, use_view_name)
+    finder.findRelations(
+      options.tableName,
+      use_view_name,
+      options.excluded_subview_templates
+    )
   );
   if (!relation && relations.paths.length > 0) {
     setProp((prop) => {
@@ -163,7 +167,8 @@ const ViewLinkSettings = () => {
       if (target_value !== use_view_name) {
         const newRelations = finder.findRelations(
           options.tableName,
-          target_value
+          target_value,
+          options.excluded_subview_templates
         );
         if (newRelations.paths.length > 0) {
           setProp((prop) => (prop.view_name = target_value));

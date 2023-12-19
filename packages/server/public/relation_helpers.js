@@ -1,4 +1,5 @@
 var relationHelpers = (() => {
+  // internal helper to build an object, structured for the picker
   const buildLayers = (path, pathArr, result) => {
     let currentLevel = result;
     for (const relation of pathArr) {
@@ -55,6 +56,14 @@ var relationHelpers = (() => {
     currentLevel.relPath = path;
   };
 
+  /**
+   * build an array of relation objects from a path string
+   * '.' stands for no relation
+   * '.table' stands for same table
+   * @param {*} path relation path string separated by '.', the first token is the source table
+   * @param {*} tableNameCache an object with table name as key and table object as value
+   * @returns
+   */
   const parseRelationPath = (path, tableNameCache) => {
     if (path === ".")
       return [{ type: "Independent", table: "None (no relation)" }];
@@ -87,6 +96,13 @@ var relationHelpers = (() => {
     }
   };
 
+  /**
+   * build an array of relation objects from a legacy relation
+   * @param {string} type relation type (ChildList, Independent, Own, OneToOneShow, ParentShow)
+   * @param {string} rest rest of the legaccy relation
+   * @param {string} parentTbl source table
+   * @returns
+   */
   const parseLegacyRelation = (type, rest, parentTbl) => {
     switch (type) {
       case "ChildList": {
@@ -146,6 +162,12 @@ var relationHelpers = (() => {
     INVALID: "INVALID",
   };
 
+  /**
+   * prepare the relations finder
+   * @param {object} tablesCache
+   * @param {object} allViews
+   * @param {number} maxDepth
+   */
   const RelationsFinder = function (tablesCache, allViews, maxDepth) {
     this.maxDepth = +maxDepth;
     this.allViews = allViews;
@@ -155,45 +177,97 @@ var relationHelpers = (() => {
     this.fieldCache = fieldCache;
   };
 
-  RelationsFinder.prototype.findRelations = function (sourceTblName, subView) {
+  /**
+   * find relations between a source table and a subview
+   * @param {string} sourceTblName
+   * @param {string} subView
+   * @param {string[]} excluded
+   * @returns {object} {paths: string[], layers: object}
+   */
+  RelationsFinder.prototype.findRelations = function (
+    sourceTblName,
+    subView,
+    excluded
+  ) {
+    let paths = [];
     const layers = { table: sourceTblName, inboundKeys: [], fkeys: [] };
-    const view = this.allViews.find((v) => v.name === subView);
-    const paths =
-      view.display_type === ViewDisplayType.SINGLE
-        ? this.singleRelationPaths(sourceTblName, subView)
-        : view.display_type === ViewDisplayType.MULTI
-        ? this.multiRelationPaths(sourceTblName, subView)
-        : [];
-    for (const path of paths)
-      buildLayers(path, parseRelationPath(path, this.tableNameCache), layers);
-    return { paths, layers };
+    try {
+      const view = this.allViews.find((v) => v.name === subView);
+      if (!view) throw new Error(`The view ${subView} does not exist`);
+      if (excluded?.find((e) => e === view.viewtemplate)) {
+        console.log(`view ${subView} is excluded`);
+        return { paths, layers };
+      }
+      switch (view.display_type) {
+        case ViewDisplayType.SINGLE:
+          paths = this.singleRelationPaths(sourceTblName, subView, excluded);
+          break;
+        case ViewDisplayType.MULTI:
+          paths = this.multiRelationPaths(sourceTblName, subView, excluded);
+          break;
+        default:
+          throw new Error(
+            `view ${subView}: The displayType (${view.display_type}) is not valid`
+          );
+      }
+      for (const path of paths)
+        buildLayers(path, parseRelationPath(path, this.tableNameCache), layers);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      return { paths, layers };
+    }
   };
 
+  /**
+   * find relations between a source table and a subview with single row display (e.g. show)
+   * @param {string} sourceTblName
+   * @param {string} subView
+   * @param {string[]} excluded
+   * @returns
+   */
   RelationsFinder.prototype.singleRelationPaths = function (
     sourceTblName,
-    subView
+    subView,
+    excluded
   ) {
     const result = [];
     const subViewObj = this.allViews.find((v) => v.name === subView);
+    if (!subViewObj) throw new Error(`The view ${subView} does not exist`);
+    if (excluded?.find((e) => e === subViewObj.viewtemplate)) {
+      console.log(`view ${subView} is excluded`);
+      return result;
+    }
     const sourceTbl = this.tableNameCache[sourceTblName];
+    if (!sourceTbl)
+      throw new Error(`The table ${sourceTblName} does not exist`);
+    // first
     const relations = sourceTbl.foreign_keys;
     if (sourceTbl.id === subViewObj.table_id) result.push(`.${sourceTblName}`);
     for (const relation of relations) {
       const targetTbl = this.tableNameCache[relation.reftable_name];
+      if (!targetTbl)
+        throw new Error(`The table ${relation.reftable_name} does not exist`);
       if (targetTbl.id === subViewObj.table_id)
         result.push(`.${sourceTblName}.${relation.name}`);
     }
+    // second
     const uniqueRelations = (this.fieldCache[sourceTblName] || []).filter(
       (f) => f.is_unique
     );
     for (const relation of uniqueRelations) {
       const targetTbl = this.tableIdCache[relation.table_id];
+      if (!targetTbl)
+        throw new Error(`The table ${relation.table_id} does not exist`);
       if (targetTbl.id === subViewObj.table_id)
         result.push(`.${sourceTblName}.${targetTbl.name}$${relation.name}`);
     }
+    // third
     const targetFields = sourceTbl.foreign_keys;
     for (const field of uniqueRelations) {
       const refTable = this.tableIdCache[field.table_id];
+      if (!refTable)
+        throw new Error(`The table ${field.table_id} does not exist`);
       const fromTargetToRef = targetFields.filter(
         (field) => field.reftable_name === refTable.name
       );
@@ -205,13 +279,28 @@ var relationHelpers = (() => {
     return result;
   };
 
+  /**
+   * find relations between a source table and a subview with multiple rows display (e.g. list)
+   * @param {string} sourceTblName
+   * @param {string} subView
+   * @param {string[]} excluded
+   * @returns
+   */
   RelationsFinder.prototype.multiRelationPaths = function (
     sourceTblName,
-    subView
+    subView,
+    excluded
   ) {
-    const relations = ["."]; // none no relation
+    const result = ["."]; // none no relation
     const subViewObj = this.allViews.find((v) => v.name === subView);
+    if (!subViewObj) throw new Error(`The view ${subView} does not exist`);
+    if (excluded?.find((e) => e === subViewObj.viewtemplate)) {
+      console.log(`view ${subView} is excluded`);
+      return result;
+    }
     const sourceTbl = this.tableNameCache[sourceTblName];
+    if (!sourceTbl)
+      throw new Error(`The table ${sourceTblName} does not exist`);
     const searcher = (current, path, level, visited) => {
       if (level > this.maxDepth) return;
       const visitedFkCopy = new Set(visited);
@@ -219,8 +308,10 @@ var relationHelpers = (() => {
       for (const fk of fks) {
         visitedFkCopy.add(fk.id);
         const target = this.tableNameCache[fk.reftable_name];
+        if (!target)
+          throw new Error(`The table ${fk.reftable_name} does not exist`);
         const newPath = `${path}.${fk.name}`;
-        if (target.id === subViewObj.table_id) relations.push(newPath);
+        if (target.id === subViewObj.table_id) result.push(newPath);
         searcher(target, newPath, level + 1, visitedFkCopy);
       }
 
@@ -231,15 +322,17 @@ var relationHelpers = (() => {
       for (const inbound of inbounds) {
         visitedInboundCopy.add(inbound.id);
         const target = this.tableIdCache[inbound.table_id];
+        if (!target)
+          throw new Error(`The table ${inbound.table_id} does not exist`);
         const newPath = `${path}.${target.name}$${inbound.name}`;
-        if (target.id === subViewObj.table_id) relations.push(newPath);
+        if (target.id === subViewObj.table_id) result.push(newPath);
         searcher(target, newPath, level + 1, visitedInboundCopy);
       }
     };
     const path = `.${sourceTblName}`;
     const visited = new Set();
     searcher(sourceTbl, path, 0, visited);
-    return relations;
+    return result;
   };
 
   return {

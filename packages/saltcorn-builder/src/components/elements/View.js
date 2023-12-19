@@ -139,7 +139,11 @@ const ViewSettings = () => {
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
   const [relations, setRelations] = React.useState(
-    finder.findRelations(options.tableName, viewname)
+    finder.findRelations(
+      options.tableName,
+      viewname,
+      options.excluded_subview_templates
+    )
   );
   if (!relation && relations.paths.length > 0) {
     setProp((prop) => {
@@ -154,7 +158,8 @@ const ViewSettings = () => {
       if (target_value !== viewname) {
         const newRelations = finder.findRelations(
           options.tableName,
-          target_value
+          target_value,
+          options.excluded_subview_templates
         );
         if (newRelations.paths.length > 0) {
           setProp((prop) => (prop.view_name = target_value));

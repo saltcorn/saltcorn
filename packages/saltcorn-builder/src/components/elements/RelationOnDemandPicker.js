@@ -1,7 +1,6 @@
-import React, { useMemo } from "react";
-import { removeWhitespaces } from "./utils";
+import React from "react";
+import { removeWhitespaces, rand_ident } from "./utils";
 import ReactDOM from "react-dom";
-
 
 const maxLevelDefault = 10;
 
@@ -48,7 +47,7 @@ const Relation = ({ cfg }) => {
     setMaxLevel(maxLevelDefault, maxLevel);
   };
   const identifier = removeWhitespaces(
-    `${relation.name}_${relation.table}_${type}_${ix}`
+    `${relation.name}_${relation.table}_${type}_${ix}_${level}_${rand_ident()}`
   );
 
   if (hasSubLevels(relation)) {
@@ -178,10 +177,7 @@ const RelationLayer = ({ cfg }) => {
  * @param {*} param0
  * @returns
  */
-export const RelationOnDemandPicker = ({
-  relations,
-  update,
-}) => {
+export const RelationOnDemandPicker = ({ relations, update }) => {
   const [maxLevel, setMaxLevel] = React.useState(maxLevelDefault);
   const toggleId = "_relation_picker_toggle_";
   const layerCfg = {
@@ -208,7 +204,7 @@ export const RelationOnDemandPicker = ({
           Select
         </button>
         <div className="dropdown-menu">
-          <RelationLayer cfg={layerCfg} />,
+          <RelationLayer cfg={layerCfg} />
         </div>
       </div>
     </div>

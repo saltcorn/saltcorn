@@ -17,7 +17,14 @@ jest.mock("@craftjs/core", () => ({
   useNode: jest.fn(),
 }));
 
-const doTest = (tables, views, tableName, viewName, expected) => {
+const doTest = (
+  tables,
+  views,
+  tableName,
+  viewName,
+  expected,
+  excludedTemplates
+) => {
   // mock craftjs
   const useNodeMock = jest.fn();
   useNodeMock.mockReturnValue({
@@ -35,6 +42,7 @@ const doTest = (tables, views, tableName, viewName, expected) => {
     views: views,
     tableName: tableName,
     roles: [],
+    excluded_subview_templates: excludedTemplates,
   });
   // spy on useState and extract the relations (first call)
   const spy = jest.spyOn(React, "useState");
@@ -199,6 +207,15 @@ describe("relations tests", () => {
           ".pressing_job.album.artist_plays_on_album$album.artist.fan_club$artist",
         ];
         doTest(tables, views, "pressing_job", "fan_club_feed", expected);
+      });
+    });
+
+    describe("excluded viewtemplates", () => {
+      it("excluded viewtemplates", async () => {
+        const { tables, views } = fixturesData();
+        const expected = [];
+        const excluded = ["Room"];
+        doTest(tables, views, "participants", "rooms_view", expected, excluded);
       });
     });
   });
