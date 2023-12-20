@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>RelationData | saltcorn-monorepo</title><meta name="description" content="Documentation for saltcorn-monorepo"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><link rel="stylesheet" href="../assets/custom.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>findType | saltcorn-monorepo</title><meta name="description" content="Documentation for saltcorn-monorepo"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><link rel="stylesheet" href="../assets/custom.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
 <div class="tsd-toolbar-contents container">
 <div class="table-cell" id="tsd-search" data-base="..">
 <div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.7824 13.833L12.6666 10.7177C12.5259 10.5771 12.3353 10.499 12.1353 10.499H11.6259C12.4884 9.39596 13.001 8.00859 13.001 6.49937C13.001 2.90909 10.0914 0 6.50048 0C2.90959 0 0 2.90909 0 6.49937C0 10.0896 2.90959 12.9987 6.50048 12.9987C8.00996 12.9987 9.39756 12.4863 10.5008 11.6239V12.1332C10.5008 12.3332 10.5789 12.5238 10.7195 12.6644L13.8354 15.7797C14.1292 16.0734 14.6042 16.0734 14.8948 15.7797L15.7793 14.8954C16.0731 14.6017 16.0731 14.1267 15.7824 13.833ZM6.50048 10.499C4.29094 10.499 2.50018 8.71165 2.50018 6.49937C2.50018 4.29021 4.28781 2.49976 6.50048 2.49976C8.71001 2.49976 10.5008 4.28708 10.5008 6.49937C10.5008 8.70852 8.71314 10.499 6.50048 10.499Z" fill="var(--color-text)"></path></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
@@ -15,19 +15,28 @@
 <li><a href="../index.html">saltcorn-monorepo</a></li>
 <li><a href="../modules/_saltcorn_data.html">@saltcorn/data</a></li>
 <li><a href="../modules/_saltcorn_data.models.html">models</a></li>
-<li><a href="../modules/_saltcorn_data.models.Table.html">Table</a></li>
-<li><a href="_saltcorn_data.models.Table.RelationData.html">RelationData</a></li></ul>
-<h1>Type alias RelationData</h1></div>
-<div class="tsd-signature"><span class="tsd-kind-type-alias">Relation<wbr/>Data</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">relationField</span><span class="tsd-signature-symbol">: </span><a href="../classes/_saltcorn_data.models.Field.html" class="tsd-signature-type tsd-kind-class">Field</a><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">relationTable</span><span class="tsd-signature-symbol">: </span><a href="../classes/_saltcorn_data.models.Table-1.html" class="tsd-signature-type tsd-kind-class">Table</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
-<div class="tsd-type-declaration">
-<h4>Type declaration</h4>
-<ul class="tsd-parameters">
-<li class="tsd-parameter">
-<h5><span class="tsd-kind-property">relation<wbr/>Field</span><span class="tsd-signature-symbol">: </span><a href="../classes/_saltcorn_data.models.Field.html" class="tsd-signature-type tsd-kind-class">Field</a></h5></li>
-<li class="tsd-parameter">
-<h5><span class="tsd-kind-property">relation<wbr/>Table</span><span class="tsd-signature-symbol">: </span><a href="../classes/_saltcorn_data.models.Table-1.html" class="tsd-signature-type tsd-kind-class">Table</a></h5></li></ul></div><aside class="tsd-sources">
+<li><a href="../modules/_saltcorn_data.models.discovery.html">discovery</a></li>
+<li><a href="_saltcorn_data.models.discovery.findType.html">findType</a></li></ul>
+<h1>Function findType</h1></div>
+<section class="tsd-panel">
+<ul class="tsd-signatures">
+<li class="tsd-signature tsd-anchor-link" id="findType"><span class="tsd-kind-call-signature">find<wbr/>Type</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">sql_name</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><a href="#findType" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Mapping SQL Type to Saltcorn type (For Discovery)</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><span class="tsd-kind-parameter">sql_name</span>: <span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography"><p>SQL type name</p>
+</div>
+<div class="tsd-comment tsd-typography"></div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4><p>return Saltcorn type</p>
+
+<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/6bb4584/packages/saltcorn-data/models/table.ts#L3304">saltcorn-data/models/table.ts:3304</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/6bb4584/packages/saltcorn-data/models/discovery.ts#L64">saltcorn-data/models/discovery.ts:64</a></li></ul></aside></li></ul></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -59,19 +68,21 @@
 <li><a href="../modules/_saltcorn_data.models.FieldRepeat.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>Field<wbr/>Repeat</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.File.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>File</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.Form.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>Form</span></a></li>
-<li>
-<details class="tsd-index-accordion" open data-key="@saltcorn/data.models.Table"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="#icon-chevronDown"></use></svg><a href="../modules/_saltcorn_data.models.Table.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>Table</span></a></summary>
-<div class="tsd-accordion-details">
-<ul class="tsd-nested-navigation">
-<li><a href="_saltcorn_data.models.Table.ChildRelations.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4194304"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-type-alias)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.31 16V8.224H8.91V7.24H14.79V8.224H12.39V16H11.31Z" fill="var(--color-text)"></path></g></svg><span>Child<wbr/>Relations</span></a></li>
-<li><a href="_saltcorn_data.models.Table.ParentRelations.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Parent<wbr/>Relations</span></a></li>
-<li><a href="_saltcorn_data.models.Table.RelationData.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Relation<wbr/>Data</span></a></li></ul></div></details></li>
+<li><a href="../modules/_saltcorn_data.models.Table.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>Table</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.TableConstraint.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>Table<wbr/>Constraint</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.User.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>User</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.View.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>View</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.Workflow.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>Workflow</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.config.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>config</span></a></li>
-<li><a href="../modules/_saltcorn_data.models.discovery.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>discovery</span></a></li>
+<li>
+<details class="tsd-index-accordion" open data-key="@saltcorn/data.models.discovery"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="#icon-chevronDown"></use></svg><a href="../modules/_saltcorn_data.models.discovery.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>discovery</span></a></summary>
+<div class="tsd-accordion-details">
+<ul class="tsd-nested-navigation">
+<li><a href="_saltcorn_data.models.discovery.discover_tables.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-64"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)"></path></g></svg><span>discover_<wbr/>tables</span></a></li>
+<li><a href="_saltcorn_data.models.discovery.discoverable_tables.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>discoverable_<wbr/>tables</span></a></li>
+<li><a href="_saltcorn_data.models.discovery.findType.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>find<wbr/>Type</span></a></li>
+<li><a href="_saltcorn_data.models.discovery.get_existing_views.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>get_<wbr/>existing_<wbr/>views</span></a></li>
+<li><a href="_saltcorn_data.models.discovery.implement_discovery.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>implement_<wbr/>discovery</span></a></li></ul></div></details></li>
 <li><a href="../modules/_saltcorn_data.models.email.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>email</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.expression.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>expression</span></a></li>
 <li><a href="../modules/_saltcorn_data.models.layout.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4"></use></svg><span>layout</span></a></li>
