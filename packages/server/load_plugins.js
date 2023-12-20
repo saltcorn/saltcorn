@@ -29,6 +29,7 @@ const staticDependencies = {
   "@saltcorn/data/models/fieldrepeat": require("@saltcorn/data/models/fieldrepeat"),
   "@saltcorn/data/models/table": require("@saltcorn/data/models/table"),
   "@saltcorn/data/models/form": require("@saltcorn/data/models/form"),
+  "@saltcorn/data/models/discovery": require("@saltcorn/data/models/discovery"),
   "@saltcorn/data/models/config": require("@saltcorn/data/models/config"),
   "@saltcorn/data/models/library": require("@saltcorn/data/models/library"),
   "@saltcorn/data/models/model": require("@saltcorn/data/models/model"),

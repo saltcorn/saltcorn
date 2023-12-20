@@ -69,10 +69,12 @@ const findType = (sql_name: string): any => {
     smallint: "Integer",
     bigint: "Integer",
     numeric: "Float", // required pres
+    decimal: "Float", // required pres
     character: "String", // char - if length is not defined is 1 else length needs to be defined
     "character varying": "String", // varchar  - this type can have length
-    // todo "varchar": "String",
+    varchar: "String",
     date: "Date",
+    timestamp: "Date",
     // todo discovery "time without time zone": "Date"?
     // todo discovery "time interval" : "Date"?
   }[sql_name.toLowerCase()];

@@ -62,6 +62,7 @@ export namespace discovery {
     discover_tables,
     implement_discovery,
     get_existing_views,
+    findType,
   } = discoveryImport;
 }
 
