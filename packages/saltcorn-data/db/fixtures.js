@@ -1325,6 +1325,28 @@ module.exports =
 
     await View.create({
       table_id: albums.id,
+      name: "show_album_with_subview_new_relation_path",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              name: "d7603a",
+              type: "view",
+              view: "show_album",
+              state: "shared",
+              relation: ".albums",
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: albums.id,
       name: "albums_feed",
       viewtemplate: "Feed",
       configuration: {
@@ -1468,6 +1490,29 @@ module.exports =
               view: "Independent:fan_club_feed",
               state: "shared",
               relation: undefined,
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: pressing_job.id,
+      name: "show_pressing_job_with_new_indenpendent_relation_path",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "a7603e",
+              type: "view",
+              view: "fan_club_feed",
+              relation: ".",
+              state: "shared",
               configuration: {},
             },
           ],

@@ -1772,32 +1772,34 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
     const field = fields.find((fld) => fld.name === k);
     if (k === "_inbound_relation_path_") {
       const queryObj = typeof v === "string" ? stringToQuery(v) : v;
-      const levels = [];
-      let lastTableName = queryObj.sourcetable;
-      let where = null;
-      for (const level of queryObj.path) {
-        if (level.inboundKey) {
-          levels.push({ ...level });
-          lastTableName = level.table;
-          if (!where)
-            where = { [db.sqlsanitize(level.inboundKey)]: queryObj.srcId };
-        } else {
-          const lastTable = Table.findOne({ name: lastTableName });
-          const refField = lastTable.fields.find(
-            (field) => field.name === level.fkey
-          );
-          levels.push({ table: refField.reftable_name, fkey: level.fkey });
-          lastTableName = refField.reftable_name;
-          if (!where) where = { id: queryObj.srcId };
+      if (queryObj.path.length > 0) {
+        const levels = [];
+        let lastTableName = queryObj.sourcetable;
+        let where = null;
+        for (const level of queryObj.path) {
+          if (level.inboundKey) {
+            levels.push({ ...level });
+            lastTableName = level.table;
+            if (!where)
+              where = { [db.sqlsanitize(level.inboundKey)]: queryObj.srcId };
+          } else {
+            const lastTable = Table.findOne({ name: lastTableName });
+            const refField = lastTable.fields.find(
+              (field) => field.name === level.fkey
+            );
+            levels.push({ table: refField.reftable_name, fkey: level.fkey });
+            lastTableName = refField.reftable_name;
+            if (!where) where = { id: queryObj.srcId };
+          }
         }
+        addOrCreateList(qstate, "id", {
+          inSelectWithLevels: {
+            joinLevels: levels,
+            schema: db.getTenantSchema(),
+            where,
+          },
+        });
       }
-      addOrCreateList(qstate, "id", {
-        inSelectWithLevels: {
-          joinLevels: levels,
-          schema: db.getTenantSchema(),
-          where,
-        },
-      });
     } else if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
