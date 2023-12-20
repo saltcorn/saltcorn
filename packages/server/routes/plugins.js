@@ -1243,6 +1243,8 @@ router.post(
     }
     await load_plugins.loadAndSaveNewPlugin(plugin, forceReInstall);
     const plugin_module = getState().plugins[name];
+    await getState().refresh_views();
+
     if (plugin_module && plugin_module.configuration_workflow) {
       const plugin_db = await Plugin.findOne({ name });
       req.flash(
