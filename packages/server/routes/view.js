@@ -120,6 +120,7 @@ router.get(
           cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}`,
           contents,
           req,
+          view,
           viewtemplate: view.viewtemplate,
           table: view.table_id || view.exttable_name,
         })

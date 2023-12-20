@@ -136,6 +136,13 @@ $(function () {
 });
 
 function reload_embedded_view(viewname) {
+  if (window._sc_loglevel > 4)
+    console.log(
+      "reload_embedded_view",
+      viewname,
+      "found",
+      $(`[data-sc-embed-viewname="${viewname}"]`).length
+    );
   $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
     const $e = $(this);
     const url =
@@ -552,7 +559,7 @@ function ajaxSubmitForm(e) {
       );
       $("#scmodal").modal("hide");
       if (on_close_reload_view) {
-        const viewE = $(`[data-sc-embed-viewname=${on_close_reload_view}]`);
+        const viewE = $(`[data-sc-embed-viewname="${on_close_reload_view}"]`);
         if (viewE.length) reload_embedded_view(on_close_reload_view);
         else location.reload();
       } else if (!no_reload) location.reload();

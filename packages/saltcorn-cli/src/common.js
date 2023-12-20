@@ -14,7 +14,12 @@ const { dump } = require("js-yaml");
 const maybe_as_tenant = async (ten, f) => {
   if (!ten) return await f();
   const db = require("@saltcorn/data/db");
-  return await db.runWithTenant(ten, f);
+  if (ten === "*") {
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+    const tenants = await getAllTenants();
+
+    for (const tenant of tenants) await db.runWithTenant(tenant, f);
+  } else return await db.runWithTenant(ten, f);
 };
 /**
  * Init specified tenant
@@ -25,7 +30,12 @@ const init_some_tenants = async (tenant) => {
   const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
   const { init_multi_tenant } = require("@saltcorn/data/db/state");
   await loadAllPlugins();
-  if (tenant) await init_multi_tenant(loadAllPlugins, undefined, [tenant]);
+  if (tenant === "*") {
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+    const tenants = await getAllTenants();
+    await init_multi_tenant(loadAllPlugins, undefined, tenants);
+  } else if (tenant)
+    await init_multi_tenant(loadAllPlugins, undefined, [tenant]);
   else await init_multi_tenant(loadAllPlugins, undefined, []);
   //await init_multi_tenant(loadAllPlugins, undefined, tenants);
 };

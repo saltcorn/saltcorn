@@ -370,6 +370,25 @@ const whereClause =
       ? `${quote(sqlsanitizeAllowDots(k))} ${
           phs.is_sqlite ? "REGEXP" : "~"
         } ${phs.push(v.source)}`
+      : typeof (v || {}).gt !== "undefined" &&
+        typeof (v || {}).lt !== "undefined"
+      ? `${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          quote(sqlsanitizeAllowDots(k))
+        )}>${v.equal ? "=" : ""}${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          phs.push(v.gt)
+        )} and ${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          quote(sqlsanitizeAllowDots(k))
+        )}<${v.equal ? "=" : ""}${castDate(
+          v.day_only,
+          phs.is_sqlite,
+          phs.push(v.lt)
+        )}`
       : typeof (v || {}).gt !== "undefined"
       ? `${castDate(
           v.day_only,

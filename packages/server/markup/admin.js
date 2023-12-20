@@ -77,6 +77,7 @@ const add_edit_bar = ({
   req,
   viewtemplate,
   table,
+  view,
   cfgUrl,
 }) => {
   if (req && req.headers.localizedstate)
@@ -91,20 +92,26 @@ const add_edit_bar = ({
     if (tbl)
       viewSpec = `${viewSpec} on <a href="/table/${table}">${tbl.name}</a>`;
   }
+  const singleton = view?.viewtemplateObj?.singleton;
 
   const bar = div(
     { class: "alert alert-light d-print-none admin-edit-bar" },
     title,
     what && span({ class: "ms-1 me-2 badge bg-primary" }, what),
-    a({ class: "ms-2", href: url }, "Edit&nbsp;", i({ class: "fas fa-edit" })),
-    cfgUrl
+    !singleton &&
+      a(
+        { class: "ms-2", href: url },
+        "Edit&nbsp;",
+        i({ class: "fas fa-edit" })
+      ),
+    cfgUrl && !singleton
       ? a(
           { class: "ms-1 me-3", href: cfgUrl },
           "Configure&nbsp;",
           i({ class: "fas fa-cog" })
         )
       : "",
-    viewSpec
+    !singleton && viewSpec
   );
 
   if (contents.above) {
