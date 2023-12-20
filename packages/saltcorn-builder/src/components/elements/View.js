@@ -15,7 +15,7 @@ import {
   setAPropGen,
   buildOptions,
   HelpTopicLink,
-  buildTableCaches,
+  prepCacheAndFinder,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -108,17 +108,10 @@ const ViewSettings = () => {
     view_name,
   } = node;
   const options = React.useContext(optionsCtx);
-  const caches = useMemo(() => buildTableCaches(options.tables), [undefined]);
-  const finder = useMemo(
-    () =>
-      new relationHelpers.RelationsFinder(
-        caches,
-        options.views,
-        options.max_relations_layer_depth || 6
-      ),
+  const { caches, finder } = useMemo(
+    () => prepCacheAndFinder(options),
     [undefined]
   );
-
   const fixed_state_fields =
     options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = React.useContext(previewCtx);
@@ -138,14 +131,16 @@ const ViewSettings = () => {
     else viewname = rest;
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
-  const [relations, setRelations] = React.useState(
-    finder.findRelations(
-      options.tableName,
-      viewname,
-      options.excluded_subview_templates
-    )
-  );
-  if (!relation && relations.paths.length > 0) {
+  const [relations, setRelations] = finder
+    ? React.useState(
+        finder.findRelations(
+          options.tableName,
+          viewname,
+          options.excluded_subview_templates
+        )
+      )
+    : [undefined, undefined];
+  if (!relation && relations?.paths.length > 0) {
     setProp((prop) => {
       prop.relation = relations.paths[0];
     });
@@ -175,49 +170,67 @@ const ViewSettings = () => {
 
   return (
     <div>
-      <Fragment>
+      {relations ? (
+        <Fragment>
+          <div>
+            <label>View to {options.mode === "show" ? "embed" : "show"}</label>
+            <select
+              value={viewname}
+              className="form-control form-select"
+              onChange={set_view_name}
+              onBlur={set_view_name}
+            >
+              {options.views.map((v, ix) => (
+                <option key={ix} value={v.name}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {
+            <div>
+              <RelationOnDemandPicker
+                relations={relations.layers}
+                update={(relPath) => {
+                  if (relPath.startsWith(".")) {
+                    setProp((prop) => {
+                      prop.view = viewname;
+                      prop.relation = relPath;
+                    });
+                  } else {
+                    setProp((prop) => {
+                      prop.view = relPath;
+                      prop.relation = undefined;
+                    });
+                  }
+                }}
+              />
+              <RelationBadges
+                view={view}
+                relation={relation}
+                parentTbl={options.tableName}
+                tableNameCache={caches.tableNameCache}
+              />
+            </div>
+          }
+        </Fragment>
+      ) : (
         <div>
           <label>View to {options.mode === "show" ? "embed" : "show"}</label>
           <select
-            value={viewname}
+            value={view}
             className="form-control form-select"
-            onChange={set_view_name}
-            onBlur={set_view_name}
+            onChange={setAProp("view")}
+            onBlur={setAProp("view")}
           >
-            {options.views.map((v, ix) => (
-              <option key={ix} value={v.name}>
-                {v.label}
+            {options.views.map((f, ix) => (
+              <option key={ix} value={f.name}>
+                {f.label || f.name}
               </option>
             ))}
           </select>
         </div>
-        {
-          <div>
-            <RelationOnDemandPicker
-              relations={relations.layers}
-              update={(relPath) => {
-                if (relPath.startsWith(".")) {
-                  setProp((prop) => {
-                    prop.view = viewname;
-                    prop.relation = relPath;
-                  });
-                } else {
-                  setProp((prop) => {
-                    prop.view = relPath;
-                    prop.relation = undefined;
-                  });
-                }
-              }}
-            />
-            <RelationBadges
-              view={view}
-              relation={relation}
-              parentTbl={options.tableName}
-              tableNameCache={caches.tableNameCache}
-            />
-          </div>
-        }
-      </Fragment>
+      )}
       {options.mode !== "edit" && (
         <Fragment>
           <div>

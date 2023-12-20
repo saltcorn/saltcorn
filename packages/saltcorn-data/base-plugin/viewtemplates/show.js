@@ -481,14 +481,21 @@ const renderRows = async (
         switch (view.view_select.type) {
           case "RelationPath": {
             const path = view.view_select.path;
-            state1 = {
-              _inbound_relation_path_: {
-                ...view.view_select,
-                srcId: path[0].fkey
-                  ? get_row_val(path[0].fkey)
-                  : get_row_val(pk_name),
-              },
-            };
+            state1 =
+              path.length === 0
+                ? // it's Own or Independent
+                  table.name === view.view_select.sourcetable
+                  ? { [pk_name]: get_row_val(pk_name) }
+                  : {}
+                : {
+                    // TODO change _inbound_relation_path_ to something more generic
+                    _inbound_relation_path_: {
+                      ...view.view_select,
+                      srcId: path[0].fkey
+                        ? get_row_val(path[0].fkey)
+                        : get_row_val(pk_name),
+                    },
+                  };
             break;
           }
           case "Own":

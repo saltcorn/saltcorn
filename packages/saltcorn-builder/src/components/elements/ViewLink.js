@@ -16,7 +16,7 @@ import {
   setAPropGen,
   FormulaTooltip,
   HelpTopicLink,
-  buildTableCaches,
+  prepCacheAndFinder,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -127,14 +127,8 @@ const ViewLinkSettings = () => {
     link_target_blank,
   } = node;
   const options = React.useContext(optionsCtx);
-  const caches = useMemo(() => buildTableCaches(options.tables), [undefined]);
-  const finder = useMemo(
-    () =>
-      new relationHelpers.RelationsFinder(
-        caches,
-        options.views,
-        options.max_relations_layer_depth || 6
-      ),
+  const { caches, finder } = useMemo(
+    () => prepCacheAndFinder(options),
     [undefined]
   );
   let errorString = false;
@@ -156,7 +150,7 @@ const ViewLinkSettings = () => {
       options.excluded_subview_templates
     )
   );
-  if (!relation && relations.paths.length > 0) {
+  if (!relation && relations?.paths.length > 0) {
     setProp((prop) => {
       prop.relation = relations.paths[0];
     });

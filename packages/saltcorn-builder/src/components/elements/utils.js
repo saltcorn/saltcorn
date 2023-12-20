@@ -1469,3 +1469,19 @@ export const buildBootstrapOptions = (values) => {
     </option>
   ));
 };
+
+export const prepCacheAndFinder = ({
+  tables,
+  views,
+  max_relations_layer_depth,
+}) => {
+  if (tables && views) {
+    const caches = buildTableCaches(tables);
+    const finder = new relationHelpers.RelationsFinder(
+      caches,
+      views,
+      max_relations_layer_depth || 6
+    );
+    return { caches, finder };
+  } else return { caches: null, finder: null };
+};
