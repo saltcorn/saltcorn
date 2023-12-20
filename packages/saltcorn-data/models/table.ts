@@ -1143,6 +1143,14 @@ class Table implements AbstractTable {
    *
    * // Update the read field to true and the rating field to 5
    * await bookTable.updateRow({read: true, rating: 5}, moby_dick.id)
+   *
+   * // if you want to update more than one row, you must first retrieve all the rows and
+   * // then update them individually
+   *
+   * const allBooks = await bookTable.getRows()
+   * for(const book of allBooks) {
+   *   await bookTable.updateRow({price: book.price*0.8}, book.id)
+   * }
    * ```
    * @param v_in - columns with values to update
    * @param id - id value
