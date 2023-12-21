@@ -398,6 +398,60 @@ module.exports =
     });
 
     await View.create({
+      table_id: disc_books.id,
+      name: "disc_books_list",
+      viewtemplate: "List",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "book", state_field: "on" },
+          { type: "Field", field_name: "discussant", state_field: "on" },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: table.id,
+      name: "show_author_with_disc_books_list",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "author", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "disc_books_list",
+            block: false,
+            label: "",
+            minRole: 100,
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", field_name: "author", fieldview: "show" },
+            {
+              type: "view",
+              view: "ChildList:disc_books_list.discusses_books.book",
+              name: "7b17af",
+              state: "shared",
+            },
+
+            {
+              type: "view_link",
+              view: "ChildList:disc_books_list.discusses_books.book",
+              block: false,
+              minRole: 100,
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
       table_id: table.id,
       name: "author_multi_edit",
       viewtemplate: "Edit",

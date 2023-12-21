@@ -46,6 +46,7 @@ describe("plugin helper", () => {
       "author_multi_edit",
       "authoredit",
       "authorshow",
+      "show_author_with_disc_books_list",
     ]);
   });
   it("get child views", async () => {

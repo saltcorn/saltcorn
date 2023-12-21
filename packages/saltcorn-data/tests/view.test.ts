@@ -120,7 +120,7 @@ describe("View", () => {
     const link_views = await View.find({
       table_id: table.id,
     });
-    expect(link_views.length).toBe(4);
+    expect(link_views.length).toBe(5);
   });
   it("should find where", async () => {
     const link_views = await View.find_all_views_where(

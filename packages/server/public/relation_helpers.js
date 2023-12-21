@@ -241,39 +241,39 @@ var relationHelpers = (() => {
     const sourceTbl = this.tableNameCache[sourceTblName];
     if (!sourceTbl)
       throw new Error(`The table ${sourceTblName} does not exist`);
-    // first
-    const relations = sourceTbl.foreign_keys;
+    // 1. parent relations
+    const parentRelations = sourceTbl.foreign_keys;
     if (sourceTbl.id === subViewObj.table_id) result.push(`.${sourceTblName}`);
-    for (const relation of relations) {
+    for (const relation of parentRelations) {
       const targetTbl = this.tableNameCache[relation.reftable_name];
       if (!targetTbl)
         throw new Error(`The table ${relation.reftable_name} does not exist`);
       if (targetTbl.id === subViewObj.table_id)
         result.push(`.${sourceTblName}.${relation.name}`);
     }
-    // second
-    const uniqueRelations = (this.fieldCache[sourceTblName] || []).filter(
+    // 2. OneToOneShow
+    const uniqueFksToSrc = (this.fieldCache[sourceTblName] || []).filter(
       (f) => f.is_unique
     );
-    for (const relation of uniqueRelations) {
+    for (const relation of uniqueFksToSrc) {
       const targetTbl = this.tableIdCache[relation.table_id];
       if (!targetTbl)
         throw new Error(`The table ${relation.table_id} does not exist`);
       if (targetTbl.id === subViewObj.table_id)
         result.push(`.${sourceTblName}.${targetTbl.name}$${relation.name}`);
     }
-    // third
-    const targetFields = sourceTbl.foreign_keys;
-    for (const field of uniqueRelations) {
-      const refTable = this.tableIdCache[field.table_id];
+    // 3. inbound_self_relations
+    const srcFks = sourceTbl.foreign_keys;
+    for (const fkToSrc of uniqueFksToSrc) {
+      const refTable = this.tableIdCache[fkToSrc.table_id];
       if (!refTable)
-        throw new Error(`The table ${field.table_id} does not exist`);
-      const fromTargetToRef = targetFields.filter(
+        throw new Error(`The table ${fkToSrc.table_id} does not exist`);
+      const fromSrcToRef = srcFks.filter(
         (field) => field.reftable_name === refTable.name
       );
-      for (const toRef of fromTargetToRef) {
-        if (field.reftable_name === sourceTblName)
-          result.push(`.${sourceTblName}.${toRef.name}.${field.name}`);
+      for (const toRef of fromSrcToRef) {
+        if (fkToSrc.reftable_name === sourceTblName)
+          result.push(`.${sourceTblName}.${toRef.name}.${fkToSrc.name}`);
       }
     }
     return result;

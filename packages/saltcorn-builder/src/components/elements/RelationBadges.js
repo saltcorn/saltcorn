@@ -1,7 +1,5 @@
 import React from "react";
-import {
-  removeWhitespaces,
-} from "./utils";
+import { removeWhitespaces } from "./utils";
 
 const buildBadgeCfgs = (parsed, parentTbl) => {
   const result = [];
@@ -69,7 +67,7 @@ export const RelationBadges = ({
 }) => {
   if (relation) {
     const parsed = relationHelpers.parseRelationPath(relation, tableNameCache);
-    
+
     return (
       <div className="overflow-scroll">
         {parsed.length > 0
@@ -78,6 +76,7 @@ export const RelationBadges = ({
       </div>
     );
   } else {
+    if (!view) return buildBadge({ table: "invalid relation" }, 0);
     const [prefix, rest] = view.split(":");
     const parsed = relationHelpers.parseLegacyRelation(prefix, rest, parentTbl);
     if (parsed.length === 0)

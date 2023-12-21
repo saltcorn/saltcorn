@@ -143,16 +143,22 @@ const ViewLinkSettings = () => {
     view_name ||
     (name &&
       ((names) => (names.length > 1 ? names[1] : names[0]))(name.split(":")));
+  const hasLegacyRelation = name && name.includes(":");
+  const safeViewName = use_view_name.includes(".")
+    ? use_view_name.split(".")[0]
+    : use_view_name;
   const [relations, setRelations] = React.useState(
     finder.findRelations(
       options.tableName,
-      use_view_name,
+      safeViewName,
       options.excluded_subview_templates
     )
   );
-  if (!relation && relations?.paths.length > 0) {
+  let safeRelation = relation;
+  if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
+    safeRelation = relations.paths[0];
     setProp((prop) => {
-      prop.relation = relations.paths[0];
+      prop.relation = safeRelation;
     });
   }
   const set_view_name = (e) => {
@@ -218,7 +224,7 @@ const ViewLinkSettings = () => {
               />
               <RelationBadges
                 view={name}
-                relation={relation}
+                relation={safeRelation}
                 parentTbl={options.tableName}
                 tableNameCache={caches.tableNameCache}
               />

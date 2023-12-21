@@ -23,7 +23,9 @@ const doTest = (
   tableName,
   viewName,
   expected,
-  excludedTemplates
+  excludedTemplates,
+  view,
+  relation
 ) => {
   // mock craftjs
   const useNodeMock = jest.fn();
@@ -31,7 +33,9 @@ const doTest = (
     actions: {
       setProp: (fn) => {},
     },
-    relation: ".",
+    relation: relation,
+    view: view,
+    name: view,
     view_name: viewName,
   });
   require("@craftjs/core").useNode.mockImplementation(useNodeMock);
@@ -216,6 +220,56 @@ describe("relations tests", () => {
         const expected = [];
         const excluded = ["Room"];
         doTest(tables, views, "participants", "rooms_view", expected, excluded);
+      });
+    });
+
+    describe("open legacy relations", () => {
+      it("ChildList", async () => {
+        const { tables, views } = fixturesData();
+        const expected = [".", ".books.discusses_books$book"];
+        doTest(
+          tables,
+          views,
+          "books",
+          "disc_books_list",
+          expected,
+          [],
+          "ChildList:disc_books_list.discusses_books.book",
+          undefined
+        );
+      });
+
+      it("Independent", async () => {
+        const { tables, views } = fixturesData();
+        const expected = [
+          ".",
+          ".blog_posts.blog_in_topic$post.topic.inbound_inbound$topic.bp_inbound.post",
+        ];
+        doTest(
+          tables,
+          views,
+          "blog_posts",
+          "blog_posts_feed",
+          expected,
+          [],
+          "Independent:blog_posts_feed",
+          undefined
+        );
+      });
+
+      it("Own", async () => {
+        const { tables, views } = fixturesData();
+        const expected = [".books"];
+        doTest(
+          tables,
+          views,
+          "books",
+          "authorshow",
+          expected,
+          [],
+          "Own:authorshow",
+          undefined
+        );
       });
     });
   });

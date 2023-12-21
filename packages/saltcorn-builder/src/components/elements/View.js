@@ -125,7 +125,9 @@ const ViewSettings = () => {
   }
 
   let viewname = view_name || view;
+  let hasLegacyRelation = false;
   if (viewname && viewname.includes(":")) {
+    hasLegacyRelation = true;
     const [prefix, rest] = viewname.split(":");
     if (rest.startsWith(".")) viewname = prefix;
     else viewname = rest;
@@ -140,9 +142,11 @@ const ViewSettings = () => {
         )
       )
     : [undefined, undefined];
-  if (!relation && relations?.paths.length > 0) {
+  let safeRelation = relation;
+  if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
+    safeRelation = relations.paths[0];
     setProp((prop) => {
-      prop.relation = relations.paths[0];
+      prop.relation = safeRelation;
     });
   }
   const helpContext = { view_name: viewname };
@@ -207,7 +211,7 @@ const ViewSettings = () => {
               />
               <RelationBadges
                 view={view}
-                relation={relation}
+                relation={safeRelation}
                 parentTbl={options.tableName}
                 tableNameCache={caches.tableNameCache}
               />
