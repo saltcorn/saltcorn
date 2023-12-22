@@ -332,9 +332,7 @@ const view_linker = (
         };
         const target = `/view/${encodeURIComponent(
           view
-        )}?_inbound_relation_path_=${encodeURIComponent(
-          JSON.stringify(relObj)
-        )}`;
+        )}?_relation_path_=${encodeURIComponent(JSON.stringify(relObj))}`;
         return link_view(
           isWeb || in_modal ? target : `javascript:execLink('${target}')`,
           get_label(view, r),

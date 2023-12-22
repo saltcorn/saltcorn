@@ -520,7 +520,7 @@ describe("inbound relations", () => {
 
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -532,7 +532,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 2;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -544,7 +544,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 3;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -564,7 +564,7 @@ describe("inbound relations", () => {
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -576,7 +576,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 2;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -614,7 +614,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/albums_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_1)
         )}`
       )
@@ -628,7 +628,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/albums_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_2)
         )}`
       )
@@ -648,7 +648,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/fan_club_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/fan_club_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_1)
         )}`
       )
@@ -665,7 +665,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/fan_club_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/fan_club_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_2)
         )}`
       )
@@ -688,7 +688,7 @@ describe("legacy relations with relation path", () => {
     };
     await request(app)
       .get(
-        `/view/fan_club_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/fan_club_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )

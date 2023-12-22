@@ -727,8 +727,7 @@ const transformForm = async ({
                 ? { id: row.id }
                 : {}
               : {
-                  // TODO change _inbound_relation_path_ to something more generic
-                  _inbound_relation_path_: {
+                  _relation_path_: {
                     ...view_select,
                     srcId: path[0].fkey
                       ? row[path[0].fkey]

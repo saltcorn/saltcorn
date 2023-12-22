@@ -143,7 +143,7 @@ const stateToQueryString = (state) => {
         k === "id"
           ? null
           : `${encodeURIComponent(k)}=${encodeURIComponent(
-              k === "_inbound_relation_path_" && typeof v !== "string"
+              k === "_relation_path_" && typeof v !== "string"
                 ? queryToString(v)
                 : v
             )}`
@@ -1770,7 +1770,7 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
     }
 
     const field = fields.find((fld) => fld.name === k);
-    if (k === "_inbound_relation_path_") {
+    if (k === "_relation_path_" || k === "_inbound_relation_path_") {
       const queryObj = typeof v === "string" ? stringToQuery(v) : v;
       if (queryObj.path.length > 0) {
         const levels = [];

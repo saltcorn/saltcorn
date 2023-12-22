@@ -488,8 +488,7 @@ const renderRows = async (
                   ? { [pk_name]: get_row_val(pk_name) }
                   : {}
                 : {
-                    // TODO change _inbound_relation_path_ to something more generic
-                    _inbound_relation_path_: {
+                    _relation_path_: {
                       ...view.view_select,
                       srcId: path[0].fkey
                         ? get_row_val(path[0].fkey)
