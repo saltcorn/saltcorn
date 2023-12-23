@@ -2373,17 +2373,16 @@ const run_action_column = async ({ col, req, ...rest }) => {
 };
 
 const ViewDisplayType = {
-  SINGLE: "SINGLE_ROW",
-  MULTI: "MULTIPLE_ROWS",
-  NO_ROWS: "NO_ROWS",
+  ROW_REQUIRED: "ROW_REQUIRED",
+  NO_ROW_LIMIT: "NO_ROW_LIMIT",
   INVALID: "INVALID",
 };
 
 const displayType = (stateFields) =>
   stateFields.every((sf) => !sf.required)
-    ? ViewDisplayType.MULTI
+    ? ViewDisplayType.NO_ROW_LIMIT
     : stateFields.some((sf) => sf.name === "id")
-    ? ViewDisplayType.SINGLE
+    ? ViewDisplayType.ROW_REQUIRED
     : ViewDisplayType.INVALID;
 
 const build_schema_data = async () => {

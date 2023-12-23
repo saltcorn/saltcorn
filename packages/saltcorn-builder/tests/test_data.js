@@ -156,7 +156,7 @@ export const withSimplePostTopicrelation = () => {
   views.push({
     name: "simple_posts_list",
     table_id: simplePostsId,
-    display_type: "MULTIPLE_ROWS",
+    display_type: "NO_ROW_LIMIT",
   });
 
   return { tables, views };

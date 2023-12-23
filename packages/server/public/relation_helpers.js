@@ -156,9 +156,8 @@ var relationHelpers = (() => {
   };
 
   const ViewDisplayType = {
-    SINGLE: "SINGLE_ROW",
-    MULTI: "MULTIPLE_ROWS",
-    NO_ROWS: "NO_ROWS",
+    ROW_REQUIRED: "ROW_REQUIRED",
+    NO_ROW_LIMIT: "NO_ROW_LIMIT",
     INVALID: "INVALID",
   };
 
@@ -199,10 +198,10 @@ var relationHelpers = (() => {
         return { paths, layers };
       }
       switch (view.display_type) {
-        case ViewDisplayType.SINGLE:
+        case ViewDisplayType.ROW_REQUIRED:
           paths = this.singleRelationPaths(sourceTblName, subView, excluded);
           break;
-        case ViewDisplayType.MULTI:
+        case ViewDisplayType.NO_ROW_LIMIT:
           paths = this.multiRelationPaths(sourceTblName, subView, excluded);
           break;
         default:
