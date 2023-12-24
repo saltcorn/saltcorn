@@ -44,7 +44,6 @@ export /**
 const ViewLink = ({
   name,
   block,
-  view_name,
   minRole,
   link_style,
   link_size,
@@ -62,8 +61,7 @@ const ViewLink = ({
   } = useNode((node) => ({ selected: node.events.selected }));
   const names = name.split(":");
 
-  const displabel =
-    label || view_name || (names.length > 1 ? names[1] : names[0]);
+  const displabel = label || (names.length > 1 ? names[1] : names[0]);
   return (
     <span
       className={`${textStyle} ${inModal ? "btn btn-secondary btn-sm" : ""} ${
@@ -110,7 +108,6 @@ const ViewLinkSettings = () => {
     link_bordercol: node.data.props.link_bordercol,
     link_textcol: node.data.props.link_textcol,
     extra_state_fml: node.data.props.extra_state_fml,
-    view_name: node.data.props.view_name,
   }));
   const {
     actions: { setProp },
@@ -123,7 +120,6 @@ const ViewLinkSettings = () => {
     inModal,
     textStyle,
     extra_state_fml,
-    view_name,
     link_target_blank,
   } = node;
   const options = React.useContext(optionsCtx);
@@ -140,11 +136,10 @@ const ViewLinkSettings = () => {
   const setAProp = setAPropGen(setProp);
   //legacy values
   const use_view_name =
-    view_name ||
-    (name &&
-      ((names) => (names.length > 1 ? names[1] : names[0]))(name.split(":")));
+    name &&
+    ((names) => (names.length > 1 ? names[1] : names[0]))(name.split(":"));
   const hasLegacyRelation = name && name.includes(":");
-  const safeViewName = use_view_name.includes(".")
+  const safeViewName = use_view_name?.includes(".")
     ? use_view_name.split(".")[0]
     : use_view_name;
   const [relations, setRelations] = React.useState(
@@ -171,7 +166,6 @@ const ViewLinkSettings = () => {
           options.excluded_subview_templates
         );
         if (newRelations.paths.length > 0) {
-          setProp((prop) => (prop.view_name = target_value));
           setProp((prop) => {
             prop.name = target_value;
             prop.relation = newRelations.paths[0];
@@ -211,12 +205,12 @@ const ViewLinkSettings = () => {
                 update={(relPath) => {
                   if (relPath.startsWith(".")) {
                     setProp((prop) => {
-                      prop.view = use_view_name;
+                      prop.name = use_view_name;
                       prop.relation = relPath;
                     });
                   } else {
                     setProp((prop) => {
-                      prop.view = relPath;
+                      prop.name = relPath;
                       prop.relation = undefined;
                     });
                   }
@@ -338,7 +332,6 @@ ViewLink.craft = {
       { name: "inModal", segment_name: "in_modal", column_name: "in_modal" },
       "minRole",
       "link_style",
-      "view_name",
       "link_icon",
       "link_size",
       "link_target_blank",

@@ -86,7 +86,6 @@ export /**
  */
 const ViewSettings = () => {
   const node = useNode((node) => ({
-    view_name: node.data.props.view_name,
     name: node.data.props.name,
     view: node.data.props.view,
     relation: node.data.props.relation,
@@ -105,7 +104,6 @@ const ViewSettings = () => {
     node_id,
     configuration,
     extra_state_fml,
-    view_name,
   } = node;
   const options = React.useContext(optionsCtx);
   const { caches, finder } = useMemo(
@@ -124,7 +122,7 @@ const ViewSettings = () => {
     errorString = error.message;
   }
 
-  let viewname = view_name || view;
+  let viewname = view;
   let hasLegacyRelation = false;
   if (viewname && viewname.includes(":")) {
     hasLegacyRelation = true;
@@ -161,7 +159,6 @@ const ViewSettings = () => {
           options.excluded_subview_templates
         );
         if (newRelations.paths.length > 0) {
-          setProp((prop) => (prop.view_name = target_value));
           setProp((prop) => {
             prop.view = target_value;
             prop.relation = newRelations.paths[0];

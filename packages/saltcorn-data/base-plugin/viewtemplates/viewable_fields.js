@@ -319,20 +319,29 @@ const view_linker = (
   if (relation) {
     const { path } = parseRelationPath(relation);
     const pathStart = path[0];
-    const idName = pathStart.fkey ? pathStart.fkey : "id";
+    const idName =
+      path.length > 0 ? (pathStart.fkey ? pathStart.fkey : "id") : undefined;
+    const topview = View.findOne({ name: srcViewName });
+    const subview = View.findOne({ name: view });
+    const get_query = get_view_link_query(fields, subview || {});
     return {
       label: view,
       key: (r) => {
-        const relObj = {
-          srcId:
-            r[idName] === null || r[idName]?.id === null
-              ? null
-              : r[idName]?.id || r[idName],
-          relation: relation,
-        };
-        const target = `/view/${encodeURIComponent(
-          view
-        )}?_relation_path_=${encodeURIComponent(JSON.stringify(relObj))}`;
+        let query = "";
+        if (path.length > 0) {
+          const relObj = {
+            srcId:
+              r[idName] === null || r[idName]?.id === null
+                ? null
+                : r[idName]?.id || r[idName],
+            relation: relation,
+          };
+          query = `?_relation_path_=${encodeURIComponent(
+            JSON.stringify(relObj)
+          )}`;
+        } else if (topview.table_id === subview.table_id) query = get_query(r);
+
+        const target = `/view/${encodeURIComponent(view)}${query}`;
         return link_view(
           isWeb || in_modal ? target : `javascript:execLink('${target}')`,
           get_label(view, r),

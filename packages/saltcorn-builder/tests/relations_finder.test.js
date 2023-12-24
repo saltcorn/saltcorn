@@ -34,9 +34,8 @@ const doTest = (
       setProp: (fn) => {},
     },
     relation: relation,
-    view: view,
-    name: view,
-    view_name: viewName,
+    view: view || viewName,
+    name: view || viewName,
   });
   require("@craftjs/core").useNode.mockImplementation(useNodeMock);
   // mock react context

@@ -257,7 +257,7 @@ const ViewElem = ({ connectors, views }) => (
     icon="fas fa-eye"
     title="Embed a view"
     label="View"
-    disable={false}
+    disable={views.length < 2}
   >
     <View name={"not_assigned"} state={"shared"} view={views[0].name} />
   </WrapElem>
@@ -425,7 +425,7 @@ const ViewLinkElem = ({ connectors, options }) => (
     icons={["fas fa-eye", "fas fa-link"]}
     title="Link to a view"
     label="ViewLink"
-    disable={false}
+    disable={options.views.length < 2}
   >
     <ViewLink
       name={options.views.length > 0 ? options.views[0].name : ""}
