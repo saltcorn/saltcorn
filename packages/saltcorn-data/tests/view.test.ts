@@ -339,6 +339,20 @@ describe("nested views", () => {
 });
 
 describe("subviews with relations", () => {
+  it("show_user_with_independent_feed", async () => {
+    const testser = (res: any) => {
+      expect(res).toContain("Content of post APost A");
+      expect(res).toContain("Content of post BPost B");
+      expect(res).toContain("Content of post CPost C");
+      expect(res).toContain("blog_posts_feed");
+    };
+    const v = View.findOne({ name: "show_user_with_independent_feed" });
+    assertIsSet(v);
+    testser(await v.run({ id: 1 }, mockReqRes));
+    testser(await v.run({ id: 2 }, mockReqRes));
+    testser(await v.run({ id: 3 }, mockReqRes));
+  });
+
   it("blog_posts_feed with inbound relation", async () => {
     const v = View.findOne({ name: "show_user_with_blog_posts_feed" });
     assertIsSet(v);
