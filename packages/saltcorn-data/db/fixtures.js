@@ -398,6 +398,60 @@ module.exports =
     });
 
     await View.create({
+      table_id: disc_books.id,
+      name: "disc_books_list",
+      viewtemplate: "List",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "book", state_field: "on" },
+          { type: "Field", field_name: "discussant", state_field: "on" },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: table.id,
+      name: "show_author_with_disc_books_list",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "author", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "disc_books_list",
+            block: false,
+            label: "",
+            minRole: 100,
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", field_name: "author", fieldview: "show" },
+            {
+              type: "view",
+              view: "ChildList:disc_books_list.discusses_books.book",
+              name: "7b17af",
+              state: "shared",
+            },
+
+            {
+              type: "view_link",
+              view: "ChildList:disc_books_list.discusses_books.book",
+              block: false,
+              minRole: 100,
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
       table_id: table.id,
       name: "author_multi_edit",
       viewtemplate: "Edit",
@@ -523,6 +577,32 @@ module.exports =
       reftable: rooms,
       required: false,
       attributes: { summary_field: "name" },
+    });
+    await View.create({
+      table_id: participants.id,
+      name: "participants_edit",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          {
+            type: "Field",
+            field_name: "user",
+            fieldview: "select",
+            textStyle: "",
+            block: false,
+            configuration: {},
+          },
+          {
+            type: "Field",
+            field_name: "room",
+            fieldview: "select",
+            textStyle: "",
+            block: false,
+            configuration: {},
+          },
+        ],
+      },
+      min_role: 100,
     });
     await db.insert("participants", {
       user: 1,
@@ -968,6 +1048,16 @@ module.exports =
               name: "bc653",
               state: "shared",
             },
+            {
+              type: "view_link",
+              view: "blog_posts_feed",
+              relation: ".",
+              view_label: "",
+              block: false,
+              minRole: 100,
+              link_icon: "",
+              isFormula: {},
+            },
           ],
         },
       },
@@ -1066,5 +1156,543 @@ module.exports =
       parameters: {},
       state: {},
       report: "report",
+    });
+
+    const artists = await Table.create("artists");
+    const covers = await Table.create("covers");
+    const albums = await Table.create("albums");
+    const artistPlaysOnAlbum = await Table.create("artist_plays_on_album");
+    const pressing_job = await Table.create("pressing_job");
+    const fan_club = await Table.create("fan_club");
+    const tracksOnAlbum = await Table.create("tracks_on_album");
+
+    await Field.create({
+      table: artists,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: artists,
+      name: "birth_data",
+      label: "Birth data",
+      type: "Date",
+      required: true,
+    });
+
+    await Field.create({
+      table: covers,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+
+    await Field.create({
+      table: albums,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: albums,
+      name: "release_date",
+      label: "Release date",
+      type: "Date",
+      required: true,
+    });
+    await Field.create({
+      table: albums,
+      name: "cover",
+      reftable: covers,
+      label: "Cover",
+      type: "Key",
+      is_unique: true,
+      attributes: { summary_field: "name" },
+    });
+
+    await Field.create({
+      table: artistPlaysOnAlbum,
+      name: "artist",
+      reftable: artists,
+      label: "Artist",
+      type: "Key",
+      attributes: { summary_field: "name" },
+    });
+    await Field.create({
+      table: artistPlaysOnAlbum,
+      name: "album",
+      reftable: albums,
+      label: "Album",
+      type: "Key",
+      attributes: { summary_field: "name" },
+    });
+
+    await Field.create({
+      table: tracksOnAlbum,
+      name: "album",
+      reftable: albums,
+      label: "Album",
+      type: "Key",
+      attributes: { summary_field: "name" },
+    });
+    await Field.create({
+      table: tracksOnAlbum,
+      name: "track",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+
+    await Field.create({
+      table: pressing_job,
+      name: "album",
+      reftable: albums,
+      label: "Album",
+      type: "Key",
+      attributes: { summary_field: "name" },
+    });
+    await Field.create({
+      table: pressing_job,
+      name: "pressing_date",
+      label: "Pressing date",
+      type: "Date",
+      required: true,
+    });
+
+    await Field.create({
+      table: fan_club,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: fan_club,
+      name: "artist",
+      reftable: artists,
+      label: "Artis",
+      type: "Key",
+      attributes: { summary_field: "name" },
+    });
+
+    await db.insert("artists", {
+      name: "artist A",
+      birth_data: new Date("2000-11-11T10:34:00.000Z"),
+    });
+    await db.insert("artists", {
+      name: "artist B",
+      birth_data: new Date("2000-11-11T10:34:00.000Z"),
+    });
+    await db.insert("albums", {
+      name: "album A",
+      release_date: new Date("2010-11-11T10:34:00.000Z"),
+    });
+    await db.insert("albums", {
+      name: "album B",
+      release_date: new Date("2010-11-11T10:34:00.000Z"),
+    });
+    await db.insert("artist_plays_on_album", {
+      artist: 1,
+      album: 1,
+    });
+    await db.insert("artist_plays_on_album", {
+      artist: 1,
+      album: 2,
+    });
+    await db.insert("artist_plays_on_album", {
+      artist: 2,
+      album: 1,
+    });
+    await db.insert("pressing_job", {
+      album: 1,
+      pressing_date: new Date("2010-11-11T10:34:00.000Z"),
+    });
+    await db.insert("pressing_job", {
+      album: 2,
+      pressing_date: new Date("2010-11-11T10:34:00.000Z"),
+    });
+    await db.insert("fan_club", {
+      name: "crazy fan club",
+      artist: 1,
+    });
+    await db.insert("fan_club", {
+      name: "fan club",
+      artist: 1,
+    });
+    await db.insert("fan_club", {
+      name: "fan club official",
+      artist: 1,
+    });
+    await db.insert("fan_club", {
+      name: "another club",
+      artist: 2,
+    });
+
+    await db.insert("tracks_on_album", {
+      album: 1,
+      track: "track one on album A",
+    });
+    await db.insert("tracks_on_album", {
+      album: 2,
+      track: "track one on album B",
+    });
+
+    await View.create({
+      table_id: albums.id,
+      name: "edit_album",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", fieldview: "show", field_name: "name" }],
+        },
+      },
+      min_role: 100,
+    });
+    await View.create({
+      table_id: albums.id,
+      name: "show_album",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", fieldview: "show", field_name: "name" }],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: albums.id,
+      name: "show_album_with_subview",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "d7603a",
+              type: "view",
+              view: "Own:show_album",
+              state: "shared",
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: albums.id,
+      name: "show_album_with_subview_new_relation_path",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              name: "d7603a",
+              type: "view",
+              view: "show_album",
+              state: "shared",
+              relation: ".albums",
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: albums.id,
+      name: "albums_feed",
+      viewtemplate: "Feed",
+      configuration: {
+        cols_lg: 1,
+        cols_md: 1,
+        cols_sm: 1,
+        cols_xl: 1,
+        in_card: false,
+        viewname: "albums_feed",
+        show_view: "edit_album",
+        descending: false,
+        view_to_create: "edit_album",
+        create_view_display: "Link",
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: tracksOnAlbum.id,
+      name: "edit_tracks_on_album",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [{ type: "Field", field_name: "album", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", fieldview: "show", field_name: "album" }],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: tracksOnAlbum.id,
+      name: "tracks_on_album_feed",
+      viewtemplate: "Feed",
+      configuration: {
+        cols_lg: 1,
+        cols_md: 1,
+        cols_sm: 1,
+        cols_xl: 1,
+        in_card: false,
+        viewname: "tracks_on_album_feed",
+        show_view: "edit_tracks_on_album",
+        descending: false,
+        view_to_create: "edit_tracks_on_album",
+        create_view_display: "Link",
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: artists.id,
+      name: "show_artist",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "d7603a",
+              type: "view",
+              view: "albums_feed",
+              state: "shared",
+              relation: ".artists.artist_plays_on_album$artist.album",
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: artistPlaysOnAlbum.id,
+      name: "artist_plays_on_album_list",
+      viewtemplate: "List",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "artist", state_field: "on" },
+          { type: "Field", field_name: "album", state_field: "on" },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: fan_club.id,
+      name: "edit_fan_club",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", fieldview: "show", field_name: "name" }],
+        },
+      },
+      min_role: 100,
+    });
+    await View.create({
+      table_id: fan_club.id,
+      name: "show_fan_club",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", fieldview: "show", field_name: "name" }],
+        },
+      },
+      min_role: 100,
+    });
+    await View.create({
+      table_id: fan_club.id,
+      name: "fan_club_feed",
+      viewtemplate: "Feed",
+      configuration: {
+        cols_lg: 1,
+        cols_md: 1,
+        cols_sm: 1,
+        cols_xl: 1,
+        in_card: false,
+        viewname: "fan_club_feed",
+        show_view: "edit_fan_club",
+        descending: false,
+        view_to_create: "edit_fan_club",
+        create_view_display: "Link",
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: pressing_job.id,
+      name: "show_pressing_job",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "d7603a",
+              type: "view",
+              view: "Independent:fan_club_feed",
+              state: "shared",
+              relation: undefined,
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: pressing_job.id,
+      name: "show_pressing_job_with_new_indenpendent_relation_path",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "a7603e",
+              type: "view",
+              view: "fan_club_feed",
+              relation: ".",
+              state: "shared",
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    const department = await Table.create("department");
+    const employee = await Table.create("employee");
+    const company = await Table.create("company");
+    await Field.create({
+      table: company,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+
+    await Field.create({
+      table: department,
+      name: "company",
+      reftable: company,
+      label: "Company",
+      type: "Key",
+      attributes: { summary_field: "name" },
+    });
+    await Field.create({
+      table: department,
+      name: "manager",
+      reftable: employee,
+      label: "Manager",
+      type: "Key",
+      is_unique: true,
+      attributes: { summary_field: "name" },
+    });
+    await Field.create({
+      table: department,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+
+    await Field.create({
+      table: employee,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: employee,
+      name: "department",
+      reftable: department,
+      label: "Department",
+      type: "Key",
+      attributes: { summary_field: "name" },
+    });
+
+    await db.insert("company", {
+      name: "my_company",
+    });
+
+    await db.insert("department", {
+      name: "my_department",
+      company: 1,
+    });
+    await db.insert("employee", {
+      name: "manager",
+      department: 1,
+    });
+    await db.insert("employee", {
+      name: "my_employee",
+      department: 1,
+    });
+    await db.update(
+      "department",
+      {
+        manager: 1,
+      },
+      1
+    );
+
+    await View.create({
+      table_id: employee.id,
+      name: "show_manager",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", fieldview: "show", field_name: "name" }],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: employee.id,
+      name: "show_employee",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              type: "view",
+              view: "show_manager",
+              relation: ".employee.department.manager",
+              name: "bc653",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 100,
     });
   };

@@ -39,7 +39,6 @@ const renderLayout = require("@saltcorn/markup/layout");
 const {
   stateFieldsToWhere,
   stateFieldsToQuery,
-  get_link_view_opts,
   picked_fields_to_query,
   initial_config_all_fields,
   calcfldViewOptions,
@@ -162,8 +161,6 @@ const configuration_workflow = (req) =>
             table,
             "show"
           );
-          const { link_view_opts, view_name_opts, view_relation_opts } =
-            await get_link_view_opts(table, context.viewname);
           const roles = await User.get_roles();
           const { parent_field_list } = await table.get_parent_relations(
             true,
@@ -181,7 +178,6 @@ const configuration_workflow = (req) =>
               .filter((f) => !f.calculated || f.stored)
               .map((f) => f.name);
           });
-          const views = link_view_opts;
           const pages = await Page.find();
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l) =>
@@ -200,19 +196,15 @@ const configuration_workflow = (req) =>
               ...field_view_options,
               ...rel_field_view_options,
             },
-            link_view_opts,
             parent_field_list,
             child_field_list,
             agg_field_opts,
             min_role: (myviewrow || {}).min_role,
             roles,
-            views,
             library,
             pages,
             allowMultiStepAction: true,
             handlesTextStyle,
-            view_name_opts,
-            view_relation_opts,
             mode: "show",
             ownership:
               !!table.ownership_field_id ||
@@ -489,14 +481,20 @@ const renderRows = async (
         switch (view.view_select.type) {
           case "RelationPath": {
             const path = view.view_select.path;
-            state1 = {
-              _inbound_relation_path_: {
-                ...view.view_select,
-                srcId: path[0].fkey
-                  ? get_row_val(path[0].fkey)
-                  : get_row_val(pk_name),
-              },
-            };
+            state1 =
+              path.length === 0
+                ? // it's Own or Independent
+                  table.name === view.view_select.sourcetable
+                  ? { [pk_name]: get_row_val(pk_name) }
+                  : {}
+                : {
+                    _relation_path_: {
+                      ...view.view_select,
+                      srcId: path[0].fkey
+                        ? get_row_val(path[0].fkey)
+                        : get_row_val(pk_name),
+                    },
+                  };
             break;
           }
           case "Own":

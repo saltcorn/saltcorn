@@ -333,7 +333,7 @@ describe("Table with row ownership formula", () => {
 });
 describe("Table with row ownership joined formula", () => {
   it("should create and delete table", async () => {
-    const department = await Table.create("Department");
+    const department = await Table.create("_Department");
     await Field.create({
       table: department,
       name: "name",
@@ -360,7 +360,7 @@ describe("Table with row ownership joined formula", () => {
     const deptkey = await Field.create({
       table: persons,
       name: "department",
-      type: "Key to Department",
+      type: "Key to _Department",
     });
 
     const own_opts = await Table.findOne({
@@ -403,7 +403,7 @@ describe("Table with row ownership joined formula", () => {
 });
 describe("Table with row ownership joined formula and stored calc", () => {
   it("should create and delete table", async () => {
-    const department = await Table.create("Department");
+    const department = await Table.create("_Department");
     await Field.create({
       table: department,
       name: "name",
@@ -438,7 +438,7 @@ describe("Table with row ownership joined formula and stored calc", () => {
     const deptkey = await Field.create({
       table: persons,
       name: "department",
-      type: "Key to Department",
+      type: "Key to _Department",
     });
 
     const own_opts = await Table.findOne({

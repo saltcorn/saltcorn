@@ -17,9 +17,6 @@ const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
-const {
-  prepareArtistsAlbumRelation,
-} = require("@saltcorn/data/tests/common_helpers");
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -523,7 +520,7 @@ describe("inbound relations", () => {
 
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -535,7 +532,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 2;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -547,7 +544,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 3;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -567,7 +564,7 @@ describe("inbound relations", () => {
     const loginCookie = await getAdminLoginCookie();
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -579,7 +576,7 @@ describe("inbound relations", () => {
     queryObj.srcId = 2;
     await request(app)
       .get(
-        `/view/blog_posts_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/blog_posts_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj)
         )}`
       )
@@ -591,10 +588,6 @@ describe("inbound relations", () => {
 });
 
 describe("many to many relations", () => {
-  beforeAll(async () => {
-    await prepareArtistsAlbumRelation();
-  });
-
   it("artist_plays_on_album", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -621,7 +614,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/albums_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_1)
         )}`
       )
@@ -635,7 +628,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/albums_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/albums_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_2)
         )}`
       )
@@ -655,7 +648,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/fan_club_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/fan_club_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_1)
         )}`
       )
@@ -672,7 +665,7 @@ describe("many to many relations", () => {
     };
     await request(app)
       .get(
-        `/view/fan_club_feed?_inbound_relation_path_=${encodeURIComponent(
+        `/view/fan_club_feed?_relation_path_=${encodeURIComponent(
           JSON.stringify(queryObj_2)
         )}`
       )
@@ -681,5 +674,54 @@ describe("many to many relations", () => {
       .expect(toNotInclude("another club"))
       .expect(toInclude("fan club"))
       .expect(toInclude("fan club official"));
+  });
+});
+
+describe("legacy relations with relation path", () => {
+  it("Independent feed", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+
+    const queryObj = {
+      relation: ".",
+      srcId: 1,
+    };
+    await request(app)
+      .get(
+        `/view/fan_club_feed?_relation_path_=${encodeURIComponent(
+          JSON.stringify(queryObj)
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude("crazy fan club"))
+      .expect(toInclude("another club"))
+      .expect(toInclude("fan club"))
+      .expect(toInclude("fan club official"));
+  });
+
+  it("Independent feed as subview", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/show_pressing_job_with_new_indenpendent_relation_path?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("crazy fan club"))
+      .expect(toInclude("another club"))
+      .expect(toInclude("fan club"))
+      .expect(toInclude("fan club official"));
+  });
+
+  it("Own same table subview", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+
+    await request(app)
+      .get("/view/show_album_with_subview_new_relation_path?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album A"));
+    await request(app)
+      .get("/view/show_album_with_subview_new_relation_path?id=2")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("album B"));
   });
 });

@@ -13,7 +13,6 @@ import mocks from "./mocks";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);
-
 const wf = new Workflow({
   steps: [
     {
@@ -68,6 +67,10 @@ const wfbuild = new Workflow({
 });
 
 describe("Workflow", () => {
+  beforeAll(async () => {
+    await require("../db/reset_schema")();
+    await require("../db/fixtures")();
+  });
   it("should run with context", async () => {
     const v = await wf.run({ foo: "bar" });
     assertIsSet(v);

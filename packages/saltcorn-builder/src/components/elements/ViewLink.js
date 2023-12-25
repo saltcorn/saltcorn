@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { useContext } from "react";
+import React, { useMemo } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -16,10 +16,11 @@ import {
   setAPropGen,
   FormulaTooltip,
   HelpTopicLink,
+  prepCacheAndFinder,
 } from "./utils";
 
-import { RelationPicker } from "./RelationPicker";
 import { RelationBadges } from "./RelationBadges";
+import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
 
 export /**
  * @param {object} props
@@ -43,7 +44,6 @@ export /**
 const ViewLink = ({
   name,
   block,
-  view_name,
   minRole,
   link_style,
   link_size,
@@ -61,8 +61,7 @@ const ViewLink = ({
   } = useNode((node) => ({ selected: node.events.selected }));
   const names = name.split(":");
 
-  const displabel =
-    label || view_name || (names.length > 1 ? names[1] : names[0]);
+  const displabel = label || (names.length > 1 ? names[1] : names[0]);
   return (
     <span
       className={`${textStyle} ${inModal ? "btn btn-secondary btn-sm" : ""} ${
@@ -86,7 +85,7 @@ const ViewLink = ({
 };
 
 export /**
- * @returns {div}
+ * @returns
  * @category saltcorn-builder
  * @subcategory components
  * @namespace
@@ -109,7 +108,6 @@ const ViewLinkSettings = () => {
     link_bordercol: node.data.props.link_bordercol,
     link_textcol: node.data.props.link_textcol,
     extra_state_fml: node.data.props.extra_state_fml,
-    view_name: node.data.props.view_name,
   }));
   const {
     actions: { setProp },
@@ -122,10 +120,13 @@ const ViewLinkSettings = () => {
     inModal,
     textStyle,
     extra_state_fml,
-    view_name,
     link_target_blank,
   } = node;
-  const options = useContext(optionsCtx);
+  const options = React.useContext(optionsCtx);
+  const { caches, finder } = useMemo(
+    () => prepCacheAndFinder(options),
+    [undefined]
+  );
   let errorString = false;
   try {
     Function("return " + extra_state_fml);
@@ -135,18 +136,42 @@ const ViewLinkSettings = () => {
   const setAProp = setAPropGen(setProp);
   //legacy values
   const use_view_name =
-    view_name ||
-    (name &&
-      ((names) => (names.length > 1 ? names[1] : names[0]))(name.split(":")));
+    name &&
+    ((names) => (names.length > 1 ? names[1] : names[0]))(name.split(":"));
+  const hasLegacyRelation = name && name.includes(":");
+  const safeViewName = use_view_name?.includes(".")
+    ? use_view_name.split(".")[0]
+    : use_view_name;
+  const [relations, setRelations] = React.useState(
+    finder.findRelations(
+      options.tableName,
+      safeViewName,
+      options.excluded_subview_templates
+    )
+  );
+  let safeRelation = relation;
+  if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
+    safeRelation = relations.paths[0];
+    setProp((prop) => {
+      prop.relation = safeRelation;
+    });
+  }
   const set_view_name = (e) => {
     if (e.target) {
       const target_value = e.target.value;
-      setProp((prop) => (prop.view_name = target_value));
       if (target_value !== use_view_name) {
-        setProp((prop) => {
-          prop.name = options.view_relation_opts[target_value][0].value;
-          prop.relation = undefined;
-        });
+        const newRelations = finder.findRelations(
+          options.tableName,
+          target_value,
+          options.excluded_subview_templates
+        );
+        if (newRelations.paths.length > 0) {
+          setProp((prop) => {
+            prop.name = target_value;
+            prop.relation = newRelations.paths[0];
+          });
+          setRelations(newRelations);
+        }
       }
     }
   };
@@ -165,7 +190,7 @@ const ViewLinkSettings = () => {
                 onChange={set_view_name}
                 onBlur={set_view_name}
               >
-                {options.view_name_opts.map((f, ix) => (
+                {options.views.map((f, ix) => (
                   <option key={ix} value={f.name}>
                     {f.label}
                   </option>
@@ -175,9 +200,8 @@ const ViewLinkSettings = () => {
           </tr>
           <tr>
             <td colSpan="2">
-              <RelationPicker
-                options={options}
-                viewname={use_view_name}
+              <RelationOnDemandPicker
+                relations={relations.layers}
                 update={(relPath) => {
                   if (relPath.startsWith(".")) {
                     setProp((prop) => {
@@ -194,9 +218,9 @@ const ViewLinkSettings = () => {
               />
               <RelationBadges
                 view={name}
-                relation={relation}
+                relation={safeRelation}
                 parentTbl={options.tableName}
-                fk_options={options.fk_options}
+                tableNameCache={caches.tableNameCache}
               />
             </td>
           </tr>
@@ -308,7 +332,6 @@ ViewLink.craft = {
       { name: "inModal", segment_name: "in_modal", column_name: "in_modal" },
       "minRole",
       "link_style",
-      "view_name",
       "link_icon",
       "link_size",
       "link_target_blank",

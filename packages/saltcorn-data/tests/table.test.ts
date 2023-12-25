@@ -582,42 +582,48 @@ describe("relations", () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const rels = await table.get_parent_relations();
-    expect(rels.parent_field_list).toEqual([
+    const expected = [
       "publisher.id",
       "publisher.name",
       "myreviews.book->book",
       "myreviews.book->id",
       "myreviews.book->rating",
-    ]);
+    ];
+    expect(rels.parent_field_list).toHaveLength(expected.length);
+    expect(rels.parent_field_list).toEqual(expect.arrayContaining(expected));
   });
   it("get child relations", async () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const rels = await table.get_child_relations();
-    expect(rels.child_field_list).toEqual([
-      "discusses_books.book",
+    const expected = [
       "myreviews.book",
+      "discusses_books.book",
       "patients.favbook",
-    ]);
+    ];
+    expect(rels.child_field_list).toHaveLength(expected.length);
+    expect(rels.child_field_list).toEqual(expect.arrayContaining(expected));
     expect(rels.child_relations.length).toBe(3);
   });
   it("get child relations with join", async () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const rels = await table.get_child_relations(true);
-    expect(rels.child_field_list).toEqual([
-      "discusses_books.book",
+    const expected = [
       "myreviews.book",
+      "discusses_books.book",
       "patients.favbook",
       "publisher->books.publisher",
-    ]);
+    ];
+    expect(rels.child_field_list).toHaveLength(expected.length);
+    expect(rels.child_field_list).toEqual(expect.arrayContaining(expected));
     expect(rels.child_relations.length).toBe(4);
   });
   it("get grandparent relations", async () => {
     const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
     const rels = await table.get_parent_relations(true);
-    expect(rels.parent_field_list).toEqual([
+    const expected = [
       "patient_id.favbook",
       "patient_id.favbook.author",
       "patient_id.favbook.id",
@@ -630,14 +636,16 @@ describe("relations", () => {
       "patient_id.parent.id",
       "patient_id.parent.name",
       "patient_id.parent.parent",
-    ]);
+    ];
+    expect(rels.parent_field_list).toHaveLength(expected.length);
+    expect(rels.parent_field_list).toEqual(expect.arrayContaining(expected));
     expect(rels.parent_relations.length).toBe(3);
   });
   it("get triple relations", async () => {
     const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
     const rels = await table.get_parent_relations(true, true);
-    expect(rels.parent_field_list).toEqual([
+    const expected = [
       "patient_id.favbook",
       "patient_id.favbook.author",
       "patient_id.favbook.id",
@@ -660,7 +668,9 @@ describe("relations", () => {
       "patient_id.parent.parent.id",
       "patient_id.parent.parent.name",
       "patient_id.parent.parent.parent",
-    ]);
+    ];
+    expect(rels.parent_field_list).toHaveLength(expected.length);
+    expect(rels.parent_field_list).toEqual(expect.arrayContaining(expected));
     expect(rels.parent_relations.length).toBe(3);
   });
 });

@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 /* globals $, _sc_globalCsrf*/
-import React, { Fragment, useContext, useState } from "react";
+import React, { Fragment, useState } from "react";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -80,7 +80,7 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
   );
 
 export const HelpTopicLink = ({ topic, ...context }) => {
-  const { mode } = useContext(optionsCtx);
+  const { mode } = React.useContext(optionsCtx);
   let qs = "";
   Object.keys(context).forEach((k) => {
     qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
@@ -95,7 +95,7 @@ export const HelpTopicLink = ({ topic, ...context }) => {
 };
 
 export const FormulaTooltip = () => {
-  const { fields } = useContext(optionsCtx);
+  const { fields } = React.useContext(optionsCtx);
   return (
     <Tooltip>
       <div>
@@ -137,7 +137,7 @@ export /**
  * @subcategory components / elements / utils
  */
 const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
-  const { mode } = useContext(optionsCtx);
+  const { mode } = React.useContext(optionsCtx);
 
   /**
    * @returns {void}
@@ -225,7 +225,7 @@ export /**
  * @subcategory components / elements / utils
  */
 const MinRoleSetting = ({ minRole, setProp }) => {
-  const options = useContext(optionsCtx);
+  const options = React.useContext(optionsCtx);
   return (
     <div>
       <label>Minimum Role</label>
@@ -259,7 +259,7 @@ export /**
  * @subcategory components / elements / utils
  */
 const MinRoleSettingRow = ({ minRole, setProp }) => {
-  const options = useContext(optionsCtx);
+  const options = React.useContext(optionsCtx);
   return (
     <tr>
       <td>
@@ -743,7 +743,7 @@ const ConfigField = ({
    * @param {object} v
    * @returns {void}
    */
-  const options = useContext(optionsCtx);
+  const options = React.useContext(optionsCtx);
 
   const myOnChange = (v) => {
     setProp((prop) => {
@@ -1412,85 +1412,20 @@ const Tooltip = ({ children }) => {
   );
 };
 
-const getFkTarget = (field, options) => {
-  const option = options.find((fk) => fk.name === field);
-  return option ? option.reftable_name : null;
-};
-
-export const parseRelationPath = (path, fk_options) => {
-  const result = [];
-  const tokens = path.split(".");
-  if (tokens.length >= 3) {
-    let currentTbl = tokens[1];
-    for (const relation of tokens.slice(2)) {
-      if (relation.indexOf("$") > 0) {
-        const [inboundTbl, inboundKey] = relation.split("$");
-        result.push({ type: "Inbound", table: inboundTbl, key: inboundKey });
-        currentTbl = inboundTbl;
-      } else {
-        const targetTbl = getFkTarget(relation, fk_options[currentTbl]);
-        if (!targetTbl) {
-          console.log(`The foreign key '${relation}' is invalid`);
-          return [];
-        }
-        result.push({ type: "Foreign", table: targetTbl, key: relation });
-        currentTbl = targetTbl;
-      }
+export const buildTableCaches = (allTables) => {
+  const tableIdCache = {};
+  const tableNameCache = {};
+  const fieldCache = {};
+  for (const table of allTables) {
+    tableIdCache[table.id] = table;
+    tableNameCache[table.name] = table;
+    for (const field of table.foreign_keys) {
+      if (!fieldCache[field.reftable_name])
+        fieldCache[field.reftable_name] = [];
+      fieldCache[field.reftable_name].push(field);
     }
   }
-  return result;
-};
-
-export const parseLegacyRelation = (type, rest, parentTbl) => {
-  switch (type) {
-    case "ChildList": {
-      const path = rest ? rest.split(".") : [];
-      if (path.length === 3) {
-        const [viewName, table, key] = path;
-        return [
-          {
-            type: "Inbound",
-            table,
-            key,
-          },
-        ];
-      } else if (path.length === 5) {
-        const [viewName, thrTbl, thrTblFkey, fromTbl, fromTblFkey] = path;
-        return [
-          {
-            type: "Inbound",
-            table: thrTbl,
-            key: thrTblFkey,
-          },
-          {
-            type: "Inbound",
-            table: fromTbl,
-            key: fromTblFkey,
-          },
-        ];
-      }
-      break;
-    }
-    case "Independent": {
-      return [{ type: "Independent", table: "None (no relation)" }];
-    }
-    case "Own": {
-      return [{ type: "Own", table: `${parentTbl} (same table)` }];
-    }
-    case "OneToOneShow": {
-      const tokens = rest ? rest.split(".") : [];
-      if (tokens.length !== 3) break;
-      const [viewname, relatedTbl, fkey] = tokens;
-      return [{ type: "Inbound", table: relatedTbl, key: fkey }];
-    }
-    case "ParentShow": {
-      const tokens = rest ? rest.split(".") : [];
-      if (tokens.length !== 3) break;
-      const [viewname, parentTbl, fkey] = tokens;
-      return [{ type: "Foreign", table: parentTbl, key: fkey }];
-    }
-  }
-  return [];
+  return { tableIdCache, tableNameCache, fieldCache };
 };
 
 export const removeWhitespaces = (str) => {
@@ -1533,4 +1468,20 @@ export const buildBootstrapOptions = (values) => {
       {mappings[option]}
     </option>
   ));
+};
+
+export const prepCacheAndFinder = ({
+  tables,
+  views,
+  max_relations_layer_depth,
+}) => {
+  if (tables && views) {
+    const caches = buildTableCaches(tables);
+    const finder = new relationHelpers.RelationsFinder(
+      caches,
+      views,
+      max_relations_layer_depth || 6
+    );
+    return { caches, finder };
+  } else return { caches: null, finder: null };
 };

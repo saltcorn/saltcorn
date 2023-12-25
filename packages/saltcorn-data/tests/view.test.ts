@@ -9,10 +9,7 @@ import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { GenObj } from "../../saltcorn-types/dist/common_types";
 import { renderEditInEditConfig } from "./remote_query_helper";
-import {
-  prepareEmployeeDepartment,
-  prepareSimpleTopicPostRelation,
-} from "./common_helpers";
+import { prepareSimpleTopicPostRelation } from "./common_helpers";
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -123,7 +120,7 @@ describe("View", () => {
     const link_views = await View.find({
       table_id: table.id,
     });
-    expect(link_views.length).toBe(4);
+    expect(link_views.length).toBe(5);
   });
   it("should find where", async () => {
     const link_views = await View.find_all_views_where(
@@ -342,6 +339,20 @@ describe("nested views", () => {
 });
 
 describe("subviews with relations", () => {
+  it("show_user_with_independent_feed", async () => {
+    const testser = (res: any) => {
+      expect(res).toContain("Content of post APost A");
+      expect(res).toContain("Content of post BPost B");
+      expect(res).toContain("Content of post CPost C");
+      expect(res).toContain("blog_posts_feed");
+    };
+    const v = View.findOne({ name: "show_user_with_independent_feed" });
+    assertIsSet(v);
+    testser(await v.run({ id: 1 }, mockReqRes));
+    testser(await v.run({ id: 2 }, mockReqRes));
+    testser(await v.run({ id: 3 }, mockReqRes));
+  });
+
   it("blog_posts_feed with inbound relation", async () => {
     const v = View.findOne({ name: "show_user_with_blog_posts_feed" });
     assertIsSet(v);
@@ -514,7 +525,6 @@ describe("subviews with relations", () => {
   });
 
   it("employee department relation", async () => {
-    await prepareEmployeeDepartment();
     const v = View.findOne({ name: "show_employee" });
     assertIsSet(v);
     {

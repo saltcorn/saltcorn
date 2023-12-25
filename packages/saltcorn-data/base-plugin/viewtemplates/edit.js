@@ -48,7 +48,6 @@ const {
   calcfldViewOptions,
   calcfldViewConfig,
   get_parent_views,
-  get_link_view_opts,
   picked_fields_to_query,
   stateFieldsToWhere,
   stateFieldsToQuery,
@@ -176,12 +175,6 @@ const configuration_workflow = (req) =>
               );
             }
           }
-          const { link_view_opts, view_name_opts, view_relation_opts } =
-            await get_link_view_opts(
-              table,
-              context.viewname,
-              (v) => v.viewtemplate !== "Room"
-            );
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -233,15 +226,12 @@ const configuration_workflow = (req) =>
             allowMultiStepAction: true,
             min_role: (myviewrow || {}).min_role,
             library,
-            views: link_view_opts,
-            link_view_opts,
             mode: "edit",
-            view_name_opts,
-            view_relation_opts,
             ownership:
               !!table.ownership_field_id ||
               !!table.ownership_formula ||
               table.name === "users",
+            excluded_subview_templates: ["Room"],
           };
         },
       },
@@ -648,7 +638,7 @@ const transformForm = async ({
     },
     async view(segment) {
       //console.log(segment);
-      const view_select = parse_view_select(segment.view);
+      const view_select = parse_view_select(segment.view, segment.relation);
       //console.log({ view_select });
 
       const view = View.findOne({ name: view_select.viewname });
@@ -712,8 +702,12 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       }
-
-      if (!row && view_select.type !== "Independent") {
+      const isIndependent =
+        view_select.type === "Independent" ||
+        (view_select.type === "RelationPath" &&
+          view_select.path.length === 0 &&
+          view_select.sourcetable === table.name);
+      if (!row && !isIndependent) {
         segment.type = "blank";
         segment.contents = "";
         return;
@@ -726,12 +720,20 @@ const transformForm = async ({
       switch (view_select.type) {
         case "RelationPath": {
           const path = view_select.path;
-          state = {
-            _inbound_relation_path_: {
-              ...view_select,
-              srcId: path[0].fkey ? row[path[0].fkey] : row[table.pk_name],
-            },
-          };
+          state =
+            path.length === 0
+              ? // it's Own or Independent
+                table.name === view.view_select.sourcetable
+                ? { id: row.id }
+                : {}
+              : {
+                  _relation_path_: {
+                    ...view_select,
+                    srcId: path[0].fkey
+                      ? row[path[0].fkey]
+                      : row[table.pk_name],
+                  },
+                };
           break;
         }
         case "Own":

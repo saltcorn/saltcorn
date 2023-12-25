@@ -143,7 +143,7 @@ const stateToQueryString = (state) => {
         k === "id"
           ? null
           : `${encodeURIComponent(k)}=${encodeURIComponent(
-              k === "_inbound_relation_path_" && typeof v !== "string"
+              k === "_relation_path_" && typeof v !== "string"
                 ? queryToString(v)
                 : v
             )}`
@@ -1770,34 +1770,36 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
     }
 
     const field = fields.find((fld) => fld.name === k);
-    if (k === "_inbound_relation_path_") {
+    if (k === "_relation_path_" || k === "_inbound_relation_path_") {
       const queryObj = typeof v === "string" ? stringToQuery(v) : v;
-      const levels = [];
-      let lastTableName = queryObj.sourcetable;
-      let where = null;
-      for (const level of queryObj.path) {
-        if (level.inboundKey) {
-          levels.push({ ...level });
-          lastTableName = level.table;
-          if (!where)
-            where = { [db.sqlsanitize(level.inboundKey)]: queryObj.srcId };
-        } else {
-          const lastTable = Table.findOne({ name: lastTableName });
-          const refField = lastTable.fields.find(
-            (field) => field.name === level.fkey
-          );
-          levels.push({ table: refField.reftable_name, fkey: level.fkey });
-          lastTableName = refField.reftable_name;
-          if (!where) where = { id: queryObj.srcId };
+      if (queryObj.path.length > 0) {
+        const levels = [];
+        let lastTableName = queryObj.sourcetable;
+        let where = null;
+        for (const level of queryObj.path) {
+          if (level.inboundKey) {
+            levels.push({ ...level });
+            lastTableName = level.table;
+            if (!where)
+              where = { [db.sqlsanitize(level.inboundKey)]: queryObj.srcId };
+          } else {
+            const lastTable = Table.findOne({ name: lastTableName });
+            const refField = lastTable.fields.find(
+              (field) => field.name === level.fkey
+            );
+            levels.push({ table: refField.reftable_name, fkey: level.fkey });
+            lastTableName = refField.reftable_name;
+            if (!where) where = { id: queryObj.srcId };
+          }
         }
+        addOrCreateList(qstate, "id", {
+          inSelectWithLevels: {
+            joinLevels: levels,
+            schema: db.getTenantSchema(),
+            where,
+          },
+        });
       }
-      addOrCreateList(qstate, "id", {
-        inSelectWithLevels: {
-          joinLevels: levels,
-          schema: db.getTenantSchema(),
-          where,
-        },
-      });
     } else if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
@@ -2370,19 +2372,49 @@ const run_action_column = async ({ col, req, ...rest }) => {
   } else return await run_action_step(col.action_name, col.configuration);
 };
 
-/**
- * for all tables collect the foreign keys with the targets
- * should only be used as options for the saltcorn-builder
- * @returns table names as key and the fks as value
- */
-const build_schema_fk_options = async () => {
-  const result = {};
-  for (const table of await Table.find({}, { cached: true })) {
-    result[table.name] = table.getForeignKeys().map((field) => {
-      return { name: field.name, reftable_name: field.reftable_name };
-    });
-  }
-  return result;
+const ViewDisplayType = {
+  ROW_REQUIRED: "ROW_REQUIRED",
+  NO_ROW_LIMIT: "NO_ROW_LIMIT",
+  INVALID: "INVALID",
+};
+
+const displayType = (stateFields) =>
+  stateFields.every((sf) => !sf.required)
+    ? ViewDisplayType.NO_ROW_LIMIT
+    : stateFields.some((sf) => sf.name === "id")
+    ? ViewDisplayType.ROW_REQUIRED
+    : ViewDisplayType.INVALID;
+
+const build_schema_data = async () => {
+  const allViews = await View.find({}, { cached: true });
+  const allTables = await Table.find({}, { cached: true });
+  const tableIdToName = {};
+  allTables.forEach((t) => {
+    tableIdToName[t.id] = t.name;
+  });
+  const views = await Promise.all(
+    allViews.map(async (v) => ({
+      name: v.name,
+      table_id: v.table_id,
+      label: `${v.name} [${v.viewtemplate}] ${tableIdToName[v.table_id] || ""}`,
+      viewtemplate: v.viewtemplate,
+      display_type: displayType(await v.get_state_fields()),
+    }))
+  );
+  const tables = await Promise.all(
+    allTables.map(async (t) => ({
+      name: t.name,
+      id: t.id,
+      foreign_keys: t.getForeignKeys().map((f) => ({
+        name: f.name,
+        id: f.id,
+        table_id: t.id,
+        reftable_name: f.reftable_name,
+        is_unique: f.is_unique,
+      })),
+    }))
+  );
+  return { views, tables };
 };
 
 module.exports = {
@@ -2409,5 +2441,5 @@ module.exports = {
   get_inbound_relation_opts,
   get_inbound_self_relation_opts,
   get_many_to_many_relation_opts,
-  build_schema_fk_options,
+  build_schema_data,
 };
