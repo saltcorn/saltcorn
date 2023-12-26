@@ -144,7 +144,7 @@ class Plugin {
         )
       : Object.keys(myViewTemplates);
     return views
-      .filter((v) => vt_names.includes(v.viewtemplate))
+      .filter((v) => vt_names.includes(v.viewtemplate) && !v.singleton)
       .map((v) => v.name);
   }
   static get_cached_plugins(): Array<Plugin> {
