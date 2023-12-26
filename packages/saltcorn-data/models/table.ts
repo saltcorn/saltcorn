@@ -717,6 +717,8 @@ class Table implements AbstractTable {
         await client.query(
           `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
         );
+      // delete tag entries from _sc_tag_entries
+      await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
       // delete fields
       await client.query(
         `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
