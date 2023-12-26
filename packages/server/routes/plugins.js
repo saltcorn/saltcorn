@@ -1243,6 +1243,7 @@ router.post(
     }
     await load_plugins.loadAndSaveNewPlugin(plugin, forceReInstall);
     const plugin_module = getState().plugins[name];
+    await sleep(1000); // Allow other workers to load this plugin
     await getState().refresh_views();
 
     if (plugin_module && plugin_module.configuration_workflow) {
@@ -1254,7 +1255,6 @@ router.post(
           plugin_db.name
         )
       );
-      await sleep(1000); // Allow other workers to load this plugin
       res.redirect(`/plugins/configure/${plugin_db.name}`);
     } else {
       req.flash("success", req.__(`Module %s installed`, plugin.name));
