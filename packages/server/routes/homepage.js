@@ -87,7 +87,12 @@ const viewTable = (views, req) =>
       {
         label: req.__("Edit"),
         key: (r) =>
-          link(`/viewedit/edit/${encodeURIComponent(r.name)}`, req.__("Edit")),
+          r.singleton
+            ? ""
+            : link(
+                `/viewedit/edit/${encodeURIComponent(r.name)}`,
+                req.__("Edit")
+              ),
       },
     ],
     views
