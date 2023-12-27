@@ -42,7 +42,14 @@ function updateQueryStringParameter(uri1, key, value) {
       hash
     );
   } else {
-    return uri + separator + key + "=" + encodeURIComponent(value) + hash;
+    if (Array.isArray(value))
+      return (
+        uri +
+        separator +
+        value.map((val) => key + "=" + encodeURIComponent(val)).join("&") +
+        hash
+      );
+    else return uri + separator + key + "=" + encodeURIComponent(value) + hash;
   }
 }
 
