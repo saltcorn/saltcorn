@@ -346,6 +346,7 @@ const run = async (
             referrer: extra.req.get("Referrer"),
             req: extra.req,
             row: state,
+            table,
           });
 
           if (actionResult)
