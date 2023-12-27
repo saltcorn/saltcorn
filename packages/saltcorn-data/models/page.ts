@@ -159,6 +159,8 @@ class Page implements AbstractPage {
    * @returns {Promise<void>}
    */
   async delete(): Promise<void> {
+    // delete tag entries from _sc_tag_entries
+    await db.deleteWhere("_sc_tag_entries", { page_id: this.id });
     await db.deleteWhere("_sc_pages", { id: this.id });
     const root_page_for_roles = await this.is_root_page_for_roles();
     for (const role of root_page_for_roles) {

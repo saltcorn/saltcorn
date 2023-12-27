@@ -52,7 +52,7 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
       class: "d-none",
       name: "file",
       type: "file",
-      accept: "application/zip,.zip",
+      accept: "application/zip,.zip,.sczip",
       onchange: "notifyAlert('Restoring backup...', true);this.form.submit();",
     })
   );

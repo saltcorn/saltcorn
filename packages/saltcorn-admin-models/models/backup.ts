@@ -444,10 +444,26 @@ const restore = async (
   const tmpDir = await dir({ unsafeCleanup: true });
   //unzip
   await extract(fnm, tmpDir.path);
+
+  let basePath = tmpDir.path;
+  // safari re-compressed. Safari unpacks zip files on download. If the user
+  // chooses compress in finder, the backup dir is nested inside the zip file
+  if (!existsSync(join(basePath, "pack.json"))) {
+    const files = await readdir(basePath);
+    let found = false;
+    for (const file of files) {
+      if (existsSync(join(basePath, file, "pack.json"))) {
+        basePath = join(basePath, file);
+        found = true;
+        break;
+      }
+    }
+    if (!found) return "Not a valid backup file";
+  }
   let err;
   //install pack
   const pack = JSON.parse(
-    (await readFile(join(tmpDir.path, "pack.json"))).toString()
+    (await readFile(join(basePath, "pack.json"))).toString()
   );
 
   const can_restore = await can_install_pack(pack);
@@ -458,14 +474,14 @@ const restore = async (
     `;
   }
   //config
-  await restore_config(tmpDir.path);
+  await restore_config(basePath);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
-  const { file_users, newLocations } = await restore_files(tmpDir.path);
+  const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
-  const tabres = await restore_tables(tmpDir.path, restore_first_user);
+  const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 
   if (Object.keys(newLocations).length > 0)

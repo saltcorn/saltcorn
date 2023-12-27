@@ -165,6 +165,8 @@ class Trigger implements AbstractTrigger {
    * @returns {Promise<void>}
    */
   async delete(): Promise<void> {
+    // delete tag entries from _sc_tag_entries
+    await db.deleteWhere("_sc_tag_entries", { trigger_id: this.id });
     await db.deleteWhere("_sc_triggers", { id: this.id });
     await require("../db/state").getState().refresh_triggers();
   }

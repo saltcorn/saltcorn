@@ -350,6 +350,8 @@ class View implements AbstractView {
         this.name,
         this.configuration
       );
+    // delete tag entries from _sc_tag_entries
+    await db.deleteWhere("_sc_tag_entries", { view_id: this.id });
     // delete view from _sc_view
     await db.deleteWhere("_sc_views", { id: this.id });
     // remove view from menu
