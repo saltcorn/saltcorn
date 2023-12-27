@@ -804,14 +804,19 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
-        ...(mode === "edit"
+        ...(mode === "edit" || mode === "filter"
           ? [
               {
                 name: "where",
                 label: "Modify where",
                 type: "String",
                 required: true,
-                attributes: { options: ["Database", "Form"] },
+                attributes: {
+                  options: [
+                    "Database",
+                    mode === "edit" ? "Form" : "Filter state",
+                  ],
+                },
               },
             ]
           : []),
@@ -830,7 +835,8 @@ module.exports = {
         user,
       });
       const calcrow = await f(row, user);
-      if (where === "Form") return { set_fields: calcrow };
+      if (where === "Form" || where === "Filter state")
+        return { set_fields: calcrow };
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;

@@ -475,7 +475,7 @@ const run = async (
         options
       );
     },
-    async action(segment) {
+    action(segment) {
       const {
         block,
         action_label,
