@@ -1101,6 +1101,10 @@ async function common_done(res, viewname, isWeb = true) {
       const f = new Function(`viewname, row, {${res.field_names}}`, s);
       const evalres = await f(viewname, res.row, res.row);
       if (evalres) await common_done(evalres, viewname, isWeb);
+    } else if (res.row) {
+      const f = new Function(`viewname, row`, s);
+      const evalres = await f(viewname, res.row);
+      if (evalres) await common_done(evalres, viewname, isWeb);
     } else {
       const f = new Function(`viewname`, s);
       const evalres = await f(viewname);

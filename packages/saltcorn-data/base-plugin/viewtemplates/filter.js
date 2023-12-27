@@ -345,6 +345,7 @@ const run = async (
             col: { ...segment },
             referrer: extra.req.get("Referrer"),
             req: extra.req,
+            row: state,
           });
 
           if (actionResult)
