@@ -385,6 +385,7 @@ const set_load_actions_join_fieldviews = async ({
           referrer: req.get("Referrer"),
           req,
           res,
+          table,
           row,
         });
         segment.type = "blank";

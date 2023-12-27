@@ -562,6 +562,7 @@ const transformForm = async ({
             referrer: req.get("Referrer"),
             req,
             res,
+            table,
             row,
           });
           segment.type = "blank";
