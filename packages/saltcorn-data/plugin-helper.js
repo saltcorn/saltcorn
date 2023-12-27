@@ -1759,6 +1759,7 @@ const queryToString = (query) => {
  */
 const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
   let qstate = {};
+  const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
       qstate["_fts"] = {
@@ -1766,6 +1767,11 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         fields,
         schema: db.getTenantSchema(),
       };
+      return;
+    }
+    if (k === "_or_field") {
+      if (Array.isArray(v)) orFields.push(...v);
+      else orFields.push(v);
       return;
     }
 
@@ -1984,6 +1990,13 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       }
     }
   });
+  orFields.forEach((orField) => {
+    if (typeof qstate[orField] === "undefined") return;
+    if (!qstate.or) qstate.or = [];
+    qstate.or.push({ [orField]: qstate[orField] });
+    delete qstate[orField];
+  });
+
   return qstate;
 };
 

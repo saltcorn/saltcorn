@@ -391,6 +391,13 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({ astr: { or: ["foo", "bar"] } });
   });
+  it("multifield or", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { age: 15, astr: "foo", _or_field: ["age", "astr"] },
+    });
+    expect(w).toStrictEqual({ or: [{ age: 15 }, { astr: { ilike: "foo" } }] });
+  });
   it("fkey", async () => {
     expect(
       stateFieldsToWhere({
