@@ -356,7 +356,6 @@ const run = async (
               )
             );
           else segment.contents = "";
-          console.log({ actionResult, contents: segment.contents });
         } catch (e) {
           segment.contents = "";
           Crash.create(e, extra.req);

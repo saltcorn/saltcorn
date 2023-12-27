@@ -156,7 +156,13 @@ const progress_bar = (type) => ({
     "Show value as a percentage filled on a horizontal or radial progress bar",
   run: (v, req, attrs = {}) => {
     const pcnt = Math.round((100 * (v - attrs.min)) / (attrs.max - attrs.min));
-    if (attrs?.radial)
+    if (attrs?.radial) {
+      const valShow =
+        typeof v !== "number"
+          ? ""
+          : (attrs?.decimal_places
+              ? v.toFixed(attrs?.decimal_places)
+              : Math.round(v)) + (attrs.max == "100" ? `%` : "");
       return (
         div({
           class: [
@@ -174,13 +180,9 @@ const progress_bar = (type) => ({
               } 0);`,
           },
         }) +
-        style(
-          `.progress-bar-radial-${pcnt}::before { content: "${v}${
-            attrs.max == "100" ? "%" : ""
-          }"; }`
-        )
+        style(`.progress-bar-radial-${pcnt}::before { content: "${valShow}"; }`)
       );
-    else
+    } else
       return div(
         {
           class: "progress",
