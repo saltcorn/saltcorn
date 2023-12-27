@@ -50,6 +50,12 @@ test("updateQueryStringParameter", () => {
   expect(updateQueryStringParameter("/foo", "_or_field", ["baz", "bar"])).toBe(
     "/foo?_or_field=baz&_or_field=bar"
   );
+  expect(
+    updateQueryStringParameter("/foo?_or_field=zoo", "_or_field", [
+      "baz",
+      "bar",
+    ])
+  ).toBe("/foo?_or_field=baz&_or_field=bar");
 });
 //publisher.publisher->name
 test("updateQueryStringParameter hash", () => {

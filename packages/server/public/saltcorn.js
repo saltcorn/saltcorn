@@ -37,10 +37,14 @@ function updateQueryStringParameter(uri1, key, value) {
   var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (uri.match(re)) {
-    return (
-      uri.replace(re, "$1" + key + "=" + encodeURIComponent(value) + "$2") +
-      hash
-    );
+    if (Array.isArray(value)) {
+      var rmuri = removeQueryStringParameter(uri, key);
+      return updateQueryStringParameter(rmuri, key, value);
+    } else
+      return (
+        uri.replace(re, "$1" + key + "=" + encodeURIComponent(value) + "$2") +
+        hash
+      );
   } else {
     if (Array.isArray(value))
       return (
