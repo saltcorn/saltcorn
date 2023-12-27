@@ -56,6 +56,20 @@ test("updateQueryStringParameter", () => {
       "bar",
     ])
   ).toBe("/foo?_or_field=baz&_or_field=bar");
+  expect(
+    updateQueryStringParameter(
+      "/foo?_or_field=baz&_or_field=bar",
+      "_or_field",
+      ["baz"]
+    )
+  ).toBe("/foo?&_or_field=baz"); //or no ampersand
+  expect(
+    updateQueryStringParameter(
+      "/foo?_or_field=baz&_or_field=bar",
+      "_or_field",
+      []
+    )
+  ).toBe("/foo?&"); //or no ampersand / question mark
 });
 //publisher.publisher->name
 test("updateQueryStringParameter hash", () => {
