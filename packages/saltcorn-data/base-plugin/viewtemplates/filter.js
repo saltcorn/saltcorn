@@ -351,7 +351,9 @@ const run = async (
 
           if (actionResult)
             segment.contents = script(
-              domReady(`common_done(${JSON.stringify(actionResult)})`)
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
             );
           else segment.contents = "";
           console.log({ actionResult, contents: segment.contents });
