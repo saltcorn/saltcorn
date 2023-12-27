@@ -21,6 +21,7 @@ const {
   select,
   button,
   text_attr,
+  domReady,
   script,
   a,
 } = require("@saltcorn/markup/tags");
@@ -335,6 +336,29 @@ const run = async (
         if (!f(state, extra.req.user)) segment.hide = true;
       }
     },
+    async action(segment) {
+      if (segment.action_style === "on_page_load") {
+        segment.type = "blank";
+        segment.style = {};
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: extra.req.get("Referrer"),
+            req: extra.req,
+          });
+
+          if (actionResult)
+            segment.contents = script(
+              domReady(`common_done(${JSON.stringify(actionResult)})`)
+            );
+          else segment.contents = "";
+          console.log({ actionResult, contents: segment.contents });
+        } catch (e) {
+          segment.contents = "";
+          Crash.create(e, extra.req);
+        }
+      }
+    },
   });
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
@@ -447,7 +471,7 @@ const run = async (
         options
       );
     },
-    action(segment) {
+    async action(segment) {
       const {
         block,
         action_label,
@@ -460,14 +484,7 @@ const run = async (
         confirm,
       } = segment;
       const label = action_label || action_name;
-      if (segment.action_style === "on_page_load") {
-        run_action_column({
-          col: { ...segment },
-          referrer: extra.req.get("Referrer"),
-          req: extra.req,
-        }).catch((e) => Crash.create(e, extra.req));
-        return "";
-      }
+
       const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
 
       if (action_name === "Clear") {
