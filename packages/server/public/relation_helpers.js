@@ -169,6 +169,10 @@ var relationHelpers = (() => {
    */
   const RelationsFinder = function (tablesCache, allViews, maxDepth) {
     this.maxDepth = +maxDepth;
+    if (isNaN(this.maxDepth)) {
+      console.log(`maxDepth '${maxDepth}' is not a number, set to 6`);
+      this.maxDepth = 6;
+    }
     this.allViews = allViews;
     const { tableIdCache, tableNameCache, fieldCache } = tablesCache;
     this.tableIdCache = tableIdCache;
@@ -303,8 +307,8 @@ var relationHelpers = (() => {
     const searcher = (current, path, level, visited) => {
       if (level > this.maxDepth) return;
       const visitedFkCopy = new Set(visited);
-      const fks = current.foreign_keys.filter((f) => !visitedFkCopy.has(f.id));
-      for (const fk of fks) {
+      for (const fk of current.foreign_keys) {
+        if (visitedFkCopy.has(fk.id)) continue;
         visitedFkCopy.add(fk.id);
         const target = this.tableNameCache[fk.reftable_name];
         if (!target)
@@ -315,10 +319,8 @@ var relationHelpers = (() => {
       }
 
       const visitedInboundCopy = new Set(visited);
-      const inbounds = (this.fieldCache[current.name] || []).filter(
-        (f) => !visitedInboundCopy.has(f.id)
-      );
-      for (const inbound of inbounds) {
+      for (const inbound of this.fieldCache[current.name] || []) {
+        if (visitedInboundCopy.has(inbound.id)) continue;
         visitedInboundCopy.add(inbound.id);
         const target = this.tableIdCache[inbound.table_id];
         if (!target)

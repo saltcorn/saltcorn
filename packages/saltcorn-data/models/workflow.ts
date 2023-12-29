@@ -267,7 +267,10 @@ class Workflow implements AbstractWorkflow {
       const { tables, views } = await build_schema_data();
       options.tables = tables;
       options.views = views;
-      options.max_relations_layer_depth = getState().getConfig("base_url", 6);
+      options.max_relations_layer_depth = getState().getConfig(
+        "max_relations_layer_depth",
+        6
+      );
       return {
         renderBuilder: {
           options,

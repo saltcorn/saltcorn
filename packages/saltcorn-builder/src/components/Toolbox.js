@@ -251,15 +251,19 @@ const LinkElem = ({ connectors }) => (
  * @subcategory components / Toolbox
  * @namespace
  */
-const ViewElem = ({ connectors, views }) => (
+const ViewElem = ({ connectors, views, isPageEdit }) => (
   <WrapElem
     connectors={connectors}
     icon="fas fa-eye"
     title="Embed a view"
     label="View"
-    disable={views.length < 2}
+    disable={!views || views.length < (!isPageEdit ? 2 : 1)}
   >
-    <View name={"not_assigned"} state={"shared"} view={views[0].name} />
+    <View
+      name={"not_assigned"}
+      state={"shared"}
+      view={views?.length > 0 ? views[0].name : ""}
+    />
   </WrapElem>
 );
 /**
@@ -425,10 +429,10 @@ const ViewLinkElem = ({ connectors, options }) => (
     icons={["fas fa-eye", "fas fa-link"]}
     title="Link to a view"
     label="ViewLink"
-    disable={options.views.length < 2}
+    disable={!options.views || options.views.length < 2}
   >
     <ViewLink
-      name={options.views.length > 0 ? options.views[0].name : ""}
+      name={options.views?.length > 0 ? options.views[0].name : ""}
       block={false}
       minRole={100}
       label={""}
@@ -703,7 +707,7 @@ const ToolboxPage = () => {
       </div>
       <div className="toolbar-row">
         <LinkElem connectors={connectors} />
-        <ViewElem connectors={connectors} views={views} />
+        <ViewElem connectors={connectors} views={views} isPageEdit={true} />
       </div>
       <div className="toolbar-row">
         <SearchElem connectors={connectors} />
