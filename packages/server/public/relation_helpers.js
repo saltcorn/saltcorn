@@ -169,6 +169,10 @@ var relationHelpers = (() => {
    */
   const RelationsFinder = function (tablesCache, allViews, maxDepth) {
     this.maxDepth = +maxDepth;
+    if (isNaN(this.maxDepth)) {
+      console.log(`maxDepth '${maxDepth}' is not a number, set to 6`);
+      this.maxDepth = 6;
+    }
     this.allViews = allViews;
     const { tableIdCache, tableNameCache, fieldCache } = tablesCache;
     this.tableIdCache = tableIdCache;
