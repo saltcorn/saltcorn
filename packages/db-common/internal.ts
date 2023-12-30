@@ -214,7 +214,7 @@ const inSelectWithLevels =
     let whereObj = null;
     const selectParts = [];
     const joinLevels = v.inSelectWithLevels.joinLevels;
-    const schemaS =
+    const schema =
       v.inSelectWithLevels.schema && !phs.is_sqlite
         ? `${quote(sqlsanitize(v.inSelectWithLevels.schema))}.`
         : "";
@@ -224,15 +224,16 @@ const inSelectWithLevels =
       const alias = quote(sqlsanitize(`${table}SubJ${i}`));
       if (i === 0) {
         selectParts.push(
-          `from ${schemaS}${quote(sqlsanitize(`${table}`))} ${quote(
+          `from ${schema}${quote(sqlsanitize(`${table}`))} ${quote(
             sqlsanitize(`${alias}`)
           )}`
         );
         whereObj = prefixFieldsInWhere(v.inSelectWithLevels.where, alias);
+        if (joinLevels.length === 1) inColumn = quote(`${alias}.id`);
       } else if (i < joinLevels.length - 1) {
         if (fkey) {
           selectParts.push(
-            `join ${schemaS}${quote(
+            `join ${schema}${quote(
               sqlsanitize(`${table}`)
             )} ${alias} on ${quote(
               `${lastAlias}.${sqlsanitize(fkey)}`
@@ -240,7 +241,7 @@ const inSelectWithLevels =
           );
         } else {
           selectParts.push(
-            `join ${schemaS}${quote(
+            `join ${schema}${quote(
               sqlsanitize(`${table}`)
             )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
               `${alias}.${sqlsanitize(inboundKey!)}`
@@ -252,7 +253,7 @@ const inSelectWithLevels =
           inColumn = quote(`${lastAlias}.${sqlsanitize(fkey)}`);
         } else {
           selectParts.push(
-            `join ${schemaS}${quote(
+            `join ${schema}${quote(
               sqlsanitize(`${table}`)
             )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
               `${alias}.${sqlsanitize(`${inboundKey}`)}`
