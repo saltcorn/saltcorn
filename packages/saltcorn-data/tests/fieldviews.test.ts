@@ -13,7 +13,6 @@ import {
   deleteViewFromServer,
   renderEditInEditConfig,
 } from "./remote_query_helper";
-import { Type } from "@saltcorn/types/common_types";
 
 let remoteQueries = false;
 

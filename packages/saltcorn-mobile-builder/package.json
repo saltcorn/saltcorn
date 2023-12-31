@@ -28,8 +28,9 @@
   "devDependencies": {
     "@types/node": "^16.11.7",
     "@types/xml2js": "0.4.11",
-    "jest": "^27.1.0",
-    "ts-jest": "^27.1.0"
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "@types/jest": "^29.5.11"
   },
   "jest": {
     "preset": "ts-jest",
@@ -38,10 +39,10 @@
       ".*\\.js$"
     ],
     "moduleNameMapper": {
-      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
-      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
-      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
-      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1"
+      "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",
+      "@saltcorn/db-common/(.*)": "<rootDir>/../db-common/dist/$1",
+      "@saltcorn/data/(.*)": "<rootDir>/../saltcorn-data/dist/$1",
+      "@saltcorn/types/(.*)": "<rootDir>/../saltcorn-types/dist/$1"
     }
   },
   "main": "./dist/index.js",

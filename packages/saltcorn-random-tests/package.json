@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "chaos-guinea-pig": "^0.1.4",
-    "jest": "^27.1.0",
+    "jest": "^29.7.0",
     "supertest": "^6.3.3"
   },
   "scripts": {
@@ -30,13 +30,13 @@
       "/plugin_packages/"
     ],
     "moduleNameMapper": {
-      "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
-      "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
-      "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
-      "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
-      "@saltcorn/markup$": "@saltcorn/markup/dist",
-      "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1",
-      "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1"
+      "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",
+      "@saltcorn/db-common/(.*)": "<rootDir>/../db-common/dist/$1",
+      "@saltcorn/data/(.*)": "<rootDir>/../saltcorn-data/dist/$1",
+      "@saltcorn/types/(.*)": "<rootDir>/../saltcorn-types/dist/$1",
+      "@saltcorn/markup$": "<rootDir>/../saltcorn-markup/dist",
+      "@saltcorn/markup/(.*)": "<rootDir>/../saltcorn-markup/dist/$1",
+      "@saltcorn/admin-models/(.*)": "<rootDir>/../saltcorn-admin-models/dist/$1"
     }
   },
   "publishConfig": {
