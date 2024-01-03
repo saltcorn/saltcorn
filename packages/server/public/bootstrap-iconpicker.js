@@ -496,7 +496,8 @@
                             var el = $this.data('bs.popover');
                             var tip = ($.fn.bsVersion() === '3.x') ? el.tip() 
                                       : ($.fn.bsVersion() === '5.x') 
-                                      ? $(bootstrap.Popover.getInstance($this).getTipElement())
+                                      ? $(bootstrap.Popover.getInstance($this).getTipElement?.() ||
+                                           bootstrap.Popover.getInstance($this).tip)
                                       : $(el.getTipElement())
                            
                             tip.addClass('iconpicker-popover');

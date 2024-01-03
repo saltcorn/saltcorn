@@ -785,7 +785,9 @@ const render = (
         value = row[join_field.split(".").join("_")];
       }
       if (field_type === "File") {
-        return value ? getState().fileviews[fieldview].run(value, "") : "";
+        return value
+          ? getState().fileviews[fieldview].run(value, "", configuration || {})
+          : "";
       }
 
       if (field_type && fieldview) {
