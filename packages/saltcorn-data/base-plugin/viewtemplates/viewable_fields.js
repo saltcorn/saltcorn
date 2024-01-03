@@ -678,24 +678,35 @@ const get_viewable_fields = (
             column
           );
         }
+        let gofv =
+          column.join_fieldview &&
+          type &&
+          type.fieldviews &&
+          type.fieldviews[column.join_fieldview]
+            ? (row) =>
+                type.fieldviews[column.join_fieldview].run(
+                  row[key],
+                  req,
+                  column
+                )
+            : null;
+        if (!gofv && column.field_type === "File") {
+          gofv = (row) =>
+            row[key]
+              ? getState().fileviews[column.join_fieldview].run(
+                  row[key],
+                  "",
+                  column
+                )
+              : "";
+        }
         fvrun = {
           ...setWidth,
           label: column.header_label
             ? text(__(column.header_label))
             : text(targetNm),
           row_key: key,
-          key:
-            column.join_fieldview &&
-            type &&
-            type.fieldviews &&
-            type.fieldviews[column.join_fieldview]
-              ? (row) =>
-                  type.fieldviews[column.join_fieldview].run(
-                    row[key],
-                    req,
-                    column
-                  )
-              : (row) => text(row[key]),
+          key: gofv ? gofv : (row) => text(row[key]),
           // sortlink: `javascript:sortby('${text(targetNm)}')`
         };
         if (column.click_to_edit) {
