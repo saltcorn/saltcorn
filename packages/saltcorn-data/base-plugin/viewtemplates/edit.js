@@ -1877,7 +1877,8 @@ module.exports = {
       return await table.getRow({ id });
     },
     async actionQuery() {
-      const { rndid, _csrf, onchange_action, ...body } = req.body;
+      const { rndid, _csrf, onchange_action, onchange_field, ...body } =
+        req.body;
 
       const table = Table.findOne({ id: table_id });
       const dbrow = body.id
@@ -1893,6 +1894,12 @@ module.exports = {
 
       try {
         if (onchange_action && !rndid) {
+          const fldCol = columns.find(
+            (c) =>
+              c.field_name === onchange_field &&
+              c.onchange_action === onchange_action
+          );
+          if (!fldCol) return { json: { error: "Field not found" } };
           const trigger = Trigger.findOne({ name: onchange_action });
           const result = await trigger.runWithoutRow({
             table,

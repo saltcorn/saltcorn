@@ -1078,7 +1078,7 @@ const renderFormLayout = (form: Form): string => {
         if (segment.fieldview) field.fieldview = segment.fieldview;
         field.attributes = { ...field.attributes, ...segment.configuration };
         if (segment.onchange_action)
-          field.attributes.onChange = `view_post('${form.viewname}', 'run_action', {onchange_action: '${segment.onchange_action}', ...get_form_record({viewname: '${form.viewname}'}) })`;
+          field.attributes.onChange = `view_post('${form.viewname}', 'run_action', {onchange_action: '${segment.onchange_action}', onchange_field:'${field.name}',  ...get_form_record({viewname: '${form.viewname}'}) })`;
         // TODO ch: get it more generic, split up editQuery
         field.attributes.isMobile = !isNode || form.req?.smr;
         return (
