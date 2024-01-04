@@ -336,7 +336,7 @@ const ActionSettings = () => {
               });
             }}
           >
-            <option value="" disabled selected>
+            <option value="" disabled>
               Select action...
             </option>
             {options.actions
