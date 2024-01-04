@@ -780,9 +780,9 @@ const ConfigField = ({
     (field_type === "String" && field.attributes?.options) ||
     field_type === "select";
   const getOptions = () =>
-    typeof field?.attributes.options === "string"
+    typeof field?.attributes?.options === "string"
       ? field.attributes.options.split(",").map((s) => s.trim())
-      : field.attributes.options || field.options;
+      : field?.attributes?.options || field.options;
 
   if (hasSelect && typeof value === "undefined") {
     //pick first value to mimic html form behaviour
