@@ -125,12 +125,14 @@ const configuration_workflow = (req) =>
             ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
+          const triggerActions = [];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           (
             await Trigger.find({
@@ -138,6 +140,7 @@ const configuration_workflow = (req) =>
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           const actionConfigForms = {
             Delete: [
@@ -219,6 +222,7 @@ const configuration_workflow = (req) =>
             blockDisplay,
             roles,
             actions,
+            triggerActions,
             builtInActions,
             fieldViewConfigForms,
             actionConfigForms,
