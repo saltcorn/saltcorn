@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 /* globals $, _sc_globalCsrf*/
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useEffect } from "react";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -775,13 +775,29 @@ const ConfigField = ({
         : field.attributes.options;
     if (!field.required && field.options) field.options.unshift("");
   }
+  const field_type = field.input_type || field.type.name || field.type;
+  const hasSelect =
+    (field_type === "String" && field.attributes?.options) ||
+    field_type === "select";
+  const getOptions = () =>
+    typeof field?.attributes.options === "string"
+      ? field.attributes.options.split(",").map((s) => s.trim())
+      : field.attributes.options || field.options;
+
+  if (hasSelect && typeof value === "undefined") {
+    //pick first value to mimic html form behaviour
+    const options = getOptions();
+    let o;
+    if ((o = options[0]))
+      useEffect(() => {
+        myOnChange(typeof o === "string" ? o : o.value || o.name || o);
+      }, []);
+  }
+
   const dispatch = {
     String() {
       if (field.attributes?.options) {
-        const options =
-          typeof field.attributes.options === "string"
-            ? field.attributes.options.split(",").map((s) => s.trim())
-            : field.attributes.options;
+        const options = getOptions();
         return (
           <select
             className="form-control form-select"
@@ -973,7 +989,7 @@ const ConfigField = ({
       );
     },
   };
-  const f = dispatch[field.input_type || field.type.name || field.type];
+  const f = dispatch[field_type];
   return f ? f() : null;
 };
 
