@@ -1877,10 +1877,8 @@ module.exports = {
       return await table.getRow({ id });
     },
     async actionQuery() {
-      const { rndid, _csrf, ...body } = req.body;
-      const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === rndid && rndid
-      );
+      const { rndid, _csrf, onchange_action, ...body } = req.body;
+
       const table = Table.findOne({ id: table_id });
       const dbrow = body.id
         ? await table.getRow(
@@ -1892,17 +1890,33 @@ module.exports = {
           )
         : undefined;
       const row = { ...dbrow, ...body };
+
       try {
-        const result = await run_action_column({
-          col,
-          req,
-          table,
-          row,
-          res,
-          referrer: req.get("Referrer"),
-        });
-        //console.log("result", result);
-        return { json: { success: "ok", ...(result || {}) } };
+        if (onchange_action && !rndid) {
+          const trigger = Trigger.findOne({ name: onchange_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            user: req.user,
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        } else {
+          const col = columns.find(
+            (c) => c.type === "Action" && c.rndid === rndid && rndid
+          );
+          const result = await run_action_column({
+            col,
+            req,
+            table,
+            row,
+            res,
+            referrer: req.get("Referrer"),
+          });
+          //console.log("result", result);
+          return { json: { success: "ok", ...(result || {}) } };
+        }
       } catch (e) {
         console.error(e);
         return { json: { error: e.message || e } };
