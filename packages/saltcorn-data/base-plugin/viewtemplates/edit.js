@@ -125,12 +125,14 @@ const configuration_workflow = (req) =>
             ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
+          const triggerActions = [];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           (
             await Trigger.find({
@@ -138,6 +140,7 @@ const configuration_workflow = (req) =>
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           const actionConfigForms = {
             Delete: [
@@ -219,6 +222,7 @@ const configuration_workflow = (req) =>
             blockDisplay,
             roles,
             actions,
+            triggerActions,
             builtInActions,
             fieldViewConfigForms,
             actionConfigForms,
@@ -1873,10 +1877,9 @@ module.exports = {
       return await table.getRow({ id });
     },
     async actionQuery() {
-      const { rndid, _csrf, ...body } = req.body;
-      const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === rndid && rndid
-      );
+      const { rndid, _csrf, onchange_action, onchange_field, ...body } =
+        req.body;
+
       const table = Table.findOne({ id: table_id });
       const dbrow = body.id
         ? await table.getRow(
@@ -1888,17 +1891,39 @@ module.exports = {
           )
         : undefined;
       const row = { ...dbrow, ...body };
+
       try {
-        const result = await run_action_column({
-          col,
-          req,
-          table,
-          row,
-          res,
-          referrer: req.get("Referrer"),
-        });
-        //console.log("result", result);
-        return { json: { success: "ok", ...(result || {}) } };
+        if (onchange_action && !rndid) {
+          const fldCol = columns.find(
+            (c) =>
+              c.field_name === onchange_field &&
+              c.onchange_action === onchange_action
+          );
+          if (!fldCol) return { json: { error: "Field not found" } };
+          const trigger = Trigger.findOne({ name: onchange_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            user: req.user,
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        } else {
+          const col = columns.find(
+            (c) => c.type === "Action" && c.rndid === rndid && rndid
+          );
+          const result = await run_action_column({
+            col,
+            req,
+            table,
+            row,
+            res,
+            referrer: req.get("Referrer"),
+          });
+          //console.log("result", result);
+          return { json: { success: "ok", ...(result || {}) } };
+        }
       } catch (e) {
         console.error(e);
         return { json: { error: e.message || e } };

@@ -336,6 +336,9 @@ const ActionSettings = () => {
               });
             }}
           >
+            <option value="" disabled>
+              Select action...
+            </option>
             {options.actions
               .filter((f) => !(options.builtInActions || []).includes(f))
               .map((f, ix) => (
@@ -344,20 +347,24 @@ const ActionSettings = () => {
                 </option>
               ))}
           </select>
-          <label>Only if... (formula)</label>
-          <input
-            type="text"
-            className="form-control text-to-display"
-            value={step_only_ifs?.[use_setting_action_n] || ""}
-            onChange={(e) => {
-              if (!e.target) return;
-              const value = e.target.value;
-              setProp((prop) => {
-                if (!prop.step_only_ifs) prop.step_only_ifs = [];
-                prop.step_only_ifs[use_setting_action_n] = value;
-              });
-            }}
-          />
+          {options.mode !== "page" ? (
+            <Fragment>
+              <label>Only if... (formula)</label>
+              <input
+                type="text"
+                className="form-control text-to-display"
+                value={step_only_ifs?.[use_setting_action_n] || ""}
+                onChange={(e) => {
+                  if (!e.target) return;
+                  const value = e.target.value;
+                  setProp((prop) => {
+                    if (!prop.step_only_ifs) prop.step_only_ifs = [];
+                    prop.step_only_ifs[use_setting_action_n] = value;
+                  });
+                }}
+              />
+            </Fragment>
+          ) : null}
           {stepCfgFields ? (
             <Fragment>
               Step configuration:
