@@ -82,7 +82,8 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         label: req.__("Label"),
         name: "label",
         sublabel: req.__("Name of the field"),
-        input_type: "text",
+        type: "String",
+        attributes: { autofocus: true },
         validator(s) {
           if (!s || s === "") return req.__("Missing label");
           if (!id && existing_names.includes(Field.labelToName(s)))
@@ -95,15 +96,6 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
             return req.__("Not a valid field name");
           }
         },
-      }),
-      // description
-      new Field({
-        label: req.__("Description"),
-        name: "description",
-        sublabel: req.__(
-          "Description allows to give more information about field"
-        ),
-        input_type: "text",
       }),
       new Field({
         label: req.__("Type"),
@@ -120,6 +112,16 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           !getState().getConfig("development_mode", false) &&
           (hasData || db.isSQLite),
       }),
+      // description
+      new Field({
+        label: req.__("Description"),
+        name: "description",
+        sublabel: req.__(
+          "Description allows to give more information about field"
+        ),
+        input_type: "text",
+      }),
+
       new Field({
         label: req.__("Calculated"),
         name: "calculated",

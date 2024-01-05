@@ -1806,6 +1806,9 @@ module.exports = {
     },
     async saveFileQuery(fieldVal, fieldId, fieldView, row) {
       const field = await Field.findOne({ id: fieldId });
+      const column = columns.find(
+        (c) => c.type === "Field" && c.field_name === field.name
+      );
       field.fieldviewObj = getState().fileviews[fieldView];
       const [pre, allData] = fieldVal.split(",");
       const buffer = require("buffer/").Buffer.from(allData, "base64");
@@ -1818,6 +1821,7 @@ module.exports = {
       const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
         ...row,
         ...field.attributes,
+        ...(column?.configuration || {}),
       });
       const file = await File.from_contents(
         filename,
