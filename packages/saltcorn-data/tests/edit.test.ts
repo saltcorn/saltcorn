@@ -85,7 +85,12 @@ const mkConfig = (hasSave?: boolean, onChange?: boolean) => {
       ],
     },
     columns: [
-      { type: "Field", fieldview: "edit", field_name: "name" },
+      {
+        type: "Field",
+        fieldview: "edit",
+        field_name: "name",
+        ...(onChange ? { onchange_action: "fieldchangeaction" } : {}),
+      },
       { type: "Field", fieldview: "edit", field_name: "age" },
       ...(hasSave
         ? [
@@ -516,16 +521,45 @@ describe("Edit view field onchange", () => {
     const persons = await Table.findOne("ValidatedTable1");
     assertIsSet(persons);
     const v = await View.create({
-      name: "ValidatedWithSave",
+      name: "OnChangeEdit",
       table_id: persons.id,
       viewtemplate: "Edit",
       min_role: 100,
       configuration: mkConfig(false, true),
     });
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: persons.id,
+      name: "fieldchangeaction",
+      when_trigger: "Never",
+      configuration: {
+        code: `return {notify: "Hello from trigger"}`,
+      },
+    });
     const vres0 = await v.run({}, mockReqRes);
     expect(vres0).toContain("<form");
     expect(vres0).toContain(
-      `onChange="view_post('ValidatedWithSave', 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record({viewname: 'ValidatedWithSave'}) })"`
+      `onChange="view_post('OnChangeEdit', 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record({viewname: 'OnChangeEdit'}) })"`
     );
+  });
+  it("should run route", async () => {
+    const v = await View.findOne({ name: "OnChangeEdit" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    const body = {
+      onchange_action: "fieldchangeaction",
+      onchange_field: "name",
+    };
+    await v.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      { req: { body } },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      notify: "Hello from trigger",
+      success: "ok",
+    });
   });
 });
