@@ -97,15 +97,6 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           }
         },
       }),
-      // description
-      new Field({
-        label: req.__("Description"),
-        name: "description",
-        sublabel: req.__(
-          "Description allows to give more information about field"
-        ),
-        input_type: "text",
-      }),
       new Field({
         label: req.__("Type"),
         name: "type",
@@ -121,6 +112,16 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           !getState().getConfig("development_mode", false) &&
           (hasData || db.isSQLite),
       }),
+      // description
+      new Field({
+        label: req.__("Description"),
+        name: "description",
+        sublabel: req.__(
+          "Description allows to give more information about field"
+        ),
+        input_type: "text",
+      }),
+
       new Field({
         label: req.__("Calculated"),
         name: "calculated",
