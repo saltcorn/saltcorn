@@ -807,7 +807,7 @@ const render = (
       } else {
         [table, fld] = agg_relation.split(".");
       }
-      const targetNm =
+      let targetNm =
         column.targetNm ||
         db.sqlsanitize(
           (
@@ -822,6 +822,12 @@ const render = (
               aggwhere || ""
           ).toLowerCase()
         );
+      if (targetNm.length > 58) {
+        targetNm = targetNm
+          .split("")
+          .filter((c, i) => i % 2 == 0)
+          .join("");
+      }
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");
