@@ -89,6 +89,7 @@ const pagePropertiesForm = async (req, isNew) => {
         },
         sublabel: req.__("A short name that will be in your URL"),
         type: "String",
+        attributes: { autofocus: true },
       }),
       new Field({
         label: req.__("Title"),
