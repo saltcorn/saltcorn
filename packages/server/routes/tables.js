@@ -162,9 +162,7 @@ const tableForm = async (table, req) => {
             },
             {
               label: req.__("Version history"),
-              sublabel: req.__(
-                "Track table data changes over time"
-              ),
+              sublabel: req.__("Track table data changes over time"),
               name: "versioned",
               type: "Bool",
             },
@@ -225,8 +223,9 @@ router.get(
                 {
                   label: req.__("Table name"),
                   name: "name",
-                  input_type: "text",
+                  type: "String",
                   required: true,
+                  attributes: { autofocus: true },
                 },
                 ...(table_provider_names.length
                   ? [
@@ -236,7 +235,7 @@ router.get(
                         input_type: "select",
                         options: [
                           // Due to packages/saltcorn-markup/helpers.ts#L45 (select_options replaces label if o.value === "")
-                          {label:req.__("Database table"), value:'-'},
+                          { label: req.__("Database table"), value: "-" },
                           ...table_provider_names,
                         ],
                         required: true,
@@ -1065,10 +1064,7 @@ router.post(
       } else if (db.sqlsanitize(name) === "") {
         req.flash("error", req.__(`Invalid table name %s`, name));
         res.redirect(`/table/new`);
-      } else if (
-        rest.provider_name &&
-        rest.provider_name !== "-"
-      ) {
+      } else if (rest.provider_name && rest.provider_name !== "-") {
         const table = await Table.create(name, rest);
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
