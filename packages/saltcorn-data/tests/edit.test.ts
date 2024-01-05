@@ -29,7 +29,7 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
-const mkConfig = (hasSave?: boolean) => {
+const mkConfig = (hasSave?: boolean, onChange?: boolean) => {
   return {
     layout: {
       above: [
@@ -42,7 +42,12 @@ const mkConfig = (hasSave?: boolean) => {
             {
               above: [
                 null,
-                { type: "field", fieldview: "edit", field_name: "name" },
+                {
+                  type: "field",
+                  fieldview: "edit",
+                  field_name: "name",
+                  ...(onChange ? { onchange_action: "fieldchangeaction" } : {}),
+                },
               ],
             },
           ],
@@ -504,5 +509,23 @@ describe("Edit-in-edit", () => {
     );
     const nbooks2 = await books.countRows({ publisher: pubrow.id });
     expect(nbooks2).toBe(1);
+  });
+});
+describe("Edit view field onchange", () => {
+  it("should have onchange in get", async () => {
+    const persons = await Table.findOne("ValidatedTable1");
+    assertIsSet(persons);
+    const v = await View.create({
+      name: "ValidatedWithSave",
+      table_id: persons.id,
+      viewtemplate: "Edit",
+      min_role: 100,
+      configuration: mkConfig(false, true),
+    });
+    const vres0 = await v.run({}, mockReqRes);
+    expect(vres0).toContain("<form");
+    expect(vres0).toContain(
+      `onChange="view_post('ValidatedWithSave', 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record({viewname: 'ValidatedWithSave'}) })"`
+    );
   });
 });
