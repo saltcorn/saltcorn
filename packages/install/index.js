@@ -338,7 +338,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
     await asyncSudo(["systemctl", "enable", "postgresql"], false, dryRun);
     await asyncSudo(["systemctl", "start", "postgresql"], false, dryRun);
   }
-  if (isSUSE) {
+  if (port === 80) {
     await asyncSudo(
       [
         "bash",
