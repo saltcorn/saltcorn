@@ -374,6 +374,9 @@ const render = ({
             target: isWeb && segment.target_blank ? "_blank" : false,
             rel: segment.nofollow ? "nofollow" : false,
             style,
+            ...(segment.link_src === "Page Group"
+              ? { page_group_link: segment.url }
+              : {}),
           },
           segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
           segment.text

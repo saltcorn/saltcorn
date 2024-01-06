@@ -12,6 +12,8 @@ const File = require("../models/file");
 const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
+const PageGroup = require("../models/page_group");
+const PageGroupMember = require("../models/page_group_member");
 const Tag = require("../models/tag");
 const Model = require("../models/model");
 const ModelInstance = require("../models/model_instance");
@@ -1689,6 +1691,77 @@ module.exports =
               relation: ".employee.department.manager",
               name: "bc653",
               state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    const group = await PageGroup.create({
+      name: "page_group",
+      min_role: 100,
+    });
+    for (const { name, eligible_formula } of [
+      {
+        name: "iPhone SE",
+        eligible_formula: "width < 380 && height < 670",
+      },
+      {
+        name: "iPhone XR",
+        eligible_formula: "width < 415 && height < 900",
+      },
+      {
+        name: "Surface Pro 7",
+        eligible_formula: "width < 915 && height < 1370",
+      },
+      {
+        name: "Laptop",
+        eligible_formula: "width < 1900 && height < 1000",
+      },
+    ]) {
+      const page = await Page.create({
+        name: name,
+        title: name,
+        description: `This is ${name}`,
+        min_role: 100,
+        layout: {
+          above: [
+            {
+              type: "blank",
+              block: false,
+              contents: `Hello I am ${name}`,
+              textStyle: "",
+            },
+          ],
+        },
+        fixed_states: {},
+      });
+      await group.addMember({
+        page_id: page.id,
+        eligible_formula: eligible_formula,
+      });
+    }
+
+    await View.create({
+      table_id: employee.id,
+      name: "view_with_group_link",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [],
+        layout: {
+          above: [
+            {
+              type: "link",
+              link_src: "Page Group",
+              url: "page/page_group",
+              text: "Page Group link",
+              block: false,
+              minRole: 100,
+              isFormula: {
+                url: false,
+              },
+              link_icon: "",
             },
           ],
         },

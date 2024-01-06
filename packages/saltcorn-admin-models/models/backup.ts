@@ -7,6 +7,7 @@ import File from "@saltcorn/data/models/file";
 import Field from "@saltcorn/data/models/field";
 import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
 import Plugin from "@saltcorn/data/models/plugin";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
@@ -30,6 +31,7 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  page_group_pack,
   tag_pack,
   model_instance_pack,
   event_log_pack,
@@ -74,6 +76,11 @@ const create_pack_json = async (
     await Page.find({}),
     async (v: Page) => await page_pack(v.name)
   );
+  // page groups
+  const page_groups = await asyncMap(
+    await PageGroup.find({}),
+    async (v: Page) => await page_group_pack(v.name)
+  );
 
   // triggers
   const triggers = Trigger.find({}).map((tr: Trigger) => tr.toJson);
@@ -113,6 +120,7 @@ const create_pack_json = async (
     views,
     plugins,
     pages,
+    page_groups,
     triggers,
     roles,
     library,

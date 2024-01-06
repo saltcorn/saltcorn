@@ -5,11 +5,21 @@ const {
   mkTable,
   link,
   post_delete_btn,
+  post_btn,
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
-const { h4, p, div, a, i, input, text } = require("@saltcorn/markup/tags");
+const {
+  h4,
+  p,
+  div,
+  a,
+  i,
+  input,
+  span,
+  text,
+} = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
@@ -273,6 +283,53 @@ const viewsList = async (
       );
 };
 
+const page_group_dropdown = (page_group, req) =>
+  settingsDropdown(`groupDropdownMenuButton${page_group.id}`, [
+    post_dropdown_item(
+      `/page_groupedit/add-to-menu/${page_group.id}`,
+      '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
+      req
+    ),
+    post_dropdown_item(
+      `/page_groupedit/clone/${page_group.id}`,
+      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+      req
+    ),
+    a(
+      {
+        class: "dropdown-item",
+        // TODO check url why view for page, what do we need for page group
+        href: `javascript:ajax_modal('/admin/snapshot-restore/pagegroup/${page_group.name}')`,
+      },
+      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
+    ),
+    div({ class: "dropdown-divider" }),
+    post_dropdown_item(
+      `/page_groupedit/delete/${page_group.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+      req,
+      true,
+      page_group.name
+    ),
+  ]);
+
+const page_group_member_dropdown = (group, member, req) =>
+  settingsDropdown(`groupMemberDropdownMenuButton${group.id}`, [
+    post_dropdown_item(
+      `/page_groupedit/clone-member/${member.id}`,
+      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+      req
+    ),
+    div({ class: "dropdown-divider" }),
+    post_dropdown_item(
+      `/page_groupedit/remove-member/${group.id}/${member.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+      req,
+      true,
+      member.name ? member.name : req.__("the member")
+    ),
+  ]);
+
 /**
  * @param {object} page
  * @param {object} req
@@ -327,9 +384,9 @@ const page_dropdown = (page, req) =>
  * @param {object} req
  * @returns {Form}
  */
-const editPageRoleForm = (page, roles, req) =>
+const editPageRoleForm = (page, roles, req, isGroup) =>
   editRoleForm({
-    url: `/pageedit/setrole/${page.id}`,
+    url: `/${!isGroup ? "page" : "page_group"}edit/setrole/${page.id}`,
     current_role: page.min_role,
     roles,
     req,
@@ -376,6 +433,131 @@ const getPageList = (rows, roles, req, { tagId, domId, showList } = {}) => {
       hover: true,
       tableClass: tagId ? `collapse ${showList ? "show" : ""}` : "",
       tableId: domId,
+    }
+  );
+};
+
+/**
+ * @param {*} rows
+ * @param {*} roles
+ * @param {*} req
+ */
+const getPageGroupList = (rows, roles, req) => {
+  return mkTable(
+    [
+      {
+        label: req.__("Name"),
+        key: (r) =>
+          link(`/page/${r.name}`, r.name, { page_group_link: r.name }),
+      },
+      {
+        label: req.__("Role to access"),
+        key: (row) => editPageRoleForm(row, roles, req, true),
+      },
+      {
+        label: req.__("Edit"),
+        key: (r) => link(`/page_groupedit/${r.name}`, req.__("Edit")),
+      },
+      {
+        label: "",
+        key: (r) => page_group_dropdown(r, req),
+      },
+    ],
+    rows,
+    {
+      hover: true,
+    }
+  );
+};
+
+const pageGroupMembers = async (pageGroup, req) => {
+  const db = require("@saltcorn/data/db");
+  const Page = require("@saltcorn/data/models/page");
+  const pages = !db.isSQLite
+    ? await Page.find({
+        id: { in: pageGroup.members.map((r) => r.page_id) },
+      })
+    : await Page.find();
+  const pageIdToName = pages.reduce((acc, page) => {
+    acc[page.id] = page.name;
+    return acc;
+  }, {});
+  let members = pageGroup.sortedMembers();
+  const upDownBtns = (r, req) => {
+    if (members.length <= 1) return "";
+    else
+      return div(
+        { class: "container" },
+        div(
+          { class: "row" },
+          div(
+            { class: "col-1" },
+            r.sequence !== members[0].sequence
+              ? post_btn(
+                  `/page_groupedit/move-member/${r.id}/Up`,
+                  `<i class="fa fa-arrow-up"></i>`,
+                  req.csrfToken(),
+                  {
+                    small: true,
+                    ajax: true,
+                    reload_on_done: true, // TODO ??
+                    btnClass: "btn btn-secondary btn-sm me-1",
+                    req,
+                    formClass: "d-inline",
+                  }
+                )
+              : ""
+          ),
+          div(
+            { class: "col-1" },
+            r.sequence !== members[members.length - 1].sequence
+              ? post_btn(
+                  `/page_groupedit/move-member/${r.id}/Down`,
+                  `<i class="fa fa-arrow-down"></i>`,
+                  req.csrfToken(),
+                  {
+                    small: true,
+                    ajax: true,
+                    reload_on_done: true, // TODO ??
+                    btnClass: "btn btn-secondary btn-sm me-1",
+                    req,
+                    formClass: "d-inline",
+                  }
+                )
+              : ""
+          )
+        )
+      );
+  };
+
+  return mkTable(
+    [
+      {
+        label: req.__("Page"),
+        key: (r) =>
+          link(`/page/${pageIdToName[r.page_id]}`, pageIdToName[r.page_id]),
+      },
+      {
+        label: req.__("Name"),
+        key: (r) => r.name || "",
+      },
+      {
+        label: "",
+        key: (r) => upDownBtns(r, req),
+      },
+      {
+        label: req.__("Edit"),
+        key: (member) =>
+          link(`/page_groupedit/edit-member/${member.id}`, req.__("Edit")),
+      },
+      {
+        label: "",
+        key: (r) => page_group_member_dropdown(pageGroup, r, req),
+      },
+    ],
+    members,
+    {
+      hover: true,
     }
   );
 };
@@ -450,5 +632,7 @@ module.exports = {
   setTableRefs,
   viewsList,
   getPageList,
+  getPageGroupList,
+  pageGroupMembers,
   getTriggerList,
 };

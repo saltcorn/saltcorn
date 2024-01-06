@@ -10,6 +10,7 @@ const User = require("../../models/user");
 const Crash = require("../../models/crash");
 const Form = require("../../models/form");
 const Page = require("../../models/page");
+const PageGroup = require("../../models/page_group");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
@@ -212,6 +213,10 @@ const configuration_workflow = (req) =>
             true,
             true
           );
+          const pages = await Page.find();
+          const groups = (await PageGroup.find()).map((g) => ({
+            name: g.name,
+          }));
 
           return {
             tableName: table.name,
@@ -236,6 +241,8 @@ const configuration_workflow = (req) =>
               !!table.ownership_formula ||
               table.name === "users",
             excluded_subview_templates: ["Room"],
+            pages,
+            page_groups: groups,
           };
         },
       },
@@ -335,6 +342,7 @@ const configuration_workflow = (req) =>
             })
           );
           const pages = await Page.find();
+          const groups = await PageGroup.find();
           return new Form({
             fields: [
               {
@@ -362,6 +370,7 @@ const configuration_workflow = (req) =>
                   options: [
                     "View",
                     "Page",
+                    "PageGroup",
                     "Formula",
                     "URL formula",
                     "Back to referer",
@@ -387,6 +396,16 @@ const configuration_workflow = (req) =>
                   options: pages.map((p) => p.name),
                 },
                 showIf: { destination_type: "Page" },
+              },
+              {
+                name: "page_group_when_done",
+                label: req.__("Destination page group"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: groups.map((p) => p.name),
+                },
+                showIf: { destination_type: "PageGroup" },
               },
               {
                 name: "dest_url_formula",
@@ -974,6 +993,7 @@ const runPost = async (
     destination_type,
     dest_url_formula,
     page_when_done,
+    page_group_when_done,
   },
   state,
   body,
@@ -1162,6 +1182,7 @@ const runPost = async (
         destination_type,
         dest_url_formula,
         page_when_done,
+        page_group_when_done,
         redirect,
       },
       req,
@@ -1299,6 +1320,7 @@ const update_matching_rows = async (
     destination_type,
     dest_url_formula,
     page_when_done,
+    page_group_when_done,
   },
   body,
   { req, res, redirect },
@@ -1375,6 +1397,7 @@ const update_matching_rows = async (
         destination_type,
         dest_url_formula,
         page_when_done,
+        page_group_when_done,
         redirect,
       },
       req,
@@ -1519,7 +1542,7 @@ const prepare = async (
  * @param {*} table_id id of the table of the view
  * @param {*} fields all fields in table
  * @param {*} pk private key field
- * @param {*} param4 view_when_done, formula_destinations, destination_type, dest_url_formula, page_when_done, redirect
+ * @param {*} param4 view_when_done, formula_destinations, destination_type, dest_url_formula, page_when_done, page_group_when_done, redirect
  * @param {*} req
  * @param {*} res
  * @param {*} body reuqest body
@@ -1537,6 +1560,7 @@ const whenDone = async (
     destination_type,
     dest_url_formula,
     page_when_done,
+    page_group_when_done,
     redirect,
   },
   req,
@@ -1574,6 +1598,9 @@ const whenDone = async (
     return;
   } else if (destination_type === "Page" && page_when_done) {
     res_redirect(`/page/${page_when_done}`);
+    return;
+  } else if (destination_type === "PageGroup" && page_group_when_done) {
+    res_redirect(`/page/${page_group_when_done}`);
     return;
   } else if (destination_type === "URL formula" && dest_url_formula) {
     const url = eval_expression(dest_url_formula, row);
@@ -2000,6 +2027,7 @@ module.exports = {
         dest_url_formula,
         formula_destinations,
         page_when_done,
+        page_group_when_done,
       },
     } = view;
     const errs = [];
@@ -2019,6 +2047,13 @@ module.exports = {
       if (!page)
         errs.push(
           `In View ${name}, page when done ${page_when_done} not found`
+        );
+    }
+    if (destination_type === "PageGroup") {
+      const group = PageGroup.findOne({ name: page_group_when_done });
+      if (!group)
+        errs.push(
+          `In View ${name}, page group when done ${page_group_when_done} not found`
         );
     }
     if (destination_type === "Formula") {

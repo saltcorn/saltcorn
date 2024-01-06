@@ -625,6 +625,7 @@ describe("clear all page", () => {
       .set("Cookie", loginCookie)
       .send("tables=on")
       .send("views=on")
+      .send("page_groups=on")
       .send("pages=on")
       .send("files=on")
       .send("users=on")

@@ -57,6 +57,14 @@ function updateQueryStringParameter(uri1, key, value) {
   }
 }
 
+function updateQueryStringParameters(uri1, kvs) {
+  let uri = uri1;
+  Object.entries(kvs).forEach((kv) => {
+    uri = updateQueryStringParameter(uri, kv[0], kv[1]);
+  });
+  return uri;
+}
+
 function removeQueryStringParameter(uri1, key) {
   let hash = "";
   let uri = uri1;
@@ -883,6 +891,11 @@ function toggle_android_platform() {
     $("#dockerCheckboxId").attr("checked", false);
     $("#dockerLabelId").addClass("d-none");
   }
+}
+
+function cancelMemberEdit(groupName) {
+  const url = new URL(location.href);
+  location.href = `${url.origin}/page_groupedit/${groupName}`;
 }
 
 function join_field_clicked(e, fieldPath) {

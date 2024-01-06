@@ -11,6 +11,8 @@ import ModelInstance from "../models/model_instance";
 import File from "../models/file";
 import View from "../models/view";
 import Page from "../models/page";
+import PageGroup from "../models/page_group";
+import PageGroupMember from "../models/page_group_member";
 import layoutModel from "../models/layout";
 const { getViews } = layoutModel;
 
@@ -159,7 +161,106 @@ describe("Page", () => {
   });
   it("should delelete", async () => {
     const cs = await Page.findOne({ name: "foo" });
+    assertIsSet(cs);
     await cs.delete();
+  });
+});
+
+describe("PageGroup", () => {
+  it("should create", async () => {
+    await PageGroup.create({
+      name: "foo",
+      description: "grgw",
+      members: [],
+      min_role: 100,
+    });
+    const cs = PageGroup.findOne({ name: "foo" });
+    assertIsSet(cs);
+    assertIsSet(cs.id);
+    expect(cs.name).toBe("foo");
+  });
+
+  it("should update", async () => {
+    const cs = PageGroup.findOne({ name: "foo" });
+    assertIsSet(cs);
+    assertIsSet(cs.id);
+    await PageGroup.update(cs.id, { name: "bar" });
+    expect(PageGroup.findOne({ name: "foo" })).toBeUndefined();
+    expect(PageGroup.findOne({ name: "bar" })).toBeDefined();
+  });
+
+  it("should add pages", async () => {
+    const pageGroup = PageGroup.findOne({ name: "bar" });
+    assertIsSet(pageGroup);
+    const aPage = Page.findOne({ name: "a_page" });
+    const pageWithFile = Page.findOne({ name: "page_with_html_file" });
+    const pageWithEmbeddedHtml = Page.findOne({
+      name: "page_with embedded_html_page",
+    });
+    assertIsSet(aPage);
+    assertIsSet(pageWithFile);
+    assertIsSet(pageWithEmbeddedHtml);
+    await pageGroup.addMember({
+      page_id: aPage.id as number,
+      eligible_formula: "true",
+      sequence: 1,
+    });
+    await pageGroup.addMember({
+      page_id: pageWithFile.id as number,
+      eligible_formula: "true",
+      sequence: 2,
+    });
+    await pageGroup.addMember({
+      page_id: pageWithEmbeddedHtml.id as number,
+      eligible_formula: "true",
+      sequence: 3,
+    });
+    const updated = PageGroup.findOne({ name: "bar" });
+    assertIsSet(updated);
+    expect(updated.members.length).toBe(3);
+  });
+
+  it("should move members up/down", async () => {
+    const pageGroup = PageGroup.findOne({ name: "bar" });
+    assertIsSet(pageGroup);
+    const members = pageGroup.sortedMembers();
+    expect(members.map((m) => m.id)).toEqual([5, 6, 7]);
+    await pageGroup.moveMember(members[1], "Down");
+    const updated = PageGroup.findOne({ name: "bar" });
+    assertIsSet(updated);
+    const updatedMembers = updated.sortedMembers();
+    expect(updatedMembers.map((m) => m.id)).toEqual([5, 7, 6]);
+  });
+
+  it("should find members", async () => {
+    const allMembers = await PageGroupMember.find();
+    const allMembersCached = await PageGroupMember.find({}, { cached: true });
+    expect(allMembers.length).toBe(allMembersCached.length);
+    expect(allMembers).toEqual(expect.arrayContaining(allMembersCached));
+  });
+
+  it("should clone the page group", async () => {
+    const source = PageGroup.findOne({ name: "bar" });
+    assertIsSet(source);
+    const copy = await source.clone();
+    assertIsSet(copy);
+    assertIsSet(copy.id);
+    expect(source.id).not.toBe(copy.id);
+    expect(copy.name).toBe("bar copy");
+    const fromState = PageGroup.findOne({ name: "bar copy" });
+    assertIsSet(fromState);
+    expect(fromState.id).toBe(copy.id);
+    expect(fromState.members).toHaveLength(source.members.length);
+  });
+
+  it("should delete", async () => {
+    const cs = PageGroup.findOne({ name: "bar" });
+    assertIsSet(cs);
+    const membersBefore = (await PageGroupMember.find()).length;
+    await cs.delete();
+    expect(PageGroup.findOne({ name: "bar" })).toBeUndefined();
+    const membersAfter = (await PageGroupMember.find()).length;
+    expect(membersAfter).toBeLessThan(membersBefore);
   });
 });
 

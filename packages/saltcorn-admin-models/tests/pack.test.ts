@@ -5,6 +5,7 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  page_group_pack,
   library_pack,
   trigger_pack,
   role_pack,
@@ -204,8 +205,51 @@ describe("pack create", () => {
     try {
       await page_pack("nonexist_page");
     } catch (error: any) {
+      expect(error.message).toMatch("Unable to find page 'nonexist_page'");
+    }
+  });
+
+  it("creates page group pack", async () => {
+    const groupPack = await page_group_pack("page_group");
+    expect(groupPack).toEqual({
+      name: "page_group",
+      description: null,
+      min_role: 100,
+      members: [
+        {
+          page_name: "iPhone SE",
+          description: null,
+          sequence: 1,
+          eligible_formula: "width < 380 && height < 670",
+        },
+        {
+          page_name: "iPhone XR",
+          description: null,
+          sequence: 2,
+          eligible_formula: "width < 415 && height < 900",
+        },
+        {
+          page_name: "Surface Pro 7",
+          description: null,
+          sequence: 3,
+          eligible_formula: "width < 915 && height < 1370",
+        },
+        {
+          page_name: "Laptop",
+          description: null,
+          sequence: 4,
+          eligible_formula: "width < 1900 && height < 1000",
+        },
+      ],
+    });
+  });
+
+  it("creates page pack for non existing page group", async () => {
+    try {
+      await page_group_pack("nonexist_page_group");
+    } catch (error: any) {
       expect(error.message).toMatch(
-        "Cannot read properties of undefined (reading 'is_root_page_for_roles')"
+        "Unable to find page group 'nonexist_page_group'"
       );
     }
   });

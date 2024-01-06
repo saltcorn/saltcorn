@@ -7,6 +7,7 @@ const field = require("./fields");
 const list = require("./list");
 const view = require("./view");
 const page = require("./page");
+const pagegroupedit = require("./page_groupedit");
 const pageedit = require("./pageedit");
 const search = require("./search");
 const files = require("./files");
@@ -58,6 +59,7 @@ module.exports =
     app.use("/models", models);
     app.use("/settings", settings);
     app.use("/pageedit", pageedit);
+    app.use("/page_groupedit", pagegroupedit);
     app.use("/actions", actions);
     app.use("/eventlog", eventlog);
     app.use("/library", library);

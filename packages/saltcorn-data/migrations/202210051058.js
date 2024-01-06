@@ -17,8 +17,13 @@ const js = async () => {
   await File.ensure_file_store(db.getTenantSchema());
 
   const state = getState();
+  await state?.refresh_tables(false);
+  await state?.refresh_views(false);
+  await state?.refresh_triggers(false);
+  await state?.refresh_pages(false);
+  await state?.refresh_config(false);
+  await state?.refresh_npmpkgs(false);
 
-  await state?.refresh(false);
   //TODO bail out if S3
 
   const useS3 = state?.getConfig("storage_s3_enabled");

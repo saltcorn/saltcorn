@@ -24,6 +24,7 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  page_group_pack,
   role_pack,
   library_pack,
   trigger_pack,
@@ -205,6 +206,7 @@ router.post(
       views: [],
       plugins: [],
       pages: [],
+      page_groups: [],
       roles: [],
       library: [],
       triggers: [],
@@ -227,6 +229,9 @@ router.post(
           break;
         case "page":
           pack.pages.push(await page_pack(name));
+          break;
+        case "page_group":
+          pack.page_groups.push(await page_group_pack(name));
           break;
         case "library":
           pack.library.push(await library_pack(name));

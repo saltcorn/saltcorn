@@ -404,9 +404,8 @@ const navbarSolidOnScroll: string = script(
 );
 
 /**
- * @param {object} x
- * @param {object} s
- * @returns {object}
+ * @param x
+ * @param s
  */
 const logit = (x: any, s: any): any => {
   if (s) console.log(s, x);
@@ -415,17 +414,22 @@ const logit = (x: any, s: any): any => {
 };
 
 /**
- * @param {number} len
- * @returns {function}
+ * @param len
  */
 const standardBreadcrumbItem =
   (len: number) =>
   (
     {
       href,
+      pageGroupLink,
       text,
       postLinkText,
-    }: { href?: string; text: string; postLinkText?: string },
+    }: {
+      href?: string;
+      pageGroupLink?: boolean;
+      text: string;
+      postLinkText?: string;
+    },
     ix: number
   ): string =>
     li(
@@ -433,7 +437,9 @@ const standardBreadcrumbItem =
         class: ["breadcrumb-item", ix == len - 1 && "active"],
         "aria-current": ix == len - 1 && "page",
       },
-      href ? a({ href }, text) : text,
+      href
+        ? a({ href, ...(pageGroupLink ? { page_group_link: href } : {}) }, text)
+        : text,
       postLinkText ? "&nbsp;" + postLinkText : ""
     );
 

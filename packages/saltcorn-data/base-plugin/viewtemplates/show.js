@@ -10,6 +10,7 @@ const View = require("../../models/view");
 const File = require("../../models/file");
 const Table = require("../../models/table");
 const Page = require("../../models/page");
+const PageGroup = require("../../models/page_group");
 const Crash = require("../../models/crash");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
@@ -179,6 +180,9 @@ const configuration_workflow = (req) =>
               .map((f) => f.name);
           });
           const pages = await Page.find();
+          const groups = (await PageGroup.find()).map((g) => ({
+            name: g.name,
+          }));
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("show")
@@ -203,6 +207,7 @@ const configuration_workflow = (req) =>
             roles,
             library,
             pages,
+            page_groups: groups,
             allowMultiStepAction: true,
             handlesTextStyle,
             mode: "show",
