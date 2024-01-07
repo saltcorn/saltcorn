@@ -715,11 +715,7 @@ const signup_login_with_user = (u, req, res, redirUrl) => {
   return req.login(u.session_object, function (err) {
     if (!err) {
       const session_id = getSessionId(req);
-      Trigger.emitEvent("Login", null, {
-        old_session_id,
-        session_id,
-        ...u,
-      });
+      Trigger.emitEvent("Login", null, u, { old_session_id, session_id });
       if (getState().verifier) res.redirect("/auth/verification-flow");
       else if (getState().get2FApolicy(u) === "Mandatory")
         res.redirect("/auth/twofa/setup/totp");
@@ -1109,10 +1105,9 @@ router.post(
       }
     const session_id = getSessionId(req);
 
-    Trigger.emitEvent("Login", null, {
+    Trigger.emitEvent("Login", null, req.user, {
       session_id,
       old_session_id: req.old_session_id,
-      ...req.user,
     });
     res?.cookie?.("loggedin", "true");
     req.flash("success", req.__("Welcome, %s!", req.user.email));
