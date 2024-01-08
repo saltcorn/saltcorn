@@ -1705,19 +1705,19 @@ module.exports =
     for (const { name, eligible_formula } of [
       {
         name: "iPhone SE",
-        eligible_formula: "width < 380 && height < 670",
+        eligible_formula: "width < 380 && height < 670 && user.id === 1",
       },
       {
         name: "iPhone XR",
-        eligible_formula: "width < 415 && height < 900",
+        eligible_formula: "width < 415 && height < 900  && user.id === 1",
       },
       {
         name: "Surface Pro 7",
-        eligible_formula: "width < 915 && height < 1370",
+        eligible_formula: "width < 915 && height < 1370  && user.id === 1",
       },
       {
         name: "Laptop",
-        eligible_formula: "width < 1900 && height < 1000",
+        eligible_formula: "width < 1900 && height < 1000 && user.id === 1",
       },
     ]) {
       const page = await Page.create({

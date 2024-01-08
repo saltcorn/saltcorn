@@ -9,7 +9,7 @@ const Router = require("express-promise-router");
 const Page = require("@saltcorn/data/models/page");
 const PageGroup = require("@saltcorn/data/models/page_group");
 const Trigger = require("@saltcorn/data/models/trigger");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, features } = require("@saltcorn/data/db/state");
 const {
   error_catcher,
   scan_for_page_title,
@@ -109,12 +109,15 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
           )
         );
       } else {
-        const eligiblePage = await pageGroup.getEligiblePage({
-          width: parseInt(width),
-          height: parseInt(height),
-          innerWidth: parseInt(innerWidth),
-          innerHeight: parseInt(innerHeight),
-        });
+        const eligiblePage = await pageGroup.getEligiblePage(
+          {
+            width: parseInt(width),
+            height: parseInt(height),
+            innerWidth: parseInt(innerWidth),
+            innerHeight: parseInt(innerHeight),
+          },
+          req.user ? req.user : { role_id: features.public_user_role }
+        );
         if (!eligiblePage) {
           getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
           res

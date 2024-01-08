@@ -1313,5 +1313,6 @@
 	"Destination page group": "Destination page group",
 	"Page groups": "Page groups",
 	"Removed member %s": "Removed member %s",
-	"Deleted page group %s": "Deleted page group %s"
+	"Deleted page group %s": "Deleted page group %s",
+	"Pagegroup %s has no eligible page": "Pagegroup %s has no eligible page"
 }

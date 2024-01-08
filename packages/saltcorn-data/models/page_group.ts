@@ -40,16 +40,26 @@ class PageGroup implements AbstractPageGroup {
   /**
    * determine the first page in the group that matches the client screen size
    * @param data client screen and window size
+   * @param user the user or just { role_id: 100 }
    * @returns the matching page, or null
    */
-  async getEligiblePage(data: EligiblePageParams) {
+  async getEligiblePage(data: EligiblePageParams, user: any) {
     const Page = (await import("./page")).default;
     const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
     for (const member of sorted) {
-      const res = eval_expression(member.eligible_formula, data);
+      const res = eval_expression(member.eligible_formula, data, user);
       if (res === true) {
         const page = Page.findOne({ id: member.page_id });
-        if (page) return page;
+        if (page) {
+          if (user.role_id <= page.min_role) return page;
+          else
+            await require("../db/state")
+              .getState()
+              .log(
+                4,
+                `page ${page.name} is not accessible for role_id ${user.role_id}`
+              );
+        }
       }
     }
     return null;
