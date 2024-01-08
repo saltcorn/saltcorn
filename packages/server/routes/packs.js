@@ -12,6 +12,7 @@ const Form = require("@saltcorn/data/models/form");
 const View = require("@saltcorn/data/models/view");
 const Plugin = require("@saltcorn/data/models/plugin");
 const Page = require("@saltcorn/data/models/page");
+const PageGroup = require("@saltcorn/data/models/page_group");
 const Tag = require("@saltcorn/data/models/tag");
 const EventLog = require("@saltcorn/data/models/eventlog");
 const Model = require("@saltcorn/data/models/model");
@@ -87,6 +88,12 @@ router.get(
       name: `page.${t.name}`,
       type: "Bool",
     }));
+    const pageGroups = await PageGroup.find({});
+    const pageGroupFields = pageGroups.map((t) => ({
+      label: `${t.name} page group`,
+      name: `page_group.${t.name}`,
+      type: "Bool",
+    }));
     const libs = await Library.find({});
     const libFields = libs.map((l) => ({
       label: `${l.name} library item`,
@@ -158,6 +165,7 @@ router.get(
         ...viewFields,
         ...pluginFields,
         ...pageFields,
+        ...pageGroupFields,
         ...trigFields,
         ...roleFields,
         ...libFields,

@@ -179,8 +179,9 @@ class PageGroupMember implements AbstractPageGroupMember {
         const group = PageGroup.findOne({ id: this.page_group_id });
         if (!group)
           throw new Error(`Page ${this.page_group_id} group not found`);
-        const newMember = await group.addMember(createObj);
+        const newMember = await group.addMember(createObj, true);
         await db.commit();
+        await require("../db/state").getState().refresh_page_groups();
         return newMember;
       } catch (e) {
         if (transactionOpen) await db.rollback();

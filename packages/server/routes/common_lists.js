@@ -313,8 +313,8 @@ const page_group_dropdown = (page_group, req) =>
     ),
   ]);
 
-const page_group_member_dropdown = (group, member, req) =>
-  settingsDropdown(`groupMemberDropdownMenuButton${group.id}`, [
+const page_group_member_dropdown = (member, req) =>
+  settingsDropdown(`groupMemberDropdownMenuButton${member.id}`, [
     post_dropdown_item(
       `/page_groupedit/clone-member/${member.id}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
@@ -322,7 +322,7 @@ const page_group_member_dropdown = (group, member, req) =>
     ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
-      `/page_groupedit/remove-member/${group.id}/${member.id}`,
+      `/page_groupedit/remove-member/${member.id}`,
       '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
       req,
       true,
@@ -552,7 +552,7 @@ const pageGroupMembers = async (pageGroup, req) => {
       },
       {
         label: "",
-        key: (r) => page_group_member_dropdown(pageGroup, r, req),
+        key: (r) => page_group_member_dropdown(r, req),
       },
     ],
     members,

@@ -82,14 +82,22 @@ class PageGroup implements AbstractPageGroup {
       if (mode === "Up" && idx > 0) {
         const prev = sorted[idx - 1];
         const tmp = prev.sequence;
-        await PageGroupMember.update(prev.id!, { sequence: member.sequence });
-        await PageGroupMember.update(member.id!, { sequence: tmp });
+        await PageGroupMember.update(
+          prev.id!,
+          { sequence: member.sequence },
+          true
+        );
+        await PageGroupMember.update(member.id!, { sequence: tmp }, true);
       }
       if (mode === "Down" && idx < sorted.length - 1) {
         const next = sorted[idx + 1];
         const tmp = next.sequence;
-        await PageGroupMember.update(next.id!, { sequence: member.sequence });
-        await PageGroupMember.update(member.id!, { sequence: tmp });
+        await PageGroupMember.update(
+          next.id!,
+          { sequence: member.sequence },
+          true
+        );
+        await PageGroupMember.update(member.id!, { sequence: tmp }, true);
       }
       await db.commit();
       await require("../db/state").getState().refresh_page_groups();
@@ -289,7 +297,10 @@ class PageGroup implements AbstractPageGroup {
    * add a member to this group
    * @param cfg
    */
-  async addMember(cfg: PageGroupMemberCfg): Promise<PageGroupMember> {
+  async addMember(
+    cfg: PageGroupMemberCfg,
+    noRrefresh?: boolean
+  ): Promise<PageGroupMember> {
     const PageGroupMember = (await import("./page_group_member")).default;
     if (!this.id)
       throw new Error("Page group must be saved before adding members");
@@ -309,8 +320,18 @@ class PageGroup implements AbstractPageGroup {
       true
     );
     this.members.push(newMember);
-    await require("../db/state").getState().refresh_page_groups();
+    if (!noRrefresh)
+      await require("../db/state").getState().refresh_page_groups();
     return new PageGroupMember(newMember);
+  }
+
+  /**
+   * clear all members from this group
+   */
+  async clearMembers(): Promise<void> {
+    await db.deleteWhere("_sc_page_group_members", { page_group_id: this.id });
+    this.members = [];
+    await require("../db/state").getState().refresh_page_groups();
   }
 
   /**

@@ -503,7 +503,10 @@ router.post(
       } else {
         try {
           await group.removeMember(member_id);
-          req.flash("success", req.__("Removed member %s", member.name));
+          req.flash(
+            "success",
+            req.__("Removed member %s", member.name || member_id)
+          );
           res.redirect(`/page_groupedit/${group.name}`);
         } catch (e) {
           req.flash("error", e.message);

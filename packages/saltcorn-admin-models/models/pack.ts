@@ -315,6 +315,7 @@ const can_install_pack = async (
   );
   const allViews = (await View.find()).map((t) => t.name);
   const allPages = (await Page.find()).map((t) => t.name);
+  const allPageGroups = (await PageGroup.find()).map((t) => t.name);
   const packTables = (pack.tables || []).map((t) =>
     db.sqlsanitize(t.name.toLowerCase())
   );
@@ -324,10 +325,12 @@ const can_install_pack = async (
   const matchViews = allViews.filter((dbt) =>
     (pack.views || []).some((pt) => pt.name === dbt)
   );
-  const matchPages = allPages.filter((dbt) =>
-    (pack.pages || []).some((pt) => pt.name === dbt)
-  );
 
+  const pFilterCb = (dbt: string) =>
+    (pack.pages || []).some((pt) => pt.name === dbt) ||
+    (pack.page_groups || []).some((pt) => pt.name === dbt);
+  const matchPages = allPages.filter(pFilterCb);
+  const matchPageGroups = allPageGroups.filter(pFilterCb);
   if (matchTables.length > 0)
     return {
       error: "Tables already exist: " + matchTables.join(),
@@ -348,6 +351,9 @@ const can_install_pack = async (
   matchPages.forEach((p) => {
     warns.push(`Clashing page ${p}.`);
   });
+  matchPageGroups.forEach((p) => {
+    warns.push(`Clashing page group ${p}.`);
+  });
   if (warns.length > 0) return { warning: warns.join(" ") };
   else return true;
 };
@@ -358,12 +364,16 @@ const can_install_pack = async (
  * @param name
  */
 const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
+  for (const pageGroupSpec of pack.page_groups || []) {
+    const pageGroup = PageGroup.findOne({ name: pageGroupSpec.name });
+    if (pageGroup) await pageGroup.delete();
+  }
   for (const pageSpec of pack.pages || []) {
-    const page = await Page.findOne({ name: pageSpec.name });
+    const page = Page.findOne({ name: pageSpec.name });
     if (page) await page.delete();
   }
   for (const viewSpec of pack.views) {
-    const view = await View.findOne({ name: viewSpec.name });
+    const view = View.findOne({ name: viewSpec.name });
     if (view) await view.delete();
   }
   for (const tableSpec of pack.tables) {
@@ -576,6 +586,25 @@ const install_pack = async (
         pagename: pageSpec.name,
         min_role: pageSpec.min_role,
       });
+  }
+
+  for (const pageGroupSpec of pack.page_groups || []) {
+    pageGroupSpec.min_role = old_to_new_role(pageGroupSpec.min_role);
+    const { members, ...pageGroupNoMembers } = pageGroupSpec;
+    const existing = PageGroup.findOne({ name: pageGroupSpec.name });
+    if (existing?.id) {
+      await existing.clearMembers(); // or merge ?
+      await PageGroup.update(existing.id, pageGroupNoMembers);
+    } else await PageGroup.create(pageGroupNoMembers);
+    const group = PageGroup.findOne({ name: pageGroupSpec.name });
+    if (!group)
+      throw new Error(`Unable to create page group '${pageGroupSpec.name}'`);
+    for (const member of members || []) {
+      const { page_name, ...memberNoPageName } = member;
+      const page = Page.findOne({ name: page_name });
+      if (!page) throw new Error(`Unable to find page '${member.page_name}'`);
+      await group.addMember({ ...memberNoPageName, page_id: page.id! });
+    }
   }
 
   for (const tag of pack.tags || []) {

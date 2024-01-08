@@ -1709,11 +1709,11 @@ module.exports =
       },
       {
         name: "iPhone XR",
-        eligible_formula: "width < 415 && height < 900  && user.id === 1",
+        eligible_formula: "width < 415 && height < 900 && user.id === 1",
       },
       {
         name: "Surface Pro 7",
-        eligible_formula: "width < 915 && height < 1370  && user.id === 1",
+        eligible_formula: "width < 915 && height < 1370 && user.id === 1",
       },
       {
         name: "Laptop",
