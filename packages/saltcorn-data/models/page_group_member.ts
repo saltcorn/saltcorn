@@ -119,25 +119,36 @@ class PageGroupMember implements AbstractPageGroupMember {
   async clone(): Promise<PageGroupMember> {
     if (!this.name) throw new Error("Please give the member a name");
     else {
-      const basename = this.name + " copy";
-      let newname;
-      for (let i = 0; i < 100; i++) {
-        newname = i ? `${basename} (${i})` : basename;
-        const existing = PageGroupMember.findOne({
-          page_group_id: this.page_group_id,
+      let transactionOpen = false;
+      try {
+        await db.begin();
+        transactionOpen = true;
+        const basename = this.name + " copy";
+        let newname;
+        for (let i = 0; i < 100; i++) {
+          newname = i ? `${basename} (${i})` : basename;
+          const existing = PageGroupMember.findOne({
+            page_group_id: this.page_group_id,
+            name: newname,
+          });
+          if (!existing) break;
+        }
+        const createObj = {
+          ...this,
           name: newname,
-        });
-        if (!existing) break;
+        };
+        delete createObj.id;
+        const PageGroup = (await import("./page_group")).default;
+        const group = PageGroup.findOne({ id: this.page_group_id });
+        if (!group)
+          throw new Error(`Page ${this.page_group_id} group not found`);
+        const newMember = await group.addMember(createObj);
+        await db.commit();
+        return newMember;
+      } catch (e) {
+        if (transactionOpen) await db.rollback();
+        throw e;
       }
-      const createObj = {
-        ...this,
-        name: newname,
-      };
-      delete createObj.id;
-      const PageGroup = (await import("./page_group")).default;
-      const group = PageGroup.findOne({ id: this.page_group_id });
-      if (!group) throw new Error(`Page ${this.page_group_id} group not found`);
-      return await group.addMember(createObj);
     }
   }
 

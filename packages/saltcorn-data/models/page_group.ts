@@ -45,22 +45,31 @@ class PageGroup implements AbstractPageGroup {
   }
 
   async moveMember(member: AbstractPageGroupMember, mode: "Up" | "Down") {
-    const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
-    const idx = sorted.findIndex((m) => m.id === member.id);
-    if (idx === -1) return;
-    if (mode === "Up" && idx > 0) {
-      const prev = sorted[idx - 1];
-      const tmp = prev.sequence;
-      await PageGroupMember.update(prev.id!, { sequence: member.sequence });
-      await PageGroupMember.update(member.id!, { sequence: tmp });
+    let transactionOpen = false;
+    try {
+      await db.begin();
+      transactionOpen = true;
+      const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
+      const idx = sorted.findIndex((m) => m.id === member.id);
+      if (idx === -1) return;
+      if (mode === "Up" && idx > 0) {
+        const prev = sorted[idx - 1];
+        const tmp = prev.sequence;
+        await PageGroupMember.update(prev.id!, { sequence: member.sequence });
+        await PageGroupMember.update(member.id!, { sequence: tmp });
+      }
+      if (mode === "Down" && idx < sorted.length - 1) {
+        const next = sorted[idx + 1];
+        const tmp = next.sequence;
+        await PageGroupMember.update(next.id!, { sequence: member.sequence });
+        await PageGroupMember.update(member.id!, { sequence: tmp });
+      }
+      await db.commit();
+      await require("../db/state").getState().refresh_page_groups();
+    } catch (e) {
+      if (transactionOpen) await db.rollback();
+      throw e;
     }
-    if (mode === "Down" && idx < sorted.length - 1) {
-      const next = sorted[idx + 1];
-      const tmp = next.sequence;
-      await PageGroupMember.update(next.id!, { sequence: member.sequence });
-      await PageGroupMember.update(member.id!, { sequence: tmp });
-    }
-    await require("../db/state").getState().refresh_page_groups();
   }
 
   sortedMembers(): Array<AbstractPageGroupMember> {
@@ -112,21 +121,34 @@ class PageGroup implements AbstractPageGroup {
     return p ? new PageGroup({ ...p }) : p;
   }
 
-  static async create(cfg: PageGroupCfg): Promise<PageGroup> {
+  static async create(
+    cfg: PageGroupCfg,
+    noTransaction?: boolean
+  ): Promise<PageGroup> {
     const pageGroup = new PageGroup(cfg);
     const membersToCopy = pageGroup.members;
     pageGroup.members = [];
     const { id, members, ...rest } = pageGroup;
-    const fid = await db.insert("_sc_page_groups", rest);
-    pageGroup.id = fid;
-
-    for (const member of membersToCopy) {
-      await pageGroup.addMember({
-        page_id: member.page_id,
-        eligible_formula: member.eligible_formula,
-        name: member.name,
-        description: member.description,
-      });
+    let transactionOpen = false;
+    try {
+      if (!noTransaction) {
+        await db.begin();
+        transactionOpen = true;
+      }
+      const fid = await db.insert("_sc_page_groups", rest);
+      pageGroup.id = fid;
+      for (const member of membersToCopy) {
+        await pageGroup.addMember({
+          page_id: member.page_id,
+          eligible_formula: member.eligible_formula,
+          name: member.name,
+          description: member.description,
+        });
+      }
+      if (transactionOpen) await db.commit();
+    } catch (e) {
+      if (transactionOpen) await db.rollback();
+      throw e;
     }
     await require("../db/state").getState().refresh_page_groups();
     return pageGroup;
@@ -175,19 +197,29 @@ class PageGroup implements AbstractPageGroup {
   }
 
   async clone(): Promise<PageGroup> {
-    const basename = this.name + " copy";
-    let newname;
-    for (let i = 0; i < 100; i++) {
-      newname = i ? `${basename} (${i})` : basename;
-      const existing = PageGroup.findOne({ name: newname });
-      if (!existing) break;
+    let transactionOpen = false;
+    try {
+      await db.begin();
+      transactionOpen = true;
+      const basename = this.name + " copy";
+      let newname;
+      for (let i = 0; i < 100; i++) {
+        newname = i ? `${basename} (${i})` : basename;
+        const existing = PageGroup.findOne({ name: newname });
+        if (!existing) break;
+      }
+      const createObj = {
+        ...this,
+        name: newname,
+      };
+      delete createObj.id;
+      const newGroup = await PageGroup.create(createObj, true);
+      await db.commit();
+      return newGroup;
+    } catch (e) {
+      if (transactionOpen) await db.rollback();
+      throw e;
     }
-    const createObj = {
-      ...this,
-      name: newname,
-    };
-    delete createObj.id;
-    return await PageGroup.create(createObj);
   }
 
   async addMember(cfg: PageGroupMemberCfg): Promise<PageGroupMember> {
