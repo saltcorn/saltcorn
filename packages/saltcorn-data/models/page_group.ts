@@ -178,7 +178,7 @@ class PageGroup implements AbstractPageGroup {
    */
   static async create(
     cfg: PageGroupCfg,
-    noTransaction?: boolean
+    noTransaction?: boolean // or within transaction ?
   ): Promise<PageGroup> {
     const pageGroup = new PageGroup(cfg);
     const membersToCopy = pageGroup.members;
@@ -193,19 +193,23 @@ class PageGroup implements AbstractPageGroup {
       const fid = await db.insert("_sc_page_groups", rest);
       pageGroup.id = fid;
       for (const member of membersToCopy) {
-        await pageGroup.addMember({
-          page_id: member.page_id,
-          eligible_formula: member.eligible_formula,
-          name: member.name,
-          description: member.description,
-        });
+        await pageGroup.addMember(
+          {
+            page_id: member.page_id,
+            eligible_formula: member.eligible_formula,
+            name: member.name,
+            description: member.description,
+          },
+          true
+        );
       }
       if (transactionOpen) await db.commit();
     } catch (e) {
       if (transactionOpen) await db.rollback();
       throw e;
     }
-    await require("../db/state").getState().refresh_page_groups();
+    if (!noTransaction)
+      await require("../db/state").getState().refresh_page_groups();
     return pageGroup;
   }
 
@@ -286,6 +290,7 @@ class PageGroup implements AbstractPageGroup {
       delete createObj.id;
       const newGroup = await PageGroup.create(createObj, true);
       await db.commit();
+      await require("../db/state").getState().refresh_page_groups();
       return newGroup;
     } catch (e) {
       if (transactionOpen) await db.rollback();
