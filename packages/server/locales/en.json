@@ -1309,5 +1309,9 @@
 	"New page group": "New page group",
 	"Page Groups": "Page Groups",
 	"add member to %s": "add member to %s",
-	"Added member %s": "Added member %s"
+	"Added member %s": "Added member %s",
+	"Destination page group": "Destination page group",
+	"Page groups": "Page groups",
+	"Removed member %s": "Removed member %s",
+	"Deleted page group %s": "Deleted page group %s"
 }

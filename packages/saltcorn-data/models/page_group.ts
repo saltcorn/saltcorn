@@ -15,6 +15,12 @@ import PageGroupMember from "./page_group_member";
 import Expression from "./expression";
 const { eval_expression } = Expression;
 
+/**
+ * PageGroup class
+ * This is a collection of (non unique) pages. A group can be requested like a normal page.
+ * Each member of the group has an eligibility formula, and the first page whose eligibility formula evaluates to true is shown.
+ * This can be used to show different pages on different devices.
+ */
 class PageGroup implements AbstractPageGroup {
   id?: number;
   name: string;
@@ -31,6 +37,11 @@ class PageGroup implements AbstractPageGroup {
     this.min_role = cfg.min_role || 100;
   }
 
+  /**
+   * determine the first page in the group that matches the client screen size
+   * @param data client screen and window size
+   * @returns the matching page, or null
+   */
   async getEligiblePage(data: EligiblePageParams) {
     const Page = (await import("./page")).default;
     const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
@@ -44,6 +55,12 @@ class PageGroup implements AbstractPageGroup {
     return null;
   }
 
+  /**
+   * manipulate the sequence of a member
+   * @param member
+   * @param mode
+   * @returns
+   */
   async moveMember(member: AbstractPageGroupMember, mode: "Up" | "Down") {
     let transactionOpen = false;
     try {
@@ -72,10 +89,19 @@ class PageGroup implements AbstractPageGroup {
     }
   }
 
+  /**
+   * @returns the members sorted by sequence
+   */
   sortedMembers(): Array<AbstractPageGroupMember> {
     return this.members.sort((a, b) => a.sequence - b.sequence);
   }
 
+  /**
+   * find groups
+   * @param where
+   * @param selectopts
+   * @returns an array of page groups
+   */
   static async find(
     where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
@@ -109,6 +135,11 @@ class PageGroup implements AbstractPageGroup {
     });
   }
 
+  /**
+   * find one group
+   * @param where
+   * @returns one page group or null
+   */
   static findOne(where: Where): PageGroup | null {
     const { getState } = require("../db/state");
     const p = getState().page_groups.find(
@@ -121,6 +152,12 @@ class PageGroup implements AbstractPageGroup {
     return p ? new PageGroup({ ...p }) : p;
   }
 
+  /**
+   * create a new group and add members
+   * @param cfg
+   * @param noTransaction
+   * @returns the created group
+   */
   static async create(
     cfg: PageGroupCfg,
     noTransaction?: boolean
@@ -154,11 +191,20 @@ class PageGroup implements AbstractPageGroup {
     return pageGroup;
   }
 
+  /**
+   * update a group
+   * @param id id of the group
+   * @param row values to update
+   */
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_page_groups", row, id);
     await require("../db/state").getState().refresh_page_groups();
   }
 
+  /**
+   * delete a group
+   * @param where
+   */
   static async delete(where: Where | number): Promise<void> {
     try {
       await db.begin();
@@ -191,11 +237,18 @@ class PageGroup implements AbstractPageGroup {
     }
   }
 
+  /**
+   * delete this group
+   */
   async delete(): Promise<void> {
     if (!this.id) throw new Error("Page group must be saved before deleting");
     await PageGroup.delete({ id: this.id });
   }
 
+  /**
+   * duplicate this group with a new name
+   * @returns the created group
+   */
   async clone(): Promise<PageGroup> {
     let transactionOpen = false;
     try {
@@ -222,6 +275,10 @@ class PageGroup implements AbstractPageGroup {
     }
   }
 
+  /**
+   * add a member to this group
+   * @param cfg
+   */
   async addMember(cfg: PageGroupMemberCfg): Promise<PageGroupMember> {
     const PageGroupMember = (await import("./page_group_member")).default;
     if (!this.id)
@@ -246,18 +303,25 @@ class PageGroup implements AbstractPageGroup {
     return new PageGroupMember(newMember);
   }
 
+  /**
+   * remove a member from this group
+   * @param id id of the member
+   */
   async removeMember(id: number): Promise<void> {
     const PageGroupMember = (await import("./page_group_member")).default;
     await PageGroupMember.delete(id, true);
     await require("../db/state").getState().refresh_page_groups();
   }
 
+  /**
+   * find a member
+   * @param where
+   */
   findMember(where: any): Array<AbstractPageGroupMember> {
     const pred = PageGroupMember.findPred(where) || satisfies(where);
     return this.members.filter(pred);
   }
 
-  // TODO
   connected_objects(): ConnectedObjects {
     return {};
   }
