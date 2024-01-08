@@ -663,7 +663,11 @@ const render = (
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       try {
-        segment[key] = eval_expression(segment[key], row, req.user);
+        segment[key] = eval_expression(
+          segment[key],
+          { session_id: getSessionId(req), ...row },
+          req.user
+        );
       } catch (error) {
         error.message = `Error in formula ${segment[key]} for property ${key} in segment of type ${segment.type}:\n${error.message}`;
         throw error;
