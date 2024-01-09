@@ -1287,5 +1287,8 @@
 	"Configure action": "Configure action",
 	"No changes detected, snapshot skipped": "No changes detected, snapshot skipped",
 	"Cannot remove module: views %s depend on it": "Cannot remove module: views %s depend on it",
-	"The view name is part of the URL when it is shown alone.": "The view name is part of the URL when it is shown alone."
+	"The view name is part of the URL when it is shown alone.": "The view name is part of the URL when it is shown alone.",
+	"Exclusion relations": "Exclusion relations",
+	"Do not include row if this relation has a match": "Do not include row if this relation has a match",
+	"Exclusion where": "Exclusion where"
 }
