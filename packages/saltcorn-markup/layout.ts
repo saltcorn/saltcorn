@@ -502,7 +502,7 @@ const render = ({
           segment,
           go,
           segment.serverRendered
-            ? req.query[segment.tabId || "_tab"]
+            ? req?.query?.[segment.tabId || "_tab"]
             : undefined,
           hints
         )
