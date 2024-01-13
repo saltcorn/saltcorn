@@ -727,9 +727,9 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      const cardDeck = segment.besides.every(
-        (s: any) => s && s.type === "card"
-      );
+      const cardDeck = segment.besides
+        .filter((e: any) => e) // allow blank
+        .every((s: any) => s && s.type === "card");
       let markup;
 
       if (cardDeck) {
@@ -747,6 +747,7 @@ const render = ({
             style: segment.style,
           },
           segment.besides.map((t: any, ixb: number) => {
+            if (!t) return ""; //blank col
             const newt = { ...t };
             newt.class = t.class
               ? Array.isArray(t.class)
