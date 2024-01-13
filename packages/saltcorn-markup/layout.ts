@@ -434,7 +434,7 @@ const render = ({
                   i({ class: "fas fa-save" })
                 )
             ),
-          segment.tabContents &&
+          segment.tabContents && // TODO remove all calls to this, use tab in content instead
             div(
               { class: "card-header" },
               ul(
