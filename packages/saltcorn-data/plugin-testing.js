@@ -200,6 +200,7 @@ const check_view_columns = async (view, columns) => {
         )
           break;
         if (
+          column.action_name !== "Multi-step action" &&
           !getState().actions[column.action_name] &&
           !trigger_actions.includes(column.action_name)
         )
