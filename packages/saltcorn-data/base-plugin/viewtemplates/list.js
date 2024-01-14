@@ -418,6 +418,20 @@ const configuration_workflow = (req) =>
             type: "Bool",
             tab: "Layout options",
           });
+          formfields.push({
+            name: "_hover_rows",
+            label: req.__("Hoverable rows"),
+            type: "Bool",
+            sublabel: req.__("Highlight row under cursor"),
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_striped_rows",
+            label: req.__("Striped rows"),
+            type: "Bool",
+            sublabel: req.__("Add zebra stripes to rows"),
+            tab: "Layout options",
+          });
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -576,6 +590,7 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
+  page_opts.class = "";
 
   if ((rows && rows.length === rows_per_page) || current_page > 1) {
     const nrows = rowCount;
@@ -589,8 +604,14 @@ const run = async (
     }
   }
 
-  if (default_state && default_state._omit_header) {
+  if (default_state?._omit_header) {
     page_opts.noHeader = true;
+  }
+  if (default_state?._hover_rows) {
+    page_opts.class += "table-hover ";
+  }
+  if (default_state?._striped_rows) {
+    page_opts.class += "table-striped ";
   }
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.transpose_width = (default_state || {}).transpose_width;

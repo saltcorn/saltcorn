@@ -434,7 +434,7 @@ const render = ({
                   i({ class: "fas fa-save" })
                 )
             ),
-          segment.tabContents &&
+          segment.tabContents && // TODO remove all calls to this, use tab in content instead
             div(
               { class: "card-header" },
               ul(
@@ -479,16 +479,34 @@ const render = ({
                 )
               ),
           segment.contents &&
-            div(
-              {
-                class: [
-                  "card-body",
-                  segment.bodyClass,
-                  segment.noPadding && "p-0",
-                ],
-              },
-              go(segment.contents)
-            ),
+            (segment.contents.type === "tabs"
+              ? renderTabs(
+                  {
+                    tabClass: "card-header-tabs",
+                    headerWrapperClass: "card-header",
+                    contentWrapperClass: [
+                      "card-body",
+                      segment.bodyClass,
+                      segment.noPadding && "p-0",
+                    ],
+                    ...segment.contents,
+                  },
+                  go,
+                  segment.serverRendered
+                    ? req?.query?.[segment.tabId || "_tab"]
+                    : undefined,
+                  hints
+                )
+              : div(
+                  {
+                    class: [
+                      "card-body",
+                      segment.bodyClass,
+                      segment.noPadding && "p-0",
+                    ],
+                  },
+                  go(segment.contents)
+                )),
           segment.footer && div({ class: "card-footer" }, go(segment.footer))
         )
       );
@@ -502,7 +520,7 @@ const render = ({
           segment,
           go,
           segment.serverRendered
-            ? req.query[segment.tabId || "_tab"]
+            ? req?.query?.[segment.tabId || "_tab"]
             : undefined,
           hints
         )
@@ -709,9 +727,9 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      const cardDeck = segment.besides.every(
-        (s: any) => s && s.type === "card"
-      );
+      const cardDeck = segment.besides
+        .filter((e: any) => e) // allow blank
+        .every((s: any) => s && s.type === "card");
       let markup;
 
       if (cardDeck) {
@@ -729,6 +747,7 @@ const render = ({
             style: segment.style,
           },
           segment.besides.map((t: any, ixb: number) => {
+            if (!t) return ""; //blank col
             const newt = { ...t };
             newt.class = t.class
               ? Array.isArray(t.class)

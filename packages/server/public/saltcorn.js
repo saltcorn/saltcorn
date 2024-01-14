@@ -513,7 +513,7 @@ function applyViewConfig(e, url, k, event) {
     complete: () => {},
   });
 
-  return false;
+  //return false;
 }
 
 function updateViewPreview() {

@@ -1290,5 +1290,9 @@
 	"The view name is part of the URL when it is shown alone.": "The view name is part of the URL when it is shown alone.",
 	"Exclusion relations": "Exclusion relations",
 	"Do not include row if this relation has a match": "Do not include row if this relation has a match",
-	"Exclusion where": "Exclusion where"
+	"Exclusion where": "Exclusion where",
+	"Hoverable rows": "Hoverable rows",
+	"Highlight row under cursor": "Highlight row under cursor",
+	"Striped rows": "Striped rows",
+	"Add zebra stripes to rows": "Add zebra stripes to rows"
 }
