@@ -11,7 +11,6 @@ const sql = [
   page_group_id integer references _sc_page_groups(id) NOT NULL,
   sequence integer NOT NULL,
   eligible_formula text,
-  name text,
   description text
 )`,
 ];

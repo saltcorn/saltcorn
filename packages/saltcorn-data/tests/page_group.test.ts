@@ -1,7 +1,7 @@
 import db from "../db";
 import { assertIsSet } from "./assertions";
 
-import PageGroup, { EligiblePageParams } from "../models/page_group";
+import PageGroup, { ScreenInfoParams } from "../models/page_group";
 import User from "../models/user";
 
 afterAll(db.close);
@@ -13,7 +13,7 @@ beforeAll(async () => {
 describe("eligible_formula", () => {
   const tester = async (
     pageGroup: PageGroup,
-    params: EligiblePageParams,
+    params: ScreenInfoParams,
     user: any,
     expectedPage?: string
   ) => {

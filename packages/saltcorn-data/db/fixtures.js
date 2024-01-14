@@ -1702,35 +1702,39 @@ module.exports =
       name: "page_group",
       min_role: 100,
     });
-    for (const { name, eligible_formula } of [
+    for (const { pageName, eligible_formula } of [
       {
-        name: "iPhone SE",
-        eligible_formula: "width < 380 && height < 670 && user.id === 1",
+        pageName: "iPhone SE",
+        eligible_formula:
+          "width < 380 && height < 670 && user.id === 1 && locale === 'en'",
       },
       {
-        name: "iPhone XR",
-        eligible_formula: "width < 415 && height < 900 && user.id === 1",
+        pageName: "iPhone XR",
+        eligible_formula:
+          "width < 415 && height < 900 && user.id === 1 && locale === 'en'",
       },
       {
-        name: "Surface Pro 7",
-        eligible_formula: "width < 915 && height < 1370 && user.id === 1",
+        pageName: "Surface Pro 7",
+        eligible_formula:
+          "width < 915 && height < 1370 && user.id === 1 && locale === 'en'",
       },
       {
-        name: "Laptop",
-        eligible_formula: "width < 1900 && height < 1000 && user.id === 1",
+        pageName: "Laptop",
+        eligible_formula:
+          "width < 1900 && height < 1000 && user.id === 1 && locale === 'en'",
       },
     ]) {
       const page = await Page.create({
-        name: name,
-        title: name,
-        description: `This is ${name}`,
+        name: pageName,
+        title: pageName,
+        description: `This is ${pageName}`,
         min_role: 100,
         layout: {
           above: [
             {
               type: "blank",
               block: false,
-              contents: `Hello I am ${name}`,
+              contents: `Hello I am ${pageName}`,
               textStyle: "",
             },
           ],

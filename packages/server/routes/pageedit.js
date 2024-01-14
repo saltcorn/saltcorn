@@ -10,7 +10,7 @@ const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const Page = require("@saltcorn/data/models/page");
 const PageGroup = require("@saltcorn/data/models/page_group");
-const { div, a, iframe, script } = require("@saltcorn/markup/tags");
+const { div, a, iframe, script, p } = require("@saltcorn/markup/tags");
 const { getState } = require("@saltcorn/data/db/state");
 const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
@@ -316,6 +316,13 @@ router.get(
           type: "card",
           title: req.__("Your page groups"),
           contents: div(
+            p(
+              req.__(
+                "A group has pages with an eligible formula. " +
+                  "When you request a group, then the first page where the formula matches gets served. " +
+                  "This way, you can choose a page depending on the screen of the device."
+              )
+            ),
             getPageGroupList(pageGroups, roles, req),
             a(
               {

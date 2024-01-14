@@ -2,9 +2,11 @@ const request = require("supertest");
 const getApp = require("../app");
 const {
   getAdminLoginCookie,
+  prepScreenInfoCookie,
+  prepUserAgent,
   toRedirect,
   toInclude,
-  respondJsonWith,
+  notFound,
   toNotInclude,
   resetToFixtures,
 } = require("../auth/testhelp");
@@ -18,7 +20,7 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
-describe("Edit Page groups", () => {
+describe("edit Page groups", () => {
   it("shows the create new page group form", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -53,7 +55,7 @@ describe("Edit Page groups", () => {
       .get(`/page_groupedit/${encodeURIComponent(pageGroupName)}`)
       .set("Cookie", loginCookie)
       .expect(toInclude("Members"))
-      .expect(toInclude("Edit group Properties"))
+      .expect(toInclude("Edit group properties"))
       .expect(toNotInclude("Save"))
       .expect(toInclude(pageGroupName));
   });
@@ -80,7 +82,7 @@ describe("Edit Page groups", () => {
     const res = await request(app)
       .get(`/page_groupedit/add-member/${nameAfterUpdate}`)
       .set("Cookie", loginCookie)
-      .expect(toInclude("Page to be delivered"))
+      .expect(toInclude("Page to be served"))
       .expect(toInclude("Eligible Formula"))
       .expect(toInclude("Cancel"))
       .expect(toInclude("Save"));
@@ -114,7 +116,7 @@ describe("Edit Page groups", () => {
       .expect(toInclude("Members"))
       .expect(toInclude("a_page"))
       .expect(toInclude("page_with_html_file"))
-      .expect(toInclude("Edit group Properties"))
+      .expect(toInclude("Edit group properties"))
       .expect(toNotInclude("Save"))
       .expect(toInclude(nameAfterUpdate));
   });
@@ -140,7 +142,7 @@ describe("Edit Page groups", () => {
     await request(app)
       .get(`/page_groupedit/edit-member/${member.id}`)
       .set("Cookie", loginCookie)
-      .expect(toInclude("Page to be delivered"))
+      .expect(toInclude("Page to be served"))
       .expect(toInclude("Eligible Formula"))
       .expect(toInclude("Cancel"))
       .expect(toInclude("Save"))
@@ -181,34 +183,184 @@ describe("Edit Page groups", () => {
 });
 
 describe("run page group", () => {
-  it("width and height", async () => {
+  it("width and height with Cookie", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get(
-        `/page/page_group?width=912&height=1368&innerWidth=912&innerHeight=1368`
-      )
-      .set("Cookie", loginCookie)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}; ${prepScreenInfoCookie(912, 1360)}`)
+      .set("accept-language", "en")
       .expect(toInclude("Surface Pro 7"))
       .expect(toNotInclude("iPhone XR"))
       .expect(toNotInclude("iPhone SE"));
-
     await request(app)
-      .get(
-        `/page/page_group?width=414&height=896&innerWidth=912&innerHeight=1368`
-      )
-      .set("Cookie", loginCookie)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}; ${prepScreenInfoCookie(414, 896)};`)
+      .set("accept-language", "en")
       .expect(toNotInclude("Surface Pro 7"))
       .expect(toInclude("iPhone XR"))
       .expect(toNotInclude("iPhone SE"));
-
     await request(app)
-      .get(
-        `/page/page_group?width=375&height=667&innerWidth=912&innerHeight=1368`
-      )
-      .set("Cookie", loginCookie)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}; ${prepScreenInfoCookie(370, 660)};`)
+      .set("accept-language", "en")
       .expect(toNotInclude("Surface Pro 7"))
       .expect(toNotInclude("iPhone XR"))
       .expect(toInclude("iPhone SE"));
+  });
+
+  it("locale mismatch", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}; ${prepScreenInfoCookie(912, 1360)}`)
+      .set("accept-language", "es")
+      .expect(notFound);
+    await request(app)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}; ${prepScreenInfoCookie(414, 896)};`)
+      .set("accept-language", "es")
+      .expect(notFound);
+    await request(app)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}; ${prepScreenInfoCookie(370, 660)};`)
+      .set("accept-language", "es")
+      .expect(notFound);
+  });
+
+  it("width an height without Cookie", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/page/page_group`)
+      .set("Cookie", `${loginCookie}`)
+      .set("User-Agent", prepUserAgent())
+      .expect(toInclude("Laptop"))
+      .expect(toNotInclude("Surface Pro 7"))
+      .expect(toNotInclude("iPhone XR"))
+      .expect(toNotInclude("iPhone SE"));
+  });
+});
+
+describe("page group settings", () => {
+  it("shows the settings page", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/page_group/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("User Agent screen infos"))
+      .expect(toInclude("web"))
+      .expect(toNotInclude("mobile"))
+      .expect(toInclude("Add screen info"))
+      .expect(toInclude("Page Group settings"))
+      .expect(toInclude("Missing screen info"))
+      .expect(toInclude(`value="guess_from_user_agent" selected`))
+      .expect(toInclude("reload"));
+  });
+
+  it("loads the add-screen info form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/page_group/settings/add-device")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Add screen info"));
+  });
+
+  it("adds a screen-info", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/page_group/settings/add-device")
+      .set("Cookie", loginCookie)
+      .send({
+        device: "mobile",
+        width: "100", // check type Number ?
+        height: "200",
+        innerWidth: "100",
+        innerHeight: "200",
+      })
+      .expect(toRedirect("/page_group/settings"));
+
+    await request(app)
+      .get("/page_group/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("web"))
+      .expect(toInclude("mobile"));
+  });
+
+  it("removes a screen-info", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/page_group/settings/remove-device/mobile")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/page_group/settings"));
+
+    await request(app)
+      .get("/page_group/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("web"))
+      .expect(toNotInclude("mobile"));
+  });
+
+  it("loads the edit-screen info form", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/page_group/settings/edit-device/web")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Edit screen info"))
+      .expect(toInclude("web"))
+      .expect(toInclude(`value="1000"`))
+      .expect(toInclude(`value="900"`))
+      .expect(toInclude(`value="912"`))
+      .expect(toInclude(`value="1368"`));
+  });
+
+  it("edits a screen-info", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/page_group/settings/edit-device/web")
+      .set("Cookie", loginCookie)
+      .send({
+        device: "web",
+        width: "1000",
+        height: "201",
+        innerWidth: "100",
+        innerHeight: "202",
+      })
+      .expect(toRedirect("/page_group/settings"));
+
+    await request(app)
+      .get("/page_group/settings/edit-device/web")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Edit screen info"))
+      .expect(toInclude("web"))
+      .expect(toInclude(`value="1000"`))
+      .expect(toInclude(`value="201"`))
+      .expect(toInclude(`value="100"`))
+      .expect(toInclude(`value="202"`));
+  });
+
+  it("edits the missing_screen_info_strategy", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/page_group/settings/config")
+      .set("Cookie", loginCookie)
+      .send({
+        missing_screen_info_strategy: "reload",
+      })
+      .expect(toRedirect("/page_group/settings"));
+
+    await request(app)
+      .get("/page_group/settings")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(`value="reload" selected`))
+      .expect(toInclude("guess_from_user_agent"));
   });
 });

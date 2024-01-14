@@ -3,6 +3,7 @@ import type {
   AbstractPageGroup,
   PageGroupCfg,
 } from "@saltcorn/types/model-abstracts/abstract_page_group";
+import Page from "./page";
 import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
 import type {
   AbstractPageGroupMember,
@@ -17,8 +18,8 @@ const { eval_expression } = Expression;
 
 /**
  * PageGroup class
- * This is a collection of (non unique) pages. A group can be requested like a normal page.
- * Each member of the group has an eligibility formula, and the first page whose eligibility formula evaluates to true is shown.
+ * This is a collection of pages that can be requested like a normal page.
+ * Each member of the group has an eligibility formula, and the first page whose eligibility formula matches is shown.
  * This can be used to show different pages on different devices.
  */
 class PageGroup implements AbstractPageGroup {
@@ -41,13 +42,15 @@ class PageGroup implements AbstractPageGroup {
    * determine the first page in the group that matches the client screen size
    * @param data client screen and window size
    * @param user the user or just { role_id: 100 }
+   * @param locale
    * @returns the matching page, or null
    */
-  async getEligiblePage(data: EligiblePageParams, user: any) {
+  async getEligiblePage(data: ScreenInfoParams, user: any, locale?: string) {
     const Page = (await import("./page")).default;
     const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
+    const expressionRow = { ...data, locale: locale || "en" };
     for (const member of sorted) {
-      const res = eval_expression(member.eligible_formula, data, user);
+      const res = eval_expression(member.eligible_formula, expressionRow, user);
       if (res === true) {
         const page = Page.findOne({ id: member.page_id });
         if (page) {
@@ -112,6 +115,14 @@ class PageGroup implements AbstractPageGroup {
    */
   sortedMembers(): Array<AbstractPageGroupMember> {
     return this.members.sort((a, b) => a.sequence - b.sequence);
+  }
+
+  async loadPages(): Promise<Array<Page>> {
+    const pageIds = this.members.map(({ page_id }) => page_id);
+    const idsLookup = new Set(pageIds);
+    return !db.isSQLite
+      ? await Page.find({ id: { in: pageIds } })
+      : (await Page.find({})).filter(({ id }) => id && idsLookup.has(id));
   }
 
   /**
@@ -197,7 +208,6 @@ class PageGroup implements AbstractPageGroup {
           {
             page_id: member.page_id,
             eligible_formula: member.eligible_formula,
-            name: member.name,
             description: member.description,
           },
           true
@@ -319,7 +329,6 @@ class PageGroup implements AbstractPageGroup {
         page_id: cfg.page_id,
         sequence: maxSeq + 1,
         eligible_formula: cfg.eligible_formula,
-        name: cfg.name,
         description: cfg.description,
       },
       true
@@ -365,7 +374,7 @@ class PageGroup implements AbstractPageGroup {
 
 // declaration merging
 namespace PageGroup {
-  export type EligiblePageParams = {
+  export type ScreenInfoParams = {
     width: number;
     height: number;
     innerWidth: number;
@@ -373,6 +382,6 @@ namespace PageGroup {
   };
 }
 
-type EligiblePageParams = PageGroup.EligiblePageParams;
+type ScreenInfoParams = PageGroup.ScreenInfoParams;
 
 export = PageGroup;

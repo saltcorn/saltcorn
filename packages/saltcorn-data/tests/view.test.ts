@@ -699,12 +699,3 @@ describe("view slug", () => {
     expect(res).toContain('<a href="/view/authorshow/1">authorshow</a>');
   });
 });
-
-describe("page group", () => {
-  it("runs a view with a link to a page group", async () => {
-    const view = View.findOne({ name: "view_with_group_link" });
-    assertIsSet(view);
-    const content = await view.run({ id: 1 }, mockReqRes);
-    expect(content).toContain(`page_group_link="page/page_group"`);
-  });
-});

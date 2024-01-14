@@ -5,10 +5,15 @@ const PageGroupMember = require("@saltcorn/data/models/page_group_member");
 const Page = require("@saltcorn/data/models/page");
 const Form = require("@saltcorn/data/models/form");
 const User = require("@saltcorn/data/models/user");
-const { div, a } = require("@saltcorn/markup/tags");
-const { renderForm } = require("@saltcorn/markup");
+const { div, a, code, span, br } = require("@saltcorn/markup/tags");
+const {
+  renderForm,
+  mkTable,
+  post_btn,
+  post_delete_btn,
+  link,
+} = require("@saltcorn/markup");
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
-const { pageGroupMembers } = require("./common_lists");
 const { error_catcher, isAdmin, setRole } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 
@@ -47,11 +52,14 @@ const groupPropsForm = async (req, isNew) => {
             return req.__("A page group with this name already exists");
           }
         },
+        sublabel: req.__("A short name that will be in your URL"),
+        attributes: { autofocus: true },
       },
       {
         name: "description",
         label: req.__("Description"),
         type: "String",
+        sublabel: req.__("A longer description"),
       },
       {
         name: "min_role",
@@ -64,39 +72,43 @@ const groupPropsForm = async (req, isNew) => {
   });
 };
 
-const memberForm = async (action, nameValidator, req, groupName) => {
+const memberForm = async (action, req, groupName, pageValidator) => {
   const pageOptions = (await Page.find()).map((p) => p.name);
   return new Form({
     action,
     fields: [
       {
-        name: "name",
-        label: req.__("Name"),
-        sublabel: req.__("Name of this member"),
-        type: "String",
-        validator: nameValidator,
-      },
-      {
-        name: "description",
-        label: req.__("Description"),
-        type: "String",
-      },
-      {
         name: "page_name",
         label: req.__("Page"),
-        sublabel: req.__("Page to be delivered"),
+        sublabel: req.__("Page to be served"),
         type: "String",
         required: true,
+        validator: pageValidator,
         attributes: {
           options: pageOptions,
         },
       },
       {
+        name: "description",
+        label: req.__("Description"),
+        type: "String",
+        sublabel: req.__("A description of the group member"),
+      },
+      {
         name: "eligible_formula",
         label: req.__("Eligible Formula"),
-        sublabel: req.__(
-          "Formula to determine if this page should be delivered"
-        ),
+        sublabel:
+          req.__("Formula to determine if this page should be served.") +
+          br() +
+          span(
+            "Variables in scope: ",
+            ["width", "height", "innerWidth", "innerHeight", "user", "locale"]
+              .map((f) => code(f))
+              .join(", ")
+          ),
+        help: {
+          topic: "Eligible Formula",
+        },
         type: "String",
         required: true,
         class: "validate-expression",
@@ -114,38 +126,30 @@ const memberForm = async (action, nameValidator, req, groupName) => {
 
 const editMemberForm = async (member, req) => {
   const group = PageGroup.findOne({ id: member.page_group_id });
-  const nameToMember = {};
-  for (const member of group.members) {
-    if (member.name) nameToMember[member.name] = member;
-  }
   const validator = (s, whole) => {
-    if (s && nameToMember[s] && +whole.id !== nameToMember[s].id) {
-      return req.__("A member with this name already exists");
-    }
+    const page = Page.findOne({ name: s });
+    if (group.members.find((m) => m.page_id === page.id && +whole.id !== m.id))
+      return req.__("A member with this page already exists");
   };
   return await memberForm(
     `/page_groupedit/edit-member/${member.id}`,
-    validator,
     req,
-    group.name
+    group.name,
+    validator
   );
 };
 
 const addMemberForm = async (group, req) => {
-  const nameToMember = {};
-  for (const member of group.members) {
-    if (member.name) nameToMember[member.name] = member;
-  }
+  const groupPages = await group.loadPages();
   const validator = (s) => {
-    if (s && nameToMember[s]) {
-      return req.__("A member with this name already exists");
-    }
+    if (groupPages.find((page) => page.name === s))
+      return req.__("A member with this page already exists");
   };
   return await memberForm(
     `/page_groupedit/add-member/${group.name}`,
-    validator,
     req,
-    group.name
+    group.name,
+    validator
   );
 };
 
@@ -182,7 +186,7 @@ const wrapMember = (contents, req, pageGroup, pageMember) => {
           { text: pageGroup.name, href: `/page_groupedit/${pageGroup.name}` },
           pageMember
             ? memberCrumb(pageMember.page_id)
-            : { text: req.__("Add member") },
+            : { text: req.__("add-member") },
         ],
       },
       {
@@ -194,6 +198,98 @@ const wrapMember = (contents, req, pageGroup, pageMember) => {
       },
     ],
   };
+};
+
+const pageGroupMembers = async (pageGroup, req) => {
+  const db = require("@saltcorn/data/db");
+  const pages = !db.isSQLite
+    ? await Page.find({
+        id: { in: pageGroup.members.map((r) => r.page_id) },
+      })
+    : await Page.find();
+  const pageIdToName = pages.reduce((acc, page) => {
+    acc[page.id] = page.name;
+    return acc;
+  }, {});
+  let members = pageGroup.sortedMembers();
+  const upDownBtns = (r, req) => {
+    if (members.length <= 1) return "";
+    else
+      return div(
+        { class: "container" },
+        div(
+          { class: "row" },
+          div(
+            { class: "col-1" },
+            r.sequence !== members[0].sequence
+              ? post_btn(
+                  `/page_groupedit/move-member/${r.id}/Up`,
+                  `<i class="fa fa-arrow-up"></i>`,
+                  req.csrfToken(),
+                  {
+                    small: true,
+                    ajax: true,
+                    reload_on_done: true,
+                    btnClass: "btn btn-secondary btn-sm me-1",
+                    req,
+                    formClass: "d-inline",
+                  }
+                )
+              : ""
+          ),
+          div(
+            { class: "col-1" },
+            r.sequence !== members[members.length - 1].sequence
+              ? post_btn(
+                  `/page_groupedit/move-member/${r.id}/Down`,
+                  `<i class="fa fa-arrow-down"></i>`,
+                  req.csrfToken(),
+                  {
+                    small: true,
+                    ajax: true,
+                    reload_on_done: true,
+                    btnClass: "btn btn-secondary btn-sm me-1",
+                    req,
+                    formClass: "d-inline",
+                  }
+                )
+              : ""
+          )
+        )
+      );
+  };
+
+  return mkTable(
+    [
+      {
+        label: req.__("Page"),
+        key: (r) =>
+          link(`/page/${pageIdToName[r.page_id]}`, pageIdToName[r.page_id]),
+      },
+      {
+        label: "",
+        key: (r) => upDownBtns(r, req),
+      },
+      {
+        label: req.__("Edit"),
+        key: (member) =>
+          link(`/page_groupedit/edit-member/${member.id}`, req.__("Edit")),
+      },
+      {
+        label: req.__("Delete"),
+        key: (member) =>
+          post_delete_btn(
+            `/page_groupedit/remove-member/${member.id}`,
+            req,
+            req.__("Member %s", member.sequence)
+          ),
+      },
+    ],
+    members,
+    {
+      hover: true,
+    }
+  );
 };
 
 /**
@@ -223,7 +319,7 @@ router.get(
     const propertiesForm = await groupPropsForm(req);
     propertiesForm.hidden("id");
     propertiesForm.values = pageGroup;
-    res.sendWrap(req.__("Pagegroup edit"), {
+    res.sendWrap(req.__("%s edit", page_groupname), {
       above: [
         {
           type: "breadcrumbs",
@@ -252,7 +348,7 @@ router.get(
         },
         {
           type: "card",
-          title: req.__("Edit group Properties"),
+          title: req.__("Edit group properties"),
           titleAjaxIndicator: true,
           contents: div(renderForm(propertiesForm, req.csrfToken())),
         },
@@ -311,7 +407,7 @@ router.get(
     } else {
       const form = await addMemberForm(group, req);
       res.sendWrap(
-        req.__(`Pagegroup attributes`),
+        req.__(`%s add-member`, group.name),
         wrapMember(renderForm(form, req.csrfToken()), req, group)
       );
     }
@@ -335,26 +431,25 @@ router.post(
     form.validate(req.body);
     if (form.hasErrors) {
       res.sendWrap(
-        req.__(`Pagegroup attributes`),
+        req.__(`%s add-member`, group.name),
         wrapMember(renderForm(form, req.csrfToken()), req, group)
       );
     } else {
-      const { page_name, eligible_formula, name, description } = form.values;
+      const { page_name, eligible_formula, description } = form.values;
       const page = Page.findOne({ name: page_name });
       if (!page) {
         req.flash("error", req.__("Page %s not found", page_name));
         res.sendWrap(
-          req.__(`Pagegroup attributes`),
+          req.__(`%s add-member`, group.name),
           wrapMember(renderForm(form, req.csrfToken()), req, group)
         );
       } else {
         await group.addMember({
           page_id: page.id,
           eligible_formula,
-          name: name || "",
           description: description || "",
         });
-        req.flash("success", req.__("Added member %s", name || page_name));
+        req.flash("success", req.__("Added member"));
         res.redirect(`/page_groupedit/${page_groupname}`);
       }
     }
@@ -391,7 +486,7 @@ router.get(
     const { member_id } = req.params;
     const member = PageGroupMember.findOne({ id: member_id });
     if (!member) {
-      req.flash("error", req.__("Group member %s does not exist", member_id));
+      req.flash("error", req.__("member %s does not exist", member_id));
       return res.redirect("/pageedit");
     }
     const group = PageGroup.findOne({ id: member.page_group_id });
@@ -412,7 +507,7 @@ router.get(
     form.values = { ...member, page_name: page.name };
 
     res.sendWrap(
-      req.__(`Pagegroup attributes`),
+      req.__(`%s edit-member`, member.name || member.id),
       wrapMember(renderForm(form, req.csrfToken()), req, group, member)
     );
   })
@@ -433,12 +528,11 @@ router.post(
     form.validate(req.body);
     if (form.hasErrors) {
       res.sendWrap(
-        req.__(`Pagegroup attributes`),
+        req.__(`%s edit-member`, member.name || member.id),
         wrapMember(renderForm(form, req.csrfToken()), req, group, member)
       );
     } else {
-      const { id, page_name, eligible_formula, name, description } =
-        form.values;
+      const { id, page_name, eligible_formula, description } = form.values;
       const page = Page.findOne({ name: page_name });
       if (!page) {
         req.flash("error", req.__("Page %s not found", page_name));
@@ -448,13 +542,9 @@ router.post(
           page_group_id: group.id,
           page_id: page.id,
           eligible_formula,
-          name: name || "",
           description: description || "",
         });
-      req.flash(
-        "success",
-        req.__("Updated member %s", member.name ? member.name : member.id)
-      );
+      req.flash("success", req.__("Updated member"));
       res.redirect(`/page_groupedit/${group.name}`);
     }
   })
@@ -533,30 +623,6 @@ router.post(
       const copy = await group.clone();
       req.flash("success", req.__("Cloned page group %s", group.name));
       res.redirect(`/page_groupedit/${copy.name}`);
-    }
-  })
-);
-
-/**
- * clone a group-member
- */
-router.post(
-  "/clone-member/:member_id",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const { member_id } = req.params;
-    const member = PageGroupMember.findOne({ id: member_id });
-    const group = PageGroup.findOne({ id: member.page_group_id });
-    if (!member) {
-      req.flash("error", req.__("Page group member %s not found", member_id));
-      res.redirect(group ? `/page_groupedit/${group.name}` : "/pageedit");
-    } else if (!member.name) {
-      req.flash("error", req.__("Please give the member a name"));
-      res.redirect(group ? `/page_groupedit/${group.name}` : "/pageedit");
-    } else {
-      const copy = await member.clone();
-      req.flash("success", req.__("Cloned page group member %s", member.name));
-      res.redirect(`/page_groupedit/edit-member/${copy.id}`);
     }
   })
 );

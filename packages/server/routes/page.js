@@ -5,6 +5,7 @@
  */
 
 const Router = require("express-promise-router");
+const { UAParser } = require("ua-parser-js");
 
 const Page = require("@saltcorn/data/models/page");
 const PageGroup = require("@saltcorn/data/models/page_group");
@@ -80,6 +81,14 @@ const runPage = async (page, req, res, tic) => {
   }
 };
 
+const screenInfoFromCfg = (req) => {
+  const uaScreenInfos = getState().getConfig("user_agent_screen_infos", {});
+  const uaParser = new UAParser(req.headers["user-agent"]);
+  const device = uaParser.getDevice();
+  if (!device.type) return uaScreenInfos.web;
+  else return uaScreenInfos[device.type];
+};
+
 const runPageGroup = async (pageGroup, req, res, tic) => {
   const role = req.user && req.user.id ? req.user.role_id : 100;
   if (role <= pageGroup.min_role) {
@@ -92,41 +101,37 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
           req.__("Pagegroup %s has no members", pageGroup.name)
         );
     } else {
-      const { innerWidth, innerHeight, width, height } = req.query;
-      if (!innerWidth || !innerHeight || !width || !height) {
-        res.sendWrap(
-          script(
-            domReady(`
-              let href = window.location.href;
-              if (href.endsWith("?")) href = href.slice(0, -1);
-              const newHref = updateQueryStringParameters(href, {
-                width: window.screen.width,
-                height: window.screen.height,
-                innerWidth: window.innerWidth,
-                innerHeight: window.innerHeight,
-              });
-              window.location = newHref;`)
-          )
+      let screenInfos = null;
+      if (req.cookies["_sc_screen_info_"])
+        screenInfos = JSON.parse(req.cookies["_sc_screen_info_"]);
+      else {
+        const strategy = getState().getConfig(
+          "missing_screen_info_strategy",
+          "guess_from_user_agent"
         );
-      } else {
-        const eligiblePage = await pageGroup.getEligiblePage(
-          {
-            width: parseInt(width),
-            height: parseInt(height),
-            innerWidth: parseInt(innerWidth),
-            innerHeight: parseInt(innerHeight),
-          },
-          req.user ? req.user : { role_id: features.public_user_role }
-        );
-        if (!eligiblePage) {
-          getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
-          res
-            .status(404)
-            .sendWrap(
-              ` page`,
-              req.__("Pagegroup %s has no eligible page", pageGroup.name)
-            );
-        } else await runPage(eligiblePage, req, res, tic);
+        if (strategy === "guess_from_user_agent")
+          screenInfos = screenInfoFromCfg(req);
+        else if (strategy === "reload" && req.query.is_reload !== "true") {
+          return res.sendWrap(
+            script(
+              domReady(`
+                setScreenInfoCookie();
+                window.location = updateQueryStringParameter(window.location.href, "is_reload", true);`)
+            )
+          );
+        }
+      }
+      const eligiblePage = await pageGroup.getEligiblePage(
+        screenInfos,
+        req.user ? req.user : { role_id: features.public_user_role },
+        req.getLocale()
+      );
+      if (eligiblePage) await runPage(eligiblePage, req, res, tic);
+      else {
+        getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
+        res
+          .status(404)
+          .sendWrap(` page`, req.__("%s has no eligible page", pageGroup.name));
       }
     }
   } else {

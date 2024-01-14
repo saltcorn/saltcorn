@@ -223,25 +223,29 @@ describe("pack create", () => {
           page_name: "iPhone SE",
           description: null,
           sequence: 1,
-          eligible_formula: "width < 380 && height < 670 && user.id === 1",
+          eligible_formula:
+            "width < 380 && height < 670 && user.id === 1 && locale === 'en'",
         },
         {
           page_name: "iPhone XR",
           description: null,
           sequence: 2,
-          eligible_formula: "width < 415 && height < 900 && user.id === 1",
+          eligible_formula:
+            "width < 415 && height < 900 && user.id === 1 && locale === 'en'",
         },
         {
           page_name: "Surface Pro 7",
           description: null,
           sequence: 3,
-          eligible_formula: "width < 915 && height < 1370 && user.id === 1",
+          eligible_formula:
+            "width < 915 && height < 1370 && user.id === 1 && locale === 'en'",
         },
         {
           page_name: "Laptop",
           description: null,
           sequence: 4,
-          eligible_formula: "width < 1900 && height < 1000 && user.id === 1",
+          eligible_formula:
+            "width < 1900 && height < 1000 && user.id === 1 && locale === 'en'",
         },
       ],
     });
@@ -544,7 +548,6 @@ const todoPack: Pack = {
       min_role: 100,
       members: [
         {
-          name: "member1",
           page_name: "FooPage",
           description: "Foo",
           eligible_formula: "width < 380 && height < 670 && user.id === 1",
@@ -585,7 +588,6 @@ describe("pack install", () => {
       sequence: 1,
       eligible_formula: "width < 380 && height < 670 && user.id === 1",
       description: "Foo",
-      name: "member1",
     });
   });
   it("cannot install pack again", async () => {

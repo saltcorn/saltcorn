@@ -13,7 +13,6 @@ const { satisfies } = utils;
  */
 class PageGroupMember implements AbstractPageGroupMember {
   id?: number;
-  name?: string;
   description?: string;
   page_group_id: number;
   page_id: number;
@@ -27,7 +26,6 @@ class PageGroupMember implements AbstractPageGroupMember {
     this.sequence = cfg.sequence || 0;
     this.eligible_formula = cfg.eligible_formula;
     this.description = cfg.description;
-    this.name = cfg.name;
   }
 
   /**
@@ -87,9 +85,6 @@ class PageGroupMember implements AbstractPageGroupMember {
         ? (m: AbstractPageGroupMember) =>
             m.page_group_id === where.page_group_id &&
             m.sequence === where.sequence
-        : where.page_group_id && where.name
-        ? (m: AbstractPageGroupMember) =>
-            m.page_group_id === where.page_group_id && m.name === where.name
         : null;
     return pred;
   }
@@ -147,47 +142,6 @@ class PageGroupMember implements AbstractPageGroupMember {
     await db.deleteWhere("_sc_page_group_members", { id });
     if (!noRrefresh)
       await require("../db/state").getState().refresh_page_groups();
-  }
-
-  /**
-   * duplicate the member with a new name
-   * @returns the create member
-   */
-  async clone(): Promise<PageGroupMember> {
-    if (!this.name) throw new Error("Please give the member a name");
-    else {
-      let transactionOpen = false;
-      try {
-        await db.begin();
-        transactionOpen = true;
-        const basename = this.name + " copy";
-        let newname;
-        for (let i = 0; i < 100; i++) {
-          newname = i ? `${basename} (${i})` : basename;
-          const existing = PageGroupMember.findOne({
-            page_group_id: this.page_group_id,
-            name: newname,
-          });
-          if (!existing) break;
-        }
-        const createObj = {
-          ...this,
-          name: newname,
-        };
-        delete createObj.id;
-        const PageGroup = (await import("./page_group")).default;
-        const group = PageGroup.findOne({ id: this.page_group_id });
-        if (!group)
-          throw new Error(`Page ${this.page_group_id} group not found`);
-        const newMember = await group.addMember(createObj, true);
-        await db.commit();
-        await require("../db/state").getState().refresh_page_groups();
-        return newMember;
-      } catch (e) {
-        if (transactionOpen) await db.rollback();
-        throw e;
-      }
-    }
   }
 
   connected_objects(): ConnectedObjects {

@@ -5,21 +5,11 @@ const {
   mkTable,
   link,
   post_delete_btn,
-  post_btn,
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
-const {
-  h4,
-  p,
-  div,
-  a,
-  i,
-  input,
-  span,
-  text,
-} = require("@saltcorn/markup/tags");
+const { h4, p, div, a, i, text } = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
@@ -313,23 +303,6 @@ const page_group_dropdown = (page_group, req) =>
     ),
   ]);
 
-const page_group_member_dropdown = (member, req) =>
-  settingsDropdown(`groupMemberDropdownMenuButton${member.id}`, [
-    post_dropdown_item(
-      `/page_groupedit/clone-member/${member.id}`,
-      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
-      req
-    ),
-    div({ class: "dropdown-divider" }),
-    post_dropdown_item(
-      `/page_groupedit/remove-member/${member.id}`,
-      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
-      req,
-      true,
-      member.name ? member.name : req.__("the member")
-    ),
-  ]);
-
 /**
  * @param {object} page
  * @param {object} req
@@ -447,8 +420,7 @@ const getPageGroupList = (rows, roles, req) => {
     [
       {
         label: req.__("Name"),
-        key: (r) =>
-          link(`/page/${r.name}`, r.name, { page_group_link: r.name }),
+        key: (r) => link(`/page/${r.name}`, r.name),
       },
       {
         label: req.__("Role to access"),
@@ -464,98 +436,6 @@ const getPageGroupList = (rows, roles, req) => {
       },
     ],
     rows,
-    {
-      hover: true,
-    }
-  );
-};
-
-const pageGroupMembers = async (pageGroup, req) => {
-  const db = require("@saltcorn/data/db");
-  const Page = require("@saltcorn/data/models/page");
-  const pages = !db.isSQLite
-    ? await Page.find({
-        id: { in: pageGroup.members.map((r) => r.page_id) },
-      })
-    : await Page.find();
-  const pageIdToName = pages.reduce((acc, page) => {
-    acc[page.id] = page.name;
-    return acc;
-  }, {});
-  let members = pageGroup.sortedMembers();
-  const upDownBtns = (r, req) => {
-    if (members.length <= 1) return "";
-    else
-      return div(
-        { class: "container" },
-        div(
-          { class: "row" },
-          div(
-            { class: "col-1" },
-            r.sequence !== members[0].sequence
-              ? post_btn(
-                  `/page_groupedit/move-member/${r.id}/Up`,
-                  `<i class="fa fa-arrow-up"></i>`,
-                  req.csrfToken(),
-                  {
-                    small: true,
-                    ajax: true,
-                    reload_on_done: true, // TODO ??
-                    btnClass: "btn btn-secondary btn-sm me-1",
-                    req,
-                    formClass: "d-inline",
-                  }
-                )
-              : ""
-          ),
-          div(
-            { class: "col-1" },
-            r.sequence !== members[members.length - 1].sequence
-              ? post_btn(
-                  `/page_groupedit/move-member/${r.id}/Down`,
-                  `<i class="fa fa-arrow-down"></i>`,
-                  req.csrfToken(),
-                  {
-                    small: true,
-                    ajax: true,
-                    reload_on_done: true, // TODO ??
-                    btnClass: "btn btn-secondary btn-sm me-1",
-                    req,
-                    formClass: "d-inline",
-                  }
-                )
-              : ""
-          )
-        )
-      );
-  };
-
-  return mkTable(
-    [
-      {
-        label: req.__("Page"),
-        key: (r) =>
-          link(`/page/${pageIdToName[r.page_id]}`, pageIdToName[r.page_id]),
-      },
-      {
-        label: req.__("Name"),
-        key: (r) => r.name || "",
-      },
-      {
-        label: "",
-        key: (r) => upDownBtns(r, req),
-      },
-      {
-        label: req.__("Edit"),
-        key: (member) =>
-          link(`/page_groupedit/edit-member/${member.id}`, req.__("Edit")),
-      },
-      {
-        label: "",
-        key: (r) => page_group_member_dropdown(r, req),
-      },
-    ],
-    members,
     {
       hover: true,
     }
@@ -633,6 +513,5 @@ module.exports = {
   viewsList,
   getPageList,
   getPageGroupList,
-  pageGroupMembers,
   getTriggerList,
 };

@@ -813,6 +813,23 @@ const configTypes: ConfigTypes = {
     label: "Max relations layer depth",
     default: 6,
   },
+  missing_screen_info_strategy: {
+    type: "String",
+    label: "how to handle a Pagegroup load when the browser sends no screen info Cookie",
+    default: "guess_from_user_agent",
+  },
+  user_agent_screen_infos: {
+    type: "JSON",
+    label: "screen infos mapped to the user agent device",
+    default: {
+      web: {
+        width: 1000,
+        height: 900,
+        innerWidth: 912,
+        innerHeight: 1368,
+      },
+    },
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

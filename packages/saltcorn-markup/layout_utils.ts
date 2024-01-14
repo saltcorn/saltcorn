@@ -437,9 +437,7 @@ const standardBreadcrumbItem =
         class: ["breadcrumb-item", ix == len - 1 && "active"],
         "aria-current": ix == len - 1 && "page",
       },
-      href
-        ? a({ href, ...(pageGroupLink ? { page_group_link: href } : {}) }, text)
-        : text,
+      href ? a({ href }, text) : text,
       postLinkText ? "&nbsp;" + postLinkText : ""
     );
 

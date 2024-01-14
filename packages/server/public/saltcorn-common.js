@@ -8,6 +8,15 @@ jQuery.fn.swapWith = function (to) {
   });
 };
 
+setScreenInfoCookie();
+function setScreenInfoCookie() {
+  document.cookie = `_sc_screen_info_=${JSON.stringify({
+    width: window.screen.width,
+    height: window.screen.height,
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+  })}`;
+}
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
   $("body").on(
@@ -731,18 +740,6 @@ function initialize_page() {
         this.style.backgroundImage = `url("${base64Encoded}")`;
       }
     }
-  });
-  $("[page_group_link]").each(function () {
-    const jThis = $(this);
-    let href = jThis.attr("href");
-    if (href.endsWith("?")) href = href.slice(0, -1);
-    const newHref = updateQueryStringParameters(href, {
-      width: window.screen.width,
-      height: window.screen.height,
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-    });
-    jThis.attr("href", newHref);
   });
 
   function setExplainer(that) {

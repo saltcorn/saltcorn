@@ -1,6 +1,5 @@
 export interface AbstractPageGroupMember {
   id?: number;
-  name?: string;
   description?: string;
   page_group_id: number;
   page_id: number;
@@ -10,7 +9,6 @@ export interface AbstractPageGroupMember {
 
 export type PageGroupMemberCfg = {
   id?: number;
-  name?: string;
   description?: string;
   page_group_id?: number;
   page_id: number;

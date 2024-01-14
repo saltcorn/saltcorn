@@ -1,0 +1,53 @@
+Here you can write a formula to decide if the page is eligible for the request.
+
+### `Variables in scope`
+You have access to the following variables:
+
+```
+width, height, innerWidth, innerHeight, user, locale
+```
+
+#### `width and height`
+This is the size of the whole screen.
+
+Example:
+```
+  width < 380 && height < 670
+```
+
+##### `innerWidth and innerHeight`
+This is the size of your window.
+
+Example:
+```javascript
+  innerWidth <= 375 && innerHeight <= 667
+```
+
+#### `user`
+Here you'll find the user object or 
+```
+  { 
+    role_id: 100
+  }
+```
+for public requests.
+
+Example:
+```
+  user.id === 1 || user.role_id === 1
+```
+
+#### `locale`
+In locale, you'll find the locale of your browser.
+
+Example:
+```
+  locale === 'en' || locale === 'es' || local === 'de'
+```
+
+
+## `Default member`
+If no member matches, you'll get an error message, or to catch this, add a default member at the lowest level with just
+```
+  true
+```
