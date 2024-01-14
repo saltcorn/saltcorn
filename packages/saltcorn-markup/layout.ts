@@ -375,7 +375,9 @@ const render = ({
             rel: segment.nofollow ? "nofollow" : false,
             style,
           },
-          segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
+          segment.link_icon
+            ? i({ class: segment.link_icon }) + (segment.text ? "&nbsp;" : "")
+            : "",
           segment.text
         )
       );
