@@ -1959,6 +1959,9 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       const kpath = k.split(".");
       if (kpath.length === 3) {
         const [jtNm, jFieldNm, lblField] = kpath;
+        let isString = false;
+        const labelField = Table.findOne({ name: jtNm })?.getField?.(lblField);
+        if (labelField) isString = labelField.type?.name === "String";
         qstate.id = [
           ...(qstate.id ? [qstate.id] : []),
           {
@@ -1967,7 +1970,10 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
               table: db.sqlsanitize(jtNm),
               tenant: db.isSQLite ? undefined : db.getTenantSchema(),
               field: db.sqlsanitize(jFieldNm),
-              where: { [db.sqlsanitize(lblField)]: v },
+              where: {
+                [db.sqlsanitize(lblField)]:
+                  isString && approximate ? { ilike: v } : v,
+              },
             },
           },
         ];
