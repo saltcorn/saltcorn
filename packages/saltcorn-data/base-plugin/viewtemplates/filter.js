@@ -393,7 +393,9 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value, this)`,
+              onChange: `set_state_field('${encodeURIComponent(
+                field_name
+              )}', this.value, this)`,
               ...field.attributes,
               isFilter: true,
               ...configuration,
@@ -417,7 +419,9 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value, this)`,
+              onChange: `set_state_field('${encodeURIComponent(
+                field_name
+              )}', this.value, this)`,
               isFilter: true,
               ...field.attributes,
               ...configuration,
@@ -573,8 +577,10 @@ const run = async (
           ],
           onClick:
             active || use_value === undefined
-              ? `unset_state_field('${field_name}', this)`
-              : `set_state_field('${field_name}', '${use_value || ""}', this)`,
+              ? `unset_state_field('${encodeURIComponent(field_name)}', this)`
+              : `set_state_field('${encodeURIComponent(field_name)}', '${
+                  use_value || ""
+                }', this)`,
         },
         label || value || preset_value
       );
