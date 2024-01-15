@@ -136,7 +136,7 @@ router.get(
     send_infoarch_page({
       res,
       req,
-      active_sub: "PageGroups",
+      active_sub: "Pagegroups",
       contents: [
         {
           type: "card",
@@ -207,7 +207,7 @@ router.get(
     send_infoarch_page({
       res,
       req,
-      active_sub: "PageGroups",
+      active_sub: "Pagegroups",
       contents: {
         type: "card",
         title: req.__("Add screen info"),
@@ -239,7 +239,7 @@ router.post(
       send_infoarch_page({
         res,
         req,
-        active_sub: "PageGroups",
+        active_sub: "Pagegroups",
         contents: {
           type: "card",
           title: req.__("Add screen info"),
@@ -291,7 +291,7 @@ router.get(
     send_infoarch_page({
       res,
       req,
-      active_sub: "PageGroups",
+      active_sub: "Pagegroups",
       contents: {
         type: "card",
         title: req.__("Edit screen info"),
@@ -321,7 +321,7 @@ router.post(
       send_infoarch_page({
         res,
         req,
-        active_sub: "PageGroups",
+        active_sub: "Pagegroups",
         contents: {
           type: "card",
           title: req.__("Edit device"),
@@ -356,7 +356,7 @@ router.post(
       send_infoarch_page({
         res,
         req,
-        active_sub: "PageGroups",
+        active_sub: "Pagegroups",
         contents: {
           type: "card",
           title: req.__("Page Group settings"),

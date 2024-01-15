@@ -314,10 +314,10 @@ describe("page group settings", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Edit screen info"))
       .expect(toInclude("web"))
+      .expect(toInclude(`value="1920"`))
       .expect(toInclude(`value="1000"`))
-      .expect(toInclude(`value="900"`))
-      .expect(toInclude(`value="912"`))
-      .expect(toInclude(`value="1368"`));
+      .expect(toInclude(`value="1848"`))
+      .expect(toInclude(`value="980"`));
   });
 
   it("edits a screen-info", async () => {

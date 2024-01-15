@@ -815,7 +815,8 @@ const configTypes: ConfigTypes = {
   },
   missing_screen_info_strategy: {
     type: "String",
-    label: "how to handle a Pagegroup load when the browser sends no screen info Cookie",
+    label:
+      "how to handle a Pagegroup load when the browser sends no screen info Cookie",
     default: "guess_from_user_agent",
   },
   user_agent_screen_infos: {
@@ -823,10 +824,10 @@ const configTypes: ConfigTypes = {
     label: "screen infos mapped to the user agent device",
     default: {
       web: {
-        width: 1000,
-        height: 900,
-        innerWidth: 912,
-        innerHeight: 1368,
+        width: 1920,
+        height: 1000,
+        innerWidth: 1848,
+        innerHeight: 980,
       },
     },
   },

@@ -1721,7 +1721,7 @@ module.exports =
       {
         pageName: "Laptop",
         eligible_formula:
-          "width < 1900 && height < 1000 && user.id === 1 && locale === 'en'",
+          "width <= 1920 && height <= 1000 && user.id === 1 && locale === 'en'",
       },
     ]) {
       const page = await Page.create({

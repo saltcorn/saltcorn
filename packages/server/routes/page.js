@@ -81,12 +81,17 @@ const runPage = async (page, req, res, tic) => {
   }
 };
 
-const screenInfoFromCfg = (req) => {
-  const uaScreenInfos = getState().getConfig("user_agent_screen_infos", {});
+const uaDevice = (req) => {
   const uaParser = new UAParser(req.headers["user-agent"]);
   const device = uaParser.getDevice();
-  if (!device.type) return uaScreenInfos.web;
-  else return uaScreenInfos[device.type];
+  if (!device.type) return "web";
+  else return device.type;
+};
+
+const screenInfoFromCfg = (req) => {
+  const device = uaDevice(req);
+  const uaScreenInfos = getState().getConfig("user_agent_screen_infos", {});
+  return { device, ...uaScreenInfos[device] };
 };
 
 const runPageGroup = async (pageGroup, req, res, tic) => {
@@ -102,9 +107,10 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
         );
     } else {
       let screenInfos = null;
-      if (req.cookies["_sc_screen_info_"])
+      if (req.cookies["_sc_screen_info_"]) {
         screenInfos = JSON.parse(req.cookies["_sc_screen_info_"]);
-      else {
+        screenInfos.device = uaDevice(req);
+      } else {
         const strategy = getState().getConfig(
           "missing_screen_info_strategy",
           "guess_from_user_agent"

@@ -102,7 +102,15 @@ const memberForm = async (action, req, groupName, pageValidator) => {
           br() +
           span(
             "Variables in scope: ",
-            ["width", "height", "innerWidth", "innerHeight", "user", "locale"]
+            [
+              "width",
+              "height",
+              "innerWidth",
+              "innerHeight",
+              "user",
+              "locale",
+              "device",
+            ]
               .map((f) => code(f))
               .join(", ")
           ),
@@ -159,7 +167,7 @@ const wrapGroup = (contents, req) => {
       {
         type: "breadcrumbs",
         crumbs: [
-          { text: req.__("Page Groups"), href: "/pageedit" }, // anchor ??
+          { text: req.__("Page Groups"), href: "/pageedit" },
           { text: req.__("Create") },
         ],
       },
@@ -182,7 +190,7 @@ const wrapMember = (contents, req, pageGroup, pageMember) => {
       {
         type: "breadcrumbs",
         crumbs: [
-          { text: req.__("Pages"), href: "/pageedit" }, // anchor ??
+          { text: req.__("Pages"), href: "/pageedit" },
           { text: pageGroup.name, href: `/page_groupedit/${pageGroup.name}` },
           pageMember
             ? memberCrumb(pageMember.page_id)
