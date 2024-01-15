@@ -28,6 +28,9 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
       for (const seg of segment) go(seg);
       return;
     }
+    if (segment.footer) {
+      if (typeof segment.footer !== "string") go(segment.footer);
+    }
     if (segment.contents) {
       if (typeof segment.contents !== "string") go(segment.contents);
       return;
@@ -60,6 +63,9 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
     if (Array.isArray(segment)) {
       for (const seg of segment) await go(seg);
       return;
+    }
+    if (segment.footer) {
+      if (typeof segment.footer !== "string") await go(segment.footer);
     }
     if (segment.contents) {
       if (typeof segment.contents !== "string") await go(segment.contents);

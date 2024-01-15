@@ -509,7 +509,9 @@ const render = ({
                   },
                   go(segment.contents)
                 )),
-          segment.footer && div({ class: "card-footer" }, go(segment.footer))
+          (segment.hasFooter ||
+            (segment.footer && segment.hasFooter !== false)) &&
+            div({ class: "card-footer" }, go(segment.footer))
         )
       );
     }
@@ -729,9 +731,15 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
+      //legacy, for empty (null) in the columns
+      const isOneCard = (segs: any) =>
+        segs.length === 1 && segs[0].type === "card";
+      const onlyCard = (s: any) =>
+        (s && s.type === "card") ||
+        (s.above && isOneCard(s.above.filter(Boolean)));
       const cardDeck = segment.besides
-        .filter((e: any) => e) // allow blank
-        .every((s: any) => s && s.type === "card");
+        .filter(Boolean) // allow blank
+        .every(onlyCard);
       let markup;
 
       if (cardDeck) {
