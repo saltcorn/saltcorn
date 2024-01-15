@@ -99,6 +99,7 @@ const {
 } = require("../markup/admin");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
+const PageGroup = require("@saltcorn/data/models/page_group");
 const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
 const Page = require("@saltcorn/data/models/page");
@@ -1223,6 +1224,12 @@ const clearAllForm = (req) =>
         type: "Bool",
         name: "pages",
         label: req.__("Pages"),
+        default: true,
+      },
+      {
+        type: "Bool",
+        name: "page_groups",
+        label: req.__("Page groups"),
         default: true,
       },
       {
@@ -2370,7 +2377,10 @@ router.post(
   error_catcher(async (req, res) => {
     const form = clearAllForm(req);
     form.validate(req.body);
-    //order: pages, views, user fields, tableconstraints, fields, table triggers, table history, tables, plugins, config+crashes+nontable triggers, users
+    //order: page_groups, pages, views, user fields, tableconstraints, fields, table triggers, table history, tables, plugins, config+crashes+nontable triggers, users
+    if (form.values.page_groups) {
+      await PageGroup.delete({});
+    }
     if (form.values.pages) {
       await db.deleteWhere("_sc_pages");
     }

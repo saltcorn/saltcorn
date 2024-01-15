@@ -17,8 +17,8 @@ const { alert, toast } = layoutUtils;
  * @param {string} s
  * @returns {string}
  */
-const link = (href: string, s: string): string =>
-  a({ href: text(href) }, text(s));
+const link = (href: string, s: string, attributes: any = {}): string =>
+  a({ href: text(href), ...attributes }, text(s));
 
 type PostBtnOpts = {
   btnClass: string;

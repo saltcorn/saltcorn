@@ -232,6 +232,7 @@ const send_infoarch_page = (args) => {
             { text: "Multitenancy", href: "/tenant/settings" },
           ]
         : []),
+      { text: "Pagegroups", href: "/page_group/settings"},
       { text: "Tags", href: "/tag" },
       { text: "Diagram", href: "/diagram" },
     ],

@@ -173,6 +173,9 @@ const LinkSettings = () => {
                   ["page", "filter"].includes(options.mode) && (
                     <option>View</option>
                   )}
+                {(options.page_groups || []).length > 0 && (
+                  <option>Page Group</option>
+                )}
               </select>
             </td>
           </tr>
@@ -206,6 +209,27 @@ const LinkSettings = () => {
                 >
                   <option></option>
                   {(options.pages || []).map((p, ix) => (
+                    <option key={ix} value={`/page/${p.name}`}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          )}
+          {link_src === "Page Group" && (
+            <tr>
+              <td>
+                <label>Page Group</label>
+              </td>
+              <td>
+                <select
+                  value={url}
+                  className="form-control form-select"
+                  onChange={setAProp("url")}
+                >
+                  <option></option>
+                  {(options.page_groups || []).map((p, ix) => (
                     <option key={ix} value={`/page/${p.name}`}>
                       {p.name}
                     </option>

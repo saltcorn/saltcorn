@@ -9,7 +9,7 @@ const {
   post_dropdown_item,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
-const { h4, p, div, a, i, input, text } = require("@saltcorn/markup/tags");
+const { h4, p, div, a, i, text } = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
@@ -273,6 +273,36 @@ const viewsList = async (
       );
 };
 
+const page_group_dropdown = (page_group, req) =>
+  settingsDropdown(`groupDropdownMenuButton${page_group.id}`, [
+    post_dropdown_item(
+      `/page_groupedit/add-to-menu/${page_group.id}`,
+      '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
+      req
+    ),
+    post_dropdown_item(
+      `/page_groupedit/clone/${page_group.id}`,
+      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+      req
+    ),
+    a(
+      {
+        class: "dropdown-item",
+        // TODO check url why view for page, what do we need for page group
+        href: `javascript:ajax_modal('/admin/snapshot-restore/pagegroup/${page_group.name}')`,
+      },
+      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
+    ),
+    div({ class: "dropdown-divider" }),
+    post_dropdown_item(
+      `/page_groupedit/delete/${page_group.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+      req,
+      true,
+      page_group.name
+    ),
+  ]);
+
 /**
  * @param {object} page
  * @param {object} req
@@ -327,9 +357,9 @@ const page_dropdown = (page, req) =>
  * @param {object} req
  * @returns {Form}
  */
-const editPageRoleForm = (page, roles, req) =>
+const editPageRoleForm = (page, roles, req, isGroup) =>
   editRoleForm({
-    url: `/pageedit/setrole/${page.id}`,
+    url: `/${!isGroup ? "page" : "page_group"}edit/setrole/${page.id}`,
     current_role: page.min_role,
     roles,
     req,
@@ -376,6 +406,38 @@ const getPageList = (rows, roles, req, { tagId, domId, showList } = {}) => {
       hover: true,
       tableClass: tagId ? `collapse ${showList ? "show" : ""}` : "",
       tableId: domId,
+    }
+  );
+};
+
+/**
+ * @param {*} rows
+ * @param {*} roles
+ * @param {*} req
+ */
+const getPageGroupList = (rows, roles, req) => {
+  return mkTable(
+    [
+      {
+        label: req.__("Name"),
+        key: (r) => link(`/page/${r.name}`, r.name),
+      },
+      {
+        label: req.__("Role to access"),
+        key: (row) => editPageRoleForm(row, roles, req, true),
+      },
+      {
+        label: req.__("Edit"),
+        key: (r) => link(`/page_groupedit/${r.name}`, req.__("Edit")),
+      },
+      {
+        label: "",
+        key: (r) => page_group_dropdown(r, req),
+      },
+    ],
+    rows,
+    {
+      hover: true,
     }
   );
 };
@@ -450,5 +512,6 @@ module.exports = {
   setTableRefs,
   viewsList,
   getPageList,
+  getPageGroupList,
   getTriggerList,
 };

@@ -158,6 +158,27 @@ const getAdminLoginCookie = async () => {
 
 /**
  *
+ * @param {*} width
+ * @param {*} height
+ * @param {*} innerWidth
+ * @param {*} innerHeight
+ * @returns
+ */
+const prepScreenInfoCookie = (width, height, innerWidth, innerHeight) => {
+  return `_sc_screen_info_=${JSON.stringify({
+    width,
+    height,
+    innerWidth: innerWidth || width,
+    innerHeight: innerHeight || height,
+  })}; Path=/;`;
+};
+
+const prepUserAgent = () => {
+  return `user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.2 (KHTML, like Gecko) Ubuntu/11.10 Chromium/15.0.874.106 Chrome/15.0.874.106 Safari/535.2"; Path=/;`;
+};
+
+/**
+ *
  * @param {string} path
  * @param {string} dest
  * @returns {void}
@@ -258,10 +279,20 @@ const notAuthorized = (res) => {
     throw new Error(`Expected status 401, received ${res.statusCode}`);
   }
 };
+
+const notFound = (res) => {
+  if (res.statusCode !== 404) {
+    console.log(res.text);
+    throw new Error(`Expected status 404, received ${res.statusCode}`);
+  }
+};
+
 module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
   getUserLoginCookie,
+  prepScreenInfoCookie,
+  prepUserAgent,
   itShouldRedirectUnauthToLogin,
   toRedirect,
   toInclude,
@@ -270,6 +301,7 @@ module.exports = {
   resetToFixtures,
   succeedJsonWith,
   notAuthorized,
+  notFound,
   respondJsonWith,
   toSucceedWithImage,
   succeedJsonWithWholeBody,

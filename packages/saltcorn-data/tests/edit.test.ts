@@ -463,6 +463,7 @@ describe("Edit-in-edit", () => {
         dest_url_formula: null,
         destination_type: "View",
         formula_destinations: [],
+        page_group_when_done: null,
       },
     });
   });

@@ -1,10 +1,11 @@
 import db from "@saltcorn/data/db/index";
-const pack = require("../models/pack");
+import pack from "../models/pack";
 const {
   table_pack,
   view_pack,
   plugin_pack,
   page_pack,
+  page_group_pack,
   library_pack,
   trigger_pack,
   role_pack,
@@ -17,12 +18,15 @@ const {
   can_install_pack,
   uninstall_pack,
 } = pack;
-const { isStale } = require("@saltcorn/data/utils");
+import utils from "@saltcorn/data/utils";
+const { isStale } = utils;
 const { getState } = require("@saltcorn/data/db/state");
 import Table from "@saltcorn/data/models/table";
 import { Pack } from "@saltcorn/types/base_types";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import Trigger from "@saltcorn/data/models/trigger";
+import PageGroup from "@saltcorn/data/models/page_group";
+import { assertIsSet } from "@saltcorn/data/tests/assertions";
 //import Trigger from "@saltcorn/data/models/trigger";
 
 getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
@@ -204,8 +208,55 @@ describe("pack create", () => {
     try {
       await page_pack("nonexist_page");
     } catch (error: any) {
+      expect(error.message).toMatch("Unable to find page 'nonexist_page'");
+    }
+  });
+
+  it("creates page group pack", async () => {
+    const groupPack = await page_group_pack("page_group");
+    expect(groupPack).toEqual({
+      name: "page_group",
+      description: null,
+      min_role: 100,
+      members: [
+        {
+          page_name: "iPhone SE",
+          description: null,
+          sequence: 1,
+          eligible_formula:
+            "width < 380 && height < 670 && user.id === 1 && locale === 'en'",
+        },
+        {
+          page_name: "iPhone XR",
+          description: null,
+          sequence: 2,
+          eligible_formula:
+            "width < 415 && height < 900 && user.id === 1 && locale === 'en'",
+        },
+        {
+          page_name: "Surface Pro 7",
+          description: null,
+          sequence: 3,
+          eligible_formula:
+            "width < 915 && height < 1370 && user.id === 1 && locale === 'en'",
+        },
+        {
+          page_name: "Laptop",
+          description: null,
+          sequence: 4,
+          eligible_formula:
+            "width <= 1920 && height <= 1000 && user.id === 1 && locale === 'en'",
+        },
+      ],
+    });
+  });
+
+  it("creates page pack for non existing page group", async () => {
+    try {
+      await page_group_pack("nonexist_page_group");
+    } catch (error: any) {
       expect(error.message).toMatch(
-        "Cannot read properties of undefined (reading 'is_root_page_for_roles')"
+        "Unable to find page group 'nonexist_page_group'"
       );
     }
   });
@@ -490,6 +541,20 @@ const todoPack: Pack = {
       root_page_for_roles: ["public"],
     },
   ],
+  page_groups: [
+    {
+      name: "FooPageGroup",
+      description: "Foo",
+      min_role: 100,
+      members: [
+        {
+          page_name: "FooPage",
+          description: "Foo",
+          eligible_formula: "width < 380 && height < 670 && user.id === 1",
+        },
+      ],
+    },
+  ],
   plugins: [],
   roles: [],
   library: [],
@@ -513,6 +578,17 @@ describe("pack install", () => {
     ]);
     const pubhome = getState().getConfig("public_home", []);
     expect(pubhome).toBe("FooPage");
+    const group = PageGroup.findOne({ name: "FooPageGroup" });
+    assertIsSet(group);
+    expect(group.members.length).toBe(1);
+    expect(group.members[0]).toEqual({
+      id: 5,
+      page_group_id: 2,
+      page_id: 8,
+      sequence: 1,
+      eligible_formula: "width < 380 && height < 670 && user.id === 1",
+      description: "Foo",
+    });
   });
   it("cannot install pack again", async () => {
     const can = await can_install_pack(todoPack);
@@ -524,7 +600,7 @@ describe("pack install", () => {
     const can = await can_install_pack(restOfPack);
     expect(can).toStrictEqual({
       warning:
-        "Clashing view EditTodo. Clashing view List Todos. Clashing page FooPage.",
+        "Clashing view EditTodo. Clashing view List Todos. Clashing page FooPage. Clashing page group FooPageGroup.",
     });
   });
   it("installs pack again anyways", async () => {

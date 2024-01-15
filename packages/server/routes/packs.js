@@ -12,6 +12,7 @@ const Form = require("@saltcorn/data/models/form");
 const View = require("@saltcorn/data/models/view");
 const Plugin = require("@saltcorn/data/models/plugin");
 const Page = require("@saltcorn/data/models/page");
+const PageGroup = require("@saltcorn/data/models/page_group");
 const Tag = require("@saltcorn/data/models/tag");
 const EventLog = require("@saltcorn/data/models/eventlog");
 const Model = require("@saltcorn/data/models/model");
@@ -24,6 +25,7 @@ const {
   view_pack,
   plugin_pack,
   page_pack,
+  page_group_pack,
   role_pack,
   library_pack,
   trigger_pack,
@@ -84,6 +86,12 @@ router.get(
     const pageFields = pages.map((t) => ({
       label: `${t.name} page`,
       name: `page.${t.name}`,
+      type: "Bool",
+    }));
+    const pageGroups = await PageGroup.find({});
+    const pageGroupFields = pageGroups.map((t) => ({
+      label: `${t.name} page group`,
+      name: `page_group.${t.name}`,
       type: "Bool",
     }));
     const libs = await Library.find({});
@@ -157,6 +165,7 @@ router.get(
         ...viewFields,
         ...pluginFields,
         ...pageFields,
+        ...pageGroupFields,
         ...trigFields,
         ...roleFields,
         ...libFields,
@@ -205,6 +214,7 @@ router.post(
       views: [],
       plugins: [],
       pages: [],
+      page_groups: [],
       roles: [],
       library: [],
       triggers: [],
@@ -227,6 +237,9 @@ router.post(
           break;
         case "page":
           pack.pages.push(await page_pack(name));
+          break;
+        case "page_group":
+          pack.page_groups.push(await page_group_pack(name));
           break;
         case "library":
           pack.library.push(await library_pack(name));

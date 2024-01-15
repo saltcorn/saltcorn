@@ -19,6 +19,7 @@ import type { RolePack } from "./model-abstracts/abstract_role";
 import type { LibraryPack } from "./model-abstracts/abstract_library";
 import type { AbstractView, ViewPack } from "./model-abstracts/abstract_view";
 import type { AbstractPage, PagePack } from "./model-abstracts/abstract_page";
+import type { PageGroupPack } from "./model-abstracts/abstract_page_group";
 import type { PluginPack } from "./model-abstracts/abstract_plugin";
 import type { TagPack } from "./model-abstracts/abstract_tag";
 import type { ModelPack } from "./model-abstracts/abstract_model";
@@ -348,6 +349,7 @@ export type Pack = {
   tables: Array<TablePack>;
   views: Array<ViewPack>;
   pages: Array<PagePack>;
+  page_groups: Array<PageGroupPack>;
   plugins: Array<PluginPack>;
   roles: Array<RolePack>;
   library: Array<LibraryPack>;

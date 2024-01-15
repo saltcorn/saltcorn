@@ -19,6 +19,7 @@ const is = require("contractis/is");
 const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
 const File = require("@saltcorn/data/models/file");
+const User = require("@saltcorn/data/models/user");
 const si = require("systeminformation");
 const {
   config_fields_form,
@@ -415,6 +416,23 @@ const sendHtmlFile = async (req, res, file) => {
   }
 };
 
+const setRole = async (req, res, model) => {
+  const { id } = req.params;
+  const role = req.body.role;
+  await model.update(+id, { min_role: role });
+  const page = model.findOne({ id });
+  const roles = await User.get_roles();
+  const roleRow = roles.find((r) => r.id === +role);
+  const message =
+    roleRow && page
+      ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
+      : req.__(`Minimum role updated`);
+  if (!req.xhr) {
+    req.flash("success", message);
+    res.redirect("/pageedit");
+  } else res.json({ okay: true, responseText: message });
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -432,4 +450,5 @@ module.exports = {
   get_sys_info,
   admin_config_route,
   sendHtmlFile,
+  setRole,
 };
