@@ -163,7 +163,7 @@ const fields = [
   { label: "Shadow", name: "shadow", type: "Bool" },
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
-  { label: "Footer", name: "footer", type: "Nodes" },
+  { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
 ];
 
