@@ -1842,7 +1842,7 @@ const bool = {
   readFromFormRecord: (rec, name) => {
     if (rec[name] === "") return null;
     if (!rec[name]) return false;
-    if (["undefined", "false", "off"].includes(rec[name])) return false;
+    if (["undefined", "false", "off", "no"].includes(rec[name])) return false;
     if (rec[name] === "?") return null;
     return rec[name] ? true : false;
   },
@@ -1853,7 +1853,7 @@ const bool = {
   read: (v) => {
     switch (typeof v) {
       case "string":
-        if (["TRUE", "T", "ON"].includes(v.toUpperCase())) return true;
+        if (["TRUE", "T", "ON", "YES"].includes(v.toUpperCase())) return true;
         if (v === "?" || v === "") return null;
         else return false;
       default:

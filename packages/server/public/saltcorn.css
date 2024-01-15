@@ -97,6 +97,9 @@ div[data-inline-edit-dest-url]:hover .editicon {
 .search-bar button.search-bar {
   border-color: #95a5a6;
   background-color: #ffffff;
+  border-left: 1px solid #95a5a6 !important;
+  border-top: 1px solid #95a5a6 !important;
+  border-bottom: 1px solid #95a5a6 !important;
 }
 .search-bar button.dropdown-toggle {
   border-left: none;
