@@ -19,7 +19,7 @@
 <h1>Function install_pack</h1></div>
 <section class="tsd-panel">
 <ul class="tsd-signatures">
-<li class="tsd-signature tsd-anchor-link" id="install_pack"><span class="tsd-kind-call-signature">install_<wbr/>pack</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">pack</span>, <span class="tsd-kind-parameter">name</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">loadAndSaveNewPlugin</span>, <span class="tsd-kind-parameter">bare_tables</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><a href="#install_pack" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="install_pack"><span class="tsd-kind-call-signature">install_<wbr/>pack</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">pack</span>, <span class="tsd-kind-parameter">name</span>, <span class="tsd-kind-parameter">loadAndSaveNewPlugin</span>, <span class="tsd-kind-parameter">bare_tables</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><a href="#install_pack" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -28,7 +28,7 @@
 <h5><span class="tsd-kind-parameter">pack</span>: <span class="tsd-signature-type ">Pack</span></h5>
 <div class="tsd-comment tsd-typography"></div></li>
 <li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-parameter">name</span>: <span class="tsd-signature-type">string</span></h5>
+<h5><span class="tsd-kind-parameter">name</span>: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
 <div class="tsd-comment tsd-typography"></div></li>
 <li>
 <h5><span class="tsd-kind-parameter">loadAndSaveNewPlugin</span>: <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">arg0</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">)</span></h5>
@@ -45,11 +45,12 @@
 <h5><span class="tsd-kind-parameter">arg0</span>: <span class="tsd-signature-type ">Plugin</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4></li></ul></li></ul></li>
 <li>
-<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-parameter">bare_tables</span>: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></h5></li></ul></div>
+<h5><span class="tsd-kind-parameter">bare_tables</span>: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></h5>
+<div class="tsd-comment tsd-typography"></div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/ac4aef2/packages/saltcorn-admin-models/models/pack.ts#L418">saltcorn-admin-models/models/pack.ts:418</a></li></ul></aside></li></ul></section></div>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/8d04d73/packages/saltcorn-admin-models/models/pack.ts#L442">saltcorn-admin-models/models/pack.ts:442</a></li></ul></aside></li></ul></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -82,6 +83,9 @@
 <li><a href="_saltcorn_admin_models.pack.fetch_pack_by_name.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>fetch_<wbr/>pack_<wbr/>by_<wbr/>name</span></a></li>
 <li><a href="_saltcorn_admin_models.pack.install_pack.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>install_<wbr/>pack</span></a></li>
 <li><a href="_saltcorn_admin_models.pack.library_pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>library_<wbr/>pack</span></a></li>
+<li><a href="_saltcorn_admin_models.pack.model_instance_pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>model_<wbr/>instance_<wbr/>pack</span></a></li>
+<li><a href="_saltcorn_admin_models.pack.model_pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>model_<wbr/>pack</span></a></li>
+<li><a href="_saltcorn_admin_models.pack.page_group_pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>page_<wbr/>group_<wbr/>pack</span></a></li>
 <li><a href="_saltcorn_admin_models.pack.page_pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>page_<wbr/>pack</span></a></li>
 <li><a href="_saltcorn_admin_models.pack.plugin_pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>plugin_<wbr/>pack</span></a></li>
 <li><a href="_saltcorn_admin_models.pack.role_pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>role_<wbr/>pack</span></a></li>
