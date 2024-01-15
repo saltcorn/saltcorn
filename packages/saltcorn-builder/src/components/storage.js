@@ -369,10 +369,16 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
    * @param {object} node
    * @returns {void|object}
    */
+  const removeEmpty = ({ above }) => {
+    const valids = above.filter(Boolean);
+    if (valids.length === 1) return valids[0];
+    else return { above: valids };
+  };
+
   const get_nodes = (node) => {
     if (!node.nodes || node.nodes.length == 0) return;
     else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
-    else return { above: node.nodes.map((nm) => go(nodes[nm])) };
+    else return removeEmpty({ above: node.nodes.map((nm) => go(nodes[nm])) });
   };
 
   /**
