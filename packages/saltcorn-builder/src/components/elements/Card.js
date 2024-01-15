@@ -7,6 +7,7 @@
 import React, { Fragment } from "react";
 import { Text } from "./Text";
 import { OrFormula, SettingsRow, Accordion, reactifyStyles } from "./utils";
+import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
 import { BoxModelEditor } from "./BoxModelEditor";
@@ -25,7 +26,15 @@ export /**
  * @subcategory components
  * @namespace
  */
-const Card = ({ children, isFormula, title, shadow, noPadding, style }) => {
+const Card = ({
+  children,
+  isFormula,
+  title,
+  shadow,
+  noPadding,
+  style,
+  footer,
+}) => {
   const {
     selected,
     connectors: { connect, drag },
@@ -50,6 +59,11 @@ const Card = ({ children, isFormula, title, shadow, noPadding, style }) => {
       )}
       <div className={`card-body ${noPadding ? "p-0" : ""}`}>
         <div className="canvas">{children}</div>
+      </div>
+      <div className={`card-footer ${noPadding ? "p-0" : ""}`}>
+        <Element canvas id={`cardfooter`} is={Column}>
+          {footer}
+        </Element>
       </div>
     </div>
   );
@@ -149,6 +163,7 @@ const fields = [
   { label: "Shadow", name: "shadow", type: "Bool" },
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
+  { label: "Footer", name: "footer", type: "Nodes" },
   { name: "style", default: {} },
 ];
 
@@ -163,6 +178,7 @@ Card.craft = {
     shadow: true,
     isFormula: {},
     style: {},
+    footer: [],
   },
   displayName: "Card",
   related: {
