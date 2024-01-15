@@ -455,7 +455,7 @@ const run = async (
           ? 1
           : -1
       );
-      const options = dvs.map(({ label, value, jsvalue }) =>
+      const options = dvs.map(({ label, value, jsvalue }, ix) =>
         option(
           {
             value,
@@ -466,7 +466,7 @@ const run = async (
               (jsvalue === false && state[field_name] === "off"),
             class: !value && !label ? "text-muted" : undefined,
           },
-          !value && !label
+          !value && !label && ix === 0 && neutral_label
             ? neutral_label
             : label_formula
             ? eval_expression(
