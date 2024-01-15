@@ -8,15 +8,21 @@ jQuery.fn.swapWith = function (to) {
   });
 };
 
-setScreenInfoCookie();
 function setScreenInfoCookie() {
   document.cookie = `_sc_screen_info_=${JSON.stringify({
     width: window.screen.width,
     height: window.screen.height,
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
-  })}`;
+  })}; expires=Thu, 01 Jan 2100 00:00:00 GMT; path=/; domain=.${
+    window.location.hostname
+  }`;
 }
+setScreenInfoCookie();
+$(window).resize(() => {
+  setScreenInfoCookie();
+});
+
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
   $("body").on(
