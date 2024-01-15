@@ -265,7 +265,22 @@ const run = async (
     field: async (segment) => {
       const { field_name, fieldview, configuration } = segment;
       let field = fields.find((fld) => fld.name === field_name);
-      if (!field) return;
+      if (!field) {
+        if (field_name.includes(".")) {
+          const kpath = field_name.split(".");
+          if (kpath.length === 3) {
+            const [jtNm, jFieldNm, lblField] = kpath;
+            const jtable = Table.findOne({ name: jtNm });
+            if (!jtable)
+              throw new InvalidConfiguration(
+                `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
+              );
+            const jfields = jtable.fields;
+            field = jfields.find((f) => f.name === lblField);
+          }
+        }
+        if (!field) return;
+      }
       field.fieldview = fieldview;
       Object.assign(field.attributes, configuration);
       await field.fill_fkey_options(
@@ -378,7 +393,9 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value, this)`,
+              onChange: `set_state_field('${encodeURIComponent(
+                field_name
+              )}', this.value, this)`,
               ...field.attributes,
               isFilter: true,
               ...configuration,
@@ -402,7 +419,9 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value, this)`,
+              onChange: `set_state_field('${encodeURIComponent(
+                field_name
+              )}', this.value, this)`,
               isFilter: true,
               ...field.attributes,
               ...configuration,
@@ -558,8 +577,10 @@ const run = async (
           ],
           onClick:
             active || use_value === undefined
-              ? `unset_state_field('${field_name}', this)`
-              : `set_state_field('${field_name}', '${use_value || ""}', this)`,
+              ? `unset_state_field('${encodeURIComponent(field_name)}', this)`
+              : `set_state_field('${encodeURIComponent(field_name)}', '${
+                  use_value || ""
+                }', this)`,
         },
         label || value || preset_value
       );
