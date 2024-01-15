@@ -34,6 +34,7 @@ const Card = ({
   noPadding,
   style,
   footer,
+  hasFooter,
 }) => {
   const {
     selected,
@@ -60,11 +61,13 @@ const Card = ({
       <div className={`card-body ${noPadding ? "p-0" : ""}`}>
         <div className="canvas">{children}</div>
       </div>
-      <div className={`card-footer ${noPadding ? "p-0" : ""}`}>
-        <Element canvas id={`cardfooter`} is={Column}>
-          {footer}
-        </Element>
-      </div>
+      {hasFooter ? (
+        <div className={`card-footer ${noPadding ? "p-0" : ""}`}>
+          <Element canvas id={`cardfooter`} is={Column}>
+            {footer}
+          </Element>
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -124,6 +127,11 @@ const CardSettings = () => {
             setProp={setProp}
           />
           <SettingsRow
+            field={{ label: "Card footer", name: "hasFooter", type: "Bool" }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
             field={{ label: "Shadow", name: "shadow", type: "Bool" }}
             node={node}
             setProp={setProp}
@@ -161,6 +169,7 @@ const fields = [
   { label: "URL", name: "url", type: "String", canBeFormula: true },
   { label: "Class", name: "class", type: "String", canBeFormula: true },
   { label: "Shadow", name: "shadow", type: "Bool" },
+  { label: "Card footer", name: "hasFooter", type: "Bool" },
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },

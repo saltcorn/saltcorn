@@ -509,7 +509,9 @@ const render = ({
                   },
                   go(segment.contents)
                 )),
-          segment.footer && div({ class: "card-footer" }, go(segment.footer))
+          (segment.hasFooter ||
+            (segment.footer && segment.hasFooter !== false)) &&
+            div({ class: "card-footer" }, go(segment.footer))
         )
       );
     }
