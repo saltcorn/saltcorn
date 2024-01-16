@@ -2323,8 +2323,8 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     owner_fieldname() {
       return null;
     },
-    async distinctValues(fldNm) {
-      let data_in = await get_json_list({});
+    async distinctValues(fldNm, opts) {
+      let data_in = await get_json_list(opts || {});
       const s = new Set(data_in.map((x) => x[fldNm]));
       return [...s];
     },

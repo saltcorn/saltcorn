@@ -786,9 +786,9 @@ module.exports = {
       for (const col of columns) {
         if (col.type === "DropDownFilter") {
           const field = fields.find((f) => f.name === col.field_name);
-          if (table.external) {
+          if (table.external || table.provider_name) {
             distinct_values[col.field_name] = (
-              await table.distinctValues(col.field_name)
+              await table.distinctValues(col.field_name, { forUser: req.user })
             ).map((x) => ({ label: x, value: x }));
           } else if (field) {
             distinct_values[col.field_name] = await field.distinct_values(
