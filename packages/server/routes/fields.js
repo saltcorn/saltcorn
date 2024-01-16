@@ -1075,7 +1075,7 @@ router.post(
       value = row && row[targetNm];
     } else {
       field = fields.find((f) => f.name === fieldName);
-      row = await table.getRow({});
+      row = await table.getRow({}, { forUser: req.user });
       value = row && row[fieldName];
     }
 

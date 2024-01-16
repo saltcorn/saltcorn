@@ -2282,6 +2282,10 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     },
     fields,
     getRows,
+    async getRow(where, opts) {
+      const rows = await getRows(where, opts);
+      return rows.length ? rows[0] : null;
+    },
     get min_role_read() {
       const roles = getState().getConfig("exttables_min_role_read", {});
       return roles[tbl.name] || 100;
