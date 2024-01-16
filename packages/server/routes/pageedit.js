@@ -242,12 +242,14 @@ const pageBuilderData = async (req, context) => {
 /**
  * Root pages configuration Form
  * Allows to configure root page for each role
- * @param {object[]} pages list of pages
- * @param {object[]} roles - list of roles
- * @param {object} req - request
+ * Groups are listed under the pages (perhaps we need something to switch between input-selects)
+ * @param {Page[]} pages list of pages
+ * @param {PageGroup[]} pageGroups list of page groups
+ * @param {Row[]} roles - list of roles
+ * @param {any} req - request
  * @returns {Form} return Form
  */
-const getRootPageForm = (pages, roles, req) => {
+const getRootPageForm = (pages, pageGroups, roles, req) => {
   const form = new Form({
     action: "/pageedit/set_root_page",
     noSubmitButton: true,
@@ -261,7 +263,14 @@ const getRootPageForm = (pages, roles, req) => {
           name: r.role,
           label: r.role,
           input_type: "select",
-          options: ["", ...pages.map((p) => p.name)],
+          options: [
+            "",
+            ...pages.map((p) => p.name),
+            ...pageGroups.map((g) => ({
+              label: `${g.name} (group)`,
+              value: g.name,
+            })),
+          ],
         })
     ),
   });
@@ -338,7 +347,7 @@ router.get(
           title: req.__("Root pages"),
           titleAjaxIndicator: true,
           contents: renderForm(
-            getRootPageForm(pages, roles, req),
+            getRootPageForm(pages, pageGroups, roles, req),
             req.csrfToken()
           ),
         },
@@ -704,8 +713,12 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name" });
+    const pageGroups = await PageGroup.find(
+      {},
+      { orderBy: "name", nocase: true }
+    );
     const roles = await User.get_roles();
-    const form = await getRootPageForm(pages, roles, req);
+    const form = getRootPageForm(pages, pageGroups, roles, req);
     const valres = form.validate(req.body);
     if (valres.success) {
       const home_page_by_role =

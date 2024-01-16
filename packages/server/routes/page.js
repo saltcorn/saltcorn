@@ -5,21 +5,20 @@
  */
 
 const Router = require("express-promise-router");
-const { UAParser } = require("ua-parser-js");
 
 const Page = require("@saltcorn/data/models/page");
 const PageGroup = require("@saltcorn/data/models/page_group");
 const Trigger = require("@saltcorn/data/models/trigger");
-const { getState, features } = require("@saltcorn/data/db/state");
+const { getState } = require("@saltcorn/data/db/state");
 const {
   error_catcher,
   scan_for_page_title,
   isAdmin,
   sendHtmlFile,
+  getEligiblePage,
 } = require("../routes/utils.js");
 const { isTest } = require("@saltcorn/data/utils");
 const { add_edit_bar } = require("../markup/admin.js");
-const { script, domReady } = require("@saltcorn/markup/tags");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 const db = require("@saltcorn/data/db");
@@ -81,64 +80,20 @@ const runPage = async (page, req, res, tic) => {
   }
 };
 
-const uaDevice = (req) => {
-  const uaParser = new UAParser(req.headers["user-agent"]);
-  const device = uaParser.getDevice();
-  if (!device.type) return "web";
-  else return device.type;
-};
-
-const screenInfoFromCfg = (req) => {
-  const device = uaDevice(req);
-  const uaScreenInfos = getState().getConfig("user_agent_screen_infos", {});
-  return { device, ...uaScreenInfos[device] };
-};
-
 const runPageGroup = async (pageGroup, req, res, tic) => {
   const role = req.user && req.user.id ? req.user.role_id : 100;
   if (role <= pageGroup.min_role) {
-    if (pageGroup.members.length === 0) {
-      getState().log(2, `Pagegroup ${pageGroup.name} has no members`);
-      res
-        .status(400)
-        .sendWrap(
-          ` page`,
-          req.__("Pagegroup %s has no members", pageGroup.name)
-        );
+    const eligible = await getEligiblePage(pageGroup, req, res);
+    if (typeof eligible === "string") {
+      getState().log(2, eligible);
+      res.status(400).sendWrap(` page`, eligible);
+    } else if (eligible) {
+      if (!eligible.isReload) await runPage(eligible, req, res, tic);
     } else {
-      let screenInfos = null;
-      if (req.cookies["_sc_screen_info_"]) {
-        screenInfos = JSON.parse(req.cookies["_sc_screen_info_"]);
-        screenInfos.device = uaDevice(req);
-      } else {
-        const strategy = getState().getConfig(
-          "missing_screen_info_strategy",
-          "guess_from_user_agent"
-        );
-        if (strategy === "guess_from_user_agent")
-          screenInfos = screenInfoFromCfg(req);
-        else if (strategy === "reload" && req.query.is_reload !== "true") {
-          return res.sendWrap(
-            script(
-              domReady(`
-                setScreenInfoCookie();
-                window.location = updateQueryStringParameter(window.location.href, "is_reload", true);`)
-            )
-          );
-        }
-      }
-      const eligiblePage = await pageGroup.getEligiblePage(
-        screenInfos,
-        req.user ? req.user : { role_id: features.public_user_role },
-        req.getLocale()
-      );
-      if (eligiblePage) await runPage(eligiblePage, req, res, tic);
-      else {
-        getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
-        res
-          .status(404)
-          .sendWrap(` page`, req.__("%s has no eligible page", pageGroup.name));
-      }
+      getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
+      res
+        .status(404)
+        .sendWrap(` page`, req.__("%s has no eligible page", pageGroup.name));
     }
   } else {
     getState().log(2, `Pagegroup ${pageGroup.name} not authorized`);

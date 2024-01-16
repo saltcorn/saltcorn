@@ -10,9 +10,10 @@ const {
   getState,
   getTenant,
   get_other_domain_tenant,
+  features,
 } = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
-const { input } = require("@saltcorn/markup/tags");
+const { input, script, domReady } = require("@saltcorn/markup/tags");
 const session = require("express-session");
 const cookieSession = require("cookie-session");
 const is = require("contractis/is");
@@ -28,6 +29,7 @@ const {
   flash_restart,
 } = require("../markup/admin.js");
 const path = require("path");
+const { UAParser } = require("ua-parser-js");
 
 const get_sys_info = async () => {
   const disks = await si.fsSize();
@@ -416,6 +418,12 @@ const sendHtmlFile = async (req, res, file) => {
   }
 };
 
+/**
+ * set the minimum role for a model (Page, View, ...)
+ * @param {any} req
+ * @param {any} res
+ * @param {any} model
+ */
 const setRole = async (req, res, model) => {
   const { id } = req.params;
   const role = req.body.role;
@@ -431,6 +439,70 @@ const setRole = async (req, res, model) => {
     req.flash("success", message);
     res.redirect("/pageedit");
   } else res.json({ okay: true, responseText: message });
+};
+
+/**
+ * internal helper to get the device type from user agent
+ * @param {any} req
+ * @returns device type as string
+ */
+const uaDevice = (req) => {
+  const uaParser = new UAParser(req.headers["user-agent"]);
+  const device = uaParser.getDevice();
+  if (!device.type) return "web";
+  else return device.type;
+};
+
+/**
+ * internal helper to get the device specific screen info from config
+ * @param {any} req
+ * @returns object with device type and screen info
+ */
+const screenInfoFromCfg = (req) => {
+  const device = uaDevice(req);
+  const uaScreenInfos = getState().getConfig("user_agent_screen_infos", {});
+  return { device, ...uaScreenInfos[device] };
+};
+
+/**
+ * get the eligible page for pagegroup with respect to the screen infos
+ * @param {PageGroup} pageGroup
+ * @param {any} req
+ * @param {any} res
+ * @returns eligible page an error message or an object with reload flag
+ */
+const getEligiblePage = async (pageGroup, req, res) => {
+  if (pageGroup.members.length === 0)
+    return req.__("Pagegroup %s has no members", pageGroup.name);
+  else {
+    let screenInfos = null;
+    if (req.cookies["_sc_screen_info_"]) {
+      screenInfos = JSON.parse(req.cookies["_sc_screen_info_"]);
+      screenInfos.device = uaDevice(req);
+    } else {
+      const strategy = getState().getConfig(
+        "missing_screen_info_strategy",
+        "guess_from_user_agent"
+      );
+      if (strategy === "guess_from_user_agent")
+        screenInfos = screenInfoFromCfg(req);
+      else if (strategy === "reload" && req.query.is_reload !== "true") {
+        res.sendWrap(
+          script(
+            domReady(`
+            setScreenInfoCookie();
+            window.location = updateQueryStringParameter(window.location.href, "is_reload", true);`)
+          )
+        );
+        return { isReload: true };
+      }
+    }
+    return await pageGroup.getEligiblePage(
+      screenInfos,
+      req.user ? req.user : { role_id: features.public_user_role },
+      req.getLocale()
+    );
+  }
 };
 
 module.exports = {
@@ -451,4 +523,5 @@ module.exports = {
   admin_config_route,
   sendHtmlFile,
   setRole,
+  getEligiblePage,
 };
