@@ -851,7 +851,7 @@ module.exports = {
         forUser: req.user,
       });
 
-      const rowCount = await table.countRows(where);
+      const rowCount = await table.countRows(where, { forUser: req.user });
       return { rows, rowCount };
     },
     async getRowQuery(id) {
