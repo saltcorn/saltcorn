@@ -160,7 +160,7 @@ router.post(
                 ? { id: view.table_id }
                 : { name: view.exttable_name }
             );
-          row = await table.getRow({});
+          row = await table.getRow({}, { forUser: req.user });
         }
         if (row) query[sf.name] = row[sf.name];
       }
