@@ -707,7 +707,7 @@ router.get(
       res.redirect(`/table`);
       return;
     }
-    const nrows = await table.countRows();
+    const nrows = await table.countRows({}, { forUser: req.user });
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
