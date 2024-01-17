@@ -707,7 +707,7 @@ router.get(
       res.redirect(`/table`);
       return;
     }
-    const nrows = await table.countRows();
+    const nrows = await table.countRows({}, { forUser: req.user });
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
@@ -1282,7 +1282,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
-    const rows = await table.getRows({}, { orderBy: "id" });
+    const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");

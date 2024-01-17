@@ -851,12 +851,18 @@ module.exports = {
         forUser: req.user,
       });
 
-      const rowCount = await table.countRows(where);
+      const rowCount = await table.countRows(where, {
+        forPublic: !req.user,
+        forUser: req.user,
+      });
       return { rows, rowCount };
     },
     async getRowQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow({ id });
+      return await table.getRow(
+        { id },
+        { forUser: req.user, forPublic: !req.user }
+      );
     },
   }),
   configCheck: async (view) => {

@@ -628,7 +628,10 @@ router.get(
     let table, row;
     if (trigger.table_id) {
       table = Table.findOne({ id: trigger.table_id });
-      row = await table.getRow({}, { orderBy: "RANDOM()" });
+      row = await table.getRow(
+        {},
+        { orderBy: "RANDOM()", forUser: req.user, forPublic: !req.user }
+      );
     }
     let runres;
 

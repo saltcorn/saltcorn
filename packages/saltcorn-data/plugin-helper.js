@@ -2282,6 +2282,10 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     },
     fields,
     getRows,
+    async getRow(where, opts) {
+      const rows = await getRows(where, opts);
+      return rows.length ? rows[0] : null;
+    },
     get min_role_read() {
       const roles = getState().getConfig("exttables_min_role_read", {});
       return roles[tbl.name] || 100;
@@ -2290,8 +2294,8 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       const { where, ...rest } = opts;
       return getRows(where || {}, rest || {});
     },
-    async countRows(where) {
-      let data_in = await get_json_list({ where });
+    async countRows(where, opts) {
+      let data_in = await get_json_list({ ...where, ...opts });
       return data_in.length;
     },
     get_child_relations() {
@@ -2319,8 +2323,8 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     owner_fieldname() {
       return null;
     },
-    async distinctValues(fldNm) {
-      let data_in = await get_json_list({});
+    async distinctValues(fldNm, opts) {
+      let data_in = await get_json_list(opts || {});
       const s = new Set(data_in.map((x) => x[fldNm]));
       return [...s];
     },
