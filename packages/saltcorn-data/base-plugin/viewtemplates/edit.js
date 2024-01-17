@@ -1204,7 +1204,10 @@ const doAuthPost = async ({ body, table_id, req }) => {
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, body);
       if (Object.keys(uniques).length > 0) {
-        body = await table.getRow(uniques);
+        body = await table.getRow(uniques, {
+          forUser: req.user,
+          forPublic: !req.user,
+        });
         return table.is_owner(req.user, body);
       }
     } else return field_name && `${body[field_name]}` === `${user_id}`;
@@ -1484,7 +1487,7 @@ const prepare = async (
   } else if (cancel) {
     row = getRowByIdQuery
       ? await getRowByIdQuery(id)
-      : await table.getRow({ id });
+      : await table.getRow({ id }, { forUser: req.user, forPublic: !req.user });
   } else {
     row = { ...form.values };
   }
