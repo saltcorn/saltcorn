@@ -1087,7 +1087,7 @@ class Table implements AbstractTable {
    * @param where
    * @returns {Promise<number>}
    */
-  async countRows(where?: Where, opts: ForUserRequest = {}): Promise<number> {
+  async countRows(where?: Where, opts?: ForUserRequest): Promise<number> {
     return await db.count(this.name, where);
   }
 
