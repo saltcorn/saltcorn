@@ -247,6 +247,20 @@ const objectToQueryString = (o: Object): string =>
     .map(([k, v]: any) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join("&");
 
+const queryStringToObject = (url: string): any => {
+  if (!url) return {};
+  const noHash = url.includes("#") ? url.split("#")[0] : url;
+  const qs = noHash.includes("?") ? noHash.split("?")[1] : noHash;
+  const parsedQuery = new URLSearchParams(qs);
+  const result: any = {};
+  if (parsedQuery) {
+    for (let [key, value] of parsedQuery) {
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
 const hashState = (state: any, viewname: string): string => {
   const excluded = ["_page", "_pagesize", "_sortby", "_sortdesc"];
   const include = (k: string) => !excluded.some((val) => k.endsWith(val));
@@ -396,4 +410,5 @@ export = {
   isTest,
   getSessionId,
   mergeActionResults,
+  queryStringToObject,
 };

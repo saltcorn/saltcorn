@@ -14,7 +14,7 @@ const {
   readState,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
-const { satisfies } = require("../utils");
+const { satisfies, queryStringToObject } = require("../utils");
 
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
@@ -477,6 +477,27 @@ describe("satisfies", () => {
     expect(satisfies({ x: 5, y: 7 })({ x: 5, y: 7 })).toBe(true);
     expect(satisfies({ x: 5, y: 8 })({ x: 5, y: 7 })).toBe(false);
     expect(satisfies({ x: 4, y: 8 })({ x: 5, y: 7 })).toBe(false);
+  });
+});
+describe("queryStringToObject", () => {
+  it("works", async () => {
+    expect(queryStringToObject(null)).toStrictEqual({});
+    expect(queryStringToObject("")).toStrictEqual({});
+    expect(queryStringToObject("http://bar.com")).toStrictEqual({});
+    expect(queryStringToObject("a=1&b=foo")).toStrictEqual({
+      a: "1",
+      b: "foo",
+    });
+    expect(queryStringToObject("http://bar.com?a=1&b=foo")).toStrictEqual({
+      a: "1",
+      b: "foo",
+    });
+    expect(
+      queryStringToObject("http://bar.com?a=1&b=foo#mylink")
+    ).toStrictEqual({
+      a: "1",
+      b: "foo",
+    });
   });
 });
 describe("plugin helper", () => {
