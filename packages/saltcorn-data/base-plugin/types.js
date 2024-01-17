@@ -1843,6 +1843,9 @@ const bool = {
               {
                 onClick: `tristateClick('${text_attr(nm)}')`,
                 type: "button",
+                "data-true-label": attrs?.true_label,
+                "data-false-label": attrs?.false_label,
+                "data-null-label": attrs?.null_label,
                 class: [
                   "btn btn-xs",
                   !isdef(v) || v === null

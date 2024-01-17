@@ -977,25 +977,26 @@ function enable_codemirror(f) {
   });
 }
 function tristateClick(nm) {
-  var current = $(`button#trib${nm}`).prev().val();
+  const btn = $(`button#trib${nm}`);
+  var current = btn.prev().val();
   switch (current) {
     case "?":
-      $(`button#trib${nm}`)
-        .html("T")
+      btn
+        .html(btn.attr("data-true-label") || "T")
         .removeClass(["btn-danger", "btn-secondary"])
         .addClass("btn-success");
       $(`input#input${nm}`).val("on").trigger("change");
       break;
     case "on":
-      $(`button#trib${nm}`)
-        .html("F")
+      btn
+        .html(btn.attr("data-false-label") || "F")
         .removeClass(["btn-success", "btn-secondary"])
         .addClass("btn-danger");
       $(`input#input${nm}`).val("off").trigger("change");
       break;
     default:
-      $(`button#trib${nm}`)
-        .html("?")
+      btn
+        .html(btn.attr("data-null-label") || "?")
         .removeClass(["btn-success", "btn-danger"])
         .addClass("btn-secondary");
       $(`input#input${nm}`).val("?").trigger("change");
