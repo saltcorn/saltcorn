@@ -1905,7 +1905,13 @@ module.exports = {
     },
     async getRowByIdQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow({ id });
+      return await table.getRow(
+        { id },
+        {
+          forUser: req.user,
+          forPublic: !req.user,
+        }
+      );
     },
     async actionQuery() {
       const { rndid, _csrf, onchange_action, onchange_field, ...body } =

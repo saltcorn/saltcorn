@@ -1061,7 +1061,10 @@ module.exports = {
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = Table.findOne({ id: table_id });
-      const row = await table.getRow({ id: body.id }, { forUser: req.user });
+      const row = await table.getRow(
+        { id: body.id },
+        { forUser: req.user, forPublic: !req.user }
+      );
       try {
         const result = await run_action_column({
           col,
