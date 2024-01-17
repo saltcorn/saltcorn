@@ -407,7 +407,7 @@ function get_form_record(e_in, select_labels) {
   const rec = {};
 
   const e = e_in.viewname
-    ? $(`form[data-viewname=${e_in.viewname}]`)
+    ? $(`form[data-viewname="${e_in.viewname}"]`)
     : e_in.closest(".form-namespace");
 
   const form = $(e).closest("form");
