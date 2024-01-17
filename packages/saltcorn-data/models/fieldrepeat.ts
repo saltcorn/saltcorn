@@ -34,9 +34,9 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.label = o.label || o.name;
     this.name = o.name;
     this.type = "FieldRepeat";
-    this.fields = o.fields.map((f) =>
-      f.constructor.name === Object.name ? new Field(f) : f
-    );
+    this.fields = o.fields
+      .filter((f) => f.name || f.label)
+      .map((f) => (f.constructor.name === Object.name ? new Field(f) : f));
     this.layout = o.layout;
     this.isRepeat = true;
     this.showIf = o.showIf;
