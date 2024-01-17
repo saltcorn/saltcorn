@@ -247,10 +247,11 @@ const objectToQueryString = (o: Object): string =>
     .map(([k, v]: any) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join("&");
 
-const queryStringToObject = (url: string): any => {
+const urlStringToObject = (url: string): any => {
   if (!url) return {};
-  const noHash = url.includes("#") ? url.split("#")[0] : url;
-  const qs = noHash.includes("?") ? noHash.split("?")[1] : noHash;
+  const noHash = url.split("#")[0];
+  const qs = noHash.split("?")[1];
+  if (!qs) return {};
   const parsedQuery = new URLSearchParams(qs);
   const result: any = {};
   if (parsedQuery) {
@@ -410,5 +411,5 @@ export = {
   isTest,
   getSessionId,
   mergeActionResults,
-  queryStringToObject,
+  urlStringToObject,
 };

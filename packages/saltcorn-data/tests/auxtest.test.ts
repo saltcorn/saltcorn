@@ -14,7 +14,7 @@ const {
   readState,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
-const { satisfies, queryStringToObject } = require("../utils");
+const { satisfies, urlStringToObject } = require("../utils");
 
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
@@ -479,22 +479,16 @@ describe("satisfies", () => {
     expect(satisfies({ x: 4, y: 8 })({ x: 5, y: 7 })).toBe(false);
   });
 });
-describe("queryStringToObject", () => {
+describe("urlStringToObject", () => {
   it("works", async () => {
-    expect(queryStringToObject(null)).toStrictEqual({});
-    expect(queryStringToObject("")).toStrictEqual({});
-    expect(queryStringToObject("http://bar.com")).toStrictEqual({});
-    expect(queryStringToObject("a=1&b=foo")).toStrictEqual({
+    expect(urlStringToObject(null)).toStrictEqual({});
+    expect(urlStringToObject("")).toStrictEqual({});
+    expect(urlStringToObject("http://bar.com")).toStrictEqual({});
+    expect(urlStringToObject("http://bar.com?a=1&b=foo")).toStrictEqual({
       a: "1",
       b: "foo",
     });
-    expect(queryStringToObject("http://bar.com?a=1&b=foo")).toStrictEqual({
-      a: "1",
-      b: "foo",
-    });
-    expect(
-      queryStringToObject("http://bar.com?a=1&b=foo#mylink")
-    ).toStrictEqual({
+    expect(urlStringToObject("http://bar.com?a=1&b=foo#mylink")).toStrictEqual({
       a: "1",
       b: "foo",
     });
