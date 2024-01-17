@@ -933,9 +933,12 @@ router.post(
             const reftable2 = Table.findOne({
               name: targetField.reftable_name,
             });
-            const refRow2 = await reftable2.getRow({
-              [reftable2.pk_name]: refRow[kpath[1]],
-            });
+            const refRow2 = await reftable2.getRow(
+              {
+                [reftable2.pk_name]: refRow[kpath[1]],
+              },
+              { forUser: req.user, forPublic: !req.user }
+            );
             if (refRow2) {
               res.send(
                 text(`${refRow2[targetField.attributes.summary_field]}`)
@@ -974,7 +977,10 @@ router.post(
               return;
             }
             const q = { [reftable.pk_name]: oldRow[ref] };
-            oldRow = await reftable.getRow(q);
+            oldRow = await reftable.getRow(q, {
+              forUser: req.user,
+              forPublic: !req.user,
+            });
             oldTable = reftable;
           }
         }
@@ -1010,14 +1016,20 @@ router.post(
         )) {
           const jf = table.getField(ref);
           const jtable = Table.findOne(jf.reftable_name);
-          const jrow = await jtable.getRow({ [jtable.pk_name]: row[ref] });
+          const jrow = await jtable.getRow(
+            { [jtable.pk_name]: row[ref] },
+            { forUser: req.user, forPublic: !req.user }
+          );
           row[ref] = jrow;
           if (through) {
             const jf2 = jtable.getField(through);
             const jtable2 = Table.findOne(jf2.reftable_name);
-            const jrow2 = await jtable2.getRow({
-              [jtable2.pk_name]: jrow[through],
-            });
+            const jrow2 = await jtable2.getRow(
+              {
+                [jtable2.pk_name]: jrow[through],
+              },
+              { forUser: req.user, forPublic: !req.user }
+            );
             row[ref][through] = jrow2;
           }
         }
@@ -1071,7 +1083,7 @@ router.post(
       }
       const reffields = await reftable.getFields();
       field = reffields.find((f) => f.name === targetNm);
-      row = await reftable.getRow({});
+      row = await reftable.getRow({}, { forUser: req.user });
       value = row && row[targetNm];
     } else {
       field = fields.find((f) => f.name === fieldName);
