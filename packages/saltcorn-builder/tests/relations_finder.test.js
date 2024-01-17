@@ -242,6 +242,7 @@ describe("relations tests", () => {
         const { tables, views } = fixturesData();
         const expected = [
           ".",
+          ".blog_posts",
           ".blog_posts.blog_in_topic$post.topic.inbound_inbound$topic.bp_inbound.post",
         ];
         doTest(
