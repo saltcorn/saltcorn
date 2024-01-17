@@ -980,16 +980,25 @@ function tristateClick(nm) {
   var current = $(`button#trib${nm}`).html();
   switch (current) {
     case "?":
-      $(`button#trib${nm}`).html("T");
-      $(`input#input${nm}`).val("on");
+      $(`button#trib${nm}`)
+        .html("T")
+        .removeClass(["btn-danger", "btn-secondary"])
+        .addClass("btn-success");
+      $(`input#input${nm}`).val("on").trigger("change");
       break;
     case "T":
-      $(`button#trib${nm}`).html("F");
-      $(`input#input${nm}`).val("off");
+      $(`button#trib${nm}`)
+        .html("F")
+        .removeClass(["btn-success", "btn-secondary"])
+        .addClass("btn-danger");
+      $(`input#input${nm}`).val("off").trigger("change");
       break;
     default:
-      $(`button#trib${nm}`).html("?");
-      $(`input#input${nm}`).val("?");
+      $(`button#trib${nm}`)
+        .html("?")
+        .removeClass(["btn-success", "btn-danger"])
+        .addClass("btn-secondary");
+      $(`input#input${nm}`).val("?").trigger("change");
       break;
   }
 }
