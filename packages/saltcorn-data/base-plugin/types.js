@@ -1808,6 +1808,23 @@ const bool = {
       isEdit: true,
       description:
         "Edit with a control that can be True, False and Null (missing)",
+      configFields: [
+        {
+          name: "false_label",
+          label: "False label",
+          type: "String",
+        },
+        {
+          name: "null_label",
+          label: "Null label",
+          type: "String",
+        },
+        {
+          name: "true_label",
+          label: "True label",
+          type: "String",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.disabled
           ? !(!isdef(v) || v === null)
@@ -1824,11 +1841,26 @@ const bool = {
             }) +
             button(
               {
-                onClick: `tristateClick('${text_attr(nm)}')`,
+                onClick: `tristateClick(this)`,
                 type: "button",
+                "data-true-label": attrs?.true_label,
+                "data-false-label": attrs?.false_label,
+                "data-null-label": attrs?.null_label,
+                class: [
+                  "btn btn-xs",
+                  !isdef(v) || v === null
+                    ? "btn-secondary"
+                    : v
+                    ? "btn-success"
+                    : "btn-danger",
+                ],
                 id: `trib${text_attr(nm)}`,
               },
-              !isdef(v) || v === null ? "?" : v ? "T" : "F"
+              !isdef(v) || v === null
+                ? attrs?.null_label || "?"
+                : v
+                ? attrs?.true_label || "T"
+                : attrs?.false_label || "F"
             ),
     },
   },
