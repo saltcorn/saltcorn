@@ -46,6 +46,7 @@ const staticDependencies = {
   "@saltcorn/data/models/expression": require("@saltcorn/data/models/expression"),
   "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow"),
   imapflow: require("imapflow"),
+  "node-fetch": require("node-fetch"),
 };
 
 /**
