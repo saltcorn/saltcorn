@@ -1826,6 +1826,14 @@ const bool = {
               {
                 onClick: `tristateClick('${text_attr(nm)}')`,
                 type: "button",
+                class: [
+                  "btn btn-xs",
+                  !isdef(v) || v === null
+                    ? "btn-secondary"
+                    : v
+                    ? "btn-success"
+                    : "btn-danger",
+                ],
                 id: `trib${text_attr(nm)}`,
               },
               !isdef(v) || v === null ? "?" : v ? "T" : "F"
