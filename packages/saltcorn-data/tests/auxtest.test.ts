@@ -14,7 +14,7 @@ const {
   readState,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
-const { satisfies } = require("../utils");
+const { satisfies, urlStringToObject } = require("../utils");
 
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
@@ -477,6 +477,21 @@ describe("satisfies", () => {
     expect(satisfies({ x: 5, y: 7 })({ x: 5, y: 7 })).toBe(true);
     expect(satisfies({ x: 5, y: 8 })({ x: 5, y: 7 })).toBe(false);
     expect(satisfies({ x: 4, y: 8 })({ x: 5, y: 7 })).toBe(false);
+  });
+});
+describe("urlStringToObject", () => {
+  it("works", async () => {
+    expect(urlStringToObject(null)).toStrictEqual({});
+    expect(urlStringToObject("")).toStrictEqual({});
+    expect(urlStringToObject("http://bar.com")).toStrictEqual({});
+    expect(urlStringToObject("http://bar.com?a=1&b=foo")).toStrictEqual({
+      a: "1",
+      b: "foo",
+    });
+    expect(urlStringToObject("http://bar.com?a=1&b=foo#mylink")).toStrictEqual({
+      a: "1",
+      b: "foo",
+    });
   });
 });
 describe("plugin helper", () => {
