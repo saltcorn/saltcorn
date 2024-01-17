@@ -977,7 +977,7 @@ function enable_codemirror(f) {
   });
 }
 function tristateClick(nm) {
-  var current = $(`button#trib${nm}`).html();
+  var current = $(`button#trib${nm}`).prev().val();
   switch (current) {
     case "?":
       $(`button#trib${nm}`)
@@ -986,7 +986,7 @@ function tristateClick(nm) {
         .addClass("btn-success");
       $(`input#input${nm}`).val("on").trigger("change");
       break;
-    case "T":
+    case "on":
       $(`button#trib${nm}`)
         .html("F")
         .removeClass(["btn-success", "btn-secondary"])

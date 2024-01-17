@@ -1808,6 +1808,23 @@ const bool = {
       isEdit: true,
       description:
         "Edit with a control that can be True, False and Null (missing)",
+      configFields: [
+        {
+          name: "false_label",
+          label: "False label",
+          type: "String",
+        },
+        {
+          name: "null_label",
+          label: "Null label",
+          type: "String",
+        },
+        {
+          name: "true_label",
+          label: "True label",
+          type: "String",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.disabled
           ? !(!isdef(v) || v === null)
@@ -1836,7 +1853,11 @@ const bool = {
                 ],
                 id: `trib${text_attr(nm)}`,
               },
-              !isdef(v) || v === null ? "?" : v ? "T" : "F"
+              !isdef(v) || v === null
+                ? attrs?.null_label || "?"
+                : v
+                ? attrs?.true_label || "T"
+                : attrs?.false_label || "F"
             ),
     },
   },
