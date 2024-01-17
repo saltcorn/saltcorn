@@ -1841,7 +1841,7 @@ const bool = {
             }) +
             button(
               {
-                onClick: `tristateClick('${text_attr(nm)}')`,
+                onClick: `tristateClick(this)`,
                 type: "button",
                 "data-true-label": attrs?.true_label,
                 "data-false-label": attrs?.false_label,

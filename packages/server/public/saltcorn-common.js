@@ -976,30 +976,31 @@ function enable_codemirror(f) {
     success: f,
   });
 }
-function tristateClick(nm) {
-  const btn = $(`button#trib${nm}`);
-  var current = btn.prev().val();
+function tristateClick(e) {
+  const btn = $(e);
+  const input = btn.prev();
+  var current = input.val();
   switch (current) {
     case "?":
       btn
         .html(btn.attr("data-true-label") || "T")
         .removeClass(["btn-danger", "btn-secondary"])
         .addClass("btn-success");
-      $(`input#input${nm}`).val("on").trigger("change");
+      input.val("on").trigger("change");
       break;
     case "on":
       btn
         .html(btn.attr("data-false-label") || "F")
         .removeClass(["btn-success", "btn-secondary"])
         .addClass("btn-danger");
-      $(`input#input${nm}`).val("off").trigger("change");
+      input.val("off").trigger("change");
       break;
     default:
       btn
         .html(btn.attr("data-null-label") || "?")
         .removeClass(["btn-success", "btn-danger"])
         .addClass("btn-secondary");
-      $(`input#input${nm}`).val("?").trigger("change");
+      input.val("?").trigger("change");
       break;
   }
 }
