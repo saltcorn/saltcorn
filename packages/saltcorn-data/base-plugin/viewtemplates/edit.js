@@ -1497,6 +1497,7 @@ const prepare = async (
 
   const file_fields = form.fields.filter((f) => f.type === "File");
   for (const field of file_fields) {
+    if (!field.fieldviewObj?.isEdit) continue;
     if (field.fieldviewObj?.setsFileId) {
       //do nothing
     } else if (field.fieldviewObj?.setsDataURL) {
