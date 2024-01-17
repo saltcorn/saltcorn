@@ -17,6 +17,7 @@ import {
   FormulaTooltip,
   HelpTopicLink,
   prepCacheAndFinder,
+  initialRelation,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -151,7 +152,7 @@ const ViewLinkSettings = () => {
   );
   let safeRelation = relation;
   if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
-    safeRelation = relations.paths[0];
+    safeRelation = initialRelation(relations.paths, options.tableName);
     setProp((prop) => {
       prop.relation = safeRelation;
     });
@@ -168,7 +169,10 @@ const ViewLinkSettings = () => {
         if (newRelations.paths.length > 0) {
           setProp((prop) => {
             prop.name = target_value;
-            prop.relation = newRelations.paths[0];
+            prop.relation = initialRelation(
+              newRelations.paths,
+              options.tableName
+            );
           });
           setRelations(newRelations);
         }

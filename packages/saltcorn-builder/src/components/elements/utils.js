@@ -1501,3 +1501,36 @@ export const prepCacheAndFinder = ({
     return { caches, finder };
   } else return { caches: null, finder: null };
 };
+
+/**
+ * @param {string[]} paths
+ * @param {string} sourceTbl name of the topview table
+ * @returns either a same table relation, a parent relation, a child relation, or the first relation
+ */
+export const initialRelation = (paths, sourceTbl) => {
+  let sameTblRel = null;
+  let parentRel = null;
+  let childRel = null;
+  for (const path of paths) {
+    if (!sameTblRel && path === `.${sourceTbl}`) sameTblRel = path;
+    else {
+      const tokens = path.split(".");
+      if (
+        !parentRel &&
+        tokens.length === 3 &&
+        tokens[1] === sourceTbl &&
+        tokens[2].indexOf("$") === -1
+      )
+        parentRel = path;
+      else {
+        const lastToken = tokens[tokens.length - 1];
+        if (
+          lastToken.indexOf("$") > 0 &&
+          (!childRel || childRel.split(".").length > tokens.length)
+        )
+          childRel = path;
+      }
+    }
+  }
+  return sameTblRel || parentRel || childRel || paths[0];
+};
