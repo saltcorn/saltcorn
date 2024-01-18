@@ -1536,6 +1536,15 @@ export const initialRelation = (paths, sourceTbl) => {
   return sameTblRel || parentRel || childRel || paths[0];
 };
 
+/**
+ * update the builder wide relations cache relations cache
+ * if there is no entry for the given tableName and viewname
+ * @param {any} relationsCache cache from the context
+ * @param {Function} setRelationsCache set cache in context
+ * @param {any} options builder options
+ * @param {RelationsFinder} finder
+ * @param {string} viewname subview name
+ */
 export const updateRelationsCache = (
   relationsCache,
   setRelationsCache,
