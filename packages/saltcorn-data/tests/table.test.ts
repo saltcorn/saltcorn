@@ -1611,12 +1611,12 @@ describe("table providers", () => {
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
     expect(rows[0].name).toBe("Robinette");
-    expect(table.fields.length).toBe(2);
+    expect(table.fields.length).toBe(3);
   });
   it("should query", async () => {
     const table = Table.findOne({ name: "JoeTable" });
     assertIsSet(table);
-    expect(table.fields.length).toBe(2);
+    expect(table.fields.length).toBe(3);
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
     expect(rows[0].name).toBe("Robinette");
@@ -1646,6 +1646,8 @@ describe("table providers", () => {
       label: "provperson",
       type: "Key to JoeTable",
     });
+
+    await tc.insertRow({ name: "foo", provperson: 1 });
   });
 });
 

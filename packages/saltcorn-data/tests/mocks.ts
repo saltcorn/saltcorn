@@ -110,7 +110,7 @@ const plugin_with_routes = () => ({
       ],
       get_table(cfg: any) {
         return {
-          getRows: async () => [{ name: cfg.middle_name, age: 36 }],
+          getRows: async () => [{ name: cfg.middle_name, age: 36, id: 1 }],
         };
       },
     },

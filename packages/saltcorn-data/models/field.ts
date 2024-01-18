@@ -977,8 +977,15 @@ class Field implements AbstractField {
       if (reftable) {
         const reffields = await reftable.getFields();
         const refpk = reffields.find((rf: Field) => rf.primary_key);
+        if (!refpk)
+          throw new Error(
+            `Table ${f.reftable_name} does not have a primary key, cannot create Key field`
+          );
         f.reftype = refpk.type.name;
         f.refname = refpk.name;
+        if (reftable.provider_name || reftable.external) {
+          bare = true;
+        }
       }
     }
 
