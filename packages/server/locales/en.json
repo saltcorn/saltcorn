@@ -352,7 +352,6 @@
 	"Next": "Next",
 	"Save": "Save",
 	"Calculated fields cannot have File type": "Calculated fields cannot have File type",
-	"Calculated fields cannot have Key type": "Calculated fields cannot have Key type",
 	"On Field": "On Field",
 	"Field in %s table": "Field in %s table",
 	"Action on row": "Action on row",
@@ -1338,5 +1337,6 @@
 	"Your page groups": "Your page groups",
 	"A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.": "A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.",
 	"Create page group": "Create page group",
-	"Page groups": "Page groups"
+	"Page groups": "Page groups",
+	"Calculated non-stored fields cannot have Key type": "Calculated non-stored fields cannot have Key type"
 }

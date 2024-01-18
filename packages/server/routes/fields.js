@@ -75,7 +75,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
       if (vs.calculated && vs.type === "File")
         return req.__("Calculated fields cannot have File type");
       if (vs.calculated && !vs.stored && vs.type.startsWith("Key to"))
-        return req.__("Calculated fields cannot have Key type");
+        return req.__("Calculated non-stored fields cannot have Key type");
     },
     fields: [
       new Field({
