@@ -361,10 +361,14 @@ class State {
   }
 
   async refresh_page_groups(noSignal: boolean) {
-    const PageGroup = (await import("../models/page_group")).default;
-    this.page_groups = await PageGroup.find();
-    if (!noSignal) this.log(5, "Refresh page groups");
-
+    try {
+      //sometimes this is run before migration
+      const PageGroup = (await import("../models/page_group")).default;
+      this.page_groups = await PageGroup.find();
+      if (!noSignal) this.log(5, "Refresh page groups");
+    } catch (e) {
+      console.error("error initializing page groups", e);
+    }
     if (!noSignal && db.is_node)
       process_send({ refresh: "page_groups", tenant: db.getTenantSchema() });
   }
