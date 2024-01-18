@@ -1632,6 +1632,21 @@ describe("table providers", () => {
     assertIsSet(table);
     expect(table.min_role_read).toBe(40);
   });
+  it("should create keys to provided table", async () => {
+    const tc = await Table.create("keytoprov");
+
+    await Field.create({
+      table: tc,
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table: tc,
+      label: "provperson",
+      type: "Key to JoeTable",
+    });
+  });
 });
 
 describe("distance ordering", () => {

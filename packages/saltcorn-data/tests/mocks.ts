@@ -99,6 +99,12 @@ const plugin_with_routes = () => ({
           ],
         }),
       fields: async (cfg: any) => [
+        {
+          name: "id",
+          label: "ID",
+          type: "Integer",
+          primary_key: true,
+        },
         { name: "name", label: "Name", type: "String" },
         { name: "age", label: "Age", type: "Integer" },
       ],
