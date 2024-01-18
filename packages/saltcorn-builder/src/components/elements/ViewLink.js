@@ -7,6 +7,8 @@
 import React, { useMemo } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
+import relationsCtx from "../relations_context";
+
 import {
   BlockSetting,
   MinRoleSettingRow,
@@ -18,6 +20,7 @@ import {
   HelpTopicLink,
   prepCacheAndFinder,
   initialRelation,
+  updateRelationsCache,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -128,6 +131,7 @@ const ViewLinkSettings = () => {
     () => prepCacheAndFinder(options),
     [undefined]
   );
+  const { relationsCache, setRelationsCache } = React.useContext(relationsCtx);
   let errorString = false;
   try {
     Function("return " + extra_state_fml);
@@ -143,12 +147,15 @@ const ViewLinkSettings = () => {
   const safeViewName = use_view_name?.includes(".")
     ? use_view_name.split(".")[0]
     : use_view_name;
+  updateRelationsCache(
+    relationsCache,
+    setRelationsCache,
+    options,
+    finder,
+    safeViewName
+  );
   const [relations, setRelations] = React.useState(
-    finder.findRelations(
-      options.tableName,
-      safeViewName,
-      options.excluded_subview_templates
-    )
+    relationsCache[options.tableName][safeViewName]
   );
   let safeRelation = relation;
   if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
@@ -161,11 +168,14 @@ const ViewLinkSettings = () => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== use_view_name) {
-        const newRelations = finder.findRelations(
-          options.tableName,
-          target_value,
-          options.excluded_subview_templates
+        updateRelationsCache(
+          relationsCache,
+          setRelationsCache,
+          options,
+          finder,
+          target_value
         );
+        const newRelations = relationsCache[options.tableName][target_value];
         if (newRelations.paths.length > 0) {
           setProp((prop) => {
             prop.name = target_value;

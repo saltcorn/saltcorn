@@ -1534,3 +1534,22 @@ export const initialRelation = (paths, sourceTbl) => {
   }
   return sameTblRel || parentRel || childRel || paths[0];
 };
+
+export const updateRelationsCache = (
+  relationsCache,
+  setRelationsCache,
+  options,
+  finder,
+  viewname
+) => {
+  if (!relationsCache[options.tableName])
+    relationsCache[options.tableName] = {};
+  if (!relationsCache[options.tableName][viewname]) {
+    relationsCache[options.tableName][viewname] = finder.findRelations(
+      options.tableName,
+      viewname,
+      options.excluded_subview_templates
+    );
+    setRelationsCache({ ...relationsCache });
+  }
+};
