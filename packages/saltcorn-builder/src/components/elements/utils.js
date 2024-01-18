@@ -890,6 +890,7 @@ const ConfigField = ({
         className="form-control"
         value={value}
         onChange={(e) => e.target && myOnChange(e.target.value)}
+        spellCheck={false}
       />
     ),
     select: () => (
