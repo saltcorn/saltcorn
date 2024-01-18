@@ -74,8 +74,8 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
     validator: (vs) => {
       if (vs.calculated && vs.type === "File")
         return req.__("Calculated fields cannot have File type");
-      if (vs.calculated && vs.type.startsWith("Key to"))
-        return req.__("Calculated fields cannot have Key type");
+      if (vs.calculated && !vs.stored && vs.type.startsWith("Key to"))
+        return req.__("Calculated non-stored fields cannot have Key type");
     },
     fields: [
       new Field({
@@ -310,7 +310,12 @@ const fieldFlow = (req) =>
           const nrows = await table.countRows({});
           const existing_fields = table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
-          const fkey_opts = ["File", ...tables.map((t) => `Key to ${t.name}`)];
+          const fkey_opts = [
+            "File",
+            ...tables
+              .filter((t) => !t.provider_name && !t.external)
+              .map((t) => `Key to ${t.name}`),
+          ];
           const form = await fieldForm(
             req,
             fkey_opts,
