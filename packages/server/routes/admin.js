@@ -1476,27 +1476,20 @@ router.get(
 );
 const buildDialogScript = () => {
   return `<script>
-  function swapEntryInputs(activeTab, activeInput, disabledTab, disabledInput) {
-    activeTab.addClass("active");
-    activeInput.removeClass("d-none");
-    activeInput.addClass("d-block");
-    activeInput.attr("name", "entryPoint");
-    disabledTab.removeClass("active");
-    disabledInput.removeClass("d-block");
-    disabledInput.addClass("d-none");
-    disabledInput.removeAttr("name");
-  }
-  
   function showEntrySelect(type) {
-    const viewNavLin = $("#viewNavLinkID");
-    const pageNavLink = $("#pageNavLinkID");
-    const viewInp = $("#viewInputID");
-    const pageInp = $("#pageInputID");
-    if (type === "page") {
-      swapEntryInputs(pageNavLink, pageInp, viewNavLin, viewInp);
-    }
-    else if (type === "view") {
-      swapEntryInputs(viewNavLin, viewInp, pageNavLink, pageInp);
+    for( const currentType of ["view", "page", "pagegroup"]) {
+      const tab = $('#' + currentType + 'NavLinkID');
+      const input = $('#' + currentType + 'InputID');
+      if (currentType === type) {
+        tab.addClass("active");
+        input.removeClass("d-none");
+        input.addClass("d-block");        
+      }
+      else {
+        tab.removeClass("active");
+        input.removeClass("d-block");
+        input.addClass("d-none");
+      }      
     }
     $("#entryPointTypeID").attr("value", type);
   }
@@ -1526,6 +1519,7 @@ router.get(
   error_catcher(async (req, res) => {
     const views = await View.find();
     const pages = await Page.find();
+    const pageGroups = await PageGroup.find();
     const images = (await File.find({ mime_super: "image" })).filter((image) =>
       image.filename?.endsWith(".png")
     );
@@ -1622,6 +1616,23 @@ router.get(
                               id: "pageNavLinkID",
                             },
                             req.__("Page")
+                          ),
+                          li(
+                            {
+                              class: "nav-item",
+                              onClick: "showEntrySelect('pagegroup')",
+                            },
+                            div(
+                              {
+                                class: `nav-link ${
+                                  builderSettings.entryPointType === "pagegroup"
+                                    ? "active"
+                                    : ""
+                                }`,
+                                id: "pagegroupNavLinkID",
+                              },
+                              req.__("Pagegroup")
+                            )
                           )
                         )
                       ),
@@ -1629,7 +1640,8 @@ router.get(
                       select(
                         {
                           class: `form-select ${
-                            builderSettings.entryPointType === "page"
+                            builderSettings.entryPointType === "page" ||
+                            builderSettings.entryPointType === "pagegroup"
                               ? "d-none"
                               : ""
                           }`,
@@ -1658,7 +1670,8 @@ router.get(
                         {
                           class: `form-select ${
                             !builderSettings.entryPointType ||
-                            builderSettings.entryPointType === "view"
+                            builderSettings.entryPointType === "view" ||
+                            builderSettings.entryPointType === "pagegroup"
                               ? "d-none"
                               : ""
                           }`,
@@ -1677,6 +1690,36 @@ router.get(
                                   builderSettings.entryPoint === page.name,
                               },
                               page.name
+                            )
+                          )
+                          .join("")
+                      ),
+                      // select entry-pagegroup
+                      select(
+                        {
+                          class: `form-select ${
+                            !builderSettings.entryPointType ||
+                            builderSettings.entryPointType === "view" ||
+                            builderSettings.entryPointType === "page"
+                              ? "d-none"
+                              : ""
+                          }`,
+                          ...(builderSettings.entryPointType === "pagegroup"
+                            ? { name: "entryPoint" }
+                            : {}),
+                          id: "pagegroupInputID",
+                        },
+                        pageGroups
+                          .map((group) =>
+                            option(
+                              {
+                                value: group.name,
+                                selected:
+                                  builderSettings.entryPointType ===
+                                    "pagegroup" &&
+                                  builderSettings.entryPoint === group.name,
+                              },
+                              group.name
                             )
                           )
                           .join("")
@@ -2252,7 +2295,7 @@ router.post(
       "-e",
       entryPoint,
       "-t",
-      entryPointType,
+      entryPointType === "pagegroup" ? "page" : entryPointType,
       "-c",
       buildDir,
       "-b",

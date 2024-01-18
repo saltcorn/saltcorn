@@ -1338,5 +1338,7 @@
 	"Your page groups": "Your page groups",
 	"A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.": "A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.",
 	"Create page group": "Create page group",
-	"%s has no eligible page": "%s has no eligible page"
+	"%s has no eligible page": "%s has no eligible page",
+	"Pagegroup %s has no members": "Pagegroup %s has no members",
+	"Pagegroup": "Pagegroup"
 }

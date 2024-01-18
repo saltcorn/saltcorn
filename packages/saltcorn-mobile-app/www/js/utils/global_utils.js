@@ -292,6 +292,7 @@ function isHtmlFile() {
 
 async function handleRoute(route, query, files, data) {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
+  let routeAdded = false;
   try {
     if (
       mobileConfig.networkState === "none" &&
@@ -306,6 +307,7 @@ async function handleRoute(route, query, files, data) {
         return await gotoEntryView();
       const safeRoute = route ? route : currentLocation();
       addRoute({ route: safeRoute, query });
+      routeAdded = true;
       const page = await router.resolve({
         pathname: safeRoute,
         query: query,
@@ -336,6 +338,7 @@ async function handleRoute(route, query, files, data) {
         if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
         else await replaceIframe(page.content, page.isFile);
       } else {
+        if (routeAdded) popRoute();
         showAlerts([
           {
             type: "warning",

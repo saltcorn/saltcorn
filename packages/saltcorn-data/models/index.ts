@@ -8,6 +8,7 @@ import File from "./file";
 import Form from "./form";
 import Library from "./library";
 import Page from "./page";
+import PageGroup from "./page_group";
 import Plugin from "./plugin";
 import Role from "./role";
 import TableConstraint from "./table_constraints";
@@ -26,6 +27,7 @@ export {
   Form,
   Library,
   Page,
+  PageGroup,
   Plugin,
   Role,
   TableConstraint,
