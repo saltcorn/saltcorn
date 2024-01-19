@@ -134,9 +134,7 @@ const FieldSettings = () => {
       })
       .then(setFetchedCfgFields);
   }, [name, fieldview]);
-  /*const getCfgFields = (fv) =>
-    ((options.fieldViewConfigForms || {})[name] || {})[fv];
-  const cfgFields = getCfgFields(fieldview);*/
+
   const refetchPreview = fetchFieldPreview({
     options,
     name,
