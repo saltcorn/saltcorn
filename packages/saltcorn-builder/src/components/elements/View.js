@@ -8,6 +8,7 @@ import React, { Fragment, useEffect, useMemo } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
+import relationsCtx from "../relations_context";
 
 import {
   fetchViewPreview,
@@ -15,7 +16,9 @@ import {
   setAPropGen,
   buildOptions,
   HelpTopicLink,
+  initialRelation,
   prepCacheAndFinder,
+  updateRelationsCache,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -113,6 +116,7 @@ const ViewSettings = () => {
   const fixed_state_fields =
     options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = React.useContext(previewCtx);
+  const { relationsCache, setRelationsCache } = React.useContext(relationsCtx);
 
   const setAProp = setAPropGen(setProp);
   let errorString = false;
@@ -131,18 +135,20 @@ const ViewSettings = () => {
     else viewname = rest;
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
+  if (finder)
+    updateRelationsCache(
+      relationsCache,
+      setRelationsCache,
+      options,
+      finder,
+      viewname
+    );
   const [relations, setRelations] = finder
-    ? React.useState(
-        finder.findRelations(
-          options.tableName,
-          viewname,
-          options.excluded_subview_templates
-        )
-      )
+    ? React.useState(relationsCache[options.tableName][viewname])
     : [undefined, undefined];
   let safeRelation = relation;
   if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
-    safeRelation = relations.paths[0];
+    safeRelation = initialRelation(relations.paths, options.tableName);
     setProp((prop) => {
       prop.relation = safeRelation;
     });
@@ -153,15 +159,21 @@ const ViewSettings = () => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== viewname) {
-        const newRelations = finder.findRelations(
-          options.tableName,
-          target_value,
-          options.excluded_subview_templates
+        updateRelationsCache(
+          relationsCache,
+          setRelationsCache,
+          options,
+          finder,
+          target_value
         );
+        const newRelations = relationsCache[options.tableName][target_value];
         if (newRelations.paths.length > 0) {
           setProp((prop) => {
             prop.view = target_value;
-            prop.relation = newRelations.paths[0];
+            prop.relation = initialRelation(
+              newRelations.paths,
+              options.tableName
+            );
           });
           setRelations(newRelations);
         }

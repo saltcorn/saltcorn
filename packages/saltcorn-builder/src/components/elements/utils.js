@@ -890,6 +890,7 @@ const ConfigField = ({
         className="form-control"
         value={value}
         onChange={(e) => e.target && myOnChange(e.target.value)}
+        spellCheck={false}
       />
     ),
     select: () => (
@@ -1500,4 +1501,65 @@ export const prepCacheAndFinder = ({
     );
     return { caches, finder };
   } else return { caches: null, finder: null };
+};
+
+/**
+ * @param {string[]} paths
+ * @param {string} sourceTbl name of the topview table
+ * @returns either a same table relation, a parent relation, a child relation, or the first relation
+ */
+export const initialRelation = (paths, sourceTbl) => {
+  let sameTblRel = null;
+  let parentRel = null;
+  let childRel = null;
+  for (const path of paths) {
+    if (!sameTblRel && path === `.${sourceTbl}`) sameTblRel = path;
+    else {
+      const tokens = path.split(".");
+      if (
+        !parentRel &&
+        tokens.length === 3 &&
+        tokens[1] === sourceTbl &&
+        tokens[2].indexOf("$") === -1
+      )
+        parentRel = path;
+      else {
+        const lastToken = tokens[tokens.length - 1];
+        if (
+          lastToken.indexOf("$") > 0 &&
+          (!childRel || childRel.split(".").length > tokens.length)
+        )
+          childRel = path;
+      }
+    }
+  }
+  return sameTblRel || parentRel || childRel || paths[0];
+};
+
+/**
+ * update the builder wide relations cache relations cache
+ * if there is no entry for the given tableName and viewname
+ * @param {any} relationsCache cache from the context
+ * @param {Function} setRelationsCache set cache in context
+ * @param {any} options builder options
+ * @param {RelationsFinder} finder
+ * @param {string} viewname subview name
+ */
+export const updateRelationsCache = (
+  relationsCache,
+  setRelationsCache,
+  options,
+  finder,
+  viewname
+) => {
+  if (!relationsCache[options.tableName])
+    relationsCache[options.tableName] = {};
+  if (!relationsCache[options.tableName][viewname]) {
+    relationsCache[options.tableName][viewname] = finder.findRelations(
+      options.tableName,
+      viewname,
+      options.excluded_subview_templates
+    );
+    setRelationsCache({ ...relationsCache });
+  }
 };
