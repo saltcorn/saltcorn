@@ -139,7 +139,7 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
       setTimeout(() => {
         doSave(query);
         setSaveTimeout(false);
-      }, 500)
+      }, 2500)
     );
   };
   useEffect(() => {
