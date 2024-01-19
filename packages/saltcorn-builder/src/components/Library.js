@@ -10,6 +10,7 @@ import React, {
   useState,
   Fragment,
   useRef,
+  useMemo,
 } from "react";
 import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,7 +20,7 @@ import faIcons from "./elements/faicons";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
-import { isEqual } from "lodash";
+import { isEqual, throttle } from "lodash";
 
 /**
  *
@@ -66,6 +67,25 @@ LibraryElem.craft = {
   displayName: "LibraryElem",
 };
 
+// https://www.developerway.com/posts/debouncing-in-react
+const useThrottle = (callback) => {
+  const ref = useRef();
+
+  useEffect(() => {
+    ref.current = callback;
+  }, [callback]);
+
+  const debouncedCallback = useMemo(() => {
+    const func = () => {
+      ref.current?.();
+    };
+
+    return throttle(func, 3000);
+  }, []);
+
+  return debouncedCallback;
+};
+
 export /**
  * @param {object} props
  * @param {object} props.nodekeys
@@ -89,11 +109,12 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
     if (savedData.current === false) {
       //do not save on first call
       savedData.current = JSON.stringify(data.layout);
-      setIsSaving(false);
+
       return;
     }
     if (isEqual(savedData.current, JSON.stringify(data.layout))) return;
     savedData.current = JSON.stringify(data.layout);
+    setIsSaving(true);
 
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
@@ -106,6 +127,9 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
       setIsSaving(false);
     });
   };
+  const throttledSave = useThrottle(() => {
+    doSave(query);
+  });
   const onNodesChange = (arg, arg1) => {
     const nodes = arg.getSerializedNodes();
     const newNodeIds = [];
@@ -133,14 +157,8 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
         actions.selectNode(id);
       }
     }
-    if (saveTimeout) clearTimeout(saveTimeout);
-    setIsSaving(true);
-    setSaveTimeout(
-      setTimeout(() => {
-        doSave(query);
-        setSaveTimeout(false);
-      }, 2500)
-    );
+
+    throttledSave();
   };
   useEffect(() => {
     const nodes = query.getSerializedNodes();
