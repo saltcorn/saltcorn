@@ -116,14 +116,9 @@ const FieldSettings = () => {
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
   const blockDisplay = (options.blockDisplay || {})[name];
 
-  const [fetchedCfgFields, setFetchedCfgFields] = useState({
-    fv: null,
-    cfgFields: [],
-  });
-  const cfgFields = fetchedCfgFields.cfgFields;
-  console.log("Render field", fetchedCfgFields);
+  const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
+  const cfgFields = fetchedCfgFields;
   useEffect(() => {
-    console.log("EFFECT!!", name, fieldview);
     fetch(`/field/fieldviewcfgform/${options.tableName}?accept=json`, {
       method: "POST",
       headers: {
@@ -137,14 +132,11 @@ const FieldSettings = () => {
         if (response.status < 399) return response.json();
         else return [];
       })
-      .then((flds) => {
-        setFetchedCfgFields({ fv: fieldview, cfgFields: flds });
-      });
+      .then(setFetchedCfgFields);
   }, [name, fieldview]);
   /*const getCfgFields = (fv) =>
     ((options.fieldViewConfigForms || {})[name] || {})[fv];
   const cfgFields = getCfgFields(fieldview);*/
-  console.log({ fetchedCfgFields });
   const refetchPreview = fetchFieldPreview({
     options,
     name,
@@ -216,7 +208,7 @@ const FieldSettings = () => {
                     const value = e.target.value;
 
                     setProp((prop) => (prop.fieldview = value));
-                    setInitialConfig(setProp, value, getCfgFields(value));
+                    //setInitialConfig(setProp, value, getCfgFields(value));
                     refetchPreview({ fieldview: value });
                   }}
                 >
