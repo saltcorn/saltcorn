@@ -179,7 +179,7 @@ const configuration_workflow = () =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("filter")
           );
-          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -201,7 +201,7 @@ const configuration_workflow = () =>
             library,
             field_view_options,
             actionConfigForms,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             mode: "filter",
           };
         },

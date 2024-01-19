@@ -196,7 +196,6 @@ const configuration_workflow = (req) =>
             builtInActions,
             actionConfigForms,
             //fieldViewConfigForms,
-            dynamicFieldViewConfig: { url: `/field/fieldviewcfgform/` },
             field_view_options: {
               ...field_view_options,
               ...rel_field_view_options,

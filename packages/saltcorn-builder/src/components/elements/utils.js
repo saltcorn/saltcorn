@@ -770,13 +770,13 @@ const ConfigField = ({
   if (
     field.type &&
     (field.type.name === "String" || field.type === "String") &&
-    field.attributes.options
+    field.attributes?.options
   ) {
     field.input_type = "select";
     field.options =
-      typeof field.attributes.options === "string"
-        ? field.attributes.options.split(",").map((s) => s.trim())
-        : field.attributes.options;
+      typeof field.attributes?.options === "string"
+        ? field.attributes?.options.split(",").map((s) => s.trim())
+        : field.attributes?.options;
     if (!field.required && field.options) field.options.unshift("");
   }
   const field_type = field.input_type || field.type.name || field.type;
@@ -785,7 +785,7 @@ const ConfigField = ({
     field_type === "select";
   const getOptions = () =>
     typeof field?.attributes?.options === "string"
-      ? field.attributes.options.split(",").map((s) => s.trim())
+      ? field.attributes?.options.split(",").map((s) => s.trim())
       : field?.attributes?.options || field.options;
 
   if (hasSelect && typeof value === "undefined") {
