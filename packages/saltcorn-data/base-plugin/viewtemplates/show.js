@@ -143,7 +143,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
-          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
             "show"
@@ -195,7 +195,8 @@ const configuration_workflow = (req) =>
             actions,
             builtInActions,
             actionConfigForms,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
+            dynamicFieldViewConfig: { url: `/field/fieldviewcfgform/` },
             field_view_options: {
               ...field_view_options,
               ...rel_field_view_options,
