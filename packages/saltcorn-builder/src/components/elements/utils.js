@@ -767,7 +767,11 @@ const ConfigField = ({
     field.default
   );
   if (field.input_type === "fromtype") field.input_type = null;
-  if (field.type && field.type.name === "String" && field.attributes.options) {
+  if (
+    field.type &&
+    (field.type.name === "String" || field.type === "String") &&
+    field.attributes.options
+  ) {
     field.input_type = "select";
     field.options =
       typeof field.attributes.options === "string"

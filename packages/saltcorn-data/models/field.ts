@@ -184,6 +184,7 @@ class Field implements AbstractField {
       sublabel: this.sublabel,
       fieldview: this.fieldview,
       type: typeof this.type === "string" ? this.type : this.type?.name,
+      input_type: this.input_type,
       reftable_name: this.reftable_name,
       attributes: this.attributes,
       required: this.required,

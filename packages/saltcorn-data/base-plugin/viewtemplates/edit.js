@@ -220,7 +220,7 @@ const configuration_workflow = (req) =>
 
           return {
             tableName: table.name,
-            fields,
+            fields: fields.map((f) => f.toJson),
             field_view_options,
             parent_field_list,
             handlesTextStyle,
