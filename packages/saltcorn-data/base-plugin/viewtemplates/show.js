@@ -190,7 +190,7 @@ const configuration_workflow = (req) =>
           const myviewrow = await View.findOne({ name: context.viewname });
           return {
             tableName: table.name,
-            fields: fields.map((f) => f.toJson),
+            fields: fields.map((f) => f.toBuilder),
             images,
             actions,
             builtInActions,

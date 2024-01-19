@@ -184,7 +184,6 @@ class Field implements AbstractField {
       sublabel: this.sublabel,
       fieldview: this.fieldview,
       type: typeof this.type === "string" ? this.type : this.type?.name,
-      input_type: this.input_type,
       reftable_name: this.reftable_name,
       attributes: this.attributes,
       required: this.required,
@@ -192,6 +191,29 @@ class Field implements AbstractField {
       reftype: this.reftype,
       refname: this.refname,
       description: this.description, //
+    };
+  }
+
+  /**
+   * To Json
+   * @type {object}
+   */
+  get toBuilder(): any {
+    return {
+      id: this.id,
+      table_id: this.table_id,
+      name: this.name,
+      label: this.label,
+      is_unique: this.is_unique,
+      calculated: this.calculated,
+      stored: this.stored,
+      fieldview: this.fieldview,
+      type: typeof this.type === "string" ? this.type : this.type?.name,
+      input_type: this.input_type,
+      reftable_name: this.reftable_name,
+      attributes: this.attributes,
+      required: this.required,
+      primary_key: this.primary_key,
     };
   }
 

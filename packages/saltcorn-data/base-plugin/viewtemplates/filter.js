@@ -188,7 +188,7 @@ const configuration_workflow = () =>
           const pages = await Page.find();
 
           return {
-            fields: fields.map((f) => f.toJson),
+            fields: fields.map((f) => f.toBuilder),
             tableName: table.name,
             parent_field_list: my_parent_field_list,
             roles,
