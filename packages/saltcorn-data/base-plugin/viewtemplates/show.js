@@ -143,7 +143,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
-          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
             "show"
@@ -190,12 +190,12 @@ const configuration_workflow = (req) =>
           const myviewrow = await View.findOne({ name: context.viewname });
           return {
             tableName: table.name,
-            fields,
+            fields: fields.map((f) => f.toBuilder),
             images,
             actions,
             builtInActions,
             actionConfigForms,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             field_view_options: {
               ...field_view_options,
               ...rel_field_view_options,
