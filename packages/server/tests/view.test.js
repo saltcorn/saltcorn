@@ -677,6 +677,65 @@ describe("many to many relations", () => {
   });
 });
 
+describe("relation path to query and state", () => {
+  it("ChildList one layer", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/view/show_department_with_employee_list?id=1`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/list_employees?department=1"))
+      // embedded list
+      .expect(toInclude("my_department"))
+      .expect(toInclude("manager"))
+      .expect(toInclude("my_employee"))
+      .expect(toInclude("/view/create_employee?department=1"));
+  });
+
+  it("ChildList two layers", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/view/show_cover_with_artist_on_album?id=1`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(
+        toInclude(
+          "/view/artist_plays_on_album_list?artist_plays_on_album.album.albums.cover=1"
+        )
+      )
+      // embedded list
+      .expect(toInclude("artist A"))
+      .expect(toInclude("artist B"))
+      .expect(toInclude("album A"));
+  });
+
+  it("OneToOneSHow", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/view/show_cover_with_album?id=1`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/show_album?cover=1"))
+      // embedded show
+      .expect(toInclude("album A"));
+  });
+
+  it("Parent", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/view/show_album_with_cover?id=1`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/show_cover?id=1"))
+      // embedded show
+      .expect(toInclude("green cover"));
+  });
+});
+
 describe("legacy relations with relation path", () => {
   it("Independent feed", async () => {
     const app = await getApp({ disableCsrf: true });

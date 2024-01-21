@@ -632,7 +632,7 @@ const run = async (
     view_to_create &&
     (role <= table.min_role_write || table.ownership_field_id)
   ) {
-    const create_view = await View.findOne({ name: view_to_create });
+    const create_view = View.findOne({ name: view_to_create });
     const ownership_field =
       table.ownership_field_id &&
       table.fields.find((f) => f.id === table.ownership_field_id);

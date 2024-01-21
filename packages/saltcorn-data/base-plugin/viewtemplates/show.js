@@ -50,6 +50,7 @@ const {
   readState,
   add_free_variables_to_joinfields,
   stateToQueryString,
+  pathToState,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -187,7 +188,7 @@ const configuration_workflow = (req) =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("show")
           );
-          const myviewrow = await View.findOne({ name: context.viewname });
+          const myviewrow = View.findOne({ name: context.viewname });
           return {
             tableName: table.name,
             fields,
@@ -434,7 +435,7 @@ const renderRows = async (
   const getView = async (name, relation) => {
     if (views[name]) return views[name];
     const view_select = parse_view_select(name, relation);
-    const view = await View.findOne({ name: view_select.viewname });
+    const view = View.findOne({ name: view_select.viewname });
     if (!view) return false;
     if (view.table_id === table.id) view.table = table;
     else view.table = Table.findOne({ id: view.table_id });
@@ -486,21 +487,13 @@ const renderRows = async (
         };
         switch (view.view_select.type) {
           case "RelationPath": {
-            const path = view.view_select.path;
-            state1 =
-              path.length === 0
-                ? // it's Own or Independent
-                  table.name === view.view_select.sourcetable
-                  ? { [pk_name]: get_row_val(pk_name) }
-                  : {}
-                : {
-                    _relation_path_: {
-                      ...view.view_select,
-                      srcId: path[0].fkey
-                        ? get_row_val(path[0].fkey)
-                        : get_row_val(pk_name),
-                    },
-                  };
+            state1 = pathToState(
+              view,
+              segment.relation,
+              view.view_select.path,
+              get_row_val,
+              table
+            );
             break;
           }
           case "Own":
