@@ -374,7 +374,7 @@ const view_linker = (
           if (type === "ParentShow") {
             const summary_field =
               r[`summary_field_${subTable.name.toLowerCase()}`];
-            get_label(
+            label = get_label(
               typeof summary_field === "undefined" ? view : summary_field,
               r
             );
