@@ -600,7 +600,7 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
-  if (default_state._row_click_url_formula) {
+  if (default_state?._row_click_url_formula) {
     let fUrl = get_expression_function(
       default_state._row_click_url_formula,
       fields
