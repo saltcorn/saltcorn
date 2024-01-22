@@ -883,6 +883,18 @@ const string = {
       isEdit: true,
       blockDisplay: true,
       description: "Edit as a text area (multi line input)",
+      configFields: [
+        {
+          type: "Bool",
+          name: "spellcheck",
+          label: "Spellcheck",
+        },
+        {
+          type: "Integer",
+          name: "rows",
+          label: "Rows",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
           {
@@ -892,11 +904,12 @@ const string = {
             disabled: attrs.disabled,
             onChange: attrs.onChange,
             readonly: attrs.readonly,
+            spellcheck: attrs.spellcheck === false ? "false" : undefined,
             required: !!required,
             maxlength: isdef(attrs.max_length) && attrs.max_length,
             minlength: isdef(attrs.min_length) && attrs.min_length,
             id: `input${text_attr(nm)}`,
-            rows: 5,
+            rows: attrs.rows || 5,
           },
           text(v) || ""
         ),

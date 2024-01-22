@@ -41,6 +41,7 @@ const {
   get_async_expression_function,
   jsexprToWhere,
   freeVariables,
+  get_expression_function,
 } = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
@@ -377,6 +378,15 @@ const configuration_workflow = (req) =>
             attributes: { min: 0 },
           });
           formfields.push({
+            name: "_row_click_url_formula",
+            label: req.__("Row click URL"),
+            sublabel: req.__(
+              "Formula. Navigate to this URL when row is clicked"
+            ),
+            type: "String",
+            class: "validate-expression",
+          });
+          formfields.push({
             name: "transpose",
             label: req.__("Transpose"),
             sublabel: req.__("Display one column per line"),
@@ -590,6 +600,14 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
+  if (default_state?._row_click_url_formula) {
+    let fUrl = get_expression_function(
+      default_state._row_click_url_formula,
+      fields
+    );
+    page_opts.onRowSelect = (row) =>
+      `location.href='${fUrl(row, extraOpts.req.user)}'`;
+  }
   page_opts.class = "";
 
   if ((rows && rows.length === rows_per_page) || current_page > 1) {
