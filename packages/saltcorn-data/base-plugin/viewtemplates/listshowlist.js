@@ -7,7 +7,7 @@ const Table = require("../../models/table");
 const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
-const { text, div, h4, h6 } = require("@saltcorn/markup/tags");
+const { text, div, h4, h6, a } = require("@saltcorn/markup/tags");
 const { renderForm, tabs } = require("@saltcorn/markup");
 const {
   get_child_views,
@@ -49,9 +49,16 @@ const configuration_workflow = (req) =>
                 name: "list_view",
                 label: req.__("List View"),
                 type: "String",
-                sublabel: req.__(
-                  "A list view shown on the left, to select rows"
-                ),
+                sublabel:
+                  req.__("A list view shown on the left, to select rows") +
+                  ". " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/viewedit/config/\${list_view}\``,
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
                 required: false,
                 attributes: {
                   options: list_view_opts,
@@ -61,7 +68,16 @@ const configuration_workflow = (req) =>
                 name: "show_view",
                 label: req.__("Show View"),
                 type: "String",
-                sublabel: req.__("The view to show the selected row"),
+                sublabel:
+                  req.__("The view to show the selected row") +
+                  ". " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/viewedit/config/\${show_view}\``,
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
                 required: false,
                 attributes: {
                   options: show_view_opts,
