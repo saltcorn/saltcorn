@@ -1338,5 +1338,7 @@
 	"A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.": "A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.",
 	"Create page group": "Create page group",
 	"Page groups": "Page groups",
-	"Calculated non-stored fields cannot have Key type": "Calculated non-stored fields cannot have Key type"
+	"Calculated non-stored fields cannot have Key type": "Calculated non-stored fields cannot have Key type",
+	"Row click URL": "Row click URL",
+	"Formula. Navigate to this URL when row is clicked": "Formula. Navigate to this URL when row is clicked"
 }
