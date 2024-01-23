@@ -38,6 +38,8 @@ const intervalIsNow = async (name: string): Promise<boolean> => {
 
   return due < now;
 };
+
+const regexHHMM = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 /**
  * @param {string} name
  * @param {number} hours
@@ -63,7 +65,13 @@ const getIntervalTriggersDueNow = async (
   due = new Date(due);
   if (due > now) return [];
   //console.log("after check", {due, name, now});
-  const triggers = await Trigger.find({ when_trigger: name });
+  let triggers = await Trigger.find({ when_trigger: name });
+  // legacy: daily events without a specified time
+  if (name === "Daily") {
+    triggers = triggers.filter(
+      (tr) => !tr.channel || !tr.channel.match?.(regexHHMM)
+    );
+  }
   due.setHours(due.getHours() + hours);
   if (now > due) {
     // we must have skipped events, e.g. if not running continuously
