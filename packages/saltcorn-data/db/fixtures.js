@@ -1508,6 +1508,87 @@ module.exports =
     });
 
     await View.create({
+      table_id: artists.id,
+      name: "edit_artist",
+      viewtemplate: "Edit",
+      configuration: {
+        layout: {
+          above: [
+            { type: "field", fieldview: "edit", field_name: "name" },
+            {
+              type: "field",
+              fieldview: "edit",
+              field_name: "birth_data",
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "birth_data",
+            configuration: {},
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "name",
+            configuration: {},
+          },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: artists.id,
+      name: "show_artist_with_edit_artist",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "edit_artist",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".artists",
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "d7603a",
+              type: "view",
+              view: "edit_artist",
+              state: "shared",
+              relation: ".artists",
+              configuration: {},
+            },
+            {
+              type: "view_link",
+              view: "edit_artist",
+              block: false,
+              minRole: 100,
+              relation: ".artists",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
       table_id: artistPlaysOnAlbum.id,
       name: "artist_plays_on_album_list",
       viewtemplate: "List",
@@ -1868,6 +1949,10 @@ module.exports =
 
     await db.insert("department", {
       name: "my_department",
+      company: 1,
+    });
+    await db.insert("department", {
+      name: "department_without_employees",
       company: 1,
     });
     await db.insert("employee", {

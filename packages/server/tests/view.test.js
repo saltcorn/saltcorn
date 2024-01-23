@@ -681,6 +681,7 @@ describe("relation path to query and state", () => {
   it("ChildList one layer", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
+    // my_department
     await request(app)
       .get(`/view/show_department_with_employee_list?id=1`)
       .set("Cookie", loginCookie)
@@ -688,9 +689,23 @@ describe("relation path to query and state", () => {
       .expect(toInclude("/view/list_employees?department=1"))
       // embedded list
       .expect(toInclude("my_department"))
+      .expect(toNotInclude("department_without_employees"))
       .expect(toInclude("manager"))
       .expect(toInclude("my_employee"))
       .expect(toInclude("/view/create_employee?department=1"));
+
+    // department_without_employees
+    await request(app)
+      .get(`/view/show_department_with_employee_list?id=2`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/list_employees?department=2"))
+      // embedded list
+      .expect(toNotInclude("my_department"))
+      .expect(toNotInclude("department_without_employees"))
+      .expect(toNotInclude("manager"))
+      .expect(toNotInclude("my_employee"))
+      .expect(toNotInclude("/view/create_employee?department=1"));
   });
 
   it("ChildList two layers", async () => {
@@ -709,6 +724,35 @@ describe("relation path to query and state", () => {
       .expect(toInclude("artist A"))
       .expect(toInclude("artist B"))
       .expect(toInclude("album A"));
+
+    await request(app)
+      .get(`/view/show_cover_with_artist_on_album?id=2`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(
+        toInclude(
+          "/view/artist_plays_on_album_list?artist_plays_on_album.album.albums.cover=2"
+        )
+      )
+      // embedded list
+      .expect(toInclude("artist A"))
+      .expect(toNotInclude("artist B"))
+      .expect(toInclude("album B"));
+
+    await request(app)
+      .get(`/view/show_cover_with_artist_on_album?id=3`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(
+        toInclude(
+          "/view/artist_plays_on_album_list?artist_plays_on_album.album.albums.cover=3"
+        )
+      )
+      // embedded list
+      .expect(toNotInclude("artist A"))
+      .expect(toNotInclude("artist B"))
+      .expect(toNotInclude("album A"))
+      .expect(toNotInclude("album B"));
   });
 
   it("OneToOneSHow", async () => {
@@ -721,6 +765,46 @@ describe("relation path to query and state", () => {
       .expect(toInclude("/view/show_album?cover=1"))
       // embedded show
       .expect(toInclude("album A"));
+
+    await request(app)
+      .get(`/view/show_cover_with_album?id=2`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/show_album?cover=2"))
+      // embedded show
+      .expect(toInclude("blue cover"))
+      .expect(toInclude("album B"));
+
+    await request(app)
+      .get(`/view/show_cover_with_album?id=3`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/show_album?cover=3"))
+      // embedded show
+      .expect(toInclude("red cover"))
+      .expect(toInclude("No row selected"));
+  });
+
+  it("Own", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/view/show_artist_with_edit_artist?id=1`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/edit_artist?id=1"))
+      // embedded edit
+      .expect(toInclude(`value="artist A"`))
+      .expect(toInclude(`11/11/2000, 11:34:00 AM`));
+
+    await request(app)
+      .get(`/view/show_artist_with_edit_artist?id=2`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/edit_artist?id=2"))
+      // embedded edit
+      .expect(toInclude(`value="artist B"`))
+      .expect(toInclude(`11/11/2000, 11:34:00 AM`));
   });
 
   it("Parent", async () => {
@@ -733,6 +817,22 @@ describe("relation path to query and state", () => {
       .expect(toInclude("/view/show_cover?id=1"))
       // embedded show
       .expect(toInclude("green cover"));
+
+    await request(app)
+      .get(`/view/show_album_with_cover?id=2`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/show_cover?id=2"))
+      // embedded show
+      .expect(toInclude("blue cover"));
+
+    await request(app)
+      .get(`/view/show_album_with_cover?id=3`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toNotInclude("/view/show_cover?id=3"))
+      // embedded show
+      .expect(toInclude("No row selected"));
   });
 
   it("RelationPath", async () => {
