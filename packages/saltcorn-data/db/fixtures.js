@@ -1663,6 +1663,64 @@ module.exports =
       min_role: 100,
     });
 
+    // RelationPath test
+    await View.create({
+      table_id: tracksOnAlbum.id,
+      name: "track_on_album_with_artists_on_album",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          {
+            type: "JoinField",
+            block: false,
+            textStyle: "",
+            join_field: "album.name",
+            configuration: {},
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "track",
+            configuration: {},
+          },
+          {
+            type: "view_link",
+            view: "artist_plays_on_album_list",
+            block: false,
+            minRole: 100,
+            relation: ".tracks_on_album.album.artist_plays_on_album$album",
+            isFormula: {},
+            link_icon: "",
+            view_label: "",
+          },
+        ],
+        layout: {
+          above: [
+            {
+              name: "1034b",
+              type: "view",
+              view: "artist_plays_on_album_list",
+              state: "shared",
+              relation: ".tracks_on_album.album.artist_plays_on_album$album",
+            },
+            {
+              type: "view_link",
+              view: "artist_plays_on_album_list",
+              block: false,
+              minRole: 100,
+              relation: ".tracks_on_album.album.artist_plays_on_album$album",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
     await View.create({
       table_id: fan_club.id,
       name: "edit_fan_club",

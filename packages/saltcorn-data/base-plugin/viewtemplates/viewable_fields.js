@@ -254,8 +254,6 @@ const parse_view_select = (view, relation) => {
 
 const pathToQuery = (subview, relation, row, srcTable) => {
   const { path } = parseRelationPath(relation);
-  const subTable = Table.findOne({ id: subview.table_id });
-  const pkName = subTable.pk_name;
   const type = relationTypeFromPath(subview, path, srcTable);
   switch (type) {
     case "ChildList":
@@ -284,9 +282,20 @@ const pathToQuery = (subview, relation, row, srcTable) => {
     case "Independent":
       return { type, query: "" };
     case "RelationPath":
+      const subTable = Table.findOne({ id: subview.table_id });
+      const idName =
+        path.length > 0
+          ? path[0].fkey
+            ? path[0].fkey
+            : subTable.pk_name
+          : undefined;
+      const srcId =
+        row[idName] === null || row[idName]?.id === null
+          ? "NULL"
+          : row[idName]?.id || row[idName];
       return {
         type,
-        query: `${relation}=${row[pkName]}`,
+        query: `?${relation}=${srcId}`,
       };
   }
 };
@@ -356,17 +365,13 @@ const view_linker = (
       .join("&");
   };
   if (relation) {
-    const { path } = parseRelationPath(relation);
-    const pathStart = path[0];
-    const idName =
-      path.length > 0 ? (pathStart.fkey ? pathStart.fkey : "id") : undefined;
     const topview = View.findOne({ name: srcViewName });
     const subview = View.findOne({ name: view });
+    const subTable = Table.findOne({ id: subview.table_id });
+    const srcTable = Table.findOne({ id: topview.table_id });
     return {
       label: view,
       key: (r) => {
-        const subTable = Table.findOne({ id: subview.table_id });
-        const srcTable = Table.findOne({ id: topview.table_id });
         const { type, query } = pathToQuery(subview, relation, r, srcTable);
         if (query === null) return "";
         else {

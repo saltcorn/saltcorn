@@ -734,6 +734,40 @@ describe("relation path to query and state", () => {
       // embedded show
       .expect(toInclude("green cover"));
   });
+
+  it("RelationPath", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/view/track_on_album_with_artists_on_album?id=1`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(
+        toInclude(
+          "/view/artist_plays_on_album_list?.tracks_on_album.album.artist_plays_on_album$album=1"
+        )
+      )
+      // embedded show
+      .expect(toInclude("artist A"))
+      .expect(toInclude("artist B"))
+      .expect(toInclude("album A"))
+      .expect(toNotInclude("album B"));
+
+    await request(app)
+      .get(`/view/track_on_album_with_artists_on_album?id=2`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(
+        toInclude(
+          "/view/artist_plays_on_album_list?.tracks_on_album.album.artist_plays_on_album$album=2"
+        )
+      )
+      // embedded show
+      .expect(toInclude("artist A"))
+      .expect(toNotInclude("artist B"))
+      .expect(toNotInclude("album A"))
+      .expect(toInclude("album B"));
+  });
 });
 
 describe("legacy relations with relation path", () => {
