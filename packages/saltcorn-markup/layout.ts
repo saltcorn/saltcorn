@@ -481,7 +481,8 @@ const render = ({
                 )
               ),
           segment.contents &&
-            (segment.contents.type === "tabs"
+            (segment.contents.type === "tabs" &&
+            segment.contents.tabsStyle !== "Value switch"
               ? renderTabs(
                   {
                     tabClass: "card-header-tabs",
