@@ -225,8 +225,8 @@ describe("plugin helper", () => {
       );
       expect(result.length).toBe(1);
       expect(result[0].path).toBe(".employee.department.manager");
-      expect(result[0].views.length).toBe(2);
-      expect(result[0].views[0].name).toBe("show_manager");
+      expect(result[0].views.length).toBe(3);
+      expect(result[0].views[0].name).toBe("create_employee");
     });
 
     it("simple post topic relation", async () => {

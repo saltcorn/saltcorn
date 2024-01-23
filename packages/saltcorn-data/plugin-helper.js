@@ -1754,6 +1754,41 @@ const queryToString = (query) => {
   return JSON.stringify(relObj);
 };
 
+const handleRelationPath = (queryObj, qstate) => {
+  if (queryObj.path.length > 0) {
+    const levels = [];
+    let lastTableName = queryObj.sourcetable;
+    let where = null;
+    for (const level of queryObj.path) {
+      if (level.inboundKey) {
+        levels.push({ ...level });
+        lastTableName = level.table;
+        if (!where)
+          where = {
+            [db.sqlsanitize(level.inboundKey)]:
+              queryObj.srcId !== "NULL" ? queryObj.srcId : null,
+          };
+      } else {
+        const lastTable = Table.findOne({ name: lastTableName });
+        const refField = lastTable.fields.find(
+          (field) => field.name === level.fkey
+        );
+        levels.push({ table: refField.reftable_name, fkey: level.fkey });
+        lastTableName = refField.reftable_name;
+        if (!where)
+          where = { id: queryObj.srcId !== "NULL" ? queryObj.srcId : null };
+      }
+    }
+    addOrCreateList(qstate, "id", {
+      inSelectWithLevels: {
+        joinLevels: levels,
+        schema: db.getTenantSchema(),
+        where,
+      },
+    });
+  }
+};
+
 /**
  * @function
  * @param {object} opts
@@ -1782,36 +1817,12 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
     }
 
     const field = fields.find((fld) => fld.name === k);
-    if (k === "_relation_path_" || k === "_inbound_relation_path_") {
-      const queryObj = typeof v === "string" ? stringToQuery(v) : v;
-      if (queryObj.path.length > 0) {
-        const levels = [];
-        let lastTableName = queryObj.sourcetable;
-        let where = null;
-        for (const level of queryObj.path) {
-          if (level.inboundKey) {
-            levels.push({ ...level });
-            lastTableName = level.table;
-            if (!where)
-              where = { [db.sqlsanitize(level.inboundKey)]: queryObj.srcId };
-          } else {
-            const lastTable = Table.findOne({ name: lastTableName });
-            const refField = lastTable.fields.find(
-              (field) => field.name === level.fkey
-            );
-            levels.push({ table: refField.reftable_name, fkey: level.fkey });
-            lastTableName = refField.reftable_name;
-            if (!where) where = { id: queryObj.srcId };
-          }
-        }
-        addOrCreateList(qstate, "id", {
-          inSelectWithLevels: {
-            joinLevels: levels,
-            schema: db.getTenantSchema(),
-            where,
-          },
-        });
-      }
+    if (k === "_relation_path_" || k === "_inbound_relation_path_")
+      handleRelationPath(typeof v === "string" ? stringToQuery(v) : v, qstate);
+    else if (k.startsWith(".")) {
+      const queryObj = parseRelationPath(k);
+      queryObj.srcId = v;
+      handleRelationPath(queryObj, qstate);
     } else if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
@@ -2446,6 +2457,60 @@ const build_schema_data = async () => {
   return { views, tables };
 };
 
+/**
+ * tries to match a type to a relation
+ * if it's not ChildList, ParentShow, Own, or Independent then RelationPath is returned
+ * @param {View} subView
+ * @param {string[]} path
+ * @param {Table} srcTable
+ * @returns ChildList, ParentShow, Own, Independent or RelationPath
+ */
+const relationTypeFromPath = (subview, path, srcTable) => {
+  if (path.length === 1 && path[0].inboundKey)
+    return "ChildList"; // works for OneToOneShow as well
+  else if (path.length === 2 && path.every((p) => p.inboundKey))
+    return "ChildList";
+  else if (path.length === 1 && path[0].fkey) return "ParentShow";
+  else if (path.length === 0)
+    return subview.table_id === srcTable.id ? "Own" : "Independent";
+  else return "RelationPath";
+};
+
+/**
+ * creates a state object from a relation path
+ * @param {View} subview
+ * @param {string} relation
+ * @param {string[]} pathArr
+ * @param {Function} getRowVal
+ * @param {Table} srcTbl
+ */
+const pathToState = (subview, relation, pathArr, getRowVal, srcTbl) => {
+  const subTbl = Table.findOne({ id: subview.table_id });
+  const pkName = subTbl.pk_name;
+  switch (relationTypeFromPath(subview, pathArr, srcTbl)) {
+    case "ChildList":
+      return pathArr.length === 1
+        ? {
+            [pathArr[0].inboundKey]: getRowVal(pkName), // works for OneToOneShow as well
+          }
+        : {
+            [`${pathArr[1].table}.${pathArr[1].inboundKey}.${pathArr[0].table}.${pathArr[0].inboundKey}`]:
+              getRowVal(pkName),
+          };
+    case "ParentShow":
+      return { id: getRowVal(pathArr[0].fkey) };
+    case "Own":
+      return { [pkName]: getRowVal(pkName) };
+    case "Independent":
+      return {};
+    case "RelationPath":
+      return {
+        [relation]:
+          getRowVal(pathArr[0].fkey ? pathArr[0].fkey : pkName) || "NULL",
+      };
+  }
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -2471,4 +2536,6 @@ module.exports = {
   get_inbound_self_relation_opts,
   get_many_to_many_relation_opts,
   build_schema_data,
+  relationTypeFromPath,
+  pathToState,
 };
