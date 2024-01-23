@@ -18,6 +18,7 @@ const {
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
+  setTenant,
 } = require("./utils.js");
 const { setTableRefs, viewsList } = require("./common_lists");
 const Form = require("@saltcorn/data/models/form");
@@ -631,6 +632,7 @@ router.get(
 router.post(
   "/config/:name",
   isAdmin,
+  setTenant,
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
@@ -769,6 +771,7 @@ router.post(
 router.post(
   "/saveconfig/:viewname",
   isAdmin,
+  setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 
