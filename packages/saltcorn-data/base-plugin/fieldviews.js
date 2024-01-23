@@ -73,6 +73,11 @@ const select = {
       label: "Disable",
       type: "Bool",
     },
+    {
+      name: "readonly",
+      label: "Read-only",
+      type: "Bool",
+    },
   ],
 
   /**
@@ -87,7 +92,9 @@ const select = {
   run: (nm, v, attrs, cls, reqd, field) => {
     if (attrs.disabled) {
       const value =
-        (field.options || []).find((lv) => lv?.value === v)?.label || v;
+        (field.options || []).find((lv) => lv?.value === v)?.label ||
+        v ||
+        attrs.neutral_label;
       return (
         input({
           class: `${cls} ${field.class || ""}`,
@@ -97,6 +104,26 @@ const select = {
           readonly: true,
           placeholder: value || field.label,
         }) + span({ class: "ml-m1" }, "v")
+      );
+    }
+    if (attrs.readonly) {
+      const placeholder =
+        (field.options || []).find((lv) => lv?.value == v)?.label ||
+        v ||
+        attrs.neutral_label;
+      return (
+        input({
+          class: `${cls} ${field.class || ""} form-control form-select`,
+          readonly: true,
+          value: placeholder,
+        }) +
+        input({
+          type: "hidden",
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          value: v,
+        })
       );
     }
     const selOptions = select_options(
