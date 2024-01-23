@@ -39,12 +39,30 @@ const intervalIsNow = async (name: string): Promise<boolean> => {
   return due < now;
 };
 
-const regexHHMM = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+const regexHHMM = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
 /**
  * @param {string} name
  * @param {number} hours
  * @returns {Promise<Trigger[]>}
  */
+
+const getDailyTriggersDueNow = (tickSeconds: number): Array<Trigger> => {
+  let triggers = Trigger.find({ when_trigger: "Daily" });
+
+  return triggers.filter((tr) => {
+    if (!tr.channel) return false;
+    const m = tr.channel.match?.(regexHHMM);
+    if (!m) return false;
+    const time_to_run = new Date();
+    time_to_run.setHours(+m[1]);
+    time_to_run.setMinutes(+m[2]);
+    const now = new Date();
+    const nextTick = new Date();
+    nextTick.setSeconds(nextTick.getSeconds() + tickSeconds);
+    return time_to_run >= now && time_to_run < nextTick;
+  });
+};
+
 const getIntervalTriggersDueNow = async (
   name: string,
   hours: number
@@ -66,6 +84,7 @@ const getIntervalTriggersDueNow = async (
   if (due > now) return [];
   //console.log("after check", {due, name, now});
   let triggers = await Trigger.find({ when_trigger: name });
+
   // legacy: daily events without a specified time
   if (name === "Daily") {
     triggers = triggers.filter(
@@ -179,12 +198,14 @@ const runScheduler = async ({
         const triggers = await Trigger.find({ when_trigger: "Often" });
         const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);
         const trsDaily = await getIntervalTriggersDueNow("Daily", 24);
+        const trsDailyNowTime = getDailyTriggersDueNow(tickSeconds);
         const trsWeekly = await getIntervalTriggersDueNow("Weekly", 24 * 7);
         const allTriggers = [
           ...triggers,
           ...trsHourly,
           ...trsDaily,
           ...trsWeekly,
+          ...trsDailyNowTime,
         ];
         for (const trigger of allTriggers) {
           try {
