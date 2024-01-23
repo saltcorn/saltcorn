@@ -1340,5 +1340,7 @@
 	"Page groups": "Page groups",
 	"Calculated non-stored fields cannot have Key type": "Calculated non-stored fields cannot have Key type",
 	"Row click URL": "Row click URL",
-	"Formula. Navigate to this URL when row is clicked": "Formula. Navigate to this URL when row is clicked"
+	"Formula. Navigate to this URL when row is clicked": "Formula. Navigate to this URL when row is clicked",
+	"Time of day": "Time of day",
+	"UTC timezone": "UTC timezone"
 }

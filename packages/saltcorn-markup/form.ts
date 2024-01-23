@@ -497,6 +497,26 @@ const innerField =
         )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
           v[hdr.form_name] || ""
         }</textarea>`;
+      case "time_of_day":
+        return (
+          `<input class="form-control ${validClass} ${
+            hdr.class || ""
+          }"${maybe_disabled} data-fieldname="${text_attr(
+            hdr.form_name
+          )}" name="${text_attr(name)}" id="input${text_attr(
+            name
+          )}" type="text" placeholder="Select time of day.." readonly="readonly" value="${text_attr(
+            v[hdr.form_name]
+          )}">` +
+          script(
+            domReady(`$('#input${text_attr(name)}').flatpickr({
+            noCalendar: true,
+            enableTime: true,
+            time_24hr: true,
+            timeFormat: 'H:i'
+          });`)
+          )
+        );
       case "file":
         if (hdr.attributes && hdr.attributes.select_file_where) {
           hdr.input_type = "select";
