@@ -1201,6 +1201,10 @@ router.post(
     formFields.forEach((ff) => {
       ff.class = ff.class ? `${ff.class} item-menu` : "item-menu";
     });
+    if (req.query?.accept == "json") {
+      res.json(formFields);
+      return;
+    }
 
     const form = new Form({
       formStyle: "vert",

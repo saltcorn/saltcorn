@@ -979,8 +979,14 @@ const field_picker_fields = async ({
       name: "formula",
       label: __("Formula"),
       type: "String",
+      fieldview: "textarea",
+
       class: "validate-expression",
       showIf: { type: "FormulaValue" },
+      attributes: {
+        rows: 2,
+        spellcheck: false,
+      },
     },
     {
       name: "field_name",

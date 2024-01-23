@@ -116,7 +116,7 @@ const configuration_workflow = (req) =>
 
           const { field_view_options, handlesTextStyle, blockDisplay } =
             calcfldViewOptions(fields, "edit");
-          const fieldViewConfigForms = await calcfldViewConfig(fields, true);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
@@ -221,7 +221,7 @@ const configuration_workflow = (req) =>
 
           return {
             tableName: table.name,
-            fields,
+            fields: fields.map((f) => f.toBuilder),
             field_view_options,
             parent_field_list,
             handlesTextStyle,
@@ -230,7 +230,7 @@ const configuration_workflow = (req) =>
             actions,
             triggerActions,
             builtInActions,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             actionConfigForms,
             images,
             allowMultiStepAction: true,

@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, useEffect, Fragment } from "react";
+import React, { useContext, useEffect, useState, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
@@ -115,9 +115,26 @@ const FieldSettings = () => {
   const fvs = options.field_view_options[name];
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
   const blockDisplay = (options.blockDisplay || {})[name];
-  const getCfgFields = (fv) =>
-    ((options.fieldViewConfigForms || {})[name] || {})[fv];
-  const cfgFields = getCfgFields(fieldview);
+
+  const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
+  const cfgFields = fetchedCfgFields;
+  useEffect(() => {
+    fetch(`/field/fieldviewcfgform/${options.tableName}?accept=json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify({ field_name: name, fieldview, type: "Field" }),
+    })
+      .then(function (response) {
+        if (response.status < 399) return response.json();
+        else return [];
+      })
+      .then(setFetchedCfgFields);
+  }, [name, fieldview]);
+
   const refetchPreview = fetchFieldPreview({
     options,
     name,
@@ -189,7 +206,7 @@ const FieldSettings = () => {
                     const value = e.target.value;
 
                     setProp((prop) => (prop.fieldview = value));
-                    setInitialConfig(setProp, value, getCfgFields(value));
+                    //setInitialConfig(setProp, value, getCfgFields(value));
                     refetchPreview({ fieldview: value });
                   }}
                 >

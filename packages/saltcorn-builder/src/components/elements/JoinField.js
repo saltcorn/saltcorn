@@ -5,7 +5,7 @@
  */
 /* eslint-env jquery */
 
-import React, { useContext, useEffect, Fragment } from "react";
+import React, { useContext, useEffect, useState, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -390,9 +390,30 @@ const JoinFieldSettings = () => {
   const { setPreviews } = useContext(previewCtx);
 
   const fvs = options.field_view_options[name];
-  const getCfgFields = (fv) =>
-    ((options.fieldViewConfigForms || {})[name] || {})[fv];
-  const cfgFields = getCfgFields(fieldview);
+
+  const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
+  const cfgFields = fetchedCfgFields;
+  useEffect(() => {
+    fetch(`/field/fieldviewcfgform/${options.tableName}?accept=json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify({
+        join_field: name,
+        join_fieldview: fieldview,
+        type: "JoinField",
+      }),
+    })
+      .then(function (response) {
+        if (response.status < 399) return response.json();
+        else return [];
+      })
+      .then(setFetchedCfgFields);
+  }, [name, fieldview]);
+
   const refetchPreview = fetchFieldPreview({
     options,
     name,
