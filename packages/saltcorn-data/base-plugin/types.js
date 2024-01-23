@@ -644,6 +644,11 @@ const string = {
           label: "Autofocus",
           type: "Bool",
         },
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options && (attrs.options.length > 0 || !required)
@@ -656,6 +661,7 @@ const string = {
                 id: `input${text_attr(nm)}`,
                 onChange: attrs.onChange,
                 readonly: attrs.readonly,
+                value: v,
               })
             : select(
                 {
@@ -1115,6 +1121,11 @@ const int = {
       description: "Number input, optionally with stepper.",
       configFields: [
         { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const id = `input${text_attr(nm)}`;
@@ -1380,6 +1391,13 @@ const float = {
       isEdit: true,
       blockDisplay: true,
       description: "Number input",
+      configFields: [
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "number",
@@ -1766,6 +1784,11 @@ const bool = {
           attributes: {
             options: ["normal", "medium", "large"],
           },
+        },
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
         },
       ],
       run: (nm, v, attrs, cls, required, field) => {

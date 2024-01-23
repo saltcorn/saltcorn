@@ -194,6 +194,13 @@ const triggerForm = async (req, trigger) => {
       },
       {
         name: "channel",
+        label: req.__("Time of day"),
+        input_type: "time_of_day",
+        showIf: { when_trigger: "Daily" },
+        sublabel: req.__("UTC timezone"),
+      },
+      {
+        name: "channel",
         label: req.__("Channel"),
         type: "String",
         sublabel: req.__("Leave blank for all channels"),
