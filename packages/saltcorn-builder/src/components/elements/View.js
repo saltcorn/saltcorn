@@ -147,7 +147,12 @@ const ViewSettings = () => {
     ? React.useState(relationsCache[options.tableName][viewname])
     : [undefined, undefined];
   let safeRelation = relation;
-  if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
+  if (
+    options.mode !== "filter" &&
+    !safeRelation &&
+    !hasLegacyRelation &&
+    relations?.paths.length > 0
+  ) {
     safeRelation = initialRelation(relations.paths, options.tableName);
     setProp((prop) => {
       prop.relation = safeRelation;
@@ -159,23 +164,29 @@ const ViewSettings = () => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== viewname) {
-        updateRelationsCache(
-          relationsCache,
-          setRelationsCache,
-          options,
-          finder,
-          target_value
-        );
-        const newRelations = relationsCache[options.tableName][target_value];
-        if (newRelations.paths.length > 0) {
+        if (options.mode === "filter") {
           setProp((prop) => {
             prop.view = target_value;
-            prop.relation = initialRelation(
-              newRelations.paths,
-              options.tableName
-            );
           });
-          setRelations(newRelations);
+        } else {
+          updateRelationsCache(
+            relationsCache,
+            setRelationsCache,
+            options,
+            finder,
+            target_value
+          );
+          const newRelations = relationsCache[options.tableName][target_value];
+          if (newRelations.paths.length > 0) {
+            setProp((prop) => {
+              prop.view = target_value;
+              prop.relation = initialRelation(
+                newRelations.paths,
+                options.tableName
+              );
+            });
+            setRelations(newRelations);
+          }
         }
       }
     }
@@ -200,7 +211,7 @@ const ViewSettings = () => {
               ))}
             </select>
           </div>
-          {
+          {options.mode !== "filter" && (
             <div>
               <RelationOnDemandPicker
                 relations={relations.layers}
@@ -225,7 +236,7 @@ const ViewSettings = () => {
                 tableNameCache={caches.tableNameCache}
               />
             </div>
-          }
+          )}
         </Fragment>
       ) : (
         <div>
