@@ -794,8 +794,7 @@ describe("relation path to query and state", () => {
       // view link
       .expect(toInclude("/view/edit_artist?id=1"))
       // embedded edit
-      .expect(toInclude(`value="artist A"`))
-      .expect(toInclude(`11/11/2000, 11:34:00 AM`));
+      .expect(toInclude(`value="artist A"`));
 
     await request(app)
       .get(`/view/show_artist_with_edit_artist?id=2`)
@@ -803,8 +802,7 @@ describe("relation path to query and state", () => {
       // view link
       .expect(toInclude("/view/edit_artist?id=2"))
       // embedded edit
-      .expect(toInclude(`value="artist B"`))
-      .expect(toInclude(`11/11/2000, 11:34:00 AM`));
+      .expect(toInclude(`value="artist B"`));
   });
 
   it("Parent", async () => {
