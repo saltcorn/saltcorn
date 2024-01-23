@@ -747,7 +747,7 @@ const transformForm = async ({
           state = pathToState(
             view,
             segment.relation,
-            view.view_select.path,
+            view_select.path,
             (k) => row[k],
             table
           );
