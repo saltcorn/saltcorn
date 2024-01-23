@@ -57,6 +57,7 @@ const {
   add_free_variables_to_joinfields,
   readState,
   stateToQueryString,
+  pathToState,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -743,21 +744,13 @@ const transformForm = async ({
       let state;
       switch (view_select.type) {
         case "RelationPath": {
-          const path = view_select.path;
-          state =
-            path.length === 0
-              ? // it's Own or Independent
-                table.name === view.view_select.sourcetable
-                ? { id: row.id }
-                : {}
-              : {
-                  _relation_path_: {
-                    ...view_select,
-                    srcId: path[0].fkey
-                      ? row[path[0].fkey]
-                      : row[table.pk_name],
-                  },
-                };
+          state = pathToState(
+            view,
+            segment.relation,
+            view.view_select.path,
+            (k) => row[k],
+            table
+          );
           break;
         }
         case "Own":

@@ -916,6 +916,17 @@ module.exports =
               name: "fc3fc3",
               state: "shared",
             },
+            {
+              type: "view_link",
+              view: "blog_in_topic_feed",
+              block: false,
+              minRole: 100,
+              relation:
+                ".users.user_interested_in_topic$user.topic.blog_in_topic$topic",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
           ],
         },
       },
@@ -1288,13 +1299,24 @@ module.exports =
       name: "artist B",
       birth_data: new Date("2000-11-11T10:34:00.000Z"),
     });
+    await db.insert("covers", {
+      name: "green cover",
+    });
+    await db.insert("covers", {
+      name: "blue cover",
+    });
+    await db.insert("covers", {
+      name: "red cover",
+    });
     await db.insert("albums", {
       name: "album A",
       release_date: new Date("2010-11-11T10:34:00.000Z"),
+      cover: 1,
     });
     await db.insert("albums", {
       name: "album B",
       release_date: new Date("2010-11-11T10:34:00.000Z"),
+      cover: 2,
     });
     await db.insert("artist_plays_on_album", {
       artist: 1,
@@ -1486,14 +1508,296 @@ module.exports =
     });
 
     await View.create({
+      table_id: artists.id,
+      name: "edit_artist",
+      viewtemplate: "Edit",
+      configuration: {
+        layout: {
+          above: [
+            { type: "field", fieldview: "edit", field_name: "name" },
+            {
+              type: "field",
+              fieldview: "edit",
+              field_name: "birth_data",
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "birth_data",
+            configuration: {},
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "name",
+            configuration: {},
+          },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: artists.id,
+      name: "show_artist_with_edit_artist",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "edit_artist",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".artists",
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "d7603a",
+              type: "view",
+              view: "edit_artist",
+              state: "shared",
+              relation: ".artists",
+              configuration: {},
+            },
+            {
+              type: "view_link",
+              view: "edit_artist",
+              block: false,
+              minRole: 100,
+              relation: ".artists",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
       table_id: artistPlaysOnAlbum.id,
       name: "artist_plays_on_album_list",
       viewtemplate: "List",
       configuration: {
         columns: [
-          { type: "Field", field_name: "artist", state_field: "on" },
-          { type: "Field", field_name: "album", state_field: "on" },
+          { type: "JoinField", join_field: "artist.name" },
+          { type: "JoinField", join_field: "album.name" },
         ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: covers.id,
+      name: "show_cover",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", fieldview: "show", field_name: "name" }],
+        },
+      },
+      min_role: 100,
+    });
+
+    // ChildList two layers
+    await View.create({
+      table_id: covers.id,
+      name: "show_cover_with_artist_on_album",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "artist_plays_on_album_list",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".covers.albums$cover.artist_plays_on_album$album",
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "f10873",
+              type: "view",
+              view: "artist_plays_on_album_list",
+              state: "shared",
+              relation: ".covers.albums$cover.artist_plays_on_album$album",
+            },
+            {
+              type: "view_link",
+              view: "artist_plays_on_album_list",
+              block: false,
+              minRole: 100,
+              relation: ".covers.albums$cover.artist_plays_on_album$album",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    // OneToOne test
+    await View.create({
+      table_id: covers.id,
+      name: "show_cover_with_album",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "show_album",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".covers.albums$cover",
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "name" },
+            {
+              name: "f10873",
+              type: "view",
+              view: "show_album",
+              state: "shared",
+              relation: ".covers.albums$cover",
+            },
+            {
+              type: "view_link",
+              view: "show_album",
+              block: false,
+              minRole: 100,
+              relation: ".covers.albums$cover",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    // Parent test
+    await View.create({
+      table_id: albums.id,
+      name: "show_album_with_cover",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          {
+            type: "ViewLink",
+            view: "show_cover",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".albums.cover",
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            {
+              name: "f10873",
+              type: "view",
+              view: "show_cover",
+              state: "shared",
+              relation: ".albums.cover",
+            },
+            {
+              type: "view_link",
+              view: "show_cover",
+              block: false,
+              minRole: 100,
+              relation: ".albums.cover",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    // RelationPath test
+    await View.create({
+      table_id: tracksOnAlbum.id,
+      name: "track_on_album_with_artists_on_album",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          {
+            type: "JoinField",
+            block: false,
+            textStyle: "",
+            join_field: "album.name",
+            configuration: {},
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "track",
+            configuration: {},
+          },
+          {
+            type: "view_link",
+            view: "artist_plays_on_album_list",
+            block: false,
+            minRole: 100,
+            relation: ".tracks_on_album.album.artist_plays_on_album$album",
+            isFormula: {},
+            link_icon: "",
+            view_label: "",
+          },
+        ],
+        layout: {
+          above: [
+            {
+              name: "1034b",
+              type: "view",
+              view: "artist_plays_on_album_list",
+              state: "shared",
+              relation: ".tracks_on_album.album.artist_plays_on_album$album",
+            },
+            {
+              type: "view_link",
+              view: "artist_plays_on_album_list",
+              block: false,
+              minRole: 100,
+              relation: ".tracks_on_album.album.artist_plays_on_album$album",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
       },
       min_role: 100,
     });
@@ -1647,6 +1951,10 @@ module.exports =
       name: "my_department",
       company: 1,
     });
+    await db.insert("department", {
+      name: "department_without_employees",
+      company: 1,
+    });
     await db.insert("employee", {
       name: "manager",
       department: 1,
@@ -1691,6 +1999,83 @@ module.exports =
               relation: ".employee.department.manager",
               name: "bc653",
               state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: employee.id,
+      name: "create_employee",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name", state_field: "on" },
+          { type: "Field", field_name: "department", state_field: "on" },
+        ],
+        layout: {
+          above: [
+            { type: "field", fieldview: "edit", field_name: "name" },
+            { type: "field", fieldview: "edit", field_name: "department" },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: employee.id,
+      name: "list_employees",
+      viewtemplate: "List",
+      configuration: {
+        columns: [
+          {
+            type: "JoinField",
+            join_field: "department.name",
+          },
+          {
+            type: "Field",
+            fieldview: "as_text",
+            field_name: "name",
+          },
+        ],
+        view_to_create: "create_employee",
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: department.id,
+      name: "show_department_with_employee_list",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          {
+            type: "ViewLink",
+            view: "list_employees",
+            relation: ".department.employee$department",
+          },
+        ],
+        layout: {
+          above: [
+            {
+              type: "view_link",
+              view: "list_employees",
+              block: false,
+              minRole: 100,
+              relation: ".department.employee$department",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+            {
+              name: "af624e",
+              type: "view",
+              view: "list_employees",
+              state: "shared",
+              relation: ".department.employee$department",
             },
           ],
         },
