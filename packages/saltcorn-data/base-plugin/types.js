@@ -661,6 +661,7 @@ const string = {
                 id: `input${text_attr(nm)}`,
                 onChange: attrs.onChange,
                 readonly: attrs.readonly,
+                value: v,
               })
             : select(
                 {
