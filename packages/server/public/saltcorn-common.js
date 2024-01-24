@@ -105,13 +105,17 @@ function apply_showif() {
     }
   });
   $("[data-dyn-href]").each(function (ix, element) {
-    const e = $(element);
-    const rec = get_form_record(e);
-    const href = new Function(
-      `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
-      "return " + e.attr("data-dyn-href")
-    )(rec);
-    e.attr("href", href);
+    try {
+      const e = $(element);
+      const rec = get_form_record(e);
+      const href = new Function(
+        `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
+        "return " + e.attr("data-dyn-href")
+      )(rec);
+      e.attr("href", href);
+    } catch (e) {
+      if (window._sc_loglevel > 4) console.error(e);
+    }
   });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
@@ -423,6 +427,7 @@ function get_form_record(e_in, select_labels) {
 
   e.find("input[name],select[name],textarea[name]").each(function () {
     const $this = $(this);
+    if ($this.prop("disabled")) return;
     const name = $this.attr("data-fieldname") || $this.attr("name");
     if (select_labels && $this.prop("tagName").toLowerCase() === "select")
       rec[name] = $this.find("option:selected").text();

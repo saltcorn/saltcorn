@@ -44,6 +44,7 @@ const get_help_markup = async (topic, query, req) => {
     const markup = md.render(mdTopic);
     return { markup };
   } catch (e) {
+    console.error(e);
     return { markup: pre(e.toString()) };
   }
 };

@@ -904,9 +904,15 @@ const ConfigField = ({
         onChange={(e) => e.target && myOnChange(e.target.value)}
         onBlur={(e) => e.target && myOnChange(e.target.value)}
       >
-        {field.options.map((o, ix) => (
-          <option key={ix}>{o}</option>
-        ))}
+        {field.options.map((o, ix) =>
+          o.name && o.label ? (
+            <option key={ix} value={o.name}>
+              {o.label}
+            </option>
+          ) : (
+            <option key={ix}>{o}</option>
+          )
+        )}
       </select>
     ),
     btn_select: () => (
