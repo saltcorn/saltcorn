@@ -1342,5 +1342,6 @@
 	"Row click URL": "Row click URL",
 	"Formula. Navigate to this URL when row is clicked": "Formula. Navigate to this URL when row is clicked",
 	"Time of day": "Time of day",
-	"UTC timezone": "UTC timezone"
+	"UTC timezone": "UTC timezone",
+	"Pagegroup": "Pagegroup"
 }

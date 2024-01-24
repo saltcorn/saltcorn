@@ -338,7 +338,6 @@ async function handleRoute(route, query, files, data) {
         if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
         else await replaceIframe(page.content, page.isFile);
       } else {
-        if (routeAdded) popRoute();
         showAlerts([
           {
             type: "warning",
@@ -351,6 +350,7 @@ async function handleRoute(route, query, files, data) {
       }
     }
   } catch (error) {
+    if (routeAdded) popRoute();
     showAlerts([
       {
         type: "error",
