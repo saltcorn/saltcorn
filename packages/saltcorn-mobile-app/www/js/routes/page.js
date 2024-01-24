@@ -1,4 +1,4 @@
-/*global MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn, loadFileAsText*/
+/*global window, MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn, loadFileAsText*/
 
 // post/page/:pagename/action/:rndid
 const postPageAction = async (context) => {
