@@ -114,7 +114,7 @@ function apply_showif() {
       )(rec);
       e.attr("href", href);
     } catch (e) {
-      console.error(e);
+      if (window._sc_loglevel > 4) console.error(e);
     }
   });
   $("[data-calc-options]").each(function (ix, element) {
