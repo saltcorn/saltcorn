@@ -655,7 +655,6 @@ const run = async (
   const create_link_showif_pass = create_view_showif
     ? eval_expression(create_view_showif, state, extraOpts.req.user)
     : undefined;
-  console.log({ create_link_showif_pass, create_view_showif });
   if (
     create_link_showif_pass !== false &&
     view_to_create &&

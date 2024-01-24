@@ -133,6 +133,15 @@ const configuration_workflow = (req) =>
                 showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
               {
+                name: "create_view_showif",
+                label: req.__("Show if formula"),
+                type: "String",
+                sublabel: req.__(
+                  "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
+                ),
+                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
+              },
+              {
                 name: "create_view_label",
                 label: req.__("Label for create"),
                 sublabel: req.__(
@@ -145,6 +154,7 @@ const configuration_workflow = (req) =>
                   view_to_create: create_view_opts.map((o) => o.name),
                 },
               },
+
               {
                 name: "create_view_location",
                 label: req.__("Location"),
@@ -472,6 +482,7 @@ const run = async (
     create_view_location,
     create_link_style,
     create_link_size,
+    create_view_showif,
     always_create_view,
     include_fml,
     exclusion_relation,
@@ -589,10 +600,14 @@ const run = async (
     (f) =>
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
   );
-
+  const create_link_showif_pass = create_view_showif
+    ? eval_expression(create_view_showif, state, extraArgs.req.user)
+    : undefined;
   if (
+    create_link_showif_pass !== false &&
     view_to_create &&
-    (role <= table.min_role_write ||
+    (create_link_showif_pass ||
+      role <= table.min_role_write ||
       (table.ownership_field_id && (about_user || always_create_view)))
   ) {
     if (create_view_display === "Embedded") {
