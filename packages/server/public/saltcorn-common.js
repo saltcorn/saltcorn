@@ -423,6 +423,7 @@ function get_form_record(e_in, select_labels) {
 
   e.find("input[name],select[name],textarea[name]").each(function () {
     const $this = $(this);
+    if ($this.prop("disabled")) return;
     const name = $this.attr("data-fieldname") || $this.attr("name");
     if (select_labels && $this.prop("tagName").toLowerCase() === "select")
       rec[name] = $this.find("option:selected").text();
