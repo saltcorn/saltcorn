@@ -105,13 +105,17 @@ function apply_showif() {
     }
   });
   $("[data-dyn-href]").each(function (ix, element) {
-    const e = $(element);
-    const rec = get_form_record(e);
-    const href = new Function(
-      `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
-      "return " + e.attr("data-dyn-href")
-    )(rec);
-    e.attr("href", href);
+    try {
+      const e = $(element);
+      const rec = get_form_record(e);
+      const href = new Function(
+        `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
+        "return " + e.attr("data-dyn-href")
+      )(rec);
+      e.attr("href", href);
+    } catch (e) {
+      console.error(e);
+    }
   });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
