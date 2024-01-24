@@ -352,7 +352,6 @@
 	"Next": "Next",
 	"Save": "Save",
 	"Calculated fields cannot have File type": "Calculated fields cannot have File type",
-	"Calculated fields cannot have Key type": "Calculated fields cannot have Key type",
 	"On Field": "On Field",
 	"Field in %s table": "Field in %s table",
 	"Action on row": "Action on row",
@@ -1338,7 +1337,10 @@
 	"Your page groups": "Your page groups",
 	"A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.": "A group has pages with an eligible formula. When you request a group, then the first page where the formula matches gets served. This way, you can choose a page depending on the screen of the device.",
 	"Create page group": "Create page group",
-	"%s has no eligible page": "%s has no eligible page",
-	"Pagegroup %s has no members": "Pagegroup %s has no members",
-	"Pagegroup": "Pagegroup"
+	"Page groups": "Page groups",
+	"Calculated non-stored fields cannot have Key type": "Calculated non-stored fields cannot have Key type",
+	"Row click URL": "Row click URL",
+	"Formula. Navigate to this URL when row is clicked": "Formula. Navigate to this URL when row is clicked",
+	"Time of day": "Time of day",
+	"UTC timezone": "UTC timezone"
 }

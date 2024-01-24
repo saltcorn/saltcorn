@@ -407,7 +407,7 @@ function get_form_record(e_in, select_labels) {
   const rec = {};
 
   const e = e_in.viewname
-    ? $(`form[data-viewname=${e_in.viewname}]`)
+    ? $(`form[data-viewname="${e_in.viewname}"]`)
     : e_in.closest(".form-namespace");
 
   const form = $(e).closest("form");
@@ -976,20 +976,31 @@ function enable_codemirror(f) {
     success: f,
   });
 }
-function tristateClick(nm) {
-  var current = $(`button#trib${nm}`).html();
+function tristateClick(e) {
+  const btn = $(e);
+  const input = btn.prev();
+  var current = input.val();
   switch (current) {
     case "?":
-      $(`button#trib${nm}`).html("T");
-      $(`input#input${nm}`).val("on");
+      btn
+        .html(btn.attr("data-true-label") || "T")
+        .removeClass(["btn-danger", "btn-secondary"])
+        .addClass("btn-success");
+      input.val("on").trigger("change");
       break;
-    case "T":
-      $(`button#trib${nm}`).html("F");
-      $(`input#input${nm}`).val("off");
+    case "on":
+      btn
+        .html(btn.attr("data-false-label") || "F")
+        .removeClass(["btn-success", "btn-secondary"])
+        .addClass("btn-danger");
+      input.val("off").trigger("change");
       break;
     default:
-      $(`button#trib${nm}`).html("?");
-      $(`input#input${nm}`).val("?");
+      btn
+        .html(btn.attr("data-null-label") || "?")
+        .removeClass(["btn-success", "btn-danger"])
+        .addClass("btn-secondary");
+      input.val("?").trigger("change");
       break;
   }
 }
@@ -1158,7 +1169,7 @@ async function common_done(res, viewname, isWeb = true) {
     });
   }
   if (res.set_fields && viewname) {
-    const form = $(`form[data-viewname=${viewname}]`);
+    const form = $(`form[data-viewname="${viewname}"]`);
     if (form.length === 0 && set_state_fields) {
       // assume this is a filter
       set_state_fields(

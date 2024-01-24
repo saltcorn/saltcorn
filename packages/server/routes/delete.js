@@ -39,7 +39,10 @@ router.post(
       if (role <= table.min_role_write)
         await table.deleteRows({ id }, req.user || { role_id: 100 });
       else if (table.ownership_field_id && req.user) {
-        const row = await table.getRow({ id });
+        const row = await table.getRow(
+          { id },
+          { forUser: req.user, forPublic: !req.user }
+        );
         if (row && table.is_owner(req.user, row))
           await table.deleteRows({ id }, req.user || { role_id: 100 });
         else req.flash("error", req.__("Not authorized"));

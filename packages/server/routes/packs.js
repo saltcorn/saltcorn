@@ -5,7 +5,7 @@
  */
 
 const Router = require("express-promise-router");
-const { isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher, setTenant } = require("./utils.js");
 const { renderForm } = require("@saltcorn/markup");
 const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
@@ -388,6 +388,7 @@ router.get(
  */
 router.post(
   "/install",
+  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;

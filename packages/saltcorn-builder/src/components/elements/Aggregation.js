@@ -140,12 +140,12 @@ const AggregationSettings = () => {
                 { valAttr: true }
               )}
               {options.fields
-                .filter((f) => f.type.name === "Date")
+                .filter((f) => f.type === "Date" || f.type.name === "Date")
                 .map((f) => (
                   <option value={`Latest ${f.name}`}>Latest {f.name}</option>
                 ))}
               {options.fields
-                .filter((f) => f.type.name === "Date")
+                .filter((f) => f.type === "Date" || f.type.name === "Date")
                 .map((f) => (
                   <option value={`Earliest ${f.name}`}>
                     Earliest {f.name}

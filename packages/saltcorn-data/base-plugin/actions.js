@@ -28,7 +28,12 @@ const {
   eval_expression,
 } = require("../models/expression");
 const { div, code, a, span } = require("@saltcorn/markup/tags");
-const { sleep, getSessionId } = require("../utils");
+const {
+  sleep,
+  getSessionId,
+  urlStringToObject,
+  dollarizeObject,
+} = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
 const { available_languages } = require("../models/config");
@@ -766,7 +771,8 @@ module.exports = {
      * @param {...*} [opts.rest]
      * @returns {Promise<object|boolean>}
      */
-    run: async ({ row, table, configuration, user, ...rest }) => {
+    run: async ({ row, table, configuration, user, referrer, ...rest }) => {
+      const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
         table?.fields || [],
@@ -774,6 +780,7 @@ module.exports = {
           user,
           console,
           session_id: rest.req && getSessionId(rest.req),
+          ...dollarizeObject(state),
         }
       );
       const calcrow = await f(row || {}, user);
@@ -918,7 +925,7 @@ module.exports = {
     ],
 
     run: async ({ configuration: { form_action } }) => {
-      const jqGet = `$("form[data-viewname="+viewname+"]")`;
+      const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };

@@ -179,7 +179,7 @@ const configuration_workflow = () =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("filter")
           );
-          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -188,7 +188,7 @@ const configuration_workflow = () =>
           const pages = await Page.find();
 
           return {
-            fields,
+            fields: fields.map((f) => f.toBuilder),
             tableName: table.name,
             parent_field_list: my_parent_field_list,
             roles,
@@ -201,7 +201,7 @@ const configuration_workflow = () =>
             library,
             field_view_options,
             actionConfigForms,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             mode: "filter",
           };
         },
@@ -455,7 +455,7 @@ const run = async (
           ? 1
           : -1
       );
-      const options = dvs.map(({ label, value, jsvalue }) =>
+      const options = dvs.map(({ label, value, jsvalue }, ix) =>
         option(
           {
             value,
@@ -466,7 +466,7 @@ const run = async (
               (jsvalue === false && state[field_name] === "off"),
             class: !value && !label ? "text-muted" : undefined,
           },
-          !value && !label
+          !value && !label && ix === 0 && neutral_label
             ? neutral_label
             : label_formula
             ? eval_expression(
@@ -786,9 +786,12 @@ module.exports = {
       for (const col of columns) {
         if (col.type === "DropDownFilter") {
           const field = fields.find((f) => f.name === col.field_name);
-          if (table.external) {
+          if (table.external || table.provider_name) {
             distinct_values[col.field_name] = (
-              await table.distinctValues(col.field_name)
+              await table.distinctValues(col.field_name, {
+                forPublic: !req.user,
+                forUser: req.user,
+              })
             ).map((x) => ({ label: x, value: x }));
           } else if (field) {
             distinct_values[col.field_name] = await field.distinct_values(

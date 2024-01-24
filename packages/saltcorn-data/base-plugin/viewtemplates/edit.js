@@ -57,6 +57,7 @@ const {
   add_free_variables_to_joinfields,
   readState,
   stateToQueryString,
+  pathToState,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -115,7 +116,7 @@ const configuration_workflow = (req) =>
 
           const { field_view_options, handlesTextStyle, blockDisplay } =
             calcfldViewOptions(fields, "edit");
-          const fieldViewConfigForms = await calcfldViewConfig(fields, true);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
@@ -220,7 +221,7 @@ const configuration_workflow = (req) =>
 
           return {
             tableName: table.name,
-            fields,
+            fields: fields.map((f) => f.toBuilder),
             field_view_options,
             parent_field_list,
             handlesTextStyle,
@@ -229,7 +230,7 @@ const configuration_workflow = (req) =>
             actions,
             triggerActions,
             builtInActions,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             actionConfigForms,
             images,
             allowMultiStepAction: true,
@@ -743,21 +744,13 @@ const transformForm = async ({
       let state;
       switch (view_select.type) {
         case "RelationPath": {
-          const path = view_select.path;
-          state =
-            path.length === 0
-              ? // it's Own or Independent
-                table.name === view.view_select.sourcetable
-                ? { id: row.id }
-                : {}
-              : {
-                  _relation_path_: {
-                    ...view_select,
-                    srcId: path[0].fkey
-                      ? row[path[0].fkey]
-                      : row[table.pk_name],
-                  },
-                };
+          state = pathToState(
+            view,
+            segment.relation,
+            view_select.path,
+            (k) => row[k],
+            table
+          );
           break;
         }
         case "Own":
@@ -1204,7 +1197,10 @@ const doAuthPost = async ({ body, table_id, req }) => {
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, body);
       if (Object.keys(uniques).length > 0) {
-        body = await table.getRow(uniques);
+        body = await table.getRow(uniques, {
+          forUser: req.user,
+          forPublic: !req.user,
+        });
         return table.is_owner(req.user, body);
       }
     } else return field_name && `${body[field_name]}` === `${user_id}`;
@@ -1484,7 +1480,7 @@ const prepare = async (
   } else if (cancel) {
     row = getRowByIdQuery
       ? await getRowByIdQuery(id)
-      : await table.getRow({ id });
+      : await table.getRow({ id }, { forUser: req.user, forPublic: !req.user });
   } else {
     row = { ...form.values };
   }
@@ -1494,6 +1490,7 @@ const prepare = async (
 
   const file_fields = form.fields.filter((f) => f.type === "File");
   for (const field of file_fields) {
+    if (!field.fieldviewObj?.isEdit) continue;
     if (field.fieldviewObj?.setsFileId) {
       //do nothing
     } else if (field.fieldviewObj?.setsDataURL) {
@@ -1905,7 +1902,13 @@ module.exports = {
     },
     async getRowByIdQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow({ id });
+      return await table.getRow(
+        { id },
+        {
+          forUser: req.user,
+          forPublic: !req.user,
+        }
+      );
     },
     async actionQuery() {
       const { rndid, _csrf, onchange_action, onchange_field, ...body } =

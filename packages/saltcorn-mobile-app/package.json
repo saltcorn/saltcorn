@@ -1,7 +1,7 @@
 {
   "name": "@saltcorn/mobile-app",
   "displayName": "Saltcorn mobile app",
-  "version": "0.9.3-beta.4",
+  "version": "0.9.3-rc.1",
   "description": "Apache Cordova application with @saltcorn/markup",
   "main": "index.js",
   "scripts": {
