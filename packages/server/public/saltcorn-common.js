@@ -1505,3 +1505,17 @@ function disable_inactive_tab_inputs(id) {
     });
   }, 100);
 }
+
+function set_readonly_select(e) {
+  if (!e.target) return;
+  const $e = $(e.target);
+  if ($e.attr("type") !== "hidden") return;
+  const $disp = $e.prev();
+  const optionsS = decodeURIComponent(
+    $disp.attr("data-readonly-select-options")
+  );
+  if (!optionsS) return;
+  const options = JSON.parse(optionsS);
+  const option = options.find((o) => o.value == e.target.value);
+  if (option) $disp.val(option.label);
+}
