@@ -223,7 +223,12 @@ const make_link = (
 const parse_view_select = (view, relation) => {
   if (relation) {
     const { sourcetable, path } = parseRelationPath(relation);
-    return { type: "RelationPath", viewname: view, sourcetable, path };
+    return {
+      type: "RelationPath",
+      viewname: view,
+      sourcetable,
+      path,
+    };
   } else {
     // legacy relation path
     const colonSplit = view.split(":");

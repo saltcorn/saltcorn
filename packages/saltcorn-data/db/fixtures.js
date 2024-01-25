@@ -1602,6 +1602,43 @@ module.exports =
     });
 
     await View.create({
+      table_id: artistPlaysOnAlbum.id,
+      name: "edit_artist_on_album",
+      viewtemplate: "Edit",
+      configuration: {
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "select",
+              field_name: "album",
+            },
+            {
+              type: "field",
+              block: false,
+              fieldview: "select",
+              field_name: "artist",
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            fieldview: "select",
+            field_name: "album",
+          },
+          {
+            type: "Field",
+            fieldview: "select",
+            field_name: "artist",
+          },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
       table_id: covers.id,
       name: "show_cover",
       viewtemplate: "Show",
@@ -2079,6 +2116,193 @@ module.exports =
             },
           ],
         },
+      },
+      min_role: 100,
+    });
+
+    // edit in edit one layer
+    await View.create({
+      table_id: department.id,
+      name: "edit_department_with_edit_in_edit_legacy",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "name",
+            configuration: {},
+          },
+        ],
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "edit",
+              textStyle: "",
+              field_name: "name",
+              configuration: {},
+            },
+            {
+              name: "99fef8",
+              type: "view",
+              view: "ChildList:create_employee.employee.department",
+              state: "shared",
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+    await View.create({
+      table_id: department.id,
+      name: "edit_department_with_edit_in_edit_relation_path",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "name",
+            configuration: {},
+          },
+        ],
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "edit",
+              textStyle: "",
+              field_name: "name",
+              configuration: {},
+            },
+            {
+              name: "99fef8",
+              type: "view",
+              view: "create_employee",
+              state: "shared",
+              relation: ".department.employee$department",
+              configuration: {},
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    // two layers
+    await View.create({
+      table_id: covers.id,
+      name: "edit_cover_with_edit_artist_on_album_rel_path",
+      viewtemplate: "Edit",
+      configuration: {
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "edit",
+              textStyle: "",
+              field_name: "name",
+              configuration: {},
+            },
+            {
+              name: "dd8ee4",
+              type: "view",
+              view: "edit_artist_on_album",
+              state: "shared",
+              relation: ".covers.albums$cover.artist_plays_on_album$album",
+            },
+            {
+              type: "action",
+              block: false,
+              rndid: "55ac5b",
+              minRole: 100,
+              action_name: "Save",
+              action_style: "btn-primary",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "name",
+            configuration: {},
+          },
+          {
+            type: "Action",
+            rndid: "55ac5b",
+            minRole: 100,
+            action_name: "Save",
+            action_style: "btn-primary",
+            configuration: {},
+          },
+        ],
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: covers.id,
+      name: "edit_cover_with_edit_artist_on_album_legacy",
+      viewtemplate: "Edit",
+      configuration: {
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "edit",
+              textStyle: "",
+              field_name: "name",
+              configuration: {},
+            },
+            {
+              name: "dd8ee4",
+              type: "view",
+              view: "ChildList:edit_artist_on_album.artist_plays_on_album.album.albums.cover",
+              state: "shared",
+            },
+            {
+              type: "action",
+              block: false,
+              rndid: "55ac5b",
+              minRole: 100,
+              action_name: "Save",
+              action_style: "btn-primary",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "name",
+            configuration: {},
+          },
+          {
+            type: "Action",
+            rndid: "55ac5b",
+            minRole: 100,
+            action_name: "Save",
+            action_style: "btn-primary",
+            configuration: {},
+          },
+        ],
       },
       min_role: 100,
     });
