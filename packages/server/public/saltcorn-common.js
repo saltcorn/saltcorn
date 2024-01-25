@@ -80,6 +80,7 @@ function apply_showif() {
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
+      if (e.prop("disabled")) return;
       let to_show = e.data("data-show-if-fun");
       if (!to_show) {
         to_show = new Function(
@@ -92,12 +93,12 @@ function apply_showif() {
         e.data("data-closest-form-ns", e.closest(".form-namespace"));
       if (to_show(e))
         e.show()
-          .find("input, textarea, button, select")
+          .find("input, textarea, button, select, [data-show-if]")
           .prop("disabled", e.attr("data-disabled") || false);
       else
         e.hide()
           .find(
-            "input:enabled, textarea:enabled, button:enabled, select:enabled"
+            "input:enabled, textarea:enabled, button:enabled, select:enabled, [data-show-if]:not([disabled])"
           )
           .prop("disabled", true);
     } catch (e) {
@@ -1503,4 +1504,18 @@ function disable_inactive_tab_inputs(id) {
       }
     });
   }, 100);
+}
+
+function set_readonly_select(e) {
+  if (!e.target) return;
+  const $e = $(e.target);
+  if ($e.attr("type") !== "hidden") return;
+  const $disp = $e.prev();
+  const optionsS = decodeURIComponent(
+    $disp.attr("data-readonly-select-options")
+  );
+  if (!optionsS) return;
+  const options = JSON.parse(optionsS);
+  const option = options.find((o) => o.value == e.target.value);
+  if (option) $disp.val(option.label);
 }
