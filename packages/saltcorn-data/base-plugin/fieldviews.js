@@ -16,6 +16,7 @@ const {
   text_attr,
   script,
   input,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
@@ -116,6 +117,9 @@ const select = {
           class: `${cls} ${field.class || ""} form-control form-select`,
           readonly: true,
           value: placeholder,
+          "data-readonly-select-options": encodeURIComponent(
+            JSON.stringify(field.options)
+          ),
         }) +
         input({
           type: "hidden",
@@ -123,7 +127,14 @@ const select = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           value: v,
-        })
+        }) +
+        script(
+          domReady(
+            `$('input[name="${text_attr(
+              nm
+            )}"]').on("set_form_field", set_readonly_select)`
+          )
+        )
       );
     }
     const selOptions = select_options(

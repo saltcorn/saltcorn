@@ -58,6 +58,7 @@ const {
   readState,
   stateToQueryString,
   pathToState,
+  relationTypeFromPath,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -473,6 +474,29 @@ const setDateLocales = (form, locale) => {
   });
 };
 
+/**
+ * check if a relation path has a CHildList structure
+ */
+const isChildListPath = (viewSelect, subView) =>
+  viewSelect.type === "RelationPath" &&
+  relationTypeFromPath(subView, viewSelect.path, viewSelect.sourcetable) ===
+    "ChildList";
+
+/**
+ * update viewSelect so that it looks like a normal ChildList
+ */
+const updateViewSelect = (viewSelect) => {
+  if (viewSelect.path.length === 1) {
+    viewSelect.field_name = viewSelect.path[0].inboundKey;
+    viewSelect.table_name = viewSelect.path[0].table;
+  } else if (viewSelect.path.length === 2) {
+    viewSelect.field_name = viewSelect.path[1].inboundKey;
+    viewSelect.table_name = viewSelect.path[1].table;
+    viewSelect.throughTable = viewSelect.path[0].inboundKey;
+    viewSelect.through = viewSelect.path[0].table;
+  }
+};
+
 /** @type {function} */
 const initial_config = initial_config_all_fields(true);
 
@@ -671,9 +695,13 @@ const transformForm = async ({
         throw new InvalidConfiguration(
           `Cannot find embedded view: ${view_select.viewname}`
         );
-
+      const childListPath = isChildListPath(view_select, view);
       // Edit-in-edit
-      if (view.viewtemplate === "Edit" && view_select.type === "ChildList") {
+      if (
+        view.viewtemplate === "Edit" &&
+        (view_select.type === "ChildList" || childListPath)
+      ) {
+        if (childListPath) updateViewSelect(view_select);
         const childTable = Table.findOne({ id: view.table_id });
         const childForm = await getForm(
           childTable,
@@ -707,6 +735,7 @@ const transformForm = async ({
             table_id: childTable.id,
             view: segment.view,
             relation: view_select.field_name,
+            relation_path: segment.relation,
           },
         });
         if (row?.id) {
@@ -1053,9 +1082,13 @@ const runPost = async (
       }
       //Edit-in-edit
       for (const field of form.fields.filter((f) => f.isRepeat)) {
-        const view_select = parse_view_select(field.metadata.view);
+        const view_select = parse_view_select(
+          field.metadata.view,
+          field.metadata.relation_path
+        );
         const childView = View.findOne({ name: view_select.viewname });
-
+        if (isChildListPath(view_select, childView))
+          updateViewSelect(view_select);
         const childTable = Table.findOne({ id: field.metadata?.table_id });
         const submitted_row_ids = new Set(
           (form.values[field.name] || []).map(

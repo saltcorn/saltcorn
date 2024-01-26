@@ -868,6 +868,63 @@ describe("relation path to query and state", () => {
   });
 });
 
+describe("edit-in-edit with relation path and legacy", () => {
+  it("edit-in-edit with relation path one layer", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/edit_department_with_edit_in_edit_legacy?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("add_repeater"));
+
+    // TODO post
+  });
+
+  it("edit-in-edit with relation path two layer", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/edit_cover_with_edit_artist_on_album_rel_path?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("add_repeater"));
+
+    // TODO post
+  });
+
+  it("edit-in-edit legacy one layer", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/edit_department_with_edit_in_edit_legacy?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("add_repeater"));
+
+    // TODO post
+  });
+
+  it("edit-in-edit with relation path two layer", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/edit_cover_with_edit_artist_on_album_rel_path?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("add_repeater"));
+
+    // TODO post
+  });
+
+  it("edit-in-edit legacy two layer", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/edit_cover_with_edit_artist_on_album_legacy?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("add_repeater"));
+
+    // TODO post
+  });
+});
+
 describe("legacy relations with relation path", () => {
   it("Independent feed", async () => {
     const app = await getApp({ disableCsrf: true });
