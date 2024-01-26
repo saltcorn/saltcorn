@@ -734,20 +734,18 @@ const get_viewable_fields = (
           type.fieldviews &&
           type.fieldviews[column.join_fieldview]
             ? (row) =>
-                type.fieldviews[column.join_fieldview].run(
-                  row[key],
-                  req,
-                  column
-                )
+                type.fieldviews[column.join_fieldview].run(row[key], req, {
+                  row,
+                  ...column,
+                })
             : null;
         if (!gofv && column.field_type === "File") {
           gofv = (row) =>
             row[key]
-              ? getState().fileviews[column.join_fieldview].run(
-                  row[key],
-                  "",
-                  column
-                )
+              ? getState().fileviews[column.join_fieldview].run(row[key], "", {
+                  row,
+                  ...column,
+                })
               : "";
         }
         fvrun = {
@@ -881,7 +879,7 @@ const get_viewable_fields = (
                     getState().fileviews[column.fieldview].run(
                       row[f.name],
                       row[`${f.name}__filename`],
-                      column
+                      { row, ...column }
                     )
                 : column.fieldview &&
                   f.type.fieldviews &&
@@ -890,7 +888,7 @@ const get_viewable_fields = (
                     f.type.fieldviews[column.fieldview].run(
                       row[f_with_val.name],
                       req,
-                      { ...f.attributes, ...column.configuration }
+                      { row, ...f.attributes, ...column.configuration }
                     )
                 : isShow
                 ? f.type.showAs

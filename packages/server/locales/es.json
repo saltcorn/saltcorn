@@ -349,7 +349,7 @@
 	"Omit search form": "Omit search form",
 	"Do not display the search filter form": "No mostrar el formulario de filtro de búsqueda",
 	"Default search form values when first loaded": "Valores del formulario de búsqueda predeterminado cuando se carga por primera vez",
-	"Next":"Siguiente",
+	"Next": "Siguiente",
 	"Save": "Guardar",
 	"Calculated fields cannot have File type": "Los campos calculados no pueden tener tipo de archivo",
 	"Calculated fields cannot have Key type": "Los campos calculados no pueden tener tipo de clave",
@@ -502,7 +502,7 @@
 	"Restart server": "Reiniciar el servidor",
 	"Edit Plugin": "Editar complemento",
 	"Unknown authentication method %ss": "Método de autenticación desconocido %ss",
-	"Restart required for changes to take effect. Restart server from the <a href=\/admin\">Admin page</a>.": "Es necesario reiniciar para que los cambios surtan efecto. Reinicie el servidor desde la <a href=\/admin\">página de administración</a>.",
+	"Restart required for changes to take effect. Restart server from the <a href=/admin\">Admin page</a>.": "Es necesario reiniciar para que los cambios surtan efecto. Reinicie el servidor desde la <a href=/admin\">página de administración</a>.",
 	"Email with password reset link sent": "Correo electrónico con enlace para restablecer contraseña enviado",
 	"Link Style": "Estilo de enlace",
 	"Link size": "Tamaño del enlace",
@@ -1268,5 +1268,6 @@
 	"Pack file": "Empaquetar archivo",
 	"Upload a pack file": "Subir un archivo de paquete",
 	"No menu": "Sin menú",
-	"Omit the menu from this page": "Omitir el menú de esta página"
+	"Omit the menu from this page": "Omitir el menú de esta página",
+	"%s has no eligible page": "%s has no eligible page"
 }
