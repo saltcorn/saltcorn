@@ -962,7 +962,6 @@ describe("legacy relations with relation path", () => {
   it("Own same table subview", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
-
     await request(app)
       .get("/view/show_album_with_subview_new_relation_path?id=1")
       .set("Cookie", loginCookie)
@@ -971,5 +970,18 @@ describe("legacy relations with relation path", () => {
       .get("/view/show_album_with_subview_new_relation_path?id=2")
       .set("Cookie", loginCookie)
       .expect(toInclude("album B"));
+  });
+
+  it("edit-view with show-subview same table", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/authoredit_with_show")
+      .set("Cookie", loginCookie)
+      .expect(toSucceed);
+    await request(app)
+      .get("/view/authoredit_with_show?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Herman Melville"));
   });
 });

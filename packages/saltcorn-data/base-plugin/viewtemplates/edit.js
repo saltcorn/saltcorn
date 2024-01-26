@@ -759,8 +759,8 @@ const transformForm = async ({
       const isIndependent =
         view_select.type === "Independent" ||
         (view_select.type === "RelationPath" &&
-          view_select.path.length === 0 &&
-          view_select.sourcetable === table.name);
+          relationTypeFromPath(view, view_select.path, table) ===
+            "Independent");
       if (!row && !isIndependent) {
         segment.type = "blank";
         segment.contents = "";
