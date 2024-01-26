@@ -12,6 +12,7 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const Page = require("@saltcorn/data/models/page");
+const PageGroup = require("@saltcorn/data/models/page_group");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { link, mkTable } = require("@saltcorn/markup");
 const { div, a, p, i, h5, span } = require("@saltcorn/markup/tags");
@@ -22,7 +23,7 @@ const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
-const { get_base_url, sendHtmlFile } = require("./utils.js");
+const { get_base_url, sendHtmlFile, getEligiblePage } = require("./utils.js");
 
 /**
  * Tables List
@@ -545,6 +546,18 @@ const no_views_logged_in = async (req, res) => {
  * @returns {Promise<boolean>}
  */
 const get_config_response = async (role_id, res, req) => {
+  const wrap = async (contents, homeCfg, title, description) => {
+    if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
+    else
+      res.sendWrap(
+        {
+          title: title || "",
+          description: description || "",
+          bodyClass: "page_" + db.sqlsanitize(homeCfg),
+        },
+        contents
+      );
+  };
   const modernCfg = getState().getConfig("home_page_by_role", false);
   // predefined roles
   const legacy_role = { 100: "public", 80: "user", 40: "staff", 1: "admin" }[
@@ -554,21 +567,30 @@ const get_config_response = async (role_id, res, req) => {
   if (typeof homeCfg !== "string")
     homeCfg = getState().getConfig(legacy_role + "_home");
   if (homeCfg) {
-    const db_page = await Page.findOne({ name: homeCfg });
-
-    if (db_page) {
-      const contents = await db_page.run(req.query, { res, req });
-      if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
-      else
-        res.sendWrap(
-          {
-            title: db_page.title,
-            description: db_page.description,
-            bodyClass: "page_" + db.sqlsanitize(homeCfg),
-          },
-          contents
-        );
-    } else res.redirect(homeCfg);
+    const db_page = Page.findOne({ name: homeCfg });
+    if (db_page)
+      wrap(
+        await db_page.run(req.query, { res, req }),
+        homeCfg,
+        db_page.title,
+        db_page.description
+      );
+    else {
+      const group = PageGroup.findOne({ name: homeCfg });
+      if (group) {
+        const eligible = await getEligiblePage(group, req, res);
+        if (typeof eligible === "string") wrap(eligible);
+        else if (eligible) {
+          if (!eligible.isReload)
+            wrap(
+              await eligible.run(req.query, { res, req }),
+              homeCfg,
+              eligible.title,
+              eligible.description
+            );
+        } else wrap(req.__("%s has no eligible page", group.name), homeCfg);
+      } else res.redirect(homeCfg);
+    }
     return true;
   }
 };
