@@ -140,22 +140,67 @@ const none_available = (required) =>
 
 const progress_bar = (type) => ({
   configFields: (field) => [
+    { name: "max_min_formula", type: "Bool", label: "Max/min Formula" },
     ...(!isdef(field.attributes.min)
-      ? [{ name: "min", type, required: true }]
+      ? [
+          {
+            name: "min",
+            label: "Min",
+            type,
+            required: true,
+            showIf: { max_min_formula: false },
+          },
+        ]
       : []),
     ...(!isdef(field.attributes.max)
-      ? [{ name: "max", type, required: true }]
+      ? [
+          {
+            name: "max",
+            label: "Max",
+            type,
+            required: true,
+            showIf: { max_min_formula: false },
+          },
+        ]
       : []),
+    {
+      name: "min_formula",
+      label: "Min formula",
+      type: "String",
+      class: "validate-expression",
+      showIf: { max_min_formula: true },
+    },
+    {
+      name: "max_formula",
+      label: "Max formula",
+      type: "String",
+      class: "validate-expression",
+      showIf: { max_min_formula: true },
+    },
+
     { name: "bar_color", type: "Color", label: "Bar color" },
     { name: "bg_color", type: "Color", label: "Background color" },
     { name: "px_height", type: "Integer", label: "Height in px" },
     { name: "radial", type: "Bool", label: "Radial" },
+    {
+      name: "show_label",
+      type: "Bool",
+      label: "Show value",
+      showif: { radial: true },
+    },
   ],
   isEdit: false,
   description:
     "Show value as a percentage filled on a horizontal or radial progress bar",
   run: (v, req, attrs = {}) => {
-    const pcnt = Math.round((100 * (v - attrs.min)) / (attrs.max - attrs.min));
+    let max = attrs.max;
+    let min = attrs.min;
+    if (attrs.max_min_formula && attrs.min_formula && attrs.row)
+      min = eval_expression(attrs.min_formula, attrs.row, req.user);
+    if (attrs.max_min_formula && attrs.max_formula && attrs.row)
+      max = eval_expression(attrs.max_formula, attrs.row, req.user);
+    if (typeof v !== "number") return "";
+    const pcnt = Math.round((100 * (v - min)) / (max - min));
     if (attrs?.radial) {
       const valShow =
         typeof v !== "number"
@@ -180,7 +225,11 @@ const progress_bar = (type) => ({
               } 0);`,
           },
         }) +
-        style(`.progress-bar-radial-${pcnt}::before { content: "${valShow}"; }`)
+        (attrs.show_label === false
+          ? ""
+          : style(
+              `.progress-bar-radial-${pcnt}::before { content: "${valShow}"; }`
+            ))
       );
     } else
       return div(
