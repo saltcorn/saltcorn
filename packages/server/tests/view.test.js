@@ -135,7 +135,7 @@ describe("view with routes", () => {
 describe("render view on page", () => {
   it("should show edit", async () => {
     const view = await View.findOne({ name: "authorshow" });
-    View.update({ default_render_page: "a_page" }, view.id);
+    await View.update({ default_render_page: "a_page" }, view.id);
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/authorshow?id=1")
@@ -151,7 +151,7 @@ describe("render view with slug", () => {
     const slugOpts = await table.slug_options();
     const slugOpt = slugOpts.find((so) => so.label === "/:id");
     expect(!!slugOpt).toBe(true);
-    View.update({ default_render_page: null, slug: slugOpt }, view.id);
+    await View.update({ default_render_page: null, slug: slugOpt }, view.id);
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/authorlist")
@@ -171,7 +171,7 @@ describe("render view with slug", () => {
     const slugOpts = await table.slug_options();
     const slugOpt = slugOpts.find((so) => so.label === "/slugify-author");
     expect(!!slugOpt).toBe(true);
-    View.update({ default_render_page: null, slug: slugOpt }, view.id);
+    await View.update({ default_render_page: null, slug: slugOpt }, view.id);
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .get("/view/authorlist")
@@ -982,6 +982,6 @@ describe("legacy relations with relation path", () => {
     await request(app)
       .get("/view/authoredit_with_show?id=1")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Herman Melville"));
+      .expect(toInclude(["Herman Melville", "agi"]));
   });
 });
