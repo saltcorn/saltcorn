@@ -76,7 +76,12 @@ const runPage = async (page, req, res, tic) => {
       );
   } else {
     getState().log(2, `Page ${page.name} not authorized`);
-    res.status(404).sendWrap(` page`, req.__("Page %s not found", page.name));
+    res
+      .status(404)
+      .sendWrap(
+        req.__("Internal Error"),
+        req.__("Page %s not found", page.name)
+      );
   }
 };
 
@@ -86,20 +91,26 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
     const eligible = await getEligiblePage(pageGroup, req, res);
     if (typeof eligible === "string") {
       getState().log(2, eligible);
-      res.status(400).sendWrap(` page`, eligible);
+      res.status(400).sendWrap(req.__("Internal Error"), eligible);
     } else if (eligible) {
       if (!eligible.isReload) await runPage(eligible, req, res, tic);
     } else {
       getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
       res
         .status(404)
-        .sendWrap(` page`, req.__("%s has no eligible page", pageGroup.name));
+        .sendWrap(
+          req.__("Internal Error"),
+          req.__("%s has no eligible page", pageGroup.name)
+        );
     }
   } else {
     getState().log(2, `Pagegroup ${pageGroup.name} not authorized`);
     res
       .status(404)
-      .sendWrap(` page`, req.__("Pagegroup %s not found", pageGroup.name));
+      .sendWrap(
+        req.__("Internal Error"),
+        req.__("Pagegroup %s not found", pageGroup.name)
+      );
   }
 };
 
@@ -119,7 +130,10 @@ router.get(
         getState().log(2, `Page ${pagename} not found or not authorized`);
         res
           .status(404)
-          .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
+          .sendWrap(
+            req.__("Internal Error"),
+            req.__("Page %s not found", pagename)
+          );
       }
     }
   })

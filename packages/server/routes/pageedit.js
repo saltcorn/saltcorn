@@ -713,10 +713,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name" });
-    const pageGroups = await PageGroup.find(
-      {},
-      { orderBy: "name", nocase: true }
-    );
+    const pageGroups = await PageGroup.find({}, { orderBy: "name" });
     const roles = await User.get_roles();
     const form = getRootPageForm(pages, pageGroups, roles, req);
     const valres = form.validate(req.body);

@@ -1483,13 +1483,15 @@ const buildDialogScript = () => {
       if (currentType === type) {
         tab.addClass("active");
         input.removeClass("d-none");
-        input.addClass("d-block");        
+        input.addClass("d-block");
+        input.attr("name", "entryPoint");
       }
       else {
         tab.removeClass("active");
         input.removeClass("d-block");
         input.addClass("d-none");
-      }      
+        input.removeAttr("name");
+      }
     }
     $("#entryPointTypeID").attr("value", type);
   }
