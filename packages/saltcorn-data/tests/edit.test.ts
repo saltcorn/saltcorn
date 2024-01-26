@@ -29,7 +29,7 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
-const mkConfig = (hasSave?: boolean) => {
+const mkConfig = (hasSave?: boolean, onChange?: boolean) => {
   return {
     layout: {
       above: [
@@ -42,7 +42,12 @@ const mkConfig = (hasSave?: boolean) => {
             {
               above: [
                 null,
-                { type: "field", fieldview: "edit", field_name: "name" },
+                {
+                  type: "field",
+                  fieldview: "edit",
+                  field_name: "name",
+                  ...(onChange ? { onchange_action: "fieldchangeaction" } : {}),
+                },
               ],
             },
           ],
@@ -80,7 +85,12 @@ const mkConfig = (hasSave?: boolean) => {
       ],
     },
     columns: [
-      { type: "Field", fieldview: "edit", field_name: "name" },
+      {
+        type: "Field",
+        fieldview: "edit",
+        field_name: "name",
+        ...(onChange ? { onchange_action: "fieldchangeaction" } : {}),
+      },
       { type: "Field", fieldview: "edit", field_name: "age" },
       ...(hasSave
         ? [
@@ -453,6 +463,7 @@ describe("Edit-in-edit", () => {
         dest_url_formula: null,
         destination_type: "View",
         formula_destinations: [],
+        page_group_when_done: null,
       },
     });
   });
@@ -504,5 +515,52 @@ describe("Edit-in-edit", () => {
     );
     const nbooks2 = await books.countRows({ publisher: pubrow.id });
     expect(nbooks2).toBe(1);
+  });
+});
+describe("Edit view field onchange", () => {
+  it("should have onchange in get", async () => {
+    const persons = await Table.findOne("ValidatedTable1");
+    assertIsSet(persons);
+    const v = await View.create({
+      name: "OnChangeEdit",
+      table_id: persons.id,
+      viewtemplate: "Edit",
+      min_role: 100,
+      configuration: mkConfig(false, true),
+    });
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: persons.id,
+      name: "fieldchangeaction",
+      when_trigger: "Never",
+      configuration: {
+        code: `return {notify: "Hello from trigger"}`,
+      },
+    });
+    const vres0 = await v.run({}, mockReqRes);
+    expect(vres0).toContain("<form");
+    expect(vres0).toContain(
+      `onChange="view_post('OnChangeEdit', 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record({viewname: 'OnChangeEdit'}) })"`
+    );
+  });
+  it("should run route", async () => {
+    const v = await View.findOne({ name: "OnChangeEdit" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    const body = {
+      onchange_action: "fieldchangeaction",
+      onchange_field: "name",
+    };
+    await v.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      { req: { body } },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      notify: "Hello from trigger",
+      success: "ok",
+    });
   });
 });

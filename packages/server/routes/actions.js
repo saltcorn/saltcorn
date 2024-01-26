@@ -162,6 +162,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Name"),
         type: "String",
         required: true,
+        attributes: { autofocus: true },
         sublabel: req.__("Name of action"),
       },
       {
@@ -190,6 +191,13 @@ const triggerForm = async (req, trigger) => {
         sublabel: req.__(
           "The table for which the trigger condition is checked."
         ),
+      },
+      {
+        name: "channel",
+        label: req.__("Time of day"),
+        input_type: "time_of_day",
+        showIf: { when_trigger: "Daily" },
+        sublabel: req.__("UTC timezone"),
       },
       {
         name: "channel",
@@ -380,11 +388,15 @@ router.post(
  * @memberof module:routes/actions~actionsRouter
  */
 router.get(
-  "/configure/:id",
+  "/configure/:idorname",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const trigger = await Trigger.findOne({ id });
+    const { idorname } = req.params;
+    let trigger;
+    let id = parseInt(idorname);
+    if (id) trigger = await Trigger.findOne({ id });
+    else trigger = await Trigger.findOne({ name: idorname });
+
     if (!trigger) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
@@ -396,11 +408,16 @@ router.get(
       ? Table.findOne({ id: trigger.table_id })
       : null;
 
-    const subtitle = span(
-      { class: "ms-3" },
-      trigger.action,
-      table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
-    ) + a({href: `/actions/testrun/${id}`, class: "ms-2" }, req.__("Test run")+"&nbsp;&raquo;");
+    const subtitle =
+      span(
+        { class: "ms-3" },
+        trigger.action,
+        table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
+      ) +
+      a(
+        { href: `/actions/testrun/${id}`, class: "ms-2" },
+        req.__("Test run") + "&nbsp;&raquo;"
+      );
     if (!action) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
@@ -618,7 +635,10 @@ router.get(
     let table, row;
     if (trigger.table_id) {
       table = Table.findOne({ id: trigger.table_id });
-      row = await table.getRow({}, {orderBy: "RANDOM()"});
+      row = await table.getRow(
+        {},
+        { orderBy: "RANDOM()", forUser: req.user, forPublic: !req.user }
+      );
     }
     let runres;
 
@@ -666,7 +686,10 @@ router.get(
               "&laquo;&nbsp;" + req.__("back to actions")
             ),
             a(
-              { href: `/actions/configure/${trigger.id}`, class: "mt-4 btn btn-primary me-1" },
+              {
+                href: `/actions/configure/${trigger.id}`,
+                class: "mt-4 btn btn-primary me-1",
+              },
               req.__("Configure action")
             ),
             a(

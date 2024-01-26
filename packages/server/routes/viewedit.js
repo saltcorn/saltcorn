@@ -18,6 +18,7 @@ const {
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
+  setTenant,
 } = require("./utils.js");
 const { setTableRefs, viewsList } = require("./common_lists");
 const Form = require("@saltcorn/data/models/form");
@@ -131,8 +132,9 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         label: req.__("View name"),
         name: "name",
         type: "String",
+        attributes: { autofocus: true },
         sublabel: req.__(
-          "The view name will appear as the title of pop-ups showing this view, and in the URL when it is shown alone."
+          "The view name is part of the URL when it is shown alone."
         ),
       }),
       new Field({
@@ -630,6 +632,7 @@ router.get(
 router.post(
   "/config/:name",
   isAdmin,
+  setTenant,
   error_catcher(async (req, res) => {
     const { name } = req.params;
 
@@ -768,6 +771,7 @@ router.post(
 router.post(
   "/saveconfig/:viewname",
   isAdmin,
+  setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 

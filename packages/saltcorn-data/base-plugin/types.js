@@ -644,6 +644,11 @@ const string = {
           label: "Autofocus",
           type: "Bool",
         },
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.options && (attrs.options.length > 0 || !required)
@@ -656,6 +661,7 @@ const string = {
                 id: `input${text_attr(nm)}`,
                 onChange: attrs.onChange,
                 readonly: attrs.readonly,
+                value: v,
               })
             : select(
                 {
@@ -883,6 +889,18 @@ const string = {
       isEdit: true,
       blockDisplay: true,
       description: "Edit as a text area (multi line input)",
+      configFields: [
+        {
+          type: "Bool",
+          name: "spellcheck",
+          label: "Spellcheck",
+        },
+        {
+          type: "Integer",
+          name: "rows",
+          label: "Rows",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
           {
@@ -892,11 +910,12 @@ const string = {
             disabled: attrs.disabled,
             onChange: attrs.onChange,
             readonly: attrs.readonly,
+            spellcheck: attrs.spellcheck === false ? "false" : undefined,
             required: !!required,
             maxlength: isdef(attrs.max_length) && attrs.max_length,
             minlength: isdef(attrs.min_length) && attrs.min_length,
             id: `input${text_attr(nm)}`,
-            rows: 5,
+            rows: attrs.rows || 5,
           },
           text(v) || ""
         ),
@@ -1102,6 +1121,11 @@ const int = {
       description: "Number input, optionally with stepper.",
       configFields: [
         { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const id = `input${text_attr(nm)}`;
@@ -1367,6 +1391,13 @@ const float = {
       isEdit: true,
       blockDisplay: true,
       description: "Number input",
+      configFields: [
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
           type: "number",
@@ -1754,6 +1785,11 @@ const bool = {
             options: ["normal", "medium", "large"],
           },
         },
+        {
+          name: "readonly",
+          label: "Read-only",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const onChange =
@@ -1808,6 +1844,23 @@ const bool = {
       isEdit: true,
       description:
         "Edit with a control that can be True, False and Null (missing)",
+      configFields: [
+        {
+          name: "false_label",
+          label: "False label",
+          type: "String",
+        },
+        {
+          name: "null_label",
+          label: "Null label",
+          type: "String",
+        },
+        {
+          name: "true_label",
+          label: "True label",
+          type: "String",
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.disabled
           ? !(!isdef(v) || v === null)
@@ -1824,11 +1877,26 @@ const bool = {
             }) +
             button(
               {
-                onClick: `tristateClick('${text_attr(nm)}')`,
+                onClick: `tristateClick(this)`,
                 type: "button",
+                "data-true-label": attrs?.true_label,
+                "data-false-label": attrs?.false_label,
+                "data-null-label": attrs?.null_label,
+                class: [
+                  "btn btn-xs",
+                  !isdef(v) || v === null
+                    ? "btn-secondary"
+                    : v
+                    ? "btn-success"
+                    : "btn-danger",
+                ],
                 id: `trib${text_attr(nm)}`,
               },
-              !isdef(v) || v === null ? "?" : v ? "T" : "F"
+              !isdef(v) || v === null
+                ? attrs?.null_label || "?"
+                : v
+                ? attrs?.true_label || "T"
+                : attrs?.false_label || "F"
             ),
     },
   },
@@ -1842,7 +1910,7 @@ const bool = {
   readFromFormRecord: (rec, name) => {
     if (rec[name] === "") return null;
     if (!rec[name]) return false;
-    if (["undefined", "false", "off"].includes(rec[name])) return false;
+    if (["undefined", "false", "off", "no"].includes(rec[name])) return false;
     if (rec[name] === "?") return null;
     return rec[name] ? true : false;
   },
@@ -1853,7 +1921,7 @@ const bool = {
   read: (v) => {
     switch (typeof v) {
       case "string":
-        if (["TRUE", "T", "ON"].includes(v.toUpperCase())) return true;
+        if (["TRUE", "T", "ON", "YES"].includes(v.toUpperCase())) return true;
         if (v === "?" || v === "") return null;
         else return false;
       default:

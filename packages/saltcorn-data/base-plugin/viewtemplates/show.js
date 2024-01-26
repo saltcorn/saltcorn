@@ -10,6 +10,7 @@ const View = require("../../models/view");
 const File = require("../../models/file");
 const Table = require("../../models/table");
 const Page = require("../../models/page");
+const PageGroup = require("../../models/page_group");
 const Crash = require("../../models/crash");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
@@ -49,6 +50,7 @@ const {
   readState,
   add_free_variables_to_joinfields,
   stateToQueryString,
+  pathToState,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -142,7 +144,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
-          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
             "show"
@@ -179,19 +181,22 @@ const configuration_workflow = (req) =>
               .map((f) => f.name);
           });
           const pages = await Page.find();
+          const groups = (await PageGroup.find()).map((g) => ({
+            name: g.name,
+          }));
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("show")
           );
-          const myviewrow = await View.findOne({ name: context.viewname });
+          const myviewrow = View.findOne({ name: context.viewname });
           return {
             tableName: table.name,
-            fields,
+            fields: fields.map((f) => f.toBuilder),
             images,
             actions,
             builtInActions,
             actionConfigForms,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             field_view_options: {
               ...field_view_options,
               ...rel_field_view_options,
@@ -203,6 +208,7 @@ const configuration_workflow = (req) =>
             roles,
             library,
             pages,
+            page_groups: groups,
             allowMultiStepAction: true,
             handlesTextStyle,
             mode: "show",
@@ -429,7 +435,7 @@ const renderRows = async (
   const getView = async (name, relation) => {
     if (views[name]) return views[name];
     const view_select = parse_view_select(name, relation);
-    const view = await View.findOne({ name: view_select.viewname });
+    const view = View.findOne({ name: view_select.viewname });
     if (!view) return false;
     if (view.table_id === table.id) view.table = table;
     else view.table = Table.findOne({ id: view.table_id });
@@ -481,21 +487,13 @@ const renderRows = async (
         };
         switch (view.view_select.type) {
           case "RelationPath": {
-            const path = view.view_select.path;
-            state1 =
-              path.length === 0
-                ? // it's Own or Independent
-                  table.name === view.view_select.sourcetable
-                  ? { [pk_name]: get_row_val(pk_name) }
-                  : {}
-                : {
-                    _relation_path_: {
-                      ...view.view_select,
-                      srcId: path[0].fkey
-                        ? get_row_val(path[0].fkey)
-                        : get_row_val(pk_name),
-                    },
-                  };
+            state1 = pathToState(
+              view,
+              segment.relation,
+              view.view_select.path,
+              get_row_val,
+              table
+            );
             break;
           }
           case "Own":
@@ -658,7 +656,11 @@ const render = (
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       try {
-        segment[key] = eval_expression(segment[key], row, req.user);
+        segment[key] = eval_expression(
+          segment[key],
+          { session_id: getSessionId(req), ...row },
+          req.user
+        );
       } catch (error) {
         error.message = `Error in formula ${segment[key]} for property ${key} in segment of type ${segment.type}:\n${error.message}`;
         throw error;
@@ -785,7 +787,9 @@ const render = (
         value = row[join_field.split(".").join("_")];
       }
       if (field_type === "File") {
-        return value ? getState().fileviews[fieldview].run(value, "") : "";
+        return value
+          ? getState().fileviews[fieldview].run(value, "", configuration || {})
+          : "";
       }
 
       if (field_type && fieldview) {
@@ -805,7 +809,7 @@ const render = (
       } else {
         [table, fld] = agg_relation.split(".");
       }
-      const targetNm =
+      let targetNm =
         column.targetNm ||
         db.sqlsanitize(
           (
@@ -820,6 +824,12 @@ const render = (
               aggwhere || ""
           ).toLowerCase()
         );
+      if (targetNm.length > 58) {
+        targetNm = targetNm
+          .split("")
+          .filter((c, i) => i % 2 == 0)
+          .join("");
+      }
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");
@@ -1044,7 +1054,10 @@ module.exports = {
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = Table.findOne({ id: table_id });
-      const row = await table.getRow({ id: body.id });
+      const row = await table.getRow(
+        { id: body.id },
+        { forUser: req.user, forPublic: !req.user }
+      );
       try {
         const result = await run_action_column({
           col,

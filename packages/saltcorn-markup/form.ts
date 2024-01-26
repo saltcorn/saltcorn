@@ -497,6 +497,26 @@ const innerField =
         )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
           v[hdr.form_name] || ""
         }</textarea>`;
+      case "time_of_day":
+        return (
+          `<input class="form-control ${validClass} ${
+            hdr.class || ""
+          }"${maybe_disabled} data-fieldname="${text_attr(
+            hdr.form_name
+          )}" name="${text_attr(name)}" id="input${text_attr(
+            name
+          )}" type="text" placeholder="Select time of day.." readonly="readonly" value="${text_attr(
+            v[hdr.form_name]
+          )}">` +
+          script(
+            domReady(`$('#input${text_attr(name)}').flatpickr({
+            noCalendar: true,
+            enableTime: true,
+            time_24hr: true,
+            timeFormat: 'H:i'
+          });`)
+          )
+        );
       case "file":
         if (hdr.attributes && hdr.attributes.select_file_where) {
           hdr.input_type = "select";
@@ -1054,13 +1074,22 @@ const renderFormLayout = (form: Form): string => {
     field(segment: any) {
       const [repeat_name, field_name] = segment.field_name.split(".");
       const in_repeat = !!field_name;
-      const field0 = segment.field_name.includes(".")
+      const fields_match: any[] = segment.field_name.includes(".")
         ? (
             form.fields.find(
               (f) => f.name === repeat_name && (f as any).isRepeat
             ) as AbstractFieldRepeat
-          )?.fields.find((f: any) => f.name === field_name)
-        : form.fields.find((f) => f.name === segment.field_name);
+          )?.fields.filter((f: any) => f.name === field_name)
+        : form.fields.filter((f) => f.name === segment.field_name);
+      let field0;
+      if (fields_match.length === 1) field0 = fields_match[0];
+      if (fields_match.length > 1) {
+        const samefv = fields_match.find(
+          (f: any) => "fieldview" in f && f.fieldview === segment.fieldview
+        );
+        if (samefv) field0 = samefv;
+        else field0 = fields_match[0];
+      }
 
       const repeater = in_repeat
         ? form.fields.find((f) => f.name === repeat_name)
@@ -1077,6 +1106,8 @@ const renderFormLayout = (form: Form): string => {
           : "";
         if (segment.fieldview) field.fieldview = segment.fieldview;
         field.attributes = { ...field.attributes, ...segment.configuration };
+        if (segment.onchange_action)
+          field.attributes.onChange = `view_post('${form.viewname}', 'run_action', {onchange_action: '${segment.onchange_action}', onchange_field:'${field.name}',  ...get_form_record({viewname: '${form.viewname}'}) })`;
         // TODO ch: get it more generic, split up editQuery
         field.attributes.isMobile = !isNode || form.req?.smr;
         return (

@@ -133,6 +133,15 @@ const configuration_workflow = (req) =>
                 showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
               {
+                name: "create_view_showif",
+                label: req.__("Show if formula"),
+                type: "String",
+                sublabel: req.__(
+                  "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
+                ),
+                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
+              },
+              {
                 name: "create_view_label",
                 label: req.__("Label for create"),
                 sublabel: req.__(
@@ -145,6 +154,7 @@ const configuration_workflow = (req) =>
                   view_to_create: create_view_opts.map((o) => o.name),
                 },
               },
+
               {
                 name: "create_view_location",
                 label: req.__("Location"),
@@ -235,6 +245,8 @@ const configuration_workflow = (req) =>
         form: async (context) => {
           const table = Table.findOne({ id: context.table_id });
           const fields = table.getFields();
+          const { child_field_list, child_relations } =
+            await table.get_child_relations();
           return new Form({
             fields: [
               {
@@ -260,27 +272,6 @@ const configuration_workflow = (req) =>
                 sublabel: "Formula for the group headings",
                 class: "validate-expression",
               },
-              {
-                name: "include_fml",
-                label: req.__("Row inclusion formula"),
-                class: "validate-expression",
-                sublabel:
-                  req.__("Only include rows where this formula is true. ") +
-                  req.__("In scope:") +
-                  " " +
-                  [
-                    ...fields.map((f) => f.name),
-                    "user",
-                    "year",
-                    "month",
-                    "day",
-                    "today()",
-                  ]
-                    .map((s) => code(s))
-                    .join(", "),
-                type: "String",
-              },
-
               {
                 name: "rows_per_page",
                 label: req.__("Items per page"),
@@ -332,6 +323,47 @@ const configuration_workflow = (req) =>
                 label: req.__("Hide pagination"),
                 type: "Bool",
                 required: true,
+              },
+              {
+                input_type: "section_header",
+                label: "Row restrictions",
+              },
+              {
+                name: "include_fml",
+                label: req.__("Row inclusion formula"),
+                class: "validate-expression",
+                sublabel:
+                  req.__("Only include rows where this formula is true. ") +
+                  req.__("In scope:") +
+                  " " +
+                  [
+                    ...fields.map((f) => f.name),
+                    "user",
+                    "year",
+                    "month",
+                    "day",
+                    "today()",
+                  ]
+                    .map((s) => code(s))
+                    .join(", "),
+                type: "String",
+              },
+              {
+                name: "exclusion_relation",
+                label: req.__("Exclusion relations"),
+                sublabel: req.__(
+                  "Do not include row if this relation has a match"
+                ),
+                type: "String",
+                required: false,
+                attributes: { options: child_field_list },
+              },
+              {
+                name: "exclusion_where",
+                label: req.__("Exclusion where"),
+                class: "validate-expression",
+                type: "String",
+                showIf: { exclusion_relation: child_field_list },
               },
               {
                 input_type: "section_header",
@@ -450,8 +482,11 @@ const run = async (
     create_view_location,
     create_link_style,
     create_link_size,
+    create_view_showif,
     always_create_view,
     include_fml,
+    exclusion_relation,
+    exclusion_where,
     empty_view,
     groupby,
     ...cols
@@ -489,11 +524,32 @@ const run = async (
   const user_id =
     extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
   if (include_fml)
-    qextra.where = jsexprToWhere(include_fml, {
-      ...state,
-      user_id,
-      user: extraArgs?.req?.user,
-    });
+    qextra.where = jsexprToWhere(
+      include_fml,
+      {
+        ...state,
+        user_id,
+        user: extraArgs?.req?.user,
+      },
+      table.fields
+    );
+  if (exclusion_relation) {
+    const [reltable, relfld] = exclusion_relation.split(".");
+    const relTable = Table.findOne({ name: reltable });
+    const relWhere = exclusion_where
+      ? jsexprToWhere(
+          exclusion_where,
+          {
+            user_id,
+            user: extraArgs?.req?.user,
+          },
+          relTable.fields
+        )
+      : {};
+    const relRows = await relTable.getRows(relWhere);
+    if (!qextra.where) qextra.where = {};
+    qextra.where.id = { not: { in: relRows.map((r) => r[relfld]) } };
+  }
   qextra.joinFields = {};
   add_free_variables_to_joinfields(
     freeVariables(title_formula),
@@ -544,10 +600,14 @@ const run = async (
     (f) =>
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
   );
-
+  const create_link_showif_pass = create_view_showif
+    ? eval_expression(create_view_showif, state, extraArgs.req.user)
+    : undefined;
   if (
+    create_link_showif_pass !== false &&
     view_to_create &&
-    (role <= table.min_role_write ||
+    (create_link_showif_pass ||
+      role <= table.min_role_write ||
       (table.ownership_field_id && (about_user || always_create_view)))
   ) {
     if (create_view_display === "Embedded") {

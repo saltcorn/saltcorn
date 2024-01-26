@@ -12,6 +12,8 @@ import Trigger from "@saltcorn/data/models/trigger";
 const { getState } = require("@saltcorn/data/db/state");
 import fetch from "node-fetch";
 import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
+import type { AbstractPageGroupMember } from "@saltcorn/types/model-abstracts/abstract_page_group_member";
 import TableConstraint from "@saltcorn/data/models/table_constraints";
 import Role from "@saltcorn/data/models/role";
 import Library from "@saltcorn/data/models/library";
@@ -26,6 +28,7 @@ import type { PagePack } from "@saltcorn/types/model-abstracts/abstract_page";
 const { save_menu_items } = config;
 import type Plugin from "@saltcorn/data/models/plugin";
 import type { ViewPack } from "@saltcorn/types/model-abstracts/abstract_view";
+import type { PageGroupPack } from "@saltcorn/types/model-abstracts/abstract_page_group";
 import type { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
 import type { PluginPack } from "@saltcorn/types/model-abstracts/abstract_plugin";
 import type { LibraryPack } from "@saltcorn/types/model-abstracts/abstract_library";
@@ -40,8 +43,7 @@ const { isStale } = require("@saltcorn/data/utils");
 /**
  * Table Pack
  * @function
- * @param {string} nameOrTable
- * @returns {Promise<object>}
+ * @param nameOrTable
  */
 const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
   // todo check this change
@@ -82,7 +84,6 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
 
 /**
  * View Pack
- * @function
  * @param name
  */
 const view_pack = async (name: string): Promise<ViewPack> => {
@@ -108,9 +109,7 @@ const view_pack = async (name: string): Promise<ViewPack> => {
 
 /**
  * Plugin pack
- * @function
- * @param {string} name
- * @returns {Promise<object>}
+ * @param name
  */
 const plugin_pack = async (name: string): Promise<PluginPack> => {
   const Plugin = (await import("@saltcorn/data/models/plugin")).default;
@@ -128,12 +127,11 @@ const plugin_pack = async (name: string): Promise<PluginPack> => {
 
 /**
  * Page Pack
- * @function
- * @param {string} name
- * @returns {Promise<object>}
+ * @param name name of the page
  */
 const page_pack = async (name: string): Promise<PagePack> => {
-  const page = await Page.findOne({ name });
+  const page = Page.findOne({ name });
+  if (!page) throw new Error(`Unable to find page '${name}'`);
   const root_page_for_roles = await page.is_root_page_for_roles();
   return {
     name: page.name,
@@ -149,10 +147,34 @@ const page_pack = async (name: string): Promise<PagePack> => {
 };
 
 /**
+ * Page group pack (page_id is replaced by page_name)
+ * @param name name of the page group
+ */
+const page_group_pack = async (name: string): Promise<PageGroupPack> => {
+  const group = PageGroup.findOne({ name });
+  if (!group) throw new Error(`Unable to find page group '${name}'`);
+  return {
+    name: group.name,
+    description: group.description,
+    min_role: group.min_role,
+    members: group.members.map((m: AbstractPageGroupMember) => {
+      // could get slow (caching ?)
+      const page = Page.findOne({ id: m.page_id });
+      if (!page) throw new Error(`Unable to find page '${m.page_id}'`);
+      return {
+        page_name: page.name,
+        description: m.description,
+        sequence: m.sequence,
+        eligible_formula: m.eligible_formula,
+      };
+    }),
+  };
+};
+
+/**
  * Library pack
  * @function
- * @param {string} name
- * @returns {Promise<object>}
+ * @param name
  */
 const library_pack = async (name: string): Promise<LibraryPack> => {
   const lib = await Library.findOne({ name });
@@ -161,9 +183,7 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
 
 /**
  * Trigger pack
- * @function
- * @param {string} name
- * @returns {Promise<object>}
+ * @param name
  */
 const trigger_pack = async (name: string): Promise<TriggerPack> => {
   const trig = await Trigger.findOne({ name });
@@ -284,9 +304,7 @@ const event_log_pack = async (eventLog: EventLog): Promise<EventLogPack> => {
 
 /**
  * Can install pock
- * @function
- * @param {string} pack
- * @returns {Promise<boolean|object>}
+ * @param pack
  */
 const can_install_pack = async (
   pack: Pack
@@ -297,6 +315,7 @@ const can_install_pack = async (
   );
   const allViews = (await View.find()).map((t) => t.name);
   const allPages = (await Page.find()).map((t) => t.name);
+  const allPageGroups = (await PageGroup.find()).map((t) => t.name);
   const packTables = (pack.tables || []).map((t) =>
     db.sqlsanitize(t.name.toLowerCase())
   );
@@ -306,10 +325,12 @@ const can_install_pack = async (
   const matchViews = allViews.filter((dbt) =>
     (pack.views || []).some((pt) => pt.name === dbt)
   );
-  const matchPages = allPages.filter((dbt) =>
-    (pack.pages || []).some((pt) => pt.name === dbt)
-  );
 
+  const pFilterCb = (dbt: string) =>
+    (pack.pages || []).some((pt) => pt.name === dbt) ||
+    (pack.page_groups || []).some((pt) => pt.name === dbt);
+  const matchPages = allPages.filter(pFilterCb);
+  const matchPageGroups = allPageGroups.filter(pFilterCb);
   if (matchTables.length > 0)
     return {
       error: "Tables already exist: " + matchTables.join(),
@@ -330,24 +351,29 @@ const can_install_pack = async (
   matchPages.forEach((p) => {
     warns.push(`Clashing page ${p}.`);
   });
+  matchPageGroups.forEach((p) => {
+    warns.push(`Clashing page group ${p}.`);
+  });
   if (warns.length > 0) return { warning: warns.join(" ") };
   else return true;
 };
 
 /**
  * Uninstall pack
- * @function
- * @param {string} pack
- * @param {string} name
- * @returns {Promise<void>}
+ * @param pack
+ * @param name
  */
 const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
+  for (const pageGroupSpec of pack.page_groups || []) {
+    const pageGroup = PageGroup.findOne({ name: pageGroupSpec.name });
+    if (pageGroup) await pageGroup.delete();
+  }
   for (const pageSpec of pack.pages || []) {
-    const page = await Page.findOne({ name: pageSpec.name });
+    const page = Page.findOne({ name: pageSpec.name });
     if (page) await page.delete();
   }
   for (const viewSpec of pack.views) {
-    const view = await View.findOne({ name: viewSpec.name });
+    const view = View.findOne({ name: viewSpec.name });
     if (view) await view.delete();
   }
   for (const tableSpec of pack.tables) {
@@ -390,9 +416,7 @@ const old_to_new_role = (old_roleS: any) => {
 };
 
 /**
- * @function
- * @param {object} item
- * @returns {Promise<void>}
+ * @param item {label, type, viewname, pagename, min_role}
  */
 const add_to_menu = async (item: {
   label: string;
@@ -411,9 +435,9 @@ const add_to_menu = async (item: {
 
 /**
  * @param pack
- * @param [name]
+ * @param name
  * @param loadAndSaveNewPlugin
- * @param  [bare_tables = false]
+ * @param bare_tables
  */
 const install_pack = async (
   pack: Pack,
@@ -564,6 +588,25 @@ const install_pack = async (
       });
   }
 
+  for (const pageGroupSpec of pack.page_groups || []) {
+    pageGroupSpec.min_role = old_to_new_role(pageGroupSpec.min_role);
+    const { members, ...pageGroupNoMembers } = pageGroupSpec;
+    const existing = PageGroup.findOne({ name: pageGroupSpec.name });
+    if (existing?.id) {
+      await existing.clearMembers(); // or merge ?
+      await PageGroup.update(existing.id, pageGroupNoMembers);
+    } else await PageGroup.create(pageGroupNoMembers);
+    const group = PageGroup.findOne({ name: pageGroupSpec.name });
+    if (!group)
+      throw new Error(`Unable to create page group '${pageGroupSpec.name}'`);
+    for (const member of members || []) {
+      const { page_name, ...memberNoPageName } = member;
+      const page = Page.findOne({ name: page_name });
+      if (!page) throw new Error(`Unable to find page '${member.page_name}'`);
+      await group.addMember({ ...memberNoPageName, page_id: page.id! });
+    }
+  }
+
   for (const tag of pack.tags || []) {
     const entries = tag.entries
       ? tag.entries.map((e) => {
@@ -680,8 +723,7 @@ const install_pack = async (
 };
 
 /**
- * @function
- * @returns {object[]}
+ * Fetch available packs from the store endpoint (packs_store_endpoint cfg)
  */
 const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
   const stored = getState().getConfigCopy("available_packs", false);
@@ -704,8 +746,7 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
 };
 
 /**
- * @function
- * @returns {object[]}
+ * Get cached packs
  */
 const get_cached_packs = (): Array<{ name: string }> => {
   const stored = getState().getConfigCopy("available_packs", false);
@@ -714,8 +755,6 @@ const get_cached_packs = (): Array<{ name: string }> => {
 
 /**
  * Fetch available packs from store
- * @function
- * @returns {Promise<object[]>}
  */
 const fetch_available_packs_from_store = async (): Promise<
   Array<{ name: string }>
@@ -740,8 +779,7 @@ const fetch_available_packs_from_store = async (): Promise<
 /**
  * Fetch pack by name
  * @function
- * @param {string} name
- * @returns {Promise<object|null>}
+ * @param name
  */
 const fetch_pack_by_name = async (
   name: string
@@ -767,6 +805,7 @@ export = {
   view_pack,
   plugin_pack,
   page_pack,
+  page_group_pack,
   role_pack,
   library_pack,
   trigger_pack,

@@ -59,7 +59,7 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: (arg0: any) => boolean | string | undefined;
+  validator: (value: any, whole_rec?: any) => boolean | string | undefined;
   showIf?: any;
   parent_field?: string;
   postText?: string;
@@ -191,6 +191,29 @@ class Field implements AbstractField {
       reftype: this.reftype,
       refname: this.refname,
       description: this.description, //
+    };
+  }
+
+  /**
+   * To Json
+   * @type {object}
+   */
+  get toBuilder(): any {
+    return {
+      id: this.id,
+      table_id: this.table_id,
+      name: this.name,
+      label: this.label,
+      is_unique: this.is_unique,
+      calculated: this.calculated,
+      stored: this.stored,
+      fieldview: this.fieldview,
+      type: typeof this.type === "string" ? this.type : this.type?.name,
+      input_type: this.input_type,
+      reftable_name: this.reftable_name,
+      attributes: this.attributes,
+      required: this.required,
+      primary_key: this.primary_key,
     };
   }
 
@@ -619,7 +642,7 @@ class Field implements AbstractField {
         ? type.validate(this.attributes || {})(readval)
         : readval;
     if (tyvalres.error) return tyvalres;
-    const fvalres = this.validator(readval);
+    const fvalres = this.validator(readval, whole_rec);
     if (typeof fvalres === "string") return { error: fvalres };
     if (typeof fvalres === "undefined" || fvalres) return { success: readval };
     else return { error: "Not accepted" };

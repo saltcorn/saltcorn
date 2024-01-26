@@ -429,7 +429,18 @@ describe("jsexprToWhere", () => {
     expect(
       new Date(jsexprToWhere("foo>=today(5)").foo.gt) > new Date(today)
     ).toEqual(true);
+    expect(
+      new Date(jsexprToWhere("foo>=today({startOf: 'week'})").foo.gt) <
+        new Date()
+    ).toEqual(true);
 
+    const eoweek = new Date(
+      jsexprToWhere("foo>=today({endOf: 'week'})").foo.gt
+    );
+
+    expect(
+      eoweek > new Date() || eoweek.toDateString() === new Date().toDateString()
+    ).toEqual(true);
     expect(jsexprToWhere("foo>=today(-5)").foo.gt).toMatch(/^202/);
     expect(
       new Date(jsexprToWhere("foo>=today(-5)").foo.gt) < new Date(today)

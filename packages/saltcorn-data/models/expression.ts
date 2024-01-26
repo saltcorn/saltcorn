@@ -8,6 +8,7 @@ import { parseExpressionAt, Node, parse } from "acorn";
 import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
+import moment from "moment";
 import Table from "./table";
 import { JoinFields, Row, Where } from "@saltcorn/db-common/internal";
 import Field from "./field";
@@ -113,9 +114,19 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
 function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
   const keys = new Set(Object.keys(extraCtx));
   const field_names = new Set(fields.map((f) => f.name));
-  const today = (offset?: number) => {
-    const d = new Date();
-    if (offset) d.setDate(d.getDate() + offset);
+  const today = (
+    offset?:
+      | number
+      | { startOf: moment.unitOfTime.StartOf }
+      | { endOf: moment.unitOfTime.StartOf }
+  ) => {
+    let d = new Date();
+    if (typeof offset === "number") d.setDate(d.getDate() + offset);
+    else if (offset && "startOf" in offset) {
+      d = moment().startOf(offset.startOf).toDate();
+    } else if (offset && "endOf" in offset) {
+      d = moment().endOf(offset.endOf).toDate();
+    }
     return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   };
   replace(ast, {
@@ -185,14 +196,18 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
           return parseExpressionAt(`'${today(arg.value)}'`, 0, {
             ecmaVersion: 2020,
           });
-        }
-        if (
+        } else if (
           arg.type === "UnaryExpression" &&
           arg.operator === "-" &&
           arg.argument.type === "Literal"
         ) {
           // @ts-ignore
           return parseExpressionAt(`'${today(-arg.argument.value)}'`, 0, {
+            ecmaVersion: 2020,
+          });
+        } else if (arg.type === "ObjectExpression") {
+          const todayArg: any = new Function("return " + generate(arg))();
+          return parseExpressionAt(`'${today(todayArg)}'`, 0, {
             ecmaVersion: 2020,
           });
         }

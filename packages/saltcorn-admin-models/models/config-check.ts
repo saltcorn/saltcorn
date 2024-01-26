@@ -133,6 +133,7 @@ const test_view_config = async (
         warnings.push(...errs.warnings);
       }
     }
+    if (view.singleton) return;
     const configFlow = await view.get_config_flow(req);
     await configFlow.run(
       {

@@ -304,6 +304,7 @@ var relationHelpers = (() => {
     const sourceTbl = this.tableNameCache[sourceTblName];
     if (!sourceTbl)
       throw new Error(`The table ${sourceTblName} does not exist`);
+    if (sourceTbl.id === subViewObj.table_id) result.push(`.${sourceTblName}`);
     const searcher = (current, path, level, visited) => {
       if (level > this.maxDepth) return;
       const visitedFkCopy = new Set(visited);

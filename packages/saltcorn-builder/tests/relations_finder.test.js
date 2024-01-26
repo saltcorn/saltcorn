@@ -38,14 +38,22 @@ const doTest = (
     name: view || viewName,
   });
   require("@craftjs/core").useNode.mockImplementation(useNodeMock);
+  let relationsCache = {};
+  const setRelationsCache = (newVal) => {
+    relationsCache = newVal;
+  };
   // mock react context
   const useContextMock = (React.useContext = jest.fn());
   useContextMock.mockReturnValue({
+    // optionsCtx part
     tables: tables,
     views: views,
     tableName: tableName,
     roles: [],
     excluded_subview_templates: excludedTemplates,
+    // relationsCtx part
+    relationsCache: relationsCache,
+    setRelationsCache: setRelationsCache,
   });
   // spy on useState and extract the relations (first call)
   const spy = jest.spyOn(React, "useState");
@@ -242,6 +250,7 @@ describe("relations tests", () => {
         const { tables, views } = fixturesData();
         const expected = [
           ".",
+          ".blog_posts",
           ".blog_posts.blog_in_topic$post.topic.inbound_inbound$topic.bp_inbound.post",
         ];
         doTest(

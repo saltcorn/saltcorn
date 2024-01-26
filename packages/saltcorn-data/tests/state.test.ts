@@ -45,11 +45,16 @@ describe("State queries", () => {
   });
   it("should query i18n strings", async () => {
     expect(getState().getStringsForI18n()).toStrictEqual([
+      "Page Group link",
       "Hello world",
       "<h1> foo</h1>",
       "Click here",
       "header",
       "Bye bye",
+      "Hello I am iPhone SE",
+      "Hello I am iPhone XR",
+      "Hello I am Laptop",
+      "Hello I am Surface Pro 7",
     ]);
   });
   it("should query type names", async () => {

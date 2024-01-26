@@ -8,6 +8,21 @@ jQuery.fn.swapWith = function (to) {
   });
 };
 
+function setScreenInfoCookie() {
+  document.cookie = `_sc_screen_info_=${JSON.stringify({
+    width: window.screen.width,
+    height: window.screen.height,
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+  })}; expires=Thu, 01 Jan 2100 00:00:00 GMT; path=/; domain=.${
+    window.location.hostname
+  }`;
+}
+setScreenInfoCookie();
+$(window).resize(() => {
+  setScreenInfoCookie();
+});
+
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
   $("body").on(
@@ -90,13 +105,17 @@ function apply_showif() {
     }
   });
   $("[data-dyn-href]").each(function (ix, element) {
-    const e = $(element);
-    const rec = get_form_record(e);
-    const href = new Function(
-      `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
-      "return " + e.attr("data-dyn-href")
-    )(rec);
-    e.attr("href", href);
+    try {
+      const e = $(element);
+      const rec = get_form_record(e);
+      const href = new Function(
+        `{${Object.keys(rec).filter(valid_js_var_name).join(",")}}`,
+        "return " + e.attr("data-dyn-href")
+      )(rec);
+      e.attr("href", href);
+    } catch (e) {
+      if (window._sc_loglevel > 4) console.error(e);
+    }
   });
   $("[data-calc-options]").each(function (ix, element) {
     var e = $(element);
@@ -392,7 +411,7 @@ function get_form_record(e_in, select_labels) {
   const rec = {};
 
   const e = e_in.viewname
-    ? $(`form[data-viewname=${e_in.viewname}]`)
+    ? $(`form[data-viewname="${e_in.viewname}"]`)
     : e_in.closest(".form-namespace");
 
   const form = $(e).closest("form");
@@ -408,6 +427,7 @@ function get_form_record(e_in, select_labels) {
 
   e.find("input[name],select[name],textarea[name]").each(function () {
     const $this = $(this);
+    if ($this.prop("disabled")) return;
     const name = $this.attr("data-fieldname") || $this.attr("name");
     if (select_labels && $this.prop("tagName").toLowerCase() === "select")
       rec[name] = $this.find("option:selected").text();
@@ -732,6 +752,7 @@ function initialize_page() {
       }
     }
   });
+
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
 
@@ -960,20 +981,31 @@ function enable_codemirror(f) {
     success: f,
   });
 }
-function tristateClick(nm) {
-  var current = $(`button#trib${nm}`).html();
+function tristateClick(e) {
+  const btn = $(e);
+  const input = btn.prev();
+  var current = input.val();
   switch (current) {
     case "?":
-      $(`button#trib${nm}`).html("T");
-      $(`input#input${nm}`).val("on");
+      btn
+        .html(btn.attr("data-true-label") || "T")
+        .removeClass(["btn-danger", "btn-secondary"])
+        .addClass("btn-success");
+      input.val("on").trigger("change");
       break;
-    case "T":
-      $(`button#trib${nm}`).html("F");
-      $(`input#input${nm}`).val("off");
+    case "on":
+      btn
+        .html(btn.attr("data-false-label") || "F")
+        .removeClass(["btn-success", "btn-secondary"])
+        .addClass("btn-danger");
+      input.val("off").trigger("change");
       break;
     default:
-      $(`button#trib${nm}`).html("?");
-      $(`input#input${nm}`).val("?");
+      btn
+        .html(btn.attr("data-null-label") || "?")
+        .removeClass(["btn-success", "btn-danger"])
+        .addClass("btn-secondary");
+      input.val("?").trigger("change");
       break;
   }
 }
@@ -1142,7 +1174,7 @@ async function common_done(res, viewname, isWeb = true) {
     });
   }
   if (res.set_fields && viewname) {
-    const form = $(`form[data-viewname=${viewname}]`);
+    const form = $(`form[data-viewname="${viewname}"]`);
     if (form.length === 0 && set_state_fields) {
       // assume this is a filter
       set_state_fields(

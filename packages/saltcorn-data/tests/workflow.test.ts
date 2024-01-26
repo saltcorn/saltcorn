@@ -156,6 +156,7 @@ describe("Edit view Workflow", () => {
         page_when_done: null,
         dest_url_formula: null,
         formula_destinations: [],
+        page_group_when_done: null,
       });
     };
     const wfres = await configFlow.run(
@@ -199,6 +200,7 @@ describe("Edit view Workflow", () => {
       dest_url_formula: null,
       destination_type: "View",
       formula_destinations: [],
+      page_group_when_done: null,
     });
   });
 
@@ -310,6 +312,7 @@ describe("Edit view Workflow", () => {
       dest_url_formula: null,
       destination_type: "View",
       formula_destinations: [],
+      page_group_when_done: null,
     });
   });
 });

@@ -28,7 +28,12 @@ const {
   eval_expression,
 } = require("../models/expression");
 const { div, code, a, span } = require("@saltcorn/markup/tags");
-const { sleep, getSessionId } = require("../utils");
+const {
+  sleep,
+  getSessionId,
+  urlStringToObject,
+  dollarizeObject,
+} = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
 const { available_languages } = require("../models/config");
@@ -766,7 +771,8 @@ module.exports = {
      * @param {...*} [opts.rest]
      * @returns {Promise<object|boolean>}
      */
-    run: async ({ row, table, configuration, user, ...rest }) => {
+    run: async ({ row, table, configuration, user, referrer, ...rest }) => {
+      const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
         table?.fields || [],
@@ -774,6 +780,7 @@ module.exports = {
           user,
           console,
           session_id: rest.req && getSessionId(rest.req),
+          ...dollarizeObject(state),
         }
       );
       const calcrow = await f(row || {}, user);
@@ -918,7 +925,7 @@ module.exports = {
     ],
 
     run: async ({ configuration: { form_action } }) => {
-      const jqGet = `$("form[data-viewname="+viewname+"]")`;
+      const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
@@ -1369,6 +1376,70 @@ module.exports = {
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({ title, body, link, user_id: user.id });
+      }
+    },
+  },
+  convert_session_to_user: {
+    description:
+      "Convert session id fields to user key fields on a table on Login events",
+    configFields: async ({ table }) => {
+      const tables = await Table.find_with_external();
+      const sess_options = {};
+      const user_options = {};
+      for (const table of tables) {
+        const fields = table.getFields();
+        sess_options[table.name] = fields
+          .filter((f) => f.type?.name === "String")
+          .map((f) => f.name);
+        user_options[table.name] = fields
+          .filter((f) => f.reftable_name === "users")
+          .map((f) => f.name);
+      }
+      return [
+        {
+          name: "table_name",
+          label: "Table",
+          sublabel: "Table with session and user field",
+          input_type: "select",
+          options: tables.filter((t) => !t.external).map((t) => t.name),
+        },
+        {
+          name: "session_field",
+          label: "Session field",
+          sublabel: "Field containing session IDs",
+          type: "String",
+          //required: true,
+          attributes: {
+            calcOptions: ["table_name", sess_options],
+          },
+        },
+        {
+          name: "user_field",
+          label: "User field",
+          sublabel:
+            "Key to users field which will be filled from matching session ID",
+          type: "String",
+          //required: true,
+          attributes: {
+            calcOptions: ["table_name", user_options],
+          },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      configuration: { table_name, session_field, user_field },
+      user,
+    }) => {
+      if (!row?.old_session_id || !user || !session_field || !user_field)
+        return;
+      const table = Table.findOne({ name: table_name });
+      const rows = await table.getRows({
+        [session_field]: row.old_session_id,
+        [user_field]: null,
+      });
+      for (const dbrow of rows) {
+        await table.updateRow({ [user_field]: user.id }, dbrow[table.pk_name]);
       }
     },
   },

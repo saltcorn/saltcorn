@@ -6,7 +6,7 @@
 const { post_btn } = require("@saltcorn/markup");
 const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
-const { link_view } = require("../../plugin-helper");
+const { link_view, relationTypeFromPath } = require("../../plugin-helper");
 const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
@@ -252,6 +252,54 @@ const parse_view_select = (view, relation) => {
   }
 };
 
+const pathToQuery = (subview, relation, row, srcTable) => {
+  const { path } = parseRelationPath(relation);
+  const type = relationTypeFromPath(subview, path, srcTable);
+  switch (type) {
+    case "ChildList":
+      return {
+        type,
+        query:
+          path.length === 1
+            ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
+            : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`,
+      };
+    case "ParentShow":
+      const fkey = path[0].fkey;
+      const reffield = srcTable.fields.find((f) => f.name === fkey);
+      const value = row[fkey];
+      return {
+        type,
+        query: value
+          ? `?${reffield.refname}=${
+              typeof value === "object" ? value.id : value
+            }`
+          : null,
+      };
+    case "Own":
+      const getQuery = get_view_link_query(srcTable.fields, subview || {});
+      return { type, query: getQuery(row) };
+    case "Independent":
+      return { type, query: "" };
+    case "RelationPath":
+      const subTable = Table.findOne({ id: subview.table_id });
+      const idName =
+        path.length > 0
+          ? path[0].fkey
+            ? path[0].fkey
+            : subTable.pk_name
+          : undefined;
+      const srcId =
+        row[idName] === null || row[idName]?.id === null
+          ? "NULL"
+          : row[idName]?.id || row[idName];
+      return {
+        type,
+        query: `?${relation}=${srcId}`,
+      };
+  }
+};
+
 //todo: use above to simplify code
 /**
  * @function
@@ -317,46 +365,43 @@ const view_linker = (
       .join("&");
   };
   if (relation) {
-    const { path } = parseRelationPath(relation);
-    const pathStart = path[0];
-    const idName =
-      path.length > 0 ? (pathStart.fkey ? pathStart.fkey : "id") : undefined;
     const topview = View.findOne({ name: srcViewName });
     const subview = View.findOne({ name: view });
-    const get_query = get_view_link_query(fields, subview || {});
+    const subTable = Table.findOne({ id: subview.table_id });
+    const srcTable = Table.findOne({ id: topview.table_id });
     return {
       label: view,
       key: (r) => {
-        let query = "";
-        if (path.length > 0) {
-          const relObj = {
-            srcId:
-              r[idName] === null || r[idName]?.id === null
-                ? null
-                : r[idName]?.id || r[idName],
-            relation: relation,
-          };
-          query = `?_relation_path_=${encodeURIComponent(
-            JSON.stringify(relObj)
-          )}`;
-        } else if (topview.table_id === subview.table_id) query = get_query(r);
+        const { type, query } = pathToQuery(subview, relation, r, srcTable);
+        if (query === null) return "";
+        else {
+          let label = "";
+          if (type === "ParentShow") {
+            const summary_field =
+              r[`summary_field_${subTable.name.toLowerCase()}`];
+            label = get_label(
+              typeof summary_field === "undefined" ? view : summary_field,
+              r
+            );
+          } else label = get_label(view, r);
 
-        const target = `/view/${encodeURIComponent(view)}${query}`;
-        return link_view(
-          isWeb || in_modal ? target : `javascript:execLink('${target}')`,
-          get_label(view, r),
-          in_modal && srcViewName && { reload_view: srcViewName },
-          link_style,
-          link_size,
-          link_icon || icon,
-          textStyle,
-          link_bgcol,
-          link_bordercol,
-          link_textcol,
-          in_dropdown && "dropdown-item",
-          get_extra_state(r),
-          link_target_blank
-        );
+          const target = `/view/${encodeURIComponent(view)}${query}`;
+          return link_view(
+            isWeb || in_modal ? target : `javascript:execLink('${target}')`,
+            label,
+            in_modal && srcViewName && { reload_view: srcViewName },
+            link_style,
+            link_size,
+            link_icon || icon,
+            textStyle,
+            link_bgcol,
+            link_bordercol,
+            link_textcol,
+            in_dropdown && "dropdown-item",
+            get_extra_state(r),
+            link_target_blank
+          );
+        }
       },
     };
   } else {
@@ -678,24 +723,35 @@ const get_viewable_fields = (
             column
           );
         }
+        let gofv =
+          column.join_fieldview &&
+          type &&
+          type.fieldviews &&
+          type.fieldviews[column.join_fieldview]
+            ? (row) =>
+                type.fieldviews[column.join_fieldview].run(
+                  row[key],
+                  req,
+                  column
+                )
+            : null;
+        if (!gofv && column.field_type === "File") {
+          gofv = (row) =>
+            row[key]
+              ? getState().fileviews[column.join_fieldview].run(
+                  row[key],
+                  "",
+                  column
+                )
+              : "";
+        }
         fvrun = {
           ...setWidth,
           label: column.header_label
             ? text(__(column.header_label))
             : text(targetNm),
           row_key: key,
-          key:
-            column.join_fieldview &&
-            type &&
-            type.fieldviews &&
-            type.fieldviews[column.join_fieldview]
-              ? (row) =>
-                  type.fieldviews[column.join_fieldview].run(
-                    row[key],
-                    req,
-                    column
-                  )
-              : (row) => text(row[key]),
+          key: gofv ? gofv : (row) => text(row[key]),
           // sortlink: `javascript:sortby('${text(targetNm)}')`
         };
         if (column.click_to_edit) {

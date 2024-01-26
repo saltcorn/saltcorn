@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, useEffect, Fragment } from "react";
+import React, { useContext, useEffect, useState, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
@@ -97,6 +97,7 @@ const FieldSettings = () => {
     node_id,
     click_to_edit,
     textStyle,
+    onchange_action,
   } = useNode((node) => ({
     name: node.data.props.name,
     fieldview: node.data.props.fieldview,
@@ -104,6 +105,7 @@ const FieldSettings = () => {
     click_to_edit: node.data.props.click_to_edit,
     inline: node.data.props.inline,
     textStyle: node.data.props.textStyle,
+    onchange_action: node.data.props.onchange_action,
     configuration: node.data.props.configuration,
     node_id: node.id,
   }));
@@ -113,9 +115,26 @@ const FieldSettings = () => {
   const fvs = options.field_view_options[name];
   const handlesTextStyle = (options.handlesTextStyle || {})[name];
   const blockDisplay = (options.blockDisplay || {})[name];
-  const getCfgFields = (fv) =>
-    ((options.fieldViewConfigForms || {})[name] || {})[fv];
-  const cfgFields = getCfgFields(fieldview);
+
+  const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
+  const cfgFields = fetchedCfgFields;
+  useEffect(() => {
+    fetch(`/field/fieldviewcfgform/${options.tableName}?accept=json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify({ field_name: name, fieldview, type: "Field" }),
+    })
+      .then(function (response) {
+        if (response.status < 399) return response.json();
+        else return [];
+      })
+      .then(setFetchedCfgFields);
+  }, [name, fieldview]);
+
   const refetchPreview = fetchFieldPreview({
     options,
     name,
@@ -187,7 +206,7 @@ const FieldSettings = () => {
                     const value = e.target.value;
 
                     setProp((prop) => (prop.fieldview = value));
-                    setInitialConfig(setProp, value, getCfgFields(value));
+                    //setInitialConfig(setProp, value, getCfgFields(value));
                     refetchPreview({ fieldview: value });
                   }}
                 >
@@ -249,6 +268,38 @@ const FieldSettings = () => {
           onChange={(k, v) => refetchPreview({ configuration: { [k]: v } })}
         />
       ) : null}
+      {options.mode === "edit" && options.triggerActions ? (
+        <Fragment>
+          <label>On change action</label>
+          <select
+            value={onchange_action}
+            className="form-control form-select"
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                prop.onchange_action = value;
+              });
+            }}
+          >
+            <option value="">None</option>
+            {options.triggerActions.map((f, ix) => (
+              <option key={ix} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+          {onchange_action ? (
+            <a
+              className="d-block mt-2"
+              target="_blank"
+              href={`/actions/configure/${onchange_action}`}
+            >
+              Configure this action
+            </a>
+          ) : null}
+        </Fragment>
+      ) : null}
     </Fragment>
   );
 };
@@ -269,6 +320,7 @@ Field.craft = {
       "block",
       "inline",
       "click_to_edit",
+      "onchange_action",
       { name: "configuration", default: {} },
     ],
   },

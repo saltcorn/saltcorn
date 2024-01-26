@@ -39,8 +39,13 @@ const js = async () => {
   await File.ensure_file_store(db.getTenantSchema());
 
   const state = getState();
+  await state?.refresh_tables(false);
+  await state?.refresh_views(false);
+  await state?.refresh_triggers(false);
+  await state?.refresh_pages(false);
+  await state?.refresh_config(false);
+  await state?.refresh_npmpkgs(false);
 
-  await state?.refresh(false);
   const xform_simple_cfg = (k) =>
     state.setConfig(k, old_to_new_role(state.getConfig(k)));
 

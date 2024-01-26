@@ -111,8 +111,13 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
       const related = MatchElement.craft.related;
       const props = {};
       related.fields.forEach((f) => {
-        const v = segment[f.segment_name || f.name || f];
-        props[f.name || f] = typeof v === "undefined" ? f.default : v;
+        if (f.type === "Nodes" && f.nodeID) {
+          props[f.name || f] = toTag(segment[f.segment_name || f.name || f]);
+          //).map(toTag);
+        } else {
+          const v = segment[f.segment_name || f.name || f];
+          props[f.name || f] = typeof v === "undefined" ? f.default : v;
+        }
       });
       if (related.fields.some((f) => f.canBeFormula))
         props.isFormula = segment.isFormula;
@@ -360,15 +365,20 @@ export /**
 const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
   //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
-
   /**
    * @param {object} node
    * @returns {void|object}
    */
+  const removeEmpty = ({ above }) => {
+    const valids = above.filter(Boolean);
+    if (valids.length === 1) return valids[0];
+    else return { above: valids };
+  };
+
   const get_nodes = (node) => {
     if (!node.nodes || node.nodes.length == 0) return;
     else if (node.nodes.length == 1) return go(nodes[node.nodes[0]]);
-    else return { above: node.nodes.map((nm) => go(nodes[nm])) };
+    else return removeEmpty({ above: node.nodes.map((nm) => go(nodes[nm])) });
   };
 
   /**
@@ -389,7 +399,12 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       const s = { type: related.segment_type };
       if (related.hasContents) s.contents = get_nodes(node);
       related.fields.forEach((f) => {
-        s[f.segment_name || f.name || f] = node.props[f.name || f];
+        if (f.type === "Nodes" && f.nodeID) {
+          //console.log("nodetype", node);
+          s[f.segment_name || f.name || f] = go(
+            nodes[node.linkedNodes[f.nodeID]]
+          );
+        } else s[f.segment_name || f.name || f] = node.props[f.name || f];
       });
       if (related.fields.some((f) => f.canBeFormula))
         s.isFormula = node.props.isFormula;
@@ -596,6 +611,6 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
   const layout = go(nodes[startFrom]) || { type: "blank", contents: "" };
   /*console.log("nodes", JSON.stringify(nodes));
     console.log("cols", JSON.stringify(columns));
-    console.log("layout", JSON.stringify(layout));*/
+  console.log("layout", JSON.stringify(layout));*/
   return { columns, layout };
 };

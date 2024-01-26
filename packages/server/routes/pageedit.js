@@ -9,7 +9,8 @@ const View = require("@saltcorn/data/models/view");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const Page = require("@saltcorn/data/models/page");
-const { div, a, iframe, script } = require("@saltcorn/markup/tags");
+const PageGroup = require("@saltcorn/data/models/page_group");
+const { div, a, iframe, script, p } = require("@saltcorn/markup/tags");
 const { getState } = require("@saltcorn/data/db/state");
 const User = require("@saltcorn/data/models/user");
 const Workflow = require("@saltcorn/data/models/workflow");
@@ -19,13 +20,14 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const db = require("@saltcorn/data/db");
-const { getPageList } = require("./common_lists");
+const { getPageList, getPageGroupList } = require("./common_lists");
 
 const {
   isAdmin,
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
+  setRole,
 } = require("./utils.js");
 const { asyncMap } = require("@saltcorn/data/utils");
 const {
@@ -61,6 +63,7 @@ module.exports = router;
 const pagePropertiesForm = async (req, isNew) => {
   const roles = await User.get_roles();
   const pages = (await Page.find()).map((p) => p.name);
+  const groups = (await PageGroup.find()).map((g) => g.name);
   const htmlFiles = await File.find(
     {
       mime_super: "text",
@@ -86,9 +89,12 @@ const pagePropertiesForm = async (req, isNew) => {
           if (s.length < 1) return req.__("Missing name");
           if (pages.includes(s) && isNew)
             return req.__("A page with this name already exists");
+          if (groups.includes(s) && isNew)
+            return req.__("A page group with this name already exists");
         },
         sublabel: req.__("A short name that will be in your URL"),
         type: "String",
+        attributes: { autofocus: true },
       }),
       new Field({
         label: req.__("Title"),
@@ -147,6 +153,7 @@ const pagePropertiesForm = async (req, isNew) => {
 const pageBuilderData = async (req, context) => {
   const views = await View.find();
   const pages = await Page.find();
+  const page_groups = (await PageGroup.find()).map((g) => ({ name: g.name }));
   const images = await File.find({ mime_super: "image" });
   images.forEach((im) => (im.location = im.path_to_serve));
   const roles = await User.get_roles();
@@ -215,6 +222,7 @@ const pageBuilderData = async (req, context) => {
     views,
     images,
     pages,
+    page_groups,
     actions,
     builtInActions: ["GoBack"],
     library,
@@ -277,6 +285,10 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name", nocase: true });
+    const pageGroups = await PageGroup.find(
+      {},
+      { orderBy: "name", nocase: true }
+    );
     const roles = await User.get_roles();
 
     res.sendWrap(req.__("Pages"), {
@@ -297,6 +309,27 @@ router.get(
                 class: "btn btn-primary",
               },
               req.__("Create page")
+            )
+          ),
+        },
+        {
+          type: "card",
+          title: req.__("Your page groups"),
+          contents: div(
+            p(
+              req.__(
+                "A group has pages with an eligible formula. " +
+                  "When you request a group, then the first page where the formula matches gets served. " +
+                  "This way, you can choose a page depending on the screen of the device."
+              )
+            ),
+            getPageGroupList(pageGroups, roles, req),
+            a(
+              {
+                href: `/page_groupedit/new`,
+                class: "btn btn-primary",
+              },
+              req.__("Create page group")
             )
           ),
         },
@@ -351,7 +384,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
-    const page = await Page.findOne({ name: pagename });
+    const page = Page.findOne({ name: pagename });
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
@@ -698,7 +731,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const page = await Page.findOne({ id });
+    const page = Page.findOne({ id });
     await add_to_menu({
       label: page.name,
       type: "Page",
@@ -747,19 +780,6 @@ router.post(
   "/setrole/:id",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const role = req.body.role;
-    await Page.update(+id, { min_role: role });
-    const page = await Page.findOne({ id });
-    const roles = await User.get_roles();
-    const roleRow = roles.find((r) => r.id === +role);
-    const message =
-      roleRow && page
-        ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
-        : req.__(`Minimum role updated`);
-    if (!req.xhr) {
-      req.flash("success", message);
-      res.redirect("/pageedit");
-    } else res.json({ okay: true, responseText: message });
+    await setRole(req, res, Page);
   })
 );

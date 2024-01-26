@@ -21,6 +21,4 @@ docker push saltcorn/saltcorn:$VERSION
 docker build -t saltcorn/saltcorn:dev -f Dockerfile.dev .
 docker push saltcorn/saltcorn:dev
 
-docker build --no-cache -t saltcorn/saltcorn:pyml -f Dockerfile.pyml .
-docker push saltcorn/saltcorn:pyml
 

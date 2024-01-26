@@ -162,9 +162,7 @@ const tableForm = async (table, req) => {
             },
             {
               label: req.__("Version history"),
-              sublabel: req.__(
-                "Track table data changes over time"
-              ),
+              sublabel: req.__("Track table data changes over time"),
               name: "versioned",
               type: "Bool",
             },
@@ -225,8 +223,9 @@ router.get(
                 {
                   label: req.__("Table name"),
                   name: "name",
-                  input_type: "text",
+                  type: "String",
                   required: true,
+                  attributes: { autofocus: true },
                 },
                 ...(table_provider_names.length
                   ? [
@@ -236,7 +235,7 @@ router.get(
                         input_type: "select",
                         options: [
                           // Due to packages/saltcorn-markup/helpers.ts#L45 (select_options replaces label if o.value === "")
-                          {label:req.__("Database table"), value:'-'},
+                          { label: req.__("Database table"), value: "-" },
                           ...table_provider_names,
                         ],
                         required: true,
@@ -708,7 +707,7 @@ router.get(
       res.redirect(`/table`);
       return;
     }
-    const nrows = await table.countRows();
+    const nrows = await table.countRows({}, { forUser: req.user });
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
@@ -1065,10 +1064,7 @@ router.post(
       } else if (db.sqlsanitize(name) === "") {
         req.flash("error", req.__(`Invalid table name %s`, name));
         res.redirect(`/table/new`);
-      } else if (
-        rest.provider_name &&
-        rest.provider_name !== "-"
-      ) {
+      } else if (rest.provider_name && rest.provider_name !== "-") {
         const table = await Table.create(name, rest);
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
@@ -1286,7 +1282,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
-    const rows = await table.getRows({}, { orderBy: "id" });
+    const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");

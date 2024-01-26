@@ -41,6 +41,8 @@ const {
   get_async_expression_function,
   jsexprToWhere,
   freeVariables,
+  get_expression_function,
+  eval_expression,
 } = require("../../models/expression");
 const db = require("../../db");
 const { get_existing_views } = require("../../models/discovery");
@@ -196,6 +198,15 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
+                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
+              },
+              {
+                name: "create_view_showif",
+                label: req.__("Show if formula"),
+                type: "String",
+                sublabel: req.__(
+                  "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
+                ),
                 showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
               {
@@ -377,6 +388,15 @@ const configuration_workflow = (req) =>
             attributes: { min: 0 },
           });
           formfields.push({
+            name: "_row_click_url_formula",
+            label: req.__("Row click URL"),
+            sublabel: req.__(
+              "Formula. Navigate to this URL when row is clicked"
+            ),
+            type: "String",
+            class: "validate-expression",
+          });
+          formfields.push({
             name: "transpose",
             label: req.__("Transpose"),
             sublabel: req.__("Display one column per line"),
@@ -416,6 +436,20 @@ const configuration_workflow = (req) =>
               "Do not display a column if it contains entirely missing values"
             ),
             type: "Bool",
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_hover_rows",
+            label: req.__("Hoverable rows"),
+            type: "Bool",
+            sublabel: req.__("Highlight row under cursor"),
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_striped_rows",
+            label: req.__("Striped rows"),
+            type: "Bool",
+            sublabel: req.__("Add zebra stripes to rows"),
             tab: "Layout options",
           });
           if (!db.isSQLite && !table.external)
@@ -514,6 +548,7 @@ const run = async (
     create_view_location,
     create_link_style,
     create_link_size,
+    create_view_showif,
   },
   stateWithId,
   extraOpts,
@@ -576,6 +611,15 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
+  if (default_state?._row_click_url_formula) {
+    let fUrl = get_expression_function(
+      default_state._row_click_url_formula,
+      fields
+    );
+    page_opts.onRowSelect = (row) =>
+      `location.href='${fUrl(row, extraOpts.req.user)}'`;
+  }
+  page_opts.class = "";
 
   if ((rows && rows.length === rows_per_page) || current_page > 1) {
     const nrows = rowCount;
@@ -589,8 +633,14 @@ const run = async (
     }
   }
 
-  if (default_state && default_state._omit_header) {
+  if (default_state?._omit_header) {
     page_opts.noHeader = true;
+  }
+  if (default_state?._hover_rows) {
+    page_opts.class += "table-hover ";
+  }
+  if (default_state?._striped_rows) {
+    page_opts.class += "table-striped ";
   }
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.transpose_width = (default_state || {}).transpose_width;
@@ -602,20 +652,29 @@ const run = async (
   var create_link = "";
   const user_id =
     extraOpts && extraOpts.req.user ? extraOpts.req.user.id : null;
-  const about_user = fields.some(
-    (f) =>
-      f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
-  );
-
+  const create_link_showif_pass = create_view_showif
+    ? eval_expression(create_view_showif, state, extraOpts.req.user)
+    : undefined;
   if (
+    create_link_showif_pass !== false &&
     view_to_create &&
-    (role <= table.min_role_write || table.ownership_field_id)
+    (create_link_showif_pass ||
+      role <= table.min_role_write ||
+      table.ownership_field_id)
   ) {
-    const create_view = await View.findOne({ name: view_to_create });
+    const create_view = View.findOne({ name: view_to_create });
     const ownership_field =
       table.ownership_field_id &&
       table.fields.find((f) => f.id === table.ownership_field_id);
+    const about_user = fields.some(
+      (f) =>
+        f.reftable_name === "users" &&
+        state[f.name] &&
+        state[f.name] === user_id
+    );
+
     if (
+      create_link_showif_pass ||
       role <= table.min_role_write ||
       (ownership_field?.reftable_name === "users" && about_user) ||
       create_view?.configuration?.fixed?.[`preset_${ownership_field?.name}`] ===
@@ -830,12 +889,18 @@ module.exports = {
         forUser: req.user,
       });
 
-      const rowCount = await table.countRows(where);
+      const rowCount = await table.countRows(where, {
+        forPublic: !req.user,
+        forUser: req.user,
+      });
       return { rows, rowCount };
     },
     async getRowQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow({ id });
+      return await table.getRow(
+        { id },
+        { forUser: req.user, forPublic: !req.user }
+      );
     },
   }),
   configCheck: async (view) => {

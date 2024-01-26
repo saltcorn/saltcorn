@@ -5,11 +5,12 @@
  */
 
 const Router = require("express-promise-router");
+const { UAParser } = require("ua-parser-js");
 
 const Page = require("@saltcorn/data/models/page");
+const PageGroup = require("@saltcorn/data/models/page_group");
 const Trigger = require("@saltcorn/data/models/trigger");
-const File = require("@saltcorn/data/models/file");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, features } = require("@saltcorn/data/db/state");
 const {
   error_catcher,
   scan_for_page_title,
@@ -18,6 +19,7 @@ const {
 } = require("../routes/utils.js");
 const { isTest } = require("@saltcorn/data/utils");
 const { add_edit_bar } = require("../markup/admin.js");
+const { script, domReady } = require("@saltcorn/markup/tags");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 const db = require("@saltcorn/data/db");
@@ -32,56 +34,134 @@ const db = require("@saltcorn/data/db");
 const router = new Router();
 module.exports = router;
 
-/**
- * @name get/:pagename
- * @function
- * @memberof module:routes/page~pageRouter
- * @function
- */
+const findPageOrGroup = (pagename) => {
+  const page = Page.findOne({ name: pagename });
+  if (page) return { page, pageGroup: null };
+  else {
+    const pageGroup = PageGroup.findOne({ name: pagename });
+    if (pageGroup) return { page: null, pageGroup };
+    else return { page: null, pageGroup: null };
+  }
+};
+
+const runPage = async (page, req, res, tic) => {
+  const role = req.user && req.user.id ? req.user.role_id : 100;
+  if (role <= page.min_role) {
+    const contents = await page.run(req.query, { res, req });
+    const title = scan_for_page_title(contents, page.title);
+    const tock = new Date();
+    const ms = tock.getTime() - tic.getTime();
+    if (!isTest())
+      Trigger.emitEvent("PageLoad", null, req.user, {
+        text: req.__("Page '%s' was loaded", page.name),
+        type: "page",
+        name: page.name,
+        render_time: ms,
+      });
+    if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
+    else
+      res.sendWrap(
+        {
+          title,
+          description: page.description,
+          bodyClass: "page_" + db.sqlsanitize(page.name),
+          no_menu: page.attributes?.no_menu,
+        } || `${page.name} page`,
+        add_edit_bar({
+          role,
+          title: page.name,
+          what: req.__("Page"),
+          url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+          contents,
+        })
+      );
+  } else {
+    getState().log(2, `Page ${page.name} not authorized`);
+    res.status(404).sendWrap(` page`, req.__("Page %s not found", page.name));
+  }
+};
+
+const uaDevice = (req) => {
+  const uaParser = new UAParser(req.headers["user-agent"]);
+  const device = uaParser.getDevice();
+  if (!device.type) return "web";
+  else return device.type;
+};
+
+const screenInfoFromCfg = (req) => {
+  const device = uaDevice(req);
+  const uaScreenInfos = getState().getConfig("user_agent_screen_infos", {});
+  return { device, ...uaScreenInfos[device] };
+};
+
+const runPageGroup = async (pageGroup, req, res, tic) => {
+  const role = req.user && req.user.id ? req.user.role_id : 100;
+  if (role <= pageGroup.min_role) {
+    if (pageGroup.members.length === 0) {
+      getState().log(2, `Pagegroup ${pageGroup.name} has no members`);
+      res
+        .status(400)
+        .sendWrap(
+          ` page`,
+          req.__("Pagegroup %s has no members", pageGroup.name)
+        );
+    } else {
+      let screenInfos = null;
+      if (req.cookies["_sc_screen_info_"]) {
+        screenInfos = JSON.parse(req.cookies["_sc_screen_info_"]);
+        screenInfos.device = uaDevice(req);
+      } else {
+        const strategy = getState().getConfig(
+          "missing_screen_info_strategy",
+          "guess_from_user_agent"
+        );
+        if (strategy === "guess_from_user_agent")
+          screenInfos = screenInfoFromCfg(req);
+        else if (strategy === "reload" && req.query.is_reload !== "true") {
+          return res.sendWrap(
+            script(
+              domReady(`
+                setScreenInfoCookie();
+                window.location = updateQueryStringParameter(window.location.href, "is_reload", true);`)
+            )
+          );
+        }
+      }
+      const eligiblePage = await pageGroup.getEligiblePage(
+        screenInfos,
+        req.user ? req.user : { role_id: features.public_user_role },
+        req.getLocale()
+      );
+      if (eligiblePage) await runPage(eligiblePage, req, res, tic);
+      else {
+        getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
+        res
+          .status(404)
+          .sendWrap(` page`, req.__("%s has no eligible page", pageGroup.name));
+      }
+    }
+  } else {
+    getState().log(2, `Pagegroup ${pageGroup.name} not authorized`);
+    res
+      .status(404)
+      .sendWrap(` page`, req.__("Pagegroup %s not found", pageGroup.name));
+  }
+};
+
 router.get(
   "/:pagename",
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
-    const state = getState();
-    state.log(3, `Route /page/${pagename} user=${req.user?.id}`);
+    getState().log(3, `Route /page/${pagename} user=${req.user?.id}`);
     const tic = new Date();
-
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const db_page = await Page.findOne({ name: pagename });
-    if (db_page && role <= db_page.min_role) {
-      const contents = await db_page.run(req.query, { res, req });
-      const title = scan_for_page_title(contents, db_page.title);
-      const tock = new Date();
-      const ms = tock.getTime() - tic.getTime();
-      if (!isTest())
-        Trigger.emitEvent("PageLoad", null, req.user, {
-          text: req.__("Page '%s' was loaded", pagename),
-          type: "page",
-          name: pagename,
-          render_time: ms,
-        });
-      if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
-      else
-        res.sendWrap(
-          {
-            title,
-            description: db_page.description,
-            bodyClass: "page_" + db.sqlsanitize(pagename),
-            no_menu: db_page.attributes?.no_menu,
-          } || `${pagename} page`,
-          add_edit_bar({
-            role,
-            title: db_page.name,
-            what: req.__("Page"),
-            url: `/pageedit/edit/${encodeURIComponent(db_page.name)}`,
-            contents,
-          })
-        );
-    } else {
-      if (db_page && !req.user) {
+    const { page, pageGroup } = findPageOrGroup(pagename);
+    if (page) await runPage(page, req, res, tic);
+    else if (pageGroup) await runPageGroup(pageGroup, req, res, tic);
+    else {
+      if ((page || pageGroup) && !req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
       } else {
-        state.log(2, `Page $pagename} not found or not authorized`);
+        getState().log(2, `Page ${pagename} not found or not authorized`);
         res
           .status(404)
           .sendWrap(`${pagename} page`, req.__("Page %s not found", pagename));
@@ -105,12 +185,6 @@ router.post(
   })
 );
 
-/**
- * @name post/:pagename/action/:rndid
- * @function
- * @memberof module:routes/page~pageRouter
- * @function
- */
 router.post(
   "/:pagename/action/:rndid",
   error_catcher(async (req, res) => {

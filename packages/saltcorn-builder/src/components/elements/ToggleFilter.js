@@ -7,12 +7,7 @@
 import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
-import {
-  blockProps,
-  BlockSetting,
-  setAPropGen,
-  buildOptions,
-} from "./utils";
+import { blockProps, BlockSetting, setAPropGen, buildOptions } from "./utils";
 
 export /**
  * @param {object} props
@@ -82,7 +77,8 @@ const ToggleFilterSettings = () => {
   const options = useContext(optionsCtx);
   const field = options.fields.find((f) => f.name === name);
   const preset_options = field.preset_options;
-  const isBool = field && field.type.name === "Bool";
+  const isBool =
+    field && (field.type?.name === "Bool" || field.type === "Bool");
   const setAProp = setAPropGen(setProp);
   return (
     <table className="w-100">
@@ -101,7 +97,9 @@ const ToggleFilterSettings = () => {
                   const value = e.target.value;
                   setProp((prop) => (prop.name = value));
                   const field = options.fields.find((f) => f.name === value);
-                  const isBool = field && field.type.name === "Bool";
+                  const isBool =
+                    field &&
+                    (field.type?.name === "Bool" || field.type === "Bool");
                   if (isBool) setProp((prop) => (prop.value = "on"));
                   setProp((prop) => (prop.preset_value = ""));
                 }

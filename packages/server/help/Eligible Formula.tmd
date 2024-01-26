@@ -1,0 +1,69 @@
+Here you can write a formula to decide if the page is eligible for the request.
+
+### `Variables in scope`
+You have access to the following variables:
+
+```
+  width, height, innerWidth, innerHeight, 
+  user, locale, 
+  device
+```
+
+#### `width and height`
+This is the size of the whole screen.
+
+Example:
+```
+  width < 380 && height < 670
+```
+Note: Depending on your browser, this can get scaled with the zoom factor.
+
+##### `innerWidth and innerHeight`
+This is the size of your window.
+
+Example:
+```
+  innerWidth <= 375 && innerHeight <= 667
+```
+Note: Depending on your browser, this can get scaled with the zoom factor.
+
+#### `user`
+Here you'll find the user object or 
+```
+  { 
+    role_id: 100
+  }
+```
+for public requests.
+
+Example:
+```
+  user.id === 1 || user.role_id === 1
+```
+
+#### `locale`
+In locale, you'll find the locale of your browser.
+
+Example:
+```
+  locale === 'en' || locale === 'es' || local === 'de'
+```
+
+### `device`
+The device type is extracted from the user agent. The following values are valid:
+```
+  web, mobile, tablet,
+  console, smarttv, wearable,
+```
+Example:
+```
+  device === "mobile" || innerWidth <= 375 && innerHeight <= 667
+```
+
+Note: This value is independent of the browser zoom.
+
+## `Default member`
+If no member matches, you'll get an error message, or to catch this, add a member at the lowest level with just
+```
+  true
+```

@@ -404,9 +404,8 @@ const navbarSolidOnScroll: string = script(
 );
 
 /**
- * @param {object} x
- * @param {object} s
- * @returns {object}
+ * @param x
+ * @param s
  */
 const logit = (x: any, s: any): any => {
   if (s) console.log(s, x);
@@ -415,17 +414,22 @@ const logit = (x: any, s: any): any => {
 };
 
 /**
- * @param {number} len
- * @returns {function}
+ * @param len
  */
 const standardBreadcrumbItem =
   (len: number) =>
   (
     {
       href,
+      pageGroupLink,
       text,
       postLinkText,
-    }: { href?: string; text: string; postLinkText?: string },
+    }: {
+      href?: string;
+      pageGroupLink?: boolean;
+      text: string;
+      postLinkText?: string;
+    },
     ix: number
   ): string =>
     li(
@@ -574,6 +578,9 @@ namespace LayoutExports {
     independent: boolean;
     startClosed?: boolean;
     disable_inactive?: boolean;
+    tabClass?: string;
+    contentWrapperClass?: string | string[];
+    headerWrapperClass?: string | string[];
   };
 }
 type RenderTabsOpts = LayoutExports.RenderTabsOpts;
@@ -611,6 +618,9 @@ const renderTabs = (
     startClosed,
     serverRendered,
     tabId,
+    tabClass,
+    contentWrapperClass,
+    headerWrapperClass,
   }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any,
   activeTabTitle?: string,
@@ -672,71 +682,80 @@ const renderTabs = (
   else {
     let activeIx = serverRendered && activeTabTitle ? +activeTabTitle : 0;
     if (activeIx === -1) activeIx = 0;
+    const maybeWrapContent = (s: string) =>
+      contentWrapperClass ? div({ class: contentWrapperClass }, s) : s;
+    const maybeWrapHeader = (s: string) =>
+      headerWrapperClass ? div({ class: headerWrapperClass }, s) : s;
     return (
-      ul(
-        {
-          role: "tablist",
-          id: `${rndid}`,
-          class: [
-            "nav",
-            tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills",
-            hints?.tabClass && tabsStyle === "Tabs" && hints?.tabClass,
-          ],
-        },
-        contents.map((t, ix) =>
-          li(
-            { class: "nav-item", role: "presentation" },
-            a(
-              {
-                class: [
-                  "nav-link",
-                  ix === activeIx && "active",
-                  deeplink && "deeplink",
-                ],
-                onclick: disable_inactive
-                  ? `disable_inactive_tab_inputs('${rndid}')`
-                  : undefined,
-                id: `${rndid}link${ix}`,
-                "data-bs-toggle": serverRendered ? undefined : "tab",
-                href: serverRendered
-                  ? `javascript:set_state_field('${tabId || "_tab"}', ${ix})`
-                  : `#${validID(titles[ix])}`,
-                role: "tab",
-                "aria-controls": `${rndid}tab${ix}`,
-                "aria-selected": ix === 0 ? "true" : "false",
-              },
-              titles[ix]
+      maybeWrapHeader(
+        ul(
+          {
+            role: "tablist",
+            id: `${rndid}`,
+            class: [
+              "nav",
+              tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills",
+              tabClass,
+              hints?.tabClass && tabsStyle === "Tabs" && hints?.tabClass,
+            ],
+          },
+          contents.map((t, ix) =>
+            li(
+              { class: "nav-item", role: "presentation" },
+              a(
+                {
+                  class: [
+                    "nav-link",
+                    ix === activeIx && "active",
+                    deeplink && "deeplink",
+                  ],
+                  onclick: disable_inactive
+                    ? `disable_inactive_tab_inputs('${rndid}')`
+                    : undefined,
+                  id: `${rndid}link${ix}`,
+                  "data-bs-toggle": serverRendered ? undefined : "tab",
+                  href: serverRendered
+                    ? `javascript:set_state_field('${tabId || "_tab"}', ${ix})`
+                    : `#${validID(titles[ix])}`,
+                  role: "tab",
+                  "aria-controls": `${rndid}tab${ix}`,
+                  "aria-selected": ix === 0 ? "true" : "false",
+                },
+                titles[ix]
+              )
             )
           )
         )
       ) +
-      div(
-        { class: "tab-content", id: `${rndid}content` },
-        serverRendered
-          ? div(
-              {
-                class: ["tab-pane", bodyClass || "", "show active"],
-                role: "tabpanel",
-                id: `${validID(titles[activeIx])}`,
-                "aria-labelledby": `${rndid}link${activeIx}`,
-              },
-              go(contents[activeIx], false, activeIx)
-            )
-          : contents.map((t, ix) =>
-              div(
+      maybeWrapContent(
+        div(
+          { class: "tab-content", id: `${rndid}content` },
+          serverRendered
+            ? div(
                 {
-                  class: [
-                    "tab-pane fade",
-                    bodyClass || "",
-                    ix === activeIx && "show active",
-                  ],
+                  class: ["tab-pane", bodyClass || "", "show active"],
                   role: "tabpanel",
-                  id: `${validID(titles[ix])}`,
-                  "aria-labelledby": `${rndid}link${ix}`,
+                  id: `${validID(titles[activeIx])}`,
+                  "aria-labelledby": `${rndid}link${activeIx}`,
                 },
-                go(t, false, ix)
+                go(contents[activeIx], false, activeIx)
               )
-            )
+            : contents.map((t, ix) =>
+                div(
+                  {
+                    class: [
+                      "tab-pane fade",
+                      bodyClass || "",
+                      ix === activeIx && "show active",
+                    ],
+                    role: "tabpanel",
+                    id: `${validID(titles[ix])}`,
+                    "aria-labelledby": `${rndid}link${ix}`,
+                  },
+                  go(t, false, ix)
+                )
+              )
+        )
       ) +
       (disable_inactive
         ? script(domReady(`disable_inactive_tab_inputs('${rndid}')`))

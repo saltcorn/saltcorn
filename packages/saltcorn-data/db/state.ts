@@ -12,6 +12,7 @@ import File from "../models/file";
 import Table from "../models/table";
 import TableConstraint from "../models/table_constraints";
 import Page from "../models/page";
+import PageGroup from "../models/page_group";
 import Field from "../models/field";
 import {
   Plugin,
@@ -114,6 +115,7 @@ class State {
   types: Record<string, Type>;
   stashed_fieldviews: Record<string, any>;
   pages: Array<Page>;
+  page_groups: Array<PageGroup>;
   fields: Array<Field>;
   configs: ConfigTypes;
   fileviews: Record<string, any>;
@@ -157,6 +159,7 @@ class State {
     this.types = {};
     this.stashed_fieldviews = {};
     this.pages = [];
+    this.page_groups = [];
     this.fields = [];
     this.configs = {};
     this.fileviews = {};
@@ -246,6 +249,7 @@ class State {
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
     await this.refresh_pages(noSignal);
+    await this.refresh_page_groups(noSignal);
     await this.refresh_config(noSignal);
     await this.refresh_npmpkgs(noSignal);
   }
@@ -348,12 +352,25 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_pages(noSignal: boolean) {
-    const Page = require("../models/page");
+    const Page = (await import("../models/page")).default;
     this.pages = await Page.find();
     if (!noSignal) this.log(5, "Refresh pages");
 
     if (!noSignal && db.is_node)
       process_send({ refresh: "pages", tenant: db.getTenantSchema() });
+  }
+
+  async refresh_page_groups(noSignal: boolean) {
+    try {
+      //sometimes this is run before migration
+      const PageGroup = (await import("../models/page_group")).default;
+      this.page_groups = await PageGroup.find();
+      if (!noSignal) this.log(5, "Refresh page groups");
+    } catch (e) {
+      console.error("error initializing page groups", e);
+    }
+    if (!noSignal && db.is_node)
+      process_send({ refresh: "page_groups", tenant: db.getTenantSchema() });
   }
 
   /**

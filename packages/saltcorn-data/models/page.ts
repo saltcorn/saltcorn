@@ -97,7 +97,9 @@ class Page implements AbstractPage {
   ): Promise<Array<Page>> {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
-      return getState().pages.map((t: Page) => new Page(t));
+      return getState()
+        .pages.map((t: Page) => new Page(t))
+        .filter(satisfies(where || {}));
     }
     const db_flds = await db.select("_sc_pages", where, selectopts);
     return db_flds.map((dbf: PageCfg) => new Page(dbf));
@@ -108,7 +110,7 @@ class Page implements AbstractPage {
    * @param where
    * @returns {Promise<Page|*>}
    */
-  static findOne(where: Where): Page {
+  static findOne(where: Where): Page | null {
     const { getState } = require("../db/state");
     const p = getState().pages.find(
       where.id
@@ -207,7 +209,7 @@ class Page implements AbstractPage {
     let newname;
     for (let i = 0; i < 100; i++) {
       newname = i ? `${basename} (${i})` : basename;
-      const existing = await Page.findOne({ name: newname });
+      const existing = Page.findOne({ name: newname });
       if (!existing) break;
     }
     const createObj = {

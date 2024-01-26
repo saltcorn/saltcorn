@@ -375,7 +375,9 @@ const render = ({
             rel: segment.nofollow ? "nofollow" : false,
             style,
           },
-          segment.link_icon ? i({ class: segment.link_icon }) + "&nbsp;" : "",
+          segment.link_icon
+            ? i({ class: segment.link_icon }) + (segment.text ? "&nbsp;" : "")
+            : "",
           segment.text
         )
       );
@@ -434,7 +436,7 @@ const render = ({
                   i({ class: "fas fa-save" })
                 )
             ),
-          segment.tabContents &&
+          segment.tabContents && // TODO remove all calls to this, use tab in content instead
             div(
               { class: "card-header" },
               ul(
@@ -479,17 +481,38 @@ const render = ({
                 )
               ),
           segment.contents &&
-            div(
-              {
-                class: [
-                  "card-body",
-                  segment.bodyClass,
-                  segment.noPadding && "p-0",
-                ],
-              },
-              go(segment.contents)
-            ),
-          segment.footer && div({ class: "card-footer" }, go(segment.footer))
+            (segment.contents.type === "tabs" &&
+            segment.contents.tabsStyle !== "Value switch"
+              ? renderTabs(
+                  {
+                    tabClass: "card-header-tabs",
+                    headerWrapperClass: "card-header",
+                    contentWrapperClass: [
+                      "card-body",
+                      segment.bodyClass,
+                      segment.noPadding && "p-0",
+                    ],
+                    ...segment.contents,
+                  },
+                  go,
+                  segment.serverRendered
+                    ? req?.query?.[segment.tabId || "_tab"]
+                    : undefined,
+                  hints
+                )
+              : div(
+                  {
+                    class: [
+                      "card-body",
+                      segment.bodyClass,
+                      segment.noPadding && "p-0",
+                    ],
+                  },
+                  go(segment.contents)
+                )),
+          (segment.hasFooter ||
+            (segment.footer && segment.hasFooter !== false)) &&
+            div({ class: "card-footer" }, go(segment.footer))
         )
       );
     }
@@ -502,7 +525,7 @@ const render = ({
           segment,
           go,
           segment.serverRendered
-            ? req.query[segment.tabId || "_tab"]
+            ? req?.query?.[segment.tabId || "_tab"]
             : undefined,
           hints
         )
@@ -709,9 +732,15 @@ const render = ({
         .join("");
     } else if (segment.besides) {
       const defwidth = Math.round(12 / segment.besides.length);
-      const cardDeck = segment.besides.every(
-        (s: any) => s && s.type === "card"
-      );
+      //legacy, for empty (null) in the columns
+      const isOneCard = (segs: any) =>
+        segs.length === 1 && segs[0].type === "card";
+      const onlyCard = (s: any) =>
+        (s && s.type === "card") ||
+        (s.above && isOneCard(s.above.filter(Boolean)));
+      const cardDeck = segment.besides
+        .filter(Boolean) // allow blank
+        .every(onlyCard);
       let markup;
 
       if (cardDeck) {
@@ -729,6 +758,7 @@ const render = ({
             style: segment.style,
           },
           segment.besides.map((t: any, ixb: number) => {
+            if (!t) return ""; //blank col
             const newt = { ...t };
             newt.class = t.class
               ? Array.isArray(t.class)

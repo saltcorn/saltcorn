@@ -10,6 +10,7 @@ const User = require("../../models/user");
 const Crash = require("../../models/crash");
 const Form = require("../../models/form");
 const Page = require("../../models/page");
+const PageGroup = require("../../models/page_group");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
@@ -56,6 +57,7 @@ const {
   add_free_variables_to_joinfields,
   readState,
   stateToQueryString,
+  pathToState,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -114,7 +116,7 @@ const configuration_workflow = (req) =>
 
           const { field_view_options, handlesTextStyle, blockDisplay } =
             calcfldViewOptions(fields, "edit");
-          const fieldViewConfigForms = await calcfldViewConfig(fields, true);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, true);
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
@@ -125,12 +127,14 @@ const configuration_workflow = (req) =>
             ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
+          const triggerActions = [];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           (
             await Trigger.find({
@@ -138,6 +142,7 @@ const configuration_workflow = (req) =>
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           const actionConfigForms = {
             Delete: [
@@ -209,18 +214,23 @@ const configuration_workflow = (req) =>
             true,
             true
           );
+          const pages = await Page.find();
+          const groups = (await PageGroup.find()).map((g) => ({
+            name: g.name,
+          }));
 
           return {
             tableName: table.name,
-            fields,
+            fields: fields.map((f) => f.toBuilder),
             field_view_options,
             parent_field_list,
             handlesTextStyle,
             blockDisplay,
             roles,
             actions,
+            triggerActions,
             builtInActions,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             actionConfigForms,
             images,
             allowMultiStepAction: true,
@@ -232,6 +242,8 @@ const configuration_workflow = (req) =>
               !!table.ownership_formula ||
               table.name === "users",
             excluded_subview_templates: ["Room"],
+            pages,
+            page_groups: groups,
           };
         },
       },
@@ -331,6 +343,7 @@ const configuration_workflow = (req) =>
             })
           );
           const pages = await Page.find();
+          const groups = await PageGroup.find();
           return new Form({
             fields: [
               {
@@ -358,6 +371,7 @@ const configuration_workflow = (req) =>
                   options: [
                     "View",
                     "Page",
+                    "PageGroup",
                     "Formula",
                     "URL formula",
                     "Back to referer",
@@ -383,6 +397,16 @@ const configuration_workflow = (req) =>
                   options: pages.map((p) => p.name),
                 },
                 showIf: { destination_type: "Page" },
+              },
+              {
+                name: "page_group_when_done",
+                label: req.__("Destination page group"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: groups.map((p) => p.name),
+                },
+                showIf: { destination_type: "PageGroup" },
               },
               {
                 name: "dest_url_formula",
@@ -720,21 +744,13 @@ const transformForm = async ({
       let state;
       switch (view_select.type) {
         case "RelationPath": {
-          const path = view_select.path;
-          state =
-            path.length === 0
-              ? // it's Own or Independent
-                table.name === view.view_select.sourcetable
-                ? { id: row.id }
-                : {}
-              : {
-                  _relation_path_: {
-                    ...view_select,
-                    srcId: path[0].fkey
-                      ? row[path[0].fkey]
-                      : row[table.pk_name],
-                  },
-                };
+          state = pathToState(
+            view,
+            segment.relation,
+            view_select.path,
+            (k) => row[k],
+            table
+          );
           break;
         }
         case "Own":
@@ -970,6 +986,7 @@ const runPost = async (
     destination_type,
     dest_url_formula,
     page_when_done,
+    page_group_when_done,
   },
   state,
   body,
@@ -1158,6 +1175,7 @@ const runPost = async (
         destination_type,
         dest_url_formula,
         page_when_done,
+        page_group_when_done,
         redirect,
       },
       req,
@@ -1179,7 +1197,10 @@ const doAuthPost = async ({ body, table_id, req }) => {
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, body);
       if (Object.keys(uniques).length > 0) {
-        body = await table.getRow(uniques);
+        body = await table.getRow(uniques, {
+          forUser: req.user,
+          forPublic: !req.user,
+        });
         return table.is_owner(req.user, body);
       }
     } else return field_name && `${body[field_name]}` === `${user_id}`;
@@ -1295,6 +1316,7 @@ const update_matching_rows = async (
     destination_type,
     dest_url_formula,
     page_when_done,
+    page_group_when_done,
   },
   body,
   { req, res, redirect },
@@ -1371,6 +1393,7 @@ const update_matching_rows = async (
         destination_type,
         dest_url_formula,
         page_when_done,
+        page_group_when_done,
         redirect,
       },
       req,
@@ -1457,7 +1480,7 @@ const prepare = async (
   } else if (cancel) {
     row = getRowByIdQuery
       ? await getRowByIdQuery(id)
-      : await table.getRow({ id });
+      : await table.getRow({ id }, { forUser: req.user, forPublic: !req.user });
   } else {
     row = { ...form.values };
   }
@@ -1467,6 +1490,7 @@ const prepare = async (
 
   const file_fields = form.fields.filter((f) => f.type === "File");
   for (const field of file_fields) {
+    if (!field.fieldviewObj?.isEdit) continue;
     if (field.fieldviewObj?.setsFileId) {
       //do nothing
     } else if (field.fieldviewObj?.setsDataURL) {
@@ -1515,7 +1539,7 @@ const prepare = async (
  * @param {*} table_id id of the table of the view
  * @param {*} fields all fields in table
  * @param {*} pk private key field
- * @param {*} param4 view_when_done, formula_destinations, destination_type, dest_url_formula, page_when_done, redirect
+ * @param {*} param4 view_when_done, formula_destinations, destination_type, dest_url_formula, page_when_done, page_group_when_done, redirect
  * @param {*} req
  * @param {*} res
  * @param {*} body reuqest body
@@ -1533,6 +1557,7 @@ const whenDone = async (
     destination_type,
     dest_url_formula,
     page_when_done,
+    page_group_when_done,
     redirect,
   },
   req,
@@ -1570,6 +1595,9 @@ const whenDone = async (
     return;
   } else if (destination_type === "Page" && page_when_done) {
     res_redirect(`/page/${page_when_done}`);
+    return;
+  } else if (destination_type === "PageGroup" && page_group_when_done) {
+    res_redirect(`/page/${page_group_when_done}`);
     return;
   } else if (destination_type === "URL formula" && dest_url_formula) {
     const url = eval_expression(dest_url_formula, row);
@@ -1802,6 +1830,9 @@ module.exports = {
     },
     async saveFileQuery(fieldVal, fieldId, fieldView, row) {
       const field = await Field.findOne({ id: fieldId });
+      const column = columns.find(
+        (c) => c.type === "Field" && c.field_name === field.name
+      );
       field.fieldviewObj = getState().fileviews[fieldView];
       const [pre, allData] = fieldVal.split(",");
       const buffer = require("buffer/").Buffer.from(allData, "base64");
@@ -1814,6 +1845,7 @@ module.exports = {
       const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
         ...row,
         ...field.attributes,
+        ...(column?.configuration || {}),
       });
       const file = await File.from_contents(
         filename,
@@ -1870,13 +1902,18 @@ module.exports = {
     },
     async getRowByIdQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow({ id });
+      return await table.getRow(
+        { id },
+        {
+          forUser: req.user,
+          forPublic: !req.user,
+        }
+      );
     },
     async actionQuery() {
-      const { rndid, _csrf, ...body } = req.body;
-      const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === rndid && rndid
-      );
+      const { rndid, _csrf, onchange_action, onchange_field, ...body } =
+        req.body;
+
       const table = Table.findOne({ id: table_id });
       const dbrow = body.id
         ? await table.getRow(
@@ -1888,17 +1925,39 @@ module.exports = {
           )
         : undefined;
       const row = { ...dbrow, ...body };
+
       try {
-        const result = await run_action_column({
-          col,
-          req,
-          table,
-          row,
-          res,
-          referrer: req.get("Referrer"),
-        });
-        //console.log("result", result);
-        return { json: { success: "ok", ...(result || {}) } };
+        if (onchange_action && !rndid) {
+          const fldCol = columns.find(
+            (c) =>
+              c.field_name === onchange_field &&
+              c.onchange_action === onchange_action
+          );
+          if (!fldCol) return { json: { error: "Field not found" } };
+          const trigger = Trigger.findOne({ name: onchange_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            user: req.user,
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        } else {
+          const col = columns.find(
+            (c) => c.type === "Action" && c.rndid === rndid && rndid
+          );
+          const result = await run_action_column({
+            col,
+            req,
+            table,
+            row,
+            res,
+            referrer: req.get("Referrer"),
+          });
+          //console.log("result", result);
+          return { json: { success: "ok", ...(result || {}) } };
+        }
       } catch (e) {
         console.error(e);
         return { json: { error: e.message || e } };
@@ -1971,6 +2030,7 @@ module.exports = {
         dest_url_formula,
         formula_destinations,
         page_when_done,
+        page_group_when_done,
       },
     } = view;
     const errs = [];
@@ -1990,6 +2050,13 @@ module.exports = {
       if (!page)
         errs.push(
           `In View ${name}, page when done ${page_when_done} not found`
+        );
+    }
+    if (destination_type === "PageGroup") {
+      const group = PageGroup.findOne({ name: page_group_when_done });
+      if (!group)
+        errs.push(
+          `In View ${name}, page group when done ${page_group_when_done} not found`
         );
     }
     if (destination_type === "Formula") {

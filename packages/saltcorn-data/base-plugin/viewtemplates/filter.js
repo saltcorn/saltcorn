@@ -179,7 +179,7 @@ const configuration_workflow = () =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("filter")
           );
-          const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
 
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -188,7 +188,7 @@ const configuration_workflow = () =>
           const pages = await Page.find();
 
           return {
-            fields,
+            fields: fields.map((f) => f.toBuilder),
             tableName: table.name,
             parent_field_list: my_parent_field_list,
             roles,
@@ -201,7 +201,7 @@ const configuration_workflow = () =>
             library,
             field_view_options,
             actionConfigForms,
-            fieldViewConfigForms,
+            //fieldViewConfigForms,
             mode: "filter",
           };
         },
@@ -265,7 +265,22 @@ const run = async (
     field: async (segment) => {
       const { field_name, fieldview, configuration } = segment;
       let field = fields.find((fld) => fld.name === field_name);
-      if (!field) return;
+      if (!field) {
+        if (field_name.includes(".")) {
+          const kpath = field_name.split(".");
+          if (kpath.length === 3) {
+            const [jtNm, jFieldNm, lblField] = kpath;
+            const jtable = Table.findOne({ name: jtNm });
+            if (!jtable)
+              throw new InvalidConfiguration(
+                `View ${viewname} incorrectly configured: cannot find join table ${jtNm}`
+              );
+            const jfields = jtable.fields;
+            field = jfields.find((f) => f.name === lblField);
+          }
+        }
+        if (!field) return;
+      }
       field.fieldview = fieldview;
       Object.assign(field.attributes, configuration);
       await field.fill_fkey_options(
@@ -378,7 +393,9 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value, this)`,
+              onChange: `set_state_field('${encodeURIComponent(
+                field_name
+              )}', this.value, this)`,
               ...field.attributes,
               isFilter: true,
               ...configuration,
@@ -402,7 +419,9 @@ const run = async (
             field_name,
             state[field_name],
             {
-              onChange: `set_state_field('${field_name}', this.value, this)`,
+              onChange: `set_state_field('${encodeURIComponent(
+                field_name
+              )}', this.value, this)`,
               isFilter: true,
               ...field.attributes,
               ...configuration,
@@ -436,7 +455,7 @@ const run = async (
           ? 1
           : -1
       );
-      const options = dvs.map(({ label, value, jsvalue }) =>
+      const options = dvs.map(({ label, value, jsvalue }, ix) =>
         option(
           {
             value,
@@ -447,7 +466,7 @@ const run = async (
               (jsvalue === false && state[field_name] === "off"),
             class: !value && !label ? "text-muted" : undefined,
           },
-          !value && !label
+          !value && !label && ix === 0 && neutral_label
             ? neutral_label
             : label_formula
             ? eval_expression(
@@ -558,8 +577,10 @@ const run = async (
           ],
           onClick:
             active || use_value === undefined
-              ? `unset_state_field('${field_name}', this)`
-              : `set_state_field('${field_name}', '${use_value || ""}', this)`,
+              ? `unset_state_field('${encodeURIComponent(field_name)}', this)`
+              : `set_state_field('${encodeURIComponent(field_name)}', '${
+                  use_value || ""
+                }', this)`,
         },
         label || value || preset_value
       );
@@ -765,9 +786,12 @@ module.exports = {
       for (const col of columns) {
         if (col.type === "DropDownFilter") {
           const field = fields.find((f) => f.name === col.field_name);
-          if (table.external) {
+          if (table.external || table.provider_name) {
             distinct_values[col.field_name] = (
-              await table.distinctValues(col.field_name)
+              await table.distinctValues(col.field_name, {
+                forPublic: !req.user,
+                forUser: req.user,
+              })
             ).map((x) => ({ label: x, value: x }));
           } else if (field) {
             distinct_values[col.field_name] = await field.distinct_values(

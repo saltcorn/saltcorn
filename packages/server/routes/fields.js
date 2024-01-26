@@ -74,15 +74,16 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
     validator: (vs) => {
       if (vs.calculated && vs.type === "File")
         return req.__("Calculated fields cannot have File type");
-      if (vs.calculated && vs.type.startsWith("Key to"))
-        return req.__("Calculated fields cannot have Key type");
+      if (vs.calculated && !vs.stored && vs.type.startsWith("Key to"))
+        return req.__("Calculated non-stored fields cannot have Key type");
     },
     fields: [
       new Field({
         label: req.__("Label"),
         name: "label",
         sublabel: req.__("Name of the field"),
-        input_type: "text",
+        type: "String",
+        attributes: { autofocus: true },
         validator(s) {
           if (!s || s === "") return req.__("Missing label");
           if (!id && existing_names.includes(Field.labelToName(s)))
@@ -95,15 +96,6 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
             return req.__("Not a valid field name");
           }
         },
-      }),
-      // description
-      new Field({
-        label: req.__("Description"),
-        name: "description",
-        sublabel: req.__(
-          "Description allows to give more information about field"
-        ),
-        input_type: "text",
       }),
       new Field({
         label: req.__("Type"),
@@ -120,6 +112,16 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           !getState().getConfig("development_mode", false) &&
           (hasData || db.isSQLite),
       }),
+      // description
+      new Field({
+        label: req.__("Description"),
+        name: "description",
+        sublabel: req.__(
+          "Description allows to give more information about field"
+        ),
+        input_type: "text",
+      }),
+
       new Field({
         label: req.__("Calculated"),
         name: "calculated",
@@ -308,7 +310,12 @@ const fieldFlow = (req) =>
           const nrows = await table.countRows({});
           const existing_fields = table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
-          const fkey_opts = ["File", ...tables.map((t) => `Key to ${t.name}`)];
+          const fkey_opts = [
+            "File",
+            ...tables
+              .filter((t) => !t.provider_name && !t.external)
+              .map((t) => `Key to ${t.name}`),
+          ];
           const form = await fieldForm(
             req,
             fkey_opts,
@@ -931,9 +938,12 @@ router.post(
             const reftable2 = Table.findOne({
               name: targetField.reftable_name,
             });
-            const refRow2 = await reftable2.getRow({
-              [reftable2.pk_name]: refRow[kpath[1]],
-            });
+            const refRow2 = await reftable2.getRow(
+              {
+                [reftable2.pk_name]: refRow[kpath[1]],
+              },
+              { forUser: req.user, forPublic: !req.user }
+            );
             if (refRow2) {
               res.send(
                 text(`${refRow2[targetField.attributes.summary_field]}`)
@@ -972,7 +982,10 @@ router.post(
               return;
             }
             const q = { [reftable.pk_name]: oldRow[ref] };
-            oldRow = await reftable.getRow(q);
+            oldRow = await reftable.getRow(q, {
+              forUser: req.user,
+              forPublic: !req.user,
+            });
             oldTable = reftable;
           }
         }
@@ -1008,14 +1021,20 @@ router.post(
         )) {
           const jf = table.getField(ref);
           const jtable = Table.findOne(jf.reftable_name);
-          const jrow = await jtable.getRow({ [jtable.pk_name]: row[ref] });
+          const jrow = await jtable.getRow(
+            { [jtable.pk_name]: row[ref] },
+            { forUser: req.user, forPublic: !req.user }
+          );
           row[ref] = jrow;
           if (through) {
             const jf2 = jtable.getField(through);
             const jtable2 = Table.findOne(jf2.reftable_name);
-            const jrow2 = await jtable2.getRow({
-              [jtable2.pk_name]: jrow[through],
-            });
+            const jrow2 = await jtable2.getRow(
+              {
+                [jtable2.pk_name]: jrow[through],
+              },
+              { forUser: req.user, forPublic: !req.user }
+            );
             row[ref][through] = jrow2;
           }
         }
@@ -1069,11 +1088,11 @@ router.post(
       }
       const reffields = await reftable.getFields();
       field = reffields.find((f) => f.name === targetNm);
-      row = await reftable.getRow({});
+      row = await reftable.getRow({}, { forUser: req.user });
       value = row && row[targetNm];
     } else {
       field = fields.find((f) => f.name === fieldName);
-      row = await table.getRow({});
+      row = await table.getRow({}, { forUser: req.user });
       value = row && row[fieldName];
     }
 
@@ -1182,6 +1201,10 @@ router.post(
     formFields.forEach((ff) => {
       ff.class = ff.class ? `${ff.class} item-menu` : "item-menu";
     });
+    if (req.query?.accept == "json") {
+      res.json(formFields);
+      return;
+    }
 
     const form = new Form({
       formStyle: "vert",
