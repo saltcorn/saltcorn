@@ -12,6 +12,7 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "exports": {
+    ".": "./dist/index.js",
     "./*": "./dist/*.js"
   },
   "typesVersions": {
