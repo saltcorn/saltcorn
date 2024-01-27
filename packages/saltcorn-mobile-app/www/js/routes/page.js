@@ -1,4 +1,4 @@
-/*global MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn, loadFileAsText*/
+/*global window, MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn, loadFileAsText*/
 
 // post/page/:pagename/action/:rndid
 const postPageAction = async (context) => {
@@ -24,19 +24,64 @@ const postPageAction = async (context) => {
   return result || {};
 };
 
+const findPageOrGroup = (pagename) => {
+  const page = saltcorn.data.models.Page.findOne({ name: pagename });
+  if (page) return { page, pageGroup: null };
+  else {
+    const pageGroup = saltcorn.data.models.PageGroup.findOne({
+      name: pagename,
+    });
+    if (pageGroup) return { page: null, pageGroup };
+    else return { page: null, pageGroup: null };
+  }
+};
+
+const runPage = async (page, state, context, { req, res }) => {
+  if (state.mobileConfig.role_id > page.min_role)
+    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
+  const query = parseQuery(context.query);
+  return await page.run(query, { req, res });
+};
+
+const getEligiblePage = async (pageGroup, req) => {
+  const screenInfos = {
+    width: window.screen.width,
+    height: window.screen.height,
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+    device: "mobile", // TODO UAParser knows tablet and mobile
+  };
+  if (pageGroup.members.length === 0)
+    return req.__("Pagegroup %s has no members", pageGroup.name);
+  return await pageGroup.getEligiblePage(
+    screenInfos,
+    req.user,
+    req.getLocale()
+  );
+};
+
+const runPageGroup = async (pageGroup, state, context, { req, res }) => {
+  if (state.mobileConfig.role_id > pageGroup.min_role)
+    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
+  const page = await getEligiblePage(pageGroup, req);
+  if (!page)
+    throw new Error(req.__(`Pagegroup ${pageGroup.name} has no eligible page`));
+  else if (typeof page === "string") throw new Error(page);
+  return await runPage(page, state, context, { req, res });
+};
+
 // get/page/pagename
 const getPage = async (context) => {
   const state = saltcorn.data.state.getState();
   const req = new MobileRequest({ xhr: context.xhr });
-  const { page_name } = context.params;
-  const page = await saltcorn.data.models.Page.findOne({ name: page_name });
-  if (!page) throw new Error(req.__("Page %s not found", page_name));
-  if (state.mobileConfig.role_id > page.min_role) {
-    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
-  }
-  const query = parseQuery(context.query);
   const res = new MobileResponse();
-  const contents = await page.run(query, { res, req });
+  const { page_name } = context.params;
+  const { page, pageGroup } = findPageOrGroup(page_name);
+  let contents = null;
+  if (page) contents = await runPage(page, state, context, { req, res });
+  else if (pageGroup)
+    contents = await runPageGroup(pageGroup, state, context, { req, res });
+  else throw new Error(req.__("Page %s not found", page_name));
   if (contents.html_file) {
     if (state.mobileConfig?.isOfflineMode)
       throw new Error(req.__("Offline mode: cannot load file"));

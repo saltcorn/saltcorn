@@ -730,6 +730,7 @@ const render = (
         val = row[localized_fld];
       }
       const cfg = {
+        row,
         ...field.attributes,
         ...configuration,
       };
@@ -795,7 +796,10 @@ const render = (
       if (field_type && fieldview) {
         const type = getState().types[field_type];
         if (type && getState().types[field_type]) {
-          return type.fieldviews[fieldview].run(value, req, configuration);
+          return type.fieldviews[fieldview].run(value, req, {
+            row,
+            ...configuration,
+          });
         } else return text(value);
       } else return text(value);
     },

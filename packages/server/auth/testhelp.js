@@ -29,24 +29,29 @@ const toRedirect = (loc) => (res) => {
 
 /**
  *
- * @param {number} txt
+ * @param {string|string[]} exp expected string or for arrrays at least one must be present
  * @param {number} expCode
  * @returns {void}
  * @throws {Error}
  */
 const toInclude =
-  (txt, expCode = 200) =>
+  (exp, expCode = 200) =>
   (res) => {
     if (res.statusCode !== expCode) {
       console.log(res.text);
       throw new Error(
-        `Expected status ${expCode} when lookinng for "${txt}", received ${res.statusCode}`
+        `Expected status ${expCode} when lookinng for "${exp}", received ${res.statusCode}`
       );
     }
-
-    if (!res.text.includes(txt)) {
+    const check = (txt) => res.text.includes(txt);
+    if (Array.isArray(exp)) {
+      if (!exp.some(check)) {
+        console.log(res.text);
+        throw new Error(`Expected text from [${exp.join(", ")}] not found`);
+      }
+    } else if (!check(exp)) {
       console.log(res.text);
-      throw new Error(`Expected text ${txt} not found`);
+      throw new Error(`Expected text ${exp} not found`);
     }
   };
 

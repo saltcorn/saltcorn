@@ -142,7 +142,9 @@ export function writeCfgFile({
   const wwwDir = join(buildDir, "www");
   let cfg: any = {
     version_tag: db.connectObj.version_tag,
-    entry_point: `get/${entryPointType}/${entryPoint}`,
+    entry_point: `get/${
+      entryPointType === "pagegroup" ? "page" : entryPointType
+    }/${entryPoint}`,
     server_path: !serverPath.endsWith("/")
       ? serverPath
       : serverPath.substring(0, serverPath.length - 1),
