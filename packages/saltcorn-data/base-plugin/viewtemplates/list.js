@@ -452,6 +452,13 @@ const configuration_workflow = (req) =>
             sublabel: req.__("Add zebra stripes to rows"),
             tab: "Layout options",
           });
+          formfields.push({
+            name: "_borderless",
+            label: req.__("Remove border"),
+            type: "Bool",
+            sublabel: req.__("No lines between tables"),
+            tab: "Layout options",
+          });
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -641,6 +648,9 @@ const run = async (
   }
   if (default_state?._striped_rows) {
     page_opts.class += "table-striped ";
+  }
+  if (default_state?._borderless) {
+    page_opts.class += "table-borderless ";
   }
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.transpose_width = (default_state || {}).transpose_width;
