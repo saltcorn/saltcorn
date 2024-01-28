@@ -1346,5 +1346,7 @@
 	"Show if formula": "Show if formula",
 	"Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>.": "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>.",
 	"Pagegroup": "Pagegroup",
-	"Pagegroup %s has no members": "Pagegroup %s has no members"
+	"Pagegroup %s has no members": "Pagegroup %s has no members",
+	"Remove border": "Remove border",
+	"No lines between tables": "No lines between tables"
 }
