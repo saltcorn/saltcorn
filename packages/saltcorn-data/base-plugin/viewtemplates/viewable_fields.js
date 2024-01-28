@@ -120,7 +120,9 @@ const action_link = (
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
       },
-      action_icon ? i({ class: action_icon }) + (label ? "&nbsp;" : "") : false,
+      action_icon && action_icon !== "empty"
+        ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
+        : false,
       label
     );
   else
@@ -207,10 +209,14 @@ const make_link = (
               ? `javascript:ajax_modal('${href}');`
               : `javascript:mobile_modal('${href}');`,
           },
-          !!theIcon && i({ class: theIcon }),
+          !!theIcon && theIcon !== "empty" && i({ class: theIcon }),
           txt
         );
-      return a(attrs, !!theIcon && i({ class: theIcon }), txt);
+      return a(
+        attrs,
+        !!theIcon && theIcon !== "empty" && i({ class: theIcon }),
+        txt
+      );
     },
   };
 };
@@ -645,7 +651,9 @@ const get_viewable_fields = (
                         column.action_size || ""
                       }`,
                 },
-                !!column.icon && i({ class: column.icon }),
+                !!column.icon &&
+                  column.icon !== "empty" &&
+                  i({ class: column.icon }),
                 label
               );
             else
