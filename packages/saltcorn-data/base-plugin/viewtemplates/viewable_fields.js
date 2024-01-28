@@ -1107,8 +1107,10 @@ const getForm = async (
             f.input_type =
               !f.fieldview || !f.fieldviewObj ? "file" : "fromtype";
           }
-          if (f.calculated)
-            f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}`;
+          if (f.calculated) {
+            const qs = objToQueryString(column.configuration);
+            f.sourceURL = `/field/show-calculated/${table.name}/${f.name}/${f.fieldview}?${qs}`;
+          }
           f.attributes = { ...column.configuration, ...f.attributes };
           if (
             typeof column.block !== "undefined" &&
