@@ -642,7 +642,7 @@ const run = async (
   const showRowInner = (r, ix) =>
     (!view_decoration && in_card) || view_decoration === "Card"
       ? div(
-          { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
+          { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4 h-100"}` },
           title_formula
             ? div(
                 { class: "card-header" },
@@ -723,7 +723,16 @@ const run = async (
                   { class: "accordion", id: `top${stateHash}` },
                   sr.map(showRowInner)
                 )
-              : div({ class: "row" }, sr.map(showRow)))
+              : div(
+                  {
+                    class: [
+                      "row",
+                      !masonry_columns &&
+                        `row-cols-md-${cols[`cols_md`]} g-4 mb-3`,
+                    ],
+                  },
+                  sr.map(showRow)
+                ))
         ),
         paginate,
         create_link_div,
@@ -740,7 +749,16 @@ const run = async (
             { class: "accordion", id: `top${stateHash}` },
             sresp.map(showRowInner)
           )
-        : div({ class: "row" }, sresp.map(showRow)),
+        : div(
+            {
+              class: [
+                "row",
+                !masonry_columns &&
+                  `row-cols-md-${cols.cols_md} row-cols-sm-${cols.cols_sm} row-cols-sm-${cols.cols_lg}  row-cols-cl-${cols.cols_xl} g-4 mb-3`,
+              ],
+            },
+            sresp.map(showRow)
+          ),
       paginate,
       create_link_div,
     ])
