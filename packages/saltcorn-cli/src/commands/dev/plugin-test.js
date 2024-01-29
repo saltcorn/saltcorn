@@ -18,10 +18,57 @@ const removePluginsDir = () => {
     fs.rmSync(pluginsPath, { force: true, recursive: true });
 };
 
+const writeJestConfigIntoPluginDir = (location) => {
+  fs.writeFileSync(
+    path.join(location, "jest.config.js"),
+    `const sqliteDir = process.env.JEST_SC_SQLITE_DIR;
+const dbCommonDir = process.env.JEST_SC_DB_COMMON_DIR;
+const dataDir = process.env.JEST_SC_DATA_DIR;
+const typesDir = process.env.JEST_SC_TYPES_DIR;
+const markupDir = process.env.JEST_SC_MARKUP_DIR;
+const adminModelsDir = process.env.JEST_SC_ADMIN_MODELS_DIR;
+const modulePath = process.env.TEST_PLUGIN_PACKAGES_DIR;
+const config = {
+  moduleNameMapper: {
+    "@saltcorn/sqlite/(.*)": sqliteDir + "/$1",
+    "@saltcorn/db-common/(.*)": dbCommonDir + "/$1",
+    "@saltcorn/data/(.*)": dataDir + "/$1",
+    "@saltcorn/types/(.*)": typesDir + "/$1",
+    "@saltcorn/markup$": markupDir,
+    "@saltcorn/markup/(.*)": markupDir + "/$1",
+    "@saltcorn/admin-models/(.*)": adminModelsDir + "/$1",
+  },
+  modulePaths: [modulePath],
+};
+module.exports = config;`
+  );
+};
+
 const spawnTest = async (installDir, env) => {
+  const scEnvVars = {};
+  for (const pckName of [
+    "sqlite",
+    "db-common",
+    "data",
+    "types",
+    "markup",
+    "admin-models",
+  ]) {
+    scEnvVars[`JEST_SC_${pckName.toUpperCase().replace("-", "_")}_DIR`] =
+      path.dirname(require.resolve(`@saltcorn/${pckName}`));
+  }
+  scEnvVars.TEST_PLUGIN_PACKAGES_DIR = path.join(
+    __dirname,
+    "test_plugin_packages"
+  );
   const ret = spawnSync("npm", ["run", "test"], {
     stdio: "inherit",
-    env,
+    env: !env
+      ? {
+          ...process.env,
+          ...scEnvVars,
+        }
+      : { ...env, ...scEnvVars },
     cwd: installDir,
   });
   return ret.status;
@@ -39,31 +86,7 @@ const installPlugin = async (plugin) => {
   });
   await loadAndSaveNewPlugin(plugin, false, false, manager);
   const location = getPLuginLocation(plugin.name);
-  const modPath = path.join(__dirname, "test_plugin_packages");
-  const pck = require(path.join(location, "package.json"));
-  if (!pck.jest) {
-    pck.jest = {
-      testEnvironment: "node",
-      moduleNameMapper: {
-        "@saltcorn/sqlite/(.*)": "@saltcorn/sqlite/dist/$1",
-        "@saltcorn/db-common/(.*)": "@saltcorn/db-common/dist/$1",
-        "@saltcorn/data/(.*)": "@saltcorn/data/dist/$1",
-        "@saltcorn/types/(.*)": "@saltcorn/types/dist/$1",
-        "@saltcorn/markup$": "@saltcorn/markup/dist",
-        "@saltcorn/markup/(.*)": "@saltcorn/markup/dist/$1",
-        "@saltcorn/admin-models/(.*)": "@saltcorn/admin-models/dist/$1",
-      },
-      modulePaths: [modPath],
-    };
-  } else if (!pck.jest.modulePaths) {
-    pck.jest.modulePaths = [modPath];
-  } else if (pck.jest.modulePaths.indexOf(modPath) === -1) {
-    pck.jest.modulePaths.push(modPath);
-  }
-  fs.writeFileSync(
-    path.join(location, "package.json"),
-    JSON.stringify(pck, null, 2)
-  );
+  writeJestConfigIntoPluginDir(location);
   return location;
 };
 

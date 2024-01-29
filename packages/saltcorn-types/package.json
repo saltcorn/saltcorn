@@ -12,6 +12,7 @@
   "license": "MIT",
   "main": "dist/index.js",
   "exports": {
+    ".": "./dist/index.js",
     "./*": "./dist/*.js",
     "./model-abstracts/*": "./dist/model-abstracts/*.js"
   },
