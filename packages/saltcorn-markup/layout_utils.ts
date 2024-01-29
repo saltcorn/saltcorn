@@ -434,7 +434,10 @@ const standardBreadcrumbItem =
   ): string =>
     li(
       {
-        class: ["breadcrumb-item", ix == len - 1 && "active"],
+        class: [
+          "breadcrumb-item",
+          ix == len - 1 && (href ? "fw-bold" : "active"),
+        ],
         "aria-current": ix == len - 1 && "page",
       },
       href ? a({ href }, text) : text,
