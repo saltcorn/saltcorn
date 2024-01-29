@@ -87,7 +87,7 @@ const link_view = (
           style,
           class: [textStyle, link_style, link_size, extraClass],
         },
-        link_icon
+        link_icon && link_icon !== "empty"
           ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
           : "",
         label === " " && link_icon ? "" : label
@@ -108,7 +108,7 @@ const link_view = (
             : `mobile_modal('${url}')`,
           style,
         },
-        link_icon
+        link_icon && link_icon !== "empty"
           ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
           : "",
         label === " " && link_icon ? "" : label
@@ -121,7 +121,7 @@ const link_view = (
         style,
         target: link_target_blank ? "_blank" : undefined,
       },
-      link_icon
+      link_icon && link_icon !== "empty"
         ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
         : "",
       text(label === " " && link_icon ? "" : label)

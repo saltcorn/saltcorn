@@ -108,7 +108,9 @@ const post_btn = (
   } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
     style ? ` style="${style}"` : ""
   }>${
-    icon ? `<i class="${icon}"></i>${s ? "&nbsp;" : ""}` : ""
+    icon && icon !== "empty"
+      ? `<i class="${icon}"></i>${s ? "&nbsp;" : ""}`
+      : ""
   }${s}</button></form>`;
 
 /**

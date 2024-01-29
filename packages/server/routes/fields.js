@@ -1044,9 +1044,10 @@ router.post(
         const f = get_expression_function(formula, fields);
         result = f(row);
       }
+      const configuration = req.query;
       const fv = field.type.fieldviews[fieldview];
       if (!fv) res.send(text(result));
-      else res.send(fv.run(result));
+      else res.send(fv.run(result, req, { row, ...configuration }));
     } catch (e) {
       return res.status(400).send(`Error: ${e.message}`);
     }

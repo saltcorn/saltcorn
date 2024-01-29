@@ -642,7 +642,7 @@ const run = async (
   const showRowInner = (r, ix) =>
     (!view_decoration && in_card) || view_decoration === "Card"
       ? div(
-          { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4"}` },
+          { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4 h-100"}` },
           title_formula
             ? div(
                 { class: "card-header" },
@@ -700,6 +700,8 @@ const run = async (
       },
       showRowInner(r)
     );
+  const is_in_card =
+    (!view_decoration && in_card) || view_decoration === "Card";
 
   const correct_order = ([main, pagin, create]) =>
     istop ? [create, main, pagin] : [main, pagin, create];
@@ -715,15 +717,24 @@ const run = async (
         Object.entries(groups).map(
           ([group, sr]) =>
             h3({ class: "feed-group-header" }, group) +
-            (((!view_decoration && in_card) || view_decoration === "Card") &&
-            masonry_columns
+            (is_in_card && masonry_columns
               ? div({ class: "card-columns" }, sr.map(showRowInner))
               : view_decoration === "Accordion"
               ? div(
                   { class: "accordion", id: `top${stateHash}` },
                   sr.map(showRowInner)
                 )
-              : div({ class: "row" }, sr.map(showRow)))
+              : div(
+                  {
+                    class: [
+                      "row",
+                      !masonry_columns &&
+                        is_in_card &&
+                        `row-cols-md-${cols[`cols_md`]} g-4 mb-3`,
+                    ],
+                  },
+                  sr.map(showRow)
+                ))
         ),
         paginate,
         create_link_div,
@@ -732,15 +743,24 @@ const run = async (
   }
   return div(
     correct_order([
-      ((!view_decoration && in_card) || view_decoration === "Card") &&
-      masonry_columns
+      is_in_card && masonry_columns
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
         : view_decoration === "Accordion"
         ? div(
             { class: "accordion", id: `top${stateHash}` },
             sresp.map(showRowInner)
           )
-        : div({ class: "row" }, sresp.map(showRow)),
+        : div(
+            {
+              class: [
+                "row",
+                !masonry_columns &&
+                  is_in_card &&
+                  `row-cols-md-${cols.cols_md} row-cols-sm-${cols.cols_sm} row-cols-sm-${cols.cols_lg}  row-cols-cl-${cols.cols_xl} g-4 mb-3`,
+              ],
+            },
+            sresp.map(showRow)
+          ),
       paginate,
       create_link_div,
     ])
