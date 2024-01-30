@@ -679,6 +679,16 @@ const render = (
     blank(segment) {
       evalMaybeExpr(segment, "contents", "text");
     },
+    tabs(segment) {
+      (segment.titles || []).forEach((t, ix) => {
+        if ((t || "").includes("{{")) {
+          const template = _.template(t, {
+            interpolate: /\{\{([^#].+?)\}\}/g,
+          });
+          segment.titles[ix] = template({ user: req.user, row, ...row });
+        }
+      });
+    },
     action(segment) {
       evalMaybeExpr(segment, "action_label");
     },
