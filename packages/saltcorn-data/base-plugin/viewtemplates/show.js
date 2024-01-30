@@ -966,6 +966,17 @@ module.exports = {
   getStringsForI18n({ layout }) {
     return getStringsForI18n(layout);
   },
+  async interpolate_title_string(table_id, title, state) {
+    const tbl = Table.findOne(table_id);
+    if (state?.[tbl.pk_name]) {
+      const row = await tbl.getRow({ [tbl.pk_name]: state.id });
+      const template = _.template(title, {
+        interpolate: /\{\{([^#].+?)\}\}/g,
+      });
+      let t = template({ row, ...row });
+      return t;
+    } else return title;
+  },
   /*authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
     return await authorizeGetQuery(query, table_id);
   },*/

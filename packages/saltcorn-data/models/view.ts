@@ -408,6 +408,20 @@ class View implements AbstractView {
    * @param {boolean} remote
    * @returns {Promise<object>}
    */
+  async interpolate_title_string(title: string, query: any): Promise<string> {
+    if (!this.viewtemplateObj?.interpolate_title_string) return title;
+    return await this.viewtemplateObj.interpolate_title_string(
+      this.table_id || this.exttable_name,
+      title,
+      query
+    );
+  }
+
+  /**
+   * @param {*} arg
+   * @param {boolean} remote
+   * @returns {Promise<object>}
+   */
   async authorise_get(
     arg: {
       query: any;

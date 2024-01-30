@@ -71,10 +71,13 @@ router.get(
     const isModal = req.headers?.saltcornmodalrequest;
 
     const contents0 = await view.run_possibly_on_page(query, req, res);
-    const title =
+    let title =
       isModal && view.attributes?.popup_title
         ? view.attributes?.popup_title
         : scan_for_page_title(contents0, view.name);
+    if (isModal && (title || "").includes("{{")) {
+      title = await view.interpolate_title_string(title, query);
+    }
     if (isModal && view.attributes?.popup_width)
       res.set(
         "SaltcornModalWidth",
