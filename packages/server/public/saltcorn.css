@@ -498,3 +498,7 @@ table.help-md th:nth-child(2) {
 tr[onclick] {
   cursor: pointer;
 }
+
+.editStarRating i.fa-star {
+  color: unset;
+}
