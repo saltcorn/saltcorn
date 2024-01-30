@@ -1625,6 +1625,8 @@ const picked_fields_to_query = (columns, fields, layout) => {
             ...freeVars,
             ...freeVariables(v.extra_state_fml),
           ]);
+        if (v.isFormula?.label && typeof v.view_label === "string")
+          freeVars = new Set([...freeVars, ...freeVariables(v.view_label)]);
       },
       link(v) {
         if (v?.isFormula?.text && typeof v.text === "string")
