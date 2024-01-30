@@ -81,6 +81,7 @@ const { asyncMap, isWeb, removeEmptyStrings } = require("../../utils");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
 const { prepare_update_row } = require("../../web-mobile-commons");
+const _ = require("underscore");
 
 const builtInActions = [
   "Save",
@@ -2053,7 +2054,23 @@ module.exports = {
     },
   }),
   routes: { run_action, update_matching_rows },
-
+  async interpolate_title_string(table_id, title, state) {
+    const tbl = Table.findOne(table_id);
+    if (state?.[tbl.pk_name]) {
+      const row = await tbl.getRow({ [tbl.pk_name]: state.id });
+      const template = _.template(title, {
+        interpolate: /\{\{([^#].+?)\}\}/g,
+      });
+      let t = template({ row, ...row });
+      return t;
+    } else {
+      const template = _.template(title, {
+        interpolate: /\{\{([^#].+?)\}\}/g,
+      });
+      let t = template({ row: null });
+      return t;
+    }
+  },
   configCheck: async (view) => {
     const {
       name,

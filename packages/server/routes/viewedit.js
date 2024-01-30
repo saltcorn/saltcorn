@@ -215,6 +215,8 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         type: "String",
         parent_field: "attributes",
         tab: "Popup settings",
+        sublabel:
+          "Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>",
       }),
       {
         name: "popup_width",
