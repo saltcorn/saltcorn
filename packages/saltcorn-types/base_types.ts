@@ -265,6 +265,11 @@ export type ViewTemplate = {
     },
     queries: any
   ) => Promise<boolean>;
+  interpolate_title_string?: (
+    table_id: number | string | undefined,
+    title: string,
+    query: any
+  ) => Promise<string>;
   authorise_get?: (
     opts: {
       query: any;
