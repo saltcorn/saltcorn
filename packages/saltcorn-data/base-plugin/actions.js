@@ -1335,6 +1335,24 @@ module.exports = {
       return { eval_js: `reload_embedded_view('${view}')` };
     },
   },
+  sleep: {
+    description: "Delay for a set number of seconds",
+    configFields: [
+      {
+        name: "seconds",
+        label: "Seconds",
+        type: "Float",
+        required: true,
+      },
+    ],
+    run: async ({ configuration: { seconds } }) => {
+      return {
+        eval_js: `return new Promise((resolve) => setTimeout(resolve, ${
+          (seconds || 0) * 1000
+        }));`,
+      };
+    },
+  },
   notify_user: {
     description: "Send a notification to a specific user",
     configFields: () => [
