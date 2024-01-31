@@ -1609,6 +1609,8 @@ const picked_fields_to_query = (columns, fields, layout) => {
     } else if (column.type === "Action" && column.action_label_formula) {
       freeVars = new Set([...freeVars, ...freeVariables(column.action_label)]);
     }
+    if (column.showif)
+      freeVars = new Set([...freeVars, ...freeVariables(column.showif)]);
   });
   if (layout) {
     traverseSync(layout, {
