@@ -2487,7 +2487,9 @@ const relationTypeFromPath = (subview, path, srcTable) => {
  * @param {Table} srcTbl
  */
 const pathToState = (subview, relation, pathArr, getRowVal, srcTbl) => {
+  if (!subview?.table_id) return {};
   const subTbl = Table.findOne({ id: subview.table_id });
+  if (!subTbl) return {};
   const pkName = subTbl.pk_name;
   switch (relationTypeFromPath(subview, pathArr, srcTbl)) {
     case "ChildList":
