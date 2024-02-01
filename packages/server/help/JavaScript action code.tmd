@@ -122,6 +122,7 @@ Example:
 ```
 return { download: {
     mimetype: "text/csv",
+    filename: "stock.csv",
     blob: filecontents
   }
 }
