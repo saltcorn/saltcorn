@@ -350,7 +350,8 @@ module.exports = (version_tag) =>
           menu: no_menu ? undefined : get_menu(req),
           currentUrl,
           originalUrl: req.originalUrl,
-
+          requestFluidLayout:
+            typeof opts === "string" ? false : opts.requestFluidLayout,
           alerts,
           body: html.length === 1 ? html[0] : html.join(""),
           headers: get_headers(req, version_tag, opts.description, pageHeaders),

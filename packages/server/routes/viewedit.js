@@ -571,7 +571,10 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
   else if (wfres.renderBuilder) {
     wfres.renderBuilder.options.view_id = view.id;
     res.sendWrap(
-      req.__(`%s configuration`, view.name),
+      {
+        title: req.__(`%s configuration`, view.name),
+        requestFluidLayout: true,
+      },
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
   } else res.redirect(wfres.redirect);
