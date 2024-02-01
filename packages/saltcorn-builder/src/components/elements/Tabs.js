@@ -8,7 +8,7 @@ import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
-import { setAPropGen, buildOptions } from "./utils";
+import { setAPropGen, buildOptions, ConfigField } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -178,6 +178,7 @@ const TabsSettings = () => {
     deeplink: node.data.props.deeplink,
     disable_inactive: node.data.props.disable_inactive,
     serverRendered: node.data.props.serverRendered,
+    setting_tab_n: node.data.props.setting_tab_n,
     tabId: node.data.props.tabId,
     titles: node.data.props.titles,
     field: node.data.props.field,
@@ -194,7 +195,9 @@ const TabsSettings = () => {
     field,
     serverRendered,
     tabId,
+    setting_tab_n,
   } = node;
+  const use_setting_tab_n = setting_tab_n || 0;
   const options = useContext(optionsCtx);
   useEffect(() => {
     if (field)
@@ -375,32 +378,49 @@ const TabsSettings = () => {
                   className="form-control"
                   value={ntabs}
                   step="1"
-                  min="0"
+                  min="1"
                   max="20"
                   onChange={setAProp("ntabs")}
                 />
               </td>
             </tr>
             <tr>
-              <th colSpan="2">Titles</th>
+              <td colSpan={2}>
+                <ConfigField
+                  field={{
+                    name: "setting_tab_n",
+                    label: "Tab number",
+                    type: "btn_select",
+                    options: ntimes(ntabs, (i) => ({
+                      value: i,
+                      title: `${i + 1}`,
+                      label: `${i + 1}`,
+                    })),
+                  }}
+                  node={node}
+                  setProp={setProp}
+                  props={node}
+                ></ConfigField>
+              </td>
             </tr>
-            {ntimes(ntabs, (ix) => (
-              <tr key={ix}>
-                <th>{ix + 1}</th>
-                <td>
-                  <input
-                    type="text"
-                    className="form-control text-to-display"
-                    value={titles[ix]}
-                    onChange={(e) => {
-                      if (!e.target) return;
-                      const value = e.target.value;
-                      setProp((prop) => (prop.titles[ix] = value));
-                    }}
-                  />
-                </td>
-              </tr>
-            ))}
+            <tr>
+              <th colSpan="2">Title</th>
+            </tr>
+
+            <tr>
+              <td colSpan={2}>
+                <input
+                  type="text"
+                  className="form-control text-to-display"
+                  value={titles[use_setting_tab_n] || ""}
+                  onChange={(e) => {
+                    if (!e.target) return;
+                    const value = e.target.value;
+                    setProp((prop) => (prop.titles[use_setting_tab_n] = value));
+                  }}
+                />
+              </td>
+            </tr>
           </Fragment>
         )}
       </tbody>
@@ -421,8 +441,10 @@ Tabs.craft = {
     deeplink: true,
     disable_inactive: false,
     serverRendered: false,
+    setting_tab_n: 0,
     tabId: "",
   },
+  defaultProps: { setting_tab_n: 0, ntabs: 2 },
   displayName: "Tabs",
   related: {
     settings: TabsSettings,
