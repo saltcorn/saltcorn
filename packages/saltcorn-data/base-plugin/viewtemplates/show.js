@@ -692,7 +692,7 @@ const render = (
       });
 
       (segment.titles || []).forEach((t, ix) => {
-        if ((t || "").includes("{{")) {
+        if (typeof t === "string" && t.includes("{{")) {
           const template = _.template(t, {
             interpolate: /\{\{([^#].+?)\}\}/g,
           });
@@ -898,7 +898,8 @@ const render = (
     },
     tabs(segment, go) {
       if (segment.tabsStyle !== "Value switch") return false;
-      const value = row[segment.field];
+      const rval = row[segment.field];
+      const value = rval?.id || rval; // TODO pkname of join table
       const ix = segment.titles.findIndex((t) =>
         typeof t.value === "undefined"
           ? `${t}` === `${value}`
