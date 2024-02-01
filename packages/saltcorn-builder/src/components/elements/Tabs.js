@@ -36,6 +36,8 @@ const Tabs = ({
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+
+  //TODO: use setting_tab_n
   const [showTab, setShowTab] = useState(
     tabsStyle === "Accordion" && startClosed ? false : 0
   );
@@ -181,6 +183,7 @@ const TabsSettings = () => {
     setting_tab_n: node.data.props.setting_tab_n,
     tabId: node.data.props.tabId,
     titles: node.data.props.titles,
+    showif: node.data.props.showif,
     field: node.data.props.field,
   }));
   const {
@@ -195,6 +198,7 @@ const TabsSettings = () => {
     field,
     serverRendered,
     tabId,
+    showif,
     setting_tab_n,
   } = node;
   const use_setting_tab_n = setting_tab_n || 0;
@@ -406,7 +410,6 @@ const TabsSettings = () => {
             <tr>
               <th colSpan="2">Title</th>
             </tr>
-
             <tr>
               <td colSpan={2}>
                 <input
@@ -421,6 +424,30 @@ const TabsSettings = () => {
                 />
               </td>
             </tr>
+            {options.mode === "show" ? (
+              <Fragment>
+                <tr>
+                  <th colSpan="2">Show if formula</th>
+                </tr>
+                <tr>
+                  <td colSpan={2}>
+                    <input
+                      type="text"
+                      className="form-control text-to-display"
+                      value={showif?.[use_setting_tab_n] || ""}
+                      onChange={(e) => {
+                        if (!e.target) return;
+                        const value = e.target.value;
+                        setProp((prop) => {
+                          if (!prop.showif) prop.showif = [];
+                          prop.showif[use_setting_tab_n] = value;
+                        });
+                      }}
+                    />
+                  </td>
+                </tr>
+              </Fragment>
+            ) : null}
           </Fragment>
         )}
       </tbody>
@@ -434,6 +461,7 @@ const TabsSettings = () => {
 Tabs.craft = {
   props: {
     titles: ["Tab1", "Tab2"],
+    showif: [],
     ntabs: 2,
     tabsStyle: "Tabs",
     independent: false,
