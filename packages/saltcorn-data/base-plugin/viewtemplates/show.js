@@ -653,12 +653,13 @@ const render = (
   is_owner,
   state
 ) => {
+  const session_id = getSessionId(req);
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       try {
         segment[key] = eval_expression(
           segment[key],
-          { session_id: getSessionId(req), ...row },
+          { session_id, ...row },
           req.user
         );
       } catch (error) {
@@ -680,6 +681,16 @@ const render = (
       evalMaybeExpr(segment, "contents", "text");
     },
     tabs(segment) {
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(sif, { session_id, ...row }, req.user);
+          if (!showit) {
+            segment.titles.splice(ix, 1);
+            segment.contents.splice(ix, 1);
+          }
+        }
+      });
+
       (segment.titles || []).forEach((t, ix) => {
         if ((t || "").includes("{{")) {
           const template = _.template(t, {
