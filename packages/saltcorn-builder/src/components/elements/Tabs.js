@@ -31,16 +31,16 @@ const Tabs = ({
   independent,
   startClosed,
   field,
+  setting_tab_n,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
+    actions: { setProp },
   } = useNode((node) => ({ selected: node.events.selected }));
 
-  //TODO: use setting_tab_n
-  const [showTab, setShowTab] = useState(
-    tabsStyle === "Accordion" && startClosed ? false : 0
-  );
+  const showTab = setting_tab_n;
+  const setShowTab = (n) => setProp((prop) => (prop.setting_tab_n = n));
   const [showTabs, setShowTabs] = useState(
     tabsStyle === "Accordion" && startClosed ? [] : [true]
   );
