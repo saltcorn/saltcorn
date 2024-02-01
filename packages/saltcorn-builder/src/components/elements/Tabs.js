@@ -263,42 +263,6 @@ const TabsSettings = () => {
           </Fragment>
         ) : (
           <Fragment>
-            <tr>
-              <th>
-                <label>Number of sections</label>
-              </th>
-              <td>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={ntabs}
-                  step="1"
-                  min="0"
-                  max="20"
-                  onChange={setAProp("ntabs")}
-                />
-              </td>
-            </tr>
-            <tr>
-              <th colSpan="2">Titles</th>
-            </tr>
-            {ntimes(ntabs, (ix) => (
-              <tr key={ix}>
-                <th>{ix + 1}</th>
-                <td>
-                  <input
-                    type="text"
-                    className="form-control text-to-display"
-                    value={titles[ix]}
-                    onChange={(e) => {
-                      if (!e.target) return;
-                      const value = e.target.value;
-                      setProp((prop) => (prop.titles[ix] = value));
-                    }}
-                  />
-                </td>
-              </tr>
-            ))}
             {tabsStyle === "Accordion" ? (
               <tr>
                 <td colSpan="2">
@@ -401,6 +365,42 @@ const TabsSettings = () => {
                 </td>
               </tr>
             ) : null}
+            <tr>
+              <th>
+                <label>Number of sections</label>
+              </th>
+              <td>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={ntabs}
+                  step="1"
+                  min="0"
+                  max="20"
+                  onChange={setAProp("ntabs")}
+                />
+              </td>
+            </tr>
+            <tr>
+              <th colSpan="2">Titles</th>
+            </tr>
+            {ntimes(ntabs, (ix) => (
+              <tr key={ix}>
+                <th>{ix + 1}</th>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control text-to-display"
+                    value={titles[ix]}
+                    onChange={(e) => {
+                      if (!e.target) return;
+                      const value = e.target.value;
+                      setProp((prop) => (prop.titles[ix] = value));
+                    }}
+                  />
+                </td>
+              </tr>
+            ))}
           </Fragment>
         )}
       </tbody>
