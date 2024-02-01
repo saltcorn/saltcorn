@@ -253,6 +253,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
         <Tabs
           key={ix}
           titles={segment.titles}
+          showif={segment.showif}
           ntabs={segment.ntabs}
           independent={segment.independent}
           startClosed={segment.startClosed}
@@ -529,6 +530,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         type: "tabs",
         contents,
         titles: node.props.titles,
+        showif: node.props.showif,
         tabsStyle: node.props.tabsStyle,
         field: node.props.field,
         independent: node.props.independent,

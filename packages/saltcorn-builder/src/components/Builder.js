@@ -54,6 +54,10 @@ import {
   faSave,
 } from "@fortawesome/free-solid-svg-icons";
 import {
+  faCaretSquareLeft,
+  faCaretSquareRight,
+} from "@fortawesome/free-regular-svg-icons";
+import {
   Accordion,
   ErrorBoundary,
   recursivelyCloneToElems,
@@ -391,6 +395,7 @@ const Builder = ({ options, layout, mode }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const nodekeys = useRef([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEnlarged, setIsEnlarged] = useState(false);
   const [relationsCache, setRelationsCache] = useState({});
 
   return (
@@ -472,13 +477,19 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                 </div>
                 <div className="col-sm-auto builder-sidebar">
-                  <div style={{ width: "16rem" }}>
+                  <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
                     <NextButton layout={layout} />
                     <HistoryPanel />
                     <FontAwesomeIcon
                       icon={faSave}
                       className={isSaving ? "d-inline" : "d-none"}
                     />
+                    <FontAwesomeIcon
+                      icon={isEnlarged ? faCaretSquareRight : faCaretSquareLeft}
+                      className={"float-end me-2 mt-1 fa-lg"}
+                      onClick={() => setIsEnlarged(!isEnlarged)}
+                    />
+
                     <SettingsPanel />
                   </div>
                 </div>

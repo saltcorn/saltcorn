@@ -1245,11 +1245,19 @@ const ButtonOrLinkSettingsRows = ({
           <option value={addBtnClass("btn-secondary")}>Secondary button</option>
           <option value={addBtnClass("btn-success")}>Success button</option>
           <option value={addBtnClass("btn-danger")}>Danger button</option>
+          <option value={addBtnClass("btn-warning")}>Warning button</option>
+          <option value={addBtnClass("btn-info")}>Info button</option>
           <option value={addBtnClass("btn-outline-primary")}>
             Primary outline button
           </option>
           <option value={addBtnClass("btn-outline-secondary")}>
             Secondary outline button
+          </option>
+          <option value={addBtnClass("btn-outline-warning")}>
+            Warning outline button
+          </option>{" "}
+          <option value={addBtnClass("btn-outline-info")}>
+            Info outline button
           </option>
           <option value={addBtnClass("btn-custom-color")}>
             Button custom color

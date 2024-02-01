@@ -738,7 +738,7 @@ const ContainerSettings = () => {
           )}
           {["show", "edit", "filter"].includes(options.mode) && (
             <tr>
-              <td>
+              <td colSpan={2}>
                 <input
                   type="text"
                   className="form-control text-to-display"
