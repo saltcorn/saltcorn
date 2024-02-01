@@ -1491,7 +1491,7 @@ const get_onetoone_views = async (table, viewname) => {
  * @throws {InvalidConfiguration}
  * @returns {object}
  */
-const picked_fields_to_query = (columns, fields, layout) => {
+const picked_fields_to_query = (columns, fields, layout, req) => {
   let joinFields = {};
   let aggregations = {};
   let freeVars = new Set(); // for join fields
@@ -1595,7 +1595,9 @@ const picked_fields_to_query = (columns, fields, layout) => {
         aggregations[targetNm] = {
           table,
           ref: fld,
-          where: column.aggwhere ? jsexprToWhere(column.aggwhere) : undefined,
+          where: column.aggwhere
+            ? jsexprToWhere(column.aggwhere, req ? { user: req.user } : {})
+            : undefined,
           field,
           aggregate: column.stat,
           through,

@@ -1004,7 +1004,8 @@ module.exports = {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields,
-        layout
+        layout,
+        req
       );
       readState(state, fields);
       const tbl = Table.findOne(table_id || exttable_name);
@@ -1047,7 +1048,8 @@ module.exports = {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields,
-        layout
+        layout,
+        req
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);
