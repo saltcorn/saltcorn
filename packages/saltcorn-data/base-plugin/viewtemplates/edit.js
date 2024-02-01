@@ -2059,7 +2059,7 @@ module.exports = {
   async interpolate_title_string(table_id, title, state) {
     const tbl = Table.findOne(table_id);
     if (state?.[tbl.pk_name]) {
-      const row = await tbl.getRow({ [tbl.pk_name]: state.id });
+      const row = await tbl.getRow({ [tbl.pk_name]: state[tbl.pk_name] });
       const template = _.template(title, {
         interpolate: /\{\{([^#].+?)\}\}/g,
       });
