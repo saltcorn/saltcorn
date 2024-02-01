@@ -732,7 +732,9 @@ module.exports = {
           const fields = table.getFields();
           const { joinFields, aggregations } = picked_fields_to_query(
             columns,
-            fields
+            fields,
+            undefined,
+            req
           );
           const where = stateFieldsToWhere({ fields, state, table });
           const q = stateFieldsToQuery({

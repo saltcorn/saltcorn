@@ -57,12 +57,14 @@ const {
  * @param {object} context
  * @returns {Promise<void>}
  */
-const create_db_view = async (context) => {
+const create_db_view = async (context, req) => {
   const table = Table.findOne({ id: context.table_id });
   const fields = table.getFields();
   const { joinFields, aggregations } = picked_fields_to_query(
     context.columns,
-    fields
+    fields,
+    undefined,
+    req
   );
 
   const { sql } = await table.getJoinedQuery({
@@ -107,7 +109,7 @@ const configuration_workflow = (req) =>
   new Workflow({
     onDone: async (ctx) => {
       if (ctx.default_state._create_db_view) {
-        await create_db_view(ctx);
+        await create_db_view(ctx, req);
       }
 
       return ctx;
@@ -864,7 +866,9 @@ module.exports = {
       const fields = table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
-        fields
+        fields,
+        undefined,
+        req
       );
       const where = await stateFieldsToWhere({ fields, state, table });
       const q = await stateFieldsToQuery({

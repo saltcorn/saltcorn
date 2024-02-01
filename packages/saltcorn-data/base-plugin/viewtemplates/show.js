@@ -981,7 +981,7 @@ module.exports = {
   async interpolate_title_string(table_id, title, state) {
     const tbl = Table.findOne(table_id);
     if (state?.[tbl.pk_name]) {
-      const row = await tbl.getRow({ [tbl.pk_name]: state.id });
+      const row = await tbl.getRow({ [tbl.pk_name]: state[tbl.pk_name] });
       const template = _.template(title, {
         interpolate: /\{\{([^#].+?)\}\}/g,
       });
@@ -1004,7 +1004,8 @@ module.exports = {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields,
-        layout
+        layout,
+        req
       );
       readState(state, fields);
       const tbl = Table.findOne(table_id || exttable_name);
@@ -1047,7 +1048,8 @@ module.exports = {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields,
-        layout
+        layout,
+        req
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);

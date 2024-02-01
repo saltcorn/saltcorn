@@ -1783,7 +1783,7 @@ module.exports = {
       if (Object.keys(uniques).length > 0) {
         // add joinfields from certain locations if they are not fields in columns
         const joinFields = {};
-        const picked = picked_fields_to_query([], fields, layout);
+        const picked = picked_fields_to_query([], fields, layout, req);
         const colFields = new Set(
           columns.map((c) =>
             c.join_field ? c.join_field.split(".")[0] : c.field_name
@@ -1823,7 +1823,9 @@ module.exports = {
       const fields = table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
-        fields
+        fields,
+        undefined,
+        req
       );
       const qstate = await stateFieldsToWhere({ fields, state, table });
       const q = await stateFieldsToQuery({ state, fields });
@@ -2057,7 +2059,7 @@ module.exports = {
   async interpolate_title_string(table_id, title, state) {
     const tbl = Table.findOne(table_id);
     if (state?.[tbl.pk_name]) {
-      const row = await tbl.getRow({ [tbl.pk_name]: state.id });
+      const row = await tbl.getRow({ [tbl.pk_name]: state[tbl.pk_name] });
       const template = _.template(title, {
         interpolate: /\{\{([^#].+?)\}\}/g,
       });
