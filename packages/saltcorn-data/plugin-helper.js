@@ -24,6 +24,7 @@ const {
   freeVariables,
   add_free_variables_to_joinfields,
   eval_expression,
+  freeVariablesInInterpolation,
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
@@ -1648,16 +1649,22 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
         if (v?.isFormula?.url && typeof v.url === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
       },
+      tabs(v) {
+        (v.titles || []).forEach((t) => {
+          freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
+        });
+        (v.showif || []).forEach((t) => {
+          freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
+        });
+      },
       blank(v) {
         if (v?.isFormula?.text && typeof v.contents === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
         if (v.isHTML)
-          ((v.contents || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach(
-            (s) => {
-              const s1 = s.replace("{{", "").replace("}}", "").trim();
-              freeVars = new Set([...freeVars, ...freeVariables(s1)]);
-            }
-          );
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariablesInInterpolation(v.contents),
+          ]);
       },
       container(v) {
         if (v.showIfFormula)

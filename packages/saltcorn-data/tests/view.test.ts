@@ -200,6 +200,15 @@ describe("View", () => {
       '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th>Count books</th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
     );
   });
+  it("should interpolate titles string", async () => {
+    const v = await View.findOne({ name: "authorshow" });
+    assertIsSet(v);
+    const title = await v.interpolate_title_string(
+      "Hello {{author}} from {{publisher.name}}",
+      { id: 2 }
+    );
+    expect(title).toBe("Hello Leo Tolstoy from AK Press");
+  });
 });
 describe("View with routes", () => {
   it("should create and delete", async () => {
