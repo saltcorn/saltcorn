@@ -2063,19 +2063,10 @@ module.exports = {
       const freeVars = freeVariablesInInterpolation(title);
       const joinFields = {};
       add_free_variables_to_joinfields(freeVars, joinFields, tbl.fields);
-      let row;
-      if (Object.keys(joinFields).length > 0 && !tbl.getJoinedRow) {
-        throw new Error(
-          `Table ${tbl.name} does not support joinfields in interpolation of string: ${title}`
-        );
-      } else if (!tbl.getJoinedRow) {
-        row = await tbl.getRow({ [tbl.pk_name]: state[tbl.pk_name] });
-      } else {
-        row = await tbl.getJoinedRow({
-          where: { [tbl.pk_name]: state[tbl.pk_name] },
-          joinFields,
-        });
-      }
+      const row = await tbl.getJoinedRow({
+        where: { [tbl.pk_name]: state[tbl.pk_name] },
+        joinFields,
+      });
       const template = _.template(title, {
         interpolate: /\{\{([^#].+?)\}\}/g,
       });
