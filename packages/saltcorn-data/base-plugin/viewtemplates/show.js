@@ -76,6 +76,7 @@ const {
   get_expression_function,
   eval_expression,
   freeVariables,
+  freeVariablesInInterpolation,
 } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
@@ -981,7 +982,13 @@ module.exports = {
   async interpolate_title_string(table_id, title, state) {
     const tbl = Table.findOne(table_id);
     if (state?.[tbl.pk_name]) {
-      const row = await tbl.getRow({ [tbl.pk_name]: state[tbl.pk_name] });
+      const freeVars = freeVariablesInInterpolation(title);
+      const joinFields = {};
+      add_free_variables_to_joinfields(freeVars, joinFields, tbl.fields);
+      const row = await tbl.getJoinedRow({
+        where: { [tbl.pk_name]: state[tbl.pk_name] },
+        joinFields,
+      });
       const template = _.template(title, {
         interpolate: /\{\{([^#].+?)\}\}/g,
       });
