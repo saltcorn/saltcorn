@@ -266,6 +266,24 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
   });
+  it("should get joined rows with filtered aggregations", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        avg_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "avg",
+          where: { normalised: true },
+        },
+      },
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(Math.round(michaels[0].avg_temp)).toBe(37);
+  });
   it("should get joined rows with unique count aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
