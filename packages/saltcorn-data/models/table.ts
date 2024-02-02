@@ -2869,11 +2869,14 @@ class Table implements AbstractTable {
         table: this.name,
         field,
         aggregate,
+        where,
       };
     });
 
     process_aggregations(this, aggregations1, fldNms, values, schema);
-    console.log({ fldNms, values });
+    const sql = `SELECT ${fldNms.join()}`;
+    const res = await db.query(sql, values);
+    return res.rows[0];
   }
 
   /**

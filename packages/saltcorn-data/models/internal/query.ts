@@ -57,7 +57,7 @@ export const process_aggregations = (
         let whereClause = ref
           ? `aggto."${sqlsanitize(ref)}"=a."${ownField}"`
           : "";
-        if (whereStr) whereClause += ` and ` + whereStr;
+        if (whereStr) whereClause += (whereClause ? ` and ` : "") + whereStr;
         if (whereClause) whereClause = ` where ` + whereClause;
         const newFld = `(select array_agg(aggjoin."${sqlsanitize(
           aggField.attributes.summary_field
@@ -77,7 +77,7 @@ export const process_aggregations = (
         const dateField = aggregate.split(" ")[1];
         const isLatest = aggregate.startsWith("Latest ");
         let whereClause = ref ? `"${sqlsanitize(ref)}"=a."${ownField}"` : "";
-        if (whereStr) whereClause += ` and ` + whereStr;
+        if (whereStr) whereClause += (whereClause ? ` and ` : "") + whereStr;
         if (whereClause) whereClause = ` where ` + whereClause;
         fldNms.push(
           `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
@@ -100,7 +100,7 @@ export const process_aggregations = (
         );
       else {
         let whereClause = ref ? `"${sqlsanitize(ref)}"=a."${ownField}"` : "";
-        if (whereStr) whereClause += ` and ` + whereStr;
+        if (whereStr) whereClause += (whereClause ? ` and ` : "") + whereStr;
         if (whereClause) whereClause = ` where ` + whereClause;
         fldNms.push(
           `(select ${agg_and_field} from ${schema}"${sqlsanitize(

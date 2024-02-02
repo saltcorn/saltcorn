@@ -600,7 +600,7 @@ describe("Table aggregationQuery", () => {
       },
       { normalised: true }
     );
-    // expect(Math.round(aggs.avg_temp)).toBe(37);
+    expect(Math.round(aggs.avg_temp)).toBe(37);
   });
 });
 
