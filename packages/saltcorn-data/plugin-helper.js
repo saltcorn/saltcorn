@@ -2325,9 +2325,9 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       const { where, ...rest } = opts;
       return getRows(where || {}, rest || {});
     },
-    getJoinedRow(opts = {}) {
+    async getJoinedRow(opts = {}) {
       const { where, ...rest } = opts;
-      const rows = getRows(where || {}, rest || {});
+      const rows = await getRows(where || {}, rest || {});
       return rows.length > 0 ? rows[0] : null;
     },
     async countRows(where, opts) {
