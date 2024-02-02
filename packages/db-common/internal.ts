@@ -595,14 +595,14 @@ export type JoinFields = {
 
 export type JoinOptions = {
   joinFields?: JoinFields;
-  aggregations?: AggregationOptions[];
+  aggregations?: { [nm: string]: AggregationOptions };
   where: any;
   starFields?: boolean;
 } & SelectOptions;
 
 export type AggregationOptions = {
   table: string;
-  ref: string;
+  ref?: string;
   field: string;
   where?: Where;
   aggregate: string;

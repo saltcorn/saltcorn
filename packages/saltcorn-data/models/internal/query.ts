@@ -19,7 +19,7 @@ import db from "../../db";
 
 export const process_aggregations = (
   this_table: any, //Table
-  aggregations: AggregationOptions[],
+  aggregations: { [nm: string]: AggregationOptions },
   fldNms: string[],
   values: any[],
   schema: string
@@ -54,6 +54,11 @@ export const process_aggregations = (
         aggField.attributes.summary_field &&
         aggregate.toLowerCase() === "array_agg"
       ) {
+        let whereClause = ref
+          ? `aggto."${sqlsanitize(ref)}"=a."${ownField}"`
+          : "";
+        if (whereStr) whereClause += ` and ` + whereStr;
+        if (whereClause) whereClause = ` where ` + whereClause;
         const newFld = `(select array_agg(aggjoin."${sqlsanitize(
           aggField.attributes.summary_field
         )}") from ${schema}"${sqlsanitize(
@@ -62,9 +67,7 @@ export const process_aggregations = (
           aggField.reftable_name as string
         )}" aggjoin on aggto."${sqlsanitize(
           field
-        )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a."${ownField}"${
-          whereStr ? ` and ${whereStr}` : ""
-        }) ${sqlsanitize(fldnm)}`;
+        )}" = aggjoin.id ${whereClause}) ${sqlsanitize(fldnm)}`;
 
         fldNms.push(newFld);
       } else if (
@@ -73,6 +76,9 @@ export const process_aggregations = (
       ) {
         const dateField = aggregate.split(" ")[1];
         const isLatest = aggregate.startsWith("Latest ");
+        let whereClause = ref ? `"${sqlsanitize(ref)}"=a."${ownField}"` : "";
+        if (whereStr) whereClause += ` and ` + whereStr;
+        if (whereClause) whereClause = ` where ` + whereClause;
         fldNms.push(
           `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
             table
@@ -80,13 +86,9 @@ export const process_aggregations = (
             isLatest ? `max` : `min`
           }("${dateField}") from ${schema}"${sqlsanitize(
             table
-          )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
-            whereStr ? ` and ${whereStr}` : ""
-          }) and "${sqlsanitize(ref)}"=a."${ownField}" limit 1) ${sqlsanitize(
-            fldnm
-          )}`
+          )}" ${whereClause}) limit 1) ${sqlsanitize(fldnm)}`
         );
-      } else if (subselect)
+      } else if (subselect && ref)
         fldNms.push(
           `(select ${agg_and_field} from ${schema}"${sqlsanitize(
             table
@@ -96,14 +98,16 @@ export const process_aggregations = (
             subselect.whereField
           }"=a."${ownField}")) ${sqlsanitize(fldnm)}`
         );
-      else
+      else {
+        let whereClause = ref ? `"${sqlsanitize(ref)}"=a."${ownField}"` : "";
+        if (whereStr) whereClause += ` and ` + whereStr;
+        if (whereClause) whereClause = ` where ` + whereClause;
         fldNms.push(
           `(select ${agg_and_field} from ${schema}"${sqlsanitize(
             table
-          )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
-            whereStr ? ` and ${whereStr}` : ""
-          }) ${sqlsanitize(fldnm)}`
+          )}" ${whereClause}) ${sqlsanitize(fldnm)}`
         );
+      }
     }
   );
   if (!isNode()) values.unshift(...aggValues);

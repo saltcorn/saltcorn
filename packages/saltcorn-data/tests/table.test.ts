@@ -587,6 +587,23 @@ describe("Table get data", () => {
   });
 });
 
+describe("Table aggregationQuery", () => {
+  it("should get aggregations", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const aggs = await readings.aggregationQuery(
+      {
+        avg_temp: {
+          field: "temperature",
+          aggregate: "avg",
+        },
+      },
+      { normalised: true }
+    );
+    // expect(Math.round(aggs.avg_temp)).toBe(37);
+  });
+});
+
 describe("relations", () => {
   it("get parent relations", async () => {
     const table = Table.findOne({ name: "patients" });

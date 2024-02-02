@@ -2853,6 +2853,30 @@ class Table implements AbstractTable {
   }
 
   /**
+   * Returns aggregations for this table, possibly on a subset by where-expression
+   */
+  async aggregationQuery(
+    aggregations: { [nm: string]: { field: string; aggregate: string } },
+    where: any = {}
+  ): Promise<any> {
+    let fldNms: string[] = [];
+    let values: any[] = [];
+    const schema = db.getTenantSchemaPrefix();
+
+    const aggregations1: { [nm: string]: AggregationOptions } = {};
+    Object.entries(aggregations).forEach(([nm, { field, aggregate }]) => {
+      aggregations1[nm] = {
+        table: this.name,
+        field,
+        aggregate,
+      };
+    });
+
+    process_aggregations(this, aggregations1, fldNms, values, schema);
+    console.log({ fldNms, values });
+  }
+
+  /**
    *
    * @param opts
    * @returns {Promise<{values, sql: string}>}
