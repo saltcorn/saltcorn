@@ -37,9 +37,19 @@ const {
 const db = require("../db");
 const { isNode } = require("../utils");
 const { available_languages } = require("../models/config");
+const _ = require("underscore");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
+
+const interpolate = (s, row) => {
+  if (s && row) {
+    const template = _.template(s, {
+      interpolate: /\{\{([^#].+?)\}\}/g,
+    });
+    return template({ row, ...row });
+  } else return s;
+};
 
 /**
  * @param opts
@@ -235,7 +245,9 @@ module.exports = {
      * @returns {Promise<object>}
      */
     run: async ({ row, configuration: { url, body } }) => {
-      return await fetch(url, {
+      let url1 = interpolate(url, row);
+
+      return await fetch(url1, {
         method: "post",
         body: body || JSON.stringify(row),
         headers: { "Content-Type": "application/json" },
@@ -887,12 +899,14 @@ module.exports = {
         showIf: { nav_action: ["Go to URL", "Popup modal"] },
       },
     ],
-    run: async ({ configuration: { nav_action, url } }) => {
+    run: async ({ row, configuration: { nav_action, url } }) => {
+      let url1 = interpolate(url, row);
+
       switch (nav_action) {
         case "Go to URL":
-          return { goto: url };
+          return { goto: url1 };
         case "Popup modal":
-          return { popup: url };
+          return { popup: url1 };
         case "Back":
           return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
         case "Close modal":
@@ -965,15 +979,17 @@ module.exports = {
         required: true,
       },
     ],
-    run: async ({ configuration: { type, notify_type, text } }) => {
+    run: async ({ row, configuration: { type, notify_type, text } }) => {
       //type is legacy. this name gave react problems
+      let text1 = interpolate(text, row);
+
       switch (notify_type || type) {
         case "Error":
-          return { error: text };
+          return { error: text1 };
         case "Success":
-          return { notify_success: text };
+          return { notify_success: text1 };
         default:
-          return { notify: text };
+          return { notify: text1 };
       }
     },
   },
@@ -1393,7 +1409,12 @@ module.exports = {
         : eval_expression(user_spec, row || {});
       const users = await User.find(user_where);
       for (const user of users) {
-        await Notification.create({ title, body, link, user_id: user.id });
+        await Notification.create({
+          title: interpolate(title, row),
+          body: interpolate(body, row),
+          link: interpolate(link, row),
+          user_id: user.id,
+        });
       }
     },
   },
