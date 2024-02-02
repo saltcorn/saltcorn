@@ -2973,16 +2973,7 @@ class Table implements AbstractTable {
     const whereObj = prefixFieldsInWhere(opts.where, "a");
     const { where, values } = mkWhere(whereObj, db.isSQLite);
 
-    let placeCounter = values.length;
-
-    process_aggregations(
-      aggregations,
-      placeCounter,
-      fldNms,
-      values,
-      schema,
-      this
-    );
+    process_aggregations(this, aggregations, fldNms, values, schema);
 
     const selectopts: SelectOptions = {
       limit: opts.limit,

@@ -18,13 +18,14 @@ import Field from "../field";
 import db from "../../db";
 
 export const process_aggregations = (
+  this_table: any, //Table
   aggregations: AggregationOptions[],
-  placeCounter: number,
   fldNms: string[],
   values: any[],
-  schema: string,
-  this_table: any
+  schema: string
 ) => {
+  let placeCounter = values.length;
+
   let aggValues: any = []; // for sqlite
   let Table = this_table.constructor;
 
