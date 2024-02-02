@@ -364,6 +364,15 @@ function jsexprToWhere(
   }
 }
 
+function freeVariablesInInterpolation(interpString: string): Set<string> {
+  let freeVars: Set<string> = new Set();
+  ((interpString || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach((s) => {
+    const s1 = s.replace("{{", "").replace("}}", "").trim();
+    freeVars = new Set([...freeVars, ...freeVariables(s1)]);
+  });
+  return freeVars;
+}
+
 function freeVariables(expression: string): Set<string> {
   if (!expression) return new Set();
   const freeVars: string[] = [];
@@ -694,6 +703,7 @@ export = {
   jsexprToWhere,
   jsexprToSQL,
   freeVariables,
+  freeVariablesInInterpolation,
   add_free_variables_to_joinfields,
   removeComments,
 };
