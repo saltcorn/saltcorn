@@ -616,27 +616,31 @@ describe("Table aggregationQuery", () => {
   it("should get array aggregations", async () => {
     const readings = Table.findOne({ name: "readings" });
     assertIsSet(readings);
-    const aggs = await readings.aggregationQuery({
-      ids: {
-        field: "id",
-        aggregate: "array_agg",
-      },
-    });
-    expect(aggs.ids).toStrictEqual([1, 2, 3]);
-  });
-  it("should get filtered array aggregations", async () => {
-    const readings = Table.findOne({ name: "readings" });
-    assertIsSet(readings);
-    const aggs = await readings.aggregationQuery(
-      {
+    if (!db.isSQLite) {
+      const aggs = await readings.aggregationQuery({
         ids: {
           field: "id",
           aggregate: "array_agg",
         },
-      },
-      { normalised: true }
-    );
-    expect(aggs.ids).toStrictEqual([1]);
+      });
+      expect(aggs.ids).toStrictEqual([1, 2, 3]);
+    }
+  });
+  it("should get filtered array aggregations", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    if (!db.isSQLite) {
+      const aggs = await readings.aggregationQuery(
+        {
+          ids: {
+            field: "id",
+            aggregate: "array_agg",
+          },
+        },
+        { normalised: true }
+      );
+      expect(aggs.ids).toStrictEqual([1]);
+    }
   });
 });
 
