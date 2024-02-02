@@ -588,7 +588,18 @@ describe("Table get data", () => {
 });
 
 describe("Table aggregationQuery", () => {
-  it("should get aggregations", async () => {
+  it("should get avg aggregations", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const aggs = await readings.aggregationQuery({
+      avg_temp: {
+        field: "temperature",
+        aggregate: "avg",
+      },
+    });
+    expect(Math.round(aggs.avg_temp)).toBe(38);
+  });
+  it("should get filtered avg aggregations", async () => {
     const readings = Table.findOne({ name: "readings" });
     assertIsSet(readings);
     const aggs = await readings.aggregationQuery(
@@ -601,6 +612,31 @@ describe("Table aggregationQuery", () => {
       { normalised: true }
     );
     expect(Math.round(aggs.avg_temp)).toBe(37);
+  });
+  it("should get array aggregations", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const aggs = await readings.aggregationQuery({
+      ids: {
+        field: "id",
+        aggregate: "array_agg",
+      },
+    });
+    expect(aggs.ids).toStrictEqual([1, 2, 3]);
+  });
+  it("should get filtered array aggregations", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const aggs = await readings.aggregationQuery(
+      {
+        ids: {
+          field: "id",
+          aggregate: "array_agg",
+        },
+      },
+      { normalised: true }
+    );
+    expect(aggs.ids).toStrictEqual([1]);
   });
 });
 
