@@ -15,6 +15,7 @@ import {
 import utils from "../../utils";
 const { isNode } = utils;
 import Field from "../field";
+import db from "../../db";
 
 export const process_aggregations = (
   aggregations: AggregationOptions[],
@@ -26,6 +27,7 @@ export const process_aggregations = (
 ) => {
   let aggValues: any = []; // for sqlite
   let Table = this_table.constructor;
+
   Object.entries<AggregationOptions>(aggregations).forEach(
     ([fldnm, { table, ref, field, where, aggregate, subselect, through }]) => {
       let whereStr = "";
