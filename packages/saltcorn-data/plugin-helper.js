@@ -2268,7 +2268,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
         else if (v?.lt) return x[k] < +v.lt;
         else if (v?.gt) return x[k] > +v.gt;
         else if (v?.ilike) return (x[k] || "").includes(v.ilike);
-        else return x[k] === v;
+        else return x[k] == v;
       };
     const data_filtered =
       restricts.length === 0
