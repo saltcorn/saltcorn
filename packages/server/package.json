@@ -35,7 +35,7 @@
     "greenlock-express": "^4.0.3",
     "helmet": "^3.23.3",
     "i18n": "^0.15.1",
-    "imapflow": "1.0.123",
+    "imapflow": "1.0.150",
     "jsonwebtoken": "^9.0.0",
     "live-plugin-manager": "^0.17.1",
     "markdown-it": "^13.0.2",
