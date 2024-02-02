@@ -2294,6 +2294,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     else return data_filtered;
   };
   const tbl = {
+    pk_name: fields.find((f) => f.primary_key)?.name,
     getFields() {
       return fields;
     },
