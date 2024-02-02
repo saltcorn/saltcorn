@@ -1648,6 +1648,20 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
         if (v?.isFormula?.url && typeof v.url === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
       },
+      tabs(v) {
+        (v.titles || []).forEach((t) => {
+          ((t || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach((s) => {
+            const s1 = s.replace("{{", "").replace("}}", "").trim();
+            freeVars = new Set([...freeVars, ...freeVariables(s1)]);
+          });
+        });
+        (v.showif || []).forEach((t) => {
+          ((t || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach((s) => {
+            const s1 = s.replace("{{", "").replace("}}", "").trim();
+            freeVars = new Set([...freeVars, ...freeVariables(s1)]);
+          });
+        });
+      },
       blank(v) {
         if (v?.isFormula?.text && typeof v.contents === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
