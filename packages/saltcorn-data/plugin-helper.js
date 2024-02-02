@@ -2266,7 +2266,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     f.constructor.name === Object.name ? new Field(f) : f
   );
   const getRows = async (where = {}, selopts = {}) => {
-    let data_in = await get_json_list({ where, ...selopts });
+    let data_in = await get_json_list(where, selopts);
     const restricts = Object.entries(where);
     const sat =
       (x) =>
@@ -2324,6 +2324,11 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     getJoinedRows(opts = {}) {
       const { where, ...rest } = opts;
       return getRows(where || {}, rest || {});
+    },
+    async getJoinedRow(opts = {}) {
+      const { where, ...rest } = opts;
+      const rows = await getRows(where || {}, rest || {});
+      return rows.length > 0 ? rows[0] : null;
     },
     async countRows(where, opts) {
       let data_in = await get_json_list({ ...where, ...opts });
