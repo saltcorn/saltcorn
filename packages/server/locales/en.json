@@ -1349,5 +1349,8 @@
 	"Pagegroup %s has no members": "Pagegroup %s has no members",
 	"Remove border": "Remove border",
 	"No lines between tables": "No lines between tables",
-	"Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class=\"fst-normal\">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.": "Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class=\"fst-normal\">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value."
+	"Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class=\"fst-normal\">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.": "Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class=\"fst-normal\">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.",
+	"Page description": "Page description",
+	"Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>": "Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>",
+	"For search engines. Some view patterns accept interpolations.": "For search engines. Some view patterns accept interpolations."
 }

@@ -188,8 +188,19 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         type: "String",
         parent_field: "attributes",
         tab: "View settings",
-        sublabel:
-          "Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>",
+        sublabel: req.__(
+          "Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>"
+        ),
+      }),
+      new Field({
+        name: "page_description",
+        label: req.__("Page description"),
+        type: "String",
+        parent_field: "attributes",
+        tab: "View settings",
+        sublabel: req.__(
+          "For search engines. Some view patterns accept interpolations."
+        ),
       }),
       new Field({
         name: "default_render_page",
