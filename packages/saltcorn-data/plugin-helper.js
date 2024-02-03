@@ -2352,6 +2352,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     slug_options() {
       return [];
     },
+    enable_fkey_constraints() {},
     ownership_options() {
       return [];
     },
