@@ -892,7 +892,7 @@ const render = (
           evaluate: /\{\{#(.+?)\}\}/g,
           interpolate: /\{\{([^#].+?)\}\}/g,
         });
-        const temres = template({ row, ...row });
+        const temres = template({ row, user: req?.user, ...row });
         return temres;
       } else return segment.contents;
     },

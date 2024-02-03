@@ -271,7 +271,7 @@ const show_with_html = {
       evaluate: /\{\{#(.+?)\}\}/g,
       interpolate: /\{\{([^#].+?)\}\}/g,
     });
-    const rendered = template({ it: v });
+    const rendered = template({ it: v, user: req?.user });
     return rendered;
   },
 };
