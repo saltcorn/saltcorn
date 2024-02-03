@@ -42,12 +42,12 @@ const _ = require("underscore");
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
-const interpolate = (s, row) => {
+const interpolate = (s, row, user) => {
   if (s && row) {
     const template = _.template(s, {
       interpolate: /\{\{([^#].+?)\}\}/g,
     });
-    return template({ row, ...row });
+    return template({ row, user, ...row });
   } else return s;
 };
 
@@ -244,8 +244,8 @@ module.exports = {
      * @param {object} opts.body
      * @returns {Promise<object>}
      */
-    run: async ({ row, configuration: { url, body } }) => {
-      let url1 = interpolate(url, row);
+    run: async ({ row, user, configuration: { url, body } }) => {
+      let url1 = interpolate(url, row, user);
 
       return await fetch(url1, {
         method: "post",
@@ -554,7 +554,7 @@ module.exports = {
         setBody.html = html.html;
       } else {
         const view = await View.findOne({ name: viewname });
-        setBody.html = await viewToEmailHtml(view, { id: row.id });
+        setBody.html = await viewToEmailHtml(view, { id: row[table.pk_name] });
       }
 
       const from = getState().getConfig("email_from");
@@ -584,9 +584,15 @@ module.exports = {
         if (confirm_field && sendres.accepted.includes(to_addr)) {
           const confirm_fld = table.getField(confirm_field);
           if (confirm_fld && confirm_fld.type.name === "Date")
-            await table.updateRow({ [confirm_field]: new Date() }, row.id);
+            await table.updateRow(
+              { [confirm_field]: new Date() },
+              row[table.pk_name]
+            );
           else if (confirm_fld && confirm_fld.type.name === "Bool")
-            await table.updateRow({ [confirm_field]: true }, row.id);
+            await table.updateRow(
+              { [confirm_field]: true },
+              row[table.pk_name]
+            );
         }
         if (disable_notify) return;
         else return { notify: `E-mail sent to ${to_addr}` };
@@ -594,7 +600,10 @@ module.exports = {
         if (confirm_field) {
           const confirm_fld = table.getField(confirm_field);
           if (confirm_fld && confirm_fld.type.name === "Bool")
-            await table.updateRow({ [confirm_field]: false }, row.id);
+            await table.updateRow(
+              { [confirm_field]: false },
+              row[table.pk_name]
+            );
           throw e;
         }
       }
@@ -899,8 +908,8 @@ module.exports = {
         showIf: { nav_action: ["Go to URL", "Popup modal"] },
       },
     ],
-    run: async ({ row, configuration: { nav_action, url } }) => {
-      let url1 = interpolate(url, row);
+    run: async ({ row, user, configuration: { nav_action, url } }) => {
+      let url1 = interpolate(url, row, user);
 
       switch (nav_action) {
         case "Go to URL":
@@ -979,9 +988,9 @@ module.exports = {
         required: true,
       },
     ],
-    run: async ({ row, configuration: { type, notify_type, text } }) => {
+    run: async ({ row, user, configuration: { type, notify_type, text } }) => {
       //type is legacy. this name gave react problems
-      let text1 = interpolate(text, row);
+      let text1 = interpolate(text, row, user);
 
       switch (notify_type || type) {
         case "Error":
@@ -1401,7 +1410,11 @@ module.exports = {
      * @param {object} opts.user
      * @returns {Promise<void>}
      */
-    run: async ({ row, configuration: { title, body, link, user_spec } }) => {
+    run: async ({
+      row,
+      user,
+      configuration: { title, body, link, user_spec },
+    }) => {
       const user_where = User.valid_email(user_spec)
         ? { email: user_spec }
         : user_spec === "*"
@@ -1410,9 +1423,9 @@ module.exports = {
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({
-          title: interpolate(title, row),
-          body: interpolate(body, row),
-          link: interpolate(link, row),
+          title: interpolate(title, row, user),
+          body: interpolate(body, row, user),
+          link: interpolate(link, row, user),
           user_id: user.id,
         });
       }

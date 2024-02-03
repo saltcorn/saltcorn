@@ -74,8 +74,9 @@ router.get(
     let title =
       isModal && view.attributes?.popup_title
         ? view.attributes?.popup_title
-        : scan_for_page_title(contents0, view.name);
-    if (isModal && (title || "").includes("{{")) {
+        : view.attributes?.page_title ||
+          scan_for_page_title(contents0, view.name); //legacy
+    if ((title || "").includes("{{")) {
       title = await view.interpolate_title_string(title, query);
     }
     if (isModal && view.attributes?.popup_width)
@@ -89,6 +90,13 @@ router.get(
       res.set("SaltcornModalSaveIndicator", `true`);
     if (isModal && view.attributes?.popup_link_out)
       res.set("SaltcornModalLinkOut", `true`);
+    if (view.attributes?.page_description) {
+      let description = view.attributes?.page_description;
+      if ((description || "").includes("{{")) {
+        description = await view.interpolate_title_string(description, query);
+      }
+      title = { title, description };
+    }
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
     if (!isTest())

@@ -360,27 +360,6 @@ describe("viewedit new Show", () => {
       .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
       .set("Cookie", loginCookie)
-      .expect(toInclude("Set page title"));
-  });
-  it("save new view page title", async () => {
-    const loginCookie = await getAdminLoginCookie();
-    const table = Table.findOne({ name: "books" });
-
-    const ctx = encodeURIComponent(
-      JSON.stringify({
-        table_id: table.id,
-        viewname: "mybook",
-        layout,
-        columns,
-      })
-    );
-
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .post("/viewedit/config/mybook")
-      .send("contextEnc=" + ctx)
-      .send("stepName=Set+page+title")
-      .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
   it("should show new view", async () => {
