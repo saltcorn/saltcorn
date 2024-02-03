@@ -183,6 +183,15 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       }),
       new Field({
+        name: "page_title",
+        label: req.__("Page title"),
+        type: "String",
+        parent_field: "attributes",
+        tab: "View settings",
+        sublabel:
+          "Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>",
+      }),
+      new Field({
         name: "default_render_page",
         label: req.__("Show on page"),
         sublabel: req.__(
