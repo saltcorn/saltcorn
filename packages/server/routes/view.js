@@ -75,7 +75,7 @@ router.get(
       isModal && view.attributes?.popup_title
         ? view.attributes?.popup_title
         : view.attributes?.page_title ||
-          scan_for_page_title(contents0, view.name);
+          scan_for_page_title(contents0, view.name); //legacy
     if ((title || "").includes("{{")) {
       title = await view.interpolate_title_string(title, query);
     }
