@@ -539,52 +539,35 @@ const ToolboxShow = ({ expanded }) => {
     views,
     images,
   } = options;
-  return (
-    <Fragment>
-      <div className="toolbar-row">
-        <TextElem connectors={connectors} />
-        <ColumnsElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <FieldElem
-          connectors={connectors}
-          fields={fields}
-          field_view_options={field_view_options}
-        />
-        <LineBreakElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <JoinFieldElem connectors={connectors} options={options} />
-        <ViewLinkElem connectors={connectors} options={options} />
-      </div>
-      <div className="toolbar-row">
-        <ActionElem connectors={connectors} options={options} />
-        <LinkElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <AggregationElem
-          connectors={connectors}
-          child_field_list={child_field_list}
-          agg_field_opts={agg_field_opts}
-        />
-        <ViewElem connectors={connectors} views={views} />
-      </div>
-      <div className="toolbar-row">
-        <ContainerElem connectors={connectors} />
-        <CardElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <TabsElem connectors={connectors} />
-        <ImageElem connectors={connectors} images={images} />
-      </div>
-      <div className="toolbar-row">
-        <HTMLElem connectors={connectors} />
-        <DropMenuElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <TableElem connectors={connectors} />
-      </div>
-    </Fragment>
+  return chunkToolBox(
+    [
+      <TextElem connectors={connectors} />,
+      <ColumnsElem connectors={connectors} />,
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />,
+      <LineBreakElem connectors={connectors} />,
+      <JoinFieldElem connectors={connectors} options={options} />,
+      <ViewLinkElem connectors={connectors} options={options} />,
+      <ActionElem connectors={connectors} options={options} />,
+      <LinkElem connectors={connectors} />,
+      <AggregationElem
+        connectors={connectors}
+        child_field_list={child_field_list}
+        agg_field_opts={agg_field_opts}
+      />,
+      <ViewElem connectors={connectors} views={views} />,
+      <ContainerElem connectors={connectors} />,
+      <CardElem connectors={connectors} />,
+      <TabsElem connectors={connectors} />,
+      <ImageElem connectors={connectors} images={images} />,
+      <HTMLElem connectors={connectors} />,
+      <DropMenuElem connectors={connectors} />,
+      <TableElem connectors={connectors} />,
+    ],
+    expanded
   );
 };
 
@@ -594,50 +577,34 @@ export /**
  * @subcategory components / Toolbox
  * @namespace
  */
-const ToolboxFilter = () => {
+const ToolboxFilter = ({ expanded }) => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
   const { fields, views, field_view_options } = options;
-  return (
-    <Fragment>
-      <div className="toolbar-row">
-        <TextElem connectors={connectors} />
-        <ColumnsElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <FieldElem
-          connectors={connectors}
-          fields={fields}
-          field_view_options={field_view_options}
-        />
-        <LineBreakElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <DropDownFilterElem connectors={connectors} fields={fields} />
-        <ToggleFilterElem connectors={connectors} fields={fields} />
-      </div>
-      <div className="toolbar-row">
-        <SearchElem connectors={connectors} />
-        <ActionElem connectors={connectors} options={options} />
-      </div>
-      <div className="toolbar-row">
-        <ContainerElem connectors={connectors} />
-
-        <CardElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <TabsElem connectors={connectors} />
-        <ViewElem connectors={connectors} views={views} />
-      </div>
-      <div className="toolbar-row">
-        <HTMLElem connectors={connectors} />
-        <LinkElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <TableElem connectors={connectors} />
-        <DropMenuElem connectors={connectors} />
-      </div>
-    </Fragment>
+  return chunkToolBox(
+    [
+      <TextElem connectors={connectors} />,
+      <ColumnsElem connectors={connectors} />,
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />,
+      <LineBreakElem connectors={connectors} />,
+      <DropDownFilterElem connectors={connectors} fields={fields} />,
+      <ToggleFilterElem connectors={connectors} fields={fields} />,
+      <SearchElem connectors={connectors} />,
+      <ActionElem connectors={connectors} options={options} />,
+      <ContainerElem connectors={connectors} />,
+      <CardElem connectors={connectors} />,
+      <TabsElem connectors={connectors} />,
+      <ViewElem connectors={connectors} views={views} />,
+      <HTMLElem connectors={connectors} />,
+      <LinkElem connectors={connectors} />,
+      <TableElem connectors={connectors} />,
+      <DropMenuElem connectors={connectors} />,
+    ],
+    expanded
   );
 };
 
@@ -651,7 +618,6 @@ const ToolboxEdit = ({ expanded }) => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
   const { fields, field_view_options, images, views } = options;
-  console.log("tbexp", expanded);
   return chunkToolBox(
     [
       <TextElem connectors={connectors} />,
@@ -685,43 +651,28 @@ export /**
  * @subcategory components / Toolbox
  * @namespace
  */
-const ToolboxPage = () => {
+const ToolboxPage = ({ expanded }) => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
   const { views, pages, images } = options;
-  return (
-    <Fragment>
-      <div className="toolbar-row">
-        <TextElem connectors={connectors} />
-        <ColumnsElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <LineBreakElem connectors={connectors} />
-        <HTMLElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <CardElem connectors={connectors} />
-        <ImageElem connectors={connectors} images={images} />{" "}
-      </div>
-      <div className="toolbar-row">
-        <LinkElem connectors={connectors} />
-        <ViewElem connectors={connectors} views={views} isPageEdit={true} />
-      </div>
-      <div className="toolbar-row">
-        <SearchElem connectors={connectors} />
-        <ActionElem connectors={connectors} options={options} />
-      </div>
-      <div className="toolbar-row">
-        <ContainerElem connectors={connectors} />
-        <TabsElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <DropMenuElem connectors={connectors} />
-        <PageElem connectors={connectors} pages={pages} />
-      </div>
-      <div className="toolbar-row">
-        <TableElem connectors={connectors} />
-      </div>
-    </Fragment>
+  return chunkToolBox(
+    [
+      <TextElem connectors={connectors} />,
+      <ColumnsElem connectors={connectors} />,
+      <LineBreakElem connectors={connectors} />,
+      <HTMLElem connectors={connectors} />,
+      <CardElem connectors={connectors} />,
+      <ImageElem connectors={connectors} images={images} />,
+      <LinkElem connectors={connectors} />,
+      <ViewElem connectors={connectors} views={views} isPageEdit={true} />,
+      <SearchElem connectors={connectors} />,
+      <ActionElem connectors={connectors} options={options} />,
+      <ContainerElem connectors={connectors} />,
+      <TabsElem connectors={connectors} />,
+      <DropMenuElem connectors={connectors} />,
+      <PageElem connectors={connectors} pages={pages} />,
+      <TableElem connectors={connectors} />,
+    ],
+    expanded
   );
 };
