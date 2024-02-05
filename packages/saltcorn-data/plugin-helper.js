@@ -2331,7 +2331,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       return rows.length > 0 ? rows[0] : null;
     },
     async countRows(where, opts) {
-      let data_in = await get_json_list({ ...where, ...opts });
+      let data_in = await get_json_list(where, opts);
       return data_in.length;
     },
     get_child_relations() {

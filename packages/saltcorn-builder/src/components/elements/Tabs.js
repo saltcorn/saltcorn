@@ -424,7 +424,7 @@ const TabsSettings = () => {
                 />
               </td>
             </tr>
-            {options.mode === "show" ? (
+            {options.mode === "show" || options.mode === "edit" ? (
               <Fragment>
                 <tr>
                   <th colSpan="2">Show if formula</th>
