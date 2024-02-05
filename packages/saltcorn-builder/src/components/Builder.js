@@ -396,8 +396,8 @@ const Builder = ({ options, layout, mode }) => {
   const nodekeys = useRef([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isEnlarged, setIsEnlarged] = useState(false);
+  const [isLeftEnlarged, setIsLeftEnlarged] = useState(false);
   const [relationsCache, setRelationsCache] = useState({});
-
   return (
     <ErrorBoundary>
       <Editor onRender={RenderNode}>
@@ -412,7 +412,13 @@ const Builder = ({ options, layout, mode }) => {
               }}
             >
               <div className="row" style={{ marginTop: "-5px" }}>
-                <div className="col-sm-auto left-builder-col">
+                <div
+                  className={`col-sm-auto left-builder-col ${
+                    isLeftEnlarged
+                      ? "builder-left-enlarged"
+                      : "builder-left-shrunk"
+                  }`}
+                >
                   <div className="componets-and-library-accordion toolbox-card">
                     <InitNewElement
                       nodekeys={nodekeys}
@@ -421,19 +427,34 @@ const Builder = ({ options, layout, mode }) => {
                     <Accordion>
                       <div className="card mt-1" accordiontitle="Components">
                         {{
-                          show: <ToolboxShow />,
-                          edit: <ToolboxEdit />,
-                          page: <ToolboxPage />,
-                          filter: <ToolboxFilter />,
+                          show: <ToolboxShow expanded={isLeftEnlarged} />,
+                          edit: <ToolboxEdit expanded={isLeftEnlarged} />,
+                          page: <ToolboxPage expanded={isLeftEnlarged} />,
+                          filter: <ToolboxFilter expanded={isLeftEnlarged} />,
                         }[mode] || <div>Missing mode</div>}
                       </div>
                       <div accordiontitle="Library">
-                        <Library />
+                        <Library expanded={isLeftEnlarged} />
                       </div>
                     </Accordion>
                   </div>
-                  <div className="card toolbox-card pe-0">
-                    <div className="card-header">Layers</div>
+                  <div
+                    className="card toolbox-card pe-0"
+                    style={isLeftEnlarged ? { width: "12.35rem" } : {}}
+                  >
+                    <div className="card-header p-2 d-flex justify-content-between">
+                      <div>Layers</div>
+                      <FontAwesomeIcon
+                        icon={
+                          isLeftEnlarged
+                            ? faCaretSquareLeft
+                            : faCaretSquareRight
+                        }
+                        className={"float-end fa-lg"}
+                        onClick={() => setIsLeftEnlarged(!isLeftEnlarged)}
+                        title={isLeftEnlarged ? "Shrink" : "Enlarge"}
+                      />
+                    </div>
                     {showLayers && (
                       <div className="card-body p-0 builder-layers">
                         <Layers expandRootOnLoad={true} />
@@ -488,6 +509,7 @@ const Builder = ({ options, layout, mode }) => {
                       icon={isEnlarged ? faCaretSquareRight : faCaretSquareLeft}
                       className={"float-end me-2 mt-1 fa-lg"}
                       onClick={() => setIsEnlarged(!isEnlarged)}
+                      title={isEnlarged ? "Shrink" : "Enlarge"}
                     />
 
                     <SettingsPanel />

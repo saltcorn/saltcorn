@@ -250,7 +250,7 @@ const ColumnsSettings = () => {
           setProp={setProp}
           props={node}
         ></ConfigField>
-        <table>
+        <table className="w-100">
           <tbody>
             <SettingsSectionHeaderRow title="Align" />
             <SettingsRow

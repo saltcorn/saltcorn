@@ -20,18 +20,7 @@ import faIcons from "./elements/faicons";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
-import { isEqual, throttle } from "lodash";
-
-/**
- *
- * @param {object[]} xs
- * @returns {object[]}
- */
-const twoByTwos = (xs) => {
-  if (xs.length <= 2) return [xs];
-  const [x, y, ...rest] = xs;
-  return [[x, y], ...twoByTwos(rest)];
-};
+import { isEqual, throttle, chunk } from "lodash";
 
 export /**
  * @param {object} props
@@ -184,7 +173,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const Library = () => {
+const Library = ({ expanded }) => {
   const { actions, selected, query, connectors } = useEditor((state, query) => {
     return {
       selected: state.events.selected,
@@ -216,7 +205,10 @@ const Library = () => {
     setRecent([...recent, data]);
   };
 
-  const elemRows = twoByTwos([...(options.library || []), ...recent]);
+  const elemRows = chunk(
+    [...(options.library || []), ...recent],
+    expanded ? 3 : 2
+  );
   return (
     <div className="builder-library">
       <div className="dropdown">

@@ -54,16 +54,34 @@ div.builder-embed-view {
       rgba(0, 0, 0, 0) 100%
     );
 }
+
+.builder-left-enlarged div.toolbox-card.componets-and-library-accordion {
+  width: 13.35rem;
+  padding-right: 1rem;
+  margin-bottom: 1rem;
+}
+
 div.toolbox-card {
   width: 9.2rem;
   padding-right: 1rem;
   margin-bottom: 1rem;
 }
-div.wrap-builder-elem {
+
+.builder-left-enlarged div.wrap-builder-elem {
+  width: 33%;
+  height: 4rem;
+  position: relative;
+}
+.builder-left-shrunk div.wrap-builder-elem {
   width: 50%;
   height: 4rem;
   position: relative;
 }
+
+.builder-left-enlarged div.toolbox-card div.wrap-builder-elem:nth-child(2) {
+  border-right: 1px solid #bcbcbc;
+}
+
 div.toolbox-card div.wrap-builder-elem:nth-child(1) {
   border-right: 1px solid #bcbcbc;
 }

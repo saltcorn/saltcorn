@@ -658,6 +658,30 @@ const transformForm = async ({
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
+    tabs(segment) {
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(sif, row || {}, req.user);
+          if (!showit) {
+            segment.titles.splice(ix, 1);
+            segment.contents.splice(ix, 1);
+          }
+        }
+      });
+
+      (segment.titles || []).forEach((t, ix) => {
+        if (typeof t === "string" && t.includes("{{")) {
+          const template = _.template(t, {
+            interpolate: /\{\{([^#].+?)\}\}/g,
+          });
+          segment.titles[ix] = template({
+            user: req.user,
+            row,
+            ...(row || {}),
+          });
+        }
+      });
+    },
     view_link(segment) {
       segment.type = "blank";
       const view_select = parse_view_select(segment.view);
