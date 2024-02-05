@@ -488,6 +488,7 @@ const Builder = ({ options, layout, mode }) => {
                       icon={isEnlarged ? faCaretSquareRight : faCaretSquareLeft}
                       className={"float-end me-2 mt-1 fa-lg"}
                       onClick={() => setIsEnlarged(!isEnlarged)}
+                      title={isEnlarged ? "Shrink" : "Enlarge"}
                     />
 
                     <SettingsPanel />
