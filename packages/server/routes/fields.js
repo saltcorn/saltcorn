@@ -479,6 +479,8 @@ const fieldFlow = (req) =>
                 // todo sublabel
                 type: "String",
                 class: "validate-expression",
+                fieldview: "textarea",
+                attributes: { rows: 2 },
                 validator: expressionValidator,
                 showIf: { expression_type: "JavaScript expression" },
               }),
