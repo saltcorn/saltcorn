@@ -45,6 +45,7 @@ describe("plugin helper", () => {
     expect(x[0].views.map((v: View) => v.name).sort()).toStrictEqual([
       "author_multi_edit",
       "authoredit",
+      "authoredit_with_independent_list",
       "authoredit_with_show",
       "authorshow",
       "show_author_with_disc_books_list",

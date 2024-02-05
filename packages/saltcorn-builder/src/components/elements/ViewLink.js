@@ -18,13 +18,18 @@ import {
   setAPropGen,
   FormulaTooltip,
   HelpTopicLink,
-  prepCacheAndFinder,
   initialRelation,
-  updateRelationsCache,
+  buildLayers,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
 import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
+
+import {
+  RelationsFinder,
+  Relation,
+  buildTableCaches,
+} from "@saltcorn/common-code";
 
 export /**
  * @param {object} props
@@ -127,10 +132,18 @@ const ViewLinkSettings = () => {
     link_target_blank,
   } = node;
   const options = React.useContext(optionsCtx);
-  const { caches, finder } = useMemo(
-    () => prepCacheAndFinder(options),
+  const {
+    tables,
+    views,
+    tableName,
+    excluded_subview_templates,
+    max_relations_layer_depth,
+  } = options;
+  const finder = useMemo(
+    () => new RelationsFinder(tables, views, max_relations_layer_depth),
     [undefined]
   );
+  const tableCaches = useMemo(() => buildTableCaches(tables), [undefined]);
   const { relationsCache, setRelationsCache } = React.useContext(relationsCtx);
   let errorString = false;
   try {
@@ -147,19 +160,36 @@ const ViewLinkSettings = () => {
   const safeViewName = use_view_name?.includes(".")
     ? use_view_name.split(".")[0]
     : use_view_name;
-  updateRelationsCache(
-    relationsCache,
-    setRelationsCache,
-    options,
-    finder,
-    safeViewName
-  );
-  const [relations, setRelations] = React.useState(
+  if (!(relationsCache[tableName] && relationsCache[tableName][safeViewName])) {
+    const relations = finder.findRelations(
+      tableName,
+      safeViewName,
+      excluded_subview_templates
+    );
+    const layers = buildLayers(
+      relations,
+      tableName,
+      tableCaches.tableNameCache
+    );
+    relationsCache[tableName] = relationsCache[tableName] || {};
+    relationsCache[tableName][safeViewName] = { relations, layers };
+    setRelationsCache({ ...relationsCache });
+  }
+  const [relationsData, setRelationsData] = React.useState(
     relationsCache[options.tableName][safeViewName]
   );
-  let safeRelation = relation;
-  if (!safeRelation && !hasLegacyRelation && relations?.paths.length > 0) {
-    safeRelation = initialRelation(relations.paths, options.tableName);
+  let safeRelation = null;
+  if (relation) {
+    const subView = views.find((view) => view.name === safeViewName);
+    const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
+    safeRelation = new Relation(relation, subTbl.name, subView.display_type);
+  }
+  if (
+    !safeRelation &&
+    !hasLegacyRelation &&
+    relationsData?.relations.length > 0
+  ) {
+    safeRelation = initialRelation(relationsData.relations);
     setProp((prop) => {
       prop.relation = safeRelation;
     });
@@ -168,29 +198,34 @@ const ViewLinkSettings = () => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== use_view_name) {
-        updateRelationsCache(
-          relationsCache,
-          setRelationsCache,
-          options,
-          finder,
-          target_value
+        const newRelations = finder.findRelations(
+          tableName,
+          target_value,
+          excluded_subview_templates
         );
-        const newRelations = relationsCache[options.tableName][target_value];
-        if (newRelations.paths.length > 0) {
+        const layers = buildLayers(
+          newRelations,
+          tableName,
+          tableCaches.tableNameCache
+        );
+
+        relationsCache[tableName] = relationsCache[tableName] || {};
+        relationsCache[tableName][target_value] = {
+          relations: newRelations,
+          layers,
+        };
+        if (newRelations.length > 0) {
           setProp((prop) => {
             prop.name = target_value;
-            prop.relation = initialRelation(
-              newRelations.paths,
-              options.tableName
-            );
+            prop.relation = initialRelation(newRelations).relationString;
           });
-          setRelations(newRelations);
+          setRelationsData(newRelations);
         }
       }
     }
   };
   const helpContext = { view_name: use_view_name };
-  if (options.tableName) helpContext.srcTable = options.tableName;
+  if (tableName) helpContext.srcTable = tableName;
   return (
     <div>
       <table className="w-100">
@@ -215,7 +250,7 @@ const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <RelationOnDemandPicker
-                relations={relations.layers}
+                relations={relationsData.layers}
                 update={(relPath) => {
                   if (relPath.startsWith(".")) {
                     setProp((prop) => {
@@ -233,8 +268,8 @@ const ViewLinkSettings = () => {
               <RelationBadges
                 view={name}
                 relation={safeRelation}
-                parentTbl={options.tableName}
-                tableNameCache={caches.tableNameCache}
+                parentTbl={tableName}
+                caches={tableCaches}
               />
             </td>
           </tr>

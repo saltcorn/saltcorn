@@ -755,7 +755,7 @@ describe("relation path to query and state", () => {
       .expect(toNotInclude("album B"));
   });
 
-  it("OneToOneSHow", async () => {
+  it("OneToOneShow", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
@@ -873,11 +873,23 @@ describe("edit-in-edit with relation path and legacy", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/view/edit_department_with_edit_in_edit_legacy?id=1")
+      .get("/view/edit_department_with_edit_in_edit_relation_path?id=1")
       .set("Cookie", loginCookie)
       .expect(toInclude("add_repeater"));
-
-    // TODO post
+    await request(app)
+      .post("/view/edit_department_with_edit_in_edit_relation_path?id=1")
+      .set("Cookie", loginCookie)
+      .send({
+        department_0: "1",
+        department_1: "1",
+        id: "1",
+        id_0: "1",
+        id_1: "2",
+        name: "my_department",
+        name_0: "manager",
+        name_1: "my_employee",
+      })
+      .expect(toRedirect("/"));
   });
 
   it("edit-in-edit with relation path two layer", async () => {
@@ -887,10 +899,21 @@ describe("edit-in-edit with relation path and legacy", () => {
       .get("/view/edit_cover_with_edit_artist_on_album_rel_path?id=1")
       .set("Cookie", loginCookie)
       .expect(toInclude("add_repeater"));
-
-    // TODO post
+    await request(app)
+      .post("/view/edit_cover_with_edit_artist_on_album_rel_path?id=1")
+      .set("Cookie", loginCookie)
+      .send({
+        album_0: "1",
+        album_1: "1",
+        artist_0: "1",
+        artist_1: "2",
+        id: "1",
+        id_0: "1",
+        id_1: "3",
+        name: "green cover",
+      })
+      .expect(toRedirect("/"));
   });
-
   it("edit-in-edit legacy one layer", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -898,8 +921,20 @@ describe("edit-in-edit with relation path and legacy", () => {
       .get("/view/edit_department_with_edit_in_edit_legacy?id=1")
       .set("Cookie", loginCookie)
       .expect(toInclude("add_repeater"));
-
-    // TODO post
+    await request(app)
+      .post("/view/edit_department_with_edit_in_edit_legacy?id=1")
+      .set("Cookie", loginCookie)
+      .send({
+        department_0: "1",
+        department_1: "1",
+        id: "1",
+        id_0: "1",
+        id_1: "2",
+        name: "my_department",
+        name_0: "manager",
+        name_1: "my_employee",
+      })
+      .expect(toRedirect("/"));
   });
 
   it("edit-in-edit with relation path two layer", async () => {
@@ -909,8 +944,20 @@ describe("edit-in-edit with relation path and legacy", () => {
       .get("/view/edit_cover_with_edit_artist_on_album_rel_path?id=1")
       .set("Cookie", loginCookie)
       .expect(toInclude("add_repeater"));
-
-    // TODO post
+    await request(app)
+      .post("/view/edit_cover_with_edit_artist_on_album_rel_path?id=1")
+      .set("Cookie", loginCookie)
+      .send({
+        album_0: "1",
+        album_1: "1",
+        artist_0: "1",
+        artist_1: "2",
+        id: "1",
+        id_0: "1",
+        id_1: "3",
+        name: "green cover",
+      })
+      .expect(toRedirect("/"));
   });
 
   it("edit-in-edit legacy two layer", async () => {
@@ -920,8 +967,20 @@ describe("edit-in-edit with relation path and legacy", () => {
       .get("/view/edit_cover_with_edit_artist_on_album_legacy?id=1")
       .set("Cookie", loginCookie)
       .expect(toInclude("add_repeater"));
-
-    // TODO post
+    await request(app)
+      .post("/view/edit_cover_with_edit_artist_on_album_legacy?id=1")
+      .set("Cookie", loginCookie)
+      .send({
+        album_0: "1",
+        album_1: "1",
+        artist_0: "1",
+        artist_1: "2",
+        id: "1",
+        id_0: "1",
+        id_1: "3",
+        name: "green cover",
+      })
+      .expect(toRedirect("/"));
   });
 });
 
@@ -983,5 +1042,20 @@ describe("legacy relations with relation path", () => {
       .get("/view/authoredit_with_show?id=1")
       .set("Cookie", loginCookie)
       .expect(toInclude(["Herman Melville", "agi"]));
+  });
+
+  it("edit-view with independent list", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/view/authoredit_with_independent_list")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(["Herman Melville", "agi"]))
+      .expect(toInclude("Delete"));
+    await request(app)
+      .get("/view/authoredit_with_independent_list?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(["Herman Melville", "agi"]))
+      .expect(toInclude("Delete"));
   });
 });

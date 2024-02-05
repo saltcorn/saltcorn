@@ -13,10 +13,16 @@ const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
 const {
-  applyAsync,
-  InvalidConfiguration,
+  Relation,
+  RelationType,
+  ViewDisplayType,
   parseRelationPath,
   buildRelationPath,
+} = require("@saltcorn/common-code");
+const {
+  applyAsync,
+  InvalidConfiguration,
+
   mergeActionResults,
 } = require("./utils");
 const {
@@ -2432,12 +2438,6 @@ const run_action_column = async ({ col, req, ...rest }) => {
   } else return await run_action_step(col.action_name, col.configuration);
 };
 
-const ViewDisplayType = {
-  ROW_REQUIRED: "ROW_REQUIRED",
-  NO_ROW_LIMIT: "NO_ROW_LIMIT",
-  INVALID: "INVALID",
-};
-
 const displayType = (stateFields) =>
   stateFields.every((sf) => !sf.required)
     ? ViewDisplayType.NO_ROW_LIMIT
@@ -2478,57 +2478,34 @@ const build_schema_data = async () => {
 };
 
 /**
- * tries to match a type to a relation
- * if it's not ChildList, ParentShow, Own, or Independent then RelationPath is returned
- * @param {View} subView
- * @param {string[]} path
- * @param {Table} srcTable
- * @returns ChildList, ParentShow, Own, Independent or RelationPath
+ *
+ * @param {Relation} relation
+ * @param {function} getRowVal
  */
-const relationTypeFromPath = (subview, path, srcTable) => {
-  if (path.length === 1 && path[0].inboundKey)
-    return "ChildList"; // works for OneToOneShow as well
-  else if (path.length === 2 && path.every((p) => p.inboundKey))
-    return "ChildList";
-  else if (path.length === 1 && path[0].fkey) return "ParentShow";
-  else if (path.length === 0)
-    return subview.table_id === srcTable.id ? "Own" : "Independent";
-  else return "RelationPath";
-};
-
-/**
- * creates a state object from a relation path
- * @param {View} subview
- * @param {string} relation
- * @param {string[]} pathArr
- * @param {Function} getRowVal
- * @param {Table} srcTbl
- */
-const pathToState = (subview, relation, pathArr, getRowVal, srcTbl) => {
-  if (!subview?.table_id) return {};
-  const subTbl = Table.findOne({ id: subview.table_id });
-  if (!subTbl) return {};
-  const pkName = subTbl.pk_name;
-  switch (relationTypeFromPath(subview, pathArr, srcTbl)) {
-    case "ChildList":
-      return pathArr.length === 1
-        ? {
-            [pathArr[0].inboundKey]: getRowVal(pkName), // works for OneToOneShow as well
-          }
+const pathToState = (relation, getRowVal) => {
+  const targetTbl = Table.findOne({ name: relation.targetTblName });
+  const pkName = targetTbl.pk_name;
+  const path = relation.path;
+  switch (relation.type) {
+    case RelationType.CHILD_LIST:
+    case RelationType.ONE_TO_ONE_SHOW:
+      return path.length === 1
+        ? { [path[0].inboundKey]: getRowVal(pkName) }
         : {
-            [`${pathArr[1].table}.${pathArr[1].inboundKey}.${pathArr[0].table}.${pathArr[0].inboundKey}`]:
+            [`${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}`]:
               getRowVal(pkName),
           };
-    case "ParentShow":
-      return { id: getRowVal(pathArr[0].fkey) };
-    case "Own":
+    case RelationType.PARENT_SHOW:
+      return { id: getRowVal(path[0].fkey) };
+    case RelationType.OWN:
       return { [pkName]: getRowVal(pkName) };
-    case "Independent":
+    case RelationType.INDEPENDENT:
+    case RelationType.NONE:
       return {};
-    case "RelationPath":
+    case RelationType.RELATION_PATH:
       return {
-        [relation]:
-          getRowVal(pathArr[0].fkey ? pathArr[0].fkey : pkName) || "NULL",
+        [relation.relationString]:
+          getRowVal(path[0].fkey ? path[0].fkey : pkName) || "NULL",
       };
   }
 };
@@ -2558,6 +2535,6 @@ module.exports = {
   get_inbound_self_relation_opts,
   get_many_to_many_relation_opts,
   build_schema_data,
-  relationTypeFromPath,
   pathToState,
+  displayType,
 };

@@ -132,40 +132,58 @@ module.exports =
       min_role: 100,
     });
 
+    const authoreditCfg = {
+      columns: [
+        {
+          type: "Field",
+          field_name: "author",
+        },
+        {
+          type: "Field",
+          field_name: "pages",
+        },
+        {
+          type: "Field",
+          field_name: "publisher",
+        },
+      ],
+      layout: {
+        above: [
+          { type: "field", fieldview: "edit", field_name: "author" },
+          { type: "field", fieldview: "edit", field_name: "pages" },
+          { type: "field", select: "edit", field_name: "publisher" },
+        ],
+      },
+    };
+    const withShowCfg = JSON.parse(JSON.stringify(authoreditCfg));
+    withShowCfg.layout.above.push({
+      name: "9512df",
+      type: "view",
+      view: "authorshow",
+      state: "shared",
+      relation: ".books",
+    });
     await View.create({
       table_id: table.id,
       name: "authoredit_with_show",
       viewtemplate: "Edit",
-      configuration: {
-        columns: [
-          {
-            type: "Field",
-            field_name: "author",
-          },
-          {
-            type: "Field",
-            field_name: "pages",
-          },
-          {
-            type: "Field",
-            field_name: "publisher",
-          },
-        ],
-        layout: {
-          above: [
-            { type: "field", fieldview: "edit", field_name: "author" },
-            { type: "field", fieldview: "edit", field_name: "pages" },
-            { type: "field", select: "edit", field_name: "publisher" },
-            {
-              name: "9512df",
-              type: "view",
-              view: "authorshow",
-              state: "shared",
-              relation: ".books",
-            },
-          ],
-        },
-      },
+      configuration: withShowCfg,
+      min_role: 100,
+    });
+
+    const withListCfg = JSON.parse(JSON.stringify(authoreditCfg));
+    withListCfg.layout.above.push({
+      name: "1512ef",
+      type: "view",
+      view: "authorlist",
+      state: "shared",
+      relation: ".",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_with_independent_list",
+      viewtemplate: "Edit",
+      configuration: withListCfg,
       min_role: 100,
     });
 

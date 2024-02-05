@@ -10,7 +10,8 @@
     "packages/saltcorn-markup",
     "packages/saltcorn-data",
     "packages/db-common",
-    "packages/saltcorn-mobile-builder"
+    "packages/saltcorn-mobile-builder",
+    "packages/common-code"
   ],
   "out": "docs",
   "readme": "deploy/typedoc/documentation_main.md"
