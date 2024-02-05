@@ -663,7 +663,9 @@ const run = async (
   }
   if (default_state?._cardstyle) {
     page_opts.class += "table-card-style ";
-    page_opts.trClass = "card";
+    page_opts.trClass = default_state._row_click_url_formula
+      ? "card card-link"
+      : "card";
   }
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.transpose_width = (default_state || {}).transpose_width;
