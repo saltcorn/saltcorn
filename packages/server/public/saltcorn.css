@@ -502,3 +502,12 @@ tr[onclick] {
 .editStarRating i.fa-star {
   color: unset;
 }
+
+table.table-card-style {
+  border-collapse: separate;
+  border-spacing: 0 1em;
+}
+
+table.table-card-style tr.card {
+  display: table-row;
+}

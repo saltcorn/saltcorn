@@ -461,6 +461,13 @@ const configuration_workflow = (req) =>
             sublabel: req.__("No lines between tables"),
             tab: "Layout options",
           });
+          formfields.push({
+            name: "_cardstyle",
+            label: req.__("Card row style"),
+            type: "Bool",
+            sublabel: req.__("Each row in a card"),
+            tab: "Layout options",
+          });
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -653,6 +660,10 @@ const run = async (
   }
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
+  }
+  if (default_state?._cardstyle) {
+    page_opts.class += "table-card-style ";
+    page_opts.trClass = "card";
   }
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.transpose_width = (default_state || {}).transpose_width;

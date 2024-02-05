@@ -152,6 +152,9 @@ const mkClickHandler = (opts: any, v: any): any => {
         : opts.onRowSelect;
   if (opts.selectedId && v.id && +v.id === +opts.selectedId)
     attrs.class = "table-active";
+  if (opts.trClass)
+    attrs.class = attrs.class ? `${attrs.class} ${opts.trClass}` : opts.trClass;
+
   return attrs;
 };
 
