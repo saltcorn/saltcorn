@@ -396,6 +396,7 @@ const Builder = ({ options, layout, mode }) => {
   const nodekeys = useRef([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isEnlarged, setIsEnlarged] = useState(false);
+  const [isLeftEnlarged, setIsLeftEnlarged] = useState(false);
   const [relationsCache, setRelationsCache] = useState({});
 
   return (
@@ -432,8 +433,23 @@ const Builder = ({ options, layout, mode }) => {
                       </div>
                     </Accordion>
                   </div>
-                  <div className="card toolbox-card pe-0">
-                    <div className="card-header">Layers</div>
+                  <div
+                    className="card toolbox-card pe-0"
+                    style={isLeftEnlarged ? { width: "12.3rem" } : {}}
+                  >
+                    <div className="card-header p-2 d-flex justify-content-between">
+                      <div>Layers</div>
+                      <FontAwesomeIcon
+                        icon={
+                          isLeftEnlarged
+                            ? faCaretSquareLeft
+                            : faCaretSquareRight
+                        }
+                        className={"float-end fa-lg"}
+                        onClick={() => setIsLeftEnlarged(!isLeftEnlarged)}
+                        title={isLeftEnlarged ? "Shrink" : "Enlarge"}
+                      />
+                    </div>
                     {showLayers && (
                       <div className="card-body p-0 builder-layers">
                         <Layers expandRootOnLoad={true} />
