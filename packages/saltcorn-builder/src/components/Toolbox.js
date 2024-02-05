@@ -35,6 +35,7 @@ import {
   SegmentedNav,
   TextareaT,
 } from "react-bootstrap-icons";
+import { chunk } from "lodash";
 
 /**
  *
@@ -510,13 +511,24 @@ const TableElem = ({ connectors }) => (
   </WrapElem>
 );
 
+const chunkToolBox = (elems, expanded) => {
+  const chunks = chunk(elems, expanded ? 3 : 2);
+  return chunks.map((es, ix) => (
+    <div className="toolbar-row" key={ix}>
+      {es.map((e, j) => (
+        <Fragment key={j}>{e}</Fragment>
+      ))}
+    </div>
+  ));
+};
+
 export /**
  * @returns {Fragment}
  * @category saltcorn-builder
  * @subcategory components / Toolbox
  * @namespace
  */
-const ToolboxShow = () => {
+const ToolboxShow = ({ expanded }) => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
   const {
@@ -635,49 +647,35 @@ export /**
  * @subcategory components / Toolbox
  * @namespace
  */
-const ToolboxEdit = () => {
+const ToolboxEdit = ({ expanded }) => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
   const { fields, field_view_options, images, views } = options;
-  return (
-    <Fragment>
-      <div className="toolbar-row">
-        <TextElem connectors={connectors} />
-        <ColumnsElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <FieldElem
-          connectors={connectors}
-          fields={fields}
-          field_view_options={field_view_options}
-        />
-        <LineBreakElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <ActionElem connectors={connectors} options={options} />
-        <ContainerElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <CardElem connectors={connectors} />
-        <TabsElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <LinkElem connectors={connectors} />
-        <ImageElem connectors={connectors} images={images} />
-      </div>
-      <div className="toolbar-row">
-        <HTMLElem connectors={connectors} />
-        <ViewElem connectors={connectors} views={views} />
-      </div>
-      <div className="toolbar-row">
-        <JoinFieldElem connectors={connectors} options={options} />
-        <DropMenuElem connectors={connectors} />
-      </div>
-      <div className="toolbar-row">
-        <TableElem connectors={connectors} />
-        <ViewLinkElem connectors={connectors} options={options} />
-      </div>
-    </Fragment>
+  console.log("tbexp", expanded);
+  return chunkToolBox(
+    [
+      <TextElem connectors={connectors} />,
+      <ColumnsElem connectors={connectors} />,
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />,
+      <LineBreakElem connectors={connectors} />,
+      <ActionElem connectors={connectors} options={options} />,
+      <ContainerElem connectors={connectors} />,
+      <CardElem connectors={connectors} />,
+      <TabsElem connectors={connectors} />,
+      <LinkElem connectors={connectors} />,
+      <ImageElem connectors={connectors} images={images} />,
+      <HTMLElem connectors={connectors} />,
+      <ViewElem connectors={connectors} views={views} />,
+      <JoinFieldElem connectors={connectors} options={options} />,
+      <DropMenuElem connectors={connectors} />,
+      <TableElem connectors={connectors} />,
+      <ViewLinkElem connectors={connectors} options={options} />,
+    ],
+    expanded
   );
 };
 

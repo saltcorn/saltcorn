@@ -1505,6 +1505,14 @@ export const buildBootstrapOptions = (values) => {
   ));
 };
 
+export const arrayChunks = (xs, n) => {
+  const arrayOfArrays = [];
+  for (var i = 0; i < bigarray.length; i += n) {
+    arrayOfArrays.push(bigarray.slice(i, i + n));
+  }
+  return arrayOfArrays;
+};
+
 export const prepCacheAndFinder = ({
   tables,
   views,
