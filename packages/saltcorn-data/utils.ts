@@ -374,6 +374,21 @@ const dollarizeObject = (state: object) =>
  */
 const isTest = () => process.env.NODE_ENV === "test";
 
+/**
+ * Compare objects (for Array.sort) by property name or function
+ */
+const comparing = (f: ((o: any) => any) | string) => (a: any, b: any) => {
+  const fa = typeof f === "string" ? a[f] : f(a);
+  const fb = typeof f === "string" ? b[f] : f(b);
+  return fa > fb ? 1 : fb > fa ? -1 : 0;
+};
+
+const comparingCaseInsensitive = (k: string) => (a: any, b: any) => {
+  const fa = a[k]?.toLowerCase?.();
+  const fb = b[k]?.toLowerCase?.();
+  return fa > fb ? 1 : fb > fa ? -1 : 0;
+};
+
 export = {
   dollarizeObject,
   objectToQueryString,
@@ -412,4 +427,6 @@ export = {
   getSessionId,
   mergeActionResults,
   urlStringToObject,
+  comparing,
+  comparingCaseInsensitive,
 };
