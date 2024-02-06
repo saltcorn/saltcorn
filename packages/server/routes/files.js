@@ -565,6 +565,7 @@ const files_settings_form = async (req) => {
     field_names: [
       "min_role_upload",
       "file_accept_filter_default",
+      "files_cache_maxage",
       "file_upload_debug",
       "file_upload_limit",
       "file_upload_timeout",

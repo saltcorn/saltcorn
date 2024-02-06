@@ -541,6 +541,12 @@ const configTypes: ConfigTypes = {
     sublabel: "Cache-control max-age for public views and pages. 0 to disable",
     default: 0,
   },
+  files_cache_maxage: {
+    type: "Integer",
+    label: "Files cache TTL (minutes)",
+    sublabel: "Cache-control max-age for files.",
+    default: 86400,
+  },
   cookie_duration_remember: {
     type: "Integer",
     label: "Cookie duration (hours) when remember ticked",
