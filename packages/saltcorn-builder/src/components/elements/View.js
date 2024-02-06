@@ -175,13 +175,18 @@ const ViewSettings = () => {
     ? React.useState(relationsCache[tableName][viewname])
     : [undefined, undefined];
   let safeRelation = null;
-  if (relation) {
-    const subView = views.find((view) => view.name === viewname);
+  const subView = views.find((view) => view.name === viewname);
+  if (relation && subView.table_id) {
     const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
-    safeRelation = new Relation(relation, subTbl.name, subView.display_type);
+    safeRelation = new Relation(
+      relation,
+      subTbl ? subTbl.name : "",
+      subView.display_type
+    );
   }
   if (
     options.mode !== "filter" &&
+    subView.table_id &&
     !safeRelation &&
     !hasLegacyRelation &&
     relationsData?.relations.length > 0
@@ -197,7 +202,7 @@ const ViewSettings = () => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== viewname) {
-        if (options.mode === "filter") {
+        if (options.mode === "filter" || subView.table_id) {
           setProp((prop) => {
             prop.view = target_value;
           });
@@ -248,7 +253,7 @@ const ViewSettings = () => {
               ))}
             </select>
           </div>
-          {options.mode !== "filter" && (
+          {options.mode !== "filter" && subView.table_id && (
             <div>
               <RelationOnDemandPicker
                 relations={relationsData.layers}

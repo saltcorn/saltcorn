@@ -40,7 +40,7 @@ export class Relation {
     else if (this.path.length === 1 && this.path[0].fkey)
       return RelationType.PARENT_SHOW;
     else if (this.path.length === 0)
-      return this.sourceTblName === this.targetTblName
+      return this.targetTblName && this.sourceTblName === this.targetTblName
         ? RelationType.OWN
         : RelationType.INDEPENDENT;
     else return RelationType.RELATION_PATH;

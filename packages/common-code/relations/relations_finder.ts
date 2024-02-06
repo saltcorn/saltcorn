@@ -38,6 +38,10 @@ export class RelationsFinder {
       }
       const subViewObj = this.allViews.find((v: any) => v.name === subView);
       const targetTbl = this.tableIdCache[subViewObj.table_id];
+      if (!targetTbl) {
+        result.push(new Relation(".", "", ViewDisplayType.NO_ROW_LIMIT));
+        return result;
+      }
       switch (view.display_type) {
         case ViewDisplayType.ROW_REQUIRED: {
           const paths = this.singleRelationPaths(

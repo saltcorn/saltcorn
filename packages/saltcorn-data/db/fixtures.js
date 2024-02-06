@@ -115,6 +115,28 @@ module.exports =
       },
       min_role: 100,
     });
+
+    await View.create({
+      table_id: table.id,
+      name: "authorshow_with_list_legacy",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "author", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "author" },
+            {
+              name: "1512ef",
+              type: "view",
+              view: "Independent:authorlist",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
     const authorEdit = await View.create({
       table_id: table.id,
       name: "authoredit",

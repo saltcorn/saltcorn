@@ -50,6 +50,7 @@ describe("plugin helper", () => {
       "authoredit_with_show",
       "authoredit_with_show_legacy",
       "authorshow",
+      "authorshow_with_list_legacy",
       "show_author_with_disc_books_list",
     ]);
   });

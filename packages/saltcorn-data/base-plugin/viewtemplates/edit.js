@@ -716,7 +716,7 @@ const transformForm = async ({
         );
       // check if the relation path matches a ChildList relations
       let childListRelPath = false;
-      if (segment.relation) {
+      if (segment.relation && view.table_id) {
         const targetTbl = Table.findOne({ id: view.table_id });
         const relation = new Relation(
           segment.relation,

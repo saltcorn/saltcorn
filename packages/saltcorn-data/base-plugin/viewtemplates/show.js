@@ -458,7 +458,7 @@ const renderRows = async (
           )
         )[0];
       } else {
-        let state1;
+        let state1 = {};
         const pk_name = table.pk_name;
         const get_row_val = (k) => {
           //handle expanded joinfields
@@ -466,7 +466,7 @@ const renderRows = async (
           if (row[k]?.id === null) return null;
           return row[k]?.id || row[k];
         };
-        if (view.view_select.type === "RelationPath") {
+        if (view.view_select.type === "RelationPath" && view.table_id) {
           const targetTbl = Table.findOne({ id: view.table_id });
           const relation = new Relation(
             segment.relation,
