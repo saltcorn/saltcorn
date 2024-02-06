@@ -160,6 +160,8 @@ const ViewLinkSettings = () => {
   const safeViewName = use_view_name?.includes(".")
     ? use_view_name.split(".")[0]
     : use_view_name;
+  const subView = views.find((view) => view.name === safeViewName);
+  const hasTableId = subView?.table_id !== undefined;
   if (!(relationsCache[tableName] && relationsCache[tableName][safeViewName])) {
     const relations = finder.findRelations(
       tableName,
@@ -179,47 +181,57 @@ const ViewLinkSettings = () => {
     relationsCache[options.tableName][safeViewName]
   );
   let safeRelation = null;
-  if (relation) {
-    const subView = views.find((view) => view.name === safeViewName);
-    const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
-    safeRelation = new Relation(relation, subTbl.name, subView.display_type);
-  }
-  if (
-    !safeRelation &&
-    !hasLegacyRelation &&
-    relationsData?.relations.length > 0
-  ) {
-    safeRelation = initialRelation(relationsData.relations);
-    setProp((prop) => {
-      prop.relation = safeRelation;
-    });
+  if (hasTableId) {
+    if (relation) {
+      const subView = views.find((view) => view.name === safeViewName);
+      const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
+      safeRelation = new Relation(relation, subTbl.name, subView.display_type);
+    }
+    if (
+      !safeRelation &&
+      !hasLegacyRelation &&
+      relationsData?.relations.length > 0
+    ) {
+      safeRelation = initialRelation(relationsData.relations);
+      setProp((prop) => {
+        prop.relation = safeRelation;
+      });
+    }
   }
   const set_view_name = (e) => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== use_view_name) {
-        const newRelations = finder.findRelations(
-          tableName,
-          target_value,
-          excluded_subview_templates
-        );
-        const layers = buildLayers(
-          newRelations,
-          tableName,
-          tableCaches.tableNameCache
-        );
+        const newSubView = views.find((view) => view.name === target_value);
+        if (newSubView?.table_id) {
+          const newRelations = finder.findRelations(
+            tableName,
+            target_value,
+            excluded_subview_templates
+          );
+          const layers = buildLayers(
+            newRelations,
+            tableName,
+            tableCaches.tableNameCache
+          );
 
-        relationsCache[tableName] = relationsCache[tableName] || {};
-        relationsCache[tableName][target_value] = {
-          relations: newRelations,
-          layers,
-        };
-        if (newRelations.length > 0) {
+          relationsCache[tableName] = relationsCache[tableName] || {};
+          relationsCache[tableName][target_value] = {
+            relations: newRelations,
+            layers,
+          };
+          if (newRelations.length > 0) {
+            setProp((prop) => {
+              prop.name = target_value;
+              prop.relation = initialRelation(newRelations).relationString;
+            });
+            setRelationsData({ relations: newRelations, layers });
+          }
+        } else {
           setProp((prop) => {
             prop.name = target_value;
-            prop.relation = initialRelation(newRelations).relationString;
+            prop.relation = undefined;
           });
-          setRelationsData(newRelations);
         }
       }
     }
@@ -247,32 +259,34 @@ const ViewLinkSettings = () => {
               </select>
             </td>
           </tr>
-          <tr>
-            <td colSpan="2">
-              <RelationOnDemandPicker
-                relations={relationsData.layers}
-                update={(relPath) => {
-                  if (relPath.startsWith(".")) {
-                    setProp((prop) => {
-                      prop.name = use_view_name;
-                      prop.relation = relPath;
-                    });
-                  } else {
-                    setProp((prop) => {
-                      prop.name = relPath;
-                      prop.relation = undefined;
-                    });
-                  }
-                }}
-              />
-              <RelationBadges
-                view={name}
-                relation={safeRelation}
-                parentTbl={tableName}
-                caches={tableCaches}
-              />
-            </td>
-          </tr>
+          {hasTableId && (
+            <tr>
+              <td colSpan="2">
+                <RelationOnDemandPicker
+                  relations={relationsData.layers}
+                  update={(relPath) => {
+                    if (relPath.startsWith(".")) {
+                      setProp((prop) => {
+                        prop.name = use_view_name;
+                        prop.relation = relPath;
+                      });
+                    } else {
+                      setProp((prop) => {
+                        prop.name = relPath;
+                        prop.relation = undefined;
+                      });
+                    }
+                  }}
+                />
+                <RelationBadges
+                  view={name}
+                  relation={safeRelation}
+                  parentTbl={tableName}
+                  caches={tableCaches}
+                />
+              </td>
+            </tr>
+          )}
           <tr>
             <td colSpan="2">
               <label>Label (leave blank for default)</label>
