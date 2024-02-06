@@ -46,7 +46,9 @@ describe("plugin helper", () => {
       "author_multi_edit",
       "authoredit",
       "authoredit_with_independent_list",
+      "authoredit_with_independent_list_legacy",
       "authoredit_with_show",
+      "authoredit_with_show_legacy",
       "authorshow",
       "show_author_with_disc_books_list",
     ]);

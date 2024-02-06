@@ -171,6 +171,21 @@ module.exports =
       min_role: 100,
     });
 
+    const withShowCfgLegacy = JSON.parse(JSON.stringify(authoreditCfg));
+    withShowCfgLegacy.layout.above.push({
+      name: "9512df",
+      type: "view",
+      view: "Own:authorshow",
+      state: "shared",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_with_show_legacy",
+      viewtemplate: "Edit",
+      configuration: withShowCfgLegacy,
+      min_role: 100,
+    });
+
     const withListCfg = JSON.parse(JSON.stringify(authoreditCfg));
     withListCfg.layout.above.push({
       name: "1512ef",
@@ -184,6 +199,21 @@ module.exports =
       name: "authoredit_with_independent_list",
       viewtemplate: "Edit",
       configuration: withListCfg,
+      min_role: 100,
+    });
+
+    const withListCfgLegacy = JSON.parse(JSON.stringify(authoreditCfg));
+    withListCfgLegacy.layout.above.push({
+      name: "1512ef",
+      type: "view",
+      view: "Independent:authorlist",
+      state: "shared",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_with_independent_list_legacy",
+      viewtemplate: "Edit",
+      configuration: withListCfgLegacy,
       min_role: 100,
     });
 
