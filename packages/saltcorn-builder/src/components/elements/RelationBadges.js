@@ -102,7 +102,7 @@ export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
     else
       return (
         <div className="overflow-scroll">
-          {buildBadgeCfgs(parentTbl, path, type, caches).map(buildBadge)}
+          {buildBadgeCfgs(parentTbl, type, path, caches).map(buildBadge)}
         </div>
       );
   }

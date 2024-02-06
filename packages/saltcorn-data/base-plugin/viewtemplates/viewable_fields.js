@@ -378,7 +378,7 @@ const view_linker = (
     const subTable = Table.findOne({ id: subview.table_id });
     const relObj = new Relation(
       relation,
-      subTable.name,
+      subTable ? subTable.name : "",
       ViewDisplayType.NO_ROW_LIMIT
     );
     const type = relObj.type;

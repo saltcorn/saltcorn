@@ -176,7 +176,7 @@ const ViewSettings = () => {
     : [undefined, undefined];
   let safeRelation = null;
   const subView = views.find((view) => view.name === viewname);
-  if (relation && subView.table_id) {
+  if (relation) {
     const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
     safeRelation = new Relation(
       relation,
@@ -202,7 +202,7 @@ const ViewSettings = () => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== viewname) {
-        if (options.mode === "filter" || subView.table_id) {
+        if (options.mode === "filter") {
           setProp((prop) => {
             prop.view = target_value;
           });
@@ -253,7 +253,7 @@ const ViewSettings = () => {
               ))}
             </select>
           </div>
-          {options.mode !== "filter" && subView.table_id && (
+          {options.mode !== "filter" && (
             <div>
               <RelationOnDemandPicker
                 relations={relationsData.layers}
