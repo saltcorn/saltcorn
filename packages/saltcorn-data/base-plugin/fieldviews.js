@@ -633,9 +633,16 @@ const search_or_create = {
               attrs.summary_field
             }+'</option>').join("")
             ${reqd ? "" : `opts = '<option></option>'+opts`}
-            $(elem).prev().html(opts).prop('selectedIndex', res.success.length${
+            const sel = $(elem).prev().html(opts);
+            sel.html(opts).prop('selectedIndex', res.success.length${
               reqd ? "-1" : ""
             }); 
+            // https://stackoverflow.com/a/26232541
+            var selected = sel.val(); // cache selected value, before reordering
+            var opts_list = sel.find('option');
+            opts_list.sort(function(a, b) { return $(a).text().toLowerCase() > $(b).text().toLowerCase() ? 1 : -1; });
+            sel.html('').append(opts_list);
+            sel.val(selected);
           }
         })
       }`)
