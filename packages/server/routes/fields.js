@@ -980,7 +980,7 @@ router.post(
             const reftable = Table.findOne({ name: field.reftable_name });
             if (!oldRow[ref]) break;
             if (role > reftable.min_role_read) {
-              res.status(401).send("");
+              res.status401.send("");
               return;
             }
             const q = { [reftable.pk_name]: oldRow[ref] };
@@ -993,7 +993,14 @@ router.post(
         }
         if (oldRow) {
           const value = oldRow[kpath[kpath.length - 1]];
-          res.send(value);
+          //TODO run fieldview
+          res.send(
+            typeof value === "string"
+              ? value
+              : value?.toString
+              ? value.toString()
+              : `${value}`
+          );
           return;
         }
       }
