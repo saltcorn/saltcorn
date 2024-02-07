@@ -197,14 +197,13 @@ const ViewLinkSettings = () => {
   ) {
     safeRelation = initialRelation(relationsData.relations);
     setProp((prop) => {
-      prop.relation = safeRelation;
+      prop.relation = safeRelation.relationString;
     });
   }
   const set_view_name = (e) => {
     if (e.target) {
       const target_value = e.target.value;
       if (target_value !== use_view_name) {
-        const newSubView = views.find((view) => view.name === target_value);
         const newRelations = finder.findRelations(
           tableName,
           target_value,
