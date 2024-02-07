@@ -597,7 +597,12 @@ const transformForm = async ({
   viewname,
   optionsQuery,
 }) => {
-  console.log({ row });
+  let pseudo_row = {};
+  if (!row) {
+    table.fields.forEach((f) => {
+      pseudo_row[f.name] = undefined;
+    });
+  }
   await traverse(form.layout, {
     async action(segment) {
       if (segment.action_style === "on_page_load") {
@@ -670,7 +675,7 @@ const transformForm = async ({
       const to_delete = new Set();
       (segment.showif || []).forEach((sif, ix) => {
         if (sif) {
-          const showit = eval_expression(sif, row || {}, req.user);
+          const showit = eval_expression(sif, row || pseudo_row, req.user);
           if (!showit) to_delete.add(ix);
         }
       });
