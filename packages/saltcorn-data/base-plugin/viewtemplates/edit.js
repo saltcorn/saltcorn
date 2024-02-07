@@ -835,7 +835,7 @@ const transformForm = async ({
             {
               ...dollarizeObject(req.query),
               session_id: getSessionId(req),
-              ...(row || {}),
+              ...(row || pseudo_row),
             },
             req.user
           )
