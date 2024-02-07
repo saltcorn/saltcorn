@@ -272,7 +272,8 @@ const select_from_table = {
               target: srcField.attributes.summary_field,
             },
           }
-        : {}
+        : {},
+      extraCtx.user_id
     );
     const get_label = field.attributes?.label_formula
       ? (r) => {
