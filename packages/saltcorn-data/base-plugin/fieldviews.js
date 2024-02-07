@@ -228,13 +228,13 @@ const select_from_table = {
         label: "Where",
         type: "String",
       },
-      /*{
+      {
         name: "label_formula",
         label: "Label formula",
         type: "String",
         class: "validate-expression",
         sublabel: "Uses summary field if blank",
-      },*/
+      },
       {
         name: "force_required",
         label: "Force required",
