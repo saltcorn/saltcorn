@@ -259,6 +259,26 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         },
       },
       {
+        name: "popup_minwidth",
+        label: req.__("Popup min width"),
+        type: "Integer",
+        tab: "Popup settings",
+        parent_field: "attributes",
+        attributes: { asideNext: true },
+      },
+      {
+        name: "popup_minwidth_units",
+        label: req.__("Units"),
+        type: "String",
+        tab: "Popup settings",
+        fieldview: "radio_group",
+        parent_field: "attributes",
+        attributes: {
+          inline: true,
+          options: ["px", "%", "vw", "em", "rem"],
+        },
+      },
+      {
         name: "popup_save_indicator",
         label: req.__("Save indicator"),
         type: "Bool",

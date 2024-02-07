@@ -1354,5 +1354,6 @@
 	"Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>": "Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>",
 	"For search engines. Some view patterns accept interpolations.": "For search engines. Some view patterns accept interpolations.",
 	"Files cache TTL (minutes)": "Files cache TTL (minutes)",
-	"Cache-control max-age for files.": "Cache-control max-age for files."
+	"Cache-control max-age for files.": "Cache-control max-age for files.",
+	"Popup min width": "Popup min width"
 }

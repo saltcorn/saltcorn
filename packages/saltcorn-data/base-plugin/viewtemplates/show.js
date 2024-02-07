@@ -662,15 +662,17 @@ const render = (
       evalMaybeExpr(segment, "contents", "text");
     },
     tabs(segment) {
+      const to_delete = new Set();
+
       (segment.showif || []).forEach((sif, ix) => {
         if (sif) {
           const showit = eval_expression(sif, { session_id, ...row }, req.user);
-          if (!showit) {
-            segment.titles.splice(ix, 1);
-            segment.contents.splice(ix, 1);
-          }
+          if (!showit) to_delete.add(ix);
         }
       });
+
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
