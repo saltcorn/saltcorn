@@ -282,6 +282,8 @@ const run = async (
         if (!field) return;
       }
       field.fieldview = fieldview;
+      if (field.is_fkey && !field.fieldviewObj)
+        field.fieldviewObj = getState().keyFieldviews[field.fieldview];
       Object.assign(field.attributes, configuration);
       await field.fill_fkey_options(
         false,
