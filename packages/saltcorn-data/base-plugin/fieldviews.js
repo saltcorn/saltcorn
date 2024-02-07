@@ -228,13 +228,13 @@ const select_from_table = {
         label: "Where",
         type: "String",
       },
-      /*{
+      {
         name: "label_formula",
         label: "Label formula",
         type: "String",
         class: "validate-expression",
         sublabel: "Uses summary field if blank",
-      },*/
+      },
       {
         name: "force_required",
         label: "Force required",
@@ -272,7 +272,10 @@ const select_from_table = {
               target: srcField.attributes.summary_field,
             },
           }
-        : {}
+        : {},
+      typeof extraCtx?.user_id === "object"
+        ? extraCtx?.user_id //TODO why is this ever an object??
+        : extraCtx?.user || null
     );
     const get_label = field.attributes?.label_formula
       ? (r) => {

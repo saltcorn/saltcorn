@@ -251,7 +251,8 @@ class Field implements AbstractField {
     table_name: string,
     where: string,
     attributes: any,
-    extra_joinfields: any = {}
+    extra_joinfields: any = {},
+    user?: any
   ) {
     const Table = require("./table");
     const label_formula = attributes?.label_formula;
@@ -271,7 +272,7 @@ class Field implements AbstractField {
       );
     }
 
-    return await table.getJoinedRows({ where, joinFields });
+    return await table.getJoinedRows({ where, joinFields, forUser: user });
   }
 
   /**

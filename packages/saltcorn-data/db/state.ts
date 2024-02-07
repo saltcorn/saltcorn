@@ -405,6 +405,8 @@ class State {
           if (typeof provider.fields === "function")
             table.fields = await provider.fields(table.provider_cfg);
           else table.fields = provider.fields;
+          table.fields.forEach((f: any) => (f.table_id = table.id));
+          this.fields.push(...table.fields);
         }
         continue;
       }
