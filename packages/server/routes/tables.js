@@ -59,6 +59,7 @@ const { tablesList, viewsList } = require("./common_lists");
 const {
   InvalidConfiguration,
   removeAllWhiteSpace,
+  comparingCaseInsensitive,
 } = require("@saltcorn/data/utils");
 const { EOL } = require("os");
 
@@ -714,6 +715,7 @@ router.get(
       ...new Set(child_relations.map(({ table }) => table.name)),
     ];
     const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
+    triggers.sort(comparingCaseInsensitive("name"));
     let fieldCard;
     if (fields.length === 0) {
       fieldCard = [
@@ -785,7 +787,16 @@ router.get(
         triggers.length
           ? req.__("Table triggers: ") +
             triggers
-              .map((t) => link(`/actions/configure/${t.id}`, t.name))
+              .map((t) =>
+                link(
+                  `/actions/configure/${
+                    t.id
+                  }?on_done_redirect=${encodeURIComponent(
+                    `table/${table.name}`
+                  )}`,
+                  t.name
+                )
+              )
               .join(", ") +
             "<br>"
           : "",

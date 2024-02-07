@@ -205,7 +205,8 @@ router.get(
     ) {
       res.type(file.mimetype);
       const cacheability = file.min_role_read === 100 ? "public" : "private";
-      res.set("Cache-Control", `${cacheability}, max-age=86400`);
+      const maxAge = getState().getConfig("files_cache_maxage", 86400);
+      res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location);
     } else {
@@ -565,6 +566,7 @@ const files_settings_form = async (req) => {
     field_names: [
       "min_role_upload",
       "file_accept_filter_default",
+      "files_cache_maxage",
       "file_upload_debug",
       "file_upload_limit",
       "file_upload_timeout",

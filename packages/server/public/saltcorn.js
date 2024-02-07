@@ -687,7 +687,7 @@ function make_unique_field(
   );
 }
 function test_formula(tablename, stored) {
-  var formula = $("input[name=expression]").val();
+  var formula = $("input[name=expression],textarea[name=expression]").val();
   ajax_post(`/field/test-formula`, {
     data: { formula, tablename, stored },
     success: (data) => {

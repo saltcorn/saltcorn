@@ -2207,7 +2207,7 @@ const readState = (state, fields, req) => {
           : current;
       else if (typeof current === "object") {
         //ignore
-      } else if (f.type.read) state[f.name] = f.type.read(current);
+      } else if (f.type?.read) state[f.name] = f.type.read(current);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const pname = current.replace("Preset:", "");
         if (Object.prototype.hasOwnProperty.call(f.presets, pname)) {

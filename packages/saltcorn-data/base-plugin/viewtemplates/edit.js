@@ -225,7 +225,7 @@ const configuration_workflow = (req) =>
 
           return {
             tableName: table.name,
-            fields: fields.map((f) => f.toBuilder),
+            fields: fields.map((f) => f.toBuilder || f),
             field_view_options,
             parent_field_list,
             handlesTextStyle,
