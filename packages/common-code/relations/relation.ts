@@ -1,6 +1,10 @@
 import { parseRelationPath } from "./relation_helpers";
 import { RelationType, ViewDisplayType } from "./relation_types";
 
+/**
+ * Relation class
+ * This is a more common interface for the relation string
+ */
 export class Relation {
   relationString: string;
   sourceTblName: string;
@@ -9,7 +13,6 @@ export class Relation {
   path: any[];
 
   /**
-   *
    * @param relationString
    * @param targetTblName
    * @param subView
@@ -27,6 +30,9 @@ export class Relation {
     this.path = path;
   }
 
+  /**
+   * get the relation type
+   */
   get type() {
     if (this.path.length === 1 && this.path[0].inboundKey)
       return this.viewDisplayType === ViewDisplayType.NO_ROW_LIMIT

@@ -3,7 +3,9 @@ import { ViewDisplayType } from "./relation_types";
 import { Relation } from "./relation";
 
 /**
- *
+ * RelationsFinder class
+ * this finder searches for relations between a sourceTable (table of the topView)
+ * and a subView (here the targetTable is used)
  */
 export class RelationsFinder {
   private maxDepth: number;
@@ -23,6 +25,13 @@ export class RelationsFinder {
     this.fieldCache = fieldCache;
   }
 
+  /**
+   * creates an array of Relation objects
+   * @param sourceTblName
+   * @param subView
+   * @param excluded
+   * @returns
+   */
   public findRelations(
     sourceTblName: string,
     subView: string,
@@ -79,6 +88,13 @@ export class RelationsFinder {
     }
   }
 
+  /**
+   * This is a helper method for findRelations() it returns raw relation strings
+   * @param sourceTblName
+   * @param subView
+   * @param excluded
+   * @returns
+   */
   singleRelationPaths(
     sourceTblName: string,
     subView: string,
@@ -132,6 +148,13 @@ export class RelationsFinder {
     return result;
   }
 
+  /**
+   * This is a helper method for findRelations() it returns raw relation strings
+   * @param sourceTblName
+   * @param subView
+   * @param excluded
+   * @returns
+   */
   multiRelationPaths(
     sourceTblName: string,
     subView: string,

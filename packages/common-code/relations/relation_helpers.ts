@@ -1,9 +1,9 @@
 import { RelationType } from "./relation_types";
 
 /**
- *
+ * when we don't have the saltcorn state those caches can be used
  * @param allTables
- * @returns
+ * @returns tableIdCache, tableNameCache, fieldCache
  */
 export const buildTableCaches = (allTables: any[]) => {
   const tableIdCache: any = {};
@@ -22,6 +22,7 @@ export const buildTableCaches = (allTables: any[]) => {
 };
 
 /**
+ * build an array from the relation string
  * @param s relation syntax
  * @returns the first table (source) and the relation as path array
  */
@@ -40,6 +41,7 @@ export const parseRelationPath = (s: string): any => {
 };
 
 /**
+ * convert a relation array back to string
  * @param sourcetable the first table (source)
  * @param path relation as path array
  * @returns relation syntax as string
@@ -56,20 +58,19 @@ export const buildRelationPath = (
 };
 
 /**
- *
  * @param type
- * @param rest
+ * @param relation
  * @param parentTbl
  * @returns
  */
 export const parseLegacyRelation = (
   type: any,
-  rest: string,
+  relation: string,
   parentTbl: string
 ) => {
   switch (type) {
     case "ChildList": {
-      const path = rest ? rest.split(".") : [];
+      const path = relation ? relation.split(".") : [];
       if (path.length === 3) {
         const [viewName, table, key] = path;
         return {
@@ -112,7 +113,7 @@ export const parseLegacyRelation = (
       };
     }
     case "OneToOneShow": {
-      const tokens = rest ? rest.split(".") : [];
+      const tokens = relation ? relation.split(".") : [];
       if (tokens.length !== 3) break;
       const [viewname, relatedTbl, fkey] = tokens;
       return {
@@ -121,7 +122,7 @@ export const parseLegacyRelation = (
       };
     }
     case "ParentShow": {
-      const tokens = rest ? rest.split(".") : [];
+      const tokens = relation ? relation.split(".") : [];
       if (tokens.length !== 3) break;
       const [viewname, parentTbl, fkey] = tokens;
       return { type: RelationType.PARENT_SHOW, path: [{ fkey }] };
