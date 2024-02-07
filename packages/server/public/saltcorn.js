@@ -376,6 +376,7 @@ function ajax_modal(url, opts = {}) {
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
       var width = request.getResponseHeader("SaltcornModalWidth");
+      var minwidth = request.getResponseHeader("SaltcornModalMinWidth");
       var saveIndicate = !!request.getResponseHeader(
         "SaltcornModalSaveIndicator"
       );
@@ -386,6 +387,8 @@ function ajax_modal(url, opts = {}) {
       else $(".sc-modal-linkout").hide();
       if (width) $(".modal-dialog").css("max-width", width);
       else $(".modal-dialog").css("max-width", "");
+      if (minwidth) $(".modal-dialog").css("min-width", minwidth);
+      else $(".modal-dialog").css("min-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
       $("#scmodal").prop("data-modal-state", url);
