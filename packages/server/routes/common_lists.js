@@ -185,6 +185,55 @@ const tagBadge = (tag) =>
     tag.name
   );
 
+const tagsDropdown = (tags) =>
+  div(
+    { class: "dropdown" },
+    div(
+      {
+        class: "link-style",
+        "data-boundary": "viewport",
+        type: "button",
+        id: "tagsselector",
+        "data-bs-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+      },
+      "Tags"
+    ),
+    div(
+      {
+        class: "dropdown-menu",
+        "aria-labelledby": "tagsselector",
+      },
+      a(
+        {
+          class: "dropdown-item",
+          // TODO check url why view for page, what do we need for page group
+          href: `javascript:unset_state_field('_tag', this)`,
+        },
+        "All tags"
+      ),
+      tags.map((tag) =>
+        a(
+          {
+            class: "dropdown-item",
+            // TODO check url why view for page, what do we need for page group
+            href: `javascript:set_state_field('_tag', ${tag.id}, this)`,
+          },
+          tag.name
+        )
+      ),
+      a(
+        {
+          class: "dropdown-item",
+          // TODO check url why view for page, what do we need for page group
+          href: `tag`,
+        },
+        "Manage tags..."
+      )
+    )
+  );
+
 const viewsList = async (
   views,
   req,
@@ -195,7 +244,9 @@ const viewsList = async (
     ? `?on_done_redirect=${on_done_redirect}`
     : "";
   const tags = await Tag.find();
-  const tag_entries = await TagEntry.find({});
+  const tag_entries = await TagEntry.find({
+    not: { view_id: null },
+  });
   const tagsById = {};
   tags.forEach((t) => (tagsById[t.id] = t));
 
@@ -215,53 +266,7 @@ const viewsList = async (
               : undefined,
           },
           {
-            label: div(
-              { class: "dropdown" },
-              div(
-                {
-                  class: "link-style",
-                  "data-boundary": "viewport",
-                  type: "button",
-                  id: "tagsselector",
-                  "data-bs-toggle": "dropdown",
-                  "aria-haspopup": "true",
-                  "aria-expanded": "false",
-                },
-                "Tags"
-              ),
-              div(
-                {
-                  class: "dropdown-menu",
-                  "aria-labelledby": "tagsselector",
-                },
-                a(
-                  {
-                    class: "dropdown-item",
-                    // TODO check url why view for page, what do we need for page group
-                    href: `javascript:unset_state_field('_tag', this)`,
-                  },
-                  "All tags"
-                ),
-                tags.map((tag) =>
-                  a(
-                    {
-                      class: "dropdown-item",
-                      // TODO check url why view for page, what do we need for page group
-                      href: `javascript:set_state_field('_tag', ${tag.id}, this)`,
-                    },
-                    tag.name
-                  )
-                ),
-                a(
-                  {
-                    class: "dropdown-item",
-                    // TODO check url why view for page, what do we need for page group
-                    href: `tag`,
-                  },
-                  "Manage tags..."
-                )
-              )
-            ),
+            label: tagsDropdown(tags),
             key: (r) => tagBadges(r),
           },
           {
