@@ -211,7 +211,45 @@ const viewsList = async (
               : undefined,
           },
           {
-            label: a({ href: "#" }, "Tags"),
+            label: div(
+              { class: "dropdown" },
+              div(
+                {
+                  class: "link-style",
+                  "data-boundary": "viewport",
+                  type: "button",
+                  id: "tagsselector",
+                  "data-bs-toggle": "dropdown",
+                  "aria-haspopup": "true",
+                  "aria-expanded": "false",
+                },
+                "Tags"
+              ),
+              div(
+                {
+                  class: "dropdown-menu",
+                  "aria-labelledby": "tagsselector",
+                },
+                a(
+                  {
+                    class: "dropdown-item",
+                    // TODO check url why view for page, what do we need for page group
+                    href: `javascript:unset_state_field('_tag', this)`,
+                  },
+                  "All tags"
+                ),
+                tags.map((tag) =>
+                  a(
+                    {
+                      class: "dropdown-item",
+                      // TODO check url why view for page, what do we need for page group
+                      href: `javascript:set_state_field('_tag', ${tag.id}, this)`,
+                    },
+                    tag.name
+                  )
+                )
+              )
+            ),
             key: (r) => tagBadges(r),
           },
           {
