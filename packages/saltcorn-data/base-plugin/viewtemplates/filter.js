@@ -355,6 +355,19 @@ const run = async (
         if (!f(state, extra.req.user)) segment.hide = true;
       }
     },
+    tabs(segment) {
+      const to_delete = new Set();
+
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(sif, evalCtx, extra.req.user);
+          if (!showit) to_delete.add(ix);
+        }
+      });
+
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+    },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
