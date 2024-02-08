@@ -476,6 +476,62 @@ module.exports =
     });
 
     await View.create({
+      table_id: patients.id,
+      name: "show_patient_with_publisher",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "show_publisher",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".patients.favbook.publisher",
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", field_name: "name", fieldview: "show" },
+            {
+              type: "view",
+              view: "show_publisher",
+              name: "7b17af",
+              state: "shared",
+              relation: ".patients.favbook.publisher",
+            },
+            {
+              type: "view_link",
+              view: "show_publisher",
+              block: false,
+              minRole: 100,
+              relation: ".patients.favbook.publisher",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: publisher.id,
+      name: "show_publisher",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", field_name: "name", fieldview: "show" }],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
       table_id: disc_books.id,
       name: "disc_books_edit-in-edit",
       viewtemplate: "Edit",
@@ -544,7 +600,6 @@ module.exports =
               name: "7b17af",
               state: "shared",
             },
-
             {
               type: "view_link",
               view: "ChildList:disc_books_list.discusses_books.book",

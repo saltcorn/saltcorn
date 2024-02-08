@@ -99,27 +99,42 @@ export class RelationsFinder {
     sourceTblName: string,
     subView: string,
     excluded: string[]
-  ) {
-    const result = new Array<any>();
+  ): Array<string> {
+    const result = new Set<string>();
     const subViewObj = this.allViews.find((v: any) => v.name === subView);
     if (!subViewObj) throw new Error(`The view ${subView} does not exist`);
     if (excluded?.find((e) => e === subViewObj.viewtemplate)) {
       console.log(`view ${subView} is excluded`);
-      return result;
+      return Array.from(result);
     }
     const sourceTbl = this.tableNameCache[sourceTblName];
     if (!sourceTbl)
       throw new Error(`The table ${sourceTblName} does not exist`);
+
     // 1. parent relations
-    const parentRelations = sourceTbl.foreign_keys;
-    if (sourceTbl.id === subViewObj.table_id) result.push(`.${sourceTblName}`);
-    for (const relation of parentRelations) {
-      const targetTbl = this.tableNameCache[relation.reftable_name];
-      if (!targetTbl)
-        throw new Error(`The table ${relation.reftable_name} does not exist`);
-      if (targetTbl.id === subViewObj.table_id)
-        result.push(`.${sourceTblName}.${relation.name}`);
-    }
+    const parentRelsFinder = (
+      currentTbl: any,
+      path: string,
+      level: number,
+      visited: any
+    ) => {
+      if (level > this.maxDepth) return;
+      const visitedFkCopy = new Set(visited);
+      for (const fk of currentTbl.foreign_keys || []) {
+        if (visitedFkCopy.has(fk.id)) continue;
+        visitedFkCopy.add(fk.id);
+        const nextPath = `${path}.${fk.name}`;
+        const nextTbl = this.tableNameCache[fk.reftable_name];
+        if (!nextTbl)
+          throw new Error(`The table ${fk.reftable_name} does not exist`);
+        if (nextTbl.id === subViewObj.table_id) result.add(nextPath);
+        parentRelsFinder(nextTbl, nextPath, level + 1, visitedFkCopy);
+      }
+    };
+    const startPath = `.${sourceTblName}`;
+    if (sourceTbl.id === subViewObj.table_id) result.add(startPath);
+    parentRelsFinder(sourceTbl, startPath, 0, new Set());
+
     // 2. OneToOneShow
     const uniqueFksToSrc = (this.fieldCache[sourceTblName] || []).filter(
       (f: any) => f.is_unique
@@ -129,7 +144,7 @@ export class RelationsFinder {
       if (!targetTbl)
         throw new Error(`The table ${relation.table_id} does not exist`);
       if (targetTbl.id === subViewObj.table_id)
-        result.push(`.${sourceTblName}.${targetTbl.name}$${relation.name}`);
+        result.add(`.${sourceTblName}.${targetTbl.name}$${relation.name}`);
     }
     // 3. inbound_self_relations
     const srcFks = sourceTbl.foreign_keys;
@@ -142,10 +157,10 @@ export class RelationsFinder {
       );
       for (const toRef of fromSrcToRef) {
         if (fkToSrc.reftable_name === sourceTblName)
-          result.push(`.${sourceTblName}.${toRef.name}.${fkToSrc.name}`);
+          result.add(`.${sourceTblName}.${toRef.name}.${fkToSrc.name}`);
       }
     }
-    return result;
+    return Array.from(result);
   }
 
   /**

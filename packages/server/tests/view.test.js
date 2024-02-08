@@ -805,7 +805,7 @@ describe("relation path to query and state", () => {
       .expect(toInclude(`value="artist B"`));
   });
 
-  it("Parent", async () => {
+  it("Parent one layer", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
@@ -831,6 +831,19 @@ describe("relation path to query and state", () => {
       .expect(toNotInclude("/view/show_cover?id=3"))
       // embedded show
       .expect(toInclude("No row selected"));
+  });
+
+  it("Parent two layers", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(`/view/show_patient_with_publisher?id=2`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/show_publisher?.patients.favbook.publisher=2"))
+      // embedded show
+      .expect(toInclude("Michael Douglas"))
+      .expect(toInclude(["AK Press", "No row selected"]));
   });
 
   it("RelationPath", async () => {

@@ -28,6 +28,14 @@ describe("single relations", () => {
     ]);
   });
 
+  it("parent relations with layers", () => {
+    const { tables, views } = fixturesData(__dirname);
+    const finder = new RelationsFinder(tables, views, 6);
+    expect(
+      finder.singleRelationPaths("patients", "show_publisher", [])
+    ).toEqual([".patients.favbook.publisher"]);
+  });
+
   it("one to one relations", () => {
     const { tables, views } = fixturesData(__dirname);
     const finder = new RelationsFinder(tables, views, 6);
