@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "outDir": "./dist",
+    "allowJs": true,
+    "sourceMap": true,
+    "composite": true,
+    "declaration": true /* set to true by "composite" */,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true /* set to true by "esModuleInterop" and "module" */,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
+    "lib": ["ES2021"],
+    "module": "commonjs",
+    "target": "ES2021"
+  },
+  "exclude": ["node_modules", "dist/**", "webpack.config.js"],
+  "include": ["**/*", "**/*.json"]
+}

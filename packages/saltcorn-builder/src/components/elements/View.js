@@ -17,12 +17,17 @@ import {
   buildOptions,
   HelpTopicLink,
   initialRelation,
-  prepCacheAndFinder,
-  updateRelationsCache,
+  buildLayers,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
 import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
+
+import {
+  RelationsFinder,
+  Relation,
+  buildTableCaches,
+} from "@saltcorn/common-code";
 
 export /**
  * @param {object} props
@@ -48,7 +53,6 @@ const View = ({ name, view, configuration, state }) => {
     if (rest.startsWith(".")) viewname = prefix;
     else viewname = rest;
   }
-
   const theview = options.views.find((v) => v.name === viewname);
   const label = theview ? theview.label : view;
   const { previews, setPreviews } = React.useContext(previewCtx);
@@ -109,10 +113,23 @@ const ViewSettings = () => {
     extra_state_fml,
   } = node;
   const options = React.useContext(optionsCtx);
-  const { caches, finder } = useMemo(
-    () => prepCacheAndFinder(options),
-    [undefined]
-  );
+  const {
+    tables,
+    views,
+    max_relations_layer_depth,
+    tableName,
+    excluded_subview_templates,
+  } = options;
+  // not needed in page editor
+  let finder = null;
+  let tableCaches = null;
+  if (tables && views) {
+    finder = useMemo(
+      () => new RelationsFinder(tables, views, max_relations_layer_depth),
+      [undefined]
+    );
+    tableCaches = useMemo(() => buildTableCaches(tables), [undefined]);
+  }
   const fixed_state_fields =
     options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = React.useContext(previewCtx);
@@ -135,27 +152,48 @@ const ViewSettings = () => {
     else viewname = rest;
   }
   if (viewname.includes(".")) viewname = viewname.split(".")[0];
-  if (finder)
-    updateRelationsCache(
-      relationsCache,
-      setRelationsCache,
-      options,
-      finder,
-      viewname
+
+  if (
+    finder &&
+    !(relationsCache[tableName] && relationsCache[tableName][viewname])
+  ) {
+    const relations = finder.findRelations(
+      tableName,
+      viewname,
+      excluded_subview_templates
     );
-  const [relations, setRelations] = finder
-    ? React.useState(relationsCache[options.tableName][viewname])
+    const layers = buildLayers(
+      relations,
+      tableName,
+      tableCaches.tableNameCache
+    );
+    relationsCache[tableName] = relationsCache[tableName] || {};
+    relationsCache[tableName][viewname] = { relations, layers };
+    setRelationsCache({ ...relationsCache });
+  }
+  const [relationsData, setRelationsData] = finder
+    ? React.useState(relationsCache[tableName][viewname])
     : [undefined, undefined];
-  let safeRelation = relation;
+  let safeRelation = null;
+  const subView = views.find((view) => view.name === viewname);
+  if (relation) {
+    const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
+    safeRelation = new Relation(
+      relation,
+      subTbl ? subTbl.name : "",
+      subView.display_type
+    );
+  }
   if (
     options.mode !== "filter" &&
+    subView.table_id &&
     !safeRelation &&
     !hasLegacyRelation &&
-    relations?.paths.length > 0
+    relationsData?.relations.length > 0
   ) {
-    safeRelation = initialRelation(relations.paths, options.tableName);
+    safeRelation = initialRelation(relationsData.relations);
     setProp((prop) => {
-      prop.relation = safeRelation;
+      prop.relation = safeRelation.relationString;
     });
   }
   const helpContext = { view_name: viewname };
@@ -169,23 +207,27 @@ const ViewSettings = () => {
             prop.view = target_value;
           });
         } else {
-          updateRelationsCache(
-            relationsCache,
-            setRelationsCache,
-            options,
-            finder,
-            target_value
+          const newRelations = finder.findRelations(
+            tableName,
+            target_value,
+            excluded_subview_templates
           );
-          const newRelations = relationsCache[options.tableName][target_value];
-          if (newRelations.paths.length > 0) {
+          const layers = buildLayers(
+            newRelations,
+            tableName,
+            tableCaches.tableNameCache
+          );
+          relationsCache[tableName] = relationsCache[tableName] || {};
+          relationsCache[tableName][target_value] = {
+            relations: newRelations,
+            layers,
+          };
+          if (newRelations.length > 0) {
             setProp((prop) => {
               prop.view = target_value;
-              prop.relation = initialRelation(
-                newRelations.paths,
-                options.tableName
-              );
+              prop.relation = initialRelation(newRelations).relationString;
             });
-            setRelations(newRelations);
+            setRelationsData({ relations: newRelations, layers });
           }
         }
       }
@@ -194,7 +236,7 @@ const ViewSettings = () => {
 
   return (
     <div>
-      {relations ? (
+      {relationsData ? (
         <Fragment>
           <div>
             <label>View to {options.mode === "show" ? "embed" : "show"}</label>
@@ -214,7 +256,7 @@ const ViewSettings = () => {
           {options.mode !== "filter" && (
             <div>
               <RelationOnDemandPicker
-                relations={relations.layers}
+                relations={relationsData.layers}
                 update={(relPath) => {
                   if (relPath.startsWith(".")) {
                     setProp((prop) => {
@@ -232,8 +274,8 @@ const ViewSettings = () => {
               <RelationBadges
                 view={view}
                 relation={safeRelation}
-                parentTbl={options.tableName}
-                tableNameCache={caches.tableNameCache}
+                parentTbl={tableName}
+                caches={tableCaches}
               />
             </div>
           )}
