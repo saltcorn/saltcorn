@@ -21,6 +21,7 @@ const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const db = require("@saltcorn/data/db");
 const { getPageList, getPageGroupList } = require("./common_lists");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
 
 const {
   isAdmin,
@@ -293,7 +294,15 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const pages = await Page.find({}, { orderBy: "name", nocase: true });
+    const pageq = {};
+    if (req.query._tag) {
+      const tagEntries = await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { page_id: null },
+      });
+      pageq.id = { in: tagEntries.map((te) => te.page_id).filter(Boolean) };
+    }
+    const pages = await Page.find(pageq, { orderBy: "name", nocase: true });
     const pageGroups = await PageGroup.find(
       {},
       { orderBy: "name", nocase: true }
