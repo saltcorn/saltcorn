@@ -42,7 +42,7 @@ router.get(
           mkTable(
             [
               {
-                label: req.__("Tagname"),
+                label: req.__("Tag name"),
                 key: (r) =>
                   link(`/tag/${r.id || r.name}?show_list=tables`, text(r.name)),
               },
@@ -57,7 +57,7 @@ router.get(
           a(
             {
               href: `/tag/new`,
-              class: "btn btn-primary",
+              class: "btn btn-primary mt-3",
             },
             req.__("Create tag")
           ),
@@ -73,6 +73,13 @@ router.get(
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`New tag`), {
       above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__(`Tags`), href: "/tag" },
+            { text: req.__(`New`) },
+          ],
+        },
         {
           type: "card",
           title: req.__(`New tag`),
@@ -97,7 +104,7 @@ router.get(
   })
 );
 
-const headerWithCollapser = (title, cardId, showList) =>
+const headerWithCollapser = (title, cardId, showList, count) =>
   a(
     {
       class: `card-header-left-collapse ${!showList ? "collapsed" : ""} ps-3`,
@@ -107,7 +114,8 @@ const headerWithCollapser = (title, cardId, showList) =>
       "aria-controls": cardId,
       role: "button",
     },
-    title
+    title,
+    ` (${count})`
   );
 
 const isShowList = (showList, listType) => showList === listType;
@@ -139,14 +147,15 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: req.__(`Tag: %s`, tag.name) }],
+          crumbs: [{ text: req.__(`Tags`), href: "/tag" }, { text: tag.name }],
         },
         {
           type: "card",
           title: headerWithCollapser(
             req.__("Tables"),
             tablesDomId,
-            isShowList(show_list, "tables")
+            isShowList(show_list, "tables"),
+            tables.length
           ),
           contents: [
             await tablesList(tables, req, {
@@ -168,7 +177,8 @@ router.get(
           title: headerWithCollapser(
             req.__("Views"),
             viewsDomId,
-            isShowList(show_list, "views")
+            isShowList(show_list, "views"),
+            views.length
           ),
           contents: [
             await viewsList(views, req, {
@@ -190,10 +200,11 @@ router.get(
           title: headerWithCollapser(
             req.__("Pages"),
             pagesDomId,
-            isShowList(show_list, "pages")
+            isShowList(show_list, "pages"),
+            pages.length
           ),
           contents: [
-            getPageList(pages, roles, req, {
+            await getPageList(pages, roles, req, {
               tagId: tag.id,
               domId: pagesDomId,
               showList: isShowList(show_list, "pages"),
@@ -213,10 +224,11 @@ router.get(
           title: headerWithCollapser(
             req.__("Triggers"),
             triggersDomId,
-            isShowList(show_list, "triggers")
+            isShowList(show_list, "triggers"),
+            triggers.length
           ),
           contents: [
-            getTriggerList(triggers, req, {
+            await getTriggerList(triggers, req, {
               tagId: tag.id,
               domId: triggersDomId,
               showList: isShowList(show_list, "triggers"),
