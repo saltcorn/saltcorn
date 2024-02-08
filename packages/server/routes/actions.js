@@ -15,6 +15,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
+const Tag = require("@saltcorn/data/models/tag");
 
 /**
  * @type {object}
@@ -79,6 +80,8 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     let triggers = await Trigger.findAllWithTableName();
+    let filterOnTag;
+
     if (req.query._tag) {
       const tagEntries = await TagEntry.find({
         tag_id: +req.query._tag,
@@ -88,6 +91,7 @@ router.get(
         tagEntries.map((te) => te.trigger_id).filter(Boolean)
       );
       triggers = triggers.filter((t) => tagged_trigger_ids.has(t.id));
+      filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
     const actions = await getActions();
     send_events_page({
@@ -100,7 +104,7 @@ router.get(
             type: "card",
             title: req.__("Triggers"),
             contents: div(
-              await getTriggerList(triggers, req),
+              await getTriggerList(triggers, req, { filterOnTag }),
               link("/actions/new", req.__("Add trigger"))
             ),
           },

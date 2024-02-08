@@ -273,7 +273,7 @@ const tagsDropdown = (tags, altHeader) =>
 const viewsList = async (
   views,
   req,
-  { tagId, domId, showList, on_done_redirect, notable } = {}
+  { tagId, domId, showList, on_done_redirect, notable, filterOnTag } = {}
 ) => {
   const roles = await User.get_roles();
   const on_done_redirect_str = on_done_redirect
@@ -307,7 +307,10 @@ const viewsList = async (
             ? []
             : [
                 {
-                  label: tagsDropdown(tags),
+                  label: tagsDropdown(
+                    tags,
+                    filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                  ),
                   key: (r) => tagBadges(r),
                 },
               ]),
@@ -479,7 +482,7 @@ const getPageList = async (
   rows,
   roles,
   req,
-  { tagId, domId, showList } = {}
+  { tagId, domId, showList, filterOnTag } = {}
 ) => {
   const tags = await Tag.find();
   const tag_entries = await TagEntry.find({
@@ -504,7 +507,10 @@ const getPageList = async (
         ? []
         : [
             {
-              label: tagsDropdown(tags),
+              label: tagsDropdown(
+                tags,
+                filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+              ),
               key: (r) => tagBadges(r),
             },
           ]),
@@ -575,7 +581,7 @@ const getPageGroupList = (rows, roles, req) => {
 const getTriggerList = async (
   triggers,
   req,
-  { tagId, domId, showList } = {}
+  { tagId, domId, showList, filterOnTag } = {}
 ) => {
   const base_url = get_base_url(req);
   const tags = await Tag.find();
@@ -599,7 +605,10 @@ const getTriggerList = async (
         ? []
         : [
             {
-              label: tagsDropdown(tags),
+              label: tagsDropdown(
+                tags,
+                filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+              ),
               key: (r) => tagBadges(r),
             },
           ]),
