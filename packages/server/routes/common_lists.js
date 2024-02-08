@@ -12,7 +12,7 @@ const {
   badge,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
-const { h4, p, div, a, i, text } = require("@saltcorn/markup/tags");
+const { h4, p, div, a, i, text, span, nbsp } = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
@@ -179,6 +179,12 @@ const setTableRefs = async (views) => {
   return views;
 };
 
+const tagBadge = (tag) =>
+  a(
+    { href: `/tag/${tag.id}?show_list=views`, class: "badge badge-secondary" },
+    tag.name
+  );
+
 const viewsList = async (
   views,
   req,
@@ -195,9 +201,7 @@ const viewsList = async (
 
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
-    return myTags
-      .map((te) => badge("secondary", tagsById[te.tag_id].name))
-      .join("");
+    return myTags.map((te) => tagBadge(tagsById[te.tag_id])).join(nbsp);
   };
 
   return views.length > 0
@@ -247,6 +251,14 @@ const viewsList = async (
                     },
                     tag.name
                   )
+                ),
+                a(
+                  {
+                    class: "dropdown-item",
+                    // TODO check url why view for page, what do we need for page group
+                    href: `tag`,
+                  },
+                  "Manage tags..."
                 )
               )
             ),
