@@ -5,6 +5,7 @@ const {
   select,
   option,
   label,
+  text,
 } = require("@saltcorn/markup/tags");
 
 const Tag = require("@saltcorn/data/models/tag");
@@ -94,15 +95,21 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { entry_type, tag_id } = req.params;
-    res.sendWrap(req.__("Add %s to tag"), {
+    const tag = await Tag.findOne({ id: tag_id });
+
+    res.sendWrap(req.__("Add %s to tag %s", entry_type, tag.name), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: req.__(`Tag entry`) }],
+          crumbs: [
+            { text: req.__(`Tags`), href: "/tag" },
+            { text: tag.name, href: `/tag/${tag.id}` },
+            { text: req.__(`Add %s`, text(entry_type)) },
+          ],
         },
         {
           type: "card",
-          title: req.__(`Add entries to tag`),
+          title: req.__(`Add entries to tag %s`, tag.name),
           contents: buildForm(
             entry_type,
             tag_id,

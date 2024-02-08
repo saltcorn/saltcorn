@@ -74,6 +74,13 @@ router.get(
     res.sendWrap(req.__(`New tag`), {
       above: [
         {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__(`Tags`), href: "/tag" },
+            { text: req.__(`New`) },
+          ],
+        },
+        {
           type: "card",
           title: req.__(`New tag`),
           contents: renderForm(
@@ -139,7 +146,7 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: req.__(`Tag: %s`, tag.name) }],
+          crumbs: [{ text: req.__(`Tags`), href: "/tag" }, { text: tag.name }],
         },
         {
           type: "card",
