@@ -561,11 +561,37 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
-const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
+const getTriggerList = async (
+  triggers,
+  req,
+  { tagId, domId, showList } = {}
+) => {
   const base_url = get_base_url(req);
+  const tags = await Tag.find();
+
+  const tag_entries = await TagEntry.find({
+    not: { trigger_id: null },
+  });
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (trigger) => {
+    const myTags = tag_entries.filter((te) => te.trigger_id === trigger.id);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id], "triggers"))
+      .join(nbsp);
+  };
   return mkTable(
     [
       { label: req.__("Name"), key: "name" },
+      ...(tagId
+        ? []
+        : [
+            {
+              label: tagsDropdown(tags),
+              key: (r) => tagBadges(r),
+            },
+          ]),
       { label: req.__("Action"), key: "action" },
       {
         label: req.__("Table or Channel"),

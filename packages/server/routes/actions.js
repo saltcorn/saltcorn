@@ -89,7 +89,7 @@ router.get(
             type: "card",
             title: req.__("Triggers"),
             contents: div(
-              getTriggerList(triggers, req),
+              await getTriggerList(triggers, req),
               link("/actions/new", req.__("Add trigger"))
             ),
           },

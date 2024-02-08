@@ -228,7 +228,7 @@ router.get(
             triggers.length
           ),
           contents: [
-            getTriggerList(triggers, req, {
+            await getTriggerList(triggers, req, {
               tagId: tag.id,
               domId: triggersDomId,
               showList: isShowList(show_list, "triggers"),
