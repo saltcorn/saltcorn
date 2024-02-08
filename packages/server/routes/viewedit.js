@@ -29,6 +29,8 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const File = require("@saltcorn/data/models/file");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
+
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/utils");
 
@@ -56,7 +58,16 @@ router.get(
   error_catcher(async (req, res) => {
     let orderBy = "name";
     if (req.query._sortby === "viewtemplate") orderBy = "viewtemplate";
-    const views = await View.find({}, { orderBy, nocase: true });
+    const viewq = {};
+    if (req.query._tag) {
+      const tagEntries = await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { view_id: null },
+      });
+      viewq.id = { in: tagEntries.map((te) => te.view_id).filter(Boolean) };
+    }
+
+    const views = await View.find(viewq, { orderBy, nocase: true });
     await setTableRefs(views);
 
     if (req.query._sortby === "table")
