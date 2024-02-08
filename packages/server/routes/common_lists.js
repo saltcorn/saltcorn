@@ -61,62 +61,66 @@ const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
       .join(nbsp);
   };
 
-  return tables.length > 0
-    ? mkTable(
-        [
-          {
-            label: req.__("Name"),
-            key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
-          },
-          {
-            label: "",
-            key: (r) => tableBadges(r, req),
-          },
-          ...(tagId
-            ? []
-            : [
-                {
-                  label: tagsDropdown(tags),
-                  key: (r) => tagBadges(r),
-                },
-              ]),
-          {
-            label: req.__("Access Read/Write"),
-            key: (t) =>
-              t.external
-                ? `${getRole(t.min_role_read)} (read only)`
-                : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
-          },
-          !tagId
-            ? {
-                label: req.__("Delete"),
-                key: (r) =>
-                  r.name === "users" || r.external
-                    ? ""
-                    : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
-              }
-            : {
-                label: req.__("Remove From Tag"),
-                key: (r) =>
-                  post_delete_btn(
-                    `/tag-entries/remove/tables/${r.id}/${tagId}`,
-                    req,
-                    `${r.name} from this tag`
-                  ),
-              },
-        ],
-        tables,
+  return (
+    mkTable(
+      [
         {
-          hover: true,
-          tableClass: listClass(tagId, showList),
-          tableId: domId,
-        }
-      )
-    : div(
-        { class: listClass(tagId, showList), id: domId },
-        h4(req.__("No tables defined")),
-        p(req.__("Tables hold collections of similar data"))
-      );
+          label: req.__("Name"),
+          key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
+        },
+        ...(tagId
+          ? []
+          : [
+              {
+                label: tagsDropdown(tags),
+                key: (r) => tagBadges(r),
+              },
+            ]),
+        {
+          label: "",
+          key: (r) => tableBadges(r, req),
+        },
+
+        {
+          label: req.__("Access Read/Write"),
+          key: (t) =>
+            t.external
+              ? `${getRole(t.min_role_read)} (read only)`
+              : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
+        },
+        !tagId
+          ? {
+              label: req.__("Delete"),
+              key: (r) =>
+                r.name === "users" || r.external
+                  ? ""
+                  : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
+            }
+          : {
+              label: req.__("Remove From Tag"),
+              key: (r) =>
+                post_delete_btn(
+                  `/tag-entries/remove/tables/${r.id}/${tagId}`,
+                  req,
+                  `${r.name} from this tag`
+                ),
+            },
+      ],
+      tables,
+      {
+        hover: true,
+        tableClass: listClass(tagId, showList),
+        tableId: domId,
+      }
+    ) +
+    (tables.length == 0
+      ? div(
+          { class: listClass(tagId, showList), id: domId },
+          h4(req.__("No tables defined")),
+          p(req.__("Tables hold collections of similar data"))
+        )
+      : "")
+  );
 };
 
 /**

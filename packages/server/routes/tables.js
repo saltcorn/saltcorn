@@ -13,6 +13,7 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const Model = require("@saltcorn/data/models/model");
 const Trigger = require("@saltcorn/data/models/trigger");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
 const {
   mkTable,
   renderForm,
@@ -1222,10 +1223,19 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const rows = await Table.find_with_external(
-      {},
-      { orderBy: "name", nocase: true }
-    );
+    const tblq = {};
+    if (req.query._tag) {
+      const tagEntries = await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { table_id: null },
+      });
+      tblq.id = { in: tagEntries.map((te) => te.table_id).filter(Boolean) };
+    }
+    console.log(tblq);
+    const rows = await Table.find_with_external(tblq, {
+      orderBy: "name",
+      nocase: true,
+    });
     const roles = await User.get_roles();
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard = await tablesList(rows, req);
