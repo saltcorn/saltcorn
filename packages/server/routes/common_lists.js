@@ -61,7 +61,7 @@ const tablesList = async (
   const tagBadges = (table) => {
     const myTags = tag_entries.filter((te) => te.table_id === table.id);
     return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id]), "tables")
+      .map((te) => tagBadge(tagsById[te.tag_id], "tables"))
       .join(nbsp);
   };
 
