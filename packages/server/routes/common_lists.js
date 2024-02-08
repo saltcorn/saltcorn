@@ -216,7 +216,7 @@ const tagBadge = (tag, type) =>
   a(
     {
       href: `/tag/${tag.id}?show_list=${type}`,
-      class: "badge badge-secondary",
+      class: "badge bg-secondary",
     },
     tag.name
   );
