@@ -1231,7 +1231,6 @@ router.get(
       });
       tblq.id = { in: tagEntries.map((te) => te.table_id).filter(Boolean) };
     }
-    console.log(tblq);
     const rows = await Table.find_with_external(tblq, {
       orderBy: "name",
       nocase: true,
