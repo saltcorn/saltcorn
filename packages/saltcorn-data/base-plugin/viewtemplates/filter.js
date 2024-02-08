@@ -261,6 +261,12 @@ const run = async (
       });
     }
   });
+  const evalCtx = { ...state };
+  fields.forEach((f) => {
+    //so it will be in scope in formula
+    if (typeof evalCtx[f.name] === "undefined") evalCtx[f.name] = "undefined";
+  });
+  evalCtx.session_id = getSessionId(extra.req);
   await traverse(layout, {
     field: async (segment) => {
       const { field_name, fieldview, configuration } = segment;
@@ -300,11 +306,7 @@ const run = async (
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
       const extra_state = segment.extra_state_fml
-        ? eval_expression(
-            segment.extra_state_fml,
-            { session_id: getSessionId(extra.req), ...state },
-            extra.req.user
-          )
+        ? eval_expression(segment.extra_state_fml, evalCtx, extra.req.user)
         : {};
       if (segment.state === "local") {
         const state1 = { ...extra_state };
@@ -339,7 +341,7 @@ const run = async (
       }
       if (segment.view_state_fml) {
         const extra_state = segment.view_state_fml
-          ? eval_expression(segment.view_state_fml, state, extra.req.user)
+          ? eval_expression(segment.view_state_fml, evalCtx, extra.req.user)
           : {};
         segment.url +=
           (segment.transfer_state ? "" : `?`) +
