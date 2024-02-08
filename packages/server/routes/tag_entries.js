@@ -155,9 +155,10 @@ router.post(
       req.flash("error", req.__("Please select at least one item"));
       return res.redirect(`/tag-entries/add/${entry_type}/${tag_id}`);
     }
+    const ids_array = Array.isArray(ids) ? ids : [ids];
     const fieldName = idField(entry_type);
     const tag = await Tag.findOne({ id: tag_id });
-    for (const id of ids) {
+    for (const id of ids_array) {
       await tag.addEntry({ [fieldName]: id });
     }
     res.redirect(`/tag/${tag_id}?show_list=${entry_type}`);

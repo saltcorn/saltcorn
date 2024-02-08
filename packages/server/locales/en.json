@@ -1355,5 +1355,7 @@
 	"For search engines. Some view patterns accept interpolations.": "For search engines. Some view patterns accept interpolations.",
 	"Files cache TTL (minutes)": "Files cache TTL (minutes)",
 	"Cache-control max-age for files.": "Cache-control max-age for files.",
-	"Popup min width": "Popup min width"
+	"Popup min width": "Popup min width",
+	"Add %s to tag %s": "Add %s to tag %s",
+	"Add entries to tag %s": "Add entries to tag %s"
 }
