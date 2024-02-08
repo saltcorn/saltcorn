@@ -1,5 +1,7 @@
 const User = require("@saltcorn/data/models/user");
 const Table = require("@saltcorn/data/models/table");
+const Tag = require("@saltcorn/data/models/tag");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
 const { editRoleForm } = require("../markup/forms.js");
 const {
   mkTable,
@@ -7,6 +9,7 @@ const {
   post_delete_btn,
   settingsDropdown,
   post_dropdown_item,
+  badge,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
 const { h4, p, div, a, i, text } = require("@saltcorn/markup/tags");
@@ -16,7 +19,6 @@ const { h4, p, div, a, i, text } = require("@saltcorn/markup/tags");
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col, lbl) => `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
 
 /**
  * Table badges to show in System Table list views
@@ -186,6 +188,18 @@ const viewsList = async (
   const on_done_redirect_str = on_done_redirect
     ? `?on_done_redirect=${on_done_redirect}`
     : "";
+  const tags = await Tag.find();
+  const tag_entries = await TagEntry.find({});
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (view) => {
+    const myTags = tag_entries.filter((te) => te.view_id === view.id);
+    return myTags
+      .map((te) => badge("secondary", tagsById[te.tag_id].name))
+      .join("");
+  };
+
   return views.length > 0
     ? mkTable(
         [
@@ -196,17 +210,10 @@ const viewsList = async (
               ? `set_state_field('_sortby', 'name', this)`
               : undefined,
           },
-          // description - currently I dont want to show description in view list
-          // because description can be long
-          /*
-       {
-           label: req.__("Description"),
-           key: "description",
-           // this is sorting by column
-           sortlink: `javascript:set_state_field('_sortby', 'description')`,
-       },
-       */
-          // template
+          {
+            label: a({ href: "#" }, "Tags"),
+            key: (r) => tagBadges(r),
+          },
           {
             label: req.__("Pattern"),
             key: "viewtemplate",
