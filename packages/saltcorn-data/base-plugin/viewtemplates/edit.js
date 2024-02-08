@@ -59,7 +59,7 @@ const {
   readState,
   stateToQueryString,
   pathToState,
-  relationTypeFromPath,
+  displayType,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -83,6 +83,7 @@ const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
 const { prepare_update_row } = require("../../web-mobile-commons");
 const _ = require("underscore");
+const { Relation, RelationType } = require("@saltcorn/common-code");
 
 const builtInActions = [
   "Save",
@@ -212,7 +213,7 @@ const configuration_workflow = (req) =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("edit")
           );
-          const myviewrow = await View.findOne({ name: context.viewname });
+          const myviewrow = View.findOne({ name: context.viewname });
           const { parent_field_list } = await table.get_parent_relations(
             true,
             true
@@ -477,14 +478,6 @@ const setDateLocales = (form, locale) => {
 };
 
 /**
- * check if a relation path has a CHildList structure
- */
-const isChildListPath = (viewSelect, subView) =>
-  viewSelect.type === "RelationPath" &&
-  relationTypeFromPath(subView, viewSelect.path, viewSelect.sourcetable) ===
-    "ChildList";
-
-/**
  * update viewSelect so that it looks like a normal ChildList
  */
 const updateViewSelect = (viewSelect) => {
@@ -728,13 +721,23 @@ const transformForm = async ({
         throw new InvalidConfiguration(
           `Cannot find embedded view: ${view_select.viewname}`
         );
-      const childListPath = isChildListPath(view_select, view);
+      // check if the relation path matches a ChildList relations
+      let childListRelPath = false;
+      if (segment.relation && view.table_id) {
+        const targetTbl = Table.findOne({ id: view.table_id });
+        const relation = new Relation(
+          segment.relation,
+          targetTbl.name,
+          displayType(await view.get_state_fields())
+        );
+        childListRelPath = relation.type === RelationType.CHILD_LIST;
+      }
       // Edit-in-edit
       if (
         view.viewtemplate === "Edit" &&
-        (view_select.type === "ChildList" || childListPath)
+        (view_select.type === "ChildList" || childListRelPath)
       ) {
-        if (childListPath) updateViewSelect(view_select);
+        if (childListRelPath) updateViewSelect(view_select);
         const childTable = Table.findOne({ id: view.table_id });
         const childForm = await getForm(
           childTable,
@@ -789,45 +792,50 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       }
-      const isIndependent =
-        view_select.type === "Independent" ||
-        (view_select.type === "RelationPath" &&
-          relationTypeFromPath(view, view_select.path, table) ===
-            "Independent");
-      if (!row && !isIndependent) {
-        segment.type = "blank";
-        segment.contents = "";
-        return;
-      }
-      if (!view)
-        throw new InvalidConfiguration(
-          `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
-        );
-      let state;
-      switch (view_select.type) {
-        case "RelationPath": {
-          state = pathToState(
-            view,
+      let state = {};
+      if (view_select.type === "RelationPath" && view.table_id) {
+        const targetTbl = Table.findOne({ id: view.table_id });
+        if (targetTbl) {
+          const relation = new Relation(
             segment.relation,
-            view_select.path,
-            (k) => row[k],
-            table
+            targetTbl.name,
+            displayType(await view.get_state_fields())
           );
-          break;
+          const type = relation.type;
+          if (!row && type !== RelationType.INDEPENDENT) {
+            segment.type = "blank";
+            segment.contents = "";
+            return;
+          }
+          state = pathToState(relation, (k) => row[k]);
         }
-        case "Own":
-          state = { id: row.id };
-          break;
-        case "Independent":
-          state = {};
-          break;
-        case "ChildList":
-        case "OneToOneShow":
-          state = { [view_select.field_name]: row.id };
-          break;
-        case "ParentShow":
-          state = { id: row[view_select.field_name] };
-          break;
+      } else {
+        const isIndependent = view_select.type === "Independent";
+        // legacy none check ?
+        if (!row && !isIndependent) {
+          segment.type = "blank";
+          segment.contents = "";
+          return;
+        }
+        if (!view)
+          throw new InvalidConfiguration(
+            `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
+          );
+        switch (view_select.type) {
+          case "Own":
+            state = { id: row.id };
+            break;
+          case "Independent":
+            state = {};
+            break;
+          case "ChildList":
+          case "OneToOneShow":
+            state = { [view_select.field_name]: row.id };
+            break;
+          case "ParentShow":
+            state = { id: row[view_select.field_name] };
+            break;
+        }
       }
       const extra_state = segment.extra_state_fml
         ? eval_expression(
@@ -1120,8 +1128,24 @@ const runPost = async (
           field.metadata.relation_path
         );
         const childView = View.findOne({ name: view_select.viewname });
-        if (isChildListPath(view_select, childView))
-          updateViewSelect(view_select);
+        if (!childView)
+          throw new InvalidConfiguration(
+            `Cannot find embedded view: ${view_select.viewname}`
+          );
+        if (
+          field.metadata.relation_path &&
+          view_select.type === "RelationPath"
+        ) {
+          const targetTbl = Table.findOne({ id: childView.table_id });
+          const relation = new Relation(
+            field.metadata.relation_path,
+            targetTbl.name,
+            displayType(await childView.get_state_fields())
+          );
+          if (relation.type === RelationType.CHILD_LIST)
+            updateViewSelect(view_select);
+        }
+
         const childTable = Table.findOne({ id: field.metadata?.table_id });
         const submitted_row_ids = new Set(
           (form.values[field.name] || []).map(
@@ -2127,7 +2151,7 @@ module.exports = {
     const warnings = [];
 
     if (!destination_type || destination_type === "View") {
-      const vwd = await View.findOne({
+      const vwd = View.findOne({
         name: (view_when_done || "").split(".")[0],
       });
       if (!vwd)

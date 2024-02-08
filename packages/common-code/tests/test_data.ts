@@ -1,18 +1,20 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 
-export const fixturesData = () => {
+export const fixturesData = (dir: string) => {
   const { tables, views } = JSON.parse(
-    readFileSync(join(__dirname, "schema_data.json"))
+    readFileSync(join(dir, "schema_data.json")).toString()
   );
   return { tables, views };
 };
 
 let nextFieldId = 3000;
 
-export const withAnotherUserField = () => {
-  const { tables, views } = JSON.parse(JSON.stringify(fixturesData()));
-  const uiit = tables.find(({ name }) => name === "user_interested_in_topic");
+export const withAnotherUserField = (dir: string) => {
+  const { tables, views } = JSON.parse(JSON.stringify(fixturesData(dir)));
+  const uiit = tables.find(
+    ({ name }: any) => name === "user_interested_in_topic"
+  );
   uiit.foreign_keys.push({
     name: "another_user",
     id: nextFieldId++,
@@ -23,9 +25,11 @@ export const withAnotherUserField = () => {
   return { tables, views };
 };
 
-export const withSecondTopicField = () => {
-  const { tables, views } = JSON.parse(JSON.stringify(withAnotherUserField()));
-  const bit = tables.find(({ name }) => name === "blog_in_topic");
+export const withSecondTopicField = (dir: string) => {
+  const { tables, views } = JSON.parse(
+    JSON.stringify(withAnotherUserField(dir))
+  );
+  const bit = tables.find(({ name }: any) => name === "blog_in_topic");
   bit.foreign_keys.push({
     name: "second_topic",
     id: nextFieldId++,
@@ -36,8 +40,10 @@ export const withSecondTopicField = () => {
   return { tables, views };
 };
 
-export const withMultipleInbounds = () => {
-  const { tables, views } = JSON.parse(JSON.stringify(withSecondTopicField()));
+export const withMultipleInbounds = (dir: string) => {
+  const { tables, views } = JSON.parse(
+    JSON.stringify(withSecondTopicField(dir))
+  );
   const nextTableId = tables.length + 1;
   tables.push({
     name: "second_inbound",
@@ -62,9 +68,13 @@ export const withMultipleInbounds = () => {
   return { tables, views };
 };
 
-export const withKeyFromLayerTwo = () => {
-  const { tables, views } = JSON.parse(JSON.stringify(withMultipleInbounds()));
-  const inboundInbound = tables.find(({ name }) => name === "inbound_inbound");
+export const withKeyFromLayerTwo = (dir: string) => {
+  const { tables, views } = JSON.parse(
+    JSON.stringify(withMultipleInbounds(dir))
+  );
+  const inboundInbound = tables.find(
+    ({ name }: any) => name === "inbound_inbound"
+  );
   inboundInbound.foreign_keys.push({
     name: "post_from_layer_two",
     id: nextFieldId++,
@@ -75,8 +85,10 @@ export const withKeyFromLayerTwo = () => {
   return { tables, views };
 };
 
-export const withKeyFromLayerThree = () => {
-  const { tables, views } = JSON.parse(JSON.stringify(withKeyFromLayerTwo()));
+export const withKeyFromLayerThree = (dir: string) => {
+  const { tables, views } = JSON.parse(
+    JSON.stringify(withKeyFromLayerTwo(dir))
+  );
   const nextTableId = tables.length + 1;
   tables.push({
     name: "inbound_level_three",
@@ -101,8 +113,8 @@ export const withKeyFromLayerThree = () => {
   return { tables, views };
 };
 
-export const withSimplePostTopicrelation = () => {
-  const { tables, views } = JSON.parse(JSON.stringify(fixturesData()));
+export const withSimplePostTopicrelation = (dir: string) => {
+  const { tables, views } = JSON.parse(JSON.stringify(fixturesData(dir)));
   const simpleTopicsId = tables.length + 1;
   const simplePostsId = simpleTopicsId + 1;
   const simplePostInboundId = simplePostsId + 1;
@@ -144,7 +156,7 @@ export const withSimplePostTopicrelation = () => {
       },
     ],
   });
-  const users = tables.find(({ name }) => name === "users");
+  const users = tables.find(({ name }: any) => name === "users");
   users.foreign_keys.push({
     name: "favsimpletopic",
     table_id: users.id,

@@ -43,6 +43,7 @@
   "dependencies": {
     "@saltcorn/types": "0.9.4-beta.8",
     "@saltcorn/markup": "0.9.4-beta.8",
+    "@saltcorn/common-code": "0.9.4-beta.8",
     "@saltcorn/db-common": "0.9.4-beta.8",
     "@saltcorn/sqlite-mobile": "0.9.4-beta.8",
     "acorn": "^8.0.3",

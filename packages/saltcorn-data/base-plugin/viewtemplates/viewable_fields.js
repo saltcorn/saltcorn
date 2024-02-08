@@ -6,7 +6,7 @@
 const { post_btn } = require("@saltcorn/markup");
 const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
-const { link_view, relationTypeFromPath } = require("../../plugin-helper");
+const { link_view, displayType } = require("../../plugin-helper");
 const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
@@ -20,8 +20,15 @@ const {
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode, parseRelationPath, dollarizeObject } = require("../../utils");
+const { isNode, dollarizeObject } = require("../../utils");
 const { bool, date } = require("../types");
+
+const {
+  Relation,
+  parseRelationPath,
+  RelationType,
+  ViewDisplayType,
+} = require("@saltcorn/common-code");
 
 /**
  * formats the column index of a view cfg
@@ -263,37 +270,29 @@ const parse_view_select = (view, relation) => {
   }
 };
 
-const pathToQuery = (subview, relation, row, srcTable) => {
-  const { path } = parseRelationPath(relation);
-  const type = relationTypeFromPath(subview, path, srcTable);
-  switch (type) {
-    case "ChildList":
-      return {
-        type,
-        query:
-          path.length === 1
-            ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
-            : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`,
-      };
-    case "ParentShow":
+const pathToQuery = (relation, srcTable, subTable, row) => {
+  const path = relation.path;
+  switch (relation.type) {
+    case RelationType.CHILD_LIST:
+      return path.length === 1
+        ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
+        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`;
+    case RelationType.PARENT_SHOW:
       const fkey = path[0].fkey;
       const reffield = srcTable.fields.find((f) => f.name === fkey);
       const value = row[fkey];
-      return {
-        type,
-        query: value
-          ? `?${reffield.refname}=${
-              typeof value === "object" ? value.id : value
-            }`
-          : null,
-      };
-    case "Own":
-      const getQuery = get_view_link_query(srcTable.fields, subview || {});
-      return { type, query: getQuery(row) };
-    case "Independent":
-      return { type, query: "" };
-    case "RelationPath":
-      const subTable = Table.findOne({ id: subview.table_id });
+      return value
+        ? `?${reffield.refname}=${typeof value === "object" ? value.id : value}`
+        : null;
+    case RelationType.OWN:
+      const getQuery = get_view_link_query(
+        srcTable.fields,
+        relation.subView || {}
+      );
+      return getQuery(row);
+    case RelationType.INDEPENDENT:
+      return "";
+    case RelationType.RELATION_PATH:
       const idName =
         path.length > 0
           ? path[0].fkey
@@ -304,10 +303,7 @@ const pathToQuery = (subview, relation, row, srcTable) => {
         row[idName] === null || row[idName]?.id === null
           ? "NULL"
           : row[idName]?.id || row[idName];
-      return {
-        type,
-        query: `?${relation}=${srcId}`,
-      };
+      return `?${relation.relationString}=${srcId}`;
   }
 };
 
@@ -377,13 +373,19 @@ const view_linker = (
   };
   if (relation) {
     const topview = View.findOne({ name: srcViewName });
+    const srcTable = Table.findOne({ id: topview.table_id });
     const subview = View.findOne({ name: view });
     const subTable = Table.findOne({ id: subview.table_id });
-    const srcTable = Table.findOne({ id: topview.table_id });
+    const relObj = new Relation(
+      relation,
+      subTable ? subTable.name : "",
+      ViewDisplayType.NO_ROW_LIMIT
+    );
+    const type = relObj.type;
     return {
       label: view,
       key: (r) => {
-        const { type, query } = pathToQuery(subview, relation, r, srcTable);
+        const query = pathToQuery(relObj, srcTable, subTable, r);
         if (query === null) return "";
         else {
           let label = "";
@@ -566,7 +568,7 @@ const flapMapish = (xs, f) => {
  * @function
  * @param {string} viewname
  * @param {Table|object} table
- * @param {Fields[]} fields
+ * @param {Field[]} fields
  * @param {object[]} columns
  * @param {boolean} isShow
  * @param {object} req

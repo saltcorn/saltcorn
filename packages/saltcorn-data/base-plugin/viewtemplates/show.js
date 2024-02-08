@@ -14,6 +14,7 @@ const PageGroup = require("../../models/page_group");
 const Crash = require("../../models/crash");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
+const { Relation } = require("@saltcorn/common-code");
 
 const { getState } = require("../../db/state");
 const {
@@ -51,6 +52,7 @@ const {
   add_free_variables_to_joinfields,
   stateToQueryString,
   pathToState,
+  displayType,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -437,6 +439,7 @@ const renderRows = async (
   }
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
+      // do all the parsing with data here? make a factory
       const view = await getView(segment.view, segment.relation);
       if (!view)
         throw new InvalidConfiguration(
@@ -455,7 +458,7 @@ const renderRows = async (
           )
         )[0];
       } else {
-        let state1;
+        let state1 = {};
         const pk_name = table.pk_name;
         const get_row_val = (k) => {
           //handle expanded joinfields
@@ -463,37 +466,37 @@ const renderRows = async (
           if (row[k]?.id === null) return null;
           return row[k]?.id || row[k];
         };
-        switch (view.view_select.type) {
-          case "RelationPath": {
-            state1 = pathToState(
-              view,
-              segment.relation,
-              view.view_select.path,
-              get_row_val,
-              table
-            );
-            break;
+        if (view.view_select.type === "RelationPath" && view.table_id) {
+          const targetTbl = Table.findOne({ id: view.table_id });
+          const relation = new Relation(
+            segment.relation,
+            targetTbl.name,
+            displayType(await view.get_state_fields())
+          );
+          state1 = pathToState(relation, get_row_val);
+        } else {
+          switch (view.view_select.type) {
+            case "Own":
+              state1 = { [pk_name]: get_row_val(pk_name) };
+              break;
+            case "Independent":
+              state1 = {};
+              break;
+            case "ChildList":
+            case "OneToOneShow":
+              state1 = {
+                [view.view_select.through
+                  ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
+                  : view.view_select.field_name]: get_row_val(pk_name),
+              };
+              break;
+            case "ParentShow":
+              //todo set by pk name of parent tablr
+              state1 = {
+                id: get_row_val(view.view_select.field_name),
+              };
+              break;
           }
-          case "Own":
-            state1 = { [pk_name]: get_row_val(pk_name) };
-            break;
-          case "Independent":
-            state1 = {};
-            break;
-          case "ChildList":
-          case "OneToOneShow":
-            state1 = {
-              [view.view_select.through
-                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
-                : view.view_select.field_name]: get_row_val(pk_name),
-            };
-            break;
-          case "ParentShow":
-            //todo set by pk name of parent tablr
-            state1 = {
-              id: get_row_val(view.view_select.field_name),
-            };
-            break;
         }
         const extra_state = segment.extra_state_fml
           ? eval_expression(

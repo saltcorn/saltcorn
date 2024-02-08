@@ -14,6 +14,7 @@
     "@oclif/plugin-plugins": "^2.1.0",
     "@oclif/plugin-help": "^3.3.1",
     "@saltcorn/admin-models": "0.9.4-beta.8",
+    "@saltcorn/common-code": "0.9.4-beta.8",
     "@saltcorn/data": "0.9.4-beta.8",
     "@saltcorn/mobile-app": "0.9.4-beta.8",
     "@saltcorn/mobile-builder": "0.9.4-beta.8",

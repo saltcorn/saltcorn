@@ -18,6 +18,7 @@ import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
 import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
+import { RelationType } from "@saltcorn/common-code";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -1447,22 +1448,6 @@ const Tooltip = ({ children }) => {
   );
 };
 
-export const buildTableCaches = (allTables) => {
-  const tableIdCache = {};
-  const tableNameCache = {};
-  const fieldCache = {};
-  for (const table of allTables) {
-    tableIdCache[table.id] = table;
-    tableNameCache[table.name] = table;
-    for (const field of table.foreign_keys) {
-      if (!fieldCache[field.reftable_name])
-        fieldCache[field.reftable_name] = [];
-      fieldCache[field.reftable_name].push(field);
-    }
-  }
-  return { tableIdCache, tableNameCache, fieldCache };
-};
-
 export const removeWhitespaces = (str) => {
   return str.replace(/\s/g, "X");
 };
@@ -1513,79 +1498,137 @@ export const arrayChunks = (xs, n) => {
   return arrayOfArrays;
 };
 
-export const prepCacheAndFinder = ({
-  tables,
-  views,
-  max_relations_layer_depth,
-}) => {
-  if (tables && views) {
-    const caches = buildTableCaches(tables);
-    const finder = new relationHelpers.RelationsFinder(
-      caches,
-      views,
-      max_relations_layer_depth || 6
-    );
-    return { caches, finder };
-  } else return { caches: null, finder: null };
-};
-
 /**
- * @param {string[]} paths
+ * @param {string[]} relations
  * @param {string} sourceTbl name of the topview table
  * @returns either a same table relation, a parent relation, a child relation, or the first relation
  */
-export const initialRelation = (paths, sourceTbl) => {
+export const initialRelation = (relations) => {
   let sameTblRel = null;
   let parentRel = null;
   let childRel = null;
-  for (const path of paths) {
-    if (!sameTblRel && path === `.${sourceTbl}`) sameTblRel = path;
-    else {
-      const tokens = path.split(".");
-      if (
-        !parentRel &&
-        tokens.length === 3 &&
-        tokens[1] === sourceTbl &&
-        tokens[2].indexOf("$") === -1
-      )
-        parentRel = path;
-      else {
-        const lastToken = tokens[tokens.length - 1];
-        if (
-          lastToken.indexOf("$") > 0 &&
-          (!childRel || childRel.split(".").length > tokens.length)
-        )
-          childRel = path;
-      }
+  for (const relation of relations) {
+    switch (relation.type) {
+      case RelationType.OWN:
+        sameTblRel = relation;
+        break;
+      case RelationType.PARENT_SHOW:
+        parentRel = relation;
+        break;
+      case RelationType.CHILD_LIST:
+      case RelationType.ONE_TO_ONE_SHOW:
+        childRel = relation;
+        break;
     }
   }
-  return sameTblRel || parentRel || childRel || paths[0];
+  return sameTblRel || parentRel || childRel || relations[0];
 };
 
 /**
- * update the builder wide relations cache relations cache
- * if there is no entry for the given tableName and viewname
- * @param {any} relationsCache cache from the context
- * @param {Function} setRelationsCache set cache in context
- * @param {any} options builder options
- * @param {RelationsFinder} finder
- * @param {string} viewname subview name
+ * builder intern path method
+ * @param path
+ * @param tableNameCache
+ * @returns
  */
-export const updateRelationsCache = (
-  relationsCache,
-  setRelationsCache,
-  options,
-  finder,
-  viewname
-) => {
-  if (!relationsCache[options.tableName])
-    relationsCache[options.tableName] = {};
-  if (!relationsCache[options.tableName][viewname]) {
-    relationsCache[options.tableName][viewname] = finder.findRelations(
-      options.tableName,
-      viewname,
-      options.excluded_subview_templates
-    );
-    setRelationsCache({ ...relationsCache });
+export const buildRelationArray = (path, tableNameCache) => {
+  if (path === ".")
+    return [{ type: "Independent", table: "None (no relation)" }];
+  const tokens = path.split(".");
+  if (tokens.length === 2)
+    return [{ type: "Own", table: `${tokens[1]} (same table)` }];
+  else if (tokens.length >= 3) {
+    const result = [];
+    let currentTbl = tokens[1];
+    for (const relation of tokens.slice(2)) {
+      if (relation.indexOf("$") > 0) {
+        const [inboundTbl, inboundKey] = relation.split("$");
+        result.push({ type: "Inbound", table: inboundTbl, key: inboundKey });
+        currentTbl = inboundTbl;
+      } else {
+        const srcTbl = tableNameCache[currentTbl];
+        const fk = srcTbl.foreign_keys.find((fk) => fk.name === relation);
+        if (fk) {
+          const targetTbl = tableNameCache[fk.reftable_name];
+          result.push({
+            type: "Foreign",
+            table: targetTbl.name,
+            key: relation,
+          });
+          currentTbl = targetTbl.name;
+        }
+      }
+    }
+    return result;
   }
+};
+
+export const buildLayers = (relations, tableName, tableNameCache) => {
+  const result = { table: tableName, inboundKeys: [], fkeys: [] };
+  for (const relation of relations) {
+    const relType = relation.type;
+    let currentLevel = result;
+    if (relType === RelationType.INDEPENDENT) {
+      currentLevel.fkeys.push({
+        name: "none (no relation)",
+        table: "",
+        inboundKeys: [],
+        fkeys: [],
+        relPath: relation.relationString,
+      });
+    } else if (relType === RelationType.OWN) {
+      currentLevel.fkeys.push({
+        name: "same table",
+        table: relation.targetTblName,
+        inboundKeys: [],
+        fkeys: [],
+        relPath: relation.relationString,
+      });
+    } else {
+      let currentTbl = relation.sourceTblName;
+      for (const pathElement of relation.path) {
+        if (pathElement.inboundKey) {
+          currentTbl = pathElement.table;
+          const existing = currentLevel.inboundKeys.find(
+            (key) =>
+              key.name === pathElement.inboundKey && key.table === currentTbl
+          );
+          if (existing) {
+            currentLevel = existing;
+          } else {
+            const nextLevel = {
+              name: pathElement.inboundKey,
+              table: currentTbl,
+              inboundKeys: [],
+              fkeys: [],
+            };
+            currentLevel.inboundKeys.push(nextLevel);
+            currentLevel = nextLevel;
+          }
+        } else if (pathElement.fkey) {
+          const tblObj = tableNameCache[currentTbl];
+          const fkey = tblObj.foreign_keys.find(
+            (key) => key.name === pathElement.fkey
+          );
+          currentTbl = fkey.reftable_name;
+          const existing = currentLevel.fkeys.find(
+            (key) => key.name === pathElement.fkey
+          );
+          if (existing) {
+            currentLevel = existing;
+          } else {
+            const nextLevel = {
+              name: pathElement.fkey,
+              table: currentTbl,
+              inboundKeys: [],
+              fkeys: [],
+            };
+            currentLevel.fkeys.push(nextLevel);
+            currentLevel = nextLevel;
+          }
+        }
+      }
+    }
+    currentLevel.relPath = relation.relationString;
+  }
+  return result;
 };
