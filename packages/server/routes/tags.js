@@ -42,7 +42,7 @@ router.get(
           mkTable(
             [
               {
-                label: req.__("Tagname"),
+                label: req.__("Tag name"),
                 key: (r) =>
                   link(`/tag/${r.id || r.name}?show_list=tables`, text(r.name)),
               },
@@ -57,7 +57,7 @@ router.get(
           a(
             {
               href: `/tag/new`,
-              class: "btn btn-primary",
+              class: "btn btn-primary mt-3",
             },
             req.__("Create tag")
           ),
