@@ -72,10 +72,14 @@ const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
             label: "",
             key: (r) => tableBadges(r, req),
           },
-          {
-            label: tagsDropdown(tags),
-            key: (r) => tagBadges(r),
-          },
+          ...(tagId
+            ? []
+            : [
+                {
+                  label: tagsDropdown(tags),
+                  key: (r) => tagBadges(r),
+                },
+              ]),
           {
             label: req.__("Access Read/Write"),
             key: (t) =>
@@ -288,10 +292,14 @@ const viewsList = async (
               ? `set_state_field('_sortby', 'name', this)`
               : undefined,
           },
-          {
-            label: tagsDropdown(tags),
-            key: (r) => tagBadges(r),
-          },
+          ...(tagId
+            ? []
+            : [
+                {
+                  label: tagsDropdown(tags),
+                  key: (r) => tagBadges(r),
+                },
+              ]),
           {
             label: req.__("Pattern"),
             key: "viewtemplate",
@@ -456,13 +464,39 @@ const editPageRoleForm = (page, roles, req, isGroup) =>
  * @param {object} req
  * @returns {div}
  */
-const getPageList = (rows, roles, req, { tagId, domId, showList } = {}) => {
+const getPageList = async (
+  rows,
+  roles,
+  req,
+  { tagId, domId, showList } = {}
+) => {
+  const tags = await Tag.find();
+  const tag_entries = await TagEntry.find({
+    not: { page_id: null },
+  });
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (page) => {
+    const myTags = tag_entries.filter((te) => te.page_id === page.id);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id], "pages"))
+      .join(nbsp);
+  };
   return mkTable(
     [
       {
         label: req.__("Name"),
         key: (r) => link(`/page/${r.name}`, r.name),
       },
+      ...(tagId
+        ? []
+        : [
+            {
+              label: tagsDropdown(tags),
+              key: (r) => tagBadges(r),
+            },
+          ]),
       {
         label: req.__("Role to access"),
         key: (row) => editPageRoleForm(row, roles, req),

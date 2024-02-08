@@ -311,7 +311,7 @@ router.get(
           title: req.__("Your pages"),
           class: "mt-0",
           contents: div(
-            getPageList(pages, roles, req),
+            await getPageList(pages, roles, req),
             a(
               {
                 href: `/pageedit/new`,
