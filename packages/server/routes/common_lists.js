@@ -47,6 +47,20 @@ const listClass = (tagId, showList) =>
 const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
   const roles = await User.get_roles();
   const getRole = (rid) => roles.find((r) => r.id === rid)?.role || "?";
+  const tags = await Tag.find();
+  const tag_entries = await TagEntry.find({
+    not: { table_id: null },
+  });
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (table) => {
+    const myTags = tag_entries.filter((te) => te.table_id === table.id);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id]), "tables")
+      .join(nbsp);
+  };
+
   return tables.length > 0
     ? mkTable(
         [
@@ -57,6 +71,10 @@ const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
           {
             label: "",
             key: (r) => tableBadges(r, req),
+          },
+          {
+            label: tagsDropdown(tags),
+            key: (r) => tagBadges(r),
           },
           {
             label: req.__("Access Read/Write"),
@@ -179,9 +197,12 @@ const setTableRefs = async (views) => {
   return views;
 };
 
-const tagBadge = (tag) =>
+const tagBadge = (tag, type) =>
   a(
-    { href: `/tag/${tag.id}?show_list=views`, class: "badge badge-secondary" },
+    {
+      href: `/tag/${tag.id}?show_list=${type}`,
+      class: "badge badge-secondary",
+    },
     tag.name
   );
 
@@ -252,7 +273,9 @@ const viewsList = async (
 
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
-    return myTags.map((te) => tagBadge(tagsById[te.tag_id])).join(nbsp);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id], "views"))
+      .join(nbsp);
   };
 
   return views.length > 0
