@@ -44,7 +44,11 @@ const valIfSet = (check, value) => (check ? value : "");
 const listClass = (tagId, showList) =>
   valIfSet(tagId, `collapse ${valIfSet(showList, "show")}`);
 
-const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
+const tablesList = async (
+  tables,
+  req,
+  { tagId, domId, showList, filterOnTag } = {}
+) => {
   const roles = await User.get_roles();
   const getRole = (rid) => roles.find((r) => r.id === rid)?.role || "?";
   const tags = await Tag.find();
@@ -72,7 +76,10 @@ const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
           ? []
           : [
               {
-                label: tagsDropdown(tags),
+                label: tagsDropdown(
+                  tags,
+                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                ),
                 key: (r) => tagBadges(r),
               },
             ]),
@@ -214,7 +221,7 @@ const tagBadge = (tag, type) =>
     tag.name
   );
 
-const tagsDropdown = (tags) =>
+const tagsDropdown = (tags, altHeader) =>
   div(
     { class: "dropdown" },
     div(
@@ -227,7 +234,7 @@ const tagsDropdown = (tags) =>
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
-      "Tags"
+      altHeader || "Tags"
     ),
     div(
       {
