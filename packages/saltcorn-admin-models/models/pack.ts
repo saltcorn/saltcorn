@@ -18,6 +18,7 @@ import TableConstraint from "@saltcorn/data/models/table_constraints";
 import Role from "@saltcorn/data/models/role";
 import Library from "@saltcorn/data/models/library";
 import Tag from "@saltcorn/data/models/tag";
+import TagEntry from "@saltcorn/data/models/tag_entry";
 import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog, { EventLogCfg } from "@saltcorn/data/models/eventlog";
@@ -38,6 +39,7 @@ import type { EventLogPack } from "@saltcorn/types/model-abstracts/abstract_even
 import type { ModelPack } from "@saltcorn/types/model-abstracts/abstract_model";
 import type { ModelInstancePack } from "@saltcorn/types/model-abstracts/abstract_model_instance";
 import type { TagPack } from "@saltcorn/types/model-abstracts/abstract_tag";
+
 const { isStale } = require("@saltcorn/data/utils");
 
 /**
@@ -86,8 +88,8 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
  * View Pack
  * @param name
  */
-const view_pack = async (name: string): Promise<ViewPack> => {
-  const view = await View.findOne({ name });
+const view_pack = async (name: string | View): Promise<ViewPack> => {
+  const view = typeof name === "string" ? await View.findOne({ name }) : name;
   if (!view) throw new Error(`Unable to find view '${name}'`);
   const table = Table.findOne({ id: view.table_id });
   //if (!table)
@@ -129,8 +131,8 @@ const plugin_pack = async (name: string): Promise<PluginPack> => {
  * Page Pack
  * @param name name of the page
  */
-const page_pack = async (name: string): Promise<PagePack> => {
-  const page = Page.findOne({ name });
+const page_pack = async (name: string | Page): Promise<PagePack> => {
+  const page = typeof name === "string" ? Page.findOne({ name }) : name;
   if (!page) throw new Error(`Unable to find page '${name}'`);
   const root_page_for_roles = await page.is_root_page_for_roles();
   return {
@@ -185,8 +187,9 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
  * Trigger pack
  * @param name
  */
-const trigger_pack = async (name: string): Promise<TriggerPack> => {
-  const trig = await Trigger.findOne({ name });
+const trigger_pack = async (name: string | Trigger): Promise<TriggerPack> => {
+  const trig =
+    typeof name === "string" ? await Trigger.findOne({ name }) : name;
   return trig.toJson;
 };
 
@@ -205,8 +208,8 @@ const role_pack = async (role: string): Promise<RolePack> => {
  * @param name name of the tag
  * @returns
  */
-const tag_pack = async (name: string): Promise<TagPack> => {
-  const tag = await Tag.findOne({ name });
+const tag_pack = async (name: string | Tag): Promise<TagPack> => {
+  const tag = typeof name === "string" ? await Tag.findOne({ name }) : name;
   if (!tag) throw new Error(`Unable to find tag '${name}'`);
   const entries = await tag.getEntries();
   const withNames = entries.map((e) => {
@@ -234,7 +237,7 @@ const tag_pack = async (name: string): Promise<TagPack> => {
     return result;
   });
   return {
-    name: name,
+    name: tag.name,
     entries: withNames,
   };
 };
@@ -636,8 +639,13 @@ const install_pack = async (
           return result;
         })
       : undefined;
-
-    await Tag.create({ name: tag.name, entries });
+    const existing = await Tag.findOne({ name: tag.name });
+    if (!existing) await Tag.create({ name: tag.name, entries });
+    else {
+      for (const entry of entries || []) {
+        await TagEntry.create({ tag_id: existing.id, ...entry });
+      }
+    }
   }
   for (const model of pack.models || []) {
     const mTbl = Table.findOne({ name: model.table_name });
@@ -800,6 +808,35 @@ const fetch_pack_by_name = async (
   else return null;
 };
 
+const create_pack_from_tag = async (tag: Tag): Promise<any> => {
+  const pack: Pack = {
+    tables: [],
+    views: [],
+    plugins: [],
+    pages: [],
+    page_groups: [],
+    roles: [],
+    library: [],
+    triggers: [],
+    tags: [],
+    models: [],
+    model_instances: [],
+    event_logs: [],
+  };
+  const tables = await tag.getTables();
+  for (const t of tables) pack.tables.push(await table_pack(t));
+  const views = await tag.getViews();
+  for (const v of views) pack.views.push(await view_pack(v));
+  const pages = await tag.getPages();
+  for (const p of pages) pack.pages.push(await page_pack(p));
+  const triggers = await tag.getTriggers();
+  for (const t of triggers) pack.triggers.push(await trigger_pack(t));
+  pack.tags.push(await tag_pack(tag));
+  return pack;
+
+  //TODO add models, plugins
+};
+
 export = {
   table_pack,
   view_pack,
@@ -820,4 +857,5 @@ export = {
   can_install_pack,
   uninstall_pack,
   add_to_menu,
+  create_pack_from_tag,
 };

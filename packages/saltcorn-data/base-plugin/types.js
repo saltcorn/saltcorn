@@ -987,6 +987,11 @@ const string = {
           name: "rows",
           label: "Rows",
         },
+        {
+          name: "placeholder",
+          label: "Placeholder",
+          type: "String",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
@@ -997,6 +1002,7 @@ const string = {
             disabled: attrs.disabled,
             onChange: attrs.onChange,
             readonly: attrs.readonly,
+            placeholder: attrs.placeholder,
             spellcheck: attrs.spellcheck === false ? "false" : undefined,
             required: !!required,
             maxlength: isdef(attrs.max_length) && attrs.max_length,

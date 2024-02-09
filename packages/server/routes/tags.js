@@ -1,9 +1,10 @@
-const { a, text } = require("@saltcorn/markup/tags");
+const { a, text, i } = require("@saltcorn/markup/tags");
 
 const Tag = require("@saltcorn/data/models/tag");
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const User = require("@saltcorn/data/models/user");
+const stream = require("stream");
 
 const { isAdmin, error_catcher, csrfField } = require("./utils");
 const { send_infoarch_page } = require("../markup/admin");
@@ -22,6 +23,10 @@ const {
   getPageList,
   getTriggerList,
 } = require("./common_lists");
+
+const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
+const { create_pack_from_tag } = require("@saltcorn/admin-models/models/pack");
 
 const router = new Router();
 module.exports = router;
@@ -42,7 +47,7 @@ router.get(
           mkTable(
             [
               {
-                label: req.__("Tagname"),
+                label: req.__("Tag name"),
                 key: (r) =>
                   link(`/tag/${r.id || r.name}?show_list=tables`, text(r.name)),
               },
@@ -57,7 +62,7 @@ router.get(
           a(
             {
               href: `/tag/new`,
-              class: "btn btn-primary",
+              class: "btn btn-primary mt-3",
             },
             req.__("Create tag")
           ),
@@ -73,6 +78,13 @@ router.get(
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`New tag`), {
       above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__(`Tags`), href: "/tag" },
+            { text: req.__(`New`) },
+          ],
+        },
         {
           type: "card",
           title: req.__(`New tag`),
@@ -97,7 +109,26 @@ router.get(
   })
 );
 
-const headerWithCollapser = (title, cardId, showList) =>
+router.get(
+  "/download-pack/:idorname",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { idorname } = req.params;
+    const id = parseInt(idorname);
+    const tag = await Tag.findOne(id ? { id } : { name: idorname });
+    if (!tag) {
+      req.flash("error", req.__("Tag not found"));
+      return res.redirect(`/tag`);
+    }
+    const pack = await create_pack_from_tag(tag);
+    const readStream = new stream.PassThrough();
+    readStream.end(JSON.stringify(pack));
+    res.type("application/json");
+    res.attachment(`${tag.name}-pack.json`);
+    readStream.pipe(res);
+  })
+);
+const headerWithCollapser = (title, cardId, showList, count) =>
   a(
     {
       class: `card-header-left-collapse ${!showList ? "collapsed" : ""} ps-3`,
@@ -107,7 +138,8 @@ const headerWithCollapser = (title, cardId, showList) =>
       "aria-controls": cardId,
       role: "button",
     },
-    title
+    title,
+    ` (${count})`
   );
 
 const isShowList = (showList, listType) => showList === listType;
@@ -139,14 +171,15 @@ router.get(
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: req.__(`Tag: %s`, tag.name) }],
+          crumbs: [{ text: req.__(`Tags`), href: "/tag" }, { text: tag.name }],
         },
         {
           type: "card",
           title: headerWithCollapser(
             req.__("Tables"),
             tablesDomId,
-            isShowList(show_list, "tables")
+            isShowList(show_list, "tables"),
+            tables.length
           ),
           contents: [
             await tablesList(tables, req, {
@@ -168,7 +201,8 @@ router.get(
           title: headerWithCollapser(
             req.__("Views"),
             viewsDomId,
-            isShowList(show_list, "views")
+            isShowList(show_list, "views"),
+            views.length
           ),
           contents: [
             await viewsList(views, req, {
@@ -190,10 +224,11 @@ router.get(
           title: headerWithCollapser(
             req.__("Pages"),
             pagesDomId,
-            isShowList(show_list, "pages")
+            isShowList(show_list, "pages"),
+            pages.length
           ),
           contents: [
-            getPageList(pages, roles, req, {
+            await getPageList(pages, roles, req, {
               tagId: tag.id,
               domId: pagesDomId,
               showList: isShowList(show_list, "pages"),
@@ -213,10 +248,11 @@ router.get(
           title: headerWithCollapser(
             req.__("Triggers"),
             triggersDomId,
-            isShowList(show_list, "triggers")
+            isShowList(show_list, "triggers"),
+            triggers.length
           ),
           contents: [
-            getTriggerList(triggers, req, {
+            await getTriggerList(triggers, req, {
               tagId: tag.id,
               domId: triggersDomId,
               showList: isShowList(show_list, "triggers"),
@@ -227,6 +263,19 @@ router.get(
                 class: "btn btn-primary",
               },
               req.__("Add triggers")
+            ),
+          ],
+        },
+        {
+          type: "card",
+          contents: [
+            a(
+              {
+                class: "btn btn-outline-primary",
+                href: `/tag/download-pack/${tag.id}`,
+              },
+              i({ class: "fas fa-download me-2" }),
+              "Download pack"
             ),
           ],
         },
