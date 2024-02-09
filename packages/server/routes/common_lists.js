@@ -120,7 +120,7 @@ const tablesList = async (
         tableId: domId,
       }
     ) +
-    (tables.length == 0
+    (tables.length == 0 && !filterOnTag
       ? div(
           { class: listClass(tagId, showList), id: domId },
           h4(req.__("No tables defined")),
@@ -294,91 +294,94 @@ const viewsList = async (
       .join(nbsp);
   };
 
-  return views.length > 0
-    ? mkTable(
-        [
-          {
-            label: req.__("Name"),
-            key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
-            sortlink: !tagId
-              ? `set_state_field('_sortby', 'name', this)`
-              : undefined,
-          },
-          ...(tagId
-            ? []
-            : [
-                {
-                  label: tagsDropdown(
-                    tags,
-                    filterOnTag ? `Tag:${filterOnTag.name}` : undefined
-                  ),
-                  key: (r) => tagBadges(r),
-                },
-              ]),
-          {
-            label: req.__("Pattern"),
-            key: "viewtemplate",
-            sortlink: !tagId
-              ? `set_state_field('_sortby', 'viewtemplate', this)`
-              : undefined,
-          },
-          ...(notable
-            ? []
-            : [
-                {
-                  label: req.__("Table"),
-                  key: (r) => link(`/table/${r.table}`, r.table),
-                  sortlink: !tagId
-                    ? `set_state_field('_sortby', 'table', this)`
-                    : undefined,
-                },
-              ]),
-          {
-            label: req.__("Role to access"),
-            key: (row) =>
-              row.id
-                ? editViewRoleForm(row, roles, req, on_done_redirect_str)
-                : "admin",
-          },
-          {
-            label: "",
-            key: (r) =>
-              r.id && r.viewtemplateObj?.configuration_workflow
-                ? link(
-                    `/viewedit/config/${encodeURIComponent(
-                      r.name
-                    )}${on_done_redirect_str}`,
-                    req.__("Configure")
-                  )
-                : "",
-          },
-          !tagId
-            ? {
-                label: "",
-                key: (r) => view_dropdown(r, req, on_done_redirect_str),
-              }
-            : {
-                label: req.__("Remove From Tag"),
-                key: (r) =>
-                  post_delete_btn(
-                    `/tag-entries/remove/views/${r.id}/${tagId}`,
-                    req,
-                    `${r.name} from this tag`
-                  ),
-              },
-        ],
-        views,
+  return (
+    mkTable(
+      [
         {
-          hover: true,
-          tableClass: listClass(tagId, showList),
-          tableId: domId,
-        }
-      )
-    : div(
-        { class: listClass(tagId, showList), id: domId },
-        h4(req.__("No views defined")),
-        p(req.__("Views define how table rows are displayed to the user"))
-      );
+          label: req.__("Name"),
+          key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+          sortlink: !tagId
+            ? `set_state_field('_sortby', 'name', this)`
+            : undefined,
+        },
+        ...(tagId
+          ? []
+          : [
+              {
+                label: tagsDropdown(
+                  tags,
+                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                ),
+                key: (r) => tagBadges(r),
+              },
+            ]),
+        {
+          label: req.__("Pattern"),
+          key: "viewtemplate",
+          sortlink: !tagId
+            ? `set_state_field('_sortby', 'viewtemplate', this)`
+            : undefined,
+        },
+        ...(notable
+          ? []
+          : [
+              {
+                label: req.__("Table"),
+                key: (r) => link(`/table/${r.table}`, r.table),
+                sortlink: !tagId
+                  ? `set_state_field('_sortby', 'table', this)`
+                  : undefined,
+              },
+            ]),
+        {
+          label: req.__("Role to access"),
+          key: (row) =>
+            row.id
+              ? editViewRoleForm(row, roles, req, on_done_redirect_str)
+              : "admin",
+        },
+        {
+          label: "",
+          key: (r) =>
+            r.id && r.viewtemplateObj?.configuration_workflow
+              ? link(
+                  `/viewedit/config/${encodeURIComponent(
+                    r.name
+                  )}${on_done_redirect_str}`,
+                  req.__("Configure")
+                )
+              : "",
+        },
+        !tagId
+          ? {
+              label: "",
+              key: (r) => view_dropdown(r, req, on_done_redirect_str),
+            }
+          : {
+              label: req.__("Remove From Tag"),
+              key: (r) =>
+                post_delete_btn(
+                  `/tag-entries/remove/views/${r.id}/${tagId}`,
+                  req,
+                  `${r.name} from this tag`
+                ),
+            },
+      ],
+      views,
+      {
+        hover: true,
+        tableClass: listClass(tagId, showList),
+        tableId: domId,
+      }
+    ) +
+    (views.length == 0 && !filterOnTag
+      ? div(
+          { class: listClass(tagId, showList), id: domId },
+          h4(req.__("No views defined")),
+          p(req.__("Views define how table rows are displayed to the user"))
+        )
+      : "")
+  );
 };
 
 const page_group_dropdown = (page_group, req) =>
