@@ -400,7 +400,9 @@ const render = ({
             ],
             onclick: segment.url
               ? isWeb
-                ? `location.href='${segment.url}'`
+                ? segment.url?.startsWith?.("javascript:")
+                  ? text_attr(segment.url)
+                  : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
             style: segment.style,
