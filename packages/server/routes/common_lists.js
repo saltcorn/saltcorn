@@ -234,7 +234,8 @@ const tagsDropdown = (tags, altHeader) =>
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
-      altHeader || "Tags"
+      altHeader || "Tags",
+      i({ class: "ms-1 fas fa-caret-down" })
     ),
     div(
       {
