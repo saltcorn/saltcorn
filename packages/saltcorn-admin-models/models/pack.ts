@@ -18,6 +18,7 @@ import TableConstraint from "@saltcorn/data/models/table_constraints";
 import Role from "@saltcorn/data/models/role";
 import Library from "@saltcorn/data/models/library";
 import Tag from "@saltcorn/data/models/tag";
+import TagEntry from "@saltcorn/data/models/tag_entry";
 import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog, { EventLogCfg } from "@saltcorn/data/models/eventlog";
@@ -38,6 +39,7 @@ import type { EventLogPack } from "@saltcorn/types/model-abstracts/abstract_even
 import type { ModelPack } from "@saltcorn/types/model-abstracts/abstract_model";
 import type { ModelInstancePack } from "@saltcorn/types/model-abstracts/abstract_model_instance";
 import type { TagPack } from "@saltcorn/types/model-abstracts/abstract_tag";
+
 const { isStale } = require("@saltcorn/data/utils");
 
 /**
@@ -637,8 +639,13 @@ const install_pack = async (
           return result;
         })
       : undefined;
-
-    await Tag.create({ name: tag.name, entries });
+    const existing = await Tag.findOne({ name: tag.name });
+    if (!existing) await Tag.create({ name: tag.name, entries });
+    else {
+      for (const entry of entries || []) {
+        await TagEntry.create({ tag_id: existing.id, ...entry });
+      }
+    }
   }
   for (const model of pack.models || []) {
     const mTbl = Table.findOne({ name: model.table_name });
