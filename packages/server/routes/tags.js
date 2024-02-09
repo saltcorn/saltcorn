@@ -26,6 +26,7 @@ const {
 
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
+const { create_pack_from_tag } = require("@saltcorn/admin-models/models/pack");
 
 const router = new Router();
 module.exports = router;
@@ -119,7 +120,7 @@ router.get(
       req.flash("error", req.__("Tag not found"));
       return res.redirect(`/tag`);
     }
-    const pack = 1;
+    const pack = await create_pack_from_tag(tag);
     const readStream = new stream.PassThrough();
     readStream.end(JSON.stringify(pack));
     res.type("application/json");

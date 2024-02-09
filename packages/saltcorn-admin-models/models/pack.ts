@@ -86,8 +86,8 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
  * View Pack
  * @param name
  */
-const view_pack = async (name: string): Promise<ViewPack> => {
-  const view = await View.findOne({ name });
+const view_pack = async (name: string | View): Promise<ViewPack> => {
+  const view = typeof name === "string" ? await View.findOne({ name }) : name;
   if (!view) throw new Error(`Unable to find view '${name}'`);
   const table = Table.findOne({ id: view.table_id });
   //if (!table)
@@ -129,8 +129,8 @@ const plugin_pack = async (name: string): Promise<PluginPack> => {
  * Page Pack
  * @param name name of the page
  */
-const page_pack = async (name: string): Promise<PagePack> => {
-  const page = Page.findOne({ name });
+const page_pack = async (name: string | Page): Promise<PagePack> => {
+  const page = typeof name === "string" ? Page.findOne({ name }) : name;
   if (!page) throw new Error(`Unable to find page '${name}'`);
   const root_page_for_roles = await page.is_root_page_for_roles();
   return {
@@ -185,8 +185,9 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
  * Trigger pack
  * @param name
  */
-const trigger_pack = async (name: string): Promise<TriggerPack> => {
-  const trig = await Trigger.findOne({ name });
+const trigger_pack = async (name: string | Trigger): Promise<TriggerPack> => {
+  const trig =
+    typeof name === "string" ? await Trigger.findOne({ name }) : name;
   return trig.toJson;
 };
 
@@ -800,6 +801,32 @@ const fetch_pack_by_name = async (
   else return null;
 };
 
+const create_pack_from_tag = async (tag: Tag): Promise<any> => {
+  const pack: Pack = {
+    tables: [],
+    views: [],
+    plugins: [],
+    pages: [],
+    page_groups: [],
+    roles: [],
+    library: [],
+    triggers: [],
+    tags: [],
+    models: [],
+    model_instances: [],
+    event_logs: [],
+  };
+  const tables = await tag.getTables();
+  for (const t of tables) pack.tables.push(await table_pack(t));
+  const views = await tag.getViews();
+  for (const v of views) pack.views.push(await view_pack(v));
+  const pages = await tag.getPages();
+  for (const p of pages) pack.pages.push(await page_pack(p));
+  const triggers = await tag.getTriggers();
+  for (const t of triggers) pack.triggers.push(await trigger_pack(t));
+  return pack;
+};
+
 export = {
   table_pack,
   view_pack,
@@ -820,4 +847,5 @@ export = {
   can_install_pack,
   uninstall_pack,
   add_to_menu,
+  create_pack_from_tag,
 };
