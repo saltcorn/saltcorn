@@ -419,6 +419,10 @@ describe("update matching rows", () => {
     await field.update({ is_unique: false });
   });
 
+  afterAll(async () => {
+    await resetToFixtures();
+  });
+
   it("update matching books normal", async () => {
     const table = Table.findOne({ name: "books" });
     await updateMatchingRows({
@@ -843,7 +847,16 @@ describe("relation path to query and state", () => {
       .expect(toInclude("/view/show_publisher?.patients.favbook.publisher=2"))
       // embedded show
       .expect(toInclude("Michael Douglas"))
-      .expect(toInclude(["AK Press", "No row selected"]));
+      .expect(toInclude("AK Press"));
+
+    await request(app)
+      .get(`/view/show_patient_with_publisher?id=1`)
+      .set("Cookie", loginCookie)
+      // view link
+      .expect(toInclude("/view/show_publisher?.patients.favbook.publisher=1"))
+      // embedded show
+      .expect(toInclude("Kirk Douglas"))
+      .expect(toInclude("No row selected"));
   });
 
   it("RelationPath", async () => {
@@ -1054,7 +1067,7 @@ describe("legacy relations with relation path", () => {
     await request(app)
       .get("/view/authoredit_with_show?id=1")
       .set("Cookie", loginCookie)
-      .expect(toInclude(["Herman Melville", "agi"]));
+      .expect(toInclude("Herman Melville"));
   });
 
   it("edit-view with independent list", async () => {
@@ -1063,12 +1076,12 @@ describe("legacy relations with relation path", () => {
     await request(app)
       .get("/view/authoredit_with_independent_list")
       .set("Cookie", loginCookie)
-      .expect(toInclude(["Herman Melville", "agi"]))
+      .expect(toInclude("Herman Melville"))
       .expect(toInclude("Delete"));
     await request(app)
       .get("/view/authoredit_with_independent_list?id=1")
       .set("Cookie", loginCookie)
-      .expect(toInclude(["Herman Melville", "agi"]))
+      .expect(toInclude("Herman Melville"))
       .expect(toInclude("Delete"));
   });
 });
