@@ -206,8 +206,8 @@ const role_pack = async (role: string): Promise<RolePack> => {
  * @param name name of the tag
  * @returns
  */
-const tag_pack = async (name: string): Promise<TagPack> => {
-  const tag = await Tag.findOne({ name });
+const tag_pack = async (name: string | Tag): Promise<TagPack> => {
+  const tag = typeof name === "string" ? await Tag.findOne({ name }) : name;
   if (!tag) throw new Error(`Unable to find tag '${name}'`);
   const entries = await tag.getEntries();
   const withNames = entries.map((e) => {
@@ -235,7 +235,7 @@ const tag_pack = async (name: string): Promise<TagPack> => {
     return result;
   });
   return {
-    name: name,
+    name: tag.name,
     entries: withNames,
   };
 };
@@ -824,7 +824,10 @@ const create_pack_from_tag = async (tag: Tag): Promise<any> => {
   for (const p of pages) pack.pages.push(await page_pack(p));
   const triggers = await tag.getTriggers();
   for (const t of triggers) pack.triggers.push(await trigger_pack(t));
+  pack.tags.push(await tag_pack(tag));
   return pack;
+
+  //TODO add models, plugins
 };
 
 export = {
