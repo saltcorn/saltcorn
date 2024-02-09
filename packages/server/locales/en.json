@@ -1355,5 +1355,7 @@
 	"For search engines. Some view patterns accept interpolations.": "For search engines. Some view patterns accept interpolations.",
 	"Files cache TTL (minutes)": "Files cache TTL (minutes)",
 	"Cache-control max-age for files.": "Cache-control max-age for files.",
-	"Popup min width": "Popup min width"
+	"Popup min width": "Popup min width",
+	"Unable to save: No page or no layout": "Unable to save: No page or no layout",
+	"Unable to save: No view": "Unable to save: No view"
 }

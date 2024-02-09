@@ -52,6 +52,7 @@ import {
   faRedo,
   faTrashAlt,
   faSave,
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faCaretSquareLeft,
@@ -394,7 +395,7 @@ const Builder = ({ options, layout, mode }) => {
   const [previews, setPreviews] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const nodekeys = useRef([]);
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingState, setSavingState] = useState({ isSaving: false });
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [isLeftEnlarged, setIsLeftEnlarged] = useState(false);
   const [relationsCache, setRelationsCache] = useState({});
@@ -422,7 +423,8 @@ const Builder = ({ options, layout, mode }) => {
                   <div className="componets-and-library-accordion toolbox-card">
                     <InitNewElement
                       nodekeys={nodekeys}
-                      setIsSaving={setIsSaving}
+                      setSavingState={setSavingState}
+                      savingState={savingState}
                     />
                     <Accordion>
                       <div className="card mt-1" accordiontitle="Components">
@@ -503,7 +505,12 @@ const Builder = ({ options, layout, mode }) => {
                     <HistoryPanel />
                     <FontAwesomeIcon
                       icon={faSave}
-                      className={isSaving ? "d-inline" : "d-none"}
+                      className={savingState.isSaving ? "d-inline" : "d-none"}
+                    />
+                    <FontAwesomeIcon
+                      icon={faExclamationTriangle}
+                      color="#ff0033"
+                      className={savingState.error ? "d-inline" : "d-none"}
                     />
                     <FontAwesomeIcon
                       icon={isEnlarged ? faCaretSquareRight : faCaretSquareLeft}
@@ -511,7 +518,13 @@ const Builder = ({ options, layout, mode }) => {
                       onClick={() => setIsEnlarged(!isEnlarged)}
                       title={isEnlarged ? "Shrink" : "Enlarge"}
                     />
-
+                    <div
+                      className={` ${
+                        savingState.error ? "d-block" : "d-none"
+                      } my-2 fw-bold`}
+                    >
+                      your work is not being saved
+                    </div>
                     <SettingsPanel />
                   </div>
                 </div>

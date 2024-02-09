@@ -83,7 +83,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const InitNewElement = ({ nodekeys, setIsSaving }) => {
+const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   const [saveTimeout, setSaveTimeout] = useState(false);
   const savedData = useRef(false);
   const { actions, query, connectors } = useEditor((state, query) => {
@@ -103,7 +103,7 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
     }
     if (isEqual(savedData.current, JSON.stringify(data.layout))) return;
     savedData.current = JSON.stringify(data.layout);
-    setIsSaving(true);
+    setSavingState({ isSaving: true });
 
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
@@ -112,9 +112,29 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
         "CSRF-Token": options.csrfToken,
       },
       body: JSON.stringify(data),
-    }).then(() => {
-      setIsSaving(false);
-    });
+    })
+      .then((response) => {
+        response.json().then((data) => {
+          if (typeof data?.error === "string") {
+            // don't log duplicates
+            if (!savingState.error)
+              window.notifyAlert({ type: "danger", text: data.error });
+            setSavingState({ isSaving: false, error: data.error });
+          } else setSavingState({ isSaving: false });
+        });
+      })
+      .catch((e) => {
+        const text = e || "Unable to save";
+        // don't log duplicates
+        if (savingState.error) setSavingState({ isSaving: false, error: text });
+        else {
+          window.notifyAlert({ type: "danger", text: text });
+          setSavingState({
+            isSaving: false,
+            error: text,
+          });
+        }
+      });
   };
   const throttledSave = useThrottle(() => {
     doSave(query);
