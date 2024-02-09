@@ -1,9 +1,10 @@
-const { a, text } = require("@saltcorn/markup/tags");
+const { a, text, i } = require("@saltcorn/markup/tags");
 
 const Tag = require("@saltcorn/data/models/tag");
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const User = require("@saltcorn/data/models/user");
+const stream = require("stream");
 
 const { isAdmin, error_catcher, csrfField } = require("./utils");
 const { send_infoarch_page } = require("../markup/admin");
@@ -22,6 +23,10 @@ const {
   getPageList,
   getTriggerList,
 } = require("./common_lists");
+
+const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
+const { create_pack_from_tag } = require("@saltcorn/admin-models/models/pack");
 
 const router = new Router();
 module.exports = router;
@@ -104,6 +109,25 @@ router.get(
   })
 );
 
+router.get(
+  "/download-pack/:idorname",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { idorname } = req.params;
+    const id = parseInt(idorname);
+    const tag = await Tag.findOne(id ? { id } : { name: idorname });
+    if (!tag) {
+      req.flash("error", req.__("Tag not found"));
+      return res.redirect(`/tag`);
+    }
+    const pack = await create_pack_from_tag(tag);
+    const readStream = new stream.PassThrough();
+    readStream.end(JSON.stringify(pack));
+    res.type("application/json");
+    res.attachment(`${tag.name}-pack.json`);
+    readStream.pipe(res);
+  })
+);
 const headerWithCollapser = (title, cardId, showList, count) =>
   a(
     {
@@ -239,6 +263,19 @@ router.get(
                 class: "btn btn-primary",
               },
               req.__("Add triggers")
+            ),
+          ],
+        },
+        {
+          type: "card",
+          contents: [
+            a(
+              {
+                class: "btn btn-outline-primary",
+                href: `/tag/download-pack/${tag.id}`,
+              },
+              i({ class: "fas fa-download me-2" }),
+              "Download pack"
             ),
           ],
         },

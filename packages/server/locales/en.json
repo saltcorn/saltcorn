@@ -1357,5 +1357,6 @@
 	"Cache-control max-age for files.": "Cache-control max-age for files.",
 	"Popup min width": "Popup min width",
 	"Add %s to tag %s": "Add %s to tag %s",
-	"Add entries to tag %s": "Add entries to tag %s"
+	"Add entries to tag %s": "Add entries to tag %s",
+	"Tag not found": "Tag not found"
 }
