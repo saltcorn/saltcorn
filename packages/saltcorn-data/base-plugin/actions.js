@@ -434,7 +434,8 @@ module.exports = {
         {
           name: "to_email_fixed",
           label: "Fixed address",
-          sublabel: "Email address to send emails", // todo send to few addresses?
+          sublabel:
+            "To addresses, comma separated, <code>{{ }}</code> interpolations usable",
           type: "String",
           showIf: { to_email: "Fixed" },
         },
@@ -442,7 +443,7 @@ module.exports = {
           name: "cc_email",
           label: "cc address",
           sublabel:
-            "cc addresses, comma separated, <code>{{ }}</code> interpolations usable", // todo send to few addresses?
+            "cc addresses, comma separated, <code>{{ }}</code> interpolations usable",
           type: "String",
         },
         {
@@ -528,7 +529,7 @@ module.exports = {
       }
       switch (to_email) {
         case "Fixed":
-          to_addr = to_email_fixed;
+          to_addr = interpolate(to_email_fixed, row, user);
           break;
         case "User":
           to_addr = user.email;
