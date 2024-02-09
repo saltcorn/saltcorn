@@ -439,6 +439,13 @@ module.exports = {
           showIf: { to_email: "Fixed" },
         },
         {
+          name: "cc_email",
+          label: "cc address",
+          sublabel:
+            "cc addresses, comma separated, <code>{{ }}</code> interpolations usable", // todo send to few addresses?
+          type: "String",
+        },
+        {
           name: "subject",
           label: "Subject",
           sublabel: "Subject of email",
@@ -505,6 +512,7 @@ module.exports = {
         to_email,
         to_email_field,
         to_email_fixed,
+        cc_email,
         only_if,
         attachment_path,
         disable_notify,
@@ -571,10 +579,11 @@ module.exports = {
         3,
         `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
-
+      const cc = cc_email ? interpolate(cc_email, row, user) : undefined;
       const email = {
         from,
         to: to_addr,
+        cc,
         subject: the_subject,
         ...setBody,
         attachments,
