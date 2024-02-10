@@ -228,7 +228,11 @@ const ViewSettings = () => {
               prop.relation = initialRelation(newRelations).relationString;
             });
             setRelationsData({ relations: newRelations, layers });
-          }
+          } else
+            window.notifyAlert({
+              type: "warning",
+              text: `${target_value} has no relations`,
+            });
         }
       }
     }
