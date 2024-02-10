@@ -690,9 +690,11 @@ router.post(
 
     if (id && req.body.layout) {
       await Page.update(+id, { layout: req.body.layout });
-      res.json({ success: "ok" });
+      res.json({
+        success: "ok",
+      });
     } else {
-      res.json({ error: "no page or no layout." });
+      res.json({ error: req.__("Unable to save: No page or no layout") });
     }
   })
 );

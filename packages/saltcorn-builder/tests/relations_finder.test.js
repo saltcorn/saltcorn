@@ -96,6 +96,12 @@ describe("relations tests", () => {
       doTest(tables, views, "fan_club", "show_artist", expected);
     });
 
+    it("parent relations with layers", () => {
+      const { tables, views } = fixturesData(__dirname);
+      const expected = [".patients.favbook.publisher"];
+      doTest(tables, views, "patients", "show_publisher", expected);
+    });
+
     it("one to one relations", () => {
       const { tables, views } = fixturesData(__dirname);
       const expected = [".covers.albums$cover"];

@@ -816,7 +816,7 @@ router.post(
       await View.update({ configuration: newcfg }, +id);
       res.json({ success: "ok" });
     } else {
-      res.json({ error: "no view" });
+      res.json({ error: req.__("Unable to save: No view") });
     }
   })
 );

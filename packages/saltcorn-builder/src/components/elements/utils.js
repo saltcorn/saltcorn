@@ -446,6 +446,10 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
       }
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
+    })
+    .catch((e) => {
+      console.log("Unable to fetch the preview:");
+      console.log(e);
     });
 };
 
