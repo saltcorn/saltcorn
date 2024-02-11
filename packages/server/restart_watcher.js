@@ -15,6 +15,7 @@ const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
  */
 const relevantPackages = [
   "db-common",
+  "common-code",
   "postgres",
   "saltcorn-data",
   "saltcorn-builder",
