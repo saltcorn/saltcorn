@@ -53,6 +53,11 @@ const doMigrationStep = async (name, contents, client) => {
   await db.insert("_sc_migrations", { migration: name }, { noid: true });
 };
 
+const getMigrationsInDB = async () => {
+  const dbmigrationRows = await db.select("_sc_migrations");
+  return dbmigrationRows.map((r) => r.migration);
+};
+
 // todo create functionality to rollback migrations
 // todo run db backup before run migration / rollback of migration
 /**
@@ -64,8 +69,8 @@ const doMigrationStep = async (name, contents, client) => {
 const migrate = async (schema0, verbose) => {
   const schema = schema0 || db.connectObj.default_schema;
   //console.log("migrating database schema %s", schema);
-  const dbmigrationRows = await db.select("_sc_migrations");
-  const dbmigrations = dbmigrationRows.map((r) => r.migration);
+
+  const dbmigrations = await getMigrationsInDB();
   //https://stackoverflow.com/questions/5364928/node-js-require-all-files-in-a-folder
   let files = null;
   if (db.is_node) {
@@ -114,4 +119,4 @@ module.exports = { sql };
   console.log(fnm);
 };
 
-module.exports = { migrate, create_blank_migration };
+module.exports = { migrate, create_blank_migration, getMigrationsInDB };
