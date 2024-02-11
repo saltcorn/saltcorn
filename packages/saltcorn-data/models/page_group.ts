@@ -28,6 +28,7 @@ class PageGroup implements AbstractPageGroup {
   description?: string;
   members: Array<AbstractPageGroupMember>;
   min_role: number;
+  random_allocation: boolean;
   constructor(cfg: PageGroupCfg) {
     this.id = cfg.id;
     this.name = cfg.name;
@@ -36,6 +37,7 @@ class PageGroup implements AbstractPageGroup {
       ? cfg.members.map((m: AbstractPageGroupMember) => new PageGroupMember(m))
       : [];
     this.min_role = cfg.min_role || 100;
+    this.random_allocation = cfg.random_allocation || false;
   }
 
   /**
