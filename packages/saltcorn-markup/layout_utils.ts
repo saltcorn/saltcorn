@@ -581,6 +581,7 @@ namespace LayoutExports {
     independent: boolean;
     startClosed?: boolean;
     disable_inactive?: boolean;
+    acc_init_opens?: boolean[];
     tabClass?: string;
     contentWrapperClass?: string | string[];
     headerWrapperClass?: string | string[];
@@ -619,6 +620,7 @@ const renderTabs = (
     deeplink,
     disable_inactive,
     startClosed,
+    acc_init_opens,
     serverRendered,
     tabId,
     tabClass,
@@ -630,6 +632,8 @@ const renderTabs = (
   hints?: any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  console.log({ acc_init_opens });
+
   if (tabsStyle === "Accordion")
     return (
       div(
@@ -644,7 +648,9 @@ const renderTabs = (
                 {
                   class: [
                     "accordion-button",
-                    (ix > 0 || startClosed) && "collapsed",
+                    acc_init_opens?.[ix] !== true &&
+                      (ix > 0 || startClosed) &&
+                      "collapsed",
                   ],
                   type: "button",
                   onclick: disable_inactive
@@ -664,7 +670,9 @@ const renderTabs = (
                 class: [
                   "accordion-collapse",
                   "collapse",
-                  !startClosed && ix === 0 && "show",
+                  (acc_init_opens?.[ix] === true ||
+                    (!startClosed && ix === 0)) &&
+                    "show",
                 ],
                 id: `${rndid}tab${ix}`,
                 "aria-labelledby": `${rndid}head${ix}`,
