@@ -105,7 +105,13 @@ router.get(
             title: req.__("Triggers"),
             contents: div(
               await getTriggerList(triggers, req, { filterOnTag }),
-              link("/actions/new", req.__("Add trigger"))
+              a(
+                {
+                  href: "/actions/new",
+                  class: "btn btn-primary",
+                },
+                req.__("Add trigger")
+              )
             ),
           },
           {
