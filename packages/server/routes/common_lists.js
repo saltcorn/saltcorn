@@ -505,7 +505,7 @@ const getPageList = async (
     [
       {
         label: req.__("Name"),
-        key: (r) => link(`/page/${r.name}`, r.name),
+        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
       },
       ...(tagId
         ? []

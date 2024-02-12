@@ -1364,5 +1364,6 @@
 	"%s has no eligible page": "%s has no eligible page",
 	"Random allocation": "Random allocation",
 	"Serve a random page, ignoring the eligible formula. Within a session, reloads will always deliver the same page. This is a basic requirement for A/B testing.": "Serve a random page, ignoring the eligible formula. Within a session, reloads will always deliver the same page. This is a basic requirement for A/B testing.",
-	"Pagegroup %s not found": "Pagegroup %s not found"
+	"Pagegroup %s not found": "Pagegroup %s not found",
+	"Create trigger": "Create trigger"
 }

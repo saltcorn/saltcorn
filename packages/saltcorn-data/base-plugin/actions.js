@@ -33,6 +33,7 @@ const {
   getSessionId,
   urlStringToObject,
   dollarizeObject,
+  objectToQueryString,
 } = require("../utils");
 const db = require("../db");
 const { isNode } = require("../utils");
@@ -1364,10 +1365,22 @@ module.exports = {
           required: true,
           attributes: { options: views.map((v) => v.select_option) },
         },
+        {
+          name: "new_state_fml",
+          label: "New state formula",
+          type: "String",
+          class: "validate-expression",
+        },
       ];
     },
-    run: async ({ configuration: { view } }) => {
-      return { eval_js: `reload_embedded_view('${view}')` };
+    run: async ({ row, user, configuration: { view, new_state_fml } }) => {
+      if (new_state_fml) {
+        const new_state = eval_expression(new_state_fml, row || {}, user);
+        const newqs = objectToQueryString(new_state);
+        return {
+          eval_js: `reload_embedded_view('${view}', '${newqs}')`,
+        };
+      } else return { eval_js: `reload_embedded_view('${view}')` };
     },
   },
   sleep: {
