@@ -383,7 +383,7 @@ const wrap = (contents, noCard, req, page) => ({
       crumbs: [
         { text: req.__("Pages"), href: "/pageedit" },
         page
-          ? { href: `/page/${page.name}`, text: page.name }
+          ? { href: `/page/${encodeURIComponent(page.name)}`, text: page.name }
           : { text: req.__("New") },
       ],
     },
