@@ -110,7 +110,7 @@ router.get(
                   href: "/actions/new",
                   class: "btn btn-primary",
                 },
-                req.__("Add trigger")
+                req.__("Create trigger")
               )
             ),
           },
