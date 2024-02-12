@@ -324,6 +324,8 @@ const run = async (
       state
     )
   )[0];
+
+  //legacy
   let page_title_preamble = "";
   if (page_title) {
     let the_title = page_title;
@@ -333,6 +335,7 @@ const run = async (
     }
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
+
   if (!extra.req.generate_email) return page_title_preamble + rendered;
   else {
     return rendered;

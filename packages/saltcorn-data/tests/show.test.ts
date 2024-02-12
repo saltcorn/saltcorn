@@ -227,4 +227,77 @@ describe("Misc Show views", () => {
       '<script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"})});</script>'
     );
   });
+  it("runs view embed ", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist?favbook=1"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'abf28\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'abf28\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody><tr><td>Kirk Douglas</td><td>1</td><td></td><td>1</td><td>Herman Melville</td><td>967</td></tr></tbody></table></div></div>'
+    );
+  });
+  it("runs view embed with exta state formula", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          extra_state_fml: "{parent: 1}",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist?favbook=1&parent=1"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'9cf8b\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'9cf8b\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'9cf8b\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'9cf8b\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody></tbody></table></div></div>'
+    );
+  });
+  it("runs view embed with local state", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "local",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-local-state="/view/patientlist?favbook=1"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'abf28\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'abf28\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody><tr><td>Kirk Douglas</td><td>1</td><td></td><td>1</td><td>Herman Melville</td><td>967</td></tr></tbody></table></div></div>'
+    );
+  });
+  it("runs independent view embed", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          relation: ".",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'4043d\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'4043d\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'4043d\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'4043d\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody><tr><td>Kirk Douglas</td><td>1</td><td></td><td>1</td><td>Herman Melville</td><td>967</td></tr><tr><td>Michael Douglas</td><td>2</td><td>1</td><td>2</td><td>Leo Tolstoy</td><td>728</td></tr></tbody></table></div></div>'
+    );
+  });
 });
