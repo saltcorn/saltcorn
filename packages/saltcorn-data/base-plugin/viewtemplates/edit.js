@@ -608,7 +608,7 @@ const transformForm = async ({
         try {
           const actionResult = await run_action_column({
             col: { ...segment },
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
             req,
             res,
             table,
@@ -2045,7 +2045,7 @@ module.exports = {
             table,
             row,
             res,
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
           });
           //console.log("result", result);
           return { json: { success: "ok", ...(result || {}) } };
