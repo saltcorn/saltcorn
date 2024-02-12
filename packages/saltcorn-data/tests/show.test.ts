@@ -100,11 +100,12 @@ const accordionConfig = {
   },
 };
 
-const mkViewWithCfg = async (viewCfg: any) => {
+const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
   return await View.create({
     viewtemplate: "Show",
     description: "",
     min_role: 1,
+    name: `someView${Math.round(Math.random() * 100000)}`,
     table_id: Table.findOne("books")?.id,
     default_render_page: "",
     slug: {
@@ -127,9 +128,8 @@ const mkViewWithCfg = async (viewCfg: any) => {
 };
 
 describe("Show view with accordion and join fields", () => {
-  it("should setup", async () => {
+  it("should run", async () => {
     const view = await mkViewWithCfg(accordionConfig);
-    assertIsSet(view);
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain(">By Herman Melville<");
     expect(vres1).not.toContain(">Publisher Tab title");
@@ -140,5 +140,22 @@ describe("Show view with accordion and join fields", () => {
     expect(vres2).toContain(
       ">Publisher JF:&nbsp;<span>the publisher AK Press </span><"
     );
+  });
+});
+
+describe("Misc Show views", () => {
+  it("HTML code", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "blank",
+          isHTML: true,
+          contents: "Author {{ author }} published by {{ publisher.name }}",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 2 }, mockReqRes);
+    expect(vres1).toBe("Author Leo Tolstoy published by AK Press");
   });
 });
