@@ -676,3 +676,108 @@ describe("Edit view with accordion and join fields", () => {
     expect(vres2).toContain(" data-source-url=");
   });
 });
+describe("Misc Edit views", () => {
+  it("runs on_page_load action", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "b6fd72",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          action_style: "on_page_load",
+          configuration: {
+            text: "Hello!",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "b6fd72",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            action_style: "on_page_load",
+            configuration: {
+              text: "Hello!",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"}, "${view.name}")});</script></form>`
+    );
+  });
+  it("runs button action", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "b6fd72",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          action_style: "btn btn-primary",
+          configuration: {
+            text: "Hello!",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "b6fd72",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            action_style: "btn btn-primary",
+            configuration: {
+              text: "Hello!",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><a href="javascript:view_post('${view.name}', 'run_action', {rndid:'b6fd72', ...get_form_record({viewname: '${view.name}'})});" class="btn btn btn-primary ">toast</a></form>`
+    );
+    mockReqRes.reset();
+    const body = { rndid: "b6fd72", id: "1" };
+    await view.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      { req: { body } },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      notify: "Hello!",
+      success: "ok",
+    });
+  });
+});
