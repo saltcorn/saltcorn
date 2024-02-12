@@ -632,8 +632,6 @@ const renderTabs = (
   hints?: any
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
-  console.log({ acc_init_opens });
-
   if (tabsStyle === "Accordion")
     return (
       div(
