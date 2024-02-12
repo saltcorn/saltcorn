@@ -768,7 +768,7 @@ module.exports = {
             forPublic: !req.user || req.user.role_id === 100,
             forUser: req.user,
           });
-          const referrer = req.get("Referrer");
+          const referrer = req?.get?.("Referrer");
           return combineResults(
             await asyncMap(rows, async (row) => {
               return await run_action_column({
@@ -788,7 +788,7 @@ module.exports = {
             req,
             table,
             res,
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
             ...(row ? { row } : {}),
           });
           return { json: { success: "ok", ...(result || {}) } };

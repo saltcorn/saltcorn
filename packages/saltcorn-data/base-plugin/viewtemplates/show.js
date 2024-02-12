@@ -324,6 +324,8 @@ const run = async (
       state
     )
   )[0];
+
+  //legacy
   let page_title_preamble = "";
   if (page_title) {
     let the_title = page_title;
@@ -333,6 +335,7 @@ const run = async (
     }
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
+
   if (!extra.req.generate_email) return page_title_preamble + rendered;
   else {
     return rendered;
@@ -368,7 +371,7 @@ const set_load_actions_join_fieldviews = async ({
         //run action
         const actionResult = await run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req,
           res,
           table,
@@ -847,7 +850,7 @@ const render = (
       if (segment.action_style === "on_page_load") {
         run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req: req,
         }).catch((e) => Crash.create(e, req));
         return "";
@@ -1093,7 +1096,7 @@ module.exports = {
           table,
           row,
           res,
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
         });
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {
