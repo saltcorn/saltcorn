@@ -31,8 +31,6 @@ beforeAll(async () => {
 
 const accordionConfig = {
   name: "authorshow1",
-  viewtemplate: "Show",
-  description: "",
   configuration: {
     layout: {
       type: "tabs",
@@ -100,32 +98,37 @@ const accordionConfig = {
       },
     ],
   },
-  min_role: 1,
-  default_render_page: "",
-  slug: {
-    label: "",
-    steps: [],
-  },
-  attributes: {
-    page_title: "",
-    popup_title: "",
-    popup_width: null,
-    popup_link_out: false,
-    popup_minwidth: null,
-    page_description: "",
-    popup_width_units: null,
-    popup_minwidth_units: null,
-    popup_save_indicator: false,
-  },
+};
+
+const mkViewWithCfg = async (viewCfg: any) => {
+  return await View.create({
+    viewtemplate: "Show",
+    description: "",
+    min_role: 1,
+    table_id: Table.findOne("books")?.id,
+    default_render_page: "",
+    slug: {
+      label: "",
+      steps: [],
+    },
+    attributes: {
+      page_title: "",
+      popup_title: "",
+      popup_width: null,
+      popup_link_out: false,
+      popup_minwidth: null,
+      page_description: "",
+      popup_width_units: null,
+      popup_minwidth_units: null,
+      popup_save_indicator: false,
+    },
+    ...viewCfg,
+  });
 };
 
 describe("Show view with accordion and join fields", () => {
   it("should setup", async () => {
-    await View.create({
-      table_id: Table.findOne("books")?.id,
-      ...accordionConfig,
-    });
-    const view = await View.findOne({ name: "authorshow1" });
+    const view = await mkViewWithCfg(accordionConfig);
     assertIsSet(view);
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain(">By Herman Melville<");
