@@ -368,7 +368,7 @@ const set_load_actions_join_fieldviews = async ({
         //run action
         const actionResult = await run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req,
           res,
           table,

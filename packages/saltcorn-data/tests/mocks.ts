@@ -221,9 +221,6 @@ const mockReqRes = {
     flash: (...fs: any) => {
       mockResReqStored.flash = fs;
     },
-    get() {
-      return "";
-    },
   },
   res: {
     redirect(url: string) {
