@@ -220,6 +220,7 @@ describe("pack create", () => {
       name: "page_group",
       description: null,
       min_role: 100,
+      random_allocation: false,
       members: [
         {
           page_name: "iPhone SE",
@@ -555,6 +556,7 @@ const todoPack: Pack = {
       name: "FooPageGroup",
       description: "Foo",
       min_role: 100,
+      random_allocation: false,
       members: [
         {
           page_name: "FooPage",

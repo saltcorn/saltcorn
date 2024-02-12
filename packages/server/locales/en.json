@@ -1360,5 +1360,9 @@
 	"Add entries to tag %s": "Add entries to tag %s",
 	"Tag not found": "Tag not found",
 	"Unable to save: No page or no layout": "Unable to save: No page or no layout",
-	"Unable to save: No view": "Unable to save: No view"
+	"Unable to save: No view": "Unable to save: No view",
+	"%s has no eligible page": "%s has no eligible page",
+	"Random allocation": "Random allocation",
+	"Serve a random page, ignoring the eligible formula. Within a session, reloads will always deliver the same page. This is a basic requirement for A/B testing.": "Serve a random page, ignoring the eligible formula. Within a session, reloads will always deliver the same page. This is a basic requirement for A/B testing.",
+	"Pagegroup %s not found": "Pagegroup %s not found"
 }

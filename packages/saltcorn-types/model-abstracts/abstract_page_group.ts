@@ -9,6 +9,7 @@ export interface AbstractPageGroup {
   description?: string;
   members: Array<AbstractPageGroupMember>;
   min_role: number;
+  random_allocation: boolean;
 }
 
 export type PageGroupCfg = {
@@ -16,6 +17,7 @@ export type PageGroupCfg = {
   name: string;
   description?: string;
   min_role?: number;
+  random_allocation?: boolean;
   members?: Array<AbstractPageGroupMember>;
 };
 

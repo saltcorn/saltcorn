@@ -73,6 +73,7 @@ describe("edit Page groups", () => {
       name: nameAfterUpdate,
       description: null,
       min_role: 100,
+      random_allocation: false,
     });
   });
 
