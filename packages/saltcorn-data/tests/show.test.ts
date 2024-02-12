@@ -164,40 +164,12 @@ describe("Misc Show views", () => {
         layout: {
           type: "container",
           style: {},
-          bgType: "None",
-          hAlign: "left",
-          margin: [0, 0, 0, 0],
-          rotate: 0,
-          vAlign: "top",
-          bgColor: "#ffffff",
-          display: "block",
-          padding: [0, 0, 0, 0],
-          bgFileId: 0,
           contents: {
-            font: "",
-            icon: "",
             type: "blank",
-            block: false,
-            style: {},
-            inline: false,
             contents: "In Container",
-            labelFor: "",
-            isFormula: {},
-            textStyle: "",
           },
-          imageSize: "contain",
-          isFormula: {},
-          minHeight: 0,
-          textColor: "#ffffff",
-          htmlElement: "div",
-          showForRole: [],
-          gradEndColor: "#88ff88",
-          setTextColor: false,
-          fullPageWidth: false,
-          gradDirection: "0",
-          showIfFormula: "pages>800",
-          gradStartColor: "#ff8888",
           minScreenWidth: "md",
+          showIfFormula: "pages>800",
           show_for_owner: false,
         },
         columns: [],
@@ -205,7 +177,7 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toBe(
-      '<div class="text-start d-none d-md-block" style="min-height: 0px;    ">In Container</div>'
+      '<div class="d-none d-md-block" style="    ">In Container</div>'
     );
     const vres2 = await view.run({ id: 2 }, mockReqRes);
     expect(vres2).toBe("");
