@@ -1270,7 +1270,7 @@ const ButtonOrLinkSettingsRows = ({
           {!linkFirst ? (
             <option value={addBtnClass("btn-link")}>Link</option>
           ) : null}
-          {!linkFirst ? (
+          {!linkFirst && allowRunOnLoad ? (
             <option value="on_page_load">Run on Page Load</option>
           ) : null}
         </select>

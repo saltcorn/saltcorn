@@ -118,6 +118,7 @@ const DropMenuSettings = () => {
           setProp={setProp}
           keyPrefix="action_"
           values={node}
+          allowRunOnLoad={false}
         />
         <tr>
           <td colSpan="2">
