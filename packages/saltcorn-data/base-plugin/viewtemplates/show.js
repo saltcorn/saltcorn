@@ -850,7 +850,7 @@ const render = (
       if (segment.action_style === "on_page_load") {
         run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req: req,
         }).catch((e) => Crash.create(e, req));
         return "";
@@ -1096,7 +1096,7 @@ module.exports = {
           table,
           row,
           res,
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
         });
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {

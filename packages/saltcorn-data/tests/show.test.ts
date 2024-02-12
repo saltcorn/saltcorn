@@ -227,6 +227,64 @@ describe("Misc Show views", () => {
       '<script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"})});</script>'
     );
   });
+  it("runs button action", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "b6fd72",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          action_style: "btn btn-primary",
+          configuration: {
+            text: "Hello!",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "b6fd72",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            action_style: "btn btn-primary",
+            configuration: {
+              text: "Hello!",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      `<a href="javascript:view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});" class="btn btn btn-primary ">toast</a>`
+    );
+    mockReqRes.reset();
+    const body = { rndid: "b6fd72", id: "1" };
+    await view.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      { req: { body } },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      notify: "Hello!",
+      success: "ok",
+    });
+  });
   it("runs view embed ", async () => {
     const view = await mkViewWithCfg({
       configuration: {
