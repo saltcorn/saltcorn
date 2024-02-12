@@ -182,4 +182,49 @@ describe("Misc Show views", () => {
     const vres2 = await view.run({ id: 2 }, mockReqRes);
     expect(vres2).toBe("");
   });
+  it("runs on_page_load action", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "b6fd72",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          action_style: "on_page_load",
+          configuration: {
+            text: "Hello!",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "b6fd72",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            action_style: "on_page_load",
+            configuration: {
+              text: "Hello!",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"})});</script>'
+    );
+  });
 });
