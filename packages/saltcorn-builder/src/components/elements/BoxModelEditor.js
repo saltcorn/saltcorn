@@ -61,7 +61,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                   onClick={() => setCatAndDir("margin", "top")}
                 >
                   <input
-                    disabled
+                    readOnly={true}
                     type="text"
                     autoComplete="off"
                     name="boxmodel-ex-1_top_margin"
@@ -92,7 +92,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                       onClick={() => setCatAndDir("border", "top")}
                     >
                       <input
-                        disabled
+                        readOnly={true}
                         type="text"
                         autoComplete="off"
                         name="boxmodel-ex-1_top_border"
@@ -125,7 +125,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                           onClick={() => setCatAndDir("padding", "top")}
                         >
                           <input
-                            disabled
+                            readOnly={true}
                             type="text"
                             autoComplete="off"
                             name="boxmodel-ex-1_top_padding"
@@ -140,7 +140,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                           onClick={() => setSelectedCategory("size")}
                         >
                           <input
-                            disabled
+                            readOnly={true}
                             type="text"
                             autoComplete="off"
                             name="boxmodel-ex-1_width"
@@ -155,7 +155,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                           />
                           x
                           <input
-                            disabled
+                            readOnly={true}
                             type="text"
                             autoComplete="off"
                             name="boxmodel-ex-1_height"
@@ -174,7 +174,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                           onClick={() => setCatAndDir("padding", "bottom")}
                         >
                           <input
-                            disabled
+                            readOnly={true}
                             type="text"
                             autoComplete="off"
                             name="boxmodel-ex-1_bottom_padding"
@@ -199,7 +199,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                       onClick={() => setCatAndDir("border", "bottom")}
                     >
                       <input
-                        disabled
+                        readOnly={true}
                         type="text"
                         autoComplete="off"
                         name="boxmodel-ex-1_bottom_border"
@@ -228,7 +228,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                   onClick={() => setCatAndDir("margin", "bottom")}
                 >
                   <input
-                    disabled
+                    readOnly={true}
                     type="text"
                     autoComplete="off"
                     name="boxmodel-ex-1_bottom_margin"
