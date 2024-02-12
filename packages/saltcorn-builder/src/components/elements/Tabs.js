@@ -185,6 +185,7 @@ const TabsSettings = () => {
     titles: node.data.props.titles,
     showif: node.data.props.showif,
     field: node.data.props.field,
+    acc_init_opens: node.data.props.acc_init_opens,
   }));
   const {
     actions: { setProp },
@@ -200,6 +201,7 @@ const TabsSettings = () => {
     tabId,
     showif,
     setting_tab_n,
+    acc_init_opens,
   } = node;
   const use_setting_tab_n = setting_tab_n || 0;
   const options = useContext(optionsCtx);
@@ -450,6 +452,30 @@ const TabsSettings = () => {
                 </tr>
               </Fragment>
             ) : null}
+            {tabsStyle === "Accordion" ? (
+              <tr>
+                <td colSpan="2">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      name="block"
+                      type="checkbox"
+                      checked={acc_init_opens?.[use_setting_tab_n] || false}
+                      onChange={(e) => {
+                        if (!e.target) return;
+                        const value = e.target.checked;
+                        console.log({ value });
+                        setProp((prop) => {
+                          if (!prop.acc_init_opens) prop.acc_init_opens = [];
+                          prop.acc_init_opens[use_setting_tab_n] = value;
+                        });
+                      }}
+                    />
+                    <label className="form-check-label">Initially open</label>
+                  </div>
+                </td>
+              </tr>
+            ) : null}
           </Fragment>
         )}
       </tbody>
@@ -464,6 +490,7 @@ Tabs.craft = {
   props: {
     titles: ["Tab1", "Tab2"],
     showif: [],
+    acc_init_opens: [],
     ntabs: 2,
     tabsStyle: "Tabs",
     independent: false,

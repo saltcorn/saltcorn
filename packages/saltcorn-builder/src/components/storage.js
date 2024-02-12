@@ -258,6 +258,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           independent={segment.independent}
           startClosed={segment.startClosed}
           deeplink={segment.deeplink}
+          acc_init_opens={segment.acc_init_opens}
           disable_inactive={segment.disable_inactive}
           serverRendered={segment.serverRendered}
           tabId={segment.tabId}
@@ -535,6 +536,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         field: node.props.field,
         independent: node.props.independent,
         startClosed: node.props.startClosed,
+        acc_init_opens: node.props.acc_init_opens,
         deeplink: node.props.deeplink,
         disable_inactive: node.props.disable_inactive,
         serverRendered: node.props.serverRendered,
