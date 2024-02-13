@@ -464,7 +464,6 @@ const TabsSettings = () => {
                       onChange={(e) => {
                         if (!e.target) return;
                         const value = e.target.checked;
-                        console.log({ value });
                         setProp((prop) => {
                           if (!prop.acc_init_opens) prop.acc_init_opens = [];
                           prop.acc_init_opens[use_setting_tab_n] = value;
