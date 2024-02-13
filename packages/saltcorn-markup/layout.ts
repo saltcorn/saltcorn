@@ -336,7 +336,15 @@ const render = ({
             "aria-expanded": "false",
             style,
           },
-          segment.label || "Actions"
+          segment.action_icon &&
+            segment.action_icon !== "empty" &&
+            i({
+              class: [segment.action_icon, segment.label && "me-1"],
+            }),
+          segment.label ||
+            (!segment.action_icon || segment.action_icon == "empty"
+              ? "Actions"
+              : "")
         ),
         div(
           {
