@@ -597,6 +597,11 @@ const transformForm = async ({
     });
   }
   await traverse(form.layout, {
+    container(segment) {
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${segment.click_action}', ...get_form_record({viewname: '${viewname}'}) })`;
+      }
+    },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //TODO check segment.min_role
@@ -2003,8 +2008,14 @@ module.exports = {
       );
     },
     async actionQuery() {
-      const { rndid, _csrf, onchange_action, onchange_field, ...body } =
-        req.body;
+      const {
+        rndid,
+        _csrf,
+        onchange_action,
+        onchange_field,
+        click_action,
+        ...body
+      } = req.body;
 
       const table = Table.findOne({ id: table_id });
       const dbrow = body.id
@@ -2019,7 +2030,24 @@ module.exports = {
       const row = { ...dbrow, ...body };
 
       try {
-        if (onchange_action && !rndid) {
+        if (click_action) {
+          let container;
+          traverseSync(layout, {
+            container(segment) {
+              if (segment.click_action === click_action) container = segment;
+            },
+          });
+          if (!container) return { json: { error: "Action not found" } };
+          const trigger = Trigger.findOne({ name: click_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            user: req.user,
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        } else if (onchange_action && !rndid) {
           const fldCol = columns.find(
             (c) =>
               c.field_name === onchange_field &&
