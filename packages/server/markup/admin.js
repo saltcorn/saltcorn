@@ -95,23 +95,27 @@ const add_edit_bar = ({
   const singleton = view?.viewtemplateObj?.singleton;
 
   const bar = div(
-    { class: "alert alert-light d-print-none admin-edit-bar" },
-    title,
-    what && span({ class: "ms-1 me-2 badge bg-primary" }, what),
-    !singleton &&
-      a(
-        { class: "ms-2", href: url },
-        "Edit&nbsp;",
-        i({ class: "fas fa-edit" })
-      ),
-    cfgUrl && !singleton
-      ? a(
-          { class: "ms-1 me-3", href: cfgUrl },
-          "Configure&nbsp;",
-          i({ class: "fas fa-cog" })
-        )
-      : "",
-    !singleton && viewSpec
+    { class: "card p-1 mt-1 mb-3 d-print-none admin-edit-bar" },
+    div(
+      { class: "card-body p-1" },
+      i({ class: "fas fa-user-cog me-1" }),
+      what && span({ class: "ms-1 me-2 badge bg-secondary" }, what),
+      title,
+      !singleton &&
+        a(
+          { class: "ms-2", href: url },
+          "Edit&nbsp;",
+          i({ class: "fas fa-edit" })
+        ),
+      cfgUrl && !singleton
+        ? a(
+            { class: "ms-1 me-3", href: cfgUrl },
+            "Configure&nbsp;",
+            i({ class: "fas fa-cog" })
+          )
+        : "",
+      !singleton && viewSpec
+    )
   );
 
   if (contents.above) {
@@ -232,7 +236,7 @@ const send_infoarch_page = (args) => {
             { text: "Multitenancy", href: "/tenant/settings" },
           ]
         : []),
-      { text: "Pagegroups", href: "/page_group/settings"},
+      { text: "Pagegroups", href: "/page_group/settings" },
       { text: "Tags", href: "/tag" },
       { text: "Diagram", href: "/diagram" },
     ],
