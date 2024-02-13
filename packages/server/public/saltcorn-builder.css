@@ -13,6 +13,10 @@ div.settings-panel {
   min-height: 150px;
 }
 
+div.settings-panel td {
+  vertical-align: top;
+}
+
 span.is-builder-link {
   color: blue;
   text-decoration: underline;
