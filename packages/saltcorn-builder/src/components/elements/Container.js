@@ -222,6 +222,7 @@ const ContainerSettings = () => {
     display: node.data.props.display,
     style: node.data.props.style,
     imgResponsiveWidths: node.data.props.imgResponsiveWidths,
+    click_action: node.data.props.click_action,
   }));
   const {
     actions: { setProp },
@@ -251,6 +252,7 @@ const ContainerSettings = () => {
     overflow,
     htmlElement,
     imgResponsiveWidths,
+    click_action,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -844,7 +846,29 @@ const ContainerSettings = () => {
             onChange={setAProp("url")}
           />
         </OrFormula>
-
+        {options.triggerActions ? (
+          <Fragment>
+            <label>Click action</label>
+            <select
+              value={click_action}
+              className="form-control form-select"
+              onChange={(e) => {
+                if (!e.target) return;
+                const value = e.target.value;
+                setProp((prop) => {
+                  prop.click_action = value;
+                });
+              }}
+            >
+              <option value="">None</option>
+              {options.triggerActions.map((f, ix) => (
+                <option key={ix} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+          </Fragment>
+        ) : null}
         <label>Hover color</label>
         <select
           value={hoverColor}

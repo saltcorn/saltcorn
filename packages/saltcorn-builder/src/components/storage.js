@@ -200,6 +200,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
+          click_action={segment.click_action}
           url={segment.url}
           hoverColor={segment.hoverColor}
           minHeightUnit={segment.minHeightUnit || "px"}
@@ -459,6 +460,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           gradStartColor: node.props.gradStartColor,
           gradEndColor: node.props.gradEndColor,
           gradDirection: node.props.gradDirection,
+          click_action: node.props.click_action,
           rotate: node.props.rotate,
           style: node.props.style,
         };
