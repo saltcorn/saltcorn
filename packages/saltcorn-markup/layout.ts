@@ -323,7 +323,7 @@ const render = ({
           {
             class:
               segment.action_style === "btn-link"
-                ? ""
+                ? "btn btn-link"
                 : `btn ${segment.action_style || "btn-primary"} ${
                     segment.action_size || ""
                   } dropdown-toggle`,
