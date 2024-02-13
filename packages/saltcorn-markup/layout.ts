@@ -340,7 +340,10 @@ const render = ({
         ),
         div(
           {
-            class: "dropdown-menu dropdown-menu-end",
+            class: [
+              "dropdown-menu",
+              segment.menu_direction === "end" && "dropdown-menu-end",
+            ],
             "aria-labelledby": rndid,
           },
           div({ class: "d-flex flex-column px-2" }, go(segment.contents))
