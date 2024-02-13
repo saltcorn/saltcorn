@@ -1116,6 +1116,7 @@ module.exports = {
             req,
             row,
             user: req.user,
+            referrer: req?.get?.("Referrer"),
           });
           return { json: { success: "ok", ...(result || {}) } };
         }
