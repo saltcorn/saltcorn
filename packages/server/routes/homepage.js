@@ -24,6 +24,7 @@ const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
 const { get_base_url, sendHtmlFile, getEligiblePage } = require("./utils.js");
+const semver = require("semver");
 
 /**
  * Tables List
@@ -519,7 +520,7 @@ const no_views_logged_in = async (req, res) => {
     const latest =
       isRoot && (await get_latest_npm_version("@saltcorn/cli", 500));
     const can_update =
-      packagejson.version !== latest &&
+      semver.gt(latest, packagejson.version) &&
       latest &&
       !process.env.SALTCORN_DISABLE_UPGRADE;
     if (latest && can_update && isRoot)
