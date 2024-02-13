@@ -115,12 +115,14 @@ const configuration_workflow = (req) =>
             ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
+          const triggerActions = [];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           (
             await Trigger.find({
@@ -128,6 +130,7 @@ const configuration_workflow = (req) =>
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           for (const field of fields) {
             if (field.type === "Key") {
@@ -197,6 +200,7 @@ const configuration_workflow = (req) =>
             fields: fields.map((f) => f.toBuilder),
             images,
             actions,
+            triggerActions,
             builtInActions,
             actionConfigForms,
             //fieldViewConfigForms,
@@ -716,6 +720,11 @@ const render = (
         if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
           segment.hide = true;
       }
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${
+          segment.click_action
+        }', ${table.pk_name}: ${JSON.stringify(row[table.pk_name])}})`;
+      }
     },
   });
   const locale = req.getLocale();
@@ -1081,15 +1090,35 @@ module.exports = {
     },
     async actionQuery() {
       const body = req.body;
+
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = Table.findOne({ id: table_id });
       const row = await table.getRow(
-        { id: body.id },
+        { [table.pk_name]: body[table.pk_name] },
         { forUser: req.user, forPublic: !req.user }
       );
       try {
+        if (body.click_action) {
+          let container;
+          traverseSync(layout, {
+            container(segment) {
+              if (segment.click_action === body.click_action)
+                container = segment;
+            },
+          });
+          if (!container) return { json: { error: "Action not found" } };
+          const trigger = Trigger.findOne({ name: body.click_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            user: req.user,
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        }
         const result = await run_action_column({
           col,
           req,
