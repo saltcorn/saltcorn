@@ -194,10 +194,16 @@ div.settings-panel div.rfipbtn {
 }
 
 div.componets-and-library-accordion {
-  min-height: 45vh;
   margin-top: -0.25rem;
 }
 
+.builder-left-enlarged .componets-and-library-accordion {
+  min-height: 20vh;
+}
+
+.builder-left-shrunk .componets-and-library-accordion {
+  min-height: 35vh;
+}
 .builder-layers {
   max-height: calc(45vh - 50px);
   overflow-y: scroll;
