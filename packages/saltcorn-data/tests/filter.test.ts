@@ -219,4 +219,32 @@ describe("Filter view components", () => {
       '<div class="form-namespace"><section class="range-slider"><span class="rangeValues"></span><input value="0" min="0" type="range" onChange="set_state_field(\'_gte_pages\', this.value, this)"><input min="0" type="range" onChange="set_state_field(\'_lte_pages\', this.value, this)"></section></div>'
     );
   });
+  it("isFilter field ", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "field",
+          block: false,
+          fieldview: "select",
+          textStyle: "",
+          field_name: "publisher",
+          configuration: {},
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "select",
+            textStyle: "",
+            field_name: "publisher",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="form-namespace"><select class="form-control form-select  " data-fieldname="publisher" name="publisher" id="inputpublisher" onChange="set_state_field(\'publisher\', this.value, this)" autocomplete="off"><option value=""></option><option value="1">AK Press</option><option value="2">No starch</option></select></div>'
+    );
+  });
 });
