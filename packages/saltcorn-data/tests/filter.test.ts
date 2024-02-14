@@ -439,4 +439,41 @@ describe("Filter view components", () => {
     expect(mockReqRes.getStored().json.notify).toContain(967);
     expect(mockReqRes.getStored().json.notify).toContain(728);
   });
+  it("container showif", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+
+          display: "block",
+          padding: [0, 0, 0, 0],
+          bgFileId: 0,
+          contents: {
+            font: "",
+            icon: "",
+            type: "blank",
+            block: false,
+            style: {},
+            inline: false,
+            contents: "More Than 800",
+            labelFor: "",
+            isFormula: {},
+            textStyle: "",
+          },
+          isFormula: {},
+          htmlElement: "div",
+          showIfFormula: "pages>800",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toBe('<div class="form-namespace"></div>');
+    const vres2 = await view.run({ pages: 500 }, mockReqRes);
+    expect(vres2).toBe('<div class="form-namespace"></div>');
+    const vres3 = await view.run({ pages: 900 }, mockReqRes);
+    expect(vres3).toContain('<div class="form-namespace">');
+    expect(vres3).toContain("More Than 800");
+  });
 });

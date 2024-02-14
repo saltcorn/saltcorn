@@ -720,6 +720,7 @@ const render = (
         const f = get_expression_function(segment.showIfFormula, fields);
         if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
           segment.hide = true;
+        else segment.hide = false;
       }
       if (segment.click_action) {
         segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${
