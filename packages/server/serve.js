@@ -283,7 +283,7 @@ module.exports =
           })
           .ready((glx) => {
             const httpsServer = glx.httpsServer();
-            setupSocket(httpsServer);
+            setupSocket(appargs?.subdomainOffset, httpsServer);
             httpsServer.setTimeout(timeout * 1000);
             process.on("message", workerDispatchMsg);
             glx.serveApp(app);
@@ -350,7 +350,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // todo timeout to config
     httpServer.setTimeout(timeout * 1000);
     httpsServer.setTimeout(timeout * 1000);
-    setupSocket(httpServer, httpsServer);
+    setupSocket(appargs?.subdomainOffset, httpServer, httpsServer);
     httpServer.listen(port, () => {
       console.log("HTTP Server running on port 80");
     });
@@ -363,7 +363,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // server with http only
     const http = require("http");
     const httpServer = http.createServer(app);
-    setupSocket(httpServer);
+    setupSocket(appargs?.subdomainOffset, httpServer);
 
     // todo timeout to config
     // todo refer in doc to httpserver doc
@@ -380,7 +380,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
  *
  * @param  {...*} servers
  */
-const setupSocket = (...servers) => {
+const setupSocket = (subdomainOffset, ...servers) => {
   // https://socket.io/docs/v4/middlewares/
   const wrap = (middleware) => (socket, next) =>
     middleware(socket.request, {}, next);
@@ -398,6 +398,12 @@ const setupSocket = (...servers) => {
   getState().setRoomEmitter((tenant, viewname, room_id, msg) => {
     io.to(`${tenant}_${viewname}_${room_id}`).emit("message", msg);
   });
+
+  getState().setLogEmitter((tenant, level, msg) => {
+    const time = new Date().valueOf();
+    io.to(`_logs_${tenant}_`).emit("log_msg", { text: msg, time, level });
+  });
+
   io.on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
       const ten = get_tenant_from_req(socket.request) || "public";
@@ -417,6 +423,21 @@ const setupSocket = (...servers) => {
       };
       if (ten && ten !== "public") db.runWithTenant(ten, f);
       else f();
+    });
+
+    socket.on("join_log_room", () => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = () => {
+        try {
+          socket.join(`_logs_${tenant}_`);
+        } catch (err) {
+          getState().log(1, `Socket join_logs stream: ${err.stack}`);
+        }
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      else f();
+      socket.join();
     });
   });
 };

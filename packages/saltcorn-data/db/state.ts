@@ -236,6 +236,8 @@ class State {
       const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
       if (min_level === 1) console.error(s);
       else console.log(s);
+      // if has log viewer listener
+      this.emitLog(ten, min_level, msg);
     }
   }
 
@@ -728,6 +730,15 @@ class State {
   emitRoom(...args: any[]) {
     globalRoomEmitter(...args);
   }
+
+  setLogEmitter(f: Function) {
+    globalLogEmitter = f;
+  }
+
+  emitLog(...args: any[]) {
+    globalLogEmitter(...args);
+  }
+
   async refresh_npmpkgs(noSignal?: boolean) {
     if (this.npm_refresh_in_progess) return;
     this.npm_refresh_in_progess = true;
@@ -774,6 +785,7 @@ class State {
  * Global
  */
 let globalRoomEmitter: Function = () => {};
+let globalLogEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State("public");

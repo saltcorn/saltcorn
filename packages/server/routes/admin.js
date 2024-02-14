@@ -2540,6 +2540,59 @@ router.post(
     }
   })
 );
+
+router.get(
+  "/dev/logs_viewer",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const multiTenant = db.is_it_multi_tenant();
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    const tblHeaders = [
+      {
+        label: req.__("Timestamp"),
+        width: "15%",
+      },
+    ];
+    // if (multiTenant && isRoot) {
+    //   tblHeaders.push({
+    //     label: req.__("Tenant"),
+    //     width: "10%"
+    //   });
+    // }
+    tblHeaders.push({ label: req.__("Message") });
+
+    return send_admin_page({
+      res,
+      req,
+      active_sub: "Development",
+      contents: {
+        above: [
+          {
+            type: "card",
+            title: req.__("Server logs"),
+            contents: mkTable(tblHeaders, [], {
+              pagination: {
+                current_page: 1,
+                pages: 1,
+                get_page_link: () => "logViewerHelpers.goToLogsPage(1)",
+              },
+              tableId: "_sc_logs_tbl_id_",
+            }),
+          },
+          // script(
+          //   domReady(`var multiTenant = ${multiTenant}, isRoot = ${isRoot};`)
+          // ),
+          script({
+            src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+          }),
+          script({ src: "/log_viewer_utils.js" }),
+          script(domReady(`logViewerHelpers.init_log_socket();`)), // with server-restart?
+        ],
+      },
+    });
+  })
+);
+
 /**
  * Dev / Admin
  */
@@ -2573,10 +2626,28 @@ admin_config_route({
       req,
       active_sub: "Development",
       contents: {
-        type: "card",
-        title: req.__("Development settings"),
-        titleAjaxIndicator: true,
-        contents: [renderForm(form, req.csrfToken())],
+        above: [
+          {
+            type: "card",
+            title: req.__("Development settings"),
+            titleAjaxIndicator: true,
+            contents: [renderForm(form, req.csrfToken())],
+          },
+          {
+            type: "card",
+            title: req.__("Runtime informations"),
+            contents: [
+              div(
+                { class: "row form-group" },
+                a(
+                  { class: "d-block", href: "dev/logs_viewer" },
+                  req.__("open logs viewer")
+                ),
+                i("Open a log viewer for the current server messages")
+              ),
+            ],
+          },
+        ],
       },
     });
   },
