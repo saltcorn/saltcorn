@@ -375,7 +375,7 @@ const run = async (
         try {
           const actionResult = await run_action_column({
             col: { ...segment },
-            referrer: extra.req.get("Referrer"),
+            referrer: extra.req?.get?.("Referrer"),
             req: extra.req,
             row: state,
             table,
