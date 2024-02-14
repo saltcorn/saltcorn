@@ -662,7 +662,50 @@ const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
     ...viewCfg,
   });
 };
-
+describe("Edit config flow", () => {
+  it("should compute for author table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {},
+    });
+    const configFlow = await view.get_config_flow(mockReqRes.req);
+    const result = await configFlow.run(
+      {
+        table_id: view.table_id,
+        exttable_name: null,
+        viewname: view.name,
+        ...view.configuration,
+      },
+      mockReqRes.req
+    );
+    const fieldNames = result?.renderBuilder?.options.fields.map(
+      (f: Field) => f.name
+    );
+    expect(fieldNames).toContain("author");
+    expect(fieldNames).not.toContain("password");
+  });
+  it("should compute for users table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {},
+      table_id: Table.findOne("users")?.id,
+    });
+    const configFlow = await view.get_config_flow(mockReqRes.req);
+    const result = await configFlow.run(
+      {
+        table_id: view.table_id,
+        exttable_name: null,
+        viewname: view.name,
+        ...view.configuration,
+      },
+      mockReqRes.req
+    );
+    const fieldNames = result?.renderBuilder?.options.fields.map(
+      (f: Field) => f.name
+    );
+    expect(fieldNames).not.toContain("author");
+    expect(fieldNames).toContain("password");
+    expect(fieldNames).toContain("email");
+  });
+});
 describe("Edit view with accordion and join fields", () => {
   it("should run", async () => {
     const view = await mkViewWithCfg(accordionConfig);
