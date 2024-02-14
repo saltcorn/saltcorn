@@ -520,8 +520,8 @@ const no_views_logged_in = async (req, res) => {
     const latest =
       isRoot && (await get_latest_npm_version("@saltcorn/cli", 500));
     const can_update =
-      semver.gt(latest, packagejson.version) &&
       latest &&
+      semver.gt(latest, packagejson.version) &&
       !process.env.SALTCORN_DISABLE_UPGRADE;
     if (latest && can_update && isRoot)
       req.flash(
