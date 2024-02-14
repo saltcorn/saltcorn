@@ -323,4 +323,61 @@ describe("Filter view components", () => {
       '<div class="form-namespace"><button onClick="clear_state(\'\', this)" class="btn btn-primary ">Clear</button></div>'
     );
   });
+  it("state code action", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "624b52",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "run_js_code",
+          action_label: "",
+          configuration: {
+            code: "return row",
+            run_where: "Server",
+          },
+          action_row_variable: "state",
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "624b52",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "run_js_code",
+            action_label: "",
+            configuration: {
+              code: "return row",
+              run_where: "Server",
+            },
+            action_row_variable: "state",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ pages: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      `<div class="form-namespace"><a href="javascript:view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);" class="btn btn-primary ">run_js_code</a></div>`
+    );
+    mockReqRes.reset();
+    const body = { rndid: "624b52" };
+    await view.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      { req: { body } },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      success: "ok",
+    });
+  });
 });
