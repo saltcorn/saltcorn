@@ -780,7 +780,7 @@ describe("Edit view components", () => {
       success: "ok",
     });
   });
-  it("view link independent", async () => {
+  it("view link independent same table", async () => {
     const view = await mkViewWithCfg({
       configuration: {
         layout: {
@@ -812,6 +812,43 @@ describe("Edit view components", () => {
     // TODO FIX THIS
     //const vres0 = await view.run({}, mockReqRes);
     //expect(vres0).toContain('<a href="/view/patientlist">patientlist</a>');
+  });
+  it("view link independent different table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "view_link",
+          view: "list_employees",
+          block: false,
+          minRole: 100,
+          relation: ".",
+          isFormula: {},
+          link_icon: "",
+          view_label: "",
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "list_employees",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".",
+            link_icon: "",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(
+      '<a href="/view/list_employees">list_employees</a>'
+    );
+
+    // TODO FIX THIS
+    //const vres0 = await view.run({}, mockReqRes);
+    //expect(vres0).toContain(
+    //  '<a href="/view/list_employees">list_employees</a>'
+    //);
   });
   it("view link children", async () => {
     const view = await mkViewWithCfg({
