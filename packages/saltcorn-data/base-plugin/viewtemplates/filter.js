@@ -794,6 +794,7 @@ module.exports = {
           return { json: { success: "ok", ...(result || {}) } };
         }
       } catch (e) {
+        console.error(e);
         return { json: { error: e.message || e } };
       }
     },
