@@ -964,7 +964,29 @@ describe("Edit view components", () => {
     expect(vres1).toContain(">Herman Melville<");
 
     const vres0 = await view.run({}, mockReqRes);
-    expect(vres1).toContain(">Leo Tolstoy<");
-    expect(vres1).toContain(">Herman Melville<");
+    expect(vres0).toContain(">Leo Tolstoy<");
+    expect(vres0).toContain(">Herman Melville<");
+  });
+  it("embed view children", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "4ff12b",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain("Kirk");
+    expect(vres1).toContain('data-sc-embed-viewname="patientlist"');
+    expect(vres1).not.toContain("Michael");
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain('data-sc-embed-viewname="patientlist"');
+    expect(vres0).toContain("<form");
   });
 });
