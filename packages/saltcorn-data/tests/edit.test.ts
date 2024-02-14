@@ -927,4 +927,44 @@ describe("Edit view components", () => {
     const vres0 = await view.run({}, mockReqRes);
     expect(vres0).not.toContain("patientlist");
   });
+  it("embed view independent different table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "f98a40",
+          type: "view",
+          view: "list_employees",
+          state: "shared",
+          relation: ".",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain("my_department");
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).toContain("my_department");
+  });
+  it("embed view independent same table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "f98a40",
+          type: "view",
+          view: "authorlist",
+          state: "shared",
+          relation: ".",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(">Leo Tolstoy<");
+    expect(vres1).toContain(">Herman Melville<");
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres1).toContain(">Leo Tolstoy<");
+    expect(vres1).toContain(">Herman Melville<");
+  });
 });
