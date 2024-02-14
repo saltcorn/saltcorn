@@ -2044,6 +2044,7 @@ module.exports = {
             Table,
             req,
             row,
+            referrer: req?.get?.("Referrer"),
             user: req.user,
           });
           return { json: { success: "ok", ...(result || {}) } };
@@ -2060,6 +2061,7 @@ module.exports = {
             Table,
             req,
             row,
+            referrer: req?.get?.("Referrer"),
             user: req.user,
           });
           return { json: { success: "ok", ...(result || {}) } };

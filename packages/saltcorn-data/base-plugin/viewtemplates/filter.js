@@ -353,6 +353,7 @@ const run = async (
         const f = get_expression_function(segment.showIfFormula, fields);
 
         if (!f(state, extra.req.user)) segment.hide = true;
+        else segment.hide = false;
       }
     },
     tabs(segment) {
@@ -375,7 +376,7 @@ const run = async (
         try {
           const actionResult = await run_action_column({
             col: { ...segment },
-            referrer: extra.req.get("Referrer"),
+            referrer: extra.req?.get?.("Referrer"),
             req: extra.req,
             row: state,
             table,
@@ -794,6 +795,7 @@ module.exports = {
           return { json: { success: "ok", ...(result || {}) } };
         }
       } catch (e) {
+        console.error(e);
         return { json: { error: e.message || e } };
       }
     },

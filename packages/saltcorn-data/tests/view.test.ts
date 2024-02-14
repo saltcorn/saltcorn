@@ -212,10 +212,16 @@ describe("View", () => {
   it("should interpolate titles string in Edit", async () => {
     const v = await View.findOne({ name: "authoredit" });
     assertIsSet(v);
-    const title = await v.interpolate_title_string("Hello {{author}}", {
+    const title = await v.interpolate_title_string("Hello {{row?.author}}", {
       id: 2,
     });
     expect(title).toBe("Hello Leo Tolstoy");
+  });
+  it("should interpolate titles string in Edit", async () => {
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    const title = await v.interpolate_title_string("Hello {{row?.author}}", {});
+    expect(title).toBe("Hello ");
   });
 });
 describe("View with routes", () => {

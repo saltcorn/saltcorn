@@ -662,7 +662,50 @@ const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
     ...viewCfg,
   });
 };
-
+describe("Edit config flow", () => {
+  it("should compute for author table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {},
+    });
+    const configFlow = await view.get_config_flow(mockReqRes.req);
+    const result = await configFlow.run(
+      {
+        table_id: view.table_id,
+        exttable_name: null,
+        viewname: view.name,
+        ...view.configuration,
+      },
+      mockReqRes.req
+    );
+    const fieldNames = result?.renderBuilder?.options.fields.map(
+      (f: Field) => f.name
+    );
+    expect(fieldNames).toContain("author");
+    expect(fieldNames).not.toContain("password");
+  });
+  it("should compute for users table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {},
+      table_id: Table.findOne("users")?.id,
+    });
+    const configFlow = await view.get_config_flow(mockReqRes.req);
+    const result = await configFlow.run(
+      {
+        table_id: view.table_id,
+        exttable_name: null,
+        viewname: view.name,
+        ...view.configuration,
+      },
+      mockReqRes.req
+    );
+    const fieldNames = result?.renderBuilder?.options.fields.map(
+      (f: Field) => f.name
+    );
+    expect(fieldNames).not.toContain("author");
+    expect(fieldNames).toContain("password");
+    expect(fieldNames).toContain("email");
+  });
+});
 describe("Edit view with accordion and join fields", () => {
   it("should run", async () => {
     const view = await mkViewWithCfg(accordionConfig);
@@ -676,7 +719,7 @@ describe("Edit view with accordion and join fields", () => {
     expect(vres2).toContain(" data-source-url=");
   });
 });
-describe("Misc Edit views", () => {
+describe("Edit view components", () => {
   it("runs on_page_load action", async () => {
     const view = await mkViewWithCfg({
       configuration: {
@@ -779,5 +822,171 @@ describe("Misc Edit views", () => {
       notify: "Hello!",
       success: "ok",
     });
+  });
+  it("view link independent same table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "view_link",
+          view: "patientlist",
+          block: false,
+          minRole: 100,
+          relation: ".",
+          isFormula: {},
+          link_icon: "",
+          view_label: "",
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "patientlist",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".",
+            link_icon: "",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('<a href="/view/patientlist">patientlist</a>');
+
+    // TODO FIX THIS
+    //const vres0 = await view.run({}, mockReqRes);
+    //expect(vres0).toContain('<a href="/view/patientlist">patientlist</a>');
+  });
+  it("view link independent different table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "view_link",
+          view: "list_employees",
+          block: false,
+          minRole: 100,
+          relation: ".",
+          isFormula: {},
+          link_icon: "",
+          view_label: "",
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "list_employees",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".",
+            link_icon: "",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(
+      '<a href="/view/list_employees">list_employees</a>'
+    );
+
+    // TODO FIX THIS
+    //const vres0 = await view.run({}, mockReqRes);
+    //expect(vres0).toContain(
+    //  '<a href="/view/list_employees">list_employees</a>'
+    //);
+  });
+  it("view link children", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "view_link",
+          view: "patientlist",
+          block: false,
+          minRole: 100,
+          relation: ".books.patients$favbook",
+          isFormula: {},
+          link_icon: "",
+          view_label: "",
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "patientlist",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".books.patients$favbook",
+            link_icon: "",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(
+      '<a href="/view/patientlist?favbook=1">patientlist</a>'
+    );
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
+  it("embed view independent different table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "f98a40",
+          type: "view",
+          view: "list_employees",
+          state: "shared",
+          relation: ".",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain("my_department");
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).toContain("my_department");
+  });
+  it("embed view independent same table", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "f98a40",
+          type: "view",
+          view: "authorlist",
+          state: "shared",
+          relation: ".",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(">Leo Tolstoy<");
+    expect(vres1).toContain(">Herman Melville<");
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).toContain(">Leo Tolstoy<");
+    expect(vres0).toContain(">Herman Melville<");
+  });
+  it("embed view children", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "4ff12b",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain("Kirk");
+    expect(vres1).toContain('data-sc-embed-viewname="patientlist"');
+    expect(vres1).not.toContain("Michael");
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain('data-sc-embed-viewname="patientlist"');
+    expect(vres0).toContain("<form");
   });
 });
