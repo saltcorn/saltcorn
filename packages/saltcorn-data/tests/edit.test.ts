@@ -676,7 +676,7 @@ describe("Edit view with accordion and join fields", () => {
     expect(vres2).toContain(" data-source-url=");
   });
 });
-describe("Misc Edit views", () => {
+describe("Edit view components", () => {
   it("runs on_page_load action", async () => {
     const view = await mkViewWithCfg({
       configuration: {
@@ -779,5 +779,38 @@ describe("Misc Edit views", () => {
       notify: "Hello!",
       success: "ok",
     });
+  });
+  it("view link independent", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "view_link",
+          view: "patientlist",
+          block: false,
+          minRole: 100,
+          relation: ".",
+          isFormula: {},
+          link_icon: "",
+          view_label: "",
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "patientlist",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".",
+            link_icon: "",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('<a href="/view/patientlist">patientlist</a>');
+
+    // TODO FIX THIS
+    //const vres0 = await view.run({}, mockReqRes);
+    //expect(vres0).toContain('<a href="/view/patientlist">patientlist</a>');
   });
 });
