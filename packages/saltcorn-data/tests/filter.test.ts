@@ -286,4 +286,41 @@ describe("Filter view components", () => {
     expect(vres2).not.toContain("Herman Melville");
     expect(vres2).toContain("Leo Tolstoy");
   });
+  it("Clear btn", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "210841",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "Clear",
+          action_label: "",
+          configuration: {},
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "210841",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Clear",
+            action_label: "",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ foo: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="form-namespace"><button onClick="clear_state(\'\', this)" class="btn btn-primary ">Clear</button></div>'
+    );
+  });
 });
