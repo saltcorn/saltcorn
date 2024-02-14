@@ -160,7 +160,63 @@ describe("Filter view components", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toBe(
-      `<div class=\"form-namespace\"><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"}, "${view.name}")});</script></div>`
+      `<div class="form-namespace"><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"}, "${view.name}")});</script></div>`
+    );
+  });
+  it("isEdit field ", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "pages",
+          configuration: {},
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "pages",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="form-namespace"><input type="number" class="form-control" data-fieldname="pages" name="pages" onChange="set_state_field(\'pages\', this.value, this)" id="inputpages" step="1"></div>'
+    );
+  });
+  it("isFilter field ", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "field",
+          block: false,
+          fieldview: "range_interval",
+          textStyle: "",
+          field_name: "pages",
+          configuration: {},
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "range_interval",
+            textStyle: "",
+            field_name: "pages",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="form-namespace"><section class="range-slider"><span class="rangeValues"></span><input value="0" min="0" type="range" onChange="set_state_field(\'_gte_pages\', this.value, this)"><input min="0" type="range" onChange="set_state_field(\'_lte_pages\', this.value, this)"></section></div>'
     );
   });
 });
