@@ -678,6 +678,7 @@ const render = (
         }
       });
 
+      // TODO mutation here - potential issue with renderRows
       segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
       segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
 
