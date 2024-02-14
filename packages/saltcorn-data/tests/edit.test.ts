@@ -813,4 +813,38 @@ describe("Edit view components", () => {
     //const vres0 = await view.run({}, mockReqRes);
     //expect(vres0).toContain('<a href="/view/patientlist">patientlist</a>');
   });
+  it("view link children", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "view_link",
+          view: "patientlist",
+          block: false,
+          minRole: 100,
+          relation: ".books.patients$favbook",
+          isFormula: {},
+          link_icon: "",
+          view_label: "",
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "patientlist",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".books.patients$favbook",
+            link_icon: "",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(
+      '<a href="/view/patientlist?favbook=1">patientlist</a>'
+    );
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
 });
