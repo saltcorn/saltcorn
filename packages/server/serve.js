@@ -425,19 +425,24 @@ const setupSocket = (subdomainOffset, ...servers) => {
       else f();
     });
 
-    socket.on("join_log_room", () => {
+    socket.on("join_log_room", (callback) => {
       const tenant =
         get_tenant_from_req(socket.request, subdomainOffset) || "public";
       const f = () => {
         try {
-          socket.join(`_logs_${tenant}_`);
+          const user = socket.request.user;
+          if (!user || user.role_id !== 1) throw new Error("Not authorized");
+          else {
+            socket.join(`_logs_${tenant}_`);
+            callback({ status: "ok" });
+          }
         } catch (err) {
           getState().log(1, `Socket join_logs stream: ${err.stack}`);
+          callback({ status: "error", msg: err.message || "unknown error" });
         }
       };
       if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
       else f();
-      socket.join();
     });
   });
 };

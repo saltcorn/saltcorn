@@ -555,7 +555,7 @@ describe("diagram", () => {
 });
 
 /**
- * Diagram tests
+ * Tags tests
  */
 describe("tags", () => {
   itShouldRedirectUnauthToLogin("/tag");
@@ -604,6 +604,12 @@ describe("tags", () => {
       .expect(toRedirect("/tag"));
   });
 });
+
+describe("server logs viewer", () => {
+  itShouldRedirectUnauthToLogin("/admin/dev/logs_viewer");
+  itShouldIncludeTextForAdmin("/admin/dev/logs_viewer", "Server logs");
+});
+
 /**
  * Clear all tests
  */

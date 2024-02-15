@@ -9,6 +9,7 @@ var logViewerHelpers = (() => {
     minute: "2-digit",
     second: "2-digit",
   };
+  let lostConnection = false;
 
   const logLevelColor = (level) => {
     switch (parseInt(level)) {
@@ -82,12 +83,59 @@ var logViewerHelpers = (() => {
       .append(buildLogRow(startedMsg.time, startedMsg.level, startedMsg.text));
   };
 
+  const handleDisconnect = () => {
+    lostConnection = true;
+    $("#server-logs-card-id")
+      .find(".sc-error-indicator")
+      .css("display", "inline");
+    notifyAlert({
+      type: "danger",
+      text: "lost the server connection",
+    });
+  };
+
+  const handleConnect = (socket) => {
+    socket.emit("join_log_room", (ack) => {
+      if (ack) {
+        if (ack.status === "ok") {
+          $("#server-logs-card-id")
+            .find(".sc-error-indicator")
+            .css("display", "none");
+          if (lostConnection) {
+            lostConnection = false;
+            emptyAlerts();
+            notifyAlert({
+              type: "success",
+              text: "You are connected again",
+            });
+          }
+        } else if (ack.status === "error" && ack.msg) {
+          notifyAlert({
+            type: "danger",
+            text: `Unable to join the log room: ${ack.msg}`,
+          });
+        } else {
+          notifyAlert({
+            type: "danger",
+            text: "Unable to join the log room: Unknow error",
+          });
+        }
+      } else {
+        notifyAlert({
+          type: "danger",
+          text: "Unable to join the log room",
+        });
+      }
+    });
+  };
+
   return {
     init_log_socket: () => {
       const socket = io({ transports: ["websocket"] });
-      socket.emit("join_log_room", "public");
       startTrackingMsg();
-      socket.on("log_msg", (msg) => handleLogMsg(msg));
+      socket.on("connect", () => handleConnect(socket));
+      socket.on("disconnect", handleDisconnect);
+      socket.on("log_msg", handleLogMsg);
     },
     goToLogsPage: (n) => {
       currentPage = n;
