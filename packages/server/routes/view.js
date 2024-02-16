@@ -79,6 +79,7 @@ router.get(
     if ((title || "").includes("{{")) {
       title = await view.interpolate_title_string(title, query);
     }
+    title = { title };
     if (isModal && view.attributes?.popup_width)
       res.set(
         "SaltcornModalWidth",
@@ -102,7 +103,10 @@ router.get(
       if ((description || "").includes("{{")) {
         description = await view.interpolate_title_string(description, query);
       }
-      title = { title, description };
+      title.description = description;
+    }
+    if (view.attributes?.no_menu) {
+      title.no_menu = true;
     }
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
