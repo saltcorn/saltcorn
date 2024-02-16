@@ -2427,6 +2427,7 @@ router.post(
       await PageGroup.delete({});
     }
     if (form.values.pages) {
+      await db.deleteWhere("_sc_tag_entries", { not: { page_id: null } });
       await db.deleteWhere("_sc_pages");
     }
     if (form.values.views) {
