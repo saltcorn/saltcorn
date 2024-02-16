@@ -1093,6 +1093,8 @@ const runPost = async (
     { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
     remote
   );
+  const view = View.findOne({ name: viewname });
+  const pagetitle = { title: viewname, no_menu: view?.attributes?.no_menu };
   if (prepResult) {
     let { form, row, pk, id } = prepResult;
     const cancel = body._cancel;
@@ -1122,7 +1124,7 @@ const runPost = async (
           res.json({ error: ins_upd_error });
         } else {
           req.flash("error", text_attr(ins_upd_error));
-          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+          res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
         }
         return;
       }
@@ -1179,7 +1181,7 @@ const runPost = async (
             );
             if (upd_res.error) {
               req.flash("error", text_attr(upd_res.error));
-              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;
             }
           } else {
@@ -1189,7 +1191,7 @@ const runPost = async (
             );
             if (ins_res.error) {
               req.flash("error", text_attr(ins_res.error));
-              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;
             } else if (ins_res.success) {
               submitted_row_ids.add(`${ins_res.success}`);
@@ -1560,8 +1562,10 @@ const prepare = async (
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options(false, optionsQuery, req.user);
+    const view = View.findOne({ name: viewname });
+
     res.sendWrap(
-      viewname,
+      { title: viewname, no_menu: view?.attributes?.no_menu },
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
     );
     return null;
