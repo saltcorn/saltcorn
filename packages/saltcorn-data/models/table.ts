@@ -1597,7 +1597,7 @@ class Table implements AbstractTable {
             `Not authorized to insertRow in table ${this.name}. ${user.id} does not match owner field`
           );
 
-          return;
+          return "Not authorized";
         }
       }
       if (!this.ownership_field_id && !this.ownership_formula) {
@@ -1605,7 +1605,7 @@ class Table implements AbstractTable {
           4,
           `Not authorized to insertRow in table ${this.name}. No ownership.`
         );
-        return;
+        return "Not authorized";
       }
     }
     let constraint_check = this.check_table_constraints(v_in);
@@ -1641,7 +1641,7 @@ class Table implements AbstractTable {
           4,
           `Not authorized to insertRow in table ${this.name}. Inserted row not retrieved.`
         );
-        return;
+        return "Not authorized";
       }
 
       let calced = await apply_calculated_fields_stored(existing[0], fields);
@@ -1669,7 +1669,7 @@ class Table implements AbstractTable {
             this.name
           }. User does not match formula: ${JSON.stringify(user)}`
         );
-        return;
+        return "Not authorized";
       }
     }
     if (this.versioned)
