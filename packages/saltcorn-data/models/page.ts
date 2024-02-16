@@ -306,6 +306,10 @@ class Page implements AbstractPage {
               ? `page "${segment.page}" not found`
               : "no page specified")
         );
+      } else if (page.name === this.name) {
+        throw new InvalidConfiguration(
+          `Page ${this.name} configuration error in embedded page: Infinite loop page-in-page`
+        );
       } else {
         const role = (extraArgs.req.user || {}).role_id || 100;
         const pageContent = await page.run(querystate, extraArgs);
