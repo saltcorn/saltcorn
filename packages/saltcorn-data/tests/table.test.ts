@@ -743,7 +743,6 @@ Peter Rossi, 212,9,200`;
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     expect(!!table).toBe(true);
-    const rowsBefore = await table.countRows();
     const impres = await table.import_csv_file(fnm, { no_table_write: true });
     assertsIsSuccessMessage(impres);
 
@@ -753,6 +752,8 @@ Peter Rossi, 212,9,200`;
     const row = rows.find((r: any) => r.id == 1);
     expect(row?.pages).toBe(540);
     expect(row.author).toBe("Noam Chomsky");
+    const row1 = rows.find((r: any) => r.id == 18);
+    expect(row1?.pages).toBe(678);
 
     const rowDB = await table.getRow({ id: 1 });
     assertIsSet(rowDB);
