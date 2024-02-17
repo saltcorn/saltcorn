@@ -737,7 +737,7 @@ Peter Rossi, 212,9,200`;
   it("should replace when id given in preview", async () => {
     const csv = `id,author,Pages
 1, Noam Chomsky, 540
-17, David Harvey, 612`;
+18, Cornel West, 678`;
     const fnm = "/tmp/testreplaceid.csv";
     await writeFile(fnm, csv);
     const table = Table.findOne({ name: "books" });
