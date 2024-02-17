@@ -132,12 +132,7 @@ const getApp = async (opts = {}) => {
   );
 
   const helmetOptions = {
-    contentSecurityPolicy: {
-      directives: {
-        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "script-src": ["'self'", "'unsafe-inline'", "example.com"],
-      },
-    },
+    contentSecurityPolicy: false,
   };
 
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
