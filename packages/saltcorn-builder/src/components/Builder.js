@@ -18,7 +18,7 @@ import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
-import { Columns } from "./elements/Columns";
+import { Columns, ntimes } from "./elements/Columns";
 import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
@@ -65,6 +65,7 @@ import {
 } from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
+import { ListColumn } from "./elements/ListColumn";
 const { Provider } = optionsCtx;
 
 /**
@@ -495,7 +496,24 @@ const Builder = ({ options, layout, mode }) => {
                         ToggleFilter,
                       }}
                     >
-                      <Element canvas is={Column}></Element>
+                      {options.mode === "list" ? (
+                        <table>
+                          <tbody>
+                            {ntimes(5, (ix) => (
+                              <tr key={ix}>
+                                <td className="w-50">
+                                  <ListColumn />
+                                </td>
+                                <td className="w-50">
+                                  <Element canvas is={Column}></Element>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <Element canvas is={Column}></Element>
+                      )}
                     </Frame>
                   </div>
                 </div>

@@ -7,6 +7,8 @@
 import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
+import { setAPropGen, SettingsFromFields } from "./utils";
+
 import optionsCtx from "../context";
 
 export /**
@@ -51,13 +53,13 @@ const fields = [
   },
   {
     name: "col_width",
-    label: __("Column width"),
+    label: "Column width",
     type: "Integer",
     attributes: { asideNext: true },
   },
   {
     name: "col_width_units",
-    label: __("Units"),
+    label: "Units",
     type: "String",
     required: true,
     attributes: {
@@ -67,7 +69,7 @@ const fields = [
   },
   {
     name: "alignment",
-    label: __("Alignment"),
+    label: "Alignment",
     input_type: "select",
     options: ["Default", "Left", "Center", "Right"],
   },
