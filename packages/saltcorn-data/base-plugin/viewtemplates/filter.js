@@ -373,6 +373,7 @@ const run = async (
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
         segment.style = {};
+        if (extra?.isPreview) return;
         try {
           const actionResult = await run_action_column({
             col: { ...segment },
