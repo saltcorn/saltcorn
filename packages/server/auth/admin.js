@@ -1029,7 +1029,10 @@ router.post(
             ? req.__(` with password %s`, code(password))
             : "";
 
-        req.flash("success", req.__(`User %s created`, email) + pwflash);
+        req.flash(
+          pwflash ? "warning" : "success",
+          req.__(`User %s created`, email) + pwflash
+        );
 
         if (rnd_password && send_pwreset_email)
           await send_reset_email(u, req, { creating: true });
