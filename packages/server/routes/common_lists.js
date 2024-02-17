@@ -524,7 +524,8 @@ const getPageList = async (
       },
       {
         label: req.__("Edit"),
-        key: (r) => link(`/pageedit/edit/${r.name}`, req.__("Edit")),
+        key: (r) =>
+          link(`/pageedit/edit/${encodeURIComponent(r.name)}`, req.__("Edit")),
       },
       !tagId
         ? {

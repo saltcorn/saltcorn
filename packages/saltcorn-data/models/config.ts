@@ -219,6 +219,12 @@ const configTypes: ConfigTypes = {
       "A view with the view to be emailed to users for email address verification",
     default: "",
   },
+  logout_url: {
+    type: "String",
+    label: "Logout URL",
+    blurb: "The URL to direct to after logout",
+    default: "/auth/login",
+  },
   /** @type {object} */
   elevate_verified: {
     type: "Role",
@@ -553,6 +559,15 @@ const configTypes: ConfigTypes = {
     sublabel: "Set to 0 for expiration at the end of browser session",
     default: 30 * 24,
   },
+  cross_domain_iframe: {
+    type: "Bool",
+    label: "Cross-domain iframe",
+    restart_required: true,
+    root_only: true,
+    sublabel:
+      "Allow embedding in iframe on different domains. Unsets the X-Frame-Options header",
+    default: false,
+  },
   /** @type {object} */
   storage_s3_enabled: {
     type: "Bool",
@@ -787,10 +802,12 @@ const configTypes: ConfigTypes = {
   body_limit: {
     type: "Integer",
     label: "Body size limit (Kb)",
+    root_only: true,
     blurb: "Maximum request body size in kilobytes",
   },
   url_encoded_limit: {
     type: "Integer",
+    root_only: true,
     label: "URL encoded size limit (Kb)",
     blurb: "Maximum URL encoded request size in kilobytes",
   },

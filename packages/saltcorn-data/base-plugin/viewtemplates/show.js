@@ -316,6 +316,7 @@ const run = async (
     req: extra.req,
     res: extra.res,
     row: rows[0],
+    isPreview: extra.isPreview,
   });
 
   const rendered = (
@@ -359,6 +360,7 @@ const set_load_actions_join_fieldviews = async ({
   req,
   res,
   row,
+  isPreview,
 }) => {
   await traverse(layout, {
     join_field: async (segment) => {
@@ -373,6 +375,11 @@ const set_load_actions_join_fieldviews = async ({
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //run action
+        if (isPreview) {
+          segment.type = "blank";
+          segment.style = {};
+          return;
+        }
         const actionResult = await run_action_column({
           col: { ...segment },
           referrer: req?.get?.("Referrer"),
@@ -574,7 +581,8 @@ const renderRows = async (
       role,
       extra.req,
       is_owner,
-      state
+      state,
+      extra
     );
   });
 };
@@ -639,7 +647,8 @@ const render = (
   role,
   req,
   is_owner,
-  state
+  state,
+  extra
 ) => {
   const session_id = getSessionId(req);
   const evalMaybeExpr = (segment, key, fmlkey) => {
@@ -859,6 +868,7 @@ const render = (
     },
     action(segment) {
       if (segment.action_style === "on_page_load") {
+        if (extra?.isPreview) return "";
         run_action_column({
           col: { ...segment },
           referrer: req?.get?.("Referrer"),

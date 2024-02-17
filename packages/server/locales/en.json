@@ -1366,5 +1366,9 @@
 	"Serve a random page, ignoring the eligible formula. Within a session, reloads will always deliver the same page. This is a basic requirement for A/B testing.": "Serve a random page, ignoring the eligible formula. Within a session, reloads will always deliver the same page. This is a basic requirement for A/B testing.",
 	"Pagegroup %s not found": "Pagegroup %s not found",
 	"Create trigger": "Create trigger",
-	"Omit the menu from this view": "Omit the menu from this view"
+	"Omit the menu from this view": "Omit the menu from this view",
+	"Cross-domain iframe": "Cross-domain iframe",
+	"Allow embedding in iframe on different domains. Unsets the X-Frame-Options header": "Allow embedding in iframe on different domains. Unsets the X-Frame-Options header",
+	"Logout URL": "Logout URL",
+	"The URL to direct to after logout": "The URL to direct to after logout"
 }
