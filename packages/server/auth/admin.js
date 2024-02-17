@@ -376,6 +376,7 @@ const http_settings_form = async (req) =>
       //"cookie_sessions",
       "public_cache_maxage",
       "custom_http_headers",
+      "cross_domain_iframe",
       "body_limit",
       "url_encoded_limit",
     ],
