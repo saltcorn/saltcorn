@@ -219,6 +219,12 @@ const configTypes: ConfigTypes = {
       "A view with the view to be emailed to users for email address verification",
     default: "",
   },
+  logout_url: {
+    type: "String",
+    label: "Logout URL",
+    blurb: "The URL to direct to after logout",
+    default: "/auth/login",
+  },
   /** @type {object} */
   elevate_verified: {
     type: "Role",

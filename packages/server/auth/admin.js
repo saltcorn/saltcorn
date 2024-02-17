@@ -354,6 +354,7 @@ const auth_settings_form = async (req) =>
       "signup_form",
       "user_settings_form",
       "verification_view",
+      "logout_url",
       "elevate_verified",
       "email_mask",
     ],

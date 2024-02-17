@@ -332,17 +332,18 @@ router.get("/logout", async (req, res, next) => {
     res.json({ success: true });
   } else if (req.logout) {
     req.logout(function (err) {
+      const destination = getState().getConfig("logout_url", "/auth/login");
       if (req.session.destroy)
         req.session.destroy((err) => {
           if (err) return next(err);
           req.logout(() => {
-            res.redirect("/auth/login");
+            res.redirect(destination);
           });
         });
       else {
         req.logout(function (err) {
           req.session = null;
-          res.redirect("/auth/login");
+          res.redirect(destination);
         });
       }
     });

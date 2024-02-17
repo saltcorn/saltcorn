@@ -131,15 +131,17 @@ const getApp = async (opts = {}) => {
     false
   );
 
-  app.use(
-    helmet(
-      cross_domain_iframe
-        ? {
-            xFrameOptions: false,
-          }
-        : undefined
-    )
-  );
+  const helmetOptions = {
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "'unsafe-inline'", "example.com"],
+      },
+    },
+  };
+
+  if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
+  app.use(helmet(helmetOptions));
 
   // TODO ch find a better solution
   app.use(cors());
