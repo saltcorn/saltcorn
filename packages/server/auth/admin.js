@@ -42,6 +42,7 @@ const {
   getBaseDomain,
   hostname_matches_baseurl,
   is_hsts_tld,
+  check_if_restart_required,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
 const { expressionValidator } = require("@saltcorn/data/models/expression");
@@ -510,12 +511,21 @@ router.post(
         },
       });
     } else {
+      const restart_required = check_if_restart_required(form, req);
+
       await save_config_from_form(form);
 
       if (!req.xhr) {
         req.flash("success", req.__("HTTP settings updated"));
         res.redirect("/useradmin/http");
-      } else res.json({ success: "ok" });
+      } else {
+        if (restart_required)
+          res.json({
+            success: "ok",
+            notify: req.__("Restart required for changes to take effect."),
+          });
+        else res.json({ success: "ok" });
+      }
     }
   })
 );
