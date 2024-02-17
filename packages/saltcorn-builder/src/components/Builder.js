@@ -37,6 +37,7 @@ import {
   ToolboxEdit,
   ToolboxPage,
   ToolboxFilter,
+  ToolboxList,
 } from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import { Card } from "./elements/Card";
@@ -431,6 +432,7 @@ const Builder = ({ options, layout, mode }) => {
                       <div className="card mt-1" accordiontitle="Components">
                         {{
                           show: <ToolboxShow expanded={isLeftEnlarged} />,
+                          list: <ToolboxList expanded={isLeftEnlarged} />,
                           edit: <ToolboxEdit expanded={isLeftEnlarged} />,
                           page: <ToolboxPage expanded={isLeftEnlarged} />,
                           filter: <ToolboxFilter expanded={isLeftEnlarged} />,
