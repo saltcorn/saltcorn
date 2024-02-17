@@ -7,6 +7,7 @@ const Field = require("../../models/field");
 const FieldRepeat = require("../../models/fieldrepeat");
 const Table = require("../../models/table");
 const Form = require("../../models/form");
+const File = require("../../models/file");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const Crash = require("../../models/crash");
@@ -124,7 +125,7 @@ const configuration_workflow = (req) =>
     steps: [
       {
         name: req.__("Columns"),
-        form: async (context) => {
+        builder: async (context) => {
           const table = Table.findOne(
             context.table_id || context.exttable_name
           );
