@@ -617,7 +617,7 @@ const transformForm = async ({
             req,
             res,
             table,
-            row,
+            row: row || pseudo_row,
           });
           segment.type = "blank";
           segment.style = {};
