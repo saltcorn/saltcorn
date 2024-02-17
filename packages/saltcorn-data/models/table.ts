@@ -2336,7 +2336,6 @@ class Table implements AbstractTable {
 
     const readStream = createReadStream(filePath);
     const returnedRows: any = [];
-    console.log("okH", okHeaders);
 
     try {
       // for files more 1MB
@@ -2433,7 +2432,6 @@ class Table implements AbstractTable {
                     }
                   }
                   const rowOk = this.read_state_strict(rec);
-                  console.log("row", rowOk);
 
                   if (typeof rowOk !== "string") {
                     if (typeof rec[this.pk_name] !== "undefined") {
