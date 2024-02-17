@@ -10,6 +10,11 @@ const Form = require("../../models/form");
 const View = require("../../models/view");
 const Workflow = require("../../models/workflow");
 const Crash = require("../../models/crash");
+const Trigger = require("../../models/trigger");
+const Page = require("../../models/page");
+const PageGroup = require("../../models/page_group");
+const Library = require("../../models/library");
+const User = require("../../models/user");
 
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script, button, div, code } = require("@saltcorn/markup/tags");
@@ -31,6 +36,8 @@ const {
   stateFieldsToQuery,
   link_view,
   getActionConfigFields,
+  calcfldViewOptions,
+  calcrelViewOptions,
   readState,
   run_action_column,
   add_free_variables_to_joinfields,
@@ -119,39 +126,134 @@ const configuration_workflow = (req) =>
         name: req.__("Columns"),
         form: async (context) => {
           const table = Table.findOne(
-            context.table_id
-              ? { id: context.table_id }
-              : { name: context.exttable_name }
+            context.table_id || context.exttable_name
           );
-          // fix legacy values missing view_name
-          (context?.columns || []).forEach((column) => {
-            if (
-              column.type === "ViewLink" &&
-              column.view &&
-              !column.view_name
-            ) {
-              const view_select = parse_view_select(column.view);
-              column.view_name = view_select.viewname;
+          const fields = table.getFields();
+
+          const boolfields = fields.filter(
+            (f) => f.type && f.type.name === "Bool"
+          );
+          const stateActions = Object.entries(getState().actions).filter(
+            ([k, v]) => !v.disableInBuilder
+          );
+          const builtInActions = [
+            "Delete",
+            "GoBack",
+            ...boolfields.map((f) => `Toggle ${f.name}`),
+          ];
+          const actions = [
+            ...builtInActions,
+            ...stateActions.map(([k, v]) => k),
+          ];
+          const triggerActions = [];
+          (
+            await Trigger.find({
+              when_trigger: { or: ["API call", "Never"] },
+            })
+          ).forEach((tr) => {
+            actions.push(tr.name);
+            triggerActions.push(tr.name);
+          });
+          (
+            await Trigger.find({
+              table_id: context.table_id,
+            })
+          ).forEach((tr) => {
+            actions.push(tr.name);
+            triggerActions.push(tr.name);
+          });
+          for (const field of fields) {
+            if (field.type === "Key") {
+              field.reftable = Table.findOne({
+                name: field.reftable_name,
+              });
+              if (field.reftable) await field.reftable.getFields();
             }
-          });
-          const field_picker_repeat = await field_picker_fields({
+          }
+          const actionConfigForms = {};
+          for (const [name, action] of stateActions) {
+            if (action.configFields) {
+              actionConfigForms[name] = await getActionConfigFields(
+                action,
+                table,
+                { mode: "show" }
+              );
+            }
+          }
+          //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
+          const { field_view_options, handlesTextStyle } = calcfldViewOptions(
+            fields,
+            "show"
+          );
+          if (table.name === "users") {
+            fields.push(
+              new Field({
+                name: "verification_url",
+                label: "Verification URL",
+                type: "String",
+              })
+            );
+            field_view_options.verification_url = ["as_text", "as_link"];
+          }
+          const rel_field_view_options = await calcrelViewOptions(
             table,
-            viewname: context.viewname,
-            req,
-            has_click_to_edit: true,
-            has_align: true,
-            has_showif: true,
+            "show"
+          );
+          const roles = await User.get_roles();
+          const { parent_field_list } = await table.get_parent_relations(
+            true,
+            true
+          );
+
+          const { child_field_list, child_relations } =
+            await table.get_child_relations(true);
+          var agg_field_opts = {};
+          child_relations.forEach(({ table, key_field, through }) => {
+            const aggKey =
+              (through ? `${through.name}->` : "") +
+              `${table.name}.${key_field.name}`;
+            agg_field_opts[aggKey] = table.fields
+              .filter((f) => !f.calculated || f.stored)
+              .map((f) => f.name);
           });
-          return new Form({
-            blurb: req.__("Specify the fields in the table to show"),
-            fields: [
-              new FieldRepeat({
-                name: "columns",
-                fancyMenuEditor: true,
-                fields: field_picker_repeat,
-              }),
-            ],
-          });
+          const pages = await Page.find();
+          const groups = (await PageGroup.find()).map((g) => ({
+            name: g.name,
+          }));
+          const images = await File.find({ mime_super: "image" });
+          const library = (await Library.find({})).filter((l) =>
+            l.suitableFor("show")
+          );
+          const myviewrow = View.findOne({ name: context.viewname });
+          return {
+            tableName: table.name,
+            fields: fields.map((f) => f.toBuilder),
+            images,
+            actions,
+            triggerActions,
+            builtInActions,
+            actionConfigForms,
+            //fieldViewConfigForms,
+            field_view_options: {
+              ...field_view_options,
+              ...rel_field_view_options,
+            },
+            parent_field_list,
+            child_field_list,
+            agg_field_opts,
+            min_role: (myviewrow || {}).min_role,
+            roles,
+            library,
+            pages,
+            page_groups: groups,
+            allowMultiStepAction: true,
+            handlesTextStyle,
+            mode: "list",
+            ownership:
+              !!table.ownership_field_id ||
+              !!table.ownership_formula ||
+              table.name === "users",
+          };
         },
       },
       {
