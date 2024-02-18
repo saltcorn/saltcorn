@@ -219,6 +219,9 @@ module.exports =
     ...appargs
   } = {}) => {
     ensureJwtSecret();
+    eachTenant(async () => {
+      await getState().setConfig("joined_log_socket_ids", []);
+    });
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");
     });
@@ -425,21 +428,38 @@ const setupSocket = (subdomainOffset, ...servers) => {
       else f();
     });
 
-    socket.on("join_log_room", (callback) => {
+    socket.on("join_log_room", async (callback) => {
       const tenant =
         get_tenant_from_req(socket.request, subdomainOffset) || "public";
-      const f = () => {
+      const f = async () => {
         try {
           const user = socket.request.user;
           if (!user || user.role_id !== 1) throw new Error("Not authorized");
           else {
             socket.join(`_logs_${tenant}_`);
+            const socketIds = await getState().getConfig(
+              "joined_log_socket_ids"
+            );
+            socketIds.push(socket.id);
+            await getState().setConfig("joined_log_socket_ids", [...socketIds]);
             callback({ status: "ok" });
           }
         } catch (err) {
           getState().log(1, `Socket join_logs stream: ${err.stack}`);
           callback({ status: "error", msg: err.message || "unknown error" });
         }
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      else await f();
+    });
+
+    socket.on("disconnect", async () => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = async () => {
+        const socketIds = await getState().getConfig("joined_log_socket_ids");
+        const newSocketIds = socketIds.filter((id) => id !== socket.id);
+        await getState().setConfig("joined_log_socket_ids", newSocketIds);
       };
       if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
       else f();

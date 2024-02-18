@@ -236,8 +236,8 @@ class State {
       const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
       if (min_level === 1) console.error(s);
       else console.log(s);
-      // if has log viewer listener
-      this.emitLog(ten, min_level, msg);
+      const socketIds = this.getConfig("joined_log_socket_ids", []);
+      if (socketIds.length > 0) this.emitLog(ten, min_level, msg);
     }
   }
 

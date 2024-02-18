@@ -837,6 +837,11 @@ const configTypes: ConfigTypes = {
       },
     },
   },
+  joined_log_socket_ids: {
+    type: "hidden",
+    label: "Joined log socket ids",
+    default: [],
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
