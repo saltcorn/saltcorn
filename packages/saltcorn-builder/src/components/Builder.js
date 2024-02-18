@@ -499,20 +499,11 @@ const Builder = ({ options, layout, mode }) => {
                       }}
                     >
                       {options.mode === "list" ? (
-                        <table>
-                          <tbody>
-                            {ntimes(5, (ix) => (
-                              <tr key={ix}>
-                                <td className="w-50">
-                                  <ListColumn />
-                                </td>
-                                <td className="w-50">
-                                  <Element canvas is={Column}></Element>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        <Column>
+                          {ntimes(5, (ix) => (
+                            <ListColumn key={ix} colIndex={ix} />
+                          ))}
+                        </Column>
                       ) : (
                         <Element canvas is={Column}></Element>
                       )}

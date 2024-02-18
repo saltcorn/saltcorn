@@ -21,18 +21,22 @@ export /**
  * @subcategory components
  * @namespace
  */
-const ListColumn = ({ alignment, header_label }) => {
+const ListColumn = ({ alignment, colIndex, children, header_label }) => {
   const {
     selected,
     id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
-    <div
-      className={`${selected ? "selected-node" : ""} list-column`}
-      ref={(dom) => connect(drag(dom))}
-    >
-      {header_label}
+    <div className="d-flex">
+      <div
+        className={`${selected ? "selected-node" : ""} list-column flex-fill`}
+        ref={(dom) => connect(drag(dom))}
+      >
+        {" "}
+        Column {colIndex}:{header_label}
+      </div>
+      <div className={`canvas flex-fill`}>{children}</div>
     </div>
   );
 };
