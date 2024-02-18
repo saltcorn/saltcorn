@@ -256,48 +256,17 @@ const SettingsPanel = () => {
   );
 };
 
-/**
- * @returns {button}
- * @category saltcorn-builder
- * @subcategory components
- * @namespace
- */
-const SaveButton = () => {
-  const { query, actions } = useEditor(() => {});
-  const options = useContext(optionsCtx);
-
-  /**
-   * @returns {void}
-   */
-  const onClick = () => {
-    const data = craftToSaltcorn(JSON.parse(query.serialize()));
-    const urlroot = options.page_id ? "pageedit" : "viewedit";
-    fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
-      method: "POST", // or 'PUT'
-      headers: {
-        "Content-Type": "application/json",
-        "CSRF-Token": options.csrfToken,
-      },
-      body: JSON.stringify(data),
-    });
-  };
-  return options.page_id || options.view_id ? (
-    <button
-      className="btn btn-sm btn-outline-secondary me-2 builder-save-ajax"
-      onClick={onClick}
-    >
-      Save
-    </button>
-  ) : (
-    ""
-  );
-};
-
 const AddColumnButton = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
+  const addColumn = () => {
+    actions.addNodeTree(
+      query.parseReactElement(<ListColumn />).toNodeTree(),
+      "ROOT"
+    );
+  };
   return (
-    <button className="btn btn-primary" onClick={() => {}}>
+    <button className="btn btn-primary" onClick={addColumn}>
       <FontAwesomeIcon icon={faPlus} className="me-2" />
       Add column
     </button>
