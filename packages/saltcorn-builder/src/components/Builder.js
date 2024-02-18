@@ -68,6 +68,7 @@ import {
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
+import { ListColumns } from "./elements/ListColumns";
 const { Provider } = optionsCtx;
 
 /**
@@ -461,9 +462,15 @@ const Builder = ({ options, layout, mode }) => {
                         Tabs,
                         Table,
                         ToggleFilter,
+                        ListColumn,
+                        ListColumns,
                       }}
                     >
-                      <Element canvas is={Column}></Element>
+                      {options.mode === "list" ? (
+                        <Element canvas is={ListColumns}></Element>
+                      ) : (
+                        <Element canvas is={Column}></Element>
+                      )}
                     </Frame>
                     {options.mode === "list" ? <AddColumnButton /> : null}
                   </div>
