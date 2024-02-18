@@ -37,7 +37,7 @@ const ListColumn = ({ alignment, colIndex, children, header_label }) => {
       >
         Column {colIndex}:{header_label}
       </div>
-      <div className={`canvas flex-fill`}>{children}</div>
+      <div className={`canvas flex-fill list-empty-msg`}>{children}</div>
     </div>
   );
 };

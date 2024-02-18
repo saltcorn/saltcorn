@@ -432,7 +432,9 @@ const Builder = ({ options, layout, mode }) => {
                 </div>
                 <div
                   id="builder-main-canvas"
-                  className={`col builder-mode-${options.mode}`}
+                  className={`col builder-mode-${options.mode} ${
+                    options.mode !== "list" ? "emptymsg" : ""
+                  }`}
                 >
                   <div>
                     <Frame

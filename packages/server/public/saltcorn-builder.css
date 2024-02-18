@@ -147,8 +147,14 @@ div.wrap-builder-elem label {
   padding: 2px;
 }
 
-#builder-main-canvas div.root-canvas:empty:before {
+#builder-main-canvas.emptymsg div.root-canvas:empty:before {
   font-size: 26px;
+  opacity: 0.5;
+  margin-left: 10px;
+  content: "Drag-and-drop components here";
+}
+
+#builder-main-canvas div.list-empty-msg:empty:before {
   opacity: 0.5;
   margin-left: 10px;
   content: "Drag-and-drop components here";
