@@ -30,10 +30,11 @@ const ListColumn = ({ alignment, colIndex, children, header_label }) => {
   return (
     <div className="d-flex">
       <div
-        className={`${selected ? "selected-node" : ""} list-column flex-fill`}
+        className={`${
+          selected ? "selected-node" : ""
+        } border list-column flex-fill`}
         ref={(dom) => connect(drag(dom))}
       >
-        {" "}
         Column {colIndex}:{header_label}
       </div>
       <div className={`canvas flex-fill`}>{children}</div>

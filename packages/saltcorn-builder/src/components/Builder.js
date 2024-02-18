@@ -54,6 +54,7 @@ import {
   faTrashAlt,
   faSave,
   faExclamationTriangle,
+  faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faCaretSquareLeft,
@@ -292,21 +293,14 @@ const SaveButton = () => {
   );
 };
 
-/**
- * @returns {a|""}
- * @category saltcorn-builder
- * @subcategory components
- * @namespace
- */
-const ViewPageLink = () => {
+const AddColumnButton = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
-  return options.page_id ? (
-    <a target="_blank" className="d-block" href={`/page/${options.page_name}`}>
-      View page in new tab &raquo;
-    </a>
-  ) : (
-    ""
+  return (
+    <button className="btn btn-primary" onClick={() => {}}>
+      <FontAwesomeIcon icon={faPlus} className="me-2" />
+      Add column
+    </button>
   );
 };
 
@@ -508,6 +502,7 @@ const Builder = ({ options, layout, mode }) => {
                         <Element canvas is={Column}></Element>
                       )}
                     </Frame>
+                    {options.mode === "list" ? <AddColumnButton /> : null}
                   </div>
                 </div>
                 <div className="col-sm-auto builder-sidebar">
