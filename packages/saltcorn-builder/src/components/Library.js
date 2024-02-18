@@ -124,7 +124,10 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
         });
       })
       .catch((e) => {
-        const text = e || "Unable to save";
+        const text =
+          e.message === "Failed to fetch"
+            ? "Network connection lost"
+            : e || "Unable to save";
         // don't log duplicates
         if (savingState.error) setSavingState({ isSaving: false, error: text });
         else {

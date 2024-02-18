@@ -323,7 +323,7 @@ const render = ({
           {
             class:
               segment.action_style === "btn-link"
-                ? ""
+                ? "btn btn-link"
                 : `btn ${segment.action_style || "btn-primary"} ${
                     segment.action_size || ""
                   } dropdown-toggle`,
@@ -336,11 +336,22 @@ const render = ({
             "aria-expanded": "false",
             style,
           },
-          segment.label || "Actions"
+          segment.action_icon &&
+            segment.action_icon !== "empty" &&
+            i({
+              class: [segment.action_icon, segment.label && "me-1"],
+            }),
+          segment.label ||
+            (!segment.action_icon || segment.action_icon == "empty"
+              ? "Actions"
+              : "")
         ),
         div(
           {
-            class: "dropdown-menu dropdown-menu-end",
+            class: [
+              "dropdown-menu",
+              segment.menu_direction === "end" && "dropdown-menu-end",
+            ],
             "aria-labelledby": rndid,
           },
           div({ class: "d-flex flex-column px-2" }, go(segment.contents))

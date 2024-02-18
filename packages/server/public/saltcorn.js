@@ -154,7 +154,7 @@ $(function () {
   });
 });
 
-function reload_embedded_view(viewname) {
+function reload_embedded_view(viewname, new_query_string) {
   if (window._sc_loglevel > 4)
     console.log(
       "reload_embedded_view",
@@ -164,15 +164,16 @@ function reload_embedded_view(viewname) {
     );
   $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
     const $e = $(this);
-    const url =
-      $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
+    let url = $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
     if (!url) return;
-    const headers = {
-      pjaxpageload: "true",
-      localizedstate: "true", //no admin bar
-    };
+    if (new_query_string) {
+      url = url.split("?")[0] + "?" + new_query_string;
+    }
     $.ajax(url, {
-      headers,
+      headers: {
+        pjaxpageload: "true",
+        localizedstate: "true", //no admin bar
+      },
       success: function (res, textStatus, request) {
         $e.html(res);
         initialize_page();

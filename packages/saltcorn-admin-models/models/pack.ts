@@ -159,6 +159,7 @@ const page_group_pack = async (name: string): Promise<PageGroupPack> => {
     name: group.name,
     description: group.description,
     min_role: group.min_role,
+    random_allocation: group.random_allocation,
     members: group.members.map((m: AbstractPageGroupMember) => {
       // could get slow (caching ?)
       const page = Page.findOne({ id: m.page_id });

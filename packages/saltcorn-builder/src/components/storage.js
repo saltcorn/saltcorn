@@ -200,6 +200,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           minHeight={segment.minHeight}
           height={segment.height}
           width={segment.width}
+          click_action={segment.click_action}
           url={segment.url}
           hoverColor={segment.hoverColor}
           minHeightUnit={segment.minHeightUnit || "px"}
@@ -258,6 +259,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           independent={segment.independent}
           startClosed={segment.startClosed}
           deeplink={segment.deeplink}
+          acc_init_opens={segment.acc_init_opens}
           disable_inactive={segment.disable_inactive}
           serverRendered={segment.serverRendered}
           tabId={segment.tabId}
@@ -458,6 +460,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
           gradStartColor: node.props.gradStartColor,
           gradEndColor: node.props.gradEndColor,
           gradDirection: node.props.gradDirection,
+          click_action: node.props.click_action,
           rotate: node.props.rotate,
           style: node.props.style,
         };
@@ -535,6 +538,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         field: node.props.field,
         independent: node.props.independent,
         startClosed: node.props.startClosed,
+        acc_init_opens: node.props.acc_init_opens,
         deeplink: node.props.deeplink,
         disable_inactive: node.props.disable_inactive,
         serverRendered: node.props.serverRendered,

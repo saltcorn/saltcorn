@@ -339,7 +339,7 @@ const ViewSettings = () => {
             )}
         </Fragment>
       )}
-      {(state === "shared" || options.mode === "page") && (
+      {
         <Fragment>
           <label>
             Extra state Formula
@@ -357,7 +357,7 @@ const ViewSettings = () => {
             </small>
           ) : null}
         </Fragment>
-      )}
+      }
       {view ? (
         <a
           className="d-block mt-2"

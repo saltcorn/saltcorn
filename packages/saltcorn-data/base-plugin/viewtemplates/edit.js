@@ -597,6 +597,11 @@ const transformForm = async ({
     });
   }
   await traverse(form.layout, {
+    container(segment) {
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${segment.click_action}', ...get_form_record({viewname: '${viewname}'}) })`;
+      }
+    },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //TODO check segment.min_role
@@ -608,11 +613,11 @@ const transformForm = async ({
         try {
           const actionResult = await run_action_column({
             col: { ...segment },
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
             req,
             res,
             table,
-            row,
+            row: row || pseudo_row,
           });
           segment.type = "blank";
           segment.style = {};
@@ -1088,6 +1093,8 @@ const runPost = async (
     { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
     remote
   );
+  const view = View.findOne({ name: viewname });
+  const pagetitle = { title: viewname, no_menu: view?.attributes?.no_menu };
   if (prepResult) {
     let { form, row, pk, id } = prepResult;
     const cancel = body._cancel;
@@ -1117,7 +1124,7 @@ const runPost = async (
           res.json({ error: ins_upd_error });
         } else {
           req.flash("error", text_attr(ins_upd_error));
-          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+          res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
         }
         return;
       }
@@ -1174,7 +1181,7 @@ const runPost = async (
             );
             if (upd_res.error) {
               req.flash("error", text_attr(upd_res.error));
-              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;
             }
           } else {
@@ -1184,7 +1191,7 @@ const runPost = async (
             );
             if (ins_res.error) {
               req.flash("error", text_attr(ins_res.error));
-              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;
             } else if (ins_res.success) {
               submitted_row_ids.add(`${ins_res.success}`);
@@ -1555,8 +1562,10 @@ const prepare = async (
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options(false, optionsQuery, req.user);
+    const view = View.findOne({ name: viewname });
+
     res.sendWrap(
-      viewname,
+      { title: viewname, no_menu: view?.attributes?.no_menu },
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
     );
     return null;
@@ -2003,8 +2012,14 @@ module.exports = {
       );
     },
     async actionQuery() {
-      const { rndid, _csrf, onchange_action, onchange_field, ...body } =
-        req.body;
+      const {
+        rndid,
+        _csrf,
+        onchange_action,
+        onchange_field,
+        click_action,
+        ...body
+      } = req.body;
 
       const table = Table.findOne({ id: table_id });
       const dbrow = body.id
@@ -2019,7 +2034,25 @@ module.exports = {
       const row = { ...dbrow, ...body };
 
       try {
-        if (onchange_action && !rndid) {
+        if (click_action) {
+          let container;
+          traverseSync(layout, {
+            container(segment) {
+              if (segment.click_action === click_action) container = segment;
+            },
+          });
+          if (!container) return { json: { error: "Action not found" } };
+          const trigger = Trigger.findOne({ name: click_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            referrer: req?.get?.("Referrer"),
+            user: req.user,
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        } else if (onchange_action && !rndid) {
           const fldCol = columns.find(
             (c) =>
               c.field_name === onchange_field &&
@@ -2032,6 +2065,7 @@ module.exports = {
             Table,
             req,
             row,
+            referrer: req?.get?.("Referrer"),
             user: req.user,
           });
           return { json: { success: "ok", ...(result || {}) } };
@@ -2045,7 +2079,7 @@ module.exports = {
             table,
             row,
             res,
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
           });
           //console.log("result", result);
           return { json: { success: "ok", ...(result || {}) } };

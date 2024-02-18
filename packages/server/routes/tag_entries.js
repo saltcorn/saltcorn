@@ -30,7 +30,12 @@ const buildFields = (entryType, formOptions, req) => {
       div(
         { class: "col-sm-10" },
         select(
-          { name: "ids", class: "form-control form-select", multiple: true },
+          {
+            name: "ids",
+            class: "form-control form-select",
+            multiple: true,
+            size: 20,
+          },
           list.map((entry) => {
             return option({ value: entry.id, label: entry.name });
           })

@@ -115,12 +115,14 @@ const configuration_workflow = (req) =>
             ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
+          const triggerActions = [];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           (
             await Trigger.find({
@@ -128,6 +130,7 @@ const configuration_workflow = (req) =>
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           for (const field of fields) {
             if (field.type === "Key") {
@@ -197,6 +200,7 @@ const configuration_workflow = (req) =>
             fields: fields.map((f) => f.toBuilder),
             images,
             actions,
+            triggerActions,
             builtInActions,
             actionConfigForms,
             //fieldViewConfigForms,
@@ -312,6 +316,7 @@ const run = async (
     req: extra.req,
     res: extra.res,
     row: rows[0],
+    isPreview: extra.isPreview,
   });
 
   const rendered = (
@@ -324,6 +329,8 @@ const run = async (
       state
     )
   )[0];
+
+  //legacy
   let page_title_preamble = "";
   if (page_title) {
     let the_title = page_title;
@@ -333,6 +340,7 @@ const run = async (
     }
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
+
   if (!extra.req.generate_email) return page_title_preamble + rendered;
   else {
     return rendered;
@@ -352,6 +360,7 @@ const set_load_actions_join_fieldviews = async ({
   req,
   res,
   row,
+  isPreview,
 }) => {
   await traverse(layout, {
     join_field: async (segment) => {
@@ -366,9 +375,14 @@ const set_load_actions_join_fieldviews = async ({
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //run action
+        if (isPreview) {
+          segment.type = "blank";
+          segment.style = {};
+          return;
+        }
         const actionResult = await run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req,
           res,
           table,
@@ -567,7 +581,8 @@ const renderRows = async (
       role,
       extra.req,
       is_owner,
-      state
+      state,
+      extra
     );
   });
 };
@@ -632,7 +647,8 @@ const render = (
   role,
   req,
   is_owner,
-  state
+  state,
+  extra
 ) => {
   const session_id = getSessionId(req);
   const evalMaybeExpr = (segment, key, fmlkey) => {
@@ -671,6 +687,7 @@ const render = (
         }
       });
 
+      // TODO mutation here - potential issue with renderRows
       segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
       segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
 
@@ -712,6 +729,12 @@ const render = (
         const f = get_expression_function(segment.showIfFormula, fields);
         if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
           segment.hide = true;
+        else segment.hide = false;
+      }
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${
+          segment.click_action
+        }', ${table.pk_name}: ${JSON.stringify(row[table.pk_name])}})`;
       }
     },
   });
@@ -845,9 +868,10 @@ const render = (
     },
     action(segment) {
       if (segment.action_style === "on_page_load") {
+        if (extra?.isPreview) return "";
         run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req: req,
         }).catch((e) => Crash.create(e, req));
         return "";
@@ -1078,22 +1102,43 @@ module.exports = {
     },
     async actionQuery() {
       const body = req.body;
+
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = Table.findOne({ id: table_id });
       const row = await table.getRow(
-        { id: body.id },
+        { [table.pk_name]: body[table.pk_name] },
         { forUser: req.user, forPublic: !req.user }
       );
       try {
+        if (body.click_action) {
+          let container;
+          traverseSync(layout, {
+            container(segment) {
+              if (segment.click_action === body.click_action)
+                container = segment;
+            },
+          });
+          if (!container) return { json: { error: "Action not found" } };
+          const trigger = Trigger.findOne({ name: body.click_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            user: req.user,
+            referrer: req?.get?.("Referrer"),
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        }
         const result = await run_action_column({
           col,
           req,
           table,
           row,
           res,
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
         });
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {

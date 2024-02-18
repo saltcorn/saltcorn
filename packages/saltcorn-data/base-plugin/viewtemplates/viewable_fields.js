@@ -537,7 +537,7 @@ const view_linker = (
           },
         };
       default:
-        throw new Error(view);
+        throw new Error("Invalid relation: " + view);
     }
   }
 };

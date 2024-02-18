@@ -353,6 +353,7 @@ const run = async (
         const f = get_expression_function(segment.showIfFormula, fields);
 
         if (!f(state, extra.req.user)) segment.hide = true;
+        else segment.hide = false;
       }
     },
     tabs(segment) {
@@ -372,10 +373,11 @@ const run = async (
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
         segment.style = {};
+        if (extra?.isPreview) return;
         try {
           const actionResult = await run_action_column({
             col: { ...segment },
-            referrer: extra.req.get("Referrer"),
+            referrer: extra.req?.get?.("Referrer"),
             req: extra.req,
             row: state,
             table,
@@ -768,7 +770,7 @@ module.exports = {
             forPublic: !req.user || req.user.role_id === 100,
             forUser: req.user,
           });
-          const referrer = req.get("Referrer");
+          const referrer = req?.get?.("Referrer");
           return combineResults(
             await asyncMap(rows, async (row) => {
               return await run_action_column({
@@ -788,12 +790,13 @@ module.exports = {
             req,
             table,
             res,
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
             ...(row ? { row } : {}),
           });
           return { json: { success: "ok", ...(result || {}) } };
         }
       } catch (e) {
+        console.error(e);
         return { json: { error: e.message || e } };
       }
     },

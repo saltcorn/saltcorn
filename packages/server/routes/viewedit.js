@@ -217,6 +217,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         ),
       }),
       new Field({
+        // legacy
         name: "default_render_page",
         label: req.__("Show on page"),
         sublabel: req.__(
@@ -242,6 +243,14 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
           ],
         },
         showIf: { viewtemplate: hasTable },
+      }),
+      new Field({
+        name: "no_menu",
+        label: req.__("No menu"),
+        sublabel: req.__("Omit the menu from this view"),
+        tab: "View settings",
+        parent_field: "attributes",
+        type: "Bool",
       }),
       new Field({
         name: "popup_title",

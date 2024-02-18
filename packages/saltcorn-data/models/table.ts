@@ -1727,7 +1727,7 @@ class Table implements AbstractTable {
   ): Promise<{ error: string } | { success: any }> {
     try {
       const id = await this.insertRow(v, user, resultCollector);
-      if (!id) return { error: "An error occurred" };
+      if (!id) return { error: "Not authorized" };
       if (id?.includes?.("Not authorized")) return { error: id };
       if (id?.error) return id;
       return { success: id };
@@ -2336,6 +2336,7 @@ class Table implements AbstractTable {
 
     const readStream = createReadStream(filePath);
     const returnedRows: any = [];
+
     try {
       // for files more 1MB
       if (db.copyFrom && fileSizeInMegabytes > 1) {
@@ -2445,7 +2446,11 @@ class Table implements AbstractTable {
                       });
 
                       if (options?.no_table_write) {
-                        if (existing) Object.assign(rec, existing);
+                        if (existing) {
+                          Object.entries(existing).forEach(([k, v]) => {
+                            if (typeof rec[k] === "undefined") rec[k] = v;
+                          });
+                        }
                         returnedRows.push(rec);
                       } else if (existing)
                         await db.update(this.name, rec, rec[this.pk_name], {

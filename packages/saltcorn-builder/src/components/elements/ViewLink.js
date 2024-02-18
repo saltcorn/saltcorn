@@ -323,6 +323,7 @@ const ViewLinkSettings = () => {
             values={node}
             linkFirst={true}
             linkIsBlank={true}
+            allowRunOnLoad={false}
           />
         </tbody>
       </table>

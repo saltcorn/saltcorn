@@ -42,6 +42,7 @@ const {
   getBaseDomain,
   hostname_matches_baseurl,
   is_hsts_tld,
+  check_if_restart_required,
 } = require("../markup/admin");
 const { send_verification_email } = require("@saltcorn/data/models/email");
 const { expressionValidator } = require("@saltcorn/data/models/expression");
@@ -354,6 +355,7 @@ const auth_settings_form = async (req) =>
       "signup_form",
       "user_settings_form",
       "verification_view",
+      "logout_url",
       "elevate_verified",
       "email_mask",
     ],
@@ -376,6 +378,7 @@ const http_settings_form = async (req) =>
       //"cookie_sessions",
       "public_cache_maxage",
       "custom_http_headers",
+      "cross_domain_iframe",
       "body_limit",
       "url_encoded_limit",
     ],
@@ -508,12 +511,21 @@ router.post(
         },
       });
     } else {
+      const restart_required = check_if_restart_required(form, req);
+
       await save_config_from_form(form);
 
       if (!req.xhr) {
         req.flash("success", req.__("HTTP settings updated"));
         res.redirect("/useradmin/http");
-      } else res.json({ success: "ok" });
+      } else {
+        if (restart_required)
+          res.json({
+            success: "ok",
+            notify: req.__("Restart required for changes to take effect."),
+          });
+        else res.json({ success: "ok" });
+      }
     }
   })
 );
@@ -1017,7 +1029,10 @@ router.post(
             ? req.__(` with password %s`, code(password))
             : "";
 
-        req.flash("success", req.__(`User %s created`, email) + pwflash);
+        req.flash(
+          pwflash ? "warning" : "success",
+          req.__(`User %s created`, email) + pwflash
+        );
 
         if (rnd_password && send_pwreset_email)
           await send_reset_email(u, req, { creating: true });

@@ -1,0 +1,361 @@
+import Table from "../models/table";
+import Field from "../models/field";
+import Trigger from "../models/trigger";
+import TableConstraint from "../models/table_constraints";
+
+import View from "../models/view";
+import db from "../db";
+import mocks from "./mocks";
+const { mockReqRes } = mocks;
+const { getState } = require("../db/state");
+import Page from "../models/page";
+import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
+import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { assertIsSet } from "./assertions";
+import {
+  prepareQueryEnviroment,
+  sendViewToServer,
+  deleteViewFromServer,
+  renderEditInEditConfig,
+} from "./remote_query_helper";
+
+let remoteQueries = false;
+
+getState().registerPlugin("base", require("../base-plugin"));
+
+afterAll(db.close);
+beforeAll(async () => {
+  await require("../db/reset_schema")();
+  await require("../db/fixtures")();
+});
+
+const accordionConfig = {
+  name: "authorshow1",
+  configuration: {
+    layout: {
+      type: "tabs",
+      ntabs: "2",
+      tabId: "",
+      showif: [null, "pages<800"],
+      titles: ["By {{ author }}", "Publisher Tab title {{ publisher.name }}"],
+      contents: [
+        {
+          font: "",
+          icon: "",
+          type: "blank",
+          block: false,
+          style: {},
+          inline: false,
+          contents: "Hello 1",
+          labelFor: "",
+          isFormula: {},
+          textStyle: "",
+        },
+        {
+          above: [
+            {
+              font: "",
+              icon: "",
+              type: "blank",
+              block: false,
+              style: {},
+              inline: false,
+              contents: "Publisher JF:&nbsp;",
+              labelFor: "",
+              isFormula: {},
+              textStyle: "",
+            },
+            {
+              type: "join_field",
+              block: false,
+              fieldview: "show_with_html",
+              textStyle: "",
+              join_field: "publisher.name",
+              configuration: {
+                code: "<span>the publisher {{it}} </span>",
+              },
+            },
+          ],
+        },
+      ],
+      deeplink: true,
+      tabsStyle: "Accordion",
+      independent: false,
+      startClosed: false,
+      serverRendered: false,
+      disable_inactive: false,
+    },
+    columns: [
+      {
+        type: "JoinField",
+        block: false,
+        fieldview: "show_with_html",
+        textStyle: "",
+        join_field: "publisher.name",
+        configuration: {
+          code: "<span>the publisher {{it}} </span>",
+        },
+      },
+    ],
+  },
+};
+
+const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
+  return await View.create({
+    viewtemplate: "Show",
+    description: "",
+    min_role: 1,
+    name: `someView${Math.round(Math.random() * 100000)}`,
+    table_id: Table.findOne("books")?.id,
+    default_render_page: "",
+    slug: {
+      label: "",
+      steps: [],
+    },
+    attributes: {
+      page_title: "",
+      popup_title: "",
+      popup_width: null,
+      popup_link_out: false,
+      popup_minwidth: null,
+      page_description: "",
+      popup_width_units: null,
+      popup_minwidth_units: null,
+      popup_save_indicator: false,
+    },
+    ...viewCfg,
+  });
+};
+
+describe("Show view with accordion and join fields", () => {
+  it("should run", async () => {
+    const view = await mkViewWithCfg(accordionConfig);
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(">By Herman Melville<");
+    expect(vres1).not.toContain(">Publisher Tab title");
+    expect(vres1).not.toContain(">Publisher JF:");
+    const vres2 = await view.run({ id: 2 }, mockReqRes);
+    expect(vres2).toContain(">By Leo Tolstoy<");
+    expect(vres2).toContain(">Publisher Tab title AK Press<");
+    expect(vres2).toContain(
+      ">Publisher JF:&nbsp;<span>the publisher AK Press </span><"
+    );
+  });
+});
+
+describe("Misc Show views", () => {
+  it("runs HTML code", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "blank",
+          isHTML: true,
+          contents: "Author {{ author }} published by {{ publisher.name }}",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 2 }, mockReqRes);
+    expect(vres1).toBe("Author Leo Tolstoy published by AK Press");
+  });
+  it("runs container showif", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+          contents: {
+            type: "blank",
+            contents: "In Container",
+          },
+          minScreenWidth: "md",
+          showIfFormula: "pages>800",
+          show_for_owner: false,
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-none d-md-block" style="    ">In Container</div>'
+    );
+    const vres2 = await view.run({ id: 2 }, mockReqRes);
+    expect(vres2).toBe("");
+  });
+  it("runs on_page_load action", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "b6fd72",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          action_style: "on_page_load",
+          configuration: {
+            text: "Hello!",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "b6fd72",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            action_style: "on_page_load",
+            configuration: {
+              text: "Hello!",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"})});</script>'
+    );
+  });
+  it("runs button action", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "b6fd72",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          action_style: "btn btn-primary",
+          configuration: {
+            text: "Hello!",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "b6fd72",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            action_style: "btn btn-primary",
+            configuration: {
+              text: "Hello!",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      `<a href="javascript:view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});" class="btn btn btn-primary ">toast</a>`
+    );
+    mockReqRes.reset();
+    const body = { rndid: "b6fd72", id: "1" };
+    await view.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      { req: { body } },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      notify: "Hello!",
+      success: "ok",
+    });
+  });
+  it("runs view embed ", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist?favbook=1"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'abf28\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'abf28\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody><tr><td>Kirk Douglas</td><td>1</td><td></td><td>1</td><td>Herman Melville</td><td>967</td></tr></tbody></table></div></div>'
+    );
+  });
+  it("runs view embed with exta state formula", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          extra_state_fml: "{parent: 1}",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist?favbook=1&parent=1"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'9cf8b\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'9cf8b\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'9cf8b\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'9cf8b\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody></tbody></table></div></div>'
+    );
+  });
+  it("runs view embed with local state", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "local",
+          relation: ".books.patients$favbook",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-local-state="/view/patientlist?favbook=1"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'abf28\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'abf28\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'abf28\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody><tr><td>Kirk Douglas</td><td>1</td><td></td><td>1</td><td>Herman Melville</td><td>967</td></tr></tbody></table></div></div>'
+    );
+  });
+  it("runs independent view embed", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          name: "dd139a",
+          type: "view",
+          view: "patientlist",
+          state: "shared",
+          relation: ".",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist"><div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'name\', false, \'4043d\', this)" class="link-style">Name</span></th><th><span onclick="sortby(\'favbook\', false, \'4043d\', this)" class="link-style">Favourite book</span></th><th><span onclick="sortby(\'parent\', false, \'4043d\', this)" class="link-style">Parent</span></th><th><span onclick="sortby(\'favbook\', false, \'4043d\', this)" class="link-style">Favourite book</span></th><th>author</th><th>pages</th></tr></thead><tbody><tr><td>Kirk Douglas</td><td>1</td><td></td><td>1</td><td>Herman Melville</td><td>967</td></tr><tr><td>Michael Douglas</td><td>2</td><td>1</td><td>2</td><td>Leo Tolstoy</td><td>728</td></tr></tbody></table></div></div>'
+    );
+  });
+});
