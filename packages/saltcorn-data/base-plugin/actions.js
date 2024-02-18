@@ -51,6 +51,26 @@ const interpolate = (s, row, user) => {
   } else return s;
 };
 
+const consoleInterceptor = (state) => {
+  const handle = (printer, level, message, optionalParams) => {
+    printer(message, ...optionalParams);
+    if (state.hasJoinedLogSockets && state.logLevel >= level)
+      state.emitLog(state.tenant || "public", level, message);
+  };
+  return {
+    log: (message, ...optionalParams) =>
+      handle(console.log, 5, message, optionalParams),
+    info: (message, ...optionalParams) =>
+      handle(console.info, 5, message, optionalParams),
+    debug: (message, ...optionalParams) =>
+      handle(console.debug, 5, message, optionalParams),
+    warn: (message, ...optionalParams) =>
+      handle(console.warn, 2, message, optionalParams),
+    error: (message, ...optionalParams) =>
+      handle(console.error, 1, message, optionalParams),
+  };
+};
+
 /**
  * @param opts
  * @param opts.row
@@ -111,7 +131,7 @@ const run_code = async ({
     table,
     row,
     user,
-    console,
+    console: consoleInterceptor(getState()),
     Actions,
     emitEvent,
     sleep,

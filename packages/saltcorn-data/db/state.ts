@@ -143,6 +143,7 @@ class State {
   pluginManager?: any;
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
+  hasJoinedLogSockets: boolean;
 
   /**
    * State constructor
@@ -188,6 +189,7 @@ class State {
     this.logLevel = 1;
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
+    this.hasJoinedLogSockets = false;
   }
 
   processSend(v: any) {
@@ -236,8 +238,7 @@ class State {
       const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
       if (min_level === 1) console.error(s);
       else console.log(s);
-      const socketIds = this.getConfig("joined_log_socket_ids", []);
-      if (socketIds.length > 0) this.emitLog(ten, min_level, msg);
+      if (this.hasJoinedLogSockets) this.emitLog(ten, min_level, msg);
     }
   }
 
@@ -271,6 +272,8 @@ class State {
     if (db.is_node) {
       // TODO ch mobile i18n
       await this.refresh_i18n();
+      this.hasJoinedLogSockets =
+        (this.configs.joined_log_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
@@ -735,8 +738,8 @@ class State {
     globalLogEmitter = f;
   }
 
-  emitLog(...args: any[]) {
-    globalLogEmitter(...args);
+  emitLog(ten: string, min_level: number, msg: string) {
+    globalLogEmitter(ten, min_level, msg);
   }
 
   async refresh_npmpkgs(noSignal?: boolean) {

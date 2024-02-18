@@ -112,6 +112,10 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
   }
+  eachTenant(async () => {
+    const state = getState();
+    if (state) await state.setConfig("joined_log_socket_ids", []);
+  });
   if (useClusterAdaptor) setupPrimary();
 };
 
@@ -219,9 +223,6 @@ module.exports =
     ...appargs
   } = {}) => {
     ensureJwtSecret();
-    eachTenant(async () => {
-      await getState().setConfig("joined_log_socket_ids", []);
-    });
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");
     });

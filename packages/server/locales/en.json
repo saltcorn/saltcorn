@@ -1360,5 +1360,10 @@
 	"Add entries to tag %s": "Add entries to tag %s",
 	"Tag not found": "Tag not found",
 	"Unable to save: No page or no layout": "Unable to save: No page or no layout",
-	"Unable to save: No view": "Unable to save: No view"
+	"Unable to save: No view": "Unable to save: No view",
+	"Runtime informations": "Runtime informations",
+	"open logs viewer": "open logs viewer",
+	"Server logs": "Server logs",
+	"Timestamp": "Timestamp",
+	"Message": "Message"
 }
