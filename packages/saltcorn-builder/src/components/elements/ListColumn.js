@@ -29,21 +29,16 @@ const ListColumn = ({ alignment, colIndex, children, header_label }) => {
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
-    <div className="d-flex">
+    <div className="d-flex w-100">
       <div
         className={`${
           selected ? "selected-node" : ""
-        } border list-column flex-fill`}
+        } border list-column flex-50`}
         ref={(dom) => connect(drag(dom))}
       >
         Column {colIndex}:{header_label}
       </div>
-      <Element
-        canvas
-        id={`listcol`}
-        className={`flex-fill list-empty-msg`}
-        is={Column}
-      >
+      <Element canvas id={`listcol`} is={Column}>
         {children}
       </Element>
     </div>

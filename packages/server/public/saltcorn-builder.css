@@ -491,3 +491,7 @@ Copyright (c) 2017 Taha Paksu
 div.builder-config-field {
   margin-top: 0.5rem;
 }
+
+.flex-50 {
+  flex: 50%;
+}
