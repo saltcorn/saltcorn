@@ -461,15 +461,7 @@ const Builder = ({ options, layout, mode }) => {
                         ToggleFilter,
                       }}
                     >
-                      {options.mode === "list" ? (
-                        <Column>
-                          {ntimes(5, (ix) => (
-                            <ListColumn key={ix} colIndex={ix} />
-                          ))}
-                        </Column>
-                      ) : (
-                        <Element canvas is={Column}></Element>
-                      )}
+                      <Element canvas is={Column}></Element>
                     </Frame>
                     {options.mode === "list" ? <AddColumnButton /> : null}
                   </div>
