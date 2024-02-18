@@ -267,7 +267,7 @@ const AddColumnButton = () => {
     );
   };
   return (
-    <button className="btn btn-primary" onClick={addColumn}>
+    <button className="btn btn-primary mt-2" onClick={addColumn}>
       <FontAwesomeIcon icon={faPlus} className="me-2" />
       Add column
     </button>
