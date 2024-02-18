@@ -8,6 +8,7 @@ import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
 import { setAPropGen, SettingsFromFields } from "./utils";
+import { Column } from "./Column";
 
 import optionsCtx from "../context";
 
@@ -37,7 +38,14 @@ const ListColumn = ({ alignment, colIndex, children, header_label }) => {
       >
         Column {colIndex}:{header_label}
       </div>
-      <div className={`canvas flex-fill list-empty-msg`}>{children}</div>
+      <Element
+        canvas
+        id={`listcol`}
+        className={`flex-fill list-empty-msg`}
+        is={Column}
+      >
+        {children}
+      </Element>
     </div>
   );
 };

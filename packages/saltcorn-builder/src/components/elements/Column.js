@@ -25,9 +25,13 @@ const Column = ({ children, align }) => {
     id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const options = useContext(optionsCtx);
+
   return (
     <div
-      className={selected ? "selected-node" : ""}
+      className={`${selected ? "selected-node" : ""} ${
+        options.mode === "list" ? "flex-fill list-empty-msg" : ""
+      }`}
       ref={(dom) => connect(drag(dom))}
     >
       <div className={`canvas ${id === "ROOT" ? "root-canvas" : ""}`}>
