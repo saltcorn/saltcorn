@@ -296,9 +296,8 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           header_label={col.header_label}
           col_width={col.col_width}
           col_width_units={col.col_width_units}
-        >
-          {toTag(col.contents)}
-        </ListColumn>
+          contents={toTag(col.contents)}
+        ></ListColumn>
       ));
     } else if (segment.besides) {
       return (

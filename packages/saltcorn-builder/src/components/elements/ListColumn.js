@@ -25,7 +25,7 @@ export /**
 const ListColumn = ({
   alignment,
   colIndex,
-  children,
+  contents,
   header_label,
   showif,
   col_width,
@@ -46,7 +46,7 @@ const ListColumn = ({
         Column {colIndex}:{header_label}
       </div>
       <Element canvas id={`listcol`} is={Column}>
-        {children}
+        {contents}
       </Element>
     </div>
   );
