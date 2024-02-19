@@ -46,7 +46,7 @@ const fields = (mode) => {
       type: "textarea",
       segment_name: "contents",
       sublabel:
-        mode === "show"
+        mode === "show" || mode === "list"
           ? "Access fields with <code>{{ var_name }}</code>"
           : undefined,
     },

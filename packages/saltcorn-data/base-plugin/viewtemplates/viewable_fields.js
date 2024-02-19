@@ -22,6 +22,7 @@ const View = require("../../models/view");
 const Table = require("../../models/table");
 const { isNode, dollarizeObject } = require("../../utils");
 const { bool, date } = require("../types");
+const _ = require("underscore");
 
 const {
   Relation,
@@ -606,6 +607,16 @@ const get_viewable_fields_from_layout = (
           col.type = "FormulaValue";
           col.formula = col.contents;
         }
+        if (contents.isHTML)
+          col.interpolator = (row) => {
+            const template = _.template(contents.contents, {
+              evaluate: /\{\{#(.+?)\}\}/g,
+              interpolate: /\{\{([^#].+?)\}\}/g,
+            });
+            const temres = template({ row, user: req?.user, ...row });
+            return temres;
+          };
+
         break;
       case "action":
         col.action_label_formula = contents.isFormula?.action_label;
@@ -688,7 +699,10 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
-          key: (r) => text(column.contents),
+          key: (r) =>
+            column.interpolator
+              ? column.interpolator(r)
+              : text(column.contents),
         };
       } else if (column.type === "Action") {
         const action_col = {
