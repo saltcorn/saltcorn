@@ -22,10 +22,17 @@ export /**
  * @subcategory components
  * @namespace
  */
-const ListColumn = ({ alignment, colIndex, children, header_label }) => {
+const ListColumn = ({
+  alignment,
+  colIndex,
+  children,
+  header_label,
+  showif,
+  col_width,
+  col_width_units,
+}) => {
   const {
     selected,
-    id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
@@ -90,6 +97,8 @@ ListColumn.craft = {
   },
   related: {
     settings: SettingsFromFields(fields, {}),
-    fields,
+    segment_type: "list_column",
+    hasContents: true,
+    colFields: fields,
   },
 };

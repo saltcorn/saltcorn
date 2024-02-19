@@ -12,6 +12,8 @@ import { Empty } from "./elements/Empty";
 import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
 import { Tabs } from "./elements/Tabs";
+import { ListColumns } from "./elements/ListColumns";
+import { ListColumn } from "./elements/ListColumn";
 import { Table } from "./elements/Table";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
@@ -76,6 +78,8 @@ const allElements = [
   DropMenu,
   Page,
   Table,
+  ListColumn,
+  ListColumns,
 ];
 
 export /**
@@ -420,6 +424,20 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         columns.push(c);
       }
       return s;
+    }
+    if (node.displayName === ListColumns.craft.displayName) {
+      return { besides: node.nodes.map((nm) => go(nodes[nm])) };
+    }
+    if (node.displayName === ListColumn.craft.displayName) {
+      const contents = go(nodes[node.linkedNodes.listcol]);
+      return {
+        contents,
+        col_width: node.props.col_width,
+        col_width_units: node.props.col_width_units,
+        alignment: node.props.aligment,
+        header_label: node.props.header_label,
+        showif: node.props.showif,
+      };
     }
     if (node.isCanvas) {
       if (node.displayName === Container.craft.displayName)
