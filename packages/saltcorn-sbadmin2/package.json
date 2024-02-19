@@ -17,7 +17,7 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "devDependencies": {
-    "jest": "26.6.3"
+    "jest": "^29.7.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {
