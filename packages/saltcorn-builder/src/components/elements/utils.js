@@ -140,7 +140,6 @@ export /**
 const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
   const { mode } = React.useContext(optionsCtx);
   const allowFormula = mode === "show" || mode === "list";
-  console.log({ mode, allowFormula });
   /**
    * @returns {void}
    */

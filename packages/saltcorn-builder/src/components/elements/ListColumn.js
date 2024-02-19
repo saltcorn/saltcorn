@@ -35,6 +35,8 @@ const ListColumn = ({
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const options = useContext(optionsCtx);
+
   return (
     <div className="d-flex w-100">
       <div
@@ -45,7 +47,12 @@ const ListColumn = ({
       >
         Column {colIndex}:{header_label}
       </div>
-      <Element canvas id={`listcol`} is={Column}>
+      <Element
+        canvas
+        id={`listcol`}
+        is={Column}
+        singleOccupancy={!options.allowMultipleElementsPerColumn}
+      >
         {contents}
       </Element>
     </div>

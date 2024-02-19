@@ -64,6 +64,12 @@ Column.craft = {
   props: {},
   rules: {
     canDrag: () => true,
+    canMoveIn: (incomming, current) => {
+      if (current?.data?.props?.singleOccupancy && current.data.nodes?.length)
+        return false;
+
+      return true;
+    },
   },
   related: {
     settings: ColumnSettings,
