@@ -133,7 +133,6 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
         );
       else return <MatchElement key={ix} {...props} />;
     }
-
     if (segment.type === "blank") {
       return (
         <Text
@@ -289,6 +288,18 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           )}
         />
       );
+    } else if (segment.besides && segment.list_columns) {
+      return segment.besides.map((col, jx) => (
+        <ListColumn
+          key={jx}
+          alignment={col.alignment}
+          header_label={col.header_label}
+          col_width={col.col_width}
+          col_width_units={col.col_width_units}
+        >
+          {toTag(col.contents)}
+        </ListColumn>
+      ));
     } else if (segment.besides) {
       return (
         <Columns
@@ -323,7 +334,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
       segment.above.forEach((child) => {
         if (child) go(child, parent);
       });
-    } else if (segment.besides) {
+    } else if (segment.besides && !segment.list_columns) {
       const node = query
         .parseReactElement(
           <Columns
@@ -345,7 +356,13 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
       actions.addNodeTree(node, parent);
     } else {
       const tag = toTag(segment);
-      if (tag) {
+      if (Array.isArray(tag)) {
+        tag.forEach((t) => {
+          const node = query.parseReactElement(t).toNodeTree();
+          //console.log("other", node);
+          actions.addNodeTree(node, parent);
+        });
+      } else if (tag) {
         const node = query.parseReactElement(tag).toNodeTree();
         //console.log("other", node);
         actions.addNodeTree(node, parent);
@@ -426,7 +443,10 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
       return s;
     }
     if (node.displayName === ListColumns.craft.displayName) {
-      return { besides: node.nodes.map((nm) => go(nodes[nm])) };
+      return {
+        besides: node.nodes.map((nm) => go(nodes[nm])),
+        list_columns: true,
+      };
     }
     if (node.displayName === ListColumn.craft.displayName) {
       const contents = go(nodes[node.linkedNodes.listcol]);
