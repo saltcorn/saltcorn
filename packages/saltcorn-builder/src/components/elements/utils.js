@@ -139,7 +139,8 @@ export /**
  */
 const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
   const { mode } = React.useContext(optionsCtx);
-
+  const allowFormula = mode === "show" || mode === "list";
+  console.log({ mode, allowFormula });
   /**
    * @returns {void}
    */
@@ -160,14 +161,14 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
     });
   };
   let errorString = false;
-  if (mode === "show" && isFormula[nodekey]) {
+  if (allowFormula && isFormula[nodekey]) {
     try {
       Function("return " + node[nodekey]);
     } catch (error) {
       errorString = error.message;
     }
   }
-  return mode !== "show" ? (
+  return !allowFormula ? (
     children
   ) : (
     <Fragment>

@@ -579,12 +579,28 @@ const get_viewable_fields_from_layout = (
 ) => {
   const typeMap = {
     field: "Field",
+    join_field: "JoinField",
+    view_link: "ViewLink",
+    link: "Link",
+    action: "Action",
   };
-  const newCols = layoutCols.map(({ contents, ...rest }) => ({
-    ...contents,
-    ...rest,
-    type: typeMap[contents.type] || contents.type,
-  }));
+  const newCols = layoutCols.map(({ contents, ...rest }) => {
+    const col = {
+      ...contents,
+      ...rest,
+      type: typeMap[contents.type] || contents.type,
+    };
+    switch (contents.type) {
+      case "link":
+        col.link_text = contents.text;
+        col.link_url = contents.url;
+        col.link_url_formula = contents.isFormula?.url;
+        col.link_text_formula = contents.isFormula?.text;
+        break;
+    }
+    return col;
+  });
+
   console.log("newCols", newCols);
   return get_viewable_fields(
     viewname,
@@ -735,6 +751,7 @@ const get_viewable_fields = (
         const r = make_link(column, fields, __);
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
+        console.log("Link col", r);
         if (column.in_dropdown) {
           dropdown_actions.push(r);
           return false;
