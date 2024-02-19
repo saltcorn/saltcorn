@@ -564,6 +564,42 @@ const flapMapish = (xs, f) => {
   return res;
 };
 
+const get_viewable_fields_from_layout = (
+  viewname,
+  statehash,
+  table,
+  fields,
+  columns,
+  isShow,
+  req,
+  __,
+  state = {},
+  srcViewName,
+  layoutCols
+) => {
+  const typeMap = {
+    field: "Field",
+  };
+  const newCols = layoutCols.map(({ contents, ...rest }) => ({
+    ...contents,
+    ...rest,
+    type: typeMap[contents.type] || contents.type,
+  }));
+  console.log("newCols", newCols);
+  return get_viewable_fields(
+    viewname,
+    statehash,
+    table,
+    fields,
+    newCols,
+    isShow,
+    req,
+    __,
+    (state = {}),
+    srcViewName
+  );
+};
+
 /**
  * @function
  * @param {string} viewname
@@ -1209,6 +1245,7 @@ const objToQueryString = (o) =>
 
 module.exports = {
   get_viewable_fields,
+  get_viewable_fields_from_layout,
   action_url,
   objToQueryString,
   action_link,

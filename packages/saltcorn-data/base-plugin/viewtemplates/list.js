@@ -43,7 +43,11 @@ const {
   run_action_column,
   add_free_variables_to_joinfields,
 } = require("../../plugin-helper");
-const { get_viewable_fields, parse_view_select } = require("./viewable_fields");
+const {
+  get_viewable_fields,
+  parse_view_select,
+  get_viewable_fields_from_layout,
+} = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const {
   get_async_expression_function,
@@ -653,6 +657,7 @@ const run = async (
   viewname,
   {
     columns,
+    layout,
     view_to_create,
     create_view_display,
     create_view_label,
@@ -705,18 +710,32 @@ const run = async (
   const statehash = hashState(state, viewname);
 
   const { rows, rowCount } = await listQuery(state, statehash);
-  const tfields = get_viewable_fields(
-    viewname,
-    statehash,
-    table,
-    fields,
-    columns,
-    false,
-    extraOpts.req,
-    __,
-    state,
-    viewname
-  );
+  const tfields = layout?.list_columns
+    ? get_viewable_fields_from_layout(
+        viewname,
+        statehash,
+        table,
+        fields,
+        columns,
+        false,
+        extraOpts.req,
+        __,
+        state,
+        viewname,
+        layout.besides
+      )
+    : get_viewable_fields(
+        viewname,
+        statehash,
+        table,
+        fields,
+        columns,
+        false,
+        extraOpts.req,
+        __,
+        state,
+        viewname
+      );
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
   var page_opts =
