@@ -52,7 +52,9 @@ ListColumns.craft = {
   rules: {
     canDrag: () => false,
     canDrop: () => false,
-    canMoveIn: () => false,
+    canMoveIn: (incoming) => {
+      return incoming?.data?.displayName === "ListColumn";
+    },
   },
   related: {
     settings: ListColumnsSettings,
