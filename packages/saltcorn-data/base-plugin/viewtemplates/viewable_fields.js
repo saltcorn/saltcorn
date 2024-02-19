@@ -597,6 +597,12 @@ const get_viewable_fields_from_layout = (
         col.link_url_formula = contents.isFormula?.url;
         col.link_text_formula = contents.isFormula?.text;
         break;
+      case "view_link":
+        col.view_label_formula = contents.isFormula?.label;
+        break;
+      case "action":
+        col.action_label_formula = contents.isFormula?.action_label;
+        break;
     }
     return col;
   });
@@ -751,7 +757,6 @@ const get_viewable_fields = (
         const r = make_link(column, fields, __);
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
-        console.log("Link col", r);
         if (column.in_dropdown) {
           dropdown_actions.push(r);
           return false;
