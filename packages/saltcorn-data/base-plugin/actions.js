@@ -36,7 +36,7 @@ const {
   objectToQueryString,
 } = require("../utils");
 const db = require("../db");
-const { isNode } = require("../utils");
+const { isNode, ppVal } = require("../utils");
 const { available_languages } = require("../models/config");
 const _ = require("underscore");
 
@@ -55,8 +55,16 @@ const interpolate = (s, row, user) => {
 const consoleInterceptor = (state) => {
   const handle = (printer, level, message, optionalParams) => {
     printer(message, ...optionalParams);
-    if (state.hasJoinedLogSockets && state.logLevel >= level)
-      state.emitLog(state.tenant || "public", level, message);
+    if (state.hasJoinedLogSockets && state.logLevel >= level) {
+      const s = ppVal(message);
+      state.emitLog(
+        state.tenant || "public",
+        level,
+        optionalParams.length === 0
+          ? s
+          : `${s} ${optionalParams.map((val) => ppVal(val)).join(" ")}`
+      );
+    }
   };
   return {
     log: (message, ...optionalParams) =>
