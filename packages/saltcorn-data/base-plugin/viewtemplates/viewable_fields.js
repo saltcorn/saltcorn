@@ -583,6 +583,7 @@ const get_viewable_fields_from_layout = (
     view_link: "ViewLink",
     link: "Link",
     action: "Action",
+    blank: "Text",
   };
   const newCols = layoutCols.map(({ contents, ...rest }) => {
     const col = {
@@ -599,6 +600,12 @@ const get_viewable_fields_from_layout = (
         break;
       case "view_link":
         col.view_label_formula = contents.isFormula?.label;
+        break;
+      case "blank":
+        if (contents.isFormula?.text) {
+          col.type = "FormulaValue";
+          col.formula = col.contents;
+        }
         break;
       case "action":
         col.action_label_formula = contents.isFormula?.action_label;
@@ -676,6 +683,12 @@ const get_viewable_fields = (
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
           key: (r) => text(eval_expression(column.formula, r, req.user)),
+        };
+      } else if (column.type === "Text") {
+        return {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) => text(column.contents),
         };
       } else if (column.type === "Action") {
         const action_col = {

@@ -179,9 +179,11 @@ const TextSettings = () => {
   } = node;
   const { mode, fields } = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
+  const allowFormula = mode === "show" || mode === "list";
+
   return (
     <div>
-      {mode === "show" && (
+      {allowFormula && (
         <div className="form-check">
           <input
             type="checkbox"
@@ -197,7 +199,7 @@ const TextSettings = () => {
         </div>
       )}
       <label>Text to display</label>
-      {mode === "show" && isFormula.text ? (
+      {allowFormula && isFormula.text ? (
         <input
           type="text"
           className="text-to-display form-control"
