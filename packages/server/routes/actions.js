@@ -11,6 +11,7 @@ const {
   addOnDoneRedirect,
   is_relative_url,
 } = require("./utils.js");
+const { ppVal } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { getTriggerList } = require("./common_lists");
@@ -631,12 +632,6 @@ router.get(
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     const output = [];
-    const ppVal = (x) =>
-      typeof x === "string"
-        ? x
-        : typeof x === "function"
-        ? x.toString()
-        : JSON.stringify(x, null, 2);
     const fakeConsole = {
       log(...s) {
         console.log(...s);

@@ -1370,5 +1370,10 @@
 	"Cross-domain iframe": "Cross-domain iframe",
 	"Allow embedding in iframe on different domains. Unsets the X-Frame-Options header": "Allow embedding in iframe on different domains. Unsets the X-Frame-Options header",
 	"Logout URL": "Logout URL",
-	"The URL to direct to after logout": "The URL to direct to after logout"
+	"The URL to direct to after logout": "The URL to direct to after logout",
+	"Runtime informations": "Runtime informations",
+	"open logs viewer": "open logs viewer",
+	"Server logs": "Server logs",
+	"Timestamp": "Timestamp",
+	"Message": "Message"
 }

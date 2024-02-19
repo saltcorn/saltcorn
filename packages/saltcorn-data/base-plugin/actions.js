@@ -36,7 +36,7 @@ const {
   objectToQueryString,
 } = require("../utils");
 const db = require("../db");
-const { isNode } = require("../utils");
+const { isNode, ppVal } = require("../utils");
 const { available_languages } = require("../models/config");
 const _ = require("underscore");
 
@@ -50,6 +50,34 @@ const interpolate = (s, row, user) => {
     });
     return template({ row, user, ...row });
   } else return s;
+};
+
+const consoleInterceptor = (state) => {
+  const handle = (printer, level, message, optionalParams) => {
+    printer(message, ...optionalParams);
+    if (state.hasJoinedLogSockets && state.logLevel >= level) {
+      const s = ppVal(message);
+      state.emitLog(
+        state.tenant || "public",
+        level,
+        optionalParams.length === 0
+          ? s
+          : `${s} ${optionalParams.map((val) => ppVal(val)).join(" ")}`
+      );
+    }
+  };
+  return {
+    log: (message, ...optionalParams) =>
+      handle(console.log, 5, message, optionalParams),
+    info: (message, ...optionalParams) =>
+      handle(console.info, 5, message, optionalParams),
+    debug: (message, ...optionalParams) =>
+      handle(console.debug, 5, message, optionalParams),
+    warn: (message, ...optionalParams) =>
+      handle(console.warn, 2, message, optionalParams),
+    error: (message, ...optionalParams) =>
+      handle(console.error, 1, message, optionalParams),
+  };
 };
 
 /**
@@ -112,7 +140,7 @@ const run_code = async ({
     table,
     row,
     user,
-    console,
+    console: consoleInterceptor(getState()),
     Actions,
     emitEvent,
     sleep,
