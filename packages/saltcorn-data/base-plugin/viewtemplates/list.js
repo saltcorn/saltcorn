@@ -230,6 +230,32 @@ const configuration_workflow = (req) =>
             l.suitableFor("show")
           );
           const myviewrow = View.findOne({ name: context.viewname });
+          // generate layout for legacy views
+          if (!context.layout?.list_columns) {
+            const newCols = [];
+            const actionDropdown = [];
+            const typeMap = {
+              Field: "field",
+              JoinField: "join_field",
+              ViewLink: "view_link",
+              Link: "link",
+              Action: "action",
+              Text: "blank",
+              DropdownMenu: "dropdown_menu",
+            };
+            context.columns.forEach((col) => {
+              newCols.push({
+                type: typeMap[col.type],
+              });
+            });
+            if (actionDropdown.length) {
+              newCols.push({});
+            }
+            context.layout = {
+              list_columns: true,
+              besides: newCols,
+            };
+          }
           return {
             tableName: table.name,
             fields: fields.map((f) => f.toBuilder),
