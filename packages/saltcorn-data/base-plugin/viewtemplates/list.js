@@ -246,7 +246,11 @@ const configuration_workflow = (req) =>
             context.columns.forEach((col) => {
               const newCol = {
                 ...col,
-                contents: { ...col, type: typeMap[col.type] },
+                contents: {
+                  ...col,
+                  configuration: col,
+                  type: typeMap[col.type],
+                },
                 type: "ListColumn",
               };
               if (col.in_dropdown)
