@@ -244,17 +244,23 @@ const configuration_workflow = (req) =>
               DropdownMenu: "dropdown_menu",
             };
             context.columns.forEach((col) => {
-              newCols.push({
-                type: typeMap[col.type],
-              });
+              const newCol = {
+                ...col,
+                contents: { ...col, type: typeMap[col.type] },
+                type: "ListColumn",
+              };
+              if (col.in_dropdown)
+                actionDropdown.push({ ...col, type: typeMap[col.type] });
+              else newCols.push(newCol);
             });
             if (actionDropdown.length) {
-              newCols.push({});
+              newCols.push({ type: "dropdown_menu", contents: actionDropdown });
             }
             context.layout = {
               list_columns: true,
               besides: newCols,
             };
+            console.log("newcols", context.layout.besides);
           }
           return {
             tableName: table.name,
