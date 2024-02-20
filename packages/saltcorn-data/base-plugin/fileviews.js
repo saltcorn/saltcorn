@@ -16,6 +16,9 @@ const {
   span,
   text,
   text_attr,
+  audio,
+  video,
+  source,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -261,6 +264,45 @@ module.exports = {
           style,
         });
       }
+    },
+  },
+  Audio: {
+    description: "Simple audio player",
+
+    run: (filePath, file_name, cfg = {}) => {
+      if (!filePath) return "";
+
+      return audio({
+        src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+        controls: true,
+      });
+    },
+  },
+  Video: {
+    description: "Simple video player",
+    configFields: [
+      { name: "width", type: "Integer", label: "Width (px)" },
+      { name: "height", type: "Integer", label: "Height (px)" },
+      { name: "controls", type: "Bool", label: "Controls" },
+      { name: "autoplay", type: "Bool", label: "Autoplay" },
+      { name: "muted", type: "Bool", label: "Muted" },
+    ],
+    run: (filePath, file_name, cfg = {}) => {
+      if (!filePath) return "";
+
+      return video(
+        {
+          controls: cfg.controls,
+          muted: cfg.muted,
+          autoplay: cfg.autoplay,
+          width: cfg.width || undefined,
+          height: cfg.height || undefined,
+        },
+        source({
+          src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+          type: File.nameToMimeType(filePath),
+        })
+      );
     },
   },
 };

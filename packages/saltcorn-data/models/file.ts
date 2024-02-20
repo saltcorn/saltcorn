@@ -212,6 +212,11 @@ class File {
     }
   }
 
+  static nameToMimeType(filepath: string) {
+    const filename = path.basename(filepath);
+    return lookup(filename);
+  }
+
   static async from_file_on_disk(
     name: string,
     absoluteFolder: string
@@ -587,7 +592,8 @@ class File {
     // set mime type
     const [mime_super, mime_sub] = mimetype.split("/");
     // move file in file system to newPath
-    const contents1 = contents instanceof ArrayBuffer ? Buffer.from(contents) : contents
+    const contents1 =
+      contents instanceof ArrayBuffer ? Buffer.from(contents) : contents;
     await fsp.writeFile(newPath, contents1);
     // create file
     const file = await File.create({
