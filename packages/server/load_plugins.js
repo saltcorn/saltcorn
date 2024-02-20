@@ -196,7 +196,10 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
   );
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   if (!isRoot && !tenants_unsafe_plugins) {
-    if (plugin.source !== "npm") return;
+    if (plugin.source !== "npm") {
+      console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
+      return;
+    }
     //get allowed plugins
 
     //refresh root store
@@ -207,7 +210,10 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
 
     const instore = getRootState().getConfig("available_plugins", []);
     const safes = instore.filter((p) => !p.unsafe).map((p) => p.location);
-    if (!safes.includes(plugin.location)) return;
+    if (!safes.includes(plugin.location)) {
+      console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
+      return;
+    }
   }
   const { version, plugin_module, location } = await requirePlugin(
     plugin,

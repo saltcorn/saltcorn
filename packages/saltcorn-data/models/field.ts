@@ -534,7 +534,7 @@ class Field implements AbstractField {
           : this.typename
           ? this.typename
           : "unknown type"
-      }`
+      } for field ${this.name} in table ${this.table_id}`
     );
   }
 
@@ -567,7 +567,9 @@ class Field implements AbstractField {
     } else if (this.type === "File") {
       return "text";
     }
-    throw new Error("Unable to get the sql_type");
+    throw new Error(
+      `Unable to get the sql_type for field ${this.name} in table ${this.table_id} type=${this.typename}`
+    );
   }
 
   /**
