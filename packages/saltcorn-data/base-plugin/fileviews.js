@@ -16,6 +16,7 @@ const {
   span,
   text,
   text_attr,
+  audio,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -261,6 +262,18 @@ module.exports = {
           style,
         });
       }
+    },
+  },
+  Audio: {
+    description: "Show the image file as small thumbnail image",
+
+    run: (filePath, file_name, cfg = {}) => {
+      if (!filePath) return "";
+
+      return audio({
+        src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+        controls: true,
+      });
     },
   },
 };
