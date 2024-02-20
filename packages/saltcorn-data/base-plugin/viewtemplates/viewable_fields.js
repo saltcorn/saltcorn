@@ -585,8 +585,12 @@ const get_viewable_fields_from_layout = (
     link: "Link",
     action: "Action",
     blank: "Text",
+    dropdown_menu: "DropdownMenu",
   };
+  const toArray = (x) => (!x ? [] : Array.isArray(x) ? x : [x]);
+  //console.log("layout cols", layoutCols);
   const newCols = layoutCols.map(({ contents, ...rest }) => {
+    if (!contents) contents = rest;
     const col = {
       ...contents,
       ...rest,
@@ -601,6 +605,21 @@ const get_viewable_fields_from_layout = (
         break;
       case "view_link":
         col.view_label_formula = contents.isFormula?.label;
+        break;
+      case "dropdown_menu":
+        col.dropdown_columns = get_viewable_fields_from_layout(
+          viewname,
+          statehash,
+          table,
+          fields,
+          columns,
+          isShow,
+          req,
+          __,
+          (state = {}),
+          srcViewName,
+          toArray(contents.contents)
+        );
         break;
       case "blank":
         if (contents.isFormula?.text) {
@@ -625,7 +644,7 @@ const get_viewable_fields_from_layout = (
     return col;
   });
 
-  console.log("newCols", newCols);
+  //console.log("newCols", newCols);
   return get_viewable_fields(
     viewname,
     statehash,
@@ -703,6 +722,50 @@ const get_viewable_fields = (
             column.interpolator
               ? column.interpolator(r)
               : text(column.contents),
+        };
+      } else if (column.type === "DropdownMenu") {
+        return {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) =>
+            div(
+              { class: "dropdown" },
+              button(
+                {
+                  class:
+                    column.action_style === "btn-link"
+                      ? "btn btn-link"
+                      : `btn ${column.action_style || "btn-primary"} ${
+                          column.action_size || ""
+                        } dropdown-toggle`,
+                  "data-boundary": "viewport",
+                  type: "button",
+                  id: `actiondd${r.id}_${index}`, //TODO need unique
+                  "data-bs-toggle": "dropdown",
+                  "aria-haspopup": "true",
+                  "aria-expanded": "false",
+                  style:
+                    column.action_style === "btn-custom-color"
+                      ? `background-color: ${
+                          column.action_bgcol || "#000000"
+                        };border-color: ${
+                          column.action_bordercol || "#000000"
+                        }; color: ${column.action_textcol || "#000000"}`
+                      : null,
+                },
+                column.label || req.__("Action")
+              ),
+              div(
+                {
+                  class: [
+                    "dropdown-menu",
+                    column.menu_direction === "end" && "dropdown-menu-end",
+                  ],
+                  "aria-labelledby": `actiondd${r.id}_${index}`,
+                },
+                column.dropdown_columns.map((acol) => acol.key(r))
+              )
+            ),
         };
       } else if (column.type === "Action") {
         const action_col = {
