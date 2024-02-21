@@ -53,6 +53,14 @@ const ListColumn = ({
         ) : (
           ""
         )}
+        {col_width ? (
+          <span className="badge bg-secondary me-2">
+            {col_width}
+            {col_width_units}
+          </span>
+        ) : (
+          ""
+        )}
       </div>
       <Element
         canvas
