@@ -295,6 +295,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           alignment={col.alignment}
           header_label={col.header_label}
           col_width={col.col_width}
+          showif={col.showif}
           col_width_units={col.col_width_units}
           contents={toTag(col.contents)}
         ></ListColumn>
