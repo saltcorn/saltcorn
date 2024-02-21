@@ -75,7 +75,8 @@ const ListColumn = ({
       <div className={`list-column flex-50 p-2`}>
         <div className="d-flex justify-content-between h-100">
           <div className="">
-            Column{header_label ? `: ${header_label}` : ""}
+            Column {childIx}
+            {header_label ? `: ${header_label}` : ""}
             <br />
             {showif ? (
               <span className="badge bg-secondary me-2">showif</span>
