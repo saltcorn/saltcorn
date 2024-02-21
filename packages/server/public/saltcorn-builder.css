@@ -504,3 +504,8 @@ div.builder-config-field {
   min-height: 70px;
   margin: 5px;
 }
+
+#builder-main-canvas .list-column-outer {
+  border: 1px solid black;
+  margin-top: 2px;
+}

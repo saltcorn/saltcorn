@@ -39,11 +39,20 @@ const ListColumn = ({
 
   return (
     <div
-      className={`${selected ? "selected-node" : ""} d-flex w-100 border`}
+      className={`${
+        selected ? "selected-node" : ""
+      } d-flex w-100 list-column-outer`}
       ref={(dom) => connect(drag(dom))}
     >
       <div className={` list-column flex-50 p-2`}>
-        Column {colIndex}:{header_label}
+        Column{header_label ? `: ${header_label}` : ""}
+        <br />
+        {showif ? <span className="badge bg-secondary me-2">showif</span> : ""}
+        {alignment && alignment !== "Default" ? (
+          <span className="badge bg-secondary me-2">Align {alignment}</span>
+        ) : (
+          ""
+        )}
       </div>
       <Element
         canvas
