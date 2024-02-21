@@ -4,12 +4,19 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, Fragment } from "react";
+import React, {
+  useContext,
+  Fragment,
+  useRef,
+  useEffect,
+  useState,
+} from "react";
 
-import { Element, useNode } from "@craftjs/core";
+import { Element, useNode, useEditor } from "@craftjs/core";
 import { setAPropGen, SettingsFromFields } from "./utils";
 import { Column } from "./Column";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowUp, faArrowDown } from "@fortawesome/free-solid-svg-icons";
 import optionsCtx from "../context";
 
 export /**
@@ -33,10 +40,31 @@ const ListColumn = ({
 }) => {
   const {
     selected,
+    id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const { actions, query, isActve } = useEditor((state) => ({}));
   const options = useContext(optionsCtx);
 
+  const {
+    data: { parent },
+  } = query.node(id).get();
+  const siblings = query.node(parent).childNodes();
+  const nChildren = siblings.length;
+  const childIx = siblings.findIndex((sib) => sib === id);
+
+  const moveDown = () => {
+    const {
+      data: { parent },
+    } = query.node(id).get();
+    actions.move(id, parent, childIx + 2);
+  };
+  const moveUp = () => {
+    const {
+      data: { parent },
+    } = query.node(id).get();
+    actions.move(id, parent, childIx - 1);
+  };
   return (
     <div
       className={`${
@@ -44,23 +72,43 @@ const ListColumn = ({
       } d-flex w-100 list-column-outer`}
       ref={(dom) => connect(drag(dom))}
     >
-      <div className={` list-column flex-50 p-2`}>
-        Column{header_label ? `: ${header_label}` : ""}
-        <br />
-        {showif ? <span className="badge bg-secondary me-2">showif</span> : ""}
-        {alignment && alignment !== "Default" ? (
-          <span className="badge bg-secondary me-2">Align {alignment}</span>
-        ) : (
-          ""
-        )}
-        {col_width ? (
-          <span className="badge bg-secondary me-2">
-            {col_width}
-            {col_width_units}
-          </span>
-        ) : (
-          ""
-        )}
+      <div className={`list-column flex-50 p-2`}>
+        <div className="d-flex justify-content-between h-100">
+          <div className="">
+            Column{header_label ? `: ${header_label}` : ""}
+            <br />
+            {showif ? (
+              <span className="badge bg-secondary me-2">showif</span>
+            ) : (
+              ""
+            )}
+            {alignment && alignment !== "Default" ? (
+              <span className="badge bg-secondary me-2">Align {alignment}</span>
+            ) : (
+              ""
+            )}
+            {col_width ? (
+              <span className="badge bg-secondary me-2">
+                {col_width}
+                {col_width_units}
+              </span>
+            ) : (
+              ""
+            )}
+          </div>
+          <div className="d-flex flex-column h-100 justify-content-between">
+            {childIx !== null && childIx > 0 ? (
+              <FontAwesomeIcon icon={faArrowUp} onClick={moveUp} />
+            ) : (
+              <span></span>
+            )}
+            {childIx !== null && childIx < nChildren - 1 ? (
+              <FontAwesomeIcon icon={faArrowDown} onClick={moveDown} />
+            ) : (
+              <span></span>
+            )}
+          </div>
+        </div>
       </div>
       <Element
         canvas
