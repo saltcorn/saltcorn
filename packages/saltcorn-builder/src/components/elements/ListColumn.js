@@ -38,13 +38,11 @@ const ListColumn = ({
   const options = useContext(optionsCtx);
 
   return (
-    <div className="d-flex w-100">
-      <div
-        className={`${
-          selected ? "selected-node" : ""
-        } border list-column flex-50`}
-        ref={(dom) => connect(drag(dom))}
-      >
+    <div
+      className={`${selected ? "selected-node" : ""} d-flex w-100 border`}
+      ref={(dom) => connect(drag(dom))}
+    >
+      <div className={` list-column flex-50 p-2`}>
         Column {colIndex}:{header_label}
       </div>
       <Element

@@ -495,3 +495,12 @@ div.builder-config-field {
 .flex-50 {
   flex: 50%;
 }
+
+#builder-main-canvas .list-column {
+  min-height: 80px;
+}
+
+#builder-main-canvas .list-col-canvas {
+  min-height: 70px;
+  margin: 5px;
+}

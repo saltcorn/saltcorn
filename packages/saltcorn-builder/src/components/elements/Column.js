@@ -30,13 +30,13 @@ const Column = ({ children, align }) => {
   return (
     <div
       className={`${selected ? "selected-node" : ""} ${
-        options.mode === "list" ? "flex-50" : ""
+        options.mode === "list" ? "flex-50 list-col-contents" : ""
       }`}
       ref={(dom) => connect(drag(dom))}
     >
       <div
         className={`canvas ${id === "ROOT" ? "root-canvas" : ""} ${
-          options.mode === "list" ? "list-empty-msg" : ""
+          options.mode === "list" ? "list-empty-msg list-col-canvas" : ""
         }`}
       >
         {children}
