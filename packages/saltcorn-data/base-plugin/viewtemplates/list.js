@@ -253,6 +253,26 @@ const configuration_workflow = (req) =>
                 },
                 type: "ListColumn",
               };
+              switch (col.type) {
+                case "Action":
+                  newCol.contents.isFormula = {
+                    action_label: !!col.action_label_formula,
+                  };
+                  break;
+                case "ViewLink":
+                  newCol.contents.isFormula = {
+                    label: !!col.view_label_formula,
+                  };
+                  break;
+                case "Link":
+                  newCol.contents.isFormula = {
+                    url: !!col.link_url_formula,
+                    text: !!col.link_text_formula,
+                  };
+                  newCol.contents.text = col.link_text;
+                  newCol.contents.url = col.link_url;
+                  break;
+              }
               if (col.in_dropdown)
                 actionDropdown.push({ ...col, type: typeMap[col.type] });
               else newCols.push(newCol);
