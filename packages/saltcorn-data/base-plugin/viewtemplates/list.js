@@ -284,7 +284,6 @@ const configuration_workflow = (req) =>
               list_columns: true,
               besides: newCols,
             };
-            console.log("newcols", context.layout.besides);
           }
           return {
             tableName: table.name,
