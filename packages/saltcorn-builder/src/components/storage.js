@@ -449,14 +449,15 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
     }
     if (node.displayName === ListColumn.craft.displayName) {
       const contents = go(nodes[node.linkedNodes.listcol]);
-      return {
+      const lc = {
         contents,
         col_width: node.props.col_width,
         col_width_units: node.props.col_width_units,
-        alignment: node.props.aligment,
+        alignment: node.props.alignment,
         header_label: node.props.header_label,
         showif: node.props.showif,
       };
+      return lc;
     }
     if (node.isCanvas) {
       if (node.displayName === Container.craft.displayName)
