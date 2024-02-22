@@ -246,18 +246,21 @@ const configuration_workflow = (req) =>
             };
             context.columns.forEach((col) => {
               const newCol = {
-                alignment: "Default",
-                col_width: "",
-                header_label: "",
-                col_width_units: "px",
-                ...col,
+                alignment: col.alignment || "Default",
+                col_width: col.col_width || "",
+                showif: col.showif || "",
+                header_label: col.header_label || "",
+                col_width_units: col.col_width_units || "px",
                 contents: {
                   ...col,
                   configuration: col,
                   type: typeMap[col.type],
                 },
               };
-              delete newCol.type;
+              delete newCol.contents._columndef;
+              delete newCol.contents.configuration._columndef;
+              delete newCol.contents.configuration.type;
+
               switch (col.type) {
                 case "Action":
                   newCol.contents.isFormula = {
@@ -285,7 +288,6 @@ const configuration_workflow = (req) =>
             if (actionDropdown.length) {
               newCols.push({ type: "dropdown_menu", contents: actionDropdown });
             }
-            console.log(newCols);
             context.layout = {
               besides: newCols,
               list_columns: true,
