@@ -253,7 +253,7 @@ const configuration_workflow = (req) =>
                 col_width_units: col.col_width_units || "px",
                 contents: {
                   ...col,
-                  configuration: col,
+                  configuration: { ...col },
                   type: typeMap[col.type],
                 },
               };
