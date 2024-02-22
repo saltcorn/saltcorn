@@ -246,14 +246,18 @@ const configuration_workflow = (req) =>
             };
             context.columns.forEach((col) => {
               const newCol = {
+                alignment: "Default",
+                col_width: "",
+                header_label: "",
+                col_width_units: "px",
                 ...col,
                 contents: {
                   ...col,
                   configuration: col,
                   type: typeMap[col.type],
                 },
-                type: "ListColumn",
               };
+              delete newCol.type;
               switch (col.type) {
                 case "Action":
                   newCol.contents.isFormula = {
@@ -281,9 +285,10 @@ const configuration_workflow = (req) =>
             if (actionDropdown.length) {
               newCols.push({ type: "dropdown_menu", contents: actionDropdown });
             }
+            console.log(newCols);
             context.layout = {
-              list_columns: true,
               besides: newCols,
+              list_columns: true,
             };
           }
           return {
