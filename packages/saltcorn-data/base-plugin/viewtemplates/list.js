@@ -242,6 +242,7 @@ const configuration_workflow = (req) =>
               Action: "action",
               Text: "blank",
               DropdownMenu: "dropdown_menu",
+              Aggregation: "aggregation",
             };
             context.columns.forEach((col) => {
               const newCol = {

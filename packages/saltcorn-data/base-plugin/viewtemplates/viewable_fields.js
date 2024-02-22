@@ -585,6 +585,7 @@ const get_viewable_fields_from_layout = (
     link: "Link",
     action: "Action",
     blank: "Text",
+    aggregation: "Aggregation",
     dropdown_menu: "DropdownMenu",
   };
   const toArray = (x) => (!x ? [] : Array.isArray(x) ? x : [x]);
