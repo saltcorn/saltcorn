@@ -41,8 +41,8 @@ contains basic information about the view
 type input#inputname ListPersons
 select select#inputviewtemplate List
 click button[type=submit]
-contains Column configuration
-click button[type=submit]
+contains Columns
+click button.builder-save
 contains Default search form values when first loaded
 click button[type=submit]
 contains Row inclusion formula
@@ -63,8 +63,8 @@ contains View <a href="/view/EditPersons">EditPersons</a> saved
 contains Views of this table
 
 goto /viewedit/config/ListPersons?on_done_redirect=table%2FPersons
-contains Column configuration
-click button[type=submit]
+contains Columns
+click button.builder-save
 contains Specify how to create a new row
 select #inputview_to_create EditPersons
 click button[type=submit]
