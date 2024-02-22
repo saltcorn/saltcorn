@@ -244,7 +244,7 @@ const configuration_workflow = (req) =>
               DropdownMenu: "dropdown_menu",
               Aggregation: "aggregation",
             };
-            context.columns.forEach((col) => {
+            (context.columns || []).forEach((col) => {
               const newCol = {
                 alignment: col.alignment || "Default",
                 col_width: col.col_width || "",
