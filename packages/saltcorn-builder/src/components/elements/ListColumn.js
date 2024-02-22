@@ -167,7 +167,9 @@ ListColumn.craft = {
     canDrag: () => true,
   },
   related: {
-    settings: SettingsFromFields(fields, {}),
+    settings: SettingsFromFields(fields, {
+      additionalFieldsOptionKey: "additionalColumnFields",
+    }),
     segment_type: "list_column",
     hasContents: true,
     colFields: fields,

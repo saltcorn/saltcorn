@@ -323,14 +323,18 @@ const NextButton = ({ layout }) => {
   const options = useContext(optionsCtx);
 
   useEffect(() => {
-    layoutToNodes(layout, query, actions);
+    layoutToNodes(layout, query, actions, "ROOT", options);
   }, []);
 
   /**
    * @returns {void}
    */
   const onClick = () => {
-    const { columns, layout } = craftToSaltcorn(JSON.parse(query.serialize()));
+    const { columns, layout } = craftToSaltcorn(
+      JSON.parse(query.serialize()),
+      "ROOT",
+      options
+    );
     document
       .querySelector("form#scbuildform input[name=columns]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(columns)));

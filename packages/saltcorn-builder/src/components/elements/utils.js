@@ -1017,8 +1017,15 @@ export /**
  * @returns {table}
  */
 const SettingsFromFields =
-  (fields, opts = {}) =>
+  (fieldsIn, opts = {}) =>
   () => {
+    const fields = [...fieldsIn];
+    if (opts.additionalFieldsOptionKey) {
+      const options = React.useContext(optionsCtx);
+
+      const addFields = options[opts.additionalFieldsOptionKey];
+      fields.push(...(addFields || []));
+    }
     const node = useNode((node) => {
       const ps = {};
       fields.forEach((f) => {

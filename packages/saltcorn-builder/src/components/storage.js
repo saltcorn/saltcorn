@@ -92,7 +92,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
+const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   /**
    * @param {object} segment
@@ -289,17 +289,26 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
         />
       );
     } else if (segment.besides && segment.list_columns) {
-      return segment.besides.map((col, jx) => (
-        <ListColumn
-          key={jx}
-          alignment={col.alignment}
-          header_label={col.header_label}
-          col_width={col.col_width}
-          showif={col.showif}
-          col_width_units={col.col_width_units}
-          contents={toTag(col.contents)}
-        ></ListColumn>
-      ));
+      const addFields = options.additionalColumnFields;
+
+      return segment.besides.map((col, jx) => {
+        const addProps = {};
+        (addFields || []).forEach((f) => {
+          addProps[f.name] = col[f.name];
+        });
+        return (
+          <ListColumn
+            key={jx}
+            alignment={col.alignment}
+            header_label={col.header_label}
+            col_width={col.col_width}
+            showif={col.showif}
+            col_width_units={col.col_width_units}
+            contents={toTag(col.contents)}
+            {...addProps}
+          ></ListColumn>
+        );
+      });
     } else if (segment.besides) {
       return (
         <Columns
@@ -386,7 +395,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
+const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
   /**
@@ -450,6 +459,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
     }
     if (node.displayName === ListColumn.craft.displayName) {
       const contents = go(nodes[node.linkedNodes.listcol]);
+      const addFields = options.additionalColumnFields;
       const lc = {
         contents,
         col_width: node.props.col_width,
@@ -458,6 +468,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         header_label: node.props.header_label,
         showif: node.props.showif,
       };
+      (addFields || []).forEach((f) => {
+        lc[f.name] = node.props[f.name];
+      });
       return lc;
     }
     if (node.isCanvas) {
