@@ -595,7 +595,6 @@ const ToolboxList = ({ expanded }) => {
         fields={fields}
         field_view_options={field_view_options}
       />,
-      <LineBreakElem connectors={connectors} />,
       <JoinFieldElem connectors={connectors} options={options} />,
       <ViewLinkElem connectors={connectors} options={options} />,
       <ActionElem connectors={connectors} options={options} />,
@@ -609,10 +608,12 @@ const ToolboxList = ({ expanded }) => {
       // <ContainerElem connectors={connectors} />,
       // <CardElem connectors={connectors} />,
       //  <TabsElem connectors={connectors} />,
-      <ImageElem connectors={connectors} images={images} />,
       <HTMLElem connectors={connectors} />,
       <DropMenuElem connectors={connectors} />,
       //  <TableElem connectors={connectors} />,
+      ...(options.allowMultipleElementsPerColumn
+        ? [<LineBreakElem connectors={connectors} />]
+        : []),
     ],
     expanded
   );
