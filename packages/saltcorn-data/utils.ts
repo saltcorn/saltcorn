@@ -355,6 +355,13 @@ const comparingCaseInsensitive = (k: string) => (a: any, b: any) => {
   return fa > fb ? 1 : fb > fa ? -1 : 0;
 };
 
+const ppVal = (x: any) =>
+  typeof x === "string"
+    ? x
+    : typeof x === "function"
+    ? x.toString()
+    : JSON.stringify(x, null, 2);
+
 export = {
   dollarizeObject,
   objectToQueryString,
@@ -393,4 +400,5 @@ export = {
   urlStringToObject,
   comparing,
   comparingCaseInsensitive,
+  ppVal,
 };

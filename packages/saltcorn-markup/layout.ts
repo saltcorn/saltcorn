@@ -409,6 +409,7 @@ const render = ({
               segment.url && "with-link",
               hints.cardClass,
             ],
+            ...(segment.id ? { id: segment.id } : {}),
             onclick: segment.url
               ? isWeb
                 ? segment.url?.startsWith?.("javascript:")
@@ -448,6 +449,14 @@ const render = ({
                     style: { display: "none" },
                   },
                   i({ class: "fas fa-save" })
+                ),
+              segment.titleErrorInidicator &&
+                span(
+                  {
+                    class: "float-end sc-error-indicator",
+                    style: { display: "none", color: "#ff0033" },
+                  },
+                  i({ class: "fas fa-exclamation-triangle" })
                 )
             ),
           segment.tabContents && // TODO remove all calls to this, use tab in content instead

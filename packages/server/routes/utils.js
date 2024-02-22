@@ -147,9 +147,10 @@ const set_custom_http_headers = (res, req, state) => {
 /**
  * Tries to recognize tenant from HTTP Request
  * @param {object} req
+ * @param {number|undefined} hostPartsOffset (optional) for socketIO, to get the tenant with localhost
  * @returns {string}
  */
-const get_tenant_from_req = (req) => {
+const get_tenant_from_req = (req, hostPartsOffset) => {
   if (req.subdomains && req.subdomains.length > 0)
     return req.subdomains[req.subdomains.length - 1];
 
@@ -157,7 +158,8 @@ const get_tenant_from_req = (req) => {
     return db.connectObj.default_schema;
   if (!req.subdomains && req.headers.host) {
     const parts = req.headers.host.split(".");
-    if (parts.length < 3) return db.connectObj.default_schema;
+    if (parts.length < (!hostPartsOffset ? 3 : 3 - hostPartsOffset))
+      return db.connectObj.default_schema;
     else return parts[0];
   }
 };

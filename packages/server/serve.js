@@ -112,6 +112,10 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
   }
+  eachTenant(async () => {
+    const state = getState();
+    if (state) await state.setConfig("joined_log_socket_ids", []);
+  });
   if (useClusterAdaptor) setupPrimary();
 };
 
@@ -283,7 +287,7 @@ module.exports =
           })
           .ready((glx) => {
             const httpsServer = glx.httpsServer();
-            setupSocket(httpsServer);
+            setupSocket(appargs?.subdomainOffset, httpsServer);
             httpsServer.setTimeout(timeout * 1000);
             process.on("message", workerDispatchMsg);
             glx.serveApp(app);
@@ -350,7 +354,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // todo timeout to config
     httpServer.setTimeout(timeout * 1000);
     httpsServer.setTimeout(timeout * 1000);
-    setupSocket(httpServer, httpsServer);
+    setupSocket(appargs?.subdomainOffset, httpServer, httpsServer);
     httpServer.listen(port, () => {
       console.log("HTTP Server running on port 80");
     });
@@ -363,7 +367,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // server with http only
     const http = require("http");
     const httpServer = http.createServer(app);
-    setupSocket(httpServer);
+    setupSocket(appargs?.subdomainOffset, httpServer);
 
     // todo timeout to config
     // todo refer in doc to httpserver doc
@@ -380,7 +384,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
  *
  * @param  {...*} servers
  */
-const setupSocket = (...servers) => {
+const setupSocket = (subdomainOffset, ...servers) => {
   // https://socket.io/docs/v4/middlewares/
   const wrap = (middleware) => (socket, next) =>
     middleware(socket.request, {}, next);
@@ -398,6 +402,12 @@ const setupSocket = (...servers) => {
   getState().setRoomEmitter((tenant, viewname, room_id, msg) => {
     io.to(`${tenant}_${viewname}_${room_id}`).emit("message", msg);
   });
+
+  getState().setLogEmitter((tenant, level, msg) => {
+    const time = new Date().valueOf();
+    io.to(`_logs_${tenant}_`).emit("log_msg", { text: msg, time, level });
+  });
+
   io.on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
       const ten = get_tenant_from_req(socket.request) || "public";
@@ -416,6 +426,43 @@ const setupSocket = (...servers) => {
         }
       };
       if (ten && ten !== "public") db.runWithTenant(ten, f);
+      else f();
+    });
+
+    socket.on("join_log_room", async (callback) => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = async () => {
+        try {
+          const user = socket.request.user;
+          if (!user || user.role_id !== 1) throw new Error("Not authorized");
+          else {
+            socket.join(`_logs_${tenant}_`);
+            const socketIds = await getState().getConfig(
+              "joined_log_socket_ids"
+            );
+            socketIds.push(socket.id);
+            await getState().setConfig("joined_log_socket_ids", [...socketIds]);
+            callback({ status: "ok" });
+          }
+        } catch (err) {
+          getState().log(1, `Socket join_logs stream: ${err.stack}`);
+          callback({ status: "error", msg: err.message || "unknown error" });
+        }
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      else await f();
+    });
+
+    socket.on("disconnect", async () => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = async () => {
+        const socketIds = await getState().getConfig("joined_log_socket_ids");
+        const newSocketIds = socketIds.filter((id) => id !== socket.id);
+        await getState().setConfig("joined_log_socket_ids", newSocketIds);
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
       else f();
     });
   });
