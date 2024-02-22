@@ -223,13 +223,18 @@ module.exports = {
           span({ class: "ms-2", id: `cpt-file-name-${text_attr(nm)}` }, "")
         );
       } else {
+        const mimebase = {
+          camera: "image",
+          camcorder: "video",
+          microphone: "audio",
+        }[attrs.device];
         return input({
           class: `${cls} ${field.class || ""}`,
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           type: "file",
-          accept: `image/*;capture=${attrs.device}`,
+          accept: `${mimebase}/*;capture=${attrs.device}`,
         });
       }
     },
