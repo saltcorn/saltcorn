@@ -244,9 +244,6 @@ const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>View to link to</label>
-              <label>
-                View to {options.mode === "show" ? "embed" : "show"}
-              </label>
               <Select
                 options={options.views}
                 value={options.views.find((v) => v.name === use_view_name)}
