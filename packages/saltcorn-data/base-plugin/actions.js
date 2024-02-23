@@ -152,6 +152,7 @@ const run_code = async ({
     View,
     EventLog,
     Buffer,
+    Notification,
     setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
