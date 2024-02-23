@@ -17,7 +17,7 @@ const Tag = require("@saltcorn/data/models/tag");
 const EventLog = require("@saltcorn/data/models/eventlog");
 const Model = require("@saltcorn/data/models/model");
 const ModelInstance = require("@saltcorn/data/models/model_instance");
-const load_plugins = require("../load_plugins");
+const load_plugins = require("../load_plugins/install_utils");
 
 const { is_pack } = require("@saltcorn/data/contracts");
 const {

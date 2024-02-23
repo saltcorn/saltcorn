@@ -27,7 +27,7 @@ const {
   plugin_viewtemplates_info_card,
   showRepository,
 } = require("../markup/plugin-store");
-const load_plugins = require("../load_plugins");
+const load_plugins = require("../load_plugins/install_utils");
 const {
   h5,
   a,
@@ -55,7 +55,7 @@ const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
 const { sleep, removeNonWordChars } = require("@saltcorn/data/utils");
-const { loadAllPlugins } = require("../load_plugins");
+const { loadAllPlugins } = require("../load_plugins/install_utils");
 const npmFetch = require("npm-registry-fetch");
 
 /**

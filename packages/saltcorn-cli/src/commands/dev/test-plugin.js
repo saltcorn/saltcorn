@@ -26,7 +26,7 @@ class TestPluginCommand extends Command {
     const reset = require("@saltcorn/data/db/reset_schema");
     const { auto_test_plugin } = require("@saltcorn/data/plugin-testing");
     const db = require("@saltcorn/data/db");
-    const { requirePlugin } = require("@saltcorn/server/load_plugins");
+    const { requirePlugin } = require("@saltcorn/server/load_plugins/install_utils");
     const { args } = this.parse(TestPluginCommand);
     await db.changeConnection({ database: "saltcorn_test" });
     await reset();

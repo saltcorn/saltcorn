@@ -13,7 +13,7 @@ const {
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
-const load_plugins = require("../load_plugins");
+const load_plugins = require("../load_plugins/install_utils");
 
 beforeAll(async () => {
   if (!db.isSQLite) await db.query(`drop schema if exists test101 CASCADE `);

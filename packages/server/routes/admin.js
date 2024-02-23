@@ -68,7 +68,7 @@ const {
   //get_other_domain_tenant,
   get_process_init_time,
 } = require("@saltcorn/data/db/state");
-const { loadAllPlugins } = require("../load_plugins");
+const { loadAllPlugins } = require("../load_plugins/install_utils");
 const {
   create_backup,
   restore,
@@ -80,7 +80,7 @@ const {
   runConfigurationCheck,
 } = require("@saltcorn/admin-models/models/config-check");
 const fs = require("fs");
-const load_plugins = require("../load_plugins");
+const load_plugins = require("../load_plugins/install_utils");
 const {
   restore_backup,
   send_admin_page,

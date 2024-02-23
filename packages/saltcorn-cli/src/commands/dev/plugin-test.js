@@ -6,10 +6,8 @@ const fs = require("fs");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { prep_test_db } = require("../../common");
 const {
-  staticDependencies,
   loadAndSaveNewPlugin,
-} = require("@saltcorn/server/load_plugins");
-const { PluginManager } = require("live-plugin-manager");
+} = require("@saltcorn/server/load_plugins/install_utils");
 
 const pluginsPath = path.join(__dirname, "test_plugin_packages");
 
@@ -77,14 +75,7 @@ const spawnTest = async (installDir, env) => {
 const installPlugin = async (plugin) => {
   await removeOldPlugin(plugin);
   removePluginsDir();
-  const manager = new PluginManager({
-    staticDependencies: {
-      contractis: require("contractis"),
-      ...staticDependencies,
-    },
-    pluginsPath,
-  });
-  await loadAndSaveNewPlugin(plugin, false, false, manager);
+  await loadAndSaveNewPlugin(plugin, false, false);
   const location = getPLuginLocation(plugin.name);
   writeJestConfigIntoPluginDir(location);
   return location;

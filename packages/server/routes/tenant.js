@@ -43,7 +43,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 
-const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
+const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins/install_utils");
 const { isAdmin, error_catcher } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");

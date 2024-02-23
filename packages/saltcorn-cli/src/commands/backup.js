@@ -46,7 +46,7 @@ class BackupCommand extends Command {
     } else if (flags.zip) {
       // zip the saltcorn backup
       const { create_backup } = require("@saltcorn/admin-models/models/backup");
-      const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+      const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
       await loadAllPlugins();
 
       if (flags.verbose)

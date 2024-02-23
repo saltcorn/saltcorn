@@ -1,8 +1,5 @@
 const { PluginManager } = require("live-plugin-manager");
-const {
-  loadAllPlugins,
-  staticDependencies,
-} = require("@saltcorn/server/load_plugins");
+const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
 const { features } = require("@saltcorn/data/db/state");
 import { join } from "path";
 import Plugin from "@saltcorn/data/models/plugin";
@@ -109,7 +106,6 @@ export class MobileBuilder {
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
-      staticDependencies,
     });
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;

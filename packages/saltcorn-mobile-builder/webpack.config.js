@@ -1,15 +1,6 @@
 const { mergeWithCustomize, merge } = require("webpack-merge");
 const { join } = require("path");
-const { PluginManager } = require("live-plugin-manager");
-const {
-  staticDependencies,
-  requirePlugin,
-} = require("@saltcorn/server/load_plugins");
-
-const manager = new PluginManager({
-  pluginsPath: join(__dirname, "plugin_packages", "node_modules"),
-  staticDependencies,
-});
+const { requirePlugin } = require("@saltcorn/server/load_plugins/install_utils");
 
 const dataCfg = require(join(
   require.resolve("@saltcorn/data"),
@@ -42,23 +33,25 @@ const buildPluginEntries = async (plugins) => {
   let result = [];
   const nameToModule = new Map();
   for (const plugin of plugins) {
-    const requireResult = await requirePlugin(plugin, false, manager);
+    const requireResult = await requirePlugin(plugin, false);
     const packageName = require(`${requireResult.location}/package.json`).name;
     nameToModule.set(plugin.name, { packageName, requireResult });
   }
   const nameByPackageName = (pckName) => {
-    for(const [pluginName, value] of nameToModule.entries()) {
-      if(value.packageName === pckName) {
-        return pluginName
+    for (const [pluginName, value] of nameToModule.entries()) {
+      if (value.packageName === pckName) {
+        return pluginName;
       }
     }
-    throw new Error(`Unable to find a plugin name for package: '${pckName}'`)
+    throw new Error(`Unable to find a plugin name for package: '${pckName}'`);
   };
 
   for (const plugin of plugins) {
-    const { requireResult }  = nameToModule.get(plugin.name);
+    const { requireResult } = nameToModule.get(plugin.name);
     const additionalDependencies = requireResult.plugin_module?.dependencies
-      ? requireResult.plugin_module.dependencies.map((dep) => nameByPackageName(dep))
+      ? requireResult.plugin_module.dependencies.map((dep) =>
+          nameByPackageName(dep)
+        )
       : [];
     const genericEntry = {
       [plugin.name]: {

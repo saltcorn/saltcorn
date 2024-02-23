@@ -43,7 +43,7 @@ class RestoreCommand extends Command {
   async zip_restore(fnm, tenant) {
     const { restore } = require("@saltcorn/admin-models/models/backup");
     const User = require("@saltcorn/data/models/user");
-    const load_plugins = require("@saltcorn/server/load_plugins");
+    const load_plugins = require("@saltcorn/server/load_plugins/install_utils");
     await maybe_as_tenant(tenant, async () => {
       await load_plugins.loadAllPlugins();
       const hasUsers = await User.nonEmpty();

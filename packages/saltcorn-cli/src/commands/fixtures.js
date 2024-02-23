@@ -18,7 +18,7 @@ class FixturesCommand extends Command {
     const reset = require("@saltcorn/data/db/reset_schema");
     const { flags } = this.parse(FixturesCommand);
     if (flags.tenant) {
-      const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+      const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
       const { init_multi_tenant } = require("@saltcorn/data/db/state");
       const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
       await loadAllPlugins();

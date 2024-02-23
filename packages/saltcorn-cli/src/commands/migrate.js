@@ -18,7 +18,7 @@ class MigrateCommand extends Command {
    */
   async run() {
     const { migrate } = require("@saltcorn/data/migrate");
-    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+    const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
     const { init_multi_tenant } = require("@saltcorn/data/db/state");
     await loadAllPlugins();
     await eachTenant(async () => {
