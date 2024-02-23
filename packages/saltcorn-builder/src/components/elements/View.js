@@ -9,6 +9,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
 import relationsCtx from "../relations_context";
+import Select from "react-select";
 
 import {
   fetchViewPreview,
@@ -199,8 +200,8 @@ const ViewSettings = () => {
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
+    if (e?.target?.value || e?.name) {
+      const target_value = e.target?.value || e.name;
       if (target_value !== viewname) {
         if (options.mode === "filter") {
           setProp((prop) => {
@@ -244,18 +245,14 @@ const ViewSettings = () => {
         <Fragment>
           <div>
             <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-            <select
-              value={viewname}
-              className="form-control form-select"
+            <Select
+              options={options.views}
+              value={options.views.find((v) => v.name === viewname)}
               onChange={set_view_name}
               onBlur={set_view_name}
-            >
-              {options.views.map((v, ix) => (
-                <option key={ix} value={v.name}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+            ></Select>
           </div>
           {options.mode !== "filter" && (
             <div>

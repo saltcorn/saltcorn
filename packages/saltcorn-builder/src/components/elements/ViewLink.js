@@ -24,6 +24,7 @@ import {
 
 import { RelationBadges } from "./RelationBadges";
 import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
+import Select from "react-select";
 
 import {
   RelationsFinder,
@@ -201,8 +202,8 @@ const ViewLinkSettings = () => {
     });
   }
   const set_view_name = (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
+    if (e?.target?.value || e?.name) {
+      const target_value = e.target?.value || e.name;
       if (target_value !== use_view_name) {
         const newRelations = finder.findRelations(
           tableName,
@@ -243,18 +244,17 @@ const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>View to link to</label>
-              <select
-                value={use_view_name}
-                className="form-control form-select"
+              <label>
+                View to {options.mode === "show" ? "embed" : "show"}
+              </label>
+              <Select
+                options={options.views}
+                value={options.views.find((v) => v.name === use_view_name)}
                 onChange={set_view_name}
                 onBlur={set_view_name}
-              >
-                {options.views.map((f, ix) => (
-                  <option key={ix} value={f.name}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
+                menuPortalTarget={document.body}
+                styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+              ></Select>
             </td>
           </tr>
           <tr>
