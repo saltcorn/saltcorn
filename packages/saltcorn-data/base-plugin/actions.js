@@ -1389,6 +1389,7 @@ module.exports = {
         {
           name: "view",
           label: "View to refresh",
+          class: "selectizable",
           type: "String",
           required: true,
           attributes: { options: views.map((v) => v.select_option) },

@@ -19,6 +19,7 @@ import faIcons from "./faicons";
 import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
+import Select from "react-select";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -902,24 +903,48 @@ const ConfigField = ({
         spellCheck={false}
       />
     ),
-    select: () => (
-      <select
-        className="form-control form-select"
-        value={value || ""}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-        onBlur={(e) => e.target && myOnChange(e.target.value)}
-      >
-        {field.options.map((o, ix) =>
-          o.name && o.label ? (
-            <option key={ix} value={o.name}>
-              {o.label}
-            </option>
-          ) : (
-            <option key={ix}>{o}</option>
-          )
-        )}
-      </select>
-    ),
+    select: () => {
+      if (field.class?.includes?.("selectizable")) {
+        console.log("seelctize", field);
+
+        return (
+          <Select
+            options={field.options.map((o, ix) =>
+              o.name && o.label ? (
+                <option key={ix} value={o.name}>
+                  {o.label}
+                </option>
+              ) : (
+                <option key={ix}>{o}</option>
+              )
+            )}
+            value={options.views.find((v) => v.name === use_view_name)}
+            onChange={set_view_name}
+            onBlur={set_view_name}
+            menuPortalTarget={document.body}
+            styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+          ></Select>
+        );
+      } else
+        return (
+          <select
+            className="form-control form-select"
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            onBlur={(e) => e.target && myOnChange(e.target.value)}
+          >
+            {field.options.map((o, ix) =>
+              o.name && o.label ? (
+                <option key={ix} value={o.name}>
+                  {o.label}
+                </option>
+              ) : (
+                <option key={ix}>{o}</option>
+              )
+            )}
+          </select>
+        );
+    },
     btn_select: () => (
       <div className="btn-group w-100" role="group">
         {field.options.map((o, ix) => (
