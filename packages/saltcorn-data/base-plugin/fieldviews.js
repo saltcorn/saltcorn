@@ -70,6 +70,11 @@ const select = {
       type: "Bool",
     },
     {
+      name: "placeholder",
+      label: "Placeholder",
+      type: "String",
+    },
+    {
       name: "disable",
       label: "Disable",
       type: "Bool",
@@ -180,6 +185,9 @@ const select = {
             }
           : {}),
       },
+      attrs.placeholder &&
+        (field.required || attrs.force_required) &&
+        option({ value: "", disabled: true, selected: !v }, attrs.placeholder),
       selOptions
     );
   },
