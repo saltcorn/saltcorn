@@ -765,6 +765,7 @@ const string = {
                   onChange: attrs.onChange,
                   onBlur: attrs.onChange,
                   autocomplete: "off",
+                  required: required || attrs.force_required,
                 },
                 attrs.placeholder && (required || attrs.force_required)
                   ? [
