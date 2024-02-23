@@ -906,21 +906,25 @@ const ConfigField = ({
     select: () => {
       if (field.class?.includes?.("selectizable")) {
         console.log("seelctize", field);
-
+        const seloptions = field.options.map((o, ix) =>
+          o.name && o.label
+            ? { value: o.name, label: o.label }
+            : { value: o, label: o }
+        );
         return (
           <Select
-            options={field.options.map((o, ix) =>
-              o.name && o.label ? (
-                <option key={ix} value={o.name}>
-                  {o.label}
-                </option>
-              ) : (
-                <option key={ix}>{o}</option>
-              )
-            )}
-            value={options.views.find((v) => v.name === use_view_name)}
-            onChange={set_view_name}
-            onBlur={set_view_name}
+            options={seloptions}
+            value={seloptions.find((so) => value === so.value)}
+            onChange={(e) =>
+              (e.name && myOnChange(e.name)) ||
+              (e.value && myOnChange(e.value)) ||
+              (typeof e === "string" && myOnChange(e))
+            }
+            onBlur={(e) =>
+              (e.name && myOnChange(e.name)) ||
+              (e.value && myOnChange(e.value)) ||
+              (typeof e === "string" && myOnChange(e))
+            }
             menuPortalTarget={document.body}
             styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
           ></Select>
