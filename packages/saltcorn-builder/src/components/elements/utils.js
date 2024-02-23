@@ -905,7 +905,6 @@ const ConfigField = ({
     ),
     select: () => {
       if (field.class?.includes?.("selectizable")) {
-        console.log("seelctize", field);
         const seloptions = field.options.map((o, ix) =>
           o.name && o.label
             ? { value: o.name, label: o.label }
