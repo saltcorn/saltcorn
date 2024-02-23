@@ -200,8 +200,8 @@ const ViewSettings = () => {
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
-    if (e?.target?.value || e?.name) {
-      const target_value = e.target?.value || e.name;
+    if (e?.target?.value || e?.value) {
+      const target_value = e.target?.value || e.value;
       if (target_value !== viewname) {
         if (options.mode === "filter") {
           setProp((prop) => {
@@ -238,7 +238,11 @@ const ViewSettings = () => {
       }
     }
   };
-
+  const viewOptions = options.views.map(({ name, label }) => ({
+    label,
+    value: name,
+  }));
+  const selectedView = viewOptions.find((v) => v.value === viewname);
   return (
     <div>
       {relationsData ? (
@@ -246,8 +250,8 @@ const ViewSettings = () => {
           <div>
             <label>View to {options.mode === "show" ? "embed" : "show"}</label>
             <Select
-              options={options.views}
-              value={options.views.find((v) => v.name === viewname)}
+              options={viewOptions}
+              value={selectedView}
               onChange={set_view_name}
               onBlur={set_view_name}
               menuPortalTarget={document.body}
