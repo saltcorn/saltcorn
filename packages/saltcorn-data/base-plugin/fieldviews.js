@@ -176,6 +176,7 @@ const select = {
         readonly: attrs.readonly,
         onChange: attrs.onChange,
         autocomplete: "off",
+        required: attrs.placeholder && (field.required || attrs.force_required),
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,
