@@ -111,7 +111,7 @@ const run_code = async ({
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
     Actions[k] = (args = {}) => {
-      v.run({ row, table, user, configuration: args, ...rest, ...args });
+      return v.run({ row, table, user, configuration: args, ...rest, ...args });
     };
   });
   const trigger_actions = await Trigger.find({
@@ -120,7 +120,7 @@ const run_code = async ({
   for (const trigger of trigger_actions) {
     const state_action = getState().actions[trigger.action];
     Actions[trigger.name] = (args = {}) => {
-      state_action.run({
+      return state_action.run({
         row,
         table,
         configuration: trigger.configuration,
@@ -152,6 +152,7 @@ const run_code = async ({
     View,
     EventLog,
     Buffer,
+    Notification,
     setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
