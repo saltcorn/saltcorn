@@ -241,7 +241,7 @@ const ViewLinkSettings = () => {
     label,
     value: name,
   }));
-  const selectedView = viewOptions.find((v) => v.value === viewname);
+  const selectedView = viewOptions.find((v) => v.value === use_view_name);
   return (
     <div>
       <table className="w-100">
