@@ -1902,6 +1902,9 @@ router.get(
     const form = new Form({
       action: "/auth/twofa/login/totp",
       submitLabel: "Verify",
+      blurb: req.__(
+        "Please enter the two-factor authetication code from your authenticator device"
+      ),
       fields: [
         {
           name: "code",
@@ -1912,6 +1915,7 @@ router.get(
             inputmode: "numeric",
             pattern: "[0-9]*",
             autocomplete: "one-time-code",
+            autofocus: true,
           },
           required: true,
         },
