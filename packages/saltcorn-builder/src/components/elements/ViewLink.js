@@ -237,6 +237,11 @@ const ViewLinkSettings = () => {
   };
   const helpContext = { view_name: use_view_name };
   if (tableName) helpContext.srcTable = tableName;
+  const viewOptions = options.views.map(({ name, label }) => ({
+    label,
+    value: name,
+  }));
+  const selectedView = viewOptions.find((v) => v.value === viewname);
   return (
     <div>
       <table className="w-100">
@@ -246,8 +251,8 @@ const ViewLinkSettings = () => {
               <label>View to link to</label>
               {options.inJestTestingMode ? null : (
                 <Select
-                  options={options.views}
-                  value={options.views.find((v) => v.name === use_view_name)}
+                  options={viewOptions}
+                  value={selectedView}
                   onChange={set_view_name}
                   onBlur={set_view_name}
                   menuPortalTarget={document.body}
