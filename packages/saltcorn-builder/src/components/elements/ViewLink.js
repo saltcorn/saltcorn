@@ -202,8 +202,8 @@ const ViewLinkSettings = () => {
     });
   }
   const set_view_name = (e) => {
-    if (e?.target?.value || e?.name) {
-      const target_value = e.target?.value || e.name;
+    if (e?.target?.value || e?.value) {
+      const target_value = e.target?.value || e.value;
       if (target_value !== use_view_name) {
         const newRelations = finder.findRelations(
           tableName,
