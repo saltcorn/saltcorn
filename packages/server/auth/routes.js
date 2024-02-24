@@ -1783,6 +1783,7 @@ router.post(
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
+    console.log("TOTP return ", rv);
     user._attributes.totp_enabled = true;
     await user.update({ _attributes: user._attributes });
     req.flash(
