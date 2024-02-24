@@ -765,8 +765,18 @@ const string = {
                   onChange: attrs.onChange,
                   onBlur: attrs.onChange,
                   autocomplete: "off",
+                  required:
+                    attrs.placeholder && (required || attrs.force_required),
                 },
-                required || attrs.force_required
+                attrs.placeholder && (required || attrs.force_required)
+                  ? [
+                      option(
+                        { value: "", disabled: true, selected: !v },
+                        attrs.placeholder
+                      ),
+                      ...getStrOptions(v, attrs.options),
+                    ]
+                  : required || attrs.force_required
                   ? getStrOptions(v, attrs.options)
                   : [
                       option({ value: "" }, attrs.neutral_label || ""),

@@ -70,6 +70,11 @@ const select = {
       type: "Bool",
     },
     {
+      name: "placeholder",
+      label: "Placeholder",
+      type: "String",
+    },
+    {
       name: "disable",
       label: "Disable",
       type: "Bool",
@@ -171,6 +176,7 @@ const select = {
         readonly: attrs.readonly,
         onChange: attrs.onChange,
         autocomplete: "off",
+        required: attrs.placeholder && (field.required || attrs.force_required),
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,
@@ -180,6 +186,9 @@ const select = {
             }
           : {}),
       },
+      attrs.placeholder &&
+        (field.required || attrs.force_required) &&
+        option({ value: "", disabled: true, selected: !v }, attrs.placeholder),
       selOptions
     );
   },
