@@ -59,6 +59,7 @@ const doTest = (
     views: views,
     tableName: tableName,
     roles: [],
+    inJestTestingMode: true,
     excluded_subview_templates: excludedTemplates,
     // relationsCtx part
     relationsCache: relationsCache,

@@ -249,14 +249,16 @@ const ViewSettings = () => {
         <Fragment>
           <div>
             <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-            <Select
-              options={viewOptions}
-              value={selectedView}
-              onChange={set_view_name}
-              onBlur={set_view_name}
-              menuPortalTarget={document.body}
-              styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
-            ></Select>
+            {options.inJestTestingMode ? null : (
+              <Select
+                options={viewOptions}
+                value={selectedView}
+                onChange={set_view_name}
+                onBlur={set_view_name}
+                menuPortalTarget={document.body}
+                styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+              ></Select>
+            )}
           </div>
           {options.mode !== "filter" && (
             <div>

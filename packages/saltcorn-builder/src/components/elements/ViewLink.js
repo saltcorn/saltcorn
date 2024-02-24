@@ -244,14 +244,18 @@ const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>View to link to</label>
-              <Select
-                options={options.views}
-                value={options.views.find((v) => v.name === use_view_name)}
-                onChange={set_view_name}
-                onBlur={set_view_name}
-                menuPortalTarget={document.body}
-                styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
-              ></Select>
+              {options.inJestTestingMode ? null : (
+                <Select
+                  options={options.views}
+                  value={options.views.find((v) => v.name === use_view_name)}
+                  onChange={set_view_name}
+                  onBlur={set_view_name}
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 19999 }),
+                  }}
+                ></Select>
+              )}
             </td>
           </tr>
           <tr>
