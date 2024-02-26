@@ -765,7 +765,9 @@ const get_viewable_fields = (
                   ],
                   "aria-labelledby": `actiondd${r.id}_${index}`,
                 },
-                column.dropdown_columns.map((acol) => acol.key(r))
+                column.dropdown_columns.map((acol) =>
+                  div({ class: "dropdown-item" }, acol.key(r))
+                )
               )
             ),
         };
