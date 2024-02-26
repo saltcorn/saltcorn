@@ -14,6 +14,7 @@ const {
 const { ppVal } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
+const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const Tag = require("@saltcorn/data/models/tag");
@@ -455,7 +456,77 @@ router.get(
         { href: `/actions/testrun/${id}`, class: "ms-2" },
         req.__("Test run") + "&nbsp;&raquo;"
       );
-    if (!action) {
+    if (trigger.action === "Multi-step action") {
+      const stateActions = getState().actions;
+      const stateActionKeys = Object.entries(stateActions)
+        .filter(([k, v]) => !v.disableInList)
+        .map(([k, v]) => k);
+      const actions = [...stateActionKeys];
+      const triggers = Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+      });
+      triggers.forEach((tr) => {
+        actions.push(tr.name);
+      });
+      const actionConfigFields = [];
+
+      for (const [name, action] of Object.entries(stateActions)) {
+        if (!stateActionKeys.includes(name)) continue;
+        const cfgFields = await getActionConfigFields(action, table);
+
+        for (const field of cfgFields) {
+          const cfgFld = {
+            ...field,
+            showIf: {
+              step_action_name: name,
+              ...(field.showIf || {}),
+            },
+          };
+          if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+          actionConfigFields.push(cfgFld);
+        }
+      }
+      const form = new Form({
+        fields: [
+          new FieldRepeat({
+            name: "steps",
+            fields: [
+              {
+                name: "step_action_name",
+                label: req.__("Action"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: actions,
+                },
+              },
+              {
+                name: "step_only_if",
+                label: req.__("Only if..."),
+                type: "String",
+                class: "validate-expression",
+              },
+              ...actionConfigFields,
+            ],
+          }),
+        ],
+      });
+
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else if (!action) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
     } else if (trigger.action === "blocks") {
