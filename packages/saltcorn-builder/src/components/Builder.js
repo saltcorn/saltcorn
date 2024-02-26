@@ -413,7 +413,7 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                   <div
                     className="card toolbox-card pe-0"
-                    style={isLeftEnlarged ? { width: "12.35rem" } : {}}
+                    style={isLeftEnlarged ? { width: "13.4rem" } : {}}
                   >
                     <div className="card-header p-2 d-flex justify-content-between">
                       <div>Layers</div>
