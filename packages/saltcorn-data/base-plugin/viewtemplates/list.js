@@ -296,7 +296,7 @@ const configuration_workflow = (req) =>
                 },
               });
             }
-            console.log("newCols", JSON.stringify(newCols, null, 2));
+
             context.layout = {
               besides: newCols,
               list_columns: true,
