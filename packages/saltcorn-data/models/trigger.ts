@@ -35,7 +35,7 @@ class Trigger implements AbstractTrigger {
   id?: number | null;
   configuration: any;
   min_role?: number | null;
-  run?: (row: Row, extraArgs?: any) => boolean;
+  run?: (row: Row, extraArgs?: any) => Promise<any>;
 
   /**
    * Trigger constructor
@@ -345,18 +345,23 @@ class Trigger implements AbstractTrigger {
   static setRunFunctions(triggers: Array<Trigger>, table: Table, user?: Row) {
     const { getState } = require("../db/state");
     for (const trigger of triggers) {
-      const action = getState().actions[trigger.action];
-      trigger.run = (row: Row, extraArgs?: any) =>
-        action &&
-        action.run &&
-        action.run({
-          table,
-          user,
-          configuration: trigger.configuration,
-          row,
-          ...row,
-          ...(extraArgs || {}),
-        });
+      if (trigger.action === "Multi-step action") {
+        trigger.run = (row: Row, extraArgs?: any) =>
+          trigger.runWithoutRow({ row, ...row, ...(extraArgs || {}) });
+      } else {
+        const action = getState().actions[trigger.action];
+        trigger.run = (row: Row, extraArgs?: any) =>
+          action &&
+          action.run &&
+          action.run({
+            table,
+            user,
+            configuration: trigger.configuration,
+            row,
+            ...row,
+            ...(extraArgs || {}),
+          });
+      }
     }
   }
 
