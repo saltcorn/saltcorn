@@ -1325,6 +1325,7 @@ const ButtonOrLinkSettingsRows = ({
             <option value="">Standard</option>
             <option value="btn-lg">Large</option>
             <option value="btn-sm">Small</option>
+            <option value="btn-sm btn-xs">Extra Small</option>
             <option value="btn-block">Block</option>
             <option value="btn-block btn-lg">Large block</option>
           </select>

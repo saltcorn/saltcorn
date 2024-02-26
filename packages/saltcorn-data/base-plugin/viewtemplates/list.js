@@ -286,8 +286,17 @@ const configuration_workflow = (req) =>
               else newCols.push(newCol);
             });
             if (actionDropdown.length) {
-              newCols.push({ type: "dropdown_menu", contents: actionDropdown });
+              newCols.push({
+                contents: {
+                  type: "dropdown_menu",
+                  label: "Action",
+                  action_size: "btn-xs",
+                  action_style: "btn-outline-secondary",
+                  contents: { above: actionDropdown },
+                },
+              });
             }
+            console.log("newCols", JSON.stringify(newCols, null, 2));
             context.layout = {
               besides: newCols,
               list_columns: true,
