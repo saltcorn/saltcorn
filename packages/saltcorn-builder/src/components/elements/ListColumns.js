@@ -1,6 +1,6 @@
 /**
  * @category saltcorn-builder
- * @module components/elements/Column
+ * @module components/elements/ListColumns
  * @subcategory components / elements
  */
 
@@ -19,28 +19,15 @@ export /**
  * @subcategory components
  * @namespace
  */
-const Column = ({ children, align }) => {
+const ListColumns = ({ children, align }) => {
   const {
     selected,
     id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  const options = useContext(optionsCtx);
-
   return (
-    <div
-      className={`${selected ? "selected-node" : ""} ${
-        options.mode === "list" ? "flex-50 list-col-contents" : ""
-      }`}
-      ref={(dom) => connect(drag(dom))}
-    >
-      <div
-        className={`canvas ${id === "ROOT" ? "root-canvas" : ""} ${
-          options.mode === "list" ? "list-empty-msg list-col-canvas" : ""
-        }`}
-      >
-        {children}
-      </div>
+    <div className={selected ? "selected-node" : ""}>
+      <div className={` ${id === "ROOT" ? "root-canvas" : ""}`}>{children}</div>
     </div>
   );
 };
@@ -51,7 +38,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const ColumnSettings = () => {
+const ListColumnsSettings = () => {
   useNode((node) => ({}));
   return <div></div>;
 };
@@ -59,19 +46,17 @@ const ColumnSettings = () => {
 /**
  * @type {object}
  */
-Column.craft = {
-  displayName: "Column",
+ListColumns.craft = {
+  displayName: "ListColumns",
   props: {},
   rules: {
-    canDrag: () => true,
-    canMoveIn: (incomming, current) => {
-      if (current?.data?.props?.singleOccupancy && current.data.nodes?.length)
-        return false;
-
-      return true;
+    canDrag: () => false,
+    canDrop: () => false,
+    canMoveIn: (incoming) => {
+      return incoming?.data?.displayName === "ListColumn";
     },
   },
   related: {
-    settings: ColumnSettings,
+    settings: ListColumnsSettings,
   },
 };

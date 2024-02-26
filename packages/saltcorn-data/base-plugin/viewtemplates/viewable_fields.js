@@ -22,6 +22,7 @@ const View = require("../../models/view");
 const Table = require("../../models/table");
 const { isNode, dollarizeObject } = require("../../utils");
 const { bool, date } = require("../types");
+const _ = require("underscore");
 
 const {
   Relation,
@@ -564,6 +565,102 @@ const flapMapish = (xs, f) => {
   return res;
 };
 
+const get_viewable_fields_from_layout = (
+  viewname,
+  statehash,
+  table,
+  fields,
+  columns,
+  isShow,
+  req,
+  __,
+  state = {},
+  srcViewName,
+  layoutCols
+) => {
+  const typeMap = {
+    field: "Field",
+    join_field: "JoinField",
+    view_link: "ViewLink",
+    link: "Link",
+    action: "Action",
+    blank: "Text",
+    aggregation: "Aggregation",
+    dropdown_menu: "DropdownMenu",
+  };
+  const toArray = (x) =>
+    !x ? [] : Array.isArray(x) ? x : x.above ? x.above : [x];
+  //console.log("layout cols", layoutCols);
+  const newCols = layoutCols.map(({ contents, ...rest }) => {
+    if (!contents) contents = rest;
+    const col = {
+      ...contents,
+      ...rest,
+      type: typeMap[contents.type] || contents.type,
+    };
+    switch (contents.type) {
+      case "link":
+        col.link_text = contents.text;
+        col.link_url = contents.url;
+        col.link_url_formula = contents.isFormula?.url;
+        col.link_text_formula = contents.isFormula?.text;
+        break;
+      case "view_link":
+        col.view_label_formula = contents.isFormula?.label;
+        break;
+      case "dropdown_menu":
+        col.dropdown_columns = get_viewable_fields_from_layout(
+          viewname,
+          statehash,
+          table,
+          fields,
+          columns,
+          isShow,
+          req,
+          __,
+          (state = {}),
+          srcViewName,
+          toArray(contents.contents)
+        );
+        break;
+      case "blank":
+        if (contents.isFormula?.text) {
+          col.type = "FormulaValue";
+          col.formula = col.contents;
+        }
+        if (contents.isHTML)
+          col.interpolator = (row) => {
+            const template = _.template(contents.contents, {
+              evaluate: /\{\{#(.+?)\}\}/g,
+              interpolate: /\{\{([^#].+?)\}\}/g,
+            });
+            const temres = template({ row, user: req?.user, ...row });
+            return temres;
+          };
+
+        break;
+      case "action":
+        col.action_label_formula = contents.isFormula?.action_label;
+        break;
+    }
+    return col;
+  });
+
+  //console.log("newCols", newCols);
+  return get_viewable_fields(
+    viewname,
+    statehash,
+    table,
+    fields,
+    newCols,
+    isShow,
+    req,
+    __,
+    (state = {}),
+    srcViewName
+  );
+};
+
 /**
  * @function
  * @param {string} viewname
@@ -618,6 +715,61 @@ const get_viewable_fields = (
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
           key: (r) => text(eval_expression(column.formula, r, req.user)),
+        };
+      } else if (column.type === "Text") {
+        return {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) =>
+            column.interpolator
+              ? column.interpolator(r)
+              : text(column.contents),
+        };
+      } else if (column.type === "DropdownMenu") {
+        return {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) =>
+            div(
+              { class: "dropdown" },
+              button(
+                {
+                  class:
+                    column.action_style === "btn-link"
+                      ? "btn btn-link"
+                      : `btn ${column.action_style || "btn-primary"} ${
+                          column.action_size || ""
+                        } dropdown-toggle`,
+                  "data-boundary": "viewport",
+                  type: "button",
+                  id: `actiondd${r.id}_${index}`, //TODO need unique
+                  "data-bs-toggle": "dropdown",
+                  "aria-haspopup": "true",
+                  "aria-expanded": "false",
+                  style:
+                    column.action_style === "btn-custom-color"
+                      ? `background-color: ${
+                          column.action_bgcol || "#000000"
+                        };border-color: ${
+                          column.action_bordercol || "#000000"
+                        }; color: ${column.action_textcol || "#000000"}`
+                      : null,
+                },
+                column.label || req.__("Action")
+              ),
+              div(
+                {
+                  class: [
+                    "dropdown-menu",
+                    column.menu_direction === "end" && "dropdown-menu-end",
+                  ],
+                  "aria-labelledby": `actiondd${r.id}_${index}`,
+                },
+                column.dropdown_columns.map((acol) =>
+                  div({ class: "dropdown-item" }, acol.key(r))
+                )
+              )
+            ),
         };
       } else if (column.type === "Action") {
         const action_col = {
@@ -1209,6 +1361,7 @@ const objToQueryString = (o) =>
 
 module.exports = {
   get_viewable_fields,
+  get_viewable_fields_from_layout,
   action_url,
   objToQueryString,
   action_link,

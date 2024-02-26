@@ -18,7 +18,7 @@ import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
-import { Columns } from "./elements/Columns";
+import { Columns, ntimes } from "./elements/Columns";
 import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
@@ -37,6 +37,7 @@ import {
   ToolboxEdit,
   ToolboxPage,
   ToolboxFilter,
+  ToolboxList,
 } from "./Toolbox";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import { Card } from "./elements/Card";
@@ -53,6 +54,7 @@ import {
   faTrashAlt,
   faSave,
   faExclamationTriangle,
+  faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faCaretSquareLeft,
@@ -65,6 +67,8 @@ import {
 } from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
+import { ListColumn } from "./elements/ListColumn";
+import { ListColumns } from "./elements/ListColumns";
 const { Provider } = optionsCtx;
 
 /**
@@ -253,58 +257,20 @@ const SettingsPanel = () => {
   );
 };
 
-/**
- * @returns {button}
- * @category saltcorn-builder
- * @subcategory components
- * @namespace
- */
-const SaveButton = () => {
+const AddColumnButton = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
-
-  /**
-   * @returns {void}
-   */
-  const onClick = () => {
-    const data = craftToSaltcorn(JSON.parse(query.serialize()));
-    const urlroot = options.page_id ? "pageedit" : "viewedit";
-    fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
-      method: "POST", // or 'PUT'
-      headers: {
-        "Content-Type": "application/json",
-        "CSRF-Token": options.csrfToken,
-      },
-      body: JSON.stringify(data),
-    });
+  const addColumn = () => {
+    actions.addNodeTree(
+      query.parseReactElement(<ListColumn />).toNodeTree(),
+      "ROOT"
+    );
   };
-  return options.page_id || options.view_id ? (
-    <button
-      className="btn btn-sm btn-outline-secondary me-2 builder-save-ajax"
-      onClick={onClick}
-    >
-      Save
+  return (
+    <button className="btn btn-primary mt-2" onClick={addColumn}>
+      <FontAwesomeIcon icon={faPlus} className="me-2" />
+      Add column
     </button>
-  ) : (
-    ""
-  );
-};
-
-/**
- * @returns {a|""}
- * @category saltcorn-builder
- * @subcategory components
- * @namespace
- */
-const ViewPageLink = () => {
-  const { query, actions } = useEditor(() => {});
-  const options = useContext(optionsCtx);
-  return options.page_id ? (
-    <a target="_blank" className="d-block" href={`/page/${options.page_name}`}>
-      View page in new tab &raquo;
-    </a>
-  ) : (
-    ""
   );
 };
 
@@ -357,14 +323,18 @@ const NextButton = ({ layout }) => {
   const options = useContext(optionsCtx);
 
   useEffect(() => {
-    layoutToNodes(layout, query, actions);
+    layoutToNodes(layout, query, actions, "ROOT", options);
   }, []);
 
   /**
    * @returns {void}
    */
   const onClick = () => {
-    const { columns, layout } = craftToSaltcorn(JSON.parse(query.serialize()));
+    const { columns, layout } = craftToSaltcorn(
+      JSON.parse(query.serialize()),
+      "ROOT",
+      options
+    );
     document
       .querySelector("form#scbuildform input[name=columns]")
       .setAttribute("value", encodeURIComponent(JSON.stringify(columns)));
@@ -430,6 +400,7 @@ const Builder = ({ options, layout, mode }) => {
                       <div className="card mt-1" accordiontitle="Components">
                         {{
                           show: <ToolboxShow expanded={isLeftEnlarged} />,
+                          list: <ToolboxList expanded={isLeftEnlarged} />,
                           edit: <ToolboxEdit expanded={isLeftEnlarged} />,
                           page: <ToolboxPage expanded={isLeftEnlarged} />,
                           filter: <ToolboxFilter expanded={isLeftEnlarged} />,
@@ -442,7 +413,7 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                   <div
                     className="card toolbox-card pe-0"
-                    style={isLeftEnlarged ? { width: "12.35rem" } : {}}
+                    style={isLeftEnlarged ? { width: "13.4rem" } : {}}
                   >
                     <div className="card-header p-2 d-flex justify-content-between">
                       <div>Layers</div>
@@ -466,7 +437,9 @@ const Builder = ({ options, layout, mode }) => {
                 </div>
                 <div
                   id="builder-main-canvas"
-                  className={`col builder-mode-${options.mode}`}
+                  className={`col builder-mode-${options.mode} ${
+                    options.mode !== "list" ? "emptymsg" : ""
+                  }`}
                 >
                   <div>
                     <Frame
@@ -493,10 +466,17 @@ const Builder = ({ options, layout, mode }) => {
                         Tabs,
                         Table,
                         ToggleFilter,
+                        ListColumn,
+                        ListColumns,
                       }}
                     >
-                      <Element canvas is={Column}></Element>
+                      {options.mode === "list" ? (
+                        <Element canvas is={ListColumns}></Element>
+                      ) : (
+                        <Element canvas is={Column}></Element>
+                      )}
                     </Frame>
+                    {options.mode === "list" ? <AddColumnButton /> : null}
                   </div>
                 </div>
                 <div className="col-sm-auto builder-sidebar">

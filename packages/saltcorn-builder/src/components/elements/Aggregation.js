@@ -141,13 +141,15 @@ const AggregationSettings = () => {
               )}
               {options.fields
                 .filter((f) => f.type === "Date" || f.type.name === "Date")
-                .map((f) => (
-                  <option value={`Latest ${f.name}`}>Latest {f.name}</option>
+                .map((f, ix) => (
+                  <option key={ix} value={`Latest ${f.name}`}>
+                    Latest {f.name}
+                  </option>
                 ))}
               {options.fields
                 .filter((f) => f.type === "Date" || f.type.name === "Date")
-                .map((f) => (
-                  <option value={`Earliest ${f.name}`}>
+                .map((f, ix) => (
+                  <option key={ix} value={`Earliest ${f.name}`}>
                     Earliest {f.name}
                   </option>
                 ))}

@@ -570,6 +570,54 @@ const ToolboxShow = ({ expanded }) => {
     expanded
   );
 };
+export /**
+ * @returns {Fragment}
+ * @category saltcorn-builder
+ * @subcategory components / Toolbox
+ * @namespace
+ */
+const ToolboxList = ({ expanded }) => {
+  const { connectors, query } = useEditor();
+  const options = useContext(optionsCtx);
+  const {
+    fields,
+    field_view_options,
+    child_field_list,
+    agg_field_opts,
+    views,
+    images,
+  } = options;
+  return chunkToolBox(
+    [
+      <TextElem connectors={connectors} />,
+      <FieldElem
+        connectors={connectors}
+        fields={fields}
+        field_view_options={field_view_options}
+      />,
+      <JoinFieldElem connectors={connectors} options={options} />,
+      <ViewLinkElem connectors={connectors} options={options} />,
+      <ActionElem connectors={connectors} options={options} />,
+      <LinkElem connectors={connectors} />,
+      <AggregationElem
+        connectors={connectors}
+        child_field_list={child_field_list}
+        agg_field_opts={agg_field_opts}
+      />,
+      // <ViewElem connectors={connectors} views={views} />,
+      // <ContainerElem connectors={connectors} />,
+      // <CardElem connectors={connectors} />,
+      //  <TabsElem connectors={connectors} />,
+      <HTMLElem connectors={connectors} />,
+      <DropMenuElem connectors={connectors} />,
+      //  <TableElem connectors={connectors} />,
+      ...(options.allowMultipleElementsPerColumn
+        ? [<LineBreakElem connectors={connectors} />]
+        : []),
+    ],
+    expanded
+  );
+};
 
 export /**
  * @returns {Fragment}

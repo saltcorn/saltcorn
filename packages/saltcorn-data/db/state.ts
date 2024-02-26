@@ -942,6 +942,7 @@ const features = {
   get_view_goto: true,
   table_undo: true,
   ellipsize: true,
+  list_builder: true,
 };
 
 export = {
