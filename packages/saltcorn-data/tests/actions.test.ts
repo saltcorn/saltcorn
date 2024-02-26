@@ -672,4 +672,35 @@ describe("run_action_column", () => {
     });
     expect(runres).toStrictEqual({ notify: "note3", notify_success: "succ3" });
   });
+  it("should run multistep builder with trigger step", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "45a31c",
+        nsteps: "2",
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "Multi-step action",
+        action_label: "",
+        configuration: {
+          steps: [
+            {
+              text: "note3",
+              notify_type: "Notify",
+            },
+            {
+              text: "succ3",
+              notify_type: "Success",
+            },
+          ],
+        },
+        step_action_names: ["toast", "Toast1"],
+      },
+    });
+    expect(runres).toStrictEqual({ notify: "note3", notify_success: "fooo" });
+  });
 });
