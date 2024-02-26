@@ -17,6 +17,8 @@ import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract
 const { satisfies, mergeActionResults } = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import expression from "./expression";
+const { eval_expression } = expression;
 
 /**
  * Trigger class
@@ -287,12 +289,32 @@ class Trigger implements AbstractTrigger {
   /**
    * Run trigger without row
    * @param runargs
-   * @returns {Promise<boolean>}
+   * @returns {Promise<any>}
    */
-  async runWithoutRow(runargs = {}): Promise<boolean> {
+  async runWithoutRow(runargs: any = {}): Promise<any> {
     const { getState } = require("../db/state");
     const state = getState();
     state.log(4, `Trigger run ${this.name} ${this.action} no row`);
+    if (this.action === "Multi-step action") {
+      const result: any = {};
+      for (let i = 0; i < this.configuration?.steps?.length; i++) {
+        const step = this.configuration?.steps[i];
+        if (step.step_only_if && runargs?.row)
+          if (!eval_expression(step.step_only_if, runargs.row)) continue;
+        const action = state.actions[step.step_action_name];
+        const stepres = await action.run({
+          ...runargs,
+          configuration: step,
+        });
+        try {
+          mergeActionResults(result, stepres);
+        } catch (error) {
+          console.error(error);
+        }
+        if (result.error) break;
+      }
+      return result;
+    }
     const action = state.actions[this.action];
     return (
       action &&

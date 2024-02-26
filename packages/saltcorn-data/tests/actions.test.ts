@@ -581,3 +581,12 @@ describe("mergeActionResults", () => {
     expect(result).toStrictEqual({ set_fields: { y: 2, z: 3 } });
   });
 });
+
+describe("multistep triggers", () => {
+  it("should run", async () => {
+    const trigger = await Trigger.findOne({ name: "MySteps" });
+    const runres = await trigger.runWithoutRow({});
+    expect(runres.error).toBe("errrr");
+    expect(runres.notify).toBe("note");
+  });
+});
