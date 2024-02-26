@@ -133,6 +133,9 @@ const getApp = async (opts = {}) => {
 
   const helmetOptions = {
     contentSecurityPolicy: false,
+    referrerPolicy: {
+      policy: ["same-origin"],
+    },
   };
 
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
