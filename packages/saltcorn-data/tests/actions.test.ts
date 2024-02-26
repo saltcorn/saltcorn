@@ -703,4 +703,25 @@ describe("run_action_column", () => {
     });
     expect(runres).toStrictEqual({ notify: "note3", notify_success: "fooo" });
   });
+  it("should run multitrigger step", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "cd9965",
+        nsteps: 1,
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "MySteps",
+        action_label: "",
+        configuration: {},
+      },
+    });
+    expect(runres.error).toBe("errrr");
+    expect(runres.notify).toBe("note");
+    expect(runres.notify_success).toBe("fooo");
+  });
 });

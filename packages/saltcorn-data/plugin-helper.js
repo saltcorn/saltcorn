@@ -2403,22 +2403,36 @@ const run_action_column = async ({ col, req, ...rest }) => {
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
-    if (state_action) configuration = colcfg;
-    else {
+    let goRun;
+    if (state_action) {
+      configuration = colcfg;
+      goRun = () =>
+        state_action.run({
+          configuration,
+          user: req.user,
+          req,
+          ...rest,
+        });
+    } else {
       const trigger = await Trigger.findOne({ name: action_name });
-      if (trigger) {
+
+      if (trigger?.action === "Multi-step action") {
+        goRun = () => trigger.runWithoutRow({ req, ...rest });
+      } else if (trigger) {
         state_action = getState().actions[trigger.action];
-        configuration = trigger.configuration;
+        goRun = () =>
+          state_action.run({
+            configuration: trigger.configuration,
+            user: req.user,
+            req,
+            ...rest,
+          });
       }
     }
-    if (!state_action)
+    if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-    return await state_action.run({
-      configuration,
-      user: req.user,
-      req,
-      ...rest,
-    });
+
+    return await goRun();
   };
   if (col.action_name === "Multi-step action") {
     const result = {};
@@ -2428,7 +2442,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
       const only_if = col.step_only_ifs?.[i];
       const config = col.configuration.steps?.[i] || {};
       if (only_if && rest.row) {
-        if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
+        if (!eval_expression(only_if, rest.row, req?.user)) continue;
       }
       const stepres = await run_action_step(action_name, config);
       try {
