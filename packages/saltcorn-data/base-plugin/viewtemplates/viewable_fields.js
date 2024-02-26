@@ -588,7 +588,8 @@ const get_viewable_fields_from_layout = (
     aggregation: "Aggregation",
     dropdown_menu: "DropdownMenu",
   };
-  const toArray = (x) => (!x ? [] : Array.isArray(x) ? x : [x]);
+  const toArray = (x) =>
+    !x ? [] : Array.isArray(x) ? x : x.above ? x.above : [x];
   //console.log("layout cols", layoutCols);
   const newCols = layoutCols.map(({ contents, ...rest }) => {
     if (!contents) contents = rest;
