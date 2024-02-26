@@ -1657,7 +1657,11 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
       },
       tabs(v) {
         (v.titles || []).forEach((t) => {
-          freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
+          if (typeof t === "string")
+            freeVars = new Set([
+              ...freeVars,
+              ...freeVariablesInInterpolation(t),
+            ]);
         });
         (v.showif || []).forEach((t) => {
           freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
