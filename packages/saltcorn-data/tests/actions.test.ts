@@ -7,8 +7,13 @@ import runScheduler from "../models/scheduler";
 import db from "../db";
 const { getState } = require("../db/state");
 import mocks from "../tests/mocks";
-const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
-  mocks;
+const {
+  plugin_with_routes,
+  getActionCounter,
+  resetActionCounter,
+  mockReqRes,
+  sleep,
+} = mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
@@ -16,6 +21,7 @@ const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
   baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
+import { run_action_column } from "../plugin-helper";
 const { applyAsync, mergeActionResults } = utils;
 
 afterAll(db.close);
@@ -589,5 +595,50 @@ describe("multistep triggers", () => {
     expect(runres.error).toBe("errrr");
     expect(runres.notify).toBe("note");
     expect(runres.notify_success).toBe("fooo");
+  });
+});
+
+describe("run_action_column", () => {
+  it("should run state action", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "2d6f57",
+        nsteps: 1,
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "toast",
+        action_label: "",
+        configuration: {
+          text: "note2",
+          run_where: "Server",
+          notify_type: "Notify",
+        },
+      },
+    });
+    expect(runres).toStrictEqual({ notify: "note2" });
+  });
+  it("should run trigger action", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "2d6f57",
+        nsteps: 1,
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "Toast1",
+        action_label: "",
+        configuration: {},
+      },
+    });
+    expect(runres).toStrictEqual({ notify_success: "fooo" });
   });
 });
