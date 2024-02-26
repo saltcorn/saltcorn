@@ -588,5 +588,6 @@ describe("multistep triggers", () => {
     const runres = await trigger.runWithoutRow({});
     expect(runres.error).toBe("errrr");
     expect(runres.notify).toBe("note");
+    expect(runres.notify_success).toBe("fooo");
   });
 });

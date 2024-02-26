@@ -2555,6 +2555,10 @@ module.exports =
       configuration: {
         steps: [
           {
+            step_only_if: "",
+            step_action_name: "Toast1",
+          },
+          {
             text: "note",
             notify_type: "Notify",
             step_only_if: "",
@@ -2568,6 +2572,21 @@ module.exports =
           },
         ],
       },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "Toast1",
+      action: "toast",
+      description: "",
+      table_id: null,
+
+      when_trigger: "Never",
+
+      configuration: {
+        text: "fooo",
+        notify_type: "Success",
+      },
+
       min_role: null,
     });
   };

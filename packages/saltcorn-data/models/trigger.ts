@@ -301,10 +301,26 @@ class Trigger implements AbstractTrigger {
         const step = this.configuration?.steps[i];
         if (step.step_only_if && runargs?.row)
           if (!eval_expression(step.step_only_if, runargs.row)) continue;
-        const action = state.actions[step.step_action_name];
+
+        let configuration = step;
+        let action = state.actions[step.step_action_name];
+
+        if (!action) {
+          const trigger = await Trigger.findOne({
+            name: step.step_action_name,
+          });
+          if (trigger) {
+            action = getState().actions[trigger.action];
+            configuration = trigger.configuration;
+          }
+        }
+        if (!action)
+          throw new Error(
+            "Runnable action not found: " + step.step_action_name
+          );
         const stepres = await action.run({
           ...runargs,
-          configuration: step,
+          configuration,
         });
         try {
           mergeActionResults(result, stepres);
