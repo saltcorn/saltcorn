@@ -17,6 +17,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const Tag = require("@saltcorn/data/models/tag");
+const db = require("@saltcorn/data/db");
 
 /**
  * @type {object}
@@ -285,6 +286,17 @@ router.get(
     send_events_page({
       res,
       req,
+      headers: [
+        // date flat picker external component
+        {
+          script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
+        },
+
+        // css for date flat picker external component
+        {
+          css: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.css`,
+        },
+      ],
       active_sub: "Triggers",
       sub2_page: "New",
       contents: {
