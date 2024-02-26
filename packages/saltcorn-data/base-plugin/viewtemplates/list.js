@@ -181,14 +181,14 @@ const configuration_workflow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(
                 action,
                 table,
-                { mode: "show" }
+                { mode: "list" }
               );
             }
           }
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
-            "show"
+            "list"
           );
           if (table.name === "users") {
             fields.push(
@@ -202,7 +202,7 @@ const configuration_workflow = (req) =>
           }
           const rel_field_view_options = await calcrelViewOptions(
             table,
-            "show"
+            "list"
           );
           const roles = await User.get_roles();
           const { parent_field_list } = await table.get_parent_relations(
