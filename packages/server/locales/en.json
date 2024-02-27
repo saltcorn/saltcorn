@@ -1377,5 +1377,7 @@
 	"Timestamp": "Timestamp",
 	"Message": "Message",
 	"Please enter the two-factor authetication code from your authenticator device": "Please enter the two-factor authetication code from your authenticator device",
-	"Only if...": "Only if..."
+	"Only if...": "Only if...",
+	"Allow self signed": "Allow self signed",
+	"Open a connection to TLS server with self-signed or invalid TLS certificate": "Open a connection to TLS server with self-signed or invalid TLS certificate"
 }
