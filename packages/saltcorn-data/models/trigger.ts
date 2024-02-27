@@ -330,7 +330,7 @@ class Trigger implements AbstractTrigger {
           configuration,
         });
 
-        if (stepres.goto_step) {
+        if (stepres?.goto_step) {
           i = +stepres.goto_step - 2;
           delete stepres.goto_step;
         }
