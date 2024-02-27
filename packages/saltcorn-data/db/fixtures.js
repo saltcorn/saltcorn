@@ -9,6 +9,7 @@ const { getState } = require("./state");
 const Table = require("../models/table");
 const Field = require("../models/field");
 const File = require("../models/file");
+const Trigger = require("../models/trigger");
 const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
@@ -2542,5 +2543,50 @@ module.exports =
         },
       },
       min_role: 100,
+    });
+    await Trigger.create({
+      name: "MySteps",
+      action: "Multi-step action",
+      description: "",
+      table_id: null,
+
+      when_trigger: "Never",
+
+      configuration: {
+        steps: [
+          {
+            step_only_if: "",
+            step_action_name: "Toast1",
+          },
+          {
+            text: "note",
+            notify_type: "Notify",
+            step_only_if: "",
+            step_action_name: "toast",
+          },
+          {
+            text: "errrr",
+            notify_type: "Error",
+            step_only_if: "",
+            step_action_name: "toast",
+          },
+        ],
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "Toast1",
+      action: "toast",
+      description: "",
+      table_id: null,
+
+      when_trigger: "Never",
+
+      configuration: {
+        text: "fooo",
+        notify_type: "Success",
+      },
+
+      min_role: null,
     });
   };

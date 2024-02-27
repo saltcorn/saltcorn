@@ -382,13 +382,13 @@ describe("actions", () => {
       .send("table_id=2")
       .send("name=mynewaction")
       .send("when_trigger=Insert")
-      .expect(toRedirect("/actions/configure/1"));
+      .expect(toRedirect("/actions/configure/3"));
   });
   it("show edit", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/edit/1")
+      .get("/actions/edit/3")
       .set("Cookie", loginCookie)
       .expect(toInclude("Edit trigger"))
       .expect(toInclude("run_js_code"));
@@ -397,7 +397,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/configure/1")
+      .get("/actions/configure/3")
       .set("Cookie", loginCookie)
       .expect(toInclude("Configure trigger"))
       .expect(toInclude("Code"));
@@ -406,7 +406,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/actions/configure/1")
+      .post("/actions/configure/3")
       .set("Cookie", loginCookie)
       .send("code=console.log(12345678)")
       .expect(toRedirect("/actions/"));
@@ -415,7 +415,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/testrun/1")
+      .get("/actions/testrun/3")
       .set("Cookie", loginCookie)
       .expect(toInclude("12345678"));
   });
@@ -423,7 +423,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/actions/configure/1")
+      .post("/actions/configure/3")
       .set("Cookie", loginCookie)
       .send("code=1")
       .expect(toRedirect("/actions/"));
@@ -432,7 +432,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .get("/actions/testrun/1")
+      .get("/actions/testrun/2")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
   });
@@ -446,9 +446,9 @@ describe("actions", () => {
       .send("action=run_js_code")
       .send("when_trigger=API+call")
       .send("min_role=1")
-      .expect(toRedirect("/actions/configure/2"));
+      .expect(toRedirect("/actions/configure/4"));
     await request(app)
-      .post("/actions/configure/2")
+      .post("/actions/configure/4")
       .set("Cookie", loginCookie)
       .send("code=return 27")
       .expect(toRedirect("/actions/"));
@@ -463,7 +463,7 @@ describe("actions", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
-      .post("/actions/delete/1")
+      .post("/actions/delete/3")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
   });

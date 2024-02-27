@@ -1376,5 +1376,6 @@
 	"Server logs": "Server logs",
 	"Timestamp": "Timestamp",
 	"Message": "Message",
-	"Please enter the two-factor authetication code from your authenticator device": "Please enter the two-factor authetication code from your authenticator device"
+	"Please enter the two-factor authetication code from your authenticator device": "Please enter the two-factor authetication code from your authenticator device",
+	"Only if...": "Only if..."
 }
