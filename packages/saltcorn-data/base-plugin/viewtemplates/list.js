@@ -1019,7 +1019,8 @@ const run_action = async (
       mode: "list",
     });
     cfgFields.forEach(({ name }) => {
-      col.configuration[name] = col[name];
+      if (typeof col.configuration[name] === "undefined")
+        col.configuration[name] = col[name];
     });
   }
   try {
