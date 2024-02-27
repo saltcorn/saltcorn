@@ -658,6 +658,10 @@ describe("run_action_column", () => {
         configuration: {
           steps: [
             {
+              code: "1;",
+              run_where: "Server",
+            },
+            {
               text: "note3",
               notify_type: "Notify",
             },
@@ -667,7 +671,7 @@ describe("run_action_column", () => {
             },
           ],
         },
-        step_action_names: ["toast", "toast"],
+        step_action_names: ["run_js_code", "toast", "toast"],
       },
     });
     expect(runres).toStrictEqual({ notify: "note3", notify_success: "succ3" });
