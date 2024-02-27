@@ -427,7 +427,6 @@ const getMultiStepForm = async (req, id, table) => {
     actions.push(tr.name);
   });
   const actionConfigFields = [];
-  console.log({ table });
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
     const cfgFields = await getActionConfigFields(action, table);
