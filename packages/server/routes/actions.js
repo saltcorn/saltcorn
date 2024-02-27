@@ -446,7 +446,7 @@ const getMultiStepForm = async (req, id, table) => {
   }
   const form = new Form({
     action: addOnDoneRedirect(`/actions/configure/${id}`, req),
-    // onChange: "saveAndContinue(this)",
+    onChange: "saveAndContinue(this)",
     submitLabel: req.__("Done"),
     fields: [
       new FieldRepeat({
