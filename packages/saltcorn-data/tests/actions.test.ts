@@ -148,7 +148,7 @@ describe("Action", () => {
     //const table = Table.findOne({ name: "books" });
 
     const triggers = await Trigger.findAllWithTableName();
-    expect(triggers.length).toBe(5);
+    expect(triggers.length).toBe(7);
     const trigger = triggers.find(
       (tr) => tr && tr.table_name === "books" && tr.when_trigger === "Update"
     );
