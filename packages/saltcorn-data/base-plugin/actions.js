@@ -968,6 +968,43 @@ module.exports = {
       }
     },
   },
+  step_control_flow: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Step control flow",
+    configFields: [
+      {
+        name: "control_action",
+        label: "Control action",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["Halt steps", "Goto step"],
+        },
+      },
+      {
+        name: "step",
+        label: "Step",
+        type: "Integer",
+        required: true,
+        showIf: { control_action: ["Goto step"] },
+      },
+    ],
+    run: async ({ row, user, configuration: { control_action, step } }) => {
+      switch (control_action) {
+        case "Halt steps":
+          return { halt_steps: true };
+        case "Goto step":
+          return { goto_step: step };
+
+        default:
+          break;
+      }
+    },
+  },
   form_action: {
     /**
      * @param {object} opts
@@ -1484,6 +1521,7 @@ module.exports = {
       }
     },
   },
+
   convert_session_to_user: {
     description:
       "Convert session id fields to user key fields on a table on Login events",

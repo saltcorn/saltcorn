@@ -297,7 +297,14 @@ class Trigger implements AbstractTrigger {
     state.log(4, `Trigger run ${this.name} ${this.action} no row`);
     if (this.action === "Multi-step action") {
       const result: any = {};
-      for (let i = 0; i < this.configuration?.steps?.length; i++) {
+      let step_count = 0;
+      let MAX_STEPS = 200;
+      for (
+        let i = 0;
+        i < this.configuration?.steps?.length && step_count < MAX_STEPS;
+        i++
+      ) {
+        step_count += 1;
         const step = this.configuration?.steps[i];
         if (step.step_only_if && runargs?.row)
           if (!eval_expression(step.step_only_if, runargs.row)) continue;
@@ -322,12 +329,17 @@ class Trigger implements AbstractTrigger {
           ...runargs,
           configuration,
         });
+
+        if (stepres.goto_step) {
+          i = +stepres.goto_step - 2;
+          delete stepres.goto_step;
+        }
         try {
           mergeActionResults(result, stepres);
         } catch (error) {
           console.error(error);
         }
-        if (result.error) break;
+        if (result.error || result.halt_steps) break;
       }
       return result;
     }

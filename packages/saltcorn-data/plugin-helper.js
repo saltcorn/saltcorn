@@ -2436,7 +2436,15 @@ const run_action_column = async ({ col, req, ...rest }) => {
   };
   if (col.action_name === "Multi-step action") {
     const result = {};
-    for (let i = 0; i < col.step_action_names.length; i++) {
+    let step_count = 0;
+    let MAX_STEPS = 200;
+    for (
+      let i = 0;
+      i < col.step_action_names.length && step_count < MAX_STEPS;
+      i++
+    ) {
+      step_count += 1;
+
       const action_name = col.step_action_names?.[i];
       if (!action_name) continue;
       const only_if = col.step_only_ifs?.[i];
@@ -2445,12 +2453,16 @@ const run_action_column = async ({ col, req, ...rest }) => {
         if (!eval_expression(only_if, rest.row, req?.user)) continue;
       }
       const stepres = await run_action_step(action_name, config);
+      if (stepres.goto_step) {
+        i = +stepres.goto_step - 2;
+        delete stepres.goto_step;
+      }
       try {
         mergeActionResults(result, stepres);
       } catch (error) {
         console.error(error);
       }
-      if (result.error) break;
+      if (result.error || result.halt_steps) break;
     }
     return result;
   } else return await run_action_step(col.action_name, col.configuration);
