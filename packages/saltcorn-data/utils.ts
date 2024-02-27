@@ -9,6 +9,7 @@ import { Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
+const _ = require("underscore");
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
@@ -362,6 +363,15 @@ const ppVal = (x: any) =>
     ? x.toString()
     : JSON.stringify(x, null, 2);
 
+const interpolate = (s: string, row: any, user?: any) => {
+  if (s && row) {
+    const template = _.template(s, {
+      interpolate: /\{\{([^#].+?)\}\}/g,
+    });
+    return template({ row, user, ...row });
+  } else return s;
+};
+
 export = {
   dollarizeObject,
   objectToQueryString,
@@ -401,4 +411,5 @@ export = {
   comparing,
   comparingCaseInsensitive,
   ppVal,
+  interpolate,
 };

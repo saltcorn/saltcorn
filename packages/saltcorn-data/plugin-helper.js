@@ -2453,7 +2453,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
         if (!eval_expression(only_if, rest.row, req?.user)) continue;
       }
       const stepres = await run_action_step(action_name, config);
-      if (stepres.goto_step) {
+      if (stepres?.goto_step) {
         i = +stepres.goto_step - 2;
         delete stepres.goto_step;
       }

@@ -2559,6 +2559,12 @@ module.exports =
             step_action_name: "Toast1",
           },
           {
+            code: "1;",
+            run_where: "Server",
+            step_only_if: "",
+            step_action_name: "run_js_code",
+          },
+          {
             text: "note",
             notify_type: "Notify",
             step_only_if: "",

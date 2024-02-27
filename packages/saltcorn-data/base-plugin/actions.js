@@ -34,23 +34,14 @@ const {
   urlStringToObject,
   dollarizeObject,
   objectToQueryString,
+  interpolate,
 } = require("../utils");
 const db = require("../db");
 const { isNode, ppVal } = require("../utils");
 const { available_languages } = require("../models/config");
-const _ = require("underscore");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
-
-const interpolate = (s, row, user) => {
-  if (s && row) {
-    const template = _.template(s, {
-      interpolate: /\{\{([^#].+?)\}\}/g,
-    });
-    return template({ row, user, ...row });
-  } else return s;
-};
 
 const consoleInterceptor = (state) => {
   const handle = (printer, level, message, optionalParams) => {
