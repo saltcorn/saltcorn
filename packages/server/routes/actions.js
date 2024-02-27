@@ -415,9 +415,9 @@ router.post(
 );
 
 const getMultiStepForm = async (req, id, table) => {
-  const stateActions = getState().actions;
+  let stateActions = getState().actions;
   const stateActionKeys = Object.entries(stateActions)
-    .filter(([k, v]) => !v.disableInList)
+    .filter(([k, v]) => !v.disableInList && (table || !v.requireRow))
     .map(([k, v]) => k);
   const actions = [...stateActionKeys];
   const triggers = Trigger.find({
