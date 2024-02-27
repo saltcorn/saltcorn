@@ -793,6 +793,7 @@ const get_viewable_fields = (
             const label = column.action_label_formula
               ? eval_expression(column.action_label, r, req.user)
               : __(column.action_label) || __(column.action_name);
+            const icon = column.action_icon || column.icon || undefined;
             if (url.javascript)
               return a(
                 {
@@ -805,16 +806,16 @@ const get_viewable_fields = (
                         column.action_size || ""
                       }`,
                 },
-                !!column.icon &&
-                  column.icon !== "empty" &&
-                  i({ class: column.icon }),
+                !!icon &&
+                  icon !== "empty" &&
+                  i({ class: icon }) + (label === " " ? "" : "&nbsp;"),
                 label
               );
             else
               return post_btn(url, label, req.csrfToken(), {
                 small: true,
                 ajax: true,
-                icon: column.icon || undefined,
+                icon,
                 reload_on_done: true,
                 confirm: column.confirm,
                 btnClass: column.in_dropdown
