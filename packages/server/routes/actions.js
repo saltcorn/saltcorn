@@ -427,7 +427,7 @@ const getMultiStepForm = async (req, id, table) => {
     actions.push(tr.name);
   });
   const actionConfigFields = [];
-
+  console.log({ table });
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
     const cfgFields = await getActionConfigFields(action, table);
@@ -660,7 +660,7 @@ router.post(
       : null;
     let form;
     if (trigger.action === "Multi-step action") {
-      form = await getMultiStepForm(req, id);
+      form = await getMultiStepForm(req, id, table);
     } else {
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
