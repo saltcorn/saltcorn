@@ -359,7 +359,13 @@ class Trigger implements AbstractTrigger {
     for (const trigger of triggers) {
       if (trigger.action === "Multi-step action") {
         trigger.run = (row: Row, extraArgs?: any) =>
-          trigger.runWithoutRow({ row, ...row, ...(extraArgs || {}) });
+          trigger.runWithoutRow({
+            user,
+            table,
+            row,
+            ...row,
+            ...(extraArgs || {}),
+          });
       } else {
         const action = getState().actions[trigger.action];
         trigger.run = (row: Row, extraArgs?: any) =>
