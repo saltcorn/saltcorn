@@ -27,6 +27,7 @@ const {
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const { create_pack_from_tag } = require("@saltcorn/admin-models/models/pack");
+const Table = require("@saltcorn/data/models/table");
 
 const router = new Router();
 module.exports = router;
@@ -161,6 +162,9 @@ router.get(
     await setTableRefs(views);
     const pages = await tag.getPages();
     const triggers = await tag.getTriggers();
+    triggers.forEach((tr) => {
+      if (tr.table_id) tr.table_name = Table.findOne(tr.table_id)?.name;
+    });
     const roles = await User.get_roles();
 
     const tablesDomId = "tablesListId";
