@@ -804,6 +804,7 @@ const field_picker_fields = async ({
   ];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
+    table_id: null,
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);

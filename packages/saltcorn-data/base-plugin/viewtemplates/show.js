@@ -119,6 +119,7 @@ const configuration_workflow = (req) =>
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
+              table_id: null,
             })
           ).forEach((tr) => {
             actions.push(tr.name);
