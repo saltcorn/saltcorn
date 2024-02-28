@@ -973,7 +973,7 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Halt steps", "Goto step"],
+          options: ["Halt steps", "Goto step", "Clear return values"],
         },
       },
       {
@@ -990,6 +990,8 @@ module.exports = {
           return { halt_steps: true };
         case "Goto step":
           return { goto_step: step };
+        case "Clear return values":
+          return { clear_return_values: true };
 
         default:
           break;

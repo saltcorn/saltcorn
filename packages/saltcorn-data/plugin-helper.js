@@ -2435,7 +2435,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
     return await goRun();
   };
   if (col.action_name === "Multi-step action") {
-    const result = {};
+    let result = {};
     let step_count = 0;
     let MAX_STEPS = 200;
     for (
@@ -2457,6 +2457,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
         i = +stepres.goto_step - 2;
         delete stepres.goto_step;
       }
+      if (stepres?.clear_return_values) result = {};
       try {
         mergeActionResults(result, stepres);
       } catch (error) {
