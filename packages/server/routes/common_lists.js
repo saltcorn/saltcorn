@@ -669,10 +669,7 @@ const getTriggerList = async (
       },
       {
         label: req.__("Test run"),
-        key: (r) =>
-          r.table_id
-            ? ""
-            : link(`/actions/testrun/${r.id}`, req.__("Test run")),
+        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
       },
       {
         label: req.__("Configure"),
