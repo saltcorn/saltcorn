@@ -1380,5 +1380,6 @@
 	"Only if...": "Only if...",
 	"Allow self signed": "Allow self signed",
 	"Open a connection to TLS server with self-signed or invalid TLS certificate": "Open a connection to TLS server with self-signed or invalid TLS certificate",
-	"Allow self-signed": "Allow self-signed"
+	"Allow self-signed": "Allow self-signed",
+	"Optionally associate a table with this trigger": "Optionally associate a table with this trigger"
 }
