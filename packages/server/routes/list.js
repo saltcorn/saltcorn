@@ -288,7 +288,7 @@ router.get(
           },
           //css for jsgrid - grid editor external component
           {
-            css: `/static_assets/${db.connectObj.version_tag}/tabulator_bootstrap5.min.css`,
+            css: `/static_assets/${db.connectObj.version_tag}/tabulator_bootstrap4.min.css`,
           },
 
           // css for date flat picker external component
