@@ -613,7 +613,7 @@ module.exports = {
       try {
         const sendres = await getMailTransport().sendMail(email);
         getState().log(5, `send_email result: ${JSON.stringify(sendres)}`);
-        if (confirm_field && sendres.accepted.includes(to_addr)) {
+        if (confirm_field && sendres.accepted.length > 0) {
           const confirm_fld = table.getField(confirm_field);
           if (confirm_fld && confirm_fld.type.name === "Date")
             await table.updateRow(
