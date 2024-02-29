@@ -527,6 +527,8 @@ const configuration_workflow = (req) =>
             .getFields()
             .filter((f) => !f.calculated || f.stored);
           const formfields = [];
+          const { child_field_list, child_relations } =
+            await table.get_child_relations();
           formfields.push({
             name: "_order_field",
             label: req.__("Default order by"),
@@ -561,6 +563,21 @@ const configuration_workflow = (req) =>
                 .map((s) => code(s))
                 .join(", "),
             type: "String",
+          });
+          formfields.push({
+            name: "exclusion_relation",
+            label: req.__("Exclusion relations"),
+            sublabel: req.__("Do not include row if this relation has a match"),
+            type: "String",
+            required: false,
+            attributes: { options: child_field_list },
+          });
+          formfields.push({
+            name: "exclusion_where",
+            label: req.__("Exclusion where"),
+            class: "validate-expression",
+            type: "String",
+            showIf: { exclusion_relation: child_field_list },
           });
           formfields.push({
             name: "_rows_per_page",
@@ -1132,6 +1149,24 @@ module.exports = {
         const ctx = { ...state, user_id: req.user?.id || null, user: req.user };
         let where1 = jsexprToWhere(default_state.include_fml, ctx, fields);
         mergeIntoWhere(where, where1 || {});
+      }
+      if (default_state?.exclusion_relation) {
+        const [reltable, relfld] = default_state.exclusion_relation.split(".");
+        const relTable = Table.findOne({ name: reltable });
+        const relWhere = default_state.exclusion_where
+          ? jsexprToWhere(
+              default_state.exclusion_where,
+              {
+                user_id: req?.user?.id,
+                user: req?.user,
+              },
+              relTable.fields
+            )
+          : {};
+        const relRows = await relTable.getRows(relWhere);
+        mergeIntoWhere(where, {
+          id: { not: { in: relRows.map((r) => r[relfld]) } },
+        });
       }
       let rows = await table.getJoinedRows({
         where,
