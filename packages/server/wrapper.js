@@ -185,17 +185,25 @@ const get_headers = (req, version_tag, description, extras = []) => {
         },
       ]
     : [];
+  const locale = req?.user?.language;
   const stdHeaders = [
     {
       headerTag: `<script>var _sc_loglevel = ${
         state.logLevel
-      }, _sc_globalCsrf = "${req.csrfToken()}", _sc_version_tag = "${version_tag}";</script>`,
+      }, _sc_globalCsrf = "${req.csrfToken()}", _sc_version_tag = "${version_tag}"${
+        locale ? `, _sc_locale = "${locale}"` : ""
+      };</script>`,
     },
     { css: `/static_assets/${version_tag}/saltcorn.css` },
     { script: `/static_assets/${version_tag}/saltcorn-common.js` },
     { script: `/static_assets/${version_tag}/saltcorn.js` },
     { script: `/static_assets/${version_tag}/dayjs.min.js` },
   ];
+  if (locale !== "en") {
+    stdHeaders.push({
+      script: `/static_assets/${version_tag}/dayjslocales/${locale}.js`,
+    });
+  }
   let from_cfg = [];
   if (state.getConfig("page_custom_css", ""))
     from_cfg.push({ style: state.getConfig("page_custom_css", "") });
