@@ -565,6 +565,7 @@ function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
 function initialize_page() {
+  if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
   const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
   //console.log("init page");
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
