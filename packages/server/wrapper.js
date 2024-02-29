@@ -185,7 +185,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
         },
       ]
     : [];
-  const locale = req?.user?.language;
+  const locale = req.getLocale();
   const stdHeaders = [
     {
       headerTag: `<script>var _sc_loglevel = ${
