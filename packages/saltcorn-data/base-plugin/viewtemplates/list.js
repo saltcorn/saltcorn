@@ -1110,7 +1110,7 @@ module.exports = {
     table_id,
     exttable_name,
     name, // viewname
-    configuration: { columns, default_state },
+    configuration: { columns, layout, default_state },
     req,
   }) => ({
     async listQuery(state, stateHash) {
@@ -1123,7 +1123,7 @@ module.exports = {
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields,
-        undefined,
+        layout,
         req
       );
       const where = await stateFieldsToWhere({ fields, state, table });

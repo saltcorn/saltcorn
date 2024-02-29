@@ -1547,8 +1547,11 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
     } else if (column.type === "FormulaValue") {
       freeVars = new Set([...freeVars, ...freeVariables(column.formula)]);
     } else if (column.type === "ViewLink") {
-      if (column.view_label_formula)
-        freeVars = new Set([...freeVars, ...freeVariables(column.view_label)]);
+      if (column.view_label_formula || column.isFormula?.label)
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(column.view_label || column.label),
+        ]);
       if (column.extra_state_fml)
         freeVars = new Set([
           ...freeVars,
