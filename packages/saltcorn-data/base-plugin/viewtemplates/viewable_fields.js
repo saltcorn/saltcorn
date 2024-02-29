@@ -959,7 +959,7 @@ const get_viewable_fields = (
         } else {
           [table, fld] = column.agg_relation.split(".");
         }
-        const targetNm =
+        let targetNm =
           column.targetNm ||
           db.sqlsanitize(
             (
@@ -974,7 +974,12 @@ const get_viewable_fields = (
                 column.aggwhere || ""
             ).toLowerCase()
           );
-
+        if (targetNm.length > 58) {
+          targetNm = targetNm
+            .split("")
+            .filter((c, i) => i % 2 == 0)
+            .join("");
+        }
         let showValue = (value) => {
           if (value === true || value === false)
             return bool.fieldviews.show.run(value);
