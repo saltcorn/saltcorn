@@ -804,6 +804,7 @@ const field_picker_fields = async ({
   ];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
+    table_id: null,
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
@@ -1546,8 +1547,11 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
     } else if (column.type === "FormulaValue") {
       freeVars = new Set([...freeVars, ...freeVariables(column.formula)]);
     } else if (column.type === "ViewLink") {
-      if (column.view_label_formula)
-        freeVars = new Set([...freeVars, ...freeVariables(column.view_label)]);
+      if (column.view_label_formula || column.isFormula?.label)
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(column.view_label || column.label),
+        ]);
       if (column.extra_state_fml)
         freeVars = new Set([
           ...freeVars,
@@ -2435,7 +2439,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
     return await goRun();
   };
   if (col.action_name === "Multi-step action") {
-    const result = {};
+    let result = {};
     let step_count = 0;
     let MAX_STEPS = 200;
     for (
@@ -2457,6 +2461,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
         i = +stepres.goto_step - 2;
         delete stepres.goto_step;
       }
+      if (stepres?.clear_return_values) result = {};
       try {
         mergeActionResults(result, stepres);
       } catch (error) {

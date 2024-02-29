@@ -600,7 +600,13 @@ router.post(
         snap.created
       ).fromNow()}`
     );
-    res.redirect(/^[a-z]+$/g.test(type) ? `/${type}edit` : "/");
+    res.redirect(
+      type === "trigger"
+        ? `/actions`
+        : /^[a-z]+$/g.test(type)
+        ? `/${type}edit`
+        : "/"
+    );
   })
 );
 

@@ -32,7 +32,7 @@ function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
     defaultDate,
     onClose: function (selectedDates, dateStr, instance) {
       evt = window.event;
-      var isEscape = false; 
+      var isEscape = false;
       if ("key" in evt) {
         isEscape = evt.key === "Escape" || evt.key === "Esc";
       } else {
@@ -85,7 +85,7 @@ function isoDateFormatter(cell, formatterParams, onRendered) {
   const val = cell.getValue();
   if (!val) return "";
   if (formatterParams && formatterParams.format)
-    return moment(val).format(formatterParams.format);
+    return dayjs(val).format(formatterParams.format);
 
   return new Date(val).toLocaleDateString(window.detected_locale || "en");
 }

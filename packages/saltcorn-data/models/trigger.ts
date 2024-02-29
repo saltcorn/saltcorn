@@ -296,7 +296,7 @@ class Trigger implements AbstractTrigger {
     const state = getState();
     state.log(4, `Trigger run ${this.name} ${this.action} no row`);
     if (this.action === "Multi-step action") {
-      const result: any = {};
+      let result: any = {};
       let step_count = 0;
       let MAX_STEPS = 200;
       for (
@@ -334,6 +334,8 @@ class Trigger implements AbstractTrigger {
           i = +stepres.goto_step - 2;
           delete stepres.goto_step;
         }
+        if (stepres?.clear_return_values) result = {};
+
         try {
           mergeActionResults(result, stepres);
         } catch (error) {

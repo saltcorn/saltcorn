@@ -447,6 +447,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         related.fields.forEach((f) => {
           c[f.column_name || f.name || f] = node.props[f.name || f];
         });
+        if (s.isFormula) c.isFormula = s.isFormula;
         columns.push(c);
       }
       return s;

@@ -612,7 +612,8 @@ module.exports = {
       };
       try {
         const sendres = await getMailTransport().sendMail(email);
-        if (confirm_field && sendres.accepted.includes(to_addr)) {
+        getState().log(5, `send_email result: ${JSON.stringify(sendres)}`);
+        if (confirm_field && sendres.accepted.length > 0) {
           const confirm_fld = table.getField(confirm_field);
           if (confirm_fld && confirm_fld.type.name === "Date")
             await table.updateRow(
@@ -973,7 +974,7 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Halt steps", "Goto step"],
+          options: ["Halt steps", "Goto step", "Clear return values"],
         },
       },
       {
@@ -990,6 +991,8 @@ module.exports = {
           return { halt_steps: true };
         case "Goto step":
           return { goto_step: step };
+        case "Clear return values":
+          return { clear_return_values: true };
 
         default:
           break;

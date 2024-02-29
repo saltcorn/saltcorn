@@ -220,6 +220,17 @@ const triggerForm = async (req, trigger) => {
         ),
       },
       {
+        name: "table_id",
+        label: req.__("Table"),
+        input_type: "select",
+        options: [
+          { value: "", label: "Table not set" },
+          ...tables.map((t) => ({ value: t.id, label: t.name })),
+        ],
+        showIf: { when_trigger: "Never" },
+        sublabel: req.__("Optionally associate a table with this trigger"),
+      },
+      {
         name: "channel",
         label: req.__("Time of day"),
         input_type: "time_of_day",
@@ -242,9 +253,41 @@ const triggerForm = async (req, trigger) => {
         attributes: {
           calcOptions: ["when_trigger", action_options],
         },
+        showIf: {
+          when_trigger: Trigger.when_options.filter((t) => t !== "Never"),
+        },
         sublabel: req.__("The action to be taken when the trigger fires"),
       },
-
+      {
+        name: "action",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        help: { topic: "Actions" },
+        attributes: {
+          options: actionsNotRequiringRow,
+        },
+        showIf: {
+          when_trigger: "Never",
+          table_id: "",
+        },
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
+      {
+        name: "action",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        help: { topic: "Actions" },
+        attributes: {
+          options: allActions,
+        },
+        showIf: {
+          when_trigger: "Never",
+          table_id: tables.map((t) => t.id),
+        },
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
       {
         name: "description",
         label: req.__("Description"),
