@@ -57,7 +57,7 @@ const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
 };
 
 describe("Misc List views", () => {
-  it("runs HTML code", async () => {
+  it("with label formula viewlink", async () => {
     const view = await mkViewWithCfg({
       configuration: {
         layout: {
@@ -112,8 +112,87 @@ describe("Misc List views", () => {
         ],
       },
     });
-    const vres1 = await view.run({ id: 2 }, mockReqRes);
+    const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain('<a href="/view/show_publisher?id=1">AK Press</a>');
+  });
+  it("with label formula viewlink", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                fieldview: "as_text",
+                field_name: "author",
+                configuration: {},
+              },
+              alignment: "Default",
+              header_label: "Author",
+              col_width_units: "px",
+            },
+            {
+              contents: {
+                type: "view_link",
+                view: "show_publisher",
+                block: false,
+                minRole: 100,
+                relation: ".books.publisher",
+                isFormula: {
+                  label: true,
+                },
+                link_icon: "",
+                view_label: "publisher.name",
+              },
+              alignment: "Default",
+              header_label: "Publisher",
+              col_width_units: "px",
+            },
+            {
+              contents: {
+                type: "join_field",
+                block: false,
+                fieldview: "as_text",
+                textStyle: "",
+                join_field: "publisher.name",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            fieldview: "as_text",
+            field_name: "author",
+            configuration: {},
+          },
+          {
+            type: "ViewLink",
+            view: "show_publisher",
+            block: false,
+            label: "publisher.name",
+            minRole: 100,
+            relation: ".books.publisher",
+            link_icon: "",
+          },
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            join_field: "publisher.name",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain('<a href="/view/show_publisher?id=1">AK Press</a>');
+    expect(vres1).toContain("<td>AK Press</td>");
   });
 
   /* it("runs button action", async () => {
