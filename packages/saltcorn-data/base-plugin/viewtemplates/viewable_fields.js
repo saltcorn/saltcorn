@@ -908,6 +908,7 @@ const get_viewable_fields = (
               ? getState().fileviews[column.join_fieldview].run(row[key], "", {
                   row,
                   ...column,
+                  ...(column?.configuration || {}),
                 })
               : "";
         }
@@ -1047,7 +1048,7 @@ const get_viewable_fields = (
                     getState().fileviews[column.fieldview].run(
                       row[f.name],
                       row[`${f.name}__filename`],
-                      { row, ...column }
+                      { row, ...column, ...(column?.configuration || {}) }
                     )
                 : column.fieldview &&
                   f.type.fieldviews &&

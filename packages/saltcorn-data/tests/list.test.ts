@@ -524,3 +524,71 @@ describe("Misc List views", () => {
     });
   });
 });
+
+describe("List fieldviews", () => {
+  it("sets up new fields", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    await Field.create({
+      table,
+      name: "published",
+      label: "Published",
+      type: "Date",
+    });
+    await Field.create({
+      table,
+      name: "cover_pic",
+      label: "Cover Pic",
+      type: "File",
+    });
+    await table.updateRow(
+      { published: new Date("1971-05.04"), cover_pic: "magrite.png" },
+      1
+    );
+  });
+  it("shows image thumbnail", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "Thumbnail",
+                textStyle: "",
+                field_name: "cover_pic",
+                configuration: {
+                  width: "66",
+                  expand: true,
+                  height: "66",
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "Thumbnail",
+            textStyle: "",
+            field_name: "cover_pic",
+            configuration: {
+              width: "66",
+              expand: true,
+              height: "66",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain(
+      `<img src="/files/resize/66/66/magrite.png" onclick="expand_thumbnail('magrite.png', 'magrite.png')">`
+    );
+  });
+});
