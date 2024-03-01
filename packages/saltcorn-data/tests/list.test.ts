@@ -80,6 +80,85 @@ describe("Misc List views", () => {
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain("<td>Herman Melville: 977</td>");
   });
+  it("interpolates HTML", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "dropdown_menu",
+                block: false,
+                label: "Menu",
+                contents: {
+                  above: [
+                    {
+                      type: "view_link",
+                      view: "show_publisher",
+                      block: false,
+                      minRole: 100,
+                      relation: ".books.publisher",
+                      isFormula: {
+                        label: true,
+                      },
+                      link_icon: "",
+                      view_label: "publisher.name",
+                    },
+                    {
+                      type: "action",
+                      block: false,
+                      rndid: "f729aa",
+                      nsteps: 1,
+                      confirm: false,
+                      minRole: 100,
+                      isFormula: {},
+                      action_icon: "",
+                      action_name: "Delete",
+                      action_label: "",
+                      configuration: {},
+                    },
+                  ],
+                },
+                action_icon: "",
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "show_publisher",
+            block: false,
+            label: "publisher.name",
+            minRole: 100,
+            relation: ".books.publisher",
+            link_icon: "",
+          },
+          {
+            type: "Action",
+            rndid: "f729aa",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "Delete",
+            action_label: "",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain(
+      `<form action="/delete/books/1?redirect=/view/${view.name}" method="post">`
+    );
+    expect(vres1).toContain('<a href="/view/show_publisher?id=1">AK Press</a>');
+    expect(vres1).toContain("dropdown-menu");
+  });
   it("with label formula viewlink", async () => {
     const view = await mkViewWithCfg({
       configuration: {
