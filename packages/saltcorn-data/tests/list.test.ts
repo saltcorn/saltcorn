@@ -525,6 +525,65 @@ describe("Misc List views", () => {
   });
 });
 
+describe("List sort options", () => {
+  it("sorts according to default sort options", async () => {
+    const layoutColumns = {
+      layout: {
+        besides: [
+          {
+            contents: {
+              type: "field",
+              block: false,
+              fieldview: "as_text",
+              textStyle: "",
+              field_name: "author",
+              configuration: {},
+            },
+            alignment: "Default",
+            col_width_units: "px",
+          },
+        ],
+        list_columns: true,
+      },
+      columns: [
+        {
+          type: "Field",
+          block: false,
+          fieldview: "as_text",
+          textStyle: "",
+          field_name: "author",
+          configuration: {},
+        },
+      ],
+    };
+    const viewAsc = await mkViewWithCfg({
+      configuration: {
+        ...layoutColumns,
+        default_state: {
+          _order_field: "author",
+        },
+      },
+    });
+    const viewDesc = await mkViewWithCfg({
+      configuration: {
+        ...layoutColumns,
+        default_state: {
+          _order_field: "author",
+          _descending: true,
+        },
+      },
+    });
+    const tBodyAuthors = (authors: string[]) =>
+      `<tbody>${authors
+        .map((nm) => `<tr><td>${nm}</td></tr>`)
+        .join("")}</tbody>`;
+    const vres1 = await viewAsc.run({}, mockReqRes);
+    expect(vres1).toContain(tBodyAuthors(["Herman Melville", "Leo Tolstoy"]));
+    const vres2 = await viewDesc.run({}, mockReqRes);
+    expect(vres2).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+  });
+});
+
 describe("List fieldviews", () => {
   it("sets up new fields", async () => {
     const table = Table.findOne({ name: "books" });
