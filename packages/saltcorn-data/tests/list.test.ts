@@ -357,7 +357,7 @@ describe("Misc List views", () => {
     expect(vres1).toContain("<td>Herman Melville</td>");
     expect(vres1).not.toContain("<td>Leo Tolstoy</td>");
   });
-  it("row inclusion", async () => {
+  it("row exclusion and click url", async () => {
     const view = await mkViewWithCfg({
       configuration: {
         layout: {
@@ -410,12 +410,16 @@ describe("Misc List views", () => {
         default_state: {
           exclusion_where: "parent === user.id",
           exclusion_relation: "patients.favbook",
+          _row_click_url_formula: "`/view/authorshow?id=${id}`",
         },
       },
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain("<td>Herman Melville</td>");
     expect(vres1).not.toContain("<td>Leo Tolstoy</td>");
+    expect(vres1).toContain(
+      `<tr onclick="location.href='/view/authorshow?id=1'">`
+    );
   });
   /* it("runs button action", async () => {
     const view = await mkViewWithCfg({
