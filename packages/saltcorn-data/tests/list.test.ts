@@ -298,6 +298,65 @@ describe("Misc List views", () => {
     expect(vres1).toContain("<td>AK Press</td>");
   });
 
+  it("interpolates HTML", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "as_text",
+                textStyle: "",
+                field_name: "author",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "show",
+                textStyle: "",
+                field_name: "pages",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "author",
+            configuration: {},
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "show",
+            textStyle: "",
+            field_name: "pages",
+            configuration: {},
+          },
+        ],
+        default_state: {
+          include_fml: "pages>800",
+        },
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("<td>Herman Melville</td>");
+    expect(vres1).not.toContain("<td>Leo Tolstoy</td>");
+  });
   /* it("runs button action", async () => {
     const view = await mkViewWithCfg({
       configuration: {
