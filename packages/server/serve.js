@@ -454,13 +454,95 @@ const setupSocket = (subdomainOffset, ...servers) => {
       else await f();
     });
 
+    let dataStream = null;
+
+    socket.on(
+      "open_data_stream",
+      async ([viewName, fieldName, fieldView, targetOpts], callback) => {
+        const tenant =
+          get_tenant_from_req(socket.request, subdomainOffset) || "public";
+        const f = async () => {
+          try {
+            const user = socket.request.user;
+            const view = View.findOne({ name: viewName });
+            const { stream, target } = await view.openDataStream(
+              fieldName,
+              fieldView,
+              user,
+              targetOpts
+            );
+            dataStream = stream;
+            getState().log(5, `opened data stram`);
+            callback({ status: "ok", target });
+          } catch (err) {
+            getState().log(
+              1,
+              `Socket open_data_stream: ${err.message || "unknown error"}`
+            );
+            callback({ status: "error", msg: err.message || "unknown error" });
+          }
+        };
+        if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+        else f();
+      }
+    );
+    socket.on("write_to_stream", async (data, callback) => {
+      if (!dataStream) {
+        getState().log(1, "Socket write_to_stream: No stream available");
+        callback({ status: "error", msg: "No stream available" });
+      } else
+        dataStream.write(data, (err) => {
+          if (err) {
+            getState().log(1, "Socket write_to_stream: No stream available");
+            callback({ status: "error", msg: err.message || "unknown error" });
+          } else callback({ status: "ok" });
+        });
+    });
+
+    socket.on("close_data_stream", async (callback) => {
+      if (!dataStream) {
+        getState().log(1, "Socket close_data_stream: No stream available");
+        callback({ status: "error", msg: "No stream available" });
+      } else {
+        dataStream.close((err) => {
+          if (err) {
+            getState().log(
+              1,
+              `Socket close_data_stream: ${err.message || "unknown error"}`
+            );
+            callback({ status: "error", msg: err.message || "unknown error" });
+          } else {
+            getState().log(5, "closed data stram");
+            callback({ status: "ok" });
+            dataStream = null;
+          }
+        });
+      }
+    });
+
     socket.on("disconnect", async () => {
       const tenant =
         get_tenant_from_req(socket.request, subdomainOffset) || "public";
       const f = async () => {
-        const socketIds = await getState().getConfig("joined_log_socket_ids");
-        const newSocketIds = socketIds.filter((id) => id !== socket.id);
-        await getState().setConfig("joined_log_socket_ids", newSocketIds);
+        if (dataStream) {
+          dataStream.close((err) => {
+            if (err) {
+              getState().log(
+                1,
+                `Socket disconnect close_data_stream: ${
+                  err.message || "unknown error"
+                }`
+              );
+            } else {
+              getState().log(5, "closed data stram");
+              dataStream = null;
+            }
+          });
+        } else {
+          const socketIds = await getState().getConfig("joined_log_socket_ids");
+          const newSocketIds = socketIds.filter((id) => id !== socket.id);
+          await getState().setConfig("joined_log_socket_ids", newSocketIds);
+        }
       };
       if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
       else f();

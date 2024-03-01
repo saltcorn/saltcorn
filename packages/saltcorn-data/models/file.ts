@@ -166,6 +166,12 @@ class File {
     return s[0] === "/" ? s.substring(1) : s;
   }
 
+  get absolutePath(): string {
+    const tenant = db.getTenantSchema();
+    const safeDir = File.normalise(this.location);
+    return path.join(db.connectObj.file_store, tenant, safeDir);
+  }
+
   /**
    * get all directories in the root folder (tenant root dir for multi-tenant)
    * @param ignoreCache if a cache exists, ignore it

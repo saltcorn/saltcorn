@@ -1373,6 +1373,35 @@ const authorise_post = async (
   return await authorizePostQuery(body, table_id);
 };
 
+const openDataStream = async (
+  tableId,
+  viewName,
+  fieldName,
+  fieldView,
+  user,
+  configuration,
+  targetOpts
+) => {
+  const table = Table.findOne({ id: tableId });
+  const field = table.getField(fieldName);
+  if (!field) throw new InvalidConfiguration(`Field ${fieldName} not found`);
+  if (field.type === "File") {
+    const cfgCol = configuration.columns.find(
+      (col) => col.fieldview === fieldView && col.field_name === fieldName
+    );
+    const fileView = getState().fileviews[fieldView];
+    if (!fileView)
+      throw new InvalidConfiguration(`File view ${fieldView} not found`);
+    return await fileView.openDataStream(
+      tableId,
+      fieldName,
+      user,
+      cfgCol.configuration,
+      targetOpts
+    );
+  }
+};
+
 /**
  * @param {number} table_id
  * @param {*} viewname
@@ -1589,7 +1618,7 @@ const prepare = async (
 
   const file_fields = form.fields.filter((f) => f.type === "File");
   for (const field of file_fields) {
-    if (!field.fieldviewObj?.isEdit) continue;
+    if (!field.fieldviewObj?.isEdit || field.fieldviewObj?.isStream) continue;
     if (field.fieldviewObj?.setsFileId) {
       //do nothing
     } else if (field.fieldviewObj?.setsDataURL) {
@@ -1804,6 +1833,7 @@ module.exports = {
   run,
   runMany,
   runPost,
+  openDataStream,
   get_state_fields,
   initial_config,
   /** @type {boolean} */

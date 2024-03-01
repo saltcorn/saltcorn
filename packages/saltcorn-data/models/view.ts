@@ -730,6 +730,27 @@ class View implements AbstractView {
       res.json({ success: "ok" });
   }
 
+  async openDataStream(
+    fieldName: string,
+    fieldView: string,
+    user: any,
+    targetOpts: any
+  ) {
+    if (!this.viewtemplateObj?.openDataStream)
+      throw new InvalidConfiguration(
+        `Unable to call openDataStream, ${this.viewtemplate} is missing 'openDataStream'.`
+      );
+    return await this.viewtemplateObj.openDataStream(
+      this.table_id,
+      this.name,
+      fieldName,
+      fieldView,
+      user,
+      this.configuration,
+      targetOpts
+    );
+  }
+
   /**
    * @param {object} req_query
    * @returns {object}
