@@ -38,6 +38,8 @@ import {
   instanceOfType,
 } from "@saltcorn/types/common_types";
 
+import { validate as uuidValidate } from 'uuid';
+
 import Trigger from "./trigger";
 import expression from "./expression";
 const {
@@ -1163,7 +1165,7 @@ class Table implements AbstractTable {
    */
   async updateRow(
     v_in: any,
-    id: number,
+    id: number | string,
     user?: Row,
     noTrigger?: boolean,
     resultCollector?: object,
@@ -1337,7 +1339,7 @@ class Table implements AbstractTable {
         ...v,
         [pk_name]: id,
         _version: {
-          next_version_by_id: +id,
+          next_version_by_id: (typeof id === "string" && uuidValidate(id))?id:+id,
         },
         _time: new Date(),
         _userid: user?.id,
@@ -1393,27 +1395,28 @@ class Table implements AbstractTable {
     }
   }
 
-  async latestSyncInfo(id: number) {
+  async latestSyncInfo(id: number | string) {
     const rows = await this.latestSyncInfos([id]);
     return rows?.length === 1 ? rows[0] : null;
   }
 
-  async latestSyncInfos(ids: number[]) {
+  async latestSyncInfos(ids: (number | string)[]) {
     const schema = db.getTenantSchemaPrefix();
     const dbResult = await db.query(
       `select max(last_modified) "last_modified", ref
        from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
-       group by ref having ref in (${ids.join(",")})`
+       group by ref having ref in ('${ids.join("','")}')`
     );
     return dbResult.rows;
   }
 
-  private async insertSyncInfo(id: number, syncTimestamp?: Date) {
+  private async insertSyncInfo(id: number | string, syncTimestamp?: Date) {
     const schema = db.getTenantSchemaPrefix();
+    id = (typeof id === "number" || uuidValidate(id)) ? id : "";
     if (isNode()) {
       await db.query(`insert into ${schema}"${db.sqlsanitize(
         this.name
-      )}_sync_info" values(${id},
+      )}_sync_info" values('${id}',
         date_trunc('milliseconds', to_timestamp(${
           (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
         })))`);
@@ -1421,24 +1424,25 @@ class Table implements AbstractTable {
       await db.query(
         `insert into "${db.sqlsanitize(this.name)}_sync_info"
          (ref, modified_local, deleted) 
-         values(${id}, true, false)`
+         values('${id}', true, false)`
       );
     }
   }
 
   private async updateSyncInfo(
-    id: number,
+    id: number | string,
     oldLastModified: Date,
     syncTimestamp?: Date
   ) {
     const schema = db.getTenantSchemaPrefix();
+    id = (typeof id === "number" || uuidValidate(id)) ? id : "";
     if (!db.isSQLite) {
       await db.query(
         `update ${schema}"${db.sqlsanitize(
           this.name
         )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp(${
           (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
-        })) where ref=${id} and last_modified = to_timestamp(${
+        })) where ref='${id}' and last_modified = to_timestamp(${
           oldLastModified.valueOf() / 1000.0
         })`
       );
@@ -1447,7 +1451,7 @@ class Table implements AbstractTable {
         `update "${db.sqlsanitize(
           this.name
         )}_sync_info" set modified_local = true 
-         where ref = ${id} and last_modified = ${
+         where ref = '${id}' and last_modified = ${
           oldLastModified ? oldLastModified.valueOf() : "null"
         }`
       );
@@ -1677,7 +1681,7 @@ class Table implements AbstractTable {
         ...v,
         [pk_name]: id,
         _version: {
-          next_version_by_id: +id,
+          next_version_by_id: uuidValidate(id)?id:+id,
         },
         _userid: user?.id,
         _time: new Date(),
@@ -2081,7 +2085,7 @@ class Table implements AbstractTable {
    * @param id
    * @returns {Promise<*>}
    */
-  async get_history(id: number): Promise<Row[]> {
+  async get_history(id: number | string): Promise<Row[]> {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
       { id },

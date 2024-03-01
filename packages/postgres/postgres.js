@@ -14,6 +14,8 @@ const {
   mkSelectOptions,
 } = require("@saltcorn/db-common/internal");
 
+const { validate: uuidValidate } = require('uuid');
+
 let getTenantSchema;
 let getConnectObject = null;
 let pool = null;
@@ -194,7 +196,7 @@ const insert = async (tbl, obj, opts = {}) => {
       valPosList.push(
         `coalesce((select max(_version) from "${schema}"."${sqlsanitize(
           tbl
-        )}" where id=${+v.next_version_by_id}), 0)+1`
+        )}" where id='${uuidValidate(v.next_version_by_id)?v.next_version_by_id:+v.next_version_by_id}'), 0)+1`
       );
       if (opts.onConflictDoNothing) conflict = "on conflict do nothing ";
     } else {
