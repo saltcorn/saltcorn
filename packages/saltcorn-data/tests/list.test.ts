@@ -591,4 +591,74 @@ describe("List fieldviews", () => {
       `<img src="/files/resize/66/66/magrite.png" onclick="expand_thumbnail('magrite.png', 'magrite.png')">`
     );
   });
+  it("relative date", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "relative",
+                textStyle: "",
+                field_name: "published",
+                configuration: {
+                  width: "66",
+                  expand: true,
+                  height: "66",
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "format",
+                textStyle: "",
+                field_name: "published",
+                configuration: {
+                  format: "YYYY",
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "relative",
+            textStyle: "",
+            field_name: "published",
+            configuration: {
+              width: "66",
+              expand: true,
+              height: "66",
+            },
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "format",
+            textStyle: "",
+            field_name: "published",
+            configuration: {
+              format: "YYYY",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain(`years ago<`);
+    expect(vres1).toContain(`>1971</time>`);
+  });
 });
+
+//sorting
