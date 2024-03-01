@@ -80,6 +80,43 @@ describe("Misc List views", () => {
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain("<td>Herman Melville: 977</td>");
   });
+  it("show if true", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              showif: "pages<800",
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "as_text",
+                textStyle: "",
+                field_name: "author",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "author",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).not.toContain("Herman Melville");
+    expect(vres1).toContain("Leo Tolstoy");
+  });
   it("dropdown menu", async () => {
     const view = await mkViewWithCfg({
       configuration: {
