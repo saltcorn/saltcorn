@@ -1692,6 +1692,12 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
       },
     });
   }
+  if (layout?.besides && layout?.list_columns) {
+    layout?.besides.forEach((s) => {
+      if (s.showif)
+        freeVars = new Set([...freeVars, ...freeVariables(s.showif)]);
+    });
+  }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
   return { joinFields, aggregations };
 };
