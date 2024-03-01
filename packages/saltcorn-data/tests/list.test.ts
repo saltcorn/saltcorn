@@ -563,6 +563,7 @@ describe("List sort options", () => {
           _order_field: "author",
         },
       },
+      name: "BookSortAsc",
     });
     const viewDesc = await mkViewWithCfg({
       configuration: {
@@ -572,15 +573,27 @@ describe("List sort options", () => {
           _descending: true,
         },
       },
+      name: "BookSortDesc",
     });
     const tBodyAuthors = (authors: string[]) =>
       `<tbody>${authors
         .map((nm) => `<tr><td>${nm}</td></tr>`)
         .join("")}</tbody>`;
+
     const vres1 = await viewAsc.run({}, mockReqRes);
     expect(vres1).toContain(tBodyAuthors(["Herman Melville", "Leo Tolstoy"]));
+
     const vres2 = await viewDesc.run({}, mockReqRes);
     expect(vres2).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    const vres3 = await viewDesc.run({ _28084_sortby: "pages" }, mockReqRes);
+    expect(vres3).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    const vres3a = await viewAsc.run({ _8a82a_sortby: "pages" }, mockReqRes);
+    expect(vres3a).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    const vres4 = await viewDesc.run(
+      { _28084_sortby: "pages", _28084_sortdesc: true },
+      mockReqRes
+    );
+    expect(vres4).toContain(tBodyAuthors(["Herman Melville", "Leo Tolstoy"]));
   });
 });
 

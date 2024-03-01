@@ -1136,10 +1136,11 @@ module.exports = {
       const rows_per_page =
         (default_state && default_state._rows_per_page) || 20;
       if (!q.limit) q.limit = rows_per_page;
+      const sort_from_state = !!q.orderBy;
       if (!q.orderBy)
         q.orderBy =
           (default_state && default_state._order_field) || table.pk_name;
-      if (!q.orderDesc)
+      if (!q.orderDesc && !sort_from_state)
         q.orderDesc = default_state && default_state._descending;
 
       const role = req && req.user ? req.user.role_id : 100;
