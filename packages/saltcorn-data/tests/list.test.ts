@@ -421,30 +421,38 @@ describe("Misc List views", () => {
       `<tr onclick="location.href='/view/authorshow?id=1'">`
     );
   });
-  /* it("runs button action", async () => {
+  it("runs button action", async () => {
     const view = await mkViewWithCfg({
       configuration: {
         layout: {
-          type: "action",
-          block: false,
-          rndid: "b6fd72",
-          nsteps: 1,
-          confirm: false,
-          minRole: 100,
-          isFormula: {},
-          action_icon: "",
-          action_name: "toast",
-          action_label: "",
-          action_style: "btn btn-primary",
-          configuration: {
-            text: "Hello!",
-            notify_type: "Notify",
-          },
+          besides: [
+            {
+              contents: {
+                type: "action",
+                block: false,
+                rndid: "d5af6d",
+                nsteps: 1,
+                confirm: false,
+                minRole: 100,
+                isFormula: {},
+                action_icon: "",
+                action_name: "toast",
+                action_label: "",
+                configuration: {
+                  text: "Hello from {{ author }}",
+                  notify_type: "Notify",
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
         },
         columns: [
           {
             type: "Action",
-            rndid: "b6fd72",
+            rndid: "d5af6d",
             nsteps: 1,
             confirm: false,
             minRole: 100,
@@ -452,21 +460,20 @@ describe("Misc List views", () => {
             action_icon: "",
             action_name: "toast",
             action_label: "",
-            action_style: "btn btn-primary",
             configuration: {
-              text: "Hello!",
+              text: "Hello from {{ author}}",
               notify_type: "Notify",
             },
           },
         ],
       },
     });
-    const vres1 = await view.run({ id: 1 }, mockReqRes);
-    expect(vres1).toBe(
-      `<a href="javascript:view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});" class="btn btn btn-primary ">toast</a>`
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain(
+      `<a href="javascript:view_post('${view.name}', 'run_action', {action_name:'toast', id:'1'});" class="btn btn-primary ">toast</a>`
     );
     mockReqRes.reset();
-    const body = { rndid: "b6fd72", id: "1" };
+    const body = { action_name: "toast", id: "1" };
     await view.runRoute(
       "run_action",
       body,
@@ -475,8 +482,8 @@ describe("Misc List views", () => {
       false
     );
     expect(mockReqRes.getStored().json).toStrictEqual({
-      notify: "Hello!",
+      notify: "Hello from Herman Melville",
       success: "ok",
     });
-  }); */
+  });
 });

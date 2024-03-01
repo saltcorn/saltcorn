@@ -1048,7 +1048,7 @@ const run_action = async (
       table,
       row,
       res,
-      referrer: req.get("Referrer"),
+      referrer: req?.get?.("Referrer"),
     });
     return { json: { success: "ok", ...(result || {}) } };
   } catch (e) {
