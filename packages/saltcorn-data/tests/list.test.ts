@@ -57,6 +57,29 @@ const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
 };
 
 describe("Misc List views", () => {
+  it("interpolates HTML", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "blank",
+                isHTML: true,
+                contents: "{{ author}}: {{pages+10}}",
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("<td>Herman Melville: 977</td>");
+  });
   it("with label formula viewlink", async () => {
     const view = await mkViewWithCfg({
       configuration: {
@@ -115,7 +138,8 @@ describe("Misc List views", () => {
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain('<a href="/view/show_publisher?id=1">AK Press</a>');
   });
-  it("with label formula viewlink", async () => {
+
+  it("with label formula viewlink and join field", async () => {
     const view = await mkViewWithCfg({
       configuration: {
         layout: {
