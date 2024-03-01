@@ -89,6 +89,10 @@ const getConnectObject = (connSpec = {}) => {
   setKey("password", "PGPASSWORD");
   setKey("database", "PGDATABASE");
   setKey("session_secret", "SALTCORN_SESSION_SECRET");
+  setKey("sslmode", "PGSSLMODE");
+  setKey("sslcert", "PGSSLCERT");
+  setKey("sslkey", "PGSSLKEY");
+  setKey("sslrootcert", "PGSSLROOTCERT");
   setKey("jwt_secret", "SALTCORN_JWT_SECRET");
   setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
   setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
@@ -102,6 +106,24 @@ const getConnectObject = (connSpec = {}) => {
     transform: stringToJSON,
   });
 
+  if (
+    connObj.sslmode ||
+    connObj.sslcert ||
+    connObj.sslkey ||
+    connObj.sslrootcert
+  ) {
+    //https://github.com/brianc/node-postgres/blob/2a8efbee09a284be12748ed3962bc9b816965e36/packages/pg/test/unit/connection-parameters/creation-tests.js#L333
+    connObj.ssl = {
+      sslmode: connObj.sslmode,
+      sslrootcert: connObj.sslrootcert,
+      sslcert: connObj.sslcert,
+      sslkey: connObj.sslkey,
+    };
+    delete connObj.sslmode;
+    delete connObj.sslcert;
+    delete connObj.sslkey;
+    delete connObj.sslrootcert;
+  }
   if (!connObj.session_secret) connObj.session_secret = is.str.generate();
   if (!connObj.jwt_secret)
     connObj.jwt_secret = crypto.randomBytes(64).toString("hex");
