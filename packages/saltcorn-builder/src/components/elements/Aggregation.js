@@ -58,16 +58,62 @@ const AggregationSettings = () => {
     aggwhere,
     block,
     textStyle,
+    agg_fieldview,
   } = useNode((node) => ({
     agg_relation: node.data.props.agg_relation,
     agg_field: node.data.props.agg_field,
     aggwhere: node.data.props.aggwhere,
     stat: node.data.props.stat,
     block: node.data.props.block,
+    agg_fieldview: node.data.props.agg_fieldview,
     textStyle: node.data.props.textStyle,
   }));
   const options = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
+
+  const targetField = options.agg_field_opts[agg_relation]?.find?.(
+    (f) => f.name === agg_field
+  );
+  const targetFieldType = targetField?.ftype;
+  const outcomeType =
+    stat === "Count" || stat === "CountUnique"
+      ? "Integer"
+      : stat === "Array_Agg"
+      ? "Array"
+      : targetFieldType;
+  const fvs = options.agg_fieldview_options[outcomeType];
+
+  /*const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
+  const cfgFields = fetchedCfgFields;
+  useEffect(() => {
+    fetch(`/field/fieldviewcfgform/${options.tableName}?accept=json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": options.csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify({
+        join_field: name,
+        join_fieldview: fieldview,
+        type: "JoinField",
+      }),
+    })
+      .then(function (response) {
+        if (response.status < 399) return response.json();
+        else return [];
+      })
+      .then(setFetchedCfgFields);
+  }, [name, fieldview]);
+
+  const refetchPreview = fetchFieldPreview({
+    options,
+    name,
+    fieldview,
+    configuration,
+    setPreviews,
+    node_id,
+  });*/
 
   return (
     <table>
@@ -169,6 +215,32 @@ const AggregationSettings = () => {
             />
           </td>
         </tr>
+        {fvs && (
+          <tr>
+            <td>
+              <label>Field view</label>
+            </td>
+
+            <td>
+              <select
+                value={agg_fieldview}
+                className="form-control form-select"
+                onChange={(e) => {
+                  if (!e.target) return;
+                  const value = e.target.value;
+                  setProp((prop) => (prop.agg_fieldview = value));
+                  //refetchPreview({ fieldview: value });
+                }}
+              >
+                {(fvs || []).map((fvnm, ix) => (
+                  <option key={ix} value={fvnm}>
+                    {fvnm}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+        )}
         <TextStyleRow textStyle={textStyle} setProp={setProp} />
         <tr>
           <td colSpan="2">
@@ -196,6 +268,7 @@ Aggregation.craft = {
       "agg_field",
       "aggwhere",
       "stat",
+      "agg_fieldview",
     ],
   },
 };
