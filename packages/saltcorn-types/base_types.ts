@@ -298,6 +298,7 @@ export type ViewTemplate = {
   openDataStream?: (
     table_id: number | undefined,
     viewName: string,
+    id: number | undefined,
     fieldName: string,
     fieldView: string,
     user: any,

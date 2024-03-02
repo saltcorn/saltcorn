@@ -1376,6 +1376,7 @@ const authorise_post = async (
 const openDataStream = async (
   tableId,
   viewName,
+  id,
   fieldName,
   fieldView,
   user,
@@ -1394,11 +1395,44 @@ const openDataStream = async (
       throw new InvalidConfiguration(`File view ${fieldView} not found`);
     return await fileView.openDataStream(
       tableId,
+      id,
       fieldName,
       user,
       cfgCol.configuration,
       targetOpts
     );
+  }
+};
+
+// TODO is owner check
+const authorizeDataStream = async (view, id, fieldName, user, targetOpts) => {
+  if (!user || user.role_id > view.min_role) return false;
+  else {
+    const table = Table.findOne({ id: view.table_id });
+    if (!table || user.role_id > table.min_role_write) return false;
+    else {
+      const field = table.getField(fieldName);
+      if (field.type === "File") {
+        if (targetOpts?.oldTarget) {
+          // continue old file ?
+          const file = await File.findOne(targetOpts.oldTarget);
+          if (file) return file.min_role_read >= user.role_id;
+        } else if (id) {
+          // continue file of existing row ?
+          const row = await table.getRow({ [table.pk_name]: id });
+          const fileCol = row[fieldName];
+          if (fileCol) {
+            const file = await File.findOne(row[fieldName]);
+            if (file) return file.min_role_read >= user.role_id;
+          }
+        }
+        // stream is new or the file does not exist
+        return true;
+      } else {
+        // only files for now
+        return false;
+      }
+    }
   }
 };
 
@@ -1834,6 +1868,7 @@ module.exports = {
   runMany,
   runPost,
   openDataStream,
+  authorizeDataStream,
   get_state_fields,
   initial_config,
   /** @type {boolean} */

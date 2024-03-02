@@ -458,14 +458,25 @@ const setupSocket = (subdomainOffset, ...servers) => {
 
     socket.on(
       "open_data_stream",
-      async ([viewName, fieldName, fieldView, targetOpts], callback) => {
+      async ([viewName, id, fieldName, fieldView, targetOpts], callback) => {
         const tenant =
           get_tenant_from_req(socket.request, subdomainOffset) || "public";
         const f = async () => {
           try {
             const user = socket.request.user;
             const view = View.findOne({ name: viewName });
+            if (view.viewtemplateObj.authorizeDataStream) {
+              const authorized = await view.viewtemplateObj.authorizeDataStream(
+                view,
+                id,
+                fieldName,
+                user,
+                targetOpts
+              );
+              if (!authorized) throw new Error("Not authorized");
+            }
             const { stream, target } = await view.openDataStream(
+              id,
               fieldName,
               fieldView,
               user,

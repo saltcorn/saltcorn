@@ -731,6 +731,7 @@ class View implements AbstractView {
   }
 
   async openDataStream(
+    id: number | undefined,
     fieldName: string,
     fieldView: string,
     user: any,
@@ -743,6 +744,7 @@ class View implements AbstractView {
     return await this.viewtemplateObj.openDataStream(
       this.table_id,
       this.name,
+      id,
       fieldName,
       fieldView,
       user,
