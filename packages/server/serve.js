@@ -394,21 +394,29 @@ const setupSocket = (subdomainOffset, ...servers) => {
     io.attach(server);
   }
 
-  //io.use(wrap(setTenant));
-  io.use(wrap(getSessionStore()));
-  io.use(wrap(passport.initialize()));
-  io.use(wrap(passport.authenticate(["jwt", "session"])));
+  const passportInit = passport.initialize();
+  const sessionStore = getSessionStore();
+  const setupNamespace = (namespace) => {
+    //io.of(namespace).use(wrap(setTenant));
+    io.of(namespace).use(wrap(sessionStore));
+    io.of(namespace).use(wrap(passportInit));
+    io.of(namespace).use(wrap(passport.authenticate(["jwt", "session"])));
+  };
+  setupNamespace("/");
+  setupNamespace("/datastream");
   if (process.send && !cluster.isMaster) io.adapter(createAdapter());
   getState().setRoomEmitter((tenant, viewname, room_id, msg) => {
-    io.to(`${tenant}_${viewname}_${room_id}`).emit("message", msg);
+    io.of("/").to(`${tenant}_${viewname}_${room_id}`).emit("message", msg);
   });
 
   getState().setLogEmitter((tenant, level, msg) => {
     const time = new Date().valueOf();
-    io.to(`_logs_${tenant}_`).emit("log_msg", { text: msg, time, level });
+    io.of("/")
+      .to(`_logs_${tenant}_`)
+      .emit("log_msg", { text: msg, time, level });
   });
 
-  io.on("connection", (socket) => {
+  io.of("/").on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
       const ten = get_tenant_from_req(socket.request) || "public";
       const f = () => {
@@ -454,8 +462,21 @@ const setupSocket = (subdomainOffset, ...servers) => {
       else await f();
     });
 
-    let dataStream = null;
+    socket.on("disconnect", async () => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = async () => {
+        const socketIds = await getState().getConfig("joined_log_socket_ids");
+        const newSocketIds = socketIds.filter((id) => id !== socket.id);
+        await getState().setConfig("joined_log_socket_ids", newSocketIds);
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      else f();
+    });
+  });
 
+  io.of("/datastream").on("connection", (socket) => {
+    let dataStream = null;
     socket.on(
       "open_data_stream",
       async ([viewName, id, fieldName, fieldView, targetOpts], callback) => {
@@ -535,7 +556,7 @@ const setupSocket = (subdomainOffset, ...servers) => {
       const tenant =
         get_tenant_from_req(socket.request, subdomainOffset) || "public";
       const f = async () => {
-        if (dataStream) {
+        if (dataStream)
           dataStream.close((err) => {
             if (err) {
               getState().log(
@@ -549,11 +570,6 @@ const setupSocket = (subdomainOffset, ...servers) => {
               dataStream = null;
             }
           });
-        } else {
-          const socketIds = await getState().getConfig("joined_log_socket_ids");
-          const newSocketIds = socketIds.filter((id) => id !== socket.id);
-          await getState().setConfig("joined_log_socket_ids", newSocketIds);
-        }
       };
       if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
       else f();
