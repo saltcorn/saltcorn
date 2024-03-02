@@ -493,6 +493,7 @@ export const fetchViewPreview =
     };
     let viewname,
       body = configuration ? { ...configuration } : {};
+    if (!view) return "";
     if (view.includes(":")) {
       const [prefix, rest] = view.split(":");
       const tokens = rest.split(".");
