@@ -993,6 +993,15 @@ const get_viewable_fields = (
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>
               type.fieldviews[column.agg_fieldview].run(x, req, column);
+        } else if (column.agg_fieldview) {
+          const outcomeType =
+            column.stat === "Count" || column.stat === "CountUnique"
+              ? "Integer"
+              : fld.type?.name;
+          const type = getState().types[outcomeType];
+          if (type?.fieldviews[column.agg_fieldview])
+            showValue = (x) =>
+              type.fieldviews[column.agg_fieldview].run(x, req, column);
         }
 
         let key = (r) => {

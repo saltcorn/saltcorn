@@ -879,7 +879,22 @@ const render = (
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");
-      else return text(val);
+      else if (column.agg_fieldview) {
+        const outcomeType =
+          stat === "Count" || stat === "CountUnique"
+            ? "Integer"
+            : fld.type?.name;
+        const type = getState().types[outcomeType];
+        if (type?.fieldviews[column.agg_fieldview]) {
+          const readval = type.read(val);
+          return type.fieldviews[column.agg_fieldview].run(
+            readval,
+            req,
+            column
+          );
+        }
+      }
+      return text(val);
     },
     action(segment) {
       if (segment.action_style === "on_page_load") {
