@@ -86,7 +86,7 @@ const AggregationSettings = () => {
                 setProp((prop) => {
                   prop.agg_relation = value;
                   const fs = options.agg_field_opts[value];
-                  if (fs && fs.length > 0) prop.agg_field = fs[0];
+                  if (fs && fs.length > 0) prop.agg_field = fs[0]?.name;
                 });
               }}
             >
@@ -109,8 +109,8 @@ const AggregationSettings = () => {
               onChange={setAProp("agg_field")}
             >
               {(options.agg_field_opts[agg_relation] || []).map((f, ix) => (
-                <option key={ix} value={f}>
-                  {f}
+                <option key={ix} value={f.name}>
+                  {f.label}
                 </option>
               ))}
             </select>

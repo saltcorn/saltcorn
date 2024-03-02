@@ -220,7 +220,11 @@ const configuration_workflow = (req) =>
               `${table.name}.${key_field.name}`;
             agg_field_opts[aggKey] = table.fields
               .filter((f) => !f.calculated || f.stored)
-              .map((f) => f.name);
+              .map((f) => ({
+                name: f.name,
+                label: f.label,
+                ftype: f.type.name || f.type,
+              }));
           });
           const pages = await Page.find();
           const groups = (await PageGroup.find()).map((g) => ({
