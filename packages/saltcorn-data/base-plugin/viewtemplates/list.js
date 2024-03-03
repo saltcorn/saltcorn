@@ -220,7 +220,20 @@ const configuration_workflow = (req) =>
               `${table.name}.${key_field.name}`;
             agg_field_opts[aggKey] = table.fields
               .filter((f) => !f.calculated || f.stored)
-              .map((f) => f.name);
+              .map((f) => ({
+                name: f.name,
+                label: f.label,
+                ftype: f.type.name || f.type,
+                table_name: table.name,
+                table_id: table.id,
+              }));
+          });
+          const agg_fieldview_options = {};
+
+          Object.values(getState().types).forEach((t) => {
+            agg_fieldview_options[t.name] = Object.entries(t.fieldviews)
+              .filter(([k, v]) => !v.isEdit && !v.isFilter)
+              .map(([k, v]) => k);
           });
           const pages = await Page.find();
           const groups = (await PageGroup.find()).map((g) => ({
@@ -319,6 +332,7 @@ const configuration_workflow = (req) =>
             parent_field_list,
             child_field_list,
             agg_field_opts,
+            agg_fieldview_options,
             min_role: (myviewrow || {}).min_role,
             roles,
             library,

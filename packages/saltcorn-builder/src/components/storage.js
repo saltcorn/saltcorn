@@ -180,6 +180,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           step_only_ifs={segment.step_only_ifs || ""}
           step_action_names={segment.step_action_names || ""}
           confirm={segment.confirm}
+          spinner={segment.spinner}
           configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
@@ -632,6 +633,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         action_textcol: node.props.action_textcol,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
+        spinner: node.props.spinner,
         nsteps: node.props.nsteps,
         step_only_ifs: node.props.step_only_ifs,
         step_action_names: node.props.step_action_names,
@@ -644,6 +646,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         block: node.props.block,
         configuration: node.props.configuration,
         confirm: node.props.confirm,
+        spinner: node.props.spinner,
         action_name: node.props.name,
         ...(node.props.name !== "Clear" && node.props.action_row_variable
           ? {

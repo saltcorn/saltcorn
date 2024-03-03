@@ -490,7 +490,7 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => (
   >
     <Aggregation
       agg_relation={child_field_list[0]}
-      agg_field={headOr(agg_field_opts[child_field_list[0]], "")}
+      agg_field={headOr(agg_field_opts[child_field_list[0]], "")?.name}
       stat={"Count"}
       textStyle={""}
       aggwhere={""}

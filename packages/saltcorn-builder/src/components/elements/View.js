@@ -152,7 +152,7 @@ const ViewSettings = () => {
     if (rest.startsWith(".")) viewname = prefix;
     else viewname = rest;
   }
-  if (viewname.includes(".")) viewname = viewname.split(".")[0];
+  if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
 
   if (
     finder &&
@@ -177,7 +177,7 @@ const ViewSettings = () => {
     : [undefined, undefined];
   let safeRelation = null;
   const subView = views.find((view) => view.name === viewname);
-  if (relation) {
+  if (relation && subView) {
     const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
     safeRelation = new Relation(
       relation,
@@ -187,7 +187,7 @@ const ViewSettings = () => {
   }
   if (
     options.mode !== "filter" &&
-    subView.table_id &&
+    subView?.table_id &&
     !safeRelation &&
     !hasLegacyRelation &&
     relationsData?.relations.length > 0
@@ -290,18 +290,26 @@ const ViewSettings = () => {
       ) : (
         <div>
           <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-          <select
-            value={view}
-            className="form-control form-select"
-            onChange={setAProp("view")}
-            onBlur={setAProp("view")}
-          >
-            {options.views.map((f, ix) => (
-              <option key={ix} value={f.name}>
-                {f.label || f.name}
-              </option>
-            ))}
-          </select>
+          {options.inJestTestingMode ? null : (
+            <Select
+              options={viewOptions}
+              value={selectedView}
+              onChange={(e) => {
+                const target_value = e?.target?.value || e?.value;
+                setProp((prop) => {
+                  prop.view = target_value;
+                });
+              }}
+              onBlur={(e) => {
+                const target_value = e?.target?.value || e?.value;
+                setProp((prop) => {
+                  prop.view = target_value;
+                });
+              }}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+            ></Select>
+          )}
         </div>
       )}
       {options.mode !== "edit" && (
