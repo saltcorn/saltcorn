@@ -798,13 +798,16 @@ const get_viewable_fields = (
               return a(
                 {
                   href: "javascript:" + url.javascript,
-                  class: column.in_dropdown
-                    ? "dropdown-item"
-                    : column.action_style === "btn-link"
-                    ? ""
-                    : `btn ${column.action_style || "btn-primary"} ${
+                  class: [
+                    column.in_dropdown && "dropdown-item",
+                    column.action_style !== "btn-link" &&
+                      `btn ${column.action_style || "btn-primary"} ${
                         column.action_size || ""
                       }`,
+                  ],
+                  onclick: column.spinner
+                    ? "spin_action_link(this)"
+                    : undefined,
                 },
                 !!icon &&
                   icon !== "empty" &&
@@ -818,6 +821,7 @@ const get_viewable_fields = (
                 icon,
                 reload_on_done: true,
                 confirm: column.confirm,
+                spinner: column.spinner,
                 btnClass: column.in_dropdown
                   ? "dropdown-item"
                   : column.action_style || "btn-primary",
@@ -826,6 +830,7 @@ const get_viewable_fields = (
           },
         };
         if (column.in_dropdown) {
+          //legacy
           dropdown_actions.push(action_col);
           return false;
         } else return action_col;
@@ -1142,6 +1147,7 @@ const get_viewable_fields = (
     })
   ).filter((v) => !!v);
   if (dropdown_actions.length > 0) {
+    //legacy
     tfields.push({
       label: req.__("Action"),
       key: (r) =>
