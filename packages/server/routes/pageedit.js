@@ -21,6 +21,8 @@ const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
 const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
 const db = require("@saltcorn/data/db");
 const { getPageList, getPageGroupList } = require("./common_lists");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
+const Tag = require("@saltcorn/data/models/tag");
 
 const {
   isAdmin,
@@ -184,7 +186,7 @@ const pageBuilderData = async (req, context) => {
   for (const view of views) {
     fixed_state_fields[view.name] = [];
     const table = Table.findOne(view.table_id || view.exttable_name);
-
+    if (table) view.table_name = table.name;
     const fs = await view.get_state_fields();
     for (const frec of fs) {
       const f = new Field(frec);
@@ -217,9 +219,10 @@ const pageBuilderData = async (req, context) => {
       }
     }
   }
+
   //console.log(fixed_state_fields.ListTasks);
   return {
-    views,
+    views: views.map((v) => v.select_option),
     images,
     pages,
     page_groups,
@@ -293,7 +296,18 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const pages = await Page.find({}, { orderBy: "name", nocase: true });
+    const pageq = {};
+    let filterOnTag;
+
+    if (req.query._tag) {
+      const tagEntries = await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { page_id: null },
+      });
+      pageq.id = { in: tagEntries.map((te) => te.page_id).filter(Boolean) };
+      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+    }
+    const pages = await Page.find(pageq, { orderBy: "name", nocase: true });
     const pageGroups = await PageGroup.find(
       {},
       { orderBy: "name", nocase: true }
@@ -311,7 +325,7 @@ router.get(
           title: req.__("Your pages"),
           class: "mt-0",
           contents: div(
-            getPageList(pages, roles, req),
+            await getPageList(pages, roles, req, { filterOnTag }),
             a(
               {
                 href: `/pageedit/new`,
@@ -370,7 +384,7 @@ const wrap = (contents, noCard, req, page) => ({
       crumbs: [
         { text: req.__("Pages"), href: "/pageedit" },
         page
-          ? { href: `/page/${page.name}`, text: page.name }
+          ? { href: `/page/${encodeURIComponent(page.name)}`, text: page.name }
           : { text: req.__("New") },
       ],
     },
@@ -677,9 +691,11 @@ router.post(
 
     if (id && req.body.layout) {
       await Page.update(+id, { layout: req.body.layout });
-      res.json({ success: "ok" });
+      res.json({
+        success: "ok",
+      });
     } else {
-      res.json({ error: "no page or no layout." });
+      res.json({ error: req.__("Unable to save: No page or no layout") });
     }
   })
 );

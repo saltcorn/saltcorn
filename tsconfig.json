@@ -24,6 +24,9 @@
     },
     {
       "path": "./packages/saltcorn-mobile-builder/tsconfig.ref.json"
+    },
+    {
+      "path": "./packages/common-code/tsconfig.ref.json"
     }
   ]
 }

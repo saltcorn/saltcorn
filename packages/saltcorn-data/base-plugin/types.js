@@ -271,7 +271,7 @@ const show_with_html = {
       evaluate: /\{\{#(.+?)\}\}/g,
       interpolate: /\{\{([^#].+?)\}\}/g,
     });
-    const rendered = template({ it: v });
+    const rendered = template({ it: v, user: req?.user });
     return rendered;
   },
 };
@@ -527,7 +527,7 @@ const string = {
         type: "String",
         required: false,
         sublabel:
-          'Use this to restrict your field to a list of options (separated by commas). For instance, if the permissible values are "Red", "Green" and "Blue", enter "Red, Green, Blue" here. Leave blank if the string can hold any value.',
+          'Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class="fst-normal">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.',
       },
       {
         name: "min_length",
@@ -765,8 +765,18 @@ const string = {
                   onChange: attrs.onChange,
                   onBlur: attrs.onChange,
                   autocomplete: "off",
+                  required:
+                    attrs.placeholder && (required || attrs.force_required),
                 },
-                required || attrs.force_required
+                attrs.placeholder && (required || attrs.force_required)
+                  ? [
+                      option(
+                        { value: "", disabled: true, selected: !v },
+                        attrs.placeholder
+                      ),
+                      ...getStrOptions(v, attrs.options),
+                    ]
+                  : required || attrs.force_required
                   ? getStrOptions(v, attrs.options)
                   : [
                       option({ value: "" }, attrs.neutral_label || ""),
@@ -987,6 +997,11 @@ const string = {
           name: "rows",
           label: "Rows",
         },
+        {
+          name: "placeholder",
+          label: "Placeholder",
+          type: "String",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
@@ -997,6 +1012,7 @@ const string = {
             disabled: attrs.disabled,
             onChange: attrs.onChange,
             readonly: attrs.readonly,
+            placeholder: attrs.placeholder,
             spellcheck: attrs.spellcheck === false ? "false" : undefined,
             required: !!required,
             maxlength: isdef(attrs.max_length) && attrs.max_length,
@@ -1213,6 +1229,11 @@ const int = {
           label: "Read-only",
           type: "Bool",
         },
+        {
+          name: "autofocus",
+          label: "Autofocus",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const id = `input${text_attr(nm)}`;
@@ -1227,6 +1248,7 @@ const int = {
               class: ["form-control", cls],
               disabled: attrs.disabled,
               readonly: attrs.readonly,
+              autofocus: attrs.autofocus,
               "data-fieldname": text_attr(field.name),
               name,
               onChange: attrs.onChange,

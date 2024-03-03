@@ -13,10 +13,16 @@ const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i } = require("@saltcorn/markup/tags");
 const {
-  applyAsync,
-  InvalidConfiguration,
+  Relation,
+  RelationType,
+  ViewDisplayType,
   parseRelationPath,
   buildRelationPath,
+} = require("@saltcorn/common-code");
+const {
+  applyAsync,
+  InvalidConfiguration,
+
   mergeActionResults,
 } = require("./utils");
 const {
@@ -24,6 +30,7 @@ const {
   freeVariables,
   add_free_variables_to_joinfields,
   eval_expression,
+  freeVariablesInInterpolation,
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
@@ -797,6 +804,7 @@ const field_picker_fields = async ({
   ];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
+    table_id: null,
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
@@ -1539,8 +1547,11 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
     } else if (column.type === "FormulaValue") {
       freeVars = new Set([...freeVars, ...freeVariables(column.formula)]);
     } else if (column.type === "ViewLink") {
-      if (column.view_label_formula)
-        freeVars = new Set([...freeVars, ...freeVariables(column.view_label)]);
+      if (column.view_label_formula || column.isFormula?.label)
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(column.view_label || column.label),
+        ]);
       if (column.extra_state_fml)
         freeVars = new Set([
           ...freeVars,
@@ -1648,16 +1659,26 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
         if (v?.isFormula?.url && typeof v.url === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
       },
+      tabs(v) {
+        (v.titles || []).forEach((t) => {
+          if (typeof t === "string")
+            freeVars = new Set([
+              ...freeVars,
+              ...freeVariablesInInterpolation(t),
+            ]);
+        });
+        (v.showif || []).forEach((t) => {
+          freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
+        });
+      },
       blank(v) {
         if (v?.isFormula?.text && typeof v.contents === "string")
           freeVars = new Set([...freeVars, ...freeVariables(v.contents)]);
         if (v.isHTML)
-          ((v.contents || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach(
-            (s) => {
-              const s1 = s.replace("{{", "").replace("}}", "").trim();
-              freeVars = new Set([...freeVars, ...freeVariables(s1)]);
-            }
-          );
+          freeVars = new Set([
+            ...freeVars,
+            ...freeVariablesInInterpolation(v.contents),
+          ]);
       },
       container(v) {
         if (v.showIfFormula)
@@ -1669,6 +1690,12 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
         if (v.isFormula?.customClass)
           freeVars = new Set([...freeVars, ...freeVariables(v.customClass)]);
       },
+    });
+  }
+  if (layout?.besides && layout?.list_columns) {
+    layout?.besides.forEach((s) => {
+      if (s.showif)
+        freeVars = new Set([...freeVars, ...freeVariables(s.showif)]);
     });
   }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
@@ -2194,7 +2221,7 @@ const readState = (state, fields, req) => {
           : current;
       else if (typeof current === "object") {
         //ignore
-      } else if (f.type.read) state[f.name] = f.type.read(current);
+      } else if (f.type?.read) state[f.name] = f.type.read(current);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const pname = current.replace("Preset:", "");
         if (Object.prototype.hasOwnProperty.call(f.presets, pname)) {
@@ -2259,7 +2286,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     f.constructor.name === Object.name ? new Field(f) : f
   );
   const getRows = async (where = {}, selopts = {}) => {
-    let data_in = await get_json_list({ where, ...selopts });
+    let data_in = await get_json_list(where, selopts);
     const restricts = Object.entries(where);
     const sat =
       (x) =>
@@ -2318,8 +2345,13 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       const { where, ...rest } = opts;
       return getRows(where || {}, rest || {});
     },
+    async getJoinedRow(opts = {}) {
+      const { where, ...rest } = opts;
+      const rows = await getRows(where || {}, rest || {});
+      return rows.length > 0 ? rows[0] : null;
+    },
     async countRows(where, opts) {
-      let data_in = await get_json_list({ ...where, ...opts });
+      let data_in = await get_json_list(where, opts);
       return data_in.length;
     },
     get_child_relations() {
@@ -2340,6 +2372,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
     slug_options() {
       return [];
     },
+    enable_fkey_constraints() {},
     ownership_options() {
       return [];
     },
@@ -2380,49 +2413,70 @@ const run_action_column = async ({ col, req, ...rest }) => {
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
-    if (state_action) configuration = colcfg;
-    else {
+    let goRun;
+    if (state_action) {
+      configuration = colcfg;
+      goRun = () =>
+        state_action.run({
+          configuration,
+          user: req.user,
+          req,
+          ...rest,
+        });
+    } else {
       const trigger = await Trigger.findOne({ name: action_name });
-      if (trigger) {
+
+      if (trigger?.action === "Multi-step action") {
+        goRun = () => trigger.runWithoutRow({ req, ...rest });
+      } else if (trigger) {
         state_action = getState().actions[trigger.action];
-        configuration = trigger.configuration;
+        goRun = () =>
+          state_action.run({
+            configuration: trigger.configuration,
+            user: req.user,
+            req,
+            ...rest,
+          });
       }
     }
-    if (!state_action)
+    if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-    return await state_action.run({
-      configuration,
-      user: req.user,
-      req,
-      ...rest,
-    });
+
+    return await goRun();
   };
   if (col.action_name === "Multi-step action") {
-    const result = {};
-    for (let i = 0; i < col.step_action_names.length; i++) {
+    let result = {};
+    let step_count = 0;
+    let MAX_STEPS = 200;
+    for (
+      let i = 0;
+      i < col.step_action_names.length && step_count < MAX_STEPS;
+      i++
+    ) {
+      step_count += 1;
+
       const action_name = col.step_action_names?.[i];
       if (!action_name) continue;
       const only_if = col.step_only_ifs?.[i];
       const config = col.configuration.steps?.[i] || {};
       if (only_if && rest.row) {
-        if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
+        if (!eval_expression(only_if, rest.row, req?.user)) continue;
       }
       const stepres = await run_action_step(action_name, config);
+      if (stepres?.goto_step) {
+        i = +stepres.goto_step - 2;
+        delete stepres.goto_step;
+      }
+      if (stepres?.clear_return_values) result = {};
       try {
         mergeActionResults(result, stepres);
       } catch (error) {
         console.error(error);
       }
-      if (result.error) break;
+      if (result.error || result.halt_steps) break;
     }
     return result;
   } else return await run_action_step(col.action_name, col.configuration);
-};
-
-const ViewDisplayType = {
-  ROW_REQUIRED: "ROW_REQUIRED",
-  NO_ROW_LIMIT: "NO_ROW_LIMIT",
-  INVALID: "INVALID",
 };
 
 const displayType = (stateFields) =>
@@ -2465,57 +2519,34 @@ const build_schema_data = async () => {
 };
 
 /**
- * tries to match a type to a relation
- * if it's not ChildList, ParentShow, Own, or Independent then RelationPath is returned
- * @param {View} subView
- * @param {string[]} path
- * @param {Table} srcTable
- * @returns ChildList, ParentShow, Own, Independent or RelationPath
+ *
+ * @param {Relation} relation
+ * @param {function} getRowVal
  */
-const relationTypeFromPath = (subview, path, srcTable) => {
-  if (path.length === 1 && path[0].inboundKey)
-    return "ChildList"; // works for OneToOneShow as well
-  else if (path.length === 2 && path.every((p) => p.inboundKey))
-    return "ChildList";
-  else if (path.length === 1 && path[0].fkey) return "ParentShow";
-  else if (path.length === 0)
-    return subview.table_id === srcTable.id ? "Own" : "Independent";
-  else return "RelationPath";
-};
-
-/**
- * creates a state object from a relation path
- * @param {View} subview
- * @param {string} relation
- * @param {string[]} pathArr
- * @param {Function} getRowVal
- * @param {Table} srcTbl
- */
-const pathToState = (subview, relation, pathArr, getRowVal, srcTbl) => {
-  if (!subview?.table_id) return {};
-  const subTbl = Table.findOne({ id: subview.table_id });
-  if (!subTbl) return {};
-  const pkName = subTbl.pk_name;
-  switch (relationTypeFromPath(subview, pathArr, srcTbl)) {
-    case "ChildList":
-      return pathArr.length === 1
-        ? {
-            [pathArr[0].inboundKey]: getRowVal(pkName), // works for OneToOneShow as well
-          }
+const pathToState = (relation, getRowVal) => {
+  const targetTbl = Table.findOne({ name: relation.targetTblName });
+  const pkName = targetTbl.pk_name;
+  const path = relation.path;
+  switch (relation.type) {
+    case RelationType.CHILD_LIST:
+    case RelationType.ONE_TO_ONE_SHOW:
+      return path.length === 1
+        ? { [path[0].inboundKey]: getRowVal(pkName) }
         : {
-            [`${pathArr[1].table}.${pathArr[1].inboundKey}.${pathArr[0].table}.${pathArr[0].inboundKey}`]:
+            [`${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}`]:
               getRowVal(pkName),
           };
-    case "ParentShow":
-      return { id: getRowVal(pathArr[0].fkey) };
-    case "Own":
+    case RelationType.PARENT_SHOW:
+      return { id: getRowVal(path[0].fkey) };
+    case RelationType.OWN:
       return { [pkName]: getRowVal(pkName) };
-    case "Independent":
+    case RelationType.INDEPENDENT:
+    case RelationType.NONE:
       return {};
-    case "RelationPath":
+    case RelationType.RELATION_PATH:
       return {
-        [relation]:
-          getRowVal(pathArr[0].fkey ? pathArr[0].fkey : pkName) || "NULL",
+        [relation.relationString]:
+          getRowVal(path[0].fkey ? path[0].fkey : pkName) || "NULL",
       };
   }
 };
@@ -2545,6 +2576,6 @@ module.exports = {
   get_inbound_self_relation_opts,
   get_many_to_many_relation_opts,
   build_schema_data,
-  relationTypeFromPath,
   pathToState,
+  displayType,
 };

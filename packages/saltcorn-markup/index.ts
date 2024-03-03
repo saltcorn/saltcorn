@@ -246,9 +246,12 @@ const localeDate = (date: Date, options: any = {}): string =>
     },
     date.toLocaleDateString("en", options)
   );
+const badge = (col: string, lbl: string): string =>
+  `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
 
 export = {
   mkTable,
+  badge,
   renderForm,
   settingsDropdown,
   renderBuilder,

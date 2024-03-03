@@ -101,16 +101,19 @@ class RunTestsCommand extends Command {
     }
   }
 
-  async copySchemaIntoBuilder() {
+  async copySchemaIntoPck(pckNames) {
     const schemaData = await build_schema_data();
-    const schemaFile = path.join(
-      process.cwd(),
-      "packages",
-      "saltcorn-builder",
-      "tests",
-      "schema_data.json"
-    );
-    fs.writeFileSync(schemaFile, JSON.stringify(schemaData));
+    const copy = (name) => {
+      const schemaFile = path.join(
+        process.cwd(),
+        "packages",
+        name,
+        "tests",
+        "schema_data.json"
+      );
+      fs.writeFileSync(schemaFile, JSON.stringify(schemaData));
+    };
+    for (const name of pckNames) copy(name);
   }
 
   /**
@@ -140,8 +143,10 @@ class RunTestsCommand extends Command {
     const reset = require("@saltcorn/data/db/reset_schema");
     await reset();
     await fixtures();
-    if (args.package === "saltcorn-builder" || !args.package)
-      await this.copySchemaIntoBuilder();
+    if (!args.package)
+      await this.copySchemaIntoPck(["saltcorn-builder", "common-code"]);
+    else if (["saltcorn-builder", "common-code"].includes(args.package))
+      await this.copySchemaIntoPck([args.package]);
     await db.close();
     let jestParams = ["--"];
     // toddo add --logHeapUsage

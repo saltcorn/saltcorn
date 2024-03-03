@@ -81,6 +81,11 @@ const RenderNode = ({ render }) => {
   }, [dom, getPos]);
 
   useEffect(() => {
+    if (name === "Column" && parent && parent !== "ROOT")
+      actions.selectNode(parent);
+  }, [isActive]);
+
+  useEffect(() => {
     document
       .getElementById("builder-main-canvas")
       .addEventListener("scroll", scroll);

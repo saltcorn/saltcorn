@@ -13,6 +13,7 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const Model = require("@saltcorn/data/models/model");
 const Trigger = require("@saltcorn/data/models/trigger");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
 const {
   mkTable,
   renderForm,
@@ -59,10 +60,12 @@ const { tablesList, viewsList } = require("./common_lists");
 const {
   InvalidConfiguration,
   removeAllWhiteSpace,
+  comparingCaseInsensitive,
 } = require("@saltcorn/data/utils");
 const { EOL } = require("os");
 
 const path = require("path");
+const Tag = require("@saltcorn/data/models/tag");
 /**
  * @type {object}
  * @const
@@ -714,6 +717,7 @@ router.get(
       ...new Set(child_relations.map(({ table }) => table.name)),
     ];
     const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
+    triggers.sort(comparingCaseInsensitive("name"));
     let fieldCard;
     if (fields.length === 0) {
       fieldCard = [
@@ -785,7 +789,16 @@ router.get(
         triggers.length
           ? req.__("Table triggers: ") +
             triggers
-              .map((t) => link(`/actions/configure/${t.id}`, t.name))
+              .map((t) =>
+                link(
+                  `/actions/configure/${
+                    t.id
+                  }?on_done_redirect=${encodeURIComponent(
+                    `table/${table.name}`
+                  )}`,
+                  t.name
+                )
+              )
               .join(", ") +
             "<br>"
           : "",
@@ -1211,13 +1224,23 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const rows = await Table.find_with_external(
-      {},
-      { orderBy: "name", nocase: true }
-    );
+    const tblq = {};
+    let filterOnTag;
+    if (req.query._tag) {
+      const tagEntries = await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { table_id: null },
+      });
+      tblq.id = { in: tagEntries.map((te) => te.table_id).filter(Boolean) };
+      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+    }
+    const rows = await Table.find_with_external(tblq, {
+      orderBy: "name",
+      nocase: true,
+    });
     const roles = await User.get_roles();
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
-    const mainCard = await tablesList(rows, req);
+    const mainCard = await tablesList(rows, req, { filterOnTag });
     const createCard = div(
       a(
         { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },

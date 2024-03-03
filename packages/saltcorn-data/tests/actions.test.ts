@@ -7,8 +7,13 @@ import runScheduler from "../models/scheduler";
 import db from "../db";
 const { getState } = require("../db/state");
 import mocks from "../tests/mocks";
-const { plugin_with_routes, getActionCounter, resetActionCounter, sleep } =
-  mocks;
+const {
+  plugin_with_routes,
+  getActionCounter,
+  resetActionCounter,
+  mockReqRes,
+  sleep,
+} = mocks;
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
@@ -16,6 +21,7 @@ const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
   baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
+import { run_action_column } from "../plugin-helper";
 const { applyAsync, mergeActionResults } = utils;
 
 afterAll(db.close);
@@ -142,7 +148,7 @@ describe("Action", () => {
     //const table = Table.findOne({ name: "books" });
 
     const triggers = await Trigger.findAllWithTableName();
-    expect(triggers.length).toBe(5);
+    expect(triggers.length).toBe(7);
     const trigger = triggers.find(
       (tr) => tr && tr.table_name === "books" && tr.when_trigger === "Update"
     );
@@ -579,5 +585,147 @@ describe("mergeActionResults", () => {
     mergeActionResults(result, { set_fields: { y: 2 } });
     mergeActionResults(result, { set_fields: { z: 3 } });
     expect(result).toStrictEqual({ set_fields: { y: 2, z: 3 } });
+  });
+});
+
+describe("multistep triggers", () => {
+  it("should run", async () => {
+    const trigger = await Trigger.findOne({ name: "MySteps" });
+    const runres = await trigger.runWithoutRow({});
+    expect(runres.error).toBe("errrr");
+    expect(runres.notify).toBe("note");
+    expect(runres.notify_success).toBe("fooo");
+  });
+});
+
+describe("run_action_column", () => {
+  it("should run state action", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "2d6f57",
+        nsteps: 1,
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "toast",
+        action_label: "",
+        configuration: {
+          text: "note2",
+          run_where: "Server",
+          notify_type: "Notify",
+        },
+      },
+    });
+    expect(runres).toStrictEqual({ notify: "note2" });
+  });
+  it("should run trigger action", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "2d6f57",
+        nsteps: 1,
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "Toast1",
+        action_label: "",
+        configuration: {},
+      },
+    });
+    expect(runres).toStrictEqual({ notify_success: "fooo" });
+  });
+  it("should run multistep builder", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "5f990e",
+        nsteps: "2",
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "Multi-step action",
+        action_label: "",
+        configuration: {
+          steps: [
+            {
+              code: "1;",
+              run_where: "Server",
+            },
+            {
+              text: "note3",
+              notify_type: "Notify",
+            },
+            {
+              text: "succ3",
+              notify_type: "Success",
+            },
+          ],
+        },
+        step_action_names: ["run_js_code", "toast", "toast"],
+      },
+    });
+    expect(runres).toStrictEqual({ notify: "note3", notify_success: "succ3" });
+  });
+  it("should run multistep builder with trigger step", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "45a31c",
+        nsteps: "2",
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "Multi-step action",
+        action_label: "",
+        configuration: {
+          steps: [
+            {
+              text: "note3",
+              notify_type: "Notify",
+            },
+            {
+              text: "succ3",
+              notify_type: "Success",
+            },
+          ],
+        },
+        step_action_names: ["toast", "Toast1"],
+      },
+    });
+    expect(runres).toStrictEqual({ notify: "note3", notify_success: "fooo" });
+  });
+  it("should run multitrigger step", async () => {
+    const runres = await run_action_column({
+      req: mockReqRes.req,
+      col: {
+        type: "action",
+        block: false,
+        rndid: "cd9965",
+        nsteps: 1,
+        confirm: false,
+        minRole: 100,
+        isFormula: {},
+        action_icon: "",
+        action_name: "MySteps",
+        action_label: "",
+        configuration: {},
+      },
+    });
+    expect(runres.error).toBe("errrr");
+    expect(runres.notify).toBe("note");
+    expect(runres.notify_success).toBe("fooo");
   });
 });

@@ -9,7 +9,16 @@ import {
   withKeyFromLayerTwo,
   withKeyFromLayerThree,
   withSimplePostTopicrelation,
-} from "./test_data";
+} from "@saltcorn/common-code/tests/test_data";
+
+import {
+  expectedOne,
+  expectedTwo,
+  expectedThree,
+  expectedFour,
+  expectedFive,
+  expectedSix,
+} from "@saltcorn/common-code/tests/expected_relations";
 import { ViewSettings } from "../src/components/elements/View";
 import { ViewLinkSettings } from "../src/components/elements/ViewLink";
 
@@ -50,6 +59,7 @@ const doTest = (
     views: views,
     tableName: tableName,
     roles: [],
+    inJestTestingMode: true,
     excluded_subview_templates: excludedTemplates,
     // relationsCtx part
     relationsCache: relationsCache,
@@ -60,43 +70,47 @@ const doTest = (
   renderer.create(<ViewSettings></ViewSettings>);
   expect(spy).toBeCalled();
   const vCallArgs = spy.mock.calls[0];
-  expect(vCallArgs[0].paths).toBeDefined();
-  expect(vCallArgs[0].paths).toHaveLength(expected.length);
-  expect(vCallArgs[0].paths).toEqual(expect.arrayContaining(expected));
+  expect(vCallArgs[0].relations).toBeDefined();
+  expect(vCallArgs[0].relations).toHaveLength(expected.length);
+  expect(vCallArgs[0].relations.map((rel) => rel.relationString)).toEqual(
+    expect.arrayContaining(expected)
+  );
 
   renderer.create(<ViewLinkSettings></ViewLinkSettings>);
   expect(spy.mock.calls).toHaveLength(4);
   const vLinkcallArgs = spy.mock.calls[2];
-  expect(vLinkcallArgs[0].paths).toBeDefined();
-  expect(vLinkcallArgs[0].paths).toHaveLength(expected.length);
-  expect(vLinkcallArgs[0].paths).toEqual(expect.arrayContaining(expected));
+  expect(vLinkcallArgs[0].relations).toBeDefined();
+  expect(vLinkcallArgs[0].relations).toHaveLength(expected.length);
+  expect(vLinkcallArgs[0].relations.map((rel) => rel.relationString)).toEqual(
+    expect.arrayContaining(expected)
+  );
 };
 
 describe("relations tests", () => {
-  beforeAll(() => {
-    // inject relationHelpers (normally it's a script tag)
-    global.relationHelpers = {
-      ...require("../../server/public/relation_helpers.js"),
-    };
-  });
   beforeEach(() => {
     jest.restoreAllMocks();
   });
   describe("single relations", () => {
-    it("parent relations", async () => {
-      const { tables, views } = fixturesData();
+    it("parent relations", () => {
+      const { tables, views } = fixturesData(__dirname);
       const expected = [".fan_club.artist"];
       doTest(tables, views, "fan_club", "show_artist", expected);
     });
 
-    it("one to one relations", async () => {
-      const { tables, views } = fixturesData();
+    it("parent relations with layers", () => {
+      const { tables, views } = fixturesData(__dirname);
+      const expected = [".patients.favbook.publisher"];
+      doTest(tables, views, "patients", "show_publisher", expected);
+    });
+
+    it("one to one relations", () => {
+      const { tables, views } = fixturesData(__dirname);
       const expected = [".covers.albums$cover"];
       doTest(tables, views, "covers", "show_album", expected);
     });
 
-    it("employee department relation", async () => {
-      const { tables, views } = fixturesData();
+    it("employee department relation", () => {
+      const { tables, views } = fixturesData(__dirname);
       const expected = [".employee", ".employee.department.manager"];
       doTest(tables, views, "employee", "show_manager", expected);
     });
@@ -104,85 +118,37 @@ describe("relations tests", () => {
 
   describe("multi relations", () => {
     describe("inbound relations", () => {
-      const expectedOne = [
-        ".",
-        ".users.user_interested_in_topic$user.topic.blog_in_topic$topic",
-        ".users.user_interested_in_topic$user.topic.inbound_inbound$topic.bp_inbound.post.blog_in_topic$post",
-        ".users.messages$user.room.participants$room.user.user_interested_in_topic$user.topic.blog_in_topic$topic",
-      ];
-      it("single keys to source and rel table", async () => {
-        const { tables, views } = fixturesData();
+      it("single keys to source and rel table", () => {
+        const { tables, views } = fixturesData(__dirname);
         doTest(tables, views, "users", "blog_in_topic_feed", expectedOne);
       });
 
-      const expectedTwo = [
-        ...expectedOne,
-        ".users.user_interested_in_topic$another_user.topic.blog_in_topic$topic",
-        ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.bp_inbound.post.blog_in_topic$post",
-        ".users.messages$user.room.participants$room.user.user_interested_in_topic$another_user.topic.blog_in_topic$topic",
-      ];
-      it("multiple keys to source and single key to rel table", async () => {
-        const { tables, views } = withAnotherUserField();
+      it("multiple keys to source and single key to rel table", () => {
+        const { tables, views } = withAnotherUserField(__dirname);
         doTest(tables, views, "users", "blog_in_topic_feed", expectedTwo);
       });
 
-      const expectedThree = [
-        ...expectedTwo,
-        ".users.user_interested_in_topic$user.topic.blog_in_topic$second_topic",
-        ".users.user_interested_in_topic$another_user.topic.blog_in_topic$second_topic",
-        ".users.messages$user.room.participants$room.user.user_interested_in_topic$user.topic.blog_in_topic$second_topic",
-        ".users.messages$user.room.participants$room.user.user_interested_in_topic$another_user.topic.blog_in_topic$second_topic",
-      ];
-      it("multiple keys to source and rel table", async () => {
-        const { tables, views } = withSecondTopicField();
+      it("multiple keys to source and rel table", () => {
+        const { tables, views } = withSecondTopicField(__dirname);
         doTest(tables, views, "users", "blog_in_topic_feed", expectedThree);
       });
 
-      const expectedFour = [
-        ...expectedThree,
-        ".users.user_interested_in_topic$user.another_user.second_inbound$user.topic.blog_in_topic$topic",
-        ".users.user_interested_in_topic$user.another_user.second_inbound$user.topic.blog_in_topic$second_topic",
-        ".users.second_inbound$user.topic.blog_in_topic$topic",
-        ".users.second_inbound$user.topic.blog_in_topic$second_topic",
-        ".users.second_inbound$user.topic.inbound_inbound$topic.bp_inbound.post.blog_in_topic$post",
-        ".users.messages$user.room.participants$room.user.second_inbound$user.topic.blog_in_topic$topic",
-        ".users.messages$user.room.participants$room.user.second_inbound$user.topic.blog_in_topic$second_topic",
-      ];
-      it("multiple inbound tables", async () => {
-        const { tables, views } = withMultipleInbounds();
+      it("multiple inbound tables", () => {
+        const { tables, views } = withMultipleInbounds(__dirname);
         doTest(tables, views, "users", "blog_in_topic_feed", expectedFour);
       });
 
-      const expectedFive = [
-        ...expectedFour,
-        ".users.user_interested_in_topic$user.topic.inbound_inbound$topic.post_from_layer_two.blog_in_topic$post",
-        ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.post_from_layer_two.blog_in_topic$post",
-        ".users.second_inbound$user.topic.inbound_inbound$topic.post_from_layer_two.blog_in_topic$post",
-        ".users.user_interested_in_topic$user.topic.blog_in_topic$topic.post.inbound_inbound$post_from_layer_two.topic.blog_in_topic$second_topic",
-        ".users.user_interested_in_topic$user.another_user.second_inbound$user.topic.inbound_inbound$topic.post_from_layer_two.blog_in_topic$post",
-        ".users.user_interested_in_topic$another_user.topic.blog_in_topic$topic.post.inbound_inbound$post_from_layer_two.topic.blog_in_topic$second_topic",
-        ".users.second_inbound$user.topic.blog_in_topic$topic.post.inbound_inbound$post_from_layer_two.topic.blog_in_topic$second_topic",
-      ];
-      it("key to source from layer two", async () => {
-        const { tables, views } = withKeyFromLayerTwo();
+      it("key to source from layer two", () => {
+        const { tables, views } = withKeyFromLayerTwo(__dirname);
         doTest(tables, views, "users", "blog_in_topic_feed", expectedFive);
       });
 
-      const expectedSix = [
-        ...expectedFive,
-        ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post.blog_in_topic$post",
-        ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.post_from_layer_two.blog_in_topic$post",
-        ".users.user_interested_in_topic$another_user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post.blog_in_topic$post",
-        ".users.user_interested_in_topic$another_user.topic.inbound_level_three$topic.inbound_level_two.post_from_layer_two.blog_in_topic$post",
-        ".users.second_inbound$user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post.blog_in_topic$post",
-        ".users.second_inbound$user.topic.inbound_level_three$topic.inbound_level_two.post_from_layer_two.blog_in_topic$post",
-      ];
-      it("three levels inbound", async () => {
-        const { tables, views } = withKeyFromLayerThree();
+      it("three levels inbound", () => {
+        const { tables, views } = withKeyFromLayerThree(__dirname);
         doTest(tables, views, "users", "blog_in_topic_feed", expectedSix);
       });
 
-      it("simple post topic relation", async () => {
+      it("simple post topic relation", () => {
         const expected = [
           ".",
           ".users.favsimpletopic.simple_posts$topic",
@@ -190,20 +156,20 @@ describe("relations tests", () => {
           ".users.messages$user.room.participants$room.user.favsimpletopic.simple_posts$topic",
           ".users.messages$user.room.participants$room.user.favsimpletopic.simple_post_inbound$topic.post",
         ];
-        const { tables, views } = withSimplePostTopicrelation();
+        const { tables, views } = withSimplePostTopicrelation(__dirname);
         doTest(tables, views, "users", "simple_posts_list", expected);
       });
     });
 
     describe("many to many relations", () => {
-      it("artist_plays_on_album", async () => {
-        const { tables, views } = fixturesData();
+      it("artist_plays_on_album", () => {
+        const { tables, views } = fixturesData(__dirname);
         const expected = [".", ".artists.artist_plays_on_album$artist.album"];
         doTest(tables, views, "artists", "albums_feed", expected);
       });
 
-      it("tracks on album", async () => {
-        const { tables, views } = fixturesData();
+      it("tracks on album", () => {
+        const { tables, views } = fixturesData(__dirname);
         const expected = [
           ".",
           ".artists.artist_plays_on_album$artist.album.tracks_on_album$album",
@@ -211,8 +177,8 @@ describe("relations tests", () => {
         doTest(tables, views, "artists", "tracks_on_album_feed", expected);
       });
 
-      it("show pressing_job with embedded fan club feed", async () => {
-        const { tables, views } = fixturesData();
+      it("show pressing_job with embedded fan club feed", () => {
+        const { tables, views } = fixturesData(__dirname);
         const expected = [
           ".",
           ".pressing_job.album.artist_plays_on_album$album.artist.fan_club$artist",
@@ -222,8 +188,8 @@ describe("relations tests", () => {
     });
 
     describe("excluded viewtemplates", () => {
-      it("excluded viewtemplates", async () => {
-        const { tables, views } = fixturesData();
+      it("excluded viewtemplates", () => {
+        const { tables, views } = fixturesData(__dirname);
         const expected = [];
         const excluded = ["Room"];
         doTest(tables, views, "participants", "rooms_view", expected, excluded);
@@ -232,7 +198,7 @@ describe("relations tests", () => {
 
     describe("open legacy relations", () => {
       it("ChildList", async () => {
-        const { tables, views } = fixturesData();
+        const { tables, views } = fixturesData(__dirname);
         const expected = [".", ".books.discusses_books$book"];
         doTest(
           tables,
@@ -247,7 +213,7 @@ describe("relations tests", () => {
       });
 
       it("Independent", async () => {
-        const { tables, views } = fixturesData();
+        const { tables, views } = fixturesData(__dirname);
         const expected = [
           ".",
           ".blog_posts",
@@ -266,7 +232,7 @@ describe("relations tests", () => {
       });
 
       it("Own", async () => {
-        const { tables, views } = fixturesData();
+        const { tables, views } = fixturesData(__dirname);
         const expected = [".books"];
         doTest(
           tables,

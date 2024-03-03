@@ -70,6 +70,11 @@ const select = {
       type: "Bool",
     },
     {
+      name: "placeholder",
+      label: "Placeholder",
+      type: "String",
+    },
+    {
       name: "disable",
       label: "Disable",
       type: "Bool",
@@ -171,6 +176,7 @@ const select = {
         readonly: attrs.readonly,
         onChange: attrs.onChange,
         autocomplete: "off",
+        required: attrs.placeholder && (field.required || attrs.force_required),
         ...(attrs?.dynamic_where
           ? {
               "data-selected": v,
@@ -180,6 +186,9 @@ const select = {
             }
           : {}),
       },
+      attrs.placeholder &&
+        (field.required || attrs.force_required) &&
+        option({ value: "", disabled: true, selected: !v }, attrs.placeholder),
       selOptions
     );
   },
@@ -228,13 +237,13 @@ const select_from_table = {
         label: "Where",
         type: "String",
       },
-      /*{
+      {
         name: "label_formula",
         label: "Label formula",
         type: "String",
         class: "validate-expression",
         sublabel: "Uses summary field if blank",
-      },*/
+      },
       {
         name: "force_required",
         label: "Force required",
@@ -272,7 +281,10 @@ const select_from_table = {
               target: srcField.attributes.summary_field,
             },
           }
-        : {}
+        : {},
+      typeof extraCtx?.user_id === "object"
+        ? extraCtx?.user_id //TODO why is this ever an object??
+        : extraCtx?.user || null
     );
     const get_label = field.attributes?.label_formula
       ? (r) => {
@@ -633,9 +645,16 @@ const search_or_create = {
               attrs.summary_field
             }+'</option>').join("")
             ${reqd ? "" : `opts = '<option></option>'+opts`}
-            $(elem).prev().html(opts).prop('selectedIndex', res.success.length${
+            const sel = $(elem).prev().html(opts);
+            sel.html(opts).prop('selectedIndex', res.success.length${
               reqd ? "-1" : ""
             }); 
+            // https://stackoverflow.com/a/26232541
+            var selected = sel.val(); // cache selected value, before reordering
+            var opts_list = sel.find('option');
+            opts_list.sort(function(a, b) { return $(a).text().toLowerCase() > $(b).text().toLowerCase() ? 1 : -1; });
+            sel.html('').append(opts_list);
+            sel.val(selected);
           }
         })
       }`)

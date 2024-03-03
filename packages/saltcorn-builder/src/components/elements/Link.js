@@ -281,6 +281,7 @@ const LinkSettings = () => {
             values={node}
             linkFirst={true}
             linkIsBlank={true}
+            allowRunOnLoad={false}
           />
         </tbody>
       </table>

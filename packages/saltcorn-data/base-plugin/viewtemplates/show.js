@@ -14,6 +14,7 @@ const PageGroup = require("../../models/page_group");
 const Crash = require("../../models/crash");
 const Workflow = require("../../models/workflow");
 const Trigger = require("../../models/trigger");
+const { Relation } = require("@saltcorn/common-code");
 
 const { getState } = require("../../db/state");
 const {
@@ -51,6 +52,7 @@ const {
   add_free_variables_to_joinfields,
   stateToQueryString,
   pathToState,
+  displayType,
 } = require("../../plugin-helper");
 const {
   action_url,
@@ -76,6 +78,7 @@ const {
   get_expression_function,
   eval_expression,
   freeVariables,
+  freeVariablesInInterpolation,
 } = require("../../models/expression");
 const { get_base_url } = require("../../models/config");
 const Library = require("../../models/library");
@@ -112,12 +115,15 @@ const configuration_workflow = (req) =>
             ...builtInActions,
             ...stateActions.map(([k, v]) => k),
           ];
+          const triggerActions = [];
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
+              table_id: null,
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           (
             await Trigger.find({
@@ -125,6 +131,7 @@ const configuration_workflow = (req) =>
             })
           ).forEach((tr) => {
             actions.push(tr.name);
+            triggerActions.push(tr.name);
           });
           for (const field of fields) {
             if (field.type === "Key") {
@@ -178,7 +185,20 @@ const configuration_workflow = (req) =>
               `${table.name}.${key_field.name}`;
             agg_field_opts[aggKey] = table.fields
               .filter((f) => !f.calculated || f.stored)
-              .map((f) => f.name);
+              .map((f) => ({
+                name: f.name,
+                label: f.label,
+                ftype: f.type.name || f.type,
+                table_name: table.name,
+                table_id: table.id,
+              }));
+          });
+          const agg_fieldview_options = {};
+
+          Object.values(getState().types).forEach((t) => {
+            agg_fieldview_options[t.name] = Object.entries(t.fieldviews)
+              .filter(([k, v]) => !v.isEdit && !v.isFilter)
+              .map(([k, v]) => k);
           });
           const pages = await Page.find();
           const groups = (await PageGroup.find()).map((g) => ({
@@ -194,6 +214,7 @@ const configuration_workflow = (req) =>
             fields: fields.map((f) => f.toBuilder),
             images,
             actions,
+            triggerActions,
             builtInActions,
             actionConfigForms,
             //fieldViewConfigForms,
@@ -204,6 +225,7 @@ const configuration_workflow = (req) =>
             parent_field_list,
             child_field_list,
             agg_field_opts,
+            agg_fieldview_options,
             min_role: (myviewrow || {}).min_role,
             roles,
             library,
@@ -218,29 +240,6 @@ const configuration_workflow = (req) =>
               table.name === "users",
           };
         },
-      },
-      {
-        name: req.__("Set page title"),
-        form: () =>
-          new Form({
-            blurb: req.__(
-              "Skip this section if you do not want to set the page title"
-            ),
-            fields: [
-              {
-                name: "page_title",
-                label: req.__("Page title"),
-                class: "validate-expression validate-expression-conditional",
-                type: "String",
-              },
-              {
-                name: "page_title_formula",
-                label: req.__("Page title is a formula?"),
-                type: "Bool",
-                required: false,
-              },
-            ],
-          }),
       },
     ],
   });
@@ -332,6 +331,7 @@ const run = async (
     req: extra.req,
     res: extra.res,
     row: rows[0],
+    isPreview: extra.isPreview,
   });
 
   const rendered = (
@@ -344,6 +344,8 @@ const run = async (
       state
     )
   )[0];
+
+  //legacy
   let page_title_preamble = "";
   if (page_title) {
     let the_title = page_title;
@@ -353,6 +355,7 @@ const run = async (
     }
     page_title_preamble = `<!--SCPT:${text_attr(the_title)}-->`;
   }
+
   if (!extra.req.generate_email) return page_title_preamble + rendered;
   else {
     return rendered;
@@ -372,6 +375,7 @@ const set_load_actions_join_fieldviews = async ({
   req,
   res,
   row,
+  isPreview,
 }) => {
   await traverse(layout, {
     join_field: async (segment) => {
@@ -386,9 +390,14 @@ const set_load_actions_join_fieldviews = async ({
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //run action
+        if (isPreview) {
+          segment.type = "blank";
+          segment.style = {};
+          return;
+        }
         const actionResult = await run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req,
           res,
           table,
@@ -459,6 +468,7 @@ const renderRows = async (
   }
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
+      // do all the parsing with data here? make a factory
       const view = await getView(segment.view, segment.relation);
       if (!view)
         throw new InvalidConfiguration(
@@ -477,7 +487,7 @@ const renderRows = async (
           )
         )[0];
       } else {
-        let state1;
+        let state1 = {};
         const pk_name = table.pk_name;
         const get_row_val = (k) => {
           //handle expanded joinfields
@@ -485,37 +495,37 @@ const renderRows = async (
           if (row[k]?.id === null) return null;
           return row[k]?.id || row[k];
         };
-        switch (view.view_select.type) {
-          case "RelationPath": {
-            state1 = pathToState(
-              view,
-              segment.relation,
-              view.view_select.path,
-              get_row_val,
-              table
-            );
-            break;
+        if (view.view_select.type === "RelationPath" && view.table_id) {
+          const targetTbl = Table.findOne({ id: view.table_id });
+          const relation = new Relation(
+            segment.relation,
+            targetTbl.name,
+            displayType(await view.get_state_fields())
+          );
+          state1 = pathToState(relation, get_row_val);
+        } else {
+          switch (view.view_select.type) {
+            case "Own":
+              state1 = { [pk_name]: get_row_val(pk_name) };
+              break;
+            case "Independent":
+              state1 = {};
+              break;
+            case "ChildList":
+            case "OneToOneShow":
+              state1 = {
+                [view.view_select.through
+                  ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
+                  : view.view_select.field_name]: get_row_val(pk_name),
+              };
+              break;
+            case "ParentShow":
+              //todo set by pk name of parent tablr
+              state1 = {
+                id: get_row_val(view.view_select.field_name),
+              };
+              break;
           }
-          case "Own":
-            state1 = { [pk_name]: get_row_val(pk_name) };
-            break;
-          case "Independent":
-            state1 = {};
-            break;
-          case "ChildList":
-          case "OneToOneShow":
-            state1 = {
-              [view.view_select.through
-                ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
-                : view.view_select.field_name]: get_row_val(pk_name),
-            };
-            break;
-          case "ParentShow":
-            //todo set by pk name of parent tablr
-            state1 = {
-              id: get_row_val(view.view_select.field_name),
-            };
-            break;
         }
         const extra_state = segment.extra_state_fml
           ? eval_expression(
@@ -586,7 +596,8 @@ const renderRows = async (
       role,
       extra.req,
       is_owner,
-      state
+      state,
+      extra
     );
   });
 };
@@ -651,7 +662,8 @@ const render = (
   role,
   req,
   is_owner,
-  state
+  state,
+  extra
 ) => {
   const session_id = getSessionId(req);
   const evalMaybeExpr = (segment, key, fmlkey) => {
@@ -681,15 +693,18 @@ const render = (
       evalMaybeExpr(segment, "contents", "text");
     },
     tabs(segment) {
+      const to_delete = new Set();
+
       (segment.showif || []).forEach((sif, ix) => {
         if (sif) {
           const showit = eval_expression(sif, { session_id, ...row }, req.user);
-          if (!showit) {
-            segment.titles.splice(ix, 1);
-            segment.contents.splice(ix, 1);
-          }
+          if (!showit) to_delete.add(ix);
         }
       });
+
+      // TODO mutation here - potential issue with renderRows
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
@@ -729,6 +744,12 @@ const render = (
         const f = get_expression_function(segment.showIfFormula, fields);
         if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
           segment.hide = true;
+        else segment.hide = false;
+      }
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${
+          segment.click_action
+        }', ${table.pk_name}: ${JSON.stringify(row[table.pk_name])}})`;
       }
     },
   });
@@ -858,13 +879,29 @@ const render = (
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");
-      else return text(val);
+      else if (column.agg_fieldview) {
+        const outcomeType =
+          stat === "Count" || stat === "CountUnique"
+            ? "Integer"
+            : fld.type?.name;
+        const type = getState().types[outcomeType];
+        if (type?.fieldviews[column.agg_fieldview]) {
+          const readval = type.read(val);
+          return type.fieldviews[column.agg_fieldview].run(
+            readval,
+            req,
+            column?.configuration || {}
+          );
+        }
+      }
+      return text(val);
     },
     action(segment) {
       if (segment.action_style === "on_page_load") {
+        if (extra?.isPreview) return "";
         run_action_column({
           col: { ...segment },
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
           req: req,
         }).catch((e) => Crash.create(e, req));
         return "";
@@ -914,7 +951,7 @@ const render = (
           evaluate: /\{\{#(.+?)\}\}/g,
           interpolate: /\{\{([^#].+?)\}\}/g,
         });
-        const temres = template({ row, ...row });
+        const temres = template({ row, user: req?.user, ...row });
         return temres;
       } else return segment.contents;
     },
@@ -981,7 +1018,13 @@ module.exports = {
   async interpolate_title_string(table_id, title, state) {
     const tbl = Table.findOne(table_id);
     if (state?.[tbl.pk_name]) {
-      const row = await tbl.getRow({ [tbl.pk_name]: state[tbl.pk_name] });
+      const freeVars = freeVariablesInInterpolation(title);
+      const joinFields = {};
+      add_free_variables_to_joinfields(freeVars, joinFields, tbl.fields);
+      const row = await tbl.getJoinedRow({
+        where: { [tbl.pk_name]: state[tbl.pk_name] },
+        joinFields,
+      });
       const template = _.template(title, {
         interpolate: /\{\{([^#].+?)\}\}/g,
       });
@@ -1089,22 +1132,43 @@ module.exports = {
     },
     async actionQuery() {
       const body = req.body;
+
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = Table.findOne({ id: table_id });
       const row = await table.getRow(
-        { id: body.id },
+        { [table.pk_name]: body[table.pk_name] },
         { forUser: req.user, forPublic: !req.user }
       );
       try {
+        if (body.click_action) {
+          let container;
+          traverseSync(layout, {
+            container(segment) {
+              if (segment.click_action === body.click_action)
+                container = segment;
+            },
+          });
+          if (!container) return { json: { error: "Action not found" } };
+          const trigger = Trigger.findOne({ name: body.click_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            user: req.user,
+            referrer: req?.get?.("Referrer"),
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        }
         const result = await run_action_column({
           col,
           req,
           table,
           row,
           res,
-          referrer: req.get("Referrer"),
+          referrer: req?.get?.("Referrer"),
         });
         return { json: { success: "ok", ...(result || {}) } };
       } catch (e) {

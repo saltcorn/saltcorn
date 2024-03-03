@@ -13,6 +13,7 @@ const {
   features,
 } = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
+const { hash } = require("@saltcorn/data/utils");
 const { input, script, domReady } = require("@saltcorn/markup/tags");
 const session = require("express-session");
 const cookieSession = require("cookie-session");
@@ -21,6 +22,7 @@ const { validateHeaderName, validateHeaderValue } = require("http");
 const Crash = require("@saltcorn/data/models/crash");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
+const Page = require("@saltcorn/data/models/page");
 const si = require("systeminformation");
 const {
   config_fields_form,
@@ -30,6 +32,7 @@ const {
 } = require("../markup/admin.js");
 const path = require("path");
 const { UAParser } = require("ua-parser-js");
+const crypto = require("crypto");
 
 const get_sys_info = async () => {
   const disks = await si.fsSize();
@@ -144,9 +147,10 @@ const set_custom_http_headers = (res, req, state) => {
 /**
  * Tries to recognize tenant from HTTP Request
  * @param {object} req
+ * @param {number|undefined} hostPartsOffset (optional) for socketIO, to get the tenant with localhost
  * @returns {string}
  */
-const get_tenant_from_req = (req) => {
+const get_tenant_from_req = (req, hostPartsOffset) => {
   if (req.subdomains && req.subdomains.length > 0)
     return req.subdomains[req.subdomains.length - 1];
 
@@ -154,7 +158,8 @@ const get_tenant_from_req = (req) => {
     return db.connectObj.default_schema;
   if (!req.subdomains && req.headers.host) {
     const parts = req.headers.host.split(".");
-    if (parts.length < 3) return db.connectObj.default_schema;
+    if (parts.length < (!hostPartsOffset ? 3 : 3 - hostPartsOffset))
+      return db.connectObj.default_schema;
     else return parts[0];
   }
 };
@@ -505,6 +510,21 @@ const getEligiblePage = async (pageGroup, req, res) => {
   }
 };
 
+/**
+ * @param {PageGroup} pageGroup
+ * @param {any} req
+ * @returns the page, null or an error msg
+ */
+const getRandomPage = (pageGroup, req) => {
+  if (pageGroup.members.length === 0)
+    return req.__("Pagegroup %s has no members", pageGroup.name);
+  const hash = crypto.createHash("sha1").update(req.sessionID).digest("hex");
+  const idx =
+    parseInt(hash.substring(hash.length - 4), 16) % pageGroup.members.length;
+  const sessionMember = pageGroup.members[idx];
+  return Page.findOne({ id: sessionMember.page_id });
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -524,4 +544,5 @@ module.exports = {
   sendHtmlFile,
   setRole,
   getEligiblePage,
+  getRandomPage,
 };

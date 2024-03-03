@@ -332,17 +332,18 @@ router.get("/logout", async (req, res, next) => {
     res.json({ success: true });
   } else if (req.logout) {
     req.logout(function (err) {
+      const destination = getState().getConfig("logout_url", "/auth/login");
       if (req.session.destroy)
         req.session.destroy((err) => {
           if (err) return next(err);
           req.logout(() => {
-            res.redirect("/auth/login");
+            res.redirect(destination);
           });
         });
       else {
         req.logout(function (err) {
           req.session = null;
-          res.redirect("/auth/login");
+          res.redirect(destination);
         });
       }
     });
@@ -1782,6 +1783,7 @@ router.post(
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
+    console.log("TOTP return ", rv);
     user._attributes.totp_enabled = true;
     await user.update({ _attributes: user._attributes });
     req.flash(
@@ -1900,6 +1902,9 @@ router.get(
     const form = new Form({
       action: "/auth/twofa/login/totp",
       submitLabel: "Verify",
+      blurb: req.__(
+        "Please enter the two-factor authetication code from your authenticator device"
+      ),
       fields: [
         {
           name: "code",
@@ -1910,6 +1915,7 @@ router.get(
             inputmode: "numeric",
             pattern: "[0-9]*",
             autocomplete: "one-time-code",
+            autofocus: true,
           },
           required: true,
         },

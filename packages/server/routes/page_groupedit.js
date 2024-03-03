@@ -29,9 +29,17 @@ const groupPropsForm = async (req, isNew) => {
     ...(isNew
       ? {}
       : {
-          onChange: `saveAndContinue(this, (res) => {
-  history.replaceState(null, '', res.responseJSON.row.name);
-});`,
+          onChange: `
+  saveAndContinue(this, (res) => {
+    history.replaceState(null, '', res.responseJSON.row.name);
+    const arrowsVisible = $('#upDownArrowsId').length > 0;
+    if (
+      arrowsVisible && res.responseJSON.row.random_allocation ||
+      !arrowsVisible && !res.responseJSON.row.random_allocation
+    ) {
+      window.location.reload();
+    }    
+  });`,
         }),
     noSubmitButton: !isNew,
     fields: [
@@ -68,65 +76,78 @@ const groupPropsForm = async (req, isNew) => {
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
+      {
+        name: "random_allocation",
+        label: req.__("Random allocation"),
+        type: "Bool",
+        sublabel: req.__(
+          "Serve a random page, ignoring the eligible formula. " +
+            "Within a session, reloads will always deliver the same page. " +
+            "This is a basic requirement for A/B testing."
+        ),
+      },
     ],
   });
 };
 
-const memberForm = async (action, req, groupName, pageValidator) => {
+const memberForm = async (action, req, group, pageValidator) => {
   const pageOptions = (await Page.find()).map((p) => p.name);
+  const fields = [
+    {
+      name: "page_name",
+      label: req.__("Page"),
+      sublabel: req.__("Page to be served"),
+      type: "String",
+      required: true,
+      validator: pageValidator,
+      attributes: {
+        options: pageOptions,
+      },
+    },
+    {
+      name: "description",
+      label: req.__("Description"),
+      type: "String",
+      sublabel: req.__("A description of the group member"),
+    },
+  ];
+  if (!group.random_allocation) {
+    fields.push({
+      name: "eligible_formula",
+      label: req.__("Eligible Formula"),
+      sublabel:
+        req.__("Formula to determine if this page should be served.") +
+        br() +
+        span(
+          "Variables in scope: ",
+          [
+            "width",
+            "height",
+            "innerWidth",
+            "innerHeight",
+            "user",
+            "locale",
+            "device",
+          ]
+            .map((f) => code(f))
+            .join(", ")
+        ),
+      help: {
+        topic: "Eligible Formula",
+      },
+      type: "String",
+      required: true,
+      class: "validate-expression",
+    });
+  }
   return new Form({
     action,
-    fields: [
-      {
-        name: "page_name",
-        label: req.__("Page"),
-        sublabel: req.__("Page to be served"),
-        type: "String",
-        required: true,
-        validator: pageValidator,
-        attributes: {
-          options: pageOptions,
-        },
-      },
-      {
-        name: "description",
-        label: req.__("Description"),
-        type: "String",
-        sublabel: req.__("A description of the group member"),
-      },
-      {
-        name: "eligible_formula",
-        label: req.__("Eligible Formula"),
-        sublabel:
-          req.__("Formula to determine if this page should be served.") +
-          br() +
-          span(
-            "Variables in scope: ",
-            [
-              "width",
-              "height",
-              "innerWidth",
-              "innerHeight",
-              "user",
-              "locale",
-              "device",
-            ]
-              .map((f) => code(f))
-              .join(", ")
-          ),
-        help: {
-          topic: "Eligible Formula",
-        },
-        type: "String",
-        required: true,
-        class: "validate-expression",
-      },
-    ],
+    fields,
     additionalButtons: [
       {
         label: req.__("Cancel"),
         class: "btn btn-primary",
-        onclick: `cancelMemberEdit('${groupName}');`,
+        onclick: `cancelMemberEdit('${group.name}');`,
       },
     ],
   });
@@ -142,7 +163,7 @@ const editMemberForm = async (member, req) => {
   return await memberForm(
     `/page_groupedit/edit-member/${member.id}`,
     req,
-    group.name,
+    group,
     validator
   );
 };
@@ -156,7 +177,7 @@ const addMemberForm = async (group, req) => {
   return await memberForm(
     `/page_groupedit/add-member/${group.name}`,
     req,
-    group.name,
+    group,
     validator
   );
 };
@@ -224,7 +245,7 @@ const pageGroupMembers = async (pageGroup, req) => {
     if (members.length <= 1) return "";
     else
       return div(
-        { class: "container" },
+        { class: "container", id: "upDownArrowsId" },
         div(
           { class: "row" },
           div(
@@ -266,38 +287,38 @@ const pageGroupMembers = async (pageGroup, req) => {
         )
       );
   };
-
-  return mkTable(
-    [
-      {
-        label: req.__("Page"),
-        key: (r) =>
-          link(`/page/${pageIdToName[r.page_id]}`, pageIdToName[r.page_id]),
-      },
-      {
-        label: "",
-        key: (r) => upDownBtns(r, req),
-      },
-      {
-        label: req.__("Edit"),
-        key: (member) =>
-          link(`/page_groupedit/edit-member/${member.id}`, req.__("Edit")),
-      },
-      {
-        label: req.__("Delete"),
-        key: (member) =>
-          post_delete_btn(
-            `/page_groupedit/remove-member/${member.id}`,
-            req,
-            req.__("Member %s", member.sequence)
-          ),
-      },
-    ],
-    members,
+  const tblArr = [
     {
-      hover: true,
+      label: req.__("Page"),
+      key: (r) =>
+        link(`/page/${pageIdToName[r.page_id]}`, pageIdToName[r.page_id]),
+    },
+  ];
+  if (!pageGroup.random_allocation) {
+    tblArr.push({
+      label: "",
+      key: (r) => upDownBtns(r, req),
+    });
+  }
+  tblArr.push(
+    {
+      label: req.__("Edit"),
+      key: (member) =>
+        link(`/page_groupedit/edit-member/${member.id}`, req.__("Edit")),
+    },
+    {
+      label: req.__("Delete"),
+      key: (member) =>
+        post_delete_btn(
+          `/page_groupedit/remove-member/${member.id}`,
+          req,
+          req.__("Member %s", member.sequence)
+        ),
     }
   );
+  return mkTable(tblArr, members, {
+    hover: true,
+  });
 };
 
 /**

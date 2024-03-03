@@ -125,7 +125,22 @@ const getApp = async (opts = {}) => {
 
   // https://www.npmjs.com/package/helmet
   // helmet is secure app by adding HTTP headers
-  app.use(helmet());
+
+  const cross_domain_iframe = getState().getConfig(
+    "cross_domain_iframe",
+    false
+  );
+
+  const helmetOptions = {
+    contentSecurityPolicy: false,
+    referrerPolicy: {
+      policy: ["same-origin"],
+    },
+  };
+
+  if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
+  app.use(helmet(helmetOptions));
+
   // TODO ch find a better solution
   app.use(cors());
   const bodyLimit = getState().getConfig("body_limit");

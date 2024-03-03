@@ -154,7 +154,7 @@ $(function () {
   });
 });
 
-function reload_embedded_view(viewname) {
+function reload_embedded_view(viewname, new_query_string) {
   if (window._sc_loglevel > 4)
     console.log(
       "reload_embedded_view",
@@ -164,15 +164,16 @@ function reload_embedded_view(viewname) {
     );
   $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
     const $e = $(this);
-    const url =
-      $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
+    let url = $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
     if (!url) return;
-    const headers = {
-      pjaxpageload: "true",
-      localizedstate: "true", //no admin bar
-    };
+    if (new_query_string) {
+      url = url.split("?")[0] + "?" + new_query_string;
+    }
     $.ajax(url, {
-      headers,
+      headers: {
+        pjaxpageload: "true",
+        localizedstate: "true", //no admin bar
+      },
       success: function (res, textStatus, request) {
         $e.html(res);
         initialize_page();
@@ -251,6 +252,21 @@ function ajax_done(res, viewname) {
   common_done(res, viewname);
 }
 
+function spin_action_link(e) {
+  const $e = $(e);
+  const width = $e.width();
+  $e.attr("data-innerhtml-prespin", $e.html());
+  $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+}
+
+function reset_spinners() {
+  $("[data-innerhtml-prespin]").each(function () {
+    $e = $(this);
+    $e.html($e.attr("data-innerhtml-prespin"));
+    $e.removeAttr("data-innerhtml-prespin");
+  });
+}
+
 function view_post(viewname, route, data, onDone, sendState) {
   const query = sendState
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
@@ -270,9 +286,11 @@ function view_post(viewname, route, data, onDone, sendState) {
     .done(function (res) {
       if (onDone) onDone(res);
       ajax_done(res, viewname);
+      reset_spinners();
     })
     .fail(function (res) {
       notifyAlert({ type: "danger", text: res.responseText });
+      reset_spinners();
     });
 }
 let logged_errors = [];
@@ -376,6 +394,7 @@ function ajax_modal(url, opts = {}) {
     success: function (res, textStatus, request) {
       var title = request.getResponseHeader("Page-Title");
       var width = request.getResponseHeader("SaltcornModalWidth");
+      var minwidth = request.getResponseHeader("SaltcornModalMinWidth");
       var saveIndicate = !!request.getResponseHeader(
         "SaltcornModalSaveIndicator"
       );
@@ -386,6 +405,8 @@ function ajax_modal(url, opts = {}) {
       else $(".sc-modal-linkout").hide();
       if (width) $(".modal-dialog").css("max-width", width);
       else $(".modal-dialog").css("max-width", "");
+      if (minwidth) $(".modal-dialog").css("min-width", minwidth);
+      else $(".modal-dialog").css("min-width", "");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       $("#scmodal .modal-body").html(res);
       $("#scmodal").prop("data-modal-state", url);
@@ -687,7 +708,7 @@ function make_unique_field(
   );
 }
 function test_formula(tablename, stored) {
-  var formula = $("input[name=expression]").val();
+  var formula = $("input[name=expression],textarea[name=expression]").val();
   ajax_post(`/field/test-formula`, {
     data: { formula, tablename, stored },
     success: (data) => {

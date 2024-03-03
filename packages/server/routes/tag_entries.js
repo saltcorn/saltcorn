@@ -5,6 +5,7 @@ const {
   select,
   option,
   label,
+  text,
 } = require("@saltcorn/markup/tags");
 
 const Tag = require("@saltcorn/data/models/tag");
@@ -29,7 +30,12 @@ const buildFields = (entryType, formOptions, req) => {
       div(
         { class: "col-sm-10" },
         select(
-          { name: "ids", class: "form-control form-select", multiple: true },
+          {
+            name: "ids",
+            class: "form-control form-select",
+            multiple: true,
+            size: 20,
+          },
           list.map((entry) => {
             return option({ value: entry.id, label: entry.name });
           })
@@ -94,15 +100,21 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { entry_type, tag_id } = req.params;
-    res.sendWrap(req.__("Add %s to tag"), {
+    const tag = await Tag.findOne({ id: tag_id });
+
+    res.sendWrap(req.__("Add %s to tag %s", entry_type, tag.name), {
       above: [
         {
           type: "breadcrumbs",
-          crumbs: [{ text: req.__(`Tag entry`) }],
+          crumbs: [
+            { text: req.__(`Tags`), href: "/tag" },
+            { text: tag.name, href: `/tag/${tag.id}` },
+            { text: req.__(`Add %s`, text(entry_type)) },
+          ],
         },
         {
           type: "card",
-          title: req.__(`Add entries to tag`),
+          title: req.__(`Add entries to tag %s`, tag.name),
           contents: buildForm(
             entry_type,
             tag_id,
@@ -148,9 +160,10 @@ router.post(
       req.flash("error", req.__("Please select at least one item"));
       return res.redirect(`/tag-entries/add/${entry_type}/${tag_id}`);
     }
+    const ids_array = Array.isArray(ids) ? ids : [ids];
     const fieldName = idField(entry_type);
     const tag = await Tag.findOne({ id: tag_id });
-    for (const id of ids) {
+    for (const id of ids_array) {
       await tag.addEntry({ [fieldName]: id });
     }
     res.redirect(`/tag/${tag_id}?show_list=${entry_type}`);

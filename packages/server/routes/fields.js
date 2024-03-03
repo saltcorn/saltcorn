@@ -479,6 +479,8 @@ const fieldFlow = (req) =>
                 // todo sublabel
                 type: "String",
                 class: "validate-expression",
+                fieldview: "textarea",
+                attributes: { rows: 2 },
                 validator: expressionValidator,
                 showIf: { expression_type: "JavaScript expression" },
               }),
@@ -978,7 +980,7 @@ router.post(
             const reftable = Table.findOne({ name: field.reftable_name });
             if (!oldRow[ref]) break;
             if (role > reftable.min_role_read) {
-              res.status(401).send("");
+              res.status401.send("");
               return;
             }
             const q = { [reftable.pk_name]: oldRow[ref] };
@@ -991,7 +993,14 @@ router.post(
         }
         if (oldRow) {
           const value = oldRow[kpath[kpath.length - 1]];
-          res.send(value);
+          //TODO run fieldview
+          res.send(
+            typeof value === "string"
+              ? value
+              : value?.toString
+              ? value.toString()
+              : `${value}`
+          );
           return;
         }
       }
@@ -1171,9 +1180,24 @@ router.post(
       type,
       join_field,
       join_fieldview,
+      agg_outcome_type,
+      agg_fieldview,
+      agg_field,
       _columndef,
     } = req.body;
     const table = Table.findOne({ name: tableName });
+    if (agg_outcome_type && agg_fieldview) {
+      const type = getState().types[agg_outcome_type];
+      const fv = type?.fieldviews?.[agg_fieldview];
+      if (!fv?.configFields) {
+        res.send(req.query?.accept == "json" ? "[]" : "");
+        return;
+      }
+      const field = table.getField(agg_field);
+      const cfgfields = await applyAsync(fv.configFields, field || { table });
+      res.json(cfgfields);
+      return;
+    }
     if (typeof type !== "string") {
       try {
         type = JSON.parse(_columndef).type;
@@ -1184,19 +1208,19 @@ router.post(
     const fieldName = type == "Field" ? field_name : join_field;
     const fv_name = type == "Field" ? fieldview : join_fieldview;
     if (!fieldName) {
-      res.send("");
+      res.send(req.query?.accept == "json" ? "[]" : "");
       return;
     }
 
     const field = table.getField(fieldName);
     if (!field) {
-      res.send("");
+      res.send(req.query?.accept == "json" ? "[]" : "");
       return;
     }
     const fieldViewConfigForms = await calcfldViewConfig([field], false, 0);
     const formFields = fieldViewConfigForms[field.name][fv_name];
     if (!formFields) {
-      res.send("");
+      res.send(req.query?.accept == "json" ? "[]" : "");
       return;
     }
     formFields.forEach((ff) => {

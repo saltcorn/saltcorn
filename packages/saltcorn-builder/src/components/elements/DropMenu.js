@@ -8,7 +8,11 @@ import React, { Fragment, useState } from "react";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCaretDown,
+  faCaretSquareLeft,
+  faCaretSquareRight,
+} from "@fortawesome/free-solid-svg-icons";
 import {
   SettingsRow,
   BlockSetting,
@@ -36,6 +40,7 @@ const DropMenu = ({
   action_textcol,
   block,
   label,
+  menu_direction,
 }) => {
   const {
     selected,
@@ -72,7 +77,7 @@ const DropMenu = ({
       <div
         className={`dropdown-menu dropmenu-dropdown ${
           showDropdown ? "show" : ""
-        }`}
+        } ${menu_direction === "end" ? "dropdown-menu-end" : ""}`}
       >
         <div className="canvas d-flex flex-column">{children}</div>
       </div>
@@ -96,6 +101,7 @@ const DropMenuSettings = () => {
     action_bgcol: node.data.props.action_bgcol,
     action_bordercol: node.data.props.action_bordercol,
     action_textcol: node.data.props.action_textcol,
+    menu_direction: node.data.props.menu_direction,
   }));
   const {
     actions: { setProp },
@@ -118,12 +124,34 @@ const DropMenuSettings = () => {
           setProp={setProp}
           keyPrefix="action_"
           values={node}
+          allowRunOnLoad={false}
         />
         <tr>
           <td colSpan="2">
             <BlockSetting block={block} setProp={setProp} />
           </td>
         </tr>
+        <SettingsRow
+          field={{
+            label: "Drop direction",
+            name: "menu_direction",
+            type: "btn_select",
+            options: [
+              {
+                value: "end",
+                title: "End",
+                label: <FontAwesomeIcon icon={faCaretSquareLeft} />,
+              },
+              {
+                value: "start",
+                title: "Start",
+                label: <FontAwesomeIcon icon={faCaretSquareRight} />,
+              },
+            ],
+          }}
+          node={node}
+          setProp={setProp}
+        />
       </tbody>
     </table>
   );
@@ -151,6 +179,7 @@ DropMenu.craft = {
       "action_bgcol",
       "action_bordercol",
       "action_textcol",
+      "menu_direction",
     ],
   },
 };

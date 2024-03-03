@@ -11,9 +11,14 @@ const {
   addOnDoneRedirect,
   is_relative_url,
 } = require("./utils.js");
+const { ppVal } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
+const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
+const Tag = require("@saltcorn/data/models/tag");
+const db = require("@saltcorn/data/db");
 
 /**
  * @type {object}
@@ -77,7 +82,20 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const triggers = await Trigger.findAllWithTableName();
+    let triggers = await Trigger.findAllWithTableName();
+    let filterOnTag;
+
+    if (req.query._tag) {
+      const tagEntries = await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { trigger_id: null },
+      });
+      const tagged_trigger_ids = new Set(
+        tagEntries.map((te) => te.trigger_id).filter(Boolean)
+      );
+      triggers = triggers.filter((t) => tagged_trigger_ids.has(t.id));
+      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+    }
     const actions = await getActions();
     send_events_page({
       res,
@@ -89,8 +107,14 @@ router.get(
             type: "card",
             title: req.__("Triggers"),
             contents: div(
-              getTriggerList(triggers, req),
-              link("/actions/new", req.__("Add trigger"))
+              await getTriggerList(triggers, req, { filterOnTag }),
+              a(
+                {
+                  href: "/actions/new",
+                  class: "btn btn-primary",
+                },
+                req.__("Create trigger")
+              )
             ),
           },
           {
@@ -145,11 +169,14 @@ const triggerForm = async (req, trigger) => {
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
   const allActions = actions.map((t) => t.name);
+  allActions.push("Multi-step action");
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
   const actionsNotRequiringRow = actions
     .filter((a) => !a.requireRow)
     .map((t) => t.name);
+  actionsNotRequiringRow.push("Multi-step action");
+
   Trigger.when_options.forEach((t) => {
     if (table_triggers.includes(t)) action_options[t] = allActions;
     else action_options[t] = actionsNotRequiringRow;
@@ -193,6 +220,17 @@ const triggerForm = async (req, trigger) => {
         ),
       },
       {
+        name: "table_id",
+        label: req.__("Table"),
+        input_type: "select",
+        options: [
+          { value: "", label: "Table not set" },
+          ...tables.map((t) => ({ value: t.id, label: t.name })),
+        ],
+        showIf: { when_trigger: "Never" },
+        sublabel: req.__("Optionally associate a table with this trigger"),
+      },
+      {
         name: "channel",
         label: req.__("Time of day"),
         input_type: "time_of_day",
@@ -215,9 +253,41 @@ const triggerForm = async (req, trigger) => {
         attributes: {
           calcOptions: ["when_trigger", action_options],
         },
+        showIf: {
+          when_trigger: Trigger.when_options.filter((t) => t !== "Never"),
+        },
         sublabel: req.__("The action to be taken when the trigger fires"),
       },
-
+      {
+        name: "action",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        help: { topic: "Actions" },
+        attributes: {
+          options: actionsNotRequiringRow,
+        },
+        showIf: {
+          when_trigger: "Never",
+          table_id: "",
+        },
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
+      {
+        name: "action",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        help: { topic: "Actions" },
+        attributes: {
+          options: allActions,
+        },
+        showIf: {
+          when_trigger: "Never",
+          table_id: tables.map((t) => t.id),
+        },
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
       {
         name: "description",
         label: req.__("Description"),
@@ -260,6 +330,17 @@ router.get(
     send_events_page({
       res,
       req,
+      headers: [
+        // date flat picker external component
+        {
+          script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
+        },
+
+        // css for date flat picker external component
+        {
+          css: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.css`,
+        },
+      ],
       active_sub: "Triggers",
       sub2_page: "New",
       contents: {
@@ -376,6 +457,66 @@ router.post(
   })
 );
 
+const getMultiStepForm = async (req, id, table) => {
+  let stateActions = getState().actions;
+  const stateActionKeys = Object.entries(stateActions)
+    .filter(([k, v]) => !v.disableInList && (table || !v.requireRow))
+    .map(([k, v]) => k);
+  const actions = [...stateActionKeys];
+  const triggers = Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    actions.push(tr.name);
+  });
+  const actionConfigFields = [];
+  for (const [name, action] of Object.entries(stateActions)) {
+    if (!stateActionKeys.includes(name)) continue;
+    const cfgFields = await getActionConfigFields(action, table);
+
+    for (const field of cfgFields) {
+      const cfgFld = {
+        ...field,
+        showIf: {
+          step_action_name: name,
+          ...(field.showIf || {}),
+        },
+      };
+      if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+      actionConfigFields.push(cfgFld);
+    }
+  }
+  const form = new Form({
+    action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+    onChange: "saveAndContinue(this)",
+    submitLabel: req.__("Done"),
+    fields: [
+      new FieldRepeat({
+        name: "steps",
+        fields: [
+          {
+            name: "step_action_name",
+            label: req.__("Action"),
+            type: "String",
+            required: true,
+            attributes: {
+              options: actions,
+            },
+          },
+          {
+            name: "step_only_if",
+            label: req.__("Only if..."),
+            type: "String",
+            class: "validate-expression",
+          },
+          ...actionConfigFields,
+        ],
+      }),
+    ],
+  });
+  return form;
+};
+
 /**
  * Edit Trigger configuration (GET)
  *
@@ -418,7 +559,24 @@ router.get(
         { href: `/actions/testrun/${id}`, class: "ms-2" },
         req.__("Test run") + "&nbsp;&raquo;"
       );
-    if (!action) {
+    if (trigger.action === "Multi-step action") {
+      const form = await getMultiStepForm(req, id, table);
+      form.values = trigger.configuration;
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else if (!action) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
     } else if (trigger.action === "blocks") {
@@ -542,13 +700,18 @@ router.post(
     const table = trigger.table_id
       ? Table.findOne({ id: trigger.table_id })
       : null;
-    const cfgFields = await getActionConfigFields(action, table, {
-      mode: "trigger",
-    });
-    const form = new Form({
-      action: `/actions/configure/${id}`,
-      fields: cfgFields,
-    });
+    let form;
+    if (trigger.action === "Multi-step action") {
+      form = await getMultiStepForm(req, id, table);
+    } else {
+      const cfgFields = await getActionConfigFields(action, table, {
+        mode: "trigger",
+      });
+      form = new Form({
+        action: `/actions/configure/${id}`,
+        fields: cfgFields,
+      });
+    }
     form.validate(req.body);
     if (form.hasErrors) {
       if (req.xhr) {
@@ -610,12 +773,6 @@ router.get(
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     const output = [];
-    const ppVal = (x) =>
-      typeof x === "string"
-        ? x
-        : typeof x === "function"
-        ? x.toString()
-        : JSON.stringify(x, null, 2);
     const fakeConsole = {
       log(...s) {
         console.log(...s);

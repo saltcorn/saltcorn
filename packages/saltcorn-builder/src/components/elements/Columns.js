@@ -250,7 +250,7 @@ const ColumnsSettings = () => {
           setProp={setProp}
           props={node}
         ></ConfigField>
-        <table>
+        <table className="w-100">
           <tbody>
             <SettingsSectionHeaderRow title="Align" />
             <SettingsRow
@@ -259,9 +259,9 @@ const ColumnsSettings = () => {
                 label: "Vertical",
                 type: "btn_select",
                 options: [
-                  { value: "start", title: "All", label: <AlignTop /> },
-                  { value: "center", title: "All", label: <AlignMiddle /> },
-                  { value: "end", title: "All", label: <AlignBottom /> },
+                  { value: "start", title: "Start", label: <AlignTop /> },
+                  { value: "center", title: "Center", label: <AlignMiddle /> },
+                  { value: "end", title: "End", label: <AlignBottom /> },
                 ],
               }}
               node={colSetsNode}

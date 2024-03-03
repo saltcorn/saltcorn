@@ -9,6 +9,7 @@ const { getState } = require("./state");
 const Table = require("../models/table");
 const Field = require("../models/field");
 const File = require("../models/file");
+const Trigger = require("../models/trigger");
 const View = require("../models/view");
 const User = require("../models/user");
 const Page = require("../models/page");
@@ -115,6 +116,28 @@ module.exports =
       },
       min_role: 100,
     });
+
+    await View.create({
+      table_id: table.id,
+      name: "authorshow_with_list_legacy",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "author", state_field: "on" }],
+        layout: {
+          above: [
+            { type: "field", fieldview: "show", field_name: "author" },
+            {
+              name: "1512ef",
+              type: "view",
+              view: "Independent:authorlist",
+              state: "shared",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
     const authorEdit = await View.create({
       table_id: table.id,
       name: "authoredit",
@@ -132,40 +155,88 @@ module.exports =
       min_role: 100,
     });
 
+    const authoreditCfg = {
+      columns: [
+        {
+          type: "Field",
+          field_name: "author",
+        },
+        {
+          type: "Field",
+          field_name: "pages",
+        },
+        {
+          type: "Field",
+          field_name: "publisher",
+        },
+      ],
+      layout: {
+        above: [
+          { type: "field", fieldview: "edit", field_name: "author" },
+          { type: "field", fieldview: "edit", field_name: "pages" },
+          { type: "field", select: "edit", field_name: "publisher" },
+        ],
+      },
+    };
+    const withShowCfg = JSON.parse(JSON.stringify(authoreditCfg));
+    withShowCfg.layout.above.push({
+      name: "9512df",
+      type: "view",
+      view: "authorshow",
+      state: "shared",
+      relation: ".books",
+    });
     await View.create({
       table_id: table.id,
       name: "authoredit_with_show",
       viewtemplate: "Edit",
-      configuration: {
-        columns: [
-          {
-            type: "Field",
-            field_name: "author",
-          },
-          {
-            type: "Field",
-            field_name: "pages",
-          },
-          {
-            type: "Field",
-            field_name: "publisher",
-          },
-        ],
-        layout: {
-          above: [
-            { type: "field", fieldview: "edit", field_name: "author" },
-            { type: "field", fieldview: "edit", field_name: "pages" },
-            { type: "field", select: "edit", field_name: "publisher" },
-            {
-              name: "9512df",
-              type: "view",
-              view: "authorshow",
-              state: "shared",
-              relation: ".books",
-            },
-          ],
-        },
-      },
+      configuration: withShowCfg,
+      min_role: 100,
+    });
+
+    const withShowCfgLegacy = JSON.parse(JSON.stringify(authoreditCfg));
+    withShowCfgLegacy.layout.above.push({
+      name: "9512df",
+      type: "view",
+      view: "Own:authorshow",
+      state: "shared",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_with_show_legacy",
+      viewtemplate: "Edit",
+      configuration: withShowCfgLegacy,
+      min_role: 100,
+    });
+
+    const withListCfg = JSON.parse(JSON.stringify(authoreditCfg));
+    withListCfg.layout.above.push({
+      name: "1512ef",
+      type: "view",
+      view: "authorlist",
+      state: "shared",
+      relation: ".",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_with_independent_list",
+      viewtemplate: "Edit",
+      configuration: withListCfg,
+      min_role: 100,
+    });
+
+    const withListCfgLegacy = JSON.parse(JSON.stringify(authoreditCfg));
+    withListCfgLegacy.layout.above.push({
+      name: "1512ef",
+      type: "view",
+      view: "Independent:authorlist",
+      state: "shared",
+    });
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_with_independent_list_legacy",
+      viewtemplate: "Edit",
+      configuration: withListCfgLegacy,
       min_role: 100,
     });
 
@@ -406,6 +477,62 @@ module.exports =
     });
 
     await View.create({
+      table_id: patients.id,
+      name: "show_patient_with_publisher",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "name", state_field: "on" },
+          {
+            type: "ViewLink",
+            view: "show_publisher",
+            block: false,
+            label: "",
+            minRole: 100,
+            relation: ".patients.favbook.publisher",
+            link_icon: "",
+          },
+        ],
+        layout: {
+          above: [
+            { type: "field", field_name: "name", fieldview: "show" },
+            {
+              type: "view",
+              view: "show_publisher",
+              name: "7b17af",
+              state: "shared",
+              relation: ".patients.favbook.publisher",
+            },
+            {
+              type: "view_link",
+              view: "show_publisher",
+              block: false,
+              minRole: 100,
+              relation: ".patients.favbook.publisher",
+              isFormula: {},
+              link_icon: "",
+              view_label: "",
+            },
+          ],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
+      table_id: publisher.id,
+      name: "show_publisher",
+      viewtemplate: "Show",
+      configuration: {
+        columns: [{ type: "Field", field_name: "name", state_field: "on" }],
+        layout: {
+          above: [{ type: "field", field_name: "name", fieldview: "show" }],
+        },
+      },
+      min_role: 100,
+    });
+
+    await View.create({
       table_id: disc_books.id,
       name: "disc_books_edit-in-edit",
       viewtemplate: "Edit",
@@ -474,7 +601,6 @@ module.exports =
               name: "7b17af",
               state: "shared",
             },
-
             {
               type: "view_link",
               view: "ChildList:disc_books_list.discusses_books.book",
@@ -2417,5 +2543,56 @@ module.exports =
         },
       },
       min_role: 100,
+    });
+    await Trigger.create({
+      name: "MySteps",
+      action: "Multi-step action",
+      description: "",
+      table_id: null,
+
+      when_trigger: "Never",
+
+      configuration: {
+        steps: [
+          {
+            step_only_if: "",
+            step_action_name: "Toast1",
+          },
+          {
+            code: "1;",
+            run_where: "Server",
+            step_only_if: "",
+            step_action_name: "run_js_code",
+          },
+          {
+            text: "note",
+            notify_type: "Notify",
+            step_only_if: "",
+            step_action_name: "toast",
+          },
+          {
+            text: "errrr",
+            notify_type: "Error",
+            step_only_if: "",
+            step_action_name: "toast",
+          },
+        ],
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "Toast1",
+      action: "toast",
+      description: "",
+      table_id: null,
+
+      when_trigger: "Never",
+
+      configuration: {
+        text: "fooo",
+        notify_type: "Success",
+      },
+
+      min_role: null,
     });
   };

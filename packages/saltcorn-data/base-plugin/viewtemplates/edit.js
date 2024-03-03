@@ -33,6 +33,7 @@ const {
   expressionChecker,
   eval_expression,
   freeVariables,
+  freeVariablesInInterpolation,
 } = require("../../models/expression");
 const {
   InvalidConfiguration,
@@ -58,7 +59,7 @@ const {
   readState,
   stateToQueryString,
   pathToState,
-  relationTypeFromPath,
+  displayType,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -82,6 +83,7 @@ const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
 const { prepare_update_row } = require("../../web-mobile-commons");
 const _ = require("underscore");
+const { Relation, RelationType } = require("@saltcorn/common-code");
 
 const builtInActions = [
   "Save",
@@ -133,6 +135,7 @@ const configuration_workflow = (req) =>
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
+              table_id: null,
             })
           ).forEach((tr) => {
             actions.push(tr.name);
@@ -211,7 +214,7 @@ const configuration_workflow = (req) =>
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("edit")
           );
-          const myviewrow = await View.findOne({ name: context.viewname });
+          const myviewrow = View.findOne({ name: context.viewname });
           const { parent_field_list } = await table.get_parent_relations(
             true,
             true
@@ -223,7 +226,7 @@ const configuration_workflow = (req) =>
 
           return {
             tableName: table.name,
-            fields: fields.map((f) => f.toBuilder),
+            fields: fields.map((f) => f.toBuilder || f),
             field_view_options,
             parent_field_list,
             handlesTextStyle,
@@ -476,14 +479,6 @@ const setDateLocales = (form, locale) => {
 };
 
 /**
- * check if a relation path has a CHildList structure
- */
-const isChildListPath = (viewSelect, subView) =>
-  viewSelect.type === "RelationPath" &&
-  relationTypeFromPath(subView, viewSelect.path, viewSelect.sourcetable) ===
-    "ChildList";
-
-/**
  * update viewSelect so that it looks like a normal ChildList
  */
 const updateViewSelect = (viewSelect) => {
@@ -596,7 +591,18 @@ const transformForm = async ({
   viewname,
   optionsQuery,
 }) => {
+  let pseudo_row = {};
+  if (!row) {
+    table.fields.forEach((f) => {
+      pseudo_row[f.name] = undefined;
+    });
+  }
   await traverse(form.layout, {
+    container(segment) {
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${segment.click_action}', ...get_form_record({viewname: '${viewname}'}) })`;
+      }
+    },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
         //TODO check segment.min_role
@@ -608,11 +614,11 @@ const transformForm = async ({
         try {
           const actionResult = await run_action_column({
             col: { ...segment },
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
             req,
             res,
             table,
-            row,
+            row: row || pseudo_row,
           });
           segment.type = "blank";
           segment.style = {};
@@ -664,6 +670,31 @@ const transformForm = async ({
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
+    tabs(segment) {
+      const to_delete = new Set();
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(sif, row || pseudo_row, req.user);
+          if (!showit) to_delete.add(ix);
+        }
+      });
+
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+
+      (segment.titles || []).forEach((t, ix) => {
+        if (typeof t === "string" && t.includes("{{")) {
+          const template = _.template(t, {
+            interpolate: /\{\{([^#].+?)\}\}/g,
+          });
+          segment.titles[ix] = template({
+            user: req.user,
+            row,
+            ...(row || {}),
+          });
+        }
+      });
+    },
     view_link(segment) {
       segment.type = "blank";
       const view_select = parse_view_select(segment.view);
@@ -696,13 +727,23 @@ const transformForm = async ({
         throw new InvalidConfiguration(
           `Cannot find embedded view: ${view_select.viewname}`
         );
-      const childListPath = isChildListPath(view_select, view);
+      // check if the relation path matches a ChildList relations
+      let childListRelPath = false;
+      if (segment.relation && view.table_id) {
+        const targetTbl = Table.findOne({ id: view.table_id });
+        const relation = new Relation(
+          segment.relation,
+          targetTbl.name,
+          displayType(await view.get_state_fields())
+        );
+        childListRelPath = relation.type === RelationType.CHILD_LIST;
+      }
       // Edit-in-edit
       if (
         view.viewtemplate === "Edit" &&
-        (view_select.type === "ChildList" || childListPath)
+        (view_select.type === "ChildList" || childListRelPath)
       ) {
-        if (childListPath) updateViewSelect(view_select);
+        if (childListRelPath) updateViewSelect(view_select);
         const childTable = Table.findOne({ id: view.table_id });
         const childForm = await getForm(
           childTable,
@@ -757,45 +798,50 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       }
-      const isIndependent =
-        view_select.type === "Independent" ||
-        (view_select.type === "RelationPath" &&
-          relationTypeFromPath(view, view_select.path, table) ===
-            "Independent");
-      if (!row && !isIndependent) {
-        segment.type = "blank";
-        segment.contents = "";
-        return;
-      }
-      if (!view)
-        throw new InvalidConfiguration(
-          `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
-        );
-      let state;
-      switch (view_select.type) {
-        case "RelationPath": {
-          state = pathToState(
-            view,
+      let state = {};
+      if (view_select.type === "RelationPath" && view.table_id) {
+        const targetTbl = Table.findOne({ id: view.table_id });
+        if (targetTbl) {
+          const relation = new Relation(
             segment.relation,
-            view_select.path,
-            (k) => row[k],
-            table
+            targetTbl.name,
+            displayType(await view.get_state_fields())
           );
-          break;
+          const type = relation.type;
+          if (!row && type !== RelationType.INDEPENDENT) {
+            segment.type = "blank";
+            segment.contents = "";
+            return;
+          }
+          state = pathToState(relation, (k) => row[k]);
         }
-        case "Own":
-          state = { id: row.id };
-          break;
-        case "Independent":
-          state = {};
-          break;
-        case "ChildList":
-        case "OneToOneShow":
-          state = { [view_select.field_name]: row.id };
-          break;
-        case "ParentShow":
-          state = { id: row[view_select.field_name] };
-          break;
+      } else {
+        const isIndependent = view_select.type === "Independent";
+        // legacy none check ?
+        if (!row && !isIndependent) {
+          segment.type = "blank";
+          segment.contents = "";
+          return;
+        }
+        if (!view)
+          throw new InvalidConfiguration(
+            `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
+          );
+        switch (view_select.type) {
+          case "Own":
+            state = { id: row.id };
+            break;
+          case "Independent":
+            state = {};
+            break;
+          case "ChildList":
+          case "OneToOneShow":
+            state = { [view_select.field_name]: row.id };
+            break;
+          case "ParentShow":
+            state = { id: row[view_select.field_name] };
+            break;
+        }
       }
       const extra_state = segment.extra_state_fml
         ? eval_expression(
@@ -803,7 +849,7 @@ const transformForm = async ({
             {
               ...dollarizeObject(req.query),
               session_id: getSessionId(req),
-              ...(row || {}),
+              ...(row || pseudo_row),
             },
             req.user
           )
@@ -1048,6 +1094,8 @@ const runPost = async (
     { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
     remote
   );
+  const view = View.findOne({ name: viewname });
+  const pagetitle = { title: viewname, no_menu: view?.attributes?.no_menu };
   if (prepResult) {
     let { form, row, pk, id } = prepResult;
     const cancel = body._cancel;
@@ -1077,7 +1125,7 @@ const runPost = async (
           res.json({ error: ins_upd_error });
         } else {
           req.flash("error", text_attr(ins_upd_error));
-          res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+          res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
         }
         return;
       }
@@ -1088,8 +1136,24 @@ const runPost = async (
           field.metadata.relation_path
         );
         const childView = View.findOne({ name: view_select.viewname });
-        if (isChildListPath(view_select, childView))
-          updateViewSelect(view_select);
+        if (!childView)
+          throw new InvalidConfiguration(
+            `Cannot find embedded view: ${view_select.viewname}`
+          );
+        if (
+          field.metadata.relation_path &&
+          view_select.type === "RelationPath"
+        ) {
+          const targetTbl = Table.findOne({ id: childView.table_id });
+          const relation = new Relation(
+            field.metadata.relation_path,
+            targetTbl.name,
+            displayType(await childView.get_state_fields())
+          );
+          if (relation.type === RelationType.CHILD_LIST)
+            updateViewSelect(view_select);
+        }
+
         const childTable = Table.findOne({ id: field.metadata?.table_id });
         const submitted_row_ids = new Set(
           (form.values[field.name] || []).map(
@@ -1118,7 +1182,7 @@ const runPost = async (
             );
             if (upd_res.error) {
               req.flash("error", text_attr(upd_res.error));
-              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;
             }
           } else {
@@ -1128,7 +1192,7 @@ const runPost = async (
             );
             if (ins_res.error) {
               req.flash("error", text_attr(ins_res.error));
-              res.sendWrap(viewname, renderForm(form, req.csrfToken()));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;
             } else if (ins_res.success) {
               submitted_row_ids.add(`${ins_res.success}`);
@@ -1499,8 +1563,10 @@ const prepare = async (
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options(false, optionsQuery, req.user);
+    const view = View.findOne({ name: viewname });
+
     res.sendWrap(
-      viewname,
+      { title: viewname, no_menu: view?.attributes?.no_menu },
       renderForm(form, req.csrfToken ? req.csrfToken() : false)
     );
     return null;
@@ -1947,8 +2013,14 @@ module.exports = {
       );
     },
     async actionQuery() {
-      const { rndid, _csrf, onchange_action, onchange_field, ...body } =
-        req.body;
+      const {
+        rndid,
+        _csrf,
+        onchange_action,
+        onchange_field,
+        click_action,
+        ...body
+      } = req.body;
 
       const table = Table.findOne({ id: table_id });
       const dbrow = body.id
@@ -1963,7 +2035,25 @@ module.exports = {
       const row = { ...dbrow, ...body };
 
       try {
-        if (onchange_action && !rndid) {
+        if (click_action) {
+          let container;
+          traverseSync(layout, {
+            container(segment) {
+              if (segment.click_action === click_action) container = segment;
+            },
+          });
+          if (!container) return { json: { error: "Action not found" } };
+          const trigger = Trigger.findOne({ name: click_action });
+          const result = await trigger.runWithoutRow({
+            table,
+            Table,
+            req,
+            row,
+            referrer: req?.get?.("Referrer"),
+            user: req.user,
+          });
+          return { json: { success: "ok", ...(result || {}) } };
+        } else if (onchange_action && !rndid) {
           const fldCol = columns.find(
             (c) =>
               c.field_name === onchange_field &&
@@ -1976,6 +2066,7 @@ module.exports = {
             Table,
             req,
             row,
+            referrer: req?.get?.("Referrer"),
             user: req.user,
           });
           return { json: { success: "ok", ...(result || {}) } };
@@ -1989,7 +2080,7 @@ module.exports = {
             table,
             row,
             res,
-            referrer: req.get("Referrer"),
+            referrer: req?.get?.("Referrer"),
           });
           //console.log("result", result);
           return { json: { success: "ok", ...(result || {}) } };
@@ -2059,7 +2150,13 @@ module.exports = {
   async interpolate_title_string(table_id, title, state) {
     const tbl = Table.findOne(table_id);
     if (state?.[tbl.pk_name]) {
-      const row = await tbl.getRow({ [tbl.pk_name]: state[tbl.pk_name] });
+      const freeVars = freeVariablesInInterpolation(title);
+      const joinFields = {};
+      add_free_variables_to_joinfields(freeVars, joinFields, tbl.fields);
+      const row = await tbl.getJoinedRow({
+        where: { [tbl.pk_name]: state[tbl.pk_name] },
+        joinFields,
+      });
       const template = _.template(title, {
         interpolate: /\{\{([^#].+?)\}\}/g,
       });
@@ -2089,7 +2186,7 @@ module.exports = {
     const warnings = [];
 
     if (!destination_type || destination_type === "View") {
-      const vwd = await View.findOne({
+      const vwd = View.findOne({
         name: (view_when_done || "").split(".")[0],
       });
       if (!vwd)

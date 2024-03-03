@@ -186,6 +186,7 @@ admin_config_route({
     "smtp_password",
     "smtp_port",
     "smtp_secure",
+    "smtp_allow_self_signed",
     "email_from",
   ],
   response(form, req, res) {
@@ -599,7 +600,13 @@ router.post(
         snap.created
       ).fromNow()}`
     );
-    res.redirect(/^[a-z]+$/g.test(type) ? `/${type}edit` : "/");
+    res.redirect(
+      type === "trigger"
+        ? `/actions`
+        : /^[a-z]+$/g.test(type)
+        ? `/${type}edit`
+        : "/"
+    );
   })
 );
 
@@ -2427,6 +2434,7 @@ router.post(
       await PageGroup.delete({});
     }
     if (form.values.pages) {
+      await db.deleteWhere("_sc_tag_entries", { not: { page_id: null } });
       await db.deleteWhere("_sc_pages");
     }
     if (form.values.views) {
@@ -2540,6 +2548,52 @@ router.post(
     }
   })
 );
+
+router.get(
+  "/dev/logs_viewer",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    return send_admin_page({
+      res,
+      req,
+      active_sub: "Development",
+      contents: {
+        above: [
+          {
+            type: "card",
+            id: "server-logs-card-id",
+            title: req.__("Server logs"),
+            titleErrorInidicator: true,
+            contents: mkTable(
+              [
+                {
+                  label: req.__("Timestamp"),
+                  width: "15%",
+                },
+                { label: req.__("Message") },
+              ],
+              [],
+              {
+                pagination: {
+                  current_page: 1,
+                  pages: 1,
+                  get_page_link: () => "logViewerHelpers.goToLogsPage(1)",
+                },
+                tableId: "_sc_logs_tbl_id_",
+              }
+            ),
+          },
+          script({
+            src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+          }),
+          script({ src: "/log_viewer_utils.js" }),
+          script(domReady(`logViewerHelpers.init_log_socket();`)),
+        ],
+      },
+    });
+  })
+);
+
 /**
  * Dev / Admin
  */
@@ -2573,10 +2627,28 @@ admin_config_route({
       req,
       active_sub: "Development",
       contents: {
-        type: "card",
-        title: req.__("Development settings"),
-        titleAjaxIndicator: true,
-        contents: [renderForm(form, req.csrfToken())],
+        above: [
+          {
+            type: "card",
+            title: req.__("Development settings"),
+            titleAjaxIndicator: true,
+            contents: [renderForm(form, req.csrfToken())],
+          },
+          {
+            type: "card",
+            title: req.__("Runtime informations"),
+            contents: [
+              div(
+                { class: "row form-group" },
+                a(
+                  { class: "d-block", href: "dev/logs_viewer" },
+                  req.__("open logs viewer")
+                ),
+                i("Open a log viewer for the current server messages")
+              ),
+            ],
+          },
+        ],
       },
     });
   },

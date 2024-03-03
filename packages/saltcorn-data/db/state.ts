@@ -143,6 +143,7 @@ class State {
   pluginManager?: any;
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
+  hasJoinedLogSockets: boolean;
 
   /**
    * State constructor
@@ -188,6 +189,7 @@ class State {
     this.logLevel = 1;
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
+    this.hasJoinedLogSockets = false;
   }
 
   processSend(v: any) {
@@ -236,6 +238,7 @@ class State {
       const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
       if (min_level === 1) console.error(s);
       else console.log(s);
+      if (this.hasJoinedLogSockets) this.emitLog(ten, min_level, msg);
     }
   }
 
@@ -269,6 +272,8 @@ class State {
     if (db.is_node) {
       // TODO ch mobile i18n
       await this.refresh_i18n();
+      this.hasJoinedLogSockets =
+        (this.configs.joined_log_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
@@ -405,6 +410,8 @@ class State {
           if (typeof provider.fields === "function")
             table.fields = await provider.fields(table.provider_cfg);
           else table.fields = provider.fields;
+          table.fields.forEach((f: any) => (f.table_id = table.id));
+          this.fields.push(...table.fields);
         }
         continue;
       }
@@ -498,6 +505,9 @@ class State {
       await setConfig(key, value);
       this.configs[key] = { value };
       if (key.startsWith("localizer_")) await this.refresh_i18n();
+      if (key === "log_level") this.logLevel = +value;
+      if (key === "joined_log_socket_ids")
+        this.hasJoinedLogSockets = (value || []).length > 0;
       if (db.is_node)
         process_send({ refresh: "config", tenant: db.getTenantSchema() });
       else {
@@ -726,6 +736,15 @@ class State {
   emitRoom(...args: any[]) {
     globalRoomEmitter(...args);
   }
+
+  setLogEmitter(f: Function) {
+    globalLogEmitter = f;
+  }
+
+  emitLog(ten: string, min_level: number, msg: string) {
+    globalLogEmitter(ten, min_level, msg);
+  }
+
   async refresh_npmpkgs(noSignal?: boolean) {
     if (this.npm_refresh_in_progess) return;
     this.npm_refresh_in_progess = true;
@@ -772,6 +791,7 @@ class State {
  * Global
  */
 let globalRoomEmitter: Function = () => {};
+let globalLogEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State("public");
@@ -923,6 +943,7 @@ const features = {
   table_undo: true,
   ellipsize: true,
   aggregation_query: true,
+  list_builder: true,
 };
 
 export = {

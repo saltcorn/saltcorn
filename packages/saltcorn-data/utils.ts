@@ -9,6 +9,7 @@ import { Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
+const _ = require("underscore");
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
@@ -317,40 +318,6 @@ const getSafeBaseUrl = () => {
 };
 
 /**
- * @param s relation syntax
- * @returns the first table (source) and the relation as path array
- */
-const parseRelationPath = (s: string) => {
-  const tokens = s.split(".");
-  const path = [];
-  for (const relation of tokens.slice(2)) {
-    if (relation.indexOf("$") > 0) {
-      const [table, inboundKey] = relation.split("$");
-      path.push({ table, inboundKey });
-    } else {
-      path.push({ fkey: relation });
-    }
-  }
-  return { sourcetable: tokens[1], path };
-};
-
-/**
- * @param sourcetable the first table (source)
- * @param path relation as path array
- * @returns relation syntax as string
- */
-const buildRelationPath = (
-  sourcetable: string,
-  path: { table: string; fkey?: string; inboundKey?: string }[]
-) => {
-  return `.${sourcetable}.${path
-    .map(({ table, fkey, inboundKey }) => {
-      return inboundKey ? `${table}$${inboundKey} ` : fkey;
-    })
-    .join(".")}`;
-};
-
-/**
  * @param str
  * @returns
  */
@@ -373,6 +340,37 @@ const dollarizeObject = (state: object) =>
  * @returns true if the NODE_ENV is 'test'
  */
 const isTest = () => process.env.NODE_ENV === "test";
+
+/**
+ * Compare objects (for Array.sort) by property name or function
+ */
+const comparing = (f: ((o: any) => any) | string) => (a: any, b: any) => {
+  const fa = typeof f === "string" ? a[f] : f(a);
+  const fb = typeof f === "string" ? b[f] : f(b);
+  return fa > fb ? 1 : fb > fa ? -1 : 0;
+};
+
+const comparingCaseInsensitive = (k: string) => (a: any, b: any) => {
+  const fa = a[k]?.toLowerCase?.();
+  const fb = b[k]?.toLowerCase?.();
+  return fa > fb ? 1 : fb > fa ? -1 : 0;
+};
+
+const ppVal = (x: any) =>
+  typeof x === "string"
+    ? x
+    : typeof x === "function"
+    ? x.toString()
+    : JSON.stringify(x, null, 2);
+
+const interpolate = (s: string, row: any, user?: any) => {
+  if (s && row) {
+    const template = _.template(s, {
+      interpolate: /\{\{([^#].+?)\}\}/g,
+    });
+    return template({ row, user, ...row });
+  } else return s;
+};
 
 export = {
   dollarizeObject,
@@ -404,12 +402,14 @@ export = {
   extractPagings,
   getSafeSaltcornCmd,
   getSafeBaseUrl,
-  parseRelationPath,
-  buildRelationPath,
   removeNonWordChars,
   nubBy,
   isTest,
   getSessionId,
   mergeActionResults,
   urlStringToObject,
+  comparing,
+  comparingCaseInsensitive,
+  ppVal,
+  interpolate,
 };

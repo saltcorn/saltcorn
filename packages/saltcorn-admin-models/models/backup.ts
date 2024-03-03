@@ -9,6 +9,7 @@ import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
 import Plugin from "@saltcorn/data/models/plugin";
+import migrate from "@saltcorn/data/migrate";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
 import {
@@ -247,6 +248,14 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
   await create_csv_from_rows(allFiles, join(root_dirpath, "files.csv"));
 };
 
+const backup_migrations = async (root_dirpath: string): Promise<void> => {
+  const migrations = await migrate.getMigrationsInDB();
+  await writeFile(
+    join(root_dirpath, "migrations.json"),
+    JSON.stringify(migrations)
+  );
+};
+
 /**
  * @function
  * @param {string} root_dirpath
@@ -277,6 +286,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
   await create_table_jsons(tmpDir.path);
   await backup_files(tmpDir.path);
   await backup_config(tmpDir.path);
+  await backup_migrations(tmpDir.path);
 
   const day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
 

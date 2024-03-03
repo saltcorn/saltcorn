@@ -1,0 +1,48 @@
+{
+  "name": "@saltcorn/common-code",
+  "version": "0.9.4-beta.19",
+  "description": "Code that can be used on both server and client",
+  "homepage": "https://saltcorn.com",
+  "scripts": {
+    "test": "jest tests --runInBand",
+    "tsc": "tsc --build",
+    "clean": "tsc --build --clean"
+  },
+  "author": "Christian Hugo",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js",
+    "./relations/*": "./dist/relations/*.js"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*"
+      ]
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "repository": "github:saltcorn/saltcorn",
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "modulePathIgnorePatterns": [
+      ".*\\.js$"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/tests/"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

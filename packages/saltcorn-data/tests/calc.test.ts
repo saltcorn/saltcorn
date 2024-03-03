@@ -12,6 +12,7 @@ const {
   jsexprToWhere,
   jsexprToSQL,
   freeVariables,
+  freeVariablesInInterpolation,
   recalculate_for_stored,
 } = expression;
 import { mkWhere } from "@saltcorn/db-common/internal";
@@ -316,6 +317,16 @@ describe("free variables", () => {
   });
   it("chain record access", () => {
     expect([...freeVariables("1+x?.k")]).toEqual(["x.k"]);
+  });
+  it("in interpolation", () => {
+    expect([...freeVariablesInInterpolation("hello {{2+x.k}}")]).toEqual([
+      "x.k",
+    ]);
+  });
+  it("in interpolation", () => {
+    expect([
+      ...freeVariablesInInterpolation("hello {{2+x.k}} there {{y.z}}"),
+    ]).toEqual(["x.k", "y.z"]);
   });
 });
 describe("jsexprToSQL", () => {

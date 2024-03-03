@@ -1,5 +1,7 @@
 const User = require("@saltcorn/data/models/user");
 const Table = require("@saltcorn/data/models/table");
+const Tag = require("@saltcorn/data/models/tag");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
 const { editRoleForm } = require("../markup/forms.js");
 const {
   mkTable,
@@ -7,16 +9,16 @@ const {
   post_delete_btn,
   settingsDropdown,
   post_dropdown_item,
+  badge,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
-const { h4, p, div, a, i, text } = require("@saltcorn/markup/tags");
+const { h4, p, div, a, i, text, span, nbsp } = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col, lbl) => `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
 
 /**
  * Table badges to show in System Table list views
@@ -42,57 +44,90 @@ const valIfSet = (check, value) => (check ? value : "");
 const listClass = (tagId, showList) =>
   valIfSet(tagId, `collapse ${valIfSet(showList, "show")}`);
 
-const tablesList = async (tables, req, { tagId, domId, showList } = {}) => {
+const tablesList = async (
+  tables,
+  req,
+  { tagId, domId, showList, filterOnTag } = {}
+) => {
   const roles = await User.get_roles();
   const getRole = (rid) => roles.find((r) => r.id === rid)?.role || "?";
-  return tables.length > 0
-    ? mkTable(
-        [
-          {
-            label: req.__("Name"),
-            key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
-          },
-          {
-            label: "",
-            key: (r) => tableBadges(r, req),
-          },
-          {
-            label: req.__("Access Read/Write"),
-            key: (t) =>
-              t.external
-                ? `${getRole(t.min_role_read)} (read only)`
-                : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
-          },
-          !tagId
-            ? {
-                label: req.__("Delete"),
-                key: (r) =>
-                  r.name === "users" || r.external
-                    ? ""
-                    : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
-              }
-            : {
-                label: req.__("Remove From Tag"),
-                key: (r) =>
-                  post_delete_btn(
-                    `/tag-entries/remove/tables/${r.id}/${tagId}`,
-                    req,
-                    `${r.name} from this tag`
-                  ),
-              },
-        ],
-        tables,
+  const tags = await Tag.find();
+  const tag_entries = await TagEntry.find({
+    not: { table_id: null },
+  });
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (table) => {
+    const myTags = tag_entries.filter((te) => te.table_id === table.id);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id], "tables"))
+      .join(nbsp);
+  };
+
+  return (
+    mkTable(
+      [
         {
-          hover: true,
-          tableClass: listClass(tagId, showList),
-          tableId: domId,
-        }
-      )
-    : div(
-        { class: listClass(tagId, showList), id: domId },
-        h4(req.__("No tables defined")),
-        p(req.__("Tables hold collections of similar data"))
-      );
+          label: req.__("Name"),
+          key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
+        },
+        ...(tagId
+          ? []
+          : [
+              {
+                label: tagsDropdown(
+                  tags,
+                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                ),
+                key: (r) => tagBadges(r),
+              },
+            ]),
+        {
+          label: "",
+          key: (r) => tableBadges(r, req),
+        },
+
+        {
+          label: req.__("Access Read/Write"),
+          key: (t) =>
+            t.external
+              ? `${getRole(t.min_role_read)} (read only)`
+              : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
+        },
+        !tagId
+          ? {
+              label: req.__("Delete"),
+              key: (r) =>
+                r.name === "users" || r.external
+                  ? ""
+                  : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
+            }
+          : {
+              label: req.__("Remove From Tag"),
+              key: (r) =>
+                post_delete_btn(
+                  `/tag-entries/remove/tables/${r.id}/${tagId}`,
+                  req,
+                  `${r.name} from this tag`
+                ),
+            },
+      ],
+      tables,
+      {
+        hover: true,
+        tableClass: listClass(tagId, showList),
+        tableId: domId,
+      }
+    ) +
+    (tables.length == 0 && !filterOnTag
+      ? div(
+          { class: listClass(tagId, showList), id: domId },
+          h4(req.__("No tables defined")),
+          p(req.__("Tables hold collections of similar data"))
+        )
+      : "")
+  );
 };
 
 /**
@@ -177,100 +212,176 @@ const setTableRefs = async (views) => {
   return views;
 };
 
+const tagBadge = (tag, type) =>
+  a(
+    {
+      href: `/tag/${tag.id}?show_list=${type}`,
+      class: "badge bg-secondary",
+    },
+    tag.name
+  );
+
+const tagsDropdown = (tags, altHeader) =>
+  div(
+    { class: "dropdown" },
+    div(
+      {
+        class: "link-style",
+        "data-boundary": "viewport",
+        type: "button",
+        id: "tagsselector",
+        "data-bs-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+      },
+      altHeader || "Tags",
+      i({ class: "ms-1 fas fa-caret-down" })
+    ),
+    div(
+      {
+        class: "dropdown-menu",
+        "aria-labelledby": "tagsselector",
+      },
+      a(
+        {
+          class: "dropdown-item",
+          // TODO check url why view for page, what do we need for page group
+          href: `javascript:unset_state_field('_tag', this)`,
+        },
+        "All tags"
+      ),
+      tags.map((tag) =>
+        a(
+          {
+            class: "dropdown-item",
+            // TODO check url why view for page, what do we need for page group
+            href: `javascript:set_state_field('_tag', ${tag.id}, this)`,
+          },
+          tag.name
+        )
+      ),
+      a(
+        {
+          class: "dropdown-item",
+          // TODO check url why view for page, what do we need for page group
+          href: `tag`,
+        },
+        "Manage tags..."
+      )
+    )
+  );
+
 const viewsList = async (
   views,
   req,
-  { tagId, domId, showList, on_done_redirect, notable } = {}
+  { tagId, domId, showList, on_done_redirect, notable, filterOnTag } = {}
 ) => {
   const roles = await User.get_roles();
   const on_done_redirect_str = on_done_redirect
     ? `?on_done_redirect=${on_done_redirect}`
     : "";
-  return views.length > 0
-    ? mkTable(
-        [
-          {
-            label: req.__("Name"),
-            key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
-            sortlink: !tagId
-              ? `set_state_field('_sortby', 'name', this)`
-              : undefined,
-          },
-          // description - currently I dont want to show description in view list
-          // because description can be long
-          /*
-       {
-           label: req.__("Description"),
-           key: "description",
-           // this is sorting by column
-           sortlink: `javascript:set_state_field('_sortby', 'description')`,
-       },
-       */
-          // template
-          {
-            label: req.__("Pattern"),
-            key: "viewtemplate",
-            sortlink: !tagId
-              ? `set_state_field('_sortby', 'viewtemplate', this)`
-              : undefined,
-          },
-          ...(notable
-            ? []
-            : [
-                {
-                  label: req.__("Table"),
-                  key: (r) => link(`/table/${r.table}`, r.table),
-                  sortlink: !tagId
-                    ? `set_state_field('_sortby', 'table', this)`
-                    : undefined,
-                },
-              ]),
-          {
-            label: req.__("Role to access"),
-            key: (row) =>
-              row.id
-                ? editViewRoleForm(row, roles, req, on_done_redirect_str)
-                : "admin",
-          },
-          {
-            label: "",
-            key: (r) =>
-              r.id && r.viewtemplateObj?.configuration_workflow
-                ? link(
-                    `/viewedit/config/${encodeURIComponent(
-                      r.name
-                    )}${on_done_redirect_str}`,
-                    req.__("Configure")
-                  )
-                : "",
-          },
-          !tagId
-            ? {
-                label: "",
-                key: (r) => view_dropdown(r, req, on_done_redirect_str),
-              }
-            : {
-                label: req.__("Remove From Tag"),
-                key: (r) =>
-                  post_delete_btn(
-                    `/tag-entries/remove/views/${r.id}/${tagId}`,
-                    req,
-                    `${r.name} from this tag`
-                  ),
-              },
-        ],
-        views,
+  const tags = await Tag.find();
+  const tag_entries = await TagEntry.find({
+    not: { view_id: null },
+  });
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (view) => {
+    const myTags = tag_entries.filter((te) => te.view_id === view.id);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id], "views"))
+      .join(nbsp);
+  };
+
+  return (
+    mkTable(
+      [
         {
-          hover: true,
-          tableClass: listClass(tagId, showList),
-          tableId: domId,
-        }
-      )
-    : div(
-        { class: listClass(tagId, showList), id: domId },
-        h4(req.__("No views defined")),
-        p(req.__("Views define how table rows are displayed to the user"))
-      );
+          label: req.__("Name"),
+          key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+          sortlink: !tagId
+            ? `set_state_field('_sortby', 'name', this)`
+            : undefined,
+        },
+        ...(tagId
+          ? []
+          : [
+              {
+                label: tagsDropdown(
+                  tags,
+                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                ),
+                key: (r) => tagBadges(r),
+              },
+            ]),
+        {
+          label: req.__("Pattern"),
+          key: "viewtemplate",
+          sortlink: !tagId
+            ? `set_state_field('_sortby', 'viewtemplate', this)`
+            : undefined,
+        },
+        ...(notable
+          ? []
+          : [
+              {
+                label: req.__("Table"),
+                key: (r) => link(`/table/${r.table}`, r.table),
+                sortlink: !tagId
+                  ? `set_state_field('_sortby', 'table', this)`
+                  : undefined,
+              },
+            ]),
+        {
+          label: req.__("Role to access"),
+          key: (row) =>
+            row.id
+              ? editViewRoleForm(row, roles, req, on_done_redirect_str)
+              : "admin",
+        },
+        {
+          label: "",
+          key: (r) =>
+            r.id && r.viewtemplateObj?.configuration_workflow
+              ? link(
+                  `/viewedit/config/${encodeURIComponent(
+                    r.name
+                  )}${on_done_redirect_str}`,
+                  req.__("Configure")
+                )
+              : "",
+        },
+        !tagId
+          ? {
+              label: "",
+              key: (r) => view_dropdown(r, req, on_done_redirect_str),
+            }
+          : {
+              label: req.__("Remove From Tag"),
+              key: (r) =>
+                post_delete_btn(
+                  `/tag-entries/remove/views/${r.id}/${tagId}`,
+                  req,
+                  `${r.name} from this tag`
+                ),
+            },
+      ],
+      views,
+      {
+        hover: true,
+        tableClass: listClass(tagId, showList),
+        tableId: domId,
+      }
+    ) +
+    (views.length == 0 && !filterOnTag
+      ? div(
+          { class: listClass(tagId, showList), id: domId },
+          h4(req.__("No views defined")),
+          p(req.__("Views define how table rows are displayed to the user"))
+        )
+      : "")
+  );
 };
 
 const page_group_dropdown = (page_group, req) =>
@@ -371,20 +482,50 @@ const editPageRoleForm = (page, roles, req, isGroup) =>
  * @param {object} req
  * @returns {div}
  */
-const getPageList = (rows, roles, req, { tagId, domId, showList } = {}) => {
+const getPageList = async (
+  rows,
+  roles,
+  req,
+  { tagId, domId, showList, filterOnTag } = {}
+) => {
+  const tags = await Tag.find();
+  const tag_entries = await TagEntry.find({
+    not: { page_id: null },
+  });
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (page) => {
+    const myTags = tag_entries.filter((te) => te.page_id === page.id);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id], "pages"))
+      .join(nbsp);
+  };
   return mkTable(
     [
       {
         label: req.__("Name"),
-        key: (r) => link(`/page/${r.name}`, r.name),
+        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
       },
+      ...(tagId
+        ? []
+        : [
+            {
+              label: tagsDropdown(
+                tags,
+                filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+              ),
+              key: (r) => tagBadges(r),
+            },
+          ]),
       {
         label: req.__("Role to access"),
         key: (row) => editPageRoleForm(row, roles, req),
       },
       {
         label: req.__("Edit"),
-        key: (r) => link(`/pageedit/edit/${r.name}`, req.__("Edit")),
+        key: (r) =>
+          link(`/pageedit/edit/${encodeURIComponent(r.name)}`, req.__("Edit")),
       },
       !tagId
         ? {
@@ -442,19 +583,70 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
-const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
+const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
+  settingsDropdown(`dropdownMenuButton${trigger.id}`, [
+    a(
+      {
+        class: "dropdown-item",
+        href: `/actions/edit/${trigger.id}${on_done_redirect_str}`,
+      },
+      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+    ),
+
+    a(
+      {
+        class: "dropdown-item",
+        href: `javascript:ajax_modal('/admin/snapshot-restore/trigger/${trigger.name}')`,
+      },
+      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
+    ),
+    div({ class: "dropdown-divider" }),
+
+    post_dropdown_item(
+      `/actions/delete/${trigger.id}${on_done_redirect_str}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+      req,
+      true,
+      trigger.name
+    ),
+  ]);
+
+const getTriggerList = async (
+  triggers,
+  req,
+  { tagId, domId, showList, filterOnTag } = {}
+) => {
   const base_url = get_base_url(req);
+  const tags = await Tag.find();
+
+  const tag_entries = await TagEntry.find({
+    not: { trigger_id: null },
+  });
+  const tagsById = {};
+  tags.forEach((t) => (tagsById[t.id] = t));
+
+  const tagBadges = (trigger) => {
+    const myTags = tag_entries.filter((te) => te.trigger_id === trigger.id);
+    return myTags
+      .map((te) => tagBadge(tagsById[te.tag_id], "triggers"))
+      .join(nbsp);
+  };
   return mkTable(
     [
       { label: req.__("Name"), key: "name" },
+      ...(tagId
+        ? []
+        : [
+            {
+              label: tagsDropdown(
+                tags,
+                filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+              ),
+              key: (r) => tagBadges(r),
+            },
+          ]),
       { label: req.__("Action"), key: "action" },
-      {
-        label: req.__("Table or Channel"),
-        key: (r) =>
-          r.table_name
-            ? a({ href: `/table/${r.table_name}` }, r.table_name)
-            : r.channel,
-      },
+
       {
         label: req.__("When"),
         key: (act) =>
@@ -469,15 +661,15 @@ const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
             : ""),
       },
       {
-        label: req.__("Test run"),
+        label: req.__("Table or Channel"),
         key: (r) =>
-          r.table_id
-            ? ""
-            : link(`/actions/testrun/${r.id}`, req.__("Test run")),
+          r.table_name
+            ? a({ href: `/table/${r.table_name}` }, r.table_name)
+            : r.channel,
       },
       {
-        label: req.__("Edit"),
-        key: (r) => link(`/actions/edit/${r.id}`, req.__("Edit")),
+        label: req.__("Test run"),
+        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
       },
       {
         label: req.__("Configure"),
@@ -485,8 +677,8 @@ const getTriggerList = (triggers, req, { tagId, domId, showList } = {}) => {
       },
       !tagId
         ? {
-            label: req.__("Delete"),
-            key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
+            label: "",
+            key: (r) => trigger_dropdown(r, req),
           }
         : {
             label: req.__("Remove From Tag"),

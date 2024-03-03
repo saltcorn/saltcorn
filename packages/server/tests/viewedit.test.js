@@ -78,6 +78,37 @@ describe("viewedit edit endpoint", () => {
 });
 
 describe("viewedit new List", () => {
+  const columns = [
+    { type: "Field", field_name: "author" },
+    { type: "Field", field_name: "pages" },
+  ];
+  const layout = {
+    besides: [
+      {
+        contents: {
+          type: "field",
+          fieldview: "as_text",
+          field_name: "author",
+          configuration: {},
+        },
+        alignment: "Default",
+        header_label: "Author",
+        col_width_units: "px",
+      },
+      {
+        contents: {
+          type: "field",
+          fieldview: "show",
+          field_name: "pages",
+          configuration: {},
+        },
+        alignment: "Default",
+        header_label: "Pages",
+        col_width_units: "px",
+      },
+    ],
+    list_columns: true,
+  };
   itShouldRedirectUnauthToLogin("/viewedit/new");
 
   it("show new view", async () => {
@@ -117,11 +148,8 @@ describe("viewedit new List", () => {
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
       .send("stepName=Columns")
-      .send("type_0=Field")
-      .send("field_name_0=author")
-      .send("type_1=Field")
-      .send("field_name_1=pages")
-      .send("create_view_display=Link")
+      .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
+      .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
       .set("Cookie", loginCookie)
       .expect(toInclude("Default state"));
   });
@@ -205,6 +233,23 @@ describe("viewedit new List", () => {
 });
 
 describe("viewedit new List with one field", () => {
+  const columns = [{ type: "Field", field_name: "author", state_field: "on" }];
+  const layout = {
+    besides: [
+      {
+        contents: {
+          type: "field",
+          fieldview: "as_text",
+          field_name: "author",
+          configuration: {},
+        },
+        alignment: "Default",
+        header_label: "Author",
+        col_width_units: "px",
+      },
+    ],
+    list_columns: true,
+  };
   it("submit new view", async () => {
     const loginCookie = await getAdminLoginCookie();
 
@@ -234,9 +279,8 @@ describe("viewedit new List with one field", () => {
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
       .send("stepName=Columns")
-      .send("type_0=Field")
-      .send("field_name_0=author")
-      .send("create_view_display=Link")
+      .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
+      .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
       .set("Cookie", loginCookie)
       .expect(toInclude("Default state"));
   });
@@ -359,27 +403,6 @@ describe("viewedit new Show", () => {
       .send("stepName=Layout")
       .send("columns=" + encodeURIComponent(JSON.stringify(columns)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layout)))
-      .set("Cookie", loginCookie)
-      .expect(toInclude("Set page title"));
-  });
-  it("save new view page title", async () => {
-    const loginCookie = await getAdminLoginCookie();
-    const table = Table.findOne({ name: "books" });
-
-    const ctx = encodeURIComponent(
-      JSON.stringify({
-        table_id: table.id,
-        viewname: "mybook",
-        layout,
-        columns,
-      })
-    );
-
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .post("/viewedit/config/mybook")
-      .send("contextEnc=" + ctx)
-      .send("stepName=Set+page+title")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });

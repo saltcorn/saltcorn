@@ -251,7 +251,8 @@ class Field implements AbstractField {
     table_name: string,
     where: string,
     attributes: any,
-    extra_joinfields: any = {}
+    extra_joinfields: any = {},
+    user?: any
   ) {
     const Table = require("./table");
     const label_formula = attributes?.label_formula;
@@ -271,7 +272,7 @@ class Field implements AbstractField {
       );
     }
 
-    return await table.getJoinedRows({ where, joinFields });
+    return await table.getJoinedRows({ where, joinFields, forUser: user });
   }
 
   /**
@@ -533,7 +534,7 @@ class Field implements AbstractField {
           : this.typename
           ? this.typename
           : "unknown type"
-      }`
+      } for field ${this.name} in table ${this.table_id}`
     );
   }
 
@@ -566,7 +567,9 @@ class Field implements AbstractField {
     } else if (this.type === "File") {
       return "text";
     }
-    throw new Error("Unable to get the sql_type");
+    throw new Error(
+      `Unable to get the sql_type for field ${this.name} in table ${this.table_id} type=${this.typename}`
+    );
   }
 
   /**

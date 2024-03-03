@@ -18,6 +18,8 @@ import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import faIcons from "./faicons";
 import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
+import { RelationType } from "@saltcorn/common-code";
+import Select from "react-select";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -138,7 +140,7 @@ export /**
  */
 const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
   const { mode } = React.useContext(optionsCtx);
-
+  const allowFormula = mode === "show" || mode === "list";
   /**
    * @returns {void}
    */
@@ -159,14 +161,14 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
     });
   };
   let errorString = false;
-  if (mode === "show" && isFormula[nodekey]) {
+  if (allowFormula && isFormula[nodekey]) {
     try {
       Function("return " + node[nodekey]);
     } catch (error) {
       errorString = error.message;
     }
   }
-  return mode !== "show" ? (
+  return !allowFormula ? (
     children
   ) : (
     <Fragment>
@@ -445,6 +447,10 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
       }
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
+    })
+    .catch((e) => {
+      console.log("Unable to fetch the preview:");
+      console.log(e);
     });
 };
 
@@ -487,6 +493,7 @@ export const fetchViewPreview =
     };
     let viewname,
       body = configuration ? { ...configuration } : {};
+    if (!view) return "";
     if (view.includes(":")) {
       const [prefix, rest] = view.split(":");
       const tokens = rest.split(".");
@@ -897,24 +904,51 @@ const ConfigField = ({
         spellCheck={false}
       />
     ),
-    select: () => (
-      <select
-        className="form-control form-select"
-        value={value || ""}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-        onBlur={(e) => e.target && myOnChange(e.target.value)}
-      >
-        {field.options.map((o, ix) =>
-          o.name && o.label ? (
-            <option key={ix} value={o.name}>
-              {o.label}
-            </option>
-          ) : (
-            <option key={ix}>{o}</option>
-          )
-        )}
-      </select>
-    ),
+    select: () => {
+      if (field.class?.includes?.("selectizable")) {
+        const seloptions = field.options.map((o, ix) =>
+          o.name && o.label
+            ? { value: o.name, label: o.label }
+            : { value: o, label: o }
+        );
+        return (
+          <Select
+            options={seloptions}
+            value={seloptions.find((so) => value === so.value)}
+            onChange={(e) =>
+              (e.name && myOnChange(e.name)) ||
+              (e.value && myOnChange(e.value)) ||
+              (typeof e === "string" && myOnChange(e))
+            }
+            onBlur={(e) =>
+              (e.name && myOnChange(e.name)) ||
+              (e.value && myOnChange(e.value)) ||
+              (typeof e === "string" && myOnChange(e))
+            }
+            menuPortalTarget={document.body}
+            styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+          ></Select>
+        );
+      } else
+        return (
+          <select
+            className="form-control form-select"
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            onBlur={(e) => e.target && myOnChange(e.target.value)}
+          >
+            {field.options.map((o, ix) =>
+              o.name && o.label ? (
+                <option key={ix} value={o.name}>
+                  {o.label}
+                </option>
+              ) : (
+                <option key={ix}>{o}</option>
+              )
+            )}
+          </select>
+        );
+    },
     btn_select: () => (
       <div className="btn-group w-100" role="group">
         {field.options.map((o, ix) => (
@@ -1012,8 +1046,15 @@ export /**
  * @returns {table}
  */
 const SettingsFromFields =
-  (fields, opts = {}) =>
+  (fieldsIn, opts = {}) =>
   () => {
+    const fields = [...fieldsIn];
+    if (opts.additionalFieldsOptionKey) {
+      const options = React.useContext(optionsCtx);
+
+      const addFields = options[opts.additionalFieldsOptionKey];
+      fields.push(...(addFields || []));
+    }
     const node = useNode((node) => {
       const ps = {};
       fields.forEach((f) => {
@@ -1265,7 +1306,7 @@ const ButtonOrLinkSettingsRows = ({
           {!linkFirst ? (
             <option value={addBtnClass("btn-link")}>Link</option>
           ) : null}
-          {!linkFirst ? (
+          {!linkFirst && allowRunOnLoad ? (
             <option value="on_page_load">Run on Page Load</option>
           ) : null}
         </select>
@@ -1285,6 +1326,7 @@ const ButtonOrLinkSettingsRows = ({
             <option value="">Standard</option>
             <option value="btn-lg">Large</option>
             <option value="btn-sm">Small</option>
+            <option value="btn-sm btn-xs">Extra Small</option>
             <option value="btn-block">Block</option>
             <option value="btn-block btn-lg">Large block</option>
           </select>
@@ -1447,22 +1489,6 @@ const Tooltip = ({ children }) => {
   );
 };
 
-export const buildTableCaches = (allTables) => {
-  const tableIdCache = {};
-  const tableNameCache = {};
-  const fieldCache = {};
-  for (const table of allTables) {
-    tableIdCache[table.id] = table;
-    tableNameCache[table.name] = table;
-    for (const field of table.foreign_keys) {
-      if (!fieldCache[field.reftable_name])
-        fieldCache[field.reftable_name] = [];
-      fieldCache[field.reftable_name].push(field);
-    }
-  }
-  return { tableIdCache, tableNameCache, fieldCache };
-};
-
 export const removeWhitespaces = (str) => {
   return str.replace(/\s/g, "X");
 };
@@ -1505,79 +1531,145 @@ export const buildBootstrapOptions = (values) => {
   ));
 };
 
-export const prepCacheAndFinder = ({
-  tables,
-  views,
-  max_relations_layer_depth,
-}) => {
-  if (tables && views) {
-    const caches = buildTableCaches(tables);
-    const finder = new relationHelpers.RelationsFinder(
-      caches,
-      views,
-      max_relations_layer_depth || 6
-    );
-    return { caches, finder };
-  } else return { caches: null, finder: null };
+export const arrayChunks = (xs, n) => {
+  const arrayOfArrays = [];
+  for (var i = 0; i < bigarray.length; i += n) {
+    arrayOfArrays.push(bigarray.slice(i, i + n));
+  }
+  return arrayOfArrays;
 };
 
 /**
- * @param {string[]} paths
+ * @param {string[]} relations
  * @param {string} sourceTbl name of the topview table
  * @returns either a same table relation, a parent relation, a child relation, or the first relation
  */
-export const initialRelation = (paths, sourceTbl) => {
+export const initialRelation = (relations) => {
   let sameTblRel = null;
   let parentRel = null;
   let childRel = null;
-  for (const path of paths) {
-    if (!sameTblRel && path === `.${sourceTbl}`) sameTblRel = path;
-    else {
-      const tokens = path.split(".");
-      if (
-        !parentRel &&
-        tokens.length === 3 &&
-        tokens[1] === sourceTbl &&
-        tokens[2].indexOf("$") === -1
-      )
-        parentRel = path;
-      else {
-        const lastToken = tokens[tokens.length - 1];
-        if (
-          lastToken.indexOf("$") > 0 &&
-          (!childRel || childRel.split(".").length > tokens.length)
-        )
-          childRel = path;
-      }
+  for (const relation of relations) {
+    switch (relation.type) {
+      case RelationType.OWN:
+        sameTblRel = relation;
+        break;
+      case RelationType.PARENT_SHOW:
+        parentRel = relation;
+        break;
+      case RelationType.CHILD_LIST:
+      case RelationType.ONE_TO_ONE_SHOW:
+        childRel = relation;
+        break;
     }
   }
-  return sameTblRel || parentRel || childRel || paths[0];
+  return sameTblRel || parentRel || childRel || relations[0];
 };
 
 /**
- * update the builder wide relations cache relations cache
- * if there is no entry for the given tableName and viewname
- * @param {any} relationsCache cache from the context
- * @param {Function} setRelationsCache set cache in context
- * @param {any} options builder options
- * @param {RelationsFinder} finder
- * @param {string} viewname subview name
+ * builder intern path method
+ * @param path
+ * @param tableNameCache
+ * @returns
  */
-export const updateRelationsCache = (
-  relationsCache,
-  setRelationsCache,
-  options,
-  finder,
-  viewname
-) => {
-  if (!relationsCache[options.tableName])
-    relationsCache[options.tableName] = {};
-  if (!relationsCache[options.tableName][viewname]) {
-    relationsCache[options.tableName][viewname] = finder.findRelations(
-      options.tableName,
-      viewname,
-      options.excluded_subview_templates
-    );
-    setRelationsCache({ ...relationsCache });
+export const buildRelationArray = (path, tableNameCache) => {
+  if (path === ".")
+    return [{ type: "Independent", table: "None (no relation)" }];
+  const tokens = path.split(".");
+  if (tokens.length === 2)
+    return [{ type: "Own", table: `${tokens[1]} (same table)` }];
+  else if (tokens.length >= 3) {
+    const result = [];
+    let currentTbl = tokens[1];
+    for (const relation of tokens.slice(2)) {
+      if (relation.indexOf("$") > 0) {
+        const [inboundTbl, inboundKey] = relation.split("$");
+        result.push({ type: "Inbound", table: inboundTbl, key: inboundKey });
+        currentTbl = inboundTbl;
+      } else {
+        const srcTbl = tableNameCache[currentTbl];
+        const fk = srcTbl.foreign_keys.find((fk) => fk.name === relation);
+        if (fk) {
+          const targetTbl = tableNameCache[fk.reftable_name];
+          result.push({
+            type: "Foreign",
+            table: targetTbl.name,
+            key: relation,
+          });
+          currentTbl = targetTbl.name;
+        }
+      }
+    }
+    return result;
   }
+};
+
+export const buildLayers = (relations, tableName, tableNameCache) => {
+  const result = { table: tableName, inboundKeys: [], fkeys: [] };
+  for (const relation of relations) {
+    const relType = relation.type;
+    let currentLevel = result;
+    if (relType === RelationType.INDEPENDENT) {
+      currentLevel.fkeys.push({
+        name: "none (no relation)",
+        table: "",
+        inboundKeys: [],
+        fkeys: [],
+        relPath: relation.relationString,
+      });
+    } else if (relType === RelationType.OWN) {
+      currentLevel.fkeys.push({
+        name: "same table",
+        table: relation.targetTblName,
+        inboundKeys: [],
+        fkeys: [],
+        relPath: relation.relationString,
+      });
+    } else {
+      let currentTbl = relation.sourceTblName;
+      for (const pathElement of relation.path) {
+        if (pathElement.inboundKey) {
+          currentTbl = pathElement.table;
+          const existing = currentLevel.inboundKeys.find(
+            (key) =>
+              key.name === pathElement.inboundKey && key.table === currentTbl
+          );
+          if (existing) {
+            currentLevel = existing;
+          } else {
+            const nextLevel = {
+              name: pathElement.inboundKey,
+              table: currentTbl,
+              inboundKeys: [],
+              fkeys: [],
+            };
+            currentLevel.inboundKeys.push(nextLevel);
+            currentLevel = nextLevel;
+          }
+        } else if (pathElement.fkey) {
+          const tblObj = tableNameCache[currentTbl];
+          const fkey = tblObj.foreign_keys.find(
+            (key) => key.name === pathElement.fkey
+          );
+          currentTbl = fkey.reftable_name;
+          const existing = currentLevel.fkeys.find(
+            (key) => key.name === pathElement.fkey
+          );
+          if (existing) {
+            currentLevel = existing;
+          } else {
+            const nextLevel = {
+              name: pathElement.fkey,
+              table: currentTbl,
+              inboundKeys: [],
+              fkeys: [],
+            };
+            currentLevel.fkeys.push(nextLevel);
+            currentLevel = nextLevel;
+          }
+        }
+      }
+    }
+    currentLevel.relPath = relation.relationString;
+  }
+  return result;
 };

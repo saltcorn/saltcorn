@@ -20,18 +20,7 @@ import faIcons from "./elements/faicons";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
-import { isEqual, throttle } from "lodash";
-
-/**
- *
- * @param {object[]} xs
- * @returns {object[]}
- */
-const twoByTwos = (xs) => {
-  if (xs.length <= 2) return [xs];
-  const [x, y, ...rest] = xs;
-  return [[x, y], ...twoByTwos(rest)];
-};
+import { isEqual, throttle, chunk } from "lodash";
 
 export /**
  * @param {object} props
@@ -94,7 +83,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const InitNewElement = ({ nodekeys, setIsSaving }) => {
+const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   const [saveTimeout, setSaveTimeout] = useState(false);
   const savedData = useRef(false);
   const { actions, query, connectors } = useEditor((state, query) => {
@@ -104,7 +93,11 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
   const doSave = (query) => {
     if (!query.serialize) return;
 
-    const data = craftToSaltcorn(JSON.parse(query.serialize()));
+    const data = craftToSaltcorn(
+      JSON.parse(query.serialize()),
+      "ROOT",
+      options
+    );
     const urlroot = options.page_id ? "pageedit" : "viewedit";
     if (savedData.current === false) {
       //do not save on first call
@@ -114,7 +107,7 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
     }
     if (isEqual(savedData.current, JSON.stringify(data.layout))) return;
     savedData.current = JSON.stringify(data.layout);
-    setIsSaving(true);
+    setSavingState({ isSaving: true });
 
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
@@ -123,9 +116,32 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
         "CSRF-Token": options.csrfToken,
       },
       body: JSON.stringify(data),
-    }).then(() => {
-      setIsSaving(false);
-    });
+    })
+      .then((response) => {
+        response.json().then((data) => {
+          if (typeof data?.error === "string") {
+            // don't log duplicates
+            if (!savingState.error)
+              window.notifyAlert({ type: "danger", text: data.error });
+            setSavingState({ isSaving: false, error: data.error });
+          } else setSavingState({ isSaving: false });
+        });
+      })
+      .catch((e) => {
+        const text =
+          e.message === "Failed to fetch"
+            ? "Network connection lost"
+            : e || "Unable to save";
+        // don't log duplicates
+        if (savingState.error) setSavingState({ isSaving: false, error: text });
+        else {
+          window.notifyAlert({ type: "danger", text: text });
+          setSavingState({
+            isSaving: false,
+            error: text,
+          });
+        }
+      });
   };
   const throttledSave = useThrottle(() => {
     doSave(query);
@@ -148,7 +164,8 @@ const InitNewElement = ({ nodekeys, setIsSaving }) => {
           layout.layout ? layout.layout : layout,
           query,
           actions,
-          node.parent
+          node.parent,
+          options
         );
         setTimeout(() => {
           actions.delete(id);
@@ -184,7 +201,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const Library = () => {
+const Library = ({ expanded }) => {
   const { actions, selected, query, connectors } = useEditor((state, query) => {
     return {
       selected: state.events.selected,
@@ -200,7 +217,11 @@ const Library = () => {
    * @returns {void}
    */
   const addSelected = () => {
-    const layout = craftToSaltcorn(JSON.parse(query.serialize()), selected);
+    const layout = craftToSaltcorn(
+      JSON.parse(query.serialize()),
+      selected,
+      options
+    );
     const data = { layout, icon, name: newName };
     fetch(`/library/savefrombuilder`, {
       method: "POST", // or 'PUT'
@@ -216,7 +237,10 @@ const Library = () => {
     setRecent([...recent, data]);
   };
 
-  const elemRows = twoByTwos([...(options.library || []), ...recent]);
+  const elemRows = chunk(
+    [...(options.library || []), ...recent],
+    expanded ? 3 : 2
+  );
   return (
     <div className="builder-library">
       <div className="dropdown">

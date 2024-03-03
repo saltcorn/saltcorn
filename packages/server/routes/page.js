@@ -16,6 +16,7 @@ const {
   isAdmin,
   sendHtmlFile,
   getEligiblePage,
+  getRandomPage,
 } = require("../routes/utils.js");
 const { isTest } = require("@saltcorn/data/utils");
 const { add_edit_bar } = require("../markup/admin.js");
@@ -88,20 +89,36 @@ const runPage = async (page, req, res, tic) => {
 const runPageGroup = async (pageGroup, req, res, tic) => {
   const role = req.user && req.user.id ? req.user.role_id : 100;
   if (role <= pageGroup.min_role) {
-    const eligible = await getEligiblePage(pageGroup, req, res);
-    if (typeof eligible === "string") {
-      getState().log(2, eligible);
-      res.status(400).sendWrap(req.__("Internal Error"), eligible);
-    } else if (eligible) {
-      if (!eligible.isReload) await runPage(eligible, req, res, tic);
+    if (pageGroup.random_allocation) {
+      const page = getRandomPage(pageGroup, req);
+      if (typeof page === "string") {
+        getState().log(2, page);
+        res.status(400).sendWrap(req.__("Internal Error"), page);
+      } else if (!page) {
+        getState().log(2, `Unable to find a random page in ${pageGroup.name}`);
+        res
+          .status(404)
+          .sendWrap(
+            req.__("Internal Error"),
+            req.__("Unable to find a random page in %s", pageGroup.name)
+          );
+      } else await runPage(page, req, res, tic);
     } else {
-      getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
-      res
-        .status(404)
-        .sendWrap(
-          req.__("Internal Error"),
-          req.__("%s has no eligible page", pageGroup.name)
-        );
+      const eligible = await getEligiblePage(pageGroup, req, res);
+      if (typeof eligible === "string") {
+        getState().log(2, eligible);
+        res.status(400).sendWrap(req.__("Internal Error"), eligible);
+      } else if (eligible) {
+        if (!eligible.isReload) await runPage(eligible, req, res, tic);
+      } else {
+        getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
+        res
+          .status(404)
+          .sendWrap(
+            req.__("Internal Error"),
+            req.__("%s has no eligible page", pageGroup.name)
+          );
+      }
     }
   } else {
     getState().log(2, `Pagegroup ${pageGroup.name} not authorized`);

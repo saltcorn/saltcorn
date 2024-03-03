@@ -39,6 +39,7 @@ class ReleaseCommand extends Command {
     await sleep(5000);
     const pkgs = {
       "@saltcorn/db-common": { dir: "db-common", publish: true },
+      "@saltcorn/common-code": { dir: "common-code", publish: true },
       "@saltcorn/sqlite": { dir: "sqlite", publish: true },
       "@saltcorn/sqlite-mobile": { dir: "sqlite-mobile", publish: true },
       "@saltcorn/postgres": { dir: "postgres", publish: true },

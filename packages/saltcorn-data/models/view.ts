@@ -513,6 +513,7 @@ class View implements AbstractView {
               req.flash(type, msg);
             return response.data.success;
           } catch (error: any) {
+            state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
             if (error.request?.status === 401)
               error.message = req.__("Not authorized");
             else

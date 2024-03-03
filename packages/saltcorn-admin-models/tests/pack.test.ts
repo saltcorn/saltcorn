@@ -17,11 +17,13 @@ const {
   install_pack,
   can_install_pack,
   uninstall_pack,
+  create_pack_from_tag,
 } = pack;
 import utils from "@saltcorn/data/utils";
 const { isStale } = utils;
 const { getState } = require("@saltcorn/data/db/state");
 import Table from "@saltcorn/data/models/table";
+import Tag from "@saltcorn/data/models/tag";
 import { Pack } from "@saltcorn/types/base_types";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import Trigger from "@saltcorn/data/models/trigger";
@@ -218,6 +220,7 @@ describe("pack create", () => {
       name: "page_group",
       description: null,
       min_role: 100,
+      random_allocation: false,
       members: [
         {
           page_name: "iPhone SE",
@@ -366,6 +369,13 @@ describe("pack create", () => {
           "invalid_table"
         ))()
     ).rejects.toThrow();
+  });
+  it("creates pack from tag", async () => {
+    const tag = await Tag.findOne({ name: "tag1" });
+    const pack = await create_pack_from_tag(tag);
+    expect(pack.tables.length).toBe(1);
+    expect(pack.tags.length).toBe(1);
+    expect(pack.tags[0].name).toBe("tag1");
   });
 });
 
@@ -546,6 +556,7 @@ const todoPack: Pack = {
       name: "FooPageGroup",
       description: "Foo",
       min_role: 100,
+      random_allocation: false,
       members: [
         {
           page_name: "FooPage",

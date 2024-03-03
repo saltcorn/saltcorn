@@ -29,6 +29,7 @@ const {
   tbody,
   iframe,
   script,
+  text_attr,
 } = tags;
 const { toast, breadcrumbs, renderTabs } = require("./layout_utils");
 import type { Layout } from "@saltcorn/types/base_types";
@@ -322,7 +323,7 @@ const render = ({
           {
             class:
               segment.action_style === "btn-link"
-                ? ""
+                ? "btn btn-link"
                 : `btn ${segment.action_style || "btn-primary"} ${
                     segment.action_size || ""
                   } dropdown-toggle`,
@@ -335,11 +336,22 @@ const render = ({
             "aria-expanded": "false",
             style,
           },
-          segment.label || "Actions"
+          segment.action_icon &&
+            segment.action_icon !== "empty" &&
+            i({
+              class: [segment.action_icon, segment.label && "me-1"],
+            }),
+          segment.label ||
+            (!segment.action_icon || segment.action_icon == "empty"
+              ? "Actions"
+              : "")
         ),
         div(
           {
-            class: "dropdown-menu dropdown-menu-end",
+            class: [
+              "dropdown-menu",
+              segment.menu_direction === "end" && "dropdown-menu-end",
+            ],
             "aria-labelledby": rndid,
           },
           div({ class: "d-flex flex-column px-2" }, go(segment.contents))
@@ -397,9 +409,12 @@ const render = ({
               segment.url && "with-link",
               hints.cardClass,
             ],
+            ...(segment.id ? { id: segment.id } : {}),
             onclick: segment.url
               ? isWeb
-                ? `location.href='${segment.url}'`
+                ? segment.url?.startsWith?.("javascript:")
+                  ? text_attr(segment.url)
+                  : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
             style: segment.style,
@@ -434,6 +449,14 @@ const render = ({
                     style: { display: "none" },
                   },
                   i({ class: "fas fa-save" })
+                ),
+              segment.titleErrorInidicator &&
+                span(
+                  {
+                    class: "float-end sc-error-indicator",
+                    style: { display: "none", color: "#ff0033" },
+                  },
+                  i({ class: "fas fa-exclamation-triangle" })
                 )
             ),
           segment.tabContents && // TODO remove all calls to this, use tab in content instead
@@ -655,7 +678,9 @@ const render = ({
             ],
             onclick: segment.url
               ? isWeb
-                ? `location.href='${segment.url}'`
+                ? segment.url?.startsWith?.("javascript:")
+                  ? text_attr(segment.url)
+                  : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
 

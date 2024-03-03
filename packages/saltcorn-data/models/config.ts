@@ -219,6 +219,12 @@ const configTypes: ConfigTypes = {
       "A view with the view to be emailed to users for email address verification",
     default: "",
   },
+  logout_url: {
+    type: "String",
+    label: "Logout URL",
+    blurb: "The URL to direct to after logout",
+    default: "/auth/login",
+  },
   /** @type {object} */
   elevate_verified: {
     type: "Role",
@@ -402,6 +408,13 @@ const configTypes: ConfigTypes = {
     sublabel:
       "Always use TLS when connecting to server? If unchecked, TLS is used if server supports the STARTTLS extension. In most cases check this box if you are connecting to port 465. For port 587 or 25 keep it unchecked",
   },
+  smtp_allow_self_signed: {
+    type: "Bool",
+    label: "Allow self-signed",
+    default: false,
+    sublabel:
+      "Open a connection to TLS server with self-signed or invalid TLS certificate",
+  },
   /** @type {object} */
   email_from: {
     type: "String",
@@ -541,11 +554,26 @@ const configTypes: ConfigTypes = {
     sublabel: "Cache-control max-age for public views and pages. 0 to disable",
     default: 0,
   },
+  files_cache_maxage: {
+    type: "Integer",
+    label: "Files cache TTL (minutes)",
+    sublabel: "Cache-control max-age for files.",
+    default: 86400,
+  },
   cookie_duration_remember: {
     type: "Integer",
     label: "Cookie duration (hours) when remember ticked",
     sublabel: "Set to 0 for expiration at the end of browser session",
     default: 30 * 24,
+  },
+  cross_domain_iframe: {
+    type: "Bool",
+    label: "Cross-domain iframe",
+    restart_required: true,
+    root_only: true,
+    sublabel:
+      "Allow embedding in iframe on different domains. Unsets the X-Frame-Options header",
+    default: false,
   },
   /** @type {object} */
   storage_s3_enabled: {
@@ -781,10 +809,12 @@ const configTypes: ConfigTypes = {
   body_limit: {
     type: "Integer",
     label: "Body size limit (Kb)",
+    root_only: true,
     blurb: "Maximum request body size in kilobytes",
   },
   url_encoded_limit: {
     type: "Integer",
+    root_only: true,
     label: "URL encoded size limit (Kb)",
     blurb: "Maximum URL encoded request size in kilobytes",
   },
@@ -830,6 +860,11 @@ const configTypes: ConfigTypes = {
         innerHeight: 980,
       },
     },
+  },
+  joined_log_socket_ids: {
+    type: "hidden",
+    label: "Joined log socket ids",
+    default: [],
   },
 };
 // TODO move list of languages from code to configuration

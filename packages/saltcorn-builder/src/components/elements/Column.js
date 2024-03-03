@@ -25,12 +25,20 @@ const Column = ({ children, align }) => {
     id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const options = useContext(optionsCtx);
+
   return (
     <div
-      className={selected ? "selected-node" : ""}
+      className={`${selected ? "selected-node" : ""} ${
+        options.mode === "list" ? "flex-50 list-col-contents" : ""
+      }`}
       ref={(dom) => connect(drag(dom))}
     >
-      <div className={`canvas ${id === "ROOT" ? "root-canvas" : ""}`}>
+      <div
+        className={`canvas ${id === "ROOT" ? "root-canvas" : ""} ${
+          options.mode === "list" ? "list-empty-msg list-col-canvas" : ""
+        }`}
+      >
         {children}
       </div>
     </div>
@@ -56,6 +64,12 @@ Column.craft = {
   props: {},
   rules: {
     canDrag: () => true,
+    canMoveIn: (incomming, current) => {
+      if (current?.data?.props?.singleOccupancy && current.data.nodes?.length)
+        return false;
+
+      return true;
+    },
   },
   related: {
     settings: ColumnSettings,

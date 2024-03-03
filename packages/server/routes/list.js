@@ -161,6 +161,11 @@ const typeToGridType = (t, field) => {
     jsgField.formatterParams = {
       inputFormat: "iso",
     };
+
+    if (field.attributes?.day_only) {
+      jsgField.editorParams = { dayOnly: true };
+      jsgField.formatter = "__isoDateFormatter";
+    }
   } else if (t.name === "Color") {
     jsgField.editor = "__colorEditor";
     jsgField.formatter = "__colorFormatter";

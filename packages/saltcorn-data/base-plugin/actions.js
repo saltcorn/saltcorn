@@ -33,13 +33,43 @@ const {
   getSessionId,
   urlStringToObject,
   dollarizeObject,
+  objectToQueryString,
+  interpolate,
 } = require("../utils");
 const db = require("../db");
-const { isNode } = require("../utils");
+const { isNode, ppVal } = require("../utils");
 const { available_languages } = require("../models/config");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
+
+const consoleInterceptor = (state) => {
+  const handle = (printer, level, message, optionalParams) => {
+    printer(message, ...optionalParams);
+    if (state.hasJoinedLogSockets && state.logLevel >= level) {
+      const s = ppVal(message);
+      state.emitLog(
+        state.tenant || "public",
+        level,
+        optionalParams.length === 0
+          ? s
+          : `${s} ${optionalParams.map((val) => ppVal(val)).join(" ")}`
+      );
+    }
+  };
+  return {
+    log: (message, ...optionalParams) =>
+      handle(console.log, 5, message, optionalParams),
+    info: (message, ...optionalParams) =>
+      handle(console.info, 5, message, optionalParams),
+    debug: (message, ...optionalParams) =>
+      handle(console.debug, 5, message, optionalParams),
+    warn: (message, ...optionalParams) =>
+      handle(console.warn, 2, message, optionalParams),
+    error: (message, ...optionalParams) =>
+      handle(console.error, 1, message, optionalParams),
+  };
+};
 
 /**
  * @param opts
@@ -72,7 +102,7 @@ const run_code = async ({
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
     Actions[k] = (args = {}) => {
-      v.run({ row, table, user, configuration: args, ...rest, ...args });
+      return v.run({ row, table, user, configuration: args, ...rest, ...args });
     };
   });
   const trigger_actions = await Trigger.find({
@@ -81,7 +111,7 @@ const run_code = async ({
   for (const trigger of trigger_actions) {
     const state_action = getState().actions[trigger.action];
     Actions[trigger.name] = (args = {}) => {
-      state_action.run({
+      return state_action.run({
         row,
         table,
         configuration: trigger.configuration,
@@ -101,7 +131,7 @@ const run_code = async ({
     table,
     row,
     user,
-    console,
+    console: consoleInterceptor(getState()),
     Actions,
     emitEvent,
     sleep,
@@ -113,6 +143,7 @@ const run_code = async ({
     View,
     EventLog,
     Buffer,
+    Notification,
     setTimeout,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
@@ -234,8 +265,10 @@ module.exports = {
      * @param {object} opts.body
      * @returns {Promise<object>}
      */
-    run: async ({ row, configuration: { url, body } }) => {
-      return await fetch(url, {
+    run: async ({ row, user, configuration: { url, body } }) => {
+      let url1 = interpolate(url, row, user);
+
+      return await fetch(url1, {
         method: "post",
         body: body || JSON.stringify(row),
         headers: { "Content-Type": "application/json" },
@@ -422,9 +455,17 @@ module.exports = {
         {
           name: "to_email_fixed",
           label: "Fixed address",
-          sublabel: "Email address to send emails", // todo send to few addresses?
+          sublabel:
+            "To addresses, comma separated, <code>{{ }}</code> interpolations usable",
           type: "String",
           showIf: { to_email: "Fixed" },
+        },
+        {
+          name: "cc_email",
+          label: "cc address",
+          sublabel:
+            "cc addresses, comma separated, <code>{{ }}</code> interpolations usable",
+          type: "String",
         },
         {
           name: "subject",
@@ -493,6 +534,7 @@ module.exports = {
         to_email,
         to_email_field,
         to_email_fixed,
+        cc_email,
         only_if,
         attachment_path,
         disable_notify,
@@ -508,7 +550,7 @@ module.exports = {
       }
       switch (to_email) {
         case "Fixed":
-          to_addr = to_email_fixed;
+          to_addr = interpolate(to_email_fixed, row, user);
           break;
         case "User":
           to_addr = user.email;
@@ -542,7 +584,7 @@ module.exports = {
         setBody.html = html.html;
       } else {
         const view = await View.findOne({ name: viewname });
-        setBody.html = await viewToEmailHtml(view, { id: row.id });
+        setBody.html = await viewToEmailHtml(view, { id: row[table.pk_name] });
       }
 
       const from = getState().getConfig("email_from");
@@ -559,22 +601,30 @@ module.exports = {
         3,
         `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
-
+      const cc = cc_email ? interpolate(cc_email, row, user) : undefined;
       const email = {
         from,
         to: to_addr,
+        cc,
         subject: the_subject,
         ...setBody,
         attachments,
       };
       try {
         const sendres = await getMailTransport().sendMail(email);
-        if (confirm_field && sendres.accepted.includes(to_addr)) {
+        getState().log(5, `send_email result: ${JSON.stringify(sendres)}`);
+        if (confirm_field && sendres.accepted.length > 0) {
           const confirm_fld = table.getField(confirm_field);
           if (confirm_fld && confirm_fld.type.name === "Date")
-            await table.updateRow({ [confirm_field]: new Date() }, row.id);
+            await table.updateRow(
+              { [confirm_field]: new Date() },
+              row[table.pk_name]
+            );
           else if (confirm_fld && confirm_fld.type.name === "Bool")
-            await table.updateRow({ [confirm_field]: true }, row.id);
+            await table.updateRow(
+              { [confirm_field]: true },
+              row[table.pk_name]
+            );
         }
         if (disable_notify) return;
         else return { notify: `E-mail sent to ${to_addr}` };
@@ -582,7 +632,10 @@ module.exports = {
         if (confirm_field) {
           const confirm_fld = table.getField(confirm_field);
           if (confirm_fld && confirm_fld.type.name === "Bool")
-            await table.updateRow({ [confirm_field]: false }, row.id);
+            await table.updateRow(
+              { [confirm_field]: false },
+              row[table.pk_name]
+            );
           throw e;
         }
       }
@@ -887,18 +940,59 @@ module.exports = {
         showIf: { nav_action: ["Go to URL", "Popup modal"] },
       },
     ],
-    run: async ({ configuration: { nav_action, url } }) => {
+    run: async ({ row, user, configuration: { nav_action, url } }) => {
+      let url1 = interpolate(url, row, user);
+
       switch (nav_action) {
         case "Go to URL":
-          return { goto: url };
+          return { goto: url1 };
         case "Popup modal":
-          return { popup: url };
+          return { popup: url1 };
         case "Back":
           return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
         case "Close modal":
           return { eval_js: "close_saltcorn_modal()" };
         case "Reload page":
           return { reload_page: true };
+
+        default:
+          break;
+      }
+    },
+  },
+  step_control_flow: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Step control flow",
+    configFields: [
+      {
+        name: "control_action",
+        label: "Control action",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["Halt steps", "Goto step", "Clear return values"],
+        },
+      },
+      {
+        name: "step",
+        label: "Step",
+        type: "Integer",
+        required: true,
+        showIf: { control_action: ["Goto step"] },
+      },
+    ],
+    run: async ({ row, user, configuration: { control_action, step } }) => {
+      switch (control_action) {
+        case "Halt steps":
+          return { halt_steps: true };
+        case "Goto step":
+          return { goto_step: step };
+        case "Clear return values":
+          return { clear_return_values: true };
 
         default:
           break;
@@ -965,15 +1059,17 @@ module.exports = {
         required: true,
       },
     ],
-    run: async ({ configuration: { type, notify_type, text } }) => {
+    run: async ({ row, user, configuration: { type, notify_type, text } }) => {
       //type is legacy. this name gave react problems
+      let text1 = interpolate(text, row, user);
+
       switch (notify_type || type) {
         case "Error":
-          return { error: text };
+          return { error: text1 };
         case "Success":
-          return { notify_success: text };
+          return { notify_success: text1 };
         default:
-          return { notify: text };
+          return { notify: text1 };
       }
     },
   },
@@ -1325,14 +1421,27 @@ module.exports = {
         {
           name: "view",
           label: "View to refresh",
+          class: "selectizable",
           type: "String",
           required: true,
           attributes: { options: views.map((v) => v.select_option) },
         },
+        {
+          name: "new_state_fml",
+          label: "New state formula",
+          type: "String",
+          class: "validate-expression",
+        },
       ];
     },
-    run: async ({ configuration: { view } }) => {
-      return { eval_js: `reload_embedded_view('${view}')` };
+    run: async ({ row, user, configuration: { view, new_state_fml } }) => {
+      if (new_state_fml) {
+        const new_state = eval_expression(new_state_fml, row || {}, user);
+        const newqs = objectToQueryString(new_state);
+        return {
+          eval_js: `reload_embedded_view('${view}', '${newqs}')`,
+        };
+      } else return { eval_js: `reload_embedded_view('${view}')` };
     },
   },
   sleep: {
@@ -1385,7 +1494,11 @@ module.exports = {
      * @param {object} opts.user
      * @returns {Promise<void>}
      */
-    run: async ({ row, configuration: { title, body, link, user_spec } }) => {
+    run: async ({
+      row,
+      user,
+      configuration: { title, body, link, user_spec },
+    }) => {
       const user_where = User.valid_email(user_spec)
         ? { email: user_spec }
         : user_spec === "*"
@@ -1393,10 +1506,16 @@ module.exports = {
         : eval_expression(user_spec, row || {});
       const users = await User.find(user_where);
       for (const user of users) {
-        await Notification.create({ title, body, link, user_id: user.id });
+        await Notification.create({
+          title: interpolate(title, row, user),
+          body: interpolate(body, row, user),
+          link: interpolate(link, row, user),
+          user_id: user.id,
+        });
       }
     },
   },
+
   convert_session_to_user: {
     description:
       "Convert session id fields to user key fields on a table on Login events",

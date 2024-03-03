@@ -9,6 +9,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
 import relationsCtx from "../relations_context";
+import Select from "react-select";
 
 import {
   fetchViewPreview,
@@ -17,12 +18,17 @@ import {
   buildOptions,
   HelpTopicLink,
   initialRelation,
-  prepCacheAndFinder,
-  updateRelationsCache,
+  buildLayers,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
 import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
+
+import {
+  RelationsFinder,
+  Relation,
+  buildTableCaches,
+} from "@saltcorn/common-code";
 
 export /**
  * @param {object} props
@@ -48,7 +54,6 @@ const View = ({ name, view, configuration, state }) => {
     if (rest.startsWith(".")) viewname = prefix;
     else viewname = rest;
   }
-
   const theview = options.views.find((v) => v.name === viewname);
   const label = theview ? theview.label : view;
   const { previews, setPreviews } = React.useContext(previewCtx);
@@ -109,10 +114,23 @@ const ViewSettings = () => {
     extra_state_fml,
   } = node;
   const options = React.useContext(optionsCtx);
-  const { caches, finder } = useMemo(
-    () => prepCacheAndFinder(options),
-    [undefined]
-  );
+  const {
+    tables,
+    views,
+    max_relations_layer_depth,
+    tableName,
+    excluded_subview_templates,
+  } = options;
+  // not needed in page editor
+  let finder = null;
+  let tableCaches = null;
+  if (tables && views) {
+    finder = useMemo(
+      () => new RelationsFinder(tables, views, max_relations_layer_depth),
+      [undefined]
+    );
+    tableCaches = useMemo(() => buildTableCaches(tables), [undefined]);
+  }
   const fixed_state_fields =
     options.fixed_state_fields && options.fixed_state_fields[view];
   const { setPreviews } = React.useContext(previewCtx);
@@ -134,87 +152,118 @@ const ViewSettings = () => {
     if (rest.startsWith(".")) viewname = prefix;
     else viewname = rest;
   }
-  if (viewname.includes(".")) viewname = viewname.split(".")[0];
-  if (finder)
-    updateRelationsCache(
-      relationsCache,
-      setRelationsCache,
-      options,
-      finder,
-      viewname
+  if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
+
+  if (
+    finder &&
+    !(relationsCache[tableName] && relationsCache[tableName][viewname])
+  ) {
+    const relations = finder.findRelations(
+      tableName,
+      viewname,
+      excluded_subview_templates
     );
-  const [relations, setRelations] = finder
-    ? React.useState(relationsCache[options.tableName][viewname])
+    const layers = buildLayers(
+      relations,
+      tableName,
+      tableCaches.tableNameCache
+    );
+    relationsCache[tableName] = relationsCache[tableName] || {};
+    relationsCache[tableName][viewname] = { relations, layers };
+    setRelationsCache({ ...relationsCache });
+  }
+  const [relationsData, setRelationsData] = finder
+    ? React.useState(relationsCache[tableName][viewname])
     : [undefined, undefined];
-  let safeRelation = relation;
+  let safeRelation = null;
+  const subView = views.find((view) => view.name === viewname);
+  if (relation && subView) {
+    const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
+    safeRelation = new Relation(
+      relation,
+      subTbl ? subTbl.name : "",
+      subView.display_type
+    );
+  }
   if (
     options.mode !== "filter" &&
+    subView?.table_id &&
     !safeRelation &&
     !hasLegacyRelation &&
-    relations?.paths.length > 0
+    relationsData?.relations.length > 0
   ) {
-    safeRelation = initialRelation(relations.paths, options.tableName);
+    safeRelation = initialRelation(relationsData.relations);
     setProp((prop) => {
-      prop.relation = safeRelation;
+      prop.relation = safeRelation.relationString;
     });
   }
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
+    if (e?.target?.value || e?.value) {
+      const target_value = e.target?.value || e.value;
       if (target_value !== viewname) {
         if (options.mode === "filter") {
           setProp((prop) => {
             prop.view = target_value;
           });
         } else {
-          updateRelationsCache(
-            relationsCache,
-            setRelationsCache,
-            options,
-            finder,
-            target_value
+          const newRelations = finder.findRelations(
+            tableName,
+            target_value,
+            excluded_subview_templates
           );
-          const newRelations = relationsCache[options.tableName][target_value];
-          if (newRelations.paths.length > 0) {
+          const layers = buildLayers(
+            newRelations,
+            tableName,
+            tableCaches.tableNameCache
+          );
+          relationsCache[tableName] = relationsCache[tableName] || {};
+          relationsCache[tableName][target_value] = {
+            relations: newRelations,
+            layers,
+          };
+          if (newRelations.length > 0) {
             setProp((prop) => {
               prop.view = target_value;
-              prop.relation = initialRelation(
-                newRelations.paths,
-                options.tableName
-              );
+              prop.relation = initialRelation(newRelations).relationString;
             });
-            setRelations(newRelations);
-          }
+            setRelationsData({ relations: newRelations, layers });
+          } else
+            window.notifyAlert({
+              type: "warning",
+              text: `${target_value} has no relations`,
+            });
         }
       }
     }
   };
-
+  const viewOptions = options.views.map(({ name, label }) => ({
+    label,
+    value: name,
+  }));
+  const selectedView = viewOptions.find((v) => v.value === viewname);
   return (
     <div>
-      {relations ? (
+      {relationsData ? (
         <Fragment>
           <div>
             <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-            <select
-              value={viewname}
-              className="form-control form-select"
-              onChange={set_view_name}
-              onBlur={set_view_name}
-            >
-              {options.views.map((v, ix) => (
-                <option key={ix} value={v.name}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
+            {options.inJestTestingMode ? null : (
+              <Select
+                options={viewOptions}
+                value={selectedView}
+                onChange={set_view_name}
+                onBlur={set_view_name}
+                menuPortalTarget={document.body}
+                styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+              ></Select>
+            )}
           </div>
           {options.mode !== "filter" && (
             <div>
               <RelationOnDemandPicker
-                relations={relations.layers}
+                relations={relationsData.layers}
                 update={(relPath) => {
                   if (relPath.startsWith(".")) {
                     setProp((prop) => {
@@ -232,8 +281,8 @@ const ViewSettings = () => {
               <RelationBadges
                 view={view}
                 relation={safeRelation}
-                parentTbl={options.tableName}
-                tableNameCache={caches.tableNameCache}
+                parentTbl={tableName}
+                caches={tableCaches}
               />
             </div>
           )}
@@ -241,18 +290,26 @@ const ViewSettings = () => {
       ) : (
         <div>
           <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-          <select
-            value={view}
-            className="form-control form-select"
-            onChange={setAProp("view")}
-            onBlur={setAProp("view")}
-          >
-            {options.views.map((f, ix) => (
-              <option key={ix} value={f.name}>
-                {f.label || f.name}
-              </option>
-            ))}
-          </select>
+          {options.inJestTestingMode ? null : (
+            <Select
+              options={viewOptions}
+              value={selectedView}
+              onChange={(e) => {
+                const target_value = e?.target?.value || e?.value;
+                setProp((prop) => {
+                  prop.view = target_value;
+                });
+              }}
+              onBlur={(e) => {
+                const target_value = e?.target?.value || e?.value;
+                setProp((prop) => {
+                  prop.view = target_value;
+                });
+              }}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+            ></Select>
+          )}
         </div>
       )}
       {options.mode !== "edit" && (
@@ -293,7 +350,7 @@ const ViewSettings = () => {
             )}
         </Fragment>
       )}
-      {(state === "shared" || options.mode === "page") && (
+      {
         <Fragment>
           <label>
             Extra state Formula
@@ -311,7 +368,7 @@ const ViewSettings = () => {
             </small>
           ) : null}
         </Fragment>
-      )}
+      }
       {view ? (
         <a
           className="d-block mt-2"

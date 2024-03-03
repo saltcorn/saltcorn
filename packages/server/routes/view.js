@@ -74,10 +74,12 @@ router.get(
     let title =
       isModal && view.attributes?.popup_title
         ? view.attributes?.popup_title
-        : scan_for_page_title(contents0, view.name);
-    if (isModal && (title || "").includes("{{")) {
+        : view.attributes?.page_title ||
+          scan_for_page_title(contents0, view.name); //legacy
+    if ((title || "").includes("{{")) {
       title = await view.interpolate_title_string(title, query);
     }
+    title = { title };
     if (isModal && view.attributes?.popup_width)
       res.set(
         "SaltcornModalWidth",
@@ -85,10 +87,27 @@ router.get(
           view.attributes?.popup_width_units || "px"
         }`
       );
+    if (isModal && view.attributes?.popup_minwidth)
+      res.set(
+        "SaltcornModalMinWidth",
+        `${view.attributes?.popup_minwidth}${
+          view.attributes?.popup_minwidth_units || "px"
+        }`
+      );
     if (isModal && view.attributes?.popup_save_indicator)
       res.set("SaltcornModalSaveIndicator", `true`);
     if (isModal && view.attributes?.popup_link_out)
       res.set("SaltcornModalLinkOut", `true`);
+    if (view.attributes?.page_description) {
+      let description = view.attributes?.page_description;
+      if ((description || "").includes("{{")) {
+        description = await view.interpolate_title_string(description, query);
+      }
+      title.description = description;
+    }
+    if (view.attributes?.no_menu) {
+      title.no_menu = true;
+    }
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
     if (!isTest())

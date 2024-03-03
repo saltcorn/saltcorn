@@ -27,7 +27,11 @@ const emailMockReqRes = {
 const getMailTransport = (): Transporter => {
   const port = getState().getConfig("smtp_port");
   const secure = getState().getConfig("smtp_secure", port === 465);
-  return createTransport({
+  const smtp_allow_self_signed = getState().getConfig(
+    "smtp_allow_self_signed",
+    false
+  );
+  const transportOptions: any = {
     host: getState().getConfig("smtp_host"),
     port,
     secure,
@@ -35,7 +39,10 @@ const getMailTransport = (): Transporter => {
       user: getState().getConfig("smtp_username"),
       pass: getState().getConfig("smtp_password"),
     },
-  });
+  };
+  if (smtp_allow_self_signed)
+    transportOptions.tls = { rejectUnauthorized: false };
+  return createTransport(transportOptions);
 };
 
 const viewToMjml = async (view: View, state: any) => {

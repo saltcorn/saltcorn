@@ -120,7 +120,7 @@ describe("View", () => {
     const link_views = await View.find({
       table_id: table.id,
     });
-    expect(link_views.length).toBe(6);
+    expect(link_views.length).toBe(10);
   });
   it("should find where", async () => {
     const link_views = await View.find_all_views_where(
@@ -199,6 +199,29 @@ describe("View", () => {
     expect(res).toBe(
       '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th>Count books</th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
     );
+  });
+  it("should interpolate titles string in Show", async () => {
+    const v = await View.findOne({ name: "authorshow" });
+    assertIsSet(v);
+    const title = await v.interpolate_title_string(
+      "Hello {{author}} from {{publisher.name}}",
+      { id: 2 }
+    );
+    expect(title).toBe("Hello Leo Tolstoy from AK Press");
+  });
+  it("should interpolate titles string in Edit", async () => {
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    const title = await v.interpolate_title_string("Hello {{row?.author}}", {
+      id: 2,
+    });
+    expect(title).toBe("Hello Leo Tolstoy");
+  });
+  it("should interpolate titles string in Edit", async () => {
+    const v = await View.findOne({ name: "authoredit" });
+    assertIsSet(v);
+    const title = await v.interpolate_title_string("Hello {{row?.author}}", {});
+    expect(title).toBe("Hello ");
   });
 });
 describe("View with routes", () => {

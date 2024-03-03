@@ -172,6 +172,7 @@ const test_trigger = async (
   errors: string[]
 ) => {
   try {
+    if (trigger.action === "Multi-step action") return;
     const action = getState().actions[trigger.action];
     if (!action) {
       errors.push(

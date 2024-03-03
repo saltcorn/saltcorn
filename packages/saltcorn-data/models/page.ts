@@ -162,6 +162,7 @@ class Page implements AbstractPage {
    */
   async delete(): Promise<void> {
     // delete tag entries from _sc_tag_entries
+    await db.deleteWhere("_sc_page_group_members", { page_id: this.id });
     await db.deleteWhere("_sc_tag_entries", { page_id: this.id });
     await db.deleteWhere("_sc_pages", { id: this.id });
     const root_page_for_roles = await this.is_root_page_for_roles();
@@ -305,6 +306,10 @@ class Page implements AbstractPage {
             (segment.page
               ? `page "${segment.page}" not found`
               : "no page specified")
+        );
+      } else if (page.name === this.name) {
+        throw new InvalidConfiguration(
+          `Page ${this.name} configuration error in embedded page: Infinite loop page-in-page`
         );
       } else {
         const role = (extraArgs.req.user || {}).role_id || 100;

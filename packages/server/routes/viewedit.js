@@ -29,6 +29,9 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
 const File = require("@saltcorn/data/models/file");
+const Tag = require("@saltcorn/data/models/tag");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
+
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/utils");
 
@@ -56,7 +59,18 @@ router.get(
   error_catcher(async (req, res) => {
     let orderBy = "name";
     if (req.query._sortby === "viewtemplate") orderBy = "viewtemplate";
-    const views = await View.find({}, { orderBy, nocase: true });
+    const viewq = {};
+    let filterOnTag;
+    if (req.query._tag) {
+      const tagEntries = await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { view_id: null },
+      });
+      viewq.id = { in: tagEntries.map((te) => te.view_id).filter(Boolean) };
+      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+    }
+
+    const views = await View.find(viewq, { orderBy, nocase: true });
     await setTableRefs(views);
 
     if (req.query._sortby === "table")
@@ -64,7 +78,7 @@ router.get(
         a.table.toLowerCase() > b.table.toLowerCase() ? 1 : -1
       );
 
-    const viewMarkup = await viewsList(views, req);
+    const viewMarkup = await viewsList(views, req, { filterOnTag });
     const tables = await Table.find();
 
     res.sendWrap(req.__(`Views`), {
@@ -183,6 +197,27 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       }),
       new Field({
+        name: "page_title",
+        label: req.__("Page title"),
+        type: "String",
+        parent_field: "attributes",
+        tab: "View settings",
+        sublabel: req.__(
+          "Some view patterns accept interpolations. Ex: <code>{{ name }}</code> or <code>{{ row ? `Edit ${row.name}` : `New person` }}</code>"
+        ),
+      }),
+      new Field({
+        name: "page_description",
+        label: req.__("Page description"),
+        type: "String",
+        parent_field: "attributes",
+        tab: "View settings",
+        sublabel: req.__(
+          "For search engines. Some view patterns accept interpolations."
+        ),
+      }),
+      new Field({
+        // legacy
         name: "default_render_page",
         label: req.__("Show on page"),
         sublabel: req.__(
@@ -210,6 +245,14 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         showIf: { viewtemplate: hasTable },
       }),
       new Field({
+        name: "no_menu",
+        label: req.__("No menu"),
+        sublabel: req.__("Omit the menu from this view"),
+        tab: "View settings",
+        parent_field: "attributes",
+        type: "Bool",
+      }),
+      new Field({
         name: "popup_title",
         label: req.__("Title"),
         type: "String",
@@ -228,6 +271,26 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
       },
       {
         name: "popup_width_units",
+        label: req.__("Units"),
+        type: "String",
+        tab: "Popup settings",
+        fieldview: "radio_group",
+        parent_field: "attributes",
+        attributes: {
+          inline: true,
+          options: ["px", "%", "vw", "em", "rem"],
+        },
+      },
+      {
+        name: "popup_minwidth",
+        label: req.__("Popup min width"),
+        type: "Integer",
+        tab: "Popup settings",
+        parent_field: "attributes",
+        attributes: { asideNext: true },
+      },
+      {
+        name: "popup_minwidth_units",
         label: req.__("Units"),
         type: "String",
         tab: "Popup settings",
@@ -762,7 +825,7 @@ router.post(
       await View.update({ configuration: newcfg }, +id);
       res.json({ success: "ok" });
     } else {
-      res.json({ error: "no view" });
+      res.json({ error: req.__("Unable to save: No view") });
     }
   })
 );

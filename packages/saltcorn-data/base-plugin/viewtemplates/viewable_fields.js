@@ -6,7 +6,7 @@
 const { post_btn } = require("@saltcorn/markup");
 const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
-const { link_view, relationTypeFromPath } = require("../../plugin-helper");
+const { link_view, displayType } = require("../../plugin-helper");
 const { eval_expression } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
@@ -20,8 +20,16 @@ const {
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode, parseRelationPath, dollarizeObject } = require("../../utils");
+const { isNode, dollarizeObject } = require("../../utils");
 const { bool, date } = require("../types");
+const _ = require("underscore");
+
+const {
+  Relation,
+  parseRelationPath,
+  RelationType,
+  ViewDisplayType,
+} = require("@saltcorn/common-code");
 
 /**
  * formats the column index of a view cfg
@@ -99,6 +107,7 @@ const action_link = (
     action_bgcol,
     action_bordercol,
     action_textcol,
+    spinner,
     block,
   },
   __ = (s) => s
@@ -119,6 +128,7 @@ const action_link = (
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
+        onclick: spinner ? "spin_action_link(this)" : undefined,
       },
       action_icon && action_icon !== "empty"
         ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
@@ -263,37 +273,29 @@ const parse_view_select = (view, relation) => {
   }
 };
 
-const pathToQuery = (subview, relation, row, srcTable) => {
-  const { path } = parseRelationPath(relation);
-  const type = relationTypeFromPath(subview, path, srcTable);
-  switch (type) {
-    case "ChildList":
-      return {
-        type,
-        query:
-          path.length === 1
-            ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
-            : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`,
-      };
-    case "ParentShow":
+const pathToQuery = (relation, srcTable, subTable, row) => {
+  const path = relation.path;
+  switch (relation.type) {
+    case RelationType.CHILD_LIST:
+      return path.length === 1
+        ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
+        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`;
+    case RelationType.PARENT_SHOW:
       const fkey = path[0].fkey;
       const reffield = srcTable.fields.find((f) => f.name === fkey);
       const value = row[fkey];
-      return {
-        type,
-        query: value
-          ? `?${reffield.refname}=${
-              typeof value === "object" ? value.id : value
-            }`
-          : null,
-      };
-    case "Own":
-      const getQuery = get_view_link_query(srcTable.fields, subview || {});
-      return { type, query: getQuery(row) };
-    case "Independent":
-      return { type, query: "" };
-    case "RelationPath":
-      const subTable = Table.findOne({ id: subview.table_id });
+      return value
+        ? `?${reffield.refname}=${typeof value === "object" ? value.id : value}`
+        : null;
+    case RelationType.OWN:
+      const getQuery = get_view_link_query(
+        srcTable.fields,
+        relation.subView || {}
+      );
+      return getQuery(row);
+    case RelationType.INDEPENDENT:
+      return "";
+    case RelationType.RELATION_PATH:
       const idName =
         path.length > 0
           ? path[0].fkey
@@ -304,10 +306,7 @@ const pathToQuery = (subview, relation, row, srcTable) => {
         row[idName] === null || row[idName]?.id === null
           ? "NULL"
           : row[idName]?.id || row[idName];
-      return {
-        type,
-        query: `?${relation}=${srcId}`,
-      };
+      return `?${relation.relationString}=${srcId}`;
   }
 };
 
@@ -377,13 +376,19 @@ const view_linker = (
   };
   if (relation) {
     const topview = View.findOne({ name: srcViewName });
+    const srcTable = Table.findOne({ id: topview.table_id });
     const subview = View.findOne({ name: view });
     const subTable = Table.findOne({ id: subview.table_id });
-    const srcTable = Table.findOne({ id: topview.table_id });
+    const relObj = new Relation(
+      relation,
+      subTable ? subTable.name : "",
+      ViewDisplayType.NO_ROW_LIMIT
+    );
+    const type = relObj.type;
     return {
       label: view,
       key: (r) => {
-        const { type, query } = pathToQuery(subview, relation, r, srcTable);
+        const query = pathToQuery(relObj, srcTable, subTable, r);
         if (query === null) return "";
         else {
           let label = "";
@@ -535,7 +540,7 @@ const view_linker = (
           },
         };
       default:
-        throw new Error(view);
+        throw new Error("Invalid relation: " + view);
     }
   }
 };
@@ -562,11 +567,107 @@ const flapMapish = (xs, f) => {
   return res;
 };
 
+const get_viewable_fields_from_layout = (
+  viewname,
+  statehash,
+  table,
+  fields,
+  columns,
+  isShow,
+  req,
+  __,
+  state = {},
+  srcViewName,
+  layoutCols
+) => {
+  const typeMap = {
+    field: "Field",
+    join_field: "JoinField",
+    view_link: "ViewLink",
+    link: "Link",
+    action: "Action",
+    blank: "Text",
+    aggregation: "Aggregation",
+    dropdown_menu: "DropdownMenu",
+  };
+  const toArray = (x) =>
+    !x ? [] : Array.isArray(x) ? x : x.above ? x.above : [x];
+  //console.log("layout cols", layoutCols);
+  const newCols = layoutCols.map(({ contents, ...rest }) => {
+    if (!contents) contents = rest;
+    const col = {
+      ...contents,
+      ...rest,
+      type: typeMap[contents.type] || contents.type,
+    };
+    switch (contents.type) {
+      case "link":
+        col.link_text = contents.text;
+        col.link_url = contents.url;
+        col.link_url_formula = contents.isFormula?.url;
+        col.link_text_formula = contents.isFormula?.text;
+        break;
+      case "view_link":
+        col.view_label_formula = contents.isFormula?.label;
+        break;
+      case "dropdown_menu":
+        col.dropdown_columns = get_viewable_fields_from_layout(
+          viewname,
+          statehash,
+          table,
+          fields,
+          columns,
+          isShow,
+          req,
+          __,
+          (state = {}),
+          srcViewName,
+          toArray(contents.contents)
+        );
+        break;
+      case "blank":
+        if (contents.isFormula?.text) {
+          col.type = "FormulaValue";
+          col.formula = col.contents;
+        }
+        if (contents.isHTML)
+          col.interpolator = (row) => {
+            const template = _.template(contents.contents, {
+              evaluate: /\{\{#(.+?)\}\}/g,
+              interpolate: /\{\{([^#].+?)\}\}/g,
+            });
+            const temres = template({ row, user: req?.user, ...row });
+            return temres;
+          };
+
+        break;
+      case "action":
+        col.action_label_formula = contents.isFormula?.action_label;
+        break;
+    }
+    return col;
+  });
+
+  //console.log("newCols", newCols);
+  return get_viewable_fields(
+    viewname,
+    statehash,
+    table,
+    fields,
+    newCols,
+    isShow,
+    req,
+    __,
+    (state = {}),
+    srcViewName
+  );
+};
+
 /**
  * @function
  * @param {string} viewname
  * @param {Table|object} table
- * @param {Fields[]} fields
+ * @param {Field[]} fields
  * @param {object[]} columns
  * @param {boolean} isShow
  * @param {object} req
@@ -617,6 +718,61 @@ const get_viewable_fields = (
           label: column.header_label ? text(__(column.header_label)) : "",
           key: (r) => text(eval_expression(column.formula, r, req.user)),
         };
+      } else if (column.type === "Text") {
+        return {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) =>
+            column.interpolator
+              ? column.interpolator(r)
+              : text(column.contents),
+        };
+      } else if (column.type === "DropdownMenu") {
+        return {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) =>
+            div(
+              { class: "dropdown" },
+              button(
+                {
+                  class:
+                    column.action_style === "btn-link"
+                      ? "btn btn-link"
+                      : `btn ${column.action_style || "btn-primary"} ${
+                          column.action_size || ""
+                        } dropdown-toggle`,
+                  "data-boundary": "viewport",
+                  type: "button",
+                  id: `actiondd${r.id}_${index}`, //TODO need unique
+                  "data-bs-toggle": "dropdown",
+                  "aria-haspopup": "true",
+                  "aria-expanded": "false",
+                  style:
+                    column.action_style === "btn-custom-color"
+                      ? `background-color: ${
+                          column.action_bgcol || "#000000"
+                        };border-color: ${
+                          column.action_bordercol || "#000000"
+                        }; color: ${column.action_textcol || "#000000"}`
+                      : null,
+                },
+                column.label || req.__("Action")
+              ),
+              div(
+                {
+                  class: [
+                    "dropdown-menu",
+                    column.menu_direction === "end" && "dropdown-menu-end",
+                  ],
+                  "aria-labelledby": `actiondd${r.id}_${index}`,
+                },
+                column.dropdown_columns.map((acol) =>
+                  div({ class: "dropdown-item" }, acol.key(r))
+                )
+              )
+            ),
+        };
       } else if (column.type === "Action") {
         const action_col = {
           ...setWidth,
@@ -639,30 +795,35 @@ const get_viewable_fields = (
             const label = column.action_label_formula
               ? eval_expression(column.action_label, r, req.user)
               : __(column.action_label) || __(column.action_name);
+            const icon = column.action_icon || column.icon || undefined;
             if (url.javascript)
               return a(
                 {
                   href: "javascript:" + url.javascript,
-                  class: column.in_dropdown
-                    ? "dropdown-item"
-                    : column.action_style === "btn-link"
-                    ? ""
-                    : `btn ${column.action_style || "btn-primary"} ${
+                  class: [
+                    column.in_dropdown && "dropdown-item",
+                    column.action_style !== "btn-link" &&
+                      `btn ${column.action_style || "btn-primary"} ${
                         column.action_size || ""
                       }`,
+                  ],
+                  onclick: column.spinner
+                    ? "spin_action_link(this)"
+                    : undefined,
                 },
-                !!column.icon &&
-                  column.icon !== "empty" &&
-                  i({ class: column.icon }),
+                !!icon &&
+                  icon !== "empty" &&
+                  i({ class: icon }) + (label === " " ? "" : "&nbsp;"),
                 label
               );
             else
               return post_btn(url, label, req.csrfToken(), {
                 small: true,
                 ajax: true,
-                icon: column.icon || undefined,
+                icon,
                 reload_on_done: true,
                 confirm: column.confirm,
+                spinner: column.spinner,
                 btnClass: column.in_dropdown
                   ? "dropdown-item"
                   : column.action_style || "btn-primary",
@@ -671,6 +832,7 @@ const get_viewable_fields = (
           },
         };
         if (column.in_dropdown) {
+          //legacy
           dropdown_actions.push(action_col);
           return false;
         } else return action_col;
@@ -753,6 +915,7 @@ const get_viewable_fields = (
               ? getState().fileviews[column.join_fieldview].run(row[key], "", {
                   row,
                   ...column,
+                  ...(column?.configuration || {}),
                 })
               : "";
         }
@@ -804,7 +967,7 @@ const get_viewable_fields = (
         } else {
           [table, fld] = column.agg_relation.split(".");
         }
-        const targetNm =
+        let targetNm =
           column.targetNm ||
           db.sqlsanitize(
             (
@@ -819,7 +982,12 @@ const get_viewable_fields = (
                 column.aggwhere || ""
             ).toLowerCase()
           );
-
+        if (targetNm.length > 58) {
+          targetNm = targetNm
+            .split("")
+            .filter((c, i) => i % 2 == 0)
+            .join("");
+        }
         let showValue = (value) => {
           if (value === true || value === false)
             return bool.fieldviews.show.run(value);
@@ -832,6 +1000,18 @@ const get_viewable_fields = (
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>
               type.fieldviews[column.agg_fieldview].run(x, req, column);
+        } else if (column.agg_fieldview) {
+          const outcomeType =
+            column.stat === "Count" || column.stat === "CountUnique"
+              ? "Integer"
+              : fld.type?.name;
+          const type = getState().types[outcomeType];
+          if (type?.fieldviews[column.agg_fieldview])
+            showValue = (x) =>
+              type.fieldviews[column.agg_fieldview].run(type.read(x), req, {
+                ...column,
+                ...(column?.configuration || {}),
+              });
         }
 
         let key = (r) => {
@@ -887,7 +1067,7 @@ const get_viewable_fields = (
                     getState().fileviews[column.fieldview].run(
                       row[f.name],
                       row[`${f.name}__filename`],
-                      { row, ...column }
+                      { row, ...column, ...(column?.configuration || {}) }
                     )
                 : column.fieldview &&
                   f.type.fieldviews &&
@@ -969,6 +1149,7 @@ const get_viewable_fields = (
     })
   ).filter((v) => !!v);
   if (dropdown_actions.length > 0) {
+    //legacy
     tfields.push({
       label: req.__("Action"),
       key: (r) =>
@@ -1207,6 +1388,7 @@ const objToQueryString = (o) =>
 
 module.exports = {
   get_viewable_fields,
+  get_viewable_fields_from_layout,
   action_url,
   objToQueryString,
   action_link,
