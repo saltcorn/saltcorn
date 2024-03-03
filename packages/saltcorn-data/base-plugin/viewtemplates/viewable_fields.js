@@ -107,6 +107,7 @@ const action_link = (
     action_bgcol,
     action_bordercol,
     action_textcol,
+    spinner,
     block,
   },
   __ = (s) => s
@@ -127,6 +128,7 @@ const action_link = (
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
+        onclick: spinner ? "spin_action_link(this)" : undefined,
       },
       action_icon && action_icon !== "empty"
         ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
@@ -798,13 +800,16 @@ const get_viewable_fields = (
               return a(
                 {
                   href: "javascript:" + url.javascript,
-                  class: column.in_dropdown
-                    ? "dropdown-item"
-                    : column.action_style === "btn-link"
-                    ? ""
-                    : `btn ${column.action_style || "btn-primary"} ${
+                  class: [
+                    column.in_dropdown && "dropdown-item",
+                    column.action_style !== "btn-link" &&
+                      `btn ${column.action_style || "btn-primary"} ${
                         column.action_size || ""
                       }`,
+                  ],
+                  onclick: column.spinner
+                    ? "spin_action_link(this)"
+                    : undefined,
                 },
                 !!icon &&
                   icon !== "empty" &&
@@ -818,6 +823,7 @@ const get_viewable_fields = (
                 icon,
                 reload_on_done: true,
                 confirm: column.confirm,
+                spinner: column.spinner,
                 btnClass: column.in_dropdown
                   ? "dropdown-item"
                   : column.action_style || "btn-primary",
@@ -826,6 +832,7 @@ const get_viewable_fields = (
           },
         };
         if (column.in_dropdown) {
+          //legacy
           dropdown_actions.push(action_col);
           return false;
         } else return action_col;
@@ -993,6 +1000,18 @@ const get_viewable_fields = (
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>
               type.fieldviews[column.agg_fieldview].run(x, req, column);
+        } else if (column.agg_fieldview) {
+          const outcomeType =
+            column.stat === "Count" || column.stat === "CountUnique"
+              ? "Integer"
+              : fld.type?.name;
+          const type = getState().types[outcomeType];
+          if (type?.fieldviews[column.agg_fieldview])
+            showValue = (x) =>
+              type.fieldviews[column.agg_fieldview].run(type.read(x), req, {
+                ...column,
+                ...(column?.configuration || {}),
+              });
         }
 
         let key = (r) => {
@@ -1130,6 +1149,7 @@ const get_viewable_fields = (
     })
   ).filter((v) => !!v);
   if (dropdown_actions.length > 0) {
+    //legacy
     tfields.push({
       label: req.__("Action"),
       key: (r) =>

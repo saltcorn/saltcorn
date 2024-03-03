@@ -186,7 +186,7 @@ const pageBuilderData = async (req, context) => {
   for (const view of views) {
     fixed_state_fields[view.name] = [];
     const table = Table.findOne(view.table_id || view.exttable_name);
-
+    if (table) view.table_name = table.name;
     const fs = await view.get_state_fields();
     for (const frec of fs) {
       const f = new Field(frec);
@@ -219,9 +219,10 @@ const pageBuilderData = async (req, context) => {
       }
     }
   }
+
   //console.log(fixed_state_fields.ListTasks);
   return {
-    views,
+    views: views.map((v) => v.select_option),
     images,
     pages,
     page_groups,
