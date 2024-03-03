@@ -30,7 +30,10 @@ export const process_aggregations = (
   let Table = this_table.constructor;
 
   Object.entries<AggregationOptions>(aggregations).forEach(
-    ([fldnm, { table, ref, field, where, aggregate, subselect, through }]) => {
+    ([
+      fldnm,
+      { table, ref, field, valueFormula, where, aggregate, subselect, through },
+    ]) => {
       let whereStr = "";
       if (where && !subselect) {
         const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
@@ -43,16 +46,17 @@ export const process_aggregations = (
       const aggTable = Table.findOne({ name: table });
       const aggField = aggTable?.fields?.find((f: Field) => f.name === field);
       const ownField = through ? sqlsanitize(through) : this_table.pk_name;
-      const agg_and_field =
+      const agg_and_field = // TODO check valueFormula for sql injection
         aggregate.toLowerCase() === "countunique"
           ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
           : `${sqlsanitize(aggregate)}(${
-              field ? `"${sqlsanitize(field)}"` : "*"
+              field ? `"${sqlsanitize(field)}"` : valueFormula || "*"
             })`;
       if (
         aggField?.is_fkey &&
         aggField.attributes.summary_field &&
-        aggregate.toLowerCase() === "array_agg"
+        aggregate.toLowerCase() === "array_agg" &&
+        field
       ) {
         let whereClause = ref
           ? `aggto."${sqlsanitize(ref)}"=a."${ownField}"`
@@ -71,8 +75,8 @@ export const process_aggregations = (
 
         fldNms.push(newFld);
       } else if (
-        aggregate.startsWith("Latest ") ||
-        aggregate.startsWith("Earliest ")
+        field &&
+        (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
       ) {
         const dateField = aggregate.split(" ")[1];
         const isLatest = aggregate.startsWith("Latest ");

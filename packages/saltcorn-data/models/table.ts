@@ -2861,7 +2861,13 @@ class Table implements AbstractTable {
    * Returns aggregations for this table, possibly on a subset by where-expression
    */
   async aggregationQuery(
-    aggregations: { [nm: string]: { field: string; aggregate: string } },
+    aggregations: {
+      [nm: string]: {
+        field?: string;
+        valueFormula?: string;
+        aggregate: string;
+      };
+    },
     where: any = {}
   ): Promise<any> {
     let fldNms: string[] = [];
@@ -2869,14 +2875,17 @@ class Table implements AbstractTable {
     const schema = db.getTenantSchemaPrefix();
 
     const aggregations1: { [nm: string]: AggregationOptions } = {};
-    Object.entries(aggregations).forEach(([nm, { field, aggregate }]) => {
-      aggregations1[nm] = {
-        table: this.name,
-        field,
-        aggregate,
-        where,
-      };
-    });
+    Object.entries(aggregations).forEach(
+      ([nm, { field, valueFormula, aggregate }]) => {
+        aggregations1[nm] = {
+          table: this.name,
+          field,
+          valueFormula,
+          aggregate,
+          where,
+        };
+      }
+    );
 
     process_aggregations(this, aggregations1, fldNms, values, schema);
     const sql = `SELECT ${fldNms.join()}`;
