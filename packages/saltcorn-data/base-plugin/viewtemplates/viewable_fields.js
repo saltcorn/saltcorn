@@ -107,6 +107,7 @@ const action_link = (
     action_bgcol,
     action_bordercol,
     action_textcol,
+    spinner,
     block,
   },
   __ = (s) => s
@@ -127,6 +128,7 @@ const action_link = (
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
+        onclick: spinner ? "spin_action_link(this)" : undefined,
       },
       action_icon && action_icon !== "empty"
         ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
