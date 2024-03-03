@@ -890,7 +890,7 @@ const render = (
           return type.fieldviews[column.agg_fieldview].run(
             readval,
             req,
-            column
+            column?.configuration || {}
           );
         }
       }
