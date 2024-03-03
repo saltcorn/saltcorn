@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -83,37 +83,33 @@ const AggregationSettings = () => {
       : targetFieldType;
   const fvs = options.agg_fieldview_options[outcomeType];
 
-  /*const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
+  const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
   const cfgFields = fetchedCfgFields;
   useEffect(() => {
-    fetch(`/field/fieldviewcfgform/${options.tableName}?accept=json`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "CSRF-Token": options.csrfToken,
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify({
-        join_field: name,
-        join_fieldview: fieldview,
-        type: "JoinField",
-      }),
-    })
+    fetch(
+      `/field/fieldviewcfgform/${
+        targetField?.table_name || options.tableName
+      }?accept=json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({
+          agg_outcome_type: outcomeType,
+          agg_fieldview,
+          agg_field: targetField?.name,
+        }),
+      }
+    )
       .then(function (response) {
         if (response.status < 399) return response.json();
         else return [];
       })
       .then(setFetchedCfgFields);
-  }, [name, fieldview]);
-
-  const refetchPreview = fetchFieldPreview({
-    options,
-    name,
-    fieldview,
-    configuration,
-    setPreviews,
-    node_id,
-  });*/
+  }, [outcomeType, agg_fieldview]);
 
   return (
     <table>
