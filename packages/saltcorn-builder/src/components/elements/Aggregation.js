@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -13,6 +13,7 @@ import {
   TextStyleRow,
   setAPropGen,
   buildOptions,
+  ConfigForm,
 } from "./utils";
 
 export /**
@@ -59,6 +60,7 @@ const AggregationSettings = () => {
     block,
     textStyle,
     agg_fieldview,
+    configuration,
   } = useNode((node) => ({
     agg_relation: node.data.props.agg_relation,
     agg_field: node.data.props.agg_field,
@@ -66,6 +68,7 @@ const AggregationSettings = () => {
     stat: node.data.props.stat,
     block: node.data.props.block,
     agg_fieldview: node.data.props.agg_fieldview,
+    configuration: node.data.props.configuration,
     textStyle: node.data.props.textStyle,
   }));
   const options = useContext(optionsCtx);
@@ -112,139 +115,149 @@ const AggregationSettings = () => {
   }, [outcomeType, agg_fieldview]);
 
   return (
-    <table>
-      <tbody>
-        <tr>
-          <td>
-            <label>Relation</label>
-          </td>
-          <td>
-            <select
-              className="form-control form-select"
-              value={agg_relation}
-              onChange={(e) => {
-                if (!e.target) return;
-                const value = e.target.value;
-                setProp((prop) => {
-                  prop.agg_relation = value;
-                  const fs = options.agg_field_opts[value];
-                  if (fs && fs.length > 0) prop.agg_field = fs[0]?.name;
-                });
-              }}
-            >
-              {options.child_field_list.map((f, ix) => (
-                <option key={ix} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Child table field</label>
-          </td>
-          <td>
-            <select
-              className="form-control form-select"
-              value={agg_field}
-              onChange={setAProp("agg_field")}
-            >
-              {(options.agg_field_opts[agg_relation] || []).map((f, ix) => (
-                <option key={ix} value={f.name}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Statistic</label>
-          </td>
-          <td>
-            <select
-              value={stat}
-              className="form-control form-select"
-              onChange={setAProp("stat")}
-              onBlur={setAProp("stat")}
-            >
-              {buildOptions(
-                [
-                  "Count",
-                  "CountUnique",
-                  "Avg",
-                  "Sum",
-                  "Max",
-                  "Min",
-                  "Array_Agg",
-                ],
-                { valAttr: true }
-              )}
-              {options.fields
-                .filter((f) => f.type === "Date" || f.type.name === "Date")
-                .map((f, ix) => (
-                  <option key={ix} value={`Latest ${f.name}`}>
-                    Latest {f.name}
-                  </option>
-                ))}
-              {options.fields
-                .filter((f) => f.type === "Date" || f.type.name === "Date")
-                .map((f, ix) => (
-                  <option key={ix} value={`Earliest ${f.name}`}>
-                    Earliest {f.name}
-                  </option>
-                ))}
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label>Where</label>
-          </td>
-          <td>
-            <input
-              type="text"
-              className="form-control"
-              value={aggwhere}
-              onChange={setAProp("aggwhere")}
-            />
-          </td>
-        </tr>
-        {fvs && (
+    <Fragment>
+      <table>
+        <tbody>
           <tr>
             <td>
-              <label>Field view</label>
+              <label>Relation</label>
             </td>
-
             <td>
               <select
-                value={agg_fieldview}
                 className="form-control form-select"
+                value={agg_relation}
                 onChange={(e) => {
                   if (!e.target) return;
                   const value = e.target.value;
-                  setProp((prop) => (prop.agg_fieldview = value));
-                  //refetchPreview({ fieldview: value });
+                  setProp((prop) => {
+                    prop.agg_relation = value;
+                    const fs = options.agg_field_opts[value];
+                    if (fs && fs.length > 0) prop.agg_field = fs[0]?.name;
+                  });
                 }}
               >
-                {(fvs || []).map((fvnm, ix) => (
-                  <option key={ix} value={fvnm}>
-                    {fvnm}
+                {options.child_field_list.map((f, ix) => (
+                  <option key={ix} value={f}>
+                    {f}
                   </option>
                 ))}
               </select>
             </td>
           </tr>
-        )}
-        <TextStyleRow textStyle={textStyle} setProp={setProp} />
-        <tr>
-          <td colSpan="2">
-            <BlockSetting block={block} setProp={setProp} />
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          <tr>
+            <td>
+              <label>Child table field</label>
+            </td>
+            <td>
+              <select
+                className="form-control form-select"
+                value={agg_field}
+                onChange={setAProp("agg_field")}
+              >
+                {(options.agg_field_opts[agg_relation] || []).map((f, ix) => (
+                  <option key={ix} value={f.name}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Statistic</label>
+            </td>
+            <td>
+              <select
+                value={stat}
+                className="form-control form-select"
+                onChange={setAProp("stat")}
+                onBlur={setAProp("stat")}
+              >
+                {buildOptions(
+                  [
+                    "Count",
+                    "CountUnique",
+                    "Avg",
+                    "Sum",
+                    "Max",
+                    "Min",
+                    "Array_Agg",
+                  ],
+                  { valAttr: true }
+                )}
+                {options.fields
+                  .filter((f) => f.type === "Date" || f.type.name === "Date")
+                  .map((f, ix) => (
+                    <option key={ix} value={`Latest ${f.name}`}>
+                      Latest {f.name}
+                    </option>
+                  ))}
+                {options.fields
+                  .filter((f) => f.type === "Date" || f.type.name === "Date")
+                  .map((f, ix) => (
+                    <option key={ix} value={`Earliest ${f.name}`}>
+                      Earliest {f.name}
+                    </option>
+                  ))}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Where</label>
+            </td>
+            <td>
+              <input
+                type="text"
+                className="form-control"
+                value={aggwhere}
+                onChange={setAProp("aggwhere")}
+              />
+            </td>
+          </tr>
+          {fvs && (
+            <tr>
+              <td>
+                <label>Field view</label>
+              </td>
+
+              <td>
+                <select
+                  value={agg_fieldview}
+                  className="form-control form-select"
+                  onChange={(e) => {
+                    if (!e.target) return;
+                    const value = e.target.value;
+                    setProp((prop) => (prop.agg_fieldview = value));
+                    //refetchPreview({ fieldview: value });
+                  }}
+                >
+                  {(fvs || []).map((fvnm, ix) => (
+                    <option key={ix} value={fvnm}>
+                      {fvnm}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          )}
+
+          <TextStyleRow textStyle={textStyle} setProp={setProp} />
+          <tr>
+            <td colSpan="2">
+              <BlockSetting block={block} setProp={setProp} />
+            </td>
+          </tr>
+        </tbody>
+      </table>{" "}
+      {cfgFields ? (
+        <ConfigForm
+          fields={cfgFields}
+          configuration={configuration || {}}
+          setProp={setProp}
+        />
+      ) : null}
+    </Fragment>
   );
 };
 
@@ -265,6 +278,7 @@ Aggregation.craft = {
       "aggwhere",
       "stat",
       "agg_fieldview",
+      { name: "configuration", default: {} },
     ],
   },
 };
