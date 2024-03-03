@@ -1001,7 +1001,10 @@ const get_viewable_fields = (
           const type = getState().types[outcomeType];
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>
-              type.fieldviews[column.agg_fieldview].run(x, req, column);
+              type.fieldviews[column.agg_fieldview].run(type.read(x), req, {
+                ...column,
+                ...(column?.configuration || {}),
+              });
         }
 
         let key = (r) => {
