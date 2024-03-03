@@ -2868,10 +2868,13 @@ class Table implements AbstractTable {
         aggregate: string;
       };
     },
-    where: any = {}
+    options?: {
+      where: any;
+    }
   ): Promise<any> {
     let fldNms: string[] = [];
     let values: any[] = [];
+    const where = options?.where || {};
     const schema = db.getTenantSchemaPrefix();
 
     const aggregations1: { [nm: string]: AggregationOptions } = {};

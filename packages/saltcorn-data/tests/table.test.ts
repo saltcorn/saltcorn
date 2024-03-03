@@ -609,7 +609,7 @@ describe("Table aggregationQuery", () => {
           aggregate: "avg",
         },
       },
-      { normalised: true }
+      { where: { normalised: true } }
     );
     expect(Math.round(aggs.avg_temp)).toBe(37);
   });
@@ -637,7 +637,7 @@ describe("Table aggregationQuery", () => {
             aggregate: "array_agg",
           },
         },
-        { normalised: true }
+        { where: { normalised: true } }
       );
       expect(aggs.ids).toStrictEqual([1]);
     }
