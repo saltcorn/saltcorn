@@ -477,6 +477,7 @@ const setupSocket = (subdomainOffset, ...servers) => {
 
   io.of("/datastream").on("connection", (socket) => {
     let dataStream = null;
+    let dataTarget = null;
     socket.on(
       "open_data_stream",
       async ([viewName, id, fieldName, fieldView, targetOpts], callback) => {
@@ -504,7 +505,11 @@ const setupSocket = (subdomainOffset, ...servers) => {
               targetOpts
             );
             dataStream = stream;
-            getState().log(5, `opened data stram`);
+            dataTarget = target;
+            getState().log(
+              5,
+              `opened data stram to: ${JSON.stringify(dataTarget)}`
+            );
             callback({ status: "ok", target });
           } catch (err) {
             getState().log(
@@ -544,7 +549,10 @@ const setupSocket = (subdomainOffset, ...servers) => {
             );
             callback({ status: "error", msg: err.message || "unknown error" });
           } else {
-            getState().log(5, "closed data stram");
+            getState().log(
+              5,
+              `closed data stram of: ${JSON.stringify(dataTarget)}`
+            );
             callback({ status: "ok" });
             dataStream = null;
           }
@@ -566,7 +574,10 @@ const setupSocket = (subdomainOffset, ...servers) => {
                 }`
               );
             } else {
-              getState().log(5, "closed data stram");
+              getState().log(
+                5,
+                `closed data stram of: ${JSON.stringify(dataTarget)}`
+              );
               dataStream = null;
             }
           });
