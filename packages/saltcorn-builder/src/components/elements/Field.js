@@ -219,26 +219,28 @@ const FieldSettings = () => {
               </td>
             </tr>
           )}
-          <tr>
-            <td></td>
-            <td>
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  name="inline"
-                  type="checkbox"
-                  checked={click_to_edit}
-                  onChange={(e) => {
-                    if (e && e.target) {
-                      const target_value = e.target.checked;
-                      setProp((prop) => (prop.click_to_edit = target_value));
-                    }
-                  }}
-                />
-                <label className="form-check-label">Click to edit?</label>
-              </div>
-            </td>
-          </tr>
+          {options.mode === "show" || options.mode === "list" ? (
+            <tr>
+              <td></td>
+              <td>
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    name="inline"
+                    type="checkbox"
+                    checked={click_to_edit}
+                    onChange={(e) => {
+                      if (e && e.target) {
+                        const target_value = e.target.checked;
+                        setProp((prop) => (prop.click_to_edit = target_value));
+                      }
+                    }}
+                  />
+                  <label className="form-check-label">Click to edit?</label>
+                </div>
+              </td>
+            </tr>
+          ) : null}
 
           {!(blockDisplay && blockDisplay.includes(fieldview)) && (
             <tr>
