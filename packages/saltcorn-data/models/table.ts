@@ -83,7 +83,7 @@ import type {
   RelationOption,
 } from "@saltcorn/types/base_types";
 import { get_formula_examples } from "./internal/table_helper";
-import { process_aggregations } from "./internal/query";
+import { getAggAndField, process_aggregations } from "./internal/query";
 
 /**
  * Transponce Objects
@@ -2869,30 +2869,43 @@ class Table implements AbstractTable {
       };
     },
     options?: {
-      where: any;
+      where?: any;
+      groupBy?: string[] | string;
     }
   ): Promise<any> {
     let fldNms: string[] = [];
-    let values: any[] = [];
-    const where = options?.where || {};
+    const where0 = options?.where || {};
+    const groupBy = Array.isArray(options?.groupBy)
+      ? options?.groupBy
+      : options?.groupBy
+      ? [options?.groupBy]
+      : null;
     const schema = db.getTenantSchemaPrefix();
 
-    const aggregations1: { [nm: string]: AggregationOptions } = {};
     Object.entries(aggregations).forEach(
       ([nm, { field, valueFormula, aggregate }]) => {
-        aggregations1[nm] = {
-          table: this.name,
-          field,
-          valueFormula,
-          aggregate,
-          where,
-        };
+        fldNms.push(
+          `${getAggAndField(
+            aggregate,
+            field === "Formula" ? undefined : field,
+            field === "Formula" ? valueFormula : undefined
+          )} as "${nm}"`
+        );
       }
     );
-
-    process_aggregations(this, aggregations1, fldNms, values, schema);
-    const sql = `SELECT ${fldNms.join()}`;
+    if (groupBy) {
+      fldNms.push(...groupBy);
+    }
+    const { where, values } = mkWhere(where0, db.isSQLite);
+    const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
+      this.name
+    )}" ${where}${
+      groupBy
+        ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}`
+        : ""
+    }`;
     const res = await db.query(sql, values);
+    if (groupBy) return res.rows;
     return res.rows[0];
   }
 

@@ -642,6 +642,25 @@ describe("Table aggregationQuery", () => {
       expect(aggs.ids).toStrictEqual([1]);
     }
   });
+  it("should get grouped aggregations", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    if (!db.isSQLite) {
+      const aggs = await readings.aggregationQuery(
+        {
+          temps: {
+            field: "id",
+            aggregate: "count",
+          },
+        },
+        { groupBy: ["patient_id"] }
+      );
+      expect(aggs).toStrictEqual([
+        { patient_id: 2, temps: "1" },
+        { patient_id: 1, temps: "2" },
+      ]);
+    }
+  });
 });
 
 describe("relations", () => {

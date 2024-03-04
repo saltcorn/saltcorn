@@ -17,6 +17,18 @@ const { isNode } = utils;
 import Field from "../field";
 import db from "../../db";
 
+// TODO check valueFormula for sql injection
+export const getAggAndField = (
+  aggregate: string,
+  field: string | undefined,
+  valueFormula: string | undefined
+) =>
+  aggregate.toLowerCase() === "countunique"
+    ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
+    : `${sqlsanitize(aggregate)}(${
+        field ? `"${sqlsanitize(field)}"` : valueFormula || "*"
+      })`;
+
 export const process_aggregations = (
   this_table: any, //Table
   aggregations: { [nm: string]: AggregationOptions },
@@ -46,12 +58,8 @@ export const process_aggregations = (
       const aggTable = Table.findOne({ name: table });
       const aggField = aggTable?.fields?.find((f: Field) => f.name === field);
       const ownField = through ? sqlsanitize(through) : this_table.pk_name;
-      const agg_and_field = // TODO check valueFormula for sql injection
-        aggregate.toLowerCase() === "countunique"
-          ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
-          : `${sqlsanitize(aggregate)}(${
-              field ? `"${sqlsanitize(field)}"` : valueFormula || "*"
-            })`;
+      const agg_and_field = getAggAndField(aggregate, field, valueFormula);
+
       if (
         aggField?.is_fkey &&
         aggField.attributes.summary_field &&
