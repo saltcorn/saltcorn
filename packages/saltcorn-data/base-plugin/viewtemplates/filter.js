@@ -72,7 +72,7 @@ const configuration_workflow = () =>
           const table = Table.findOne(
             context.table_id || context.exttable_name
           );
-          const fields = table.getFields();
+          const fields = [...table.getFields()];
           const { child_field_list, child_relations } =
             await table.get_child_relations();
           const { parent_field_list } = await table.get_parent_relations(true);
@@ -186,11 +186,33 @@ const configuration_workflow = () =>
             "filter"
           );
           const pages = await Page.find();
+          var agg_field_opts = {};
+
+          agg_field_opts[table.name] = table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => ({
+              name: f.name,
+              label: f.label,
+              ftype: f.type.name || f.type,
+              table_name: table.name,
+              table_id: table.id,
+            }));
+
+          const agg_fieldview_options = {};
+
+          Object.values(getState().types).forEach((t) => {
+            agg_fieldview_options[t.name] = Object.entries(t.fieldviews)
+              .filter(([k, v]) => !v.isEdit && !v.isFilter)
+              .map(([k, v]) => k);
+          });
 
           return {
             fields: fields.map((f) => f.toBuilder),
             tableName: table.name,
             parent_field_list: my_parent_field_list,
+            child_field_list: [table.name],
+            agg_field_opts,
+            agg_fieldview_options,
             roles,
             builtInActions: ["Clear"],
             actions,

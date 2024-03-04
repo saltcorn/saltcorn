@@ -118,35 +118,39 @@ const AggregationSettings = () => {
     <Fragment>
       <table>
         <tbody>
+          {options.mode === "filter" ? null : (
+            <tr>
+              <td>
+                <label>Relation</label>
+              </td>
+              <td>
+                <select
+                  className="form-control form-select"
+                  value={agg_relation}
+                  onChange={(e) => {
+                    if (!e.target) return;
+                    const value = e.target.value;
+                    setProp((prop) => {
+                      prop.agg_relation = value;
+                      const fs = options.agg_field_opts[value];
+                      if (fs && fs.length > 0) prop.agg_field = fs[0]?.name;
+                    });
+                  }}
+                >
+                  {options.child_field_list.map((f, ix) => (
+                    <option key={ix} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          )}
           <tr>
             <td>
-              <label>Relation</label>
-            </td>
-            <td>
-              <select
-                className="form-control form-select"
-                value={agg_relation}
-                onChange={(e) => {
-                  if (!e.target) return;
-                  const value = e.target.value;
-                  setProp((prop) => {
-                    prop.agg_relation = value;
-                    const fs = options.agg_field_opts[value];
-                    if (fs && fs.length > 0) prop.agg_field = fs[0]?.name;
-                  });
-                }}
-              >
-                {options.child_field_list.map((f, ix) => (
-                  <option key={ix} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label>Child table field</label>
+              <label>
+                {options.mode === "filter" ? "Field" : "Child table field"}
+              </label>
             </td>
             <td>
               <select

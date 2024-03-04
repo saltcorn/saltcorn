@@ -628,7 +628,13 @@ export /**
 const ToolboxFilter = ({ expanded }) => {
   const { connectors, query } = useEditor();
   const options = useContext(optionsCtx);
-  const { fields, views, field_view_options } = options;
+  const {
+    fields,
+    views,
+    field_view_options,
+    child_field_list,
+    agg_field_opts,
+  } = options;
   return chunkToolBox(
     [
       <TextElem connectors={connectors} />,
@@ -643,6 +649,11 @@ const ToolboxFilter = ({ expanded }) => {
       <ToggleFilterElem connectors={connectors} fields={fields} />,
       <SearchElem connectors={connectors} />,
       <ActionElem connectors={connectors} options={options} />,
+      <AggregationElem
+        connectors={connectors}
+        child_field_list={child_field_list}
+        agg_field_opts={agg_field_opts}
+      />,
       <ContainerElem connectors={connectors} />,
       <CardElem connectors={connectors} />,
       <TabsElem connectors={connectors} />,
