@@ -52,6 +52,7 @@ const {
   removeEmptyStrings,
   asyncMap,
   getSessionId,
+  mergeIntoWhere,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -291,32 +292,39 @@ const run = async (
   evalCtx.session_id = getSessionId(extra.req);
   await traverse(layout, {
     aggregation: async (segment) => {
-      console.log("aggseg", segment);
+      const { stat, agg_field, agg_fieldview, aggwhere } = segment;
       const where = stateFieldsToWhere({ fields, state, table });
-      const stat = segment.stat;
-      //todo mergeintowhere segment.aggwhere
+      if (aggwhere) {
+        const ctx = {
+          ...state,
+          user_id: extra.req.user?.id || null,
+          user: extra.req.user,
+        };
+        let where1 = jsexprToWhere(aggwhere, ctx, fields);
+        mergeIntoWhere(where, where1 || {});
+      }
       const { val } = await table.aggregationQuery(
         {
           val: {
-            field: segment.agg_field,
+            field: agg_field,
             aggregate: stat,
           },
         },
         { where }
       );
-      const fld = table.getField(segment.agg_field);
+      const fld = table.getField(agg_field);
       segment.type = "blank";
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         segment.contents = val.map((v) => text(v.toString())).join(", ");
-      else if (segment.agg_fieldview) {
+      else if (agg_fieldview) {
         const outcomeType =
           stat === "Count" || stat === "CountUnique"
             ? "Integer"
             : fld.type?.name;
         const type = getState().types[outcomeType];
-        if (type?.fieldviews[segment.agg_fieldview]) {
+        if (type?.fieldviews[agg_fieldview]) {
           const readval = type.read(val);
-          segment.contents = type.fieldviews[segment.agg_fieldview].run(
+          segment.contents = type.fieldviews[agg_fieldview].run(
             readval,
             extra.req,
             segment?.configuration || {}
