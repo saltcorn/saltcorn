@@ -2902,12 +2902,12 @@ class Table implements AbstractTable {
           }
           fldNms.push(
             `(select ${
-              field ? `"${field}"` : valueFormula
+              field ? `"${sqlsanitize(field)}"` : valueFormula
             } from ${schema}"${sqlsanitize(
               this.name
-            )}" innertbl ${newWhere} order by "${dateField}" ${
+            )}" innertbl ${newWhere} order by "${sqlsanitize(dateField)}" ${
               isLatest ? "DESC" : "ASC"
-            } limit 1) as "${nm}"`
+            } limit 1) as "${sqlsanitize(nm)}"`
           );
         } else
           fldNms.push(
@@ -2915,7 +2915,7 @@ class Table implements AbstractTable {
               aggregate,
               field === "Formula" ? undefined : field,
               field === "Formula" ? valueFormula : undefined
-            )} as "${nm}"`
+            )} as "${sqlsanitize(nm)}"`
           );
       }
     );
