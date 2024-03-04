@@ -661,6 +661,48 @@ describe("Table aggregationQuery", () => {
       ]);
     }
   });
+  it("sets up new fields", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    await Field.create({
+      table,
+      name: "published",
+      label: "Published",
+      type: "Date",
+    });
+
+    await table.updateRow({ published: new Date("1971-05.04") }, 1);
+    await table.updateRow({ published: new Date("1972-05.04") }, 2);
+  });
+  it("should get latest by field", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    if (!db.isSQLite) {
+      const aggs = await books.aggregationQuery({
+        pages: {
+          field: "pages",
+          aggregate: "Latest published",
+        },
+      });
+      expect(aggs).toStrictEqual({ pages: 728 });
+    }
+  });
+  it("should get latest by field, qualified", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    if (!db.isSQLite) {
+      const aggs = await books.aggregationQuery(
+        {
+          pages: {
+            field: "pages",
+            aggregate: "Latest published",
+          },
+        },
+        { where: { author: "Herman Melville" } }
+      );
+      expect(aggs).toStrictEqual({ pages: 967 });
+    }
+  });
 });
 
 describe("relations", () => {

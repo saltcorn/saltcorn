@@ -2881,29 +2881,54 @@ class Table implements AbstractTable {
       ? [options?.groupBy]
       : null;
     const schema = db.getTenantSchemaPrefix();
+    const { where, values } = mkWhere(where0, db.isSQLite);
 
     Object.entries(aggregations).forEach(
       ([nm, { field, valueFormula, aggregate }]) => {
-        fldNms.push(
-          `${getAggAndField(
-            aggregate,
-            field === "Formula" ? undefined : field,
-            field === "Formula" ? valueFormula : undefined
-          )} as "${nm}"`
-        );
+        if (
+          field &&
+          (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
+        ) {
+          const dateField = aggregate.split(" ")[1];
+          const isLatest = aggregate.startsWith("Latest ");
+          /* (SELECT pages 
+     FROM books AS inner_books 
+     WHERE inner_books.publisher = outer_books.publisher 
+     ORDER BY published DESC 
+     LIMIT 1) AS latest_published_pages */
+
+          fldNms.push(
+            `(select ${
+              field ? `"${field}"` : valueFormula
+            } from ${schema}"${sqlsanitize(
+              this.name
+            )}" innertbl ${where} order by "${dateField}" ${
+              isLatest ? "DESC" : "ASC"
+            } limit 1) as "${nm}"`
+          );
+        } else
+          fldNms.push(
+            `${getAggAndField(
+              aggregate,
+              field === "Formula" ? undefined : field,
+              field === "Formula" ? valueFormula : undefined
+            )} as "${nm}"`
+          );
       }
     );
     if (groupBy) {
       fldNms.push(...groupBy);
     }
-    const { where, values } = mkWhere(where0, db.isSQLite);
+
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
-    )}" ${where}${
+    )}" mt ${where}${
       groupBy
         ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}`
         : ""
     }`;
+    console.log(sql);
+
     const res = await db.query(sql, values);
     if (groupBy) return res.rows;
     return res.rows[0];
