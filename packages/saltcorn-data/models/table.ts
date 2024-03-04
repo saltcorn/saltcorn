@@ -83,6 +83,7 @@ import type {
   RelationOption,
 } from "@saltcorn/types/base_types";
 import { get_formula_examples } from "./internal/table_helper";
+import { getAggAndField, process_aggregations } from "./internal/query";
 
 /**
  * Transponce Objects
@@ -2857,6 +2858,85 @@ class Table implements AbstractTable {
   }
 
   /**
+   * Returns aggregations for this table, possibly on a subset by where-expression
+   */
+  async aggregationQuery(
+    aggregations: {
+      [nm: string]: {
+        field?: string;
+        valueFormula?: string;
+        aggregate: string;
+      };
+    },
+    options?: {
+      where?: any;
+      groupBy?: string[] | string;
+    }
+  ): Promise<any> {
+    let fldNms: string[] = [];
+    const where0 = options?.where || {};
+    const groupBy = Array.isArray(options?.groupBy)
+      ? options?.groupBy
+      : options?.groupBy
+      ? [options?.groupBy]
+      : null;
+    const schema = db.getTenantSchemaPrefix();
+    const { where, values } = mkWhere(where0, db.isSQLite);
+
+    Object.entries(aggregations).forEach(
+      ([nm, { field, valueFormula, aggregate }]) => {
+        if (
+          field &&
+          (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
+        ) {
+          const dateField = aggregate.split(" ")[1];
+          const isLatest = aggregate.startsWith("Latest ");
+
+          let newWhere = where;
+          if (groupBy) {
+            const newClauses = groupBy
+              .map((f) => `innertbl."${f}" = mt."${f}"`)
+              .join(" AND ");
+            if (!newWhere) newWhere = "where " + newClauses;
+            else newWhere = `${newWhere} AND ${newClauses}`;
+          }
+          fldNms.push(
+            `(select ${
+              field ? `"${sqlsanitize(field)}"` : valueFormula
+            } from ${schema}"${sqlsanitize(
+              this.name
+            )}" innertbl ${newWhere} order by "${sqlsanitize(dateField)}" ${
+              isLatest ? "DESC" : "ASC"
+            } limit 1) as "${sqlsanitize(nm)}"`
+          );
+        } else
+          fldNms.push(
+            `${getAggAndField(
+              aggregate,
+              field === "Formula" ? undefined : field,
+              field === "Formula" ? valueFormula : undefined
+            )} as "${sqlsanitize(nm)}"`
+          );
+      }
+    );
+    if (groupBy) {
+      fldNms.push(...groupBy);
+    }
+
+    const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
+      this.name
+    )}" mt ${where}${
+      groupBy
+        ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}`
+        : ""
+    }`;
+
+    const res = await db.query(sql, values);
+    if (groupBy) return res.rows;
+    return res.rows[0];
+  }
+
+  /**
    *
    * @param opts
    * @returns {Promise<{values, sql: string}>}
@@ -2977,89 +3057,7 @@ class Table implements AbstractTable {
     const whereObj = prefixFieldsInWhere(opts.where, "a");
     const { where, values } = mkWhere(whereObj, db.isSQLite);
 
-    let placeCounter = values.length;
-    let aggValues: any = []; // for sqlite
-    Object.entries<AggregationOptions>(aggregations).forEach(
-      ([
-        fldnm,
-        { table, ref, field, where, aggregate, subselect, through },
-      ]) => {
-        let whereStr = "";
-        if (where && !subselect) {
-          const whereAndValues = mkWhere(where, db.isSQLite, placeCounter);
-          // todo warning deprecated symbol substr is used
-          whereStr = whereAndValues.where.substr(6); // remove "where "
-          if (isNode()) values.push(...whereAndValues.values);
-          else aggValues.push(...whereAndValues.values);
-          placeCounter += whereAndValues.values.length;
-        }
-        const aggTable = Table.findOne({ name: table });
-        const aggField = aggTable?.fields?.find((f) => f.name === field);
-        const ownField = through ? sqlsanitize(through) : this.pk_name;
-        const agg_and_field =
-          aggregate.toLowerCase() === "countunique"
-            ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
-            : `${sqlsanitize(aggregate)}(${
-                field ? `"${sqlsanitize(field)}"` : "*"
-              })`;
-        if (
-          aggField?.is_fkey &&
-          aggField.attributes.summary_field &&
-          aggregate.toLowerCase() === "array_agg"
-        ) {
-          const newFld = `(select array_agg(aggjoin."${sqlsanitize(
-            aggField.attributes.summary_field
-          )}") from ${schema}"${sqlsanitize(
-            table
-          )}" aggto join ${schema}"${sqlsanitize(
-            aggField.reftable_name as string
-          )}" aggjoin on aggto."${sqlsanitize(
-            field
-          )}" = aggjoin.id where aggto."${sqlsanitize(ref)}"=a."${ownField}"${
-            whereStr ? ` and ${whereStr}` : ""
-          }) ${sqlsanitize(fldnm)}`;
-
-          fldNms.push(newFld);
-        } else if (
-          aggregate.startsWith("Latest ") ||
-          aggregate.startsWith("Earliest ")
-        ) {
-          const dateField = aggregate.split(" ")[1];
-          const isLatest = aggregate.startsWith("Latest ");
-          fldNms.push(
-            `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
-              table
-            )}" where "${dateField}"=(select ${
-              isLatest ? `max` : `min`
-            }("${dateField}") from ${schema}"${sqlsanitize(
-              table
-            )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
-              whereStr ? ` and ${whereStr}` : ""
-            }) and "${sqlsanitize(ref)}"=a."${ownField}" limit 1) ${sqlsanitize(
-              fldnm
-            )}`
-          );
-        } else if (subselect)
-          fldNms.push(
-            `(select ${agg_and_field} from ${schema}"${sqlsanitize(
-              table
-            )}" where "${sqlsanitize(ref)}" in (select "${
-              subselect.field
-            }" from ${schema}"${sqlsanitize(subselect.table.name)}" where "${
-              subselect.whereField
-            }"=a."${ownField}")) ${sqlsanitize(fldnm)}`
-          );
-        else
-          fldNms.push(
-            `(select ${agg_and_field} from ${schema}"${sqlsanitize(
-              table
-            )}" where "${sqlsanitize(ref)}"=a."${ownField}"${
-              whereStr ? ` and ${whereStr}` : ""
-            }) ${sqlsanitize(fldnm)}`
-          );
-      }
-    );
-    if (!isNode()) values.unshift(...aggValues);
+    process_aggregations(this, aggregations, fldNms, values, schema);
 
     const selectopts: SelectOptions = {
       limit: opts.limit,
