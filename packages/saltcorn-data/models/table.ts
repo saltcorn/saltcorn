@@ -2891,18 +2891,21 @@ class Table implements AbstractTable {
         ) {
           const dateField = aggregate.split(" ")[1];
           const isLatest = aggregate.startsWith("Latest ");
-          /* (SELECT pages 
-     FROM books AS inner_books 
-     WHERE inner_books.publisher = outer_books.publisher 
-     ORDER BY published DESC 
-     LIMIT 1) AS latest_published_pages */
 
+          let newWhere = where;
+          if (groupBy) {
+            const newClauses = groupBy
+              .map((f) => `innertbl."${f}" = mt."${f}"`)
+              .join(" AND ");
+            if (!newWhere) newWhere = "where " + newClauses;
+            else newWhere = `${newWhere} AND ${newClauses}`;
+          }
           fldNms.push(
             `(select ${
               field ? `"${field}"` : valueFormula
             } from ${schema}"${sqlsanitize(
               this.name
-            )}" innertbl ${where} order by "${dateField}" ${
+            )}" innertbl ${newWhere} order by "${dateField}" ${
               isLatest ? "DESC" : "ASC"
             } limit 1) as "${nm}"`
           );
@@ -2927,7 +2930,6 @@ class Table implements AbstractTable {
         ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}`
         : ""
     }`;
-    console.log(sql);
 
     const res = await db.query(sql, values);
     if (groupBy) return res.rows;

@@ -703,6 +703,41 @@ describe("Table aggregationQuery", () => {
       expect(aggs).toStrictEqual({ pages: 967 });
     }
   });
+  it("should get latest by field, grouped", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    if (!db.isSQLite) {
+      const aggs = await books.aggregationQuery(
+        {
+          pages: {
+            field: "pages",
+            aggregate: "Latest published",
+          },
+        },
+        { groupBy: "author" }
+      );
+      expect(aggs).toStrictEqual([
+        { author: "Leo Tolstoy", pages: 728 },
+        { author: "Herman Melville", pages: 967 },
+      ]);
+    }
+  });
+  it("should get latest by field, grouped and qualified", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    if (!db.isSQLite) {
+      const aggs = await books.aggregationQuery(
+        {
+          pages: {
+            field: "pages",
+            aggregate: "Latest published",
+          },
+        },
+        { groupBy: "author", where: { author: "Herman Melville" } }
+      );
+      expect(aggs).toStrictEqual([{ author: "Herman Melville", pages: 967 }]);
+    }
+  });
 });
 
 describe("relations", () => {
