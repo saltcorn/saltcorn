@@ -1185,6 +1185,7 @@ router.post(
         }#table-views">Views for ${text(t.name)}</a>`
       );
       res.redirect(`/table`);
+      return;
     }
     if (t.id) {
       const triggers = await Trigger.find({ table_id: t.id });
@@ -1196,6 +1197,7 @@ router.post(
           )} has triggers. Delete these first: <a href="/actions">Trigger list</a>`
         );
         res.redirect(`/table`);
+        return;
       }
     }
     try {
