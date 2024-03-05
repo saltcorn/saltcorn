@@ -376,6 +376,7 @@ const JoinFieldSettings = () => {
     textStyle,
     configuration,
     fieldview,
+    click_to_edit,
     node_id,
   } = useNode((node) => ({
     name: node.data.props.name,
@@ -383,7 +384,7 @@ const JoinFieldSettings = () => {
     textStyle: node.data.props.textStyle,
     fieldview: node.data.props.fieldview,
     configuration: node.data.props.configuration,
-
+    click_to_edit: node.data.props.click_to_edit,
     node_id: node.id,
   }));
   const options = useContext(optionsCtx);
@@ -493,6 +494,28 @@ const JoinFieldSettings = () => {
               </td>
             </tr>
           )}
+          {options.mode === "show" || options.mode === "list" ? (
+            <tr>
+              <td></td>
+              <td>
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    name="inline"
+                    type="checkbox"
+                    checked={click_to_edit}
+                    onChange={(e) => {
+                      if (e && e.target) {
+                        const target_value = e.target.checked;
+                        setProp((prop) => (prop.click_to_edit = target_value));
+                      }
+                    }}
+                  />
+                  <label className="form-check-label">Click to edit?</label>
+                </div>
+              </td>
+            </tr>
+          ) : null}
           <tr>
             <td></td>
             <td>
@@ -527,6 +550,7 @@ JoinField.craft = {
       { name: "name", segment_name: "join_field", column_name: "join_field" },
       "fieldview",
       "textStyle",
+      "click_to_edit",
       "block",
       { name: "configuration", default: {} },
     ],
