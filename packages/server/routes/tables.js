@@ -832,6 +832,7 @@ router.get(
       }
       viewCard = {
         type: "card",
+        id: "table-views",
         title: req.__("Views of this table"),
         contents:
           viewCardContents +
@@ -1172,6 +1173,32 @@ router.post(
       req.flash("error", req.__(`Cannot delete users table`));
       res.redirect(`/table`);
       return;
+    }
+    const views = await View.find(
+      t.id ? { table_id: t.id } : { exttable_name: t.name }
+    );
+    if (views.length) {
+      req.flash(
+        "error",
+        `${text(t.name)} has views. Delete these first: <a href="/table/${
+          t.name
+        }#table-views">Views for ${text(t.name)}</a>`
+      );
+      res.redirect(`/table`);
+      return;
+    }
+    if (t.id) {
+      const triggers = await Trigger.find({ table_id: t.id });
+      if (triggers.length) {
+        req.flash(
+          "error",
+          `${text(
+            t.name
+          )} has triggers. Delete these first: <a href="/actions">Trigger list</a>`
+        );
+        res.redirect(`/table`);
+        return;
+      }
     }
     try {
       await t.delete();
