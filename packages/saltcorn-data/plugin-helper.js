@@ -2468,6 +2468,11 @@ const run_action_column = async ({ col, req, ...rest }) => {
         delete stepres.goto_step;
       }
       if (stepres?.clear_return_values) result = {};
+      if (stepres?.set_fields && rest?.row) {
+        Object.entries(stepres?.set_fields).forEach(([k, v]) => {
+          rest.row[k] = v;
+        });
+      }
       try {
         mergeActionResults(result, stepres);
       } catch (error) {
