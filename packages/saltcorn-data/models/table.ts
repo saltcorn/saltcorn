@@ -32,7 +32,7 @@ import type {
   AbstractUser,
 } from "@saltcorn/types/model-abstracts/abstract_user";
 
-import type { ResultMessage } from "@saltcorn/types/common_types";
+import type { ResultMessage, Type } from "@saltcorn/types/common_types";
 import {
   instanceOfErrorMsg,
   instanceOfType,
@@ -1505,6 +1505,17 @@ class Table implements AbstractTable {
       throw new Error("A primary key field is mandatory");
     }
     return pkField;
+  }
+
+  get pk_type(): Type {
+    const pkField = this.fields?.find((f: Field) => f.primary_key);
+    if (!pkField) {
+      throw new Error("A primary key field is mandatory");
+    }
+    if (!instanceOfType(pkField.type)) {
+      throw new Error("A primary key field must have a type");
+    }
+    return pkField.type;
   }
 
   /**
