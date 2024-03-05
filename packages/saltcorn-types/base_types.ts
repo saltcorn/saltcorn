@@ -294,6 +294,18 @@ export type ViewTemplate = {
     queries: any,
     remote?: boolean
   ) => Promise<void>;
+
+  openDataStream?: (
+    table_id: number | undefined,
+    viewName: string,
+    id: number | undefined,
+    fieldName: string,
+    fieldView: string,
+    user: any,
+    configuration: any,
+    targetOpts: any
+  ) => Promise<any>;
+
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
   routes?: Record<string, Action>;
