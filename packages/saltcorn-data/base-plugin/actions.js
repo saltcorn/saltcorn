@@ -1030,14 +1030,22 @@ module.exports = {
             //we will save server side so we can set id
             const db_row = {};
             table.fields.forEach((f) => {
-              const v = row[f.name];
-              if (typeof v !== "undefined")
-                db_row[f.name] = f.type?.read ? f.type.read(v) : v;
+              if (!f?.validate) return;
+              const valres = f.validate(row);
+              if ("success" in valres) db_row[f.name] = valres.success;
             });
             const result = await table.tryInsertRow(db_row);
             if (result.success)
               return { set_fields: { [table.pk_name]: result.success } };
-            else return { eval_js: `return saveAndContinueAsync(${jqGet})` };
+            else {
+              getState().log(
+                3,
+                `form_actions Save failed server side, result: ${JSON.stringify(
+                  result
+                )} row ${JSON.stringify(row)}`
+              );
+              return { eval_js: `return saveAndContinueAsync(${jqGet})` };
+            }
           }
           return { eval_js: `return saveAndContinueAsync(${jqGet})` };
         case "Reset":
