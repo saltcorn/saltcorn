@@ -1164,7 +1164,7 @@ class Table implements AbstractTable {
    */
   async updateRow(
     v_in: any,
-    id: number,
+    id: any,
     user?: Row,
     noTrigger?: boolean,
     resultCollector?: object,
@@ -1338,7 +1338,7 @@ class Table implements AbstractTable {
         ...v,
         [pk_name]: id,
         _version: {
-          next_version_by_id: +id,
+          next_version_by_id: id,
         },
         _time: new Date(),
         _userid: user?.id,
@@ -1394,41 +1394,46 @@ class Table implements AbstractTable {
     }
   }
 
-  async latestSyncInfo(id: number) {
+  async latestSyncInfo(id: any) {
     const rows = await this.latestSyncInfos([id]);
     return rows?.length === 1 ? rows[0] : null;
   }
 
-  async latestSyncInfos(ids: number[]) {
+  async latestSyncInfos(ids: any[]) {
     const schema = db.getTenantSchemaPrefix();
     const dbResult = await db.query(
       `select max(last_modified) "last_modified", ref
        from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
-       group by ref having ref in (${ids.join(",")})`
+       group by ref having ref = ${db.isSQLite ? "" : "ANY"} ($1)`,
+      [ids]
     );
     return dbResult.rows;
   }
 
-  private async insertSyncInfo(id: number, syncTimestamp?: Date) {
+  private async insertSyncInfo(id: any, syncTimestamp?: Date) {
     const schema = db.getTenantSchemaPrefix();
     if (isNode()) {
-      await db.query(`insert into ${schema}"${db.sqlsanitize(
-        this.name
-      )}_sync_info" values(${id},
-        date_trunc('milliseconds', to_timestamp(${
-          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
-        })))`);
+      await db.query(
+        `insert into ${schema}"${db.sqlsanitize(
+          this.name
+        )}_sync_info" values($1,
+        date_trunc('milliseconds', to_timestamp($2)))`,
+        [
+          id,
+          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0,
+        ]
+      );
     } else {
       await db.query(
         `insert into "${db.sqlsanitize(this.name)}_sync_info"
          (ref, modified_local, deleted) 
-         values(${id}, true, false)`
+         values('${id}', true, false)`
       );
     }
   }
 
   private async updateSyncInfo(
-    id: number,
+    id: any,
     oldLastModified: Date,
     syncTimestamp?: Date
   ) {
@@ -1437,11 +1442,12 @@ class Table implements AbstractTable {
       await db.query(
         `update ${schema}"${db.sqlsanitize(
           this.name
-        )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp(${
-          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
-        })) where ref=${id} and last_modified = to_timestamp(${
-          oldLastModified.valueOf() / 1000.0
-        })`
+        )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp($1)) where ref=$2 and last_modified = to_timestamp($3)`,
+        [
+          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0,
+          id,
+          oldLastModified.valueOf() / 1000.0,
+        ]
       );
     } else {
       await db.query(
@@ -1689,7 +1695,7 @@ class Table implements AbstractTable {
         ...v,
         [pk_name]: id,
         _version: {
-          next_version_by_id: +id,
+          next_version_by_id: id,
         },
         _userid: user?.id,
         _time: new Date(),

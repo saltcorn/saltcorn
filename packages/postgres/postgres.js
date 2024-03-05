@@ -191,10 +191,11 @@ const insert = async (tbl, obj, opts = {}) => {
   let conflict = "";
   kvs.forEach(([k, v]) => {
     if (v && v.next_version_by_id) {
+      valList.push(v.next_version_by_id);
       valPosList.push(
         `coalesce((select max(_version) from "${schema}"."${sqlsanitize(
           tbl
-        )}" where id=${+v.next_version_by_id}), 0)+1`
+        )}" where id=$${valList.length}), 0)+1`
       );
       if (opts.onConflictDoNothing) conflict = "on conflict do nothing ";
     } else {
