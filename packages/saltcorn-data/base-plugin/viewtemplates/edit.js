@@ -135,6 +135,7 @@ const configuration_workflow = (req) =>
           (
             await Trigger.find({
               when_trigger: { or: ["API call", "Never"] },
+              table_id: null,
             })
           ).forEach((tr) => {
             actions.push(tr.name);
@@ -1373,6 +1374,69 @@ const authorise_post = async (
   return await authorizePostQuery(body, table_id);
 };
 
+const openDataStream = async (
+  tableId,
+  viewName,
+  id,
+  fieldName,
+  fieldView,
+  user,
+  configuration,
+  targetOpts
+) => {
+  const table = Table.findOne({ id: tableId });
+  const field = table.getField(fieldName);
+  if (!field) throw new InvalidConfiguration(`Field ${fieldName} not found`);
+  if (field.type === "File") {
+    const cfgCol = configuration.columns.find(
+      (col) => col.fieldview === fieldView && col.field_name === fieldName
+    );
+    const fileView = getState().fileviews[fieldView];
+    if (!fileView)
+      throw new InvalidConfiguration(`File view ${fieldView} not found`);
+    return await fileView.openDataStream(
+      tableId,
+      id,
+      fieldName,
+      user,
+      cfgCol.configuration,
+      targetOpts
+    );
+  }
+};
+
+// TODO is owner check
+const authorizeDataStream = async (view, id, fieldName, user, targetOpts) => {
+  if (!user || user.role_id > view.min_role) return false;
+  else {
+    const table = Table.findOne({ id: view.table_id });
+    if (!table || user.role_id > table.min_role_write) return false;
+    else {
+      const field = table.getField(fieldName);
+      if (field.type === "File") {
+        if (targetOpts?.oldTarget) {
+          // continue old file ?
+          const file = await File.findOne(targetOpts.oldTarget);
+          if (file) return file.min_role_read >= user.role_id;
+        } else if (id) {
+          // continue file of existing row ?
+          const row = await table.getRow({ [table.pk_name]: id });
+          const fileCol = row[fieldName];
+          if (fileCol) {
+            const file = await File.findOne(row[fieldName]);
+            if (file) return file.min_role_read >= user.role_id;
+          }
+        }
+        // stream is new or the file does not exist
+        return true;
+      } else {
+        // only files for now
+        return false;
+      }
+    }
+  }
+};
+
 /**
  * @param {number} table_id
  * @param {*} viewname
@@ -1589,7 +1653,7 @@ const prepare = async (
 
   const file_fields = form.fields.filter((f) => f.type === "File");
   for (const field of file_fields) {
-    if (!field.fieldviewObj?.isEdit) continue;
+    if (!field.fieldviewObj?.isEdit || field.fieldviewObj?.isStream) continue;
     if (field.fieldviewObj?.setsFileId) {
       //do nothing
     } else if (field.fieldviewObj?.setsDataURL) {
@@ -1804,6 +1868,8 @@ module.exports = {
   run,
   runMany,
   runPost,
+  openDataStream,
+  authorizeDataStream,
   get_state_fields,
   initial_config,
   /** @type {boolean} */

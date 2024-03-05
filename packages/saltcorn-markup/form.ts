@@ -68,7 +68,7 @@ const mkShowIf = (sIf: any): string =>
               .map((v) => `'${v}'`)
               .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
               target
-            )}]').val())`
+            )}]:not(:disabled)').val())`
           : target.includes("|_")
           ? `splitTargetMatch(e.data("data-closest-form-ns").find('[data-fieldname=${
               rmInitialDot(target).split("|_")[0]

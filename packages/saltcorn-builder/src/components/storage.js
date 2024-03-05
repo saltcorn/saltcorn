@@ -12,6 +12,8 @@ import { Empty } from "./elements/Empty";
 import { Columns, ntimes, sum } from "./elements/Columns";
 import { JoinField } from "./elements/JoinField";
 import { Tabs } from "./elements/Tabs";
+import { ListColumns } from "./elements/ListColumns";
+import { ListColumn } from "./elements/ListColumn";
 import { Table } from "./elements/Table";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
@@ -76,6 +78,8 @@ const allElements = [
   DropMenu,
   Page,
   Table,
+  ListColumn,
+  ListColumns,
 ];
 
 export /**
@@ -88,7 +92,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
+const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   /**
    * @param {object} segment
@@ -129,7 +133,6 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
         );
       else return <MatchElement key={ix} {...props} />;
     }
-
     if (segment.type === "blank") {
       return (
         <Text
@@ -177,6 +180,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           step_only_ifs={segment.step_only_ifs || ""}
           step_action_names={segment.step_action_names || ""}
           confirm={segment.confirm}
+          spinner={segment.spinner}
           configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
@@ -285,6 +289,27 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
           )}
         />
       );
+    } else if (segment.besides && segment.list_columns) {
+      const addFields = options.additionalColumnFields;
+
+      return segment.besides.map((col, jx) => {
+        const addProps = {};
+        (addFields || []).forEach((f) => {
+          addProps[f.name] = col[f.name];
+        });
+        return (
+          <ListColumn
+            key={jx}
+            alignment={col.alignment}
+            header_label={col.header_label}
+            col_width={col.col_width}
+            showif={col.showif}
+            col_width_units={col.col_width_units}
+            contents={toTag(col.contents)}
+            {...addProps}
+          ></ListColumn>
+        );
+      });
     } else if (segment.besides) {
       return (
         <Columns
@@ -319,7 +344,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
       segment.above.forEach((child) => {
         if (child) go(child, parent);
       });
-    } else if (segment.besides) {
+    } else if (segment.besides && !segment.list_columns) {
       const node = query
         .parseReactElement(
           <Columns
@@ -341,7 +366,13 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT") => {
       actions.addNodeTree(node, parent);
     } else {
       const tag = toTag(segment);
-      if (tag) {
+      if (Array.isArray(tag)) {
+        tag.forEach((t) => {
+          const node = query.parseReactElement(t).toNodeTree();
+          //console.log("other", node);
+          actions.addNodeTree(node, parent);
+        });
+      } else if (tag) {
         const node = query.parseReactElement(tag).toNodeTree();
         //console.log("other", node);
         actions.addNodeTree(node, parent);
@@ -365,7 +396,7 @@ export /**
  * @subcategory components
  * @namespace
  */
-const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
+const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
   /**
@@ -417,9 +448,32 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         related.fields.forEach((f) => {
           c[f.column_name || f.name || f] = node.props[f.name || f];
         });
+        if (s.isFormula) c.isFormula = s.isFormula;
         columns.push(c);
       }
       return s;
+    }
+    if (node.displayName === ListColumns.craft.displayName) {
+      return {
+        besides: node.nodes.map((nm) => go(nodes[nm])),
+        list_columns: true,
+      };
+    }
+    if (node.displayName === ListColumn.craft.displayName) {
+      const contents = go(nodes[node.linkedNodes.listcol]);
+      const addFields = options.additionalColumnFields;
+      const lc = {
+        contents,
+        col_width: node.props.col_width,
+        col_width_units: node.props.col_width_units,
+        alignment: node.props.alignment,
+        header_label: node.props.header_label,
+        showif: node.props.showif,
+      };
+      (addFields || []).forEach((f) => {
+        lc[f.name] = node.props[f.name];
+      });
+      return lc;
     }
     if (node.isCanvas) {
       if (node.displayName === Container.craft.displayName)
@@ -579,6 +633,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         action_textcol: node.props.action_textcol,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
+        spinner: node.props.spinner,
         nsteps: node.props.nsteps,
         step_only_ifs: node.props.step_only_ifs,
         step_action_names: node.props.step_action_names,
@@ -591,6 +646,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT") => {
         block: node.props.block,
         configuration: node.props.configuration,
         confirm: node.props.confirm,
+        spinner: node.props.spinner,
         action_name: node.props.name,
         ...(node.props.name !== "Clear" && node.props.action_row_variable
           ? {

@@ -765,8 +765,18 @@ const string = {
                   onChange: attrs.onChange,
                   onBlur: attrs.onChange,
                   autocomplete: "off",
+                  required:
+                    attrs.placeholder && (required || attrs.force_required),
                 },
-                required || attrs.force_required
+                attrs.placeholder && (required || attrs.force_required)
+                  ? [
+                      option(
+                        { value: "", disabled: true, selected: !v },
+                        attrs.placeholder
+                      ),
+                      ...getStrOptions(v, attrs.options),
+                    ]
+                  : required || attrs.force_required
                   ? getStrOptions(v, attrs.options)
                   : [
                       option({ value: "" }, attrs.neutral_label || ""),
@@ -1219,6 +1229,11 @@ const int = {
           label: "Read-only",
           type: "Bool",
         },
+        {
+          name: "autofocus",
+          label: "Autofocus",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) => {
         const id = `input${text_attr(nm)}`;
@@ -1233,6 +1248,7 @@ const int = {
               class: ["form-control", cls],
               disabled: attrs.disabled,
               readonly: attrs.readonly,
+              autofocus: attrs.autofocus,
               "data-fieldname": text_attr(field.name),
               name,
               onChange: attrs.onChange,

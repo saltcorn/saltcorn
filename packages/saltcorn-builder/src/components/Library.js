@@ -93,7 +93,11 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   const doSave = (query) => {
     if (!query.serialize) return;
 
-    const data = craftToSaltcorn(JSON.parse(query.serialize()));
+    const data = craftToSaltcorn(
+      JSON.parse(query.serialize()),
+      "ROOT",
+      options
+    );
     const urlroot = options.page_id ? "pageedit" : "viewedit";
     if (savedData.current === false) {
       //do not save on first call
@@ -160,7 +164,8 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
           layout.layout ? layout.layout : layout,
           query,
           actions,
-          node.parent
+          node.parent,
+          options
         );
         setTimeout(() => {
           actions.delete(id);
@@ -212,7 +217,11 @@ const Library = ({ expanded }) => {
    * @returns {void}
    */
   const addSelected = () => {
-    const layout = craftToSaltcorn(JSON.parse(query.serialize()), selected);
+    const layout = craftToSaltcorn(
+      JSON.parse(query.serialize()),
+      selected,
+      options
+    );
     const data = { layout, icon, name: newName };
     fetch(`/library/savefrombuilder`, {
       method: "POST", // or 'PUT'

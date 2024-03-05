@@ -24,6 +24,7 @@ import {
 
 import { RelationBadges } from "./RelationBadges";
 import { RelationOnDemandPicker } from "./RelationOnDemandPicker";
+import Select from "react-select";
 
 import {
   RelationsFinder,
@@ -201,8 +202,8 @@ const ViewLinkSettings = () => {
     });
   }
   const set_view_name = (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
+    if (e?.target?.value || e?.value) {
+      const target_value = e.target?.value || e.value;
       if (target_value !== use_view_name) {
         const newRelations = finder.findRelations(
           tableName,
@@ -236,6 +237,11 @@ const ViewLinkSettings = () => {
   };
   const helpContext = { view_name: use_view_name };
   if (tableName) helpContext.srcTable = tableName;
+  const viewOptions = options.views.map(({ name, label }) => ({
+    label,
+    value: name,
+  }));
+  const selectedView = viewOptions.find((v) => v.value === use_view_name);
   return (
     <div>
       <table className="w-100">
@@ -243,18 +249,18 @@ const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>View to link to</label>
-              <select
-                value={use_view_name}
-                className="form-control form-select"
-                onChange={set_view_name}
-                onBlur={set_view_name}
-              >
-                {options.views.map((f, ix) => (
-                  <option key={ix} value={f.name}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
+              {options.inJestTestingMode ? null : (
+                <Select
+                  options={viewOptions}
+                  value={selectedView}
+                  onChange={set_view_name}
+                  onBlur={set_view_name}
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 19999 }),
+                  }}
+                ></Select>
+              )}
             </td>
           </tr>
           <tr>

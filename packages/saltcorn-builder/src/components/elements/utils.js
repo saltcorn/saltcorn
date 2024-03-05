@@ -19,6 +19,7 @@ import faIcons from "./faicons";
 import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
+import Select from "react-select";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -139,7 +140,7 @@ export /**
  */
 const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
   const { mode } = React.useContext(optionsCtx);
-
+  const allowFormula = mode === "show" || mode === "list";
   /**
    * @returns {void}
    */
@@ -160,14 +161,14 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
     });
   };
   let errorString = false;
-  if (mode === "show" && isFormula[nodekey]) {
+  if (allowFormula && isFormula[nodekey]) {
     try {
       Function("return " + node[nodekey]);
     } catch (error) {
       errorString = error.message;
     }
   }
-  return mode !== "show" ? (
+  return !allowFormula ? (
     children
   ) : (
     <Fragment>
@@ -492,6 +493,7 @@ export const fetchViewPreview =
     };
     let viewname,
       body = configuration ? { ...configuration } : {};
+    if (!view) return "";
     if (view.includes(":")) {
       const [prefix, rest] = view.split(":");
       const tokens = rest.split(".");
@@ -902,24 +904,51 @@ const ConfigField = ({
         spellCheck={false}
       />
     ),
-    select: () => (
-      <select
-        className="form-control form-select"
-        value={value || ""}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-        onBlur={(e) => e.target && myOnChange(e.target.value)}
-      >
-        {field.options.map((o, ix) =>
-          o.name && o.label ? (
-            <option key={ix} value={o.name}>
-              {o.label}
-            </option>
-          ) : (
-            <option key={ix}>{o}</option>
-          )
-        )}
-      </select>
-    ),
+    select: () => {
+      if (field.class?.includes?.("selectizable")) {
+        const seloptions = field.options.map((o, ix) =>
+          o.name && o.label
+            ? { value: o.name, label: o.label }
+            : { value: o, label: o }
+        );
+        return (
+          <Select
+            options={seloptions}
+            value={seloptions.find((so) => value === so.value)}
+            onChange={(e) =>
+              (e.name && myOnChange(e.name)) ||
+              (e.value && myOnChange(e.value)) ||
+              (typeof e === "string" && myOnChange(e))
+            }
+            onBlur={(e) =>
+              (e.name && myOnChange(e.name)) ||
+              (e.value && myOnChange(e.value)) ||
+              (typeof e === "string" && myOnChange(e))
+            }
+            menuPortalTarget={document.body}
+            styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+          ></Select>
+        );
+      } else
+        return (
+          <select
+            className="form-control form-select"
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            onBlur={(e) => e.target && myOnChange(e.target.value)}
+          >
+            {field.options.map((o, ix) =>
+              o.name && o.label ? (
+                <option key={ix} value={o.name}>
+                  {o.label}
+                </option>
+              ) : (
+                <option key={ix}>{o}</option>
+              )
+            )}
+          </select>
+        );
+    },
     btn_select: () => (
       <div className="btn-group w-100" role="group">
         {field.options.map((o, ix) => (
@@ -1017,8 +1046,15 @@ export /**
  * @returns {table}
  */
 const SettingsFromFields =
-  (fields, opts = {}) =>
+  (fieldsIn, opts = {}) =>
   () => {
+    const fields = [...fieldsIn];
+    if (opts.additionalFieldsOptionKey) {
+      const options = React.useContext(optionsCtx);
+
+      const addFields = options[opts.additionalFieldsOptionKey];
+      fields.push(...(addFields || []));
+    }
     const node = useNode((node) => {
       const ps = {};
       fields.forEach((f) => {
@@ -1290,6 +1326,7 @@ const ButtonOrLinkSettingsRows = ({
             <option value="">Standard</option>
             <option value="btn-lg">Large</option>
             <option value="btn-sm">Small</option>
+            <option value="btn-sm btn-xs">Extra Small</option>
             <option value="btn-block">Block</option>
             <option value="btn-block btn-lg">Large block</option>
           </select>

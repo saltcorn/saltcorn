@@ -17,6 +17,7 @@ import View from "@saltcorn/data/models/view";
 import { Pack } from "@saltcorn/types/base_types";
 import Page from "@saltcorn/data/models/page";
 import Table from "@saltcorn/data/models/table";
+import Trigger from "@saltcorn/data/models/trigger";
 
 type SnapshotCfg = {
   id?: number;
@@ -101,6 +102,13 @@ class Snapshot {
       const page = await Page.findOne({ name });
       if (page) await Page.update(page.id!, pageSpec!);
     }
+    if ((type || "").toLowerCase() === "trigger") {
+      const { table_name, ...triggerSpec } = this.pack?.triggers.find(
+        (p: any) => p.name === name
+      ) as any;
+      const trigger = await Trigger.findOne({ name });
+      if (trigger) await Trigger.update(trigger.id!, triggerSpec!);
+    }
     return;
   }
   static async entity_history(type: string, name: string): Promise<Snapshot[]> {
@@ -115,6 +123,8 @@ class Snapshot {
           return pack.views.find((v: any) => v.name === name);
         case "page":
           return pack.pages.find((p: any) => p.name === name);
+        case "trigger":
+          return pack.triggers.find((p: any) => p.name === name);
       }
     };
     let last = get_entity(snaps[0].pack);

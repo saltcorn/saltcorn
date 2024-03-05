@@ -804,6 +804,7 @@ const field_picker_fields = async ({
   ];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
+    table_id: null,
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
@@ -1546,8 +1547,11 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
     } else if (column.type === "FormulaValue") {
       freeVars = new Set([...freeVars, ...freeVariables(column.formula)]);
     } else if (column.type === "ViewLink") {
-      if (column.view_label_formula)
-        freeVars = new Set([...freeVars, ...freeVariables(column.view_label)]);
+      if (column.view_label_formula || column.isFormula?.label)
+        freeVars = new Set([
+          ...freeVars,
+          ...freeVariables(column.view_label || column.label),
+        ]);
       if (column.extra_state_fml)
         freeVars = new Set([
           ...freeVars,
@@ -1657,7 +1661,11 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
       },
       tabs(v) {
         (v.titles || []).forEach((t) => {
-          freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
+          if (typeof t === "string")
+            freeVars = new Set([
+              ...freeVars,
+              ...freeVariablesInInterpolation(t),
+            ]);
         });
         (v.showif || []).forEach((t) => {
           freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
@@ -1682,6 +1690,12 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
         if (v.isFormula?.customClass)
           freeVars = new Set([...freeVars, ...freeVariables(v.customClass)]);
       },
+    });
+  }
+  if (layout?.besides && layout?.list_columns) {
+    layout?.besides.forEach((s) => {
+      if (s.showif)
+        freeVars = new Set([...freeVars, ...freeVariables(s.showif)]);
     });
   }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
@@ -2399,40 +2413,67 @@ const run_action_column = async ({ col, req, ...rest }) => {
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
-    if (state_action) configuration = colcfg;
-    else {
+    let goRun;
+    if (state_action) {
+      configuration = colcfg;
+      goRun = () =>
+        state_action.run({
+          configuration,
+          user: req.user,
+          req,
+          ...rest,
+        });
+    } else {
       const trigger = await Trigger.findOne({ name: action_name });
-      if (trigger) {
+
+      if (trigger?.action === "Multi-step action") {
+        goRun = () => trigger.runWithoutRow({ req, ...rest });
+      } else if (trigger) {
         state_action = getState().actions[trigger.action];
-        configuration = trigger.configuration;
+        goRun = () =>
+          state_action.run({
+            configuration: trigger.configuration,
+            user: req.user,
+            req,
+            ...rest,
+          });
       }
     }
-    if (!state_action)
+    if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-    return await state_action.run({
-      configuration,
-      user: req.user,
-      req,
-      ...rest,
-    });
+
+    return await goRun();
   };
   if (col.action_name === "Multi-step action") {
-    const result = {};
-    for (let i = 0; i < col.step_action_names.length; i++) {
+    let result = {};
+    let step_count = 0;
+    let MAX_STEPS = 200;
+    for (
+      let i = 0;
+      i < col.step_action_names.length && step_count < MAX_STEPS;
+      i++
+    ) {
+      step_count += 1;
+
       const action_name = col.step_action_names?.[i];
       if (!action_name) continue;
       const only_if = col.step_only_ifs?.[i];
       const config = col.configuration.steps?.[i] || {};
       if (only_if && rest.row) {
-        if (!eval_expression(only_if, rest.row, rest.req?.user)) continue;
+        if (!eval_expression(only_if, rest.row, req?.user)) continue;
       }
       const stepres = await run_action_step(action_name, config);
+      if (stepres?.goto_step) {
+        i = +stepres.goto_step - 2;
+        delete stepres.goto_step;
+      }
+      if (stepres?.clear_return_values) result = {};
       try {
         mergeActionResults(result, stepres);
       } catch (error) {
         console.error(error);
       }
-      if (result.error) break;
+      if (result.error || result.halt_steps) break;
     }
     return result;
   } else return await run_action_step(col.action_name, col.configuration);

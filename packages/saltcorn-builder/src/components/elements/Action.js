@@ -110,6 +110,7 @@ const ActionSettings = () => {
     step_only_ifs: node.data.props.step_only_ifs,
     step_action_names: node.data.props.step_action_names,
     setting_action_n: node.data.props.setting_action_n,
+    spinner: node.data.props.spinner,
   }));
   const {
     actions: { setProp },
@@ -127,6 +128,7 @@ const ActionSettings = () => {
     setting_action_n,
     step_only_ifs,
     step_action_names,
+    spinner,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
@@ -277,6 +279,16 @@ const ActionSettings = () => {
           onChange={setAProp("confirm", { checked: true })}
         />
         <label className="form-check-label">User confirmation?</label>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={spinner}
+          onChange={setAProp("spinner", { checked: true })}
+        />
+        <label className="form-check-label">Spinner on click</label>
       </div>
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />

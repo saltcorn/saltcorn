@@ -187,7 +187,8 @@ const user_dropdown = (user, req, can_reset) =>
     post_dropdown_item(
       `/useradmin/set-random-password/${user.id}`,
       '<i class="fas fa-random"></i>&nbsp;' + req.__("Set random password"),
-      req
+      req,
+      true
     ),
     can_reset &&
       post_dropdown_item(

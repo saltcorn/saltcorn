@@ -147,8 +147,14 @@ div.wrap-builder-elem label {
   padding: 2px;
 }
 
-#builder-main-canvas div.root-canvas:empty:before {
+#builder-main-canvas.emptymsg div.root-canvas:empty:before {
   font-size: 26px;
+  opacity: 0.5;
+  margin-left: 10px;
+  content: "Drag-and-drop components here";
+}
+
+#builder-main-canvas div.list-empty-msg:empty:before {
   opacity: 0.5;
   margin-left: 10px;
   content: "Drag-and-drop components here";
@@ -484,4 +490,22 @@ Copyright (c) 2017 Taha Paksu
 
 div.builder-config-field {
   margin-top: 0.5rem;
+}
+
+.flex-50 {
+  flex: 50%;
+}
+
+#builder-main-canvas .list-column {
+  min-height: 80px;
+}
+
+#builder-main-canvas .list-col-canvas {
+  min-height: 70px;
+  margin: 5px;
+}
+
+#builder-main-canvas .list-column-outer {
+  border: 1px solid black;
+  margin-top: 2px;
 }

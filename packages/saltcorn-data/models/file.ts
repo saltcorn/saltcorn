@@ -166,6 +166,12 @@ class File {
     return s[0] === "/" ? s.substring(1) : s;
   }
 
+  get absolutePath(): string {
+    const tenant = db.getTenantSchema();
+    const safeDir = File.normalise(this.location);
+    return path.join(db.connectObj.file_store, tenant, safeDir);
+  }
+
   /**
    * get all directories in the root folder (tenant root dir for multi-tenant)
    * @param ignoreCache if a cache exists, ignore it
@@ -210,6 +216,11 @@ class File {
     } catch (e) {
       throw new Error("File.is_symlink: File not found: " + this.location);
     }
+  }
+
+  static nameToMimeType(filepath: string) {
+    const filename = path.basename(filepath);
+    return lookup(filename);
   }
 
   static async from_file_on_disk(
@@ -587,7 +598,8 @@ class File {
     // set mime type
     const [mime_super, mime_sub] = mimetype.split("/");
     // move file in file system to newPath
-    const contents1 = contents instanceof ArrayBuffer ? Buffer.from(contents) : contents
+    const contents1 =
+      contents instanceof ArrayBuffer ? Buffer.from(contents) : contents;
     await fsp.writeFile(newPath, contents1);
     // create file
     const file = await File.create({

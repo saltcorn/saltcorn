@@ -17,6 +17,8 @@ import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract
 const { satisfies, mergeActionResults } = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import expression from "./expression";
+const { eval_expression } = expression;
 
 /**
  * Trigger class
@@ -33,7 +35,7 @@ class Trigger implements AbstractTrigger {
   id?: number | null;
   configuration: any;
   min_role?: number | null;
-  run?: (row: Row, extraArgs?: any) => boolean;
+  run?: (row: Row, extraArgs?: any) => Promise<any>;
 
   /**
    * Trigger constructor
@@ -287,12 +289,62 @@ class Trigger implements AbstractTrigger {
   /**
    * Run trigger without row
    * @param runargs
-   * @returns {Promise<boolean>}
+   * @returns {Promise<any>}
    */
-  async runWithoutRow(runargs = {}): Promise<boolean> {
+  async runWithoutRow(runargs: any = {}): Promise<any> {
     const { getState } = require("../db/state");
     const state = getState();
     state.log(4, `Trigger run ${this.name} ${this.action} no row`);
+    if (this.action === "Multi-step action") {
+      let result: any = {};
+      let step_count = 0;
+      let MAX_STEPS = 200;
+      for (
+        let i = 0;
+        i < this.configuration?.steps?.length && step_count < MAX_STEPS;
+        i++
+      ) {
+        step_count += 1;
+        const step = this.configuration?.steps[i];
+        if (step.step_only_if && runargs?.row)
+          if (!eval_expression(step.step_only_if, runargs.row)) continue;
+
+        let configuration = step;
+        let action = state.actions[step.step_action_name];
+
+        if (!action) {
+          const trigger = await Trigger.findOne({
+            name: step.step_action_name,
+          });
+          if (trigger) {
+            action = getState().actions[trigger.action];
+            configuration = trigger.configuration;
+          }
+        }
+        if (!action)
+          throw new Error(
+            "Runnable action not found: " + step.step_action_name
+          );
+        const stepres = await action.run({
+          ...runargs,
+          configuration,
+        });
+
+        if (stepres?.goto_step) {
+          i = +stepres.goto_step - 2;
+          delete stepres.goto_step;
+        }
+        if (stepres?.clear_return_values) result = {};
+
+        try {
+          mergeActionResults(result, stepres);
+        } catch (error) {
+          console.error(error);
+        }
+        if (result.error || result.halt_steps) break;
+      }
+      return result;
+    }
     const action = state.actions[this.action];
     return (
       action &&
@@ -307,18 +359,29 @@ class Trigger implements AbstractTrigger {
   static setRunFunctions(triggers: Array<Trigger>, table: Table, user?: Row) {
     const { getState } = require("../db/state");
     for (const trigger of triggers) {
-      const action = getState().actions[trigger.action];
-      trigger.run = (row: Row, extraArgs?: any) =>
-        action &&
-        action.run &&
-        action.run({
-          table,
-          user,
-          configuration: trigger.configuration,
-          row,
-          ...row,
-          ...(extraArgs || {}),
-        });
+      if (trigger.action === "Multi-step action") {
+        trigger.run = (row: Row, extraArgs?: any) =>
+          trigger.runWithoutRow({
+            user,
+            table,
+            row,
+            ...row,
+            ...(extraArgs || {}),
+          });
+      } else {
+        const action = getState().actions[trigger.action];
+        trigger.run = (row: Row, extraArgs?: any) =>
+          action &&
+          action.run &&
+          action.run({
+            table,
+            user,
+            configuration: trigger.configuration,
+            row,
+            ...row,
+            ...(extraArgs || {}),
+          });
+      }
     }
   }
 

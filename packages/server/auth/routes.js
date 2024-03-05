@@ -1783,6 +1783,7 @@ router.post(
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
+    console.log("TOTP return ", rv);
     user._attributes.totp_enabled = true;
     await user.update({ _attributes: user._attributes });
     req.flash(
@@ -1901,6 +1902,9 @@ router.get(
     const form = new Form({
       action: "/auth/twofa/login/totp",
       submitLabel: "Verify",
+      blurb: req.__(
+        "Please enter the two-factor authetication code from your authenticator device"
+      ),
       fields: [
         {
           name: "code",
@@ -1911,6 +1915,7 @@ router.get(
             inputmode: "numeric",
             pattern: "[0-9]*",
             autocomplete: "one-time-code",
+            autofocus: true,
           },
           required: true,
         },

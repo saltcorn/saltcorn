@@ -583,6 +583,34 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
+const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
+  settingsDropdown(`dropdownMenuButton${trigger.id}`, [
+    a(
+      {
+        class: "dropdown-item",
+        href: `/actions/edit/${trigger.id}${on_done_redirect_str}`,
+      },
+      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+    ),
+
+    a(
+      {
+        class: "dropdown-item",
+        href: `javascript:ajax_modal('/admin/snapshot-restore/trigger/${trigger.name}')`,
+      },
+      '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
+    ),
+    div({ class: "dropdown-divider" }),
+
+    post_dropdown_item(
+      `/actions/delete/${trigger.id}${on_done_redirect_str}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
+      req,
+      true,
+      trigger.name
+    ),
+  ]);
+
 const getTriggerList = async (
   triggers,
   req,
@@ -618,13 +646,7 @@ const getTriggerList = async (
             },
           ]),
       { label: req.__("Action"), key: "action" },
-      {
-        label: req.__("Table or Channel"),
-        key: (r) =>
-          r.table_name
-            ? a({ href: `/table/${r.table_name}` }, r.table_name)
-            : r.channel,
-      },
+
       {
         label: req.__("When"),
         key: (act) =>
@@ -639,15 +661,15 @@ const getTriggerList = async (
             : ""),
       },
       {
-        label: req.__("Test run"),
+        label: req.__("Table or Channel"),
         key: (r) =>
-          r.table_id
-            ? ""
-            : link(`/actions/testrun/${r.id}`, req.__("Test run")),
+          r.table_name
+            ? a({ href: `/table/${r.table_name}` }, r.table_name)
+            : r.channel,
       },
       {
-        label: req.__("Edit"),
-        key: (r) => link(`/actions/edit/${r.id}`, req.__("Edit")),
+        label: req.__("Test run"),
+        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
       },
       {
         label: req.__("Configure"),
@@ -655,8 +677,8 @@ const getTriggerList = async (
       },
       !tagId
         ? {
-            label: req.__("Delete"),
-            key: (r) => post_delete_btn(`/actions/delete/${r.id}`, req),
+            label: "",
+            key: (r) => trigger_dropdown(r, req),
           }
         : {
             label: req.__("Remove From Tag"),

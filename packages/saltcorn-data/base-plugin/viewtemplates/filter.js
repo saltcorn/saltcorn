@@ -52,6 +52,7 @@ const {
   removeEmptyStrings,
   asyncMap,
   getSessionId,
+  mergeIntoWhere,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -72,7 +73,7 @@ const configuration_workflow = () =>
           const table = Table.findOne(
             context.table_id || context.exttable_name
           );
-          const fields = table.getFields();
+          const fields = [...table.getFields()];
           const { child_field_list, child_relations } =
             await table.get_child_relations();
           const { parent_field_list } = await table.get_parent_relations(true);
@@ -186,11 +187,33 @@ const configuration_workflow = () =>
             "filter"
           );
           const pages = await Page.find();
+          var agg_field_opts = {};
+
+          agg_field_opts[table.name] = table.fields
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => ({
+              name: f.name,
+              label: f.label,
+              ftype: f.type.name || f.type,
+              table_name: table.name,
+              table_id: table.id,
+            }));
+
+          const agg_fieldview_options = {};
+
+          Object.values(getState().types).forEach((t) => {
+            agg_fieldview_options[t.name] = Object.entries(t.fieldviews)
+              .filter(([k, v]) => !v.isEdit && !v.isFilter)
+              .map(([k, v]) => k);
+          });
 
           return {
             fields: fields.map((f) => f.toBuilder),
             tableName: table.name,
             parent_field_list: my_parent_field_list,
+            child_field_list: [table.name],
+            agg_field_opts,
+            agg_fieldview_options,
             roles,
             builtInActions: ["Clear"],
             actions,
@@ -268,6 +291,47 @@ const run = async (
   });
   evalCtx.session_id = getSessionId(extra.req);
   await traverse(layout, {
+    aggregation: async (segment) => {
+      const { stat, agg_field, agg_fieldview, aggwhere } = segment;
+      const where = stateFieldsToWhere({ fields, state, table });
+      if (aggwhere) {
+        const ctx = {
+          ...state,
+          user_id: extra.req.user?.id || null,
+          user: extra.req.user,
+        };
+        let where1 = jsexprToWhere(aggwhere, ctx, fields);
+        mergeIntoWhere(where, where1 || {});
+      }
+      const { val } = await table.aggregationQuery(
+        {
+          val: {
+            field: agg_field,
+            aggregate: stat,
+          },
+        },
+        { where }
+      );
+      const fld = table.getField(agg_field);
+      segment.type = "blank";
+      if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
+        segment.contents = val.map((v) => text(v.toString())).join(", ");
+      else if (agg_fieldview) {
+        const outcomeType =
+          stat === "Count" || stat === "CountUnique"
+            ? "Integer"
+            : fld.type?.name;
+        const type = getState().types[outcomeType];
+        if (type?.fieldviews[agg_fieldview]) {
+          const readval = type.read(val);
+          segment.contents = type.fieldviews[agg_fieldview].run(
+            readval,
+            extra.req,
+            segment?.configuration || {}
+          );
+        }
+      } else segment.contents = text(val);
+    },
     field: async (segment) => {
       const { field_name, fieldview, configuration } = segment;
       let field = fields.find((fld) => fld.name === field_name);

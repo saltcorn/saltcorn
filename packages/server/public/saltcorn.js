@@ -252,6 +252,21 @@ function ajax_done(res, viewname) {
   common_done(res, viewname);
 }
 
+function spin_action_link(e) {
+  const $e = $(e);
+  const width = $e.width();
+  $e.attr("data-innerhtml-prespin", $e.html());
+  $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+}
+
+function reset_spinners() {
+  $("[data-innerhtml-prespin]").each(function () {
+    $e = $(this);
+    $e.html($e.attr("data-innerhtml-prespin"));
+    $e.removeAttr("data-innerhtml-prespin");
+  });
+}
+
 function view_post(viewname, route, data, onDone, sendState) {
   const query = sendState
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
@@ -271,9 +286,11 @@ function view_post(viewname, route, data, onDone, sendState) {
     .done(function (res) {
       if (onDone) onDone(res);
       ajax_done(res, viewname);
+      reset_spinners();
     })
     .fail(function (res) {
       notifyAlert({ type: "danger", text: res.responseText });
+      reset_spinners();
     });
 }
 let logged_errors = [];

@@ -9,6 +9,7 @@ import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
 import relationsCtx from "../relations_context";
+import Select from "react-select";
 
 import {
   fetchViewPreview,
@@ -151,7 +152,7 @@ const ViewSettings = () => {
     if (rest.startsWith(".")) viewname = prefix;
     else viewname = rest;
   }
-  if (viewname.includes(".")) viewname = viewname.split(".")[0];
+  if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
 
   if (
     finder &&
@@ -176,7 +177,7 @@ const ViewSettings = () => {
     : [undefined, undefined];
   let safeRelation = null;
   const subView = views.find((view) => view.name === viewname);
-  if (relation) {
+  if (relation && subView) {
     const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
     safeRelation = new Relation(
       relation,
@@ -186,7 +187,7 @@ const ViewSettings = () => {
   }
   if (
     options.mode !== "filter" &&
-    subView.table_id &&
+    subView?.table_id &&
     !safeRelation &&
     !hasLegacyRelation &&
     relationsData?.relations.length > 0
@@ -199,8 +200,8 @@ const ViewSettings = () => {
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
-    if (e.target) {
-      const target_value = e.target.value;
+    if (e?.target?.value || e?.value) {
+      const target_value = e.target?.value || e.value;
       if (target_value !== viewname) {
         if (options.mode === "filter") {
           setProp((prop) => {
@@ -237,25 +238,27 @@ const ViewSettings = () => {
       }
     }
   };
-
+  const viewOptions = options.views.map(({ name, label }) => ({
+    label,
+    value: name,
+  }));
+  const selectedView = viewOptions.find((v) => v.value === viewname);
   return (
     <div>
       {relationsData ? (
         <Fragment>
           <div>
             <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-            <select
-              value={viewname}
-              className="form-control form-select"
-              onChange={set_view_name}
-              onBlur={set_view_name}
-            >
-              {options.views.map((v, ix) => (
-                <option key={ix} value={v.name}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
+            {options.inJestTestingMode ? null : (
+              <Select
+                options={viewOptions}
+                value={selectedView}
+                onChange={set_view_name}
+                onBlur={set_view_name}
+                menuPortalTarget={document.body}
+                styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+              ></Select>
+            )}
           </div>
           {options.mode !== "filter" && (
             <div>
@@ -287,18 +290,26 @@ const ViewSettings = () => {
       ) : (
         <div>
           <label>View to {options.mode === "show" ? "embed" : "show"}</label>
-          <select
-            value={view}
-            className="form-control form-select"
-            onChange={setAProp("view")}
-            onBlur={setAProp("view")}
-          >
-            {options.views.map((f, ix) => (
-              <option key={ix} value={f.name}>
-                {f.label || f.name}
-              </option>
-            ))}
-          </select>
+          {options.inJestTestingMode ? null : (
+            <Select
+              options={viewOptions}
+              value={selectedView}
+              onChange={(e) => {
+                const target_value = e?.target?.value || e?.value;
+                setProp((prop) => {
+                  prop.view = target_value;
+                });
+              }}
+              onBlur={(e) => {
+                const target_value = e?.target?.value || e?.value;
+                setProp((prop) => {
+                  prop.view = target_value;
+                });
+              }}
+              menuPortalTarget={document.body}
+              styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+            ></Select>
+          )}
         </div>
       )}
       {options.mode !== "edit" && (

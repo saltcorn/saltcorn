@@ -186,6 +186,7 @@ admin_config_route({
     "smtp_password",
     "smtp_port",
     "smtp_secure",
+    "smtp_allow_self_signed",
     "email_from",
   ],
   response(form, req, res) {
@@ -599,7 +600,13 @@ router.post(
         snap.created
       ).fromNow()}`
     );
-    res.redirect(/^[a-z]+$/g.test(type) ? `/${type}edit` : "/");
+    res.redirect(
+      type === "trigger"
+        ? `/actions`
+        : /^[a-z]+$/g.test(type)
+        ? `/${type}edit`
+        : "/"
+    );
   })
 );
 

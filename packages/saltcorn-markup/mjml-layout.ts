@@ -482,6 +482,9 @@ const render = ({
     if (segment.type === "line_break") {
       return "<br />";
     }
+    if (segment.type === "dropdown_menu") {
+      return "";
+    }
     if (segment.above) {
       return segment.above
         .map((s: any, ix: number) => go(s, isTop, ix))

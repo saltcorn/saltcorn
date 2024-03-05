@@ -408,6 +408,13 @@ const configTypes: ConfigTypes = {
     sublabel:
       "Always use TLS when connecting to server? If unchecked, TLS is used if server supports the STARTTLS extension. In most cases check this box if you are connecting to port 465. For port 587 or 25 keep it unchecked",
   },
+  smtp_allow_self_signed: {
+    type: "Bool",
+    label: "Allow self-signed",
+    default: false,
+    sublabel:
+      "Open a connection to TLS server with self-signed or invalid TLS certificate",
+  },
   /** @type {object} */
   email_from: {
     type: "String",
