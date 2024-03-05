@@ -1189,6 +1189,13 @@ async function common_done(res, viewname, isWeb = true) {
         const input = form.find(
           `input[name=${k}], textarea[name=${k}], select[name=${k}]`
         );
+        if (k === "id" && input.length === 0) {
+          //TODO table.pk_name instead of id
+          form.append(
+            `<input type="hidden" name="id" value="${res.set_fields[k]}">`
+          );
+          return;
+        }
         if (input.attr("type") === "checkbox")
           input.prop("checked", res.set_fields[k]);
         else input.val(res.set_fields[k]);

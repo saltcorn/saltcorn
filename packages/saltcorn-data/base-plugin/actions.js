@@ -1006,6 +1006,8 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Action on form in Edit view",
+    requireRow: true,
+
     configFields: [
       {
         name: "form_action",
@@ -1018,12 +1020,25 @@ module.exports = {
       },
     ],
 
-    run: async ({ configuration: { form_action } }) => {
+    run: async ({ row, table, configuration: { form_action } }) => {
       const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
         case "Save":
+          if (!row[table.pk_name]) {
+            //we will save server side so we can set id
+            const db_row = {};
+            table.fields.forEach((f) => {
+              const v = row[f.name];
+              if (typeof v !== "undefined")
+                db_row[f.name] = f.type?.read ? f.type.read(v) : v;
+            });
+            const result = await table.tryInsertRow(db_row);
+            if (result.success)
+              return { set_fields: { [table.pk_name]: result.success } };
+            else return { eval_js: `return saveAndContinueAsync(${jqGet})` };
+          }
           return { eval_js: `return saveAndContinueAsync(${jqGet})` };
         case "Reset":
           return { eval_js: jqGet + ".trigger('reset')" };
