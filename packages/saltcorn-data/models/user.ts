@@ -323,12 +323,13 @@ class User {
     for (const cfield of cfields) {
       const table = Table.findOne(cfield.table_id) as Table;
       const fv = freeUserVars.find((fuv) =>
-        fuv.startsWith(`${table!.name}_by_${cfield.name}`)
+        fuv.startsWith(`${db.sqlsanitize(table!.name)}_by_${cfield.name}`)
       );
       if (fv) {
-        newUser[`${table!.name}_by_${cfield.name}`] = await table.getRows({
-          [cfield.name]: newUser.id,
-        });
+        newUser[`${db.sqlsanitize(table!.name)}_by_${cfield.name}`] =
+          await table.getRows({
+            [cfield.name]: newUser.id,
+          });
       }
     }
     return newUser;
