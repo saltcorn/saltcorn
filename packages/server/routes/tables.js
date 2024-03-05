@@ -1186,6 +1186,18 @@ router.post(
       );
       res.redirect(`/table`);
     }
+    if (t.id) {
+      const triggers = await Trigger.find({ table_id: t.id });
+      if (triggers.length) {
+        req.flash(
+          "error",
+          `${text(
+            t.name
+          )} has triggers. Delete these first: <a href="/actions">Trigger list</a>`
+        );
+        res.redirect(`/table`);
+      }
+    }
     try {
       await t.delete();
       req.flash("success", req.__(`Table %s deleted`, t.name));
