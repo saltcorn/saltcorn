@@ -113,7 +113,6 @@ const AggregationSettings = () => {
       })
       .then(setFetchedCfgFields);
   }, [outcomeType, agg_fieldview]);
-
   return (
     <Fragment>
       <table>
@@ -189,29 +188,29 @@ const AggregationSettings = () => {
                   ],
                   { valAttr: true }
                 )}
-                {options.fields
-                  .filter((f) => f.type === "Bool" || f.type.name === "Bool")
+                {(options.agg_field_opts[agg_relation] || [])
+                  .filter((f) => f.ftype === "Bool")
                   .map((f, ix) => (
                     <option key={ix} value={`Percent true ${f.name}`}>
                       Percent true {f.name}
                     </option>
                   ))}
-                {options.fields
-                  .filter((f) => f.type === "Bool" || f.type.name === "Bool")
+                {(options.agg_field_opts[agg_relation] || [])
+                  .filter((f) => f.ftype === "Bool")
                   .map((f, ix) => (
                     <option key={ix} value={`Percent false ${f.name}`}>
                       Percent false {f.name}
                     </option>
                   ))}
-                {options.fields
-                  .filter((f) => f.type === "Date" || f.type.name === "Date")
+                {(options.agg_field_opts[agg_relation] || [])
+                  .filter((f) => f.ftype === "Date")
                   .map((f, ix) => (
                     <option key={ix} value={`Latest ${f.name}`}>
                       Latest {f.name}
                     </option>
                   ))}
-                {options.fields
-                  .filter((f) => f.type === "Date" || f.type.name === "Date")
+                {(options.agg_field_opts[agg_relation] || [])
+                  .filter((f) => f.ftype === "Date")
                   .map((f, ix) => (
                     <option key={ix} value={`Earliest ${f.name}`}>
                       Earliest {f.name}
