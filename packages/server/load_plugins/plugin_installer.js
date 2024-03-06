@@ -68,7 +68,7 @@ class PluginInstaller {
     const pckJson = require(join(this.pluginDir, "package.json"));
     if (process.env.NODE_ENV === "test") {
       // downgrad to require in a jest environment
-      require(join(this.pluginDir, pckJson.main));
+      return require(join(this.pluginDir, pckJson.main));
     } else {
       const res = await import(join(this.pluginDir, pckJson.main));
       return res.default;

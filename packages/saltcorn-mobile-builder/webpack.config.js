@@ -1,6 +1,8 @@
 const { mergeWithCustomize, merge } = require("webpack-merge");
 const { join } = require("path");
-const { requirePlugin } = require("@saltcorn/server/load_plugins/install_utils");
+const {
+  requirePlugin,
+} = require("@saltcorn/server/load_plugins/install_utils");
 
 const dataCfg = require(join(
   require.resolve("@saltcorn/data"),
@@ -55,7 +57,7 @@ const buildPluginEntries = async (plugins) => {
       : [];
     const genericEntry = {
       [plugin.name]: {
-        import: requireResult.mainFile,
+        import: requireResult.location,
         dependOn: ["markup", "data", ...additionalDependencies],
       },
     };
