@@ -190,6 +190,20 @@ const AggregationSettings = () => {
                   { valAttr: true }
                 )}
                 {options.fields
+                  .filter((f) => f.type === "Bool" || f.type.name === "Bool")
+                  .map((f, ix) => (
+                    <option key={ix} value={`Percent true ${f.name}`}>
+                      Percent true {f.name}
+                    </option>
+                  ))}
+                {options.fields
+                  .filter((f) => f.type === "Bool" || f.type.name === "Bool")
+                  .map((f, ix) => (
+                    <option key={ix} value={`Percent false ${f.name}`}>
+                      Percent false {f.name}
+                    </option>
+                  ))}
+                {options.fields
                   .filter((f) => f.type === "Date" || f.type.name === "Date")
                   .map((f, ix) => (
                     <option key={ix} value={`Latest ${f.name}`}>
