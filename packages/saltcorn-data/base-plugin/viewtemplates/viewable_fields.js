@@ -959,7 +959,6 @@ const get_viewable_fields = (
         }
         return fvrun;
       } else if (column.type === "Aggregation") {
-        console.log("agg col", column);
         let table, fld, through;
         if (column.agg_relation.includes("->")) {
           let restpath;
