@@ -995,6 +995,13 @@ router.get(
                 req,
                 true
               ),
+            table.name !== "users" &&
+              post_dropdown_item(
+                `/table/delete/${table.id}`,
+                '<i class="fas fa-trash"></i>&nbsp;' + req.__("Delete table"),
+                req,
+                true
+              ),
           ])
         )
     );
