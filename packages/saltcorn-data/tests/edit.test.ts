@@ -823,6 +823,111 @@ describe("Edit view components", () => {
       success: "ok",
     });
   });
+  it("runs button action with form input", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "edit",
+              textStyle: "",
+              field_name: "author",
+              configuration: {},
+            },
+            {
+              type: "action",
+              block: false,
+              rndid: "40bb3f",
+              nsteps: "",
+              minRole: 100,
+              isFormula: {},
+              action_icon: "",
+              action_name: "toast",
+              action_size: "",
+              action_bgcol: "",
+              action_label: "",
+              action_style: "btn-primary",
+              configuration: {
+                text: "Hello from {{ author}}",
+                notify_type: "Notify",
+              },
+              step_only_ifs: "",
+              action_textcol: "",
+              action_bordercol: "",
+              step_action_names: "",
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "edit",
+            textStyle: "",
+            field_name: "author",
+            configuration: {},
+          },
+          {
+            type: "Action",
+            rndid: "40bb3f",
+            nsteps: "",
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_size: "",
+            action_bgcol: "",
+            action_label: "",
+            action_style: "btn-primary",
+            configuration: {
+              text: "Hello {{ user.email}} from {{ author}}",
+              notify_type: "Notify",
+            },
+            step_only_ifs: "",
+            action_textcol: "",
+            action_bordercol: "",
+            step_action_names: "",
+          },
+        ],
+      },
+    });
+
+    mockReqRes.reset();
+    const body = {
+      rndid: "40bb3f",
+      user: {
+        email: "admin@bar.com",
+        id: 1,
+        role_id: 1,
+        language: "en",
+      },
+
+      author: "Chris Date",
+    };
+    await view.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      {
+        req: {
+          body,
+          user: {
+            email: "admin@foo.com",
+            id: 1,
+            role_id: 1,
+            language: "en",
+          },
+        },
+      },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      notify: "Hello admin@foo.com from Chris Date",
+      success: "ok",
+    });
+  });
   it("view link independent same table", async () => {
     const view = await mkViewWithCfg({
       configuration: {
