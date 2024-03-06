@@ -2088,7 +2088,7 @@ module.exports = {
       } = req.body;
 
       const table = Table.findOne({ id: table_id });
-      const dbrow = body.id
+      const row = body.id
         ? await table.getRow(
             { id: body.id },
             {
@@ -2096,8 +2096,13 @@ module.exports = {
               forUser: req.user,
             }
           )
-        : undefined;
-      const row = { ...dbrow, ...body };
+        : {};
+
+      table.fields.forEach((f) => {
+        if (!f?.validate) return;
+        const valres = f.validate(body);
+        if ("success" in valres) row[f.name] = valres.success;
+      });
 
       try {
         if (click_action) {

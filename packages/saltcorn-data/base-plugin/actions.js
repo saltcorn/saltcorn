@@ -1028,13 +1028,7 @@ module.exports = {
         case "Save":
           if (!row[table.pk_name]) {
             //we will save server side so we can set id
-            const db_row = {};
-            table.fields.forEach((f) => {
-              if (!f?.validate) return;
-              const valres = f.validate(row);
-              if ("success" in valres) db_row[f.name] = valres.success;
-            });
-            const result = await table.tryInsertRow(db_row);
+            const result = await table.tryInsertRow(row);
             if (result.success)
               return { set_fields: { [table.pk_name]: result.success } };
             else {
