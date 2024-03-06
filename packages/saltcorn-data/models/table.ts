@@ -2908,6 +2908,17 @@ class Table implements AbstractTable {
       ([nm, { field, valueFormula, aggregate }]) => {
         if (
           field &&
+          (aggregate.startsWith("Percent ") || aggregate.startsWith("Percent "))
+        ) {
+          const targetBoolVal = aggregate.split(" ")[1] === "true";
+
+          fldNms.push(
+            `avg( CASE WHEN "${sqlsanitize(field)}"=${JSON.stringify(
+              !!targetBoolVal
+            )} THEN 100.0 ELSE 0.0 END) as "${sqlsanitize(nm)}"`
+          );
+        } else if (
+          field &&
           (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
         ) {
           const dateField = aggregate.split(" ")[1];

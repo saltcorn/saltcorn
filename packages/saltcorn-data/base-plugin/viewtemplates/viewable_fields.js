@@ -1001,10 +1001,11 @@ const get_viewable_fields = (
             showValue = (x) =>
               type.fieldviews[column.agg_fieldview].run(x, req, column);
         } else if (column.agg_fieldview) {
+          const aggField = Table.findOne(table)?.getField?.(column.agg_field);
           const outcomeType =
             column.stat === "Count" || column.stat === "CountUnique"
               ? "Integer"
-              : fld.type?.name;
+              : aggField?.type?.name;
           const type = getState().types[outcomeType];
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>
