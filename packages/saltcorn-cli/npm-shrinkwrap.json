@@ -1,24 +1,24 @@
 {
   "name": "@saltcorn/cli",
-  "version": "0.9.4-beta.21",
+  "version": "0.9.4-beta.22",
   "lockfileVersion": 2,
   "requires": true,
   "packages": {
     "": {
       "name": "@saltcorn/cli",
-      "version": "0.9.4-beta.21",
+      "version": "0.9.4-beta.22",
       "license": "MIT",
       "dependencies": {
         "@oclif/command": "^1.8.16",
         "@oclif/config": "^1.18.3",
         "@oclif/plugin-help": "^3.3.1",
         "@oclif/plugin-plugins": "^2.1.0",
-        "@saltcorn/admin-models": "0.9.4-beta.21",
-        "@saltcorn/common-code": "0.9.4-beta.21",
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/mobile-app": "0.9.4-beta.21",
-        "@saltcorn/mobile-builder": "0.9.4-beta.21",
-        "@saltcorn/server": "0.9.4-beta.21",
+        "@saltcorn/admin-models": "0.9.4-beta.22",
+        "@saltcorn/common-code": "0.9.4-beta.22",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/mobile-app": "0.9.4-beta.22",
+        "@saltcorn/mobile-builder": "0.9.4-beta.22",
+        "@saltcorn/server": "0.9.4-beta.22",
         "cli-ux": "^5.6.7",
         "contractis": "^0.1.0",
         "dateformat": "^3.0.3",
@@ -3868,14 +3868,14 @@
       }
     },
     "node_modules/@saltcorn/admin-models": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/admin-models/-/admin-models-0.9.4-beta.21.tgz",
-      "integrity": "sha512-SxiHPf6a5DNe2cXMxpHc/PxrIBvGmLiCDQUyPTZVQ1afFg4s7n/w9NhtFma0+br6+TyFx747QRYS/2Wd0iR5vg==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/admin-models/-/admin-models-0.9.4-beta.22.tgz",
+      "integrity": "sha512-y+mS/oP35Z8+VFRSduPNzcnjwoNHNSUNapEyqt0jT8x0x+cAQ2kzUuIOQpMoWrdtfn8UtKNkXAlEEkK3N8arIA==",
       "dependencies": {
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/db-common": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/types": "0.9.4-beta.21",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/db-common": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/types": "0.9.4-beta.22",
         "@types/lodash": "^4.14.182",
         "adm-zip": "0.5.5",
         "chaos-guinea-pig": "^0.1.4",
@@ -3888,36 +3888,36 @@
       }
     },
     "node_modules/@saltcorn/base-plugin": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/base-plugin/-/base-plugin-0.9.4-beta.21.tgz",
-      "integrity": "sha512-sVBNMVN6xnRDnRIxZAofmZUmEfGpPWgEyVwdoLOulgqssq0rjPEnDNihux46n8fl6Gb7Q9NbIFhiV2XZShFHEw==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/base-plugin/-/base-plugin-0.9.4-beta.22.tgz",
+      "integrity": "sha512-7c1TCrdcPfIn1SgdAAfs1vHJNBV+RJB6TQVk2l6h2Qmz7CCIbyNFB4Kw7abPJIRQfHW0ZZv6MPGS8FQDehsl5A==",
       "dependencies": {
-        "@saltcorn/data": "0.9.4-beta.21"
+        "@saltcorn/data": "0.9.4-beta.22"
       }
     },
     "node_modules/@saltcorn/builder": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/builder/-/builder-0.9.4-beta.21.tgz",
-      "integrity": "sha512-Ut07o+jd2mk+xZYflE0WXTMltBjC6Pz7xxd5zCjOStI6JZLaQJi06LoSjBjBRwwC9Qd4OjEtGbe1vBxTIUTf/A==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/builder/-/builder-0.9.4-beta.22.tgz",
+      "integrity": "sha512-aeLPg/e+4iIEx8s3oJHT6AorpgJF/f/0Qa6WrSdUPANRbanxeB4hp+QqBllwYmSYCtTUSkOecqjoe3++H7Q85g==",
       "dependencies": {
         "styled-components": "4.4.1"
       }
     },
     "node_modules/@saltcorn/common-code": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/common-code/-/common-code-0.9.4-beta.21.tgz",
-      "integrity": "sha512-2sWrSfD1G0V8aCxyO+3kQeSG620v8U5LjhIrvFBdWFBdt/7bwcdrJOw3HNxqj2sl6BGPZdixHs48+yo/lFvNrA=="
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/common-code/-/common-code-0.9.4-beta.22.tgz",
+      "integrity": "sha512-aIVrX0stxwZyOAzZ1DrIn2kDblM/uO8Kb9MdUbD/DHG6oHeIH2Gc4ZaayVO7Ol0x+nJShhTzTQWCQy71zeTaPA=="
     },
     "node_modules/@saltcorn/data": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/data/-/data-0.9.4-beta.21.tgz",
-      "integrity": "sha512-cOkPQWSLTPT2eQaU2cyIjZz2KXjpjfrJCPhxf3o3RQ/xhX4I3iOHtwFdUmRsAtyFwqNqOL8i3RziX2JEOUNQJA==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/data/-/data-0.9.4-beta.22.tgz",
+      "integrity": "sha512-1+4H91PTyhiLfiPiPIj4dOQJzv/iWJqDPYQKVsDv7dd9ZxyeQY7YkdwbdOlq1a0Mh3AukRJB5x4nvGykdC84Qg==",
       "dependencies": {
-        "@saltcorn/common-code": "0.9.4-beta.21",
-        "@saltcorn/db-common": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/sqlite-mobile": "0.9.4-beta.21",
-        "@saltcorn/types": "0.9.4-beta.21",
+        "@saltcorn/common-code": "0.9.4-beta.22",
+        "@saltcorn/db-common": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/sqlite-mobile": "0.9.4-beta.22",
+        "@saltcorn/types": "0.9.4-beta.22",
         "acorn": "^8.0.3",
         "assert": "^2.0.0",
         "astring": "^1.4.3",
@@ -3960,27 +3960,27 @@
         "vm-browserify": "^1.1.2"
       },
       "optionalDependencies": {
-        "@saltcorn/postgres": "0.9.4-beta.21",
-        "@saltcorn/sqlite": "0.9.4-beta.21"
+        "@saltcorn/postgres": "0.9.4-beta.22",
+        "@saltcorn/sqlite": "0.9.4-beta.22"
       }
     },
     "node_modules/@saltcorn/db-common": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/db-common/-/db-common-0.9.4-beta.21.tgz",
-      "integrity": "sha512-2P8smqGJOk4lcDHvNCKMMx/uIYJGWrJ8vVLg/92aSbLh3WyQukksM3ucHbk5rZU4dufF7YQVV9cUj+49vThawQ=="
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/db-common/-/db-common-0.9.4-beta.22.tgz",
+      "integrity": "sha512-WNws7UenVNa4ryhZlZuCKLig+I1JBXNmBkVbasSmFc7yvhbtTbRbHHht9u6fDzWaXRQDq+KTOHaGSKB1Lx+k1A=="
     },
     "node_modules/@saltcorn/filemanager": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/filemanager/-/filemanager-0.9.4-beta.21.tgz",
-      "integrity": "sha512-UkNKW/cNcqLPlRIvlySN3Zuo1Yi5sjrkxJWf7vTwUTFzKn2guKTJBIXDDaWusWDHLWzCJL9FUu3LDXAzphj7rw==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/filemanager/-/filemanager-0.9.4-beta.22.tgz",
+      "integrity": "sha512-xRctDESa/8s6DG7aJTvaqxAzj9TOIANtFv2qbr1BtBt1ahfkILauT7SthO2CX9xBUGRalyjFNLgax+mI0jJueg==",
       "dependencies": {
         "sirv-cli": "^2.0.0"
       }
     },
     "node_modules/@saltcorn/markup": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/markup/-/markup-0.9.4-beta.21.tgz",
-      "integrity": "sha512-+XE0O6Lkv9pbA8x0hhQKQFZST9c18aTPpcLeoMl4nhSeMtDixHanN6Pl6aOWCa9/phdtgZYGOy63GYW69dMC+Q==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/markup/-/markup-0.9.4-beta.22.tgz",
+      "integrity": "sha512-DB2/rWqNHpoWqQfhpyaeDQg+AqGhbrMF7EiV3xoDc3X/UhHcz7AxHdkvIu63eY6EEYoA5w9p79ULv14uQ+qRNg==",
       "dependencies": {
         "escape-html": "^1.0.3",
         "html-tags": "3.1.0",
@@ -3988,27 +3988,27 @@
       }
     },
     "node_modules/@saltcorn/mobile-app": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-app/-/mobile-app-0.9.4-beta.21.tgz",
-      "integrity": "sha512-KJXE2LkF58C6a8+h5Xa9EeOtD+tgrXvEe7KDKOgTRkBsIz9kTemlGrSVQqhMFbVoJPifCzzxH7CfWiTxwS/aTA==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-app/-/mobile-app-0.9.4-beta.22.tgz",
+      "integrity": "sha512-YhUB0M2EPzGeOqZg76eNxDBxsqZtR879bKkc4c3nBEa7/g+rM/9nKAjPlQzImek0TucjfQ5SZCQG5+xjJAZpJQ==",
       "dependencies": {
         "cordova": "^11.0.0",
         "cordova-sqlite-ext": "^6.0.0"
       }
     },
     "node_modules/@saltcorn/mobile-builder": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-builder/-/mobile-builder-0.9.4-beta.21.tgz",
-      "integrity": "sha512-xRgxwd5/bxDMqZMMC2oxHQnJU1mFUhpxYHtkTGPMSZBE7sB56uP159nG564kdTLDctEbaMlkYEGk/JQtSynoDA==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-builder/-/mobile-builder-0.9.4-beta.22.tgz",
+      "integrity": "sha512-KOwqPkFr40iBagM6VFmoScL+dtQ+NKGccajOtIrQc4iAMqjtI9DWEvMkTYpox4/ns01UkG4Ebx/BRlryv9YtZw==",
       "hasInstallScript": true,
       "dependencies": {
-        "@saltcorn/base-plugin": "0.9.4-beta.21",
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/db-common": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/mobile-app": "0.9.4-beta.21",
-        "@saltcorn/sbadmin2": "0.9.4-beta.21",
-        "@saltcorn/server": "0.9.4-beta.21",
+        "@saltcorn/base-plugin": "0.9.4-beta.22",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/db-common": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/mobile-app": "0.9.4-beta.22",
+        "@saltcorn/sbadmin2": "0.9.4-beta.22",
+        "@saltcorn/server": "0.9.4-beta.22",
         "fs-extra": "^10.0.1",
         "live-plugin-manager": "^0.17.1",
         "webpack": "5.68.0",
@@ -4050,40 +4050,40 @@
       }
     },
     "node_modules/@saltcorn/postgres": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/postgres/-/postgres-0.9.4-beta.21.tgz",
-      "integrity": "sha512-7+XwsFRO5DSZm3JgfH9Bm5Jk40GujM3DkbtBaXdK5oZZAR5Ke3JaEvebIm+3Llmq9RFRAxYIMRRQlnlSVbZdjQ==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/postgres/-/postgres-0.9.4-beta.22.tgz",
+      "integrity": "sha512-S2nXBByUHrahxPp0NvnSoeADcWR25VF4KI6I8UWag0cNwyRwoH/O/A/B5h3eXZQ172YcRba+/1msv4pLTaLxGQ==",
       "optional": true,
       "dependencies": {
-        "@saltcorn/db-common": "0.9.4-beta.21",
+        "@saltcorn/db-common": "0.9.4-beta.22",
         "pg": "^8.2.1",
         "pg-copy-streams": "^5.1.1"
       }
     },
     "node_modules/@saltcorn/sbadmin2": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/sbadmin2/-/sbadmin2-0.9.4-beta.21.tgz",
-      "integrity": "sha512-3ZjY9BjwHiyxmQZ3IucmaxvN00V6wADJ6Az5J4Y8Nr8g737KKle9Y3n2C1zkuMZbGzj7Qo5kZAALd3BuRhHQcQ==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/sbadmin2/-/sbadmin2-0.9.4-beta.22.tgz",
+      "integrity": "sha512-/mP6z4QcPzKHNl3oxrppDgANSHVYb+SUmKUmIuXd+9tG9zqj1rmEiY9ZjCLSM6h+og4YN2kglWb9NYWWU+7tkQ==",
       "dependencies": {
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
         "nunito-fontface": "0.7.3",
         "startbootstrap-sb-admin-2-bs5": "^4.1.5-beta.8"
       }
     },
     "node_modules/@saltcorn/server": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/server/-/server-0.9.4-beta.21.tgz",
-      "integrity": "sha512-cDFlDeZSpJg+B261b8Voo8DJaAucO0qdGdOtQUy5AKAL+E5IdHLN/peJW4RBxLa2FueF2rcmV1zaVrtoEFB/2Q==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/server/-/server-0.9.4-beta.22.tgz",
+      "integrity": "sha512-WqQxV48rw9KJ4QYTcIHGSAEvB17yoftos+yjuIQJJ8w8NAonxeL7cV5LA9NxHDj2X3fLmLrQRBe7qSD1BVvBVA==",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.451.0",
-        "@saltcorn/admin-models": "0.9.4-beta.21",
-        "@saltcorn/base-plugin": "0.9.4-beta.21",
-        "@saltcorn/builder": "0.9.4-beta.21",
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/filemanager": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/sbadmin2": "0.9.4-beta.21",
+        "@saltcorn/admin-models": "0.9.4-beta.22",
+        "@saltcorn/base-plugin": "0.9.4-beta.22",
+        "@saltcorn/builder": "0.9.4-beta.22",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/filemanager": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/sbadmin2": "0.9.4-beta.22",
         "@socket.io/cluster-adapter": "^0.2.1",
         "@socket.io/sticky": "^1.0.1",
         "adm-zip": "0.5.10",
@@ -4148,29 +4148,29 @@
       }
     },
     "node_modules/@saltcorn/sqlite": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite/-/sqlite-0.9.4-beta.21.tgz",
-      "integrity": "sha512-nuUbVl0qCiJqBb0wX722CQ5i/LcQrjG6LahM7dXPDY9awg0LGfbtaQRkihC4fH1u5Z8F10TKqS2J0oByVYL5xw==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite/-/sqlite-0.9.4-beta.22.tgz",
+      "integrity": "sha512-WGXy9b75HTKVthjb73KVU5kV16gNDqUG0VcgfV8tlW0522EgVAoKWYMw4TuGcFfy/vOH5zDVZSZWH3fxfM6v1Q==",
       "optional": true,
       "dependencies": {
-        "@saltcorn/db-common": "0.9.4-beta.21"
+        "@saltcorn/db-common": "0.9.4-beta.22"
       },
       "optionalDependencies": {
         "sqlite3": "^5.0.8"
       }
     },
     "node_modules/@saltcorn/sqlite-mobile": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite-mobile/-/sqlite-mobile-0.9.4-beta.21.tgz",
-      "integrity": "sha512-qCqfCEcIhXnCH9htlKjApDN8M6X3vqQq8hybl9NMjcN4rppUwk7s8ssI58FvbgqbnzCEnYAyZQ+412booLHYpQ==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite-mobile/-/sqlite-mobile-0.9.4-beta.22.tgz",
+      "integrity": "sha512-uyvUTDZJSUOK30AkR5YjJ7KTY3PvxT2ocQL2Vl+wJOVcffpo6JCsqt2pMFc4GqnBI5aqR+mafOy3QSxckSGj0A==",
       "dependencies": {
-        "@saltcorn/db-common": "0.9.4-beta.21"
+        "@saltcorn/db-common": "0.9.4-beta.22"
       }
     },
     "node_modules/@saltcorn/types": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/types/-/types-0.9.4-beta.21.tgz",
-      "integrity": "sha512-nu6FFqwEaYSV4tLd8+rdBDamBRb8CPc42iAQ50lYbT9G/wdMCw4MwiBZ5T1iZqSwf2VfjztOiYvBRI4LU9eNcg=="
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/types/-/types-0.9.4-beta.22.tgz",
+      "integrity": "sha512-iCE47qId3LA8dkJspqHWzsc6xdpKfvk5jFqL+Lt3KE2kYwn5lXQqDVD/70hgnMB+T38EHTcFWQYX1Q5CCeQGtg=="
     },
     "node_modules/@sinclair/typebox": {
       "version": "0.27.8",
@@ -22760,14 +22760,14 @@
       }
     },
     "@saltcorn/admin-models": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/admin-models/-/admin-models-0.9.4-beta.21.tgz",
-      "integrity": "sha512-SxiHPf6a5DNe2cXMxpHc/PxrIBvGmLiCDQUyPTZVQ1afFg4s7n/w9NhtFma0+br6+TyFx747QRYS/2Wd0iR5vg==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/admin-models/-/admin-models-0.9.4-beta.22.tgz",
+      "integrity": "sha512-y+mS/oP35Z8+VFRSduPNzcnjwoNHNSUNapEyqt0jT8x0x+cAQ2kzUuIOQpMoWrdtfn8UtKNkXAlEEkK3N8arIA==",
       "requires": {
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/db-common": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/types": "0.9.4-beta.21",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/db-common": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/types": "0.9.4-beta.22",
         "@types/lodash": "^4.14.182",
         "adm-zip": "0.5.5",
         "chaos-guinea-pig": "^0.1.4",
@@ -22780,38 +22780,38 @@
       }
     },
     "@saltcorn/base-plugin": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/base-plugin/-/base-plugin-0.9.4-beta.21.tgz",
-      "integrity": "sha512-sVBNMVN6xnRDnRIxZAofmZUmEfGpPWgEyVwdoLOulgqssq0rjPEnDNihux46n8fl6Gb7Q9NbIFhiV2XZShFHEw==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/base-plugin/-/base-plugin-0.9.4-beta.22.tgz",
+      "integrity": "sha512-7c1TCrdcPfIn1SgdAAfs1vHJNBV+RJB6TQVk2l6h2Qmz7CCIbyNFB4Kw7abPJIRQfHW0ZZv6MPGS8FQDehsl5A==",
       "requires": {
-        "@saltcorn/data": "0.9.4-beta.21"
+        "@saltcorn/data": "0.9.4-beta.22"
       }
     },
     "@saltcorn/builder": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/builder/-/builder-0.9.4-beta.21.tgz",
-      "integrity": "sha512-Ut07o+jd2mk+xZYflE0WXTMltBjC6Pz7xxd5zCjOStI6JZLaQJi06LoSjBjBRwwC9Qd4OjEtGbe1vBxTIUTf/A==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/builder/-/builder-0.9.4-beta.22.tgz",
+      "integrity": "sha512-aeLPg/e+4iIEx8s3oJHT6AorpgJF/f/0Qa6WrSdUPANRbanxeB4hp+QqBllwYmSYCtTUSkOecqjoe3++H7Q85g==",
       "requires": {
         "styled-components": "4.4.1"
       }
     },
     "@saltcorn/common-code": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/common-code/-/common-code-0.9.4-beta.21.tgz",
-      "integrity": "sha512-2sWrSfD1G0V8aCxyO+3kQeSG620v8U5LjhIrvFBdWFBdt/7bwcdrJOw3HNxqj2sl6BGPZdixHs48+yo/lFvNrA=="
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/common-code/-/common-code-0.9.4-beta.22.tgz",
+      "integrity": "sha512-aIVrX0stxwZyOAzZ1DrIn2kDblM/uO8Kb9MdUbD/DHG6oHeIH2Gc4ZaayVO7Ol0x+nJShhTzTQWCQy71zeTaPA=="
     },
     "@saltcorn/data": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/data/-/data-0.9.4-beta.21.tgz",
-      "integrity": "sha512-cOkPQWSLTPT2eQaU2cyIjZz2KXjpjfrJCPhxf3o3RQ/xhX4I3iOHtwFdUmRsAtyFwqNqOL8i3RziX2JEOUNQJA==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/data/-/data-0.9.4-beta.22.tgz",
+      "integrity": "sha512-1+4H91PTyhiLfiPiPIj4dOQJzv/iWJqDPYQKVsDv7dd9ZxyeQY7YkdwbdOlq1a0Mh3AukRJB5x4nvGykdC84Qg==",
       "requires": {
-        "@saltcorn/common-code": "0.9.4-beta.21",
-        "@saltcorn/db-common": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/postgres": "0.9.4-beta.21",
-        "@saltcorn/sqlite": "0.9.4-beta.21",
-        "@saltcorn/sqlite-mobile": "0.9.4-beta.21",
-        "@saltcorn/types": "0.9.4-beta.21",
+        "@saltcorn/common-code": "0.9.4-beta.22",
+        "@saltcorn/db-common": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/postgres": "0.9.4-beta.22",
+        "@saltcorn/sqlite": "0.9.4-beta.22",
+        "@saltcorn/sqlite-mobile": "0.9.4-beta.22",
+        "@saltcorn/types": "0.9.4-beta.22",
         "acorn": "^8.0.3",
         "assert": "^2.0.0",
         "astring": "^1.4.3",
@@ -22855,22 +22855,22 @@
       }
     },
     "@saltcorn/db-common": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/db-common/-/db-common-0.9.4-beta.21.tgz",
-      "integrity": "sha512-2P8smqGJOk4lcDHvNCKMMx/uIYJGWrJ8vVLg/92aSbLh3WyQukksM3ucHbk5rZU4dufF7YQVV9cUj+49vThawQ=="
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/db-common/-/db-common-0.9.4-beta.22.tgz",
+      "integrity": "sha512-WNws7UenVNa4ryhZlZuCKLig+I1JBXNmBkVbasSmFc7yvhbtTbRbHHht9u6fDzWaXRQDq+KTOHaGSKB1Lx+k1A=="
     },
     "@saltcorn/filemanager": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/filemanager/-/filemanager-0.9.4-beta.21.tgz",
-      "integrity": "sha512-UkNKW/cNcqLPlRIvlySN3Zuo1Yi5sjrkxJWf7vTwUTFzKn2guKTJBIXDDaWusWDHLWzCJL9FUu3LDXAzphj7rw==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/filemanager/-/filemanager-0.9.4-beta.22.tgz",
+      "integrity": "sha512-xRctDESa/8s6DG7aJTvaqxAzj9TOIANtFv2qbr1BtBt1ahfkILauT7SthO2CX9xBUGRalyjFNLgax+mI0jJueg==",
       "requires": {
         "sirv-cli": "^2.0.0"
       }
     },
     "@saltcorn/markup": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/markup/-/markup-0.9.4-beta.21.tgz",
-      "integrity": "sha512-+XE0O6Lkv9pbA8x0hhQKQFZST9c18aTPpcLeoMl4nhSeMtDixHanN6Pl6aOWCa9/phdtgZYGOy63GYW69dMC+Q==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/markup/-/markup-0.9.4-beta.22.tgz",
+      "integrity": "sha512-DB2/rWqNHpoWqQfhpyaeDQg+AqGhbrMF7EiV3xoDc3X/UhHcz7AxHdkvIu63eY6EEYoA5w9p79ULv14uQ+qRNg==",
       "requires": {
         "escape-html": "^1.0.3",
         "html-tags": "3.1.0",
@@ -22878,26 +22878,26 @@
       }
     },
     "@saltcorn/mobile-app": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-app/-/mobile-app-0.9.4-beta.21.tgz",
-      "integrity": "sha512-KJXE2LkF58C6a8+h5Xa9EeOtD+tgrXvEe7KDKOgTRkBsIz9kTemlGrSVQqhMFbVoJPifCzzxH7CfWiTxwS/aTA==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-app/-/mobile-app-0.9.4-beta.22.tgz",
+      "integrity": "sha512-YhUB0M2EPzGeOqZg76eNxDBxsqZtR879bKkc4c3nBEa7/g+rM/9nKAjPlQzImek0TucjfQ5SZCQG5+xjJAZpJQ==",
       "requires": {
         "cordova": "^11.0.0",
         "cordova-sqlite-ext": "^6.0.0"
       }
     },
     "@saltcorn/mobile-builder": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-builder/-/mobile-builder-0.9.4-beta.21.tgz",
-      "integrity": "sha512-xRgxwd5/bxDMqZMMC2oxHQnJU1mFUhpxYHtkTGPMSZBE7sB56uP159nG564kdTLDctEbaMlkYEGk/JQtSynoDA==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/mobile-builder/-/mobile-builder-0.9.4-beta.22.tgz",
+      "integrity": "sha512-KOwqPkFr40iBagM6VFmoScL+dtQ+NKGccajOtIrQc4iAMqjtI9DWEvMkTYpox4/ns01UkG4Ebx/BRlryv9YtZw==",
       "requires": {
-        "@saltcorn/base-plugin": "0.9.4-beta.21",
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/db-common": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/mobile-app": "0.9.4-beta.21",
-        "@saltcorn/sbadmin2": "0.9.4-beta.21",
-        "@saltcorn/server": "0.9.4-beta.21",
+        "@saltcorn/base-plugin": "0.9.4-beta.22",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/db-common": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/mobile-app": "0.9.4-beta.22",
+        "@saltcorn/sbadmin2": "0.9.4-beta.22",
+        "@saltcorn/server": "0.9.4-beta.22",
         "fs-extra": "^10.0.1",
         "live-plugin-manager": "^0.17.1",
         "webpack": "5.68.0",
@@ -22933,40 +22933,40 @@
       }
     },
     "@saltcorn/postgres": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/postgres/-/postgres-0.9.4-beta.21.tgz",
-      "integrity": "sha512-7+XwsFRO5DSZm3JgfH9Bm5Jk40GujM3DkbtBaXdK5oZZAR5Ke3JaEvebIm+3Llmq9RFRAxYIMRRQlnlSVbZdjQ==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/postgres/-/postgres-0.9.4-beta.22.tgz",
+      "integrity": "sha512-S2nXBByUHrahxPp0NvnSoeADcWR25VF4KI6I8UWag0cNwyRwoH/O/A/B5h3eXZQ172YcRba+/1msv4pLTaLxGQ==",
       "optional": true,
       "requires": {
-        "@saltcorn/db-common": "0.9.4-beta.21",
+        "@saltcorn/db-common": "0.9.4-beta.22",
         "pg": "^8.2.1",
         "pg-copy-streams": "^5.1.1"
       }
     },
     "@saltcorn/sbadmin2": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/sbadmin2/-/sbadmin2-0.9.4-beta.21.tgz",
-      "integrity": "sha512-3ZjY9BjwHiyxmQZ3IucmaxvN00V6wADJ6Az5J4Y8Nr8g737KKle9Y3n2C1zkuMZbGzj7Qo5kZAALd3BuRhHQcQ==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/sbadmin2/-/sbadmin2-0.9.4-beta.22.tgz",
+      "integrity": "sha512-/mP6z4QcPzKHNl3oxrppDgANSHVYb+SUmKUmIuXd+9tG9zqj1rmEiY9ZjCLSM6h+og4YN2kglWb9NYWWU+7tkQ==",
       "requires": {
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
         "nunito-fontface": "0.7.3",
         "startbootstrap-sb-admin-2-bs5": "^4.1.5-beta.8"
       }
     },
     "@saltcorn/server": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/server/-/server-0.9.4-beta.21.tgz",
-      "integrity": "sha512-cDFlDeZSpJg+B261b8Voo8DJaAucO0qdGdOtQUy5AKAL+E5IdHLN/peJW4RBxLa2FueF2rcmV1zaVrtoEFB/2Q==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/server/-/server-0.9.4-beta.22.tgz",
+      "integrity": "sha512-WqQxV48rw9KJ4QYTcIHGSAEvB17yoftos+yjuIQJJ8w8NAonxeL7cV5LA9NxHDj2X3fLmLrQRBe7qSD1BVvBVA==",
       "requires": {
         "@aws-sdk/client-s3": "^3.451.0",
-        "@saltcorn/admin-models": "0.9.4-beta.21",
-        "@saltcorn/base-plugin": "0.9.4-beta.21",
-        "@saltcorn/builder": "0.9.4-beta.21",
-        "@saltcorn/data": "0.9.4-beta.21",
-        "@saltcorn/filemanager": "0.9.4-beta.21",
-        "@saltcorn/markup": "0.9.4-beta.21",
-        "@saltcorn/sbadmin2": "0.9.4-beta.21",
+        "@saltcorn/admin-models": "0.9.4-beta.22",
+        "@saltcorn/base-plugin": "0.9.4-beta.22",
+        "@saltcorn/builder": "0.9.4-beta.22",
+        "@saltcorn/data": "0.9.4-beta.22",
+        "@saltcorn/filemanager": "0.9.4-beta.22",
+        "@saltcorn/markup": "0.9.4-beta.22",
+        "@saltcorn/sbadmin2": "0.9.4-beta.22",
         "@socket.io/cluster-adapter": "^0.2.1",
         "@socket.io/sticky": "^1.0.1",
         "adm-zip": "0.5.10",
@@ -23028,27 +23028,27 @@
       }
     },
     "@saltcorn/sqlite": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite/-/sqlite-0.9.4-beta.21.tgz",
-      "integrity": "sha512-nuUbVl0qCiJqBb0wX722CQ5i/LcQrjG6LahM7dXPDY9awg0LGfbtaQRkihC4fH1u5Z8F10TKqS2J0oByVYL5xw==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite/-/sqlite-0.9.4-beta.22.tgz",
+      "integrity": "sha512-WGXy9b75HTKVthjb73KVU5kV16gNDqUG0VcgfV8tlW0522EgVAoKWYMw4TuGcFfy/vOH5zDVZSZWH3fxfM6v1Q==",
       "optional": true,
       "requires": {
-        "@saltcorn/db-common": "0.9.4-beta.21",
+        "@saltcorn/db-common": "0.9.4-beta.22",
         "sqlite3": "^5.0.8"
       }
     },
     "@saltcorn/sqlite-mobile": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite-mobile/-/sqlite-mobile-0.9.4-beta.21.tgz",
-      "integrity": "sha512-qCqfCEcIhXnCH9htlKjApDN8M6X3vqQq8hybl9NMjcN4rppUwk7s8ssI58FvbgqbnzCEnYAyZQ+412booLHYpQ==",
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/sqlite-mobile/-/sqlite-mobile-0.9.4-beta.22.tgz",
+      "integrity": "sha512-uyvUTDZJSUOK30AkR5YjJ7KTY3PvxT2ocQL2Vl+wJOVcffpo6JCsqt2pMFc4GqnBI5aqR+mafOy3QSxckSGj0A==",
       "requires": {
-        "@saltcorn/db-common": "0.9.4-beta.21"
+        "@saltcorn/db-common": "0.9.4-beta.22"
       }
     },
     "@saltcorn/types": {
-      "version": "0.9.4-beta.21",
-      "resolved": "https://registry.npmjs.org/@saltcorn/types/-/types-0.9.4-beta.21.tgz",
-      "integrity": "sha512-nu6FFqwEaYSV4tLd8+rdBDamBRb8CPc42iAQ50lYbT9G/wdMCw4MwiBZ5T1iZqSwf2VfjztOiYvBRI4LU9eNcg=="
+      "version": "0.9.4-beta.22",
+      "resolved": "https://registry.npmjs.org/@saltcorn/types/-/types-0.9.4-beta.22.tgz",
+      "integrity": "sha512-iCE47qId3LA8dkJspqHWzsc6xdpKfvk5jFqL+Lt3KE2kYwn5lXQqDVD/70hgnMB+T38EHTcFWQYX1Q5CCeQGtg=="
     },
     "@sinclair/typebox": {
       "version": "0.27.8",
