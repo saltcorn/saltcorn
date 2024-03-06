@@ -880,10 +880,11 @@ const render = (
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
         return val.map((v) => text(v.toString())).join(", ");
       else if (column.agg_fieldview) {
+        const aggField = Table.findOne(table)?.getField?.(column.agg_field);
         const outcomeType =
           stat === "Count" || stat === "CountUnique"
             ? "Integer"
-            : fld.type?.name;
+            : aggField.type?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[column.agg_fieldview]) {
           const readval = type.read(val);
