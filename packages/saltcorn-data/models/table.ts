@@ -2908,6 +2908,10 @@ class Table implements AbstractTable {
       ([nm, { field, valueFormula, aggregate }]) => {
         if (
           field &&
+          (aggregate.startsWith("Percent ") || aggregate.startsWith("Percent "))
+        ) {
+        } else if (
+          field &&
           (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
         ) {
           const dateField = aggregate.split(" ")[1];

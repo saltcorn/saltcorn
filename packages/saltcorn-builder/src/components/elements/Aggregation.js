@@ -188,20 +188,12 @@ const AggregationSettings = () => {
                   ],
                   { valAttr: true }
                 )}
-                {(options.agg_field_opts[agg_relation] || [])
-                  .filter((f) => f.ftype === "Bool")
-                  .map((f, ix) => (
-                    <option key={ix} value={`Percent true ${f.name}`}>
-                      Percent true {f.name}
-                    </option>
-                  ))}
-                {(options.agg_field_opts[agg_relation] || [])
-                  .filter((f) => f.ftype === "Bool")
-                  .map((f, ix) => (
-                    <option key={ix} value={`Percent false ${f.name}`}>
-                      Percent false {f.name}
-                    </option>
-                  ))}
+                {targetFieldType === "Bool" ? (
+                  <option value={`Percent true`}>Percent true</option>
+                ) : null}
+                {targetFieldType === "Bool" ? (
+                  <option value={`Percent false`}>Percent false</option>
+                ) : null}
                 {(options.agg_field_opts[agg_relation] || [])
                   .filter((f) => f.ftype === "Date")
                   .map((f, ix) => (

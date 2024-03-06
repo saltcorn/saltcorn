@@ -82,6 +82,18 @@ export const process_aggregations = (
         )}" = aggjoin.id ${whereClause}) ${sqlsanitize(fldnm)}`;
 
         fldNms.push(newFld);
+      } else if (field && aggregate.startsWith("Percent ")) {
+        const targetBoolVal = aggregate.split(" ")[1] === "true";
+        let whereClause = ref ? `"${sqlsanitize(ref)}"=a."${ownField}"` : "";
+        if (whereStr) whereClause += (whereClause ? ` and ` : "") + whereStr;
+        if (whereClause) whereClause = ` where ` + whereClause;
+        fldNms.push(
+          `(select avg( CASE WHEN "${sqlsanitize(field)}"=${JSON.stringify(
+            !!targetBoolVal
+          )} THEN 100.0 ELSE 0.0 END)  from ${schema}"${sqlsanitize(
+            table
+          )}" ${whereClause}) ${sqlsanitize(fldnm)}`
+        );
       } else if (
         field &&
         (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
@@ -122,5 +134,6 @@ export const process_aggregations = (
       }
     }
   );
+
   if (!isNode()) values.unshift(...aggValues);
 };
