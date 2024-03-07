@@ -1003,7 +1003,9 @@ const get_viewable_fields = (
         } else if (column.agg_fieldview) {
           const aggField = Table.findOne(table)?.getField?.(column.agg_field);
           const outcomeType =
-            column.stat === "Count" || column.stat === "CountUnique"
+            column.stat === "Percent true" || column.stat === "Percent false"
+              ? "Float"
+              : column.stat === "Count" || column.stat === "CountUnique"
               ? "Integer"
               : aggField?.type?.name;
           const type = getState().types[outcomeType];

@@ -79,7 +79,9 @@ const AggregationSettings = () => {
   );
   const targetFieldType = targetField?.ftype;
   const outcomeType =
-    stat === "Count" || stat === "CountUnique"
+    stat === "Percent true" || stat === "Percent false"
+      ? "Float"
+      : stat === "Count" || stat === "CountUnique"
       ? "Integer"
       : stat === "Array_Agg"
       ? "Array"

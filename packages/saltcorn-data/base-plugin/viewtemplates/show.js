@@ -882,7 +882,9 @@ const render = (
       else if (column.agg_fieldview) {
         const aggField = Table.findOne(table)?.getField?.(column.agg_field);
         const outcomeType =
-          stat === "Count" || stat === "CountUnique"
+          stat === "Percent true" || stat === "Percent false"
+            ? "Float"
+            : stat === "Count" || stat === "CountUnique"
             ? "Integer"
             : aggField.type?.name;
         const type = getState().types[outcomeType];

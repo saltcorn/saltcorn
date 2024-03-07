@@ -318,7 +318,9 @@ const run = async (
         segment.contents = val.map((v) => text(v.toString())).join(", ");
       else if (agg_fieldview) {
         const outcomeType =
-          stat === "Count" || stat === "CountUnique"
+          stat === "Percent true" || stat === "Percent false"
+            ? "Float"
+            : stat === "Count" || stat === "CountUnique"
             ? "Integer"
             : fld.type?.name;
         const type = getState().types[outcomeType];
