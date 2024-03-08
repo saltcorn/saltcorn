@@ -150,6 +150,8 @@ const run_code = async ({
     getConfig: (k) => sysState.getConfig(k),
     channel: table ? table.name : channel,
     session_id: rest.req && getSessionId(rest.req),
+    request_headers: rest?.req?.headers,
+    request_ip: rest?.req?.ip,
     ...(row || {}),
     ...getState().function_context,
     ...rest,
