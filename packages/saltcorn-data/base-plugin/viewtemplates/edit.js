@@ -1896,6 +1896,7 @@ module.exports = {
       auto_save,
       split_paste,
       destination_type,
+      fixed,
     },
     req,
     res,
@@ -2082,7 +2083,7 @@ module.exports = {
       } = req.body;
 
       const table = Table.findOne({ id: table_id });
-      const row = body.id
+      let row = body.id
         ? await table.getRow(
             { id: body.id },
             {
@@ -2097,7 +2098,8 @@ module.exports = {
         const valres = f.validate(body);
         if ("success" in valres) row[f.name] = valres.success;
       });
-
+      const use_fixed = await fill_presets(table, req, fixed);
+      row = { ...use_fixed, ...row };
       try {
         if (click_action) {
           let container;
