@@ -250,7 +250,7 @@ describe("base plugin actions", () => {
       configuration: { row_expr: "{favbook:1}", where: "Database" },
       user: { id: 1, role_id: 1 },
     });
-    expect(result).toStrictEqual(undefined);
+    expect(result?.set_fields?.favbook).toBe(1);
 
     const row1 = await patients.getRow({ name: "Simon1" });
     assertIsSet(row1);
