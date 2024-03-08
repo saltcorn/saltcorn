@@ -8,6 +8,7 @@ const Router = require("express-promise-router");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
 const Field = require("@saltcorn/data/models/field");
+const Page = require("@saltcorn/data/models/page");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 
@@ -311,8 +312,13 @@ router.get(
         );
       else {
         const resp = await login_form.run_possibly_on_page({}, req, res);
-        if (login_form.default_render_page) res.sendWrap(req.__(`Login`), resp);
-        else res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
+        if (login_form.default_render_page) {
+          const page = Page.findOne({ name: login_form.default_render_page });
+          res.sendWrap(
+            { title: req.__(`Login`), no_menu: page?.attributes?.no_menu },
+            resp
+          );
+        } else res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
       }
     } else
       res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
