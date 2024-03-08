@@ -38,6 +38,7 @@ const { localeDate, localeDateTime } = require("@saltcorn/markup");
 const { freeVariables, eval_expression } = require("../models/expression");
 const Table = require("../models/table");
 const _ = require("underscore");
+const { interpolate } = require("../utils");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -267,11 +268,7 @@ const show_with_html = {
   isEdit: false,
   description: "Show value with any HTML code",
   run: (v, req, attrs = {}) => {
-    const template = _.template(attrs?.code || "", {
-      evaluate: /\{\{#(.+?)\}\}/g,
-      interpolate: /\{\{([^#].+?)\}\}/g,
-    });
-    const rendered = template({ it: v, user: req?.user });
+    const rendered = interpolate(attrs?.code, { it: v }, req?.user);
     return rendered;
   },
 };

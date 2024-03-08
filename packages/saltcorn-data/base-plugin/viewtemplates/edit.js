@@ -42,6 +42,7 @@ const {
   mergeIntoWhere,
   dollarizeObject,
   getSessionId,
+  interpolate,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -684,14 +685,7 @@ const transformForm = async ({
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
-          const template = _.template(t, {
-            interpolate: /\{\{([^#].+?)\}\}/g,
-          });
-          segment.titles[ix] = template({
-            user: req.user,
-            row,
-            ...(row || {}),
-          });
+          segment.titles[ix] = interpolate(t, row, req.user);
         }
       });
     },
@@ -2227,17 +2221,10 @@ module.exports = {
         where: { [tbl.pk_name]: state[tbl.pk_name] },
         joinFields,
       });
-      const template = _.template(title, {
-        interpolate: /\{\{([^#].+?)\}\}/g,
-      });
-      let t = template({ row, ...row });
-      return t;
+
+      return interpolate(title, row);
     } else {
-      const template = _.template(title, {
-        interpolate: /\{\{([^#].+?)\}\}/g,
-      });
-      let t = template({ row: null });
-      return t;
+      return interpolate(title, null);
     }
   },
   configCheck: async (view) => {
