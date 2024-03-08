@@ -325,6 +325,16 @@ describe("free variables", () => {
       "x.k",
     ]);
   });
+  it("in unsafe interpolation", () => {
+    expect([...freeVariablesInInterpolation("hello {{! x.k}}")]).toEqual([
+      "x.k",
+    ]);
+  });
+  it("in unsafe interpolation", () => {
+    expect([...freeVariablesInInterpolation("hello {{! foo}}")]).toEqual([
+      "foo",
+    ]);
+  });
   it("in interpolation", () => {
     expect([
       ...freeVariablesInInterpolation("hello {{2+x.k}} there {{y.z}}"),
