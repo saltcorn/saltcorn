@@ -16,6 +16,7 @@ const {
   isWeb,
   isOfflineMode,
   getSessionId,
+  interpolate,
 } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
@@ -631,15 +632,8 @@ const get_viewable_fields_from_layout = (
           col.formula = col.contents;
         }
         if (contents.isHTML)
-          col.interpolator = (row) => {
-            const template = _.template(contents.contents, {
-              evaluate: /\{\{#(.+?)\}\}/g,
-              interpolate: /\{\{([^#].+?)\}\}/g,
-            });
-            const temres = template({ row, user: req?.user, ...row });
-            return temres;
-          };
-
+          col.interpolator = (row) =>
+            interpolate(contents.contents, row, req?.user);
         break;
       case "action":
         col.action_label_formula = contents.isFormula?.action_label;
