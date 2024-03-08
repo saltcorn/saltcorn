@@ -366,7 +366,8 @@ const ppVal = (x: any) =>
 const interpolate = (s: string, row: any, user?: any) => {
   if (s && typeof s === "string") {
     const template = _.template(s, {
-      interpolate: /\{\{([^#].+?)\}\}/g,
+      interpolate: /\{\{!(.+?)\}\}/g,
+      escape: /\{\{([^!].+?)\}\}/g,
     });
     return template({ row, user, ...(row || {}) });
   } else return s;

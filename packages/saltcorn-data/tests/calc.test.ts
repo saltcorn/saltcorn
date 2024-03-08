@@ -19,6 +19,8 @@ import { mkWhere } from "@saltcorn/db-common/internal";
 
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import utils from "../utils";
+const { interpolate } = utils;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -327,6 +329,19 @@ describe("free variables", () => {
     expect([
       ...freeVariablesInInterpolation("hello {{2+x.k}} there {{y.z}}"),
     ]).toEqual(["x.k", "y.z"]);
+  });
+});
+describe("interpolation", () => {
+  it("interpolates simple", () => {
+    expect(interpolate("hello {{ x }}", { x: 1 })).toBe("hello 1");
+    expect(
+      interpolate("hello {{ x }}", { x: "<script>alert(1)</script>" })
+    ).toBe("hello &lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(
+      interpolate("hello {{! x }}", { x: "<script>alert(1)</script>" })
+    ).toBe("hello <script>alert(1)</script>");
+
+    //expect(interpolate("hello {{x}}", { x: 1 })).toBe("hello 1"); TODO
   });
 });
 describe("jsexprToSQL", () => {
