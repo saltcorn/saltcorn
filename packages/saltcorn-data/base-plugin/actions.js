@@ -900,7 +900,7 @@ module.exports = {
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;
-      else return;
+      else return { set_fields: calcrow };
     },
   },
 
