@@ -866,6 +866,7 @@ const get_viewable_fields = (
       } else if (column.type === "JoinField") {
         //console.log(column);
         let fvrun;
+        const fieldview = column.join_fieldview || column.fieldview;
         let refNm, targetNm, through, key, type;
         if (column.join_field.includes("->")) {
           const [relation, target] = column.join_field.split("->");
@@ -880,16 +881,21 @@ const get_viewable_fields = (
           key = keypath.join("_");
         }
         if (column.field_type) type = getState().types[column.field_type];
-        if (
-          column.join_fieldview &&
-          type?.fieldviews?.[column.join_fieldview]?.expandColumns
-        ) {
+        else {
+          const field = table.getField(column.join_field);
+          if (field && field.type === "File") column.field_type = "File";
+          else if (field?.type.name && field?.type?.fieldviews[fieldview]) {
+            column.field_type = field.type.name;
+            type = getState().types[column.field_type];
+          }
+        }
+        if (fieldview && type?.fieldviews?.[fieldview]?.expandColumns) {
           const reffield = fields.find((f) => f.name === refNm);
           const reftable = Table.findOne({
             name: reffield.reftable_name,
           });
           const field = reftable.fields.find((f) => f.name === targetNm);
-          return type.fieldviews[column.join_fieldview].expandColumns(
+          return type.fieldviews[fieldview].expandColumns(
             field,
             {
               ...field.attributes,
@@ -899,20 +905,18 @@ const get_viewable_fields = (
           );
         }
         let gofv =
-          column.join_fieldview &&
-          type &&
-          type.fieldviews &&
-          type.fieldviews[column.join_fieldview]
+          fieldview && type && type.fieldviews && type.fieldviews[fieldview]
             ? (row) =>
-                type.fieldviews[column.join_fieldview].run(row[key], req, {
+                type.fieldviews[fieldview].run(row[key], req, {
                   row,
                   ...column,
+                  ...(column?.configuration || {}),
                 })
             : null;
         if (!gofv && column.field_type === "File") {
           gofv = (row) =>
             row[key]
-              ? getState().fileviews[column.join_fieldview].run(row[key], "", {
+              ? getState().fileviews[fieldview].run(row[key], "", {
                   row,
                   ...column,
                   ...(column?.configuration || {}),
