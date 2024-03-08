@@ -364,11 +364,12 @@ const ppVal = (x: any) =>
     : JSON.stringify(x, null, 2);
 
 const interpolate = (s: string, row: any, user?: any) => {
-  if (s && row) {
+  if (s && typeof s === "string") {
     const template = _.template(s, {
-      interpolate: /\{\{([^#].+?)\}\}/g,
+      interpolate: /\{\{!(.+?)\}\}/g,
+      escape: /\{\{([^!].+?)\}\}/g,
     });
-    return template({ row, user, ...row });
+    return template({ row, user, ...(row || {}) });
   } else return s;
 };
 

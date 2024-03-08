@@ -928,6 +928,80 @@ describe("Edit view components", () => {
       success: "ok",
     });
   });
+  it("runs button action with fixed inputs", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        fixed: {
+          author: "MrFoo",
+        },
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "ca9d71",
+          nsteps: 1,
+          confirm: false,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          configuration: {
+            text: "Hello {{ user.email}} from {{ author}}",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "ca9d71",
+            nsteps: 1,
+            confirm: false,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            configuration: {
+              text: "Hello {{ user.email}} from {{ author}}",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+
+    mockReqRes.reset();
+    const body = {
+      rndid: "ca9d71",
+      user: {
+        email: "admin@bar.com",
+        id: 1,
+        role_id: 1,
+        language: "en",
+      },
+    };
+    await view.runRoute(
+      "run_action",
+      body,
+      mockReqRes.res,
+      {
+        req: {
+          body,
+          user: {
+            email: "admin@foo.com",
+            id: 1,
+            role_id: 1,
+            language: "en",
+          },
+        },
+      },
+      false
+    );
+    expect(mockReqRes.getStored().json).toStrictEqual({
+      notify: "Hello admin@foo.com from MrFoo",
+      success: "ok",
+    });
+  });
   it("view link independent same table", async () => {
     const view = await mkViewWithCfg({
       configuration: {

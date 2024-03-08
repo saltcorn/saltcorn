@@ -461,6 +461,24 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
     expect(michaels[1].author).toBe("Leo Tolstoy");
   });
+  it("should get percent true aggregations", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      aggregations: {
+        pcnt_norm: {
+          table: "readings",
+          ref: "patient_id",
+          field: "normalised",
+          aggregate: "Percent true",
+        },
+      },
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(Math.round(michaels[0].pcnt_norm)).toBe(50);
+    expect(Math.round(michaels[1].pcnt_norm)).toBe(0);
+  });
 
   it("should support full text search", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -612,6 +630,17 @@ describe("Table aggregationQuery", () => {
       { where: { normalised: true } }
     );
     expect(Math.round(aggs.avg_temp)).toBe(37);
+  });
+  it("should get percent true aggregations", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const aggs = await readings.aggregationQuery({
+      pcnt_norm: {
+        field: "normalised",
+        aggregate: "Percent true",
+      },
+    });
+    expect(Math.round(aggs.pcnt_norm)).toBe(33);
   });
   it("should get array aggregations", async () => {
     const readings = Table.findOne({ name: "readings" });

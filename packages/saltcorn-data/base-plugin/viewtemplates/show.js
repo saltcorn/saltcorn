@@ -72,6 +72,7 @@ const {
   getSafeBaseUrl,
   dollarizeObject,
   getSessionId,
+  interpolate,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -708,10 +709,7 @@ const render = (
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
-          const template = _.template(t, {
-            interpolate: /\{\{([^#].+?)\}\}/g,
-          });
-          segment.titles[ix] = template({ user: req.user, row, ...row });
+          segment.titles[ix] = interpolate(t, row, req.user);
         }
       });
     },
@@ -882,7 +880,9 @@ const render = (
       else if (column.agg_fieldview) {
         const aggField = Table.findOne(table)?.getField?.(column.agg_field);
         const outcomeType =
-          stat === "Count" || stat === "CountUnique"
+          stat === "Percent true" || stat === "Percent false"
+            ? "Float"
+            : stat === "Count" || stat === "CountUnique"
             ? "Integer"
             : aggField.type?.name;
         const type = getState().types[outcomeType];
@@ -948,12 +948,7 @@ const render = (
     },
     blank(segment) {
       if (segment.isHTML) {
-        const template = _.template(segment.contents, {
-          evaluate: /\{\{#(.+?)\}\}/g,
-          interpolate: /\{\{([^#].+?)\}\}/g,
-        });
-        const temres = template({ row, user: req?.user, ...row });
-        return temres;
+        return interpolate(segment.contents, row, req?.user);
       } else return segment.contents;
     },
   };
@@ -1026,11 +1021,7 @@ module.exports = {
         where: { [tbl.pk_name]: state[tbl.pk_name] },
         joinFields,
       });
-      const template = _.template(title, {
-        interpolate: /\{\{([^#].+?)\}\}/g,
-      });
-      let t = template({ row, ...row });
-      return t;
+      return interpolate(title, row);
     } else return title;
   },
   /*authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
