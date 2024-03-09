@@ -29,6 +29,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import Trigger from "@saltcorn/data/models/trigger";
 import PageGroup from "@saltcorn/data/models/page_group";
 import { assertIsSet } from "@saltcorn/data/tests/assertions";
+import View from "@saltcorn/data/models/view";
 //import Trigger from "@saltcorn/data/models/trigger";
 
 getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
@@ -622,5 +623,12 @@ describe("pack install", () => {
     await uninstall_pack(todoPack, "Todo list");
     const tbl = Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(false);
+  });
+  it("installs pack overwrites view", async () => {
+    const newpack = JSON.parse(JSON.stringify(todoPack));
+    newpack.views[0].configuration.fixed.done = true;
+    await install_pack(newpack, "Todo list", () => {});
+    const view = View.findOne({ name: "EditTodo" });
+    expect(view?.configuration.fixed.done).toBe(true);
   });
 });
