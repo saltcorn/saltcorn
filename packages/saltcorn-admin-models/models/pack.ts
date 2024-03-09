@@ -317,9 +317,10 @@ const can_install_pack = async (
   const allTables = (await Table.find()).map((t) =>
     db.sqlsanitize(t.name.toLowerCase())
   );
-  const allViews = (await View.find()).map((t) => t.name);
-  const allPages = (await Page.find()).map((t) => t.name);
-  const allPageGroups = (await PageGroup.find()).map((t) => t.name);
+  const allViews = (await View.find()).map((t) => ({
+    name: t.name,
+    table: Table.findOne({ id: t.table_id })?.name,
+  }));
   const packTables = (pack.tables || []).map((t) =>
     db.sqlsanitize(t.name.toLowerCase())
   );
@@ -327,18 +328,16 @@ const can_install_pack = async (
     packTables.some((pt: string) => pt === dbt && pt !== "users")
   );
   const matchViews = allViews.filter((dbt) =>
-    (pack.views || []).some((pt) => pt.name === dbt)
+    (pack.views || []).some(
+      (pv) => pv.name === dbt.name && dbt.table && pv.table !== dbt.table
+    )
   );
 
-  const pFilterCb = (dbt: string) =>
-    (pack.pages || []).some((pt) => pt.name === dbt) ||
-    (pack.page_groups || []).some((pt) => pt.name === dbt);
-  const matchPages = allPages.filter(pFilterCb);
-  const matchPageGroups = allPageGroups.filter(pFilterCb);
   if (matchTables.length > 0)
     return {
       error: "Tables already exist: " + matchTables.join(),
     };
+
   pack.tables.forEach((t) => {
     if (t.name === "users")
       t.fields.forEach((f) => {
@@ -350,13 +349,7 @@ const can_install_pack = async (
       });
   });
   matchViews.forEach((v) => {
-    warns.push(`Clashing view ${v}.`);
-  });
-  matchPages.forEach((p) => {
-    warns.push(`Clashing page ${p}.`);
-  });
-  matchPageGroups.forEach((p) => {
-    warns.push(`Clashing page group ${p}.`);
+    warns.push(`Clashing view ${v} on different tables.`);
   });
   if (warns.length > 0) return { warning: warns.join(" ") };
   else return true;

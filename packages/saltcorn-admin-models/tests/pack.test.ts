@@ -624,9 +624,11 @@ describe("pack install", () => {
     const tbl = Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(false);
   });
-  it("installs pack overwrites view", async () => {
+  it("installs pack updates view", async () => {
     const newpack = JSON.parse(JSON.stringify(todoPack));
     newpack.views[0].configuration.fixed.done = true;
+    const can = await can_install_pack(newpack);
+    expect(can).toBe(true);
     await install_pack(newpack, "Todo list", () => {});
     const view = View.findOne({ name: "EditTodo" });
     expect(view?.configuration.fixed.done).toBe(true);
