@@ -21,7 +21,7 @@ describe("Tag IO", () => {
 
   beforeAll(async () => {
     books = Table.findOne({ name: "books" })!;
-    patients = Table.findOne({ name: "books" })!;
+    patients = Table.findOne({ name: "patients" })!;
     authorlist = View.findOne({ name: "authorlist" })!;
     authorshow = View.findOne({ name: "authorshow" })!;
     pageA = await Page.findOne({ name: "a_page" })!;
