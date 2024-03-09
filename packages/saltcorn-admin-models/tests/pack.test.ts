@@ -30,6 +30,8 @@ import Trigger from "@saltcorn/data/models/trigger";
 import PageGroup from "@saltcorn/data/models/page_group";
 import { assertIsSet } from "@saltcorn/data/tests/assertions";
 import View from "@saltcorn/data/models/view";
+import { instanceOfType } from "@saltcorn/types/common_types";
+
 //import Trigger from "@saltcorn/data/models/trigger";
 
 getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
@@ -602,20 +604,8 @@ describe("pack install", () => {
       description: "Foo",
     });
   });
-  it("cannot install pack again", async () => {
-    const can = await can_install_pack(todoPack);
-    expect(can).toStrictEqual({ error: "Tables already exist: todoitems" });
-  });
-  it("warns about duplicates", async () => {
-    const { ...restOfPack } = todoPack;
-    restOfPack.tables = [];
-    const can = await can_install_pack(restOfPack);
-    expect(can).toStrictEqual({
-      warning:
-        "Clashing view EditTodo. Clashing view List Todos. Clashing page FooPage. Clashing page group FooPageGroup.",
-    });
-  });
-  it("installs pack again anyways", async () => {
+
+  it("installs pack again", async () => {
     await install_pack(todoPack, "Todo list", () => {});
   });
   it("uninstalls pack", async () => {
@@ -632,5 +622,37 @@ describe("pack install", () => {
     await install_pack(newpack, "Todo list", () => {});
     const view = View.findOne({ name: "EditTodo" });
     expect(view?.configuration.fixed.done).toBe(true);
+  });
+  it("installs pack adds table field", async () => {
+    const newpack = JSON.parse(JSON.stringify(todoPack));
+    newpack.tables[0].fields.push({
+      name: "important",
+      label: "Important",
+      type: "Bool",
+    });
+    const can = await can_install_pack(newpack);
+    expect(can).toBe(true);
+    await install_pack(newpack, "Todo list", () => {});
+    const table = Table.findOne({ name: "TodoItems" });
+    assertIsSet(table);
+    const fimp = table.getField("important");
+    expect(instanceOfType(fimp?.type) && fimp?.type?.name).toBe("Bool");
+  });
+  it("warns on clashing types", async () => {
+    const newpack = JSON.parse(JSON.stringify(todoPack));
+    newpack.tables[0].fields.push({
+      name: "important",
+      label: "Important",
+      type: "String",
+    });
+    const can = await can_install_pack(newpack);
+    expect(can).toStrictEqual({
+      warning: "Clashing field types for important on table TodoItems",
+    });
+    await install_pack(newpack, "Todo list", () => {});
+    const table = Table.findOne({ name: "TodoItems" });
+    assertIsSet(table);
+    const fimp = table.getField("important");
+    expect(instanceOfType(fimp?.type) && fimp?.type?.name).toBe("String");
   });
 });
