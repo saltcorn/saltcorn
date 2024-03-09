@@ -346,7 +346,7 @@ const can_install_pack = async (
       t.fields.forEach((f) => {
         if (f.required) {
           const ex = userTable?.getField(f.name as string);
-          if (ex && !ex.required)
+          if (!ex || !ex.required)
             warns.push(
               `User field '${f.name}' is required in pack, but there are existing users. You must set a value for each user and then change the field to be required. Got to <a href="/list/users">users table data</a>.`
             );
