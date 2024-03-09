@@ -8,6 +8,7 @@ const {
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
+  toBeTrue,
   toNotInclude,
   toRedirect,
   resetToFixtures,
@@ -364,9 +365,9 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/books/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect((r) => +r.body > 2);
+      .expect(toBeTrue((r) => +r.body > 2));
   });
-  it("should show calculated with single joinfield", async () => {
+  it("should show calculated field with single joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "patients" });
     await Field.create({
@@ -382,9 +383,9 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/patients/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect((r) => +r.body > 2);
+      .expect(toBeTrue((r) => +r.body > 2));
   });
-  it("should show calculated with double joinfield", async () => {
+  it("should show calculated field with double joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "readings" });
     await Field.create({
@@ -400,7 +401,20 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/readings/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect((r) => +r.body > 2);
+      .expect(toBeTrue((r) => +r.body > 2));
+  });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/books/publisher.name/as_text")
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "AK Press"));
   });
 });
 
