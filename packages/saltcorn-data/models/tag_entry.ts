@@ -39,6 +39,15 @@ class TagEntry implements AbstractTagEntry {
 
   static async create(cfg: TagEntryCfg): Promise<TagEntry> {
     const entry = new TagEntry(cfg);
+    const ex = await db.selectMaybeOne("_sc_tag_entries", {
+      tag_id: cfg.tag_id,
+      table_id: cfg.table_id || null,
+      view_id: cfg.view_id || null,
+      page_id: cfg.page_id || null,
+      trigger_id: cfg.trigger_id || null,
+    });
+
+    if (ex) return new TagEntry(ex);
     const eid = await db.insert("_sc_tag_entries", {
       tag_id: cfg.tag_id,
       table_id: cfg.table_id,
