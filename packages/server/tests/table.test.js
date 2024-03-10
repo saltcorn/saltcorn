@@ -254,11 +254,7 @@ Gordon Kane, 218`;
       await request(app)
         .get("/table/")
         .set("Cookie", loginCookie)
-        .expect(
-          toInclude(
-            "cannot drop table books because other objects depend on it"
-          )
-        );
+        .expect(toInclude("has views. Delete these first"));
   });
 });
 describe("deletion to table with row ownership", () => {

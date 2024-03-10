@@ -280,19 +280,7 @@ describe("Pack clash detection", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/"));
   });
-  it("should install issues", async () => {
-    const loginCookie = await getAdminLoginCookie();
 
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .post("/packs/install-named/Blog")
-      .set("Cookie", loginCookie)
-      .expect(toRedirect("/plugins"));
-    await request(app)
-      .get("/plugins")
-      .set("Cookie", loginCookie)
-      .expect(toInclude("Tables already exist: comments"));
-  });
   it("should reset again", async () => {
     await resetToFixtures();
   });

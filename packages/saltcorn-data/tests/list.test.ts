@@ -495,6 +495,174 @@ describe("Misc List views", () => {
       `<tr onclick="location.href='/view/authorshow?id=1'">`
     );
   });
+  it("field with fieldview config", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "show_with_html",
+                textStyle: "",
+                field_name: "author",
+                configuration: {
+                  code: "Low:{{it.toLowerCase()}}",
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "show_with_html",
+            textStyle: "",
+            field_name: "author",
+            configuration: {
+              code: "Low:{{it.toLowerCase()}}",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("<td>Low:herman melville</td>");
+  });
+  it("joinfield with fieldview config", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "join_field",
+                block: false,
+                fieldview: "show_with_html",
+                textStyle: "",
+                join_field: "publisher.name",
+                configuration: {
+                  code: 'pub:{{ (it||"").toLowerCase()}}',
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "show_with_html",
+            textStyle: "",
+            join_field: "publisher.name",
+            configuration: {
+              code: 'pub:{{ (it||"").toLowerCase()}}',
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("<td>pub:ak press</td>");
+  });
+  it("aggregation with int fieldview config", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                stat: "Max",
+                type: "aggregation",
+                block: false,
+                aggwhere: "",
+                agg_field: "id",
+                textStyle: "",
+                agg_relation: "patients.favbook",
+                agg_fieldview: "show_with_html",
+                configuration: {
+                  code: "MAX:{{it}}",
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            stat: "Max",
+            type: "Aggregation",
+            block: false,
+            aggwhere: "",
+            agg_field: "id",
+            textStyle: "",
+            agg_relation: "patients.favbook",
+            agg_fieldview: "show_with_html",
+            configuration: {
+              code: "MAX:{{it}}",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("<td>MAX:2</td>");
+  });
+  it("aggregation with int fieldview config", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                stat: "Max",
+                type: "aggregation",
+                block: false,
+                aggwhere: "",
+                agg_field: "name",
+                textStyle: "",
+                agg_relation: "patients.favbook",
+                agg_fieldview: "code",
+                configuration: {
+                  code: "MAX:{{it}}",
+                },
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            stat: "Max",
+            type: "Aggregation",
+            block: false,
+            aggwhere: "",
+            agg_field: "name",
+            textStyle: "",
+            agg_relation: "patients.favbook",
+            agg_fieldview: "code",
+            configuration: {
+              code: "MAX:{{it}}",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("<code>Michael Douglas</code>");
+  });
   it("runs button action", async () => {
     const view = await mkViewWithCfg({
       configuration: {

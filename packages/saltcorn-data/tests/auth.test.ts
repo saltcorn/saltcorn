@@ -500,7 +500,7 @@ describe("ownerhip of users table", () => {
   });
 });
 
-describe("User group", () => {
+describe("User group no spaces", () => {
   it("should support user groups", async () => {
     const projects = await Table.create("Project");
     await Field.create({
@@ -609,6 +609,125 @@ describe("User group", () => {
         label: "Inherit task",
         value:
           "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(task?.project) /* Inherit task */",
+      },
+    ]);
+
+    await subtasks.delete();
+    await tasks.delete();
+    await user_works_proj.delete();
+    await projects.delete();
+  });
+});
+
+describe("User group with spaces in name", () => {
+  it("should support user groups", async () => {
+    const projects = await Table.create("The Project");
+    await Field.create({
+      table: projects,
+      name: "name",
+      type: "String",
+    });
+    const user_works_proj = await Table.create("User Works On Project1");
+
+    await Field.create({
+      table: user_works_proj,
+      name: "user",
+      type: "Key to users",
+    });
+    await Field.create({
+      table: user_works_proj,
+      name: "project",
+      type: "Key to The Project",
+    });
+    await user_works_proj.update({ is_user_group: true });
+
+    const projs = Table.findOne({ name: "The Project" });
+    assertIsSet(projs);
+
+    const own_opts = await projs.ownership_options();
+    expect(own_opts).toEqual([
+      {
+        label: "In User Works On Project1 user group by project",
+        value:
+          "Fml:user.UserWorksOnProject1_by_user.map(g=>g.project).includes(id) /* User group User Works On Project1 */",
+      },
+    ]);
+    await projs.update({
+      ownership_formula: own_opts[0].value.replace("Fml:", ""),
+    });
+    const projid = await projects.insertRow({ name: "World domination" });
+    const user = await User.findOne({ role_id: 80 });
+    assertIsSet(user);
+    await user_works_proj.insertRow({ project: projid, user: user.id });
+
+    const uobj = await User.findForSession({ id: user.id });
+    assertIsSet(uobj);
+
+    expect(uobj.id).toBe(user.id);
+    expect(uobj.role_id).toBe(80);
+    expect(uobj.UserWorksOnProject1_by_user).toEqual([
+      { id: 1, project: 1, user: 3 },
+    ]);
+
+    const myproj = await projs.getRow({ id: projid });
+    assertIsSet(myproj);
+    expect(projs.is_owner(uobj, myproj)).toBe(true);
+
+    const projid1 = await projects.insertRow({ name: "Take out trash" });
+    const staff = await User.findOne({ role_id: 40 });
+    assertIsSet(staff);
+    await user_works_proj.insertRow({ project: projid1, user: staff.id });
+    const myproj1 = await projs.getRow({ id: projid1 });
+    assertIsSet(myproj1);
+    const staffobj = await User.findForSession({ id: staff.id });
+    assertIsSet(staffobj);
+    expect(projs.is_owner(staffobj, myproj)).toBe(false);
+    expect(projs.is_owner(staffobj, myproj1)).toBe(true);
+    expect(projs.is_owner(uobj, myproj1)).toBe(false);
+
+    // admin is not "owner" but can still read/write due to min_role etc.
+    const adminobj = await User.findForSession({ role_id: 1 });
+    expect(projs.is_owner(adminobj, myproj)).toBe(false);
+    expect(projs.is_owner(adminobj, myproj1)).toBe(false);
+
+    const tasks = await Table.create("tasks1");
+
+    await Field.create({
+      table: tasks,
+      name: "project",
+      type: "Key to The Project",
+    });
+
+    const task_opts = await Table.findOne({
+      name: "tasks1",
+    })?.ownership_options();
+    expect(task_opts).toEqual([
+      {
+        label: "Inherit project",
+        value:
+          "Fml:user.UserWorksOnProject1_by_user.map(g=>g.project).includes(project) /* Inherit project */",
+      },
+    ]);
+    await tasks.update({
+      ownership_formula: task_opts?.[0].value.replace("Fml:", ""),
+    });
+
+    const subtasks = await Table.create("subtasks1");
+
+    await Field.create({
+      table: subtasks,
+      name: "task",
+      type: "Key to tasks1",
+    });
+    const subtask_opts = await Table.findOne({
+      name: "subtasks1",
+    })?.ownership_options();
+
+    expect(subtask_opts).toEqual([
+      {
+        label: "Inherit task",
+        value:
+          "Fml:user.UserWorksOnProject1_by_user.map(g=>g.project).includes(task?.project) /* Inherit task */",
       },
     ]);
 

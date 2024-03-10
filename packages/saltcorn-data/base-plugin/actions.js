@@ -150,6 +150,8 @@ const run_code = async ({
     getConfig: (k) => sysState.getConfig(k),
     channel: table ? table.name : channel,
     session_id: rest.req && getSessionId(rest.req),
+    request_headers: rest?.req?.headers,
+    request_ip: rest?.req?.ip,
     ...(row || {}),
     ...getState().function_context,
     ...rest,
@@ -1006,6 +1008,8 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Action on form in Edit view",
+    requireRow: true,
+
     configFields: [
       {
         name: "form_action",
@@ -1018,12 +1022,27 @@ module.exports = {
       },
     ],
 
-    run: async ({ configuration: { form_action } }) => {
+    run: async ({ row, table, configuration: { form_action } }) => {
       const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
         case "Save":
+          if (!row[table.pk_name]) {
+            //we will save server side so we can set id
+            const result = await table.tryInsertRow(row);
+            if (result.success)
+              return { set_fields: { [table.pk_name]: result.success } };
+            else {
+              getState().log(
+                3,
+                `form_actions Save failed server side, result: ${JSON.stringify(
+                  result
+                )} row ${JSON.stringify(row)}`
+              );
+              return { eval_js: `return saveAndContinueAsync(${jqGet})` };
+            }
+          }
           return { eval_js: `return saveAndContinueAsync(${jqGet})` };
         case "Reset":
           return { eval_js: jqGet + ".trigger('reset')" };

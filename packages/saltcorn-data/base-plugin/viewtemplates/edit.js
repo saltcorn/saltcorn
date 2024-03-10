@@ -42,6 +42,7 @@ const {
   mergeIntoWhere,
   dollarizeObject,
   getSessionId,
+  interpolate,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -684,14 +685,7 @@ const transformForm = async ({
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
-          const template = _.template(t, {
-            interpolate: /\{\{([^#].+?)\}\}/g,
-          });
-          segment.titles[ix] = template({
-            user: req.user,
-            row,
-            ...(row || {}),
-          });
+          segment.titles[ix] = interpolate(t, row, req.user);
         }
       });
     },
@@ -1902,6 +1896,7 @@ module.exports = {
       auto_save,
       split_paste,
       destination_type,
+      fixed,
     },
     req,
     res,
@@ -2088,7 +2083,7 @@ module.exports = {
       } = req.body;
 
       const table = Table.findOne({ id: table_id });
-      const dbrow = body.id
+      let row = body.id
         ? await table.getRow(
             { id: body.id },
             {
@@ -2096,9 +2091,15 @@ module.exports = {
               forUser: req.user,
             }
           )
-        : undefined;
-      const row = { ...dbrow, ...body };
+        : {};
 
+      table.fields.forEach((f) => {
+        if (!f?.validate) return;
+        const valres = f.validate(body);
+        if ("success" in valres) row[f.name] = valres.success;
+      });
+      const use_fixed = await fill_presets(table, req, fixed);
+      row = { ...use_fixed, ...row };
       try {
         if (click_action) {
           let container;
@@ -2222,17 +2223,10 @@ module.exports = {
         where: { [tbl.pk_name]: state[tbl.pk_name] },
         joinFields,
       });
-      const template = _.template(title, {
-        interpolate: /\{\{([^#].+?)\}\}/g,
-      });
-      let t = template({ row, ...row });
-      return t;
+
+      return interpolate(title, row);
     } else {
-      const template = _.template(title, {
-        interpolate: /\{\{([^#].+?)\}\}/g,
-      });
-      let t = template({ row: null });
-      return t;
+      return interpolate(title, null);
     }
   },
   configCheck: async (view) => {

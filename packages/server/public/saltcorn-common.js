@@ -1154,11 +1154,35 @@ async function common_done(res, viewname, isWeb = true) {
     await handle(res.notify_success, (text) =>
       notifyAlert({ type: "success", text: text })
     );
-  if (res.eval_js) await handle(res.eval_js, eval_it);
-
-  if (res.reload_page) {
-    (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
+  if (res.set_fields && viewname) {
+    const form = $(`form[data-viewname="${viewname}"]`);
+    if (form.length === 0 && set_state_fields) {
+      // assume this is a filter
+      set_state_fields(
+        res.set_fields,
+        false
+        // $(`[data-sc-embed-viewname="${viewname}"]`)
+      );
+    } else {
+      Object.keys(res.set_fields).forEach((k) => {
+        const input = form.find(
+          `input[name=${k}], textarea[name=${k}], select[name=${k}]`
+        );
+        if (k === "id" && input.length === 0) {
+          //TODO table.pk_name instead of id
+          form.append(
+            `<input type="hidden" name="id" value="${res.set_fields[k]}">`
+          );
+          return;
+        }
+        if (input.attr("type") === "checkbox")
+          input.prop("checked", res.set_fields[k]);
+        else input.val(res.set_fields[k]);
+        input.trigger("set_form_field");
+      });
+    }
   }
+
   if (res.download) {
     await handle(res.download, (download) => {
       const dataurl = `data:${
@@ -1175,27 +1199,18 @@ async function common_done(res, viewname, isWeb = true) {
         });
     });
   }
-  if (res.set_fields && viewname) {
-    const form = $(`form[data-viewname="${viewname}"]`);
-    if (form.length === 0 && set_state_fields) {
-      // assume this is a filter
-      set_state_fields(
-        res.set_fields,
-        false
-        // $(`[data-sc-embed-viewname="${viewname}"]`)
-      );
-    } else {
-      Object.keys(res.set_fields).forEach((k) => {
-        const input = form.find(
-          `input[name=${k}], textarea[name=${k}], select[name=${k}]`
-        );
-        if (input.attr("type") === "checkbox")
-          input.prop("checked", res.set_fields[k]);
-        else input.val(res.set_fields[k]);
-        input.trigger("set_form_field");
-      });
-    }
+
+  if (res.popup) {
+    ajax_modal(res.popup);
   }
+  if (res.suppressed) {
+    notifyAlert({
+      type: "warning",
+      text: res.suppressed,
+    });
+  }
+  if (res.eval_js) await handle(res.eval_js, eval_it);
+
   if (res.goto && !isWeb)
     // TODO ch
     notifyAlert({
@@ -1217,14 +1232,8 @@ async function common_done(res, viewname, isWeb = true) {
         location.reload();
     }
   }
-  if (res.popup) {
-    ajax_modal(res.popup);
-  }
-  if (res.suppressed) {
-    notifyAlert({
-      type: "warning",
-      text: res.suppressed,
-    });
+  if (res.reload_page) {
+    (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
   }
 }
 

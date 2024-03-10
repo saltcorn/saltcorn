@@ -16,6 +16,7 @@ const {
   isWeb,
   isOfflineMode,
   getSessionId,
+  interpolate,
 } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
@@ -631,15 +632,8 @@ const get_viewable_fields_from_layout = (
           col.formula = col.contents;
         }
         if (contents.isHTML)
-          col.interpolator = (row) => {
-            const template = _.template(contents.contents, {
-              evaluate: /\{\{#(.+?)\}\}/g,
-              interpolate: /\{\{([^#].+?)\}\}/g,
-            });
-            const temres = template({ row, user: req?.user, ...row });
-            return temres;
-          };
-
+          col.interpolator = (row) =>
+            interpolate(contents.contents, row, req?.user);
         break;
       case "action":
         col.action_label_formula = contents.isFormula?.action_label;
@@ -866,6 +860,7 @@ const get_viewable_fields = (
       } else if (column.type === "JoinField") {
         //console.log(column);
         let fvrun;
+        const fieldview = column.join_fieldview || column.fieldview;
         let refNm, targetNm, through, key, type;
         if (column.join_field.includes("->")) {
           const [relation, target] = column.join_field.split("->");
@@ -880,16 +875,21 @@ const get_viewable_fields = (
           key = keypath.join("_");
         }
         if (column.field_type) type = getState().types[column.field_type];
-        if (
-          column.join_fieldview &&
-          type?.fieldviews?.[column.join_fieldview]?.expandColumns
-        ) {
+        else {
+          const field = table.getField(column.join_field);
+          if (field && field.type === "File") column.field_type = "File";
+          else if (field?.type.name && field?.type?.fieldviews[fieldview]) {
+            column.field_type = field.type.name;
+            type = getState().types[column.field_type];
+          }
+        }
+        if (fieldview && type?.fieldviews?.[fieldview]?.expandColumns) {
           const reffield = fields.find((f) => f.name === refNm);
           const reftable = Table.findOne({
             name: reffield.reftable_name,
           });
           const field = reftable.fields.find((f) => f.name === targetNm);
-          return type.fieldviews[column.join_fieldview].expandColumns(
+          return type.fieldviews[fieldview].expandColumns(
             field,
             {
               ...field.attributes,
@@ -899,20 +899,18 @@ const get_viewable_fields = (
           );
         }
         let gofv =
-          column.join_fieldview &&
-          type &&
-          type.fieldviews &&
-          type.fieldviews[column.join_fieldview]
+          fieldview && type && type.fieldviews && type.fieldviews[fieldview]
             ? (row) =>
-                type.fieldviews[column.join_fieldview].run(row[key], req, {
+                type.fieldviews[fieldview].run(row[key], req, {
                   row,
                   ...column,
+                  ...(column?.configuration || {}),
                 })
             : null;
         if (!gofv && column.field_type === "File") {
           gofv = (row) =>
             row[key]
-              ? getState().fileviews[column.join_fieldview].run(row[key], "", {
+              ? getState().fileviews[fieldview].run(row[key], "", {
                   row,
                   ...column,
                   ...(column?.configuration || {}),
@@ -1001,10 +999,13 @@ const get_viewable_fields = (
             showValue = (x) =>
               type.fieldviews[column.agg_fieldview].run(x, req, column);
         } else if (column.agg_fieldview) {
+          const aggField = Table.findOne(table)?.getField?.(column.agg_field);
           const outcomeType =
-            column.stat === "Count" || column.stat === "CountUnique"
+            column.stat === "Percent true" || column.stat === "Percent false"
+              ? "Float"
+              : column.stat === "Count" || column.stat === "CountUnique"
               ? "Integer"
-              : fld.type?.name;
+              : aggField?.type?.name;
           const type = getState().types[outcomeType];
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>

@@ -314,49 +314,48 @@ const can_install_pack = async (
   pack: Pack
 ): Promise<true | { error?: string; warning?: string }> => {
   const warns = new Array<string>();
-  const allTables = (await Table.find()).map((t) =>
-    db.sqlsanitize(t.name.toLowerCase())
-  );
-  const allViews = (await View.find()).map((t) => t.name);
-  const allPages = (await Page.find()).map((t) => t.name);
-  const allPageGroups = (await PageGroup.find()).map((t) => t.name);
-  const packTables = (pack.tables || []).map((t) =>
-    db.sqlsanitize(t.name.toLowerCase())
-  );
-  const matchTables = allTables.filter((dbt) =>
-    packTables.some((pt: string) => pt === dbt && pt !== "users")
-  );
+
+  const allViews = (await View.find()).map((t) => ({
+    name: t.name,
+    table: Table.findOne({ id: t.table_id })?.name,
+  }));
+
+  for (const pt of pack.tables || []) {
+    const matchTable = Table.findOne({ name: pt.name });
+    if (!matchTable) continue;
+
+    //failure conditions: existing field with different type (warn)
+
+    pt.fields.forEach((f) => {
+      const ex = matchTable.getField(f.name as string);
+      if (ex && ex.type_name !== f.type) {
+        warns.push(`Clashing field types for ${f.name} on table ${pt.name}`);
+      }
+    });
+  }
+
   const matchViews = allViews.filter((dbt) =>
-    (pack.views || []).some((pt) => pt.name === dbt)
+    (pack.views || []).some(
+      (pv) => pv.name === dbt.name && dbt.table && pv.table !== dbt.table
+    )
   );
 
-  const pFilterCb = (dbt: string) =>
-    (pack.pages || []).some((pt) => pt.name === dbt) ||
-    (pack.page_groups || []).some((pt) => pt.name === dbt);
-  const matchPages = allPages.filter(pFilterCb);
-  const matchPageGroups = allPageGroups.filter(pFilterCb);
-  if (matchTables.length > 0)
-    return {
-      error: "Tables already exist: " + matchTables.join(),
-    };
   pack.tables.forEach((t) => {
-    if (t.name === "users")
+    if (t.name === "users") {
+      const userTable = Table.findOne({ name: "users" });
       t.fields.forEach((f) => {
         if (f.required) {
-          warns.push(
-            `User field '${f.name}' is required in pack, but there are existing users. You must set a value for each user and then change the field to be required. Got to <a href="/list/users">users table data</a>.`
-          );
+          const ex = userTable?.getField(f.name as string);
+          if (!ex || !ex.required)
+            warns.push(
+              `User field '${f.name}' is required in pack, but there are existing users. You must set a value for each user and then change the field to be required. Got to <a href="/list/users">users table data</a>.`
+            );
         }
       });
+    }
   });
   matchViews.forEach((v) => {
-    warns.push(`Clashing view ${v}.`);
-  });
-  matchPages.forEach((p) => {
-    warns.push(`Clashing page ${p}.`);
-  });
-  matchPageGroups.forEach((p) => {
-    warns.push(`Clashing page group ${p}.`);
+    warns.push(`Clashing view ${v} on different tables.`);
   });
   if (warns.length > 0) return { warning: warns.join(" ") };
   else return true;

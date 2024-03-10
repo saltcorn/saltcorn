@@ -40,7 +40,7 @@ const toInclude =
     if (res.statusCode !== expCode) {
       console.log(res.text);
       throw new Error(
-        `Expected status ${expCode} when lookinng for "${exp}", received ${res.statusCode}`
+        `Expected status ${expCode} when looking for "${exp}", received ${res.statusCode}`
       );
     }
     const check = (txt) => res.text.includes(txt);
@@ -52,6 +52,21 @@ const toInclude =
     } else if (!check(exp)) {
       console.log(res.text);
       throw new Error(`Expected text ${exp} not found`);
+    }
+  };
+
+const toBeTrue =
+  (pred, expCode = 200) =>
+  (res) => {
+    if (res.statusCode !== expCode) {
+      console.log(res.text);
+      throw new Error(
+        `Expected status ${expCode} when checking predicate, received ${res.statusCode}`
+      );
+    }
+    if (!pred(res)) {
+      console.log(res.text);
+      throw new Error(`Expected predicate not true`);
     }
   };
 
@@ -303,6 +318,7 @@ module.exports = {
   toInclude,
   toNotInclude,
   toSucceed,
+  toBeTrue,
   resetToFixtures,
   succeedJsonWith,
   notAuthorized,

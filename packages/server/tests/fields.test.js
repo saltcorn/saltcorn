@@ -8,6 +8,7 @@ const {
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
+  toBeTrue,
   toNotInclude,
   toRedirect,
   resetToFixtures,
@@ -364,9 +365,12 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/books/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect((r) => +r.body > 2);
+      .send({
+        id: 1,
+      })
+      .expect(toBeTrue((r) => +r.text > 500 && +r.text < 1500));
   });
-  it("should show calculated with single joinfield", async () => {
+  it("should show calculated field with single joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "patients" });
     await Field.create({
@@ -382,9 +386,12 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/patients/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect((r) => +r.body > 2);
+      .send({
+        id: 1,
+      })
+      .expect(toBeTrue((r) => +r.text > 2));
   });
-  it("should show calculated with double joinfield", async () => {
+  it("should show calculated field with double joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "readings" });
     await Field.create({
@@ -400,7 +407,127 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/readings/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect((r) => +r.body > 2);
+      .send({
+        id: 1,
+      })
+      .expect(toBeTrue((r) => +r.text > 2));
+  });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/books/publisher.name/as_text")
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "AK Press"));
+  });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/books/publisher.name/code")
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "<pre><code>AK Press</code></pre>"));
+  });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/books/publisher.name/code")
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "<pre><code>AK Press</code></pre>"));
+  });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post(
+        "/field/show-calculated/books/publisher.name/show_with_html?code=pub%3A%7B%7Bit.toLowerCase()%7D%7D"
+      )
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "pub:ak press"));
+  });
+  it("should show-calculated on double-join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/patients/favbook.publisher.name/as_text")
+      .set("Cookie", loginCookie)
+      .send({
+        favbook: 2,
+      })
+      .expect(toBeTrue((r) => r.text === "AK Press"));
+  });
+  it("should not show unauth show-calculated on double-join field value", async () => {
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/patients/favbook.publisher.name/as_text")
+
+      .send({
+        favbook: 2,
+      })
+      .expect(401);
+  });
+  it("should preview field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/preview/books/author/code")
+      .set("Cookie", loginCookie)
+      .send({})
+      .expect(
+        toBeTrue((r) => r.text === "<pre><code>Herman Melville</code></pre>")
+      );
+  });
+  it("should preview joinfield", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/preview/books/publisher.name/code")
+      .set("Cookie", loginCookie)
+      .send({})
+      .expect(toBeTrue((r) => r.text === "<pre><code>AK Press</code></pre>"));
+  });
+  it("should preview joinfield with cfg", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/preview/books/publisher.name/show_with_html")
+      .set("Cookie", loginCookie)
+      .send({
+        configuration: {
+          code: "pub:{{it.toLowerCase()}}",
+        },
+      })
+      .expect(toBeTrue((r) => r.text === "pub:ak press"));
   });
 });
 

@@ -300,12 +300,6 @@ const ViewSettings = () => {
                   prop.view = target_value;
                 });
               }}
-              onBlur={(e) => {
-                const target_value = e?.target?.value || e?.value;
-                setProp((prop) => {
-                  prop.view = target_value;
-                });
-              }}
               menuPortalTarget={document.body}
               styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
             ></Select>

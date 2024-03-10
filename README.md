@@ -116,6 +116,10 @@ Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
      - `database`: PostgreSQL database
      - `user`: PostgreSQL user name
      - `password`: PostgreSQL user password
+     - `sslmode`: PostgreSQL [SSL Mode](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE)
+     - `sslcert`: PostgreSQL [SSL Certificate](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLCERT)
+     - `sslkey`: PostgreSQL [SSL Key](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLKEY)
+     - `sslrootcert`: PostgreSQL [SSL Root Certificate](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLROOTCERT)
      - `session_secret`: Saltcorn session secret
      - `multi_tenant`: run as multi-tenant (true/false)
 
@@ -135,7 +139,7 @@ Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
 
      Or,
 
-   - Set environment variables. `SALTCORN_SESSION_SECRET`, `SALTCORN_MULTI_TENANT` (defaults to `false`), and either `DATABASE_URL` or `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE`, `PGPASSWORD`.
+   - Set environment variables. `SALTCORN_SESSION_SECRET`, `SALTCORN_MULTI_TENANT` (defaults to `false`), and either `DATABASE_URL` or `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE`, `PGPASSWORD`. You can also set `PGSSLMODE`, `PGSSLCERT`, `PGSSLKEY`, `PGSSLROOTCERT` (see [Postgres Documentation](https://www.postgresql.org/docs/current/libpq-envars.html))
 
 ### Run
 

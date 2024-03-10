@@ -797,7 +797,10 @@ module.exports = {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
       const where = await stateFieldsToWhere({ fields, state, table });
-      return await table.countRows(where);
+      return await table.countRows(where, {
+        forUser: req?.user,
+        forPublic: !req?.user,
+      });
     },
   }),
   connectedObjects: async (configuration) => {

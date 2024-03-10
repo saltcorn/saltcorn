@@ -729,6 +729,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
  * @returns {Promise<void>}
  */
 const set_join_fieldviews = async ({ table, columns, fields }) => {
+  //legacy
   for (const segment of columns) {
     const { join_field, join_fieldview } = segment;
     if (!join_fieldview) continue;
