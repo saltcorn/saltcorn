@@ -2259,6 +2259,7 @@ router.post(
   "/build-mobile-app",
   isAdmin,
   error_catcher(async (req, res) => {
+    getState().log(2, `starting mobile build: ${JSON.stringify(req.body)}`);
     let {
       entryPoint,
       entryPointType,
