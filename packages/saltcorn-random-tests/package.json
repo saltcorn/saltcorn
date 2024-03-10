@@ -23,11 +23,13 @@
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/plugin_packages/"
+      "/plugin_packages/",
+      "/plugins_folder/"
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/plugin_packages/"
+      "/plugin_packages/",
+      "/plugins_folder/"
     ],
     "moduleNameMapper": {
       "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",

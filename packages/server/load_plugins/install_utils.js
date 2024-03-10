@@ -51,9 +51,9 @@ const loadPlugin = async (plugin, force) => {
  */
 const requirePlugin = async (plugin, force) => {
   const loader = new PluginInstaller(plugin);
-  const res = await loader.install(force);
-  return res;
+  return await loader.install(force);
 };
+
 /**
  * Load all plugins
  * @returns {Promise<void>}
@@ -70,15 +70,15 @@ const loadAllPlugins = async (force) => {
   }
   await getState().refresh(true);
 };
+
 /**
  * Load Plugin and its dependencies and save into local installation
  * @param plugin
  * @param force
  * @param noSignalOrDB
- * @param manager - optional plugin manager
  * @returns {Promise<void>}
  */
-const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
+const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
     false

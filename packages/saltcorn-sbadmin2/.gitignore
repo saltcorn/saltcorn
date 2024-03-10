@@ -104,5 +104,6 @@ dist
 .tern-port
 
 plugin_packages/
+plugins_folder/
 sessions.sqlite
 

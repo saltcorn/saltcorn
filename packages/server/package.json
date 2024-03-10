@@ -70,8 +70,8 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "26.6.3",
-    "jest-environment-jsdom": "^26.6.2",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "29.7.0",
     "supertest": "^6.3.3"
   },
   "scripts": {
@@ -84,11 +84,13 @@
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/plugin_packages/"
+      "/plugin_packages/",
+      "/plugins_folder/"
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/plugin_packages/"
+      "/plugin_packages/",
+      "/plugins_folder/"
     ],
     "moduleNameMapper": {
       "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",

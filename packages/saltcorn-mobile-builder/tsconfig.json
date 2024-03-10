@@ -26,6 +26,7 @@
     "*.test.*",
     "webpack.config.js",
     "bundle",
-    "plugin_packages"
+    "plugin_packages",
+    "plugins_folder"
   ]
 }

@@ -126,4 +126,4 @@ package-lock.json
 !packages/saltcorn-builder/dist/builder_bundle.js
 !packages/saltcorn-builder/package-lock.json
 !/package-lock.json
-plugins_folder
+plugins_folder/
