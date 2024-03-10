@@ -365,7 +365,10 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/books/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect(toBeTrue((r) => +r.body > 2));
+      .send({
+        id: 1,
+      })
+      .expect(toBeTrue((r) => +r.text > 500 && +r.text < 1500));
   });
   it("should show calculated field with single joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -383,7 +386,10 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/patients/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect(toBeTrue((r) => +r.body > 2));
+      .send({
+        id: 1,
+      })
+      .expect(toBeTrue((r) => +r.text > 2));
   });
   it("should show calculated field with double joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -401,7 +407,10 @@ describe("Field Endpoints", () => {
     await request(app)
       .post("/field/show-calculated/readings/pagesp1/show")
       .set("Cookie", loginCookie)
-      .expect(toBeTrue((r) => +r.body > 2));
+      .send({
+        id: 1,
+      })
+      .expect(toBeTrue((r) => +r.text > 2));
   });
   it("should show-calculated on join field value", async () => {
     const loginCookie = await getAdminLoginCookie();
