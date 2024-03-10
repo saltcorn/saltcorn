@@ -161,6 +161,33 @@ describe("API read", () => {
         succeedJsonWith((rows) => rows.length == 2 && +rows[0]._versions === 0)
       );
   });
+  it("should get distinct authors for public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/books/distinct/author")
+      .expect(
+        succeedJsonWith((vals) => {
+          return vals.length == 2 && vals.includes("Herman Melville");
+        })
+      );
+  });
+  it("should not allow public access to distinct patients", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/api/patients/distinct/name").expect(notAuthorized);
+  });
+  it("should allow staff access to distinct patients", async () => {
+    const loginCookie = await getStaffLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/patients/distinct/name")
+      .set("Cookie", loginCookie)
+      .expect(
+        succeedJsonWith(
+          (rows) => rows.length == 2 && rows.includes("Kirk Douglas")
+        )
+      );
+  });
 });
 describe("API post", () => {
   it("should post books", async () => {
