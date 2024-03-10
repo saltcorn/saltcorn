@@ -466,6 +466,30 @@ describe("Field Endpoints", () => {
       })
       .expect(toBeTrue((r) => r.text === "pub:ak press"));
   });
+  it("should show-calculated on double-join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/patients/favbook.publisher.name/as_text")
+      .set("Cookie", loginCookie)
+      .send({
+        favbook: 2,
+      })
+      .expect(toBeTrue((r) => r.text === "AK Press"));
+  });
+  it("should not show unauth show-calculated on double-join field value", async () => {
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/patients/favbook.publisher.name/as_text")
+
+      .send({
+        favbook: 2,
+      })
+      .expect(401);
+  });
 });
 
 describe("Fieldview config", () => {
