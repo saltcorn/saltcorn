@@ -930,7 +930,7 @@ class Table implements AbstractTable {
         await this.addDeleteSyncInfo(delIds, dbTime);
       }
     }
-    if (fields.find((f) => f.primary_key)) await this.resetSequence();
+    //if (fields.find((f) => f.primary_key)) await this.resetSequence();
     for (const file of deleteFiles) {
       await file.delete();
     }
