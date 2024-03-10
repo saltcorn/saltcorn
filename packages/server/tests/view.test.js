@@ -37,6 +37,18 @@ describe("view list endpoint", () => {
 describe("nonexisting view", () => {
   itShouldRedirectUnauthToLogin("/view/patlist", "/");
 });
+describe("preview view", () => {
+  it("should show previewview to auth", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/view/authorlist/preview")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Tolstoy"))
+      .expect(toNotInclude(">728<"));
+  });
+});
 describe("view patients list endpoint", () => {
   itShouldRedirectUnauthToLogin("/view/patientlist");
 
