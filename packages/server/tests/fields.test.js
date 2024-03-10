@@ -425,6 +425,47 @@ describe("Field Endpoints", () => {
       })
       .expect(toBeTrue((r) => r.text === "AK Press"));
   });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/books/publisher.name/code")
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "<pre><code>AK Press</code></pre>"));
+  });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/books/publisher.name/code")
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "<pre><code>AK Press</code></pre>"));
+  });
+  it("should show-calculated on join field value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post(
+        "/field/show-calculated/books/publisher.name/show_with_html?code=pub%3A%7B%7Bit.toLowerCase()%7D%7D"
+      )
+      .set("Cookie", loginCookie)
+      .send({
+        publisher: 1,
+      })
+      .expect(toBeTrue((r) => r.text === "pub:ak press"));
+  });
 });
 
 describe("Fieldview config", () => {
