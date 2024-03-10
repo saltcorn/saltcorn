@@ -2465,11 +2465,12 @@ router.post(
         });
         await table.update({ ownership_field_id: null });
         const fields = table.getFields();
-        for (const f of fields) {
-          if (f.is_fkey) {
-            await f.delete();
+        if (!table.extername && !table.provider_name)
+          for (const f of fields) {
+            if (f.is_fkey) {
+              await f.delete();
+            }
           }
-        }
       }
       for (const table of tables) {
         if (table.name !== "users") await table.delete();
