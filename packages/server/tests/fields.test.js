@@ -490,6 +490,45 @@ describe("Field Endpoints", () => {
       })
       .expect(401);
   });
+  it("should preview field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/preview/books/author/code")
+      .set("Cookie", loginCookie)
+      .send({})
+      .expect(
+        toBeTrue((r) => r.text === "<pre><code>Herman Melville</code></pre>")
+      );
+  });
+  it("should preview joinfield", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/preview/books/publisher.name/code")
+      .set("Cookie", loginCookie)
+      .send({})
+      .expect(toBeTrue((r) => r.text === "<pre><code>AK Press</code></pre>"));
+  });
+  it("should preview joinfield with cfg", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/preview/books/publisher.name/show_with_html")
+      .set("Cookie", loginCookie)
+      .send({
+        configuration: {
+          code: "pub:{{it.toLowerCase()}}",
+        },
+      })
+      .expect(toBeTrue((r) => r.text === "pub:ak press"));
+  });
 });
 
 describe("Fieldview config", () => {
