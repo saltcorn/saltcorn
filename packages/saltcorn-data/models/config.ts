@@ -733,6 +733,7 @@ const configTypes: ConfigTypes = {
     fields: [
       {
         type: "File",
+        name: "image",
         label: "Image",
         default: 0,
         attributes: {

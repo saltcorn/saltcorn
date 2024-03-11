@@ -119,7 +119,15 @@ router.get(
       display: state.getConfig("pwa_display", "browser"),
     };
     const site_logo = state.getConfig("site_logo_id");
-    if (site_logo)
+    const pwa_icons = state.getConfig("pwa_icons");
+    if (Array.isArray(pwa_icons) && pwa_icons.length > 0)
+      manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
+        src: `/files/serve/${image}`,
+        type: File.nameToMimeType(site_logo),
+        sizes: `${size}x${size}`,
+        ...(maskable ? { purpose: "maskable" } : {}),
+      }));
+    else if (site_logo)
       manifest.icons = [
         {
           src: `/files/serve/${site_logo}`,
