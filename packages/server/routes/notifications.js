@@ -11,6 +11,7 @@ const { div, a, i, text, h5, p, span } = require("@saltcorn/markup/tags");
 const moment = require("moment");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
+const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const { renderForm } = require("@saltcorn/markup");
 
@@ -122,6 +123,7 @@ router.get(
       manifest.icons = [
         {
           src: `/files/serve/${site_logo}`,
+          type: File.nameToMimeType(site_logo),
         },
       ];
     if (state.getConfig("pwa_set_colors", false)) {
