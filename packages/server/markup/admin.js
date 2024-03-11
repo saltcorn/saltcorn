@@ -23,6 +23,8 @@ const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
+const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
+const Field = require("@saltcorn/data/models/field");
 
 /**
  * Restore Backup
@@ -436,6 +438,26 @@ const config_fields_form = async ({
     const isTenant = configTypes[name].type === "Tenant";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
+
+    if (configTypes[name].type === "Repeat") {
+      const repFields = configTypes[name].fields;
+      const filledFields = [];
+      for (const rfield of repFields) {
+        const fillField = new Field(rfield);
+        await fillField.fill_fkey_options();
+        filledFields.push(fillField);
+      }
+      fields.push(
+        new FieldRepeat({
+          name,
+          label,
+          fields: filledFields,
+          showIf,
+        })
+      );
+
+      continue;
+    }
 
     fields.push({
       name,

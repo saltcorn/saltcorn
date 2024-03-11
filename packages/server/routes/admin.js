@@ -2676,6 +2676,10 @@ admin_config_route({
       name: "pwa_background_color",
       showIf: { pwa_enabled: true, pwa_set_colors: true },
     },
+    {
+      name: "pwa_icons",
+      showIf: { pwa_enabled: true },
+    },
   ],
   response(form, req, res) {
     send_admin_page({

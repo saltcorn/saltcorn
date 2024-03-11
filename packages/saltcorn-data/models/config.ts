@@ -727,6 +727,32 @@ const configTypes: ConfigTypes = {
     type: "Color",
     label: "Background color",
   },
+  pwa_icons: {
+    type: "Repeat",
+    label: "Icons",
+    fields: [
+      {
+        type: "File",
+        label: "Image",
+        default: 0,
+        attributes: {
+          select_file_where: { min_role_read: 100, mime_super: "image" },
+        },
+        blurb: "Select a publicly accessible square image file",
+      },
+      {
+        type: "Integer",
+        label: "Size",
+        name: "size",
+        blurb: "Height and width in px",
+      },
+      {
+        type: "Bool",
+        label: "Maskable",
+        name: "maskable",
+      },
+    ],
+  },
   log_level: {
     input_type: "select",
     label: "System logging verbosity",
