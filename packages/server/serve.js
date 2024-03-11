@@ -26,7 +26,7 @@ const {
   loadAllPlugins,
   loadAndSaveNewPlugin,
   loadPlugin,
-} = require("./load_plugins/install_utils");
+} = require("./load_plugins");
 const { getConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 const socketio = require("socket.io");

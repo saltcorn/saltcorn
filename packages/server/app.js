@@ -15,7 +15,7 @@ const BearerStrategy = require("passport-http-bearer");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const flash = require("connect-flash");
-const { loadAllPlugins } = require("./load_plugins/install_utils");
+const { loadAllPlugins } = require("./load_plugins");
 const homepage = require("./routes/homepage");
 const errors = require("./errors");
 const {

@@ -1,8 +1,6 @@
 const { mergeWithCustomize, merge } = require("webpack-merge");
 const { join } = require("path");
-const {
-  requirePlugin,
-} = require("@saltcorn/server/load_plugins/install_utils");
+const { requirePlugin } = require("@saltcorn/server/load_plugins");
 
 const dataCfg = require(join(
   require.resolve("@saltcorn/data"),

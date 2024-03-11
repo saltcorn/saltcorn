@@ -6,7 +6,7 @@ const Table = require("@saltcorn/data/models/table");
 const fs = require("fs").promises;
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
-const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
+const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 
 const pickFields = (table, pkName, row, keepId) => {
   const result = {};

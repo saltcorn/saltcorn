@@ -9,7 +9,7 @@ const db = require("@saltcorn/data/db");
 const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
 
-const PluginInstaller = require("./plugin_installer");
+const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
 
 /**
  * Load one plugin

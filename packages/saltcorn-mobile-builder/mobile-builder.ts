@@ -1,5 +1,5 @@
 const { PluginManager } = require("live-plugin-manager");
-const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
+const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const { features } = require("@saltcorn/data/db/state");
 import { join } from "path";
 import Plugin from "@saltcorn/data/models/plugin";

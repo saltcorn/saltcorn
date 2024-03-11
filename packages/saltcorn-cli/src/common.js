@@ -27,7 +27,7 @@ const maybe_as_tenant = async (ten, f) => {
  * @returns {Promise<void>}
  */
 const init_some_tenants = async (tenant) => {
-  const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
+  const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
   const { init_multi_tenant } = require("@saltcorn/data/db/state");
   await loadAllPlugins();
   if (tenant === "*") {
@@ -112,7 +112,7 @@ const prep_test_db = async (backupFile) => {
   const fs = require("fs");
   if (!fs.existsSync(backupFile))
     throw new Error(`backup file '${backupFile}' does not exist`);
-  const load_plugins = require("@saltcorn/server/load_plugins/install_utils");
+  const load_plugins = require("@saltcorn/server/load_plugins");
   await require("@saltcorn/data/db/reset_schema")();
   await load_plugins.loadAllPlugins();
   const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);

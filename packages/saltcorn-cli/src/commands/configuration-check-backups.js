@@ -39,7 +39,7 @@ class ConfigurationCheckBackupsCommand extends Command {
 
     const ten = "cfgcheckbackuptenannt";
     await deleteTenant(ten);
-    const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
+    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
     const { init_multi_tenant } = require("@saltcorn/data/db/state");
     await loadAllPlugins();
     for (const file of argv) {
@@ -55,7 +55,7 @@ class ConfigurationCheckBackupsCommand extends Command {
           const { restore } = require("@saltcorn/admin-models/models/backup");
           await loadAllPlugins();
 
-          const load_plugins = require("@saltcorn/server/load_plugins/install_utils");
+          const load_plugins = require("@saltcorn/server/load_plugins");
           const savePlugin = (p) => load_plugins.loadAndSaveNewPlugin(p);
           const err = await restore(file, savePlugin, true);
           if (err) {

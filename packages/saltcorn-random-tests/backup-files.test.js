@@ -5,7 +5,7 @@ const fs = require("fs");
 const {
   runConfigurationCheck,
 } = require("@saltcorn/admin-models/models/config-check");
-const load_plugins = require("@saltcorn/server/load_plugins/install_utils");
+const load_plugins = require("@saltcorn/server/load_plugins");
 const { restore } = require("@saltcorn/admin-models/models/backup");
 const { getState } = require("@saltcorn/data/db/state");
 const { mockReqRes } = require("@saltcorn/data/tests/mocks");

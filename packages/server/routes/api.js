@@ -27,7 +27,7 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 //const Field = require("@saltcorn/data/models/field");
 const Trigger = require("@saltcorn/data/models/trigger");
-//const load_plugins = require("../load_plugins/install_utils");
+//const load_plugins = require("../load_plugins");
 const passport = require("passport");
 
 const {

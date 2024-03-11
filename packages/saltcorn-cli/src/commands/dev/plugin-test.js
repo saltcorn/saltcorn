@@ -5,9 +5,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const fs = require("fs");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { prep_test_db } = require("../../common");
-const {
-  loadAndSaveNewPlugin,
-} = require("@saltcorn/server/load_plugins/install_utils");
+const { loadAndSaveNewPlugin } = require("@saltcorn/server/load_plugins");
 
 const pluginsPath = path.join(__dirname, "test_plugin_packages");
 

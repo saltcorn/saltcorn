@@ -3,7 +3,7 @@ const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
 const { init_multi_tenant } = require("@saltcorn/data/db/state");
-const { loadAllPlugins } = require("@saltcorn/server/load_plugins/install_utils");
+const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const User = require("@saltcorn/data/models/user");
 
 /**
