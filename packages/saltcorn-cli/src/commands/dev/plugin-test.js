@@ -6,6 +6,7 @@ const fs = require("fs");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { prep_test_db } = require("../../common");
 const { loadAndSaveNewPlugin } = require("@saltcorn/server/load_plugins");
+const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
 
 const pluginsPath = path.join(__dirname, "test_plugin_packages");
 
@@ -74,26 +75,40 @@ const installPlugin = async (plugin) => {
   await removeOldPlugin(plugin);
   removePluginsDir();
   await loadAndSaveNewPlugin(plugin, false, false);
-  const location = getPLuginLocation(plugin.name);
+  const location = getPluginLocation(plugin.name);
   writeJestConfigIntoPluginDir(location);
   return location;
 };
 
 const removeOldPlugin = async (plugin) => {
   const byName = await Plugin.findOne({ name: plugin.name });
-  if (byName) await byName.delete();
+  if (byName) {
+    await byName.delete();
+    await new PluginInstaller(byName).remove();
+  }
+  let oldPlugin = null;
   if (!plugin.name.startsWith("@saltcorn/")) {
     const withOrg = await Plugin.findOne({ name: `@saltcorn/${plugin.name}` });
-    if (withOrg) await withOrg.delete();
+    if (withOrg) {
+      await withOrg.delete();
+      oldPlugin = withOrg;
+    }
   } else {
     const withoutOrg = await Plugin.findOne({
       name: plugin.name.replace(/^@saltcorn\//, ""),
     });
-    if (withoutOrg) await withoutOrg.delete();
+    if (withoutOrg) {
+      await withoutOrg.delete();
+      oldPlugin = withoutOrg;
+    }
+  }
+  if (oldPlugin) {
+    const installer = new PluginInstaller(oldPlugin);
+    await installer.remove();
   }
 };
 
-const getPLuginLocation = (pluginName) => {
+const getPluginLocation = (pluginName) => {
   const pluginLocations = getState().plugin_locations;
   return (
     pluginLocations[pluginName] ||
