@@ -779,7 +779,7 @@ module.exports = {
         row &&
         row[table.pk_name]
       ) {
-        table.updateRow({}, row[table.pk_name], undefined, true);
+        await table.updateRow({}, row[table.pk_name], undefined, true);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
