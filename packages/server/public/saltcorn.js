@@ -472,15 +472,7 @@ function saveAndContinue(e, k) {
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
         );
       }
-      if (res.notify) {
-        notifyAlert(res.notify);
-      }
-      if (res.notify_success) {
-        notifyAlert({ type: "success", text: res.notify });
-      }
-      if (res.reload_page) {
-        location.reload(); //TODO notify to cookie if reload or goto
-      }
+      common_done(res, form.attr("data-viewname"));
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
