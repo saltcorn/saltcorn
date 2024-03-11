@@ -11,6 +11,7 @@ const { div, a, i, text, h5, p, span } = require("@saltcorn/markup/tags");
 const moment = require("moment");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
+const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const { renderForm } = require("@saltcorn/markup");
 
@@ -114,14 +115,24 @@ router.get(
     const state = getState();
     const manifest = {
       name: state.getConfig("site_name"),
-      start_url: state.getConfig("base_url") || "/",
+      start_url: "/",
       display: state.getConfig("pwa_display", "browser"),
     };
     const site_logo = state.getConfig("site_logo_id");
-    if (site_logo)
+    const pwa_icons = state.getConfig("pwa_icons");
+    if (Array.isArray(pwa_icons) && pwa_icons.length > 0)
+      manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
+        src: `/files/serve/${image}`,
+        type: File.nameToMimeType(site_logo),
+        sizes: size ? `${size}x${size}` : "144x144",
+        ...(maskable ? { purpose: "maskable" } : {}),
+      }));
+    else if (site_logo)
       manifest.icons = [
         {
           src: `/files/serve/${site_logo}`,
+          type: File.nameToMimeType(site_logo),
+          sizes: "144x144",
         },
       ];
     if (state.getConfig("pwa_set_colors", false)) {
