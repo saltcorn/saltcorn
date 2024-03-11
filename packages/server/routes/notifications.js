@@ -124,7 +124,7 @@ router.get(
       manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
         src: `/files/serve/${image}`,
         type: File.nameToMimeType(site_logo),
-        sizes: `${size}x${size}`,
+        sizes: size ? `${size}x${size}` : "144x144",
         ...(maskable ? { purpose: "maskable" } : {}),
       }));
     else if (site_logo)
@@ -132,6 +132,7 @@ router.get(
         {
           src: `/files/serve/${site_logo}`,
           type: File.nameToMimeType(site_logo),
+          sizes: "144x144",
         },
       ];
     if (state.getConfig("pwa_set_colors", false)) {
