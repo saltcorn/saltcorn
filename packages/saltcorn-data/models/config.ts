@@ -738,13 +738,13 @@ const configTypes: ConfigTypes = {
         attributes: {
           select_file_where: { min_role_read: 100, mime_super: "image" },
         },
-        blurb: "Select a publicly accessible square image file",
+        sublabel: "Select a publicly accessible square image file",
       },
       {
         type: "Integer",
         label: "Size",
         name: "size",
-        blurb: "Height and width in px",
+        sublabel: "Height and width in px",
       },
       {
         type: "Bool",
