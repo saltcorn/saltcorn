@@ -2453,6 +2453,11 @@ router.post(
         }
       }
     }
+    if (form.values.triggers) {
+      await db.deleteWhere("_sc_tag_entries", { not: { trigger_id: null } });
+      await db.deleteWhere("_sc_triggers");
+      await getState().refresh_triggers();
+    }
     if (form.values.tables) {
       await db.deleteWhere("_sc_table_constraints");
       await db.deleteWhere("_sc_model_instances");
@@ -2492,10 +2497,7 @@ router.post(
       }
       await getState().refresh_plugins();
     }
-    if (form.values.triggers) {
-      await db.deleteWhere("_sc_triggers");
-      await getState().refresh_triggers();
-    }
+
     if (form.values.library) {
       await db.deleteWhere("_sc_library");
     }
