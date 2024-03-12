@@ -1382,5 +1382,7 @@
 	"Open a connection to TLS server with self-signed or invalid TLS certificate": "Open a connection to TLS server with self-signed or invalid TLS certificate",
 	"Allow self-signed": "Allow self-signed",
 	"Optionally associate a table with this trigger": "Optionally associate a table with this trigger",
-	"Delete table": "Delete table"
+	"Delete table": "Delete table",
+	"Signup role": "Signup role",
+	"The initial role of signed up users": "The initial role of signed up users"
 }
