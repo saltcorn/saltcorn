@@ -11,7 +11,7 @@ const npmFetch = require("npm-registry-fetch");
 const rootFolder = process.cwd();
 
 const downloadFromGithub = async (plugin, pluginDir) => {
-  const tarballUrl = `https://api.github.com/repos/${plugin.location}/tarball/master`;
+  const tarballUrl = `https://api.github.com/repos/${plugin.location}/tarball`;
   const fileName = plugin.name.split("/").pop();
   const filePath = await loadTarball(tarballUrl, fileName);
   await mkdir(pluginDir, { recursive: true });
@@ -66,14 +66,22 @@ const loadTarball = (url, name) => {
           if (redirect.statusCode === 200) {
             const filePath = await writeTarball(redirect);
             resolve(filePath);
-          } else reject(new Error("Error downloading tarball"));
+          } else
+            reject(
+              new Error(
+                `Error downloading tarball: http code ${redirect.statusCode}`
+              )
+            );
         });
-      } else {
+      } else if (res.statusCode !== 200)
+        reject(
+          new Error(`Error downloading tarball: http code ${res.statusCode}`)
+        );
+      else {
         const filePath = await writeTarball(res);
         resolve(filePath);
       }
     }).on("error", (err) => {
-      unlink("tarball.tar.gz", () => {});
       reject(err);
     });
   });
