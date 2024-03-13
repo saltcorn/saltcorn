@@ -786,6 +786,7 @@ router.post(
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
         return;
       }
+      uobj.role_id = +getState().getConfig("signup_role", "80");
       const u = await User.create(uobj);
       await send_verification_email(u, req);
 
@@ -843,6 +844,7 @@ router.post(
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
         try {
+          form.values.role_id = +getState().getConfig("signup_role", "80");
           const u = await User.create(form.values);
           await send_verification_email(u, req);
 
@@ -978,6 +980,7 @@ router.post(
             getAuthLinks("signup", true)
           );
         } else {
+          userObject.role_id = +getState().getConfig("signup_role", "80");
           const u = await User.create(userObject);
           await send_verification_email(u, req);
 
@@ -1010,6 +1013,7 @@ router.post(
         form.values.password = password;
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
+        form.values.role_id = +getState().getConfig("signup_role", "80");
         const u = await User.create(form.values);
         await send_verification_email(u, req);
         if (req.smr)

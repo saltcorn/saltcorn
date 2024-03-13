@@ -286,12 +286,13 @@ class Table implements AbstractTable {
     delete t.min_role_read; //it is a getter
     Object.assign(t, tbl);
     t.update = async (upd_rec: any) => {
-      await db.update("_sc_tables", upd_rec, tbl.id);
+      const { fields, constraints, ...updDB } = upd_rec;
+      await db.update("_sc_tables", updDB, tbl.id);
       await require("../db/state").getState().refresh_tables();
     };
     t.delete = async (upd_rec: any) => {
       const schema = db.getTenantSchemaPrefix();
-
+      await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
       await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [tbl.id]);
       await require("../db/state").getState().refresh_tables();
     };
