@@ -2481,19 +2481,29 @@ class Table implements AbstractTable {
                           client,
                         });
                       else
+                        try {
+                          await db.insert(this.name, rec, {
+                            noid: true,
+                            client,
+                            pk_name,
+                          });
+                        } catch (e: any) {
+                          rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
+                          rejects += 1;
+                        }
+                    } else if (options?.no_table_write) {
+                      returnedRows.push(rec);
+                    } else
+                      try {
                         await db.insert(this.name, rec, {
                           noid: true,
                           client,
                           pk_name,
                         });
-                    } else if (options?.no_table_write) {
-                      returnedRows.push(rec);
-                    } else
-                      await db.insert(this.name, rec, {
-                        noid: true,
-                        client,
-                        pk_name,
-                      });
+                      } catch (e: any) {
+                        rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
+                        rejects += 1;
+                      }
                   } else {
                     rejectDetails += `Reject row ${i} because: ${rowOk}\n`;
                     rejects += 1;
