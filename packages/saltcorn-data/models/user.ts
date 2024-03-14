@@ -376,6 +376,7 @@ class User {
   async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     await this.destroy_sessions();
+    await db.deleteWhere("_sc_notifications", { user_id: this.id });
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
     await Trigger.runTableTriggers(
       "Delete",

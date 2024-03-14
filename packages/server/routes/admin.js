@@ -2511,6 +2511,8 @@ router.post(
       await getState().refresh();
     }
     if (form.values.users) {
+      await db.deleteWhere("_sc_notifications");
+
       const users1 = Table.findOne({ name: "users" });
       const userfields1 = await users1.getFields();
 
