@@ -233,6 +233,14 @@ const configTypes: ConfigTypes = {
       "Elevate users to a higher role when their email addresses have been verified",
   },
   /** @type {object} */
+  signup_role: {
+    type: "Role",
+    label: "Signup role",
+    blurb: "The initial role of signed up users",
+    default: "80",
+    required: true,
+  },
+  /** @type {object} */
   min_role_upload: {
     type: "Role",
     label: "Role to upload files",
