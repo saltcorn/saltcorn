@@ -107,6 +107,7 @@ const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
 const { get_help_markup } = require("../help/index.js");
+const Docker = require("dockerode");
 
 const router = new Router();
 module.exports = router;
@@ -1481,8 +1482,9 @@ router.get(
     });
   })
 );
-const buildDialogScript = () => {
+const buildDialogScript = (cordovaBuilderAvailable) => {
   return `<script>
+  var cordovaBuilderAvailable = ${cordovaBuilderAvailable};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
       const tab = $('#' + currentType + 'NavLinkID');
@@ -1519,6 +1521,17 @@ const buildDialogScript = () => {
   }
   </script>`;
 };
+
+const imageAvailable = async () => {
+  try {
+    const image = new Docker().getImage("saltcorn/cordova-builer");
+    await image.inspect();
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 /**
  * Build mobile app
  */
@@ -1538,13 +1551,14 @@ router.get(
     );
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
+    const dockerAvailable = await imageAvailable();
     send_admin_page({
       res,
       req,
       active_sub: "Mobile app",
       headers: [
         {
-          headerTag: buildDialogScript(),
+          headerTag: buildDialogScript(dockerAvailable),
         },
       ],
       contents: {
@@ -2165,6 +2179,56 @@ router.get(
                         )
                       )
                     )
+                  ),
+                  div(
+                    { class: "row pb-3 pt-3" },
+                    div(
+                      label(
+                        { class: "form-label fw-bold" },
+                        req.__("Cordova builder") +
+                          a(
+                            {
+                              href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                            },
+                            i({ class: "fas fa-question-circle ps-1" })
+                          )
+                      )
+                    ),
+                    div(
+                      { class: "col-sm-4" },
+                      div(
+                        {
+                          id: "dockerBuilderStatusId",
+                          class: "",
+                        },
+                        dockerAvailable
+                          ? span(
+                              req.__("installed"),
+                              i({ class: "ps-2 fas fa-check text-success" })
+                            )
+                          : span(
+                              req.__("not available"),
+                              i({ class: "ps-2 fas fa-times text-danger" })
+                            )
+                      )
+                    ),
+                    div(
+                      { class: "col-sm-4" },
+                      button(
+                        {
+                          id: "pullCordovaBtnId",
+                          type: "button",
+                          onClick: `pull_cordova_builder(this);`,
+                          class: "btn btn-warning",
+                        },
+                        req.__("pull")
+                      ),
+                      span(
+                        { role: "button", onClick: "check_cordova_builder()" },
+                        i({ class: "ps-3 fas fa-undo" }),
+                        span({ class: "ps-2" }, req.__("refresh"))
+                      )
+                    )
                   )
                 ),
                 button(
@@ -2416,6 +2480,48 @@ router.post(
         }
       );
     });
+  })
+);
+
+router.post(
+  "/mobile-app/pull-cordova-builder",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const state = getState();
+    const child = spawn(
+      "docker",
+      ["image", "pull", "saltcorn/cordova-builer:latest"],
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+        cwd: ".",
+      }
+    );
+    child.stdout.on("data", (data) => {
+      state.log(5, data.toString());
+    });
+    child.stderr.on("data", (data) => {
+      state.log(1, data.toString());
+    });
+    child.on("exit", (exitCode, signal) => {
+      state.log(
+        2,
+        `"pull cordova-builder exit with code: ${exitCode} and signal: ${signal}`
+      );
+    });
+    child.on("error", (msg) => {
+      state.log(1, `pull cordova-builder error: ${msg}`);
+    });
+
+    res.json({});
+  })
+);
+
+router.get(
+  "/mobile-app/check-cordova-builder",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const installed = await imageAvailable();
+    res.json({ installed });
   })
 );
 

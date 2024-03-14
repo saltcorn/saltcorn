@@ -26,6 +26,7 @@
     "cors": "2.8.5",
     "csurf": "^1.11.0",
     "csv-stringify": "^5.5.0",
+    "dockerode": "~4.0.2",
     "express": "^4.17.1",
     "express-fileupload": "^1.1.8",
     "express-promise-router": "^3.0.3",

@@ -468,6 +468,89 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
     dryRun
   );
 };
+
+const handleCordovaBuilder = async (user, dryRun) => {
+  console.log();
+  console.log(
+    "Saltcorn is now installed, but before you finish, you could set up the cordova-builder docker image."
+  );
+  console.log(
+    "This image has all needed dependencies to build Android mobile apps."
+  );
+  console.log(
+    "If you skip this or if it fails, you can also pull it later, or configure an Android SDK on your own."
+  );
+  console.log();
+  const askPullCordovaBuilder = async () => {
+    const responses = await inquirer.prompt([
+      {
+        name: "cordovabuilder",
+        message: "Do you want to pull the Cordova builder?",
+        type: "confirm",
+        default: true,
+      },
+    ]);
+    return responses.cordovabuilder;
+  };
+
+  const askDockerMode = async () => {
+    const responses = await inquirer.prompt([
+      {
+        name: "dockermode",
+        message: "Which docker mode are you using?",
+        type: "list",
+        choices: [
+          {
+            name: "Standard: Root privileges are required",
+            value: "standard",
+          },
+          {
+            name: "Rootless: Docker is available without root privileges",
+            value: "rootless",
+          },
+        ],
+      },
+    ]);
+    return responses.dockermode;
+  };
+
+  const askDockerGroup = async () => {
+    const responses = await inquirer.prompt([
+      {
+        name: "dockergroup",
+        message: "Would you like to add your user to the docker group?",
+        type: "confirm",
+        default: true,
+      },
+    ]);
+    return responses.dockergroup;
+  };
+
+  const doPull = await askPullCordovaBuilder();
+  if (doPull) {
+    const dockerMode = await askDockerMode();
+    if (dockerMode === "standard") {
+      const addToDockerGroup = await askDockerGroup();
+      if (addToDockerGroup) {
+        await asyncSudo(["usermod", "-aG", "docker", user], false, dryRun);
+      }
+    }
+    console.log();
+    console.log("Pulling the Cordova builder image.");
+    console.log(
+      "This might take some time, but the Saltcorn server is already running, " +
+        "and you can open the 'Mobile builder' menu to check if the image is available."
+    );
+    console.log();
+    await asyncSudoUser(
+      user,
+      ["docker", "pull", "saltcorn/cordova-builder"],
+      false,
+      dryRun
+    );
+  }
+};
+
 /** main logic of script **/
 (async () => {
   // get OS info
@@ -659,6 +742,9 @@ WantedBy=multi-user.target`
   await asyncSudo(["systemctl", "start", osService], false, dryRun);
   await asyncSudo(["systemctl", "enable", osService], false, dryRun);
   if (!hasSDnotify) await asyncSudo(["sleep", "5"], false, dryRun);
+
+  // ask if and how the cordova-builder image should be set up
+  await handleCordovaBuilder(user, dryRun);
 })().catch((e) => {
   console.error(e ? e.message || e : e);
   process.exit(1);

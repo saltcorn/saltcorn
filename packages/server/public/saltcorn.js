@@ -821,6 +821,17 @@ function build_mobile_app(button) {
   params.includedPlugins = Array.from(pluginsSelect.options)
     .filter((option) => !option.hidden)
     .map((option) => option.value);
+
+  if (
+    params.useDocker &&
+    !cordovaBuilderAvailable &&
+    !confirm(
+      "Docker is selected but the Cordova builder seems not to be installed. " +
+        "Do you really want to continue?"
+    )
+  ) {
+    return;
+  }
   ajax_post("/admin/build-mobile-app", {
     data: params,
     success: (data) => {
@@ -829,6 +840,41 @@ function build_mobile_app(button) {
         const orginalBtnHtml = $("#buildMobileAppBtnId").html();
         press_store_button(button);
         poll_mobile_build_finished(data.build_dir_name, 0, orginalBtnHtml);
+      }
+    },
+  });
+}
+
+function pull_cordova_builder() {
+  ajax_post("/admin/mobile-app/pull-cordova-builder", {
+    success: () => {
+      notifyAlert(
+        "Pulling the the cordova-builder. " +
+          "To see the progress, open the logs viewer with the System logging verbosity set to 'All'."
+      );
+    },
+  });
+}
+
+function check_cordova_builder() {
+  $.ajax("/admin/mobile-app/check-cordova-builder", {
+    type: "GET",
+    success: function (res) {
+      cordovaBuilderAvailable = !!res.installed;
+      if (cordovaBuilderAvailable) {
+        $("#dockerBuilderStatusId").html(
+          `<span>
+            installed<i class="ps-2 fas fa-check text-success"></i>
+          </span>
+          `
+        );
+      } else {
+        $("#dockerBuilderStatusId").html(
+          `<span>
+            not available<i class="ps-2 fas fa-times text-danger"></i>
+          </span>
+          `
+        );
       }
     },
   });
@@ -897,7 +943,7 @@ function toggle_tbl_sync() {
 function toggle_android_platform() {
   if ($("#androidCheckboxId")[0].checked === true) {
     $("#dockerCheckboxId").attr("hidden", false);
-    $("#dockerCheckboxId").attr("checked", true);
+    $("#dockerCheckboxId").attr("checked", cordovaBuilderAvailable);
     $("#dockerLabelId").removeClass("d-none");
   } else {
     $("#dockerCheckboxId").attr("hidden", true);
