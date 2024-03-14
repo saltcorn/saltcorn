@@ -1014,7 +1014,6 @@ function tristateClick(e, required) {
           .removeClass(["btn-danger", "btn-secondary"])
           .addClass("btn-success");
         input.val("on").trigger("change");
-        break;
       } else {
         btn
           .html(btn.attr("data-null-label") || "?")
