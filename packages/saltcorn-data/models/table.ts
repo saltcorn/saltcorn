@@ -2482,6 +2482,7 @@ class Table implements AbstractTable {
                         });
                       else
                         try {
+                          // TODO check constraints???
                           await db.insert(this.name, rec, {
                             noid: true,
                             client,
@@ -2495,6 +2496,7 @@ class Table implements AbstractTable {
                       returnedRows.push(rec);
                     } else
                       try {
+                        // TODO check constraints???
                         await db.insert(this.name, rec, {
                           noid: true,
                           client,
