@@ -266,6 +266,14 @@ class User {
     else return false;
   }
 
+  async send_verification_email(
+    req?: any,
+    opts?: { new_verification_token?: string }
+  ): Promise<boolean | any> {
+    const { send_verification_email } = require("./email");
+    return await send_verification_email(this, req, opts);
+  }
+
   /**
    * Find users list
    * @param where - where object
