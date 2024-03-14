@@ -514,9 +514,13 @@ router.get(
       if (!signup_form) await defaultSignup();
       else {
         const resp = await signup_form.run_possibly_on_page({}, req, res);
-        if (signup_form.default_render_page)
-          res.sendWrap(req.__(`Sign up`), resp);
-        else res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
+        if (signup_form.default_render_page) {
+          const page = Page.findOne({ name: signup_form.default_render_page });
+          res.sendWrap(
+            { title: req.__(`Sign up`), no_menu: page?.attributes?.no_menu },
+            resp
+          );
+        } else res.sendAuthWrap(req.__(`Sign up`), resp, { methods: [] });
       }
     } else await defaultSignup();
   })

@@ -1144,6 +1144,10 @@ module.exports = {
           });
           if (!container) return { json: { error: "Action not found" } };
           const trigger = Trigger.findOne({ name: body.click_action });
+          if (!trigger)
+            throw new Error(
+              `View ${name}: Container click action ${body.click_action} not found`
+            );
           const result = await trigger.runWithoutRow({
             table,
             Table,
