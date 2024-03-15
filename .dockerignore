@@ -1,5 +1,6 @@
 **/node_modules
 plugin_packages/
+plugins_folder/
 git_plugins/
 Dockerfile
 Dockerfile.*
