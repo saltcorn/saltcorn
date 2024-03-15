@@ -3,6 +3,8 @@ const {
   mkWhere,
   mkSelectOptions,
   sqlsanitizeAllowDots,
+  sqlFun,
+  sqlBinOp,
 } = require("./internal");
 
 const someday = new Date("2019-11-11T10:34:00.000Z");
@@ -438,5 +440,17 @@ describe("mkSelectOptions", () => {
         },
       })
     ).toContain("order by ((x - 5)*(x - 5)) + ((y - 10)*(y - 10)*0.99240");
+  });
+  it("should order by operator", () => {
+    const nearOp = sqlFun("ABS", sqlBinOp("-", "target", "field"));
+    expect(
+      mkSelectOptions({
+        orderBy: {
+          operator: nearOp,
+          target: "x",
+          field: "y",
+        },
+      })
+    ).toContain("order by ABS(x-y)");
   });
 });

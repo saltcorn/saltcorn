@@ -555,35 +555,52 @@ const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   )} - ${+long})*${cos_lat_2})`;
 };
 
+export type Operator =
+  | "target"
+  | "field"
+  | { type: string; name: string; args: Operator[] };
+
 const getOperatorOrder = ({
   operator,
   target,
   field,
 }: {
-  operator: any;
-  target: any;
-  field: any;
+  operator: Operator;
+  target: string;
+  field: string;
 }) => {
+  const validOp = (s: string) => {
+    if (s.includes("--")) return "";
+    if (s.includes(";")) return "";
+    if (s.includes("/*")) return "";
+    if (s.includes("*/")) return "";
+    if (s.includes("'")) return "";
+    if (s.includes('"')) return "";
+    if (s.includes("(")) return "";
+    if (s.includes(")")) return "";
+    if (s.includes(" ")) return "";
+    return s;
+  };
   const ppOp = (ast: any): string => {
     if (ast === "target") return target;
     if (ast === "field") return field;
     const { type, name, args } = ast;
     switch (type) {
       case "SqlFun":
-        return `${sqlsanitize(name)}(${args.map(ppOp).join(", ")})`;
+        return `${sqlsanitize(name)}(${args.map(ppOp).join(",")})`;
       case "SqlBinOp":
         const [arg1, arg2] = args;
-        return `${ppOp(arg1)}${sqlsanitize(name)}${ppOp(arg2)}`;
+        return `${ppOp(arg1)}${validOp(name)}${ppOp(arg2)}`;
     }
     return "";
   };
-  return "";
+  return ppOp(operator);
 };
 
 export type SelectOptions = {
   orderBy?:
     | { distance: CoordOpts }
-    | { opertator: any; target: string; field: string }
+    | { opertator: Operator; target: string; field: string }
     | string;
   limit?: string | number;
   offset?: string | number;
@@ -669,7 +686,7 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
       : selopts.orderBy &&
         typeof selopts.orderBy === "object" &&
         "operator" in selopts.orderBy
-      ? `order by ${getOperatorOrder(selopts.orderBy)}`
+      ? `order by ${getOperatorOrder(selopts.orderBy as any)}`
       : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
