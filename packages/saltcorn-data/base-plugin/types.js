@@ -1200,6 +1200,8 @@ const int = {
    * @category saltcorn-data
    * @subcategory types / int
    */
+  operators: { near: sqlFun("ABS", sqlBinOp("-", "target", "field")) },
+
   fieldviews: {
     /**
      * @namespace
@@ -1474,7 +1476,7 @@ const float = {
    */
   contract: ({ min, max }) => is.number({ lte: max, gte: min }),
 
-  operators: { near: sqlFun("ABS", sqlBinOp("-", "target", "field")) }, //ABS(x - y)
+  operators: { near: sqlFun("ABS", sqlBinOp("-", "target", "field")) },
 
   /**
    * @namespace
