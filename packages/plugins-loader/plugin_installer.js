@@ -115,12 +115,15 @@ class PluginInstaller {
   }
 
   async loadMainFile() {
+    const isWindows = process.platform === "win32";
     if (process.env.NODE_ENV === "test") {
       // in jest, downgrad to require
       return require(normalize(join(this.pluginDir, this.pckJson.main)));
     } else {
       const res = await import(
-        normalize(join(this.pluginDir, this.pckJson.main))
+        `${isWindows ? `file://` : ""}${normalize(
+          join(this.pluginDir, this.pckJson.main)
+        )}`
       );
       return res.default;
     }
