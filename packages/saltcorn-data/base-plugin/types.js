@@ -1978,12 +1978,13 @@ const bool = {
               type: "hidden",
               "data-fieldname": text_attr(field.name),
               name: text_attr(nm),
+              "data-postprocess": `it=='on'?true:it=='off'?false:null`,
               id: `input${text_attr(nm)}`,
               value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
             }) +
             button(
               {
-                onClick: `tristateClick(this)`,
+                onClick: `tristateClick(this, ${JSON.stringify(required)})`,
                 type: "button",
                 "data-true-label": attrs?.true_label,
                 "data-false-label": attrs?.false_label,

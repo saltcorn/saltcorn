@@ -82,6 +82,13 @@ const getUserFields = async (req) => {
   await iterForm("new_user_form");
   //console.log(userFields);
   for (const f of userFields) {
+    if (f.is_fkey && !f.fieldview) {
+      f.fieldviewObj = getState().keyFieldviews?.select;
+      if (f.fieldviewObj) {
+        f.input_type = "fromtype";
+        f.fieldview = "select";
+      }
+    }
     await f.fill_fkey_options();
     if (f.name === "email") {
       f.validator = (s) => {

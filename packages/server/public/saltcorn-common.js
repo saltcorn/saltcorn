@@ -437,6 +437,11 @@ function get_form_record(e_in, select_labels) {
     else if ($this.prop("type") === "radio" && !$this.prop("checked")) {
       //do nothing
     } else rec[name] = $this.val();
+    //postprocess
+    if ($this.attr("data-postprocess")) {
+      const f = new Function("it", "return " + $this.attr("data-postprocess"));
+      rec[name] = f(rec[name]);
+    }
   });
   return rec;
 }
@@ -983,7 +988,7 @@ function enable_codemirror(f) {
     success: f,
   });
 }
-function tristateClick(e) {
+function tristateClick(e, required) {
   const btn = $(e);
   const input = btn.prev();
   var current = input.val();
@@ -1003,11 +1008,19 @@ function tristateClick(e) {
       input.val("off").trigger("change");
       break;
     default:
-      btn
-        .html(btn.attr("data-null-label") || "?")
-        .removeClass(["btn-success", "btn-danger"])
-        .addClass("btn-secondary");
-      input.val("?").trigger("change");
+      if (required) {
+        btn
+          .html(btn.attr("data-true-label") || "T")
+          .removeClass(["btn-danger", "btn-secondary"])
+          .addClass("btn-success");
+        input.val("on").trigger("change");
+      } else {
+        btn
+          .html(btn.attr("data-null-label") || "?")
+          .removeClass(["btn-success", "btn-danger"])
+          .addClass("btn-secondary");
+        input.val("?").trigger("change");
+      }
       break;
   }
 }

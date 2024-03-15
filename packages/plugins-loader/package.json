@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/plugins-loader",
-  "version": "0.9.5-beta.1",
+  "version": "0.9.5-beta.2",
   "description": "Saltcorn plugin loader",
   "homepage": "https://saltcorn.com",
   "scripts": {
