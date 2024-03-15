@@ -699,7 +699,7 @@ export const sqlFun = (name: string, ...args: any[]) => ({
   name,
   args,
 });
-export const qlBinOp = (name: string, ...args: any[]) => ({
+export const sqlBinOp = (name: string, ...args: any[]) => ({
   type: "SqlBinOp",
   name,
   args,
