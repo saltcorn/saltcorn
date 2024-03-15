@@ -1452,6 +1452,9 @@ const color = {
   },
 };
 
+const sqlFun = (name, ...args) => ({ type: "SqlFun", name, args });
+const sqlBinOp = (name, ...args) => ({ type: "SqlBinOp", name, args });
+
 /**
  * Float type
  * @namespace
@@ -1472,6 +1475,9 @@ const float = {
    * @returns {function}
    */
   contract: ({ min, max }) => is.number({ lte: max, gte: min }),
+
+  operators: { near: sqlFun("ABS", sqlBinOp("-", "target", "field")) }, //ABS(x - y)
+
   /**
    * @namespace
    * @category saltcorn-data

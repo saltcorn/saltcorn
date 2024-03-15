@@ -555,8 +555,36 @@ const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   )} - ${+long})*${cos_lat_2})`;
 };
 
+const getOperatorOrder = ({
+  operator,
+  target,
+  field,
+}: {
+  operator: any;
+  target: any;
+  field: any;
+}) => {
+  const ppOp = (ast: any): string => {
+    if (ast === "target") return target;
+    if (ast === "field") return field;
+    const { type, name, args } = ast;
+    switch (type) {
+      case "SqlFun":
+        return `${sqlsanitize(name)}(${args.map(ppOp).join(", ")})`;
+      case "SqlBinOp":
+        const [arg1, arg2] = args;
+        return `${ppOp(arg1)}${sqlsanitize(name)}${ppOp(arg2)}`;
+    }
+    return "";
+  };
+  return "";
+};
+
 export type SelectOptions = {
-  orderBy?: { distance: CoordOpts } | string;
+  orderBy?:
+    | { distance: CoordOpts }
+    | { opertator: any; target: string; field: string }
+    | string;
   limit?: string | number;
   offset?: string | number;
   nocase?: boolean;
@@ -628,7 +656,7 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
       ? "order by RANDOM()"
       : selopts.orderBy &&
         typeof selopts.orderBy === "object" &&
-        selopts.orderBy.distance
+        "distance" in selopts.orderBy
       ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
       : selopts.orderBy && typeof selopts.orderBy === "string" && selopts.nocase
       ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
@@ -638,6 +666,10 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
       ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
           selopts.orderDesc ? " DESC" : ""
         }`
+      : selopts.orderBy &&
+        typeof selopts.orderBy === "object" &&
+        "operator" in selopts.orderBy
+      ? `order by ${getOperatorOrder(selopts.orderBy)}`
       : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
