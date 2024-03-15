@@ -15,7 +15,10 @@ import {
   assertIsType,
 } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import { add_free_variables_to_joinfields } from "../plugin-helper";
+import {
+  add_free_variables_to_joinfields,
+  stateFieldsToQuery,
+} from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
 const { freeVariables } = expressionModule;
@@ -636,6 +639,16 @@ describe("Table sorting", () => {
       },
     });
     expect(ps2).toStrictEqual([728, 967]);
+  });
+  it("should read with stateFieldsToQuery", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const q = stateFieldsToQuery({
+      state: { _foo_sortby: "pages" },
+      stateHash: "foo",
+      fields: books.fields,
+    });
+    expect(q).toBe({ orderBy: "pages" });
   });
 });
 describe("Table aggregationQuery", () => {
