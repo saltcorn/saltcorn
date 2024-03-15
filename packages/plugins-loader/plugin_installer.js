@@ -1,4 +1,4 @@
-const { join } = require("path");
+const { join, normalize } = require("path");
 const { writeFile, mkdir, rm, pathExists, copy } = require("fs-extra");
 const { spawn } = require("child_process");
 const {
@@ -117,9 +117,11 @@ class PluginInstaller {
   async loadMainFile() {
     if (process.env.NODE_ENV === "test") {
       // in jest, downgrad to require
-      return require(join(this.pluginDir, this.pckJson.main));
+      return require(normalize(join(this.pluginDir, this.pckJson.main)));
     } else {
-      const res = await import(join(this.pluginDir, this.pckJson.main));
+      const res = await import(
+        normalize(join(this.pluginDir, this.pckJson.main))
+      );
       return res.default;
     }
   }
