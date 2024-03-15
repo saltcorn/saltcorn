@@ -600,7 +600,7 @@ const getOperatorOrder = ({
 export type SelectOptions = {
   orderBy?:
     | { distance: CoordOpts }
-    | { operator: Operator; target: string; field: string }
+    | { operator: Operator | string; target: string; field: string }
     | string;
   limit?: string | number;
   offset?: string | number;
@@ -685,8 +685,9 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
         }`
       : selopts.orderBy &&
         typeof selopts.orderBy === "object" &&
-        "operator" in selopts.orderBy
-      ? `order by ${getOperatorOrder(selopts.orderBy)}`
+        "operator" in selopts.orderBy &&
+        typeof selopts.orderBy.operator === "object"
+      ? `order by ${getOperatorOrder(selopts.orderBy as any)}`
       : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";

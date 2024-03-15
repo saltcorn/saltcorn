@@ -640,6 +640,24 @@ describe("Table sorting", () => {
     });
     expect(ps2).toStrictEqual([728, 967]);
   });
+  it("should use operator by name", async () => {
+    const ps1 = await getPagesWithOrder({
+      orderBy: {
+        operator: "near",
+        target: 950,
+        field: "pages",
+      },
+    });
+    expect(ps1).toStrictEqual([967, 728]);
+    const ps2 = await getPagesWithOrder({
+      orderBy: {
+        operator: "near",
+        target: 750,
+        field: "pages",
+      },
+    });
+    expect(ps2).toStrictEqual([728, 967]);
+  });
   it("should read with stateFieldsToQuery", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);

@@ -991,7 +991,11 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
-    const row = await db.selectMaybeOne(this.name, where, selopts1);
+    const row = await db.selectMaybeOne(
+      this.name,
+      where,
+      this.processSelectOptions(selopts1)
+    );
     if (!row || !this.fields) return null;
     if (role && role > this.min_role_read) {
       //check ownership
@@ -1055,7 +1059,11 @@ class Table implements AbstractTable {
       return [];
     }
 
-    let rows = await db.select(this.name, where, selopts1);
+    let rows = await db.select(
+      this.name,
+      where,
+      this.processSelectOptions(selopts1)
+    );
     if (role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return [];
@@ -1071,6 +1079,22 @@ class Table implements AbstractTable {
       this.fields,
       !!selopts.ignore_errors
     );
+  }
+
+  processSelectOptions(
+    selopts: SelectOptions & ForUserRequest = {}
+  ): SelectOptions & ForUserRequest {
+    if (
+      typeof selopts?.orderBy === "object" &&
+      "operator" in selopts?.orderBy &&
+      typeof selopts.orderBy.operator === "string"
+    ) {
+      const field = this.getField(selopts.orderBy.field);
+      if (!instanceOfType(field?.type)) return selopts;
+      const operator = field?.type?.operators?.[selopts.orderBy.operator];
+      selopts.orderBy.operator = operator;
+    }
+    return selopts;
   }
 
   /**
@@ -3104,7 +3128,7 @@ class Table implements AbstractTable {
 
     process_aggregations(this, aggregations, fldNms, values, schema);
 
-    const selectopts: SelectOptions = {
+    const selectopts: SelectOptions = this.processSelectOptions({
       limit: opts.limit,
       orderBy:
         opts.orderBy &&
@@ -3117,7 +3141,7 @@ class Table implements AbstractTable {
           : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
-    };
+    });
 
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name

@@ -47,6 +47,7 @@ export type Type = {
   fieldviews?: any;
   attributes?: GenObj;
   validate_attributes?: Function;
+  operators?: { [opName: string]: any };
 };
 
 export function instanceOfType(object: any): object is Type {
