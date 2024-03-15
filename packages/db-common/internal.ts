@@ -693,3 +693,14 @@ export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
   });
   return whereObj;
 };
+
+export const sqlFun = (name: string, ...args: any[]) => ({
+  type: "SqlFun",
+  name,
+  args,
+});
+export const qlBinOp = (name: string, ...args: any[]) => ({
+  type: "SqlBinOp",
+  name,
+  args,
+});

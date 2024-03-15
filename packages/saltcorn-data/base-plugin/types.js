@@ -39,6 +39,7 @@ const { freeVariables, eval_expression } = require("../models/expression");
 const Table = require("../models/table");
 const _ = require("underscore");
 const { interpolate } = require("../utils");
+const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -1451,9 +1452,6 @@ const color = {
     return true;
   },
 };
-
-const sqlFun = (name, ...args) => ({ type: "SqlFun", name, args });
-const sqlBinOp = (name, ...args) => ({ type: "SqlBinOp", name, args });
 
 /**
  * Float type
