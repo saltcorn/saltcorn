@@ -266,6 +266,14 @@ class User {
     else return false;
   }
 
+  async send_verification_email(
+    req?: any,
+    opts?: { new_verification_token?: string }
+  ): Promise<boolean | any> {
+    const { send_verification_email } = require("./email");
+    return await send_verification_email(this, req, opts);
+  }
+
   /**
    * Find users list
    * @param where - where object
@@ -376,6 +384,7 @@ class User {
   async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
     await this.destroy_sessions();
+    await db.deleteWhere("_sc_notifications", { user_id: this.id });
     await db.query(`delete FROM ${schema}users WHERE id = $1`, [this.id]);
     await Trigger.runTableTriggers(
       "Delete",

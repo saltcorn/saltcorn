@@ -89,7 +89,7 @@ const viewToEmailHtml = async (view: View, state: any) => {
  */
 const send_verification_email = async (
   user: User,
-  req: any,
+  req?: any,
   opts?: { new_verification_token?: string }
 ): Promise<boolean | any> => {
   const verification_view_name = getState().getConfig("verification_view");

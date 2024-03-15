@@ -2110,6 +2110,10 @@ module.exports = {
           });
           if (!container) return { json: { error: "Action not found" } };
           const trigger = Trigger.findOne({ name: click_action });
+          if (!trigger)
+            throw new Error(
+              `View ${name}: Container click action ${click_action} not found`
+            );
           const result = await trigger.runWithoutRow({
             table,
             Table,
@@ -2127,6 +2131,11 @@ module.exports = {
           );
           if (!fldCol) return { json: { error: "Field not found" } };
           const trigger = Trigger.findOne({ name: onchange_action });
+          if (!trigger)
+            throw new Error(
+              `View ${name}: On change action ${onchange_action} for field ${onchange_field} not found`
+            );
+
           const result = await trigger.runWithoutRow({
             table,
             Table,
