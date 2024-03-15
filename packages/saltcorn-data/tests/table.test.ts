@@ -648,7 +648,23 @@ describe("Table sorting", () => {
       stateHash: "foo",
       fields: books.fields,
     });
-    expect(q).toBe({ orderBy: "pages" });
+    expect(q).toStrictEqual({ orderBy: "pages" });
+  });
+  it("should use operators from stateFieldsToQuery", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const q = stateFieldsToQuery({
+      state: { _op_pages_near: "950" },
+      stateHash: "foo",
+      fields: books.fields,
+    });
+    expect(q).toStrictEqual({
+      orderBy: {
+        operator: sqlFun("ABS", sqlBinOp("-", "target", "field")),
+        target: "950",
+        field: "pages",
+      },
+    });
   });
 });
 describe("Table aggregationQuery", () => {

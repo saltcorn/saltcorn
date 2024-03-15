@@ -1725,6 +1725,18 @@ const stateFieldsToQuery = ({
       if (field) q.orderBy = state[sortbyName];
       if (state[sortDescName]) q.orderDesc = true;
     }
+    Object.keys(state).forEach((k) => {
+      if (!k.startsWith("_op_")) return;
+      const [_blank, _op, fieldName, opName] = k.split("_");
+      const field = fields.find((f) => f.name == fieldName);
+
+      if (!field) return;
+      const operator = field.type?.operators?.[opName];
+
+      if (!operator) return;
+      q.orderBy = { operator, field: fieldName, target: state[k] };
+    });
+
     const pagesize =
       stateHash && state[`_${stateHash}_pagesize`]
         ? parseInt(state[`_${stateHash}_pagesize`])
