@@ -37,8 +37,12 @@ const findPageOrGroup = (pagename) => {
 };
 
 const runPage = async (page, state, context, { req, res }) => {
-  if (state.mobileConfig.role_id > page.min_role)
-    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
+  if (state.mobileConfig.role_id > page.min_role) {
+    const additionalInfos = `: your role: ${state.mobileConfig.role_id}, page min_role: ${page.min_role}`;
+    throw new saltcorn.data.utils.NotAuthorized(
+      req.__("Not authorized") + additionalInfos
+    );
+  }
   const query = parseQuery(context.query);
   return await page.run(query, { req, res });
 };
@@ -61,8 +65,12 @@ const getEligiblePage = async (pageGroup, req) => {
 };
 
 const runPageGroup = async (pageGroup, state, context, { req, res }) => {
-  if (state.mobileConfig.role_id > pageGroup.min_role)
-    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
+  if (state.mobileConfig.role_id > pageGroup.min_role) {
+    const additionalInfos = `: your role: ${state.mobileConfig.role_id}, pagegroup min_role: ${pageGroup.min_role}`;
+    throw new saltcorn.data.utils.NotAuthorized(
+      req.__("Not authorized") + additionalInfos
+    );
+  }
   const page = await getEligiblePage(pageGroup, req);
   if (!page)
     throw new Error(req.__(`Pagegroup ${pageGroup.name} has no eligible page`));
