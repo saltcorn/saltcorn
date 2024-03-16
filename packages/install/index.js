@@ -477,6 +477,7 @@ const handleCordovaBuilder = async (user, dryRun) => {
   console.log(
     "This image has all needed dependencies to build Android mobile apps."
   );
+  console.log("Please make sure you have docker installed.");
   console.log(
     "If you skip this or if it fails, you can also pull it later, or configure an Android SDK on your own."
   );
@@ -508,6 +509,10 @@ const handleCordovaBuilder = async (user, dryRun) => {
             name: "Rootless: Docker is available without root privileges",
             value: "rootless",
           },
+          {
+            name: "Cancel",
+            value: "cancel",
+          },
         ],
       },
     ]);
@@ -534,6 +539,8 @@ const handleCordovaBuilder = async (user, dryRun) => {
       if (addToDockerGroup) {
         await asyncSudo(["usermod", "-aG", "docker", user], false, dryRun);
       }
+    } else if (dockerMode === "cancel") {
+      return;
     }
     console.log();
     console.log("Pulling the Cordova builder image.");
