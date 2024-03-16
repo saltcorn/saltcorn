@@ -1524,7 +1524,7 @@ const buildDialogScript = (cordovaBuilderAvailable) => {
 
 const imageAvailable = async () => {
   try {
-    const image = new Docker().getImage("saltcorn/cordova-builer");
+    const image = new Docker().getImage("saltcorn/cordova-builder");
     await image.inspect();
     return true;
   } catch (e) {
@@ -2225,8 +2225,8 @@ router.get(
                       ),
                       span(
                         { role: "button", onClick: "check_cordova_builder()" },
-                        i({ class: "ps-3 fas fa-undo" }),
-                        span({ class: "ps-2" }, req.__("refresh"))
+                        span({ class: "ps-3" }, req.__("refresh")),
+                        i({ class: "ps-2 fas fa-undo" })
                       )
                     )
                   )
@@ -2490,7 +2490,7 @@ router.post(
     const state = getState();
     const child = spawn(
       "docker",
-      ["image", "pull", "saltcorn/cordova-builer:latest"],
+      ["image", "pull", "saltcorn/cordova-builder:latest"],
       {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: ".",

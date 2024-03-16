@@ -1384,5 +1384,10 @@
 	"Optionally associate a table with this trigger": "Optionally associate a table with this trigger",
 	"Delete table": "Delete table",
 	"Signup role": "Signup role",
-	"The initial role of signed up users": "The initial role of signed up users"
+	"The initial role of signed up users": "The initial role of signed up users",
+	"Cordova builder": "Cordova builder",
+	"not available": "not available",
+	"pull": "pull",
+	"refresh": "refresh",
+	"installed": "installed"
 }
