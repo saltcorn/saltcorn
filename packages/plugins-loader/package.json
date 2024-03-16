@@ -1,0 +1,21 @@
+{
+  "name": "@saltcorn/plugins-loader",
+  "version": "0.9.5-beta.2",
+  "description": "Saltcorn plugin loader",
+  "homepage": "https://saltcorn.com",
+  "scripts": {
+    "test": "echo 'No tests'",
+    "tsc": "echo 'No TypeScript build'",
+    "clean": "echo 'No TypeScript build'"
+  },
+  "author": "Christian Hugo",
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "semver": "^7.6.0"
+  },
+  "repository": "github:saltcorn/saltcorn",
+  "publishConfig": {
+    "access": "public"
+  }
+}

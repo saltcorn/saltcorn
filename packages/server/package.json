@@ -13,6 +13,7 @@
     "@saltcorn/admin-models": "0.9.5-beta.2",
     "@saltcorn/filemanager": "0.9.5-beta.2",
     "@saltcorn/markup": "0.9.5-beta.2",
+    "@saltcorn/plugins-loader": "0.9.5-beta.2",
     "@saltcorn/sbadmin2": "0.9.5-beta.2",
     "@socket.io/cluster-adapter": "^0.2.1",
     "@socket.io/sticky": "^1.0.1",
@@ -38,7 +39,6 @@
     "i18n": "^0.15.1",
     "imapflow": "1.0.123",
     "jsonwebtoken": "^9.0.0",
-    "live-plugin-manager": "^0.17.1",
     "markdown-it": "^13.0.2",
     "moment": "^2.29.4",
     "multer": "1.4.5-lts.1",
@@ -71,8 +71,8 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "26.6.3",
-    "jest-environment-jsdom": "^26.6.2",
+    "jest": "^28.1.3",
+    "jest-environment-jsdom": "28.1.3",
     "supertest": "^6.3.3"
   },
   "scripts": {
@@ -85,11 +85,13 @@
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/plugin_packages/"
+      "/plugin_packages/",
+      "/plugins_folder/"
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/plugin_packages/"
+      "/plugin_packages/",
+      "/plugins_folder/"
     ],
     "moduleNameMapper": {
       "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",

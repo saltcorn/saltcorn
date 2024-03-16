@@ -22,7 +22,6 @@ class MigrateCommand extends Command {
     const { init_multi_tenant } = require("@saltcorn/data/db/state");
     await loadAllPlugins();
     await eachTenant(async () => {
-
       const domain = db.getTenantSchema();
       await init_multi_tenant(loadAllPlugins, undefined, [domain]);
       console.log("Tenant %s check for migrations...", domain);

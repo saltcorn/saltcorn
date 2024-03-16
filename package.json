@@ -32,6 +32,7 @@
     "ext": "js,json,css",
     "ignore": [
       "plugin_packages/",
+      "plugins_folder/",
       "git_plugins/",
       "packages/saltcorn-data/app-locales/",
       "packages/server/locales/"
@@ -40,6 +41,7 @@
   "eslintConfig": {
     "ignorePatterns": [
       "**/plugin_packages/**",
+      "**/plugins_folder/**",
       "packages/server/public/**",
       "**/dist/**",
       "*.test.js",

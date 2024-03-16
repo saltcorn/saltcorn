@@ -57,6 +57,7 @@ const { flash_restart } = require("../markup/admin.js");
 const { sleep, removeNonWordChars } = require("@saltcorn/data/utils");
 const { loadAllPlugins } = require("../load_plugins");
 const npmFetch = require("npm-registry-fetch");
+const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
 
 /**
  * @type {object}
@@ -1178,6 +1179,7 @@ router.post(
       getState().getConfig("development_mode", false)
     ) {
       await plugin.delete();
+      await new PluginInstaller(plugin).remove();
       req.flash("success", req.__(`Module %s removed.`, plugin.name));
     } else {
       req.flash(
