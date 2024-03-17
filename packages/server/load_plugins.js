@@ -6,59 +6,10 @@
  * @module load_plugins
  */
 const db = require("@saltcorn/data/db");
-const { PluginManager } = require("live-plugin-manager");
 const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
-const fs = require("fs");
-const proc = require("child_process");
-const tmp = require("tmp-promise");
 
-const staticDependencies = {
-  "@saltcorn/markup": require("@saltcorn/markup"),
-  "@saltcorn/markup/tags": require("@saltcorn/markup/tags"),
-  "@saltcorn/markup/layout": require("@saltcorn/markup/layout"),
-  "@saltcorn/markup/helpers": require("@saltcorn/markup/helpers"),
-  "@saltcorn/markup/layout_utils": require("@saltcorn/markup/layout_utils"),
-  "@saltcorn/data": require("@saltcorn/data"),
-  "@saltcorn/data/db": require("@saltcorn/data/db"),
-  "@saltcorn/data/utils": require("@saltcorn/data/utils"),
-  "@saltcorn/data/db/state": require("@saltcorn/data/db/state"),
-  "@saltcorn/data/plugin-helper": require("@saltcorn/data/plugin-helper"),
-  "@saltcorn/data/plugin-testing": require("@saltcorn/data/plugin-testing"),
-  "@saltcorn/data/models/field": require("@saltcorn/data/models/field"),
-  "@saltcorn/data/models/fieldrepeat": require("@saltcorn/data/models/fieldrepeat"),
-  "@saltcorn/data/models/table": require("@saltcorn/data/models/table"),
-  "@saltcorn/data/models/form": require("@saltcorn/data/models/form"),
-  "@saltcorn/data/models/discovery": require("@saltcorn/data/models/discovery"),
-  "@saltcorn/data/models/config": require("@saltcorn/data/models/config"),
-  "@saltcorn/data/models/library": require("@saltcorn/data/models/library"),
-  "@saltcorn/data/models/model": require("@saltcorn/data/models/model"),
-  "@saltcorn/data/models/model_instance": require("@saltcorn/data/models/model_instance"),
-  "@saltcorn/data/models/notification": require("@saltcorn/data/models/notification"),
-  "@saltcorn/data/models/role": require("@saltcorn/data/models/role"),
-  "@saltcorn/data/models/tag": require("@saltcorn/data/models/tag"),
-  "@saltcorn/data/models/tag_entry": require("@saltcorn/data/models/tag_entry"),
-  "@saltcorn/data/models/view": require("@saltcorn/data/models/view"),
-  "@saltcorn/data/models/page": require("@saltcorn/data/models/page"),
-  "@saltcorn/data/models/file": require("@saltcorn/data/models/file"),
-  "@saltcorn/data/models/user": require("@saltcorn/data/models/user"),
-  "@saltcorn/data/models/layout": require("@saltcorn/data/models/layout"),
-  "@saltcorn/data/models/expression": require("@saltcorn/data/models/expression"),
-  "@saltcorn/data/models/workflow": require("@saltcorn/data/models/workflow"),
-  imapflow: require("imapflow"),
-  "node-fetch": require("node-fetch"),
-};
-
-/**
- * Create plugin manager with default list of core plugins
- * @type {PluginManager}
- */
-const defaultManager = new PluginManager({
-  staticDependencies: {
-    contractis: require("contractis"),
-    ...staticDependencies,
-  },
-});
+const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
 
 /**
  * Load one plugin
@@ -68,7 +19,8 @@ const defaultManager = new PluginManager({
  */
 const loadPlugin = async (plugin, force) => {
   // load plugin
-  const res = await requirePlugin(plugin, force);
+  const loader = new PluginInstaller(plugin);
+  const res = await loader.install(force);
   const configuration =
     typeof plugin.configuration === "string"
       ? JSON.parse(plugin.configuration)
@@ -92,104 +44,41 @@ const loadPlugin = async (plugin, force) => {
 };
 
 /**
- * Git pull or clone
- * @param plugin
- */
-const gitPullOrClone = async (plugin) => {
-  await fs.promises.mkdir("git_plugins", { recursive: true });
-  let keyfnm,
-    setKey = `-c core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no'" `;
-  if (plugin.deploy_private_key) {
-    keyfnm = await tmp.tmpName();
-    await fs.promises.writeFile(
-      keyfnm,
-      plugin.deploy_private_key.replace(/[\r]+/g, "") + "\n",
-      {
-        mode: 0o600,
-        encoding: "ascii",
-      }
-    );
-    setKey = `-c core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no' -i ${keyfnm}" `;
-  }
-  const dir = `git_plugins/${plugin.name}`;
-  if (fs.existsSync(dir)) {
-    proc.execSync(`git ${setKey} -C ${dir} pull`);
-  } else {
-    proc.execSync(`git ${setKey} clone ${plugin.location} ${dir}`);
-  }
-  if (plugin.deploy_private_key) await fs.promises.unlink(keyfnm);
-  return dir;
-};
-/**
  * Install plugin
  * @param plugin - plugin name
  * @param force - force flag
- * @param manager - plugin manager
  * @returns {Promise<{plugin_module: *}|{plugin_module: any}>}
  */
-const requirePlugin = async (plugin, force, manager = defaultManager) => {
-  const installed_plugins = (await manager.list()).map((p) => p.name);
-  // todo as idea is to make list of mandatory plugins configurable
-  if (
-    ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(plugin.location)
-  ) {
-    return { plugin_module: require(plugin.location) };
-  } else if (plugin.source === "npm") {
-    if (force || !installed_plugins.includes(plugin.location)) {
-      const plinfo = await manager.install(plugin.location, plugin.version);
-      return { plugin_module: manager.require(plugin.location), ...plinfo };
-    } else {
-      const plinfo = manager.getInfo(plugin.location);
-      return { plugin_module: manager.require(plugin.location), ...plinfo };
-    }
-  } else if (plugin.source === "local") {
-    const plinfo = await manager.installFromPath(plugin.location, {
-      force: true,
-    });
-    return { plugin_module: manager.require(plugin.name), ...plinfo };
-  } else if (plugin.source === "git") {
-    const loc = await gitPullOrClone(plugin);
-    const plinfo = await manager.installFromPath(loc, {
-      force: true,
-    });
-    return { plugin_module: manager.require(plugin.name), ...plinfo };
-  } else if (plugin.source === "github") {
-    if (force || !installed_plugins.includes(plugin.location)) {
-      const plinfo = await manager.installFromGithub(plugin.location, {
-        force: true,
-      });
-      return { plugin_module: manager.require(plugin.name), ...plinfo };
-    } else {
-      const plinfo = manager.getInfo(plugin.location);
-      return { plugin_module: manager.require(plugin.location), ...plinfo };
-    }
-  } else throw new Error("Unknown plugin source: " + plugin.source);
+const requirePlugin = async (plugin, force) => {
+  const loader = new PluginInstaller(plugin);
+  return await loader.install(force);
 };
+
 /**
  * Load all plugins
  * @returns {Promise<void>}
  */
-const loadAllPlugins = async () => {
+const loadAllPlugins = async (force) => {
   await getState().refresh(true);
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     try {
-      await loadPlugin(plugin);
+      await loadPlugin(plugin, force);
     } catch (e) {
       console.error(e);
     }
   }
   await getState().refresh(true);
 };
+
 /**
  * Load Plugin and its dependencies and save into local installation
  * @param plugin
  * @param force
  * @param noSignalOrDB
- * @param manager - optional plugin manager
  * @returns {Promise<void>}
  */
-const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
+const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
     false
@@ -215,11 +104,8 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
       return;
     }
   }
-  const { version, plugin_module, location } = await requirePlugin(
-    plugin,
-    force,
-    manager
-  );
+  const loader = new PluginInstaller(plugin);
+  const { version, plugin_module, location } = await loader.install(force);
 
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
@@ -252,7 +138,7 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB, manager) => {
     getState().processSend({
       installPlugin: plugin,
       tenant: db.getTenantSchema(),
-      force,
+      force: false, // okay ??
     });
   }
 };
@@ -262,5 +148,4 @@ module.exports = {
   loadAllPlugins,
   loadPlugin,
   requirePlugin,
-  staticDependencies,
 };

@@ -28,7 +28,6 @@ class BackupCommand extends Command {
   async run() {
     const { flags } = this.parse(BackupCommand);
 
-
     if (flags.tenant) {
       // for tenant do saltcorn backup
       const { create_backup } = require("@saltcorn/admin-models/models/backup");
@@ -37,7 +36,10 @@ class BackupCommand extends Command {
       const db = require("@saltcorn/data/db");
 
       if (flags.verbose)
-        console.log(`Start to prepare backup of tenant "${flags.tenant}" in saltcorn format`, flags.tenant);
+        console.log(
+          `Start to prepare backup of tenant "${flags.tenant}" in saltcorn format`,
+          flags.tenant
+        );
 
       await db.runWithTenant(flags.tenant, async () => {
         const fnm = await create_backup(flags.output);
@@ -50,20 +52,19 @@ class BackupCommand extends Command {
       await loadAllPlugins();
 
       if (flags.verbose)
-        console.log(`Start to prepare backup of public tenant in saltcorn format`);
-
+        console.log(
+          `Start to prepare backup of public tenant in saltcorn format`
+        );
 
       const fnm = await create_backup(flags.output);
       console.log(fnm);
     } else {
-
       // else do pg_dump backup
       const db = require("@saltcorn/data/db");
-      if(db.isSQLite){
+      if (db.isSQLite) {
         console.log(`Database Backup is supported only for PostgreSQL`);
         this.exit(1);
       }
-
 
       const pguser = connobj.user;
       const pghost = connobj.host || "localhost";
@@ -72,14 +73,19 @@ class BackupCommand extends Command {
       const env = { ...process.env, PGPASSWORD: connobj.password };
 
       if (flags.verbose) {
-        console.log ("Do database backup using pg_dump")
-        console.log(`pg_dump ${pgdb} -U ${pguser} -h ${pghost} -p ${pgport} -F c >${outfnm}`);
+        console.log("Do database backup using pg_dump");
+        console.log(
+          `pg_dump ${pgdb} -U ${pguser} -h ${pghost} -p ${pgport} -F c >${outfnm}`
+        );
       }
 
-      execSync(`pg_dump ${pgdb} -U ${pguser} -h ${pghost} -p ${pgport} -F c >${outfnm}`, {
-        stdio: "inherit",
-        env,
-      });
+      execSync(
+        `pg_dump ${pgdb} -U ${pguser} -h ${pghost} -p ${pgport} -F c >${outfnm}`,
+        {
+          stdio: "inherit",
+          env,
+        }
+      );
       console.log(outfnm);
     }
     this.exit(0);
