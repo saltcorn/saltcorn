@@ -1091,7 +1091,8 @@ class Table implements AbstractTable {
     ) {
       const field = this.getField(selopts.orderBy.field);
       if (!instanceOfType(field?.type)) return selopts;
-      const operator = field?.type?.operators?.[selopts.orderBy.operator];
+      const operator =
+        field?.type?.distance_operators?.[selopts.orderBy.operator];
       selopts.orderBy.operator = operator;
     }
     return selopts;

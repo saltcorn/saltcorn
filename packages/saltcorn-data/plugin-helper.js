@@ -1731,7 +1731,7 @@ const stateFieldsToQuery = ({
       const field = fields.find((f) => f.name == fieldName);
 
       if (!field) return;
-      const operator = field.type?.operators?.[opName];
+      const operator = field.type?.distance_operators?.[opName];
 
       if (!operator) return;
       q.orderBy = { operator, field: fieldName, target: state[k] };
