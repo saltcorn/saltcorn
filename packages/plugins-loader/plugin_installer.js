@@ -1,5 +1,5 @@
-const { join, normalize } = require("path");
-const { writeFile, mkdir, rm, pathExists, copy } = require("fs-extra");
+const { join, normalize, dirname } = require("path");
+const { writeFile, mkdir, rm, pathExists, copy, symlink } = require("fs-extra");
 const { spawn } = require("child_process");
 const {
   downloadFromNpm,
@@ -10,10 +10,16 @@ const {
 } = require("./download_utils");
 const semver = require("semver");
 const fs = require("fs");
+const resolveGlobal = require("resolve-global");
 
 const rootFolder = process.cwd();
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
+
+const isGitCheckout = async () => {
+  const gitPath = join(__dirname, "..", "..", "Dockerfile.release");
+  return await pathExists(gitPath);
+};
 
 class PluginInstaller {
   constructor(plugin) {
@@ -34,7 +40,7 @@ class PluginInstaller {
   }
 
   async install(force) {
-    await this.ensureFolder();
+    await this.ensurePluginsRootFolders();
     if (fixedPlugins.includes(this.plugin.location))
       return { plugin_module: require(this.plugin.location) };
     this.pckJson = await this.readPackageJson();
@@ -91,9 +97,19 @@ class PluginInstaller {
     return wasLoaded;
   }
 
-  async ensureFolder() {
-    const pluginsFolder = join(rootFolder, "plugins_folder");
-    if (!(await pathExists(pluginsFolder))) await mkdir(pluginsFolder);
+  async ensurePluginsRootFolders() {
+    const ensureFn = async (folder) => {
+      const pluginsFolder = join(rootFolder, folder);
+      if (!(await pathExists(pluginsFolder))) await mkdir(pluginsFolder);
+      const symLinkDst = join(pluginsFolder, "node_modules");
+      const symLinkSrc = (await isGitCheckout())
+        ? join(__dirname, "..", "..", "node_modules")
+        : join(dirname(resolveGlobal("@saltcorn/cli")), "..", "node_modules");
+      if (!(await pathExists(symLinkDst)))
+        await symlink(symLinkSrc, symLinkDst, "dir");
+    };
+    for (const folder of ["plugins_folder", "git_plugins"])
+      await ensureFn(folder);
   }
 
   isFixedVersion() {
