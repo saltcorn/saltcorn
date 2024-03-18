@@ -1,5 +1,5 @@
 const { join, normalize, dirname } = require("path");
-const { writeFile, mkdir, rm, pathExists, copy, symlink } = require("fs-extra");
+const { writeFile, mkdir, pathExists, copy, symlink } = require("fs-extra");
 const { spawn } = require("child_process");
 const {
   downloadFromNpm,
@@ -10,6 +10,7 @@ const {
 } = require("./download_utils");
 const semver = require("semver");
 const fs = require("fs");
+const { rm } = require("fs").promises;
 const resolveGlobal = require("resolve-global");
 
 const rootFolder = process.cwd();
