@@ -1724,6 +1724,22 @@ const stateFieldsToQuery = ({
       //this is ok because it has to match fieldname
       if (field) q.orderBy = state[sortbyName];
       if (state[sortDescName]) q.orderDesc = true;
+    } else if (state._orderBy) {
+      if (typeof state._orderBy === "string") {
+        const field = fields.find((f) => f.name === state._orderBy);
+        //this is ok because it has to match fieldname
+        if (field) q.orderBy = state._orderBy;
+        if (state._orderDesc) q.orderDesc = true;
+      } else if (typeof state._orderBy === "object") {
+        const { operator, field, target } = state._orderBy;
+        const fld = fields.find((f) => f.name == field);
+
+        if (!fld) return;
+        const oper = fld.type?.distance_operators?.[operator];
+
+        if (!oper) return;
+        q.orderBy = { operator, field, target };
+      }
     }
     Object.keys(state).forEach((k) => {
       if (!k.startsWith("_op_")) return;
