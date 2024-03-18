@@ -626,6 +626,12 @@ export const orderByIsObject = (
   return object && object.distance;
 };
 
+export const orderByIsOperator = (
+  object: any
+): object is { operator: Operator; target: string; field: string } => {
+  return object && object.operator && typeof object.operator !== "string";
+};
+
 export type JoinField = {
   ref: any;
   target: any;

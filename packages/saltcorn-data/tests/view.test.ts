@@ -70,6 +70,21 @@ describe("View", () => {
     const res = await v.runMany({}, mockReqRes);
     expect(res.length > 0).toBe(true);
   });
+  it("should runMany with operator", async () => {
+    const v = await View.findOne({ name: "authorshow" });
+    assertIsSet(v);
+    const res = await v.runMany(
+      { _orderBy: { operator: "near", field: "pages", target: 950 } },
+      mockReqRes
+    );
+    expect((res as any)[0].row.pages).toBe(967);
+
+    const res1 = await v.runMany(
+      { _orderBy: { operator: "near", field: "pages", target: 720 } },
+      mockReqRes
+    );
+    expect((res1 as any)[0].row.pages).toBe(728);
+  });
   it("should runPost", async () => {
     const v = await View.findOne({ name: "authoredit" });
     assertIsSet(v);

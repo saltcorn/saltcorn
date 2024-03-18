@@ -10,6 +10,7 @@ import {
   mkWhere,
   mkSelectOptions,
   orderByIsObject,
+  orderByIsOperator,
 } from "@saltcorn/db-common/internal";
 import type {
   Where,
@@ -3133,11 +3134,11 @@ class Table implements AbstractTable {
       limit: opts.limit,
       orderBy:
         opts.orderBy &&
-        (orderByIsObject(opts.orderBy)
+        (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
           ? opts.orderBy
-          : opts.orderBy.toLowerCase() === "random()"
+          : opts.orderBy.toLowerCase?.() === "random()"
           ? opts.orderBy
           : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
