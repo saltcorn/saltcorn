@@ -684,6 +684,22 @@ describe("Table sorting", () => {
       },
     });
   });
+  it("should use operators from stateFieldsToQuery from _orderBy", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const q = stateFieldsToQuery({
+      state: { _orderBy: { operator: "near", field: "pages", target: 950 } },
+      stateHash: "foo",
+      fields: books.fields,
+    });
+    expect(q).toStrictEqual({
+      orderBy: {
+        operator: sqlFun("ABS", sqlBinOp("-", "target", "field")),
+        target: 950,
+        field: "pages",
+      },
+    });
+  });
 });
 describe("Table aggregationQuery", () => {
   it("should get avg aggregations", async () => {

@@ -1738,7 +1738,7 @@ const stateFieldsToQuery = ({
         const oper = fld.type?.distance_operators?.[operator];
 
         if (!oper) return;
-        q.orderBy = { operator, field, target };
+        q.orderBy = { operator: oper, field, target };
       }
     }
     Object.keys(state).forEach((k) => {
