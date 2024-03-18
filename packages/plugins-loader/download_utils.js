@@ -1,5 +1,6 @@
 const fs = require("fs");
-const { mkdir, rm, pathExists } = require("fs-extra");
+const { rm } = require("fs").promises;
+const { mkdir, pathExists } = require("fs-extra");
 const { tmpName } = require("tmp-promise");
 const { execSync } = require("child_process");
 const { extract } = require("tar");
