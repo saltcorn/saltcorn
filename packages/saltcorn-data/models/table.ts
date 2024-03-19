@@ -637,6 +637,18 @@ class Table implements AbstractTable {
     options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
+    let pk_type: string = "Integer";
+    if (options?.fields && Array.isArray(options.fields)) {
+      const pk_field = (options.fields as any).find?.(
+        (f: Field) => typeof f !== "string" && f?.primary_key
+      );
+      pk_type =
+        (typeof pk_field === "string"
+          ? pk_field
+          : typeof pk_field?.type === "string"
+          ? pk_field?.type
+          : pk_field?.type?.name) || "Integer";
+    }
     const schema = db.getTenantSchemaPrefix();
     // create table in database
     if (!options.provider_name)
@@ -666,7 +678,7 @@ class Table implements AbstractTable {
       if (!options.provider_name) {
         const insfldres = await db.query(
           `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-            values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
+            values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
           [id]
         );
         pk_fld_id = insfldres.rows[0].id;
@@ -679,7 +691,7 @@ class Table implements AbstractTable {
       ? [] //TODO look up
       : [
           new Field({
-            type: "Integer",
+            type: pk_type,
             name: "id",
             label: "ID",
             primary_key: true,
