@@ -12,8 +12,7 @@
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
-    "semver": "^7.6.0",
-    "resolve-global": "^1.0.0"
+    "semver": "^7.6.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {

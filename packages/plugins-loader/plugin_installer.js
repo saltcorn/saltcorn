@@ -11,7 +11,6 @@ const {
 const semver = require("semver");
 const fs = require("fs");
 const { rm } = require("fs").promises;
-const resolveGlobal = require("resolve-global");
 
 const rootFolder = process.cwd();
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
@@ -105,7 +104,7 @@ class PluginInstaller {
       const symLinkDst = join(pluginsFolder, "node_modules");
       const symLinkSrc = (await isGitCheckout())
         ? join(__dirname, "..", "..", "node_modules")
-        : join(dirname(resolveGlobal("@saltcorn/cli")), "..", "node_modules");
+        : join(dirname(require.resolve("@saltcorn/cli")), "..", "node_modules");
       if (!(await pathExists(symLinkDst)))
         await symlink(symLinkSrc, symLinkDst, "dir");
     };
