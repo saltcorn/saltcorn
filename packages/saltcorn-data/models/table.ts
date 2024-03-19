@@ -1886,9 +1886,9 @@ class Table implements AbstractTable {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     const fields = this.fields;
-    const flds = fields.map(
-      (f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
-    );
+    const flds = fields
+      .filter((f) => !f.calculated || f.stored)
+      .map((f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`);
     const pk = fields.find((f) => f.primary_key)?.name;
     if (!pk) {
       throw new Error("Unable to find a field with a primary key.");
