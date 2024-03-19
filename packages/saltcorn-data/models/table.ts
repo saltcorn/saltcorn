@@ -1404,18 +1404,26 @@ class Table implements AbstractTable {
     }
   }
 
-  async insert_history_row(v: any, retry = 0) {
+  async insert_history_row(v0: any, retry = 0) {
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
     // solution: retry 3 times, if fails run with on conflict do nothing
+
+    //legacy workaround: delete calc fields which may be in row
+    const calcFields = this.fields.filter((f) => f.calculated && !f.stored);
+    const v1 = { ...v0 };
+    calcFields.forEach((f) => {
+      // delete v1[f.name];
+    });
+
     if (retry < 3) {
       try {
-        await db.insert(this.name + "__history", v);
+        await db.insert(this.name + "__history", v1);
       } catch (error) {
-        await this.insert_history_row(v, retry + 1);
+        await this.insert_history_row(v1, retry + 1);
       }
     } else {
-      await db.insert(this.name + "__history", v, {
+      await db.insert(this.name + "__history", v1, {
         onConflictDoNothing: true,
       });
     }
