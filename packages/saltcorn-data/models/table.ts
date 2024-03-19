@@ -2104,10 +2104,10 @@ class Table implements AbstractTable {
    * @param id
    * @returns {Promise<*>}
    */
-  async get_history(id: number): Promise<Row[]> {
+  async get_history(id?: number): Promise<Row[]> {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
-      { id },
+      id ? { id } : {},
       { orderBy: "_version" }
     );
   }

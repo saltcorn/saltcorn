@@ -200,7 +200,16 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
   await mkdir(dirpath, { recursive: true });
   const tables = await Table.find({});
   for (const t of tables) {
-    if (!t.external && !t.provider_name) await create_table_json(t, dirpath);
+    if (!t.external && !t.provider_name) {
+      await create_table_json(t, dirpath);
+      if (t.versioned) {
+        const rows = await t.get_history();
+        await writeFile(
+          join(dirpath, t.name + "__history.json"),
+          JSON.stringify(rows)
+        );
+      }
+    }
   }
 };
 
