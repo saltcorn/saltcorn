@@ -638,6 +638,7 @@ class Table implements AbstractTable {
     id?: number
   ): Promise<Table> {
     let pk_type: string = "Integer";
+    let pk_sql_type = db.isSQLite ? "integer" : "serial";
     if (options?.fields && Array.isArray(options.fields)) {
       const pk_field = (options.fields as any).find?.(
         (f: Field) => typeof f !== "string" && f?.primary_key
@@ -649,13 +650,22 @@ class Table implements AbstractTable {
           ? pk_field?.type
           : pk_field?.type?.name) || "Integer";
     }
+    if (pk_type !== "Integer") {
+      const { getState } = require("../db/state");
+
+      const type = getState().types[pk_type];
+      pk_sql_type = type.sql_name;
+      if (type.primaryKey?.default_sql)
+        pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
+    }
+
     const schema = db.getTenantSchemaPrefix();
     // create table in database
     if (!options.provider_name)
       await db.query(
-        `create table ${schema}"${sqlsanitize(name)}" (id ${
-          db.isSQLite ? "integer" : "serial"
-        } primary key)`
+        `create table ${schema}"${sqlsanitize(
+          name
+        )}" (id ${pk_sql_type} primary key)`
       );
     // populate table definition row
     const tblrow: any = {
