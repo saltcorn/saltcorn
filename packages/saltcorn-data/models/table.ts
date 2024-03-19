@@ -1382,7 +1382,7 @@ class Table implements AbstractTable {
     }
   }
 
-  private async insert_history_row(v: any, retry = 0) {
+  async insert_history_row(v: any, retry = 0) {
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
     // solution: retry 3 times, if fails run with on conflict do nothing

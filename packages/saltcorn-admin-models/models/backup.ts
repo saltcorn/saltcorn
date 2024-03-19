@@ -431,6 +431,20 @@ const restore_tables = async (
       });
       if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
     }
+    if (table.versioned) {
+      const fnm_hist_json = join(
+        dirpath,
+        "tables",
+        table.name + "__history.json"
+      );
+      if (existsSync(fnm_hist_json)) {
+        const fileContents = (await readFile(fnm_hist_json)).toString();
+        const rows = JSON.parse(fileContents);
+        for (const row of rows) {
+          await table.insert_history_row(row);
+        }
+      }
+    }
   }
   for (const table of tables) {
     try {
