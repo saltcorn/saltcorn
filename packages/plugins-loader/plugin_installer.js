@@ -8,7 +8,7 @@ const {
   tarballExists,
   removeTarball,
 } = require("./download_utils");
-const { rm, rename, readFile } = require("fs").promises;
+const { rm, rename, cp, readFile } = require("fs").promises;
 
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
@@ -106,6 +106,7 @@ class PluginInstaller {
   }
 
   async ensurePluginsRootFolders() {
+    const isWindows = process.platform === "win32";
     const ensureFn = async (folder) => {
       const pluginsFolder = join(this.rootFolder, folder);
       if (!(await pathExists(pluginsFolder))) await mkdir(pluginsFolder);
@@ -114,7 +115,7 @@ class PluginInstaller {
         ? join(__dirname, "..", "..", "node_modules")
         : join(dirname(require.resolve("@saltcorn/cli")), "..", "node_modules");
       if (!(await pathExists(symLinkDst)))
-        await symlink(symLinkSrc, symLinkDst, "dir");
+        await symlink(symLinkSrc, symLinkDst, !isWindows ? "dir" : "junction");
     };
     for (const folder of ["plugins_folder", "git_plugins"])
       await ensureFn(folder);
@@ -171,12 +172,14 @@ class PluginInstaller {
   }
 
   async npmInstall(pckJSON) {
+    const isWindows = process.platform === "win32";
     if (
       Object.keys(pckJSON.dependencies || {}).length > 0 ||
       Object.keys(pckJSON.devDependencies || {}).length > 0
     ) {
       const child = spawn("npm", ["install"], {
         cwd: this.tempDir,
+        ...(isWindows ? { shell: true } : {}),
       });
       return new Promise((resolve, reject) => {
         child.on("exit", (exitCode, signal) => {
@@ -191,10 +194,13 @@ class PluginInstaller {
   }
 
   async movePlugin() {
+    const isWindows = process.platform === "win32";
     if (await pathExists(this.pluginDir))
       await rm(this.pluginDir, { recursive: true });
     await mkdir(this.pluginDir, { recursive: true });
-    await rename(this.tempDir, this.pluginDir);
+    if (!isWindows) await rename(this.tempDir, this.pluginDir);
+    else
+      await cp(this.tempDir, this.pluginDir, { recursive: true, force: true });
   }
 }
 
