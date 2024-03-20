@@ -8,12 +8,8 @@ const {
   tarballExists,
   removeTarball,
 } = require("./download_utils");
-const semver = require("semver");
-const fs = require("fs");
-const { rm } = require("fs").promises;
-const resolveGlobal = require("resolve-global");
+const { rm, rename, cp, readFile } = require("fs").promises;
 
-const rootFolder = process.cwd();
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
 
@@ -22,74 +18,85 @@ const isGitCheckout = async () => {
   return await pathExists(gitPath);
 };
 
+const readPackageJson = async (filePath) => {
+  if (await pathExists(filePath)) return JSON.parse(await readFile(filePath));
+  else return null;
+};
+
 class PluginInstaller {
-  constructor(plugin) {
+  constructor(plugin, opts = {}) {
     this.plugin = plugin;
-    this.pckJson = null;
-    this.tarFile = null;
+    this.rootFolder = opts.rootFolder || process.cwd();
+    this.tempRootFolder = opts.tempRootFolder || process.cwd();
     const tokens =
       plugin.source === "npm"
         ? plugin.location.split("/")
         : plugin.name.split("/");
+    this.name = tokens[tokens.length - 1];
     this.pluginDir = join(
-      rootFolder,
+      this.rootFolder,
       plugin.source === "git" ? "git_plugins" : "plugins_folder",
       ...tokens
     );
     this.pckJsonPath = join(this.pluginDir, "package.json");
-    this.name = tokens[tokens.length - 1];
+    this.tempDir = join(this.tempRootFolder, "temp_install", ...tokens);
+    this.tempPckJsonPath = join(this.tempDir, "package.json");
   }
 
   async install(force) {
     await this.ensurePluginsRootFolders();
     if (fixedPlugins.includes(this.plugin.location))
       return { plugin_module: require(this.plugin.location) };
-    this.pckJson = await this.readPackageJson();
-    if (await this.prepPluginsFolder(force)) {
-      await this.removeDependencies();
-      this.pckJson = await this.readPackageJson();
-      await this.npmInstall();
+
+    let pckJSON = await readPackageJson(this.pckJsonPath);
+    if (await this.prepPluginsFolder(force, pckJSON)) {
+      const tmpPckJSON = await this.removeDependencies(
+        await readPackageJson(this.tempPckJsonPath)
+      );
+      await this.npmInstall(tmpPckJSON);
+      await this.movePlugin();
       if (await tarballExists(this.plugin)) await removeTarball(this.plugin);
     }
+    pckJSON = await readPackageJson(this.pckJsonPath);
     return {
-      version: this.pckJson.version,
-      plugin_module: await this.loadMainFile(),
+      version: pckJSON.version,
+      plugin_module: await this.loadMainFile(pckJSON),
       location: this.pluginDir,
       name: this.name,
     };
   }
 
-  async prepPluginsFolder(force) {
+  async remove() {
+    if (await pathExists(this.pluginDir))
+      await rm(this.pluginDir, { recursive: true });
+  }
+
+  async prepPluginsFolder(force, pckJSON) {
     let wasLoaded = false;
     switch (this.plugin.source) {
       case "npm":
         if (
-          (force && !(await this.versionIsInstalled())) ||
+          (force && !(await this.versionIsInstalled(pckJSON))) ||
           !(await pathExists(this.pluginDir))
         ) {
-          this.tarFile = await downloadFromNpm(
-            this.plugin,
-            this.pluginDir,
-            this.pckJson
-          );
-          wasLoaded = true;
+          wasLoaded = await downloadFromNpm(this.plugin, this.tempDir, pckJSON);
         }
         break;
       case "github":
         if (force || !(await pathExists(this.pluginDir))) {
-          this.tarFile = await downloadFromGithub(this.plugin, this.pluginDir);
+          await downloadFromGithub(this.plugin, this.tempDir);
           wasLoaded = true;
         }
         break;
       case "local":
         if (force || !(await pathExists(this.pluginDir))) {
-          await copy(this.plugin.location, this.pluginDir);
+          await copy(this.plugin.location, this.tempDir);
           wasLoaded = true;
         }
         break;
       case "git":
         if (force || !(await pathExists(this.pluginDir))) {
-          await gitPullOrClone(this.plugin, this.pluginDir);
+          await gitPullOrClone(this.plugin, this.tempDir);
           this.pckJsonPath = join(this.pluginDir, "package.json");
           wasLoaded = true;
         }
@@ -99,15 +106,16 @@ class PluginInstaller {
   }
 
   async ensurePluginsRootFolders() {
+    const isWindows = process.platform === "win32";
     const ensureFn = async (folder) => {
-      const pluginsFolder = join(rootFolder, folder);
+      const pluginsFolder = join(this.rootFolder, folder);
       if (!(await pathExists(pluginsFolder))) await mkdir(pluginsFolder);
       const symLinkDst = join(pluginsFolder, "node_modules");
       const symLinkSrc = (await isGitCheckout())
         ? join(__dirname, "..", "..", "node_modules")
-        : join(dirname(resolveGlobal("@saltcorn/cli")), "..", "node_modules");
+        : join(dirname(require.resolve("@saltcorn/cli")), "..", "node_modules");
       if (!(await pathExists(symLinkDst)))
-        await symlink(symLinkSrc, symLinkDst, "dir");
+        await symlink(symLinkSrc, symLinkDst, !isWindows ? "dir" : "junction");
     };
     for (const folder of ["plugins_folder", "git_plugins"])
       await ensureFn(folder);
@@ -117,77 +125,61 @@ class PluginInstaller {
     return !!this.plugin.version && this.plugin.version !== "latest";
   }
 
-  async versionIsInstalled() {
-    if (!this.pckJson || !this.isFixedVersion()) return false;
+  async versionIsInstalled(pckJSON) {
+    if (!pckJSON || !this.isFixedVersion()) return false;
     else {
-      const vInstalled = this.pckJson.version;
+      const vInstalled = pckJSON.version;
       if (vInstalled === this.plugin.version) return true;
       else return false;
     }
   }
 
-  async remove() {
-    if (await pathExists(this.pluginDir))
-      await rm(this.pluginDir, { recursive: true });
-  }
-
-  async loadMainFile() {
+  async loadMainFile(pckJSON) {
     const isWindows = process.platform === "win32";
     if (process.env.NODE_ENV === "test") {
       // in jest, downgrad to require
-      return require(normalize(join(this.pluginDir, this.pckJson.main)));
+      return require(normalize(join(this.pluginDir, pckJSON.main)));
     } else {
       const res = await import(
         `${isWindows ? `file://` : ""}${normalize(
-          join(this.pluginDir, this.pckJson.main)
+          join(this.pluginDir, pckJSON.main)
         )}`
       );
       return res.default;
     }
   }
 
-  async removeDependencies() {
-    const pckJson = await this.readPackageJson();
-    const oldDepsLength = Object.keys(pckJson.dependencies || {}).length;
-    const oldDevDepsLength = Object.keys(pckJson.devDependencies || {}).length;
-
-    const satisfiedRemover = (deps) => {
-      for (const [name, version] of Object.entries(deps)) {
-        try {
-          const vInstalled = require(`${name}/package.json`).version;
-          if (semver.satisfies(vInstalled, version)) {
-            delete deps[name];
-          }
-        } catch (e) {} // continue, npm installs it
-      }
-    };
+  async removeDependencies(tmpPckJSON) {
+    const pckJSON = { ...tmpPckJSON };
+    const oldDepsLength = Object.keys(pckJSON.dependencies || {}).length;
+    const oldDevDepsLength = Object.keys(pckJSON.devDependencies || {}).length;
     const staticsRemover = (deps) => {
       for (const staticDep of staticDeps) {
         if (deps[staticDep]) delete deps[staticDep];
       }
     };
-    if (pckJson.dependencies) {
-      satisfiedRemover(pckJson.dependencies);
-      staticsRemover(pckJson.dependencies);
-    }
-    if (pckJson.devDependencies) {
-      satisfiedRemover(pckJson.devDependencies);
-      staticsRemover(pckJson.devDependencies);
-    }
+    if (pckJSON.dependencies) staticsRemover(pckJSON.dependencies);
+    if (pckJSON.devDependencies) staticsRemover(pckJSON.devDependencies);
     if (
-      Object.keys(pckJson.dependencies || {}).length !== oldDepsLength ||
-      Object.keys(pckJson.devDependencies || {}).length !== oldDevDepsLength
+      Object.keys(pckJSON.dependencies || {}).length !== oldDepsLength ||
+      Object.keys(pckJSON.devDependencies || {}).length !== oldDevDepsLength
     )
-      await writeFile(this.pckJsonPath, JSON.stringify(pckJson, null, 2));
+      await writeFile(
+        join(this.tempDir, "package.json"),
+        JSON.stringify(pckJSON, null, 2)
+      );
+    return pckJSON;
   }
 
-  async npmInstall() {
+  async npmInstall(pckJSON) {
+    const isWindows = process.platform === "win32";
     if (
-      Object.keys(this.pckJson.dependencies || {}).length > 0 ||
-      Object.keys(this.pckJson.devDependencies || {}).length > 0
+      Object.keys(pckJSON.dependencies || {}).length > 0 ||
+      Object.keys(pckJSON.devDependencies || {}).length > 0
     ) {
       const child = spawn("npm", ["install"], {
-        cwd: this.pluginDir,
+        cwd: this.tempDir,
+        ...(isWindows ? { shell: true } : {}),
       });
       return new Promise((resolve, reject) => {
         child.on("exit", (exitCode, signal) => {
@@ -201,13 +193,14 @@ class PluginInstaller {
     }
   }
 
-  async readPackageJson() {
-    if (await pathExists(this.pckJsonPath)) {
-      const str = await fs.promises.readFile(this.pckJsonPath);
-      return JSON.parse(str);
-    } else {
-      return null;
-    }
+  async movePlugin() {
+    const isWindows = process.platform === "win32";
+    if (await pathExists(this.pluginDir))
+      await rm(this.pluginDir, { recursive: true });
+    await mkdir(this.pluginDir, { recursive: true });
+    if (!isWindows) await rename(this.tempDir, this.pluginDir);
+    else
+      await cp(this.tempDir, this.pluginDir, { recursive: true, force: true });
   }
 }
 

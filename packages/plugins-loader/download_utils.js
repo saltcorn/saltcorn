@@ -28,13 +28,14 @@ const downloadFromNpm = async (plugin, pluginDir, pckJson) => {
   const vToInstall =
     plugin.version && plugin.version !== "latest" ? plugin.version : latest;
 
-  if (pckJson && pckJson.version === vToInstall) return null;
+  if (pckJson && pckJson.version === vToInstall) return false;
   else {
     const tarballUrl = pkgInfo.versions[vToInstall].dist.tarball;
     const fileName = plugin.name.split("/").pop();
     const filePath = await loadTarball(tarballUrl, fileName);
     await mkdir(pluginDir, { recursive: true });
     await extractTarball(filePath, pluginDir);
+    return true;
   }
 };
 
