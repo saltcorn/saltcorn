@@ -61,7 +61,7 @@ class PluginInstaller {
       await this.movePlugin();
       if (await tarballExists(this.plugin)) await removeTarball(this.plugin);
     }
-    if (!pckJSON) pckJSON = await readPackageJson(this.pckJsonPath);
+    pckJSON = await readPackageJson(this.pckJsonPath);
     return {
       version: pckJSON.version,
       plugin_module: await this.loadMainFile(pckJSON),
