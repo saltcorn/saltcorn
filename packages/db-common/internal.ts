@@ -560,15 +560,19 @@ export type Operator =
   | "field"
   | { type: string; name: string; args: Operator[] };
 
-const getOperatorOrder = ({
-  operator,
-  target,
-  field,
-}: {
-  operator: Operator;
-  target: string;
-  field: string;
-}) => {
+const getOperatorOrder = (
+  {
+    operator,
+    target,
+    field,
+  }: {
+    operator: Operator;
+    target: string;
+    field: string;
+  },
+  values: any[],
+  isSQLite: boolean
+) => {
   const validOp = (s: string) => {
     if (s.includes("--")) return "";
     if (s.includes(";")) return "";
@@ -582,7 +586,10 @@ const getOperatorOrder = ({
     return s;
   };
   const ppOp = (ast: any): string => {
-    if (ast === "target") return target;
+    if (ast === "target") {
+      values.push(target);
+      return isSQLite ? "?" : `$${values.length}`;
+    }
     if (ast === "field") return field;
     const { type, name, args } = ast;
     switch (type) {
@@ -673,7 +680,11 @@ export type SubselectOptions = {
  * @param {object} selopts
  * @returns {string}
  */
-export const mkSelectOptions = (selopts: SelectOptions): string => {
+export const mkSelectOptions = (
+  selopts: SelectOptions,
+  values: any[],
+  isSQLite: boolean
+): string => {
   const orderby =
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
@@ -693,7 +704,7 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
         typeof selopts.orderBy === "object" &&
         "operator" in selopts.orderBy &&
         typeof selopts.orderBy.operator === "object"
-      ? `order by ${getOperatorOrder(selopts.orderBy as any)}`
+      ? `order by ${getOperatorOrder(selopts.orderBy as any, values, isSQLite)}`
       : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";

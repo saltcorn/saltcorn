@@ -97,7 +97,9 @@ const select = async (tbl, whereObj, selectopts = {}) => {
   const sql = `SELECT ${
     selectopts.fields ? selectopts.fields.join(", ") : `*`
   } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
-    selectopts
+    selectopts,
+    values,
+    false
   )}`;
   sql_log(sql, values);
   const tq = await (client || selectopts.client || pool).query(sql, values);

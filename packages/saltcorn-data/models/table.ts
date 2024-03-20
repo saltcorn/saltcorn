@@ -3177,7 +3177,11 @@ class Table implements AbstractTable {
 
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
-    )}" a ${joinq} ${where}  ${mkSelectOptions(selectopts)}`;
+    )}" a ${joinq} ${where}  ${mkSelectOptions(
+      selectopts,
+      values,
+      db.is_sqlite
+    )}`;
 
     return { sql, values, joinFields };
   }
