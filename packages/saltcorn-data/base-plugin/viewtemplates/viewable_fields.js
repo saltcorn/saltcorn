@@ -781,8 +781,8 @@ const get_viewable_fields = (
               table,
               column.action_name,
               r,
-              column.action_name,
-              "action_name",
+              column.rndid || column.action_name,
+              column.rndid ? "rndid" : "action_name",
               column.confirm,
               index
             );

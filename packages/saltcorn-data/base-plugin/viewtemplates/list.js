@@ -1038,11 +1038,11 @@ const run_action = async (
   const col = columns.find(
     (c, index) =>
       c.type === "Action" &&
-      c.action_name === body.action_name &&
-      body.action_name &&
-      (body.column_index ? body.column_index === index : true)
+      (c.rndid == body.rndid ||
+        (c.action_name === body.action_name &&
+          body.action_name &&
+          (body.column_index ? body.column_index === index : true)))
   );
-
   const table = Table.findOne({ id: table_id });
   const row = await getRowQuery(body.id);
   const state_action = getState().actions[col.action_name];
