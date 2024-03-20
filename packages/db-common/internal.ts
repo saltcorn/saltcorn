@@ -590,7 +590,7 @@ const getOperatorOrder = (
       values.push(target);
       return isSQLite ? "?" : `$${values.length}`;
     }
-    if (ast === "field") return field;
+    if (ast === "field") return sqlsanitize(field);
     const { type, name, args } = ast;
     switch (type) {
       case "SqlFun":
