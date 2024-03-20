@@ -226,7 +226,7 @@ const tagsDropdown = (tags, altHeader) =>
     { class: "dropdown" },
     div(
       {
-        class: "link-style",
+        class: "link-style text-nowrap",
         "data-boundary": "viewport",
         type: "button",
         id: "tagsselector",
