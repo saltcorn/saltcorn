@@ -444,13 +444,17 @@ describe("mkSelectOptions", () => {
   it("should order by operator", () => {
     const nearOp = sqlFun("ABS", sqlBinOp("-", "target", "field"));
     expect(
-      mkSelectOptions({
-        orderBy: {
-          operator: nearOp,
-          target: "x",
-          field: "y",
+      mkSelectOptions(
+        {
+          orderBy: {
+            operator: nearOp,
+            target: 5,
+            field: "y",
+          },
         },
-      })
-    ).toContain("order by ABS(x-y)");
+        [],
+        false
+      )
+    ).toContain("order by ABS($1-y)");
   });
 });
