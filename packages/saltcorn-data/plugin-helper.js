@@ -11,7 +11,7 @@ const Tag = require("./models/tag");
 
 const { getState } = require("./db/state");
 const db = require("./db");
-const { button, a, text, i } = require("@saltcorn/markup/tags");
+const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
 const {
   Relation,
   RelationType,
@@ -64,7 +64,8 @@ const link_view = (
   link_textcol,
   extraClass,
   extraState,
-  link_target_blank
+  link_target_blank,
+  label_attr // for sorting
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -86,6 +87,7 @@ const link_view = (
     if (!link_style)
       return a(
         {
+          ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
           href: `javascript:${
             isNode()
               ? `ajax_modal('${url}'${ajaxOpts})`
@@ -102,6 +104,7 @@ const link_view = (
     else
       return button(
         {
+          ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
           class: [
             textStyle,
             link_style,
@@ -123,6 +126,7 @@ const link_view = (
   } else
     return a(
       {
+        ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
         href: url,
         class: [textStyle, link_style, link_size, extraClass],
         style,

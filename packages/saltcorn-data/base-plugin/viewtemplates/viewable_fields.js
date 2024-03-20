@@ -356,7 +356,8 @@ const view_linker = (
   targetPrefix = "",
   state = {},
   req,
-  srcViewName
+  srcViewName,
+  label_attr //for sorting
 ) => {
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
@@ -416,7 +417,8 @@ const view_linker = (
             link_textcol,
             in_dropdown && "dropdown-item",
             get_extra_state(r),
-            link_target_blank
+            link_target_blank,
+            label_attr
           );
         }
       },
@@ -451,7 +453,8 @@ const view_linker = (
               link_textcol,
               in_dropdown && "dropdown-item",
               get_extra_state(r),
-              link_target_blank
+              link_target_blank,
+              label_attr
             );
           },
         };
@@ -474,7 +477,8 @@ const view_linker = (
               link_textcol,
               in_dropdown && "dropdown-item",
               get_extra_state(r),
-              link_target_blank
+              link_target_blank,
+              label_attr
             );
           },
         };
@@ -501,7 +505,8 @@ const view_linker = (
               link_textcol,
               in_dropdown && "dropdown-item",
               get_extra_state(r),
-              link_target_blank
+              link_target_blank,
+              label_attr
             );
           },
         };
@@ -535,7 +540,8 @@ const view_linker = (
                 link_textcol,
                 in_dropdown && "dropdown-item",
                 get_extra_state(r),
-                link_target_blank
+                link_target_blank,
+                label_attr
               );
             } else return "";
           },
