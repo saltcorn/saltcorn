@@ -944,6 +944,7 @@ const features = {
   ellipsize: true,
   aggregation_query: true,
   list_builder: true,
+  esm_plugins: true,
 };
 
 export = {
