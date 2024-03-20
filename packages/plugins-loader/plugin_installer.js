@@ -39,11 +39,7 @@ class PluginInstaller {
       ...tokens
     );
     this.pckJsonPath = join(this.pluginDir, "package.json");
-    this.tempDir = join(
-      this.tempRootFolder,
-      plugin.source === "git" ? "temp_git_install" : "temp_install",
-      ...tokens
-    );
+    this.tempDir = join(this.tempRootFolder, "temp_install", ...tokens);
     this.tempPckJsonPath = join(this.tempDir, "package.json");
   }
 
