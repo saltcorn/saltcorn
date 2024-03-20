@@ -111,6 +111,22 @@ const plugin_with_routes = () => ({
   },
   types: [
     {
+      name: "Varchar",
+      sql_name: ({ dimensions }: any) => {
+        if (typeof dimensions !== "number") throw new Error("dim must be num");
+        return `varchar(${dimensions})`;
+      },
+      attributes: [
+        {
+          label: "Dimensions",
+          name: "dimensions",
+          type: "Integer",
+          required: true,
+        },
+      ],
+      read: (s: any) => s,
+    },
+    {
       name: "UUID",
       sql_name: "uuid",
       primaryKey: { default_sql: "uuid_generate_v4()" },

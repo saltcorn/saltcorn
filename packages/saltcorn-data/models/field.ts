@@ -17,6 +17,7 @@ const {
   InvalidAdminAction,
   isNode,
   satisfies,
+  apply,
   structuredClone,
 } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
@@ -513,11 +514,12 @@ class Field implements AbstractField {
       const { getState } = require("../db/state");
       const on_delete = this.on_delete_sql;
 
-      return `${
+      return `${apply(
         getState().types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
-        ].sql_name
-      } constraint "${sqlsanitize(this!.table!.name)}_${sqlsanitize(
+        ].sql_name,
+        this.attributes
+      )} constraint "${sqlsanitize(this!.table!.name)}_${sqlsanitize(
         this.name
       )}_fkey" references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
@@ -525,7 +527,7 @@ class Field implements AbstractField {
     } else if (this.type === "File") {
       return "text";
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
-      return this.type.sql_name;
+      return apply(this.type.sql_name, this.attributes);
     }
     throw new Error(
       `Unable to get the sql_type: ${
@@ -559,11 +561,14 @@ class Field implements AbstractField {
         );
       }
       const { getState } = require("../db/state");
-      return getState().types[
-        typeof this.reftype === "string" ? this.reftype : this.reftype.name
-      ].sql_name;
+      return apply(
+        getState().types[
+          typeof this.reftype === "string" ? this.reftype : this.reftype.name
+        ].sql_name,
+        this.attributes
+      );
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
-      return this.type.sql_name;
+      return apply(this.type.sql_name, this.attributes);
     } else if (this.type === "File") {
       return "text";
     }
