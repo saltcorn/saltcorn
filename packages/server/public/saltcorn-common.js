@@ -76,7 +76,7 @@ function valid_js_var_name(s) {
   return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
 }
 function apply_showif() {
-  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const isNode = getIsNode();
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
@@ -571,7 +571,7 @@ function reload_on_init() {
 }
 function initialize_page() {
   if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
-  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const isNode = getIsNode();
   //console.log("init page");
   $(".blur-on-enter-keypress").bind("keyup", function (e) {
     if (e.keyCode === 13) e.target.blur();
@@ -877,7 +877,7 @@ function initialize_page() {
 $(initialize_page);
 
 function cancel_inline_edit(e, opts1) {
-  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const isNode = getIsNode();
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   var form = $(e.target).closest("form");
   form.replaceWith(opts.resetHtml);
@@ -885,7 +885,7 @@ function cancel_inline_edit(e, opts1) {
 }
 
 function inline_submit_success(e, form, opts) {
-  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const isNode = getIsNode();
   const formDataArray = form.serializeArray();
   if (opts) {
     let fdEntry = formDataArray.find((f) => f.name == opts.key);
@@ -1025,6 +1025,15 @@ function tristateClick(e, required) {
   }
 }
 
+function getIsNode() {
+  try {
+    return typeof parent?.saltcorn?.data?.state === "undefined";
+  } catch (e) {
+    //probably in an iframe
+    return true;
+  }
+}
+
 function buildToast(txt, type, spin) {
   const realtype = type === "error" ? "danger" : type;
   const icon =
@@ -1035,7 +1044,7 @@ function buildToast(txt, type, spin) {
       : realtype === "warning"
       ? "fa-exclamation-triangle"
       : "";
-  const isNode = typeof parent?.saltcorn?.data?.state === "undefined";
+  const isNode = getIsNode();
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   return {
     id: rndid,
