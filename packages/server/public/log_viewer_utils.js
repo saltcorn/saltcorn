@@ -131,7 +131,23 @@ var logViewerHelpers = (() => {
 
   return {
     init_log_socket: () => {
-      const socket = io({ transports: ["websocket"] });
+      let socket = null;
+      setTimeout(() => {
+        if (socket === null || socket.disconnected) {
+          notifyAlert({
+            type: "danger",
+            text: "Unable to connect to the server",
+          });
+        }
+      }, 5000);
+      try {
+        socket = io({ transports: ["websocket"] });
+      } catch (e) {
+        notifyAlert({
+          type: "danger",
+          text: "Unable to connect to the server " + e.message,
+        });
+      }
       startTrackingMsg();
       socket.on("connect", () => handleConnect(socket));
       socket.on("disconnect", handleDisconnect);

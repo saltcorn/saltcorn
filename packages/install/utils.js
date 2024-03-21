@@ -1,6 +1,6 @@
 const sudo = require("sudo");
 const { is } = require("contractis");
-const { execSync } = require("child_process");
+const { execSync, spawnSync } = require("child_process");
 const os = require("os");
 const crypto = require("crypto");
 
@@ -13,20 +13,42 @@ const crypto = require("crypto");
  */
 const asyncSudo = (args, allowFail, dryRun) => {
   console.log(">", args.join(" "));
-  if(!dryRun) return new Promise(function (resolve, reject) {
-    let child = sudo(args, { cachePassword: true });
-    //var child = sudo(['ls'], {cachePassword: true})
-    child.stdout.on("data", function (data) {
-      console.log(data.toString());
+  if (!dryRun)
+    return new Promise(function (resolve, reject) {
+      let child = sudo(args, { cachePassword: true });
+      //var child = sudo(['ls'], {cachePassword: true})
+      child.stdout.on("data", function (data) {
+        console.log(data.toString());
+      });
+      child.stderr.on("data", function (data) {
+        console.error(data.toString());
+      });
+      child.on("exit", function (data) {
+        if (data !== 0 && !allowFail) reject(data);
+        else resolve();
+      });
     });
-    child.stderr.on("data", function (data) {
-      console.error(data.toString());
-    });
-    child.on("exit", function (data) {
-      if (data !== 0 && !allowFail) reject(data);
-      else resolve();
-    });
-  });
+};
+
+/**
+ * run docker pull saltcorn/cordova-builder as another user
+ * and preserver DOCKER_HOST environment variable
+ * @param user - user to run docker with
+ */
+const pullWithSudo = (user) => {
+  const res = spawnSync("sudo", [
+    "--preserve-env=DOCKER_HOST",
+    "-iu",
+    user,
+    "docker",
+    "pull",
+    "saltcorn/cordova-builder",
+  ]);
+  console.log(res.stdout.toString());
+  if (res.status !== 0) {
+    console.error("Error pulling docker image");
+    console.log(res.stderr?.toString());
+  }
 };
 /**
  * Execute OS commands. For current user uses direct exec instead of sudo
@@ -42,7 +64,7 @@ const asyncSudoUser = (user, args, allowFail, dryRun) => {
     execSync(args.join(" "), {
       stdio: "inherit",
     });
-  } else return asyncSudo(["sudo", "-iu", user, ...args], allowFail,dryRun);
+  } else return asyncSudo(["sudo", "-iu", user, ...args], allowFail, dryRun);
 };
 /**
  * Execute sudo for postgres user with arguments
@@ -68,8 +90,15 @@ const gen_password = () => {
  * Generate jwt secret
  * @returns {string}
  */
- const genJwtSecret = () => {
+const genJwtSecret = () => {
   return crypto.randomBytes(64).toString("hex");
 };
 
-module.exports = { asyncSudo, asyncSudoPostgres, asyncSudoUser, gen_password, genJwtSecret };
+module.exports = {
+  asyncSudo,
+  asyncSudoPostgres,
+  asyncSudoUser,
+  gen_password,
+  genJwtSecret,
+  pullWithSudo,
+};

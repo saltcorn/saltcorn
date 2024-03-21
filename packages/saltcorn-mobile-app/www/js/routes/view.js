@@ -131,8 +131,12 @@ const getView = async (context) => {
   if (
     state.mobileConfig.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))
-  )
-    throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
+  ) {
+    const additionalInfos = `: your role: ${state.mobileConfig.role_id}, view min_role: ${view.min_role}`;
+    throw new saltcorn.data.utils.NotAuthorized(
+      req.__("Not authorized") + additionalInfos
+    );
+  }
   const contents = await view.run_possibly_on_page(
     query,
     req,

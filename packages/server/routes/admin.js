@@ -107,6 +107,7 @@ const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
 const { get_help_markup } = require("../help/index.js");
+const Docker = require("dockerode");
 
 const router = new Router();
 module.exports = router;
@@ -1104,6 +1105,28 @@ router.post(
   })
 );
 
+const pullCordovaBuilder = (req, res) => {
+  const child = spawn("docker", ["pull", "saltcorn/cordova-builder"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return new Promise((resolve, reject) => {
+    child.stdout.on("data", (data) => {
+      res.write(data);
+    });
+    child.stderr?.on("data", (data) => {
+      res.write(data);
+    });
+    child.on("exit", function (code, signal) {
+      resolve(code);
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      res.write(req.__("Error: ") + message + "\n");
+      resolve(msg.code);
+    });
+  });
+};
+
 /**
  * Do Upgrade
  * @name post/upgrade
@@ -1132,7 +1155,14 @@ router.post(
       child.stderr?.on("data", (data) => {
         res.write(data);
       });
-      child.on("exit", function (code, signal) {
+      child.on("exit", async function (code, signal) {
+        if (code === 0) {
+          res.write(
+            req.__("Pulling the cordova-builder docker image...") + "\n"
+          );
+          const pullCode = await pullCordovaBuilder(req, res);
+          res.write(req.__("Pull done with code %s", pullCode) + "\n");
+        }
         res.end(
           req.__(
             `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
@@ -1481,8 +1511,9 @@ router.get(
     });
   })
 );
-const buildDialogScript = () => {
+const buildDialogScript = (cordovaBuilderAvailable) => {
   return `<script>
+  var cordovaBuilderAvailable = ${cordovaBuilderAvailable};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
       const tab = $('#' + currentType + 'NavLinkID');
@@ -1519,6 +1550,17 @@ const buildDialogScript = () => {
   }
   </script>`;
 };
+
+const imageAvailable = async () => {
+  try {
+    const image = new Docker().getImage("saltcorn/cordova-builder");
+    await image.inspect();
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 /**
  * Build mobile app
  */
@@ -1538,13 +1580,14 @@ router.get(
     );
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
+    const dockerAvailable = await imageAvailable();
     send_admin_page({
       res,
       req,
       active_sub: "Mobile app",
       headers: [
         {
-          headerTag: buildDialogScript(),
+          headerTag: buildDialogScript(dockerAvailable),
         },
       ],
       contents: {
@@ -2165,6 +2208,56 @@ router.get(
                         )
                       )
                     )
+                  ),
+                  div(
+                    { class: "row pb-3 pt-3" },
+                    div(
+                      label(
+                        { class: "form-label fw-bold" },
+                        req.__("Cordova builder") +
+                          a(
+                            {
+                              href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                            },
+                            i({ class: "fas fa-question-circle ps-1" })
+                          )
+                      )
+                    ),
+                    div(
+                      { class: "col-sm-4" },
+                      div(
+                        {
+                          id: "dockerBuilderStatusId",
+                          class: "",
+                        },
+                        dockerAvailable
+                          ? span(
+                              req.__("installed"),
+                              i({ class: "ps-2 fas fa-check text-success" })
+                            )
+                          : span(
+                              req.__("not available"),
+                              i({ class: "ps-2 fas fa-times text-danger" })
+                            )
+                      )
+                    ),
+                    div(
+                      { class: "col-sm-4" },
+                      button(
+                        {
+                          id: "pullCordovaBtnId",
+                          type: "button",
+                          onClick: `pull_cordova_builder(this);`,
+                          class: "btn btn-warning",
+                        },
+                        req.__("pull")
+                      ),
+                      span(
+                        { role: "button", onClick: "check_cordova_builder()" },
+                        span({ class: "ps-3" }, req.__("refresh")),
+                        i({ class: "ps-2 fas fa-undo" })
+                      )
+                    )
                   )
                 ),
                 button(
@@ -2416,6 +2509,48 @@ router.post(
         }
       );
     });
+  })
+);
+
+router.post(
+  "/mobile-app/pull-cordova-builder",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const state = getState();
+    const child = spawn(
+      "docker",
+      ["image", "pull", "saltcorn/cordova-builder:latest"],
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+        cwd: ".",
+      }
+    );
+    child.stdout.on("data", (data) => {
+      state.log(5, data.toString());
+    });
+    child.stderr.on("data", (data) => {
+      state.log(1, data.toString());
+    });
+    child.on("exit", (exitCode, signal) => {
+      state.log(
+        2,
+        `"pull cordova-builder exit with code: ${exitCode} and signal: ${signal}`
+      );
+    });
+    child.on("error", (msg) => {
+      state.log(1, `pull cordova-builder error: ${msg}`);
+    });
+
+    res.json({});
+  })
+);
+
+router.get(
+  "/mobile-app/check-cordova-builder",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const installed = await imageAvailable();
+    res.json({ installed });
   })
 );
 
