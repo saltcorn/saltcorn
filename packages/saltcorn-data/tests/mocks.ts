@@ -116,14 +116,43 @@ const plugin_with_routes = () => ({
         if (typeof dimensions !== "number") throw new Error("dim must be num");
         return `varchar(${dimensions})`;
       },
+      fieldviews: {
+        show: { isEdit: false, run: (v: any) => v || "" },
+        editHTML: {
+          isEdit: true,
+          run: (
+            nm: string,
+            v: any,
+            attrs: any,
+            cls: string,
+            required: boolean,
+            field: Field
+          ) =>
+            input({
+              type: "text",
+              disabled: attrs.disabled,
+              class: ["form-control", cls],
+              "data-fieldname": field.name,
+              name: nm,
+              id: `input${nm}`,
+              value: v || "",
+            }),
+        },
+      },
       attributes: [
         {
           label: "Dimensions",
           name: "dimensions",
           type: "Integer",
           required: true,
+          attributes: {
+            max: 1024,
+            min: 0,
+          },
         },
       ],
+      validate_attributes: ({ dimensions }: any) =>
+        dimensions > 0 && dimensions < 1024,
       read: (s: any) => s,
     },
     {
