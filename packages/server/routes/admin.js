@@ -1105,6 +1105,28 @@ router.post(
   })
 );
 
+const pullCordovaBuilder = (req, res) => {
+  const child = spawn("docker", ["pull", "saltcorn/cordova-builder"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return new Promise((resolve, reject) => {
+    child.stdout.on("data", (data) => {
+      res.write(data);
+    });
+    child.stderr?.on("data", (data) => {
+      res.write(data);
+    });
+    child.on("exit", function (code, signal) {
+      resolve(code);
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      res.write(req.__("Error: ") + message + "\n");
+      resolve(msg.code);
+    });
+  });
+};
+
 /**
  * Do Upgrade
  * @name post/upgrade
@@ -1133,7 +1155,14 @@ router.post(
       child.stderr?.on("data", (data) => {
         res.write(data);
       });
-      child.on("exit", function (code, signal) {
+      child.on("exit", async function (code, signal) {
+        if (code === 0) {
+          res.write(
+            req.__("Pulling the cordova-builder docker image...") + "\n"
+          );
+          const pullCode = await pullCordovaBuilder(req, res);
+          res.write(req.__("Pull done with code %s", pullCode) + "\n");
+        }
         res.end(
           req.__(
             `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`

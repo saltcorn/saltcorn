@@ -24,6 +24,7 @@ const {
   asyncSudoPostgres,
   gen_password,
   genJwtSecret,
+  pullWithSudo,
 } = require("./utils");
 //const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
 
@@ -564,12 +565,15 @@ const handleCordovaBuilder = async (user, dryRun) => {
         "and you can open the 'Mobile builder' menu to check if the image is available."
     );
     console.log();
-    await asyncSudoUser(
-      user,
-      ["docker", "pull", "saltcorn/cordova-builder"],
-      false,
-      dryRun
-    );
+
+    if (os.userInfo().username === user) {
+      await asyncSudoUser(
+        user,
+        ["docker", "pull", "saltcorn/cordova-builder"],
+        false,
+        dryRun
+      );
+    } else pullWithSudo(user);
   }
 };
 
