@@ -471,16 +471,28 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
 
 const handleCordovaBuilder = async (user, dryRun) => {
   console.log();
-  console.log(
-    "Saltcorn is now installed, but before you finish, you could set up the cordova-builder docker image."
-  );
-  console.log(
-    "This image has all needed dependencies to build Android mobile apps."
-  );
-  console.log("Please make sure you have docker installed.");
-  console.log(
-    "If you skip this or if it fails, you can also pull it later, or configure an Android SDK on your own."
-  );
+  if (!yes) {
+    console.log(
+      "Saltcorn is now installed, but before you finish, you could set up the cordova-builder docker image."
+    );
+    console.log(
+      "This image has all needed dependencies to build Android mobile apps."
+    );
+    console.log("Please make sure you have docker installed.");
+    console.log(
+      "If you skip this or if it fails, you can also pull it later, or configure an Android SDK on your own."
+    );
+  } else {
+    console.log(
+      "saltcorn is now installed, trying to set up the cordova-builder docker image."
+    );
+    console.log(
+      "This image has all needed dependencies to build Android mobile apps."
+    );
+    console.log(
+      "if it fails, you can also pull it later, or configure an Android SDK on your own."
+    );
+  }
   console.log();
   const askPullCordovaBuilder = async () => {
     const responses = await inquirer.prompt([
@@ -523,7 +535,10 @@ const handleCordovaBuilder = async (user, dryRun) => {
     const responses = await inquirer.prompt([
       {
         name: "dockergroup",
-        message: "Would you like to add your user to the docker group?",
+        message:
+          "Would you like to add your user to the docker group?" +
+          os.EOL +
+          "This could be needed for later upgrades.",
         type: "confirm",
         default: true,
       },
@@ -531,9 +546,9 @@ const handleCordovaBuilder = async (user, dryRun) => {
     return responses.dockergroup;
   };
 
-  const doPull = await askPullCordovaBuilder();
+  const doPull = yes || (await askPullCordovaBuilder());
   if (doPull) {
-    const dockerMode = await askDockerMode();
+    const dockerMode = yes || (await askDockerMode());
     if (dockerMode === "standard") {
       const addToDockerGroup = await askDockerGroup();
       if (addToDockerGroup) {
