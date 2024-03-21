@@ -19,6 +19,7 @@ class ReleaseCommand extends Command {
   async run() {
     const {
       args: { version },
+      flags,
     } = this.parse(ReleaseCommand);
     spawnSync("git", ["pull"], {
       stdio: "inherit",
@@ -98,10 +99,18 @@ class ReleaseCommand extends Command {
       });
     };
     const publish = (dir) =>
-      spawnSync("npm", ["publish", "--access=public"], {
-        stdio: "inherit",
-        cwd: `packages/${dir}/`,
-      });
+      spawnSync(
+        "npm",
+        [
+          "publish",
+          "--access=public",
+          ...(flags.tag ? [`--tag=${flags.tag}`] : []),
+        ],
+        {
+          stdio: "inherit",
+          cwd: `packages/${dir}/`,
+        }
+      );
 
     const rootPackageJson = require(`../../../../../package.json`);
 
@@ -185,4 +194,10 @@ ReleaseCommand.args = [
   { name: "version", required: true, description: "New version number" },
 ];
 
+ReleaseCommand.flags = {
+  tag: flags.string({
+    char: "t",
+    description: "NPM tag",
+  }),
+};
 module.exports = ReleaseCommand;

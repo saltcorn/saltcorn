@@ -637,13 +637,35 @@ class Table implements AbstractTable {
     options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
+    let pk_type: string = "Integer";
+    let pk_sql_type = db.isSQLite ? "integer" : "serial";
+    if (options?.fields && Array.isArray(options.fields)) {
+      const pk_field = (options.fields as any).find?.(
+        (f: Field) => typeof f !== "string" && f?.primary_key
+      );
+      pk_type =
+        (typeof pk_field === "string"
+          ? pk_field
+          : typeof pk_field?.type === "string"
+          ? pk_field?.type
+          : pk_field?.type?.name) || "Integer";
+    }
+    if (pk_type !== "Integer") {
+      const { getState } = require("../db/state");
+
+      const type = getState().types[pk_type];
+      pk_sql_type = type.sql_name;
+      if (type.primaryKey?.default_sql)
+        pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
+    }
+
     const schema = db.getTenantSchemaPrefix();
     // create table in database
     if (!options.provider_name)
       await db.query(
-        `create table ${schema}"${sqlsanitize(name)}" (id ${
-          db.isSQLite ? "integer" : "serial"
-        } primary key)`
+        `create table ${schema}"${sqlsanitize(
+          name
+        )}" (id ${pk_sql_type} primary key)`
       );
     // populate table definition row
     const tblrow: any = {
@@ -666,7 +688,7 @@ class Table implements AbstractTable {
       if (!options.provider_name) {
         const insfldres = await db.query(
           `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-            values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
+            values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
           [id]
         );
         pk_fld_id = insfldres.rows[0].id;
@@ -679,7 +701,7 @@ class Table implements AbstractTable {
       ? [] //TODO look up
       : [
           new Field({
-            type: "Integer",
+            type: pk_type,
             name: "id",
             label: "ID",
             primary_key: true,
@@ -1382,18 +1404,26 @@ class Table implements AbstractTable {
     }
   }
 
-  private async insert_history_row(v: any, retry = 0) {
+  async insert_history_row(v0: any, retry = 0) {
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
     // solution: retry 3 times, if fails run with on conflict do nothing
+
+    //legacy workaround: delete calc fields which may be in row
+    const calcFields = this.fields.filter((f) => f.calculated && !f.stored);
+    const v1 = { ...v0 };
+    calcFields.forEach((f) => {
+      // delete v1[f.name];
+    });
+
     if (retry < 3) {
       try {
-        await db.insert(this.name + "__history", v);
+        await db.insert(this.name + "__history", v1);
       } catch (error) {
-        await this.insert_history_row(v, retry + 1);
+        await this.insert_history_row(v1, retry + 1);
       }
     } else {
-      await db.insert(this.name + "__history", v, {
+      await db.insert(this.name + "__history", v1, {
         onConflictDoNothing: true,
       });
     }
@@ -1864,9 +1894,9 @@ class Table implements AbstractTable {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     const fields = this.fields;
-    const flds = fields.map(
-      (f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`
-    );
+    const flds = fields
+      .filter((f) => !f.calculated || f.stored)
+      .map((f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`);
     const pk = fields.find((f) => f.primary_key)?.name;
     if (!pk) {
       throw new Error("Unable to find a field with a primary key.");
@@ -2104,10 +2134,10 @@ class Table implements AbstractTable {
    * @param id
    * @returns {Promise<*>}
    */
-  async get_history(id: number): Promise<Row[]> {
+  async get_history(id?: number): Promise<Row[]> {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
-      { id },
+      id ? { id } : {},
       { orderBy: "_version" }
     );
   }

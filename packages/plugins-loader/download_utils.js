@@ -1,5 +1,6 @@
 const fs = require("fs");
-const { mkdir, rm, pathExists } = require("fs-extra");
+const { rm } = require("fs").promises;
+const { mkdir, pathExists } = require("fs-extra");
 const { tmpName } = require("tmp-promise");
 const { execSync } = require("child_process");
 const { extract } = require("tar");
@@ -27,13 +28,14 @@ const downloadFromNpm = async (plugin, pluginDir, pckJson) => {
   const vToInstall =
     plugin.version && plugin.version !== "latest" ? plugin.version : latest;
 
-  if (pckJson && pckJson.version === vToInstall) return null;
+  if (pckJson && pckJson.version === vToInstall) return false;
   else {
     const tarballUrl = pkgInfo.versions[vToInstall].dist.tarball;
     const fileName = plugin.name.split("/").pop();
     const filePath = await loadTarball(tarballUrl, fileName);
     await mkdir(pluginDir, { recursive: true });
     await extractTarball(filePath, pluginDir);
+    return true;
   }
 };
 
