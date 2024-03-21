@@ -167,6 +167,10 @@ const tableForm = async (table, req) => {
               label: req.__("Version history"),
               sublabel: req.__("Track table data changes over time"),
               name: "versioned",
+              attributes: {
+                onChange:
+                  "if(!this.checked && !confirm('Are you sure? This will delete all history')) {this.checked = true; return false}",
+              },
               type: "Bool",
             },
             ...(table.name === "users"
