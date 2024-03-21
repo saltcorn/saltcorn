@@ -6,7 +6,7 @@ const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
-const { sleep } = mocks;
+const { sleep, plugin_with_routes } = mocks;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -502,5 +502,17 @@ describe("adds new fields to history #1202", () => {
     assertIsSet(table1);
     const fields = await table1.getFields();
     expect(fields.length).toBe(1); // id
+  });
+});
+describe("fields with sql types depending on attribute", () => {
+  it("should create", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    const table = await Table.create("TableVarchar");
+    await Field.create({
+      table,
+      label: "Name",
+      type: "Varchar",
+      attributes: { dimensions: 80 },
+    });
   });
 });

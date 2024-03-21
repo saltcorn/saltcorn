@@ -145,6 +145,7 @@ const run_code = async ({
     Buffer,
     Notification,
     setTimeout,
+    interpolate,
     require,
     setConfig: (k, v) => sysState.setConfig(k, v),
     getConfig: (k) => sysState.getConfig(k),

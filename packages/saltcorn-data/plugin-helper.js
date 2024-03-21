@@ -34,6 +34,8 @@ const {
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
+const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
+
 /**
  *
  * @param {string} url0
@@ -1728,7 +1730,35 @@ const stateFieldsToQuery = ({
       //this is ok because it has to match fieldname
       if (field) q.orderBy = state[sortbyName];
       if (state[sortDescName]) q.orderDesc = true;
+    } else if (state._orderBy) {
+      if (typeof state._orderBy === "string") {
+        const field = fields.find((f) => f.name === state._orderBy);
+        //this is ok because it has to match fieldname
+        if (field) q.orderBy = state._orderBy;
+        if (state._orderDesc) q.orderDesc = true;
+      } else if (typeof state._orderBy === "object") {
+        const { operator, field, target } = state._orderBy;
+        const fld = fields.find((f) => f.name == field);
+
+        if (!fld) return;
+        const oper = fld.type?.distance_operators?.[operator];
+
+        if (!oper) return;
+        q.orderBy = { operator: oper, field, target };
+      }
     }
+    Object.keys(state).forEach((k) => {
+      if (!k.startsWith("_op_")) return;
+      const [_blank, _op, fieldName, opName] = k.split("_");
+      const field = fields.find((f) => f.name == fieldName);
+
+      if (!field) return;
+      const operator = field.type?.distance_operators?.[opName];
+
+      if (!operator) return;
+      q.orderBy = { operator, field: fieldName, target: state[k] };
+    });
+
     const pagesize =
       stateHash && state[`_${stateHash}_pagesize`]
         ? parseInt(state[`_${stateHash}_pagesize`])
@@ -2587,4 +2617,6 @@ module.exports = {
   build_schema_data,
   pathToState,
   displayType,
+  sqlBinOp,
+  sqlFun,
 };

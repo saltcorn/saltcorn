@@ -114,7 +114,9 @@ export const select = async (
 ): Promise<Row[]> => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
-    selectopts
+    selectopts,
+    values,
+    true
   )}`;
   const tq = await query(sql, values);
   return tq.rows;

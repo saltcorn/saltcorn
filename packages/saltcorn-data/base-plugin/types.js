@@ -39,6 +39,7 @@ const { freeVariables, eval_expression } = require("../models/expression");
 const Table = require("../models/table");
 const _ = require("underscore");
 const { interpolate } = require("../utils");
+const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -1199,6 +1200,8 @@ const int = {
    * @category saltcorn-data
    * @subcategory types / int
    */
+  distance_operators: { near: sqlFun("ABS", sqlBinOp("-", "target", "field")) },
+
   fieldviews: {
     /**
      * @namespace
@@ -1472,6 +1475,9 @@ const float = {
    * @returns {function}
    */
   contract: ({ min, max }) => is.number({ lte: max, gte: min }),
+
+  distance_operators: { near: sqlFun("ABS", sqlBinOp("-", "target", "field")) },
+
   /**
    * @namespace
    * @category saltcorn-data

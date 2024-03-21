@@ -15,8 +15,12 @@ import {
   assertIsType,
 } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import { add_free_variables_to_joinfields } from "../plugin-helper";
+import {
+  add_free_variables_to_joinfields,
+  stateFieldsToQuery,
+} from "../plugin-helper";
 import expressionModule from "../models/expression";
+import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -604,7 +608,99 @@ describe("Table get data", () => {
     expect(reads[0].pages).toBe(967);
   });
 });
+describe("Table sorting", () => {
+  const getPagesWithOrder = async (selopts: any) => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const all = await books.getRows({}, selopts);
+    return all.map((b) => b.pages);
+  };
 
+  it("should get rows", async () => {
+    const ps1 = await getPagesWithOrder({ orderBy: "pages" });
+    expect(ps1).toStrictEqual([728, 967]);
+    const ps2 = await getPagesWithOrder({ orderBy: "pages", orderDesc: true });
+    expect(ps2).toStrictEqual([967, 728]);
+  });
+  it("should use operator", async () => {
+    const ps1 = await getPagesWithOrder({
+      orderBy: {
+        operator: sqlFun("ABS", sqlBinOp("-", "target", "field")),
+        target: 950,
+        field: "pages",
+      },
+    });
+    expect(ps1).toStrictEqual([967, 728]);
+    const ps2 = await getPagesWithOrder({
+      orderBy: {
+        operator: sqlFun("ABS", sqlBinOp("-", "target", "field")),
+        target: 750,
+        field: "pages",
+      },
+    });
+    expect(ps2).toStrictEqual([728, 967]);
+  });
+  it("should use operator by name", async () => {
+    const ps1 = await getPagesWithOrder({
+      orderBy: {
+        operator: "near",
+        target: 950,
+        field: "pages",
+      },
+    });
+    expect(ps1).toStrictEqual([967, 728]);
+    const ps2 = await getPagesWithOrder({
+      orderBy: {
+        operator: "near",
+        target: 750,
+        field: "pages",
+      },
+    });
+    expect(ps2).toStrictEqual([728, 967]);
+  });
+  it("should read with stateFieldsToQuery", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const q = stateFieldsToQuery({
+      state: { _foo_sortby: "pages" },
+      stateHash: "foo",
+      fields: books.fields,
+    });
+    expect(q).toStrictEqual({ orderBy: "pages" });
+  });
+  it("should use operators from stateFieldsToQuery", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const q = stateFieldsToQuery({
+      state: { _op_pages_near: "950" },
+      stateHash: "foo",
+      fields: books.fields,
+    });
+    expect(q).toStrictEqual({
+      orderBy: {
+        operator: sqlFun("ABS", sqlBinOp("-", "target", "field")),
+        target: "950",
+        field: "pages",
+      },
+    });
+  });
+  it("should use operators from stateFieldsToQuery from _orderBy", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const q = stateFieldsToQuery({
+      state: { _orderBy: { operator: "near", field: "pages", target: 950 } },
+      stateHash: "foo",
+      fields: books.fields,
+    });
+    expect(q).toStrictEqual({
+      orderBy: {
+        operator: sqlFun("ABS", sqlBinOp("-", "target", "field")),
+        target: 950,
+        field: "pages",
+      },
+    });
+  });
+});
 describe("Table aggregationQuery", () => {
   it("should get avg aggregations", async () => {
     const readings = Table.findOne({ name: "readings" });

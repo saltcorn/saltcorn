@@ -32,7 +32,7 @@ export const instanceOfSuccessMsg = (object: any): object is SuccessMessage => {
 
 export type Type = {
   name: string;
-  sql_name?: string;
+  sql_name?: string | ((attrs: any) => string);
   js_type?: string;
   readFromDB?: (arg0: any) => any;
   read?: (arg0: any, arg1?: any) => any;
@@ -47,6 +47,7 @@ export type Type = {
   fieldviews?: any;
   attributes?: GenObj;
   validate_attributes?: Function;
+  distance_operators?: { [opName: string]: any };
 };
 
 export function instanceOfType(object: any): object is Type {

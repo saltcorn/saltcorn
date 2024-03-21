@@ -555,8 +555,60 @@ const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   )} - ${+long})*${cos_lat_2})`;
 };
 
+export type Operator =
+  | "target"
+  | "field"
+  | { type: string; name: string; args: Operator[] };
+
+const getOperatorOrder = (
+  {
+    operator,
+    target,
+    field,
+  }: {
+    operator: Operator;
+    target: string;
+    field: string;
+  },
+  values: any[],
+  isSQLite: boolean
+) => {
+  const validOp = (s: string) => {
+    if (s.includes("--")) return "";
+    if (s.includes(";")) return "";
+    if (s.includes("/*")) return "";
+    if (s.includes("*/")) return "";
+    if (s.includes("'")) return "";
+    if (s.includes('"')) return "";
+    if (s.includes("(")) return "";
+    if (s.includes(")")) return "";
+    if (s.includes(" ")) return "";
+    return s;
+  };
+  const ppOp = (ast: any): string => {
+    if (ast === "target") {
+      values.push(target);
+      return isSQLite ? "?" : `$${values.length}`;
+    }
+    if (ast === "field") return sqlsanitize(field);
+    const { type, name, args } = ast;
+    switch (type) {
+      case "SqlFun":
+        return `${sqlsanitize(name)}(${args.map(ppOp).join(",")})`;
+      case "SqlBinOp":
+        const [arg1, arg2] = args;
+        return `${ppOp(arg1)}${validOp(name)}${ppOp(arg2)}`;
+    }
+    return "";
+  };
+  return ppOp(operator);
+};
+
 export type SelectOptions = {
-  orderBy?: { distance: CoordOpts } | string;
+  orderBy?:
+    | { distance: CoordOpts }
+    | { operator: Operator | string; target: string; field: string }
+    | string;
   limit?: string | number;
   offset?: string | number;
   nocase?: boolean;
@@ -579,6 +631,12 @@ export const orderByIsObject = (
   object: any
 ): object is { distance: CoordOpts } => {
   return object && object.distance;
+};
+
+export const orderByIsOperator = (
+  object: any
+): object is { operator: Operator; target: string; field: string } => {
+  return object && object.operator && typeof object.operator !== "string";
 };
 
 export type JoinField = {
@@ -622,13 +680,17 @@ export type SubselectOptions = {
  * @param {object} selopts
  * @returns {string}
  */
-export const mkSelectOptions = (selopts: SelectOptions): string => {
+export const mkSelectOptions = (
+  selopts: SelectOptions,
+  values: any[],
+  isSQLite: boolean
+): string => {
   const orderby =
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
       : selopts.orderBy &&
         typeof selopts.orderBy === "object" &&
-        selopts.orderBy.distance
+        "distance" in selopts.orderBy
       ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
       : selopts.orderBy && typeof selopts.orderBy === "string" && selopts.nocase
       ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
@@ -638,6 +700,11 @@ export const mkSelectOptions = (selopts: SelectOptions): string => {
       ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
           selopts.orderDesc ? " DESC" : ""
         }`
+      : selopts.orderBy &&
+        typeof selopts.orderBy === "object" &&
+        "operator" in selopts.orderBy &&
+        typeof selopts.orderBy.operator === "object"
+      ? `order by ${getOperatorOrder(selopts.orderBy as any, values, isSQLite)}`
       : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
@@ -661,3 +728,14 @@ export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
   });
   return whereObj;
 };
+
+export const sqlFun = (name: string, ...args: any[]) => ({
+  type: "SqlFun",
+  name,
+  args,
+});
+export const sqlBinOp = (name: string, ...args: any[]) => ({
+  type: "SqlBinOp",
+  name,
+  args,
+});
