@@ -439,14 +439,16 @@ class Field implements AbstractField {
    */
   async distinct_values(
     req?: any,
-    where?: Where
+    where?: Where,
+    only_present?: boolean
   ): Promise<{ label: string; value: string; jsvalue?: boolean }[]> {
     const __ = req && req.__ ? req.__ : (s: string) => s;
     if (
       instanceOfType(this.type) &&
       this.type.name === "String" &&
       this.attributes &&
-      this.attributes.options
+      this.attributes.options &&
+      !only_present
     ) {
       return [
         { label: "", value: "" },
