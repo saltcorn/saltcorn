@@ -34,6 +34,8 @@ const {
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
+const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
+
 /**
  *
  * @param {string} url0
@@ -2615,4 +2617,6 @@ module.exports = {
   build_schema_data,
   pathToState,
   displayType,
+  sqlBinOp,
+  sqlFun,
 };
