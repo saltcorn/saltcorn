@@ -980,7 +980,7 @@ class Field implements AbstractField {
       )}_fkey" FOREIGN KEY ("${sqlsanitize(
         this.name
       )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)${
-        this.attributes?.on_delete_cascade ? " on delete cascade" : ""
+        this.on_delete_sql
       }`;
       await db.query(q);
     }

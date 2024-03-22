@@ -274,6 +274,8 @@ router.get(
     const aBackupFilePrefixForm = backupFilePrefixForm(req);
     aBackupFilePrefixForm.values.backup_file_prefix =
       getState().getConfig("backup_file_prefix");
+    aBackupFilePrefixForm.values.backup_history =
+      getState().getConfig("backup_history");
     //
     const backupForm = autoBackupForm(req);
     backupForm.values.auto_backup_frequency = getState().getConfig(
@@ -673,6 +675,13 @@ const backupFilePrefixForm = (req) =>
         name: "backup_file_prefix",
         sublabel: req.__("Backup file prefix"),
         default: "sc-backup-",
+      },
+      {
+        type: "Bool",
+        label: req.__("History"),
+        name: "backup_history",
+        sublabel: req.__("Include table history in backup"),
+        default: true,
       },
     ],
   });
