@@ -9,6 +9,7 @@ const {
   removeTarball,
 } = require("./download_utils");
 const { rm, rename, cp, readFile } = require("fs").promises;
+const envPaths = require("env-paths");
 
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
@@ -27,7 +28,8 @@ class PluginInstaller {
   constructor(plugin, opts = {}) {
     this.plugin = plugin;
     this.rootFolder = opts.rootFolder || process.cwd();
-    this.tempRootFolder = opts.tempRootFolder || process.cwd();
+    this.tempRootFolder =
+      opts.tempRootFolder || envPaths("saltcorn", { suffix: "tmp" }).temp;
     const tokens =
       plugin.source === "npm"
         ? plugin.location.split("/")

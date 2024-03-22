@@ -8,6 +8,9 @@
     "tsc": "echo 'No TypeScript build'",
     "clean": "echo 'No TypeScript build'"
   },
+  "dependencies": {
+    "env-paths": "^2.2.0"
+  },
   "author": "Christian Hugo",
   "license": "MIT",
   "main": "index.js",
