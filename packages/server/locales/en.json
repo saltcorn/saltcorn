@@ -1389,5 +1389,6 @@
 	"not available": "not available",
 	"pull": "pull",
 	"refresh": "refresh",
-	"installed": "installed"
+	"installed": "installed",
+	"Include table history in backup": "Include table history in backup"
 }

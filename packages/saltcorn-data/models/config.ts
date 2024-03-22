@@ -873,6 +873,11 @@ const configTypes: ConfigTypes = {
     label: "Backup file prefix",
     default: "sc-backup-",
   },
+  backup_history: {
+    type: "Bool",
+    label: "Include table history in backup",
+    default: true,
+  },
   max_relations_layer_depth: {
     type: "Integer",
     label: "Max relations layer depth",
