@@ -1136,6 +1136,7 @@ const renderFormLayout = (form: Form): string => {
       action_bgcol,
       action_bordercol,
       action_textcol,
+      spinner,
     }: any) {
       const isMobile = !isNode || form.req?.smr;
       let style =
@@ -1145,7 +1146,7 @@ const renderFormLayout = (form: Form): string => {
             }; color: ${action_textcol || "#000000"}`
           : null;
       const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
-
+      const spinnerStr = spinner ? `spin_action_link(this);` : "";
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
 
@@ -1168,9 +1169,11 @@ const renderFormLayout = (form: Form): string => {
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-        }"${style ? ` style="${style}"` : ""}>${
-          action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""
-        }${text(
+        }"${style ? ` style="${style}"` : ""}${
+          spinner && !onclick_or_type?.startsWith?.("on")
+            ? ` onclick="spin_action_link(this)"`
+            : ""
+        }>${action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""}${text(
           action_label || form.submitLabel || action_name || "Save"
         )}</button>`;
 
@@ -1179,7 +1182,7 @@ const renderFormLayout = (form: Form): string => {
           const dest = configuration && configuration.after_delete_url;
           if (isNode && !form.req?.smr) {
             return mkBtn(
-              `onClick="${confirmStr}ajax_post('${action_url}', {success:()=>{${
+              `onClick="${spinnerStr}${confirmStr}ajax_post('${action_url}', {success:()=>{${
                 form.req?.xhr ? `close_saltcorn_modal();` : ""
               }${
                 dest
@@ -1191,7 +1194,7 @@ const renderFormLayout = (form: Form): string => {
             );
           } else {
             return mkBtn(
-              `onClick="${confirmStr}local_post('${action_url}', {after_delete_url:'${
+              `onClick="${spinnerStr}${confirmStr}local_post('${action_url}', {after_delete_url:'${
                 dest || "/"
               }'})" type="button"`
             );
@@ -1200,12 +1203,12 @@ const renderFormLayout = (form: Form): string => {
       }
       if (action_name === "Reset") {
         return mkBtn(
-          `onClick="${confirmStr}$(this).closest('form').trigger('reset')" type="button"`
+          `onClick="${spinnerStr}${confirmStr}$(this).closest('form').trigger('reset')" type="button"`
         );
       }
       if (action_name === "Cancel") {
         return mkBtn(
-          `onClick="${confirmStr}cancel_form($(this).closest('form'))" type="button"`
+          `onClick="${spinnerStr}${confirmStr}cancel_form($(this).closest('form'))" type="button"`
         );
       }
       if (action_name === "GoBack") {
@@ -1222,16 +1225,19 @@ const renderFormLayout = (form: Form): string => {
         if (configuration.save_first) {
           const complete = `()=>${doNav}`;
           return mkBtn(
-            `onClick="${reload}saveAndContinue(this,${
+            `onClick="${spinnerStr}${reload}saveAndContinue(this,${
               isMobile ? `'${form.action}', ${complete}` : complete
             })" type="button"`
           );
-        } else return mkBtn(`onClick="${reload}${doNav}" type="button"`);
+        } else
+          return mkBtn(
+            `onClick="${spinnerStr}${reload}${doNav}" type="button"`
+          );
       }
       if (action_name === "SaveAndContinue") {
         return (
           mkBtn(
-            `onClick="saveAndContinue(this,${
+            `onClick="${spinnerStr}saveAndContinue(this,${
               isMobile ? `'${form.action}'` : undefined
             })" type="button"`
           ) +
@@ -1254,15 +1260,17 @@ const renderFormLayout = (form: Form): string => {
       }
       if (action_name === "UpdateMatchingRows")
         return mkBtn(
-          `onClick="updateMatchingRows(this, '${form.viewname}')" type="button"`
+          `onClick="${spinnerStr}updateMatchingRows(this, '${form.viewname}')" type="button"`
         );
       if (action_name === "SubmitWithAjax")
-        return mkBtn(`onClick="submitWithAjax(this)" type="button"`);
+        return mkBtn(
+          `onClick="${spinnerStr}submitWithAjax(this)" type="button"`
+        );
       if (action_link) return action_link;
 
       if (isNode && !form.req?.smr) {
         const submitAttr = form.xhrSubmit
-          ? 'onClick="ajaxSubmitForm(this)" type="button"'
+          ? 'onClick="${spinnerStr}ajaxSubmitForm(this)" type="button"'
           : 'type="submit"';
         return mkBtn(submitAttr);
       }
