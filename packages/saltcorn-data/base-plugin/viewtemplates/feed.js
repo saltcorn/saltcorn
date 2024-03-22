@@ -639,6 +639,18 @@ const run = async (
 
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
+  const wrapScEmbed = (r) =>
+    div(
+      {
+        class: "d-inline",
+        "data-sc-embed-viewname": show_view,
+        "data-sc-view-source": `/view/${show_view}${table.pk_name}=${
+          r.row[table.pk_name]
+        }`,
+      },
+      r.html
+    );
+
   const showRowInner = (r, ix) =>
     (!view_decoration && in_card) || view_decoration === "Card"
       ? div(
@@ -649,7 +661,7 @@ const run = async (
                 eval_expression(title_formula, r.row, extraArgs.req.user)
               )
             : undefined,
-          div({ class: "card-body" }, r.html)
+          div({ class: "card-body" }, wrapScEmbed(r))
         )
       : view_decoration === "Accordion"
       ? div(
@@ -688,10 +700,10 @@ const run = async (
               "aria-labelledby": `a${stateHash}head${ix}`,
               "data-bs-parent": `#top${stateHash}`,
             },
-            div({ class: ["accordion-body"] }, r.html)
+            div({ class: ["accordion-body"] }, wrapScEmbed(r))
           )
         )
-      : r.html;
+      : wrapScEmbed(r);
 
   const showRow = (r) =>
     div(
