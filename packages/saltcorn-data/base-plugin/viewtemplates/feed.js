@@ -644,7 +644,7 @@ const run = async (
       {
         class: "d-inline",
         "data-sc-embed-viewname": show_view,
-        "data-sc-view-source": `/view/${show_view}${table.pk_name}=${
+        "data-sc-view-source": `/view/${show_view}?${table.pk_name}=${
           r.row[table.pk_name]
         }`,
       },
