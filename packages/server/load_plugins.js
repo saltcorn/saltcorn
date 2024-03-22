@@ -25,14 +25,29 @@ const loadPlugin = async (plugin, force) => {
     typeof plugin.configuration === "string"
       ? JSON.parse(plugin.configuration)
       : plugin.configuration;
-  // register plugin
-  getState().registerPlugin(
-    res.plugin_module.plugin_name || plugin.name,
-    res.plugin_module,
-    configuration,
-    res.location,
-    res.name
-  );
+  try {
+    // register plugin
+    getState().registerPlugin(
+      res.plugin_module.plugin_name || plugin.name,
+      res.plugin_module,
+      configuration,
+      res.location,
+      res.name
+    );
+  } catch (error) {
+    if (force) {
+      // remove the install dir and try again
+      await loader.remove();
+      await loader.install(force);
+      getState().registerPlugin(
+        res.plugin_module.plugin_name || plugin.name,
+        res.plugin_module,
+        configuration,
+        res.location,
+        res.name
+      );
+    }
+  }
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
