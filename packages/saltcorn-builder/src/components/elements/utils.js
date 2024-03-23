@@ -1401,6 +1401,20 @@ const ButtonOrLinkSettingsRows = ({
           </tr>,
         ]
       : []),
+    values[keyPrefix + "style"] !== "on_page_load" ? (
+      <tr key="btntitle">
+        <td>
+          <label>Hover title</label>
+        </td>
+        <td>
+          <input
+            className="form-control"
+            value={values[keyPrefix + "title"]}
+            onChange={setAProp(keyPrefix + "title")}
+          />
+        </td>
+      </tr>
+    ) : null,
   ];
 };
 
