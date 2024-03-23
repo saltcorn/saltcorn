@@ -1243,7 +1243,12 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
-    await load_plugins.loadAndSaveNewPlugin(plugin, forceReInstall);
+    const msgs = await load_plugins.loadAndSaveNewPlugin(
+      plugin,
+      forceReInstall,
+      undefined,
+      req.__
+    );
     const plugin_module = getState().plugins[name];
     await sleep(1000); // Allow other workers to load this plugin
     await getState().refresh_views();
@@ -1257,9 +1262,11 @@ router.post(
           plugin_db.name
         )
       );
+      if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
       res.redirect(`/plugins/configure/${plugin_db.name}`);
     } else {
       req.flash("success", req.__(`Module %s installed`, plugin.name));
+      if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
       res.redirect(`/plugins`);
     }
   })

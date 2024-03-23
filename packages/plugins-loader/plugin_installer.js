@@ -8,6 +8,7 @@ const {
   tarballExists,
   removeTarball,
 } = require("./download_utils");
+const { getState } = require("@saltcorn/data/db/state");
 const { rm, rename, cp, readFile } = require("fs").promises;
 const envPaths = require("env-paths");
 
@@ -64,24 +65,31 @@ class PluginInstaller {
     };
     await installer();
     let module = null;
+    let loadedWithReload = false;
     try {
       // try importing it and if it fails, remove and try again
       // could happen when there is a directory with a valid package.json
       // but without a valid node modules folder
       module = await this.loadMainFile(pckJSON);
     } catch (e) {
+      getState().log(
+        2,
+        `Error loading plugin ${this.plugin.name}. Removing and trying again.`
+      );
       if (force) {
         await this.remove();
         pckJSON = null;
         await installer();
       }
       module = await this.loadMainFile(pckJSON, true);
+      loadedWithReload = true;
     }
     return {
       version: pckJSON.version,
       plugin_module: module,
       location: this.pluginDir,
       name: this.name,
+      loadedWithReload,
     };
   }
 

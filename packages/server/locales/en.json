@@ -1389,5 +1389,6 @@
 	"not available": "not available",
 	"pull": "pull",
 	"refresh": "refresh",
-	"installed": "installed"
+	"installed": "installed",
+	"The plugin was corrupted and had to be repaired. We recommend restarting your server.": "The plugin was corrupted and had to be repaired. We recommend restarting your server."
 }
