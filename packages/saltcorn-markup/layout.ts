@@ -384,6 +384,7 @@ const render = ({
                 }')`,
             class: [segment.link_style || "", segment.link_size || ""],
             target: isWeb && segment.target_blank ? "_blank" : false,
+            title: segment.link_title,
             rel: segment.nofollow ? "nofollow" : false,
             style,
           },
