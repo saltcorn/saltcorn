@@ -67,7 +67,8 @@ const link_view = (
   extraClass,
   extraState,
   link_target_blank,
-  label_attr // for sorting
+  label_attr, // for sorting
+  link_title
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -96,6 +97,7 @@ const link_view = (
               : `mobile_modal('${url}'${ajaxOpts})`
           }`,
           style,
+          title: link_title,
           class: [textStyle, link_style, link_size, extraClass],
         },
         link_icon && link_icon !== "empty"
@@ -114,6 +116,7 @@ const link_view = (
             !link_style && "btn btn-link",
             extraClass,
           ],
+          title: link_title,
           type: "button",
           onClick: isNode()
             ? `ajax_modal('${url}'${ajaxOpts})`
@@ -132,6 +135,7 @@ const link_view = (
         href: url,
         class: [textStyle, link_style, link_size, extraClass],
         style,
+        title: link_title,
         target: link_target_blank ? "_blank" : undefined,
       },
       link_icon && link_icon !== "empty"
