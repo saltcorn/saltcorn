@@ -1290,6 +1290,9 @@ const ButtonOrLinkSettingsRows = ({
           <option value={addBtnClass("btn-outline-secondary")}>
             Secondary outline button
           </option>
+          <option value={addBtnClass("btn-outline-success")}>
+            Success outline button
+          </option>
           <option value={addBtnClass("btn-outline-danger")}>
             Danger outline button
           </option>
