@@ -893,7 +893,7 @@ module.exports = {
                 },
                 fields
               ),
-              true
+              !col.all_options
             );
           } else if (col.field_name.split("->").length === 3) {
             //`${jFieldNm}.${jfld.reftable_name}->${throughField}.${throughFld.reftable_name}->${lblField}`;
@@ -908,7 +908,7 @@ module.exports = {
               distinct_values[col.field_name] = await target.distinct_values(
                 req,
                 jsexprToWhere(col.where),
-                true
+                !col.all_options
               );
           } else if (col.field_name.includes("->")) {
             const [jFieldNm, krest] = col.field_name.split(".");
@@ -924,7 +924,7 @@ module.exports = {
               distinct_values[col.field_name] = await jfield.distinct_values(
                 req,
                 jsexprToWhere(col.where),
-                true
+                !col.all_options
               );
           } else if (col.field_name.includes(".")) {
             const kpath = col.field_name.split(".");
@@ -941,7 +941,7 @@ module.exports = {
                 distinct_values[col.field_name] = await jfield.distinct_values(
                   req,
                   jsexprToWhere(col.where),
-                  true
+                  !col.all_options
                 );
             } else if (kpath.length === 2) {
               const target = table.getField(col.field_name);
@@ -949,7 +949,7 @@ module.exports = {
                 distinct_values[col.field_name] = await target.distinct_values(
                   req,
                   jsexprToWhere(col.where),
-                  true
+                  !col.all_options
                 );
             }
           }
