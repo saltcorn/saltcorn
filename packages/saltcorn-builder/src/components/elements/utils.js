@@ -1211,11 +1211,7 @@ export class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // You can also log the error to an error reporting service
     //logErrorToMyService(error, errorInfo);
-    console.log(
-      "ErrorBoundary reporting: ",
-      JSON.stringify(error),
-      JSON.stringify(errorInfo)
-    );
+    console.error(error);
 
     if (!this.state.reported) {
       const data = {
