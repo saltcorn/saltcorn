@@ -505,24 +505,25 @@ const install_pack = async (
     if (!_table) throw new Error(`Unable to find table '${tableSpec.name}'`);
 
     const exfields = _table.getFields();
-    for (const field of tableSpec.fields) {
-      const exfield = exfields.find((f) => f.name === field.name);
-      if (!((_table.name === "users" && field.name === "email") || exfield)) {
-        if (_table.name === "users" && field.required)
-          await Field.create(
-            { table: _table, ...field, required: false },
-            bare_tables
-          );
-        else await Field.create({ table: _table, ...field }, bare_tables);
-      } else if (
-        exfield &&
-        !(_table.name === "users" && field.name === "email") &&
-        exfield.type
-      ) {
-        const { id, table_id, ...updrow } = field;
-        await exfield.update(updrow);
+    if (!_table.provider_name)
+      for (const field of tableSpec.fields) {
+        const exfield = exfields.find((f) => f.name === field.name);
+        if (!((_table.name === "users" && field.name === "email") || exfield)) {
+          if (_table.name === "users" && field.required)
+            await Field.create(
+              { table: _table, ...field, required: false },
+              bare_tables
+            );
+          else await Field.create({ table: _table, ...field }, bare_tables);
+        } else if (
+          exfield &&
+          !(_table.name === "users" && field.name === "email") &&
+          exfield.type
+        ) {
+          const { id, table_id, ...updrow } = field;
+          await exfield.update(updrow);
+        }
       }
-    }
     for (const { table, ...trigger } of tableSpec.triggers || []) {
       trigger.min_role = old_to_new_role(trigger.min_role);
       await Trigger.create({ table: _table, ...trigger }); //legacy, not in new packs

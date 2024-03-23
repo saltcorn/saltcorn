@@ -37,6 +37,7 @@ module.exports =
     const createCrash = severity <= 3;
     //console.error(err.stack);
     if (!(devmode && log_sql) && createCrash) await Crash.create(err, req);
+    else console.error(err);
 
     if (req.xhr) {
       res

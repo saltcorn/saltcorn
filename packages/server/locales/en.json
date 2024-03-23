@@ -1390,5 +1390,6 @@
 	"pull": "pull",
 	"refresh": "refresh",
 	"installed": "installed",
+	"Include table history in backup": "Include table history in backup",
 	"The plugin was corrupted and had to be repaired. We recommend restarting your server.": "The plugin was corrupted and had to be repaired. We recommend restarting your server."
 }
