@@ -25,14 +25,29 @@ const loadPlugin = async (plugin, force) => {
     typeof plugin.configuration === "string"
       ? JSON.parse(plugin.configuration)
       : plugin.configuration;
-  // register plugin
-  getState().registerPlugin(
-    res.plugin_module.plugin_name || plugin.name,
-    res.plugin_module,
-    configuration,
-    res.location,
-    res.name
-  );
+  try {
+    // register plugin
+    getState().registerPlugin(
+      res.plugin_module.plugin_name || plugin.name,
+      res.plugin_module,
+      configuration,
+      res.location,
+      res.name
+    );
+  } catch (error) {
+    if (force) {
+      // remove the install dir and try again
+      await loader.remove();
+      await loader.install(force);
+      getState().registerPlugin(
+        res.plugin_module.plugin_name || plugin.name,
+        res.plugin_module,
+        configuration,
+        res.location,
+        res.name
+      );
+    }
+  }
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
@@ -76,9 +91,15 @@ const loadAllPlugins = async (force) => {
  * @param plugin
  * @param force
  * @param noSignalOrDB
+ * @param __ translation function
  * @returns {Promise<void>}
  */
-const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
+const loadAndSaveNewPlugin = async (
+  plugin,
+  force,
+  noSignalOrDB,
+  __ = (str) => str
+) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
     false
@@ -104,8 +125,10 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
       return;
     }
   }
+  const msgs = [];
   const loader = new PluginInstaller(plugin);
-  const { version, plugin_module, location } = await loader.install(force);
+  const { version, plugin_module, location, loadedWithReload } =
+    await loader.install(force);
 
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
@@ -118,13 +141,43 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
       );
     }
   }
-  getState().registerPlugin(
-    plugin_module.plugin_name || plugin.name,
-    plugin_module,
-    plugin.configuration,
-    location,
-    plugin.name
-  );
+  let registeredWithReload = false;
+  try {
+    getState().registerPlugin(
+      plugin_module.plugin_name || plugin.name,
+      plugin_module,
+      plugin.configuration,
+      location,
+      plugin.name
+    );
+  } catch (error) {
+    if (force) {
+      getState().log(
+        2,
+        `Error registering plugin ${plugin.name}. Removing and trying again.`
+      );
+      await loader.remove();
+      await loader.install(force);
+      getState().registerPlugin(
+        plugin_module.plugin_name || plugin.name,
+        plugin_module,
+        plugin.configuration,
+        location,
+        plugin.name
+      );
+      registeredWithReload = true;
+    } else {
+      throw error;
+    }
+  }
+  if (loadedWithReload || registeredWithReload) {
+    msgs.push(
+      __(
+        "The plugin was corrupted and had to be repaired. We recommend restarting your server.",
+        plugin.name
+      )
+    );
+  }
   if (plugin_module.onLoad) {
     try {
       await plugin_module.onLoad(plugin.configuration);
@@ -141,6 +194,7 @@ const loadAndSaveNewPlugin = async (plugin, force, noSignalOrDB) => {
       force: false, // okay ??
     });
   }
+  return msgs;
 };
 
 module.exports = {

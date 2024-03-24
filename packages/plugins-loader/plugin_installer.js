@@ -8,7 +8,9 @@ const {
   tarballExists,
   removeTarball,
 } = require("./download_utils");
+const { getState } = require("@saltcorn/data/db/state");
 const { rm, rename, cp, readFile } = require("fs").promises;
+const envPaths = require("env-paths");
 
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
@@ -27,7 +29,8 @@ class PluginInstaller {
   constructor(plugin, opts = {}) {
     this.plugin = plugin;
     this.rootFolder = opts.rootFolder || process.cwd();
-    this.tempRootFolder = opts.tempRootFolder || process.cwd();
+    this.tempRootFolder =
+      opts.tempRootFolder || envPaths("saltcorn", { suffix: "tmp" }).temp;
     const tokens =
       plugin.source === "npm"
         ? plugin.location.split("/")
@@ -49,20 +52,44 @@ class PluginInstaller {
       return { plugin_module: require(this.plugin.location) };
 
     let pckJSON = await readPackageJson(this.pckJsonPath);
-    if (await this.prepPluginsFolder(force, pckJSON)) {
-      const tmpPckJSON = await this.removeDependencies(
-        await readPackageJson(this.tempPckJsonPath)
+    const installer = async () => {
+      if (await this.prepPluginsFolder(force, pckJSON)) {
+        const tmpPckJSON = await this.removeDependencies(
+          await readPackageJson(this.tempPckJsonPath)
+        );
+        await this.npmInstall(tmpPckJSON);
+        await this.movePlugin();
+        if (await tarballExists(this.plugin)) await removeTarball(this.plugin);
+      }
+      pckJSON = await readPackageJson(this.pckJsonPath);
+    };
+    await installer();
+    let module = null;
+    let loadedWithReload = false;
+    try {
+      // try importing it and if it fails, remove and try again
+      // could happen when there is a directory with a valid package.json
+      // but without a valid node modules folder
+      module = await this.loadMainFile(pckJSON);
+    } catch (e) {
+      getState().log(
+        2,
+        `Error loading plugin ${this.plugin.name}. Removing and trying again.`
       );
-      await this.npmInstall(tmpPckJSON);
-      await this.movePlugin();
-      if (await tarballExists(this.plugin)) await removeTarball(this.plugin);
+      if (force) {
+        await this.remove();
+        pckJSON = null;
+        await installer();
+      }
+      module = await this.loadMainFile(pckJSON, true);
+      loadedWithReload = true;
     }
-    pckJSON = await readPackageJson(this.pckJsonPath);
     return {
       version: pckJSON.version,
-      plugin_module: await this.loadMainFile(pckJSON),
+      plugin_module: module,
       location: this.pluginDir,
       name: this.name,
+      loadedWithReload,
     };
   }
 
@@ -134,7 +161,7 @@ class PluginInstaller {
     }
   }
 
-  async loadMainFile(pckJSON) {
+  async loadMainFile(pckJSON, reload) {
     const isWindows = process.platform === "win32";
     if (process.env.NODE_ENV === "test") {
       // in jest, downgrad to require
@@ -142,7 +169,7 @@ class PluginInstaller {
     } else {
       const res = await import(
         `${isWindows ? `file://` : ""}${normalize(
-          join(this.pluginDir, pckJSON.main)
+          join(this.pluginDir, pckJSON.main + (reload ? "?reload=true" : ""))
         )}`
       );
       return res.default;
