@@ -106,6 +106,7 @@ const action_link = (
     action_size,
     action_icon,
     action_bgcol,
+    action_title,
     action_bordercol,
     action_textcol,
     spinner,
@@ -129,6 +130,7 @@ const action_link = (
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
+        title: action_title,
         onclick: spinner ? "spin_action_link(this)" : undefined,
       },
       action_icon && action_icon !== "empty"
@@ -348,6 +350,7 @@ const view_linker = (
     in_dropdown,
     extra_state_fml,
     link_target_blank,
+    link_title,
   },
   fields,
   __ = (s) => s,
@@ -418,7 +421,8 @@ const view_linker = (
             in_dropdown && "dropdown-item",
             get_extra_state(r),
             link_target_blank,
-            label_attr
+            label_attr,
+            link_title
           );
         }
       },
@@ -454,7 +458,8 @@ const view_linker = (
               in_dropdown && "dropdown-item",
               get_extra_state(r),
               link_target_blank,
-              label_attr
+              label_attr,
+              link_title
             );
           },
         };
@@ -478,7 +483,8 @@ const view_linker = (
               in_dropdown && "dropdown-item",
               get_extra_state(r),
               link_target_blank,
-              label_attr
+              label_attr,
+              link_title
             );
           },
         };
@@ -506,7 +512,8 @@ const view_linker = (
               in_dropdown && "dropdown-item",
               get_extra_state(r),
               link_target_blank,
-              label_attr
+              label_attr,
+              link_title
             );
           },
         };
@@ -541,7 +548,8 @@ const view_linker = (
                 in_dropdown && "dropdown-item",
                 get_extra_state(r),
                 link_target_blank,
-                label_attr
+                label_attr,
+                link_title
               );
             } else return "";
           },

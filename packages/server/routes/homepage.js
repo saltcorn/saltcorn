@@ -547,7 +547,7 @@ const no_views_logged_in = async (req, res) => {
  * @returns {Promise<boolean>}
  */
 const get_config_response = async (role_id, res, req) => {
-  const wrap = async (contents, homeCfg, title, description) => {
+  const wrap = async (contents, homeCfg, title, description, no_menu) => {
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else
       res.sendWrap(
@@ -555,6 +555,7 @@ const get_config_response = async (role_id, res, req) => {
           title: title || "",
           description: description || "",
           bodyClass: "page_" + db.sqlsanitize(homeCfg),
+          no_menu,
         },
         contents
       );
@@ -574,7 +575,8 @@ const get_config_response = async (role_id, res, req) => {
         await db_page.run(req.query, { res, req }),
         homeCfg,
         db_page.title,
-        db_page.description
+        db_page.description,
+        db_page.attributes?.no_menu
       );
     else {
       const group = PageGroup.findOne({ name: homeCfg });
@@ -587,7 +589,8 @@ const get_config_response = async (role_id, res, req) => {
               await eligible.run(req.query, { res, req }),
               homeCfg,
               eligible.title,
-              eligible.description
+              eligible.description,
+              eligible.attributes?.no_menu
             );
         } else wrap(req.__("%s has no eligible page", group.name), homeCfg);
       } else res.redirect(homeCfg);

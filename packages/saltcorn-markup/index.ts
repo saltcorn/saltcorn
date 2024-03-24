@@ -8,7 +8,7 @@ import renderBuilder = require("./builder");
 import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
-const { a, text, div, button, hr, time, i, input } = tags;
+const { a, text, div, button, hr, time, i, input, text_attr } = tags;
 import layoutUtils = require("./layout_utils");
 const { alert, toast } = layoutUtils;
 
@@ -34,6 +34,7 @@ type PostBtnOpts = {
   req: any;
   confirm?: boolean;
   icon?: string;
+  title?: string;
 };
 
 declare let window: any;
@@ -85,6 +86,7 @@ const post_btn = (
     req,
     confirm,
     icon,
+    title,
   }: PostBtnOpts | any = {}
 ): string =>
   `<form action="${text(href)}" method="post"${
@@ -107,7 +109,7 @@ const post_btn = (
       : ""
   } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
     style ? ` style="${style}"` : ""
-  }>${
+  }${title ? ` title=${text_attr(title)}` : ""}>${
     icon && icon !== "empty"
       ? `<i class="${icon}"></i>${s ? "&nbsp;" : ""}`
       : ""

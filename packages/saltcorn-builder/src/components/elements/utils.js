@@ -909,6 +909,8 @@ const ConfigField = ({
         const seloptions = field.options.map((o, ix) =>
           o.name && o.label
             ? { value: o.name, label: o.label }
+            : o.value && o.label
+            ? { value: o.value, label: o.label }
             : { value: o, label: o }
         );
         return (
@@ -940,6 +942,10 @@ const ConfigField = ({
             {field.options.map((o, ix) =>
               o.name && o.label ? (
                 <option key={ix} value={o.name}>
+                  {o.label}
+                </option>
+              ) : o.value && o.label ? (
+                <option key={ix} value={o.value}>
                   {o.label}
                 </option>
               ) : (
@@ -1211,11 +1217,7 @@ export class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // You can also log the error to an error reporting service
     //logErrorToMyService(error, errorInfo);
-    console.log(
-      "ErrorBoundary reporting: ",
-      JSON.stringify(error),
-      JSON.stringify(errorInfo)
-    );
+    console.error(error);
 
     if (!this.state.reported) {
       const data = {
@@ -1293,6 +1295,9 @@ const ButtonOrLinkSettingsRows = ({
           </option>
           <option value={addBtnClass("btn-outline-secondary")}>
             Secondary outline button
+          </option>
+          <option value={addBtnClass("btn-outline-success")}>
+            Success outline button
           </option>
           <option value={addBtnClass("btn-outline-danger")}>
             Danger outline button
@@ -1396,6 +1401,20 @@ const ButtonOrLinkSettingsRows = ({
           </tr>,
         ]
       : []),
+    values[keyPrefix + "style"] !== "on_page_load" ? (
+      <tr key="btntitle">
+        <td>
+          <label>Hover title</label>
+        </td>
+        <td>
+          <input
+            className="form-control"
+            value={values[keyPrefix + "title"]}
+            onChange={setAProp(keyPrefix + "title")}
+          />
+        </td>
+      </tr>
+    ) : null,
   ];
 };
 

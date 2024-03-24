@@ -56,6 +56,7 @@ const DropDownFilterSettings = () => {
     label_formula,
     full_width,
     where,
+    all_options,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -63,10 +64,14 @@ const DropDownFilterSettings = () => {
     full_width: node.data.props.full_width,
     label_formula: node.data.props.label_formula,
     where: node.data.props.where,
+    all_options: node.data.props.all_options,
   }));
   const options = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
-
+  let select_all_options;
+  const field = options.fields.find((f) => f.name === name);
+  if (field?.type === "String" && field.attributes?.options)
+    select_all_options = true;
   return (
     <table className="w-100">
       <tbody>
@@ -153,6 +158,23 @@ const DropDownFilterSettings = () => {
             </div>
           </td>
         </tr>
+        {select_all_options ? (
+          <tr>
+            <td></td>
+            <td>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={all_options}
+                  onChange={setAProp("all_options", { checked: true })}
+                />
+                <label className="form-check-label">All options</label>
+              </div>
+            </td>
+          </tr>
+        ) : null}
       </tbody>
     </table>
   );
@@ -173,6 +195,7 @@ DropDownFilter.craft = {
       "neutral_label",
       "label_formula",
       "where",
+      "all_options",
       "block",
     ],
   },

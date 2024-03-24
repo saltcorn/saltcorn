@@ -173,6 +173,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           action_style={segment.action_style || "btn-primary"}
           action_size={segment.action_size || ""}
           action_icon={segment.action_icon || ""}
+          action_title={segment.action_title || ""}
           action_bgcol={segment.action_bgcol || ""}
           action_bordercol={segment.action_bordercol || ""}
           action_textcol={segment.action_textcol || ""}
@@ -628,6 +629,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         action_style: node.props.action_style,
         action_size: node.props.action_size,
         action_icon: node.props.action_icon,
+        action_title: node.props.action_title,
         action_bgcol: node.props.action_bgcol,
         action_bordercol: node.props.action_bordercol,
         action_textcol: node.props.action_textcol,
@@ -658,6 +660,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         action_style: node.props.action_style,
         action_size: node.props.action_size,
         action_icon: node.props.action_icon,
+        action_title: node.props.action_title,
         action_bgcol: node.props.action_bgcol,
         action_bordercol: node.props.action_bordercol,
         action_textcol: node.props.action_textcol,
