@@ -37,6 +37,7 @@ const excludePatterns = [
   /\.docs/,
   /migrations/,
   /.*test.js/,
+  /.*test.ts/,
 ];
 
 /**

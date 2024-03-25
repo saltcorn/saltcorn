@@ -994,13 +994,15 @@ router.post(
         if (oldRow) {
           const value = oldRow[kpath[kpath.length - 1]];
           //TODO run fieldview
-          res.send(
-            typeof value === "string"
-              ? value
-              : value?.toString
-              ? value.toString()
-              : `${value}`
-          );
+          if (value === null || typeof value === "undefined") res.send("");
+          else
+            res.send(
+              typeof value === "string"
+                ? value
+                : value?.toString
+                ? value.toString()
+                : `${value}`
+            );
           return;
         }
       }
