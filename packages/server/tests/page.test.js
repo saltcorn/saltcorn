@@ -30,7 +30,17 @@ const prepHtmlFiles = async () => {
     const html = `<html><head><title>Landing page</title></head><body><h1>${content}</h1></body></html>`;
     if (!existsSync(scFolder)) await File.new_folder(folder);
     if (!existsSync(join(scFolder, name))) {
-      return await File.from_contents(name, "text/html", html, 1, 1, folder);
+      const file = await File.from_contents(
+        name,
+        "text/html",
+        html,
+        1,
+        1,
+        folder
+      );
+      file.location = File.absPathToServePath(file.location);
+
+      return file;
     } else {
       const file = await File.from_file_on_disk(name, scFolder);
       fs.writeFileSync(file.location, html);
