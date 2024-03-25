@@ -142,7 +142,15 @@ const configuration_workflow = (req) =>
               if (field.reftable) await field.reftable.getFields();
             }
           }
-          const actionConfigForms = {};
+          const actionConfigForms = {
+            Delete: [
+              {
+                name: "after_delete_url",
+                label: req.__("URL after delete"),
+                type: "String",
+              },
+            ],
+          };
           for (const [name, action] of stateActions) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
@@ -152,6 +160,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
+
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -907,7 +916,7 @@ const render = (
         }).catch((e) => Crash.create(e, req));
         return "";
       }
-      const url = action_url(
+      let url = action_url(
         viewname,
         table,
         segment.action_name,
@@ -916,6 +925,12 @@ const render = (
         "rndid",
         segment.confirm
       );
+      if (segment.action_name === "Delete")
+        url = `/delete/${table.name}/${
+          row[table.pk_name]
+        }?redirect=${encodeURIComponent(
+          segment.configuration?.after_delete_url || "/"
+        )}`;
       return action_link(url, req, segment);
     },
     view_link(view) {
