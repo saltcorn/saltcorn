@@ -911,7 +911,6 @@ router.post(
     if (fieldName.includes(".")) {
       //join field
       const kpath = fieldName.split(".");
-      console.log({ kpath });
       if (kpath.length === 2 && row[kpath[0]]) {
         const field = fields.find((f) => f.name === kpath[0]);
         const reftable = Table.findOne({ name: field.reftable_name });
