@@ -23,7 +23,7 @@ import Library from "../models/library";
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { existsSync } from "fs";
-import { join } from "path";
+import { join, basename } from "path";
 
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
@@ -98,5 +98,75 @@ describe("File", () => {
     expect(
       htmlFiles.find((file: any) => file.filename === fileName)
     ).toBeDefined();
+  });
+
+  it("should resolve filename clash in root", async () => {
+    const file1 = await File.from_contents(
+      "clashing.html",
+      "text/html",
+      "hello",
+      1,
+      100
+    );
+    expect(file1.filename).toBe("clashing.html");
+    expect(file1.path_to_serve).toBe("clashing.html");
+    expect(basename(file1.location)).toBe("clashing.html");
+    const file2 = await File.from_contents(
+      "clashing.html",
+      "text/html",
+      "world",
+      1,
+      100
+    );
+    expect(file2.filename).toBe("clashing_1.html");
+    expect(basename(file2.location)).toBe("clashing_1.html");
+
+    await file1.delete();
+    await file2.delete();
+    const file3 = await File.from_contents(
+      "clashing.html",
+      "text/html",
+      "hello",
+      1,
+      100
+    );
+    expect(file3.filename).toBe("clashing.html");
+    expect(basename(file3.location)).toBe("clashing.html");
+    await file3.delete();
+  });
+  it("should resolve filename clash in subfolder", async () => {
+    const subfolder = "subfolder";
+    if (
+      !existsSync(
+        join(db.connectObj.file_store, db.getTenantSchema(), "subfolder")
+      )
+    )
+      await File.new_folder(subfolder);
+    const file1 = await File.from_contents(
+      "clashing.html",
+      "text/html",
+      "hello",
+      1,
+      100,
+      "subfolder"
+    );
+
+    expect(file1.filename).toBe("clashing.html");
+    expect(file1.path_to_serve).toBe("subfolder/clashing.html");
+
+    expect(basename(file1.location)).toBe("clashing.html");
+    const file2 = await File.from_contents(
+      "clashing.html",
+      "text/html",
+      "world",
+      1,
+      100,
+      "subfolder"
+    );
+    expect(file2.filename).toBe("clashing_1.html");
+    expect(basename(file2.location)).toBe("clashing_1.html");
+
+    await file1.delete();
+    await file2.delete();
   });
 });
