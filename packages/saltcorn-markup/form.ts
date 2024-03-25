@@ -1270,7 +1270,7 @@ const renderFormLayout = (form: Form): string => {
 
       if (isNode && !form.req?.smr) {
         const submitAttr = form.xhrSubmit
-          ? 'onClick="${spinnerStr}ajaxSubmitForm(this)" type="button"'
+          ? `onClick="${spinnerStr}ajaxSubmitForm(this)" type="button"`
           : 'type="submit"';
         return mkBtn(submitAttr);
       }

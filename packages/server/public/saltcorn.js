@@ -549,10 +549,12 @@ function updateViewPreview() {
       },
 
       error: function (resp) {
-        $("#viewcfg-preview-error").html(resp.responseText || resp.statusText);
+        $("#viewcfg-preview-error")
+          .show()
+          .html(resp.responseText || resp.statusText);
       },
       success: function (res) {
-        $("#viewcfg-preview-error").html("");
+        $("#viewcfg-preview-error").hide().html("");
         $preview.css({ opacity: 1.0 });
 
         //disable functions preview migght try to call
