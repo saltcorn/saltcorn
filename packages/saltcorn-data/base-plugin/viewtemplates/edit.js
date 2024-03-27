@@ -1174,7 +1174,7 @@ const runPost = async (
             (f) => f.type === "File"
           )) {
             const key = `${file_field.name}_${repeatIx}`;
-            if (req.files[key]) {
+            if (req.files?.[key]) {
               const file = await File.from_req_files(
                 req.files[key],
                 req.user ? req.user.id : null,
