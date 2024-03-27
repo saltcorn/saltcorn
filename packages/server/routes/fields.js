@@ -955,8 +955,11 @@ router.post(
             }
             return;
           }
+        }
+        if (targetField.type === "File") {
+          fv = getState().fileviews[fieldview];
         } else {
-          fv = targetField.type.fieldviews[fieldview];
+          fv = targetField.type?.fieldviews?.[fieldview];
           if (!fv)
             fv =
               targetField.type.fieldviews.show ||
