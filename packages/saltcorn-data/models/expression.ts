@@ -298,6 +298,10 @@ function jsexprToWhere(
           );
           return rec;
         },
+        NewExpression({ callee }: any) {
+          if (callee.name === "Date") return new Date();
+          throw new Error("Unknown new expression");
+        },
         MemberExpression() {
           const cleft = compile(node.object!);
           const cleftName =
