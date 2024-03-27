@@ -1324,7 +1324,11 @@ const renderForm = (
  * @returns
  */
 const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
-  const hasFile = form.fields.some((f: any) => f.multipartFormData);
+  const hasFile = form.fields.some(
+    (f: any) =>
+      f.multipartFormData ||
+      (f.isRepeat && f.fields.some((f2: any) => f2.multipartFormData))
+  );
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const extraValues: any = {};
   if (form.req?.user) extraValues.user = form.req.user;
