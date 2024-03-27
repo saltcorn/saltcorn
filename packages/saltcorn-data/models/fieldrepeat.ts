@@ -83,6 +83,12 @@ class FieldRepeat implements AbstractFieldRepeat {
         has_any = true;
         res[f.name] = fval;
       }
+      if (
+        f.type === "File" &&
+        whole_rec._file_names &&
+        whole_rec._file_names.includes(`${f.name}_${ix}`)
+      )
+        has_any = true;
     });
     if (has_any) {
       const rest = this.validate_from_ix(whole_rec, ix + 1);

@@ -1635,7 +1635,10 @@ const prepare = async (
     optionsQuery,
   });
   const cancel = body._cancel;
-  await form.asyncValidate(body);
+  await form.asyncValidate({
+    ...body,
+    _file_names: Object.keys(req.files || {}),
+  });
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options(false, optionsQuery, req.user);
