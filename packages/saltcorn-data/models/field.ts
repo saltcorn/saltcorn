@@ -330,11 +330,19 @@ class Field implements AbstractField {
       formFieldNames!.forEach((nm) => {
         fakeEnv[nm] = "$" + nm;
       });
+      const whereWithExisting = existingValue
+        ? {
+            or: [
+              { id: existingValue },
+              jsexprToWhere(this.attributes.where, fakeEnv),
+            ],
+          } //TODO pk_name
+        : jsexprToWhere(this.attributes.where, fakeEnv);
       this.attributes.dynamic_where = {
         table: this.reftable_name,
         refname: this.refname,
         where: this.attributes.where,
-        whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
+        whereParsed: whereWithExisting,
         summary_field: this.attributes.summary_field,
         label_formula: this.attributes.label_formula,
         neutral_label: this.attributes.neutral_label,
