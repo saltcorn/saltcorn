@@ -389,9 +389,11 @@ class Field implements AbstractField {
       if (!this.attributes) this.attributes = {};
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
-      const whereWithExisting = existingValue
-        ? { or: [{ id: existingValue }, where] } //TODO pk_name
-        : where;
+      const whereWithExisting =
+        existingValue && where
+          ? { or: [{ id: existingValue }, where] } //TODO pk_name
+          : where;
+
       const rows = !optionsQuery
         ? await Field.select_options_query(
             this.reftable_name as string,
