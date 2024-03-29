@@ -4,7 +4,11 @@
  */
 const { Command, flags } = require("@oclif/command");
 const { cli } = require("cli-ux");
-const { maybe_as_tenant, init_some_tenants, readFileSync} = require("../common");
+const {
+  maybe_as_tenant,
+  init_some_tenants,
+  readFileSync,
+} = require("../common");
 const vm = require("vm");
 const db = require("@saltcorn/data/db");
 const Table = require("@saltcorn/data/models/table");
@@ -25,9 +29,7 @@ class RunJSCommand extends Command {
 
     const that = this;
     await maybe_as_tenant(flags.tenant, async () => {
-
-
-      const code = flags.code? flags.code  : readFileSync(flags.file);
+      const code = flags.code ? flags.code : readFileSync(flags.file);
       // run script as here https://github.com/saltcorn/js-code-view/blob/main/js-code-view.js
       const f = vm.runInNewContext(`async () => {${code}\n}`, {
         Table,
@@ -38,11 +40,10 @@ class RunJSCommand extends Command {
         // markupTags,
         db,
         // req: extraArgs.req,
-       //  state,
-        ...getState().function_context,
+        //  state,
+        ...getState().eval_context,
       });
       return await f();
-
     });
     this.exit(0);
   }
@@ -52,7 +53,6 @@ class RunJSCommand extends Command {
  * @type {string}
  */
 RunJSCommand.description = `Run javascript code`;
-
 
 /**
  * @type {object}
@@ -74,6 +74,5 @@ RunJSCommand.flags = {
     description: "path to script file",
   }),
 };
-
 
 module.exports = RunJSCommand;

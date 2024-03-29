@@ -154,7 +154,7 @@ const run_code = async ({
     request_headers: rest?.req?.headers,
     request_ip: rest?.req?.ip,
     ...(row || {}),
-    ...getState().function_context,
+    ...getState().eval_context,
     ...rest,
   });
   return await f();
