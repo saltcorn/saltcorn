@@ -17,6 +17,7 @@ const {
   isOfflineMode,
   getSessionId,
   interpolate,
+  objectToQueryString,
 } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
@@ -1340,7 +1341,7 @@ const getForm = async (
     })
     .filter((tf) => !!tf);
   const path = isWeb(req) ? req.baseUrl + req.path : "";
-  let action = `/view/${viewname}`;
+  let action = `/view/${viewname}?${objectToQueryString(req.query)}`;
   if (path && path.startsWith("/auth/")) action = path;
   const layout = structuredClone(layout0);
   traverseSync(layout, {
