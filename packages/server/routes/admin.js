@@ -2849,6 +2849,8 @@ router.get(
           name: "code",
           form_name: "code",
           label: "Code",
+          sublabel:
+            "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions",
           input_type: "code",
           attributes: { mode: "text/javascript" },
           validator(s) {
