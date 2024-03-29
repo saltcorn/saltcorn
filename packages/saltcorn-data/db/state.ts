@@ -40,6 +40,8 @@ import { tz } from "moment-timezone";
 import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
+import { parseExpressionAt, Node, parse } from "acorn";
+import { runInContext, createContext } from "vm";
 
 /**
  * @param v
@@ -133,6 +135,7 @@ class State {
   layouts: Record<string, PluginLayout>;
   headers: any;
   function_context: any;
+  codepage_context: any;
   functions: any;
   keyFieldviews: any;
   external_tables: any;
@@ -255,6 +258,7 @@ class State {
     await this.refresh_page_groups(noSignal);
     await this.refresh_config(noSignal);
     await this.refresh_npmpkgs(noSignal);
+    await this.refresh_codepages(noSignal);
   }
 
   /**
@@ -673,6 +677,48 @@ class State {
     await this.refresh_plugins();
     if (!noSignal && db.is_node)
       process_send({ removePlugin: name, tenant: db.getTenantSchema() });
+  }
+
+  get eval_context() {
+    return { ...this.function_context, ...this.codepage_context };
+  }
+
+  async refresh_codepages(noSignal?: boolean) {
+    this.codepage_context = {};
+    const code_pages: Record<string, string> = this.getConfig(
+      "function_code_pages",
+      {}
+    );
+    Object.values(code_pages).forEach((codeStr: string) => {
+      try {
+        const identifiers: string[] = [];
+        const ast: any = parse(codeStr, { ecmaVersion: 2020 });
+        if (ast?.type === "Program")
+          ast.body.forEach((node: any) => {
+            if (node.type === "FunctionDeclaration")
+              identifiers.push(node.id.name);
+            if (node.type === "VariableDeclaration") {
+              identifiers.push(
+                ...node.declarations.map((node: any) => node.id.name)
+              );
+            }
+          });
+
+        const modStr = `${codeStr};return { ${identifiers.join(", ")}}`;
+        const funCtxKeys = new Set(Object.keys(this.function_context));
+        const sandbox = createContext(this.function_context);
+        runInContext(modStr, sandbox);
+        Object.keys(sandbox).forEach((k) => {
+          if (!funCtxKeys.has(k)) {
+            this.codepage_context[k] = sandbox[k];
+          }
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    });
+    if (!noSignal && db.is_node)
+      process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
   }
 
   /**

@@ -554,6 +554,12 @@ const configTypes: ConfigTypes = {
     type: "hidden",
     label: "Function code pages",
     default: {},
+    async onChange(val: string) {
+      setTimeout(async () => {
+        const { getState } = require("../db/state");
+        await getState().refresh_codepages();
+      });
+    },
   },
   cookie_duration: {
     type: "Integer",
