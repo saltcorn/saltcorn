@@ -2857,8 +2857,17 @@ router.get(
         },
       ],
     });
-    res.sendWrap(req.__(`Edit code page`), {
-      above: [div(renderForm(form, req.csrfToken()))],
+
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Development",
+      sub2_page: req.__(`%s code page`, name),
+      contents: {
+        type: "card",
+        title: req.__(`%s code page`, name),
+        contents: [renderForm(form, req.csrfToken())],
+      },
     });
   })
 );
