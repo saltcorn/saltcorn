@@ -691,23 +691,10 @@ class State {
     );
     Object.values(code_pages).forEach((codeStr: string) => {
       try {
-        const identifiers: string[] = [];
-        const ast: any = parse(codeStr, { ecmaVersion: 2020 });
-        if (ast?.type === "Program")
-          ast.body.forEach((node: any) => {
-            if (node.type === "FunctionDeclaration")
-              identifiers.push(node.id.name);
-            if (node.type === "VariableDeclaration") {
-              identifiers.push(
-                ...node.declarations.map((node: any) => node.id.name)
-              );
-            }
-          });
-
-        const modStr = `${codeStr};return { ${identifiers.join(", ")}}`;
         const funCtxKeys = new Set(Object.keys(this.function_context));
-        const sandbox = createContext(this.function_context);
-        runInContext(modStr, sandbox);
+        const sandbox = createContext({ ...this.function_context });
+        runInContext(codeStr, sandbox);
+
         Object.keys(sandbox).forEach((k) => {
           if (!funCtxKeys.has(k)) {
             this.codepage_context[k] = sandbox[k];

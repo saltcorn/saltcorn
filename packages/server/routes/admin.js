@@ -2884,6 +2884,8 @@ router.post(
       ...code_pages,
       [name]: code,
     });
+    await getState().refresh_codepages();
+
     res.json({ success: true });
   })
 );
