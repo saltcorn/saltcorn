@@ -40,7 +40,6 @@ import { tz } from "moment-timezone";
 import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
-import { parseExpressionAt, Node, parse } from "acorn";
 import { runInContext, createContext } from "vm";
 
 /**
