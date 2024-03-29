@@ -550,6 +550,11 @@ const configTypes: ConfigTypes = {
     label: "Legacy file_id locations",
     default: {},
   },
+  function_code_pages: {
+    type: "hidden",
+    label: "Function code pages",
+    default: {},
+  },
   cookie_duration: {
     type: "Integer",
     label: "Cookie duration (hours)",
