@@ -697,7 +697,12 @@ router.get(
           label: "Reload page to see changes",
           id: "btnReloadNow",
           class: "btn btn-outline-secondary",
-          onclick: "location.reload()",
+          onclick: `if (window.savingViewConfig) 
+  notifyAlert({
+    type: 'danger',
+    text: 'Still saving, please wait',
+  });
+else location.reload();`,
         },
       ];
       wfres.renderForm.onChange = `${
@@ -705,25 +710,31 @@ router.get(
       };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
     }
 
-    res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Settings"), href: "/settings" },
-            { text: req.__("Module store"), href: "/plugins" },
-            { text: plugin.name },
-          ],
-        },
-        {
-          type: "card",
-          class: "mt-0",
-          title: req.__(`Configure %s Plugin`, plugin.name),
-          titleAjaxIndicator: true,
-          contents: renderForm(wfres.renderForm, req.csrfToken()),
-        },
-      ],
-    });
+    res.sendWrap(
+      {
+        title: req.__(`Configure %s Plugin`, plugin.name),
+        headers: wfres.additionalHeaders || [],
+      },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: req.__("Settings"), href: "/settings" },
+              { text: req.__("Module store"), href: "/plugins" },
+              { text: plugin.name },
+            ],
+          },
+          {
+            type: "card",
+            class: "mt-0",
+            title: req.__(`Configure %s Plugin`, plugin.name),
+            titleAjaxIndicator: true,
+            contents: renderForm(wfres.renderForm, req.csrfToken()),
+          },
+        ],
+      }
+    );
   })
 );
 
@@ -799,10 +810,11 @@ router.post(
     const flow = module.configuration_workflow();
     const step = await flow.singleStepForm(req.body, req);
     if (step?.renderForm) {
-      if (!step.renderForm.hasErrors) {
+      if (!step.renderForm.hasErrors && !step.savingErrors) {
         plugin.configuration = {
           ...plugin.configuration,
           ...step.renderForm.values,
+          ...(step.contextChanges ? step.contextChanges : {}),
         };
         await plugin.upsert();
         await load_plugins.loadPlugin(plugin);
@@ -811,7 +823,7 @@ router.post(
           tenant: db.getTenantSchema(),
         });
         res.json({ success: "ok" });
-      }
+      } else if (step.savingErrors) res.status(400).send(step.savingErrors);
     }
   })
 );
