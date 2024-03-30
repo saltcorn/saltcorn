@@ -955,8 +955,11 @@ router.post(
             }
             return;
           }
+        }
+        if (targetField.type === "File") {
+          fv = getState().fileviews[fieldview];
         } else {
-          fv = targetField.type.fieldviews[fieldview];
+          fv = targetField.type?.fieldviews?.[fieldview];
           if (!fv)
             fv =
               targetField.type.fieldviews.show ||
@@ -994,13 +997,15 @@ router.post(
         if (oldRow) {
           const value = oldRow[kpath[kpath.length - 1]];
           //TODO run fieldview
-          res.send(
-            typeof value === "string"
-              ? value
-              : value?.toString
-              ? value.toString()
-              : `${value}`
-          );
+          if (value === null || typeof value === "undefined") res.send("");
+          else
+            res.send(
+              typeof value === "string"
+                ? value
+                : value?.toString
+                ? value.toString()
+                : `${value}`
+            );
           return;
         }
       }

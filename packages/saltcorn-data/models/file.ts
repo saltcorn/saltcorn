@@ -603,7 +603,7 @@ class File {
     await fsp.writeFile(newPath, contents1);
     // create file
     const file = await File.create({
-      filename: name,
+      filename: path.basename(newPath),
       location: newPath,
       uploaded_at: new Date(),
       size_kb: contents1.length,
@@ -612,7 +612,7 @@ class File {
       mime_sub,
       min_role_read,
     });
-    file.location = File.absPathToServePath(file.location);
+    //file.location = File.absPathToServePath(file.location);
     return file;
   }
 
@@ -644,6 +644,7 @@ class File {
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
       // reload file list cache
     } catch (e: any) {
+      console.error(e);
       return { error: e.message };
     }
   }

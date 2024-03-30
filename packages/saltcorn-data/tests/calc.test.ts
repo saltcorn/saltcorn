@@ -482,4 +482,11 @@ describe("jsexprToWhere", () => {
       new Date(jsexprToWhere("foo>=today(-5)").foo.gt) < new Date(today)
     ).toEqual(true);
   });
+  it("translates new Date()", () => {
+    const todayW = jsexprToWhere("foo>=new Date()");
+    const today = todayW.foo.gt;
+    expect(todayW.foo.equal).toEqual(true);
+    expect(today instanceof Date).toBe(true);
+    expect(today.toISOString()).toMatch(/^202/);
+  });
 });

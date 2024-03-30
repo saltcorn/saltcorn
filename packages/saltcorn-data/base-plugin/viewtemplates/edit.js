@@ -1155,6 +1155,7 @@ const runPost = async (
           )
         );
         const childFields = new Set(childTable.fields.map((f) => f.name));
+        let repeatIx = 0;
         for (const childRow of form.values[field.name]) {
           // set fixed here
           childRow[field.metadata?.relation] = id;
@@ -1167,6 +1168,23 @@ const runPost = async (
               childFields.has(k)
             )
               childRow[k] = v;
+          }
+
+          for (const file_field of field.fields.filter(
+            (f) => f.type === "File"
+          )) {
+            const key = `${file_field.name}_${repeatIx}`;
+            if (req.files?.[key]) {
+              const file = await File.from_req_files(
+                req.files[key],
+                req.user ? req.user.id : null,
+                (file_field.attributes &&
+                  +file_field.attributes.min_role_read) ||
+                  1,
+                file_field?.attributes?.folder
+              );
+              childRow[file_field.name] = file.path_to_serve;
+            }
           }
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
@@ -1192,6 +1210,7 @@ const runPost = async (
               submitted_row_ids.add(`${ins_res.success}`);
             }
           }
+          repeatIx += 1;
         }
 
         //need to delete any rows that are missing
@@ -1616,7 +1635,10 @@ const prepare = async (
     optionsQuery,
   });
   const cancel = body._cancel;
-  await form.asyncValidate(body);
+  await form.asyncValidate({
+    ...body,
+    _file_names: Object.keys(req.files || {}),
+  });
   if (form.hasErrors && !cancel) {
     if (req.xhr) res.status(422);
     await form.fill_fkey_options(false, optionsQuery, req.user);
