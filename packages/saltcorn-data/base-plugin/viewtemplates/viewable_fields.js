@@ -1341,7 +1341,8 @@ const getForm = async (
     })
     .filter((tf) => !!tf);
   const path = isWeb(req) ? req.baseUrl + req.path : "";
-  let action = `/view/${viewname}?${objectToQueryString(req.query)}`;
+  const qs = objectToQueryString(req.query);
+  let action = `/view/${viewname}${qs ? "?" + qs : ""}`;
   if (path && path.startsWith("/auth/")) action = path;
   const layout = structuredClone(layout0);
   traverseSync(layout, {
