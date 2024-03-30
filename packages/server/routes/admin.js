@@ -2844,6 +2844,7 @@ router.get(
       onChange: "saveAndContinue(this)",
       values: { code: existing },
       noSubmitButton: true,
+      labelCols: 0,
       additionalButtons: [
         {
           label: req.__("Delete code page"),

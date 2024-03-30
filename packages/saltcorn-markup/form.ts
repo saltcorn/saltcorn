@@ -137,7 +137,12 @@ const formRowWrap = (
         ) + mkSubLabelAndHelp(hdr)
       : [
           div(
-            { class: [isHoriz(fStyle) && `col-sm-${labelCols} text-end`] },
+            {
+              class: [
+                isHoriz(fStyle) && labelCols && `col-sm-${labelCols} text-end`,
+                labelCols === 0 && "d-none",
+              ],
+            },
             label(
               {
                 for: `input${text_attr(hdr.form_name)}`,
