@@ -781,7 +781,8 @@ router.post(
         contents: renderForm(wfres.renderForm, req.csrfToken()),
       });
     } else {
-      plugin.configuration = wfres;
+      const newCfg = wfres.cleanup ? wfres.context : wfres;
+      plugin.configuration = newCfg;
       await plugin.upsert();
       await load_plugins.loadPlugin(plugin);
       const instore = await Plugin.store_plugins_available();
@@ -792,6 +793,7 @@ router.post(
         tenant: db.getTenantSchema(),
       });
       if (module.layout) await sleep(500); // Allow other workers to reload this plugin
+      if (wfres.cleanup) await wfres.cleanup();
       res.redirect("/plugins");
     }
   })
