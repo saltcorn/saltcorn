@@ -688,10 +688,22 @@ class State {
       "function_code_pages",
       {}
     );
+    const fetch = require("node-fetch");
+
     Object.values(code_pages).forEach((codeStr: string) => {
       try {
-        const funCtxKeys = new Set(Object.keys(this.function_context));
-        const sandbox = createContext({ ...this.function_context });
+        const myContext = {
+          ...this.function_context,
+          Table,
+          File,
+          User,
+          setTimeout,
+          fetch,
+          URL,
+          require: (nm: string) => this.codeNPMmodules[nm],
+        };
+        const funCtxKeys = new Set(Object.keys(myContext));
+        const sandbox = createContext(myContext);
         runInContext(codeStr, sandbox);
 
         Object.keys(sandbox).forEach((k) => {
