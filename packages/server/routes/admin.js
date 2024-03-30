@@ -2844,6 +2844,15 @@ router.get(
       onChange: "saveAndContinue(this)",
       values: { code: existing },
       noSubmitButton: true,
+      additionalButtons: [
+        {
+          label: req.__("Delete code page"),
+          class: "btn btn-outline-danger btn-sm",
+          onclick: `if(confirm('Are you sure you would like to delete this code page?'))ajax_post('/admin/delete-codepage/${encodeURIComponent(
+            name
+          )}')`,
+        },
+      ],
       fields: [
         {
           name: "code",
@@ -2889,6 +2898,19 @@ router.post(
     await getState().refresh_codepages();
 
     res.json({ success: true });
+  })
+);
+router.post(
+  "/delete-codepage/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const code_pages = getState().getConfigCopy("function_code_pages", {});
+    delete code_pages[name];
+    await getState().setConfig("function_code_pages", code_pages);
+    await getState().refresh_codepages();
+
+    res.json({ goto: `/admin/dev` });
   })
 );
 
