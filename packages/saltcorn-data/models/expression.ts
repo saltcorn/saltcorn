@@ -536,7 +536,7 @@ function get_expression_function(
   const { getState } = require("../db/state");
   const f = runInNewContext(
     `(${args})=>(${expression})`,
-    getState().function_context
+    getState().eval_context
   );
   return (row: any, user: any) => f(row, row, user);
 }
@@ -555,10 +555,11 @@ function eval_expression(expression: string, row: any, user?: any): any {
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
-  return runInNewContext(
-    `(${args})=>(${expression})`,
-    getState().function_context
-  )(row, row, user);
+  return runInNewContext(`(${args})=>(${expression})`, getState().eval_context)(
+    row,
+    row,
+    user
+  );
 }
 
 /**
@@ -580,7 +581,7 @@ function get_async_expression_function(
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
   const f = runInNewContext(evalStr, {
-    ...getState().function_context,
+    ...getState().eval_context,
     ...extraContext,
   });
   return (row: any, user: any) => f(row, row, user);

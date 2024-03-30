@@ -133,7 +133,8 @@ class Form implements AbstractForm {
           undefined,
           extraCtx,
           optionsQuery,
-          formFieldNames
+          formFieldNames,
+          this.values[f.name] || undefined
         );
     }
   }

@@ -241,7 +241,7 @@ const configuration_workflow = (req) =>
           }));
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l) =>
-            l.suitableFor("show")
+            l.suitableFor("list")
           );
           const myviewrow = View.findOne({ name: context.viewname });
           // generate layout for legacy views

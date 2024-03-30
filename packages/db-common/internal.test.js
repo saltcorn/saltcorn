@@ -145,6 +145,10 @@ describe("mkWhere", () => {
       values: [],
       where: 'where not ("id" is null)',
     });
+    expect(mkWhere({ not: { id: null }, x: 5 })).toStrictEqual({
+      values: [5],
+      where: 'where not ("id" is null) and "x"=$1',
+    });
   });
   it("should query lt/gt", () => {
     expect(mkWhere({ id: { lt: 5 } })).toStrictEqual({

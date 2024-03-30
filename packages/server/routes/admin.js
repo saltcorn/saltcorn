@@ -2772,6 +2772,7 @@ admin_config_route({
     });
   },
   response(form, req, res) {
+    const code_pages = getState().getConfig("function_code_pages", {});
     send_admin_page({
       res,
       req,
@@ -2798,11 +2799,122 @@ admin_config_route({
               ),
             ],
           },
+          {
+            type: "card",
+            title: req.__("Constants and function code"),
+            contents: [
+              div(
+                Object.keys(code_pages)
+                  .map((k) =>
+                    a(
+                      {
+                        href: `/admin/edit-codepage/${encodeURIComponent(k)}`,
+                        class: "",
+                      },
+                      k
+                    )
+                  )
+                  .join(" | "),
+                button(
+                  {
+                    class: "btn btn-secondary btn-sm d-block mt-2",
+                    onclick: `location.href='/admin/edit-codepage/'+prompt('Name of the new page')`,
+                  },
+                  i({ class: "fas fa-plus me-1" }),
+                  "Add page"
+                )
+              ),
+            ],
+          },
         ],
       },
     });
   },
 });
+
+router.get(
+  "/edit-codepage/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const code_pages = getState().getConfig("function_code_pages", {});
+    const existing = code_pages[name] || "";
+    const form = new Form({
+      action: `/admin/edit-codepage/${encodeURIComponent(name)}`,
+      onChange: "saveAndContinue(this)",
+      values: { code: existing },
+      noSubmitButton: true,
+      labelCols: 0,
+      additionalButtons: [
+        {
+          label: req.__("Delete code page"),
+          class: "btn btn-outline-danger btn-sm",
+          onclick: `if(confirm('Are you sure you would like to delete this code page?'))ajax_post('/admin/delete-codepage/${encodeURIComponent(
+            name
+          )}')`,
+        },
+      ],
+      fields: [
+        {
+          name: "code",
+          form_name: "code",
+          label: "Code",
+          sublabel:
+            "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions",
+          input_type: "code",
+          attributes: { mode: "text/javascript" },
+          validator(s) {
+            return true;
+          },
+        },
+      ],
+    });
+
+    send_admin_page({
+      res,
+      req,
+      active_sub: "Development",
+      sub2_page: req.__(`%s code page`, name),
+      contents: {
+        type: "card",
+        title: req.__(`%s code page`, name),
+        contents: [renderForm(form, req.csrfToken())],
+      },
+    });
+  })
+);
+
+router.post(
+  "/edit-codepage/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const code_pages = getState().getConfigCopy("function_code_pages", {});
+
+    const code = req.body.code;
+    await getState().setConfig("function_code_pages", {
+      ...code_pages,
+      [name]: code,
+    });
+    await getState().refresh_codepages();
+
+    res.json({ success: true });
+  })
+);
+router.post(
+  "/delete-codepage/:name",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { name } = req.params;
+    const code_pages = getState().getConfigCopy("function_code_pages", {});
+    delete code_pages[name];
+    await getState().setConfig("function_code_pages", code_pages);
+    await getState().refresh_codepages();
+
+    res.json({ goto: `/admin/dev` });
+  })
+);
+
 /**
  * Notifications
  */

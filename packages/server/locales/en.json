@@ -1391,5 +1391,8 @@
 	"refresh": "refresh",
 	"installed": "installed",
 	"Include table history in backup": "Include table history in backup",
-	"The plugin was corrupted and had to be repaired. We recommend restarting your server.": "The plugin was corrupted and had to be repaired. We recommend restarting your server."
+	"The plugin was corrupted and had to be repaired. We recommend restarting your server.": "The plugin was corrupted and had to be repaired. We recommend restarting your server.",
+	"%s code page": "%s code page",
+	"Constants and function code": "Constants and function code",
+	"Delete code page": "Delete code page"
 }

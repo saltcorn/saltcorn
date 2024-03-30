@@ -159,10 +159,18 @@ function apply_showif() {
       decodeURIComponent(e.attr("data-fetch-options"))
     );
     if (window._sc_loglevel > 4) console.log("dynwhere", dynwhere);
-    const kvToQs = ([k, v]) => {
+    const kvToQs = ([k, v], is_or) => {
       return k === "or" && Array.isArray(v)
-        ? v.map((v1) => Object.entries(v1).map(kvToQs).join("&")).join("&")
-        : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}`;
+        ? v
+            .map((v1) =>
+              Object.entries(v1)
+                .map((kv) => kvToQs(kv, true))
+                .join("&")
+            )
+            .join("&")
+        : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}${
+            is_or ? "&_or_field=" + k : ""
+          }`;
     };
     const qss = Object.entries(dynwhere.whereParsed).map(kvToQs);
     if (dynwhere.dereference) {

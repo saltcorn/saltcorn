@@ -6,6 +6,7 @@ import mocks from "./mocks";
 const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
 const {
+  eval_expression,
   get_expression_function,
   transform_for_async,
   expressionValidator,
@@ -29,6 +30,20 @@ afterAll(db.close);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+});
+
+describe("eval_expression", () => {
+  it("simply evaluates", () => {
+    expect(eval_expression("x+2", { x: 5 })).toBe(7);
+  });
+  it("uses code pages", async () => {
+    await getState().setConfig("function_code_pages", {
+      mypage: `function add58(x){return x+58}`,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("add58(x)", { x: 5 })).toBe(63);
+  });
 });
 
 describe("calculated", () => {
