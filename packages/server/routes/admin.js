@@ -2863,8 +2863,17 @@ router.get(
             "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions",
           input_type: "code",
           attributes: { mode: "text/javascript" },
+          class: "validate-statements",
           validator(s) {
-            return true;
+            try {
+              let AsyncFunction = Object.getPrototypeOf(
+                async function () {}
+              ).constructor;
+              AsyncFunction(s);
+              return true;
+            } catch (e) {
+              return e.message;
+            }
           },
         },
       ],
