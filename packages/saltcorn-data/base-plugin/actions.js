@@ -1106,6 +1106,9 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Run arbitrary JavaScript code",
+    configFormOptions: {
+      formStyle: "vert",
+    },
     configFields: async ({ table }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
