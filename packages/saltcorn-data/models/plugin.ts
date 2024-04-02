@@ -104,6 +104,7 @@ class Plugin {
     await db.deleteWhere("_sc_plugins", { id: this.id });
     const { getState } = require("../db/state");
     await getState().remove_plugin(this.name);
+    await getState().refreshUserLayouts();
   }
 
   /**

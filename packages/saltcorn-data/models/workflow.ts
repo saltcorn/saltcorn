@@ -36,6 +36,7 @@ class Workflow implements AbstractWorkflow {
   startAtStepURL?: (stepName: string) => string;
   autoSave?: boolean;
   previewURL?: string;
+  userSpecific?: boolean;
 
   /**
    * Workflow constructor
@@ -49,6 +50,7 @@ class Workflow implements AbstractWorkflow {
     this.previewURL = o.previewURL;
     this.__ = (s: any) => s;
     this.onStepSave = o.onStepSave;
+    this.userSpecific = o.userSpecific;
   }
   async singleStepForm(body?: any, req?: any): Promise<RunResult | undefined> {
     if (req) this.__ = (s: any) => req.__(s);
@@ -65,7 +67,10 @@ class Workflow implements AbstractWorkflow {
     const step = this.steps[stepIx];
     if (step.form) {
       const form = await applyAsync(step.form, context);
-
+      if (stepBody.userId) {
+        form.hidden("userId");
+        form.values.userId = stepBody.userId;
+      }
       let contextChanges = null,
         savingErrors = null;
       const valres = form.validate(stepBody);
@@ -114,7 +119,7 @@ class Workflow implements AbstractWorkflow {
       return this.runStep(body || {}, 0);
     }
 
-    const { stepName, contextEnc, ...stepBody } = body;
+    const { stepName, contextEnc, userId, ...stepBody } = body;
 
     if (!contextEnc) {
       const startStepIx = this.steps.findIndex(
@@ -170,7 +175,7 @@ class Workflow implements AbstractWorkflow {
       } else {
         newCtx = { ...context, ...toCtx };
       }
-
+      if (userId) newCtx.userId = userId;
       if (this.onStepSuccess) await this.onStepSuccess(step, newCtx);
       return this.runStep(newCtx, stepIx + 1);
     } else if (step.builder) {
@@ -208,10 +213,12 @@ class Workflow implements AbstractWorkflow {
     }
     if (step.form) {
       const form = await applyAsync(step.form, context);
-
-      form.hidden("stepName", "contextEnc");
+      const hiddens = ["stepName", "contextEnc"];
+      if (context.userId) hiddens.push("userId");
+      form.hidden(...hiddens);
       form.values.stepName = step.name;
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
+      if (context.userId) form.values.userId;
 
       form.fields.forEach((fld: Field) => {
         const ctxValue =
@@ -371,6 +378,7 @@ namespace Workflow {
     action?: string;
     previewURL?: string;
     onStepSave?: (step: any, context: any, formVals: any) => any;
+    userSpecific?: boolean;
   };
 }
 type WorkflowCfg = Workflow.WorkflowCfg;

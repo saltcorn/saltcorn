@@ -16,6 +16,7 @@ const {
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
+const User = require("@saltcorn/data/models/user");
 const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
 const {
   upgrade_all_tenants_plugins,
@@ -675,6 +676,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
+    const { user_id } = req.query;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
@@ -689,7 +691,16 @@ router.get(
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     flow.autoSave = true;
     flow.saveURL = `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`;
-    const wfres = await flow.run(plugin.configuration || {});
+    // take the configuration from user._attributes when user_id is set
+    let wfres = null;
+    if (user_id) {
+      const user = await User.findOne({ id: user_id });
+      const userLayout = user._attributes?.layout || {};
+      wfres = await flow.run({
+        ...(userLayout.plugin === name ? userLayout.config : {}),
+        userId: user_id,
+      });
+    } else wfres = await flow.run(plugin.configuration || {});
     if (module.layout) {
       wfres.renderForm.additionalButtons = [
         ...(wfres.renderForm.additionalButtons || []),
@@ -749,6 +760,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
+    const { userId } = req.body;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     let module = getState().plugins[plugin.name];
     if (!module) {
@@ -782,19 +794,30 @@ router.post(
       });
     } else {
       const newCfg = wfres.cleanup ? wfres.context : wfres;
-      plugin.configuration = newCfg;
-      await plugin.upsert();
-      await load_plugins.loadPlugin(plugin);
-      const instore = await Plugin.store_plugins_available();
-      const store_plugin = instore.find((p) => p.name === plugin.name);
-      if (store_plugin && store_plugin.has_auth) flash_restart(req);
+      let redirect = "";
+      if (!userId) {
+        plugin.configuration = newCfg;
+        await plugin.upsert();
+        await load_plugins.loadPlugin(plugin);
+        const instore = await Plugin.store_plugins_available();
+        const store_plugin = instore.find((p) => p.name === plugin.name);
+        if (store_plugin && store_plugin.has_auth) flash_restart(req);
+        redirect = "/plugins";
+      } else {
+        const user = await User.findOne({ id: userId });
+        const userAttrs = user._attributes ? { ...user._attributes } : {};
+        userAttrs.layout = { plugin: plugin.name, config: newCfg };
+        await user.update({ _attributes: userAttrs });
+        getState().userLayouts[req.user.email] = module.layout(newCfg);
+        redirect = "/auth/settings";
+      }
       getState().processSend({
         refresh_plugin_cfg: plugin.name,
         tenant: db.getTenantSchema(),
       });
       if (module.layout) await sleep(500); // Allow other workers to reload this plugin
       if (wfres.cleanup) await wfres.cleanup();
-      res.redirect("/plugins");
+      res.redirect(redirect);
     }
   })
 );
@@ -804,6 +827,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
+    const { userId } = req.body;
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     let module = getState().plugins[plugin.name];
     if (!module) {
@@ -812,7 +836,9 @@ router.post(
     const flow = module.configuration_workflow();
     const step = await flow.singleStepForm(req.body, req);
     if (step?.renderForm) {
-      if (!step.renderForm.hasErrors && !step.savingErrors) {
+      if (step.renderForm.hasErrors || step.savingErrors)
+        res.status(400).send(step.savingErrors || "Error");
+      else if (!userId) {
         plugin.configuration = {
           ...plugin.configuration,
           ...step.renderForm.values,
@@ -820,12 +846,26 @@ router.post(
         };
         await plugin.upsert();
         await load_plugins.loadPlugin(plugin);
-        getState().processSend({
-          refresh_plugin_cfg: plugin.name,
-          tenant: db.getTenantSchema(),
-        });
-        res.json({ success: "ok" });
-      } else if (step.savingErrors) res.status(400).send(step.savingErrors);
+      } else {
+        const user = await User.findOne({ id: userId });
+        const userAttrs = user._attributes ? { ...user._attributes } : {};
+        userAttrs.layout = {
+          plugin: plugin.name,
+          config: {
+            ...step.renderForm.values,
+            ...(step.contextChanges ? step.contextChanges : {}),
+          },
+        };
+        await user.update({ _attributes: userAttrs });
+        getState().userLayouts[req.user.email] = module.layout(
+          userAttrs.layout.config
+        );
+      }
+      getState().processSend({
+        refresh_plugin_cfg: plugin.name,
+        tenant: db.getTenantSchema(),
+      });
+      res.json({ success: "ok" });
     }
   })
 );

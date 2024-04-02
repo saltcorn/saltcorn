@@ -131,6 +131,7 @@ class State {
   eventTypes: any;
   fonts: Record<string, string>;
   layouts: Record<string, PluginLayout>;
+  userLayouts: Record<string, PluginLayout>;
   headers: any;
   function_context: any;
   functions: any;
@@ -175,6 +176,7 @@ class State {
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.layouts = { emergency: emergency_layout };
+    this.userLayouts = {};
     this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
@@ -203,15 +205,39 @@ class State {
    * @returns {object}
    */
   getLayout(user?: User) {
-    const role_id = user ? +user.role_id : 100;
-    const layout_by_role = this.getConfig("layout_by_role");
-    if (layout_by_role && layout_by_role[role_id]) {
-      const chosen = this.layouts[layout_by_role[role_id]];
-      if (chosen) return chosen;
+    if (user?.email && this.userLayouts[user.email]) {
+      return this.userLayouts[user.email];
+    } else {
+      const role_id = user ? +user.role_id : 100;
+      const layout_by_role = this.getConfig("layout_by_role");
+      if (layout_by_role && layout_by_role[role_id]) {
+        const chosen = this.layouts[layout_by_role[role_id]];
+        if (chosen) return chosen;
+      }
+      const layoutvs = Object.values(this.layouts);
+      return isNode()
+        ? layoutvs[layoutvs.length - 1]
+        : withRenderBody(layoutvs);
     }
-    const layoutvs = Object.values(this.layouts);
-    return isNode() ? layoutvs[layoutvs.length - 1] : withRenderBody(layoutvs);
   }
+
+  getLayoutPlugin(user?: User) {
+    if (user?._attributes?.layout) {
+      const pluginName = user._attributes.layout.plugin;
+      let plugin = this.plugins[pluginName];
+      if (!plugin) plugin = this.plugins[this.plugin_module_names[pluginName]];
+      if (plugin) return plugin;
+      else
+        this.log(
+          5,
+          `Warning: ${user.email} layout plugin ${pluginName} not found`
+        );
+    }
+    const layoutvs = Object.keys(this.layouts);
+    const name = layoutvs[layoutvs.length - 1];
+    return this.plugins[name];
+  }
+
   /**
    * Get Two factor authentication policy
    * Based on role of user
@@ -277,6 +303,24 @@ class State {
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+
+  async refreshUserLayouts() {
+    this.userLayouts = {};
+    const usersWithLayout = (await User.find({})).filter(
+      (user) => user._attributes?.layout
+    );
+    for (const user of usersWithLayout) {
+      const nameWithOrg = user._attributes.layout.plugin;
+      const tokens = nameWithOrg.split("/");
+      const pluginName = tokens[tokens.length - 1];
+      const module = this.plugins[pluginName];
+      if (module?.layout) {
+        // @ts-ignore
+        const userLayout = module.layout(user._attributes.layout.config);
+        this.userLayouts[user.email] = userLayout;
+      }
+    }
   }
 
   /**

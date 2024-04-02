@@ -1362,6 +1362,43 @@ const userSettings = async ({ req, res, pwform, user }) => {
           ),
       ],
     };
+  let themeCfgCard;
+  if (user) {
+    const layoutPlugin = getState().getLayoutPlugin(user);
+    const modNames = getState().plugin_module_names;
+    const pluginName = layoutPlugin.plugin_name;
+    let safeName = "";
+    for (const [k, v] of Object.entries(modNames)) {
+      if (v === pluginName) safeName = k;
+    }
+    const showThemeCfg =
+      layoutPlugin.configuration_workflow &&
+      layoutPlugin.configuration_workflow().userSpecific;
+    themeCfgCard = {
+      type: "card",
+      title: req.__("Layout"),
+      contents: [
+        div(
+          showThemeCfg
+            ? req.__("Adjust the the theme for this user")
+            : req.__("The current theme has no user specific settings")
+        ),
+        showThemeCfg
+          ? a(
+              {
+                class: "mt-4 btn btn-primary",
+                role: "button",
+                href: `/plugins/configure/${encodeURIComponent(
+                  safeName
+                )}?user_id=${user.id}`,
+                title: req.__("Configure theme"),
+              },
+              req.__("Configure")
+            )
+          : "",
+      ],
+    };
+  }
   return {
     above: [
       {
@@ -1434,6 +1471,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
           ]
         : []),
       ...(apikeycard ? [apikeycard] : []),
+      ...(themeCfgCard ? [themeCfgCard] : []),
     ],
   };
 };

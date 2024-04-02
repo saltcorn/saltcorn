@@ -88,7 +88,7 @@ class PluginInstaller {
       version: pckJSON.version,
       plugin_module: module,
       location: this.pluginDir,
-      name: this.name,
+      name: this.plugin.name,
       loadedWithReload,
     };
   }

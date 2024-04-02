@@ -48,6 +48,11 @@ const loadPlugin = async (plugin, force) => {
       );
     }
   }
+  if (res.plugin_module.layout && res.plugin_module.configuration_workflow) {
+    const flow = res.plugin_module.configuration_workflow();
+    if (flow?.userSpecific) getState().refreshUserLayouts();
+  }
+
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
@@ -83,6 +88,7 @@ const loadAllPlugins = async (force) => {
       console.error(e);
     }
   }
+  await getState().refreshUserLayouts();
   await getState().refresh(true);
 };
 
