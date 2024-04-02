@@ -1195,6 +1195,48 @@ module.exports = {
      **/
     run: run_code,
   },
+  run_js_code_in_field: {
+    /**
+     * @param {object} opts
+     * @param {object} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Run arbitrary JavaScript code from a String field",
+    configFields: async ({ table }) => {
+      const field_opts = table.fields
+        .filter((f) => f.type?.name === "String")
+        .map((f) => f.name);
+      return [
+        {
+          name: "code_field",
+          label: "Code field",
+          sublabel: "String field that contains the JavaScript code to run",
+          type: "String",
+          required: true,
+          attributes: {
+            options: field_opts,
+          },
+        },
+        {
+          name: "run_where",
+          label: "Run where",
+          input_type: "select",
+          options: ["Server", "Client page"],
+        },
+      ];
+    },
+    requireRow: true,
+
+    /**
+     * @type {base-plugin/actions~run_code}
+     * @see base-plugin/actions~run_code
+     **/
+    run: async ({ configuration: { code_field, run_where }, row, ...rest }) => {
+      const code = row[code_field] || "";
+      return await run_code({ ...rest, configuration: { run_where, code } });
+    },
+  },
+
   duplicate_row_prefill_edit: {
     configFields: async ({ table }) => {
       const fields = table ? table.getFields() : [];
