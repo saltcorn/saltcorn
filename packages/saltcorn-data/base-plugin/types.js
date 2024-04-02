@@ -1021,6 +1021,51 @@ const string = {
           text(v) || ""
         ),
     },
+    code_editor: {
+      isEdit: true,
+      blockDisplay: true,
+      description: "Edit as code",
+      configFields: [
+        {
+          type: "String",
+          name: "mode",
+          label: "mode",
+          required: true,
+          attributes: {
+            options: [
+              "application/javascript",
+              "text/html",
+              "text/css",
+              "text/x-sql",
+            ],
+          },
+        },
+        /*{
+          type: "Integer",
+          name: "rows",
+          label: "Rows",
+        },*/
+      ],
+      run: (nm, v, attrs, cls, required, field) =>
+        textarea(
+          {
+            class: ["form-control", "to-code", cls],
+            name: text_attr(nm),
+            "data-fieldname": text_attr(field.name),
+            disabled: attrs.disabled,
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+            placeholder: attrs.placeholder,
+            spellcheck: "false",
+            required: !!required,
+            maxlength: isdef(attrs.max_length) && attrs.max_length,
+            minlength: isdef(attrs.min_length) && attrs.min_length,
+            id: `input${text_attr(nm)}`,
+            mode: attrs.mode,
+          },
+          text(v) || ""
+        ),
+    },
     /**
      * @namespace
      * @category saltcorn-data

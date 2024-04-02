@@ -712,7 +712,7 @@ class State {
           }
         });
       } catch (e) {
-        console.error(e);
+        //console.error(e);
       }
     });
     if (!noSignal && db.is_node)

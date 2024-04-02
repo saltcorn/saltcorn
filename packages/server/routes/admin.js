@@ -2860,11 +2860,27 @@ router.get(
           form_name: "code",
           label: "Code",
           sublabel:
-            "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions",
+            "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions. Declare a constant <code>k</code> as <code>globalThis.k = ...</code> In scope: " +
+            a(
+              {
+                href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html",
+                target: "_blank",
+              },
+              "Table"
+            ),
           input_type: "code",
           attributes: { mode: "text/javascript" },
+          class: "validate-statements",
           validator(s) {
-            return true;
+            try {
+              let AsyncFunction = Object.getPrototypeOf(
+                async function () {}
+              ).constructor;
+              AsyncFunction(s);
+              return true;
+            } catch (e) {
+              return e.message;
+            }
           },
         },
       ],
