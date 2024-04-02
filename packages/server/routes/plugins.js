@@ -869,6 +869,30 @@ router.post(
     }
   })
 );
+
+router.post(
+  "/remove_user_layout",
+  error_catcher(async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: "Not logged in" });
+    else if (!req.user.email)
+      return res.status(400).json({ error: "No email" });
+    else {
+      const user = await User.findOne({ email: req.user.email });
+      if (user && user._attributes?.layout) {
+        const userAttrs = { ...user._attributes };
+        const plugin = userAttrs.layout.plugin;
+        delete userAttrs.layout;
+        await user.update({ _attributes: userAttrs });
+        getState().processSend({
+          refresh_plugin_cfg: plugin,
+          tenant: db.getTenantSchema(),
+        });
+      }
+      res.json({ success: "ok", reload_page: true });
+    }
+  })
+);
+
 /**
  * @name get/new
  * @function

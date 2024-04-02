@@ -45,6 +45,7 @@ const {
   p,
   script,
   domReady,
+  button,
 } = require("@saltcorn/markup/tags");
 const {
   available_languages,
@@ -1384,16 +1385,30 @@ const userSettings = async ({ req, res, pwform, user }) => {
             : req.__("The current theme has no user specific settings")
         ),
         showThemeCfg
-          ? a(
+          ? div(
               {
-                class: "mt-4 btn btn-primary",
-                role: "button",
-                href: `/plugins/configure/${encodeURIComponent(
-                  safeName
-                )}?user_id=${user.id}`,
-                title: req.__("Configure theme"),
+                class: "mt-4",
               },
-              req.__("Configure")
+
+              a(
+                {
+                  class: "btn btn-primary",
+                  role: "button",
+                  href: `/plugins/configure/${encodeURIComponent(
+                    safeName
+                  )}?user_id=${user.id}`,
+                  title: req.__("Configure theme"),
+                },
+                req.__("Configure")
+              ),
+              button(
+                {
+                  class: "btn btn-primary ms-2",
+                  onclick: "ajax_post('/plugins/remove_user_layout')",
+                  title: req.__("Remove all user specific theme settings"),
+                },
+                req.__("Reset")
+              )
             )
           : "",
       ],
