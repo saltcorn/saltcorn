@@ -1233,7 +1233,11 @@ module.exports = {
      **/
     run: async ({ configuration: { code_field, run_where }, row, ...rest }) => {
       const code = row[code_field] || "";
-      return await run_code({ ...rest, configuration: { run_where, code } });
+      return await run_code({
+        ...rest,
+        row,
+        configuration: { run_where, code },
+      });
     },
   },
 
