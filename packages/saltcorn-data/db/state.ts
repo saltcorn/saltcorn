@@ -34,7 +34,14 @@ import config from "../models/config";
 const { getAllConfigOrDefaults, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
-const { structuredClone, removeAllWhiteSpace, stringToJSON, isNode } = utils;
+const {
+  structuredClone,
+  removeAllWhiteSpace,
+  stringToJSON,
+  sleep,
+  interpolate,
+  isNode,
+} = utils;
 import I18n from "i18n";
 import { tz } from "moment-timezone";
 import { join } from "path";
@@ -699,6 +706,8 @@ class State {
           User,
           setTimeout,
           fetch,
+          sleep,
+          interpolate,
           URL,
           require: (nm: string) => this.codeNPMmodules[nm],
         };
