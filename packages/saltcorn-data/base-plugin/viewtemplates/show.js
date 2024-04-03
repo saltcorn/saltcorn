@@ -929,7 +929,11 @@ const render = (
         url = `/delete/${table.name}/${
           row[table.pk_name]
         }?redirect=${encodeURIComponent(
-          segment.configuration?.after_delete_url || "/"
+          interpolate(
+            segment.configuration?.after_delete_url || "/",
+            row,
+            req?.user
+          )
         )}`;
       return action_link(url, req, segment);
     },
