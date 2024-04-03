@@ -121,6 +121,17 @@ const run_code = async ({
       });
     };
   }
+  const run_js_code = async ({ code, ...restArgs }) => {
+    return await run_code({
+      row,
+      table,
+      channel,
+      configuration: { code, run_where },
+      user,
+      ...rest,
+      ...restArgs,
+    });
+  };
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
@@ -137,6 +148,7 @@ const run_code = async ({
     sleep,
     fetchJSON,
     fetch,
+    run_js_code,
     URL,
     File,
     User,
