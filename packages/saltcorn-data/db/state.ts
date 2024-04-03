@@ -697,33 +697,33 @@ class State {
     );
     const fetch = require("node-fetch");
 
-    Object.values(code_pages).forEach((codeStr: string) => {
-      try {
-        const myContext = {
-          ...this.function_context,
-          Table,
-          File,
-          User,
-          setTimeout,
-          fetch,
-          sleep,
-          interpolate,
-          URL,
-          require: (nm: string) => this.codeNPMmodules[nm],
-        };
-        const funCtxKeys = new Set(Object.keys(myContext));
-        const sandbox = createContext(myContext);
-        runInContext(codeStr, sandbox);
+    try {
+      const myContext = {
+        ...this.function_context,
+        Table,
+        File,
+        User,
+        setTimeout,
+        fetch,
+        sleep,
+        interpolate,
+        URL,
+        require: (nm: string) => this.codeNPMmodules[nm],
+      };
+      const funCtxKeys = new Set(Object.keys(myContext));
+      const sandbox = createContext(myContext);
+      const codeStr = Object.values(code_pages).join(";\n");
+      runInContext(codeStr, sandbox);
 
-        Object.keys(sandbox).forEach((k) => {
-          if (!funCtxKeys.has(k)) {
-            this.codepage_context[k] = sandbox[k];
-          }
-        });
-      } catch (e) {
-        //console.error(e);
-      }
-    });
+      Object.keys(sandbox).forEach((k) => {
+        if (!funCtxKeys.has(k)) {
+          this.codepage_context[k] = sandbox[k];
+        }
+      });
+    } catch (e) {
+      //console.error(e);
+    }
+
     if (!noSignal && db.is_node)
       process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
   }
