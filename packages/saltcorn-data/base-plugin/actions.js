@@ -1206,6 +1206,18 @@ module.exports = {
       const field_opts = table.fields
         .filter((f) => f.type?.name === "String")
         .map((f) => f.name);
+      table.fields.forEach((f) => {
+        if (f.is_fkey && f.type !== "File") {
+          const refTable = Table.findOne({ name: f.reftable_name });
+          if (!refTable)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+          field_opts.push(
+            ...refTable.fields
+              .filter((jf) => jf.type?.name === "String")
+              .map((jf) => `${f.name}.${jf.name}`)
+          );
+        }
+      });
       return [
         {
           name: "code_field",
@@ -1231,8 +1243,25 @@ module.exports = {
      * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      **/
-    run: async ({ configuration: { code_field, run_where }, row, ...rest }) => {
-      const code = row[code_field] || "";
+    run: async ({
+      table,
+      configuration: { code_field, run_where },
+      row,
+      ...rest
+    }) => {
+      let code;
+      if (code_field.includes(".")) {
+        const [ref, target] = code_field.split(".");
+        if (typeof row[ref] === "object") code = row[ref][target];
+        else if (!row[ref]) return;
+        else {
+          const keyfield = table.getField(ref);
+          const refTable = Table.findOne({ name: keyfield.reftable_name });
+          const refRow = await refTable.getRow({ id: row[ref] });
+          code = refRow[target];
+        }
+      } else code = row[code_field];
+      code = code || "";
       return await run_code({
         ...rest,
         row,
