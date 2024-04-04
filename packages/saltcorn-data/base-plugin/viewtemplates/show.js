@@ -545,7 +545,8 @@ const renderRows = async (
                 session_id: getSessionId(extra.req),
                 ...row,
               },
-              extra.req.user
+              extra.req.user,
+              `Extra state formula for view ${view.name}`
             )
           : {};
         const { id, ...outerState } = state;
@@ -678,16 +679,12 @@ const render = (
   const session_id = getSessionId(req);
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
-      try {
-        segment[key] = eval_expression(
-          segment[key],
-          { session_id, ...row },
-          req.user
-        );
-      } catch (error) {
-        error.message = `Error in formula ${segment[key]} for property ${key} in segment of type ${segment.type}:\n${error.message}`;
-        throw error;
-      }
+      segment[key] = eval_expression(
+        segment[key],
+        { session_id, ...row },
+        req.user,
+        `property ${key} in segment of type ${segment.type}`
+      );
     }
   };
   const layout = structuredClone(layout0);
@@ -707,7 +704,12 @@ const render = (
 
       (segment.showif || []).forEach((sif, ix) => {
         if (sif) {
-          const showit = eval_expression(sif, { session_id, ...row }, req.user);
+          const showit = eval_expression(
+            sif,
+            { session_id, ...row },
+            req.user,
+            `Tabs show if formula`
+          );
           if (!showit) to_delete.add(ix);
         }
       });
