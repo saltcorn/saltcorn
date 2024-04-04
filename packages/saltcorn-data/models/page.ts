@@ -240,7 +240,8 @@ class Page implements AbstractPage {
               ...dollarizeObject(querystate || {}),
               session_id: getSessionId(extraArgs.req),
             },
-            extraArgs.req.user
+            extraArgs.req.user,
+            `Extra state formula when embedding view ${view?.name}`
           )
         : {};
       if (!view) {
@@ -366,7 +367,8 @@ class Page implements AbstractPage {
                   ...dollarizeObject(querystate || {}),
                   session_id: getSessionId(extraArgs.req),
                 },
-                extraArgs.req.user
+                extraArgs.req.user,
+                `Link extra state formula`
               )
             : {};
           segment.url +=

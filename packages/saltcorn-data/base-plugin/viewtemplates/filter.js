@@ -372,7 +372,12 @@ const run = async (
           `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
         );
       const extra_state = segment.extra_state_fml
-        ? eval_expression(segment.extra_state_fml, evalCtx, extra.req.user)
+        ? eval_expression(
+            segment.extra_state_fml,
+            evalCtx,
+            extra.req.user,
+            `Extra state formula for view ${view.name}`
+          )
         : {};
       if (segment.state === "local") {
         const state1 = { ...extra_state };
@@ -407,7 +412,12 @@ const run = async (
       }
       if (segment.view_state_fml) {
         const extra_state = segment.view_state_fml
-          ? eval_expression(segment.view_state_fml, evalCtx, extra.req.user)
+          ? eval_expression(
+              segment.view_state_fml,
+              evalCtx,
+              extra.req.user,
+              `Extra state formula for link`
+            )
           : {};
         segment.url +=
           (segment.transfer_state ? "" : `?`) +
@@ -427,7 +437,12 @@ const run = async (
 
       (segment.showif || []).forEach((sif, ix) => {
         if (sif) {
-          const showit = eval_expression(sif, evalCtx, extra.req.user);
+          const showit = eval_expression(
+            sif,
+            evalCtx,
+            extra.req.user,
+            "Tabs show if formula"
+          );
           if (!showit) to_delete.add(ix);
         }
       });
@@ -557,7 +572,8 @@ const run = async (
             ? eval_expression(
                 label_formula,
                 { [field_name]: value },
-                extra.req.user || { role_id: 100 }
+                extra.req.user || { role_id: 100 },
+                "Dropdown label formula"
               )
             : label
         )

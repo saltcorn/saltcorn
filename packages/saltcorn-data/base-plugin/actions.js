@@ -560,7 +560,12 @@ module.exports = {
       let to_addr;
 
       if (only_if) {
-        const bres = eval_expression(only_if, row);
+        const bres = eval_expression(
+          only_if,
+          row,
+          user,
+          "send_email only if formula"
+        );
         if (!bres) return;
       }
       switch (to_email) {
@@ -609,7 +614,7 @@ module.exports = {
         user ? user : { role_id: 100 }
       );
       const the_subject = subject_formula
-        ? eval_expression(subject, row)
+        ? eval_expression(subject, row, user, "send_email subject formula")
         : subject;
 
       getState().log(
@@ -1546,7 +1551,12 @@ module.exports = {
     },
     run: async ({ row, user, configuration: { view, new_state_fml } }) => {
       if (new_state_fml) {
-        const new_state = eval_expression(new_state_fml, row || {}, user);
+        const new_state = eval_expression(
+          new_state_fml,
+          row || {},
+          user,
+          "reload_embedded_view new state formula"
+        );
         const newqs = objectToQueryString(new_state);
         return {
           eval_js: `reload_embedded_view('${view}', '${newqs}')`,
@@ -1613,7 +1623,7 @@ module.exports = {
         ? { email: user_spec }
         : user_spec === "*"
         ? {}
-        : eval_expression(user_spec, row || {});
+        : eval_expression(user_spec, row || {}, user, "Notify user user where");
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({

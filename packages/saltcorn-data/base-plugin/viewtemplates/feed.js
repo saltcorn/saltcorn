@@ -605,7 +605,7 @@ const run = async (
         create_view_showif,
         state,
         extraArgs.req.user,
-        "Create link show if formula"
+        "Create view show if formula"
       )
     : undefined;
   if (

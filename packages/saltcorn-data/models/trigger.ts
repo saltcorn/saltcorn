@@ -307,7 +307,15 @@ class Trigger implements AbstractTrigger {
         step_count += 1;
         const step = this.configuration?.steps[i];
         if (step.step_only_if && runargs?.row)
-          if (!eval_expression(step.step_only_if, runargs.row)) continue;
+          if (
+            !eval_expression(
+              step.step_only_if,
+              runargs.row,
+              undefined,
+              "Multistep only if formula"
+            )
+          )
+            continue;
 
         let configuration = step;
         let action = state.actions[step.step_action_name];

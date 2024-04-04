@@ -1608,7 +1608,8 @@ class Table implements AbstractTable {
       .filter((c) => c.type === "Formula")
       .map((c) => c.configuration);
     for (const { formula, errormsg } of fmls) {
-      if (!eval_expression(formula, row)) return errormsg;
+      if (!eval_expression(formula, row, undefined, "Contraint formula"))
+        return errormsg;
     }
     return undefined;
   }
