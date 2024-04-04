@@ -682,8 +682,9 @@ const run = async (
                 "aria-expanded": "false",
                 "aria-controls": `a${stateHash}tab${ix}`,
               },
-              eval_expression(title_formula, r.row, extraArgs.req.user) ||
-                "Missing title"
+              (title_formula
+                ? eval_expression(title_formula, r.row, extraArgs.req.user)
+                : "") || "Missing title"
             )
           ),
           div(
