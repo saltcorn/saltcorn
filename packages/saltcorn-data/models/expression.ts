@@ -685,7 +685,7 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
     for (const row of rows) {
       try {
         getState().log(
-          5,
+          6,
           `recalculate_for_stored on table ${table.name} row ${row.id}`
         );
         await table.updateRow({}, row.id, undefined, true);
