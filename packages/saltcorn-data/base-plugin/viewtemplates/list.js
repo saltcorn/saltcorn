@@ -935,7 +935,12 @@ const run = async (
   const user_id =
     extraOpts && extraOpts.req.user ? extraOpts.req.user.id : null;
   const create_link_showif_pass = create_view_showif
-    ? eval_expression(create_view_showif, state, extraOpts.req.user)
+    ? eval_expression(
+        create_view_showif,
+        state,
+        extraOpts.req.user,
+        "Create view show if formula"
+      )
     : undefined;
   if (
     create_link_showif_pass !== false &&

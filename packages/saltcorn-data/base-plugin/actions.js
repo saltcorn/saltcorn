@@ -121,6 +121,17 @@ const run_code = async ({
       });
     };
   }
+  const run_js_code = async ({ code, ...restArgs }) => {
+    return await run_code({
+      row,
+      table,
+      channel,
+      configuration: { code, run_where },
+      user,
+      ...rest,
+      ...restArgs,
+    });
+  };
   const emitEvent = (eventType, channel, payload) =>
     Trigger.emitEvent(eventType, channel, user, payload);
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
@@ -137,6 +148,7 @@ const run_code = async ({
     sleep,
     fetchJSON,
     fetch,
+    run_js_code,
     URL,
     File,
     User,
@@ -548,7 +560,12 @@ module.exports = {
       let to_addr;
 
       if (only_if) {
-        const bres = eval_expression(only_if, row);
+        const bres = eval_expression(
+          only_if,
+          row,
+          user,
+          "send_email only if formula"
+        );
         if (!bres) return;
       }
       switch (to_email) {
@@ -597,7 +614,7 @@ module.exports = {
         user ? user : { role_id: 100 }
       );
       const the_subject = subject_formula
-        ? eval_expression(subject, row)
+        ? eval_expression(subject, row, user, "send_email subject formula")
         : subject;
 
       getState().log(
@@ -1206,6 +1223,18 @@ module.exports = {
       const field_opts = table.fields
         .filter((f) => f.type?.name === "String")
         .map((f) => f.name);
+      table.fields.forEach((f) => {
+        if (f.is_fkey && f.type !== "File") {
+          const refTable = Table.findOne({ name: f.reftable_name });
+          if (!refTable)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+          field_opts.push(
+            ...refTable.fields
+              .filter((jf) => jf.type?.name === "String")
+              .map((jf) => `${f.name}.${jf.name}`)
+          );
+        }
+      });
       return [
         {
           name: "code_field",
@@ -1231,8 +1260,25 @@ module.exports = {
      * @type {base-plugin/actions~run_code}
      * @see base-plugin/actions~run_code
      **/
-    run: async ({ configuration: { code_field, run_where }, row, ...rest }) => {
-      const code = row[code_field] || "";
+    run: async ({
+      table,
+      configuration: { code_field, run_where },
+      row,
+      ...rest
+    }) => {
+      let code;
+      if (code_field.includes(".")) {
+        const [ref, target] = code_field.split(".");
+        if (typeof row[ref] === "object") code = row[ref][target];
+        else if (!row[ref]) return;
+        else {
+          const keyfield = table.getField(ref);
+          const refTable = Table.findOne({ name: keyfield.reftable_name });
+          const refRow = await refTable.getRow({ id: row[ref] });
+          code = refRow[target];
+        }
+      } else code = row[code_field];
+      code = code || "";
       return await run_code({
         ...rest,
         row,
@@ -1505,7 +1551,12 @@ module.exports = {
     },
     run: async ({ row, user, configuration: { view, new_state_fml } }) => {
       if (new_state_fml) {
-        const new_state = eval_expression(new_state_fml, row || {}, user);
+        const new_state = eval_expression(
+          new_state_fml,
+          row || {},
+          user,
+          "reload_embedded_view new state formula"
+        );
         const newqs = objectToQueryString(new_state);
         return {
           eval_js: `reload_embedded_view('${view}', '${newqs}')`,
@@ -1572,7 +1623,7 @@ module.exports = {
         ? { email: user_spec }
         : user_spec === "*"
         ? {}
-        : eval_expression(user_spec, row || {});
+        : eval_expression(user_spec, row || {}, user, "Notify user user where");
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({

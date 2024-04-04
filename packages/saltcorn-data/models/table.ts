@@ -1365,6 +1365,12 @@ class Table implements AbstractTable {
       });
       let updated;
       if (need_to_update) {
+        state.log(
+          6,
+          `Updating ${this.name} because calculated fields: ${JSON.stringify(
+            v
+          )}, id=${id}`
+        );
         await db.update(this.name, v, id, { pk_name });
         updated = await this.getJoinedRow({
           where: { [pk_name]: id },
@@ -1407,7 +1413,7 @@ class Table implements AbstractTable {
           joinFields,
         });
     }
-
+    state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
     await db.update(this.name, v, id, { pk_name });
 
     if (this.has_sync_info) {
@@ -1602,7 +1608,8 @@ class Table implements AbstractTable {
       .filter((c) => c.type === "Formula")
       .map((c) => c.configuration);
     for (const { formula, errormsg } of fmls) {
-      if (!eval_expression(formula, row)) return errormsg;
+      if (!eval_expression(formula, row, undefined, "Contraint formula"))
+        return errormsg;
     }
     return undefined;
   }
@@ -1707,6 +1714,10 @@ class Table implements AbstractTable {
       Object.assign(v_in, valResCollector.set_fields);
 
     if (Object.keys(joinFields).length > 0) {
+      state.log(
+        6,
+        `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
+      );
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
@@ -1728,9 +1739,17 @@ class Table implements AbstractTable {
 
       for (const f of fields)
         if (f.calculated && f.stored) v[f.name] = calced[f.name];
+      state.log(
+        6,
+        `Updating ${this.name} because join fields: ${JSON.stringify(v_in)}`
+      );
       await db.update(this.name, v, id, { pk_name });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields);
+      state.log(
+        6,
+        `Inserting ${this.name} because join fields: ${JSON.stringify(v)}`
+      );
       id = await db.insert(this.name, v, { pk_name });
     }
     if (user && user.role_id > this.min_role_write && this.ownership_formula) {

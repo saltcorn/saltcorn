@@ -200,18 +200,15 @@ const make_link = (
     key: (r) => {
       let txt, href;
       const theIcon = link_icon || icon;
-      try {
-        txt = link_text_formula ? eval_expression(link_text, r) : link_text;
-      } catch (error) {
-        error.message = `Error in formula ${link_text} for link text:\n${error.message}`;
-        throw error;
-      }
-      try {
-        href = link_url_formula ? eval_expression(link_url, r) : link_url;
-      } catch (error) {
-        error.message = `Error in formula ${link_url} for link URL:\n${error.message}`;
-        throw error;
-      }
+
+      txt = link_text_formula
+        ? eval_expression(link_text, r, undefined, "Link text formula")
+        : link_text;
+
+      href = link_url_formula
+        ? eval_expression(link_url, r, undefined, "Link URL formula")
+        : link_url;
+
       const attrs = { href };
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = "dropdown-item";
@@ -366,7 +363,7 @@ const view_linker = (
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
     if (!view_label_formula) return view_label;
-    return eval_expression(view_label, row, user);
+    return eval_expression(view_label, row, user, "View Link label formula");
   };
   const get_extra_state = (row) => {
     if (!extra_state_fml) return "";
@@ -375,7 +372,12 @@ const view_linker = (
       session_id: getSessionId(req),
       ...row,
     };
-    const o = eval_expression(extra_state_fml, ctx, user);
+    const o = eval_expression(
+      extra_state_fml,
+      ctx,
+      user,
+      "View link extra state formula"
+    );
     return Object.entries(o)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
@@ -702,7 +704,10 @@ const get_viewable_fields = (
       const oldKeyF = tfield.key;
       if (typeof oldKeyF !== "function") return tfield;
       const newKeyF = (r) => {
-        if (eval_expression(column.showif, r, req.user)) return oldKeyF(r);
+        if (
+          eval_expression(column.showif, r, req.user, "Column show if formula")
+        )
+          return oldKeyF(r);
         else return "";
       };
       tfield.key = newKeyF;
@@ -725,7 +730,15 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
-          key: (r) => text(eval_expression(column.formula, r, req.user)),
+          key: (r) =>
+            text(
+              eval_expression(
+                column.formula,
+                r,
+                req.user,
+                "Formula value column"
+              )
+            ),
         };
       } else if (column.type === "Text") {
         return {
@@ -802,7 +815,12 @@ const get_viewable_fields = (
               index
             );
             const label = column.action_label_formula
-              ? eval_expression(column.action_label, r, req.user)
+              ? eval_expression(
+                  column.action_label,
+                  r,
+                  req.user,
+                  "Action label formula"
+                )
               : __(column.action_label) || __(column.action_name);
             const icon = column.action_icon || column.icon || undefined;
             if (url.javascript)

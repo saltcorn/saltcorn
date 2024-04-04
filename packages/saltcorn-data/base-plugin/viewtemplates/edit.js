@@ -675,7 +675,12 @@ const transformForm = async ({
       const to_delete = new Set();
       (segment.showif || []).forEach((sif, ix) => {
         if (sif) {
-          const showit = eval_expression(sif, row || pseudo_row, req.user);
+          const showit = eval_expression(
+            sif,
+            row || pseudo_row,
+            req.user,
+            "Tab show if formula"
+          );
           if (!showit) to_delete.add(ix);
         }
       });
@@ -845,7 +850,8 @@ const transformForm = async ({
               session_id: getSessionId(req),
               ...(row || pseudo_row),
             },
-            req.user
+            req.user,
+            `Extra state formula for embedding view ${view.name}`
           )
         : {};
       const qs = stateToQueryString({ ...state, ...extra_state });
@@ -1779,7 +1785,11 @@ const whenDone = async (
     res_redirect(`/page/${page_group_when_done}`);
     return;
   } else if (destination_type === "URL formula" && dest_url_formula) {
-    const url = eval_expression(dest_url_formula, row);
+    const url = eval_expression(
+      dest_url_formula,
+      row,
+      "Destination URL formula"
+    );
     res_redirect(url);
     return;
   } else if (destination_type !== "View")

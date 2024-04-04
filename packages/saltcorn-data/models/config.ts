@@ -787,6 +787,10 @@ const configTypes: ConfigTypes = {
           "All: All Errors, pageloads, triggers, scheduler ticks, events, state refreshes",
         value: "5",
       },
+      {
+        label: "Silly: Additional debug logging",
+        value: "6",
+      },
     ],
   },
   apple_team_id: {
