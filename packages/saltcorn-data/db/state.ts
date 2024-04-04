@@ -708,6 +708,7 @@ class State {
         sleep,
         interpolate,
         URL,
+        console, //TODO consoleInterceptor
         require: (nm: string) => this.codeNPMmodules[nm],
       };
       const funCtxKeys = new Set(Object.keys(myContext));
