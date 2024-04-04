@@ -675,6 +675,7 @@ const apply_calculated_fields_stored = async (
 const recalculate_for_stored = async (table: Table): Promise<void> => {
   let rows = [];
   let maxid = 0;
+  const { getState } = require("../db/state");
 
   do {
     rows = await table.getRows(
@@ -683,6 +684,10 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
     );
     for (const row of rows) {
       try {
+        getState().log(
+          5,
+          `recalculate_for_stored on table ${table.name} row ${row.id}`
+        );
         await table.updateRow({}, row.id, undefined, true);
       } catch (e: any) {
         console.error(e);
