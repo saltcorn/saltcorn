@@ -601,7 +601,12 @@ const run = async (
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
   );
   const create_link_showif_pass = create_view_showif
-    ? eval_expression(create_view_showif, state, extraArgs.req.user)
+    ? eval_expression(
+        create_view_showif,
+        state,
+        extraArgs.req.user,
+        "Create link show if formula"
+      )
     : undefined;
   if (
     create_link_showif_pass !== false &&
@@ -658,7 +663,12 @@ const run = async (
           title_formula
             ? div(
                 { class: "card-header" },
-                eval_expression(title_formula, r.row, extraArgs.req.user)
+                eval_expression(
+                  title_formula,
+                  r.row,
+                  extraArgs.req.user,
+                  "Card title formula"
+                )
               )
             : undefined,
           div({ class: "card-body" }, wrapScEmbed(r))
@@ -683,7 +693,12 @@ const run = async (
                 "aria-controls": `a${stateHash}tab${ix}`,
               },
               (title_formula
-                ? eval_expression(title_formula, r.row, extraArgs.req.user)
+                ? eval_expression(
+                    title_formula,
+                    r.row,
+                    extraArgs.req.user,
+                    `Accordion title formula`
+                  )
                 : "") || "Missing title"
             )
           ),
@@ -721,7 +736,12 @@ const run = async (
   if (groupby) {
     const groups = {};
     for (const r of sresp) {
-      const group = eval_expression(groupby, r.row, extraArgs.req.user);
+      const group = eval_expression(
+        groupby,
+        r.row,
+        extraArgs.req.user,
+        "Group by expression"
+      );
       if (!groups[group]) groups[group] = [];
       groups[group].push(r);
     }
