@@ -1103,6 +1103,12 @@ const runPost = async (
     let trigger_return;
     let ins_upd_error;
     if (!cancel) {
+      getState().log(
+        6,
+        `Edit POST ready to insert/update into ${
+          table.name
+        } Row=${JSON.stringify(row)} ID=${id} Ajax=${!!req.xhr}`
+      );
       if (typeof id === "undefined") {
         const ins_res = await tryInsertQuery(row);
         if (ins_res.success) {
@@ -1192,6 +1198,14 @@ const runPost = async (
               childRow[file_field.name] = file.path_to_serve;
             }
           }
+          getState().log(
+            6,
+            `Edit POST ready to insert/update Child row into ${
+              childTable.name
+            } Row=${JSON.stringify(childRow)} ID=${
+              childRow[childTable.pk_name]
+            } Ajax=${!!req.xhr}`
+          );
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
               childRow,
