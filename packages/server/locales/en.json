@@ -1391,5 +1391,8 @@
 	"refresh": "refresh",
 	"installed": "installed",
 	"Include table history in backup": "Include table history in backup",
-	"The plugin was corrupted and had to be repaired. We recommend restarting your server.": "The plugin was corrupted and had to be repaired. We recommend restarting your server."
+	"The plugin was corrupted and had to be repaired. We recommend restarting your server.": "The plugin was corrupted and had to be repaired. We recommend restarting your server.",
+	"Adjust the the theme for this user": "Adjust the the theme for this user",
+	"Configure theme": "Configure theme",
+	"Remove all user specific theme settings": "Remove all user specific theme settings"
 }

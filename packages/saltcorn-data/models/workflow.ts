@@ -36,7 +36,6 @@ class Workflow implements AbstractWorkflow {
   startAtStepURL?: (stepName: string) => string;
   autoSave?: boolean;
   previewURL?: string;
-  userSpecific?: boolean;
 
   /**
    * Workflow constructor
@@ -50,7 +49,6 @@ class Workflow implements AbstractWorkflow {
     this.previewURL = o.previewURL;
     this.__ = (s: any) => s;
     this.onStepSave = o.onStepSave;
-    this.userSpecific = o.userSpecific;
   }
   async singleStepForm(body?: any, req?: any): Promise<RunResult | undefined> {
     if (req) this.__ = (s: any) => req.__(s);
@@ -67,12 +65,7 @@ class Workflow implements AbstractWorkflow {
     const step = this.steps[stepIx];
     if (step.form) {
       const form = await applyAsync(step.form, context);
-      if (stepBody.userId) {
-        form.hidden("userId");
-        form.values.userId = stepBody.userId;
-      }
-      let contextChanges = null,
-        savingErrors = null;
+      let savingErrors = null;
       const valres = form.validate(stepBody);
       if (valres.errors) {
         form.hidden("stepName", "contextEnc");
@@ -89,10 +82,8 @@ class Workflow implements AbstractWorkflow {
         await addApplyButtonToForm(form, this, context);
       } else if (this.onStepSave) {
         const saveRes = await this.onStepSave(step, context, valres.success);
-        if (saveRes) {
-          contextChanges = saveRes.contextChanges;
+        if (saveRes)
           savingErrors = saveRes.savingErrors;
-        }
       }
       return {
         renderForm: form,
@@ -103,7 +94,6 @@ class Workflow implements AbstractWorkflow {
         title: this.title(step, stepIx),
         contextField: step.contextField,
         ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
-        ...(contextChanges ? { contextChanges } : {}),
         savingErrors,
       };
     }
@@ -119,7 +109,7 @@ class Workflow implements AbstractWorkflow {
       return this.runStep(body || {}, 0);
     }
 
-    const { stepName, contextEnc, userId, ...stepBody } = body;
+    const { stepName, contextEnc, ...stepBody } = body;
 
     if (!contextEnc) {
       const startStepIx = this.steps.findIndex(
@@ -175,7 +165,6 @@ class Workflow implements AbstractWorkflow {
       } else {
         newCtx = { ...context, ...toCtx };
       }
-      if (userId) newCtx.userId = userId;
       if (this.onStepSuccess) await this.onStepSuccess(step, newCtx);
       return this.runStep(newCtx, stepIx + 1);
     } else if (step.builder) {
@@ -214,12 +203,9 @@ class Workflow implements AbstractWorkflow {
     if (step.form) {
       const form = await applyAsync(step.form, context);
       const hiddens = ["stepName", "contextEnc"];
-      if (context.userId) hiddens.push("userId");
       form.hidden(...hiddens);
       form.values.stepName = step.name;
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
-      if (context.userId) form.values.userId;
-
       form.fields.forEach((fld: Field) => {
         const ctxValue =
           step.contextField && fld.parent_field
@@ -251,7 +237,6 @@ class Workflow implements AbstractWorkflow {
 
       await addApplyButtonToForm(form, this, context);
       return {
-        additionalHeaders: form.additionalHeaders,
         renderForm: form,
         context,
         stepName: step.name,
@@ -378,7 +363,6 @@ namespace Workflow {
     action?: string;
     previewURL?: string;
     onStepSave?: (step: any, context: any, formVals: any) => any;
-    userSpecific?: boolean;
   };
 }
 type WorkflowCfg = Workflow.WorkflowCfg;

@@ -123,7 +123,7 @@ class State {
   auth_methods: Record<string, any>;
   plugins: Record<string, Plugin>;
   table_providers: Record<string, any>;
-  plugin_cfgs: any;
+  plugin_cfgs: Record<string, any>;
   plugin_locations: any;
   plugin_module_names: any;
   plugin_routes: Record<string, Array<PluginRoute>>;
@@ -315,9 +315,13 @@ class State {
       const tokens = nameWithOrg.split("/");
       const pluginName = tokens[tokens.length - 1];
       const module = this.plugins[pluginName];
+      const pluginCfg = this.plugin_cfgs[pluginName];
       if (module?.layout) {
         // @ts-ignore
-        const userLayout = module.layout(user._attributes.layout.config);
+        const userLayout = module.layout({
+          ...pluginCfg,
+          ...user._attributes.layout.config,
+        });
         this.userLayouts[user.email] = userLayout;
       }
     }

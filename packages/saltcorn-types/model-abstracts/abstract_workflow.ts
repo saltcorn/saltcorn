@@ -11,8 +11,6 @@ export type RunResult = {
   renderBuilder?: GenObj;
   contextField?: string;
   previewURL?: string;
-  contextChanges?: any;
-  additionalHeaders?: Array<Header>;
   savingErrors?: any;
 };
 

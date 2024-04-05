@@ -48,6 +48,7 @@ class Form implements AbstractForm {
   submitButtonClass?: string;
   noSubmitButton?: boolean;
   additionalButtons?: Array<_AdditionalButton>;
+  // only for workflow and userConfig Forms
   additionalHeaders?: Array<Header>;
   onChange?: string;
   validator?: (arg0: any) => any;

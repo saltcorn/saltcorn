@@ -1372,19 +1372,18 @@ const userSettings = async ({ req, res, pwform, user }) => {
     for (const [k, v] of Object.entries(modNames)) {
       if (v === pluginName) safeName = k;
     }
-    const showThemeCfg =
-      layoutPlugin.configuration_workflow &&
-      layoutPlugin.configuration_workflow().userSpecific;
+
+    const hasUserConfigs = layoutPlugin.user_config_form;
     themeCfgCard = {
       type: "card",
       title: req.__("Layout"),
       contents: [
         div(
-          showThemeCfg
+          hasUserConfigs
             ? req.__("Adjust the the theme for this user")
             : req.__("The current theme has no user specific settings")
         ),
-        showThemeCfg
+        hasUserConfigs
           ? div(
               {
                 class: "mt-4",
@@ -1394,9 +1393,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
                 {
                   class: "btn btn-primary",
                   role: "button",
-                  href: `/plugins/configure/${encodeURIComponent(
+                  href: `/plugins/user_configure/${encodeURIComponent(
                     safeName
-                  )}?user_id=${user.id}`,
+                  )}`,
                   title: req.__("Configure theme"),
                 },
                 req.__("Configure")
