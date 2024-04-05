@@ -1005,7 +1005,7 @@ const render = async ({
   if (actually_auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    }, event)`;
   let reloadAfterCloseInModalScript =
     actually_auto_save && req.xhr
       ? script(
@@ -1103,6 +1103,12 @@ const runPost = async (
     let trigger_return;
     let ins_upd_error;
     if (!cancel) {
+      getState().log(
+        6,
+        `Edit POST ready to insert/update into ${
+          table.name
+        } Row=${JSON.stringify(row)} ID=${id} Ajax=${!!req.xhr}`
+      );
       if (typeof id === "undefined") {
         const ins_res = await tryInsertQuery(row);
         if (ins_res.success) {
@@ -1192,6 +1198,14 @@ const runPost = async (
               childRow[file_field.name] = file.path_to_serve;
             }
           }
+          getState().log(
+            6,
+            `Edit POST ready to insert/update Child row into ${
+              childTable.name
+            } Row=${JSON.stringify(childRow)} ID=${
+              childRow[childTable.pk_name]
+            } Ajax=${!!req.xhr}`
+          );
           if (childRow[childTable.pk_name]) {
             const upd_res = await childTable.tryUpdateRow(
               childRow,
@@ -1619,7 +1633,7 @@ const prepare = async (
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    }, event)`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
