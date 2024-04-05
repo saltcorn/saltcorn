@@ -1005,7 +1005,7 @@ const render = async ({
   if (actually_auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    }, event)`;
   let reloadAfterCloseInModalScript =
     actually_auto_save && req.xhr
       ? script(
@@ -1633,7 +1633,7 @@ const prepare = async (
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
-    })`;
+    }, event)`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);

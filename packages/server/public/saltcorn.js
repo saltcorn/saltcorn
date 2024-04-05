@@ -450,7 +450,14 @@ function saveAndContinueAsync(e) {
   });
 }
 
-function saveAndContinue(e, k) {
+function saveAndContinue(e, k, event) {
+  if (
+    event &&
+    event.target &&
+    event.target.classList &&
+    event.target.classList.contains("no-form-change")
+  )
+    return;
   var form = $(e).closest("form");
   const valres = form[0].reportValidity();
   if (!valres) return;
