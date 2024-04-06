@@ -321,10 +321,12 @@ class State {
       (user) => user._attributes?.layout
     );
     for (const user of usersWithLayout) {
-      const nameWithOrg = user._attributes.layout.plugin;
-      const tokens = nameWithOrg.split("/");
-      const pluginName = tokens[tokens.length - 1];
-      const module = this.plugins[pluginName];
+      let pluginName = user._attributes.layout.plugin;
+      let module = this.plugins[pluginName];
+      if (!module) {
+        pluginName = this.plugin_module_names[pluginName];
+        module = this.plugins[pluginName];
+      }
       const pluginCfg = this.plugin_cfgs[pluginName];
       if (module?.layout) {
         // @ts-ignore

@@ -986,10 +986,9 @@ router.post(
   "/remove_user_layout",
   loggedIn,
   error_catcher(async (req, res) => {
-    const user = await User.findOne({ email: req.user.id });
+    const user = await User.findOne({ id: req.user.id });
     if (!user) {
-      req.flash("error", req.__("Not authorized"));
-      return res.redirect("/");
+      return res.status(401).json({ error: req.__("Not authorized") });
     } else if (user._attributes?.layout) {
       const userAttrs = { ...user._attributes };
       const plugin = userAttrs.layout.plugin;

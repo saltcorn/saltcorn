@@ -1397,5 +1397,6 @@
 	"Delete code page": "Delete code page",
 	"Adjust the the theme for this user": "Adjust the the theme for this user",
 	"Configure theme": "Configure theme",
-	"Remove all user specific theme settings": "Remove all user specific theme settings"
+	"Remove all user specific theme settings": "Remove all user specific theme settings",
+	"Configure %s Plugin for %s": "Configure %s Plugin for %s"
 }
