@@ -287,14 +287,13 @@ const select_from_table = {
         : extraCtx?.user || null
     );
     const get_label = field.attributes?.label_formula
-      ? (r) => {
-          try {
-            return eval_expression(field.attributes?.label_formula, r);
-          } catch (error) {
-            error.message = `Error in formula ${field.attributes?.label_formula} for select label:\n${error.message}`;
-            throw error;
-          }
-        }
+      ? (r) =>
+          eval_expression(
+            field.attributes?.label_formula,
+            r,
+            undefined,
+            "Select label formula"
+          )
       : srcField.attributes.summary_field
       ? (r) => r.summary_field
       : (r) => r[fieldNm];

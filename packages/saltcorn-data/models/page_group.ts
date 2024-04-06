@@ -52,7 +52,12 @@ class PageGroup implements AbstractPageGroup {
     const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
     const expressionRow = { ...data, locale: locale || "en" };
     for (const member of sorted) {
-      const res = eval_expression(member.eligible_formula, expressionRow, user);
+      const res = eval_expression(
+        member.eligible_formula,
+        expressionRow,
+        user,
+        "Page group eligible formula"
+      );
       if (res === true) {
         const page = Page.findOne({ id: member.page_id });
         if (page) {

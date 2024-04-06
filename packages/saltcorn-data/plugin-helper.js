@@ -2498,7 +2498,15 @@ const run_action_column = async ({ col, req, ...rest }) => {
       const only_if = col.step_only_ifs?.[i];
       const config = col.configuration.steps?.[i] || {};
       if (only_if && rest.row) {
-        if (!eval_expression(only_if, rest.row, req?.user)) continue;
+        if (
+          !eval_expression(
+            only_if,
+            rest.row,
+            req?.user,
+            "Multistep action only if formula"
+          )
+        )
+          continue;
       }
       const stepres = await run_action_step(action_name, config);
       if (stepres?.goto_step) {

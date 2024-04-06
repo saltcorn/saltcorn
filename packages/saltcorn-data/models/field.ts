@@ -291,7 +291,8 @@ class Field implements AbstractField {
     where0?: Where,
     extraCtx: any = {},
     optionsQuery?: any,
-    formFieldNames?: string[]
+    formFieldNames?: string[],
+    existingValue?: any
   ): Promise<void> {
     let where = where0;
 
@@ -329,11 +330,19 @@ class Field implements AbstractField {
       formFieldNames!.forEach((nm) => {
         fakeEnv[nm] = "$" + nm;
       });
+      const whereWithExisting = existingValue
+        ? {
+            or: [
+              { id: existingValue },
+              jsexprToWhere(this.attributes.where, fakeEnv),
+            ],
+          } //TODO pk_name
+        : jsexprToWhere(this.attributes.where, fakeEnv);
       this.attributes.dynamic_where = {
         table: this.reftable_name,
         refname: this.refname,
         where: this.attributes.where,
-        whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
+        whereParsed: whereWithExisting,
         summary_field: this.attributes.summary_field,
         label_formula: this.attributes.label_formula,
         neutral_label: this.attributes.neutral_label,
@@ -380,31 +389,36 @@ class Field implements AbstractField {
       if (!this.attributes) this.attributes = {};
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
+      const whereWithExisting =
+        existingValue && where
+          ? { or: [{ id: existingValue }, where] } //TODO pk_name
+          : where;
 
       const rows = !optionsQuery
         ? await Field.select_options_query(
             this.reftable_name as string,
-            this.type === "File" ? this.attributes.select_file_where : where,
+            this.type === "File"
+              ? this.attributes.select_file_where
+              : whereWithExisting,
             this.attributes
           )
         : await optionsQuery(
             this.reftable_name,
             this.type,
             this.attributes,
-            where
+            whereWithExisting
           );
       const summary_field =
         this.attributes.summary_field ||
         (this.type === "File" ? "filename" : "id");
       const get_label = this.attributes?.label_formula
-        ? (r: Row) => {
-            try {
-              return eval_expression(this.attributes?.label_formula, r);
-            } catch (error: any) {
-              error.message = `Error in formula ${this.attributes?.label_formula} for select label:\n${error.message}`;
-              throw error;
-            }
-          }
+        ? (r: Row) =>
+            eval_expression(
+              this.attributes?.label_formula,
+              r,
+              undefined,
+              "Select label formula"
+            )
         : (r: Row) => r[summary_field];
       const dbOpts = rows.map((r: Row) => ({
         label: get_label(r),

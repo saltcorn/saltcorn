@@ -662,6 +662,7 @@ router.get(
         onChange: "saveAndContinue(this)",
         submitLabel: req.__("Done"),
         fields: cfgFields,
+        ...(action.configFormOptions || {}),
       });
       // populate form values
       form.values = trigger.configuration;

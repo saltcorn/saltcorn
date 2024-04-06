@@ -661,32 +661,39 @@ class View implements AbstractView {
     remote: boolean = !isNode()
   ): Promise<any> {
     const { getState } = require("../db/state");
+    const state = getState();
     if (
-      !getState().mobileConfig ||
-      getState().mobileConfig.localTableIds.indexOf(this.table_id) >= 0
+      !state.mobileConfig ||
+      state.mobileConfig.localTableIds.indexOf(this.table_id) >= 0
     ) {
       remote = false;
     }
-    if (isWeb(extraArgs.req)) this.check_viewtemplate();
-    else if (!this.viewtemplateObj) return;
-    getState().log(
-      5,
-      `runPost view ${this.name} with state ${JSON.stringify(query)}`
-    );
-    if (!this.viewtemplateObj!.runPost)
-      throw new InvalidConfiguration(
-        `Unable to call runPost, ${this.viewtemplate} is missing 'runPost'.`
+    try {
+      if (isWeb(extraArgs.req)) this.check_viewtemplate();
+      else if (!this.viewtemplateObj) return;
+      state.log(
+        5,
+        `runPost view ${this.name} with state ${JSON.stringify(query)}`
       );
-    return await this.viewtemplateObj!.runPost(
-      this.table_id,
-      this.name,
-      this.configuration,
-      removeEmptyStrings(query),
-      removeEmptyStrings(body),
-      extraArgs,
-      this.queries(remote, extraArgs.req),
-      remote
-    );
+      if (!this.viewtemplateObj!.runPost)
+        throw new InvalidConfiguration(
+          `Unable to call runPost, ${this.viewtemplate} is missing 'runPost'.`
+        );
+      return await this.viewtemplateObj!.runPost(
+        this.table_id,
+        this.name,
+        this.configuration,
+        removeEmptyStrings(query),
+        removeEmptyStrings(body),
+        extraArgs,
+        this.queries(remote, extraArgs.req),
+        remote
+      );
+    } catch (error: any) {
+      state.log(2, error.stack);
+      error.message = `In POST ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
+      throw error;
+    }
   }
 
   /**

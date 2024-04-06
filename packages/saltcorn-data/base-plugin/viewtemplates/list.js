@@ -241,7 +241,7 @@ const configuration_workflow = (req) =>
           }));
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l) =>
-            l.suitableFor("show")
+            l.suitableFor("list")
           );
           const myviewrow = View.findOne({ name: context.viewname });
           // generate layout for legacy views
@@ -935,7 +935,12 @@ const run = async (
   const user_id =
     extraOpts && extraOpts.req.user ? extraOpts.req.user.id : null;
   const create_link_showif_pass = create_view_showif
-    ? eval_expression(create_view_showif, state, extraOpts.req.user)
+    ? eval_expression(
+        create_view_showif,
+        state,
+        extraOpts.req.user,
+        "Create view show if formula"
+      )
     : undefined;
   if (
     create_link_showif_pass !== false &&

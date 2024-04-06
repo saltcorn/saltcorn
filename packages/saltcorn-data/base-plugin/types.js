@@ -198,9 +198,19 @@ const progress_bar = (type) => ({
     let max = attrs.max;
     let min = attrs.min;
     if (attrs.max_min_formula && attrs.min_formula && attrs.row)
-      min = eval_expression(attrs.min_formula, attrs.row, req.user);
+      min = eval_expression(
+        attrs.min_formula,
+        attrs.row,
+        req.user,
+        "Progress bar min formula"
+      );
     if (attrs.max_min_formula && attrs.max_formula && attrs.row)
-      max = eval_expression(attrs.max_formula, attrs.row, req.user);
+      max = eval_expression(
+        attrs.max_formula,
+        attrs.row,
+        req.user,
+        "Progress bar max formula"
+      );
     if (typeof v !== "number") return "";
     const pcnt = Math.round((100 * (v - min)) / (max - min));
     if (attrs?.radial) {
@@ -330,9 +340,19 @@ const heat_cell = (type) => ({
     let max = attrs.max;
     let min = attrs.min;
     if (attrs.max_min_formula && attrs.min_formula && attrs.row)
-      min = eval_expression(attrs.min_formula, attrs.row, req.user);
+      min = eval_expression(
+        attrs.min_formula,
+        attrs.row,
+        req.user,
+        "Heat cell min formula"
+      );
     if (attrs.max_min_formula && attrs.max_formula && attrs.row)
-      max = eval_expression(attrs.max_formula, attrs.row, req.user);
+      max = eval_expression(
+        attrs.max_formula,
+        attrs.row,
+        req.user,
+        "Heat cell max formula"
+      );
     if (typeof v !== "number") return "";
     const pcnt0 = (v - min) / (max - min);
     const pcnt = attrs.reverse ? 1 - pcnt0 : pcnt0;
@@ -1017,6 +1037,51 @@ const string = {
             minlength: isdef(attrs.min_length) && attrs.min_length,
             id: `input${text_attr(nm)}`,
             rows: attrs.rows || 5,
+          },
+          text(v) || ""
+        ),
+    },
+    code_editor: {
+      isEdit: true,
+      blockDisplay: true,
+      description: "Edit as code",
+      configFields: [
+        {
+          type: "String",
+          name: "mode",
+          label: "mode",
+          required: true,
+          attributes: {
+            options: [
+              "application/javascript",
+              "text/html",
+              "text/css",
+              "text/x-sql",
+            ],
+          },
+        },
+        /*{
+          type: "Integer",
+          name: "rows",
+          label: "Rows",
+        },*/
+      ],
+      run: (nm, v, attrs, cls, required, field) =>
+        textarea(
+          {
+            class: ["form-control", "to-code", cls],
+            name: text_attr(nm),
+            "data-fieldname": text_attr(field.name),
+            disabled: attrs.disabled,
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+            placeholder: attrs.placeholder,
+            spellcheck: "false",
+            required: !!required,
+            maxlength: isdef(attrs.max_length) && attrs.max_length,
+            minlength: isdef(attrs.min_length) && attrs.min_length,
+            id: `input${text_attr(nm)}`,
+            mode: attrs.mode,
           },
           text(v) || ""
         ),
