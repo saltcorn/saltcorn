@@ -202,10 +202,10 @@ class Workflow implements AbstractWorkflow {
     }
     if (step.form) {
       const form = await applyAsync(step.form, context);
-      const hiddens = ["stepName", "contextEnc"];
-      form.hidden(...hiddens);
+      form.hidden("stepName", "contextEnc");
       form.values.stepName = step.name;
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
+
       form.fields.forEach((fld: Field) => {
         const ctxValue =
           step.contextField && fld.parent_field
