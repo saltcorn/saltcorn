@@ -1364,55 +1364,56 @@ const userSettings = async ({ req, res, pwform, user }) => {
       ],
     };
   let themeCfgCard;
-  if (user) {
-    const layoutPlugin = getState().getLayoutPlugin(user);
-    const modNames = getState().plugin_module_names;
-    const pluginName = layoutPlugin.plugin_name;
-    let safeName = "";
-    for (const [k, v] of Object.entries(modNames)) {
-      if (v === pluginName) safeName = k;
-    }
-
-    const hasUserConfigs = layoutPlugin.user_config_form;
-    themeCfgCard = {
-      type: "card",
-      title: req.__("Layout"),
-      contents: [
-        div(
-          hasUserConfigs
-            ? req.__("Adjust the the theme for this user")
-            : req.__("The current theme has no user specific settings")
-        ),
-        hasUserConfigs
-          ? div(
-              {
-                class: "mt-4",
-              },
-
-              a(
-                {
-                  class: "btn btn-primary",
-                  role: "button",
-                  href: `/plugins/user_configure/${encodeURIComponent(
-                    safeName
-                  )}`,
-                  title: req.__("Configure theme"),
-                },
-                req.__("Configure")
-              ),
-              button(
-                {
-                  class: "btn btn-primary ms-2",
-                  onclick: "ajax_post('/plugins/remove_user_layout')",
-                  title: req.__("Remove all user specific theme settings"),
-                },
-                req.__("Reset")
-              )
-            )
-          : "",
-      ],
-    };
+  const layoutPlugin = getState().getLayoutPlugin(user);
+  const modNames = getState().plugin_module_names;
+  const pluginName = layoutPlugin.plugin_name;
+  let safeName = pluginName;
+  for (const [k, v] of Object.entries(modNames)) {
+    if (v === pluginName) safeName = k;
   }
+
+  const hasUserConfigs =
+    layoutPlugin.user_config_form &&
+    (await layoutPlugin.user_config_form(
+      getState().plugin_cfgs[pluginName] || {}
+    )) !== null;
+  themeCfgCard = {
+    type: "card",
+    title: req.__("Layout"),
+    contents: [
+      div(
+        hasUserConfigs
+          ? req.__("Adjust the the theme for this user")
+          : req.__("The current theme has no user specific settings")
+      ),
+      hasUserConfigs
+        ? div(
+            {
+              class: "mt-4",
+            },
+
+            a(
+              {
+                class: "btn btn-primary",
+                role: "button",
+                href: `/plugins/user_configure/${encodeURIComponent(safeName)}`,
+                title: req.__("Configure theme"),
+              },
+              req.__("Configure")
+            ),
+            button(
+              {
+                class: "btn btn-primary ms-2",
+                onclick: "ajax_post('/plugins/remove_user_layout')",
+                title: req.__("Remove all user specific theme settings"),
+              },
+              req.__("Reset")
+            )
+          )
+        : "",
+    ],
+  };
+
   return {
     above: [
       {
