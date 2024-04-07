@@ -925,6 +925,7 @@ router.post(
       );
     }
     const values = valResult.success;
+    values.is_user_config = true;
     const userAttrs = user._attributes ? { ...user._attributes } : {};
     userAttrs.layout = {
       plugin: plugin.name,
@@ -965,6 +966,7 @@ router.post(
       return res.status(400).json({ error: req.__("An error occured") });
     }
     const values = valResult.success;
+    values.is_user_config = true;
     const userAttrs = user._attributes ? { ...user._attributes } : {};
     userAttrs.layout = {
       plugin: plugin.name,
