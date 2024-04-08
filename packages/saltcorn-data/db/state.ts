@@ -609,6 +609,7 @@ class State {
     location?: string,
     modname?: string
   ) {
+    this.log(6, `Register Plugin: ${name} at ${location}`);
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
     if (location) this.plugin_locations[plugin.plugin_name || name] = location;
