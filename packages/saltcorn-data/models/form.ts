@@ -18,7 +18,7 @@ import type { FieldLike } from "@saltcorn/types/base_types";
 import Field from "./field";
 import User from "./user";
 import FieldRepeat from "./fieldrepeat";
-import type { Layout } from "@saltcorn/types/base_types";
+import type { Layout, Header } from "@saltcorn/types/base_types";
 
 const { is } = require("contractis");
 
@@ -48,6 +48,8 @@ class Form implements AbstractForm {
   submitButtonClass?: string;
   noSubmitButton?: boolean;
   additionalButtons?: Array<_AdditionalButton>;
+  // only for workflow and userConfig Forms
+  additionalHeaders?: Array<Header>;
   onChange?: string;
   validator?: (arg0: any) => any;
   hasErrors: boolean;
@@ -83,6 +85,7 @@ class Form implements AbstractForm {
     this.submitButtonClass = o.submitButtonClass;
     this.noSubmitButton = o.noSubmitButton;
     this.additionalButtons = o.additionalButtons;
+    this.additionalHeaders = o.additionalHeaders;
     this.onChange = o.onChange;
     this.validator = o.validator;
     this.hasErrors = false;
@@ -271,6 +274,7 @@ namespace Form {
     submitButtonClass?: string;
     noSubmitButton?: boolean;
     additionalButtons?: Array<_AdditionalButton>;
+    additionalHeaders?: Array<Header>;
     onChange?: string;
     validator?: (arg0: any) => any;
     xhrSubmit?: boolean;

@@ -1,4 +1,5 @@
-import { GenObj } from "../common_types";
+import type { GenObj } from "../common_types";
+import type { Header } from "../base_types";
 
 export type RunResult = {
   renderForm?: any;
@@ -10,6 +11,7 @@ export type RunResult = {
   renderBuilder?: GenObj;
   contextField?: string;
   previewURL?: string;
+  savingErrors?: any;
 };
 
 export interface AbstractWorkflow {

@@ -522,6 +522,7 @@ function applyViewConfig(e, url, k, event) {
     cfg[item.name] = item.value;
   });
   ajax_indicator(true, e);
+  window.savingViewConfig = true;
   $.ajax(url, {
     type: "POST",
     dataType: "json",
@@ -531,9 +532,11 @@ function applyViewConfig(e, url, k, event) {
     },
     data: JSON.stringify(cfg),
     error: function (request) {
+      window.savingViewConfig = false;
       ajax_indicate_error(e, request);
     },
     success: function (res) {
+      window.savingViewConfig = false;
       ajax_indicator(false);
       k && k(res);
       !k && updateViewPreview();

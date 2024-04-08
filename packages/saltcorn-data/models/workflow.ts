@@ -32,6 +32,7 @@ class Workflow implements AbstractWorkflow {
   action?: string | undefined;
   __: any;
   saveURL?: string;
+  onStepSave?: (step: any, context: any, formVals: any) => any;
   startAtStepURL?: (stepName: string) => string;
   autoSave?: boolean;
   previewURL?: string;
@@ -47,6 +48,7 @@ class Workflow implements AbstractWorkflow {
     this.action = o.action;
     this.previewURL = o.previewURL;
     this.__ = (s: any) => s;
+    this.onStepSave = o.onStepSave;
   }
   async singleStepForm(body?: any, req?: any): Promise<RunResult | undefined> {
     if (req) this.__ = (s: any) => req.__(s);
@@ -63,7 +65,7 @@ class Workflow implements AbstractWorkflow {
     const step = this.steps[stepIx];
     if (step.form) {
       const form = await applyAsync(step.form, context);
-
+      let savingErrors = null;
       const valres = form.validate(stepBody);
       if (valres.errors) {
         form.hidden("stepName", "contextEnc");
@@ -78,6 +80,10 @@ class Workflow implements AbstractWorkflow {
               : this.__("Next") + " &raquo;";
 
         await addApplyButtonToForm(form, this, context);
+      } else if (this.onStepSave) {
+        const saveRes = await this.onStepSave(step, context, valres.success);
+        if (saveRes)
+          savingErrors = saveRes.savingErrors;
       }
       return {
         renderForm: form,
@@ -88,6 +94,7 @@ class Workflow implements AbstractWorkflow {
         title: this.title(step, stepIx),
         contextField: step.contextField,
         ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
+        savingErrors,
       };
     }
   }
@@ -158,7 +165,6 @@ class Workflow implements AbstractWorkflow {
       } else {
         newCtx = { ...context, ...toCtx };
       }
-
       if (this.onStepSuccess) await this.onStepSuccess(step, newCtx);
       return this.runStep(newCtx, stepIx + 1);
     } else if (step.builder) {
@@ -196,7 +202,6 @@ class Workflow implements AbstractWorkflow {
     }
     if (step.form) {
       const form = await applyAsync(step.form, context);
-
       form.hidden("stepName", "contextEnc");
       form.values.stepName = step.name;
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
@@ -357,6 +362,7 @@ namespace Workflow {
     onStepSuccess?: (step: any, context: any) => any;
     action?: string;
     previewURL?: string;
+    onStepSave?: (step: any, context: any, formVals: any) => any;
   };
 }
 type WorkflowCfg = Workflow.WorkflowCfg;
