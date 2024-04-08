@@ -1197,6 +1197,7 @@ async function common_done(res, viewname, isWeb = true) {
       );
     } else {
       Object.keys(res.set_fields).forEach((k) => {
+        if (k === "_viewname") return;
         const input = form.find(
           `input[name=${k}], textarea[name=${k}], select[name=${k}]`
         );
