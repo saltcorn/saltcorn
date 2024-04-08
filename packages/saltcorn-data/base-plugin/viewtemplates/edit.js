@@ -2156,11 +2156,13 @@ module.exports = {
         const valres = f.validate(body);
         if ("success" in valres) row[f.name] = valres.success;
       });
-      const use_fixed = await fill_presets(table, req, fixed);
-      Object.keys(use_fixed).forEach((k) => {
-        if (row[k] === null || typeof row[k] === "undefined")
-          row[k] = use_fixed[k];
-      });
+      if (fixed) {
+        const use_fixed = await fill_presets(table, req, fixed);
+        Object.keys(use_fixed).forEach((k) => {
+          if (row[k] === null || typeof row[k] === "undefined")
+            row[k] = use_fixed[k];
+        });
+      }
 
       try {
         if (click_action) {
