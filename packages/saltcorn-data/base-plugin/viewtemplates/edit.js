@@ -1126,6 +1126,10 @@ const runPost = async (
         trigger_return = upd_res.trigger_return;
       }
       if (ins_upd_error) {
+        getState().log(
+          6,
+          `Insert or update failure ${JSON.stringify(ins_upd_error)}`
+        );
         res.status(422);
         if (req.xhr) {
           res.json({ error: ins_upd_error });
@@ -1213,6 +1217,10 @@ const runPost = async (
               req.user || { role_id: 100 }
             );
             if (upd_res.error) {
+              getState().log(
+                6,
+                `Update child row failure ${JSON.stringify(upd_res)}`
+              );
               req.flash("error", text_attr(upd_res.error));
               res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;
@@ -1223,6 +1231,10 @@ const runPost = async (
               req.user || { role_id: 100 }
             );
             if (ins_res.error) {
+              getState().log(
+                6,
+                `Insert child row failure ${JSON.stringify(ins_res)}`
+              );
               req.flash("error", text_attr(ins_res.error));
               res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
               return;

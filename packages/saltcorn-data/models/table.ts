@@ -1746,10 +1746,7 @@ class Table implements AbstractTable {
       await db.update(this.name, v, id, { pk_name });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields);
-      state.log(
-        6,
-        `Inserting ${this.name} because join fields: ${JSON.stringify(v)}`
-      );
+      state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, { pk_name });
     }
     if (user && user.role_id > this.min_role_write && this.ownership_formula) {
