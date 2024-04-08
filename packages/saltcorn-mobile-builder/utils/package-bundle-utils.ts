@@ -49,10 +49,15 @@ async function copyHeaderToApp(
       mkdirSync(dstPublicDir, { recursive: true });
     }
     const headerFile = basename(header);
-    copySync(
-      join(pluginLocation, "public", pluginSubDir, headerFile),
-      join(dstPublicDir, headerFile)
-    );
+    try {
+      copySync(
+        join(pluginLocation, "public", pluginSubDir, headerFile),
+        join(dstPublicDir, headerFile)
+      );
+    } catch (e) {
+      console.log(`Error copying header ${header} to ${dstPublicDir}`);
+      console.log(e);
+    }
   } else {
     console.log(`skipping header '${header}'`);
   }
