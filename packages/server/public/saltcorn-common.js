@@ -1184,8 +1184,10 @@ async function common_done(res, viewname, isWeb = true) {
     await handle(res.notify_success, (text) =>
       notifyAlert({ type: "success", text: text })
     );
-  if (res.set_fields && viewname) {
-    const form = $(`form[data-viewname="${viewname}"]`);
+  if (res.set_fields && (viewname || res.set_fields._viewname)) {
+    const form = $(
+      `form[data-viewname="${res.set_fields._viewname || viewname}"]`
+    );
     if (form.length === 0 && set_state_fields) {
       // assume this is a filter
       set_state_fields(
