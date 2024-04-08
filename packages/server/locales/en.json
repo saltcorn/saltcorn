@@ -1394,5 +1394,10 @@
 	"The plugin was corrupted and had to be repaired. We recommend restarting your server.": "The plugin was corrupted and had to be repaired. We recommend restarting your server.",
 	"%s code page": "%s code page",
 	"Constants and function code": "Constants and function code",
-	"Delete code page": "Delete code page"
+	"Delete code page": "Delete code page",
+	"Adjust the the theme for this user": "Adjust the the theme for this user",
+	"Configure theme": "Configure theme",
+	"Remove all user specific theme settings": "Remove all user specific theme settings",
+	"Configure %s Plugin for %s": "Configure %s Plugin for %s",
+	"The current theme has no user specific settings": "The current theme has no user specific settings"
 }

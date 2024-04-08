@@ -6,7 +6,7 @@
  */
 
 const Router = require("express-promise-router");
-const { isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, loggedIn, error_catcher } = require("./utils.js");
 const { renderForm, link, post_btn } = require("@saltcorn/markup");
 const {
   getState,
@@ -16,6 +16,7 @@ const {
 const Form = require("@saltcorn/data/models/form");
 const Field = require("@saltcorn/data/models/field");
 const Plugin = require("@saltcorn/data/models/plugin");
+const User = require("@saltcorn/data/models/user");
 const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
 const {
   upgrade_all_tenants_plugins,
@@ -697,7 +698,12 @@ router.get(
           label: "Reload page to see changes",
           id: "btnReloadNow",
           class: "btn btn-outline-secondary",
-          onclick: "location.reload()",
+          onclick: `if (window.savingViewConfig) 
+  notifyAlert({
+    type: 'danger',
+    text: 'Still saving, please wait',
+  });
+else location.reload();`,
         },
       ];
       wfres.renderForm.onChange = `${
@@ -705,25 +711,31 @@ router.get(
       };$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
     }
 
-    res.sendWrap(req.__(`Configure %s Plugin`, plugin.name), {
-      above: [
-        {
-          type: "breadcrumbs",
-          crumbs: [
-            { text: req.__("Settings"), href: "/settings" },
-            { text: req.__("Module store"), href: "/plugins" },
-            { text: plugin.name },
-          ],
-        },
-        {
-          type: "card",
-          class: "mt-0",
-          title: req.__(`Configure %s Plugin`, plugin.name),
-          titleAjaxIndicator: true,
-          contents: renderForm(wfres.renderForm, req.csrfToken()),
-        },
-      ],
-    });
+    res.sendWrap(
+      {
+        title: req.__(`Configure %s Plugin`, plugin.name),
+        headers: wfres.renderForm?.additionalHeaders || [],
+      },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: req.__("Settings"), href: "/settings" },
+              { text: req.__("Module store"), href: "/plugins" },
+              { text: plugin.name },
+            ],
+          },
+          {
+            type: "card",
+            class: "mt-0",
+            title: req.__(`Configure %s Plugin`, plugin.name),
+            titleAjaxIndicator: true,
+            contents: renderForm(wfres.renderForm, req.csrfToken()),
+          },
+        ],
+      }
+    );
   })
 );
 
@@ -770,7 +782,8 @@ router.post(
         contents: renderForm(wfres.renderForm, req.csrfToken()),
       });
     } else {
-      plugin.configuration = wfres;
+      const newCfg = wfres.cleanup ? wfres.context : wfres;
+      plugin.configuration = newCfg;
       await plugin.upsert();
       await load_plugins.loadPlugin(plugin);
       const instore = await Plugin.store_plugins_available();
@@ -781,6 +794,7 @@ router.post(
         tenant: db.getTenantSchema(),
       });
       if (module.layout) await sleep(500); // Allow other workers to reload this plugin
+      if (wfres.cleanup) await wfres.cleanup();
       res.redirect("/plugins");
     }
   })
@@ -799,22 +813,199 @@ router.post(
     const flow = module.configuration_workflow();
     const step = await flow.singleStepForm(req.body, req);
     if (step?.renderForm) {
-      if (!step.renderForm.hasErrors) {
+      if (step.renderForm.hasErrors || step.savingErrors)
+        res.status(400).send(step.savingErrors || "Error");
+      else {
         plugin.configuration = {
           ...plugin.configuration,
           ...step.renderForm.values,
         };
         await plugin.upsert();
         await load_plugins.loadPlugin(plugin);
-        getState().processSend({
-          refresh_plugin_cfg: plugin.name,
-          tenant: db.getTenantSchema(),
-        });
-        res.json({ success: "ok" });
       }
+      getState().processSend({
+        refresh_plugin_cfg: plugin.name,
+        tenant: db.getTenantSchema(),
+      });
+      res.json({ success: "ok" });
     }
   })
 );
+
+router.get(
+  "/user_configure/:name",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user?.id });
+    if (!user) {
+      req.flash("error", req.__("Not authorized"));
+      return res.redirect("/");
+    }
+    const { name } = req.params;
+    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    if (!plugin) {
+      req.flash("warning", req.__("Module not found"));
+      return res.redirect("/auth/settings");
+    }
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
+    const form = await module.user_config_form({
+      ...(plugin.configuration || {}),
+      ...(user._attributes?.layout?.config || {}),
+    });
+    form.action = `/plugins/user_configure/${encodeURIComponent(plugin.name)}`;
+    form.onChange = `applyViewConfig(this, '/plugins/user_saveconfig/${encodeURIComponent(
+      name
+    )}', null, event);$('#btnReloadNow').removeClass('btn-outline-secondary').addClass('btn-secondary')`;
+
+    form.additionalButtons = [
+      {
+        label: "Reload page to see changes",
+        id: "btnReloadNow",
+        class: "btn btn-outline-secondary",
+        onclick: "location.reload();",
+      },
+    ];
+    form.submitLabel = req.__("Finish") + " &raquo;";
+    res.sendWrap(
+      {
+        title: req.__(`Configure %s Plugin for %s`, plugin.name, user.email),
+        headers: form.additionalHeaders || [],
+      },
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [
+              { text: req.__("Settings"), href: "/settings" },
+              { text: req.__("Module store"), href: "/plugins" },
+              { text: plugin.name },
+            ],
+          },
+          {
+            type: "card",
+            class: "mt-0",
+            title: req.__(`Configure %s Plugin`, plugin.name),
+            titleAjaxIndicator: true,
+            contents: renderForm(form, req.csrfToken()),
+          },
+        ],
+      }
+    );
+  })
+);
+
+router.post(
+  "/user_configure/:name",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user?.id });
+    if (!user) {
+      req.flash("error", req.__("Not authorized"));
+      return res.redirect("/");
+    }
+    const { name } = req.params;
+    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
+    const form = await module.user_config_form({
+      ...(plugin.configuration || {}),
+      ...(user._attributes?.layout?.config || {}),
+    });
+    const valResult = form.validate(req.body);
+    if (form.hasErrors) {
+      req.flash("warning", req.__("An error occurred"));
+      return res.sendWrap(
+        req.__(`Configure %s Plugin for %s`, plugin.name, user.email),
+        renderForm(form, req.csrfToken())
+      );
+    }
+    const values = valResult.success;
+    values.is_user_config = true;
+    const userAttrs = user._attributes ? { ...user._attributes } : {};
+    userAttrs.layout = {
+      plugin: plugin.name,
+      config: values,
+    };
+    await user.update({ _attributes: userAttrs });
+    getState().userLayouts[req.user.email] = module.layout({
+      ...(plugin.configuration ? plugin.configuration : {}),
+      ...values,
+    });
+    getState().processSend({
+      refresh_plugin_cfg: plugin.name,
+      tenant: db.getTenantSchema(),
+    });
+    if (module.layout) await sleep(500); // Allow other workers to reload this plugin
+    res.redirect("/auth/settings");
+  })
+);
+
+router.post(
+  "/user_saveconfig/:name",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user?.id });
+    if (!user) return res.status(401).json({ error: req.__("Not authorized") });
+    const { name } = req.params;
+    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    let module = getState().plugins[plugin.name];
+    if (!module) {
+      module = getState().plugins[getState().plugin_module_names[plugin.name]];
+    }
+    const form = await module.user_config_form({
+      ...(plugin.configuration || {}),
+      ...(user._attributes?.layout?.config || {}),
+    });
+    const valResult = form.validate(req.body);
+    if (form.hasErrors) {
+      return res.status(400).json({ error: req.__("An error occured") });
+    }
+    const values = valResult.success;
+    values.is_user_config = true;
+    const userAttrs = user._attributes ? { ...user._attributes } : {};
+    userAttrs.layout = {
+      plugin: plugin.name,
+      config: values,
+    };
+    await user.update({ _attributes: userAttrs });
+    getState().userLayouts[req.user.email] = module.layout(
+      userAttrs.layout.config
+    );
+    getState().processSend({
+      refresh_plugin_cfg: plugin.name,
+      tenant: db.getTenantSchema(),
+    });
+    res.json({ success: "ok" });
+  })
+);
+
+router.post(
+  "/remove_user_layout",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+    if (!user) {
+      return res.status(401).json({ error: req.__("Not authorized") });
+    } else if (user._attributes?.layout) {
+      const userAttrs = { ...user._attributes };
+      const plugin = userAttrs.layout.plugin;
+      delete userAttrs.layout;
+      await user.update({ _attributes: userAttrs });
+      getState().userLayouts[req.user.email] = null;
+      getState().processSend({
+        refresh_plugin_cfg: plugin,
+        tenant: db.getTenantSchema(),
+      });
+    }
+    res.json({ success: "ok", reload_page: true });
+  })
+);
+
 /**
  * @name get/new
  * @function

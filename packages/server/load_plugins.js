@@ -48,6 +48,7 @@ const loadPlugin = async (plugin, force) => {
       );
     }
   }
+  if (res.plugin_module.user_config_form) getState().refreshUserLayouts();
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
@@ -83,6 +84,7 @@ const loadAllPlugins = async (force) => {
       console.error(e);
     }
   }
+  await getState().refreshUserLayouts();
   await getState().refresh(true);
 };
 
