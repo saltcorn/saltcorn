@@ -35,6 +35,10 @@ const loadPlugin = async (plugin, force) => {
       res.name
     );
   } catch (error) {
+    getState().log(
+      3,
+      `Error loading plugin ${plugin.name}: ${error.message || error}`
+    );
     if (force) {
       // remove the install dir and try again
       await loader.remove();

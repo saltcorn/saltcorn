@@ -199,6 +199,7 @@ class PluginInstaller {
   }
 
   async npmInstall(pckJSON) {
+    getState().log(5, `NPM install plugin: ${pckJSON.name}`);
     const isWindows = process.platform === "win32";
     if (
       Object.keys(pckJSON.dependencies || {}).length > 0 ||
