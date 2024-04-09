@@ -35,6 +35,8 @@ const {
   mergeIntoWhere,
   mergeConnectedObjects,
   hashState,
+  dollarizeObject,
+  getSessionId,
 } = require("../../utils");
 const {
   field_picker_fields,
@@ -891,7 +893,19 @@ const run = async (
       );
     view.check_viewtemplate();
     let stateMany, getRowState;
-
+    const get_extra_state = (row) =>
+      segment.extra_state_fml
+        ? eval_expression(
+            segment.extra_state_fml,
+            {
+              ...dollarizeObject(state),
+              session_id: getSessionId(extraOpts.req),
+              ...row,
+            },
+            extraOpts.req.user,
+            `Extra state formula for view ${view.name}`
+          )
+        : {};
     if (view.view_select.type === "RelationPath" && view.table_id) {
       const targetTbl = Table.findOne({ id: view.table_id });
       const relation = new Relation(
@@ -902,14 +916,24 @@ const run = async (
       switch (relation.type) {
         case RelationType.OWN:
           stateMany = {
-            [table.pk_name]: { in: rows.map((r) => r[table.pk_name]) },
+            or: rows.map((row) => ({
+              [table.pk_name]: row[table.pk_name],
+              ...get_extra_state(row),
+            })),
           };
-          getRowState = (row) => ({ [table.pk_name]: row[table.pk_name] });
+          getRowState = (row) => ({
+            [table.pk_name]: row[table.pk_name],
+            ...get_extra_state(row),
+          });
           break;
         case RelationType.INDEPENDENT:
         case RelationType.NONE:
-          stateMany = {};
-          getRowState = (row) => {};
+          stateMany = segment.extra_state_fml
+            ? {
+                or: rows.map((row) => get_extra_state(row)),
+              }
+            : {};
+          getRowState = (row) => get_extra_state(row);
 
           break;
         default:
