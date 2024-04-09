@@ -923,10 +923,9 @@ const run = async (
     // extra state fml
     // other rel types
     if (this.viewtemplateObj?.runMany) {
-      viewResults[segment.view + segment.relation] = await view.runMany(
-        stateMany,
-        extraOpts
-      );
+      const runs = await view.runMany(stateMany, extraOpts);
+      viewResults[segment.view + segment.relation] = (row) =>
+        runs.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
     } else if (this.viewtemplateObj?.renderRows) {
       const rendered = await view.viewtemplateObj.renderRows(
         view.table,
@@ -937,21 +936,25 @@ const run = async (
         state
       );
 
-      viewResults[segment.view + segment.relation] = rendered.map(
-        (html, ix) => ({
-          html,
-          row: rows[ix],
-        })
-      );
+      viewResults[segment.view + segment.relation] = (row) =>
+        rendered
+          .map((html, ix) => ({
+            html,
+            row: rows[ix],
+          }))
+          .find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
     } else {
-      viewResults[segment.view + segment.relation] = [];
+      const results = [];
+
       for (const row of rows) {
         const rendered = await view.run(getRowState(row), extraOpts);
-        viewResults[segment.view + segment.relation].push({
+        results.push({
           html: rendered,
           row,
         });
       }
+      viewResults[segment.view + segment.relation] = (row) =>
+        results.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
     }
   });
 

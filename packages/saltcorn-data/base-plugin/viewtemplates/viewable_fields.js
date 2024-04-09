@@ -870,10 +870,7 @@ const get_viewable_fields = (
       } else if (column.type === "View") {
         return {
           label: column.header_label ? __(column.header_label) : "",
-          key: (r) =>
-            viewResults[column.view + column.relation].find(
-              (rh) => rh.row[table.pk_name] == r[table.pk_name]
-            )?.html,
+          key: (r) => viewResults[column.view + column.relation]?.(r),
         };
       } else if (column.type === "ViewLink") {
         if (!column.view) return;
