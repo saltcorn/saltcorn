@@ -925,6 +925,19 @@ const run = async (
             ...get_extra_state(row),
           });
           break;
+        case RelationType.PARENT_SHOW:
+          const refTable = Table.findOne({ id: view.table_id });
+          stateMany = {
+            or: rows.map((row) => ({
+              [refTable.pk_name]: row[relation.targetTblName],
+              ...get_extra_state(row),
+            })),
+          };
+          getRowState = (row) => ({
+            [refTable.pk_name]: row[relation.targetTblName],
+            ...get_extra_state(row),
+          });
+          break;
         case RelationType.INDEPENDENT:
         case RelationType.NONE:
           stateMany = segment.extra_state_fml
