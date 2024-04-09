@@ -604,7 +604,7 @@ const ToolboxList = ({ expanded }) => {
         child_field_list={child_field_list}
         agg_field_opts={agg_field_opts}
       />,
-      // <ViewElem connectors={connectors} views={views} />,
+      <ViewElem connectors={connectors} views={views} />,
       // <ContainerElem connectors={connectors} />,
       // <CardElem connectors={connectors} />,
       //  <TabsElem connectors={connectors} />,
