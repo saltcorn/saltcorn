@@ -17,8 +17,16 @@ const PageGroup = require("../../models/page_group");
 const Library = require("../../models/library");
 const User = require("../../models/user");
 
+const { Relation, RelationType } = require("@saltcorn/common-code");
+
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
 const { text, script, button, div, code } = require("@saltcorn/markup/tags");
+const {
+  eachView,
+  traverse,
+  getStringsForI18n,
+  translateLayout,
+} = require("../../models/layout");
 const pluralize = require("pluralize");
 const {
   removeEmptyStrings,
@@ -27,6 +35,8 @@ const {
   mergeIntoWhere,
   mergeConnectedObjects,
   hashState,
+  dollarizeObject,
+  getSessionId,
 } = require("../../utils");
 const {
   field_picker_fields,
@@ -42,6 +52,8 @@ const {
   readState,
   run_action_column,
   add_free_variables_to_joinfields,
+  pathToState,
+  displayType,
 } = require("../../plugin-helper");
 const {
   get_viewable_fields,
@@ -858,6 +870,129 @@ const run = async (
   const statehash = hashState(state, viewname);
 
   const { rows, rowCount } = await listQuery(state, statehash);
+
+  const viewResults = {};
+  var views = {};
+
+  const getView = async (name, relation) => {
+    if (views[name]) return views[name];
+    const view_select = parse_view_select(name, relation);
+    const view = View.findOne({ name: view_select.viewname });
+    if (!view) return false;
+    if (view.table_id === table.id) view.table = table;
+    else view.table = Table.findOne({ id: view.table_id });
+    view.view_select = view_select;
+    views[name] = view;
+    return view;
+  };
+  await eachView(layout, async (segment) => {
+    const view = await getView(segment.view, segment.relation);
+    if (!view)
+      throw new InvalidConfiguration(
+        `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
+      );
+    view.check_viewtemplate();
+    let stateMany, getRowState;
+    const get_extra_state = (row) =>
+      segment.extra_state_fml
+        ? eval_expression(
+            segment.extra_state_fml,
+            {
+              ...dollarizeObject(state),
+              session_id: getSessionId(extraOpts.req),
+              ...row,
+            },
+            extraOpts.req.user,
+            `Extra state formula for view ${view.name}`
+          )
+        : {};
+    if (view.view_select.type === "RelationPath") {
+      const relation = new Relation(
+        segment.relation,
+        view.table_id ? Table.findOne({ id: view.table_id }).name : undefined,
+        displayType(await view.get_state_fields())
+      );
+      switch (relation.type) {
+        case RelationType.OWN:
+          stateMany = {
+            or: rows.map((row) => ({
+              [table.pk_name]: row[table.pk_name],
+              ...get_extra_state(row),
+            })),
+          };
+          getRowState = (row) => ({
+            [table.pk_name]: row[table.pk_name],
+            ...get_extra_state(row),
+          });
+          break;
+        case RelationType.PARENT_SHOW:
+          const refTable = Table.findOne({ id: view.table_id });
+          stateMany = {
+            or: rows.map((row) => ({
+              [refTable.pk_name]: row[relation.targetTblName],
+              ...get_extra_state(row),
+            })),
+          };
+          getRowState = (row) => ({
+            [refTable.pk_name]: row[relation.targetTblName],
+            ...get_extra_state(row),
+          });
+          break;
+        case RelationType.INDEPENDENT:
+        case RelationType.NONE:
+          stateMany = segment.extra_state_fml
+            ? {
+                or: rows.map((row) => get_extra_state(row)),
+              }
+            : {};
+          getRowState = (row) => get_extra_state(row);
+
+          break;
+        default:
+          throw new Error(
+            `View in List: invalid relation type ${relation.type}`
+          );
+      }
+    }
+
+    //todo:
+    // other rel types
+    if (this.viewtemplateObj?.runMany) {
+      const runs = await view.runMany(stateMany, extraOpts);
+      viewResults[segment.view + segment.relation] = (row) =>
+        runs.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+    } else if (this.viewtemplateObj?.renderRows) {
+      const rendered = await view.viewtemplateObj.renderRows(
+        view.table,
+        view.name,
+        view.configuration,
+        extraOpts,
+        rows,
+        state
+      );
+
+      viewResults[segment.view + segment.relation] = (row) =>
+        rendered
+          .map((html, ix) => ({
+            html,
+            row: rows[ix],
+          }))
+          .find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+    } else {
+      const results = [];
+
+      for (const row of rows) {
+        const rendered = await view.run(getRowState(row), extraOpts);
+        results.push({
+          html: rendered,
+          row,
+        });
+      }
+      viewResults[segment.view + segment.relation] = (row) =>
+        results.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+    }
+  });
+
   const tfields = layout?.list_columns
     ? get_viewable_fields_from_layout(
         viewname,
@@ -870,7 +1005,8 @@ const run = async (
         __,
         state,
         viewname,
-        layout.besides
+        layout.besides,
+        viewResults
       )
     : get_viewable_fields(
         viewname,

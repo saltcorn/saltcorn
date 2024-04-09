@@ -586,6 +586,7 @@ const ToolboxList = ({ expanded }) => {
     agg_field_opts,
     views,
     images,
+    disable_toolbox,
   } = options;
   return chunkToolBox(
     [
@@ -596,25 +597,36 @@ const ToolboxList = ({ expanded }) => {
         field_view_options={field_view_options}
       />,
       <JoinFieldElem connectors={connectors} options={options} />,
-      <ViewLinkElem connectors={connectors} options={options} />,
-      <ActionElem connectors={connectors} options={options} />,
-      <LinkElem connectors={connectors} />,
-      <AggregationElem
-        connectors={connectors}
-        child_field_list={child_field_list}
-        agg_field_opts={agg_field_opts}
-      />,
-      // <ViewElem connectors={connectors} views={views} />,
+      !disable_toolbox?.view_link && (
+        <ViewLinkElem connectors={connectors} options={options} />
+      ),
+      !disable_toolbox?.action && (
+        <ActionElem connectors={connectors} options={options} />
+      ),
+      !disable_toolbox?.link && <LinkElem connectors={connectors} />,
+      !disable_toolbox?.aggregation && (
+        <AggregationElem
+          connectors={connectors}
+          child_field_list={child_field_list}
+          agg_field_opts={agg_field_opts}
+        />
+      ),
+      !disable_toolbox?.view && (
+        <ViewElem connectors={connectors} views={views} />
+      ),
       // <ContainerElem connectors={connectors} />,
       // <CardElem connectors={connectors} />,
       //  <TabsElem connectors={connectors} />,
       <HTMLElem connectors={connectors} />,
-      <DropMenuElem connectors={connectors} />,
+      !disable_toolbox?.dropdown_menu && (
+        <DropMenuElem connectors={connectors} />
+      ),
       //  <TableElem connectors={connectors} />,
-      ...(options.allowMultipleElementsPerColumn
-        ? [<LineBreakElem connectors={connectors} />]
-        : []),
-    ],
+      options.allowMultipleElementsPerColumn &&
+        !disable_toolbox?.line_break && (
+          <LineBreakElem connectors={connectors} />
+        ),
+    ].filter(Boolean),
     expanded
   );
 };
