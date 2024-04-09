@@ -596,12 +596,14 @@ const get_viewable_fields_from_layout = (
   __,
   state = {},
   srcViewName,
-  layoutCols
+  layoutCols,
+  viewResults
 ) => {
   const typeMap = {
     field: "Field",
     join_field: "JoinField",
     view_link: "ViewLink",
+    view: "View",
     link: "Link",
     action: "Action",
     blank: "Text",
@@ -670,7 +672,8 @@ const get_viewable_fields_from_layout = (
     req,
     __,
     (state = {}),
-    srcViewName
+    srcViewName,
+    viewResults
   );
 };
 
@@ -695,7 +698,8 @@ const get_viewable_fields = (
   req,
   __,
   state = {},
-  srcViewName
+  srcViewName,
+  viewResults
 ) => {
   const dropdown_actions = [];
   const checkShowIf = (tFieldGenF) => (column, index) => {
@@ -863,6 +867,14 @@ const get_viewable_fields = (
           dropdown_actions.push(action_col);
           return false;
         } else return action_col;
+      } else if (column.type === "View") {
+        return {
+          label: "a view",
+          key: (r) =>
+            viewResults[column.view + column.relation].find(
+              (rh) => rh.row[table.pk_name] == r[table.pk_name]
+            )?.html,
+        };
       } else if (column.type === "ViewLink") {
         if (!column.view) return;
         const r = view_linker(
