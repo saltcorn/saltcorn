@@ -869,7 +869,7 @@ const get_viewable_fields = (
         } else return action_col;
       } else if (column.type === "View") {
         return {
-          label: "a view",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) =>
             viewResults[column.view + column.relation].find(
               (rh) => rh.row[table.pk_name] == r[table.pk_name]

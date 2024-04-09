@@ -918,7 +918,16 @@ const run = async (
           );
       }
     }
-    if (this.viewtemplateObj?.renderRows) {
+
+    //todo:
+    // extra state fml
+    // other rel types
+    if (this.viewtemplateObj?.runMany) {
+      viewResults[segment.view + segment.relation] = await view.runMany(
+        stateMany,
+        extraOpts
+      );
+    } else if (this.viewtemplateObj?.renderRows) {
       const rendered = await view.viewtemplateObj.renderRows(
         view.table,
         view.name,
@@ -933,11 +942,6 @@ const run = async (
           html,
           row: rows[ix],
         })
-      );
-    } else if (this.viewtemplateObj?.runMany) {
-      viewResults[segment.view + segment.relation] = await view.runMany(
-        stateMany,
-        extraOpts
       );
     } else {
       viewResults[segment.view + segment.relation] = [];
