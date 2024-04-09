@@ -906,11 +906,10 @@ const run = async (
             `Extra state formula for view ${view.name}`
           )
         : {};
-    if (view.view_select.type === "RelationPath" && view.table_id) {
-      const targetTbl = Table.findOne({ id: view.table_id });
+    if (view.view_select.type === "RelationPath") {
       const relation = new Relation(
         segment.relation,
-        targetTbl.name,
+        view.table_id ? Table.findOne({ id: view.table_id }).name : undefined,
         displayType(await view.get_state_fields())
       );
       switch (relation.type) {
@@ -944,7 +943,6 @@ const run = async (
     }
 
     //todo:
-    // extra state fml
     // other rel types
     if (this.viewtemplateObj?.runMany) {
       const runs = await view.runMany(stateMany, extraOpts);
