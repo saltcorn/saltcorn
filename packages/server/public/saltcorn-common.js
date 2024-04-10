@@ -1206,6 +1206,7 @@ async function common_done(res, viewname, isWeb = true) {
           form.append(
             `<input type="hidden" name="id" value="${res.set_fields[k]}">`
           );
+          reloadEmbeddedEditOwnViews(form, res.set_fields[k]);
           return;
         }
         if (input.attr("type") === "checkbox")
@@ -1268,6 +1269,13 @@ async function common_done(res, viewname, isWeb = true) {
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
   }
+}
+
+function reloadEmbeddedEditOwnViews(form, id) {
+  form.find("div[sc-load-on-assign-id]").each(function () {
+    const $e = $(this);
+    console.log("load this", $e, id, $e.attr("sc-load-on-assign-id"));
+  });
 }
 
 const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {
