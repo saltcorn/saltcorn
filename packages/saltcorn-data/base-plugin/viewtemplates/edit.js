@@ -632,6 +632,10 @@ const transformForm = async ({
           else segment.contents = "";
           return;
         } catch (e) {
+          getState().log(
+            5,
+            `Error in Edit ${viewname} on page load action: ${e.message}`
+          );
           e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
           throw e;
         }
