@@ -974,6 +974,10 @@ function join_field_clicked(e, fieldPath) {
   apply_showif();
 }
 
+function execLink(path) {
+  window.location.href = `${location.origin}${path}`;
+}
+
 (() => {
   const e = document.querySelector("[data-sidebar-toggler]");
   let closed = localStorage.getItem("sidebarClosed") === "true";

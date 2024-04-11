@@ -186,14 +186,10 @@ async function login(e, entryPoint, isSignup) {
       config.user_name = decodedJwt.user.email;
       config.user_id = decodedJwt.user.id;
       config.language = decodedJwt.user.language;
+      config.user = decodedJwt.user;
       config.isPublicUser = false;
       config.isOfflineMode = false;
-      await parent.insertUser({
-        id: config.user_id,
-        email: config.user_name,
-        role_id: config.role_id,
-        language: config.language,
-      });
+      await parent.insertUser(config.user);
       await parent.setJwt(loginResult);
       config.jwt = loginResult;
       await parent.i18next.changeLanguage(config.language);
@@ -245,9 +241,16 @@ async function publicLogin(entryPoint) {
     const loginResult = await loginRequest({ isPublic: true });
     if (typeof loginResult === "string") {
       const config = parent.saltcorn.data.state.getState().mobileConfig;
+      config.user = {
+        role_id: 100,
+        user_name: "public",
+        language: "en",
+      };
+      // TODO remove these, use 'user' everywhere
       config.role_id = 100;
       config.user_name = "public";
       config.language = "en";
+
       config.isPublicUser = true;
       await parent.setJwt(loginResult);
       config.jwt = loginResult;
@@ -462,6 +465,10 @@ async function gopage(n, pagesize, viewIdentifier, extra) {
     },
     parent.currentLocation()
   );
+}
+
+function ajax_modal(url, opts = {}) {
+  mobile_modal(url, opts);
 }
 
 async function mobile_modal(url, opts = {}) {

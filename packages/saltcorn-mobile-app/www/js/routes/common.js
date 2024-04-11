@@ -1,7 +1,8 @@
 /*global saltcorn, offlineHelper*/
 
 const getHeaders = () => {
-  const config = saltcorn.data.state.getState().mobileConfig;
+  const state = saltcorn.data.state.getState();
+  const config = state.mobileConfig;
   const versionTag = config.version_tag;
   const stdHeaders = [
     { css: `static_assets/${versionTag}/saltcorn.css` },
@@ -9,7 +10,13 @@ const getHeaders = () => {
     { script: `static_assets/${versionTag}/dayjs.min.js` },
     { script: "js/utils/iframe_view_utils.js" },
   ];
-  return [...stdHeaders, ...config.pluginHeaders];
+
+  let from_cfg = [];
+  if (state.getConfig("page_custom_css", ""))
+    from_cfg.push({ style: state.getConfig("page_custom_css", "") });
+  if (state.getConfig("page_custom_html", ""))
+    from_cfg.push({ headerTag: state.getConfig("page_custom_html", "") });
+  return [...stdHeaders, ...config.pluginHeaders, ...from_cfg];
 };
 
 const parseQuery = (queryStr) => {

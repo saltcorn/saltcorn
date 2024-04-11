@@ -35,10 +35,7 @@ function MobileRequest({
       const mobileCfg = saltcorn.data.state.getState().mobileConfig;
       return mobileCfg?.language ? mobileCfg.language : "en";
     },
-    user: {
-      id: userId,
-      role_id: roleId,
-    },
+    user: cfg.user,
     flash: (type, msg) => {
       flashMessages.push({ type, msg });
     },

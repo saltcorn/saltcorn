@@ -228,12 +228,15 @@
               if (mobileConfig.user_id) await gotoEntryView();
               else {
                 const decodedJwt = jwt_decode(mobileConfig.jwt);
+                mobileConfig.user = decodedJwt.user;
+                // TODO remove these, use 'user' everywhere
                 mobileConfig.role_id = decodedJwt.user.role_id
                   ? decodedJwt.user.role_id
                   : 100;
                 mobileConfig.user_id = decodedJwt.user.id;
                 mobileConfig.user_name = decodedJwt.user.email;
                 mobileConfig.language = decodedJwt.user.language;
+
                 mobileConfig.isPublicUser = false;
               }
               addRoute({ route: entryPoint, query: undefined });
@@ -364,12 +367,15 @@
           if ((networkDisabled && jwt) || (await checkJWT(jwt))) {
             const mobileConfig = state.mobileConfig;
             const decodedJwt = jwt_decode(mobileConfig.jwt);
+            mobileConfig.user = decodedJwt.user;
+            // TODO remove these, use 'user' everywhere
             mobileConfig.role_id = decodedJwt.user.role_id
               ? decodedJwt.user.role_id
               : 100;
             mobileConfig.user_id = decodedJwt.user.id;
             mobileConfig.user_name = decodedJwt.user.email;
             mobileConfig.language = decodedJwt.user.language;
+
             mobileConfig.isPublicUser = false;
             await i18next.changeLanguage(mobileConfig.language);
             if (mobileConfig.allowOfflineMode) {
@@ -419,9 +425,12 @@
             if (page.content) await replaceIframe(page.content, page.isFile);
           } else if (isPublicJwt(jwt)) {
             const config = state.mobileConfig;
+            config.user = { role_id: 100, user_name: "public", language: "en" };
+            // TODO remove these, use 'user' everywhere
             config.role_id = 100;
             config.user_name = "public";
             config.language = "en";
+
             config.isPublicUser = true;
             i18next.changeLanguage(config.language);
             addRoute({ route: entryPoint, query: undefined });
