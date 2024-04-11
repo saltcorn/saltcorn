@@ -1274,7 +1274,22 @@ async function common_done(res, viewname, isWeb = true) {
 function reloadEmbeddedEditOwnViews(form, id) {
   form.find("div[sc-load-on-assign-id]").each(function () {
     const $e = $(this);
-    console.log("load this", $e, id, $e.attr("sc-load-on-assign-id"));
+    const viewname = $e.attr("sc-load-on-assign-id");
+    const newUrl = `/view/${viewname}?id=${id}`;
+    $.ajax(newUrl, {
+      headers: {
+        pjaxpageload: "true",
+        localizedstate: "true", //no admin bar
+      },
+      success: function (res, textStatus, request) {
+        const newE = `<div class="d-inline" data-sc-embed-viewname="${viewname}" data-sc-view-source="${newUrl}">${res}</div>`;
+        $e.replaceWith(newE);
+        initialize_page();
+      },
+      error: function (res) {
+        notifyAlert({ type: "danger", text: res.responseText });
+      },
+    });
   });
 }
 
