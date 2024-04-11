@@ -632,6 +632,10 @@ const transformForm = async ({
           else segment.contents = "";
           return;
         } catch (e) {
+          getState().log(
+            5,
+            `Error in Edit ${viewname} on page load action: ${e.message}`
+          );
           e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
           throw e;
         }
@@ -796,7 +800,7 @@ const transformForm = async ({
         segment.type = "field_repeat";
         segment.field_repeat = fr;
         return;
-      }
+      } // end edit in edit
       let state = {};
       if (view_select.type === "RelationPath" && view.table_id) {
         const targetTbl = Table.findOne({ id: view.table_id });
@@ -807,7 +811,11 @@ const transformForm = async ({
             displayType(await view.get_state_fields())
           );
           const type = relation.type;
-          if (!row && type !== RelationType.INDEPENDENT) {
+          if (!row && type == RelationType.OWN) {
+            segment.type = "blank";
+            segment.contents = div({ "sc-load-on-assign-id": view.name });
+            return;
+          } else if (!row && type !== RelationType.INDEPENDENT) {
             segment.type = "blank";
             segment.contents = "";
             return;
