@@ -1,6 +1,7 @@
 import { dirname, basename, join, sep } from "path";
 import { existsSync, mkdirSync, copySync, readdirSync, rmSync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
+import File from "@saltcorn/data/models/file";
 import { spawnSync } from "child_process";
 const { getState } = require("@saltcorn/data/db/state");
 
@@ -83,6 +84,7 @@ function copyAllPublicFiles(location: string, dstPublicDir: string) {
 export async function copyPublicDirs(buildDir: string) {
   const state = getState();
   const wwwDir = join(buildDir, "www");
+  const pluginCfgs = state.plugin_cfgs || {};
   for (const [k, v] of <[string, any]>Object.entries(state.plugins)) {
     const location = state.plugin_locations[k];
     if (location) {
@@ -92,6 +94,15 @@ export async function copyPublicDirs(buildDir: string) {
       }
       if (k !== "sbadmin2")
         copyAllPublicFiles(location, join(wwwDir, "plugins", "public", k));
+    }
+    if (pluginCfgs[k] && pluginCfgs[k].alt_css_file) {
+      const altCssFile = await File.findOne(pluginCfgs[k].alt_css_file);
+      if (altCssFile)
+        copySync(
+          altCssFile.location,
+          join(wwwDir, "plugins", "public", k, pluginCfgs[k].alt_css_file),
+          { recursive: true }
+        );
     }
   }
 }
