@@ -762,6 +762,7 @@ function initialize_page() {
     $("[sc-image]").each(async function () {
       if (parent.loadEncodedFile) {
         const src = $(this).attr("src");
+        $(this).attr("src", "");
         const fileId = src.replace("/files/serve/", "");
         const base64Encoded = await parent.loadEncodedFile(fileId);
         this.src = base64Encoded;
@@ -1572,4 +1573,56 @@ function set_readonly_select(e) {
   const options = JSON.parse(optionsS);
   const option = options.find((o) => o.value == e.target.value);
   if (option) $disp.val(option.label);
+}
+
+function close_saltcorn_modal() {
+  $("#scmodal").off("hidden.bs.modal");
+  var myModalEl = document.getElementById("scmodal");
+  if (!myModalEl) return;
+  var modal = bootstrap.Modal.getInstance(myModalEl);
+  if (modal) {
+    if (modal.hide) modal.hide();
+    if (modal.dispose) modal.dispose();
+  }
+}
+
+function reload_embedded_view(viewname, new_query_string) {
+  const isNode = getIsNode();
+  const updater = ($e, res) => {
+    $e.html(res);
+    initialize_page();
+  };
+  if (window._sc_loglevel > 4)
+    console.log(
+      "reload_embedded_view",
+      viewname,
+      "found",
+      $(`[data-sc-embed-viewname="${viewname}"]`).length
+    );
+  $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
+    const $e = $(this);
+    let url = $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
+    if (!url) return;
+    if (new_query_string) {
+      url = url.split("?")[0] + "?" + new_query_string;
+    }
+    if (isNode) {
+      $.ajax(url, {
+        headers: {
+          pjaxpageload: "true",
+          localizedstate: "true", //no admin bar
+        },
+        success: function (res, textStatus, request) {
+          updater($e, res);
+        },
+        error: function (res) {
+          notifyAlert({ type: "danger", text: res.responseText });
+        },
+      });
+    } else {
+      runUrl(url).then((html) => {
+        updater($e, html);
+      });
+    }
+  });
 }

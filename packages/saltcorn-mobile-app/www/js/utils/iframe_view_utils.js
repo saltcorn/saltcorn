@@ -34,6 +34,15 @@ async function execLink(url, linkSrc) {
     }
 }
 
+async function runUrl(url, method = "get") {
+  const { path, query } = parent.splitPathQuery(url);
+  const page = await parent.router.resolve({
+    pathname: `get${path}`,
+    query: query,
+  });
+  return page.content;
+}
+
 async function execNavbarLink(url) {
   $(".navbar-toggler").click();
   execLink(url);

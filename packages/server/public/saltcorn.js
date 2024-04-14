@@ -154,37 +154,6 @@ $(function () {
   });
 });
 
-function reload_embedded_view(viewname, new_query_string) {
-  if (window._sc_loglevel > 4)
-    console.log(
-      "reload_embedded_view",
-      viewname,
-      "found",
-      $(`[data-sc-embed-viewname="${viewname}"]`).length
-    );
-  $(`[data-sc-embed-viewname="${viewname}"]`).each(function () {
-    const $e = $(this);
-    let url = $e.attr("data-sc-local-state") || $e.attr("data-sc-view-source");
-    if (!url) return;
-    if (new_query_string) {
-      url = url.split("?")[0] + "?" + new_query_string;
-    }
-    $.ajax(url, {
-      headers: {
-        pjaxpageload: "true",
-        localizedstate: "true", //no admin bar
-      },
-      success: function (res, textStatus, request) {
-        $e.html(res);
-        initialize_page();
-      },
-      error: function (res) {
-        notifyAlert({ type: "danger", text: res.responseText });
-      },
-    });
-  });
-}
-
 function pjax_to(href, e) {
   let $modal = $("#scmodal");
   const inModal = $modal.length && $modal.hasClass("show");
@@ -321,17 +290,6 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
     contentType: "application/json",
     data: JSON.stringify(data),
   });
-}
-
-function close_saltcorn_modal() {
-  $("#scmodal").off("hidden.bs.modal");
-  var myModalEl = document.getElementById("scmodal");
-  if (!myModalEl) return;
-  var modal = bootstrap.Modal.getInstance(myModalEl);
-  if (modal) {
-    if (modal.hide) modal.hide();
-    if (modal.dispose) modal.dispose();
-  }
 }
 
 function ensure_modal_exists_and_closed() {
