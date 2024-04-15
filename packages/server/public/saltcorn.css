@@ -502,3 +502,7 @@ tr[onclick] {
 .editStarRating i.fa-star {
   color: unset;
 }
+
+.modal-header {
+  justify-content: space-between;
+}

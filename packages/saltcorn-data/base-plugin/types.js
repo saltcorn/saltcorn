@@ -1743,6 +1743,7 @@ const date = {
       ],
       run: (d, req, options) => {
         if (!d) return "";
+        if (req?.noHTML) return moment(d).format(options?.format);
         return time(
           {
             datetime: new Date(d).toISOString(),

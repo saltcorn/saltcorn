@@ -140,6 +140,9 @@ class Trigger implements AbstractTrigger {
    * @returns {Promise<void>}
    */
   static async update(id: number, row: Row): Promise<void> {
+    const { getState } = require("../db/state");
+    getState().log(6, `Update trigger ID=${id} Row=${JSON.stringify(row)}`);
+    if (row.table_id === "") row.table_id = null;
     await db.update("_sc_triggers", row, id);
     await require("../db/state").getState().refresh_triggers();
   }
