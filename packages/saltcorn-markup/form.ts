@@ -1337,6 +1337,11 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const csrfField = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
   const extraValues: any = {};
   if (form.req?.user) extraValues.user = form.req.user;
+  if (form.userAttributes) {
+    if (extraValues.user)
+      extraValues.user.attributes = { ...form.userAttributes };
+    else extraValues.user = { attributes: { ...form.userAttributes } };
+  }
   if (Object.keys(form.values || {}).length > 1) {
     const formVals = new Set(
       form.fields

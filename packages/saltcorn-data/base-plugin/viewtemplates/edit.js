@@ -1034,6 +1034,19 @@ const render = async ({
     viewname,
     optionsQuery,
   });
+
+  // make exposed plugin configs or user overwrites available in expressions
+  const fullUser = req?.user?.id && (await User.findOne({ id: req.user.id }));
+  const userLayout = fullUser?._attributes?.layout;
+  const attributes = { ...getState().plugins_cfg_context };
+  if (userLayout) {
+    const pluginName = getState().plugin_module_names[userLayout.plugin];
+    attributes[pluginName] = {
+      ...attributes[pluginName],
+      ...userLayout.config,
+    };
+  }
+  form.userAttributes = attributes;
   return (
     renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
     reloadAfterCloseInModalScript
