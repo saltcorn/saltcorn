@@ -258,7 +258,7 @@ const mockReqRes = {
     csrfToken: () => "",
     getLocale: () => "en",
     __: (s: any) => s,
-    user: { id: 1, role_id: 1 },
+    user: { id: 1, role_id: 1, attributes: {} },
     isAuthenticated: () => true,
     headers: {},
     query: {},

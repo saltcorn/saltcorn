@@ -476,8 +476,6 @@ const renderRows = async (
     // no mjml markup for for nested subviews, only for the top view
     subviewExtra.req = { ...extra.req, isSubView: true };
   }
-  const fullUser =
-    extra.req?.user?.id && (await User.findOne({ id: extra.req.user.id }));
   return await asyncMap(rows, async (row) => {
     await eachView(layout, async (segment) => {
       // do all the parsing with data here? make a factory
@@ -610,8 +608,7 @@ const renderRows = async (
       extra.req,
       is_owner,
       state,
-      extra,
-      fullUser
+      extra
     );
   });
 };
@@ -677,8 +674,7 @@ const render = (
   req,
   is_owner,
   state,
-  extra,
-  fullUser
+  extra
 ) => {
   const session_id = getSessionId(req);
   const evalMaybeExpr = (segment, key, fmlkey) => {
@@ -755,19 +751,7 @@ const render = (
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
-        const user = {
-          ...req.user,
-          attributes: { ...getState().plugins_cfg_context },
-        };
-        const userLayout = fullUser?._attributes?.layout;
-        if (userLayout) {
-          const pluginName = getState().plugin_module_names[userLayout.plugin];
-          user.attributes[pluginName] = {
-            ...user.attributes[pluginName],
-            ...userLayout.config,
-          };
-        }
-        if (!f({ ...dollarizeObject(state || {}), ...row }, user))
+        if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
           segment.hide = true;
         else segment.hide = false;
       }

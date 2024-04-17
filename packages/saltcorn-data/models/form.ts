@@ -58,7 +58,6 @@ class Form implements AbstractForm {
   isOwner: boolean;
   onSubmit?: string;
   req: any;
-  userAttributes?: any;
   tabs?: string;
   __?: any;
 

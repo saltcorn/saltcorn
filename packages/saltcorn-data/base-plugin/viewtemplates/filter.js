@@ -290,8 +290,6 @@ const run = async (
     if (typeof evalCtx[f.name] === "undefined") evalCtx[f.name] = "undefined";
   });
   evalCtx.session_id = getSessionId(extra.req);
-  const fullUser =
-    extra.req?.user?.id && (await User.findOne({ id: extra.req.user?.id }));
   await traverse(layout, {
     aggregation: async (segment) => {
       const { stat, agg_field, agg_fieldview, aggwhere } = segment;
@@ -429,19 +427,8 @@ const run = async (
     container(segment) {
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
-        const user = {
-          ...extra.req.user,
-          attributes: { ...getState().plugins_cfg_context },
-        };
-        const userLayout = fullUser?._attributes?.layout;
-        if (userLayout) {
-          const pluginName = getState().plugin_module_names[userLayout.plugin];
-          user.attributes[pluginName] = {
-            ...user.attributes[pluginName],
-            ...userLayout.config,
-          };
-        }
-        if (!f(state, user)) segment.hide = true;
+
+        if (!f(state, extra.req.user)) segment.hide = true;
         else segment.hide = false;
       }
     },

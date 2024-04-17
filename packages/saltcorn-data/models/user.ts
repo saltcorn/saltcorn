@@ -236,14 +236,24 @@ class User {
    * @type {{role_id: number, language, id, email, tenant: *}}
    */
   get session_object(): any {
-    const so = {
+    const { getState } = require("../db/state");
+    const so: any = {
       email: this.email,
       id: this.id,
       role_id: this.role_id,
       language: this.language,
       tenant: db.getTenantSchema(),
+      attributes: { ...getState().plugins_cfg_context },
     };
     Object.assign(so, safeUserFields(this));
+    const userLayout = this._attributes?.layout;
+    if (userLayout) {
+      const moduleName = getState().plugin_module_names[userLayout.plugin];
+      so.attributes[moduleName] = {
+        ...(so.attributes[moduleName] || {}),
+        ...userLayout.config,
+      };
+    }
     return so;
   }
 

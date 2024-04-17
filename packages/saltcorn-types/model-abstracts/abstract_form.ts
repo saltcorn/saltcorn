@@ -33,5 +33,4 @@ export interface AbstractForm {
   tabs?: any;
   req: any;
   __?: any;
-  userAttributes?: any;
 }
