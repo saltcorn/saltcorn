@@ -68,6 +68,36 @@ type NavSubItemsOpts = {
   isUser: boolean;
 };
 
+const navSubItemsIterator = (si: any) =>
+  si?.type === "Separator"
+    ? hr({ class: "mx-3 my-1" })
+    : si?.subitems
+    ? div(
+        { class: "dropdown-item btn-group dropend" },
+        a(
+          {
+            type: "button",
+            class: "dropdown-item dropdown-toggle p-0",
+            "data-bs-toggle": "dropdown",
+            "aria-expanded": "false",
+          },
+          si.label
+        ),
+        ul(
+          { class: "dropdown-menu" },
+          si?.subitems.map((si1: any) => li(navSubItemsIterator(si1)))
+        )
+      )
+    : a(
+        {
+          class: ["dropdown-item", si.style || "", si.class],
+          href: si.link,
+          target: si.target_blank ? "_blank" : undefined,
+        },
+        si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
+        si.label
+      );
+
 /**
  * @param {object} opts
  * @param {string} opts.label
@@ -81,8 +111,8 @@ const navSubitems = ({
   subitems,
   icon,
   isUser,
-}: NavSubItemsOpts): string =>
-  li(
+}: NavSubItemsOpts): string => {
+  return li(
     { class: "nav-item dropdown" },
     a(
       {
@@ -93,6 +123,7 @@ const navSubitems = ({
         "data-bs-toggle": "dropdown",
         "aria-haspopup": "true",
         "aria-expanded": "false",
+        "data-bs-auto-close": "outside",
       },
       icon ? i({ class: `fa-fw mr-05 ${icon}` }) : "",
       label
@@ -102,21 +133,10 @@ const navSubitems = ({
         class: ["dropdown-menu", isUser && "dropdown-menu-end"],
         "aria-labelledby": `dropdown${labelToId(label)}`,
       },
-      subitems.map((si) =>
-        si?.type === "Separator"
-          ? hr({ class: "mx-3 my-1" })
-          : a(
-              {
-                class: ["dropdown-item", si.style || "", si.class],
-                href: si.link,
-                target: si.target_blank ? "_blank" : undefined,
-              },
-              si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
-              si.label
-            )
-      )
+      subitems.map(navSubItemsIterator)
     )
   );
+};
 
 /**
  * @param {string} currentUrl
