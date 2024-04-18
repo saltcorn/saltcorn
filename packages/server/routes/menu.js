@@ -19,7 +19,7 @@ const { save_menu_items } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const { renderForm } = require("@saltcorn/markup");
-const { script, domReady, div, ul } = require("@saltcorn/markup/tags");
+const { script, domReady, div, ul, i } = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
@@ -368,7 +368,7 @@ const menuEditorScript = (menu_items) => `
               iconPicker: iconPickerOptions,
               getLabelText: (item) => item?.text || item?.type,
               labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
-              maxLevel: 1 // (Optional) Default is -1 (no level limit)
+              maxLevel: 2 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
               });
   editor.setForm($('#menuForm'));
@@ -446,7 +446,16 @@ router.get(
           above: [
             {
               besides: [
-                div(ul({ id: "myEditor", class: "sortableLists list-group" })),
+                div(
+                  ul({ id: "myEditor", class: "sortableLists list-group" }),
+                  div(
+                    i(
+                      req.__(
+                        "Some themes support only one level of menu nesting."
+                      )
+                    )
+                  )
+                ),
                 div(
                   renderForm(form, req.csrfToken()),
                   script(domReady(menuEditorScript(menu_items)))
