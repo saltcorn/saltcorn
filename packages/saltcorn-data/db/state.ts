@@ -143,6 +143,7 @@ class State {
   headers: any;
   function_context: any;
   codepage_context: any;
+  plugins_cfg_context: any;
   functions: any;
   keyFieldviews: any;
   external_tables: any;
@@ -189,6 +190,7 @@ class State {
     this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
     this.functions = { moment, slugify: db.slugify };
+    this.plugins_cfg_context = {};
     this.keyFieldviews = {};
     this.external_tables = {};
     this.verifier = null;
@@ -612,6 +614,13 @@ class State {
     this.log(6, `Register Plugin: ${name} at ${location}`);
     this.plugins[name] = plugin;
     this.plugin_cfgs[name] = cfg;
+    if (plugin.exposed_configs && cfg) {
+      const exposedCfgs: any = {};
+      for (const exposed of plugin.exposed_configs) {
+        exposedCfgs[exposed] = cfg[exposed];
+      }
+      this.plugins_cfg_context[name] = exposedCfgs;
+    }
     if (location) this.plugin_locations[plugin.plugin_name || name] = location;
     this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
