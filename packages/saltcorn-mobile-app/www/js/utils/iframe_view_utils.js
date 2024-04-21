@@ -27,8 +27,11 @@ async function execLink(url, linkSrc) {
   } else
     try {
       showLoadSpinner();
-      const { path, query } = parent.splitPathQuery(url);
-      await parent.handleRoute(`get${path}`, query);
+      if (url.startsWith("javascript:")) eval(url.substring(11));
+      else {
+        const { path, query } = parent.splitPathQuery(url);
+        await parent.handleRoute(`get${path}`, query);
+      }
     } finally {
       removeLoadSpinner();
     }
@@ -37,7 +40,7 @@ async function execLink(url, linkSrc) {
 async function runUrl(url, method = "get") {
   const { path, query } = parent.splitPathQuery(url);
   const page = await parent.router.resolve({
-    pathname: `get${path}`,
+    pathname: `${method}${path}`,
     query: query,
   });
   return page.content;
@@ -333,7 +336,13 @@ async function signupFormSubmit(e, entryView) {
 
 async function loginFormSubmit(e, entryView) {
   try {
-    await login(e, entryView, false);
+    let safeEntryView = entryView;
+    if (!safeEntryView) {
+      const config = parent.saltcorn.data.state.getState().mobileConfig;
+      if (!config.entry_point) throw new Error("Unable to find an entry-point");
+      safeEntryView = config.entry_point;
+    }
+    await login(e, safeEntryView, false);
   } catch (error) {
     parent.errorAlert(error);
   }

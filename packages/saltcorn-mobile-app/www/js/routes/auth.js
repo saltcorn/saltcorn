@@ -1,4 +1,4 @@
-/*global sbAdmin2Layout, apiCall, removeJwt, saltcorn, clearHistory*/
+/*global sbAdmin2Layout, apiCall, removeJwt, saltcorn, clearHistory, MobileRequest, MobileResponse, getHeaders*/
 
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
@@ -35,11 +35,40 @@ const getAuthLinks = (current, entryPoint) => {
   return links;
 };
 
-const renderLoginView = (entryPoint, versionTag, alerts = []) => {
+const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
+  const state = saltcorn.data.state.getState();
   const form = prepareAuthForm(entryPoint);
   form.onSubmit = `javascript:loginFormSubmit(this, '${entryPoint}')`;
   form.submitLabel = "Login";
-  return sbAdmin2Layout().authWrap({
+  const layout = sbAdmin2Layout();
+  const login_form_name = state.getConfig("login_form", "");
+  if (login_form_name) {
+    const login_form = saltcorn.data.models.View.findOne({
+      name: login_form_name,
+    });
+    if (login_form) {
+      const req = new MobileRequest();
+      const res = new MobileResponse();
+      const resp = await login_form.run_possibly_on_page({}, req, res);
+      if (login_form.default_render_page) {
+        return layout.wrap({
+          title: "Login",
+          no_menu: true,
+          body: resp,
+          alerts: [],
+          role: req.user ? req.user.role_id : 100,
+          req,
+          headers: getHeaders(),
+          brand: {
+            name: state.getConfig("site_name") || "Saltcorn",
+            logo: state.mobileConfig.encodedSiteLogo,
+          },
+        });
+      }
+    }
+  }
+
+  return layout.authWrap({
     title: "login",
     form: form,
     authLinks: getAuthLinks("login", entryPoint),
@@ -72,7 +101,7 @@ const renderSignupView = (entryPoint, versionTag) => {
 const getLoginView = async (context) => {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   return {
-    content: renderLoginView(
+    content: await renderLoginView(
       mobileConfig.entry_point,
       mobileConfig.version_tag,
       context.alerts ? context.alerts : []
@@ -97,7 +126,7 @@ const logoutAction = async () => {
     clearHistory();
     config.jwt = undefined;
     return {
-      content: renderLoginView(config.entry_point, config.version_tag),
+      content: await renderLoginView(config.entry_point, config.version_tag),
     };
   } else {
     console.log("unable to logout");

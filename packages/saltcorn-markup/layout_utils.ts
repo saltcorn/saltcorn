@@ -503,6 +503,11 @@ const breadcrumbs = (crumbs: any[], right: any, after: any): string =>
     )
   );
 
+const removeLeadingSlash = (s: string) => {
+  if (s.startsWith("/")) return s.slice(1);
+  else return s;
+};
+
 /**
  * @param {object[]} headers
  * @returns {string}
@@ -510,7 +515,12 @@ const breadcrumbs = (crumbs: any[], right: any, after: any): string =>
 const headersInHead = (headers: any[]): string =>
   headers
     .filter((h) => h.css)
-    .map((h) => `<link href="${h.css}" rel="stylesheet">`)
+    .map(
+      (h) =>
+        `<link href="${
+          isNode ? h.css : removeLeadingSlash(h.css)
+        }" rel="stylesheet">`
+    )
     .join("") +
   headers
     .filter((h) => h.style)
@@ -530,7 +540,9 @@ const headersInBody = (headers: any[]): string =>
     .filter((h) => h.script)
     .map(
       (h) =>
-        `<script ${h.defer ? "defer " : ""}src="${h.script}" ${
+        `<script ${h.defer ? "defer " : ""}src="${
+          isNode ? h.script : removeLeadingSlash(h.script)
+        }" ${
           h.integrity
             ? `integrity="${h.integrity}" crossorigin="anonymous"`
             : ""
