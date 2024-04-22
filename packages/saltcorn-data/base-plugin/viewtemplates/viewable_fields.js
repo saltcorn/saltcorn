@@ -626,6 +626,7 @@ const get_viewable_fields_from_layout = (
         col.link_url = contents.url;
         col.link_url_formula = contents.isFormula?.url;
         col.link_text_formula = contents.isFormula?.text;
+        col.link_target_blank = contents.target_blank;
         break;
       case "view_link":
         col.view_label_formula = contents.isFormula?.label;
