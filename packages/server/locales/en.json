@@ -1400,5 +1400,7 @@
 	"Remove all user specific theme settings": "Remove all user specific theme settings",
 	"Configure %s Plugin for %s": "Configure %s Plugin for %s",
 	"The current theme has no user specific settings": "The current theme has no user specific settings",
-	"Some themes support only one level of menu nesting.": "Some themes support only one level of menu nesting."
+	"Some themes support only one level of menu nesting.": "Some themes support only one level of menu nesting.",
+	"Apple Team ID": "Apple Team ID",
+	"Please enter your Apple Team ID": "Please enter your Apple Team ID"
 }

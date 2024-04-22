@@ -405,10 +405,14 @@ export type MobileConfig = {
     | "unknown"
     | "wifi";
   pluginHeaders?: string[];
+
+  user?: any;
+  // TODO remove these, use 'user' everywhere
   role_id?: number;
   user_name?: string;
   user_id?: number;
   language?: string;
+
   isPublicUser?: boolean;
   jwt?: string;
   inErrorState?: boolean;

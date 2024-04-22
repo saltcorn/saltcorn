@@ -33,7 +33,7 @@ const buildPluginEntries = async (plugins) => {
   let result = [];
   const nameToModule = new Map();
   for (const plugin of plugins) {
-    const requireResult = await requirePlugin(plugin, false);
+    const requireResult = await requirePlugin(plugin, true);
     const packageName = require(`${requireResult.location}/package.json`).name;
     nameToModule.set(plugin.name, { packageName, requireResult });
   }

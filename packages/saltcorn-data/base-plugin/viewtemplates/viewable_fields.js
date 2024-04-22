@@ -1387,11 +1387,20 @@ const getForm = async (
   });
   if (!req.layout_hints)
     req.layout_hints = state.getLayout(req.user).hints || {};
+  let isMobileLogin = false;
+  if (isRemote) {
+    const loginForm = getState().getConfig("login_form", "");
+    if (loginForm && viewname === loginForm) isMobileLogin = true;
+  }
   const form = new Form({
     action: action,
     onSubmit:
       isRemote || isOfflineMode()
-        ? `javascript:formSubmit(this, '/view/', '${viewname}')`
+        ? `javascript:${
+            !isMobileLogin
+              ? `formSubmit(this, '/view/', '${viewname}')`
+              : "loginFormSubmit(this)"
+          }`
         : undefined,
     viewname: viewname,
     fields: tfields,

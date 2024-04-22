@@ -1545,17 +1545,6 @@ const buildDialogScript = (cordovaBuilderAvailable) => {
   
   function handleMessages() {
     notifyAlert("Building the app, please wait.", true)
-    ${
-      getState().getConfig("apple_team_id") &&
-      getState().getConfig("apple_team_id") !== "null"
-        ? ""
-        : `  
-    if ($("#iOSCheckboxId")[0].checked) {
-      notifyAlert(
-        "No 'Apple Team ID' is configured, I will try to build a project for the iOS simulator."
-      );
-    }`
-    }
   }
   </script>`;
 };
@@ -2221,6 +2210,30 @@ router.get(
                   div(
                     { class: "row pb-3 pt-3" },
                     div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "splashPageInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("Apple Team ID")
+                      ),
+                      input({
+                        type: "text",
+                        class: "form-control",
+                        name: "appleTeamId",
+                        id: "appleTeamIdInputId",
+                        value:
+                          builderSettings.appleTeamId ||
+                          getState().getConfig("apple_team_id") ||
+                          "",
+                        placeholder: req.__("Please enter your Apple Team ID"),
+                      })
+                    )
+                  ),
+                  div(
+                    { class: "row pb-3 pt-2" },
+                    div(
                       label(
                         { class: "form-label fw-bold" },
                         req.__("Cordova builder") +
@@ -2377,6 +2390,7 @@ router.post(
       allowOfflineMode,
       synchedTables,
       includedPlugins,
+      appleTeamId,
     } = req.body;
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
@@ -2419,10 +2433,9 @@ router.post(
     if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) {
       spawnParams.push("-p", "ios");
-      const teamId = getState().getConfig("apple_team_id");
-      if (!teamId || teamId === "null") {
+      if (!appleTeamId || appleTeamId === "null")
         spawnParams.push("--buildForEmulator");
-      }
+      else spawnParams.push("--appleTeamId", appleTeamId);
     }
     if (appName) spawnParams.push("--appName", appName);
     if (appVersion) spawnParams.push("--appVersion", appVersion);
@@ -2467,6 +2480,7 @@ router.post(
       synchedTables: synchedTables,
       includedPlugins: includedPlugins,
       excludedPlugins,
+      appleTeamId,
     });
     // end http call, return the out directory name
     // the gui polls for results

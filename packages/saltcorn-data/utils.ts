@@ -4,11 +4,12 @@
  */
 import { serialize, deserialize } from "v8";
 import { createReadStream } from "fs";
-import { GenObj } from "@saltcorn/types/common_types";
-import { Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
+import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
+import { Row, Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
+import type Field from "./models/field"; // only type, shouldn't cause require loop
 const _ = require("underscore");
 
 const removeEmptyStrings = (obj: GenObj) => {
@@ -373,6 +374,23 @@ const interpolate = (s: string, row: any, user?: any) => {
   } else return s;
 };
 
+const prepMobileRows = (rows: Row[], fields: Field[]) => {
+  const dateFields = fields.filter(
+    (f) => instanceOfType(f.type) && f.type?.name === "Date"
+  );
+  if (dateFields.length === 0) return rows;
+  else {
+    const dateFieldNames = dateFields.map((f: any) => f.name);
+    return rows.map((row) => {
+      const newRow = { ...row };
+      for (const fn of dateFieldNames) {
+        if (newRow[fn]) newRow[fn] = new Date(newRow[fn]);
+      }
+      return newRow;
+    });
+  }
+};
+
 export = {
   dollarizeObject,
   objectToQueryString,
@@ -413,4 +431,5 @@ export = {
   comparingCaseInsensitive,
   ppVal,
   interpolate,
+  prepMobileRows,
 };

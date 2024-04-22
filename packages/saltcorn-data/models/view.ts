@@ -16,6 +16,7 @@ const {
   structuredClone,
   isNode,
   isWeb,
+  prepMobileRows,
 } = utils;
 
 import tags from "@saltcorn/markup/tags";
@@ -492,6 +493,8 @@ class View implements AbstractView {
       const state = getState();
       const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
       const queries: any = {};
+      const table = require("./table").findOne({ id: this.table_id });
+      const fields = table?.getFields() || [];
       Object.entries(queryObj).forEach(([k, v]) => {
         queries[k] = async (...args: any[]) => {
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
@@ -511,7 +514,9 @@ class View implements AbstractView {
             );
             for (const { type, msg } of response.data.alerts)
               req.flash(type, msg);
-            return response.data.success;
+            return Array.isArray(response.data.success)
+              ? prepMobileRows(response.data.success, fields)
+              : response.data.success;
           } catch (error: any) {
             state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
             if (error.request?.status === 401)

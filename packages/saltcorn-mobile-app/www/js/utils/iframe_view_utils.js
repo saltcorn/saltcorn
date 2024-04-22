@@ -27,11 +27,23 @@ async function execLink(url, linkSrc) {
   } else
     try {
       showLoadSpinner();
-      const { path, query } = parent.splitPathQuery(url);
-      await parent.handleRoute(`get${path}`, query);
+      if (url.startsWith("javascript:")) eval(url.substring(11));
+      else {
+        const { path, query } = parent.splitPathQuery(url);
+        await parent.handleRoute(`get${path}`, query);
+      }
     } finally {
       removeLoadSpinner();
     }
+}
+
+async function runUrl(url, method = "get") {
+  const { path, query } = parent.splitPathQuery(url);
+  const page = await parent.router.resolve({
+    pathname: `${method}${path}`,
+    query: query,
+  });
+  return page.content;
 }
 
 async function execNavbarLink(url) {
@@ -186,14 +198,10 @@ async function login(e, entryPoint, isSignup) {
       config.user_name = decodedJwt.user.email;
       config.user_id = decodedJwt.user.id;
       config.language = decodedJwt.user.language;
+      config.user = decodedJwt.user;
       config.isPublicUser = false;
       config.isOfflineMode = false;
-      await parent.insertUser({
-        id: config.user_id,
-        email: config.user_name,
-        role_id: config.role_id,
-        language: config.language,
-      });
+      await parent.insertUser(config.user);
       await parent.setJwt(loginResult);
       config.jwt = loginResult;
       await parent.i18next.changeLanguage(config.language);
@@ -245,9 +253,16 @@ async function publicLogin(entryPoint) {
     const loginResult = await loginRequest({ isPublic: true });
     if (typeof loginResult === "string") {
       const config = parent.saltcorn.data.state.getState().mobileConfig;
+      config.user = {
+        role_id: 100,
+        user_name: "public",
+        language: "en",
+      };
+      // TODO remove these, use 'user' everywhere
       config.role_id = 100;
       config.user_name = "public";
       config.language = "en";
+
       config.isPublicUser = true;
       await parent.setJwt(loginResult);
       config.jwt = loginResult;
@@ -321,7 +336,13 @@ async function signupFormSubmit(e, entryView) {
 
 async function loginFormSubmit(e, entryView) {
   try {
-    await login(e, entryView, false);
+    let safeEntryView = entryView;
+    if (!safeEntryView) {
+      const config = parent.saltcorn.data.state.getState().mobileConfig;
+      if (!config.entry_point) throw new Error("Unable to find an entry-point");
+      safeEntryView = config.entry_point;
+    }
+    await login(e, safeEntryView, false);
   } catch (error) {
     parent.errorAlert(error);
   }
@@ -464,6 +485,10 @@ async function gopage(n, pagesize, viewIdentifier, extra) {
   );
 }
 
+function ajax_modal(url, opts = {}) {
+  mobile_modal(url, opts);
+}
+
 async function mobile_modal(url, opts = {}) {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal" class="modal">
@@ -473,6 +498,13 @@ async function mobile_modal(url, opts = {}) {
           <h5 class="modal-title">Modal title</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
           </button>
+          <div
+            id="modal-toasts-area"
+            class="toast-container position-fixed top-0 start-50 p-0"
+            style: "z-index: 7000;"
+            aria-live="polite"
+            aria-atomic="true">
+          </div>
         </div>
         <div class="modal-body">
           <p>Modal body text goes here.</p>
