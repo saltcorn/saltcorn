@@ -399,12 +399,16 @@ const set_load_actions_join_fieldviews = async ({
     },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
-        //run action
-        if (isPreview) {
-          segment.type = "blank";
-          segment.style = {};
-          return;
+        segment.type = "blank";
+        segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return;
         }
+        //run action
+        if (isPreview) return;
+
         const actionResult = await run_action_column({
           col: { ...segment },
           referrer: req?.get?.("Referrer"),

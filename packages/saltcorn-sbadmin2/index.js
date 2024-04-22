@@ -37,7 +37,24 @@ const { isNode } = require("@saltcorn/data/utils");
  * @returns {function}
  */
 const subItem = (currentUrl) => (item) =>
-  item.link
+  item.subitems
+    ? div(
+        { class: "dropdown-item btn-group dropend" },
+        a(
+          {
+            type: "button",
+            class: "dropdown-item dropdown-toggle p-0",
+            "data-bs-toggle": "dropdown",
+            "aria-expanded": "false",
+          },
+          item.label
+        ),
+        ul(
+          { class: "dropdown-menu" },
+          item.subitems.map((si1) => li(subItem(currentUrl)(si1)))
+        )
+      )
+    : item.link
     ? a(
         {
           class: [

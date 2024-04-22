@@ -606,11 +606,15 @@ const transformForm = async ({
     },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
-        //TODO check segment.min_role
-        if (req.method === "POST") {
-          segment.contents = "";
-          return;
+        segment.type = "blank";
+        segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return;
         }
+        if (req.method === "POST") return;
+
         //run action
         try {
           const actionResult = await run_action_column({
@@ -621,17 +625,18 @@ const transformForm = async ({
             table,
             row: row || pseudo_row,
           });
-          segment.type = "blank";
-          segment.style = {};
+
           if (actionResult)
             segment.contents = script(
               domReady(
                 `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
               )
             );
-          else segment.contents = "";
-          return;
         } catch (e) {
+          getState().log(
+            5,
+            `Error in Edit ${viewname} on page load action: ${e.message}`
+          );
           e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
           throw e;
         }
@@ -796,7 +801,7 @@ const transformForm = async ({
         segment.type = "field_repeat";
         segment.field_repeat = fr;
         return;
-      }
+      } // end edit in edit
       let state = {};
       if (view_select.type === "RelationPath" && view.table_id) {
         const targetTbl = Table.findOne({ id: view.table_id });
@@ -807,7 +812,11 @@ const transformForm = async ({
             displayType(await view.get_state_fields())
           );
           const type = relation.type;
-          if (!row && type !== RelationType.INDEPENDENT) {
+          if (!row && type == RelationType.OWN) {
+            segment.type = "blank";
+            segment.contents = div({ "sc-load-on-assign-id": view.name });
+            return;
+          } else if (!row && type !== RelationType.INDEPENDENT) {
             segment.type = "blank";
             segment.contents = "";
             return;
@@ -2156,8 +2165,14 @@ module.exports = {
         const valres = f.validate(body);
         if ("success" in valres) row[f.name] = valres.success;
       });
-      const use_fixed = await fill_presets(table, req, fixed);
-      row = { ...use_fixed, ...row };
+      if (fixed) {
+        const use_fixed = await fill_presets(table, req, fixed);
+        Object.keys(use_fixed).forEach((k) => {
+          if (row[k] === null || typeof row[k] === "undefined")
+            row[k] = use_fixed[k];
+        });
+      }
+
       try {
         if (click_action) {
           let container;

@@ -93,6 +93,9 @@ describe("tags", () => {
     );
     expect(text("<p>alert<p>")).toBe("<p>alert<p>");
     expect(text("<kbd>ctrl<kbd>")).toBe("<kbd>ctrl<kbd>");
+    expect(text('<span style="color:#2ecc71;">green</span>')).toBe(
+      '<span style="color:#2ecc71;">green</span>'
+    );
   });
 });
 

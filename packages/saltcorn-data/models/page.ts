@@ -329,6 +329,13 @@ class Page implements AbstractPage {
     await traverse(this.layout, {
       async action(segment: any) {
         if (segment.action_style === "on_page_load") {
+          segment.type = "blank";
+          segment.style = {};
+          if (segment.minRole && segment.minRole != 100) {
+            const minRole = +segment.minRole;
+            const userRole = extraArgs?.req?.user?.role_id || 100;
+            if (minRole < userRole) return;
+          }
           //run action
           const actionResult = await run_action_column({
             col: { ...segment },
@@ -336,13 +343,10 @@ class Page implements AbstractPage {
             req: extraArgs.req,
             res: extraArgs.res,
           });
-          segment.type = "blank";
-          segment.style = {};
           if (actionResult)
             segment.contents = script(
               domReady(`common_done(${JSON.stringify(actionResult)})`)
             );
-          else segment.contents = "";
           return;
         }
         const url =

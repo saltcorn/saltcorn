@@ -140,6 +140,9 @@ class Trigger implements AbstractTrigger {
    * @returns {Promise<void>}
    */
   static async update(id: number, row: Row): Promise<void> {
+    const { getState } = require("../db/state");
+    getState().log(6, `Update trigger ID=${id} Row=${JSON.stringify(row)}`);
+    if (row.table_id === "") row.table_id = null;
     await db.update("_sc_triggers", row, id);
     await require("../db/state").getState().refresh_triggers();
   }
@@ -295,6 +298,9 @@ class Trigger implements AbstractTrigger {
     const { getState } = require("../db/state");
     const state = getState();
     state.log(4, `Trigger run ${this.name} ${this.action} no row`);
+    const table = this.table_id
+      ? require("./table").findOne({ id: this.table_id })
+      : undefined;
     if (this.action === "Multi-step action") {
       let result: any = {};
       let step_count = 0;
@@ -334,6 +340,7 @@ class Trigger implements AbstractTrigger {
             "Runnable action not found: " + step.step_action_name
           );
         const stepres = await action.run({
+          table,
           ...runargs,
           configuration,
         });
@@ -362,6 +369,7 @@ class Trigger implements AbstractTrigger {
       action &&
       action.run &&
       action.run({
+        table,
         ...runargs,
         configuration: this.configuration,
       })

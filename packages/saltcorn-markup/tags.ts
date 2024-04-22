@@ -20,6 +20,8 @@ const domReady = (js: string): string =>
   `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){${js}});`;
 
 whiteList.kbd = [];
+whiteList.span = ["style"];
+whiteList.div = ["style"];
 
 /**
  * @param {string|number} t

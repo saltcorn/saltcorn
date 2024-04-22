@@ -454,6 +454,11 @@ const run = async (
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
         segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = extra?.req?.user?.role_id || 100;
+          if (minRole < userRole) return;
+        }
         if (extra?.isPreview) return;
         try {
           const actionResult = await run_action_column({
