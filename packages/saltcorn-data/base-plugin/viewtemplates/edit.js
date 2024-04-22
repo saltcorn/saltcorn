@@ -606,11 +606,15 @@ const transformForm = async ({
     },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
-        //TODO check segment.min_role
-        if (req.method === "POST") {
-          segment.contents = "";
-          return;
+        segment.type = "blank";
+        segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return;
         }
+        if (req.method === "POST") return;
+
         //run action
         try {
           const actionResult = await run_action_column({
@@ -621,16 +625,13 @@ const transformForm = async ({
             table,
             row: row || pseudo_row,
           });
-          segment.type = "blank";
-          segment.style = {};
+
           if (actionResult)
             segment.contents = script(
               domReady(
                 `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
               )
             );
-          else segment.contents = "";
-          return;
         } catch (e) {
           getState().log(
             5,

@@ -801,6 +801,11 @@ const get_viewable_fields = (
             ),
         };
       } else if (column.type === "Action") {
+        if (column.minRole && column.minRole != 100) {
+          const minRole = +column.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return false;
+        }
         const action_col = {
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
