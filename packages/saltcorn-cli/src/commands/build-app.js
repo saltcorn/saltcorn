@@ -95,6 +95,7 @@ class BuildAppCommand extends Command {
         copyTargetDir: flags.copyAppDirectory,
         user,
         buildForEmulator: flags.buildForEmulator,
+        appleTeamId: flags.appleTeamId,
         tenantAppName: flags.tenantAppName,
       });
       process.exit(await builder.build());
@@ -220,6 +221,11 @@ BuildAppCommand.flags = {
     name: "build for emulator",
     description:
       "build without '--device', generates no .ipa file so that iOS apps can be build without developer accounts",
+  }),
+  appleTeamId: flags.string({
+    name: "apple team id",
+    string: "appleTeamId",
+    description: "Apple team id for iOS builds",
   }),
 };
 

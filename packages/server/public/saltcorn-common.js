@@ -759,15 +759,6 @@ function initialize_page() {
         this.src = base64Encoded;
       }
     });
-    $("[sc-image]").each(async function () {
-      if (parent.loadEncodedFile) {
-        const src = $(this).attr("src");
-        $(this).attr("src", "");
-        const fileId = src.replace("/files/serve/", "");
-        const base64Encoded = await parent.loadEncodedFile(fileId);
-        this.src = base64Encoded;
-      }
-    });
 
     $("[mobile-bg-img-path]").each(async function () {
       if (parent.loadEncodedFile) {
@@ -778,8 +769,40 @@ function initialize_page() {
         }
       }
     });
-  }
 
+    $("a").each(function () {
+      let path = $(this).attr("href") || "";
+      if (path.startsWith("http")) {
+        const url = new URL(path);
+        path = `${url.pathname}${url.search}`;
+      }
+      if (path.startsWith("/view/")) {
+        const jThis = $(this);
+        const skip = jThis.attr("skip-mobile-adjust");
+        if (!skip) {
+          jThis.attr("href", `javascript:execLink('${path}')`);
+          if (jThis.find("i,img").length === 0 && !jThis.css("color")) {
+            jThis.css(
+              "color",
+              "rgba(var(--bs-link-color-rgb),var(--bs-link-opacity,1))"
+            );
+          }
+        }
+      }
+    });
+
+    $("img").each(async function () {
+      if (parent.loadEncodedFile) {
+        const jThis = $(this);
+        const src = jThis.attr("src");
+        if (src?.startsWith("/files/serve/")) {
+          const fileId = src.replace("/files/serve/", "");
+          const base64Encoded = await parent.loadEncodedFile(fileId);
+          this.src = base64Encoded;
+        }
+      }
+    });
+  }
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
 

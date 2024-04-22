@@ -498,6 +498,13 @@ async function mobile_modal(url, opts = {}) {
           <h5 class="modal-title">Modal title</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">            
           </button>
+          <div
+            id="modal-toasts-area"
+            class="toast-container position-fixed top-0 start-50 p-0"
+            style: "z-index: 7000;"
+            aria-live="polite"
+            aria-atomic="true">
+          </div>
         </div>
         <div class="modal-body">
           <p>Modal body text goes here.</p>

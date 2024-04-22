@@ -57,6 +57,7 @@ export class MobileBuilder {
   copyTargetDir?: string;
   user?: User;
   buildForEmulator?: boolean;
+  appleTeamId?: string;
   tenantAppName?: string;
 
   /**
@@ -85,6 +86,7 @@ export class MobileBuilder {
     copyTargetDir?: string;
     user?: User;
     buildForEmulator?: boolean;
+    appleTeamId?: string;
     tenantAppName?: string;
   }) {
     this.appName = cfg.appName;
@@ -111,6 +113,7 @@ export class MobileBuilder {
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
     this.buildForEmulator = cfg.buildForEmulator;
+    this.appleTeamId = cfg.appleTeamId;
     this.tenantAppName = cfg.tenantAppName;
   }
 
@@ -161,7 +164,8 @@ export class MobileBuilder {
       this.buildDir,
       this.platforms,
       this.useDocker,
-      this.buildForEmulator
+      this.buildForEmulator,
+      this.appleTeamId
     );
     if (resultCode === 0 && this.copyTargetDir) {
       await tryCopyAppFiles(

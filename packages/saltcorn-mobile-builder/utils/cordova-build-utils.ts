@@ -10,7 +10,6 @@ import {
 import { join } from "path";
 import { readdirSync } from "fs";
 import File from "@saltcorn/data/models/file";
-const { getState } = require("@saltcorn/data/db/state");
 import type User from "@saltcorn/data/models/user";
 import { parseStringPromise, Builder } from "xml2js";
 import { removeNonWordChars } from "@saltcorn/data/utils";
@@ -131,15 +130,16 @@ export function buildApp(
   buildDir: string,
   platforms: string[],
   useDocker?: boolean,
-  buildForEmulator?: boolean
+  buildForEmulator?: boolean,
+  appleTeamId?: string
 ) {
   if (!useDocker) {
     addPlugins(buildDir);
-    return callBuild(buildDir, platforms, buildForEmulator);
+    return callBuild(buildDir, platforms, buildForEmulator, appleTeamId);
   } else {
     let code = buildApkInContainer(buildDir);
     if (code === 0 && platforms.indexOf("ios") > -1)
-      code = callBuild(buildDir, ["ios"]);
+      code = callBuild(buildDir, ["ios"], buildForEmulator, appleTeamId);
     return code;
   }
 }
@@ -249,14 +249,16 @@ export function addPlatforms(buildDir: string, platforms: string[]) {
 export function callBuild(
   buildDir: string,
   platforms: string[],
-  buildForEmulator?: boolean
+  buildForEmulator?: boolean,
+  appleTeamId?: string
 ) {
   addPlatforms(buildDir, platforms);
   let buildParams = [...platforms];
   if (!buildForEmulator) {
     buildParams.push(
       "--device",
-      `--developmentTeam="${getState().getConfig("apple_team_id")}"`
+      `--developmentTeam=${appleTeamId}`,
+      "--codeSignIdentity=iPhone Developer"
     );
   }
   const result = spawnSync("npm", ["run", "build-app", "--", ...buildParams], {
