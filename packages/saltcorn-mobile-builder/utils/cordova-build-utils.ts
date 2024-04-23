@@ -258,7 +258,8 @@ export function callBuild(
     buildParams.push(
       "--device",
       `--developmentTeam=${appleTeamId}`,
-      "--codeSignIdentity=iPhone Developer"
+      "--codeSignIdentity=iPhone Developer",
+      "--automaticProvisioning=true"
     );
   }
   const result = spawnSync("npm", ["run", "build-app", "--", ...buildParams], {
