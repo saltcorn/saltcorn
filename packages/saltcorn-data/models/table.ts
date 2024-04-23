@@ -2115,7 +2115,7 @@ class Table implements AbstractTable {
       //change refs
       await db.query(
         `update ${schemaPrefix}_sc_fields set reftable_name=$1 where reftable_name=$2`,
-        [sqlsanitize(new_name), sqlsanitize(this.name)]
+        [new_name, this.name]
       );
       //rename history
       if (this.versioned)
