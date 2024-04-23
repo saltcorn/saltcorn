@@ -547,6 +547,16 @@ const plugin_store_html = (items, req) => {
   };
 };
 
+const flash_relogin = (req, exposedConfigs) => {
+  req.flash(
+    "warning",
+    req.__(
+      "To see changes for '%s' in show-if-formulas, users need to relogin",
+      exposedConfigs.join(", ")
+    )
+  );
+};
+
 /**
  * @name get
  * @function
@@ -789,6 +799,8 @@ router.post(
       const instore = await Plugin.store_plugins_available();
       const store_plugin = instore.find((p) => p.name === plugin.name);
       if (store_plugin && store_plugin.has_auth) flash_restart(req);
+      if (module.exposed_configs?.length > 0)
+        flash_relogin(req, module.exposed_configs);
       getState().processSend({
         refresh_plugin_cfg: plugin.name,
         tenant: db.getTenantSchema(),
@@ -936,6 +948,14 @@ router.post(
       ...(plugin.configuration ? plugin.configuration : {}),
       ...values,
     });
+    const sessionUser = req.session?.passport?.user;
+    if (sessionUser) {
+      const pluginName = module.plugin_name;
+      if (sessionUser.attributes) {
+        const oldAttrs = sessionUser.attributes[pluginName] || {};
+        sessionUser.attributes[pluginName] = { ...oldAttrs, ...values };
+      } else sessionUser.attributes = { [pluginName]: values };
+    }
     getState().processSend({
       refresh_plugin_cfg: plugin.name,
       tenant: db.getTenantSchema(),
@@ -976,6 +996,14 @@ router.post(
     getState().userLayouts[req.user.email] = module.layout(
       userAttrs.layout.config
     );
+    const sessionUser = req.session?.passport?.user;
+    if (sessionUser) {
+      const pluginName = module.plugin_name;
+      if (sessionUser.attributes) {
+        const oldAttrs = sessionUser.attributes[pluginName] || {};
+        sessionUser.attributes[pluginName] = { ...oldAttrs, ...values };
+      } else sessionUser.attributes = { [pluginName]: values };
+    }
     getState().processSend({
       refresh_plugin_cfg: plugin.name,
       tenant: db.getTenantSchema(),
@@ -997,6 +1025,14 @@ router.post(
       delete userAttrs.layout;
       await user.update({ _attributes: userAttrs });
       getState().userLayouts[req.user.email] = null;
+      let module = getState().plugins[plugin];
+      if (!module) {
+        module = getState().plugins[getState().plugin_module_names[plugin]];
+      }
+      const pluginName = module.plugin_name;
+      const sessionUser = req.session?.passport?.user;
+      if (sessionUser?.attributes[pluginName])
+        sessionUser.attributes[pluginName] = {};
       getState().processSend({
         refresh_plugin_cfg: plugin,
         tenant: db.getTenantSchema(),
