@@ -1402,5 +1402,6 @@
 	"The current theme has no user specific settings": "The current theme has no user specific settings",
 	"Some themes support only one level of menu nesting.": "Some themes support only one level of menu nesting.",
 	"Apple Team ID": "Apple Team ID",
-	"Please enter your Apple Team ID": "Please enter your Apple Team ID"
+	"Please enter your Apple Team ID": "Please enter your Apple Team ID",
+	"To see changes for '%s' in show-if-formulas, users need to relogin": "To see changes for '%s' in show-if-formulas, users need to relogin"
 }
