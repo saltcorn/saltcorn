@@ -39,7 +39,9 @@
     "node-fetch": "2.6.9",
     "tmp-promise": "^3.0.2",
     "lodash": "^4.17.21",
-    "@types/lodash": "^4.14.182"
+    "@types/lodash": "^4.14.182",
+    "@types/ssh2-sftp-client": "9.0.3",
+    "ssh2-sftp-client": "10.0.3"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {

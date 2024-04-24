@@ -21,7 +21,7 @@ import {
   readdir,
   stat,
 } from "fs/promises";
-import { existsSync, readdirSync, statSync } from "fs";
+import { existsSync, readdirSync, statSync, createReadStream } from "fs";
 import { join, basename } from "path";
 import dateFormat from "dateformat";
 import stringify from "csv-stringify/lib/sync";
@@ -49,6 +49,8 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
+
+import SftpClient from "ssh2-sftp-client";
 
 /**
  * @param [withEventLog] - include event log
@@ -596,7 +598,24 @@ const auto_backup_now = async () => {
       await unlink(fileName);
       await delete_old_backups();
       break;
-
+    case "SFTP server":
+      let sftp = new SftpClient();
+      await sftp.connect({
+        host: getState().getConfig("auto_backup_server"),
+        port: getState().getConfig("auto_backup_port"),
+        username: getState().getConfig("auto_backup_username"),
+        password: getState().getConfig("auto_backup_password"),
+      });
+      let data = createReadStream(fileName);
+      let remote = join(
+        getState().getConfig("auto_backup_directory", ""),
+        basename(fileName)
+      );
+      await sftp.put(data, remote);
+      await sftp.end();
+      await unlink(fileName);
+      break;
+    //await  SftpClient()
     default:
       throw new Error("Unknown destination: " + destination);
   }
