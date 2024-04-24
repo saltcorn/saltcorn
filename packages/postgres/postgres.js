@@ -190,7 +190,7 @@ const insert = async (tbl, obj, opts = {}) => {
   var valPosList = [];
   var valList = [];
   const schema = opts.schema || getTenantSchema();
-  let conflict = "";
+  const conflict = opts.onConflictDoNothing ? "on conflict do nothing " : "";
   kvs.forEach(([k, v]) => {
     if (v && v.next_version_by_id) {
       valList.push(v.next_version_by_id);
@@ -199,7 +199,6 @@ const insert = async (tbl, obj, opts = {}) => {
           tbl
         )}" where id=$${valList.length}), 0)+1`
       );
-      if (opts.onConflictDoNothing) conflict = "on conflict do nothing ";
     } else {
       valList.push(v);
       valPosList.push(`$${valList.length}`);
