@@ -308,7 +308,7 @@ const triggerForm = async (req, trigger) => {
         options: roleOptions,
       },
       {
-        name: "raw_output",
+        name: "_raw_output",
         label: "Raw Output",
         sublabel: req.__("Do not wrap response in a success object"),
         type: "Bool",
