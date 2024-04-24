@@ -51,6 +51,7 @@ import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
 
 import SftpClient from "ssh2-sftp-client";
+import tenantModule from "./tenant";
 
 /**
  * @param [withEventLog] - include event log
@@ -557,14 +558,14 @@ const delete_old_backups = async () => {
 /**
  * Do autobackup now
  */
-const auto_backup_now = async () => {
+const auto_backup_now_tenant = async (state: any) => {
   const fileName = await create_backup();
 
-  const destination = getState().getConfig(
+  const destination = state.getConfig(
     "auto_backup_destination",
     "Saltcorn files"
   );
-  const directory = getState().getConfig("auto_backup_directory", "");
+  const directory = state.getConfig("auto_backup_directory", "");
   if (directory === null) throw new Error("Directory is unspecified");
 
   switch (destination) {
@@ -588,7 +589,7 @@ const auto_backup_now = async () => {
       await unlink(fileName);
       break;
     case "Local directory":
-      //const directory = getState().getConfig("auto_backup_directory");
+      //const directory = state.getConfig("auto_backup_directory");
 
       if (directory.length > 0) {
         await mkdir(directory, { recursive: true });
@@ -601,14 +602,14 @@ const auto_backup_now = async () => {
     case "SFTP server":
       let sftp = new SftpClient();
       await sftp.connect({
-        host: getState().getConfig("auto_backup_server"),
-        port: getState().getConfig("auto_backup_port"),
-        username: getState().getConfig("auto_backup_username"),
-        password: getState().getConfig("auto_backup_password"),
+        host: state.getConfig("auto_backup_server"),
+        port: state.getConfig("auto_backup_port"),
+        username: state.getConfig("auto_backup_username"),
+        password: state.getConfig("auto_backup_password"),
       });
       let data = createReadStream(fileName);
       let remote = join(
-        getState().getConfig("auto_backup_directory", ""),
+        state.getConfig("auto_backup_directory", ""),
         basename(fileName)
       );
       await sftp.put(data, remote);
@@ -620,7 +621,15 @@ const auto_backup_now = async () => {
       throw new Error("Unknown destination: " + destination);
   }
 };
-
+const auto_backup_now = async () => {
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  const state = getState();
+  if (isRoot && state.getConfig("auto_backup_tenants"))
+    await tenantModule.eachTenant(
+      async () => await auto_backup_now_tenant(state)
+    );
+  else await auto_backup_now_tenant(state);
+};
 export = {
   create_backup,
   restore,

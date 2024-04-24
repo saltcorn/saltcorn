@@ -721,7 +721,7 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     excludeFromSnapshot: true,
     label: "Auto backup tenants",
-    default: 22,
+    default: false,
     root_only: true,
   },
   auto_backup_expire_days: {
