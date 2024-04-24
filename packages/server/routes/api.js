@@ -373,7 +373,10 @@ router.all(
               res.redirect(resp.goto);
             else if (req.headers?.scgotourl)
               res.redirect(req.headers?.scgotourl);
-            else res.json({ success: true, data: resp });
+            else {
+              if (trigger.configuration?._raw_output) res.json({ resp });
+              else res.json({ success: true, data: resp });
+            }
           } catch (e) {
             Crash.create(e, req);
             res.status(400).json({ success: false, error: e.message });

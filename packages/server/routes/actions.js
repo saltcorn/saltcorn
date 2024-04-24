@@ -307,6 +307,14 @@ const triggerForm = async (req, trigger) => {
         showIf: { when_trigger: ["API call"] },
         options: roleOptions,
       },
+      {
+        name: "_raw_output",
+        label: "Raw Output",
+        parent_field: "configuration",
+        sublabel: req.__("Do not wrap response in a success object"),
+        type: "Bool",
+        showIf: { when_trigger: ["API call"] },
+      },
     ],
   });
   // if (trigger) {
@@ -450,6 +458,11 @@ router.post(
         },
       });
     } else {
+      if (form.values.configuration)
+        form.values.configuration = {
+          ...trigger.configuration,
+          ...form.values.configuration,
+        };
       await Trigger.update(trigger.id, form.values); //{configuration: form.values});
       req.flash("success", req.__("Action information saved"));
       res.redirect(`/actions/`);
@@ -730,7 +743,9 @@ router.post(
           },
         });
     } else {
-      await Trigger.update(trigger.id, { configuration: form.values });
+      await Trigger.update(trigger.id, {
+        configuration: { ...trigger.configuration, ...form.values },
+      });
       if (req.xhr) {
         res.json({ success: "ok" });
         return;
