@@ -1199,12 +1199,6 @@ module.exports = {
           showIf: { run_where: "Client page" },
         },
         {
-          name: "raw_output",
-          label: "Raw Output",
-          input_type: "select",
-          options: ["No", "Yes"],
-        },
-        {
           name: "run_where",
           label: "Run where",
           input_type: "select",
