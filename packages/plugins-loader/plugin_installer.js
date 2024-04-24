@@ -25,6 +25,17 @@ const readPackageJson = async (filePath) => {
   else return null;
 };
 
+const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
+  const oldDeps = oldPckJSON.dependencies || {};
+  const oldDevDeps = oldPckJSON.devDependencies || {};
+  const newDeps = newPckJSON.dependencies || {};
+  const newDevDeps = newPckJSON.devDependencies || {};
+  return (
+    JSON.stringify(oldDeps) !== JSON.stringify(newDeps) ||
+    JSON.stringify(oldDevDeps) !== JSON.stringify(newDevDeps)
+  );
+};
+
 class PluginInstaller {
   constructor(plugin, opts = {}) {
     this.plugin = plugin;
@@ -55,9 +66,14 @@ class PluginInstaller {
     const installer = async () => {
       if (await this.prepPluginsFolder(force, pckJSON)) {
         const tmpPckJSON = await this.removeDependencies(
-          await readPackageJson(this.tempPckJsonPath)
+          await readPackageJson(this.tempPckJsonPath),
+          true
         );
-        await this.npmInstall(tmpPckJSON);
+        if (
+          !pckJSON ||
+          npmInstallNeeded(await this.removeDependencies(pckJSON), tmpPckJSON)
+        )
+          await this.npmInstall(tmpPckJSON);
         await this.movePlugin();
         if (await tarballExists(this.plugin)) await removeTarball(this.plugin);
       }
@@ -100,29 +116,30 @@ class PluginInstaller {
 
   async prepPluginsFolder(force, pckJSON) {
     let wasLoaded = false;
+    const folderExists = await pathExists(this.pluginDir);
     switch (this.plugin.source) {
       case "npm":
         if (
           (force && !(await this.versionIsInstalled(pckJSON))) ||
-          !(await pathExists(this.pluginDir))
+          !folderExists
         ) {
           wasLoaded = await downloadFromNpm(this.plugin, this.tempDir, pckJSON);
         }
         break;
       case "github":
-        if (force || !(await pathExists(this.pluginDir))) {
+        if (force || !folderExists) {
           await downloadFromGithub(this.plugin, this.tempDir);
           wasLoaded = true;
         }
         break;
       case "local":
-        if (force || !(await pathExists(this.pluginDir))) {
+        if (force || !folderExists) {
           await copy(this.plugin.location, this.tempDir);
           wasLoaded = true;
         }
         break;
       case "git":
-        if (force || !(await pathExists(this.pluginDir))) {
+        if (force || !folderExists) {
           await gitPullOrClone(this.plugin, this.tempDir);
           this.pckJsonPath = join(this.pluginDir, "package.json");
           wasLoaded = true;
@@ -176,7 +193,7 @@ class PluginInstaller {
     }
   }
 
-  async removeDependencies(tmpPckJSON) {
+  async removeDependencies(tmpPckJSON, writeToDisk) {
     const pckJSON = { ...tmpPckJSON };
     const oldDepsLength = Object.keys(pckJSON.dependencies || {}).length;
     const oldDevDepsLength = Object.keys(pckJSON.devDependencies || {}).length;
@@ -188,8 +205,9 @@ class PluginInstaller {
     if (pckJSON.dependencies) staticsRemover(pckJSON.dependencies);
     if (pckJSON.devDependencies) staticsRemover(pckJSON.devDependencies);
     if (
-      Object.keys(pckJSON.dependencies || {}).length !== oldDepsLength ||
-      Object.keys(pckJSON.devDependencies || {}).length !== oldDevDepsLength
+      writeToDisk &&
+      (Object.keys(pckJSON.dependencies || {}).length !== oldDepsLength ||
+        Object.keys(pckJSON.devDependencies || {}).length !== oldDevDepsLength)
     )
       await writeFile(
         join(this.tempDir, "package.json"),
