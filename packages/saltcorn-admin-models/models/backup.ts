@@ -614,6 +614,11 @@ const auto_backup_now_tenant = async (state: any) => {
       );
       await sftp.put(data, remote);
       await sftp.end();
+      const retain_dir = state.getConfig("auto_backup_retain_local_directory");
+      if (retain_dir) {
+        await mkdir(retain_dir, { recursive: true });
+        await copyFile(fileName, join(retain_dir, fileName));
+      }
       await unlink(fileName);
       break;
     //await  SftpClient()
@@ -625,9 +630,13 @@ const auto_backup_now = async () => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const state = getState();
   if (isRoot && state.getConfig("auto_backup_tenants"))
-    await tenantModule.eachTenant(
-      async () => await auto_backup_now_tenant(state)
-    );
+    await tenantModule.eachTenant(async () => {
+      try {
+        await auto_backup_now_tenant(state);
+      } catch (e) {
+        console.error(e);
+      }
+    });
   else await auto_backup_now_tenant(state);
 };
 export = {

@@ -693,6 +693,12 @@ const configTypes: ConfigTypes = {
     label: "Auto backup directory",
     default: "",
   },
+  auto_backup_retain_local_directory: {
+    type: "String",
+    excludeFromSnapshot: true,
+    label: "Retain auto backup local directory",
+    default: "",
+  },
   auto_backup_server: {
     type: "String",
     excludeFromSnapshot: true,

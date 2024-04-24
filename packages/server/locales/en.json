@@ -1408,5 +1408,7 @@
 	"Username": "Username",
 	"Port": "Port",
 	"All tenants": "All tenants",
-	"Also backup all tenants": "Also backup all tenants"
+	"Also backup all tenants": "Also backup all tenants",
+	"Retain local directory": "Retain local directory",
+	"Retain a local backup copy in this directory (optional)": "Retain a local backup copy in this directory (optional)"
 }

@@ -787,6 +787,19 @@ const autoBackupForm = (req) => {
         },
       },
       {
+        type: "String",
+        label: req.__("Retain local directory"),
+        name: "auto_backup_retain_local_directory",
+        sublabel: req.__(
+          "Retain a local backup copy in this directory (optional)"
+        ),
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "SFTP server",
+          //auto_backup_destination: "Local directory",
+        },
+      },
+      {
         type: "Integer",
         label: req.__("Expiration in days"),
         sublabel: req.__(
