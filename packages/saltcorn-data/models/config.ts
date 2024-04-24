@@ -693,6 +693,43 @@ const configTypes: ConfigTypes = {
     label: "Auto backup directory",
     default: "",
   },
+  auto_backup_retain_local_directory: {
+    type: "String",
+    excludeFromSnapshot: true,
+    label: "Retain auto backup local directory",
+    default: "",
+  },
+  auto_backup_server: {
+    type: "String",
+    excludeFromSnapshot: true,
+    label: "Auto backup server",
+    default: "",
+  },
+  auto_backup_username: {
+    type: "String",
+    excludeFromSnapshot: true,
+    label: "Auto backup username",
+    default: "",
+  },
+  auto_backup_password: {
+    type: "String",
+    excludeFromSnapshot: true,
+    label: "Auto backup password",
+    default: "",
+  },
+  auto_backup_port: {
+    type: "Integer",
+    excludeFromSnapshot: true,
+    label: "Auto backup port",
+    default: 22,
+  },
+  auto_backup_tenants: {
+    type: "Bool",
+    excludeFromSnapshot: true,
+    label: "Auto backup tenants",
+    default: false,
+    root_only: true,
+  },
   auto_backup_expire_days: {
     type: "Integer",
     excludeFromSnapshot: true,

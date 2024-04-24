@@ -284,9 +284,23 @@ router.get(
     backupForm.values.auto_backup_destination = getState().getConfig(
       "auto_backup_destination"
     );
+    backupForm.values.auto_backup_tenants = getState().getConfig(
+      "auto_backup_tenants"
+    );
     backupForm.values.auto_backup_directory = getState().getConfig(
       "auto_backup_directory"
     );
+    backupForm.values.auto_backup_username = getState().getConfig(
+      "auto_backup_username"
+    );
+    backupForm.values.auto_backup_server =
+      getState().getConfig("auto_backup_server");
+    backupForm.values.auto_backup_password = getState().getConfig(
+      "auto_backup_password"
+    );
+    backupForm.values.auto_backup_port =
+      getState().getConfig("auto_backup_port");
+
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
@@ -691,8 +705,10 @@ const backupFilePrefixForm = (req) =>
  * @param {object} req
  * @returns {Form} form
  */
-const autoBackupForm = (req) =>
-  new Form({
+const autoBackupForm = (req) => {
+  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+
+  return new Form({
     action: "/admin/set-auto-backup",
     onChange: `saveAndContinue(this);$('#btnBackupNow').prop('disabled', $('#inputauto_backup_frequency').val()==='Never');`,
     noSubmitButton: true,
@@ -718,7 +734,47 @@ const autoBackupForm = (req) =>
         name: "auto_backup_destination",
         required: true,
         showIf: { auto_backup_frequency: ["Daily", "Weekly"] },
-        attributes: { options: ["Saltcorn files", "Local directory"] },
+        attributes: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          options: ["Saltcorn files", "Local directory", "SFTP server"],
+        },
+      },
+      {
+        type: "String",
+        label: req.__("Server host"),
+        name: "auto_backup_server",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "SFTP server",
+        },
+      },
+      {
+        type: "String",
+        label: req.__("Username"),
+        name: "auto_backup_username",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "SFTP server",
+        },
+      },
+      {
+        type: "String",
+        label: req.__("Password"),
+        fieldview: "password",
+        name: "auto_backup_password",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "SFTP server",
+        },
+      },
+      {
+        type: "Integer",
+        label: req.__("Port"),
+        name: "auto_backup_port",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "SFTP server",
+        },
       },
       {
         type: "String",
@@ -727,6 +783,19 @@ const autoBackupForm = (req) =>
         sublabel: req.__("Directory for backup files"),
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
+          //auto_backup_destination: "Local directory",
+        },
+      },
+      {
+        type: "String",
+        label: req.__("Retain local directory"),
+        name: "auto_backup_retain_local_directory",
+        sublabel: req.__(
+          "Retain a local backup copy in this directory (optional)"
+        ),
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "SFTP server",
           //auto_backup_destination: "Local directory",
         },
       },
@@ -742,6 +811,19 @@ const autoBackupForm = (req) =>
           auto_backup_destination: "Local directory",
         },
       },
+      ...(isRoot
+        ? [
+            {
+              type: "Bool",
+              label: req.__("All tenants"),
+              sublabel: req.__("Also backup all tenants"),
+              name: "auto_backup_tenants",
+              showIf: {
+                auto_backup_frequency: ["Daily", "Weekly"],
+              },
+            },
+          ]
+        : []),
       {
         type: "Bool",
         label: req.__("Include Event Logs"),
@@ -753,6 +835,7 @@ const autoBackupForm = (req) =>
       },
     ],
   });
+};
 
 /**
  * Snapshot Form
