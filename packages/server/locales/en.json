@@ -1406,5 +1406,7 @@
 	"To see changes for '%s' in show-if-formulas, users need to relogin": "To see changes for '%s' in show-if-formulas, users need to relogin",
 	"Server host": "Server host",
 	"Username": "Username",
-	"Port": "Port"
+	"Port": "Port",
+	"All tenants": "All tenants",
+	"Also backup all tenants": "Also backup all tenants"
 }

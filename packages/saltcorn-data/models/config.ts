@@ -717,7 +717,13 @@ const configTypes: ConfigTypes = {
     label: "Auto backup port",
     default: 22,
   },
-
+  auto_backup_tenants: {
+    type: "Bool",
+    excludeFromSnapshot: true,
+    label: "Auto backup tenants",
+    default: 22,
+    root_only: true,
+  },
   auto_backup_expire_days: {
     type: "Integer",
     excludeFromSnapshot: true,
