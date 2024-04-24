@@ -287,6 +287,17 @@ router.get(
     backupForm.values.auto_backup_directory = getState().getConfig(
       "auto_backup_directory"
     );
+    backupForm.values.auto_backup_username = getState().getConfig(
+      "auto_backup_username"
+    );
+    backupForm.values.auto_backup_server =
+      getState().getConfig("auto_backup_server");
+    backupForm.values.auto_backup_password = getState().getConfig(
+      "auto_backup_password"
+    );
+    backupForm.values.auto_backup_port =
+      getState().getConfig("auto_backup_port");
+
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
@@ -718,7 +729,42 @@ const autoBackupForm = (req) =>
         name: "auto_backup_destination",
         required: true,
         showIf: { auto_backup_frequency: ["Daily", "Weekly"] },
-        attributes: { options: ["Saltcorn files", "Local directory"] },
+        attributes: {
+          options: ["Saltcorn files", "Local directory", "SFTP server"],
+        },
+      },
+      {
+        type: "String",
+        label: req.__("Server host"),
+        name: "auto_backup_server",
+        showIf: {
+          auto_backup_destination: "SFTP server",
+        },
+      },
+      {
+        type: "String",
+        label: req.__("Username"),
+        name: "auto_backup_username",
+        showIf: {
+          auto_backup_destination: "SFTP server",
+        },
+      },
+      {
+        type: "String",
+        label: req.__("Password"),
+        fieldview: "password",
+        name: "auto_backup_password",
+        showIf: {
+          auto_backup_destination: "SFTP server",
+        },
+      },
+      {
+        type: "Integer",
+        label: req.__("Port"),
+        name: "auto_backup_port",
+        showIf: {
+          auto_backup_destination: "SFTP server",
+        },
       },
       {
         type: "String",
