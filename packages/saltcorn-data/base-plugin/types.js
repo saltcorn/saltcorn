@@ -2050,6 +2050,7 @@ const bool = {
               type: "hidden",
               "data-fieldname": text_attr(field.name),
               name: text_attr(nm),
+              onChange: attrs.onChange,
               "data-postprocess": `it=='on'?true:it=='off'?false:null`,
               id: `input${text_attr(nm)}`,
               value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
