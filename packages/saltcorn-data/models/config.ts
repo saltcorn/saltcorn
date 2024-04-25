@@ -914,6 +914,11 @@ const configTypes: ConfigTypes = {
     default: 20,
     blurb: "Search page pagination size",
   },
+  search_table_description: {
+    type: "Bool",
+    label: "Use table description instead of name as header",
+    default: 20,
+  },
   backup_file_prefix: {
     type: "String",
     label: "Backup file prefix",
