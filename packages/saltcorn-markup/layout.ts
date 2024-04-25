@@ -548,7 +548,7 @@ const render = ({
         renderTabs(
           segment,
           go,
-          segment.serverRendered
+          (segment.serverRendered || !isWeb)
             ? req?.query?.[segment.tabId || "_tab"]
             : undefined,
           hints

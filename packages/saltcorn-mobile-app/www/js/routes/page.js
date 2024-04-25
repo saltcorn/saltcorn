@@ -81,7 +81,8 @@ const runPageGroup = async (pageGroup, state, context, { req, res }) => {
 // get/page/pagename
 const getPage = async (context) => {
   const state = saltcorn.data.state.getState();
-  const req = new MobileRequest({ xhr: context.xhr });
+  const query = context.query ? parseQuery(context.query) : {};
+  const req = new MobileRequest({ xhr: context.xhr, query: query});
   const res = new MobileResponse();
   const { page_name } = context.params;
   const { page, pageGroup } = findPageOrGroup(page_name);
