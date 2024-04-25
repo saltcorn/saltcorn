@@ -16,6 +16,18 @@ function currentQuery() {
   return routingHistory[routingHistory.length - 1].query;
 }
 
+function addQueryParam(key, value) {
+  let query = currentQuery();
+  if (!query) {
+    routingHistory[routingHistory.length - 1].query = `${key}=${value}`;
+  }
+  else {
+    const parsed = new URLSearchParams(query);
+    parsed.set(key, value);
+    routingHistory[routingHistory.length - 1].query = parsed.toString();
+  }
+}
+
 function addRoute(routeEntry) {
   routingHistory.push(routeEntry);
 }

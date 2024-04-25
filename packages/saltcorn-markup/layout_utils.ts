@@ -721,12 +721,23 @@ const renderTabs = (
         : "")
     );
   else {
-    let activeIx = serverRendered && activeTabTitle ? +activeTabTitle : 0;
+    let activeIx =
+      (serverRendered || !isNode) && activeTabTitle ? +activeTabTitle : 0;
     if (activeIx === -1) activeIx = 0;
     const maybeWrapContent = (s: string) =>
       contentWrapperClass ? div({ class: contentWrapperClass }, s) : s;
     const maybeWrapHeader = (s: string) =>
       headerWrapperClass ? div({ class: headerWrapperClass }, s) : s;
+    const buildOnClick = (ix: number) => {
+      const addQueryParam = !isNode
+        ? `parent.addQueryParam('_tab', ${ix})`
+        : "";
+      let result = disable_inactive
+        ? `disable_inactive_tab_inputs('${rndid}'); `
+        : "";
+      result += addQueryParam;
+      return result ? result : undefined;
+    };
     return (
       maybeWrapHeader(
         ul(
@@ -750,9 +761,7 @@ const renderTabs = (
                     ix === activeIx && "active",
                     deeplink && "deeplink",
                   ],
-                  onclick: disable_inactive
-                    ? `disable_inactive_tab_inputs('${rndid}')`
-                    : undefined,
+                  onclick: buildOnClick(ix),
                   id: `${rndid}link${ix}`,
                   "data-bs-toggle": serverRendered ? undefined : "tab",
                   href: serverRendered
