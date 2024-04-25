@@ -90,7 +90,7 @@ router.get(
     const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
-    form.values = getState().getConfig("globalSearch");
+    form.values = getState().getConfig("globalSearch", {});
     form.values.search_table_description = getState().getConfig(
       "search_table_description",
       false
