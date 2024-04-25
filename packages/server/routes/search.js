@@ -52,6 +52,12 @@ const searchConfigForm = (tables, views, req) => {
         attributes: { options: ok_views.map((v) => v.name).join() },
       });
   }
+  fields.push({
+    name: "search_table_description",
+    label: req.__("Description header"),
+    sublabel: req.__("Use table description instead of name as header"),
+    type: "Bool",
+  });
   const blurb1 = req.__(
     `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`
   );
@@ -85,6 +91,10 @@ router.get(
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
     form.values = getState().getConfig("globalSearch");
+    form.values.search_table_description = getState().getConfig(
+      "search_table_description",
+      false
+    );
     send_infoarch_page({
       res,
       req,
@@ -116,6 +126,13 @@ router.post(
     const result = form.validate(req.body);
 
     if (result.success) {
+      const search_table_description =
+        !!result.success.search_table_description;
+      await getState().setConfig(
+        "search_table_description",
+        search_table_description
+      );
+      delete result.success.search_table_description;
       await getState().setConfig("globalSearch", result.success);
       if (!req.xhr) res.redirect("/search/config");
       else res.json({ success: "ok" });
@@ -175,6 +192,10 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     res.redirect("/");
     return;
   }
+  const search_table_description = getState().getConfig(
+    "search_table_description",
+    false
+  );
   const current_page = parseInt(_page) || 1;
   const offset = (current_page - 1) * page_size;
   let resp = [];
@@ -184,6 +205,11 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     if (!viewName || viewName === "") continue;
     tablesConfigured += 1;
     if (table && tableName !== table) continue;
+    let sectionHeader = tableName;
+    if (search_table_description) {
+      sectionHeader =
+        Table.findOne({ name: tableName })?.description || tableName;
+    }
     const view = await View.findOne({ name: viewName });
     if (!view)
       throw new InvalidConfiguration(
@@ -209,7 +235,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       tablesWithResults.push(tableName);
       resp.push({
         type: "card",
-        title: span({ id: tableName }, tableName),
+        title: span({ id: tableName }, sectionHeader),
         contents: vresps.map((vr) => vr.html).join("<hr>") + paginate,
       });
     }
