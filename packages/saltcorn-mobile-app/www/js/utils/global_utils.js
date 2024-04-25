@@ -11,17 +11,21 @@ function currentLocation() {
   return routingHistory[index].route;
 }
 
-function currentQuery() {
+function currentQuery(skipPosts = false) {
   if (routingHistory.length == 0) return undefined;
-  return routingHistory[routingHistory.length - 1].query;
+  let index = routingHistory.length - 1;
+  if (skipPosts)
+    while (index > 0 && routingHistory[index].route.startsWith("post/")) {
+      index--;
+    }
+  return routingHistory[index].query;
 }
 
 function addQueryParam(key, value) {
   let query = currentQuery();
   if (!query) {
     routingHistory[routingHistory.length - 1].query = `${key}=${value}`;
-  }
-  else {
+  } else {
     const parsed = new URLSearchParams(query);
     parsed.set(key, value);
     routingHistory[routingHistory.length - 1].query = parsed.toString();
@@ -378,7 +382,7 @@ async function handleRoute(route, query, files, data) {
 async function reload() {
   const currentRoute = currentLocation();
   if (!currentRoute) await gotoEntryView();
-  await handleRoute(currentRoute, currentQuery());
+  await handleRoute(currentRoute, currentQuery(true));
 }
 
 async function goBack(steps = 1, exitOnFirstPage = false) {
