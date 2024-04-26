@@ -915,6 +915,9 @@ function initialize_page() {
       .find(".show[rendered='server-side'][type='success']")
       .removeClass("show");
   }, 5000);
+  $(".lazy-accoordion").on("show.bs.collapse", function (...args) {
+    console.log("bs acc collapse", ...args);
+  });
 }
 
 $(initialize_page);

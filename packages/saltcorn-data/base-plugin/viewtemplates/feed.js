@@ -319,6 +319,12 @@ const configuration_workflow = (req) =>
                 showIf: { view_decoration: "Accordion" },
               },
               {
+                name: "lazy_accordions",
+                label: req.__("Lazy load views"),
+                type: "Bool",
+                showIf: { view_decoration: "Accordion" },
+              },
+              {
                 name: "hide_pagination",
                 label: req.__("Hide pagination"),
                 type: "Bool",
@@ -489,6 +495,7 @@ const run = async (
     exclusion_where,
     empty_view,
     groupby,
+    lazy_accordions,
     ...cols
   },
   state,
@@ -754,7 +761,10 @@ const run = async (
               ? div({ class: "card-columns" }, sr.map(showRowInner))
               : view_decoration === "Accordion"
               ? div(
-                  { class: "accordion", id: `top${stateHash}` },
+                  {
+                    class: ["accordion", lazy_accordions && "lazy-accoordion"],
+                    id: `top${stateHash}`,
+                  },
                   sr.map(showRowInner)
                 )
               : div(
@@ -780,7 +790,10 @@ const run = async (
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
         : view_decoration === "Accordion"
         ? div(
-            { class: "accordion", id: `top${stateHash}` },
+            {
+              class: ["accordion", lazy_accordions && "lazy-accoordion"],
+              id: `top${stateHash}`,
+            },
             sresp.map(showRowInner)
           )
         : div(
