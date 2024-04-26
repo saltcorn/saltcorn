@@ -651,7 +651,7 @@ const run = async (
 
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
-  const wrapScEmbed = (r) =>
+  const wrapScEmbed = (r, neverLazy) =>
     div(
       {
         class: "d-inline",
@@ -660,7 +660,9 @@ const run = async (
           r.row[table.pk_name]
         }`,
       },
-      view_decoration === "Accordion" && lazy_accordions ? "" : r.html
+      view_decoration === "Accordion" && lazy_accordions && !neverLazy
+        ? ""
+        : r.html
     );
 
   const showRowInner = (r, ix) =>
@@ -723,7 +725,16 @@ const run = async (
               "aria-labelledby": `a${stateHash}head${ix}`,
               "data-bs-parent": `#top${stateHash}`,
             },
-            div({ class: ["accordion-body"] }, wrapScEmbed(r))
+            div(
+              { class: ["accordion-body"] },
+              wrapScEmbed(
+                r,
+                !(
+                  initial_open_accordions === "None" ||
+                  (initial_open_accordions === "First" && ix > 0)
+                )
+              )
+            )
           )
         )
       : wrapScEmbed(r);
