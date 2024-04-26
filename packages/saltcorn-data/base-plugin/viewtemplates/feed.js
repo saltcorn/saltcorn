@@ -660,7 +660,7 @@ const run = async (
           r.row[table.pk_name]
         }`,
       },
-      r.html
+      view_decoration === "Accordion" && lazy_accordions ? "" : r.html
     );
 
   const showRowInner = (r, ix) =>
