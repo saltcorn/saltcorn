@@ -286,6 +286,10 @@ const extractPagings = (state: any): any => {
   return result;
 };
 
+const hashString = (s: string): string => {
+  return crypto.createHash("sha1").update(s).digest("hex");
+};
+
 /**
  * check if 'saltcorn' is in the PATH env or build a full path
  * @returns string ready to use for spawn
@@ -418,6 +422,7 @@ export = {
   isOfflineMode,
   mergeConnectedObjects,
   hashState,
+  hashString,
   extractPagings,
   getSafeSaltcornCmd,
   getSafeBaseUrl,

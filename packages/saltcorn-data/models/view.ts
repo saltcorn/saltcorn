@@ -17,6 +17,7 @@ const {
   isNode,
   isWeb,
   prepMobileRows,
+  hashString,
 } = utils;
 
 import tags from "@saltcorn/markup/tags";
@@ -497,6 +498,10 @@ class View implements AbstractView {
       const fields = table?.getFields() || [];
       Object.entries(queryObj).forEach(([k, v]) => {
         queries[k] = async (...args: any[]) => {
+          const argsStr = `${JSON.stringify(args)}${this.name}`;
+          const hashedArgs = hashString(argsStr);
+          if (state.queriesCache && state.queriesCache[hashedArgs])
+            return state.queriesCache[hashedArgs];
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
           const headers: any = {
             "X-Requested-With": "XMLHttpRequest",
@@ -514,9 +519,11 @@ class View implements AbstractView {
             );
             for (const { type, msg } of response.data.alerts)
               req.flash(type, msg);
-            return Array.isArray(response.data.success)
+            const result = Array.isArray(response.data.success)
               ? prepMobileRows(response.data.success, fields)
               : response.data.success;
+            if (state.queriesCache) state.queriesCache[hashedArgs] = result;
+            return result;
           } catch (error: any) {
             state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
             if (error.request?.status === 401)

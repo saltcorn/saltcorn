@@ -82,15 +82,20 @@ const runPageGroup = async (pageGroup, state, context, { req, res }) => {
 const getPage = async (context) => {
   const state = saltcorn.data.state.getState();
   const query = context.query ? parseQuery(context.query) : {};
-  const req = new MobileRequest({ xhr: context.xhr, query: query});
+  const req = new MobileRequest({ xhr: context.xhr, query: query });
   const res = new MobileResponse();
   const { page_name } = context.params;
   const { page, pageGroup } = findPageOrGroup(page_name);
   let contents = null;
-  if (page) contents = await runPage(page, state, context, { req, res });
-  else if (pageGroup)
-    contents = await runPageGroup(pageGroup, state, context, { req, res });
-  else throw new Error(req.__("Page %s not found", page_name));
+  state.queriesCache = {};
+  try {
+    if (page) contents = await runPage(page, state, context, { req, res });
+    else if (pageGroup)
+      contents = await runPageGroup(pageGroup, state, context, { req, res });
+    else throw new Error(req.__("Page %s not found", page_name));
+  } finally {
+    state.queriesCache = null;
+  }
   if (contents.html_file) {
     if (state.mobileConfig?.isOfflineMode)
       throw new Error(req.__("Offline mode: cannot load file"));
