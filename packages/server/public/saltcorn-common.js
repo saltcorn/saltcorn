@@ -915,6 +915,25 @@ function initialize_page() {
       .find(".show[rendered='server-side'][type='success']")
       .removeClass("show");
   }, 5000);
+  $(".lazy-accoordion").on("show.bs.collapse", function (e) {
+    const $e = $(e.target).find("[data-sc-view-source]");
+    if ($.trim($e.html()) == "") {
+      const url = $e.attr("data-sc-view-source");
+      $.ajax(url, {
+        headers: {
+          pjaxpageload: "true",
+          localizedstate: "true", //no admin bar
+        },
+        success: function (res, textStatus, request) {
+          $e.html(res);
+          initialize_page();
+        },
+        error: function (res) {
+          notifyAlert({ type: "danger", text: res.responseText });
+        },
+      });
+    }
+  });
 }
 
 $(initialize_page);

@@ -319,6 +319,12 @@ const configuration_workflow = (req) =>
                 showIf: { view_decoration: "Accordion" },
               },
               {
+                name: "lazy_accordions",
+                label: req.__("Lazy load views"),
+                type: "Bool",
+                showIf: { view_decoration: "Accordion" },
+              },
+              {
                 name: "hide_pagination",
                 label: req.__("Hide pagination"),
                 type: "Bool",
@@ -489,6 +495,7 @@ const run = async (
     exclusion_where,
     empty_view,
     groupby,
+    lazy_accordions,
     ...cols
   },
   state,
@@ -644,7 +651,7 @@ const run = async (
 
   const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
-  const wrapScEmbed = (r) =>
+  const wrapScEmbed = (r, neverLazy) =>
     div(
       {
         class: "d-inline",
@@ -653,7 +660,9 @@ const run = async (
           r.row[table.pk_name]
         }`,
       },
-      r.html
+      view_decoration === "Accordion" && lazy_accordions && !neverLazy
+        ? ""
+        : r.html
     );
 
   const showRowInner = (r, ix) =>
@@ -716,7 +725,16 @@ const run = async (
               "aria-labelledby": `a${stateHash}head${ix}`,
               "data-bs-parent": `#top${stateHash}`,
             },
-            div({ class: ["accordion-body"] }, wrapScEmbed(r))
+            div(
+              { class: ["accordion-body"] },
+              wrapScEmbed(
+                r,
+                !(
+                  initial_open_accordions === "None" ||
+                  (initial_open_accordions === "First" && ix > 0)
+                )
+              )
+            )
           )
         )
       : wrapScEmbed(r);
@@ -754,7 +772,10 @@ const run = async (
               ? div({ class: "card-columns" }, sr.map(showRowInner))
               : view_decoration === "Accordion"
               ? div(
-                  { class: "accordion", id: `top${stateHash}` },
+                  {
+                    class: ["accordion", lazy_accordions && "lazy-accoordion"],
+                    id: `top${stateHash}`,
+                  },
                   sr.map(showRowInner)
                 )
               : div(
@@ -780,7 +801,10 @@ const run = async (
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
         : view_decoration === "Accordion"
         ? div(
-            { class: "accordion", id: `top${stateHash}` },
+            {
+              class: ["accordion", lazy_accordions && "lazy-accoordion"],
+              id: `top${stateHash}`,
+            },
             sresp.map(showRowInner)
           )
         : div(
