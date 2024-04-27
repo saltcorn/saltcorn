@@ -64,6 +64,7 @@ module.exports = {
         limits: fileSizeLimit
           ? {
               fileSize: fileSizeLimit,
+              fieldSize: fileSizeLimit,
             }
           : {},
         abortOnLimit: fileSizeLimit !== 0,
