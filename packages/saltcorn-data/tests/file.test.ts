@@ -57,6 +57,13 @@ describe("File", () => {
     assertIsSet(f2);
     expect(f2.user_id).toBe(2);
     expect(f2.min_role_read).toBe(80);
+
+    expect(await f2.get_contents("utf8")).toBe("nevergonnagiveyouup");
+    expect(await f2.get_contents("base64")).toBe(
+      "bmV2ZXJnb25uYWdpdmV5b3V1cA=="
+    );
+    expect((await f2.get_contents()).toString()).toBe("nevergonnagiveyouup");
+
     await f.delete();
   });
 
