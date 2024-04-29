@@ -21,7 +21,7 @@ const rick_file = async () => {
   return await File.from_req_files(
     { mimetype: "image/png", name: "rick.png", mv, size: 245752 },
     1,
-    10
+    100
   );
 };
 const configuration_workflow = () =>
