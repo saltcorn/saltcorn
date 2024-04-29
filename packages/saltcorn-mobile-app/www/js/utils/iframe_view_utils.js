@@ -48,6 +48,13 @@ async function runUrl(url, method = "get") {
 
 async function execNavbarLink(url) {
   $(".navbar-toggler").click();
+  if (typeof KTDrawer === "function") {
+    const aside = $("#kt_aside")[0];
+    if (aside) {
+      const kAside = KTDrawer.getInstance(aside);
+      kAside.hide();
+    }
+  }
   execLink(url);
 }
 
