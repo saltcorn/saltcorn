@@ -264,6 +264,13 @@ const urlStringToObject = (url: string): any => {
   return result;
 };
 
+/**
+ * create a hash from a state object so that views with identical type can be uniquely identified
+ * "_page", "_pagesize", "_sortby", "_sortdesc" are ecxluded
+ * @param state
+ * @param viewname
+ * @returns
+ */
 const hashState = (state: any, viewname: string): string => {
   const excluded = ["_page", "_pagesize", "_sortby", "_sortdesc"];
   const include = (k: string) => !excluded.some((val) => k.endsWith(val));
@@ -286,6 +293,11 @@ const extractPagings = (state: any): any => {
   return result;
 };
 
+/**
+ * create a sha1 hash from a string
+ * @param s string to hash
+ * @returns sha1 hash
+ */
 const hashString = (s: string): string => {
   return crypto.createHash("sha1").update(s).digest("hex");
 };
