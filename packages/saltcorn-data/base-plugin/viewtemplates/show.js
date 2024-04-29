@@ -303,7 +303,7 @@ const run = async (
       })
     );
   }
-  const { rows, message } = await showQuery(state, fields);
+  const { rows, message } = await showQuery(state);
   if (message) return extra.req.__(message);
   if (rows.length > 1)
     rows.sort((a, b) => {
@@ -1060,7 +1060,18 @@ module.exports = {
     req,
     res,
   }) => ({
-    async showQuery(state, fields) {
+    async showQuery(state) {
+      const tbl = Table.findOne(table_id || exttable_name);
+      const fields = tbl.getFields();
+      if (tbl.name === "users") {
+        fields.push(
+          new Field({
+            name: "verification_token",
+            label: "Verification Token",
+            type: "String",
+          })
+        );
+      }
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
         fields,
@@ -1068,7 +1079,6 @@ module.exports = {
         req
       );
       readState(state, fields);
-      const tbl = Table.findOne(table_id || exttable_name);
       const qstate = await stateFieldsToWhere({
         fields,
         state,
