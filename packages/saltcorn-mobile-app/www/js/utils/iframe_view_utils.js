@@ -1,5 +1,5 @@
 /*eslint-env browser*/
-/*global $, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success*/
+/*global $, KTDrawer, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success*/
 
 function combineFormAndQuery(form, query) {
   let paramsList = [];
@@ -48,6 +48,13 @@ async function runUrl(url, method = "get") {
 
 async function execNavbarLink(url) {
   $(".navbar-toggler").click();
+  if (typeof KTDrawer === "function") {
+    const aside = $("#kt_aside")[0];
+    if (aside) {
+      const kAside = KTDrawer.getInstance(aside);
+      kAside.hide();
+    }
+  }
   execLink(url);
 }
 

@@ -155,6 +155,7 @@ class State {
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
+  queriesCache?: Record<string, any>;
 
   /**
    * State constructor

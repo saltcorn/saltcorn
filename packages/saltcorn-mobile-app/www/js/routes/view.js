@@ -137,12 +137,18 @@ const getView = async (context) => {
       req.__("Not authorized") + additionalInfos
     );
   }
-  const contents = await view.run_possibly_on_page(
-    query,
-    req,
-    res,
-    view.isRemoteTable()
-  );
+  state.queriesCache = {};
+  let contents = null;
+  try {
+    contents = await view.run_possibly_on_page(
+      query,
+      req,
+      res,
+      view.isRemoteTable()
+    );
+  } finally {
+    state.queriesCache = null;
+  }
   const wrapped = res.getWrapHtml();
   if (wrapped)
     return wrapContents(
