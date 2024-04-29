@@ -258,6 +258,7 @@ async function replaceIframeInnerContent(content) {
   if (scmodal) {
     scmodal.modal("hide");
   }
+  iframe.contentWindow.scrollTo(0, 0);
   iframe.contentWindow.initialize_page();
 }
 
