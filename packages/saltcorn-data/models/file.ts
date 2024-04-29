@@ -575,6 +575,12 @@ class File {
       });
     }
   }
+
+  async get_contents(
+    encoding?: "utf8" | "base64" | "base64url" | "hex" | "ascii"
+  ): Promise<Buffer> {
+    return await fsp.readFile(this.location, encoding);
+  }
   /**
    * Create new file
    * @param name
