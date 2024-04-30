@@ -1909,9 +1909,13 @@ const bool = {
     show: {
       isEdit: false,
       description: "Show as a green tick or red cross circle",
-      run: (v) =>
+      run: (v, req) =>
         typeof v === "undefined" || v === null
           ? ""
+          : req.generate_email
+          ? v
+            ? "&#10004;"
+            : "&#10008;"
           : v
           ? i({
               class: "fas fa-lg fa-check-circle text-success",

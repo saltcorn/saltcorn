@@ -37,6 +37,13 @@ function init_bs5_dropdowns() {
     }
   );
 }
+
+function reset_nearest_form(that) {
+  const form = $(that).closest("form");
+  form.trigger("reset");
+  form.find("select").trigger("change");
+}
+
 function add_repeater(nm) {
   var es = $("div.form-repeat.repeat-" + nm);
   var e = es.first();
@@ -923,6 +930,7 @@ function initialize_page() {
     const $e = $(e.target).find("[data-sc-view-source]");
     if ($.trim($e.html()) == "") {
       const url = $e.attr("data-sc-view-source");
+      $e.html("Loading...");
       $.ajax(url, {
         headers: {
           pjaxpageload: "true",
@@ -934,6 +942,7 @@ function initialize_page() {
         },
         error: function (res) {
           notifyAlert({ type: "danger", text: res.responseText });
+          if ($e.html() === "Loading...") $e.html("");
         },
       });
     }
