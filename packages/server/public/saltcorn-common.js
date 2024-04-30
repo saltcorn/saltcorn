@@ -447,8 +447,12 @@ function get_form_record(e_in, select_labels) {
     } else rec[name] = $this.val();
     //postprocess
     if ($this.attr("data-postprocess")) {
-      const f = new Function("it", "return " + $this.attr("data-postprocess"));
-      rec[name] = f(rec[name]);
+      const f = new Function(
+        "it",
+        "$e",
+        "return " + $this.attr("data-postprocess")
+      );
+      rec[name] = f(rec[name], $this);
     }
   });
   return rec;
