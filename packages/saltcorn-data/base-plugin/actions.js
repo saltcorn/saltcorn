@@ -1301,6 +1301,7 @@ module.exports = {
       code = code || "";
       return await run_code({
         ...rest,
+        table,
         row,
         configuration: { run_where, code },
       });
