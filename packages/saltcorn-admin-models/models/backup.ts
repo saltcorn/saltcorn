@@ -51,7 +51,6 @@ import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
 
 import SftpClient from "ssh2-sftp-client";
-import tenantModule from "./tenant";
 
 /**
  * @param [withEventLog] - include event log
@@ -629,6 +628,7 @@ const auto_backup_now_tenant = async (state: any) => {
 const auto_backup_now = async () => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const state = getState();
+  const tenantModule = require("./tenant");
   if (isRoot && state.getConfig("auto_backup_tenants"))
     await tenantModule.eachTenant(async () => {
       try {
