@@ -26,6 +26,9 @@ const {
   get_async_expression_function,
   recalculate_for_stored,
   eval_expression,
+  freeVariablesInInterpolation,
+  add_free_variables_to_joinfields,
+  freeVariables,
 } = require("../models/expression");
 const { div, code, a, span } = require("@saltcorn/markup/tags");
 const {
@@ -558,11 +561,28 @@ module.exports = {
       user,
     }) => {
       let to_addr;
+      let useRow = row;
+      const fvs = [
+        ...freeVariablesInInterpolation(to_email_fixed),
+        ...freeVariablesInInterpolation(cc_email),
+        ...freeVariables(subject),
+        ...freeVariables(only_if),
+      ];
+      if (fvs.length > 0) {
+        const joinFields = {};
+        const fields = table.getFields();
+        add_free_variables_to_joinfields(new Set(fvs), joinFields, fields);
+        useRow = await table.getJoinedRow({
+          where: { [table.pk_name]: row[table.pk_name] },
+          joinFields,
+          forUser: user,
+        });
+      }
 
       if (only_if) {
         const bres = eval_expression(
           only_if,
-          row,
+          useRow,
           user,
           "send_email only if formula"
         );
@@ -570,7 +590,7 @@ module.exports = {
       }
       switch (to_email) {
         case "Fixed":
-          to_addr = interpolate(to_email_fixed, row, user);
+          to_addr = interpolate(to_email_fixed, useRow, user);
           break;
         case "User":
           to_addr = user.email;
@@ -614,14 +634,14 @@ module.exports = {
         user ? user : { role_id: 100 }
       );
       const the_subject = subject_formula
-        ? eval_expression(subject, row, user, "send_email subject formula")
+        ? eval_expression(subject, useRow, user, "send_email subject formula")
         : subject;
 
       getState().log(
         3,
         `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
-      const cc = cc_email ? interpolate(cc_email, row, user) : undefined;
+      const cc = cc_email ? interpolate(cc_email, useRow, user) : undefined;
       const email = {
         from,
         to: to_addr,
