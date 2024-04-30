@@ -37,6 +37,13 @@ function init_bs5_dropdowns() {
     }
   );
 }
+
+function reset_nearest_form(that) {
+  const form = $(that).closest("form");
+  form.trigger("reset");
+  form.find("select").trigger("change");
+}
+
 function add_repeater(nm) {
   var es = $("div.form-repeat.repeat-" + nm);
   var e = es.first();

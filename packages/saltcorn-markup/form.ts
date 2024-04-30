@@ -1208,7 +1208,7 @@ const renderFormLayout = (form: Form): string => {
       }
       if (action_name === "Reset") {
         return mkBtn(
-          `onClick="${spinnerStr}${confirmStr}$(this).closest('form').trigger('reset')" type="button"`
+          `onClick="${spinnerStr}${confirmStr}reset_nearest_form(this)" type="button"`
         );
       }
       if (action_name === "Cancel") {
