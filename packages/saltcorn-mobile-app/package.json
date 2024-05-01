@@ -20,10 +20,10 @@
     "ansi-regex": "4.1.1"
   },
   "dependencies": {
-    "cordova": "^11.0.0",
+    "cordova": "^12.0.0",
     "cordova-sqlite-ext": "^6.0.0"
   },
   "devDependencies": {
-    "cordova-android": "^10.1.2"
+    "cordova-android": "^12.0.1"
   }
 }
