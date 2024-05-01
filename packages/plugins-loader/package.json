@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "env-paths": "^2.2.0",
+    "npm-registry-fetch": "16.0.0",
     "@saltcorn/data": "0.9.5-beta.22"
   },
   "author": "Christian Hugo",
