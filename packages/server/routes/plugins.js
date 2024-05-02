@@ -363,7 +363,9 @@ const storeNavPills = (req) => {
       { class: "nav-item" },
       a(
         {
-          href: `/plugins?set=${txt.toLowerCase()}`,
+          href: `/plugins?set=${txt.toLowerCase()}${
+            req.query.q ? `&q=${req.query.q}` : ""
+          }`,
           class: [
             "nav-link",
             (req.query.set === txt.toLowerCase() ||
