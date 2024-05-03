@@ -244,7 +244,7 @@ const configTypes: ConfigTypes = {
   min_role_upload: {
     type: "Role",
     label: "Role to upload files",
-    default: "1",
+    default: "80",
     required: true,
     blurb:
       "User should have this role or higher to upload files with API (uploads through forms are not affected)",
