@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { text } from "stream/consumers";
+import utils from "../utils";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -196,7 +197,46 @@ describe("undo/redo", () => {
     expect(r2?.number).toBe(104);
   });
 });
+describe("history compression", () => {
+  it("should create table", async () => {
+    const tc = await Table.create("counttable32");
 
+    await Field.create({
+      table: tc,
+      label: "Number",
+      type: "Integer",
+      required: true,
+    });
+    await tc.update({ versioned: true });
+    await tc.insertRow({ id: 1, number: 101 });
+    await tc.insertRow({ id: 2, number: 201 });
+
+    await tc.updateRow({ number: 102 }, 1);
+    await tc.updateRow({ number: 103 }, 1);
+    await tc.updateRow({ number: 202 }, 2);
+    await utils.sleep(500);
+    await tc.updateRow({ number: 104 }, 1);
+    await tc.updateRow({ number: 205 }, 2);
+    const h1 = await tc.get_history(1);
+    expect(h1.length).toBe(4);
+    expect(h1.map((h) => h.number)).toContain(101);
+    expect(h1.map((h) => h.number)).toContain(102);
+    const h2 = await tc.get_history(2);
+    expect(h2.length).toBe(3);
+    expect(h2.map((h) => h.number)).toContain(202);
+
+    await tc.compress_history(0.2);
+
+    const h1c = await tc.get_history(1);
+    expect(h1c.length).toBe(2);
+    expect(h1c.map((h) => h.number)).toContain(103);
+    expect(h1c.map((h) => h.number)).toContain(104);
+    const h2c = await tc.get_history(2);
+    expect(h2c.length).toBe(2);
+    expect(h2c.map((h) => h.number)).toContain(202);
+    expect(h2c.map((h) => h.number)).toContain(205);
+  });
+});
 describe("unique history clash", () => {
   it("should create table", async () => {
     const table = await Table.create("unihistory");
