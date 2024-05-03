@@ -544,7 +544,7 @@ function updateViewPreview() {
   }
 }
 
-function ajaxSubmitForm(e) {
+function ajaxSubmitForm(e, force_no_reload) {
   var form = $(e).closest("form");
   var url = form.attr("action");
   $.ajax(url, {
@@ -561,11 +561,11 @@ function ajaxSubmitForm(e) {
         "data-on-close-reload-view"
       );
       $("#scmodal").modal("hide");
-      if (on_close_reload_view) {
+      if (!force_no_reload && on_close_reload_view) {
         const viewE = $(`[data-sc-embed-viewname="${on_close_reload_view}"]`);
         if (viewE.length) reload_embedded_view(on_close_reload_view);
         else location.reload();
-      } else if (!no_reload) location.reload();
+      } else if (!force_no_reload && !no_reload) location.reload();
       else common_done(res, form.attr("data-viewname"));
     },
     error: function (request) {

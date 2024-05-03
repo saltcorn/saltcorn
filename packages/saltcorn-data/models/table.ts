@@ -2081,6 +2081,28 @@ class Table implements AbstractTable {
     }
   }
 
+  async compress_history(interval_secs: number) {
+    if (typeof interval_secs !== "number" || interval_secs < 0.199)
+      throw new Error(
+        "compress_history mush be called with a number greater than 0.2 seconds"
+      );
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    await db.query(`
+      delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
+        where (${sqlsanitize(this.pk_name)}, _version) in (
+          select h1.${sqlsanitize(this.pk_name)}, h1._version
+          FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
+          JOIN ${schemaPrefix}"${sqlsanitize(
+      this.name
+    )}__history" h2 ON h1.${sqlsanitize(this.pk_name)} = h2.${sqlsanitize(
+      this.pk_name
+    )}
+          AND h1._version < h2._version
+          AND h1._time < h2._time
+          AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
+        );`);
+  }
   /**
    * Drop history table
    * @returns {Promise<void>}

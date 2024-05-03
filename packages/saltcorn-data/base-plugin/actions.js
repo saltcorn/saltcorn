@@ -969,6 +969,7 @@ module.exports = {
             "Back",
             "Reload page",
             "Close modal",
+            "Close tab",
           ],
         },
       },
@@ -990,6 +991,8 @@ module.exports = {
           return { popup: url1 };
         case "Back":
           return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Close tab":
+          return { eval_js: "window.close()" };
         case "Close modal":
           return { eval_js: "close_saltcorn_modal()" };
         case "Reload page":
@@ -1055,7 +1058,13 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Submit", "Save", "Reset", "Submit with Ajax"],
+          options: [
+            "Submit",
+            "Save",
+            "Reset",
+            "Submit with Ajax",
+            "Ajax Save Form Data",
+          ],
         },
       },
     ],
@@ -1086,6 +1095,8 @@ module.exports = {
           return { eval_js: jqGet + ".trigger('reset')" };
         case "Submit with Ajax":
           return { eval_js: `submitWithAjax(${jqGet})` };
+        case "Ajax Save Form Data":
+          return { eval_js: `ajaxSubmitForm(${jqGet}, true)` };
         default:
           return { eval_js: jqGet + ".submit()" };
       }
@@ -1301,6 +1312,7 @@ module.exports = {
       code = code || "";
       return await run_code({
         ...rest,
+        table,
         row,
         configuration: { run_where, code },
       });

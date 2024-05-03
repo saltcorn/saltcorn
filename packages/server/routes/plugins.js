@@ -363,7 +363,9 @@ const storeNavPills = (req) => {
       { class: "nav-item" },
       a(
         {
-          href: `/plugins?set=${txt.toLowerCase()}`,
+          href: `/plugins?set=${txt.toLowerCase()}${
+            req.query.q ? `&q=${req.query.q}` : ""
+          }`,
           class: [
             "nav-link",
             (req.query.set === txt.toLowerCase() ||
@@ -1093,8 +1095,15 @@ router.get(
       const fullpath = path.join(location, "public", safeFile);
       if (fs.existsSync(fullpath))
         res.sendFile(fullpath, { maxAge: hasVersion ? "100d" : "1d" });
-      else res.status(404).send(req.__("Not found"));
+      else {
+        getState().log(6, `Plugin serve public: file not found ${fullpath}`);
+        res.status(404).send(req.__("Not found"));
+      }
     } else {
+      getState().log(
+        6,
+        `Plugin serve public: No location for plugin: ${plugin}`
+      );
       res.status(404).send(req.__("Not found"));
     }
   })
