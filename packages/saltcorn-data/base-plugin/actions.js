@@ -969,6 +969,7 @@ module.exports = {
             "Back",
             "Reload page",
             "Close modal",
+            "Close tab",
           ],
         },
       },
@@ -990,6 +991,8 @@ module.exports = {
           return { popup: url1 };
         case "Back":
           return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Close tab":
+          return { eval_js: "window.close()" };
         case "Close modal":
           return { eval_js: "close_saltcorn_modal()" };
         case "Reload page":
