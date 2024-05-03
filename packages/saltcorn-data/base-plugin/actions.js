@@ -1058,7 +1058,13 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Submit", "Save", "Reset", "Submit with Ajax"],
+          options: [
+            "Submit",
+            "Save",
+            "Reset",
+            "Submit with Ajax",
+            "Ajax Save Form Data",
+          ],
         },
       },
     ],
@@ -1089,6 +1095,8 @@ module.exports = {
           return { eval_js: jqGet + ".trigger('reset')" };
         case "Submit with Ajax":
           return { eval_js: `submitWithAjax(${jqGet})` };
+        case "Ajax Save Form Data":
+          return { eval_js: `ajaxSubmitForm(${jqGet}, true)` };
         default:
           return { eval_js: jqGet + ".submit()" };
       }
