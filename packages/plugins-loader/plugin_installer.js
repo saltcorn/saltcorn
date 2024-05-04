@@ -240,25 +240,12 @@ class PluginInstaller {
   }
 
   async movePlugin() {
-    const isWindows = process.platform === "win32";
-    const copyMove = async () => {
-      await cp(this.tempDir, this.pluginDir, { recursive: true, force: true });
-      try {
-        await rm(this.tempDir, { recursive: true });
-      } catch (error) {
-        getState().log(2, `Error removing temp folder ${this.tempDir}`);
-      }
-    };
-    if (await pathExists(this.pluginDir))
-      await rm(this.pluginDir, { recursive: true });
-    await mkdir(this.pluginDir, { recursive: true });
-    if (!isWindows) {
-      try {
-        await rename(this.tempDir, this.pluginDir);
-      } catch (error) {
-        await copyMove();
-      }
-    } else await copyMove();
+    await copy(this.tempDir, this.pluginDir, { overwrite: true });
+    try {
+      await rm(this.tempDir, { recursive: true });
+    } catch (error) {
+      getState().log(2, `Error removing temp folder ${this.tempDir}`);
+    }
   }
 }
 
