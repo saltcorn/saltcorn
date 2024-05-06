@@ -565,7 +565,7 @@ module.exports = {
       const fvs = [
         ...freeVariablesInInterpolation(to_email_fixed),
         ...freeVariablesInInterpolation(cc_email),
-        ...freeVariables(subject),
+        ...(subject_formula ? freeVariables(subject) : []),
         ...freeVariables(only_if),
       ];
       if (fvs.length > 0) {
