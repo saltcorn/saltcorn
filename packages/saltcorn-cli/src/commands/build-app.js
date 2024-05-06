@@ -97,6 +97,10 @@ class BuildAppCommand extends Command {
         buildForEmulator: flags.buildForEmulator,
         appleTeamId: flags.appleTeamId,
         tenantAppName: flags.tenantAppName,
+        buildType: flags.buildType,
+        keyStorePath: flags.androidKeystore,
+        keyStoreAlias: flags.androidKeyStoreAlias,
+        keyStorePassword: flags.androidKeystorePassword,
       });
       process.exit(await builder.build());
     };
@@ -226,6 +230,26 @@ BuildAppCommand.flags = {
     name: "apple team id",
     string: "appleTeamId",
     description: "Apple team id for iOS builds",
+  }),
+  buildType: flags.string({
+    name: "build type",
+    string: "buildType",
+    description: "TODO",
+  }),
+  androidKeystore: flags.string({
+    name: "android key store",
+    string: "androidKeyStore",
+    description: "This key will be used to sign your app",
+  }),
+  androidKeyStoreAlias: flags.string({
+    name: "android key store alias",
+    string: "keyStoreAlias",
+    description: "TODO",
+  }),
+  androidKeystorePassword: flags.string({
+    name: "android key store password",
+    string: "keyStorePassword",
+    description: "TODO",
   }),
 };
 

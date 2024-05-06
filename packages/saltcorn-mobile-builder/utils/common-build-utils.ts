@@ -8,6 +8,7 @@ import {
   copySync,
   writeFileSync,
   readFileSync,
+  rmSync,
 } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
 import { spawnSync } from "child_process";
@@ -16,6 +17,96 @@ import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
+import { parseStringPromise, Builder } from "xml2js";
+import { removeNonWordChars } from "@saltcorn/data/utils";
+
+export function copyKeyStore(buildDir: string, keyStorePath: string) {
+  copySync(keyStorePath, join(buildDir, "myapp.keystore"));
+  return "myapp.keystore";
+}
+
+/**
+ * copy saltcorn-mobile-app as a template to buildDir
+ * @param buildDir directory where the app will be build
+ * @param templateDir directory of the template code that will be copied to 'buildDir'
+ */
+export function prepareBuildDir(buildDir: string, templateDir: string) {
+  if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
+  copySync(templateDir, buildDir);
+  rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
+  const result = spawnSync("npm", ["install", "--legacy-peer-deps"], {
+    cwd: buildDir,
+  });
+  console.log(result.output.toString());
+}
+
+/**
+ * parse the config.xml file and replace the id and name parameters
+ * on error the defaults will be used
+ * @param buildDir directory where the app will be build
+ * @param appName
+ */
+export async function setAppName(buildDir: string, appName: string) {
+  try {
+    const configXml = join(buildDir, "config.xml");
+    const content = readFileSync(configXml);
+    const parsed = await parseStringPromise(content);
+    parsed.widget.$.id = `${removeNonWordChars(appName)}.mobile.app`;
+    parsed.widget.name[0] = appName;
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(configXml, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to set the appName to '${appName}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
+ * parse the config.xml file and replace the version parameter
+ * on error the defaults will be used
+ * @param buildDir directory where the app will be build
+ * @param appVersion
+ */
+export async function setAppVersion(buildDir: string, appVersion: string) {
+  try {
+    const configXml = join(buildDir, "config.xml");
+    const content = readFileSync(configXml);
+    const parsed = await parseStringPromise(content);
+    parsed.widget.$.version = appVersion;
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(configXml, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to set the appVersion to '${appVersion}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
+ * copy a png file into the build dir and use it as launcher icon
+ * @param buildDir
+ * @param appIcon path to appIcon file
+ */
+export async function prepareAppIcon(buildDir: string, appIcon: string) {
+  try {
+    copySync(appIcon, join(buildDir, "res", "icon", "android", "icon.png"), {
+      overwrite: true,
+    });
+  } catch (error: any) {
+    console.log(
+      `Unable to set the app icon '${appIcon}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
 
 /**
  * copy files from 'server/public' into the www folder (with a version_tag prefix)

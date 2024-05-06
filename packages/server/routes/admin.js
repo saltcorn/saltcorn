@@ -1655,6 +1655,7 @@ router.get(
     const images = (await File.find({ mime_super: "image" })).filter((image) =>
       image.filename?.endsWith(".png")
     );
+    const keystoreFiles = await File.find({ folder: "keystore_files" });
     const withSyncInfo = await Table.find({ has_sync_info: true });
     const plugins = (await Plugin.find()).filter(
       (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
@@ -2290,8 +2291,9 @@ router.get(
                       )
                     )
                   ),
+                  // build type
                   div(
-                    { class: "row pb-3 pt-3" },
+                    { class: "row pb-3 pt-2" },
                     div(
                       { class: "col-sm-8" },
                       label(
@@ -2299,68 +2301,212 @@ router.get(
                           for: "splashPageInputId",
                           class: "form-label fw-bold",
                         },
-                        req.__("Apple Team ID")
+                        req.__("Build type")
                       ),
-                      input({
-                        type: "text",
-                        class: "form-control",
-                        name: "appleTeamId",
-                        id: "appleTeamIdInputId",
-                        value:
-                          builderSettings.appleTeamId ||
-                          getState().getConfig("apple_team_id") ||
-                          "",
-                        placeholder: req.__("Please enter your Apple Team ID"),
-                      })
+
+                      div(
+                        { class: "form-check" },
+                        input({
+                          type: "radio",
+                          id: "debugBuildTypeId",
+                          class: "form-check-input me-2",
+                          name: "buildType",
+                          value: "debug",
+                          checked: builderSettings.buildType === "debug",
+                        }),
+                        label(
+                          {
+                            for: "debugBuildTypeId",
+                            class: "form-label",
+                          },
+                          req.__("debug")
+                        )
+                      ),
+                      div(
+                        { class: "form-check" },
+                        input({
+                          type: "radio",
+                          id: "releaseBuildTypeId",
+                          class: "form-check-input me-2",
+                          name: "buildType",
+                          value: "release",
+                          checked:
+                            builderSettings.buildType === "release" ||
+                            !builderSettings.buildType,
+                        }),
+                        label(
+                          {
+                            for: "releaseBuildTypeId",
+                            class: "form-label",
+                          },
+                          req.__("release")
+                        )
+                      )
                     )
                   ),
                   div(
-                    { class: "row pb-3 pt-2" },
+                    { class: "form-group border p-3 rounded" },
+                    p({ class: "h4" }, "Android configurations"),
                     div(
-                      label(
-                        { class: "form-label fw-bold" },
-                        req.__("Cordova builder") +
-                          a(
-                            {
-                              href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
-                            },
-                            i({ class: "fas fa-question-circle ps-1" })
-                          )
-                      )
-                    ),
-                    div(
-                      { class: "col-sm-4" },
+                      { class: "row pb-3 pt-2" },
                       div(
-                        {
-                          id: "dockerBuilderStatusId",
-                          class: "",
-                        },
-                        dockerAvailable
-                          ? span(
-                              req.__("installed"),
-                              i({ class: "ps-2 fas fa-check text-success" })
+                        label(
+                          { class: "form-label fw-bold" },
+                          req.__("Cordova builder") +
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
                             )
-                          : span(
-                              req.__("not available"),
-                              i({ class: "ps-2 fas fa-times text-danger" })
-                            )
+                        )
+                      ),
+                      div(
+                        { class: "col-sm-4" },
+                        div(
+                          {
+                            id: "dockerBuilderStatusId",
+                            class: "",
+                          },
+                          dockerAvailable
+                            ? span(
+                                req.__("installed"),
+                                i({ class: "ps-2 fas fa-check text-success" })
+                              )
+                            : span(
+                                req.__("not available"),
+                                i({ class: "ps-2 fas fa-times text-danger" })
+                              )
+                        )
+                      ),
+                      div(
+                        { class: "col-sm-4" },
+                        button(
+                          {
+                            id: "pullCordovaBtnId",
+                            type: "button",
+                            onClick: `pull_cordova_builder(this);`,
+                            class: "btn btn-warning",
+                          },
+                          req.__("pull")
+                        ),
+                        span(
+                          {
+                            role: "button",
+                            onClick: "check_cordova_builder()",
+                          },
+                          span({ class: "ps-3" }, req.__("refresh")),
+                          i({ class: "ps-2 fas fa-undo" })
+                        )
                       )
                     ),
+                    // keystore file
                     div(
-                      { class: "col-sm-4" },
-                      button(
-                        {
-                          id: "pullCordovaBtnId",
-                          type: "button",
-                          onClick: `pull_cordova_builder(this);`,
-                          class: "btn btn-warning",
-                        },
-                        req.__("pull")
-                      ),
-                      span(
-                        { role: "button", onClick: "check_cordova_builder()" },
-                        span({ class: "ps-3" }, req.__("refresh")),
-                        i({ class: "ps-2 fas fa-undo" })
+                      { class: "row pb-3" },
+                      div(
+                        { class: "col-sm-8" },
+                        label(
+                          {
+                            for: "keystoreInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Keystore File")
+                        ),
+                        select(
+                          {
+                            class: "form-select",
+                            name: "keystoreFile",
+                            id: "keystoreInputId",
+                          },
+                          [
+                            option({ value: "" }, ""),
+                            ...keystoreFiles.map((file) =>
+                              option(
+                                {
+                                  value: file.location,
+                                  selected:
+                                    builderSettings.keystoreFile ===
+                                    file.location,
+                                },
+                                file.filename
+                              )
+                            ),
+                          ].join("")
+                        )
+                      )
+                    ),
+                    // keystore alias
+                    div(
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-8" },
+                        label(
+                          {
+                            for: "keystoreAliasInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Keystore Alias")
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "keystoreAlias",
+                          id: "keystoreAliasInputId",
+                          value: builderSettings.keystoreAlias || "",
+                          placeholder: "",
+                        })
+                      )
+                    ),
+                    // keystore password
+                    div(
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-8" },
+                        label(
+                          {
+                            for: "keystorePasswordInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Keystore Password")
+                        ),
+                        input({
+                          type: "password",
+                          class: "form-control",
+                          name: "keystorePassword",
+                          id: "keystorePasswordInputId",
+                          value: "",
+                          placeholder: "",
+                        })
+                      )
+                    )
+                  ),
+                  div(
+                    { class: "form-group border p-3 rounded" },
+                    p({ class: "h4" }, "iOS configurations"),
+                    div(
+                      { class: "row pb-3 pt-3" },
+                      div(
+                        { class: "col-sm-8" },
+                        label(
+                          {
+                            for: "appleTeamIdInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Apple Team ID")
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "appleTeamId",
+                          id: "appleTeamIdInputId",
+                          value:
+                            builderSettings.appleTeamId ||
+                            getState().getConfig("apple_team_id") ||
+                            "",
+                          placeholder: req.__(
+                            "Please enter your Apple Team ID"
+                          ),
+                        })
                       )
                     )
                   )
@@ -2474,6 +2620,10 @@ router.post(
       synchedTables,
       includedPlugins,
       appleTeamId,
+      buildType,
+      keystoreFile,
+      keystoreAlias,
+      keystorePassword,
     } = req.body;
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
@@ -2547,6 +2697,13 @@ router.post(
           includedPlugins.indexOf(plugin.name) < 0
       )
       .map((plugin) => plugin.name);
+
+    if (buildType) spawnParams.push("--buildType", buildType);
+    if (keystoreFile) spawnParams.push("--androidKeystore", keystoreFile);
+    if (keystoreAlias)
+      spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
+    if (keystorePassword)
+      spawnParams.push("--androidKeystorePassword", keystorePassword);
     await getState().setConfig("mobile_builder_settings", {
       entryPoint,
       entryPointType,
@@ -2564,6 +2721,9 @@ router.post(
       includedPlugins: includedPlugins,
       excludedPlugins,
       appleTeamId,
+      keystoreFile,
+      keystoreAlias,
+      buildType,
     });
     // end http call, return the out directory name
     // the gui polls for results

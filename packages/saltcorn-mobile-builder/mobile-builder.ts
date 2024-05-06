@@ -12,23 +12,51 @@ import {
   createSqliteDb,
   writeCfgFile,
   prepareSplashPage,
+  copyKeyStore,
+  prepareBuildDir,
+  setAppName,
+  setAppVersion,
+  prepareAppIcon,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
   installNpmPackages,
 } from "./utils/package-bundle-utils";
-import {
-  buildApp,
-  tryCopyAppFiles,
-  prepareBuildDir,
-  setAppName,
-  setAppVersion,
-  prepareAppIcon,
-} from "./utils/cordova-build-utils";
 import User from "@saltcorn/data/models/user";
+import { CordovaHelper } from "./utils/cordova_helper";
 
 type EntryPointType = "view" | "page";
+
+type MobileBuilderConfig = {
+  appName?: string;
+  appVersion?: string;
+  appIcon?: string;
+  templateDir: string;
+  buildDir: string;
+  cliDir: string;
+  useDocker?: boolean;
+  platforms: string[];
+  localUserTables?: string[];
+  synchedTables?: string[];
+  includedPlugins?: string[];
+  entryPoint: string;
+  entryPointType: EntryPointType;
+  serverURL: string;
+  splashPage?: string;
+  autoPublicLogin: string;
+  allowOfflineMode: string;
+  plugins: Plugin[];
+  copyTargetDir?: string;
+  user?: User;
+  buildForEmulator?: boolean;
+  appleTeamId?: string;
+  tenantAppName?: string;
+  keyStorePath?: string;
+  keyStoreAlias?: string;
+  keyStorePassword?: string;
+  buildType: "debug" | "release";
+};
 
 /**
  *
@@ -59,36 +87,16 @@ export class MobileBuilder {
   buildForEmulator?: boolean;
   appleTeamId?: string;
   tenantAppName?: string;
+  keyStorePath?: string;
+  keyStoreAlias?: string;
+  keyStorePassword?: string;
+  buildType: "debug" | "release";
 
   /**
    *
    * @param cfg
    */
-  constructor(cfg: {
-    appName?: string;
-    appVersion?: string;
-    appIcon?: string;
-    templateDir: string;
-    buildDir: string;
-    cliDir: string;
-    useDocker?: boolean;
-    platforms: string[];
-    localUserTables?: string[];
-    synchedTables?: string[];
-    includedPlugins?: string[];
-    entryPoint: string;
-    entryPointType: EntryPointType;
-    serverURL: string;
-    splashPage?: string;
-    autoPublicLogin: string;
-    allowOfflineMode: string;
-    plugins: Plugin[];
-    copyTargetDir?: string;
-    user?: User;
-    buildForEmulator?: boolean;
-    appleTeamId?: string;
-    tenantAppName?: string;
-  }) {
+  constructor(cfg: MobileBuilderConfig) {
     this.appName = cfg.appName;
     this.appVersion = cfg.appVersion;
     this.appIcon = cfg.appIcon;
@@ -115,6 +123,10 @@ export class MobileBuilder {
     this.buildForEmulator = cfg.buildForEmulator;
     this.appleTeamId = cfg.appleTeamId;
     this.tenantAppName = cfg.tenantAppName;
+    this.keyStorePath = cfg.keyStorePath;
+    this.keyStoreAlias = cfg.keyStoreAlias;
+    this.keyStorePassword = cfg.keyStorePassword;
+    this.buildType = cfg.buildType;
   }
 
   /**
@@ -160,21 +172,17 @@ export class MobileBuilder {
       );
     resultCode = await createSqliteDb(this.buildDir);
     if (resultCode !== 0) return resultCode;
-    resultCode = buildApp(
-      this.buildDir,
-      this.platforms,
-      this.useDocker,
-      this.buildForEmulator,
-      this.appleTeamId
-    );
-    if (resultCode === 0 && this.copyTargetDir) {
-      await tryCopyAppFiles(
-        this.buildDir,
+    if (this.keyStorePath) copyKeyStore(this.buildDir, this.keyStorePath);
+    const cordovaHelper = new CordovaHelper({
+      ...this,
+    });
+    resultCode = cordovaHelper.buildApp();
+    if (resultCode === 0 && this.copyTargetDir)
+      await cordovaHelper.tryCopyAppFiles(
         this.copyTargetDir,
         this.user!,
         this.appName
       );
-    }
     return resultCode;
   }
 }
