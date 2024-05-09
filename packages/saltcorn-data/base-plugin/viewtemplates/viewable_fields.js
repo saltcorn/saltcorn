@@ -967,9 +967,15 @@ const get_viewable_fields = (
         }
         fvrun = {
           ...setWidth,
-          label: column.header_label
-            ? text(__(column.header_label))
-            : text(targetNm),
+          label: headerLabelForName(
+            column.header_label
+              ? text(__(column.header_label))
+              : text(targetNm),
+            key,
+            req,
+            __,
+            statehash
+          ),
           row_key: key,
           key: gofv ? gofv : (row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
@@ -1107,7 +1113,15 @@ const get_viewable_fields = (
         } else
           fvrun = f && {
             ...setWidth,
-            label: headerLabelForName(column, f, req, __, statehash),
+            label: headerLabelForName(
+              column.header_label
+                ? text(__(column.header_label))
+                : text(f.label),
+              f.name,
+              req,
+              __,
+              statehash
+            ),
             row_key: f_with_val.name,
             key:
               column.fieldview && f.type === "File"
@@ -1252,10 +1266,7 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
  * @param {*} __
  * @returns {string}
  */
-const headerLabelForName = (column, f, req, __, statehash) => {
-  const label = column.header_label
-    ? text(__(column.header_label))
-    : text(f.label);
+const headerLabelForName = (label, fname, req, __, statehash) => {
   //const { _sortby, _sortdesc } = req.query || {};
   const _sortby = req?.query ? req.query[`_${statehash}_sortby`] : undefined;
   const _sortdesc = req?.query
@@ -1263,7 +1274,7 @@ const headerLabelForName = (column, f, req, __, statehash) => {
     : undefined;
 
   let arrow =
-    _sortby !== f.name
+    _sortby !== fname
       ? ""
       : _sortdesc
       ? i({ class: "fas fa-caret-down" })
