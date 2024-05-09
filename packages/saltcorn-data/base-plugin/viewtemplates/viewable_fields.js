@@ -1107,7 +1107,7 @@ const get_viewable_fields = (
         } else
           fvrun = f && {
             ...setWidth,
-            label: headerLabelForName(column, f, req, __),
+            label: headerLabelForName(column, f, req, __, statehash),
             row_key: f_with_val.name,
             key:
               column.fieldview && f.type === "File"
@@ -1252,11 +1252,16 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
  * @param {*} __
  * @returns {string}
  */
-const headerLabelForName = (column, f, req, __) => {
+const headerLabelForName = (column, f, req, __, statehash) => {
   const label = column.header_label
     ? text(__(column.header_label))
     : text(f.label);
-  const { _sortby, _sortdesc } = req.query || {};
+  //const { _sortby, _sortdesc } = req.query || {};
+  const _sortby = req?.query ? req.query[`_${statehash}_sortby`] : undefined;
+  const _sortdesc = req?.query
+    ? req.query[`_${statehash}_sortdesc`]
+    : undefined;
+
   let arrow =
     _sortby !== f.name
       ? ""
