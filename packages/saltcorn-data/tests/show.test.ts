@@ -340,6 +340,8 @@ describe("Misc Show views", () => {
     expect(vres1).toContain(
       '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-local-state="/view/patientlist?favbook=1"><div class="table-responsive"><table '
     );
+    expect(vres1).toContain("Kirk Douglas");
+    expect(vres1).not.toContain("Michael Douglas");
   });
   it("runs independent view embed", async () => {
     const view = await mkViewWithCfg({
