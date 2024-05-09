@@ -1080,11 +1080,18 @@ const get_viewable_fields = (
               : "";
         return {
           ...setWidth,
-          label: column.header_label
-            ? text(column.header_label)
-            : text(column.stat + " " + table),
+          label: headerLabelForName(
+            column.header_label
+              ? text(column.header_label)
+              : text(column.stat + " " + table),
+
+            targetNm,
+            req,
+            __,
+            statehash
+          ),
           key,
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
+          sortlink: sortlinkForName(targetNm, req, viewname, statehash),
         };
       } else if (column.type === "Field") {
         //console.log(column);
