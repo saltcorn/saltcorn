@@ -700,6 +700,84 @@ describe("Table sorting", () => {
       },
     });
   });
+  it("should sort by joinfield", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getJoinedRows({
+      orderBy: "pages",
+      aggregations: {
+        avg_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "avg",
+        },
+      },
+      joinFields: {
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" },
+      },
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(michaels[1].author).toBe("Herman Melville");
+    const michaelsDesc = await patients.getJoinedRows({
+      orderBy: "pages",
+      orderDesc: true,
+      aggregations: {
+        avg_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "avg",
+        },
+      },
+      joinFields: {
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" },
+      },
+    });
+    expect(michaelsDesc.length).toStrictEqual(2);
+    expect(michaelsDesc[1].author).toBe("Leo Tolstoy");
+  });
+  it("should sort by aggregation", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getJoinedRows({
+      orderBy: "avg_temp",
+      aggregations: {
+        avg_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "avg",
+        },
+      },
+      joinFields: {
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" },
+      },
+    });
+    expect(michaels.length).toStrictEqual(2);
+    expect(+michaels[1].avg_temp).toBeGreaterThan(37.5);
+    const michaelsDesc = await patients.getJoinedRows({
+      orderBy: "avg_temp",
+      orderDesc: true,
+      aggregations: {
+        avg_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "avg",
+        },
+      },
+      joinFields: {
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" },
+      },
+    });
+    expect(michaelsDesc.length).toStrictEqual(2);
+    expect(+michaelsDesc[1].avg_temp).toBeLessThan(37.5);
+  });
 });
 describe("Table aggregationQuery", () => {
   it("should get avg aggregations", async () => {

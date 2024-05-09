@@ -1730,15 +1730,12 @@ const stateFieldsToQuery = ({
     const sortbyName = `_${stateHash}_sortby`;
     const sortDescName = `_${stateHash}_sortdesc`;
     if (state[sortbyName]) {
-      const field = fields.find((f) => f.name === state[sortbyName]);
-      //this is ok because it has to match fieldname
-      if (field) q.orderBy = state[sortbyName];
+      if (typeof state[sortbyName] === "string")
+        q.orderBy = db.sqlsanitize(state[sortbyName]);
       if (state[sortDescName]) q.orderDesc = true;
     } else if (state._orderBy) {
       if (typeof state._orderBy === "string") {
-        const field = fields.find((f) => f.name === state._orderBy);
-        //this is ok because it has to match fieldname
-        if (field) q.orderBy = state._orderBy;
+        q.orderBy = db.sqlsanitize(state._orderBy);
         if (state._orderDesc) q.orderDesc = true;
       } else if (typeof state._orderBy === "object") {
         const { operator, field, target } = state._orderBy;
