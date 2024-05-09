@@ -972,7 +972,7 @@ const get_viewable_fields = (
             : text(targetNm),
           row_key: key,
           key: gofv ? gofv : (row) => text(row[key]),
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
+          sortlink: sortlinkForName(key, req, viewname, statehash),
         };
         if (column.click_to_edit) {
           const reffield = fields.find((f) => f.name === refNm);
