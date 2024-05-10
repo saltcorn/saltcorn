@@ -251,6 +251,13 @@ const fieldFlow = (req) =>
             : ""
         }row).${model_output}`;
       }
+      if (context.expression_type === "Aggregation") {
+        expression = "__aggregation";
+        attributes.agg_relation = context.agg_relation;
+        attributes.agg_field = context.agg_field;
+        attributes.aggwhere = context.aggwhere;
+        attributes.stat = context.stat;
+      }
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
         table_id,
@@ -421,6 +428,50 @@ const fieldFlow = (req) =>
             );
             output_options[model.name] = outputs.map((o) => o.name);
           }
+          const aggStatOptions = {};
+
+          const { child_field_list, child_relations } =
+            await table.get_child_relations(true);
+          const agg_field_opts = child_relations.map(
+            ({ table, key_field, through }) => {
+              const aggKey =
+                (through ? `${through.name}->` : "") +
+                `${table.name}.${key_field.name}`;
+              aggStatOptions[aggKey] = [
+                "Count",
+                "CountUnique",
+                "Avg",
+                "Sum",
+                "Max",
+                "Min",
+                "Array_Agg",
+              ];
+              table.fields.forEach((f) => {
+                if (f.type && f.type.name === "Date") {
+                  aggStatOptions[aggKey].push(`Latest ${f.name}`);
+                  aggStatOptions[aggKey].push(`Earliest ${f.name}`);
+                }
+              });
+              return {
+                name: `agg_field`,
+                label: req.__("On Field"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: table.fields
+                    .filter((f) => !f.calculated || f.stored)
+                    .map((f) => ({
+                      label: f.name,
+                      name: `${f.name}@${f.type_name}`,
+                    })),
+                },
+                showIf: {
+                  agg_relation: aggKey,
+                  expression_type: "Aggregation",
+                },
+              };
+            }
+          );
           return new Form({
             fields: [
               {
@@ -429,8 +480,40 @@ const fieldFlow = (req) =>
                 input_type: "select",
                 options: [
                   "JavaScript expression",
+                  ...(child_relations.length ? ["Aggregation"] : []),
                   ...(models.length ? ["Model prediction"] : []),
                 ],
+              },
+              {
+                name: "agg_relation",
+                label: req.__("Relation"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: child_field_list,
+                },
+                showIf: { expression_type: "Aggregation" },
+              },
+              ...agg_field_opts,
+              {
+                name: "stat",
+                label: req.__("Statistic"),
+                type: "String",
+                required: true,
+                attributes: {
+                  calcOptions: ["agg_relation", aggStatOptions],
+                },
+
+                showIf: { expression_type: "Aggregation" },
+              },
+              {
+                name: "aggwhere",
+                label: req.__("Where"),
+                sublabel: req.__("Formula"),
+                class: "validate-expression",
+                type: "String",
+                required: false,
+                showIf: { expression_type: "Aggregation" },
               },
               {
                 name: "model",
@@ -487,7 +570,9 @@ const fieldFlow = (req) =>
               new Field({
                 name: "test_btn",
                 label: req.__("Test"),
-                showIf: { expression_type: "JavaScript expression" },
+                showIf: {
+                  expression_type: ["JavaScript expression", "Aggregation"],
+                },
                 // todo sublabel
                 input_type: "custom_html",
                 attributes: {
@@ -652,6 +737,9 @@ router.get(
       {
         ...field.toJson,
         ...field.attributes,
+        ...(field.expression === "__aggregation"
+          ? { expression_type: "Aggregation" }
+          : {}),
       },
       req
     );
