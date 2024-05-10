@@ -348,6 +348,14 @@ describe("aggregations in stored calculated fields", () => {
     await recalculate_for_stored(publisher);
     const hrow1 = await publisher.getRow({ id: hid });
     expect(hrow1?.number_of_books).toBe(1);
+    await books.insertRow({
+      author: "Tufte",
+      pages: 210,
+      publisher: hid,
+    });
+    await recalculate_for_stored(publisher, { id: hid });
+    const hrow2 = await publisher.getRow({ id: hid });
+    expect(hrow2?.number_of_books).toBe(2);
   });
 });
 

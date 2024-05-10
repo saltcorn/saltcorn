@@ -716,16 +716,14 @@ const apply_calculated_fields_stored = async (
  * @param {object} table - table object
  * @returns {Promise<void>}
  */
-const recalculate_for_stored = async (table: Table): Promise<void> => {
+const recalculate_for_stored = async (
+  table: Table,
+  where?: Where
+): Promise<void> => {
   let rows = [];
   let maxid = 0;
   const { getState } = require("../db/state");
-
-  do {
-    rows = await table.getRows(
-      { id: { gt: maxid } },
-      { orderBy: "id", limit: 20 }
-    );
+  const go = async (rows: any) => {
     for (const row of rows) {
       try {
         getState().log(
@@ -737,8 +735,20 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
         console.error(e);
       }
     }
-    if (rows.length > 0) maxid = rows[rows.length - 1].id;
-  } while (rows.length === 20);
+  };
+  if (where) {
+    rows = await table.getRows(where);
+    await go(rows);
+  } else {
+    do {
+      rows = await table.getRows(
+        { id: { gt: maxid } },
+        { orderBy: "id", limit: 20 }
+      );
+      await go(rows);
+      if (rows.length > 0) maxid = rows[rows.length - 1].id;
+    } while (rows.length === 20);
+  }
 };
 //https://stackoverflow.com/a/59094308/19839414
 function removeComments(str: string) {
