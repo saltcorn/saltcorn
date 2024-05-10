@@ -294,6 +294,61 @@ describe("joinfields in stored calculated fields", () => {
     //expect(bookrow?.favpages).toBe(967);
   });
 });
+describe("aggregations in stored calculated fields", () => {
+  it("creates", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    await Field.create({
+      table: publisher,
+      label: "Number of books",
+      type: "Integer",
+      calculated: true,
+      expression: "__aggregation",
+      attributes: {
+        aggregate: "Count",
+        aggwhere: "",
+        agg_field: "id@Integer",
+        agg_relation: "books.publisher",
+        table: "books",
+        ref: "publisher",
+      },
+      stored: true,
+    });
+  });
+  it("updates", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    const bookRows = await publisher.getRows({});
+    for (const row of bookRows) {
+      await publisher.updateRow({}, row.id);
+    }
+  });
+  it("check", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    const bookrow = await publisher.getRow({ id: 1 });
+
+    expect(bookrow?.number_of_books).toBe(1);
+  });
+  /*it("changes", async () => {
+      const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+        await patients.updateRow({ favbook: 2 }, 1);
+
+    const bookrow = await patients.getRow({ id: 1 });
+
+    expect(bookrow?.favpages).toBe(728);
+  });
+  it("insert", async () => {
+     const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+        const hid = await patients.insertRow({ name: "Herman Smith", favbook: 1 });
+    const hrow = await patients.getRow({ id: hid });
+
+    expect(hrow?.favpages).toBe(967);
+    //expect(bookrow?.favpages).toBe(967);
+  });*/
+});
 
 describe("expressionValidator", () => {
   it("validates correct", () => {

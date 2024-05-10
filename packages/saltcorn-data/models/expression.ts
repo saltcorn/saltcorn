@@ -650,12 +650,43 @@ function apply_calculated_fields(
  */
 const apply_calculated_fields_stored = async (
   row: Row,
-  fields: Array<Field>
+  fields: Array<Field>,
+  table: Table
 ): Promise<Row> => {
   let hasExprs = false;
   let transform = (x: Row) => x;
   for (const field of fields) {
-    if (field.calculated && field.stored) {
+    if (
+      field.calculated &&
+      field.stored &&
+      field.expression == "__aggregation"
+    ) {
+      hasExprs = true;
+      // refetch row with agg
+      const reFetchedRow = await table.getJoinedRow({
+        where: { [table.pk_name]: row[table.pk_name] },
+        aggregations: {
+          _agg_val: field.attributes,
+        },
+      });
+
+      if (!reFetchedRow)
+        throw new Error(`Error in calculating "${field.name}": row not found`);
+      //transform
+      const oldf = transform;
+      transform = async (row) => {
+        row[field.name] = reFetchedRow._agg_val;
+
+        return await oldf(row);
+      };
+    }
+  }
+  for (const field of fields) {
+    if (
+      field.calculated &&
+      field.stored &&
+      field.expression !== "__aggregation"
+    ) {
       hasExprs = true;
       let f: Function;
       try {

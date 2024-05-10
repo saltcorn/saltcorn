@@ -256,7 +256,10 @@ const fieldFlow = (req) =>
         attributes.agg_relation = context.agg_relation;
         attributes.agg_field = context.agg_field;
         attributes.aggwhere = context.aggwhere;
-        attributes.stat = context.stat;
+        attributes.aggregate = context.aggregate;
+        const [table, ref] = context.agg_relation.split(".");
+        attributes.table = table;
+        attributes.ref = ref;
       }
       const { reftable_name, type } = calcFieldType(context.type);
       const fldRow = {
@@ -496,7 +499,7 @@ const fieldFlow = (req) =>
               },
               ...agg_field_opts,
               {
-                name: "stat",
+                name: "aggregate",
                 label: req.__("Statistic"),
                 type: "String",
                 required: true,
