@@ -1714,7 +1714,10 @@ class Table implements AbstractTable {
     if ("set_fields" in valResCollector)
       Object.assign(v_in, valResCollector.set_fields);
 
-    if (Object.keys(joinFields).length > 0) {
+    if (
+      Object.keys(joinFields).length > 0 ||
+      fields.some((f) => f.expression === "__aggregation")
+    ) {
       state.log(
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`

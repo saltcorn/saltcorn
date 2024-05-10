@@ -330,24 +330,14 @@ describe("aggregations in stored calculated fields", () => {
 
     expect(bookrow?.number_of_books).toBe(1);
   });
-  /*it("changes", async () => {
-      const publisher = Table.findOne({ name: "publisher" });
-    assertIsSet(publisher);
-        await patients.updateRow({ favbook: 2 }, 1);
 
-    const bookrow = await patients.getRow({ id: 1 });
-
-    expect(bookrow?.favpages).toBe(728);
-  });
   it("insert", async () => {
-     const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" });
     assertIsSet(publisher);
-        const hid = await patients.insertRow({ name: "Herman Smith", favbook: 1 });
-    const hrow = await patients.getRow({ id: hid });
-
-    expect(hrow?.favpages).toBe(967);
-    //expect(bookrow?.favpages).toBe(967);
-  });*/
+    const hid = await publisher.insertRow({ name: "Collins" });
+    const hrow = await publisher.getRow({ id: hid });
+    expect(hrow?.number_of_books).toBe(0);
+  });
 });
 
 describe("expressionValidator", () => {
