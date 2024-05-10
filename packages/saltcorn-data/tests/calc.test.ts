@@ -337,6 +337,17 @@ describe("aggregations in stored calculated fields", () => {
     const hid = await publisher.insertRow({ name: "Collins" });
     const hrow = await publisher.getRow({ id: hid });
     expect(hrow?.number_of_books).toBe(0);
+
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await books.insertRow({
+      author: "Murphy",
+      pages: 456,
+      publisher: hid,
+    });
+    await recalculate_for_stored(publisher);
+    const hrow1 = await publisher.getRow({ id: hid });
+    expect(hrow1?.number_of_books).toBe(1);
   });
 });
 
