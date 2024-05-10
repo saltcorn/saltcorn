@@ -1,5 +1,6 @@
 import Table from "../models/table";
 import Field from "../models/field";
+import Trigger from "../models/trigger";
 import db from "../db";
 const { getState } = require("../db/state");
 import mocks from "./mocks";
@@ -356,6 +357,24 @@ describe("aggregations in stored calculated fields", () => {
     await recalculate_for_stored(publisher, { id: hid });
     const hrow2 = await publisher.getRow({ id: hid });
     expect(hrow2?.number_of_books).toBe(2);
+    const trigger = await Trigger.create({
+      action: "recalculate_stored_fields",
+      table_id: books.id,
+      when_trigger: "Insert",
+      configuration: {
+        table: "publisher",
+        where: "{id: publisher}",
+      },
+    });
+    await books.insertRow({
+      author: "West",
+      pages: 210,
+      publisher: hid,
+    });
+    await sleep(200);
+
+    const hrow3 = await publisher.getRow({ id: hid });
+    expect(hrow3?.number_of_books).toBe(3);
   });
 });
 
