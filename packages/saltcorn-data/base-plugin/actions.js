@@ -797,6 +797,13 @@ module.exports = {
           type: "Bool",
           showIf: table ? { table: table.name } : {},
         },
+        {
+          name: "where",
+          label: "Recalculate where",
+          sublabel: "Where-expression for subset of rows to recalculate",
+          type: "String",
+          class: "validate-expression",
+        },
       ];
     },
     /**
@@ -804,7 +811,7 @@ module.exports = {
      * @param {object} opts.configuration
      * @returns {Promise<void>}
      */
-    run: async ({ table, row, configuration }) => {
+    run: async ({ table, row, configuration, user }) => {
       const table_for_recalc = Table.findOne({
         name: configuration.table,
       });
@@ -818,6 +825,14 @@ module.exports = {
         row[table.pk_name]
       ) {
         await table.updateRow({}, row[table.pk_name], undefined, true);
+      } else if (configuration.where) {
+        const where = eval_expression(
+          configuration.where,
+          row || {},
+          user,
+          "recalculate_stored_fields where"
+        );
+        recalculate_for_stored(table_for_recalc, where);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },

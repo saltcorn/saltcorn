@@ -1382,7 +1382,8 @@ class Table implements AbstractTable {
       let calced = await apply_calculated_fields_stored(
         need_to_update ? updated : { ...existing, ...v_in },
         // @ts-ignore TODO ch throw ?
-        this.fields
+        this.fields,
+        this
       );
 
       for (const f of fields)
@@ -1713,7 +1714,10 @@ class Table implements AbstractTable {
     if ("set_fields" in valResCollector)
       Object.assign(v_in, valResCollector.set_fields);
 
-    if (Object.keys(joinFields).length > 0) {
+    if (
+      Object.keys(joinFields).length > 0 ||
+      fields.some((f) => f.expression === "__aggregation")
+    ) {
       state.log(
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
@@ -1734,7 +1738,11 @@ class Table implements AbstractTable {
         return;
       }
 
-      let calced = await apply_calculated_fields_stored(existing[0], fields);
+      let calced = await apply_calculated_fields_stored(
+        existing[0],
+        fields,
+        this
+      );
       v = { ...v_in };
 
       for (const f of fields)
@@ -1745,7 +1753,7 @@ class Table implements AbstractTable {
       );
       await db.update(this.name, v, id, { pk_name });
     } else {
-      v = await apply_calculated_fields_stored(v_in, fields);
+      v = await apply_calculated_fields_stored(v_in, fields, this);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, { pk_name });
     }
