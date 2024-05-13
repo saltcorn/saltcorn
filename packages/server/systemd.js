@@ -43,7 +43,7 @@ const watchDog = (interval, notify, { port }) => {
           });
       }
     } else {
-      getState().log(5, `watchdog with no test`);
+      getState().log(6, `watchdog with no test`);
       notify.watchdog();
       return;
     }
