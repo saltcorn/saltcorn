@@ -254,8 +254,8 @@ const fieldFlow = (req) =>
       if (context.expression_type === "Aggregation") {
         expression = "__aggregation";
         attributes.agg_relation = context.agg_relation;
-        attributes.agg_field = context.agg_field;
-        attributes.aggwhere = context.aggwhere;
+        attributes.field = context.agg_field.split("@")[0];
+        attributes.where = context.aggwhere;
         attributes.aggregate = context.aggregate;
         const [table, ref] = context.agg_relation.split(".");
         attributes.table = table;
