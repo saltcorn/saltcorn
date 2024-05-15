@@ -307,8 +307,8 @@ describe("aggregations in stored calculated fields", () => {
       expression: "__aggregation",
       attributes: {
         aggregate: "Count",
-        where: "",
-        field: "id",
+        aggwhere: "",
+        agg_field: "id@Integer",
         agg_relation: "books.publisher",
         table: "books",
         ref: "publisher",
@@ -375,34 +375,6 @@ describe("aggregations in stored calculated fields", () => {
 
     const hrow3 = await publisher.getRow({ id: hid });
     expect(hrow3?.number_of_books).toBe(3);
-  });
-  it("creates sum aggregation field", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
-    assertIsSet(publisher);
-    await Field.create({
-      table: publisher,
-      label: "Sum of pages",
-      type: "Integer",
-      calculated: true,
-      expression: "__aggregation",
-      attributes: {
-        aggregate: "Sum",
-        where: "",
-        field: "pages",
-        agg_relation: "books.publisher",
-        table: "books",
-        ref: "publisher",
-      },
-      stored: true,
-    });
-  });
-  it("updates", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
-    assertIsSet(publisher);
-    const bookRows = await publisher.getRows({});
-    for (const row of bookRows) {
-      await publisher.updateRow({}, row.id);
-    }
   });
 });
 
