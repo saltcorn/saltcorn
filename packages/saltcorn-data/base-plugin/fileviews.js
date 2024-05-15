@@ -291,6 +291,8 @@ module.exports = {
       { name: "controls", type: "Bool", label: "Controls" },
       { name: "autoplay", type: "Bool", label: "Autoplay" },
       { name: "muted", type: "Bool", label: "Muted" },
+      { name: "loop", type: "Bool", label: "Loop" },
+      { name: "fullscreen", type: "Bool", label: "Full screen" },
     ],
     run: (filePath, file_name, cfg = {}) => {
       if (!filePath) return "";
@@ -299,9 +301,13 @@ module.exports = {
         {
           controls: cfg.controls,
           muted: cfg.muted,
+          loop: cfg.loop,
           autoplay: cfg.autoplay,
           width: cfg.width || undefined,
           height: cfg.height || undefined,
+          style: cfg.fullscreen
+            ? `height: 100vh; width: 100%; object-fit: fill; position: absolute;`
+            : undefined,
         },
         source({
           src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
