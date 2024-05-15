@@ -666,7 +666,11 @@ const apply_calculated_fields_stored = async (
       const reFetchedRow = await table.getJoinedRow({
         where: { [table.pk_name]: row[table.pk_name] },
         aggregations: {
-          _agg_val: field.attributes,
+          _agg_val: {
+            ...field.attributes,
+            where: field.attributes.aggwhere,
+            field: field.attributes.agg_field.split("@")[0],
+          },
         },
       });
 
