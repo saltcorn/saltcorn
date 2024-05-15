@@ -574,7 +574,7 @@ const fieldFlow = (req) =>
                 name: "test_btn",
                 label: req.__("Test"),
                 showIf: {
-                  expression_type: ["JavaScript expression", "Aggregation"],
+                  expression_type: ["JavaScript expression"],
                 },
                 // todo sublabel
                 input_type: "custom_html",
