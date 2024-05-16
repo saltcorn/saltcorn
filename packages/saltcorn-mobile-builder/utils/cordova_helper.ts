@@ -1,4 +1,4 @@
-import { spawnSync } from "child_process";
+import { spawnSync, execSync } from "child_process";
 import { join, basename } from "path";
 import { existsSync, mkdirSync, copySync } from "fs-extra";
 import utils = require("@saltcorn/data/utils");
@@ -10,34 +10,34 @@ export type CordovaCfg = {
   buildDir: string;
   platforms: string[];
   useDocker?: boolean;
-  buildForEmulator?: boolean;
   appleTeamId?: string;
+  provisioningProfile?: string;
   buildType: "debug" | "release";
   keyStorePath?: string;
   keyStoreAlias?: string;
   keyStorePassword?: string;
+  appName: string;
 };
 
 export class CordovaHelper {
   buildDir: string;
   platforms: string[];
   useDocker?: boolean;
-  buildForEmulator?: boolean;
   appleTeamId?: string;
   buildType: "debug" | "release";
   keyStoreFile?: string;
   keyStoreAlias?: string;
   keyStorePassword?: string;
-
+  teamId?: string;
+  provisioningProfile?: string;
+  appName: string;
   androidReleaseOut: string;
   androidDebugOut: string;
-  ipaBuildDir: string;
 
   constructor(cfg: CordovaCfg) {
     this.buildDir = cfg.buildDir;
     this.platforms = cfg.platforms;
     this.useDocker = cfg.useDocker;
-    this.buildForEmulator = cfg.buildForEmulator;
     this.appleTeamId = cfg.appleTeamId;
     this.buildType = cfg.buildType || "debug";
     this.keyStoreFile = cfg.keyStorePath
@@ -55,24 +55,55 @@ export class CordovaHelper {
     );
     this.androidReleaseOut = join(androidOut, "bundle", "release");
     this.androidDebugOut = join(androidOut, "apk", "debug");
-    this.ipaBuildDir = join(
-      this.buildDir,
-      "platforms",
-      "ios",
-      "build",
-      "device"
-    );
+    this.appName = cfg.appName;
+    this.provisioningProfile = cfg.provisioningProfile;
+    this.teamId = cfg.appleTeamId;
   }
 
   buildApp() {
+    let code = null;
     if (!this.useDocker) {
       this.addPlugins();
-      return this.callBuild();
+      code = this.callBuild();
     } else {
-      let code = this.buildApkInContainer();
-      if (code === 0 && this.platforms.indexOf("ios") > -1)
+      code = this.buildApkInContainer();
+      if (code === 0 && this.platforms.includes("ios"))
         code = this.callBuild(["ios"]);
-      return code;
+    }
+    if (code !== 0) return code;
+    if (this.platforms.includes("ios")) code = this.runXcodeCmds();
+    return code;
+  }
+
+  private runXcodeCmds() {
+    try {
+      console.log("xcodebuild -workspace");
+      let buffer = execSync(
+        `xcodebuild -workspace platforms/ios/${this.appName}.xcworkspace ` +
+          `-scheme ${this.appName} -destination "generic/platform=iOS" ` +
+          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningProfile}" ` +
+          ` CODE_SIGN_STYLE="Manual" DEVELOPMENT_TEAM="${this.teamId}"`,
+        { cwd: this.buildDir }
+      );
+      console.log(buffer.toString());
+      if (!existsSync(join(this.buildDir, "MyArchive.xcarchive"))) {
+        console.log(
+          "Unable to export ipa: xcodebuild did not create the archivePath."
+        );
+        return 1;
+      } else {
+        console.log("xcodebuild -exportArchive");
+        buffer = execSync(
+          "xcodebuild -exportArchive -archivePath MyArchive.xcarchive " +
+            `-exportPath ${this.buildDir} -exportOptionsPlist ExportOptions.plist`,
+          { cwd: this.buildDir }
+        );
+        console.log(buffer.toString());
+        return 0;
+      }
+    } catch (err) {
+      console.log(err);
+      return 1;
     }
   }
 
@@ -144,10 +175,12 @@ export class CordovaHelper {
         `--storePassword=${this.keyStorePassword || "??"}`
       );
     }
-    if (this.appleTeamId) {
+    if (platforms.includes("ios")) {
       buildParams.push(
         `--developmentTeam=${this.appleTeamId}`,
-        "--codeSignIdentity=iPhone Developer"
+        "--codeSignIdentity=iPhone Developer",
+        "--packageType=app-store",
+        `--provisioningProfile=${this.provisioningProfile}`
       );
     }
     const result = spawnSync(
@@ -184,10 +217,10 @@ export class CordovaHelper {
     else copyHelper("aab", this.androidReleaseOut);
 
     // iOS .ipa file
-    const ipaFile = fileWithEnding(this.ipaBuildDir, ".ipa");
+    const ipaFile = fileWithEnding(this.buildDir, ".ipa");
     if (ipaFile) {
       const dstFile = appName ? safeEnding(appName, ".ipa") : "app-debug.ipa";
-      copySync(join(this.ipaBuildDir, ipaFile), join(copyDir, dstFile));
+      copySync(join(this.buildDir, ipaFile), join(copyDir, dstFile));
       await File.set_xattr_of_existing_file(dstFile, copyDir, user);
     }
   }

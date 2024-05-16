@@ -789,9 +789,9 @@ function build_mobile_app(button) {
     .filter((option) => !option.hidden)
     .map((option) => option.value);
   const pluginsSelect = $("#included-plugins-select-id")[0];
-  params.includedPlugins = Array.from(pluginsSelect.options)
-    .filter((option) => !option.hidden)
-    .map((option) => option.value);
+  params.includedPlugins = Array.from(pluginsSelect.options || []).map(
+    (option) => option.value
+  );
 
   if (
     params.useDocker &&
@@ -881,12 +881,14 @@ function move_plugin_to_included() {
   const opts = $("#excluded-plugins-select-id");
   $("#included-plugins-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jExclOpt = $(`[id='${selected}_excluded_opt']`);
-    jExclOpt.attr("hidden", "true");
-    jExclOpt.removeAttr("selected");
-    const jInclOpt = $(`[id='${selected}_included_opt']`);
-    jInclOpt.removeAttr("hidden");
-    jInclOpt.removeAttr("selected");
+    $(`[id='${selected}_excluded_opt']`).remove();
+    $("#included-plugins-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_included_opt`,
+      })
+    );
   }
 }
 
@@ -894,12 +896,14 @@ function move_plugin_to_excluded() {
   const opts = $("#included-plugins-select-id");
   $("#excluded-plugins-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jInclOpt = $(`[id='${selected}_included_opt']`);
-    jInclOpt.attr("hidden", "true");
-    jInclOpt.removeAttr("selected");
-    const jExclOpt = $(`[id='${selected}_excluded_opt']`);
-    jExclOpt.removeAttr("hidden");
-    jExclOpt.removeAttr("selected");
+    $(`[id='${selected}_included_opt']`).remove();
+    $("#excluded-plugins-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_excluded_opt`,
+      })
+    );
   }
 }
 

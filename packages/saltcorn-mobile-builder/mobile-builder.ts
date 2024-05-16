@@ -14,8 +14,8 @@ import {
   prepareSplashPage,
   copyKeyStore,
   prepareBuildDir,
-  setAppName,
-  setAppVersion,
+  prepareExportOptionsPlist,
+  modifyConfigXml,
   prepareAppIcon,
 } from "./utils/common-build-utils";
 import {
@@ -25,11 +25,15 @@ import {
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
 import { CordovaHelper } from "./utils/cordova_helper";
+import { removeNonWordChars } from "@saltcorn/data/utils";
 
 type EntryPointType = "view" | "page";
+const appIdDefault = "saltcorn.mobile.app";
+const appNameDefault = "SaltcornMobileApp";
 
 type MobileBuilderConfig = {
   appName?: string;
+  appId?: string;
   appVersion?: string;
   appIcon?: string;
   templateDir: string;
@@ -49,8 +53,8 @@ type MobileBuilderConfig = {
   plugins: Plugin[];
   copyTargetDir?: string;
   user?: User;
-  buildForEmulator?: boolean;
   appleTeamId?: string;
+  provisioningProfile?: string;
   tenantAppName?: string;
   keyStorePath?: string;
   keyStoreAlias?: string;
@@ -62,7 +66,8 @@ type MobileBuilderConfig = {
  *
  */
 export class MobileBuilder {
-  appName?: string;
+  appName: string;
+  appId: string;
   appVersion?: string;
   appIcon?: string;
   templateDir: string;
@@ -84,8 +89,8 @@ export class MobileBuilder {
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
   user?: User;
-  buildForEmulator?: boolean;
   appleTeamId?: string;
+  provisioningProfile?: string;
   tenantAppName?: string;
   keyStorePath?: string;
   keyStoreAlias?: string;
@@ -97,7 +102,11 @@ export class MobileBuilder {
    * @param cfg
    */
   constructor(cfg: MobileBuilderConfig) {
-    this.appName = cfg.appName;
+    this.appName = cfg.appName || appNameDefault;
+    if (cfg.appId) this.appId = cfg.appId;
+    else if (cfg.appName && cfg.appName !== appNameDefault)
+      this.appId = `${removeNonWordChars(cfg.appName)}.mobile.app`;
+    else this.appId = appIdDefault;
     this.appVersion = cfg.appVersion;
     this.appIcon = cfg.appIcon;
     this.templateDir = cfg.templateDir;
@@ -120,8 +129,8 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
-    this.buildForEmulator = cfg.buildForEmulator;
     this.appleTeamId = cfg.appleTeamId;
+    this.provisioningProfile = cfg.provisioningProfile;
     this.tenantAppName = cfg.tenantAppName;
     this.keyStorePath = cfg.keyStorePath;
     this.keyStoreAlias = cfg.keyStoreAlias;
@@ -134,9 +143,18 @@ export class MobileBuilder {
    */
   async build() {
     prepareBuildDir(this.buildDir, this.templateDir);
-    if (this.appName) await setAppName(this.buildDir, this.appName);
-    if (this.appVersion) await setAppVersion(this.buildDir, this.appVersion);
+    await modifyConfigXml(this.buildDir, {
+      appName: this.appName,
+      appId: this.appId !== appIdDefault ? this.appId : undefined,
+      appVersion: this.appVersion,
+    });
     if (this.appIcon) await prepareAppIcon(this.buildDir, this.appIcon);
+    if (this.platforms.includes("ios"))
+      await prepareExportOptionsPlist(
+        this.buildDir,
+        `${removeNonWordChars(this.appName || "")}.mobile.app`,
+        this.provisioningProfile || ""
+      );
     copyServerFiles(this.buildDir);
     copySbadmin2Deps(this.buildDir);
     await copySiteLogo(this.buildDir);

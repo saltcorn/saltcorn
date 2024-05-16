@@ -38,6 +38,13 @@ class BuildAppCommand extends Command {
         `To build for tenant '${flags.tenantAppName}' please activate multi-tenancy`
       );
     }
+
+    if (flags.platforms.includes("ios")) {
+      if (!flags.appleTeamId)
+        throw new Error("Please specify an apple team id");
+      if (!flags.provisioningProfile)
+        throw new Error("Please specify a provisioning profile");
+    }
   }
 
   async uniquePlugins(toInclude) {
@@ -75,6 +82,7 @@ class BuildAppCommand extends Command {
         throw new Error(`The user '${flags.userEmail}' does not exist'`);
       const builder = new MobileBuilder({
         appName: flags.appName,
+        appId: flags.appId,
         appVersion: flags.appVersion,
         appIcon: flags.appIcon,
         templateDir: mobileAppDir,
@@ -94,8 +102,8 @@ class BuildAppCommand extends Command {
         plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
         user,
-        buildForEmulator: flags.buildForEmulator,
         appleTeamId: flags.appleTeamId,
+        provisioningProfile: flags.provisioningProfile,
         tenantAppName: flags.tenantAppName,
         buildType: flags.buildType,
         keyStorePath: flags.androidKeystore,
@@ -188,6 +196,11 @@ BuildAppCommand.flags = {
     string: "appName",
     description: "Name of the mobile app (default SaltcornMobileApp)",
   }),
+  appId: flags.string({
+    name: "app id",
+    string: "appId",
+    description: "Id of the mobile app (default com.saltcorn.mobileapp)",
+  }),
   appVersion: flags.string({
     name: "app version",
     string: "appVersion",
@@ -221,20 +234,20 @@ BuildAppCommand.flags = {
     description:
       "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
   }),
-  buildForEmulator: flags.boolean({
-    name: "build for emulator",
-    description:
-      "build without '--device', generates no .ipa file so that iOS apps can be build without developer accounts",
-  }),
   appleTeamId: flags.string({
     name: "apple team id",
     string: "appleTeamId",
     description: "Apple team id for iOS builds",
   }),
+  provisioningProfile: flags.string({
+    name: "provisioning profile",
+    string: "provisioningProfile",
+    description: "GUUID of the provisioning profile for iOS builds",
+  }),
   buildType: flags.string({
     name: "build type",
     string: "buildType",
-    description: "TODO",
+    description: "debug or release build",
   }),
   androidKeystore: flags.string({
     name: "android key store",

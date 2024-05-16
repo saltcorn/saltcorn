@@ -18,7 +18,6 @@ import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
-import { removeNonWordChars } from "@saltcorn/data/utils";
 
 export function copyKeyStore(buildDir: string, keyStorePath: string) {
   copySync(keyStorePath, join(buildDir, "myapp.keystore"));
@@ -40,49 +39,20 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   console.log(result.output.toString());
 }
 
-/**
- * parse the config.xml file and replace the id and name parameters
- * on error the defaults will be used
- * @param buildDir directory where the app will be build
- * @param appName
- */
-export async function setAppName(buildDir: string, appName: string) {
+export async function modifyConfigXml(buildDir: string, config: any) {
   try {
     const configXml = join(buildDir, "config.xml");
     const content = readFileSync(configXml);
     const parsed = await parseStringPromise(content);
-    parsed.widget.$.id = `${removeNonWordChars(appName)}.mobile.app`;
-    parsed.widget.name[0] = appName;
+    if (config.appName) parsed.widget.name[0] = config.appName;
+    if (config.appId) parsed.widget.$.id = config.appId;
+    if (config.appVersion) parsed.widget.$.version = config.appVersion;
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);
     writeFileSync(configXml, newCfg);
   } catch (error: any) {
     console.log(
-      `Unable to set the appName to '${appName}': ${
-        error.message ? error.message : "Unknown error"
-      }`
-    );
-  }
-}
-
-/**
- * parse the config.xml file and replace the version parameter
- * on error the defaults will be used
- * @param buildDir directory where the app will be build
- * @param appVersion
- */
-export async function setAppVersion(buildDir: string, appVersion: string) {
-  try {
-    const configXml = join(buildDir, "config.xml");
-    const content = readFileSync(configXml);
-    const parsed = await parseStringPromise(content);
-    parsed.widget.$.version = appVersion;
-    const xmlBuilder = new Builder();
-    const newCfg = xmlBuilder.buildObject(parsed);
-    writeFileSync(configXml, newCfg);
-  } catch (error: any) {
-    console.log(
-      `Unable to set the appVersion to '${appVersion}': ${
+      `Unable to modify the config.xml: ${
         error.message ? error.message : "Unknown error"
       }`
     );
@@ -102,6 +72,39 @@ export async function prepareAppIcon(buildDir: string, appIcon: string) {
   } catch (error: any) {
     console.log(
       `Unable to set the app icon '${appIcon}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+export async function prepareExportOptionsPlist(
+  buildDir: string,
+  appId: string,
+  provisioningProfile: string
+) {
+  try {
+    const exportOptionsPlist = join(buildDir, "ExportOptions.plist");
+    writeFileSync(
+      exportOptionsPlist,
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "~//Apple/DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+        <dict>
+          <key>method</key>
+          <string>app-store-connect</string>
+          <key>provisioningProfiles</key>
+          <dict>          
+            <key>${appId}</key>
+            <string>${provisioningProfile}</string>
+          </dict>
+        </dict>
+
+      </plist>`
+    );
+  } catch (error: any) {
+    console.log(
+      `Unable to set the provisioning profile '${provisioningProfile}': ${
         error.message ? error.message : "Unknown error"
       }`
     );

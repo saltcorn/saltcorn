@@ -1931,6 +1931,28 @@ router.get(
                       })
                     )
                   ),
+                  // app id
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "appIdInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("App ID")
+                      ),
+                      input({
+                        type: "text",
+                        class: "form-control",
+                        name: "appId",
+                        id: "appIdInputId",
+                        placeholder: "com.saltcorn.app",
+                        value: builderSettings.appId || "",
+                      })
+                    )
+                  ),
                   // app version
                   div(
                     { class: "row pb-2" },
@@ -2223,19 +2245,20 @@ router.get(
                               class: "form-control form-select",
                               multiple: true,
                             },
-                            plugins.map((plugin) =>
-                              option({
-                                id: `${plugin.name}_excluded_opt`,
-                                value: plugin.name,
-                                label: plugin.name,
-                                hidden:
+                            plugins
+                              .filter(
+                                (plugin) =>
                                   builderSettings.excludedPlugins?.indexOf(
                                     plugin.name
                                   ) >= 0
-                                    ? false
-                                    : true,
-                              })
-                            )
+                              )
+                              .map((plugin) =>
+                                option({
+                                  id: `${plugin.name}_excluded_opt`,
+                                  value: plugin.name,
+                                  label: plugin.name,
+                                })
+                              )
                           )
                         ),
                         div(
@@ -2273,19 +2296,21 @@ router.get(
                               class: "form-control form-select",
                               multiple: true,
                             },
-                            plugins.map((plugin) =>
-                              option({
-                                id: `${plugin.name}_included_opt`,
-                                value: plugin.name,
-                                label: plugin.name,
-                                hidden:
-                                  builderSettings.excludedPlugins?.indexOf(
+                            plugins
+                              .filter(
+                                (plugin) =>
+                                  !builderSettings.excludedPlugins ||
+                                  builderSettings.excludedPlugins.indexOf(
                                     plugin.name
-                                  ) >= 0
-                                    ? true
-                                    : false,
-                              })
-                            )
+                                  ) < 0
+                              )
+                              .map((plugin) =>
+                                option({
+                                  id: `${plugin.name}_included_opt`,
+                                  value: plugin.name,
+                                  label: plugin.name,
+                                })
+                              )
                           )
                         )
                       )
@@ -2346,7 +2371,7 @@ router.get(
                   ),
                   div(
                     { class: "form-group border p-3 rounded" },
-                    p({ class: "h4" }, "Android configurations"),
+                    p({ class: "h4" }, "Android configuration"),
                     div(
                       { class: "row pb-3 pt-2" },
                       div(
@@ -2482,7 +2507,17 @@ router.get(
                   ),
                   div(
                     { class: "form-group border p-3 rounded" },
-                    p({ class: "h4" }, "iOS configurations"),
+                    p(
+                      { class: "h4" },
+                      "iOS configuration",
+                      a(
+                        {
+                          href: "javascript:ajax_modal('/admin/help/iOS configuration?')",
+                        },
+                        i({ class: "fas fa-question-circle ps-1" })
+                      )
+                    ),
+                    // apple team id
                     div(
                       { class: "row pb-3 pt-3" },
                       div(
@@ -2492,7 +2527,7 @@ router.get(
                             for: "appleTeamIdInputId",
                             class: "form-label fw-bold",
                           },
-                          req.__("Apple Team ID")
+                          req.__("Team ID")
                         ),
                         input({
                           type: "text",
@@ -2505,6 +2540,30 @@ router.get(
                             "",
                           placeholder: req.__(
                             "Please enter your Apple Team ID"
+                          ),
+                        })
+                      )
+                    ),
+                    // provisioning profile guuid
+                    div(
+                      { class: "row pb-3" },
+                      div(
+                        { class: "col-sm-8" },
+                        label(
+                          {
+                            for: "provisioningProfileInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Provisioning Profile GUUID")
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "provisioningProfileGUUID",
+                          id: "provisioningProfileInputId",
+                          value: builderSettings.provisioningProfileGUUID || "",
+                          placeholder: req.__(
+                            "Please enter your Provisioning Profile GUUID"
                           ),
                         })
                       )
@@ -2611,6 +2670,7 @@ router.post(
       iOSPlatform,
       useDocker,
       appName,
+      appId,
       appVersion,
       appIcon,
       serverURL,
@@ -2620,6 +2680,7 @@ router.post(
       synchedTables,
       includedPlugins,
       appleTeamId,
+      provisioningProfileGUUID,
       buildType,
       keystoreFile,
       keystoreAlias,
@@ -2645,6 +2706,13 @@ router.post(
         error: req.__("Please enter a valid server URL."),
       });
     }
+    if (iOSPlatform && (!appleTeamId || !provisioningProfileGUUID)) {
+      return res.json({
+        error: req.__(
+          "Please enter your Apple Team ID and Provisioning Profile GUUID."
+        ),
+      });
+    }
     const outDirName = `build_${new Date().valueOf()}`;
     const rootFolder = await File.rootFolder();
     const buildDir = path.join(rootFolder.location, "mobile_app", outDirName);
@@ -2665,12 +2733,17 @@ router.post(
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) {
-      spawnParams.push("-p", "ios");
-      if (!appleTeamId || appleTeamId === "null")
-        spawnParams.push("--buildForEmulator");
-      else spawnParams.push("--appleTeamId", appleTeamId);
+      spawnParams.push(
+        "-p",
+        "ios",
+        "--appleTeamId",
+        appleTeamId,
+        "--provisioningProfile",
+        provisioningProfileGUUID
+      );
     }
     if (appName) spawnParams.push("--appName", appName);
+    if (appId) spawnParams.push("--appId", appId);
     if (appVersion) spawnParams.push("--appVersion", appVersion);
     if (appIcon) spawnParams.push("--appIcon", appIcon);
     if (serverURL) spawnParams.push("-s", serverURL);
@@ -2711,6 +2784,7 @@ router.post(
       iOSPlatform,
       useDocker,
       appName,
+      appId,
       appVersion,
       appIcon,
       serverURL,
@@ -2721,6 +2795,7 @@ router.post(
       includedPlugins: includedPlugins,
       excludedPlugins,
       appleTeamId,
+      provisioningProfileGUUID,
       keystoreFile,
       keystoreAlias,
       buildType,
