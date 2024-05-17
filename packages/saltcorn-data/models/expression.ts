@@ -650,12 +650,47 @@ function apply_calculated_fields(
  */
 const apply_calculated_fields_stored = async (
   row: Row,
-  fields: Array<Field>
+  fields: Array<Field>,
+  table: Table
 ): Promise<Row> => {
   let hasExprs = false;
   let transform = (x: Row) => x;
   for (const field of fields) {
-    if (field.calculated && field.stored) {
+    if (
+      field.calculated &&
+      field.stored &&
+      field.expression == "__aggregation"
+    ) {
+      hasExprs = true;
+      // refetch row with agg
+      const reFetchedRow = await table.getJoinedRow({
+        where: { [table.pk_name]: row[table.pk_name] },
+        aggregations: {
+          _agg_val: {
+            ...field.attributes,
+            where: field.attributes.aggwhere,
+            field: field.attributes.agg_field.split("@")[0],
+          },
+        },
+      });
+
+      if (!reFetchedRow)
+        throw new Error(`Error in calculating "${field.name}": row not found`);
+      //transform
+      const oldf = transform;
+      transform = async (row) => {
+        row[field.name] = reFetchedRow._agg_val;
+
+        return await oldf(row);
+      };
+    }
+  }
+  for (const field of fields) {
+    if (
+      field.calculated &&
+      field.stored &&
+      field.expression !== "__aggregation"
+    ) {
       hasExprs = true;
       let f: Function;
       try {
@@ -685,16 +720,14 @@ const apply_calculated_fields_stored = async (
  * @param {object} table - table object
  * @returns {Promise<void>}
  */
-const recalculate_for_stored = async (table: Table): Promise<void> => {
+const recalculate_for_stored = async (
+  table: Table,
+  where?: Where
+): Promise<void> => {
   let rows = [];
   let maxid = 0;
   const { getState } = require("../db/state");
-
-  do {
-    rows = await table.getRows(
-      { id: { gt: maxid } },
-      { orderBy: "id", limit: 20 }
-    );
+  const go = async (rows: any) => {
     for (const row of rows) {
       try {
         getState().log(
@@ -706,8 +739,20 @@ const recalculate_for_stored = async (table: Table): Promise<void> => {
         console.error(e);
       }
     }
-    if (rows.length > 0) maxid = rows[rows.length - 1].id;
-  } while (rows.length === 20);
+  };
+  if (where) {
+    rows = await table.getRows(where);
+    await go(rows);
+  } else {
+    do {
+      rows = await table.getRows(
+        { id: { gt: maxid } },
+        { orderBy: "id", limit: 20 }
+      );
+      await go(rows);
+      if (rows.length > 0) maxid = rows[rows.length - 1].id;
+    } while (rows.length === 20);
+  }
 };
 //https://stackoverflow.com/a/59094308/19839414
 function removeComments(str: string) {

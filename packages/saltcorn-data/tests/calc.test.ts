@@ -1,5 +1,6 @@
 import Table from "../models/table";
 import Field from "../models/field";
+import Trigger from "../models/trigger";
 import db from "../db";
 const { getState } = require("../db/state");
 import mocks from "./mocks";
@@ -292,6 +293,112 @@ describe("joinfields in stored calculated fields", () => {
 
     expect(hrow?.favpages).toBe(967);
     //expect(bookrow?.favpages).toBe(967);
+  });
+});
+describe("aggregations in stored calculated fields", () => {
+  it("creates", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    await Field.create({
+      table: publisher,
+      label: "Number of books",
+      type: "Integer",
+      calculated: true,
+      expression: "__aggregation",
+      attributes: {
+        aggregate: "Count",
+        aggwhere: "",
+        agg_field: "id@Integer",
+        agg_relation: "books.publisher",
+        table: "books",
+        ref: "publisher",
+      },
+      stored: true,
+    });
+  });
+  it("updates", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    const bookRows = await publisher.getRows({});
+    for (const row of bookRows) {
+      await publisher.updateRow({}, row.id);
+    }
+  });
+  it("check", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    const bookrow = await publisher.getRow({ id: 1 });
+
+    expect(bookrow?.number_of_books).toBe(1);
+  });
+
+  it("insert", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    const hid = await publisher.insertRow({ name: "Collins" });
+    const hrow = await publisher.getRow({ id: hid });
+    expect(hrow?.number_of_books).toBe(0);
+
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await books.insertRow({
+      author: "Murphy",
+      pages: 456,
+      publisher: hid,
+    });
+    await recalculate_for_stored(publisher);
+    const hrow1 = await publisher.getRow({ id: hid });
+    expect(hrow1?.number_of_books).toBe(1);
+    await books.insertRow({
+      author: "Tufte",
+      pages: 210,
+      publisher: hid,
+    });
+    await recalculate_for_stored(publisher, { id: hid });
+    const hrow2 = await publisher.getRow({ id: hid });
+    expect(hrow2?.number_of_books).toBe(2);
+    const trigger = await Trigger.create({
+      action: "recalculate_stored_fields",
+      table_id: books.id,
+      when_trigger: "Insert",
+      configuration: {
+        table: "publisher",
+        where: "{id: publisher}",
+      },
+    });
+    await books.insertRow({
+      author: "West",
+      pages: 210,
+      publisher: hid,
+    });
+    await sleep(200);
+
+    const hrow3 = await publisher.getRow({ id: hid });
+    expect(hrow3?.number_of_books).toBe(3);
+  });
+  it("creates and updates sum field", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    await Field.create({
+      table: publisher,
+      label: "Sum of pages",
+      type: "Integer",
+      calculated: true,
+      expression: "__aggregation",
+      attributes: {
+        aggregate: "Sum",
+        aggwhere: "",
+        agg_field: "pages@Integer",
+        agg_relation: "books.publisher",
+        table: "books",
+        ref: "publisher",
+      },
+      stored: true,
+    });
+    const bookRows = await publisher.getRows({});
+    for (const row of bookRows) {
+      await publisher.updateRow({}, row.id);
+    }
   });
 });
 

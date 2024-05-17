@@ -87,9 +87,9 @@ const formOptions = async (type, tag_id) => {
     case "triggers": {
       const ids = await tag.getTriggerIds();
       return {
-        triggers: Trigger.find().filter(
-          (value) => ids.indexOf(value.id) === -1
-        ),
+        triggers: (
+          await Trigger.findDB({}, { orderBy: "name", nocase: true })
+        ).filter((value) => ids.indexOf(value.id) === -1),
       };
     }
   }

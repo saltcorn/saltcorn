@@ -565,7 +565,7 @@ module.exports = {
       const fvs = [
         ...freeVariablesInInterpolation(to_email_fixed),
         ...freeVariablesInInterpolation(cc_email),
-        ...freeVariables(subject),
+        ...(subject_formula ? freeVariables(subject) : []),
         ...freeVariables(only_if),
       ];
       if (fvs.length > 0) {
@@ -797,6 +797,13 @@ module.exports = {
           type: "Bool",
           showIf: table ? { table: table.name } : {},
         },
+        {
+          name: "where",
+          label: "Recalculate where",
+          sublabel: "Where-expression for subset of rows to recalculate",
+          type: "String",
+          class: "validate-expression",
+        },
       ];
     },
     /**
@@ -804,7 +811,7 @@ module.exports = {
      * @param {object} opts.configuration
      * @returns {Promise<void>}
      */
-    run: async ({ table, row, configuration }) => {
+    run: async ({ table, row, configuration, user }) => {
       const table_for_recalc = Table.findOne({
         name: configuration.table,
       });
@@ -818,6 +825,14 @@ module.exports = {
         row[table.pk_name]
       ) {
         await table.updateRow({}, row[table.pk_name], undefined, true);
+      } else if (configuration.where) {
+        const where = eval_expression(
+          configuration.where,
+          row || {},
+          user,
+          "recalculate_stored_fields where"
+        );
+        recalculate_for_stored(table_for_recalc, where);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
@@ -969,6 +984,7 @@ module.exports = {
             "Back",
             "Reload page",
             "Close modal",
+            "Close tab",
           ],
         },
       },
@@ -990,6 +1006,8 @@ module.exports = {
           return { popup: url1 };
         case "Back":
           return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+        case "Close tab":
+          return { eval_js: "window.close()" };
         case "Close modal":
           return { eval_js: "close_saltcorn_modal()" };
         case "Reload page":
@@ -1055,7 +1073,13 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Submit", "Save", "Reset", "Submit with Ajax"],
+          options: [
+            "Submit",
+            "Save",
+            "Reset",
+            "Submit with Ajax",
+            "Ajax Save Form Data",
+          ],
         },
       },
     ],
@@ -1086,6 +1110,8 @@ module.exports = {
           return { eval_js: jqGet + ".trigger('reset')" };
         case "Submit with Ajax":
           return { eval_js: `submitWithAjax(${jqGet})` };
+        case "Ajax Save Form Data":
+          return { eval_js: `ajaxSubmitForm(${jqGet}, true)` };
         default:
           return { eval_js: jqGet + ".submit()" };
       }
@@ -1301,6 +1327,7 @@ module.exports = {
       code = code || "";
       return await run_code({
         ...rest,
+        table,
         row,
         configuration: { run_where, code },
       });

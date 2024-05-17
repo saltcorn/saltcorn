@@ -967,12 +967,18 @@ const get_viewable_fields = (
         }
         fvrun = {
           ...setWidth,
-          label: column.header_label
-            ? text(__(column.header_label))
-            : text(targetNm),
+          label: headerLabelForName(
+            column.header_label
+              ? text(__(column.header_label))
+              : text(targetNm),
+            key,
+            req,
+            __,
+            statehash
+          ),
           row_key: key,
           key: gofv ? gofv : (row) => text(row[key]),
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
+          sortlink: sortlinkForName(key, req, viewname, statehash),
         };
         if (column.click_to_edit) {
           const reffield = fields.find((f) => f.name === refNm);
@@ -1074,11 +1080,18 @@ const get_viewable_fields = (
               : "";
         return {
           ...setWidth,
-          label: column.header_label
-            ? text(column.header_label)
-            : text(column.stat + " " + table),
+          label: headerLabelForName(
+            column.header_label
+              ? text(column.header_label)
+              : text(column.stat + " " + table),
+
+            targetNm,
+            req,
+            __,
+            statehash
+          ),
           key,
-          // sortlink: `javascript:sortby('${text(targetNm)}')`
+          sortlink: sortlinkForName(targetNm, req, viewname, statehash),
         };
       } else if (column.type === "Field") {
         //console.log(column);
@@ -1107,7 +1120,15 @@ const get_viewable_fields = (
         } else
           fvrun = f && {
             ...setWidth,
-            label: headerLabelForName(column, f, req, __),
+            label: headerLabelForName(
+              column.header_label
+                ? text(__(column.header_label))
+                : text(f.label),
+              f.name,
+              req,
+              __,
+              statehash
+            ),
             row_key: f_with_val.name,
             key:
               column.fieldview && f.type === "File"
@@ -1252,13 +1273,15 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
  * @param {*} __
  * @returns {string}
  */
-const headerLabelForName = (column, f, req, __) => {
-  const label = column.header_label
-    ? text(__(column.header_label))
-    : text(f.label);
-  const { _sortby, _sortdesc } = req.query || {};
+const headerLabelForName = (label, fname, req, __, statehash) => {
+  //const { _sortby, _sortdesc } = req.query || {};
+  const _sortby = req?.query ? req.query[`_${statehash}_sortby`] : undefined;
+  const _sortdesc = req?.query
+    ? req.query[`_${statehash}_sortdesc`]
+    : undefined;
+
   let arrow =
-    _sortby !== f.name
+    _sortby !== fname
       ? ""
       : _sortdesc
       ? i({ class: "fas fa-caret-down" })

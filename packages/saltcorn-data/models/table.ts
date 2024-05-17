@@ -1382,7 +1382,8 @@ class Table implements AbstractTable {
       let calced = await apply_calculated_fields_stored(
         need_to_update ? updated : { ...existing, ...v_in },
         // @ts-ignore TODO ch throw ?
-        this.fields
+        this.fields,
+        this
       );
 
       for (const f of fields)
@@ -1713,7 +1714,10 @@ class Table implements AbstractTable {
     if ("set_fields" in valResCollector)
       Object.assign(v_in, valResCollector.set_fields);
 
-    if (Object.keys(joinFields).length > 0) {
+    if (
+      Object.keys(joinFields).length > 0 ||
+      fields.some((f) => f.expression === "__aggregation")
+    ) {
       state.log(
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
@@ -1734,7 +1738,11 @@ class Table implements AbstractTable {
         return;
       }
 
-      let calced = await apply_calculated_fields_stored(existing[0], fields);
+      let calced = await apply_calculated_fields_stored(
+        existing[0],
+        fields,
+        this
+      );
       v = { ...v_in };
 
       for (const f of fields)
@@ -1745,7 +1753,7 @@ class Table implements AbstractTable {
       );
       await db.update(this.name, v, id, { pk_name });
     } else {
-      v = await apply_calculated_fields_stored(v_in, fields);
+      v = await apply_calculated_fields_stored(v_in, fields, this);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, { pk_name });
     }
@@ -2081,6 +2089,28 @@ class Table implements AbstractTable {
     }
   }
 
+  async compress_history(interval_secs: number) {
+    if (typeof interval_secs !== "number" || interval_secs < 0.199)
+      throw new Error(
+        "compress_history mush be called with a number greater than 0.2 seconds"
+      );
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    await db.query(`
+      delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
+        where (${sqlsanitize(this.pk_name)}, _version) in (
+          select h1.${sqlsanitize(this.pk_name)}, h1._version
+          FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
+          JOIN ${schemaPrefix}"${sqlsanitize(
+      this.name
+    )}__history" h2 ON h1.${sqlsanitize(this.pk_name)} = h2.${sqlsanitize(
+      this.pk_name
+    )}
+          AND h1._version < h2._version
+          AND h1._time < h2._time
+          AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
+        );`);
+  }
   /**
    * Drop history table
    * @returns {Promise<void>}

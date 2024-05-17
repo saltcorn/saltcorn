@@ -290,6 +290,9 @@ router.get(
     backupForm.values.auto_backup_directory = getState().getConfig(
       "auto_backup_directory"
     );
+    backupForm.values.auto_backup_retain_local_directory = getState().getConfig(
+      "auto_backup_retain_local_directory"
+    );
     backupForm.values.auto_backup_username = getState().getConfig(
       "auto_backup_username"
     );

@@ -19,7 +19,7 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
-describe("View", () => {
+describe("Misc view tests", () => {
   it("should run with no query", async () => {
     const v = await View.findOne({ name: "authorlist" });
     assertIsSet(v);
@@ -212,7 +212,7 @@ describe("View", () => {
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toBe(
-      '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th>Count books</th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
+      '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th><span onclick="sortby(\'count_books_publisher_id_\', false, \'249ab\', this)" class="link-style">Count books</span></th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
     );
   });
   it("should interpolate titles string in Show", async () => {
