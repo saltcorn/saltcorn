@@ -274,6 +274,22 @@ class Table implements AbstractTable {
     this.fields = o.fields.map((f) => new Field(f));
   }
 
+  get to_json() {
+    return {
+      name: this.name,
+      id: this.id,
+      min_role_read: this.min_role_read,
+      min_role_write: this.min_role_write,
+      provider_name: this.provider_name,
+      ownership_formula: this.ownership_formula,
+      ownership_field_id: this.ownership_field_id,
+      provider_cfg: this.provider_cfg,
+      external: this.external,
+      versioned: this.versioned,
+      fields: this.fields.map((f) => f.toJson),
+    };
+  }
+
   to_provided_table() {
     const tbl = this;
     if (!tbl.provider_name) return this;
