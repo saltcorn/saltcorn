@@ -9,6 +9,7 @@ import {
   writeFileSync,
   readFileSync,
   rmSync,
+  rmdirSync,
 } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
 import { spawnSync } from "child_process";
@@ -18,6 +19,8 @@ import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
+
+const resizer = require("resize-with-sharp-or-jimp");
 
 export function copyKeyStore(buildDir: string, keyStorePath: string) {
   copySync(keyStorePath, join(buildDir, "myapp.keystore"));
@@ -64,14 +67,60 @@ export async function modifyConfigXml(buildDir: string, config: any) {
  * @param buildDir
  * @param appIcon path to appIcon file
  */
-export async function prepareAppIcon(buildDir: string, appIcon: string) {
+export async function prepareAppIcon(
+  buildDir: string,
+  appIcon: string,
+  platforms: string[]
+) {
   try {
-    copySync(appIcon, join(buildDir, "res", "icon", "android", "icon.png"), {
-      overwrite: true,
-    });
+    if (platforms.includes("android"))
+      copySync(appIcon, join(buildDir, "res", "icon", "android", "icon.png"), {
+        overwrite: true,
+      });
+    if (platforms.includes("ios")) await prepareAppIconSet(buildDir, appIcon);
   } catch (error: any) {
     console.log(
       `Unable to set the app icon '${appIcon}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+async function prepareAppIconSet(buildDir: string, appIcon: string) {
+  console.log("prepareAppIconSet", buildDir, appIcon);
+  const dir = join(buildDir, "AppIcon.appiconset");
+  mkdirSync(dir);
+  const contentsJSON = { images: new Array<any>() };
+  try {
+    for (const { size, scale, idiom } of [
+      { size: 29, scale: 1, idiom: "iphone" },
+      { size: 20, scale: 2, idiom: "iphone" },
+      { size: 40, scale: 2, idiom: "iphone" },
+      { size: 57, scale: 1, idiom: "iphone" },
+      { size: 60, scale: 2, idiom: "iphone" },
+      { size: 1024, scale: 1, idiom: "ios-marketing" },
+    ]) {
+      const scaledSize = size * scale;
+      const fileName = `${size}x${scale}.png`;
+      await resizer({
+        fromFileName: appIcon,
+        width: scaledSize,
+        height: scaledSize,
+        toFileName: join(dir, fileName),
+      });
+      contentsJSON.images.push({
+        size: `${size}x${size}`,
+        idiom: idiom,
+        filename: fileName,
+        "expected-size": scaledSize,
+        scale: `${scale}x`,
+      });
+    }
+    writeFileSync(join(dir, "Contents.json"), JSON.stringify(contentsJSON));
+  } catch (error: any) {
+    console.log(
+      `Unable to generate appicon set for '${appIcon}': ${
         error.message ? error.message : "Unknown error"
       }`
     );

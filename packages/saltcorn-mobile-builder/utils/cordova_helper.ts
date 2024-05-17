@@ -1,6 +1,6 @@
 import { spawnSync, execSync } from "child_process";
 import { join, basename } from "path";
-import { existsSync, mkdirSync, copySync } from "fs-extra";
+import { existsSync, mkdirSync, copySync, rmSync } from "fs-extra";
 import utils = require("@saltcorn/data/utils");
 const { fileWithEnding, safeEnding } = utils;
 import File from "@saltcorn/data/models/file";
@@ -71,7 +71,10 @@ export class CordovaHelper {
         code = this.callBuild(["ios"]);
     }
     if (code !== 0) return code;
-    if (this.platforms.includes("ios")) code = this.runXcodeCmds();
+    if (this.platforms.includes("ios")) {
+      this.copyAppIconsSet();
+      code = this.runXcodeCmds();
+    }
     return code;
   }
 
@@ -104,6 +107,28 @@ export class CordovaHelper {
     } catch (err) {
       console.log(err);
       return 1;
+    }
+  }
+
+  private copyAppIconsSet() {
+    const src = join(this.buildDir, "AppIcon.appiconset");
+    if (!existsSync(src)) {
+      console.log("AppIcon.appiconset not found");
+    } else {
+      const dst = join(
+        this.buildDir,
+        "platforms",
+        "ios",
+        this.appName,
+        "Assets.xcassets",
+        "AppIcon.appiconset"
+      );
+      try {
+        rmSync(dst, { recursive: true, force: true });
+        copySync(src, dst, { recursive: true, overwrite: true });
+      } catch (err) {
+        console.log(err);
+      }
     }
   }
 

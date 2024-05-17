@@ -148,13 +148,15 @@ export class MobileBuilder {
       appId: this.appId !== appIdDefault ? this.appId : undefined,
       appVersion: this.appVersion,
     });
-    if (this.appIcon) await prepareAppIcon(this.buildDir, this.appIcon);
-    if (this.platforms.includes("ios"))
+    if (this.appIcon)
+      await prepareAppIcon(this.buildDir, this.appIcon, this.platforms);
+    if (this.platforms.includes("ios")) {
       await prepareExportOptionsPlist(
         this.buildDir,
         `${removeNonWordChars(this.appName || "")}.mobile.app`,
         this.provisioningProfile || ""
       );
+    }
     copyServerFiles(this.buildDir);
     copySbadmin2Deps(this.buildDir);
     await copySiteLogo(this.buildDir);
