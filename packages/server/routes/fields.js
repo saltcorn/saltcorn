@@ -483,7 +483,9 @@ const fieldFlow = (req) =>
                 input_type: "select",
                 options: [
                   "JavaScript expression",
-                  ...(child_relations.length ? ["Aggregation"] : []),
+                  ...(child_relations.length && context.stored
+                    ? ["Aggregation"]
+                    : []),
                   ...(models.length ? ["Model prediction"] : []),
                 ],
               },
