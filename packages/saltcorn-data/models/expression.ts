@@ -668,7 +668,7 @@ const apply_calculated_fields_stored = async (
         aggregations: {
           _agg_val: {
             ...field.attributes,
-            where: field.attributes.aggwhere,
+            where: jsexprToWhere(field.attributes.aggwhere),
             field: field.attributes.agg_field.split("@")[0],
           },
         },
