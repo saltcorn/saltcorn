@@ -1659,6 +1659,7 @@ router.get(
       image.filename?.endsWith(".png")
     );
     const keystoreFiles = await File.find({ folder: "keystore_files" });
+    const provisioningFiles = await File.find({ folder: "provisioning_files" });
     const withSyncInfo = await Table.find({ has_sync_info: true });
     const plugins = (await Plugin.find()).filter(
       (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
@@ -2520,34 +2521,7 @@ router.get(
                         i({ class: "fas fa-question-circle ps-1" })
                       )
                     ),
-                    // apple team id
-                    div(
-                      { class: "row pb-3 pt-3" },
-                      div(
-                        { class: "col-sm-8" },
-                        label(
-                          {
-                            for: "appleTeamIdInputId",
-                            class: "form-label fw-bold",
-                          },
-                          req.__("Team ID")
-                        ),
-                        input({
-                          type: "text",
-                          class: "form-control",
-                          name: "appleTeamId",
-                          id: "appleTeamIdInputId",
-                          value:
-                            builderSettings.appleTeamId ||
-                            getState().getConfig("apple_team_id") ||
-                            "",
-                          placeholder: req.__(
-                            "Please enter your Apple Team ID"
-                          ),
-                        })
-                      )
-                    ),
-                    // provisioning profile guuid
+                    // provisioning profile file
                     div(
                       { class: "row pb-3" },
                       div(
@@ -2557,18 +2531,29 @@ router.get(
                             for: "provisioningProfileInputId",
                             class: "form-label fw-bold",
                           },
-                          req.__("Provisioning Profile GUUID")
+                          req.__("Provisioning Profile")
                         ),
-                        input({
-                          type: "text",
-                          class: "form-control",
-                          name: "provisioningProfileGUUID",
-                          id: "provisioningProfileInputId",
-                          value: builderSettings.provisioningProfileGUUID || "",
-                          placeholder: req.__(
-                            "Please enter your Provisioning Profile GUUID"
-                          ),
-                        })
+                        select(
+                          {
+                            class: "form-select",
+                            name: "provisioningProfile",
+                            id: "provisioningProfileInputId",
+                          },
+                          [
+                            option({ value: "" }, ""),
+                            ...provisioningFiles.map((file) =>
+                              option(
+                                {
+                                  value: file.location,
+                                  selected:
+                                    builderSettings.provisioningProfile ===
+                                    file.location,
+                                },
+                                file.filename
+                              )
+                            ),
+                          ].join("")
+                        )
                       )
                     )
                   )
@@ -2682,8 +2667,7 @@ router.post(
       allowOfflineMode,
       synchedTables,
       includedPlugins,
-      appleTeamId,
-      provisioningProfileGUUID,
+      provisioningProfile,
       buildType,
       keystoreFile,
       keystoreAlias,
@@ -2709,10 +2693,10 @@ router.post(
         error: req.__("Please enter a valid server URL."),
       });
     }
-    if (iOSPlatform && (!appleTeamId || !provisioningProfileGUUID)) {
+    if (iOSPlatform && !provisioningProfile) {
       return res.json({
         error: req.__(
-          "Please enter your Apple Team ID and Provisioning Profile GUUID."
+          "Please provide a Provisioning Profile for the iOS build."
         ),
       });
     }
@@ -2739,10 +2723,8 @@ router.post(
       spawnParams.push(
         "-p",
         "ios",
-        "--appleTeamId",
-        appleTeamId,
         "--provisioningProfile",
-        provisioningProfileGUUID
+        provisioningProfile,
       );
     }
     if (appName) spawnParams.push("--appName", appName);
@@ -2797,8 +2779,7 @@ router.post(
       synchedTables: synchedTables,
       includedPlugins: includedPlugins,
       excludedPlugins,
-      appleTeamId,
-      provisioningProfileGUUID,
+      provisioningProfile,
       keystoreFile,
       keystoreAlias,
       buildType,

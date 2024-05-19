@@ -17,6 +17,7 @@ import {
   prepareExportOptionsPlist,
   modifyConfigXml,
   prepareAppIcon,
+  decodeProvisioningProfile,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -129,7 +130,6 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
-    this.appleTeamId = cfg.appleTeamId;
     this.provisioningProfile = cfg.provisioningProfile;
     this.tenantAppName = cfg.tenantAppName;
     this.keyStorePath = cfg.keyStorePath;
@@ -150,12 +150,13 @@ export class MobileBuilder {
     });
     if (this.appIcon)
       await prepareAppIcon(this.buildDir, this.appIcon, this.platforms);
+    let iosParams = null;
     if (this.platforms.includes("ios")) {
-      await prepareExportOptionsPlist(
+      iosParams = await decodeProvisioningProfile(
         this.buildDir,
-        `${removeNonWordChars(this.appName || "")}.mobile.app`,
-        this.provisioningProfile || ""
+        this.provisioningProfile!
       );
+      prepareExportOptionsPlist(this.buildDir, this.appId, iosParams.guuid);
     }
     copyServerFiles(this.buildDir);
     copySbadmin2Deps(this.buildDir);
@@ -195,6 +196,8 @@ export class MobileBuilder {
     if (this.keyStorePath) copyKeyStore(this.buildDir, this.keyStorePath);
     const cordovaHelper = new CordovaHelper({
       ...this,
+      appleTeamId: iosParams?.teamId,
+      provisioningGUUID: iosParams?.guuid,
     });
     resultCode = cordovaHelper.buildApp();
     if (resultCode === 0 && this.copyTargetDir)

@@ -9,10 +9,9 @@ import {
   writeFileSync,
   readFileSync,
   rmSync,
-  rmdirSync,
 } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
-import { spawnSync } from "child_process";
+import { spawnSync, execSync } from "child_process";
 import Page from "@saltcorn/data/models/page";
 import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
@@ -127,7 +126,7 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
   }
 }
 
-export async function prepareExportOptionsPlist(
+export function prepareExportOptionsPlist(
   buildDir: string,
   appId: string,
   provisioningProfile: string
@@ -158,6 +157,30 @@ export async function prepareExportOptionsPlist(
       }`
     );
   }
+}
+
+export async function decodeProvisioningProfile(
+  buildDir: string,
+  provisioningProfile: string
+) {
+  console.log("decodeProvisioningProfile", buildDir, provisioningProfile);
+  const outFile = join(buildDir, "provisioningProfile.xml");
+  try {
+    execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
+    const content = readFileSync(outFile);
+    const parsed = await parseStringPromise(content);
+    const dict = parsed.plist.dict[0];
+    const guuid = dict.string[dict.string.length - 1];
+    const teamId = dict.array[0].string[0];
+    return { guuid, teamId };
+  } catch (error: any) {
+    console.log(
+      `Unable to decode the provisioning profile '${provisioningProfile}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+    throw error;
+  }  
 }
 
 /**

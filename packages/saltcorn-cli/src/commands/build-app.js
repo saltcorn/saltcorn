@@ -39,11 +39,8 @@ class BuildAppCommand extends Command {
       );
     }
 
-    if (flags.platforms.includes("ios")) {
-      if (!flags.appleTeamId)
-        throw new Error("Please specify an apple team id");
-      if (!flags.provisioningProfile)
-        throw new Error("Please specify a provisioning profile");
+    if (flags.platforms.includes("ios") && !flags.provisioningProfile) {
+      throw new Error("Please specify a provisioning profile");
     }
   }
 
@@ -102,7 +99,6 @@ class BuildAppCommand extends Command {
         plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
         user,
-        appleTeamId: flags.appleTeamId,
         provisioningProfile: flags.provisioningProfile,
         tenantAppName: flags.tenantAppName,
         buildType: flags.buildType,
@@ -234,15 +230,10 @@ BuildAppCommand.flags = {
     description:
       "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
   }),
-  appleTeamId: flags.string({
-    name: "apple team id",
-    string: "appleTeamId",
-    description: "Apple team id for iOS builds",
-  }),
   provisioningProfile: flags.string({
     name: "provisioning profile",
     string: "provisioningProfile",
-    description: "GUUID of the provisioning profile for iOS builds",
+    description: "This profile will be used to sign your app",
   }),
   buildType: flags.string({
     name: "build type",

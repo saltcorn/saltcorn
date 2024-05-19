@@ -9,37 +9,41 @@ import type User from "@saltcorn/data/models/user";
 export type CordovaCfg = {
   buildDir: string;
   platforms: string[];
-  useDocker?: boolean;
-  appleTeamId?: string;
-  provisioningProfile?: string;
   buildType: "debug" | "release";
+  appName: string;
+
+  useDocker?: boolean;
   keyStorePath?: string;
   keyStoreAlias?: string;
   keyStorePassword?: string;
-  appName: string;
+
+  appleTeamId?: string;
+  provisioningGUUID?: string;
 };
 
 export class CordovaHelper {
   buildDir: string;
   platforms: string[];
-  useDocker?: boolean;
-  appleTeamId?: string;
   buildType: "debug" | "release";
+  appName: string;
+
+  useDocker?: boolean;
   keyStoreFile?: string;
   keyStoreAlias?: string;
   keyStorePassword?: string;
-  teamId?: string;
-  provisioningProfile?: string;
-  appName: string;
   androidReleaseOut: string;
   androidDebugOut: string;
+
+  appleTeamId?: string;
+  provisioningGUUID?: string;
 
   constructor(cfg: CordovaCfg) {
     this.buildDir = cfg.buildDir;
     this.platforms = cfg.platforms;
-    this.useDocker = cfg.useDocker;
-    this.appleTeamId = cfg.appleTeamId;
     this.buildType = cfg.buildType || "debug";
+    this.appName = cfg.appName;
+
+    this.useDocker = cfg.useDocker;
     this.keyStoreFile = cfg.keyStorePath
       ? basename(cfg.keyStorePath)
       : undefined;
@@ -55,9 +59,9 @@ export class CordovaHelper {
     );
     this.androidReleaseOut = join(androidOut, "bundle", "release");
     this.androidDebugOut = join(androidOut, "apk", "debug");
-    this.appName = cfg.appName;
-    this.provisioningProfile = cfg.provisioningProfile;
-    this.teamId = cfg.appleTeamId;
+
+    this.appleTeamId = cfg.appleTeamId;
+    this.provisioningGUUID = cfg.provisioningGUUID;
   }
 
   buildApp() {
@@ -84,8 +88,8 @@ export class CordovaHelper {
       let buffer = execSync(
         `xcodebuild -workspace platforms/ios/${this.appName}.xcworkspace ` +
           `-scheme ${this.appName} -destination "generic/platform=iOS" ` +
-          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningProfile}" ` +
-          ` CODE_SIGN_STYLE="Manual" DEVELOPMENT_TEAM="${this.teamId}"`,
+          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningGUUID}" ` +
+          ` CODE_SIGN_STYLE="Manual" DEVELOPMENT_TEAM="${this.appleTeamId}"`,
         { cwd: this.buildDir }
       );
       console.log(buffer.toString());
@@ -205,7 +209,7 @@ export class CordovaHelper {
         `--developmentTeam=${this.appleTeamId}`,
         "--codeSignIdentity=iPhone Developer",
         "--packageType=app-store",
-        `--provisioningProfile=${this.provisioningProfile}`
+        `--provisioningProfile=${this.provisioningGUUID}`
       );
     }
     const result = spawnSync(
