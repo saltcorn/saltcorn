@@ -89,7 +89,8 @@ export class CordovaHelper {
         `xcodebuild -workspace platforms/ios/${this.appName}.xcworkspace ` +
           `-scheme ${this.appName} -destination "generic/platform=iOS" ` +
           `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningGUUID}" ` +
-          ` CODE_SIGN_STYLE="Manual" DEVELOPMENT_TEAM="${this.appleTeamId}"`,
+          ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
+          ` DEVELOPMENT_TEAM="${this.appleTeamId}"`,
         { cwd: this.buildDir }
       );
       console.log(buffer.toString());
@@ -207,7 +208,7 @@ export class CordovaHelper {
     if (platforms.includes("ios")) {
       buildParams.push(
         `--developmentTeam=${this.appleTeamId}`,
-        "--codeSignIdentity=iPhone Developer",
+        '--codeSignIdentity="iPhone Distribution"',
         "--packageType=app-store",
         `--provisioningProfile=${this.provisioningGUUID}`
       );
