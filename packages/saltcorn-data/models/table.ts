@@ -2409,6 +2409,8 @@ class Table implements AbstractTable {
     const fkey_fields: Field[] = [];
     const json_schema_fields: Field[] = [];
 
+    const state = require("../db/state").getState();
+
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
       else if (headers.includes(f.label)) {
@@ -2652,6 +2654,9 @@ class Table implements AbstractTable {
         }`,
       };
     }
+
+    if (rejectDetails)
+      state.log(6, `CSV import rejectDetails: ` + rejectDetails);
 
     // stop sql transaction
     await client.query("COMMIT");

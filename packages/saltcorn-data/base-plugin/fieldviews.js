@@ -155,7 +155,12 @@ const select = {
             class: `form-control form-select ${cls} ${field.class || ""}`,
             disabled: true,
           },
-          selOptions
+          select_options(
+            v,
+            { ...field, options: field.options.filter((o) => o.value == v) },
+            (attrs || {}).force_required,
+            (attrs || {}).neutral_label
+          )
         ) +
         input({
           type: "hidden",
