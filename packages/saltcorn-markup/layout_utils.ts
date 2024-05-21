@@ -73,7 +73,7 @@ const navSubItemsIterator = (si: any) =>
     ? hr({ class: "mx-3 my-1" })
     : si?.subitems
     ? div(
-        { class: "dropdown-item btn-group dropend" },
+        { class: "dropdown-item btn-group dropstart" },
         a(
           {
             type: "button",
