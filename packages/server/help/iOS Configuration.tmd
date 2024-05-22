@@ -1,15 +1,17 @@
-To build your iOS app, you need to set up a Provisioning Profile. Follow these steps to configure it correctly.
+To build and publish your iOS app, you need to set up a Provisioning Profile. 
+Follow these steps to configure it correctly and optionally upload it to the App Store.
 
 *Note: You need an enrolled [Apple Developer Account](https://developer.apple.com/programs/).*
 
-## Apple Account Configurations
-
-Create an App ID, a Certificate, and a Provisioning Profile in your Apple Developer Account.
+## Apple Developer Account
+In your Apple Developer Account create an App ID, a Certificate, and a Provisioning Profile.
 
 - **App ID:** Identifies your app in provisioning profiles. Use the ID from this builder dialog.
 - **Certificate:** Used to sign your app, verifying the creator and ensuring the source hasn't been altered.
 - **Provisioning Profile:** Combines the App ID and Certificate, along with other configurations, to build iOS apps.
 
+## App Store Connect
+To publish your app, you must create a new app in your App Store Connect account and upload the IPA file from this build.
 ## Step-by-Step Instructions
 
 ### 1. Register App ID
@@ -49,4 +51,10 @@ You have to permit using the Certificate's private key; otherwise, the build blo
 4. Choose any name for the profile, click **Generate**, and download the file.
 5. Double-click the downloaded file to install the Provisioning Profile on your local Mac.
 
-Finally, upload the Provisioning Profile into the 'provisioning_files' directory of your Saltcorn installation, so you can select it in this menu.
+Finally, upload the Provisioning Profile into the 'provisioning_files' directory of your Saltcorn installation, so you can select it here.
+### 4 Upload to App Store Connect
+When you run a build with a valid provisioning profile, the builder generates an .ipa file. 
+You can download this file and upload it to [App Store Connect](https://appstoreconnect.apple.com/apps) 
+using the Transporter tool on your Mac. 
+
+**Note:** Ensure that your App Store Connect account has an app that matches your App ID before uploading the file.
