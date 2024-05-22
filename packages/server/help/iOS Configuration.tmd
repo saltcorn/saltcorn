@@ -1,0 +1,52 @@
+To build your iOS app, you need to set up a Provisioning Profile. Follow these steps to configure it correctly.
+
+*Note: You need an enrolled [Apple Developer Account](https://developer.apple.com/programs/).*
+
+## Apple Account Configurations
+
+Create an App ID, a Certificate, and a Provisioning Profile in your Apple Developer Account.
+
+- **App ID:** Identifies your app in provisioning profiles. Use the ID from this builder dialog.
+- **Certificate:** Used to sign your app, verifying the creator and ensuring the source hasn't been altered.
+- **Provisioning Profile:** Combines the App ID and Certificate, along with other configurations, to build iOS apps.
+
+## Step-by-Step Instructions
+
+### 1. Register App ID
+1. Navigate to the [Identifiers](https://developer.apple.com/account/resources/identifiers/list) section.
+2. Click the plus button and select 'App IDs' followed by 'App' in the subsequent dialog.
+3. Enter a description and the actual App ID (same as in the builder dialog).
+4. Click **Continue**, review your entries, and finish by clicking **Register**.
+
+### 2. Create Certificate
+1. Go to the [Certificates](https://developer.apple.com/account/resources/certificates/list) section and click the plus button.
+2. Select 'Apple Distribution'.
+3. Generate and upload a Certificate Signing Request from your local machine.
+
+##### 2.1 Certificate Signing Request
+1. Open the Keychain Access tool via Launchpad.
+2. Navigate to **Keychain Access > Certificate Assistant** and select **Request a Certificate from a Certificate Authority**.
+3. Fill out 'User Email Address' and 'Common Name', leaving 'CA Email Address' empty, and select 'Saved to disk'.
+4. Save the file and upload it through your browser. 
+5. Click **Continue**, download the generated Certificate, and double-click the file to install it locally.
+
+After that, the Certificate and its private key are installed locally.
+
+##### 2.2 Permit Access to the Certificate
+You have to permit using the Certificate's private key; otherwise, the build blocks with a confirm dialog on your local Mac.
+1. Open Keychain Access and select the login default keychain (left corner of the window).
+2. Locate your certificate, it will look something like   
+```Apple Distribution: [your name] ([Team ID])```
+3. Expand it to view the private key, then double-click to open its properties.
+4. Go to the **Access Control** tab and activate 'Allow all applications to access this item'.
+
+**Note:** You can also select 'Always allow' when the confirmation dialog appears on your local Mac.
+
+### 3. Create a Provisioning Profile
+1. Go to the [Profiles](https://developer.apple.com/account/resources/profiles/list) section and click the plus button.
+2. Choose 'App Store Connect'.
+3. In the following steps, use the App ID and Certificate you created.
+4. Choose any name for the profile, click **Generate**, and download the file.
+5. Double-click the downloaded file to install the Provisioning Profile on your local Mac.
+
+Finally, upload the Provisioning Profile into the 'provisioning_files' directory of your Saltcorn installation, so you can select it in this menu.

@@ -2513,10 +2513,10 @@ router.get(
                     { class: "form-group border p-3 rounded" },
                     p(
                       { class: "h4" },
-                      "iOS configuration",
+                      "iOS Configuration",
                       a(
                         {
-                          href: "javascript:ajax_modal('/admin/help/iOS configuration?')",
+                          href: "javascript:ajax_modal('/admin/help/iOS Configuration?')",
                         },
                         i({ class: "fas fa-question-circle ps-1" })
                       )
@@ -2724,7 +2724,7 @@ router.post(
         "-p",
         "ios",
         "--provisioningProfile",
-        provisioningProfile,
+        provisioningProfile
       );
     }
     if (appName) spawnParams.push("--appName", appName);
