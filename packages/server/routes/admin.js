@@ -16,7 +16,7 @@ const {
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
-const { spawn } = require("child_process");
+const { spawn, exec } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
 const { X509Certificate } = require("crypto");
@@ -1645,6 +1645,18 @@ const imageAvailable = async () => {
   }
 };
 
+const checkXcodebuild = () => {
+  return new Promise((resolve) => {
+    exec("xcodebuild -version", (error, stdout, stderr) => {
+      if (error) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+};
+
 /**
  * Build mobile app
  */
@@ -1667,6 +1679,7 @@ router.get(
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
     const dockerAvailable = await imageAvailable();
+    const xcodebuildAvailable = await checkXcodebuild();
     send_admin_page({
       res,
       req,
@@ -2521,6 +2534,62 @@ router.get(
                         i({ class: "fas fa-question-circle ps-1" })
                       )
                     ),
+
+                    div(
+                      { class: "row pb-3 mb-3 pt-2" },
+                      div(
+                        label(
+                          { class: "form-label fw-bold" },
+                          req.__("xcodebuild") +
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/xcodebuild?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                        )
+                      ),
+                      div(
+                        { class: "col-sm-4" },
+                        div(
+                          {
+                            id: "xcodebuildStatusId",
+                            class: "",
+                          },
+                          xcodebuildAvailable
+                            ? span(
+                                req.__("installed"),
+                                i({ class: "ps-2 fas fa-check text-success" })
+                              )
+                            : span(
+                                req.__("not available"),
+                                i({ class: "ps-2 fas fa-times text-danger" })
+                              )
+                        )
+                      ),
+                      div(
+                        { class: "col-sm-4" },
+                        // not sure if we should provide this
+                        // button(
+                        //   {
+                        //     id: "installXCodeBtnId",
+                        //     type: "button",
+                        //     onClick: `install_xcode(this);`,
+                        //     class: "btn btn-warning",
+                        //   },
+                        //   req.__("install")
+                        // ),
+                        span(
+                          {
+                            role: "button",
+                            onClick: "check_xcodebuild()",
+                          },
+                          span({ class: "ps-3" }, req.__("refresh")),
+                          i({ class: "ps-2 fas fa-undo" })
+                        )
+                      )
+                    ),
+
                     // provisioning profile file
                     div(
                       { class: "row pb-3" },
@@ -2875,6 +2944,15 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const installed = await imageAvailable();
+    res.json({ installed });
+  })
+);
+
+router.get(
+  "/mobile-app/check-xcodebuild",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const installed = await checkXcodebuild();
     res.json({ installed });
   })
 );

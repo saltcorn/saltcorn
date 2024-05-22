@@ -827,6 +827,29 @@ function pull_cordova_builder() {
   });
 }
 
+function check_xcodebuild() {
+  $.ajax("/admin/mobile-app/check-xcodebuild", {
+    type: "GET",
+    success: function (res) {
+      if (res.installed) {
+        $("#xcodebuildStatusId").html(
+          `<span>
+            installed<i class="ps-2 fas fa-check text-success"></i>
+          </span>
+          `
+        );
+      } else {
+        $("#xcodebuildStatusId").html(
+          `<span>
+            not available<i class="ps-2 fas fa-times text-danger"></i>
+          </span>
+          `
+        );
+      }
+    },
+  });
+}
+
 function check_cordova_builder() {
   $.ajax("/admin/mobile-app/check-cordova-builder", {
     type: "GET",
