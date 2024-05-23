@@ -1060,6 +1060,7 @@ const features = {
   aggregation_query: true,
   list_builder: true,
   esm_plugins: true,
+  stringify_json_fields: true,
 };
 
 export = {
