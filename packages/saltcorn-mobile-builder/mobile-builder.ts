@@ -1,7 +1,8 @@
 const { PluginManager } = require("live-plugin-manager");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const { features } = require("@saltcorn/data/db/state");
-import { join } from "path";
+import { join, basename } from "path";
+import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
 import {
   buildTablesFile,
@@ -12,7 +13,6 @@ import {
   createSqliteDb,
   writeCfgFile,
   prepareSplashPage,
-  copyKeyStore,
   prepareBuildDir,
   prepareExportOptionsPlist,
   modifyConfigXml,
@@ -193,7 +193,11 @@ export class MobileBuilder {
       );
     resultCode = await createSqliteDb(this.buildDir);
     if (resultCode !== 0) return resultCode;
-    if (this.keyStorePath) copyKeyStore(this.buildDir, this.keyStorePath);
+    if (this.keyStorePath)
+      copySync(
+        this.keyStorePath,
+        join(this.buildDir, basename(this.keyStorePath))
+      );
     const cordovaHelper = new CordovaHelper({
       ...this,
       appleTeamId: iosParams?.teamId,

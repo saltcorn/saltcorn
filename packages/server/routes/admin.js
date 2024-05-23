@@ -2388,7 +2388,16 @@ router.get(
                   ),
                   div(
                     { class: "form-group border p-3 rounded" },
-                    p({ class: "h4" }, "Android configuration"),
+                    p(
+                      { class: "h4" },
+                      "Android configuration",
+                      a(
+                        {
+                          href: "javascript:ajax_modal('/admin/help/Android Configuration?')",
+                        },
+                        i({ class: "fas fa-question-circle ps-1" })
+                      )
+                    ),
                     div(
                       { class: "row pb-3 pt-2" },
                       div(
@@ -2766,6 +2775,13 @@ router.post(
       return res.json({
         error: req.__(
           "Please provide a Provisioning Profile for the iOS build."
+        ),
+      });
+    }
+    if (keystoreFile && (!keystoreAlias || !keystorePassword)) {
+      return res.json({
+        error: req.__(
+          "Please provide the keystore alias and password for the android build."
         ),
       });
     }

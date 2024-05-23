@@ -21,11 +21,6 @@ import { parseStringPromise, Builder } from "xml2js";
 
 const resizer = require("resize-with-sharp-or-jimp");
 
-export function copyKeyStore(buildDir: string, keyStorePath: string) {
-  copySync(keyStorePath, join(buildDir, "myapp.keystore"));
-  return "myapp.keystore";
-}
-
 /**
  * copy saltcorn-mobile-app as a template to buildDir
  * @param buildDir directory where the app will be build
