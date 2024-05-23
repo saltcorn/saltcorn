@@ -115,7 +115,18 @@ const plugin_with_routes = () => ({
       sql_name: "jsonb",
       fieldviews: {},
       attributes: [],
-      read: (s: any) => s,
+      read: (v: any) => {
+        switch (typeof v) {
+          case "string":
+            try {
+              return JSON.parse(v);
+            } catch {
+              return v;
+            }
+          default:
+            return v;
+        }
+      },
     },
     {
       name: "Varchar",

@@ -1743,6 +1743,7 @@ class Table implements AbstractTable {
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
       );
+      this.stringify_json_fields(v_in);
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
@@ -1775,6 +1776,7 @@ class Table implements AbstractTable {
       await db.update(this.name, v, id, { pk_name });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields, this);
+      this.stringify_json_fields(v);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, { pk_name });
     }
@@ -2696,6 +2698,13 @@ class Table implements AbstractTable {
     };
   }
 
+  stringify_json_fields(v1: Row) {
+    this.fields
+      .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
+      .forEach((f) => {
+        v1[f.name] = JSON.stringify(v1[f.name]);
+      });
+  }
   /**
    * Import JSON table description
    * @param filePath

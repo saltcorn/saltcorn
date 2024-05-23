@@ -1967,6 +1967,16 @@ describe("json restore", () => {
     const row4 = await table.getRow({ id: 4 });
     assertIsSet(row4);
     expect(row4.stuff).toStrictEqual([17]);
+    const testInsert = async (name: string, val: any) => {
+      await table.insertRow({ name, stuff: val });
+      const row5 = await table.getRow({ name });
+      assertIsSet(row5);
+      expect(row5.stuff).toStrictEqual(val);
+    };
+    await testInsert("Baz1", { a: 1 });
+    await testInsert("Baz2", 19);
+    await testInsert("Bar", [15]);
+    await testInsert("Baza", "baz");
   });
 });
 
