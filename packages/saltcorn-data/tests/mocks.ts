@@ -113,7 +113,26 @@ const plugin_with_routes = () => ({
     {
       name: "JSON",
       sql_name: "jsonb",
-      fieldviews: {},
+      fieldviews: {
+        show: {
+          isEdit: false,
+          run: (v: any) =>
+            tags.pre({ class: "wsprewrap" }, tags.code(JSON.stringify(v))),
+        },
+        edit: {
+          isEdit: true,
+          run: (nm: string, v: any, attrs: any, cls: string) =>
+            tags.textarea(
+              {
+                class: ["form-control", cls],
+                name: encodeURIComponent(nm),
+                id: `input${encodeURIComponent(nm)}`,
+                rows: 10,
+              },
+              typeof v === "undefined" ? "" : tags.text(JSON.stringify(v)) || ""
+            ),
+        },
+      },
       attributes: [],
       read: (v: any) => {
         switch (typeof v) {
