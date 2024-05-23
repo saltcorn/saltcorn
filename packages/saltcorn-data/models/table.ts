@@ -2720,6 +2720,13 @@ class Table implements AbstractTable {
             delete rec[f.name];
           }
         });
+      fields.forEach((f) => {
+        if (typeof f.type !== "string" && f?.type?.name === "JSON") {
+          if (typeof rec[f.name] === "string")
+            rec[f.name] = JSON.stringify(rec[f.name]);
+        }
+      });
+
       try {
         readState(rec, fields);
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)

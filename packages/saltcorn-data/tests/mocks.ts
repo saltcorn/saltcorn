@@ -111,6 +111,13 @@ const plugin_with_routes = () => ({
   },
   types: [
     {
+      name: "JSON",
+      sql_name: "jsonb",
+      fieldviews: {},
+      attributes: [],
+      read: (s: any) => s,
+    },
+    {
       name: "Varchar",
       sql_name: ({ dimensions }: any) => {
         if (typeof dimensions !== "number") throw new Error("dim must be num");

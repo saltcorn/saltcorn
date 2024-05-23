@@ -1925,6 +1925,44 @@ describe("Table with UUID pks", () => {
     });
   }
 });
+describe("json restore", () => {
+  it("should import json with json", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    const json = [
+      { name: "Alex", id: 1, stuff: { bar: "foo" } },
+      { name: "Alex1", id: 2, stuff: 1 },
+      { name: "Alex2", id: 3, stuff: "hello" },
+    ];
+    const fnm = "/tmp/test1.json";
+    await writeFile(fnm, JSON.stringify(json));
+
+    await getState().refresh_tables();
+
+    const table = await Table.create("JsonJson");
+    await Field.create({
+      table: table,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: table,
+      name: "stuff",
+      type: "JSON",
+    });
+
+    //db.set_sql_logging();
+    assertIsSet(table);
+
+    const impres = await table.import_json_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 3 rows into table JsonJson",
+    });
+    const rows = await table.getRows();
+    expect(rows.length).toBe(3);
+  });
+});
+
 describe("external tables", () => {
   it("should register plugin", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes());
