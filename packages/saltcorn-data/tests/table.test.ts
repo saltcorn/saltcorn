@@ -1933,6 +1933,7 @@ describe("json restore", () => {
       { name: "Alex", id: 1, stuff: { bar: "foo" } },
       { name: "Alex1", id: 2, stuff: 1 },
       { name: "Alex2", id: 3, stuff: "hello" },
+      { name: "Alex3", id: 4, stuff: [17] },
     ];
     const fnm = "/tmp/test1.json";
     await writeFile(fnm, JSON.stringify(json));
@@ -1956,13 +1957,16 @@ describe("json restore", () => {
 
     const impres = await table.import_json_file(fnm);
     expect(impres).toEqual({
-      success: "Imported 3 rows into table JsonJson",
+      success: "Imported 4 rows into table JsonJson",
     });
     const rows = await table.getRows();
-    expect(rows.length).toBe(3);
+    expect(rows.length).toBe(4);
     const row3 = await table.getRow({ id: 3 });
     assertIsSet(row3);
     expect(row3.stuff).toBe("hello");
+    const row4 = await table.getRow({ id: 4 });
+    assertIsSet(row4);
+    expect(row4.stuff).toStrictEqual([17]);
   });
 });
 
