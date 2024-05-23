@@ -1050,7 +1050,10 @@ class Table implements AbstractTable {
         if (!this.is_owner(forUser, row)) return null;
       } else return null; //no ownership
     }
-    return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
+    return apply_calculated_fields(
+      [this.readFromDB(this.parse_json_fields(row))],
+      this.fields
+    )[0];
   }
 
   /**
@@ -1114,7 +1117,7 @@ class Table implements AbstractTable {
     }
 
     return apply_calculated_fields(
-      rows.map((r: Row) => this.readFromDB(r)),
+      rows.map((r: Row) => this.readFromDB(this.parse_json_fields(r))),
       this.fields,
       !!selopts.ignore_errors
     );
@@ -2699,6 +2702,7 @@ class Table implements AbstractTable {
   }
 
   stringify_json_fields(v1: Row) {
+    if (db.isSQLite) return;
     this.fields
       .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
       .forEach((f) => {
@@ -2706,6 +2710,19 @@ class Table implements AbstractTable {
           v1[f.name] = JSON.stringify(v1[f.name]);
       });
   }
+  parse_json_fields(v1: Row): Row {
+    if (db.isSQLite)
+      this.fields
+        .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
+        .forEach((f) => {
+          if (typeof v1[f.name] === "string")
+            try {
+              v1[f.name] = JSON.parse(v1[f.name]);
+            } catch (e) {}
+        });
+    return v1;
+  }
+
   /**
    * Import JSON table description
    * @param filePath
@@ -2741,7 +2758,7 @@ class Table implements AbstractTable {
       try {
         readState(rec, fields);
         jsonFields.forEach((f) => {
-          if (typeof rec[f.name] !== "undefined")
+          if (!db.isSQLite && typeof rec[f.name] !== "undefined")
             rec[f.name] = JSON.stringify(rec[f.name]);
         });
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
@@ -3336,7 +3353,7 @@ class Table implements AbstractTable {
     if (res.length === 0) return res; // check
 
     let calcRow = apply_calculated_fields(
-      res.rows,
+      res.rows.map((row: Row) => this.parse_json_fields(row)),
       fields,
       !!opts?.ignore_errors
     );
