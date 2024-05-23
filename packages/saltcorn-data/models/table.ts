@@ -1467,11 +1467,8 @@ class Table implements AbstractTable {
     calcFields.forEach((f) => {
       // delete v1[f.name];
     });
-    this.fields
-      .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
-      .forEach((f) => {
-        v1[f.name] = JSON.stringify(v1[f.name]);
-      });
+
+    this.stringify_json_fields(v1);
 
     if (retry < 3) {
       try {
@@ -2705,7 +2702,8 @@ class Table implements AbstractTable {
     this.fields
       .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
       .forEach((f) => {
-        v1[f.name] = JSON.stringify(v1[f.name]);
+        if (typeof v1[f.name] !== "undefined")
+          v1[f.name] = JSON.stringify(v1[f.name]);
       });
   }
   /**
@@ -2743,7 +2741,8 @@ class Table implements AbstractTable {
       try {
         readState(rec, fields);
         jsonFields.forEach((f) => {
-          rec[f.name] = JSON.stringify(rec[f.name]);
+          if (typeof rec[f.name] !== "undefined")
+            rec[f.name] = JSON.stringify(rec[f.name]);
         });
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
           rec.role_id = rec.role_id * 10;

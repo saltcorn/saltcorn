@@ -1934,6 +1934,7 @@ describe("json restore", () => {
       { name: "Alex1", id: 2, stuff: 1 },
       { name: "Alex2", id: 3, stuff: "hello" },
       { name: "Alex3", id: 4, stuff: [17] },
+      { name: "Alex4", id: 5, stuff: null },
     ];
     const fnm = "/tmp/test1.json";
     await writeFile(fnm, JSON.stringify(json));
@@ -1957,16 +1958,19 @@ describe("json restore", () => {
 
     const impres = await table.import_json_file(fnm);
     expect(impres).toEqual({
-      success: "Imported 4 rows into table JsonJson",
+      success: "Imported 5 rows into table JsonJson",
     });
     const rows = await table.getRows();
-    expect(rows.length).toBe(4);
-    const row3 = await table.getRow({ id: 3 });
-    assertIsSet(row3);
-    expect(row3.stuff).toBe("hello");
-    const row4 = await table.getRow({ id: 4 });
-    assertIsSet(row4);
-    expect(row4.stuff).toStrictEqual([17]);
+    expect(rows.length).toBe(5);
+    const testValue = async (id: number, value: any) => {
+      const row4 = await table.getRow({ id });
+      assertIsSet(row4);
+      expect(row4.stuff).toStrictEqual(value);
+    };
+    await testValue(3, "hello");
+    await testValue(4, [17]);
+    await testValue(5, null);
+
     const testInsert = async (name: string, val: any) => {
       await table.insertRow({ name, stuff: val });
       const row5 = await table.getRow({ name });
@@ -1977,6 +1981,7 @@ describe("json restore", () => {
     await testInsert("Baz2", 19);
     await testInsert("Bar", [15]);
     await testInsert("Baza", "baz");
+    await testInsert("Bazn", null);
     const testUpdate = async (name: string, val: any) => {
       const row6 = await table.getRow({ name });
       assertIsSet(row6);
@@ -1988,7 +1993,17 @@ describe("json restore", () => {
     await testUpdate("Baz1", { a: 2 });
     await testUpdate("Baz2", 91);
     await testUpdate("Bar", [51]);
+    await testUpdate("Bar", null);
     await testUpdate("Baza", "bazc");
+
+    //test empty update
+    const row7 = await table.getRow({ name: "Baz2" });
+    assertIsSet(row7);
+    await table.updateRow({}, row7.id);
+    const row5 = await table.getRow({ name: "Baz2" });
+    assertIsSet(row5);
+    expect(row5.stuff).toStrictEqual(91);
+
     table.versioned = true;
     await table.update(table);
     await testInsert("Baz1h", { a: 1 });
