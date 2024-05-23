@@ -1246,7 +1246,7 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();
-
+    let stringified = false;
     if (typeof id === "undefined")
       throw new Error(
         this.name + " updateRow called without primary key value"
@@ -1387,6 +1387,8 @@ class Table implements AbstractTable {
             v
           )}, id=${id}`
         );
+        this.stringify_json_fields(v);
+        stringified = true;
         await db.update(this.name, v, id, { pk_name });
         updated = await this.getJoinedRow({
           where: { [pk_name]: id },
@@ -1431,6 +1433,7 @@ class Table implements AbstractTable {
         });
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
+    if (!stringified) this.stringify_json_fields(v);
     await db.update(this.name, v, id, { pk_name });
 
     if (this.has_sync_info) {

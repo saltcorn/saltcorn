@@ -1977,6 +1977,28 @@ describe("json restore", () => {
     await testInsert("Baz2", 19);
     await testInsert("Bar", [15]);
     await testInsert("Baza", "baz");
+    const testUpdate = async (name: string, val: any) => {
+      const row6 = await table.getRow({ name });
+      assertIsSet(row6);
+      await table.updateRow({ stuff: val }, row6.id);
+      const row5 = await table.getRow({ name });
+      assertIsSet(row5);
+      expect(row5.stuff).toStrictEqual(val);
+    };
+    await testUpdate("Baz1", { a: 2 });
+    await testUpdate("Baz2", 91);
+    await testUpdate("Bar", [51]);
+    await testUpdate("Baza", "bazc");
+    table.versioned = true;
+    await table.update(table);
+    await testInsert("Baz1h", { a: 1 });
+    await testInsert("Baz2h", 19);
+    await testInsert("Barh", [15]);
+    await testInsert("Bazah", "baz");
+    await testUpdate("Baz1h", { a: 2 });
+    await testUpdate("Baz2h", 91);
+    await testUpdate("Barh", [51]);
+    await testUpdate("Bazah", "bazc");
   });
 });
 
