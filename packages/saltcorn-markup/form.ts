@@ -562,7 +562,7 @@ const innerField =
           v && isdef(v[hdr.form_name])
             ? ` value="${text_attr(v[hdr.form_name])}"`
             : ""
-        }>`;
+        }${hdr.attributes?.autofocus ? " autofocus" : ""}>`;
         const inner = hdr.postText
           ? div(
               { class: "input-group" },

@@ -96,6 +96,7 @@ const tenant_form = (req, base_url) =>
         label: req.__("Application name"),
         input_type: "text",
         postText: text("." + base_url),
+        attributes: { autofocus: true },
       },
     ],
   });
