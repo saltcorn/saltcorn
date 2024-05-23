@@ -1960,6 +1960,9 @@ describe("json restore", () => {
     });
     const rows = await table.getRows();
     expect(rows.length).toBe(3);
+    const row3 = await table.getRow({ id: 3 });
+    assertIsSet(row3);
+    expect(row3.stuff).toBe("hello");
   });
 });
 

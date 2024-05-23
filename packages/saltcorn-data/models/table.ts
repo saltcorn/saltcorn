@@ -2706,7 +2706,9 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
-
+    const jsonFields = fields.filter(
+      (f) => typeof f.type !== "string" && f?.type?.name === "JSON"
+    );
     let i = 1;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
@@ -2720,15 +2722,13 @@ class Table implements AbstractTable {
             delete rec[f.name];
           }
         });
-      fields.forEach((f) => {
-        if (typeof f.type !== "string" && f?.type?.name === "JSON") {
-          if (typeof rec[f.name] === "string")
-            rec[f.name] = JSON.stringify(rec[f.name]);
-        }
-      });
 
       try {
         readState(rec, fields);
+        jsonFields.forEach((f) => {
+          if (typeof rec[f.name] === "string")
+            rec[f.name] = JSON.stringify(rec[f.name]);
+        });
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
           rec.role_id = rec.role_id * 10;
         await db.insert(this.name, rec, { noid: true, client, pk_name });
