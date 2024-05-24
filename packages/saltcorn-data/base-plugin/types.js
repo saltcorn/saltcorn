@@ -914,7 +914,7 @@ const string = {
                 JSON.stringify(join_fields_in_formula(attrs?.formula))
               ),
               "data-formula-table": encodeURIComponent(
-                JSON.stringify(Table.findOne(field.table_id.to_json))
+                JSON.stringify(Table.findOne(field.table_id).to_json)
               ),
               onClick:
                 "fill_formula_btn_click(this" +
