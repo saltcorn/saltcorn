@@ -203,7 +203,15 @@ const setTenant = (req, res, next) => {
         } else {
           db.runWithTenant(other_domain, () => {
             setLanguage(req, res, state);
-            state.log(5, `${req.method} ${req.originalUrl}`);
+            if (state.logLevel >= 5)
+              state.log(
+                5,
+                `${req.method} ${req.originalUrl}${
+                  state.getConfig("log_ip_address", false)
+                    ? ` IP=${req.ip}`
+                    : ""
+                }`
+              );
             next();
           });
         }
@@ -216,7 +224,15 @@ const setTenant = (req, res, next) => {
         } else {
           db.runWithTenant(ten, () => {
             setLanguage(req, res, state);
-            state.log(5, `${req.method} ${req.originalUrl}`);
+            if (state.logLevel >= 5)
+              state.log(
+                5,
+                `${req.method} ${req.originalUrl}${
+                  state.getConfig("log_ip_address", false)
+                    ? ` IP=${req.ip}`
+                    : ""
+                }`
+              );
             next();
           });
         }

@@ -45,7 +45,12 @@ router.get(
     const view = await View.findOne({ name: viewname });
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const state = getState();
-    state.log(3, `Route /view/${viewname} user=${req.user?.id}`);
+    state.log(
+      3,
+      `Route /view/${viewname} user=${req.user?.id}${
+        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+      }`
+    );
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       state.log(2, `View ${viewname} not found`);
