@@ -786,10 +786,18 @@ const transformForm = async ({
         });
         if (row?.id) {
           const childRows = getRowQuery
-            ? await getRowQuery(view.table_id, view_select, row.id)
-            : await childTable.getRows({
-                [view_select.field_name]: row.id,
-              });
+            ? await getRowQuery(
+                view.table_id,
+                view_select,
+                row.id,
+                segment.owner_field
+              )
+            : await childTable.getRows(
+                {
+                  [view_select.field_name]: row.id,
+                },
+                segment.owner_field ? { orderBy: segment.owner_field } : {}
+              );
           fr.metadata.rows = childRows;
           if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
             fr.fields.push({
@@ -2117,7 +2125,7 @@ module.exports = {
       }
       return doAuthPost({ body, table_id, req });
     },
-    async getRowQuery(table_id, view_select, row_id) {
+    async getRowQuery(table_id, view_select, row_id, order_field) {
       const childTable = Table.findOne({ id: table_id });
       return await childTable.getRows(
         {
@@ -2126,6 +2134,7 @@ module.exports = {
         {
           forPublic: !req.user,
           forUser: req.user,
+          orderBy: order_field || undefined,
         }
       );
     },
