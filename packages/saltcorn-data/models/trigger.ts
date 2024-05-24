@@ -339,12 +339,16 @@ class Trigger implements AbstractTrigger {
           throw new Error(
             "Runnable action not found: " + step.step_action_name
           );
+        state.log(
+          6,
+          `Multistep step ${i} (step count ${step_count}) action ${step.step_action_name}`
+        );
         const stepres = await action.run({
           table,
           ...runargs,
           configuration,
         });
-
+        state.log(6, `Multistep step result ${JSON.stringify(stepres)}`);
         if (stepres?.goto_step) {
           i = +stepres.goto_step - 2;
           delete stepres.goto_step;
