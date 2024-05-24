@@ -22,6 +22,7 @@ const domReady = (js: string): string =>
 whiteList.kbd = [];
 whiteList.span = ["style"];
 whiteList.div = ["style"];
+whiteList.td = ["style"];
 
 /**
  * @param {string|number} t
