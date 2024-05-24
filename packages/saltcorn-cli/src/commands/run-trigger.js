@@ -28,7 +28,7 @@ class RunTriggerCommand extends Command {
         console.error(`Trigger ${args.trigger} not found`);
         this.exit(1);
       }
-      await trigger.runWithoutRow();
+      await trigger.runWithoutRow({ user: { role_id: 1 } });
     });
   }
 }
