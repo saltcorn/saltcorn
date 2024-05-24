@@ -212,7 +212,9 @@ router.post(
     const state = getState();
     state.log(
       3,
-      `Route /view/${viewname} viewroute ${route} user=${req.user?.id}`
+      `Route /view/${viewname} viewroute ${route} user=${req.user?.id}${
+        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+      }`
     );
 
     const view = await View.findOne({ name: viewname });
@@ -245,7 +247,12 @@ router.post(
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const query = { ...req.query };
     const state = getState();
-    state.log(3, `Route /view/${viewname} POST user=${req.user?.id}`);
+    state.log(
+      3,
+      `Route /view/${viewname} POST user=${req.user?.id}${
+        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+      }`
+    );
     const view = await View.findOne({ name: viewname });
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
