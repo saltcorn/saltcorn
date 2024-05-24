@@ -1415,5 +1415,6 @@
 	"Use table description instead of name as header": "Use table description instead of name as header",
 	"Description header": "Description header",
 	"Lazy load views": "Lazy load views",
-	"Log IP address": "Log IP address"
+	"Log IP address": "Log IP address",
+	"Record the request IP address in log messages": "Record the request IP address in log messages"
 }

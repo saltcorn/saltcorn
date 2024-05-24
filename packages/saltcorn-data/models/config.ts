@@ -833,7 +833,7 @@ const configTypes: ConfigTypes = {
   log_ip_address: {
     type: "Bool",
     label: "Log IP address",
-    sublabel: "Record the request IP address",
+    sublabel: "Record the request IP address in log messages",
     default: false,
   },
   apple_team_id: {
