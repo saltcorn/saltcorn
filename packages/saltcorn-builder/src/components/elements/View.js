@@ -97,7 +97,7 @@ const ViewSettings = () => {
     name: node.data.props.name,
     view: node.data.props.view,
     relation: node.data.props.relation,
-    order_fields: node.data.props.order_field,
+    order_field: node.data.props.order_field,
     state: node.data.props.state,
     extra_state_fml: node.data.props.extra_state_fml,
     configuration: node.data.props.configuration, // fixed states
@@ -109,6 +109,7 @@ const ViewSettings = () => {
     name,
     view,
     relation,
+    order_field,
     state,
     node_id,
     configuration,
@@ -247,6 +248,9 @@ const ViewSettings = () => {
 
   const theview = options.views.find((v) => v.name === viewname);
 
+  const targetTable = options.tables.find(
+    (t) => t.name === safeRelation?.targetTblName
+  );
   return (
     <div>
       {relationsData ? (
@@ -312,23 +316,22 @@ const ViewSettings = () => {
       )}
       {options.mode === "edit" &&
       safeRelation?.type === "ChildList" &&
-      theview?.viewtemplate === "Edit" ? (
+      theview?.viewtemplate === "Edit" &&
+      targetTable ? (
         <div>
           <label>Order field</label>
           <select
-            value={state}
+            value={order_field}
             className="form-control form-select"
             onChange={setAProp("order_field")}
             onBlur={setAProp("order_field")}
           >
             <option value=""></option>
-            {options.fields
-              .filter((f) => f.type === "Integer" && !f.calculated)
-              .map((f, ix) => (
-                <option key={ix} value={f.name}>
-                  {f.label}
-                </option>
-              ))}
+            {targetTable.int_fields.map((f, ix) => (
+              <option key={ix} value={f}>
+                {f}
+              </option>
+            ))}
           </select>
         </div>
       ) : null}
