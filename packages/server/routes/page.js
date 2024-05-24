@@ -135,7 +135,13 @@ router.get(
   "/:pagename",
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
-    getState().log(3, `Route /page/${pagename} user=${req.user?.id}`);
+    const state = getState();
+    state.log(
+      3,
+      `Route /page/${pagename} user=${req.user?.id}${
+        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+      }`
+    );
     const tic = new Date();
     const { page, pageGroup } = findPageOrGroup(pagename);
     if (page) await runPage(page, req, res, tic);
@@ -144,7 +150,7 @@ router.get(
       if ((page || pageGroup) && !req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
       } else {
-        getState().log(2, `Page ${pagename} not found or not authorized`);
+        state.log(2, `Page ${pagename} not found or not authorized`);
         res
           .status(404)
           .sendWrap(
