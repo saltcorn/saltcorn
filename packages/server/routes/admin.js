@@ -1649,11 +1649,26 @@ const checkXcodebuild = () => {
   return new Promise((resolve) => {
     exec("xcodebuild -version", (error, stdout, stderr) => {
       if (error) {
-        resolve(false);
+        resolve({ installed: false });
       } else {
-        resolve(true);
+        const tokens = stdout.split(" ");
+        resolve({
+          installed: true,
+          version: tokens.length > 1 ? tokens[1] : undefined,
+        });
       }
     });
+  });
+};
+
+const versionMarker = (version) => {
+  const tokens = version.split(".");
+  const majVers = parseInt(tokens[0]);
+  return i({
+    id: "versionMarkerId",
+    class: `fas ${
+      majVers >= 11 ? "fa-check text-success" : "fa-times text-danger"
+    }`,
   });
 };
 
@@ -1679,7 +1694,9 @@ router.get(
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
     const dockerAvailable = await imageAvailable();
-    const xcodebuildAvailable = await checkXcodebuild();
+    const xcodeCheckRes = await checkXcodebuild();
+    const xcodebuildAvailable = xcodeCheckRes.installed;
+    const xcodebuildVersion = xcodeCheckRes.version;
     send_admin_page({
       res,
       req,
@@ -2545,7 +2562,7 @@ router.get(
                     ),
 
                     div(
-                      { class: "row pb-3 mb-3 pt-2" },
+                      { class: "row pb-3 pt-2" },
                       div(
                         label(
                           { class: "form-label fw-bold" },
@@ -2595,6 +2612,25 @@ router.get(
                           },
                           span({ class: "ps-3" }, req.__("refresh")),
                           i({ class: "ps-2 fas fa-undo" })
+                        )
+                      )
+                    ),
+                    div(
+                      {
+                        class: `row mb-3 pb-3 ${
+                          xcodebuildAvailable ? "" : "d-none"
+                        }`,
+                        id: "xcodebuildVersionBoxId",
+                      },
+                      div(
+                        { class: "col-sm-4" },
+                        span(
+                          req.__("Version") +
+                            span(
+                              { id: "xcodebuildVersionId", class: "pe-2" },
+                              `: ${xcodebuildVersion || "unknown"}`
+                            ),
+                          versionMarker(xcodebuildVersion || "0")
                         )
                       )
                     ),
@@ -2968,8 +3004,7 @@ router.get(
   "/mobile-app/check-xcodebuild",
   isAdmin,
   error_catcher(async (req, res) => {
-    const installed = await checkXcodebuild();
-    res.json({ installed });
+    res.json(await checkXcodebuild());
   })
 );
 

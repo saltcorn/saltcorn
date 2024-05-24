@@ -828,6 +828,22 @@ function pull_cordova_builder() {
 }
 
 function check_xcodebuild() {
+  const handleVersion = (version) => {
+    const tokens = version.split(".");
+    const majVers = parseInt(tokens[0]);
+    const marker = $("#versionMarkerId");
+    if (majVers >= 11) {
+      marker.removeClass("text-danger");
+      marker.addClass("text-success");
+      marker.removeClass("fa-times");
+      marker.addClass("fa-check");
+    } else {
+      marker.removeClass("text-success");
+      marker.addClass("text-danger");
+      marker.removeClass("fa-check");
+      marker.addClass("fa-times");
+    }
+  };
   $.ajax("/admin/mobile-app/check-xcodebuild", {
     type: "GET",
     success: function (res) {
@@ -838,6 +854,9 @@ function check_xcodebuild() {
           </span>
           `
         );
+        $("#xcodebuildVersionBoxId").removeClass("d-none");
+        $("#xcodebuildVersionId").html(` ${res.version}`);
+        handleVersion(res.version || "0");
       } else {
         $("#xcodebuildStatusId").html(
           `<span>
@@ -845,6 +864,7 @@ function check_xcodebuild() {
           </span>
           `
         );
+        $("#xcodebuildVersionBoxId").addClass("d-none");
       }
     },
   });
