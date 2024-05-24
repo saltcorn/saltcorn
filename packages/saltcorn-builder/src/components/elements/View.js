@@ -97,6 +97,7 @@ const ViewSettings = () => {
     name: node.data.props.name,
     view: node.data.props.view,
     relation: node.data.props.relation,
+    order_fields: node.data.props.order_field,
     state: node.data.props.state,
     extra_state_fml: node.data.props.extra_state_fml,
     configuration: node.data.props.configuration, // fixed states
@@ -243,6 +244,9 @@ const ViewSettings = () => {
     value: name,
   }));
   const selectedView = viewOptions.find((v) => v.value === viewname);
+
+  const theview = options.views.find((v) => v.name === viewname);
+
   return (
     <div>
       {relationsData ? (
@@ -306,6 +310,28 @@ const ViewSettings = () => {
           )}
         </div>
       )}
+      {options.mode === "edit" &&
+      safeRelation?.type === "ChildList" &&
+      theview?.viewtemplate === "Edit" ? (
+        <div>
+          <label>Order field</label>
+          <select
+            value={state}
+            className="form-control form-select"
+            onChange={setAProp("order_field")}
+            onBlur={setAProp("order_field")}
+          >
+            <option value=""></option>
+            {options.fields
+              .filter((f) => f.type === "Integer" && !f.calculated)
+              .map((f, ix) => (
+                <option key={ix} value={f.name}>
+                  {f.label}
+                </option>
+              ))}
+          </select>
+        </div>
+      ) : null}
       {options.mode !== "edit" && (
         <Fragment>
           <div>
