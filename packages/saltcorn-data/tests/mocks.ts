@@ -111,6 +111,43 @@ const plugin_with_routes = () => ({
   },
   types: [
     {
+      name: "JSON",
+      sql_name: "jsonb",
+      fieldviews: {
+        show: {
+          isEdit: false,
+          run: (v: any) =>
+            tags.pre({ class: "wsprewrap" }, tags.code(JSON.stringify(v))),
+        },
+        edit: {
+          isEdit: true,
+          run: (nm: string, v: any, attrs: any, cls: string) =>
+            tags.textarea(
+              {
+                class: ["form-control", cls],
+                name: encodeURIComponent(nm),
+                id: `input${encodeURIComponent(nm)}`,
+                rows: 10,
+              },
+              typeof v === "undefined" ? "" : tags.text(JSON.stringify(v)) || ""
+            ),
+        },
+      },
+      attributes: [],
+      read: (v: any) => {
+        switch (typeof v) {
+          case "string":
+            try {
+              return JSON.parse(v);
+            } catch {
+              return v;
+            }
+          default:
+            return v;
+        }
+      },
+    },
+    {
       name: "Varchar",
       sql_name: ({ dimensions }: any) => {
         if (typeof dimensions !== "number") throw new Error("dim must be num");

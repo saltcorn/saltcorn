@@ -215,7 +215,7 @@ describe("history compression", () => {
       await tc.updateRow({ number: 102 }, 1);
       await tc.updateRow({ number: 103 }, 1);
       await tc.updateRow({ number: 202 }, 2);
-      await utils.sleep(500);
+      await utils.sleep(600);
       await tc.updateRow({ number: 104 }, 1);
       await tc.updateRow({ number: 205 }, 2);
       const h1 = await tc.get_history(1);

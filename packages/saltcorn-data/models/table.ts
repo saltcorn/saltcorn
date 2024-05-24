@@ -1050,7 +1050,10 @@ class Table implements AbstractTable {
         if (!this.is_owner(forUser, row)) return null;
       } else return null; //no ownership
     }
-    return apply_calculated_fields([this.readFromDB(row)], this.fields)[0];
+    return apply_calculated_fields(
+      [this.readFromDB(this.parse_json_fields(row))],
+      this.fields
+    )[0];
   }
 
   /**
@@ -1114,7 +1117,7 @@ class Table implements AbstractTable {
     }
 
     return apply_calculated_fields(
-      rows.map((r: Row) => this.readFromDB(r)),
+      rows.map((r: Row) => this.readFromDB(this.parse_json_fields(r))),
       this.fields,
       !!selopts.ignore_errors
     );
@@ -1246,7 +1249,7 @@ class Table implements AbstractTable {
     const pk_name = this.pk_name;
     const role = user?.role_id;
     const state = require("../db/state").getState();
-
+    let stringified = false;
     if (typeof id === "undefined")
       throw new Error(
         this.name + " updateRow called without primary key value"
@@ -1387,6 +1390,8 @@ class Table implements AbstractTable {
             v
           )}, id=${id}`
         );
+        this.stringify_json_fields(v);
+        stringified = true;
         await db.update(this.name, v, id, { pk_name });
         updated = await this.getJoinedRow({
           where: { [pk_name]: id },
@@ -1431,6 +1436,7 @@ class Table implements AbstractTable {
         });
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
+    if (!stringified) this.stringify_json_fields(v);
     await db.update(this.name, v, id, { pk_name });
 
     if (this.has_sync_info) {
@@ -1464,6 +1470,8 @@ class Table implements AbstractTable {
     calcFields.forEach((f) => {
       // delete v1[f.name];
     });
+
+    this.stringify_json_fields(v1);
 
     if (retry < 3) {
       try {
@@ -1738,6 +1746,7 @@ class Table implements AbstractTable {
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
       );
+      this.stringify_json_fields(v_in);
       id = await db.insert(this.name, v_in, { pk_name });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
@@ -1770,6 +1779,7 @@ class Table implements AbstractTable {
       await db.update(this.name, v, id, { pk_name });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields, this);
+      this.stringify_json_fields(v);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, { pk_name });
     }
@@ -2691,6 +2701,28 @@ class Table implements AbstractTable {
     };
   }
 
+  stringify_json_fields(v1: Row) {
+    if (db.isSQLite) return;
+    this.fields
+      .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
+      .forEach((f) => {
+        if (typeof v1[f.name] !== "undefined")
+          v1[f.name] = JSON.stringify(v1[f.name]);
+      });
+  }
+  parse_json_fields(v1: Row): Row {
+    if (db.isSQLite)
+      this.fields
+        .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
+        .forEach((f) => {
+          if (typeof v1[f.name] === "string")
+            try {
+              v1[f.name] = JSON.parse(v1[f.name]);
+            } catch (e) {}
+        });
+    return v1;
+  }
+
   /**
    * Import JSON table description
    * @param filePath
@@ -2706,7 +2738,9 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
-
+    const jsonFields = fields.filter(
+      (f) => typeof f.type !== "string" && f?.type?.name === "JSON"
+    );
     let i = 1;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
@@ -2720,8 +2754,13 @@ class Table implements AbstractTable {
             delete rec[f.name];
           }
         });
+
       try {
         readState(rec, fields);
+        jsonFields.forEach((f) => {
+          if (!db.isSQLite && typeof rec[f.name] !== "undefined")
+            rec[f.name] = JSON.stringify(rec[f.name]);
+        });
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
           rec.role_id = rec.role_id * 10;
         await db.insert(this.name, rec, { noid: true, client, pk_name });
@@ -3314,7 +3353,7 @@ class Table implements AbstractTable {
     if (res.length === 0) return res; // check
 
     let calcRow = apply_calculated_fields(
-      res.rows,
+      res.rows.map((row: Row) => this.parse_json_fields(row)),
       fields,
       !!opts?.ignore_errors
     );

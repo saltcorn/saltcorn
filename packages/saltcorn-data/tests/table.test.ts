@@ -1925,6 +1925,98 @@ describe("Table with UUID pks", () => {
     });
   }
 });
+describe("json restore", () => {
+  it("should import json with json", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    const json = [
+      { name: "Alex", id: 1, stuff: { bar: "foo" } },
+      { name: "Alex1", id: 2, stuff: 1 },
+      { name: "Alex2", id: 3, stuff: "hello" },
+      { name: "Alex3", id: 4, stuff: [17] },
+      { name: "Alex4", id: 5, stuff: null },
+    ];
+    const fnm = "/tmp/test1.json";
+    await writeFile(fnm, JSON.stringify(json));
+
+    await getState().refresh_tables();
+
+    const table = await Table.create("JsonJson");
+    await Field.create({
+      table: table,
+      name: "name",
+      type: "String",
+    });
+    await Field.create({
+      table: table,
+      name: "stuff",
+      type: "JSON",
+    });
+
+    //db.set_sql_logging();
+    assertIsSet(table);
+
+    const impres = await table.import_json_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 5 rows into table JsonJson",
+    });
+    const rows = await table.getRows();
+    expect(rows.length).toBe(5);
+    const testValue = async (id: number, value: any) => {
+      const row4 = await table.getRow({ id });
+      assertIsSet(row4);
+      expect(row4.stuff).toStrictEqual(value);
+    };
+    await testValue(3, "hello");
+    await testValue(4, [17]);
+    await testValue(5, null);
+
+    const testInsert = async (name: string, val: any) => {
+      await table.insertRow({ name, stuff: val });
+      const row5 = await table.getRow({ name });
+      assertIsSet(row5);
+      expect(row5.stuff).toStrictEqual(val);
+    };
+    await testInsert("Baz1", { a: 1 });
+    await testInsert("Baz2", 19);
+    await testInsert("Bar", [15]);
+    await testInsert("Baza", "baz");
+    await testInsert("Bazn", null);
+    const testUpdate = async (name: string, val: any) => {
+      const row6 = await table.getRow({ name });
+      assertIsSet(row6);
+      await table.updateRow({ stuff: val }, row6.id);
+      const row5 = await table.getRow({ name });
+      assertIsSet(row5);
+      expect(row5.stuff).toStrictEqual(val);
+    };
+    await testUpdate("Baz1", { a: 2 });
+    await testUpdate("Baz2", 91);
+    await testUpdate("Bar", [51]);
+    await testUpdate("Bar", null);
+    await testUpdate("Baza", "bazc");
+
+    //test empty update
+    const row7 = await table.getRow({ name: "Baz2" });
+    assertIsSet(row7);
+    await table.updateRow({}, row7.id);
+    const row5 = await table.getRow({ name: "Baz2" });
+    assertIsSet(row5);
+    expect(row5.stuff).toStrictEqual(91);
+
+    table.versioned = true;
+    await table.update(table);
+    await testInsert("Baz1h", { a: 1 });
+    await testInsert("Baz2h", 19);
+    await testInsert("Barh", [15]);
+    await testInsert("Bazah", "baz");
+    await testUpdate("Baz1h", { a: 2 });
+    await testUpdate("Baz2h", 91);
+    await testUpdate("Barh", [51]);
+    await testUpdate("Bazah", "bazc");
+  });
+});
+
 describe("external tables", () => {
   it("should register plugin", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes());
