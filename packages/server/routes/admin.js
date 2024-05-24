@@ -2865,6 +2865,7 @@ admin_config_route({
         "development_mode",
         "log_sql",
         "log_client_errors",
+        "log_ip_address",
         "log_level",
         ...(isRoot || tenants_set_npm_modules ? ["npm_available_js_code"] : []),
       ],
