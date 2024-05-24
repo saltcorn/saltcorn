@@ -782,6 +782,7 @@ const transformForm = async ({
             view: segment.view,
             relation: view_select.field_name,
             relation_path: segment.relation,
+            order_field: segment.order_field,
           },
         });
         if (row?.id) {
@@ -1162,6 +1163,7 @@ const runPost = async (
           field.metadata.view,
           field.metadata.relation_path
         );
+        const order_field = field.metadata.order_field;
         const childView = View.findOne({ name: view_select.viewname });
         if (!childView)
           throw new InvalidConfiguration(
@@ -1189,7 +1191,9 @@ const runPost = async (
         );
         const childFields = new Set(childTable.fields.map((f) => f.name));
         let repeatIx = 0;
-        for (const childRow of form.values[field.name]) {
+        for (const [childRow, row_ix] of form.values[field.name].map(
+          (r, ix) => [r, ix]
+        )) {
           // set fixed here
           childRow[field.metadata?.relation] = id;
           for (const [k, v] of Object.entries(
@@ -1202,7 +1206,8 @@ const runPost = async (
             )
               childRow[k] = v;
           }
-
+          if (order_field && !childRow[order_field])
+            childRow[order_field] = row_ix;
           for (const file_field of field.fields.filter(
             (f) => f.type === "File"
           )) {
