@@ -171,7 +171,8 @@ const random_field = async (
     }
   }
   // unique?
-  if (Math.random() < 0.25 && type !== "Bool") f.is_unique = true;
+  if (Math.random() < 0.25 && type !== "Bool" && type !== "JSON")
+    f.is_unique = true;
   // required?
   if (generateBool()) f.required = true;
   return f;
