@@ -1,0 +1,22 @@
+To build an Android app for the Play Store, you need to create an Android Application Bundle (.aab file) and sign the app with a certificate. A keystore file, a keystore alias, and a keystore password are needed for this. 
+
+*Note: The builder creates .aab files for the release Build type and .apk files for debug.*
+
+- **Keystore file:** A self-signed certificate that includes the private key used to sign your app. When you upload the app, you must sign it. However, before you publish it, you can use another key controlled by the Google Play App Signing feature.
+- **Keystore alias:** A unique name to identify the key within the keystore file.
+- **Keystore password:** The password to access the keystore file.
+
+*Note: You need a [Play Console developer account](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en&ref_topic=3450769&sjid=11090022771305927482-EU) to publish your app on the Play Store.*
+
+### Create a Keysore file
+On any Unix-based system, you can use the `keytool` command to create the keystore file. For example:
+```sh
+keytool -genkey -v -keystore my-app-key.jks 
+  -keyalg RSA -keysize 2048 -validity 3650 
+  -alias my-key-alias
+  -storepass mypassword
+```
+genereates a keystore file named **keystore my-app-key.jks** with the alias **my-key-alias** and with **mypassword** as password.
+
+You will be prompted for additional information. Once this is done, upload **my-app-key.jks** into the keystore_files directory of your Saltcorn installation, and it shows up.
+

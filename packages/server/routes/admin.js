@@ -2404,269 +2404,275 @@ router.get(
                     )
                   ),
                   div(
-                    { class: "form-group border p-3 rounded" },
-                    p(
-                      { class: "h4" },
-                      "Android configuration",
-                      a(
-                        {
-                          href: "javascript:ajax_modal('/admin/help/Android Configuration?')",
-                        },
-                        i({ class: "fas fa-question-circle ps-1" })
-                      )
-                    ),
+                    { class: "mt-3 mb-3" },
+                    p({ class: "h3 ps-3" }, "Android configuration"),
                     div(
-                      { class: "row pb-3 pt-2" },
+                      { class: "form-group border border-2 p-3 rounded" },
+
                       div(
-                        label(
-                          { class: "form-label fw-bold" },
-                          req.__("Cordova builder") +
+                        { class: "row pb-3 pt-2" },
+                        div(
+                          label(
+                            { class: "form-label fw-bold" },
+                            req.__("Cordova builder") +
+                              a(
+                                {
+                                  href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                                },
+                                i({ class: "fas fa-question-circle ps-1" })
+                              )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-4" },
+                          div(
+                            {
+                              id: "dockerBuilderStatusId",
+                              class: "",
+                            },
+                            dockerAvailable
+                              ? span(
+                                  req.__("installed"),
+                                  i({ class: "ps-2 fas fa-check text-success" })
+                                )
+                              : span(
+                                  req.__("not available"),
+                                  i({ class: "ps-2 fas fa-times text-danger" })
+                                )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-4" },
+                          button(
+                            {
+                              id: "pullCordovaBtnId",
+                              type: "button",
+                              onClick: `pull_cordova_builder(this);`,
+                              class: "btn btn-warning",
+                            },
+                            req.__("pull")
+                          ),
+                          span(
+                            {
+                              role: "button",
+                              onClick: "check_cordova_builder()",
+                            },
+                            span({ class: "ps-3" }, req.__("refresh")),
+                            i({ class: "ps-2 fas fa-undo" })
+                          )
+                        )
+                      ),
+                      // keystore file
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "keystoreInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Keystore File"),
                             a(
                               {
-                                href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                                href: "javascript:ajax_modal('/admin/help/Android App Signing?')",
                               },
                               i({ class: "fas fa-question-circle ps-1" })
                             )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "keystoreFile",
+                              id: "keystoreInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...keystoreFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.keystoreFile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
                         )
                       ),
+                      // keystore alias
                       div(
-                        { class: "col-sm-4" },
+                        { class: "row pb-2" },
                         div(
-                          {
-                            id: "dockerBuilderStatusId",
-                            class: "",
-                          },
-                          dockerAvailable
-                            ? span(
-                                req.__("installed"),
-                                i({ class: "ps-2 fas fa-check text-success" })
-                              )
-                            : span(
-                                req.__("not available"),
-                                i({ class: "ps-2 fas fa-times text-danger" })
-                              )
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "keystoreAliasInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Keystore Alias")
+                          ),
+                          input({
+                            type: "text",
+                            class: "form-control",
+                            name: "keystoreAlias",
+                            id: "keystoreAliasInputId",
+                            value: builderSettings.keystoreAlias || "",
+                            placeholder: "",
+                          })
                         )
                       ),
+                      // keystore password
                       div(
-                        { class: "col-sm-4" },
-                        button(
-                          {
-                            id: "pullCordovaBtnId",
-                            type: "button",
-                            onClick: `pull_cordova_builder(this);`,
-                            class: "btn btn-warning",
-                          },
-                          req.__("pull")
-                        ),
-                        span(
-                          {
-                            role: "button",
-                            onClick: "check_cordova_builder()",
-                          },
-                          span({ class: "ps-3" }, req.__("refresh")),
-                          i({ class: "ps-2 fas fa-undo" })
+                        { class: "row pb-2" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "keystorePasswordInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Keystore Password")
+                          ),
+                          input({
+                            type: "password",
+                            class: "form-control",
+                            name: "keystorePassword",
+                            id: "keystorePasswordInputId",
+                            value: "",
+                            placeholder: "",
+                          })
                         )
-                      )
-                    ),
-                    // keystore file
-                    div(
-                      { class: "row pb-3" },
-                      div(
-                        { class: "col-sm-8" },
-                        label(
-                          {
-                            for: "keystoreInputId",
-                            class: "form-label fw-bold",
-                          },
-                          req.__("Keystore File")
-                        ),
-                        select(
-                          {
-                            class: "form-select",
-                            name: "keystoreFile",
-                            id: "keystoreInputId",
-                          },
-                          [
-                            option({ value: "" }, ""),
-                            ...keystoreFiles.map((file) =>
-                              option(
-                                {
-                                  value: file.location,
-                                  selected:
-                                    builderSettings.keystoreFile ===
-                                    file.location,
-                                },
-                                file.filename
-                              )
-                            ),
-                          ].join("")
-                        )
-                      )
-                    ),
-                    // keystore alias
-                    div(
-                      { class: "row pb-2" },
-                      div(
-                        { class: "col-sm-8" },
-                        label(
-                          {
-                            for: "keystoreAliasInputId",
-                            class: "form-label fw-bold",
-                          },
-                          req.__("Keystore Alias")
-                        ),
-                        input({
-                          type: "text",
-                          class: "form-control",
-                          name: "keystoreAlias",
-                          id: "keystoreAliasInputId",
-                          value: builderSettings.keystoreAlias || "",
-                          placeholder: "",
-                        })
-                      )
-                    ),
-                    // keystore password
-                    div(
-                      { class: "row pb-2" },
-                      div(
-                        { class: "col-sm-8" },
-                        label(
-                          {
-                            for: "keystorePasswordInputId",
-                            class: "form-label fw-bold",
-                          },
-                          req.__("Keystore Password")
-                        ),
-                        input({
-                          type: "password",
-                          class: "form-control",
-                          name: "keystorePassword",
-                          id: "keystorePasswordInputId",
-                          value: "",
-                          placeholder: "",
-                        })
                       )
                     )
                   ),
                   div(
-                    { class: "form-group border p-3 rounded" },
-                    p(
-                      { class: "h4" },
-                      "iOS Configuration",
-                      a(
-                        {
-                          href: "javascript:ajax_modal('/admin/help/iOS Configuration?')",
-                        },
-                        i({ class: "fas fa-question-circle ps-1" })
-                      )
-                    ),
-
+                    { class: "mt-3" },
+                    p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
                     div(
-                      { class: "row pb-3 pt-2" },
+                      { class: "form-group border border-2 p-3 rounded" },
                       div(
-                        label(
-                          { class: "form-label fw-bold" },
-                          req.__("xcodebuild") +
+                        { class: "mb-3" },
+                        div(
+                          { class: "row pb-3 pt-2" },
+                          div(
+                            label(
+                              { class: "form-label fw-bold" },
+                              req.__("xcodebuild") +
+                                a(
+                                  {
+                                    href: "javascript:ajax_modal('/admin/help/xcodebuild?')",
+                                  },
+                                  i({ class: "fas fa-question-circle ps-1" })
+                                )
+                            )
+                          ),
+                          div(
+                            { class: "col-sm-4" },
+                            div(
+                              {
+                                id: "xcodebuildStatusId",
+                                class: "",
+                              },
+                              xcodebuildAvailable
+                                ? span(
+                                    req.__("installed"),
+                                    i({
+                                      class: "ps-2 fas fa-check text-success",
+                                    })
+                                  )
+                                : span(
+                                    req.__("not available"),
+                                    i({
+                                      class: "ps-2 fas fa-times text-danger",
+                                    })
+                                  )
+                            )
+                          ),
+                          div(
+                            { class: "col-sm-4" },
+                            // not sure if we should provide this
+                            // button(
+                            //   {
+                            //     id: "installXCodeBtnId",
+                            //     type: "button",
+                            //     onClick: `install_xcode(this);`,
+                            //     class: "btn btn-warning",
+                            //   },
+                            //   req.__("install")
+                            // ),
+                            span(
+                              {
+                                role: "button",
+                                onClick: "check_xcodebuild()",
+                              },
+                              span({ class: "ps-3" }, req.__("refresh")),
+                              i({ class: "ps-2 fas fa-undo" })
+                            )
+                          )
+                        ),
+                        div(
+                          {
+                            class: `row mb-3 pb-3 ${
+                              xcodebuildAvailable ? "" : "d-none"
+                            }`,
+                            id: "xcodebuildVersionBoxId",
+                          },
+                          div(
+                            { class: "col-sm-4" },
+                            span(
+                              req.__("Version") +
+                                span(
+                                  { id: "xcodebuildVersionId", class: "pe-2" },
+                                  `: ${xcodebuildVersion || "unknown"}`
+                                ),
+                              versionMarker(xcodebuildVersion || "0")
+                            )
+                          )
+                        )
+                      ),
+                      // provisioning profile file
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "provisioningProfileInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Provisioning Profile"),
                             a(
                               {
-                                href: "javascript:ajax_modal('/admin/help/xcodebuild?')",
+                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
                               },
                               i({ class: "fas fa-question-circle ps-1" })
                             )
-                        )
-                      ),
-                      div(
-                        { class: "col-sm-4" },
-                        div(
-                          {
-                            id: "xcodebuildStatusId",
-                            class: "",
-                          },
-                          xcodebuildAvailable
-                            ? span(
-                                req.__("installed"),
-                                i({ class: "ps-2 fas fa-check text-success" })
-                              )
-                            : span(
-                                req.__("not available"),
-                                i({ class: "ps-2 fas fa-times text-danger" })
-                              )
-                        )
-                      ),
-                      div(
-                        { class: "col-sm-4" },
-                        // not sure if we should provide this
-                        // button(
-                        //   {
-                        //     id: "installXCodeBtnId",
-                        //     type: "button",
-                        //     onClick: `install_xcode(this);`,
-                        //     class: "btn btn-warning",
-                        //   },
-                        //   req.__("install")
-                        // ),
-                        span(
-                          {
-                            role: "button",
-                            onClick: "check_xcodebuild()",
-                          },
-                          span({ class: "ps-3" }, req.__("refresh")),
-                          i({ class: "ps-2 fas fa-undo" })
-                        )
-                      )
-                    ),
-                    div(
-                      {
-                        class: `row mb-3 pb-3 ${
-                          xcodebuildAvailable ? "" : "d-none"
-                        }`,
-                        id: "xcodebuildVersionBoxId",
-                      },
-                      div(
-                        { class: "col-sm-4" },
-                        span(
-                          req.__("Version") +
-                            span(
-                              { id: "xcodebuildVersionId", class: "pe-2" },
-                              `: ${xcodebuildVersion || "unknown"}`
-                            ),
-                          versionMarker(xcodebuildVersion || "0")
-                        )
-                      )
-                    ),
-
-                    // provisioning profile file
-                    div(
-                      { class: "row pb-3" },
-                      div(
-                        { class: "col-sm-8" },
-                        label(
-                          {
-                            for: "provisioningProfileInputId",
-                            class: "form-label fw-bold",
-                          },
-                          req.__("Provisioning Profile")
-                        ),
-                        select(
-                          {
-                            class: "form-select",
-                            name: "provisioningProfile",
-                            id: "provisioningProfileInputId",
-                          },
-                          [
-                            option({ value: "" }, ""),
-                            ...provisioningFiles.map((file) =>
-                              option(
-                                {
-                                  value: file.location,
-                                  selected:
-                                    builderSettings.provisioningProfile ===
-                                    file.location,
-                                },
-                                file.filename
-                              )
-                            ),
-                          ].join("")
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "provisioningProfile",
+                              id: "provisioningProfileInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...provisioningFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.provisioningProfile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
                         )
                       )
                     )
