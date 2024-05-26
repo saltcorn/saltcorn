@@ -12,6 +12,8 @@
     </config-file>
     <preference name="Scheme" value="http"/>
     <preference name="MixedContentMode" value="2"/>
+    <preference name="minSdkVersion" value="33"/>
+    <preference name="targetSdkVersion" value="33"/>
   </platform>
   <platform name="ios">
     <preference name="deployment-target" value="12.0"/>

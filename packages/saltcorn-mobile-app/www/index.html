@@ -141,12 +141,6 @@
         }
       };
 
-      const setVersionTtag = () => {
-        const config = saltcorn.data.state.getState().mobileConfig;
-        let iframe = document.getElementById("content-iframe");
-        iframe.contentWindow._sc_version_tag = config.version_tag;
-      };
-
       const initJwt = async () => {
         if (!(await saltcorn.data.db.tableExists("jwt_table"))) {
           await createJwtTable();
@@ -345,7 +339,6 @@
         );
         await state.setConfig("base_url", config.server_path);
         await initRoutes();
-        setVersionTtag();
         const entryPoint = config.entry_point;
         await initI18Next();
         await readSiteLogo(state);

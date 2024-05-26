@@ -16,7 +16,7 @@ const {
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
-const { spawn } = require("child_process");
+const { spawn, exec } = require("child_process");
 const User = require("@saltcorn/data/models/user");
 const path = require("path");
 const { X509Certificate } = require("crypto");
@@ -1645,6 +1645,33 @@ const imageAvailable = async () => {
   }
 };
 
+const checkXcodebuild = () => {
+  return new Promise((resolve) => {
+    exec("xcodebuild -version", (error, stdout, stderr) => {
+      if (error) {
+        resolve({ installed: false });
+      } else {
+        const tokens = stdout.split(" ");
+        resolve({
+          installed: true,
+          version: tokens.length > 1 ? tokens[1] : undefined,
+        });
+      }
+    });
+  });
+};
+
+const versionMarker = (version) => {
+  const tokens = version.split(".");
+  const majVers = parseInt(tokens[0]);
+  return i({
+    id: "versionMarkerId",
+    class: `fas ${
+      majVers >= 11 ? "fa-check text-success" : "fa-times text-danger"
+    }`,
+  });
+};
+
 /**
  * Build mobile app
  */
@@ -1658,6 +1685,8 @@ router.get(
     const images = (await File.find({ mime_super: "image" })).filter((image) =>
       image.filename?.endsWith(".png")
     );
+    const keystoreFiles = await File.find({ folder: "keystore_files" });
+    const provisioningFiles = await File.find({ folder: "provisioning_files" });
     const withSyncInfo = await Table.find({ has_sync_info: true });
     const plugins = (await Plugin.find()).filter(
       (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
@@ -1665,6 +1694,9 @@ router.get(
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
     const dockerAvailable = await imageAvailable();
+    const xcodeCheckRes = await checkXcodebuild();
+    const xcodebuildAvailable = xcodeCheckRes.installed;
+    const xcodebuildVersion = xcodeCheckRes.version;
     send_admin_page({
       res,
       req,
@@ -1930,6 +1962,28 @@ router.get(
                         id: "appNameInputId",
                         placeholder: "SaltcornMobileApp",
                         value: builderSettings.appName || "",
+                      })
+                    )
+                  ),
+                  // app id
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-8" },
+                      label(
+                        {
+                          for: "appIdInputId",
+                          class: "form-label fw-bold",
+                        },
+                        req.__("App ID")
+                      ),
+                      input({
+                        type: "text",
+                        class: "form-control",
+                        name: "appId",
+                        id: "appIdInputId",
+                        placeholder: "com.saltcorn.app",
+                        value: builderSettings.appId || "",
                       })
                     )
                   ),
@@ -2225,19 +2279,20 @@ router.get(
                               class: "form-control form-select",
                               multiple: true,
                             },
-                            plugins.map((plugin) =>
-                              option({
-                                id: `${plugin.name}_excluded_opt`,
-                                value: plugin.name,
-                                label: plugin.name,
-                                hidden:
+                            plugins
+                              .filter(
+                                (plugin) =>
                                   builderSettings.excludedPlugins?.indexOf(
                                     plugin.name
                                   ) >= 0
-                                    ? false
-                                    : true,
-                              })
-                            )
+                              )
+                              .map((plugin) =>
+                                option({
+                                  id: `${plugin.name}_excluded_opt`,
+                                  value: plugin.name,
+                                  label: plugin.name,
+                                })
+                              )
                           )
                         ),
                         div(
@@ -2275,26 +2330,29 @@ router.get(
                               class: "form-control form-select",
                               multiple: true,
                             },
-                            plugins.map((plugin) =>
-                              option({
-                                id: `${plugin.name}_included_opt`,
-                                value: plugin.name,
-                                label: plugin.name,
-                                hidden:
-                                  builderSettings.excludedPlugins?.indexOf(
+                            plugins
+                              .filter(
+                                (plugin) =>
+                                  !builderSettings.excludedPlugins ||
+                                  builderSettings.excludedPlugins.indexOf(
                                     plugin.name
-                                  ) >= 0
-                                    ? true
-                                    : false,
-                              })
-                            )
+                                  ) < 0
+                              )
+                              .map((plugin) =>
+                                option({
+                                  id: `${plugin.name}_included_opt`,
+                                  value: plugin.name,
+                                  label: plugin.name,
+                                })
+                              )
                           )
                         )
                       )
                     )
                   ),
+                  // build type
                   div(
-                    { class: "row pb-3 pt-3" },
+                    { class: "row pb-3 pt-2" },
                     div(
                       { class: "col-sm-8" },
                       label(
@@ -2302,68 +2360,320 @@ router.get(
                           for: "splashPageInputId",
                           class: "form-label fw-bold",
                         },
-                        req.__("Apple Team ID")
+                        req.__("Build type")
                       ),
-                      input({
-                        type: "text",
-                        class: "form-control",
-                        name: "appleTeamId",
-                        id: "appleTeamIdInputId",
-                        value:
-                          builderSettings.appleTeamId ||
-                          getState().getConfig("apple_team_id") ||
-                          "",
-                        placeholder: req.__("Please enter your Apple Team ID"),
-                      })
+
+                      div(
+                        { class: "form-check" },
+                        input({
+                          type: "radio",
+                          id: "debugBuildTypeId",
+                          class: "form-check-input me-2",
+                          name: "buildType",
+                          value: "debug",
+                          checked: builderSettings.buildType === "debug",
+                        }),
+                        label(
+                          {
+                            for: "debugBuildTypeId",
+                            class: "form-label",
+                          },
+                          req.__("debug")
+                        )
+                      ),
+                      div(
+                        { class: "form-check" },
+                        input({
+                          type: "radio",
+                          id: "releaseBuildTypeId",
+                          class: "form-check-input me-2",
+                          name: "buildType",
+                          value: "release",
+                          checked:
+                            builderSettings.buildType === "release" ||
+                            !builderSettings.buildType,
+                        }),
+                        label(
+                          {
+                            for: "releaseBuildTypeId",
+                            class: "form-label",
+                          },
+                          req.__("release")
+                        )
+                      )
                     )
                   ),
                   div(
-                    { class: "row pb-3 pt-2" },
+                    { class: "mt-3 mb-3" },
+                    p({ class: "h3 ps-3" }, "Android configuration"),
                     div(
-                      label(
-                        { class: "form-label fw-bold" },
-                        req.__("Cordova builder") +
-                          a(
-                            {
-                              href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
-                            },
-                            i({ class: "fas fa-question-circle ps-1" })
-                          )
-                      )
-                    ),
-                    div(
-                      { class: "col-sm-4" },
+                      { class: "form-group border border-2 p-3 rounded" },
+
                       div(
-                        {
-                          id: "dockerBuilderStatusId",
-                          class: "",
-                        },
-                        dockerAvailable
-                          ? span(
-                              req.__("installed"),
-                              i({ class: "ps-2 fas fa-check text-success" })
-                            )
-                          : span(
-                              req.__("not available"),
-                              i({ class: "ps-2 fas fa-times text-danger" })
-                            )
-                      )
-                    ),
-                    div(
-                      { class: "col-sm-4" },
-                      button(
-                        {
-                          id: "pullCordovaBtnId",
-                          type: "button",
-                          onClick: `pull_cordova_builder(this);`,
-                          class: "btn btn-warning",
-                        },
-                        req.__("pull")
+                        { class: "row pb-3 pt-2" },
+                        div(
+                          label(
+                            { class: "form-label fw-bold" },
+                            req.__("Cordova builder") +
+                              a(
+                                {
+                                  href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                                },
+                                i({ class: "fas fa-question-circle ps-1" })
+                              )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-4" },
+                          div(
+                            {
+                              id: "dockerBuilderStatusId",
+                              class: "",
+                            },
+                            dockerAvailable
+                              ? span(
+                                  req.__("installed"),
+                                  i({ class: "ps-2 fas fa-check text-success" })
+                                )
+                              : span(
+                                  req.__("not available"),
+                                  i({ class: "ps-2 fas fa-times text-danger" })
+                                )
+                          )
+                        ),
+                        div(
+                          { class: "col-sm-4" },
+                          button(
+                            {
+                              id: "pullCordovaBtnId",
+                              type: "button",
+                              onClick: `pull_cordova_builder(this);`,
+                              class: "btn btn-warning",
+                            },
+                            req.__("pull")
+                          ),
+                          span(
+                            {
+                              role: "button",
+                              onClick: "check_cordova_builder()",
+                            },
+                            span({ class: "ps-3" }, req.__("refresh")),
+                            i({ class: "ps-2 fas fa-undo" })
+                          )
+                        )
                       ),
-                      span(
-                        { role: "button", onClick: "check_cordova_builder()" },
-                        span({ class: "ps-3" }, req.__("refresh")),
-                        i({ class: "ps-2 fas fa-undo" })
+                      // keystore file
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "keystoreInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Keystore File"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Android App Signing?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "keystoreFile",
+                              id: "keystoreInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...keystoreFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.keystoreFile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
+                        )
+                      ),
+                      // keystore alias
+                      div(
+                        { class: "row pb-2" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "keystoreAliasInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Keystore Alias")
+                          ),
+                          input({
+                            type: "text",
+                            class: "form-control",
+                            name: "keystoreAlias",
+                            id: "keystoreAliasInputId",
+                            value: builderSettings.keystoreAlias || "",
+                            placeholder: "",
+                          })
+                        )
+                      ),
+                      // keystore password
+                      div(
+                        { class: "row pb-2" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "keystorePasswordInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Keystore Password")
+                          ),
+                          input({
+                            type: "password",
+                            class: "form-control",
+                            name: "keystorePassword",
+                            id: "keystorePasswordInputId",
+                            value: "",
+                            placeholder: "",
+                          })
+                        )
+                      )
+                    )
+                  ),
+                  div(
+                    { class: "mt-3" },
+                    p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
+                    div(
+                      { class: "form-group border border-2 p-3 rounded" },
+                      div(
+                        { class: "mb-3" },
+                        div(
+                          { class: "row pb-3 pt-2" },
+                          div(
+                            label(
+                              { class: "form-label fw-bold" },
+                              req.__("xcodebuild") +
+                                a(
+                                  {
+                                    href: "javascript:ajax_modal('/admin/help/xcodebuild?')",
+                                  },
+                                  i({ class: "fas fa-question-circle ps-1" })
+                                )
+                            )
+                          ),
+                          div(
+                            { class: "col-sm-4" },
+                            div(
+                              {
+                                id: "xcodebuildStatusId",
+                                class: "",
+                              },
+                              xcodebuildAvailable
+                                ? span(
+                                    req.__("installed"),
+                                    i({
+                                      class: "ps-2 fas fa-check text-success",
+                                    })
+                                  )
+                                : span(
+                                    req.__("not available"),
+                                    i({
+                                      class: "ps-2 fas fa-times text-danger",
+                                    })
+                                  )
+                            )
+                          ),
+                          div(
+                            { class: "col-sm-4" },
+                            // not sure if we should provide this
+                            // button(
+                            //   {
+                            //     id: "installXCodeBtnId",
+                            //     type: "button",
+                            //     onClick: `install_xcode(this);`,
+                            //     class: "btn btn-warning",
+                            //   },
+                            //   req.__("install")
+                            // ),
+                            span(
+                              {
+                                role: "button",
+                                onClick: "check_xcodebuild()",
+                              },
+                              span({ class: "ps-3" }, req.__("refresh")),
+                              i({ class: "ps-2 fas fa-undo" })
+                            )
+                          )
+                        ),
+                        div(
+                          {
+                            class: `row mb-3 pb-3 ${
+                              xcodebuildAvailable ? "" : "d-none"
+                            }`,
+                            id: "xcodebuildVersionBoxId",
+                          },
+                          div(
+                            { class: "col-sm-4" },
+                            span(
+                              req.__("Version") +
+                                span(
+                                  { id: "xcodebuildVersionId", class: "pe-2" },
+                                  `: ${xcodebuildVersion || "unknown"}`
+                                ),
+                              versionMarker(xcodebuildVersion || "0")
+                            )
+                          )
+                        )
+                      ),
+                      // provisioning profile file
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "provisioningProfileInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Provisioning Profile"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "provisioningProfile",
+                              id: "provisioningProfileInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...provisioningFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.provisioningProfile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
+                        )
                       )
                     )
                   )
@@ -2468,6 +2778,7 @@ router.post(
       iOSPlatform,
       useDocker,
       appName,
+      appId,
       appVersion,
       appIcon,
       serverURL,
@@ -2476,7 +2787,11 @@ router.post(
       allowOfflineMode,
       synchedTables,
       includedPlugins,
-      appleTeamId,
+      provisioningProfile,
+      buildType,
+      keystoreFile,
+      keystoreAlias,
+      keystorePassword,
     } = req.body;
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
@@ -2496,6 +2811,20 @@ router.post(
     if (!serverURL.startsWith("http")) {
       return res.json({
         error: req.__("Please enter a valid server URL."),
+      });
+    }
+    if (iOSPlatform && !provisioningProfile) {
+      return res.json({
+        error: req.__(
+          "Please provide a Provisioning Profile for the iOS build."
+        ),
+      });
+    }
+    if (keystoreFile && (!keystoreAlias || !keystorePassword)) {
+      return res.json({
+        error: req.__(
+          "Please provide the keystore alias and password for the android build."
+        ),
       });
     }
     const outDirName = `build_${new Date().valueOf()}`;
@@ -2518,12 +2847,15 @@ router.post(
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) {
-      spawnParams.push("-p", "ios");
-      if (!appleTeamId || appleTeamId === "null")
-        spawnParams.push("--buildForEmulator");
-      else spawnParams.push("--appleTeamId", appleTeamId);
+      spawnParams.push(
+        "-p",
+        "ios",
+        "--provisioningProfile",
+        provisioningProfile
+      );
     }
     if (appName) spawnParams.push("--appName", appName);
+    if (appId) spawnParams.push("--appId", appId);
     if (appVersion) spawnParams.push("--appVersion", appVersion);
     if (appIcon) spawnParams.push("--appIcon", appIcon);
     if (serverURL) spawnParams.push("-s", serverURL);
@@ -2550,6 +2882,13 @@ router.post(
           includedPlugins.indexOf(plugin.name) < 0
       )
       .map((plugin) => plugin.name);
+
+    if (buildType) spawnParams.push("--buildType", buildType);
+    if (keystoreFile) spawnParams.push("--androidKeystore", keystoreFile);
+    if (keystoreAlias)
+      spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
+    if (keystorePassword)
+      spawnParams.push("--androidKeystorePassword", keystorePassword);
     await getState().setConfig("mobile_builder_settings", {
       entryPoint,
       entryPointType,
@@ -2557,6 +2896,7 @@ router.post(
       iOSPlatform,
       useDocker,
       appName,
+      appId,
       appVersion,
       appIcon,
       serverURL,
@@ -2566,7 +2906,10 @@ router.post(
       synchedTables: synchedTables,
       includedPlugins: includedPlugins,
       excludedPlugins,
-      appleTeamId,
+      provisioningProfile,
+      keystoreFile,
+      keystoreAlias,
+      buildType,
     });
     // end http call, return the out directory name
     // the gui polls for results
@@ -2660,6 +3003,14 @@ router.get(
   error_catcher(async (req, res) => {
     const installed = await imageAvailable();
     res.json({ installed });
+  })
+);
+
+router.get(
+  "/mobile-app/check-xcodebuild",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    res.json(await checkXcodebuild());
   })
 );
 

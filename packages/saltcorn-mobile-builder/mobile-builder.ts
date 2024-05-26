@@ -1,7 +1,8 @@
 const { PluginManager } = require("live-plugin-manager");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const { features } = require("@saltcorn/data/db/state");
-import { join } from "path";
+import { join, basename } from "path";
+import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
 import {
   buildTablesFile,
@@ -12,29 +13,62 @@ import {
   createSqliteDb,
   writeCfgFile,
   prepareSplashPage,
+  prepareBuildDir,
+  prepareExportOptionsPlist,
+  modifyConfigXml,
+  prepareAppIcon,
+  decodeProvisioningProfile,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
   installNpmPackages,
 } from "./utils/package-bundle-utils";
-import {
-  buildApp,
-  tryCopyAppFiles,
-  prepareBuildDir,
-  setAppName,
-  setAppVersion,
-  prepareAppIcon,
-} from "./utils/cordova-build-utils";
 import User from "@saltcorn/data/models/user";
+import { CordovaHelper } from "./utils/cordova_helper";
+import { removeNonWordChars } from "@saltcorn/data/utils";
 
 type EntryPointType = "view" | "page";
+const appIdDefault = "saltcorn.mobile.app";
+const appNameDefault = "SaltcornMobileApp";
+
+type MobileBuilderConfig = {
+  appName?: string;
+  appId?: string;
+  appVersion?: string;
+  appIcon?: string;
+  templateDir: string;
+  buildDir: string;
+  cliDir: string;
+  useDocker?: boolean;
+  platforms: string[];
+  localUserTables?: string[];
+  synchedTables?: string[];
+  includedPlugins?: string[];
+  entryPoint: string;
+  entryPointType: EntryPointType;
+  serverURL: string;
+  splashPage?: string;
+  autoPublicLogin: string;
+  allowOfflineMode: string;
+  plugins: Plugin[];
+  copyTargetDir?: string;
+  user?: User;
+  appleTeamId?: string;
+  provisioningProfile?: string;
+  tenantAppName?: string;
+  keyStorePath?: string;
+  keyStoreAlias?: string;
+  keyStorePassword?: string;
+  buildType: "debug" | "release";
+};
 
 /**
  *
  */
 export class MobileBuilder {
-  appName?: string;
+  appName: string;
+  appId: string;
   appVersion?: string;
   appIcon?: string;
   templateDir: string;
@@ -56,40 +90,24 @@ export class MobileBuilder {
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
   user?: User;
-  buildForEmulator?: boolean;
   appleTeamId?: string;
+  provisioningProfile?: string;
   tenantAppName?: string;
+  keyStorePath?: string;
+  keyStoreAlias?: string;
+  keyStorePassword?: string;
+  buildType: "debug" | "release";
 
   /**
    *
    * @param cfg
    */
-  constructor(cfg: {
-    appName?: string;
-    appVersion?: string;
-    appIcon?: string;
-    templateDir: string;
-    buildDir: string;
-    cliDir: string;
-    useDocker?: boolean;
-    platforms: string[];
-    localUserTables?: string[];
-    synchedTables?: string[];
-    includedPlugins?: string[];
-    entryPoint: string;
-    entryPointType: EntryPointType;
-    serverURL: string;
-    splashPage?: string;
-    autoPublicLogin: string;
-    allowOfflineMode: string;
-    plugins: Plugin[];
-    copyTargetDir?: string;
-    user?: User;
-    buildForEmulator?: boolean;
-    appleTeamId?: string;
-    tenantAppName?: string;
-  }) {
-    this.appName = cfg.appName;
+  constructor(cfg: MobileBuilderConfig) {
+    this.appName = cfg.appName || appNameDefault;
+    if (cfg.appId) this.appId = cfg.appId;
+    else if (cfg.appName && cfg.appName !== appNameDefault)
+      this.appId = `${removeNonWordChars(cfg.appName)}.mobile.app`;
+    else this.appId = appIdDefault;
     this.appVersion = cfg.appVersion;
     this.appIcon = cfg.appIcon;
     this.templateDir = cfg.templateDir;
@@ -112,9 +130,12 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
-    this.buildForEmulator = cfg.buildForEmulator;
-    this.appleTeamId = cfg.appleTeamId;
+    this.provisioningProfile = cfg.provisioningProfile;
     this.tenantAppName = cfg.tenantAppName;
+    this.keyStorePath = cfg.keyStorePath;
+    this.keyStoreAlias = cfg.keyStoreAlias;
+    this.keyStorePassword = cfg.keyStorePassword;
+    this.buildType = cfg.buildType;
   }
 
   /**
@@ -122,9 +143,21 @@ export class MobileBuilder {
    */
   async build() {
     prepareBuildDir(this.buildDir, this.templateDir);
-    if (this.appName) await setAppName(this.buildDir, this.appName);
-    if (this.appVersion) await setAppVersion(this.buildDir, this.appVersion);
-    if (this.appIcon) await prepareAppIcon(this.buildDir, this.appIcon);
+    await modifyConfigXml(this.buildDir, {
+      appName: this.appName,
+      appId: this.appId !== appIdDefault ? this.appId : undefined,
+      appVersion: this.appVersion,
+    });
+    if (this.appIcon)
+      await prepareAppIcon(this.buildDir, this.appIcon, this.platforms);
+    let iosParams = null;
+    if (this.platforms.includes("ios")) {
+      iosParams = await decodeProvisioningProfile(
+        this.buildDir,
+        this.provisioningProfile!
+      );
+      prepareExportOptionsPlist(this.buildDir, this.appId, iosParams.guuid);
+    }
     copyServerFiles(this.buildDir);
     copySbadmin2Deps(this.buildDir);
     await copySiteLogo(this.buildDir);
@@ -160,21 +193,23 @@ export class MobileBuilder {
       );
     resultCode = await createSqliteDb(this.buildDir);
     if (resultCode !== 0) return resultCode;
-    resultCode = buildApp(
-      this.buildDir,
-      this.platforms,
-      this.useDocker,
-      this.buildForEmulator,
-      this.appleTeamId
-    );
-    if (resultCode === 0 && this.copyTargetDir) {
-      await tryCopyAppFiles(
-        this.buildDir,
+    if (this.keyStorePath)
+      copySync(
+        this.keyStorePath,
+        join(this.buildDir, basename(this.keyStorePath))
+      );
+    const cordovaHelper = new CordovaHelper({
+      ...this,
+      appleTeamId: iosParams?.teamId,
+      provisioningGUUID: iosParams?.guuid,
+    });
+    resultCode = cordovaHelper.buildApp();
+    if (resultCode === 0 && this.copyTargetDir)
+      await cordovaHelper.tryCopyAppFiles(
         this.copyTargetDir,
         this.user!,
         this.appName
       );
-    }
     return resultCode;
   }
 }

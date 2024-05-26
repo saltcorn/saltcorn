@@ -8,14 +8,175 @@ import {
   copySync,
   writeFileSync,
   readFileSync,
+  rmSync,
 } from "fs-extra";
 import { Row } from "@saltcorn/db-common/internal";
-import { spawnSync } from "child_process";
+import { spawnSync, execSync } from "child_process";
 import Page from "@saltcorn/data/models/page";
 import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
+import { parseStringPromise, Builder } from "xml2js";
+
+const resizer = require("resize-with-sharp-or-jimp");
+
+/**
+ * copy saltcorn-mobile-app as a template to buildDir
+ * @param buildDir directory where the app will be build
+ * @param templateDir directory of the template code that will be copied to 'buildDir'
+ */
+export function prepareBuildDir(buildDir: string, templateDir: string) {
+  if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
+  copySync(templateDir, buildDir);
+  rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
+  const result = spawnSync("npm", ["install", "--legacy-peer-deps"], {
+    cwd: buildDir,
+  });
+  console.log(result.output.toString());
+}
+
+export async function modifyConfigXml(buildDir: string, config: any) {
+  try {
+    const configXml = join(buildDir, "config.xml");
+    const content = readFileSync(configXml);
+    const parsed = await parseStringPromise(content);
+    if (config.appName) parsed.widget.name[0] = config.appName;
+    if (config.appId) parsed.widget.$.id = config.appId;
+    if (config.appVersion) parsed.widget.$.version = config.appVersion;
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(configXml, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to modify the config.xml: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
+ * copy a png file into the build dir and use it as launcher icon
+ * @param buildDir
+ * @param appIcon path to appIcon file
+ */
+export async function prepareAppIcon(
+  buildDir: string,
+  appIcon: string,
+  platforms: string[]
+) {
+  try {
+    if (platforms.includes("android"))
+      copySync(appIcon, join(buildDir, "res", "icon", "android", "icon.png"), {
+        overwrite: true,
+      });
+    if (platforms.includes("ios")) await prepareAppIconSet(buildDir, appIcon);
+  } catch (error: any) {
+    console.log(
+      `Unable to set the app icon '${appIcon}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+async function prepareAppIconSet(buildDir: string, appIcon: string) {
+  console.log("prepareAppIconSet", buildDir, appIcon);
+  const dir = join(buildDir, "AppIcon.appiconset");
+  mkdirSync(dir);
+  const contentsJSON = { images: new Array<any>() };
+  try {
+    for (const { size, scale, idiom } of [
+      { size: 29, scale: 1, idiom: "iphone" },
+      { size: 20, scale: 2, idiom: "iphone" },
+      { size: 40, scale: 2, idiom: "iphone" },
+      { size: 57, scale: 1, idiom: "iphone" },
+      { size: 60, scale: 2, idiom: "iphone" },
+      { size: 1024, scale: 1, idiom: "ios-marketing" },
+    ]) {
+      const scaledSize = size * scale;
+      const fileName = `${size}x${scale}.png`;
+      await resizer({
+        fromFileName: appIcon,
+        width: scaledSize,
+        height: scaledSize,
+        toFileName: join(dir, fileName),
+      });
+      contentsJSON.images.push({
+        size: `${size}x${size}`,
+        idiom: idiom,
+        filename: fileName,
+        "expected-size": scaledSize,
+        scale: `${scale}x`,
+      });
+    }
+    writeFileSync(join(dir, "Contents.json"), JSON.stringify(contentsJSON));
+  } catch (error: any) {
+    console.log(
+      `Unable to generate appicon set for '${appIcon}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+export function prepareExportOptionsPlist(
+  buildDir: string,
+  appId: string,
+  provisioningProfile: string
+) {
+  try {
+    const exportOptionsPlist = join(buildDir, "ExportOptions.plist");
+    writeFileSync(
+      exportOptionsPlist,
+      `<?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "~//Apple/DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+        <dict>
+          <key>method</key>
+          <string>app-store-connect</string>
+          <key>provisioningProfiles</key>
+          <dict>          
+            <key>${appId}</key>
+            <string>${provisioningProfile}</string>
+          </dict>
+        </dict>
+
+      </plist>`
+    );
+  } catch (error: any) {
+    console.log(
+      `Unable to set the provisioning profile '${provisioningProfile}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+export async function decodeProvisioningProfile(
+  buildDir: string,
+  provisioningProfile: string
+) {
+  console.log("decodeProvisioningProfile", buildDir, provisioningProfile);
+  const outFile = join(buildDir, "provisioningProfile.xml");
+  try {
+    execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
+    const content = readFileSync(outFile);
+    const parsed = await parseStringPromise(content);
+    const dict = parsed.plist.dict[0];
+    const guuid = dict.string[dict.string.length - 1];
+    const teamId = dict.array[0].string[0];
+    return { guuid, teamId };
+  } catch (error: any) {
+    console.log(
+      `Unable to decode the provisioning profile '${provisioningProfile}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+    throw error;
+  }  
+}
 
 /**
  * copy files from 'server/public' into the www folder (with a version_tag prefix)

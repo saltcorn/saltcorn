@@ -789,9 +789,9 @@ function build_mobile_app(button) {
     .filter((option) => !option.hidden)
     .map((option) => option.value);
   const pluginsSelect = $("#included-plugins-select-id")[0];
-  params.includedPlugins = Array.from(pluginsSelect.options)
-    .filter((option) => !option.hidden)
-    .map((option) => option.value);
+  params.includedPlugins = Array.from(pluginsSelect.options || []).map(
+    (option) => option.value
+  );
 
   if (
     params.useDocker &&
@@ -823,6 +823,49 @@ function pull_cordova_builder() {
         "Pulling the the cordova-builder. " +
           "To see the progress, open the logs viewer with the System logging verbosity set to 'All'."
       );
+    },
+  });
+}
+
+function check_xcodebuild() {
+  const handleVersion = (version) => {
+    const tokens = version.split(".");
+    const majVers = parseInt(tokens[0]);
+    const marker = $("#versionMarkerId");
+    if (majVers >= 11) {
+      marker.removeClass("text-danger");
+      marker.addClass("text-success");
+      marker.removeClass("fa-times");
+      marker.addClass("fa-check");
+    } else {
+      marker.removeClass("text-success");
+      marker.addClass("text-danger");
+      marker.removeClass("fa-check");
+      marker.addClass("fa-times");
+    }
+  };
+  $.ajax("/admin/mobile-app/check-xcodebuild", {
+    type: "GET",
+    success: function (res) {
+      if (res.installed) {
+        $("#xcodebuildStatusId").html(
+          `<span>
+            installed<i class="ps-2 fas fa-check text-success"></i>
+          </span>
+          `
+        );
+        $("#xcodebuildVersionBoxId").removeClass("d-none");
+        $("#xcodebuildVersionId").html(` ${res.version}`);
+        handleVersion(res.version || "0");
+      } else {
+        $("#xcodebuildStatusId").html(
+          `<span>
+            not available<i class="ps-2 fas fa-times text-danger"></i>
+          </span>
+          `
+        );
+        $("#xcodebuildVersionBoxId").addClass("d-none");
+      }
     },
   });
 }
@@ -881,12 +924,14 @@ function move_plugin_to_included() {
   const opts = $("#excluded-plugins-select-id");
   $("#included-plugins-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jExclOpt = $(`[id='${selected}_excluded_opt']`);
-    jExclOpt.attr("hidden", "true");
-    jExclOpt.removeAttr("selected");
-    const jInclOpt = $(`[id='${selected}_included_opt']`);
-    jInclOpt.removeAttr("hidden");
-    jInclOpt.removeAttr("selected");
+    $(`[id='${selected}_excluded_opt']`).remove();
+    $("#included-plugins-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_included_opt`,
+      })
+    );
   }
 }
 
@@ -894,12 +939,14 @@ function move_plugin_to_excluded() {
   const opts = $("#included-plugins-select-id");
   $("#excluded-plugins-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jInclOpt = $(`[id='${selected}_included_opt']`);
-    jInclOpt.attr("hidden", "true");
-    jInclOpt.removeAttr("selected");
-    const jExclOpt = $(`[id='${selected}_excluded_opt']`);
-    jExclOpt.removeAttr("hidden");
-    jExclOpt.removeAttr("selected");
+    $(`[id='${selected}_included_opt']`).remove();
+    $("#excluded-plugins-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_excluded_opt`,
+      })
+    );
   }
 }
 

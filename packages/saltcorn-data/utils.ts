@@ -3,13 +3,14 @@
  * @module utils
  */
 import { serialize, deserialize } from "v8";
-import { createReadStream } from "fs";
+import { createReadStream, readdirSync } from "fs";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import { Row, Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
+import { existsSync } from "fs-extra";
 const _ = require("underscore");
 
 const removeEmptyStrings = (obj: GenObj) => {
@@ -407,6 +408,24 @@ const prepMobileRows = (rows: Row[], fields: Field[]) => {
   }
 };
 
+/**
+ * find first file with specific ending
+ * @param directory directory to search
+ * @param ending wantet ending
+ */
+const fileWithEnding = (directory: string, ending: string): string | null => {
+  if (!existsSync(directory)) return null;
+  for (const file of readdirSync(directory)) {
+    if (file.endsWith(ending)) return file;
+  }
+  return null;
+};
+
+const safeEnding = (file: string, ending: string): string => {
+  if (!file.endsWith(ending)) return `${file}${ending}`;
+  return file;
+};
+
 export = {
   dollarizeObject,
   objectToQueryString,
@@ -449,4 +468,6 @@ export = {
   ppVal,
   interpolate,
   prepMobileRows,
+  fileWithEnding,
+  safeEnding,
 };

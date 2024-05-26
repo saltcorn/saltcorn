@@ -192,9 +192,7 @@ function splitPathQuery(url) {
 
 async function replaceIframe(content, isFile = false) {
   const iframe = document.getElementById("content-iframe");
-  await write("content.html", `${cordova.file.dataDirectory}`, content);
-  const url = await getDirEntry(`${cordova.file.dataDirectory}content.html`);
-  iframe.src = url.toURL();
+  iframe.srcdoc = content;
   if (isFile) {
     iframe.setAttribute("is-html-file", true);
     await new Promise((resolve, reject) => {
