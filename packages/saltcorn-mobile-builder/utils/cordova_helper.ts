@@ -107,6 +107,8 @@ export class CordovaHelper {
           { cwd: this.buildDir }
         );
         console.log(buffer.toString());
+        // to upload it automatically:
+        // xrun altool --upload-app -f [.ipa file] -t ios -u [apple-id] -p [app-specific password]
         return 0;
       }
     } catch (err) {
