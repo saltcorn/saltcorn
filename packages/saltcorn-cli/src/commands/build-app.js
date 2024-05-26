@@ -243,17 +243,18 @@ BuildAppCommand.flags = {
   androidKeystore: flags.string({
     name: "android key store",
     string: "androidKeyStore",
-    description: "This key will be used to sign your app",
+    description:
+      "A self-signed certificate that includes the private key used to sign your app.",
   }),
   androidKeyStoreAlias: flags.string({
     name: "android key store alias",
     string: "keyStoreAlias",
-    description: "TODO",
+    description: "A unique name to identify the key within the keystore file.",
   }),
   androidKeystorePassword: flags.string({
     name: "android key store password",
     string: "keyStorePassword",
-    description: "TODO",
+    description: "he password to access the keystore file.",
   }),
 };
 
