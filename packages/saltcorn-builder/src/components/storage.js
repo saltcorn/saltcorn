@@ -154,6 +154,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           key={ix}
           view={segment.view}
           relation={segment.relation}
+          order_field={segment.order_field}
           view_name={segment.view_name}
           name={segment.name}
           state={segment.state}
@@ -607,6 +608,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         type: "view",
         view: node.props.view,
         relation: node.props.relation,
+        order_field: node.props.order_field,
         name:
           node.props.name === "not_assigned" ? rand_ident() : node.props.name,
         state: node.props.state,

@@ -127,6 +127,10 @@ describe("Random tables", () => {
       assertIsSet(table);
       expect(!!table).toBe(true);
       const count = await table.countRows();
+      if (count !== n) {
+        console.log(restoreres);
+        console.log(JSON.stringify(table, null, 2));
+      }
       expect([table.name, count]).toEqual([oldtable.name, n]);
       expect(await table.owner_fieldname()).toEqual(
         await oldtable.owner_fieldname()

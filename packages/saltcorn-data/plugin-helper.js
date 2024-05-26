@@ -2554,6 +2554,12 @@ const build_schema_data = async () => {
     allTables.map(async (t) => ({
       name: t.name,
       id: t.id,
+      //for edit-in-edit
+      int_fields: t.fields
+        .filter(
+          (f) => f.type?.name === "Integer" && !f.calculated && !f.primary_key
+        )
+        .map((f) => f.name),
       foreign_keys: t.getForeignKeys().map((f) => ({
         name: f.name,
         id: f.id,
