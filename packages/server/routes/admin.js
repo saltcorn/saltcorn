@@ -1710,11 +1710,13 @@ router.get(
         above: [
           {
             type: "card",
+            titleAjaxIndicator: true,
             title: req.__("Build mobile app"),
             contents: form(
               {
                 action: "/admin/build-mobile-app",
                 method: "post",
+                onchange: "builderMenuChanged(this)",
               },
 
               fieldset(
@@ -2889,28 +2891,6 @@ router.post(
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
     if (keystorePassword)
       spawnParams.push("--androidKeystorePassword", keystorePassword);
-    await getState().setConfig("mobile_builder_settings", {
-      entryPoint,
-      entryPointType,
-      androidPlatform,
-      iOSPlatform,
-      useDocker,
-      appName,
-      appId,
-      appVersion,
-      appIcon,
-      serverURL,
-      splashPage,
-      autoPublicLogin,
-      allowOfflineMode,
-      synchedTables: synchedTables,
-      includedPlugins: includedPlugins,
-      excludedPlugins,
-      provisioningProfile,
-      keystoreFile,
-      keystoreAlias,
-      buildType,
-    });
     // end http call, return the out directory name
     // the gui polls for results
     res.json({ build_dir_name: outDirName });
@@ -3011,6 +2991,20 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     res.json(await checkXcodebuild());
+  })
+);
+
+router.post(
+  "/mobile-app/save-config",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    try {
+      await getState().setConfig("mobile_builder_settings", req.body);
+      res.json({ success: true });
+    } catch (e) {
+      getState().log(1, `Unable to save mobile builder config: ${e.message}`);
+      res.json({ error: e.message });
+    }
   })
 );
 

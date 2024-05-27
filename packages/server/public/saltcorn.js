@@ -751,6 +751,43 @@ function removeSpinner(elementId, orginalHtml) {
   $(`#${elementId}`).html(orginalHtml);
 }
 
+function builderMenuChanged(e) {
+  console.log("builderMenuChanged");
+  const form = $(e);
+  const params = {};
+  form.serializeArray().forEach((item) => {
+    params[item.name] = item.value;
+  });
+  params.synchedTables = Array.from($("#synched-tbls-select-id")[0].options)
+    .filter((option) => !option.hidden)
+    .map((option) => option.value);
+  const pluginsSelect = $("#included-plugins-select-id")[0];
+  params.includedPlugins = Array.from(pluginsSelect.options || []).map(
+    (option) => option.value
+  );
+  const indicator = $(".sc-ajax-indicator");
+  indicator.attr("title", "Saving the configuration");
+  indicator.attr("style", "display: inline-block;");
+  const icon = $(".fa-save, .fa-exclamation-triangle");
+  icon.attr("class", "fas fa-save");
+  const setErrorIcon = () => {
+    icon.attr("class", "fas fa-exclamation-triangle");
+    icon.attr("style", "color: #ff0033!important;");
+    indicator.attr("title", "Unable to save the configuration");
+  };
+  $.ajax("/admin/mobile-app/save-config", {
+    type: "POST",
+    data: params,
+    success: function (res) {
+      if (res.success) indicator.attr("style", "display: none;");
+      else setErrorIcon();
+    },
+    error: function (res) {
+      setErrorIcon();
+    },
+  });
+}
+
 function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
   $.ajax("/admin/build-mobile-app/finished", {
     type: "GET",

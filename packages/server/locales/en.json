@@ -1416,5 +1416,14 @@
 	"Description header": "Description header",
 	"Lazy load views": "Lazy load views",
 	"Log IP address": "Log IP address",
-	"Record the request IP address in log messages": "Record the request IP address in log messages"
+	"Record the request IP address in log messages": "Record the request IP address in log messages",
+	"App ID": "App ID",
+	"Build type": "Build type",
+	"debug": "debug",
+	"release": "release",
+	"Keystore File": "Keystore File",
+	"Keystore Alias": "Keystore Alias",
+	"Keystore Password": "Keystore Password",
+	"xcodebuild": "xcodebuild",
+	"Provisioning Profile": "Provisioning Profile"
 }
