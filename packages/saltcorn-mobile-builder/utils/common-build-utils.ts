@@ -81,6 +81,53 @@ export async function prepareAppIcon(
   }
 }
 
+/**
+ * copy a png file into the build dir and use it as splash icon
+ * This shows up before the splash page, while the infrastructure loads
+ * TODO for now it's only one png for all sizes
+ * @param buildDir
+ * @param splashIcon
+ * @param platforms
+ */
+export async function prepareSplashIcon(
+  buildDir: string,
+  splashIcon: string,
+  platforms: string[]
+) {
+  try {
+    if (platforms.includes("android")) {
+      copySync(
+        splashIcon,
+        join(buildDir, "res", "screen", "android", "splash-icon.png"),
+        {
+          overwrite: true,
+        }
+      );
+    }
+    if (platforms.includes("ios")) {
+      copySync(
+        splashIcon,
+        join(
+          buildDir,
+          "res",
+          "screen",
+          "ios",
+          "Default@2x~universal~anyany.png"
+        ),
+        {
+          overwrite: true,
+        }
+      );
+    }
+  } catch (error: any) {
+    console.log(
+      `Unable to set the splash icon '${splashIcon}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
 async function prepareAppIconSet(buildDir: string, appIcon: string) {
   console.log("prepareAppIconSet", buildDir, appIcon);
   const dir = join(buildDir, "AppIcon.appiconset");
@@ -175,7 +222,7 @@ export async function decodeProvisioningProfile(
       }`
     );
     throw error;
-  }  
+  }
 }
 
 /**

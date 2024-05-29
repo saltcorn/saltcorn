@@ -17,6 +17,7 @@ import {
   prepareExportOptionsPlist,
   modifyConfigXml,
   prepareAppIcon,
+  prepareSplashIcon,
   decodeProvisioningProfile,
 } from "./utils/common-build-utils";
 import {
@@ -148,8 +149,10 @@ export class MobileBuilder {
       appId: this.appId !== appIdDefault ? this.appId : undefined,
       appVersion: this.appVersion,
     });
-    if (this.appIcon)
+    if (this.appIcon) {
       await prepareAppIcon(this.buildDir, this.appIcon, this.platforms);
+      await prepareSplashIcon(this.buildDir, this.appIcon, this.platforms);
+    }
     let iosParams = null;
     if (this.platforms.includes("ios")) {
       iosParams = await decodeProvisioningProfile(
