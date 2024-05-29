@@ -11,11 +11,12 @@ RUN mkdir android_sdk
 RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;13.0"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager --list
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "platforms;android-13"
-RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;33.0.3"
+RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;33.0.2"
+RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;34.0.0"
 
 # download gradle
-RUN wget -q https://services.gradle.org/distributions/gradle-7.5.1-all.zip \
-    && unzip gradle-7.5.1-all.zip -d /opt
+RUN wget -q https://services.gradle.org/distributions/gradle-8.4-all.zip \
+    && unzip gradle-8.4-all.zip -d /opt
 
 RUN npm install -g cordova@12.0.0
 
@@ -32,13 +33,13 @@ RUN cordova plugin add cordova-plugin-network-information@3.0.0
 RUN cordova plugin add cordova-plugin-geolocation@4.1.0
 RUN cordova plugin add cordova-plugin-camera@6.0.0
 RUN cordova platform add android
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk
 ENV ANDROID_HOME=/android_sdk
-ENV GRADLE_HOME=/opt/gradle-7.5.1
-ENV PATH=$PATH:/opt/gradle-7.5.1/bin
+ENV GRADLE_HOME=/opt/gradle-8.4
+ENV PATH=$PATH:/opt/gradle-8.4/bin
 # stop gradle from downloading itself
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-7.5.1-all.zip
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-8.4-all.zip
 RUN cordova build android
 
 # due to a bug in npm that has been addressed since then
