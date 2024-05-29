@@ -188,7 +188,7 @@ describe("Filter view components", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toBe(
-      '<div class="form-namespace"><input type="number" class="form-control" data-fieldname="pages" name="pages" onChange="set_state_field(\'pages\', this.value, this)" id="inputpages" step="1"></div>'
+      '<div class="form-namespace"><input type="number" class="form-control" data-fieldname="pages" name="pages" onChange="set_state_field(\'pages\', this.value, this)" id="inputpages" step="1" min="0"></div>'
     );
   });
   it("isFilter field", async () => {
