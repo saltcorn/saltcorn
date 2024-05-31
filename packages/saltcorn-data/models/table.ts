@@ -1446,6 +1446,9 @@ class Table implements AbstractTable {
       else await this.insertSyncInfo(id, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
+
+    await this.auto_update_calc_aggregations(newRow, !existing);
+
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
         "Update",
@@ -1829,17 +1832,48 @@ class Table implements AbstractTable {
         );
       }
     }
+    const newRow = { [pk_name]: id, ...v };
+    await this.auto_update_calc_aggregations(newRow);
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
         "Insert",
         this,
-        { [pk_name]: id, ...v },
+        newRow,
         resultCollector,
         user
       );
       if (resultCollector) await trigPromise;
     }
     return id;
+  }
+
+  async auto_update_calc_aggregations(v0: Row, refetch?: boolean) {
+    const calc_agg_fields = await Field.find(
+      {
+        calculated: true,
+        stored: true,
+        expression: "__aggregation",
+        attributes: { json: { table: this.name } },
+      },
+      { cached: true }
+    );
+    let v = v0;
+    if (refetch && calc_agg_fields.length) {
+      v = (await this.getJoinedRow({
+        where: { [this.pk_name]: v0.id },
+      })) as Row;
+    }
+
+    for (const calc_field of calc_agg_fields) {
+      const refTable = Table.findOne({ id: calc_field.table_id });
+      if (!refTable || !v[calc_field.attributes.ref]) continue;
+      const rows = await refTable?.getRows({
+        [refTable.pk_name]: v[calc_field.attributes.ref],
+      });
+      for (const row of rows) {
+        await refTable?.updateRow({}, row[refTable.pk_name]);
+      }
+    }
   }
 
   /**
