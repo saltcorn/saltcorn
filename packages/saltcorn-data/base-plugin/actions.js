@@ -910,7 +910,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Modify the triggering row",
-    configFields: async ({ mode }) => {
+    configFields: async ({ mode, when_trigger }) => {
       return [
         {
           name: "row_expr",
@@ -919,7 +919,7 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
-        ...(mode === "edit" || mode === "filter"
+        ...(mode === "edit" || mode === "filter" || when_trigger === "Validate"
           ? [
               {
                 name: "where",
@@ -927,10 +927,10 @@ module.exports = {
                 type: "String",
                 required: true,
                 attributes: {
-                  options: [
-                    "Database",
-                    mode === "edit" ? "Form" : "Filter state",
-                  ],
+                  options:
+                    when_trigger === "Validate"
+                      ? ["Row"]
+                      : ["Database", mode === "edit" ? "Form" : "Filter state"],
                 },
               },
             ]
@@ -950,7 +950,7 @@ module.exports = {
         user,
       });
       const calcrow = await f(row, user);
-      if (where === "Form" || where === "Filter state")
+      if (where === "Form" || where === "Filter state" || where === "Row")
         return { set_fields: calcrow };
 
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
