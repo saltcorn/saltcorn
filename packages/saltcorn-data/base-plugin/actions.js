@@ -931,7 +931,9 @@ module.exports = {
                   options:
                     when_trigger === "Validate"
                       ? ["Row"]
-                      : ["Database", mode === "edit" ? "Form" : "Filter state"],
+                      : mode === "filter"
+                      ? ["Filter state"]
+                      : ["Form", "Database"],
                 },
               },
             ]
