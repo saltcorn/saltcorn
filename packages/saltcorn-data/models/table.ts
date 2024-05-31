@@ -1829,6 +1829,7 @@ class Table implements AbstractTable {
         );
       }
     }
+    await this.auto_update_calc_aggregations(v);
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
         "Insert",
@@ -1840,6 +1841,28 @@ class Table implements AbstractTable {
       if (resultCollector) await trigPromise;
     }
     return id;
+  }
+
+  async auto_update_calc_aggregations(v: Row) {
+    const calc_agg_fields = await Field.find(
+      {
+        calculated: true,
+        stored: true,
+        expression: "__aggregation",
+        attributes: { json: { table: this.name } },
+      },
+      { cached: true }
+    );
+    for (const calc_field of calc_agg_fields) {
+      const refTable = Table.findOne({ id: calc_field.table_id });
+      if (!refTable || !v[calc_field.attributes.ref]) continue;
+      const rows = await refTable?.getRows({
+        [refTable.pk_name]: v[calc_field.attributes.ref],
+      });
+      for (const row of rows) {
+        await refTable?.updateRow({}, row[refTable.pk_name]);
+      }
+    }
   }
 
   /**
