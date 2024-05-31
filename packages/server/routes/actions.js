@@ -666,7 +666,6 @@ router.get(
       res.redirect(`/actions/`);
     } else {
       // get configuration fields
-      console.log("trig", trigger);
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
