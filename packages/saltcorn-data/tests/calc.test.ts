@@ -346,7 +346,7 @@ describe("aggregations in stored calculated fields", () => {
       pages: 456,
       publisher: hid,
     });
-    await recalculate_for_stored(publisher);
+    //await recalculate_for_stored(publisher);
     const hrow1 = await publisher.getRow({ id: hid });
     expect(hrow1?.number_of_books).toBe(1);
     await books.insertRow({
