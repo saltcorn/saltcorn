@@ -915,7 +915,8 @@ module.exports = {
         {
           name: "row_expr",
           label: "Row expression",
-          sublabel: "Expression for JavaScript object",
+          sublabel:
+            "Expression for JavaScript object. For example, <code>{points: 34}</code>",
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
