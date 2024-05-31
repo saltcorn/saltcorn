@@ -399,6 +399,16 @@ describe("aggregations in stored calculated fields", () => {
     for (const row of bookRows) {
       await publisher.updateRow({}, row.id);
     }
+    const hrow3 = await publisher.getRow({ id: 1 });
+
+    expect(hrow3?.sum_of_pages).toBe(728);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ publisher: 1 });
+    assertIsSet(book);
+    await books.updateRow({ pages: 729 }, book.id);
+    const hrow4 = await publisher.getRow({ id: 1 });
+    expect(hrow4?.sum_of_pages).toBe(729);
   });
 });
 
