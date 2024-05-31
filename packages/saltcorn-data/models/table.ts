@@ -1446,7 +1446,6 @@ class Table implements AbstractTable {
       else await this.insertSyncInfo(id, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
-    //console.log("in updaterow", id);
 
     await this.auto_update_calc_aggregations(newRow, !existing);
 
