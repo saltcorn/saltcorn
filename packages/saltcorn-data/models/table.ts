@@ -642,6 +642,35 @@ class Table implements AbstractTable {
   get santized_name() {
     return sqlsanitize(this.name);
   }
+
+  /**
+   * extract primary key type name from fields
+   * @param fields
+   */
+  private static pkSqlType(fields?: any[]): string {
+    let pk_sql_type = db.isSQLite ? "integer" : "serial";
+    if (fields && Array.isArray(fields)) {
+      let pk_sql_type = null;
+      const pk_field = fields.find?.(
+        (f) => typeof f !== "string" && f?.primary_key
+      );
+      const pk_type =
+        (typeof pk_field === "string"
+          ? pk_field
+          : typeof pk_field?.type === "string"
+          ? pk_field?.type
+          : pk_field?.type?.name) || "Integer";
+      if (pk_type !== "Integer") {
+        const { getState } = require("../db/state");
+        const type = getState().types[pk_type];
+        pk_sql_type = type.sql_name;
+        if (type.primaryKey?.default_sql)
+          pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
+      }
+    }
+    return pk_sql_type;
+  }
+
   /**
    * Create table
    * @param name - table name
@@ -655,26 +684,7 @@ class Table implements AbstractTable {
     id?: number
   ): Promise<Table> {
     let pk_type: string = "Integer";
-    let pk_sql_type = db.isSQLite ? "integer" : "serial";
-    if (options?.fields && Array.isArray(options.fields)) {
-      const pk_field = (options.fields as any).find?.(
-        (f: Field) => typeof f !== "string" && f?.primary_key
-      );
-      pk_type =
-        (typeof pk_field === "string"
-          ? pk_field
-          : typeof pk_field?.type === "string"
-          ? pk_field?.type
-          : pk_field?.type?.name) || "Integer";
-    }
-    if (pk_type !== "Integer") {
-      const { getState } = require("../db/state");
-
-      const type = getState().types[pk_type];
-      pk_sql_type = type.sql_name;
-      if (type.primaryKey?.default_sql)
-        pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
-    }
+    const pk_sql_type = Table.pkSqlType(options.fields);
 
     const schema = db.getTenantSchemaPrefix();
     // create table in database
@@ -742,6 +752,45 @@ class Table implements AbstractTable {
     await require("../db/state").getState().refresh_tables();
 
     return table;
+  }
+
+  /**
+   * Create the table structure
+   * generates a CREATE TABLE cmd with all field and runs it
+   * TODO field defaults for pg
+   * @param table
+   */
+  static async createInDb(table: Table): Promise<void> {
+    const is_sqlite = db.isSQLite;
+    const schema = db.getTenantSchemaPrefix();
+    const pkSqlType = Table.pkSqlType(table.fields);
+    const columnDefs = [`id ${pkSqlType} primary key`];
+    for (const f of table.fields) {
+      if (f.primary_key) continue;
+      if (!f.calculated || f.stored) {
+        if (typeof f.attributes.default === "undefined") {
+          columnDefs.push(
+            `"${sqlsanitize(f.name)}" ${f.sql_type} ${
+              f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
+            }`
+          );
+        } else if (is_sqlite) {
+          columnDefs.push(
+            ` ${sqlsanitize(f.name)}  ${f.sql_type} ${
+              f.required
+                ? `not null default ${JSON.stringify(f.attributes.default)}`
+                : ""
+            } `
+          );
+        } else {
+          // TODO pg (only sqlite for the mobile app)
+        }
+      }
+    }
+    const sql = `CREATE TABLE ${schema}"${sqlsanitize(
+      table.name
+    )}" ( ${columnDefs.join(", ")})`;
+    await db.query(sql);
   }
 
   /**
