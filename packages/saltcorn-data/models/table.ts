@@ -647,28 +647,32 @@ class Table implements AbstractTable {
    * extract primary key type name from fields
    * @param fields
    */
-  private static pkSqlType(fields?: any[]): string {
+  private static pkSqlType(fields?: any[]): {
+    pk_type: string;
+    pk_sql_type: string;
+  } {
+    let pk_type: string = "Integer";
     let pk_sql_type = db.isSQLite ? "integer" : "serial";
     if (fields && Array.isArray(fields)) {
-      let pk_sql_type = null;
-      const pk_field = fields.find?.(
-        (f) => typeof f !== "string" && f?.primary_key
+      const pk_field = (fields as any).find?.(
+        (f: Field) => typeof f !== "string" && f?.primary_key
       );
-      const pk_type =
+      pk_type =
         (typeof pk_field === "string"
           ? pk_field
           : typeof pk_field?.type === "string"
           ? pk_field?.type
           : pk_field?.type?.name) || "Integer";
-      if (pk_type !== "Integer") {
-        const { getState } = require("../db/state");
-        const type = getState().types[pk_type];
-        pk_sql_type = type.sql_name;
-        if (type.primaryKey?.default_sql)
-          pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
-      }
     }
-    return pk_sql_type;
+    if (pk_type !== "Integer") {
+      const { getState } = require("../db/state");
+
+      const type = getState().types[pk_type];
+      pk_sql_type = type.sql_name;
+      if (type.primaryKey?.default_sql)
+        pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
+    }
+    return { pk_type, pk_sql_type };
   }
 
   /**
@@ -683,8 +687,7 @@ class Table implements AbstractTable {
     options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
-    let pk_type: string = "Integer";
-    const pk_sql_type = Table.pkSqlType(options.fields);
+    const { pk_type, pk_sql_type } = Table.pkSqlType(options.fields);
 
     const schema = db.getTenantSchemaPrefix();
     // create table in database
@@ -763,8 +766,8 @@ class Table implements AbstractTable {
   static async createInDb(table: Table): Promise<void> {
     const is_sqlite = db.isSQLite;
     const schema = db.getTenantSchemaPrefix();
-    const pkSqlType = Table.pkSqlType(table.fields);
-    const columnDefs = [`id ${pkSqlType} primary key`];
+    const { pk_sql_type } = Table.pkSqlType(table.fields);
+    const columnDefs = [`id ${pk_sql_type} primary key`];
     for (const f of table.fields) {
       if (f.primary_key) continue;
       if (!f.calculated || f.stored) {
