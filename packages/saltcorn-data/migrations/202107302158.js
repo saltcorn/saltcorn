@@ -1,4 +1,4 @@
-const sql_pg = `CREATE UNLOGGED TABLE _sc_event_log (
+const sql_pg = `CREATE UNLOGGED TABLE IF NOT EXISTS _sc_event_log (
     id serial primary key,
     event_type text NOT NULL,
     channel text,
@@ -17,4 +17,3 @@ const sql_sqlite = `CREATE TABLE _sc_event_log (
 );`;
 
 module.exports = { sql_pg, sql_sqlite };
-    

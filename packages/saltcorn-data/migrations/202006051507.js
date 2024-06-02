@@ -1,4 +1,4 @@
-const sql = `create table _sc_errors (
+const sql = `create table IF NOT EXISTS _sc_errors (
     id serial primary key,
     stack text NOT NULL,
     message text NOT NULL,

@@ -1,5 +1,5 @@
 const sql_pg = `
-create table _sc_models (
+create table IF NOT EXISTS _sc_models (
   id serial primary key,
   name text not null,
   table_id integer references _sc_tables(id),
@@ -7,7 +7,7 @@ create table _sc_models (
   configuration jsonb,
   UNIQUE (table_id, name)
 );
-create table _sc_model_instances (
+create table IF NOT EXISTS _sc_model_instances (
   id serial primary key,
   name text not null,
   model_id integer references _sc_models(id),

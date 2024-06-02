@@ -1,5 +1,5 @@
 const sql = `
-create table _sc_files (
+create table IF NOT EXISTS _sc_files (
     id serial primary key,
     filename text NOT NULL,
     location text NOT NULL,

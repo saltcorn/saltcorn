@@ -1,4 +1,4 @@
-const sql_pg = `CREATE TABLE _sc_snapshots (
+const sql_pg = `CREATE TABLE IF NOT EXISTS _sc_snapshots (
     id serial primary key,
     created timestamptz NOT NULL,
     pack jsonb
