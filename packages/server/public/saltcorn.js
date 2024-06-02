@@ -752,7 +752,6 @@ function removeSpinner(elementId, orginalHtml) {
 }
 
 function builderMenuChanged(e) {
-  console.log("builderMenuChanged");
   const form = $(e);
   const params = {};
   form.serializeArray().forEach((item) => {
@@ -935,26 +934,32 @@ function move_to_synched() {
   const opts = $("#unsynched-tbls-select-id");
   $("#synched-tbls-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jUnsOpt = $(`[id='${selected}_unsynched_opt']`);
-    jUnsOpt.attr("hidden", "true");
-    jUnsOpt.removeAttr("selected");
-    const jSynOpt = $(`[id='${selected}_synched_opt']`);
-    jSynOpt.removeAttr("hidden");
-    jSynOpt.removeAttr("selected");
+    $(`[id='${selected}_unsynched_opt']`).remove();
+    $("#synched-tbls-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_synched_opt`,
+      })
+    );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function move_to_unsynched() {
   const opts = $("#synched-tbls-select-id");
   $("#unsynched-tbls-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jSynOpt = $(`[id='${selected}_synched_opt']`);
-    jSynOpt.attr("hidden", "true");
-    jSynOpt.removeAttr("selected");
-    const jUnsOpt = $(`[id='${selected}_unsynched_opt']`);
-    jUnsOpt.removeAttr("hidden");
-    jUnsOpt.removeAttr("selected");
+    $(`[id='${selected}_synched_opt']`).remove();
+    $("#unsynched-tbls-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_unsynched_opt`,
+      })
+    );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function move_plugin_to_included() {
@@ -970,6 +975,7 @@ function move_plugin_to_included() {
       })
     );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function move_plugin_to_excluded() {
@@ -985,6 +991,7 @@ function move_plugin_to_excluded() {
       })
     );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function toggle_tbl_sync() {
