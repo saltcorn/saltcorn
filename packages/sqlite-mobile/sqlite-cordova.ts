@@ -13,6 +13,7 @@ import {
 } from "@saltcorn/db-common/internal";
 import {
   buildInsertSql,
+  buildInsertBulkSql,
   doCount,
   doDeleteWhere,
   mkVal,
@@ -98,6 +99,24 @@ export const insert = async (
   await query(sql, valList);
   const ids = await query("SELECT last_insert_rowid() as id");
   return ids.rows[0].id;
+};
+
+/**
+ * Insert multiple rows
+ * @param tbl
+ * @param rows
+ * @param opts
+ */
+export const insertRows = async (
+  tbl: string,
+  rows: Row[],
+  opts: { noid?: boolean; ignoreExisting?: boolean; replace?: boolean } = {}
+): Promise<void> => {
+  if (rows.length === 0) return;
+  const bulkCmds = buildInsertBulkSql(tbl, rows, opts);
+  for (const { sql, vals } of bulkCmds) {
+    await query(sql, vals);
+  }
 };
 
 /**

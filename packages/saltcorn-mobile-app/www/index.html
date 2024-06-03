@@ -292,70 +292,70 @@
 
       // device is ready
       const init = async () => {
-        document.addEventListener("resume", onResume, false);
-        const config = await readJSON(
-          "config",
-          `${cordova.file.applicationDirectory}www`
-        );
-        const { created_at } = await readJSON(
-          "tables_created_at.json",
-          `${cordova.file.applicationDirectory}${"www"}`
-        );
-        let tablesJSON = null;
-        await addScripts(config.version_tag);
-        saltcorn.data.db.connectObj.version_tag = config.version_tag;
-        await saltcorn.data.db.init();
-        const updateNeeded = await dbUpdateNeeded(created_at);
-        if (updateNeeded) {
-          tablesJSON = await readJSON(
-            "tables.json",
+        try {
+          document.addEventListener("resume", onResume, false);
+          const config = await readJSON(
+            "config",
+            `${cordova.file.applicationDirectory}www`
+          );
+          const { created_at } = await readJSON(
+            "tables_created_at.json",
             `${cordova.file.applicationDirectory}${"www"}`
           );
-          // update '_sc_plugins' first because of loadPlugins()
-          await updateScPlugins(tablesJSON);
-        }
-        saltcorn.data.state.features.version_plugin_serve_path = false;
-        const state = saltcorn.data.state.getState();
-        state.mobileConfig = config;
-        state.registerPlugin("base", saltcorn.base_plugin);
-        state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
-        collectPluginHeaders(await loadPlugins(state));
-        if (updateNeeded) {
-          if (!tablesJSON)
+          let tablesJSON = null;
+          await addScripts(config.version_tag);
+          saltcorn.data.db.connectObj.version_tag = config.version_tag;
+          await saltcorn.data.db.init();
+          const updateNeeded = await dbUpdateNeeded(created_at);
+          if (updateNeeded) {
             tablesJSON = await readJSON(
               "tables.json",
               `${cordova.file.applicationDirectory}${"www"}`
             );
-          await updateDb(tablesJSON);
-        }
-        await createSyncInfoTables(config.synchedTables);
-        await initJwt();
-        await state.refresh_tables();
-        await state.refresh_views();
-        await state.refresh_pages();
-        await state.refresh_page_groups();
-        state.mobileConfig.localTableIds = await getTableIds(
-          config.localUserTables
-        );
-        await state.setConfig("base_url", config.server_path);
-        await initRoutes();
-        const entryPoint = config.entry_point;
-        await initI18Next();
-        await readSiteLogo(state);
-        state.mobileConfig.networkState = navigator.connection.type;
-        document.addEventListener(
-          "offline",
-          offlineHelper.offlineCallback,
-          false
-        );
-        document.addEventListener(
-          "online",
-          offlineHelper.onlineCallback,
-          false
-        );
-        const networkDisabled = state.mobileConfig.networkState === "none";
-        const jwt = state.mobileConfig.jwt;
-        try {
+            // update '_sc_plugins' first because of loadPlugins()
+            await updateScPlugins(tablesJSON);
+          }
+          saltcorn.data.state.features.version_plugin_serve_path = false;
+          const state = saltcorn.data.state.getState();
+          state.mobileConfig = config;
+          state.registerPlugin("base", saltcorn.base_plugin);
+          state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
+          collectPluginHeaders(await loadPlugins(state));
+          if (updateNeeded) {
+            if (!tablesJSON)
+              tablesJSON = await readJSON(
+                "tables.json",
+                `${cordova.file.applicationDirectory}${"www"}`
+              );
+            await updateDb(tablesJSON);
+          }
+          await createSyncInfoTables(config.synchedTables);
+          await initJwt();
+          await state.refresh_tables();
+          await state.refresh_views();
+          await state.refresh_pages();
+          await state.refresh_page_groups();
+          state.mobileConfig.localTableIds = await getTableIds(
+            config.localUserTables
+          );
+          await state.setConfig("base_url", config.server_path);
+          await initRoutes();
+          const entryPoint = config.entry_point;
+          await initI18Next();
+          await readSiteLogo(state);
+          state.mobileConfig.networkState = navigator.connection.type;
+          document.addEventListener(
+            "offline",
+            offlineHelper.offlineCallback,
+            false
+          );
+          document.addEventListener(
+            "online",
+            offlineHelper.onlineCallback,
+            false
+          );
+          const networkDisabled = state.mobileConfig.networkState === "none";
+          const jwt = state.mobileConfig.jwt;
           const alerts = [];
           if ((networkDisabled && jwt) || (await checkJWT(jwt))) {
             const mobileConfig = state.mobileConfig;
@@ -445,8 +445,19 @@
             await publicLogin(entryPoint);
           } else await showLogin(alerts);
         } catch (error) {
-          if (error.httpCode === 401) await showLogin([]);
-          else await showErrorPage(error);
+          if (
+            typeof saltcorn === "undefined" ||
+            typeof router === "undefined"
+          ) {
+            const msg = `An error occured: ${
+              error.message ? error.message : "Unknown error"
+            }`;
+            console.log(msg);
+            alert(msg);
+          } else {
+            if (error.httpCode === 401) await showLogin([]);
+            else await showErrorPage(error);
+          }
         }
       };
 

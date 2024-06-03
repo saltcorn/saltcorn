@@ -3,6 +3,7 @@
   <name>SaltcornMobileApp</name>
   <description>Apache Cordova application with @saltcorn/markup</description>
   <platform name="android">
+    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/screen/android/splash-icon.png"/>
     <icon density="ldpi" foreground="res/icon/android/icon.png" background="res/icon/android/icon.png" />
     <edit-config file="app/src/main/AndroidManifest.xml" target="/manifest/application" mode="merge">
       <application android:usesCleartextTraffic="true"/>
@@ -17,6 +18,7 @@
   </platform>
   <platform name="ios">
     <preference name="deployment-target" value="12.0"/>
+    <splash src="res/screen/ios/Default@2x~universal~anyany.png" />
   </platform>
   <content src="index.html"/>
   <access origin="*"/>
