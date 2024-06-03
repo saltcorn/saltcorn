@@ -9,17 +9,15 @@ const { createWriteStream, unlink } = require("fs");
 const { get } = require("https");
 const npmFetch = require("npm-registry-fetch");
 
-const rootFolder = process.cwd();
-
-const downloadFromGithub = async (plugin, pluginDir) => {
+const downloadFromGithub = async (plugin, rootFolder, pluginDir) => {
   const tarballUrl = `https://api.github.com/repos/${plugin.location}/tarball`;
   const fileName = plugin.name.split("/").pop();
-  const filePath = await loadTarball(tarballUrl, fileName);
+  const filePath = await loadTarball(rootFolder, tarballUrl, fileName);
   await mkdir(pluginDir, { recursive: true });
   await extractTarball(filePath, pluginDir);
 };
 
-const downloadFromNpm = async (plugin, pluginDir, pckJson) => {
+const downloadFromNpm = async (plugin, rootFolder, pluginDir, pckJson) => {
   const pkgInfo = await npmFetch.json(
     `https://registry.npmjs.org/${plugin.location}`
   );
@@ -32,14 +30,14 @@ const downloadFromNpm = async (plugin, pluginDir, pckJson) => {
   else {
     const tarballUrl = pkgInfo.versions[vToInstall].dist.tarball;
     const fileName = plugin.name.split("/").pop();
-    const filePath = await loadTarball(tarballUrl, fileName);
+    const filePath = await loadTarball(rootFolder, tarballUrl, fileName);
     await mkdir(pluginDir, { recursive: true });
     await extractTarball(filePath, pluginDir);
     return true;
   }
 };
 
-const loadTarball = (url, name) => {
+const loadTarball = (rootFolder, url, name) => {
   const options = {
     headers: {
       "User-Agent": "request",
@@ -125,12 +123,12 @@ const extractTarball = async (tarFile, destination) => {
   });
 };
 
-const tarballExists = async (plugin) => {
+const tarballExists = async (rootFolder, plugin) => {
   const fileName = `${plugin.name.split("/").pop()}.tar.gz`;
   return await pathExists(join(rootFolder, "plugins_folder", fileName));
 };
 
-const removeTarball = async (plugin) => {
+const removeTarball = async (rootFolder, plugin) => {
   const fileName = `${plugin.name.split("/").pop()}.tar.gz`;
   await rm(join(rootFolder, "plugins_folder", fileName));
 };

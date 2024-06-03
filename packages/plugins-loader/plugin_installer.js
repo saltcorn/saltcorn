@@ -39,7 +39,8 @@ const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
 class PluginInstaller {
   constructor(plugin, opts = {}) {
     this.plugin = plugin;
-    this.rootFolder = opts.rootFolder || process.cwd();
+    this.rootFolder =
+      opts.rootFolder || envPaths("saltcorn", { suffix: "plugins" }).data;
     this.tempRootFolder =
       opts.tempRootFolder || envPaths("saltcorn", { suffix: "tmp" }).temp;
     const tokens =
@@ -75,7 +76,8 @@ class PluginInstaller {
         )
           await this.npmInstall(tmpPckJSON);
         await this.movePlugin();
-        if (await tarballExists(this.plugin)) await removeTarball(this.plugin);
+        if (await tarballExists(this.rootFolder, this.plugin))
+          await removeTarball(this.rootFolder, this.plugin);
       }
       pckJSON = await readPackageJson(this.pckJsonPath);
     };
@@ -123,18 +125,23 @@ class PluginInstaller {
           (force && !(await this.versionIsInstalled(pckJSON))) ||
           !folderExists
         ) {
-          wasLoaded = await downloadFromNpm(this.plugin, this.tempDir, pckJSON);
+          wasLoaded = await downloadFromNpm(
+            this.plugin,
+            this.rootFolder,
+            this.tempDir,
+            pckJSON
+          );
         }
         break;
       case "github":
         if (force || !folderExists) {
-          await downloadFromGithub(this.plugin, this.tempDir);
+          await downloadFromGithub(this.plugin, this.rootFolder, this.tempDir);
           wasLoaded = true;
         }
         break;
       case "local":
         if (force || !folderExists) {
-          await copy(this.plugin.location, this.tempDir);
+          await copy(this.plugin.location, this.rootFolder, this.tempDir);
           wasLoaded = true;
         }
         break;
@@ -153,7 +160,8 @@ class PluginInstaller {
     const isWindows = process.platform === "win32";
     const ensureFn = async (folder) => {
       const pluginsFolder = join(this.rootFolder, folder);
-      if (!(await pathExists(pluginsFolder))) await mkdir(pluginsFolder);
+      if (!(await pathExists(pluginsFolder)))
+        await mkdir(pluginsFolder, { recursive: true });
       const symLinkDst = join(pluginsFolder, "node_modules");
       const symLinkSrc = (await isGitCheckout())
         ? join(__dirname, "..", "..", "node_modules")
