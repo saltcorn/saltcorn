@@ -4,6 +4,7 @@ import Table from "@saltcorn/data/models/table";
 import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
 import View from "@saltcorn/data/models/view";
 import File from "@saltcorn/data/models/file";
+import Crash from "@saltcorn/data/models/crash";
 import Field from "@saltcorn/data/models/field";
 import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
@@ -635,6 +636,10 @@ const auto_backup_now = async () => {
         await auto_backup_now_tenant(state);
       } catch (e) {
         console.error(e);
+        await Crash.create(e, {
+          url: `Scheduler auto backup for tenant`,
+          headers: {},
+        });
       }
     });
   else await auto_backup_now_tenant(state);
