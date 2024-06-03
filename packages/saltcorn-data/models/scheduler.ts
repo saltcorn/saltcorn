@@ -242,6 +242,7 @@ const runScheduler = async ({
         (auto_backup_freq === "Daily" && isDaily) ||
         (auto_backup_freq === "Weekly" && isWeekly)
       ) {
+        getState().log(5, `Auto backup now`);
         await auto_backup_now();
       }
     } catch (e) {
