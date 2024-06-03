@@ -92,7 +92,6 @@ const loadTarball = (rootFolder, url, name) => {
  * @param plugin
  */
 const gitPullOrClone = async (plugin, pluginDir) => {
-  await fs.promises.mkdir("git_plugins", { recursive: true });
   let keyfnm,
     setKey = `-c core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no'" `;
   if (plugin.deploy_private_key) {
