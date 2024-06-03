@@ -559,7 +559,9 @@ const delete_old_backups = async () => {
  * Do autobackup now
  */
 const auto_backup_now_tenant = async (state: any) => {
+  state.log(6, `Creating backup file`);
   const fileName = await create_backup();
+  state.log(6, `Created backup file with name ${fileName}`);
 
   const destination = state.getConfig(
     "auto_backup_destination",
@@ -567,6 +569,7 @@ const auto_backup_now_tenant = async (state: any) => {
   );
   const directory = state.getConfig("auto_backup_directory", "");
   if (directory === null) throw new Error("Directory is unspecified");
+  state.log(6, `Backup to destination`);
 
   switch (destination) {
     case "Saltcorn files":
@@ -612,7 +615,9 @@ const auto_backup_now_tenant = async (state: any) => {
         state.getConfig("auto_backup_directory", ""),
         basename(fileName)
       );
-      await sftp.put(data, remote);
+      const putres = await sftp.put(data, remote);
+      state.log(6, `SFTP Put response: ${putres}`);
+
       await sftp.end();
       const retain_dir = state.getConfig("auto_backup_retain_local_directory");
       if (retain_dir) {
