@@ -141,7 +141,7 @@ class PluginInstaller {
         break;
       case "local":
         if (force || !folderExists) {
-          await copy(this.plugin.location, this.rootFolder, this.tempDir);
+          await copy(this.plugin.location, this.tempDir);
           wasLoaded = true;
         }
         break;
