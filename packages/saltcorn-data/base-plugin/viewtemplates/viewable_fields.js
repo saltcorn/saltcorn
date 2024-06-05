@@ -7,7 +7,7 @@ const { post_btn } = require("@saltcorn/markup");
 const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
 const { link_view, displayType } = require("../../plugin-helper");
-const { eval_expression } = require("../../models/expression");
+const { eval_expression, freeVariables } = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
@@ -125,14 +125,14 @@ const action_link = (
   if (url.javascript)
     return a(
       {
-        href: "javascript:" + url.javascript,
+        href: "javascript:void(0)",
+        onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}`,
         class:
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
         title: action_title,
-        onclick: spinner ? "spin_action_link(this)" : undefined,
       },
       action_icon && action_icon !== "empty"
         ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
@@ -1405,6 +1405,19 @@ const getForm = async (
     container(segment) {
       if (segment.showIfFormula) {
         segment.showIfFormulaInputs = segment.showIfFormula;
+        const fvs = [...freeVariables(segment.showIfFormula)];
+        const jfFvs = fvs.filter(
+          (fv) => fv.includes(".") && !fv.startsWith("user.")
+        );
+        if (jfFvs.length)
+          segment.showIfFormulaJoinFields = jfFvs.map((jf) => {
+            const [ref, target] = jf.split(".");
+            return {
+              ref,
+              target,
+              refTable: table.getField(ref).reftable_name,
+            };
+          });
       }
     },
   });

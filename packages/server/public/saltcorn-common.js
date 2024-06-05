@@ -428,7 +428,7 @@ function get_form_record(e_in, select_labels) {
 
   const e = e_in.viewname
     ? $(`form[data-viewname="${e_in.viewname}"]`)
-    : e_in.closest(".form-namespace");
+    : $(e_in).closest(".form-namespace");
 
   const form = $(e).closest("form");
 
@@ -462,6 +462,38 @@ function get_form_record(e_in, select_labels) {
       rec[name] = f(rec[name], $this);
     }
   });
+
+  const joinFieldsStr =
+    typeof e_in !== "string" && $(e_in).attr("data-show-if-joinfields");
+  if (joinFieldsStr) {
+    const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
+
+    const joinVals = $(e_in).prop("data-join-values");
+    const kvals = $(e_in).prop("data-join-key-values") || {};
+    let differentKeys = false;
+    for (const { ref } of joinFields) {
+      if (rec[ref] != kvals[ref]) differentKeys = true;
+    }
+    if (!joinVals || differentKeys) {
+      $(e_in).prop("data-join-values", {});
+      const keyVals = {};
+      for (const { ref, target, refTable } of joinFields) {
+        keyVals[ref] = rec[ref];
+        $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
+          success: (val) => {
+            const jvs = $(e_in).prop("data-join-values") || {};
+
+            jvs[ref] = val.success[0];
+            $(e_in).prop("data-join-values", jvs);
+            apply_showif();
+          },
+        });
+      }
+      $(e_in).prop("data-join-key-values", keyVals);
+    } else if (joinFieldsStr) {
+      Object.assign(rec, joinVals);
+    }
+  }
   return rec;
 }
 function showIfFormulaInputs(e, fml) {
@@ -1219,7 +1251,13 @@ function restore_old_button(btnId) {
   btn.removeData("old-text");
 }
 
-async function common_done(res, viewname, isWeb = true) {
+async function common_done(res, viewnameOrElem, isWeb = true) {
+  const viewname =
+    typeof viewnameOrElem === "string"
+      ? viewnameOrElem
+      : $(viewnameOrElem)
+          .closest("[data-sc-embed-viewname]")
+          .attr("data-sc-embed-viewname");
   if (window._sc_loglevel > 4)
     console.log("ajax result directives", viewname, res);
   const handle = async (element, fn) => {
@@ -1231,15 +1269,15 @@ async function common_done(res, viewname, isWeb = true) {
     if (res.row && res.field_names) {
       const f = new Function(`viewname, row, {${res.field_names}}`, s);
       const evalres = await f(viewname, res.row, res.row);
-      if (evalres) await common_done(evalres, viewname, isWeb);
+      if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     } else if (res.row) {
       const f = new Function(`viewname, row`, s);
       const evalres = await f(viewname, res.row);
-      if (evalres) await common_done(evalres, viewname, isWeb);
+      if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     } else {
       const f = new Function(`viewname`, s);
       const evalres = await f(viewname);
-      if (evalres) await common_done(evalres, viewname, isWeb);
+      if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     }
   };
   if (res.notify) await handle(res.notify, notifyAlert);
@@ -1252,9 +1290,10 @@ async function common_done(res, viewname, isWeb = true) {
       notifyAlert({ type: "success", text: text })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
-    const form = $(
-      `form[data-viewname="${res.set_fields._viewname || viewname}"]`
-    );
+    const form =
+      typeof viewnameOrElem === "string"
+        ? $(`form[data-viewname="${res.set_fields._viewname || viewname}"]`)
+        : $(viewnameOrElem).closest("form[data-viewname]");
     if (form.length === 0 && set_state_fields) {
       // assume this is a filter
       set_state_fields(
