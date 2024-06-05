@@ -1250,7 +1250,13 @@ function restore_old_button(btnId) {
   btn.removeData("old-text");
 }
 
-async function common_done(res, viewname, isWeb = true) {
+async function common_done(res, viewnameOrElem, isWeb = true) {
+  const viewname =
+    typeof viewnameOrElem === "string"
+      ? viewnameOrElem
+      : $(viewnameOrElem)
+          .closest("[data-sc-embed-viewname]")
+          .attr("data-sc-embed-viewname");
   if (window._sc_loglevel > 4)
     console.log("ajax result directives", viewname, res);
   const handle = async (element, fn) => {
@@ -1262,15 +1268,15 @@ async function common_done(res, viewname, isWeb = true) {
     if (res.row && res.field_names) {
       const f = new Function(`viewname, row, {${res.field_names}}`, s);
       const evalres = await f(viewname, res.row, res.row);
-      if (evalres) await common_done(evalres, viewname, isWeb);
+      if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     } else if (res.row) {
       const f = new Function(`viewname, row`, s);
       const evalres = await f(viewname, res.row);
-      if (evalres) await common_done(evalres, viewname, isWeb);
+      if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     } else {
       const f = new Function(`viewname`, s);
       const evalres = await f(viewname);
-      if (evalres) await common_done(evalres, viewname, isWeb);
+      if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     }
   };
   if (res.notify) await handle(res.notify, notifyAlert);
@@ -1283,9 +1289,10 @@ async function common_done(res, viewname, isWeb = true) {
       notifyAlert({ type: "success", text: text })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
-    const form = $(
-      `form[data-viewname="${res.set_fields._viewname || viewname}"]`
-    );
+    const form =
+      typeof viewnameOrElem === "string"
+        ? $(`form[data-viewname="${res.set_fields._viewname || viewname}"]`)
+        : $(viewnameOrElem).closest("form[data-viewname]");
     if (form.length === 0 && set_state_fields) {
       // assume this is a filter
       set_state_fields(

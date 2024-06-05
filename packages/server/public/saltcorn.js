@@ -236,7 +236,13 @@ function reset_spinners() {
   });
 }
 
-function view_post(viewname, route, data, onDone, sendState) {
+function view_post(viewnameOrElem, route, data, onDone, sendState) {
+  const viewname =
+    typeof viewnameOrElem === "string"
+      ? viewnameOrElem
+      : $(viewnameOrElem)
+          .closest("[data-sc-embed-viewname]")
+          .attr("data-sc-embed-viewname");
   const query = sendState
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
@@ -254,7 +260,7 @@ function view_post(viewname, route, data, onDone, sendState) {
   })
     .done(function (res) {
       if (onDone) onDone(res);
-      ajax_done(res, viewname);
+      ajax_done(res, viewnameOrElem);
       reset_spinners();
     })
     .fail(function (res) {
