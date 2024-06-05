@@ -880,9 +880,16 @@ class State {
               "child_process",
               "path",
               "http",
+              "https",
               "crypto",
               "dns",
               "os",
+              "process",
+              "net",
+              "querystring",
+              "stream",
+              "url",
+              "zlib",
             ].includes(moduleName)
           ) {
             this.codeNPMmodules[moduleName] = require(moduleName);
