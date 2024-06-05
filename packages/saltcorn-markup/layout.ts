@@ -414,7 +414,7 @@ const render = ({
             onclick: segment.url
               ? isWeb
                 ? segment.url?.startsWith?.("javascript:")
-                  ? text_attr(segment.url)
+                  ? text_attr(segment.url.replace("javascript:", ""))
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
@@ -681,7 +681,7 @@ const render = ({
             onclick: segment.url
               ? isWeb
                 ? segment.url?.startsWith?.("javascript:")
-                  ? text_attr(segment.url)
+                  ? text_attr(segment.url.replace("javascript:", ""))
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
