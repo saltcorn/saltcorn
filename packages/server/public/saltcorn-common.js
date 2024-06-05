@@ -462,6 +462,25 @@ function get_form_record(e_in, select_labels) {
       rec[name] = f(rec[name], $this);
     }
   });
+  const joinVals = $(e_in).prop("data-join-values");
+  const joinFieldsStr = $(e_in).attr("data-show-if-joinfields");
+  if (joinFieldsStr && !joinVals) {
+    const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
+    $(e_in).prop("data-join-values", {});
+    for (const { ref, target, refTable } of joinFields) {
+      $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
+        success: (val) => {
+          const jvs = $(e_in).prop("data-join-values") || {};
+
+          jvs[ref] = val.success[0];
+          $(e_in).prop("data-join-values", jvs);
+          apply_showif();
+        },
+      });
+    }
+  } else if (joinFieldsStr) {
+    Object.assign(rec, joinVals);
+  }
   return rec;
 }
 function showIfFormulaInputs(e, fml) {

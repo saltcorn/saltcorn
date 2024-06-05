@@ -548,7 +548,7 @@ const render = ({
         renderTabs(
           segment,
           go,
-          (segment.serverRendered || !isWeb)
+          segment.serverRendered || !isWeb
             ? req?.query?.[segment.tabId || "_tab"]
             : undefined,
           hints
@@ -576,6 +576,7 @@ const render = ({
         minScreenWidth,
         maxScreenWidth,
         showIfFormulaInputs,
+        showIfFormulaJoinFields,
         show_for_owner,
         borderDirection,
         borderColor,
@@ -727,6 +728,13 @@ const render = ({
               ? {
                   "data-show-if": encodeURIComponent(
                     `showIfFormulaInputs(e, '${showIfFormulaInputs}')`
+                  ),
+                }
+              : {}),
+            ...(showIfFormulaJoinFields
+              ? {
+                  "data-show-if-joinfields": encodeURIComponent(
+                    JSON.stringify(showIfFormulaJoinFields)
                   ),
                 }
               : {}),
