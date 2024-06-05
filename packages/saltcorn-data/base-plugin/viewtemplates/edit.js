@@ -601,7 +601,7 @@ const transformForm = async ({
   await traverse(form.layout, {
     container(segment) {
       if (segment.click_action) {
-        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${segment.click_action}', ...get_form_record({viewname: '${viewname}'}) })`;
+        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
       }
     },
     async action(segment) {
