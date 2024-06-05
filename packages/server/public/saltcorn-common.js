@@ -462,24 +462,36 @@ function get_form_record(e_in, select_labels) {
       rec[name] = f(rec[name], $this);
     }
   });
-  const joinVals = $(e_in).prop("data-join-values");
-  const joinFieldsStr = $(e_in).attr("data-show-if-joinfields");
-  if (joinFieldsStr && !joinVals) {
-    const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
-    $(e_in).prop("data-join-values", {});
-    for (const { ref, target, refTable } of joinFields) {
-      $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
-        success: (val) => {
-          const jvs = $(e_in).prop("data-join-values") || {};
 
-          jvs[ref] = val.success[0];
-          $(e_in).prop("data-join-values", jvs);
-          apply_showif();
-        },
-      });
+  const joinFieldsStr = $(e_in).attr("data-show-if-joinfields");
+  if (joinFieldsStr) {
+    const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
+
+    const joinVals = $(e_in).prop("data-join-values");
+    const kvals = $(e_in).prop("data-join-key-values") || {};
+    let differentKeys = false;
+    for (const { ref } of joinFields) {
+      if (rec[ref] != kvals[ref]) differentKeys = true;
     }
-  } else if (joinFieldsStr) {
-    Object.assign(rec, joinVals);
+    if (!joinVals || differentKeys) {
+      $(e_in).prop("data-join-values", {});
+      const keyVals = {};
+      for (const { ref, target, refTable } of joinFields) {
+        keyVals[ref] = rec[ref];
+        $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
+          success: (val) => {
+            const jvs = $(e_in).prop("data-join-values") || {};
+
+            jvs[ref] = val.success[0];
+            $(e_in).prop("data-join-values", jvs);
+            apply_showif();
+          },
+        });
+      }
+      $(e_in).prop("data-join-key-values", keyVals);
+    } else if (joinFieldsStr) {
+      Object.assign(rec, joinVals);
+    }
   }
   return rec;
 }
