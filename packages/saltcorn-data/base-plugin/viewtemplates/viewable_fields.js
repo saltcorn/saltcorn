@@ -126,13 +126,13 @@ const action_link = (
     return a(
       {
         href: "javascript:void(0)",
+        onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}`,
         class:
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
         style,
         title: action_title,
-        onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}`,
       },
       action_icon && action_icon !== "empty"
         ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
