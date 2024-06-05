@@ -3445,7 +3445,10 @@ class Table implements AbstractTable {
     );
 
     //rename joinfields
-    if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {
+    if (
+      !opts?.disableRenames &&
+      Object.values(joinFields || {}).some((jf: any) => jf.rename_object)
+    ) {
       let f = (x: any) => x;
       Object.entries(joinFields || {}).forEach(([k, v]: any) => {
         if (v.rename_object) {

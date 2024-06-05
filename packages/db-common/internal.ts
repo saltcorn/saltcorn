@@ -656,6 +656,7 @@ export type JoinOptions = {
   aggregations?: { [nm: string]: AggregationOptions };
   where: any;
   starFields?: boolean;
+  disableRenames?: boolean;
 } & SelectOptions;
 
 export type AggregationOptions = {
