@@ -540,7 +540,7 @@ describe("Edit view field onchange", () => {
     const vres0 = await v.run({}, mockReqRes);
     expect(vres0).toContain("<form");
     expect(vres0).toContain(
-      `onChange="view_post('OnChangeEdit', 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record({viewname: 'OnChangeEdit'}) })"`
+      `onChange="view_post(this, 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record(this) })"`
     );
   });
   it("should run route", async () => {
