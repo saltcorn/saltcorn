@@ -428,7 +428,7 @@ function get_form_record(e_in, select_labels) {
 
   const e = e_in.viewname
     ? $(`form[data-viewname="${e_in.viewname}"]`)
-    : e_in.closest(".form-namespace");
+    : $(e_in).closest(".form-namespace");
 
   const form = $(e).closest("form");
 
@@ -463,7 +463,8 @@ function get_form_record(e_in, select_labels) {
     }
   });
 
-  const joinFieldsStr = $(e_in).attr("data-show-if-joinfields");
+  const joinFieldsStr =
+    typeof e_in !== "string" && $(e_in).attr("data-show-if-joinfields");
   if (joinFieldsStr) {
     const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
 

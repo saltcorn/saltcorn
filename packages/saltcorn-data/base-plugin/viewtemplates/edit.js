@@ -667,7 +667,7 @@ const transformForm = async ({
             ? `if(confirm('Are you sure?'))`
             : "";
 
-          url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record({viewname: '${viewname}'})});`;
+          url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
         }
         segment.action_link = action_link(url, req, segment);
       }
