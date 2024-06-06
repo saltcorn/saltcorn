@@ -127,7 +127,7 @@ router.get(
     else {
       const qs = "";
       const contents =
-        typeof contents0 === "string" && !req.xhr
+        typeof contents0 === "string"
           ? div(
               {
                 class: "d-inline",
