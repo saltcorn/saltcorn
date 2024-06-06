@@ -1291,7 +1291,7 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
     const form =
-      typeof viewnameOrElem === "string"
+      typeof viewnameOrElem === "string" // || res.set_fields._viewname
         ? $(`form[data-viewname="${res.set_fields._viewname || viewname}"]`)
         : $(viewnameOrElem).closest("form[data-viewname]");
     if (form.length === 0 && set_state_fields) {
@@ -1321,6 +1321,7 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
         input.trigger("set_form_field");
       });
     }
+    form.trigger("change");
   }
 
   if (res.download) {
