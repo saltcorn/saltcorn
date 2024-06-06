@@ -1413,7 +1413,7 @@ const getForm = async (
           segment.showIfFormulaJoinFields = jfFvs.map((jf) => {
             const [ref, target] = jf.split(".");
             return {
-              ref,
+              ref: ref.replace("?", ""),
               target,
               refTable: table.getField(ref).reftable_name,
             };
