@@ -727,7 +727,10 @@ const render = ({
             ...(showIfFormulaInputs
               ? {
                   "data-show-if": encodeURIComponent(
-                    `showIfFormulaInputs(e, '${showIfFormulaInputs}')`
+                    `showIfFormulaInputs(e, '${showIfFormulaInputs.replaceAll(
+                      "'",
+                      "\\'"
+                    )}')`
                   ),
                 }
               : {}),
