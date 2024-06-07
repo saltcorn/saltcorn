@@ -872,7 +872,7 @@ const transformForm = async ({
             `Extra state formula for embedding view ${view.name}`
           )
         : {};
-      const qs = stateToQueryString({ ...state, ...extra_state });
+      const qs = stateToQueryString({ ...state, ...extra_state }, true);
       segment.contents = div(
         {
           class: "d-inline",

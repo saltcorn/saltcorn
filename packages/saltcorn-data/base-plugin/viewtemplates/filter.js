@@ -381,7 +381,7 @@ const run = async (
         : {};
       if (segment.state === "local") {
         const state1 = { ...extra_state };
-        const qs = stateToQueryString(state1);
+        const qs = stateToQueryString(state1, true);
 
         segment.contents = div(
           {
@@ -393,7 +393,7 @@ const run = async (
         );
       } else {
         const state1 = { ...state, ...extra_state };
-        const qs = stateToQueryString(state1);
+        const qs = stateToQueryString(state1, true);
 
         segment.contents = div(
           {
