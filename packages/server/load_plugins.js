@@ -141,7 +141,11 @@ const loadAndSaveNewPlugin = async (
     const existing = await Plugin.findOne({ location: loc });
     if (!existing && loc !== plugin.location) {
       await loadAndSaveNewPlugin(
-        new Plugin({ name: loc, location: loc, source: "npm" }),
+        new Plugin({
+          name: loc.replace("@saltcorn/", ""),
+          location: loc,
+          source: "npm",
+        }),
         force,
         noSignalOrDB
       );
