@@ -1128,7 +1128,7 @@ describe("Page", () => {
             view: "authorshow",
             state: "fixed",
             contents:
-              '<div class="d-inline" data-sc-embed-viewname="authorshow" data-sc-view-source="/view/authorshow?">Herman Melville</div>',
+              '<div class="d-inline" data-sc-embed-viewname="authorshow" data-sc-view-source="/view/authorshow?id=1">Herman Melville</div>',
           },
         ],
       },
