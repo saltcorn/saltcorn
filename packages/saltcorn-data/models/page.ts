@@ -256,7 +256,7 @@ class Page implements AbstractPage {
           ...querystate,
           ...extra_state,
         });
-        const qs = stateToQueryString(mystate);
+        const qs = stateToQueryString(mystate, true);
         segment.contents = div(
           {
             class: "d-inline",
@@ -270,7 +270,7 @@ class Page implements AbstractPage {
           ...querystate,
           ...extra_state,
         });
-        const qs = stateToQueryString(mystate);
+        const qs = stateToQueryString(mystate, true);
         segment.contents = div(
           {
             class: "d-inline",
@@ -286,7 +286,7 @@ class Page implements AbstractPage {
         const filled = await fill_presets(table, extraArgs.req, state);
 
         const mystate = view.combine_state_and_default_state(filled || {});
-        const qs = stateToQueryString(mystate);
+        const qs = stateToQueryString(mystate, true);
 
         Object.assign(mystate, extra_state);
         segment.contents = div(

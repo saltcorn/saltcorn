@@ -557,7 +557,7 @@ const renderRows = async (
         //console.log(segment);
         if (segment.state === "local") {
           const state2 = { ...state1, ...extra_state };
-          const qs = stateToQueryString(state2);
+          const qs = stateToQueryString(state2, true);
           if (
             view.name === viewname &&
             JSON.stringify(state) === JSON.stringify(state2)
@@ -575,7 +575,7 @@ const renderRows = async (
           );
         } else {
           const state2 = { ...outerState, ...state1, ...extra_state };
-          const qs = stateToQueryString(state2);
+          const qs = stateToQueryString(state2, true);
 
           if (
             view.name === viewname &&

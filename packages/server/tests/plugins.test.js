@@ -137,8 +137,10 @@ describe("Plugin dependency resolution and upgrade", () => {
       .expect(toRedirect("/plugins"));
     const quill = await Plugin.findOne({ name: "quill-editor" });
     expect(quill.location).toBe("@saltcorn/quill-editor");
+    expect(quill.name).toBe("quill-editor");
     const html = await Plugin.findOne({ location: "@saltcorn/html" });
     expect(html.location).toBe("@saltcorn/html");
+    expect(html.name).toBe("html");
     const html_type = getState().types.HTML;
     expect(!!html_type.fieldviews.Quill).toBe(true);
   });
