@@ -114,9 +114,20 @@ const configuration_workflow = (req) =>
               {
                 name: "view_to_create",
                 label: req.__("Use view to create"),
-                sublabel: req.__(
-                  "If user has write permission.  Leave blank to have no link to create a new item"
-                ),
+                sublabel:
+                  req.__(
+                    "If user has write permission.  Leave blank to have no link to create a new item"
+                  ) +
+                  ". " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/viewedit/config/\${view_to_create}\``,
+                      "data-show-if":
+                        "showIfFormulaInputs($('select[name=view_to_create]'), 'view_to_create')",
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
                 type: "String",
                 attributes: {
                   options: create_view_opts,
