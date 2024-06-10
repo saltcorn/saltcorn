@@ -1315,7 +1315,12 @@ router.get(
       await upgrade_all_tenants_plugins((p, f) =>
         load_plugins.loadPlugin(p, f)
       );
-      req.flash("success", req.__(`Modules up-to-date. Please restart server`));
+      req.flash(
+        "success",
+        req.__(`Modules up-to-date. Please restart server`) +
+          ". " +
+          a({ href: "/admin/system" }, req.__("Restart here"))
+      );
     } else {
       const installed_plugins = await Plugin.find({});
       for (const plugin of installed_plugins) {
