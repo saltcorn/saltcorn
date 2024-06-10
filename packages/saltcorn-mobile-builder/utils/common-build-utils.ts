@@ -140,6 +140,8 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
       { size: 40, scale: 2, idiom: "iphone" },
       { size: 57, scale: 1, idiom: "iphone" },
       { size: 60, scale: 2, idiom: "iphone" },
+      { size: 76, scale: 2, idiom: "ipad" },
+      { size: 83.5, scale: 2, idiom: "ipad" },
       { size: 1024, scale: 1, idiom: "ios-marketing" },
     ]) {
       const scaledSize = size * scale;
