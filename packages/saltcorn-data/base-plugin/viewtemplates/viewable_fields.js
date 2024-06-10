@@ -1421,7 +1421,7 @@ const getForm = async (
                 refTable: refField.reftable_name,
               };
             })
-            .map(Boolean);
+            .filter(Boolean);
       }
     },
   });
