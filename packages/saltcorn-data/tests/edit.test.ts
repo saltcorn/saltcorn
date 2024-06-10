@@ -1186,7 +1186,7 @@ describe("Edit view components", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain('data-show-if="showIfFormulaInputs(');
-    expect(vres1).toContain("data-show-if-joinfields");
+    expect(vres1).toContain('data-show-if-joinfields="%5B%7B%22ref%22%3A%22');
     const vres0 = await view.run({}, mockReqRes);
     expect(vres0).not.toContain("patientlist");
   });
