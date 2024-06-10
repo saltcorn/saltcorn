@@ -14,7 +14,7 @@ const {
 } = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
 const { hash } = require("@saltcorn/data/utils");
-const { input, script, domReady } = require("@saltcorn/markup/tags");
+const { input, script, domReady, a } = require("@saltcorn/markup/tags");
 const session = require("express-session");
 const cookieSession = require("cookie-session");
 const is = require("contractis/is");
@@ -398,7 +398,10 @@ const admin_config_route = ({
           if (restart_required)
             res.json({
               success: "ok",
-              notify: req.__("Restart required for changes to take effect."),
+              notify:
+                req.__("Restart required for changes to take effect.") +
+                " " +
+                a({ href: "/admin/system" }, req.__("Restart here")),
             });
           else res.json({ success: "ok" });
         }

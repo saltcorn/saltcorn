@@ -1410,14 +1410,18 @@ const getForm = async (
           (fv) => fv.includes(".") && !fv.startsWith("user.")
         );
         if (jfFvs.length)
-          segment.showIfFormulaJoinFields = jfFvs.map((jf) => {
-            const [ref, target] = jf.split(".");
-            return {
-              ref: ref.replace("?", ""),
-              target,
-              refTable: table.getField(ref).reftable_name,
-            };
-          });
+          segment.showIfFormulaJoinFields = jfFvs
+            .map((jf) => {
+              const [ref, target] = jf.split(".");
+              const refField = table.getField(ref);
+              if (!refField) return null;
+              return {
+                ref: ref.replace("?", ""),
+                target,
+                refTable: refField.reftable_name,
+              };
+            })
+            .filter(Boolean);
       }
     },
   });

@@ -1106,6 +1106,90 @@ describe("Edit view components", () => {
     const vres0 = await view.run({}, mockReqRes);
     expect(vres0).not.toContain("patientlist");
   });
+  it("container showif on field", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+          contents: {
+            type: "blank",
+            block: false,
+            style: {},
+            inline: false,
+            contents: "LONG",
+          },
+          isFormula: {},
+          htmlElement: "div",
+          showForRole: [],
+          showIfFormula: "pages>500",
+          minScreenWidth: "",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('data-show-if="showIfFormulaInputs(');
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
+  it("container showif on row.field", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+          contents: {
+            type: "blank",
+            block: false,
+            style: {},
+            inline: false,
+            contents: "LONG",
+          },
+          isFormula: {},
+          htmlElement: "div",
+          showForRole: [],
+          showIfFormula: "row.pages>500",
+          minScreenWidth: "",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('data-show-if="showIfFormulaInputs(');
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
+  it("container showif on joinfield", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+          contents: {
+            type: "blank",
+            block: false,
+            style: {},
+            inline: false,
+            contents: "LONG",
+          },
+          isFormula: {},
+          htmlElement: "div",
+          showForRole: [],
+          showIfFormula: "publisher.name==='AK Press'",
+          minScreenWidth: "",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('data-show-if="showIfFormulaInputs(');
+    expect(vres1).toContain('data-show-if-joinfields="%5B%7B%22ref%22%3A%22');
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
   it("embed view independent different table", async () => {
     const view = await mkViewWithCfg({
       configuration: {

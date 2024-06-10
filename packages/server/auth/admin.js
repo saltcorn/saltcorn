@@ -531,7 +531,10 @@ router.post(
         if (restart_required)
           res.json({
             success: "ok",
-            notify: req.__("Restart required for changes to take effect."),
+            notify:
+              req.__("Restart required for changes to take effect.") +
+              " " +
+              a({ href: "/admin/system" }, req.__("Restart here")),
           });
         else res.json({ success: "ok" });
       }
