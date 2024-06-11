@@ -484,7 +484,7 @@ const fieldFlow = (req) =>
                   .filter((f) => !f.calculated || f.stored)
                   .map((f) => ({
                     label: f.name,
-                    name: `${f.name}@${f.type_name}`,
+                    name: f.name,
                   })),
               },
               showIf: {
