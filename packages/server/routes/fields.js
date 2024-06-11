@@ -255,6 +255,7 @@ const fieldFlow = (req) =>
         expression = "__aggregation";
         attributes.agg_relation = context.agg_relation;
         attributes.agg_field = context.agg_field;
+        attributes.agg_order_by = context.agg_order_by;
         attributes.aggwhere = context.aggwhere;
         attributes.aggregate = context.aggregate;
         const [table, ref] = context.agg_relation.split(".");
@@ -435,46 +436,64 @@ const fieldFlow = (req) =>
 
           const { child_field_list, child_relations } =
             await table.get_child_relations(true);
-          const agg_field_opts = child_relations.map(
-            ({ table, key_field, through }) => {
-              const aggKey =
-                (through ? `${through.name}->` : "") +
-                `${table.name}.${key_field.name}`;
-              aggStatOptions[aggKey] = [
-                "Count",
-                "CountUnique",
-                "Avg",
-                "Sum",
-                "Max",
-                "Min",
-                "Array_Agg",
-              ];
-              table.fields.forEach((f) => {
-                if (f.type && f.type.name === "Date") {
-                  aggStatOptions[aggKey].push(`Latest ${f.name}`);
-                  aggStatOptions[aggKey].push(`Earliest ${f.name}`);
-                }
-              });
-              return {
-                name: `agg_field`,
-                label: req.__("On Field"),
-                type: "String",
-                required: true,
-                attributes: {
-                  options: table.fields
-                    .filter((f) => !f.calculated || f.stored)
-                    .map((f) => ({
-                      label: f.name,
-                      name: `${f.name}@${f.type_name}`,
-                    })),
-                },
-                showIf: {
-                  agg_relation: aggKey,
-                  expression_type: "Aggregation",
-                },
-              };
-            }
-          );
+          const agg_field_opts = [];
+          const agg_order_opts = [];
+          child_relations.forEach(({ table, key_field, through }) => {
+            const aggKey =
+              (through ? `${through.name}->` : "") +
+              `${table.name}.${key_field.name}`;
+            aggStatOptions[aggKey] = [
+              "Count",
+              "CountUnique",
+              "Avg",
+              "Sum",
+              "Max",
+              "Min",
+              "Array_Agg",
+            ];
+            table.fields.forEach((f) => {
+              if (f.type && f.type.name === "Date") {
+                aggStatOptions[aggKey].push(`Latest ${f.name}`);
+                aggStatOptions[aggKey].push(`Earliest ${f.name}`);
+              }
+            });
+            agg_field_opts.push({
+              name: `agg_field`,
+              label: req.__("On Field"),
+              type: "String",
+              required: true,
+              attributes: {
+                options: table.fields
+                  .filter((f) => !f.calculated || f.stored)
+                  .map((f) => ({
+                    label: f.name,
+                    name: `${f.name}@${f.type_name}`,
+                  })),
+              },
+              showIf: {
+                agg_relation: aggKey,
+                expression_type: "Aggregation",
+              },
+            });
+            agg_order_opts.push({
+              name: `agg_order_by`,
+              label: req.__("Order by"),
+              type: "String",
+              attributes: {
+                options: table.fields
+                  .filter((f) => !f.calculated || f.stored)
+                  .map((f) => ({
+                    label: f.name,
+                    name: `${f.name}@${f.type_name}`,
+                  })),
+              },
+              showIf: {
+                agg_relation: aggKey,
+                expression_type: "Aggregation",
+                aggregate: "Array_Agg",
+              },
+            });
+          });
           return new Form({
             fields: [
               {
@@ -520,6 +539,7 @@ const fieldFlow = (req) =>
                 required: false,
                 showIf: { expression_type: "Aggregation" },
               },
+              ...agg_order_opts,
               {
                 name: "model",
                 label: req.__("Model"),
