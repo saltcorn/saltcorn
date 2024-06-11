@@ -256,7 +256,7 @@ describe("Table get data", () => {
   it("should get joined rows with aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
-    const michaels = await patients.getJoinedRows({
+    const arg = {
       orderBy: "id",
       aggregations: {
         avg_temp: {
@@ -266,9 +266,14 @@ describe("Table get data", () => {
           aggregate: "avg",
         },
       },
-    });
+    };
+    const michaels = await patients.getJoinedRows(arg);
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
+    const { sql } = await patients.getJoinedQuery(arg);
+    expect(sql).toBe(
+      'SELECT a."favbook",a."id",a."name",a."parent",(select avg("temperature") from "public"."readings"  where "patient_id"=a."id") avg_temp FROM "public"."patients" a    order by "a"."id"'
+    );
   });
   it("should get joined rows with filtered aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
