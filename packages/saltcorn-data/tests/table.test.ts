@@ -313,20 +313,49 @@ describe("Table get data", () => {
   it("should get fkey aggregations", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
-    if (!db.isSQLite) {
-      const rows = await books.getJoinedRows({
-        orderBy: "id",
-        aggregations: {
-          fans: {
-            table: "patients",
-            ref: "favbook",
-            field: "parent",
-            aggregate: "array_agg",
-          },
+    const arg = {
+      orderBy: "id",
+      aggregations: {
+        fans: {
+          table: "patients",
+          ref: "favbook",
+          field: "parent",
+          aggregate: "array_agg",
         },
-      });
+      },
+    };
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows(arg);
       expect(rows.length).toStrictEqual(2);
       expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
+      const { sql } = await books.getJoinedQuery(arg);
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg(aggjoin."name") from "public"."patients" aggto join "public"."patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+      );
+    }
+  });
+  it("should get array aggregations", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const arg = {
+      orderBy: "id",
+      aggregations: {
+        fans: {
+          table: "patients",
+          ref: "favbook",
+          field: "name",
+          aggregate: "array_agg",
+        },
+      },
+    };
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows(arg);
+      expect(rows.length).toStrictEqual(2);
+      expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
+      const { sql } = await books.getJoinedQuery(arg);
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+      );
     }
   });
   it("should get join-aggregations", async () => {
