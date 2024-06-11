@@ -358,6 +358,31 @@ describe("Table get data", () => {
       );
     }
   });
+  it("should get array aggregations with order", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const arg = {
+      orderBy: "id",
+      aggregations: {
+        fans: {
+          table: "patients",
+          ref: "favbook",
+          field: "name",
+          aggregate: "array_agg",
+          orderBy: "id",
+        },
+      },
+    };
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows(arg);
+      expect(rows.length).toStrictEqual(2);
+      expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
+      const { sql } = await books.getJoinedQuery(arg);
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name" order by "id") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+      );
+    }
+  });
   it("should get join-aggregations", async () => {
     //how many books has my publisher published
     const books = Table.findOne({ name: "books" });
