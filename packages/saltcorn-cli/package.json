@@ -58,6 +58,7 @@
     "plugins": [
       "@oclif/plugin-help"
     ],
+    "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/saltcorn-cli/<%- commandPath %>",
     "topics": {
       "dev": {
         "description": "Tools for core and plugin developers"
