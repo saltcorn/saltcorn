@@ -1,4 +1,4 @@
-const sql_pg = `CREATE UNLOGGED TABLE _sc_notifications (
+const sql_pg = `CREATE UNLOGGED TABLE IF NOT EXISTS _sc_notifications (
   id serial primary key,
   created timestamptz NOT NULL,
   title text not null,

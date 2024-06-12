@@ -642,22 +642,19 @@ class Table implements AbstractTable {
   get santized_name() {
     return sqlsanitize(this.name);
   }
+
   /**
-   * Create table
-   * @param name - table name
-   * @param options - table fields
-   * @param id - optional id, if set, no '_sc_tables' entry is inserted
-   * @returns {Promise<Table>} table
+   * extract primary key type name from fields
+   * @param fields
    */
-  static async create(
-    name: string,
-    options: SelectOptions | TablePack = {}, //TODO not selectoptions
-    id?: number
-  ): Promise<Table> {
+  private static pkSqlType(fields?: any[]): {
+    pk_type: string;
+    pk_sql_type: string;
+  } {
     let pk_type: string = "Integer";
     let pk_sql_type = db.isSQLite ? "integer" : "serial";
-    if (options?.fields && Array.isArray(options.fields)) {
-      const pk_field = (options.fields as any).find?.(
+    if (fields && Array.isArray(fields)) {
+      const pk_field = (fields as any).find?.(
         (f: Field) => typeof f !== "string" && f?.primary_key
       );
       pk_type =
@@ -675,6 +672,22 @@ class Table implements AbstractTable {
       if (type.primaryKey?.default_sql)
         pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
     }
+    return { pk_type, pk_sql_type };
+  }
+
+  /**
+   * Create table
+   * @param name - table name
+   * @param options - table fields
+   * @param id - optional id, if set, no '_sc_tables' entry is inserted
+   * @returns {Promise<Table>} table
+   */
+  static async create(
+    name: string,
+    options: SelectOptions | TablePack = {}, //TODO not selectoptions
+    id?: number
+  ): Promise<Table> {
+    const { pk_type, pk_sql_type } = Table.pkSqlType(options.fields);
 
     const schema = db.getTenantSchemaPrefix();
     // create table in database
@@ -742,6 +755,45 @@ class Table implements AbstractTable {
     await require("../db/state").getState().refresh_tables();
 
     return table;
+  }
+
+  /**
+   * Create the table structure
+   * generates a CREATE TABLE cmd with all field and runs it
+   * TODO field defaults for pg
+   * @param table
+   */
+  static async createInDb(table: Table): Promise<void> {
+    const is_sqlite = db.isSQLite;
+    const schema = db.getTenantSchemaPrefix();
+    const { pk_sql_type } = Table.pkSqlType(table.fields);
+    const columnDefs = [`id ${pk_sql_type} primary key`];
+    for (const f of table.fields) {
+      if (f.primary_key) continue;
+      if (!f.calculated || f.stored) {
+        if (typeof f.attributes.default === "undefined") {
+          columnDefs.push(
+            `"${sqlsanitize(f.name)}" ${f.sql_type} ${
+              f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
+            }`
+          );
+        } else if (is_sqlite) {
+          columnDefs.push(
+            ` ${sqlsanitize(f.name)}  ${f.sql_type} ${
+              f.required
+                ? `not null default ${JSON.stringify(f.attributes.default)}`
+                : ""
+            } `
+          );
+        } else {
+          // TODO pg (only sqlite for the mobile app)
+        }
+      }
+    }
+    const sql = `CREATE TABLE ${schema}"${sqlsanitize(
+      table.name
+    )}" ( ${columnDefs.join(", ")})`;
+    await db.query(sql);
   }
 
   /**
@@ -1446,6 +1498,9 @@ class Table implements AbstractTable {
       else await this.insertSyncInfo(id, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
+
+    await this.auto_update_calc_aggregations(newRow, !existing);
+
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
         "Update",
@@ -1829,17 +1884,48 @@ class Table implements AbstractTable {
         );
       }
     }
+    const newRow = { [pk_name]: id, ...v };
+    await this.auto_update_calc_aggregations(newRow);
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
         "Insert",
         this,
-        { [pk_name]: id, ...v },
+        newRow,
         resultCollector,
         user
       );
       if (resultCollector) await trigPromise;
     }
     return id;
+  }
+
+  async auto_update_calc_aggregations(v0: Row, refetch?: boolean) {
+    const calc_agg_fields = await Field.find(
+      {
+        calculated: true,
+        stored: true,
+        expression: "__aggregation",
+        attributes: { json: { table: this.name } },
+      },
+      { cached: true }
+    );
+    let v = v0;
+    if (refetch && calc_agg_fields.length) {
+      v = (await this.getJoinedRow({
+        where: { [this.pk_name]: v0.id },
+      })) as Row;
+    }
+
+    for (const calc_field of calc_agg_fields) {
+      const refTable = Table.findOne({ id: calc_field.table_id });
+      if (!refTable || !v[calc_field.attributes.ref]) continue;
+      const rows = await refTable?.getRows({
+        [refTable.pk_name]: v[calc_field.attributes.ref],
+      });
+      for (const row of rows) {
+        await refTable?.updateRow({}, row[refTable.pk_name]);
+      }
+    }
   }
 
   /**

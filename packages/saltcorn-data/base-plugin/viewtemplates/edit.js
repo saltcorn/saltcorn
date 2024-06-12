@@ -601,7 +601,7 @@ const transformForm = async ({
   await traverse(form.layout, {
     container(segment) {
       if (segment.click_action) {
-        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${segment.click_action}', ...get_form_record({viewname: '${viewname}'}) })`;
+        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
       }
     },
     async action(segment) {
@@ -667,7 +667,7 @@ const transformForm = async ({
             ? `if(confirm('Are you sure?'))`
             : "";
 
-          url.javascript = `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}', ...get_form_record({viewname: '${viewname}'})});`;
+          url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
         }
         segment.action_link = action_link(url, req, segment);
       }
@@ -872,7 +872,7 @@ const transformForm = async ({
             `Extra state formula for embedding view ${view.name}`
           )
         : {};
-      const qs = stateToQueryString({ ...state, ...extra_state });
+      const qs = stateToQueryString({ ...state, ...extra_state }, true);
       segment.contents = div(
         {
           class: "d-inline",

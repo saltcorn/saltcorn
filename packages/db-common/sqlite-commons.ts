@@ -32,11 +32,11 @@ export type SqlAndValues = {
 };
 
 /**
- *
- * @param tbl
- * @param obj
- * @param opts
- * @returns
+ * Build a INSERT INTO sql statement for one row
+ * @param tbl table name
+ * @param obj row to insert
+ * @param opts noid, ignoreExisting, replace
+ * @returns sql string and values for the placeholders
  */
 export const buildInsertSql = (
   tbl: string,
@@ -69,6 +69,57 @@ export const buildInsertSql = (
     sql: sql,
     valList: valList,
   };
+};
+
+type SqlAndValuesBulk = {
+  sql: string;
+  vals: string[];
+};
+
+/**
+ * Build INSERT INTO sql statements for multiple rows
+ * The rows are grouped by fields that are the same
+ * @param tbl table name
+ * @param objs rows to insert
+ * @param opts noid, ignoreExisting, replace
+ * @returns an array of sql strings with values for the placeholders
+ */
+export const buildInsertBulkSql = (
+  tbl: string,
+  objs: Row[],
+  opts: { noid?: boolean; ignoreExisting?: boolean; replace?: boolean } = {}
+): Array<SqlAndValuesBulk> => {
+  const result = new Array<SqlAndValuesBulk>();
+  const ignoreExisting = opts.ignoreExisting ? "or ignore" : "";
+  const replace = opts.replace ? "or replace" : "";
+  // group rows by fields that are the same
+  const fieldsWithRows: any = {};
+  for (const obj of objs) {
+    const kvs = Object.entries(obj);
+    const fnames = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join(",");
+    const vals = kvs
+      .filter(([k, v]: [any, any]) => !(v && v.next_version_by_id))
+      .map(mkVal);
+    if (!fieldsWithRows[fnames])
+      fieldsWithRows[fnames] = {
+        valPattern: `(${kvs
+          .map(([k, v]) => (reprAsJson(v) ? "json(?)" : "?"))
+          .join()})`,
+        vals: [],
+        count: 0,
+      };
+    fieldsWithRows[fnames].vals.push(...vals);
+    fieldsWithRows[fnames].count++;
+  }
+
+  for (const [k, v] of Object.entries(fieldsWithRows)) {
+    const { valPattern, vals, count } = v as any;
+    const sql = `insert ${ignoreExisting} ${replace} into "${sqlsanitize(
+      tbl
+    )}" (${k}) values ${Array(count).fill(valPattern).join(",")}`;
+    result.push({ sql, vals });
+  }
+  return result;
 };
 
 /**

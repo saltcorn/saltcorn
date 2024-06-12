@@ -1,4 +1,4 @@
-const sql = `create table _sc_triggers (
+const sql = `create table IF NOT EXISTS  _sc_triggers (
     id serial primary key,
     action text NOT NULL,
     table_id integer references _sc_tables(id),    

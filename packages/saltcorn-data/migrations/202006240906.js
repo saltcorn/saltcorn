@@ -1,4 +1,4 @@
-const sql = `create table _sc_pages (
+const sql = `create table IF NOT EXISTS _sc_pages (
     id serial primary key,
     name text NOT NULL,
     title text NOT NULL,

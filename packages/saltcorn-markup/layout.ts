@@ -414,7 +414,7 @@ const render = ({
             onclick: segment.url
               ? isWeb
                 ? segment.url?.startsWith?.("javascript:")
-                  ? text_attr(segment.url)
+                  ? text_attr(segment.url.replace("javascript:", ""))
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
@@ -548,7 +548,7 @@ const render = ({
         renderTabs(
           segment,
           go,
-          (segment.serverRendered || !isWeb)
+          segment.serverRendered || !isWeb
             ? req?.query?.[segment.tabId || "_tab"]
             : undefined,
           hints
@@ -576,6 +576,7 @@ const render = ({
         minScreenWidth,
         maxScreenWidth,
         showIfFormulaInputs,
+        showIfFormulaJoinFields,
         show_for_owner,
         borderDirection,
         borderColor,
@@ -680,7 +681,7 @@ const render = ({
             onclick: segment.url
               ? isWeb
                 ? segment.url?.startsWith?.("javascript:")
-                  ? text_attr(segment.url)
+                  ? text_attr(segment.url.replace("javascript:", ""))
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
@@ -726,7 +727,17 @@ const render = ({
             ...(showIfFormulaInputs
               ? {
                   "data-show-if": encodeURIComponent(
-                    `showIfFormulaInputs(e, '${showIfFormulaInputs}')`
+                    `showIfFormulaInputs(e, '${showIfFormulaInputs.replaceAll(
+                      "'",
+                      "\\'"
+                    )}')`
+                  ),
+                }
+              : {}),
+            ...(showIfFormulaJoinFields
+              ? {
+                  "data-show-if-joinfields": encodeURIComponent(
+                    JSON.stringify(showIfFormulaJoinFields)
                   ),
                 }
               : {}),

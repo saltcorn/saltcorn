@@ -1710,11 +1710,14 @@ router.get(
         above: [
           {
             type: "card",
+            titleAjaxIndicator: true,
             title: req.__("Build mobile app"),
             contents: form(
               {
                 action: "/admin/build-mobile-app",
                 method: "post",
+                onchange: "builderMenuChanged(this)",
+                id: "buildMobileAppForm",
               },
 
               fieldset(
@@ -2178,19 +2181,21 @@ router.get(
                               class: "form-control form-select",
                               multiple: true,
                             },
-                            withSyncInfo.map((table) =>
-                              option({
-                                id: `${table.name}_unsynched_opt`,
-                                value: table.name,
-                                label: table.name,
-                                hidden:
-                                  builderSettings.synchedTables?.indexOf(
+                            withSyncInfo
+                              .filter(
+                                (table) =>
+                                  !builderSettings.synchedTables ||
+                                  builderSettings.synchedTables.indexOf(
                                     table.name
-                                  ) >= 0
-                                    ? true
-                                    : false,
-                              })
-                            )
+                                  ) < 0
+                              )
+                              .map((table) =>
+                                option({
+                                  id: `${table.name}_unsynched_opt`,
+                                  value: table.name,
+                                  label: table.name,
+                                })
+                              )
                           )
                         ),
                         div(
@@ -2228,19 +2233,20 @@ router.get(
                               class: "form-control form-select",
                               multiple: true,
                             },
-                            withSyncInfo.map((table) =>
-                              option({
-                                id: `${table.name}_synched_opt`,
-                                value: table.name,
-                                label: table.name,
-                                hidden:
+                            withSyncInfo
+                              .filter(
+                                (table) =>
                                   builderSettings.synchedTables?.indexOf(
                                     table.name
                                   ) >= 0
-                                    ? false
-                                    : true,
-                              })
-                            )
+                              )
+                              .map((table) =>
+                                option({
+                                  id: `${table.name}_synched_opt`,
+                                  value: table.name,
+                                  label: table.name,
+                                })
+                              )
                           )
                         )
                       )
@@ -2875,13 +2881,6 @@ router.post(
     ) {
       spawnParams.push("--tenantAppName", db.getTenantSchema());
     }
-    const excludedPlugins = (await Plugin.find())
-      .filter(
-        (plugin) =>
-          ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
-          includedPlugins.indexOf(plugin.name) < 0
-      )
-      .map((plugin) => plugin.name);
 
     if (buildType) spawnParams.push("--buildType", buildType);
     if (keystoreFile) spawnParams.push("--androidKeystore", keystoreFile);
@@ -2889,28 +2888,6 @@ router.post(
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
     if (keystorePassword)
       spawnParams.push("--androidKeystorePassword", keystorePassword);
-    await getState().setConfig("mobile_builder_settings", {
-      entryPoint,
-      entryPointType,
-      androidPlatform,
-      iOSPlatform,
-      useDocker,
-      appName,
-      appId,
-      appVersion,
-      appIcon,
-      serverURL,
-      splashPage,
-      autoPublicLogin,
-      allowOfflineMode,
-      synchedTables: synchedTables,
-      includedPlugins: includedPlugins,
-      excludedPlugins,
-      provisioningProfile,
-      keystoreFile,
-      keystoreAlias,
-      buildType,
-    });
     // end http call, return the out directory name
     // the gui polls for results
     res.json({ build_dir_name: outDirName });
@@ -3011,6 +2988,29 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     res.json(await checkXcodebuild());
+  })
+);
+
+router.post(
+  "/mobile-app/save-config",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    try {
+      const newCfg = { ...req.body };
+      const excludedPlugins = (await Plugin.find())
+        .filter(
+          (plugin) =>
+            ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
+            newCfg.includedPlugins.indexOf(plugin.name) < 0
+        )
+        .map((plugin) => plugin.name);
+      newCfg.excludedPlugins = excludedPlugins;
+      await getState().setConfig("mobile_builder_settings", newCfg);
+      res.json({ success: true });
+    } catch (e) {
+      getState().log(1, `Unable to save mobile builder config: ${e.message}`);
+      res.json({ error: e.message });
+    }
   })
 );
 

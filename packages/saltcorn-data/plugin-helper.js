@@ -150,14 +150,14 @@ const link_view = (
  * @param {object} [state]
  * @returns {string}
  */
-const stateToQueryString = (state) => {
+const stateToQueryString = (state, include_id) => {
   if (!state || Object.keys(state).length === 0) return "";
 
   return (
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        k === "id"
+        k === "id" && !include_id
           ? null
           : `${encodeURIComponent(k)}=${encodeURIComponent(
               k === "_relation_path_" && typeof v !== "string"

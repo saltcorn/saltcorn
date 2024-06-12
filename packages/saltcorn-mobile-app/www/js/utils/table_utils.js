@@ -21,28 +21,37 @@ async function dropDeletedTables(incomingTables) {
   }
 }
 
+/**
+ * pick fields that really exist
+ * @param {*} table
+ * @param {*} rows
+ * @returns
+ */
+async function safeRows(table, rows) {
+  const existingFields = (
+    await saltcorn.data.db.query(
+      `PRAGMA table_info('${saltcorn.data.db.sqlsanitize(table)}')`
+    )
+  ).rows.map((row) => row.name);
+  return rows.map((row) => {
+    const insertRow = {};
+    for (const safeField of existingFields) {
+      const fromRow = row[safeField];
+      if (fromRow !== null && fromRow !== undefined) {
+        insertRow[safeField] = fromRow;
+      }
+    }
+    return insertRow;
+  });
+}
+
 async function updateScTables(tablesJSON, skipScPlugins = true) {
   await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
   for (const { table, rows } of tablesJSON.sc_tables) {
     if (skipScPlugins && table === "_sc_plugins") continue;
     if (table === "_sc_tables") await dropDeletedTables(rows);
     await saltcorn.data.db.deleteWhere(table);
-    const existingFields = (
-      await saltcorn.data.db.query(
-        `PRAGMA table_info('${saltcorn.data.db.sqlsanitize(table)}')`
-      )
-    ).rows.map((row) => row.name);
-    for (const row of rows) {
-      // pick fields that really exist
-      const insertRow = {};
-      for (const safeField of existingFields) {
-        const fromRow = row[safeField];
-        if (fromRow !== null && fromRow !== undefined) {
-          insertRow[safeField] = fromRow;
-        }
-      }
-      await saltcorn.data.db.insert(table, insertRow);
-    }
+    await saltcorn.data.db.insertRows(table, await safeRows(table, rows));
   }
   await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
 }
@@ -66,18 +75,18 @@ async function updateUserDefinedTables() {
       table.name !== "users" &&
       !existingTables.find((row) => row.name === sanitized)
     ) {
-      // CREATE TABLE without inserting into _sc_tables
-      await saltcorn.data.models.Table.create(table.name, {}, table.id);
-    }
-    const existingFields = (
-      await saltcorn.data.db.query(`PRAGMA table_info('${sanitized}')`)
-    ).rows.map((row) => row.name);
-    for (const field of table.getFields()) {
-      if (
-        existingFields.indexOf(saltcorn.data.db.sqlsanitize(field.name)) < 0
-      ) {
-        // field is new
-        await saltcorn.data.models.Field.create(field, false, field.id);
+      await saltcorn.data.models.Table.createInDb(table);
+    } else {
+      const existingFields = (
+        await saltcorn.data.db.query(`PRAGMA table_info('${sanitized}')`)
+      ).rows.map((row) => row.name);
+      for (const field of table.getFields()) {
+        if (
+          existingFields.indexOf(saltcorn.data.db.sqlsanitize(field.name)) < 0
+        ) {
+          // field is new
+          await saltcorn.data.models.Field.create(field, false, field.id);
+        }
       }
     }
   }

@@ -441,9 +441,9 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
       {
         class: "btn btn-outline-secondary",
         type: "button",
-        onClick: `$('#${id}').val(Math.max(${
+        onClick: `$(this).next().val(Math.max(${
           isdef(attrs.min) ? attrs.min : "-Infinity"
-        },+$('#${id}').val()-1)).trigger('change');${attrs.onChange || ""}`,
+        },+$(this).next().val()-1)).trigger('change');${attrs.onChange || ""}`,
       },
       i({ class: "fas fa-minus" })
     ),
@@ -465,9 +465,9 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
       {
         class: "btn btn-outline-secondary",
         type: "button",
-        onClick: `$('#${id}').val(Math.min(${
+        onClick: `$(this).prev().val(Math.min(${
           isdef(attrs.max) ? attrs.max : "Infinity"
-        },+$('#${id}').val()+1)).trigger('change');${attrs.onChange || ""}`,
+        },+$(this).prev().val()+1)).trigger('change');${attrs.onChange || ""}`,
       },
       i({ class: "fas fa-plus" })
     )

@@ -1,4 +1,4 @@
-const sql_pg = `CREATE TABLE _sc_library (
+const sql_pg = `CREATE TABLE IF NOT EXISTS  _sc_library (
     id serial primary key,
     name text NOT NULL UNIQUE,
     icon text,

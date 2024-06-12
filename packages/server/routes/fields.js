@@ -1156,7 +1156,8 @@ router.post(
       if (!fv) res.send(text(result));
       else res.send(fv.run(result, req, { row, ...configuration }));
     } catch (e) {
-      return res.status(400).send(`Error: ${e.message}`);
+      console.error("show-calculated error", e);
+      return res.status(200).send(``);
     }
   })
 );

@@ -236,7 +236,13 @@ function reset_spinners() {
   });
 }
 
-function view_post(viewname, route, data, onDone, sendState) {
+function view_post(viewnameOrElem, route, data, onDone, sendState) {
+  const viewname =
+    typeof viewnameOrElem === "string"
+      ? viewnameOrElem
+      : $(viewnameOrElem)
+          .closest("[data-sc-embed-viewname]")
+          .attr("data-sc-embed-viewname");
   const query = sendState
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
@@ -254,7 +260,7 @@ function view_post(viewname, route, data, onDone, sendState) {
   })
     .done(function (res) {
       if (onDone) onDone(res);
-      ajax_done(res, viewname);
+      ajax_done(res, viewnameOrElem);
       reset_spinners();
     })
     .fail(function (res) {
@@ -751,6 +757,42 @@ function removeSpinner(elementId, orginalHtml) {
   $(`#${elementId}`).html(orginalHtml);
 }
 
+function builderMenuChanged(e) {
+  const form = $(e);
+  const params = {};
+  form.serializeArray().forEach((item) => {
+    params[item.name] = item.value;
+  });
+  params.synchedTables = Array.from($("#synched-tbls-select-id")[0].options)
+    .filter((option) => !option.hidden)
+    .map((option) => option.value);
+  const pluginsSelect = $("#included-plugins-select-id")[0];
+  params.includedPlugins = Array.from(pluginsSelect.options || []).map(
+    (option) => option.value
+  );
+  const indicator = $(".sc-ajax-indicator");
+  indicator.attr("title", "Saving the configuration");
+  indicator.attr("style", "display: inline-block;");
+  const icon = $(".fa-save, .fa-exclamation-triangle");
+  icon.attr("class", "fas fa-save");
+  const setErrorIcon = () => {
+    icon.attr("class", "fas fa-exclamation-triangle");
+    icon.attr("style", "color: #ff0033!important;");
+    indicator.attr("title", "Unable to save the configuration");
+  };
+  $.ajax("/admin/mobile-app/save-config", {
+    type: "POST",
+    data: params,
+    success: function (res) {
+      if (res.success) indicator.attr("style", "display: none;");
+      else setErrorIcon();
+    },
+    error: function (res) {
+      setErrorIcon();
+    },
+  });
+}
+
 function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
   $.ajax("/admin/build-mobile-app/finished", {
     type: "GET",
@@ -898,26 +940,32 @@ function move_to_synched() {
   const opts = $("#unsynched-tbls-select-id");
   $("#synched-tbls-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jUnsOpt = $(`[id='${selected}_unsynched_opt']`);
-    jUnsOpt.attr("hidden", "true");
-    jUnsOpt.removeAttr("selected");
-    const jSynOpt = $(`[id='${selected}_synched_opt']`);
-    jSynOpt.removeAttr("hidden");
-    jSynOpt.removeAttr("selected");
+    $(`[id='${selected}_unsynched_opt']`).remove();
+    $("#synched-tbls-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_synched_opt`,
+      })
+    );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function move_to_unsynched() {
   const opts = $("#synched-tbls-select-id");
   $("#unsynched-tbls-select-id").removeAttr("selected");
   for (const selected of opts.val()) {
-    const jSynOpt = $(`[id='${selected}_synched_opt']`);
-    jSynOpt.attr("hidden", "true");
-    jSynOpt.removeAttr("selected");
-    const jUnsOpt = $(`[id='${selected}_unsynched_opt']`);
-    jUnsOpt.removeAttr("hidden");
-    jUnsOpt.removeAttr("selected");
+    $(`[id='${selected}_synched_opt']`).remove();
+    $("#unsynched-tbls-select-id").append(
+      $("<option>", {
+        value: selected,
+        label: selected,
+        id: `${selected}_unsynched_opt`,
+      })
+    );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function move_plugin_to_included() {
@@ -933,6 +981,7 @@ function move_plugin_to_included() {
       })
     );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function move_plugin_to_excluded() {
@@ -948,6 +997,7 @@ function move_plugin_to_excluded() {
       })
     );
   }
+  $("#buildMobileAppForm").trigger("change");
 }
 
 function toggle_tbl_sync() {

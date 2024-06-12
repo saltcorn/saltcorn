@@ -540,7 +540,7 @@ describe("Edit view field onchange", () => {
     const vres0 = await v.run({}, mockReqRes);
     expect(vres0).toContain("<form");
     expect(vres0).toContain(
-      `onChange="view_post('OnChangeEdit', 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record({viewname: 'OnChangeEdit'}) })"`
+      `onChange="view_post(this, 'run_action', {onchange_action: 'fieldchangeaction', onchange_field:'name',  ...get_form_record(this) })"`
     );
   });
   it("should run route", async () => {
@@ -807,7 +807,7 @@ describe("Edit view components", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><a href="javascript:view_post('${view.name}', 'run_action', {rndid:'b6fd72', ...get_form_record({viewname: '${view.name}'})});" class="btn btn btn-primary ">toast</a></form>`
+      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><a href="javascript:void(0)" onclick="view_post(this, 'run_action', {rndid:'b6fd72', ...get_form_record(this)});" class="btn btn btn-primary ">toast</a></form>`
     );
     mockReqRes.reset();
     const body = { rndid: "b6fd72", id: "1" };
@@ -1103,6 +1103,90 @@ describe("Edit view components", () => {
       '<a href="/view/patientlist?favbook=1">patientlist</a>'
     );
 
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
+  it("container showif on field", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+          contents: {
+            type: "blank",
+            block: false,
+            style: {},
+            inline: false,
+            contents: "LONG",
+          },
+          isFormula: {},
+          htmlElement: "div",
+          showForRole: [],
+          showIfFormula: "pages>500",
+          minScreenWidth: "",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('data-show-if="showIfFormulaInputs(');
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
+  it("container showif on row.field", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+          contents: {
+            type: "blank",
+            block: false,
+            style: {},
+            inline: false,
+            contents: "LONG",
+          },
+          isFormula: {},
+          htmlElement: "div",
+          showForRole: [],
+          showIfFormula: "row.pages>500",
+          minScreenWidth: "",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('data-show-if="showIfFormulaInputs(');
+
+    const vres0 = await view.run({}, mockReqRes);
+    expect(vres0).not.toContain("patientlist");
+  });
+  it("container showif on joinfield", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "container",
+          style: {},
+          contents: {
+            type: "blank",
+            block: false,
+            style: {},
+            inline: false,
+            contents: "LONG",
+          },
+          isFormula: {},
+          htmlElement: "div",
+          showForRole: [],
+          showIfFormula: "publisher.name==='AK Press'",
+          minScreenWidth: "",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain('data-show-if="showIfFormulaInputs(');
+    expect(vres1).toContain('data-show-if-joinfields="%5B%7B%22ref%22%3A%22');
     const vres0 = await view.run({}, mockReqRes);
     expect(vres0).not.toContain("patientlist");
   });

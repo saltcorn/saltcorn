@@ -1,9 +1,9 @@
 const sql_pg = [
-  `CREATE TABLE _sc_tags (
+  `CREATE TABLE IF NOT EXISTS _sc_tags (
   id serial primary key,
   name text NOT NULL
 );`,
-  `CREATE TABLE _sc_tag_entries(
+  `CREATE TABLE IF NOT EXISTS  _sc_tag_entries(
     id serial primary key,
     tag_id integer references _sc_tags(id) NOT NULL,
     table_id integer references _sc_tables(id),

@@ -365,7 +365,7 @@ describe("Filter view components", () => {
     });
     const vres1 = await view.run({ pages: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<div class="form-namespace"><a href="javascript:view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);" class="btn btn-primary ">run_js_code</a></div>`
+      `<div class="form-namespace"><a href="javascript:void(0)" onclick="view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);" class="btn btn-primary ">run_js_code</a></div>`
     );
     mockReqRes.reset();
     const body = { rndid: "624b52" };
@@ -424,7 +424,7 @@ describe("Filter view components", () => {
     });
     const vres1 = await view.run({ pages: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<div class="form-namespace"><a href="javascript:view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);" class="btn btn-primary ">run_js_code</a></div>`
+      `<div class="form-namespace"><a href="javascript:void(0)" onclick="view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);" class="btn btn-primary ">run_js_code</a></div>`
     );
     mockReqRes.reset();
     const body = { rndid: "624b52" };
