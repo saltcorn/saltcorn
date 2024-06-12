@@ -271,8 +271,9 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
     const { sql } = await patients.getJoinedQuery(arg);
+    const schema = db.isSQLite ? "" : `"public".`;
     expect(sql).toBe(
-      'SELECT a."favbook",a."id",a."name",a."parent",(select avg("temperature") from "public"."readings"  where "patient_id"=a."id") avg_temp FROM "public"."patients" a    order by "a"."id"'
+      `SELECT a."favbook",a."id",a."name",a."parent",(select avg("temperature") from ${schema}"readings"  where "patient_id"=a."id") avg_temp FROM ${schema}"patients" a    order by "a"."id"`
     );
   });
   it("should get joined rows with filtered aggregations", async () => {
