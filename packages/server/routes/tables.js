@@ -681,6 +681,10 @@ const attribBadges = (f) => {
           "on_delete_cascade",
           "on_delete",
           "unique_error_msg",
+          "ref",
+          "table",
+          "agg_field",
+          "agg_relation",
         ].includes(k)
       )
         return;

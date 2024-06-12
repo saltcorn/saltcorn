@@ -667,6 +667,7 @@ export type AggregationOptions = {
   aggregate: string;
   subselect?: SubselectOptions;
   through?: string;
+  orderBy?: string;
 };
 
 export type SubselectOptions = {

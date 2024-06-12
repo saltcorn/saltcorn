@@ -670,6 +670,7 @@ const apply_calculated_fields_stored = async (
             ...field.attributes,
             where: jsexprToWhere(field.attributes.aggwhere),
             field: field.attributes.agg_field.split("@")[0],
+            orderBy: field.attributes.agg_order_by,
           },
         },
       });

@@ -256,7 +256,7 @@ describe("Table get data", () => {
   it("should get joined rows with aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
-    const michaels = await patients.getJoinedRows({
+    const arg = {
       orderBy: "id",
       aggregations: {
         avg_temp: {
@@ -266,9 +266,15 @@ describe("Table get data", () => {
           aggregate: "avg",
         },
       },
-    });
+    };
+    const michaels = await patients.getJoinedRows(arg);
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
+    const { sql } = await patients.getJoinedQuery(arg);
+    const schema = db.isSQLite ? "" : `"public".`;
+    expect(sql).toBe(
+      `SELECT a."favbook",a."id",a."name",a."parent",(select avg("temperature") from ${schema}"readings"  where "patient_id"=a."id") avg_temp FROM ${schema}"patients" a    order by "a"."id"`
+    );
   });
   it("should get joined rows with filtered aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -308,20 +314,74 @@ describe("Table get data", () => {
   it("should get fkey aggregations", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
-    if (!db.isSQLite) {
-      const rows = await books.getJoinedRows({
-        orderBy: "id",
-        aggregations: {
-          fans: {
-            table: "patients",
-            ref: "favbook",
-            field: "parent",
-            aggregate: "array_agg",
-          },
+    const arg = {
+      orderBy: "id",
+      aggregations: {
+        fans: {
+          table: "patients",
+          ref: "favbook",
+          field: "parent",
+          aggregate: "array_agg",
         },
-      });
+      },
+    };
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows(arg);
       expect(rows.length).toStrictEqual(2);
       expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
+      const { sql } = await books.getJoinedQuery(arg);
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg(aggjoin."name") from "public"."patients" aggto join "public"."patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+      );
+    }
+  });
+  it("should get array aggregations", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const arg = {
+      orderBy: "id",
+      aggregations: {
+        fans: {
+          table: "patients",
+          ref: "favbook",
+          field: "name",
+          aggregate: "array_agg",
+        },
+      },
+    };
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows(arg);
+      expect(rows.length).toStrictEqual(2);
+      expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
+      const { sql } = await books.getJoinedQuery(arg);
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+      );
+    }
+  });
+  it("should get array aggregations with order", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const arg = {
+      orderBy: "id",
+      aggregations: {
+        fans: {
+          table: "patients",
+          ref: "favbook",
+          field: "name",
+          aggregate: "array_agg",
+          orderBy: "id",
+        },
+      },
+    };
+    if (!db.isSQLite) {
+      const rows = await books.getJoinedRows(arg);
+      expect(rows.length).toStrictEqual(2);
+      expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
+      const { sql } = await books.getJoinedQuery(arg);
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name" order by "id") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+      );
     }
   });
   it("should get join-aggregations", async () => {

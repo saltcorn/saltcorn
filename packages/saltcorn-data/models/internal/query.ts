@@ -21,12 +21,17 @@ import db from "../../db";
 export const getAggAndField = (
   aggregate: string,
   field: string | undefined,
-  valueFormula: string | undefined
+  valueFormula: string | undefined,
+  orderBy?: string
 ) =>
   aggregate.toLowerCase() === "countunique"
     ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
     : `${sqlsanitize(aggregate)}(${
         field ? `"${sqlsanitize(field)}"` : valueFormula || "*"
+      }${
+        orderBy && aggregate.toLowerCase() === "array_agg"
+          ? ` order by "${sqlsanitize(orderBy)}"`
+          : ""
       })`;
 
 export const process_aggregations = (
@@ -44,7 +49,17 @@ export const process_aggregations = (
   Object.entries<AggregationOptions>(aggregations).forEach(
     ([
       fldnm,
-      { table, ref, field, valueFormula, where, aggregate, subselect, through },
+      {
+        table,
+        ref,
+        field,
+        valueFormula,
+        where,
+        aggregate,
+        subselect,
+        through,
+        orderBy,
+      },
     ]) => {
       let whereStr = "";
       if (where && !subselect) {
@@ -58,7 +73,12 @@ export const process_aggregations = (
       const aggTable = Table.findOne({ name: table });
       const aggField = aggTable?.fields?.find((f: Field) => f.name === field);
       const ownField = through ? sqlsanitize(through) : this_table.pk_name;
-      const agg_and_field = getAggAndField(aggregate, field, valueFormula);
+      const agg_and_field = getAggAndField(
+        aggregate,
+        field,
+        valueFormula,
+        orderBy
+      );
 
       if (
         aggField?.is_fkey &&
