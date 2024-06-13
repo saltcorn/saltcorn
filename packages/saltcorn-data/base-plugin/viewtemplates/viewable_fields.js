@@ -1212,7 +1212,7 @@ const get_viewable_fields = (
             fvrun.forEach((fvr) => {
               updateKey(fvr, fvr.row_key[1]);
             });
-          } else updateKey(fvrun, column.key);
+          } else updateKey(fvrun, column.configuration?.key || column.key);
         }
         return fvrun;
       }

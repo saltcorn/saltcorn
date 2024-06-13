@@ -1919,8 +1919,10 @@ class Table implements AbstractTable {
     for (const calc_field of calc_agg_fields) {
       const refTable = Table.findOne({ id: calc_field.table_id });
       if (!refTable || !v[calc_field.attributes.ref]) continue;
+      const val0 = v[calc_field.attributes.ref];
+      const val = typeof val0 === "object" ? val0[this.pk_name] : val0;
       const rows = await refTable?.getRows({
-        [refTable.pk_name]: v[calc_field.attributes.ref],
+        [refTable.pk_name]: val,
       });
       for (const row of rows) {
         await refTable?.updateRow({}, row[refTable.pk_name]);
