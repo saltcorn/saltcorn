@@ -329,24 +329,30 @@ module.exports = {
       return [];
     },
     run: (nm, file_name, attrs, cls, reqd, field, row) => {
-      console.trace({ nm, file_name, attrs, cls, reqd, field, row });
+      //console.trace({ nm, file_name, attrs, cls, reqd, field, row });
       const contents = row?.[`_content_${nm}`].toString();
-      return textarea(
-        {
-          class: ["form-control", "to-code", cls],
+      return (
+        input({
+          type: "hidden",
           name: text_attr(nm),
           "data-fieldname": text_attr(field.name),
-          disabled: attrs.disabled,
-          onChange: attrs.onChange,
-          readonly: attrs.readonly,
-          placeholder: attrs.placeholder,
-          spellcheck: "false",
-          required: !!reqd,
-
-          id: `input${text_attr(nm)}`,
-          mode: File.nameToMimeType(file_name),
-        },
-        contents
+          value: text_attr(file_name),
+        }) +
+        textarea(
+          {
+            name: `_content_${text_attr(nm)}`,
+            class: ["form-control", "to-code", cls],
+            disabled: attrs.disabled,
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+            placeholder: attrs.placeholder,
+            spellcheck: "false",
+            required: !!reqd,
+            id: `input${text_attr(nm)}`,
+            mode: File.nameToMimeType(file_name),
+          },
+          contents
+        )
       );
     },
   },

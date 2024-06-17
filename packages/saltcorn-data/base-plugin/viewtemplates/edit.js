@@ -1728,6 +1728,7 @@ const prepare = async (
 
   const file_fields = form.fields.filter((f) => f.type === "File");
   for (const field of file_fields) {
+    console.log("post file field", field, body);
     if (!field.fieldviewObj?.isEdit || field.fieldviewObj?.isStream) continue;
     if (field.fieldviewObj?.setsFileId) {
       //do nothing
@@ -1742,6 +1743,19 @@ const prepare = async (
           );
           row[field.name] = path_to_serve;
         }
+      }
+    } else if (field.fieldviewObj?.editContent) {
+      console.log("it is editContnent");
+      if (body[field.name]) {
+        const path_to_serve = await saveFileQuery(
+          body[`_content_${field.name}`],
+          field.id,
+          field.fieldview,
+          row,
+          body[field.name],
+          "utf8"
+        );
+        row[field.name] = path_to_serve;
       }
     } else if (req.files && req.files[field.name]) {
       if (!isNode() && !remote && req.files[field.name].name) {
@@ -2075,27 +2089,44 @@ module.exports = {
       const table = Table.findOne(table_id);
       return await tryUpdateImpl(row, id, table, req.user);
     },
-    async saveFileQuery(fieldVal, fieldId, fieldView, row) {
+    async saveFileQuery(
+      fieldVal,
+      fieldId,
+      fieldView,
+      row,
+      filename,
+      encoding = "base64"
+    ) {
+      console.log("saveQuery", { fieldVal, filename, encoding });
       const field = await Field.findOne({ id: fieldId });
       const column = columns.find(
         (c) => c.type === "Field" && c.field_name === field.name
       );
       field.fieldviewObj = getState().fileviews[fieldView];
-      const [pre, allData] = fieldVal.split(",");
-      const buffer = require("buffer/").Buffer.from(allData, "base64");
-      const mimetype = pre.split(";")[0].split(":")[1];
-      const filename =
+      let mimetype, allData;
+      if (encoding == "base64") {
+        let [pre, allData0] = fieldVal.split(",");
+        mimetype = pre.split(";")[0].split(":")[1];
+        allData = allData0;
+      } else {
+        allData = fieldVal;
+        mimetype = File.nameToMimeType(filename);
+      }
+      const buffer = require("buffer/").Buffer.from(allData, encoding);
+      const filename1 =
+        filename ||
         field.fieldviewObj?.setsDataURL?.get_filename?.({
           ...row,
           ...field.attributes,
-        }) || "file";
+        }) ||
+        "file";
       const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
         ...row,
         ...field.attributes,
         ...(column?.configuration || {}),
       });
       const file = await File.from_contents(
-        filename,
+        filename1,
         mimetype,
         buffer,
         req.user?.id,
