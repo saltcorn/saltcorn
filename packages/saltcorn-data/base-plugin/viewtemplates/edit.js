@@ -1745,7 +1745,6 @@ const prepare = async (
         }
       }
     } else if (field.fieldviewObj?.editContent) {
-      console.log("it is editContnent");
       if (body[field.name]) {
         const path_to_serve = await saveFileQuery(
           body[`_content_${field.name}`],
@@ -2110,7 +2109,9 @@ module.exports = {
         allData = allData0;
       } else {
         allData = fieldVal;
-        mimetype = File.nameToMimeType(filename);
+        mimetype =
+          (filename && File.nameToMimeType(filename)) ||
+          "application/octet-stream";
       }
       const buffer = require("buffer/").Buffer.from(allData, encoding);
       const filename1 =

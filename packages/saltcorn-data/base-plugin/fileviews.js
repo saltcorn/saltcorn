@@ -330,7 +330,7 @@ module.exports = {
     },
     run: (nm, file_name, attrs, cls, reqd, field, row) => {
       //console.trace({ nm, file_name, attrs, cls, reqd, field, row });
-      const contents = row?.[`_content_${nm}`].toString();
+      const contents = row?.[`_content_${nm}`]?.toString?.() || "";
       return (
         input({
           type: "hidden",
@@ -349,7 +349,7 @@ module.exports = {
             spellcheck: "false",
             required: !!reqd,
             id: `input${text_attr(nm)}`,
-            mode: File.nameToMimeType(file_name),
+            mode: file_name ? File.nameToMimeType(file_name) : undefined,
           },
           contents
         )
