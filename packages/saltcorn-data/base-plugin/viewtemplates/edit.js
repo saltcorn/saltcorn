@@ -2165,7 +2165,7 @@ module.exports = {
 
       const existing_file = await File.findOne(filename1);
       if (existing_file) {
-        if (file.min_role_read >= (req.user?.role_id || 100)) {
+        if (existing_file.min_role_read >= (req.user?.role_id || 100)) {
           await existing_file.overwrite_contents(buffer);
           return existing_file.path_to_serve;
         } else throw new Error("Not authorized to write file");
