@@ -1095,6 +1095,7 @@ const runPost = async (
     tryUpdateQuery,
     getRowQuery,
     saveFileQuery,
+    saveFileFromContentsQuery,
     optionsQuery,
     getRowByIdQuery,
   },
@@ -1114,7 +1115,13 @@ const runPost = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
+    {
+      getRowQuery,
+      saveFileQuery,
+      saveFileFromContentsQuery,
+      optionsQuery,
+      getRowByIdQuery,
+    },
     remote
   );
   const view = View.findOne({ name: viewname });
@@ -1557,6 +1564,7 @@ const update_matching_rows = async (
     updateMatchingQuery,
     getRowQuery,
     saveFileQuery,
+    saveFileFromContentsQuery,
     optionsQuery,
     getRowByIdQuery,
   }
@@ -1575,7 +1583,13 @@ const update_matching_rows = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery }
+    {
+      getRowQuery,
+      saveFileQuery,
+      saveFileFromContentsQuery,
+      optionsQuery,
+      getRowByIdQuery,
+    }
   );
   if (prepResult) {
     let { form, row, pk } = prepResult;
@@ -1645,7 +1659,7 @@ const update_matching_rows = async (
  * @param {*} param3 columns, layout, fixed, auto_save
  * @param {*} param4  req, res
  * @param {*} body request body
- * @param {*} param6 getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery
+ * @param {*} param6 getRowQuery, saveFileQuery, saveFileFromContentsQuery, optionsQuery, getRowByIdQuery
  * @param {*} remote
  * @returns null on error, { form, row, pk, id } on success
  */
@@ -1656,7 +1670,13 @@ const prepare = async (
   { columns, layout, fixed, auto_save },
   { req, res },
   body,
-  { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
+  {
+    getRowQuery,
+    saveFileQuery,
+    saveFileFromContentsQuery,
+    optionsQuery,
+    getRowByIdQuery,
+  },
   remote
 ) => {
   const isRemote = !isWeb(req);
@@ -1746,7 +1766,7 @@ const prepare = async (
       }
     } else if (field.fieldviewObj?.editContent) {
       if (body[field.name]) {
-        const path_to_serve = await saveFileQuery(
+        const path_to_serve = await saveFileFromContentsQuery(
           body[`_content_${field.name}`],
           field.id,
           field.fieldview,
@@ -2088,7 +2108,36 @@ module.exports = {
       const table = Table.findOne(table_id);
       return await tryUpdateImpl(row, id, table, req.user);
     },
-    async saveFileQuery(
+    async saveFileQuery(fieldVal, fieldId, fieldView, row) {
+      const field = await Field.findOne({ id: fieldId });
+      const column = columns.find(
+        (c) => c.type === "Field" && c.field_name === field.name
+      );
+      field.fieldviewObj = getState().fileviews[fieldView];
+      const [pre, allData] = fieldVal.split(",");
+      const buffer = require("buffer/").Buffer.from(allData, "base64");
+      const mimetype = pre.split(";")[0].split(":")[1];
+      const filename =
+        field.fieldviewObj?.setsDataURL?.get_filename?.({
+          ...row,
+          ...field.attributes,
+        }) || "file";
+      const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
+        ...row,
+        ...field.attributes,
+        ...(column?.configuration || {}),
+      });
+      const file = await File.from_contents(
+        filename,
+        mimetype,
+        buffer,
+        req.user?.id,
+        field.attributes.min_role_read || 1,
+        folder
+      );
+      return file.path_to_serve;
+    },
+    async saveFileFromContentsQuery(
       fieldVal,
       fieldId,
       fieldView,
@@ -2114,25 +2163,20 @@ module.exports = {
           "application/octet-stream";
       }
       const buffer = require("buffer/").Buffer.from(allData, encoding);
-      const filename1 =
-        filename ||
-        field.fieldviewObj?.setsDataURL?.get_filename?.({
-          ...row,
-          ...field.attributes,
-        }) ||
-        "file";
-      const folder = field.fieldviewObj?.setsDataURL?.get_folder?.({
-        ...row,
-        ...field.attributes,
-        ...(column?.configuration || {}),
-      });
+      const filename1 = filename || "file";
+
+      const existing_file = await File.findOne(filename1);
+      if (existing_file) {
+        await existing_file.overwrite_contents(buffer);
+        return existing_file.path_to_serve;
+      }
+
       const file = await File.from_contents(
         filename1,
         mimetype,
         buffer,
         req.user?.id,
-        field.attributes.min_role_read || 1,
-        folder
+        field.attributes.min_role_read || 1
       );
       return file.path_to_serve;
     },

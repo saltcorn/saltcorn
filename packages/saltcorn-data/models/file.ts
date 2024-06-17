@@ -625,7 +625,7 @@ class File {
   async overwrite_contents(
     contents: string | Buffer | ArrayBuffer
   ): Promise<void> {
-    await fsp.writeFile(this.absolutePath, contents);
+    await fsp.writeFile(this.location, contents);
   }
 
   /**
