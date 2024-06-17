@@ -2167,8 +2167,10 @@ module.exports = {
 
       const existing_file = await File.findOne(filename1);
       if (existing_file) {
-        await existing_file.overwrite_contents(buffer);
-        return existing_file.path_to_serve;
+        if (file.min_role_read >= req.user?.role_id) {
+          await existing_file.overwrite_contents(buffer);
+          return existing_file.path_to_serve;
+        } else throw new Error("Not authorized to write file");
       }
 
       const file = await File.from_contents(
