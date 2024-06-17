@@ -349,7 +349,7 @@ module.exports = {
           placeholder: edit_file_name ? "File name" : undefined,
           name: text_attr(nm),
           "data-fieldname": text_attr(field.name),
-          value: text_attr(file_name),
+          value: file_name ? text_attr(file_name) : undefined,
         }) +
         textarea(
           {
