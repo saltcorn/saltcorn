@@ -19,6 +19,7 @@ const {
   audio,
   video,
   source,
+  textarea,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -313,6 +314,58 @@ module.exports = {
           src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
           type: File.nameToMimeType(filePath),
         })
+      );
+    },
+  },
+  TextEditor: {
+    isEdit: true,
+    multipartFormData: true,
+    editContent: true,
+    description:
+      "Capture image, audio, or video with the user's camera or microphone",
+
+    configFields: async () => {
+      const dirs = await File.allDirectories();
+      return [
+        {
+          name: "edit_file_name",
+          label: "Edit file name",
+          type: "String",
+          required: true,
+          attributes: { options: ["Never", "Always", "Only if new file"] },
+        },
+      ];
+    },
+    run: (nm, file_name, attrs, cls, reqd, field, row) => {
+      //console.trace({ nm, file_name, attrs, cls, reqd, field, row });
+      const contents = row?.[`_content_${nm}`]?.toString?.() || "";
+      const edit_file_name =
+        attrs?.edit_file_name === "Always" ||
+        (attrs?.edit_file_name === "Only if new file" && !file_name);
+      return (
+        input({
+          type: edit_file_name ? "text" : "hidden",
+          class: edit_file_name ? "form-control" : undefined,
+          placeholder: edit_file_name ? "File name" : undefined,
+          name: text_attr(nm),
+          "data-fieldname": text_attr(field.name),
+          value: file_name ? text_attr(file_name) : undefined,
+        }) +
+        textarea(
+          {
+            name: `_content_${text_attr(nm)}`,
+            class: ["form-control", "to-code", cls],
+            disabled: attrs.disabled,
+            onChange: attrs.onChange,
+            readonly: attrs.readonly,
+            placeholder: attrs.placeholder,
+            spellcheck: "false",
+            required: !!reqd,
+            id: `input${text_attr(nm)}`,
+            mode: file_name ? File.nameToMimeType(file_name) : undefined,
+          },
+          contents
+        )
       );
     },
   },

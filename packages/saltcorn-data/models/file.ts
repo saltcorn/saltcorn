@@ -622,6 +622,12 @@ class File {
     return file;
   }
 
+  async overwrite_contents(
+    contents: string | Buffer | ArrayBuffer
+  ): Promise<void> {
+    await fsp.writeFile(this.location, contents);
+  }
+
   /**
    * Delete file
    * @returns {Promise<{error}>}

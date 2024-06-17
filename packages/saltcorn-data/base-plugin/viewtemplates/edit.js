@@ -944,6 +944,11 @@ const render = async ({
           const file = await File.findOne({ id: row[field.name] });
           if (file.id) form.values[field.name] = file.filename;
         }
+        if (field.fieldviewObj?.editContent && row[field.name]) {
+          const file = await File.findOne(row[field.name]);
+          if (file && file.min_role_read >= (req.user?.role_id || 100))
+            form.values[`_content_${field.name}`] = await file.get_contents();
+        }
       }
     }
     form.hidden(table.pk_name);
@@ -1090,6 +1095,7 @@ const runPost = async (
     tryUpdateQuery,
     getRowQuery,
     saveFileQuery,
+    saveFileFromContentsQuery,
     optionsQuery,
     getRowByIdQuery,
   },
@@ -1109,7 +1115,13 @@ const runPost = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
+    {
+      getRowQuery,
+      saveFileQuery,
+      saveFileFromContentsQuery,
+      optionsQuery,
+      getRowByIdQuery,
+    },
     remote
   );
   const view = View.findOne({ name: viewname });
@@ -1552,6 +1564,7 @@ const update_matching_rows = async (
     updateMatchingQuery,
     getRowQuery,
     saveFileQuery,
+    saveFileFromContentsQuery,
     optionsQuery,
     getRowByIdQuery,
   }
@@ -1570,7 +1583,13 @@ const update_matching_rows = async (
     },
     { req, res },
     body,
-    { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery }
+    {
+      getRowQuery,
+      saveFileQuery,
+      saveFileFromContentsQuery,
+      optionsQuery,
+      getRowByIdQuery,
+    }
   );
   if (prepResult) {
     let { form, row, pk } = prepResult;
@@ -1640,7 +1659,7 @@ const update_matching_rows = async (
  * @param {*} param3 columns, layout, fixed, auto_save
  * @param {*} param4  req, res
  * @param {*} body request body
- * @param {*} param6 getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery
+ * @param {*} param6 getRowQuery, saveFileQuery, saveFileFromContentsQuery, optionsQuery, getRowByIdQuery
  * @param {*} remote
  * @returns null on error, { form, row, pk, id } on success
  */
@@ -1651,7 +1670,13 @@ const prepare = async (
   { columns, layout, fixed, auto_save },
   { req, res },
   body,
-  { getRowQuery, saveFileQuery, optionsQuery, getRowByIdQuery },
+  {
+    getRowQuery,
+    saveFileQuery,
+    saveFileFromContentsQuery,
+    optionsQuery,
+    getRowByIdQuery,
+  },
   remote
 ) => {
   const isRemote = !isWeb(req);
@@ -1737,6 +1762,18 @@ const prepare = async (
           );
           row[field.name] = path_to_serve;
         }
+      }
+    } else if (field.fieldviewObj?.editContent) {
+      if (body[field.name]) {
+        const path_to_serve = await saveFileFromContentsQuery(
+          body[`_content_${field.name}`],
+          field.id,
+          field.fieldview,
+          row,
+          body[field.name],
+          "utf8"
+        );
+        row[field.name] = path_to_serve;
       }
     } else if (req.files && req.files[field.name]) {
       if (!isNode() && !remote && req.files[field.name].name) {
@@ -2096,6 +2133,50 @@ module.exports = {
         req.user?.id,
         field.attributes.min_role_read || 1,
         folder
+      );
+      return file.path_to_serve;
+    },
+    async saveFileFromContentsQuery(
+      fieldVal,
+      fieldId,
+      fieldView,
+      row,
+      filename,
+      encoding = "base64"
+    ) {
+      const field = await Field.findOne({ id: fieldId });
+      const column = columns.find(
+        (c) => c.type === "Field" && c.field_name === field.name
+      );
+      field.fieldviewObj = getState().fileviews[fieldView];
+      let mimetype, allData;
+      if (encoding == "base64") {
+        let [pre, allData0] = fieldVal.split(",");
+        mimetype = pre.split(";")[0].split(":")[1];
+        allData = allData0;
+      } else {
+        allData = fieldVal;
+        mimetype =
+          (filename && File.nameToMimeType(filename)) ||
+          "application/octet-stream";
+      }
+      const buffer = require("buffer/").Buffer.from(allData, encoding);
+      const filename1 = filename || "file";
+
+      const existing_file = await File.findOne(filename1);
+      if (existing_file) {
+        if (file.min_role_read >= (req.user?.role_id || 100)) {
+          await existing_file.overwrite_contents(buffer);
+          return existing_file.path_to_serve;
+        } else throw new Error("Not authorized to write file");
+      }
+
+      const file = await File.from_contents(
+        filename1,
+        mimetype,
+        buffer,
+        req.user?.id,
+        field.attributes.min_role_read || 1
       );
       return file.path_to_serve;
     },

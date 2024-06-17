@@ -463,7 +463,8 @@ const innerField =
             : v && isdef(v[hdr.form_name])
             ? v[hdr.form_name]
             : hdr.default,
-          validClass
+          validClass,
+          v
         );
       case "hidden":
         return `<input type="hidden" class="form-control ${validClass} ${
@@ -829,7 +830,13 @@ const mkFormRowForRepeat = (
  * @param extracls
  * @returns
  */
-const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
+const displayEdit = (
+  hdr: any,
+  name: string,
+  v: any,
+  extracls: string,
+  row: any
+): any => {
   let fieldview: any;
   const attributes = hdr.attributes;
   if (hdr.disabled) attributes.disabled = true;
@@ -865,7 +872,8 @@ const displayEdit = (hdr: any, name: string, v: any, extracls: string): any => {
       attributes,
       extracls + " " + hdr.class,
       hdr.required,
-      hdr
+      hdr,
+      row
     );
   } else return fieldview.run(v, undefined, attributes);
 };
