@@ -946,7 +946,7 @@ const render = async ({
         }
         if (field.fieldviewObj?.editContent && row[field.name]) {
           const file = await File.findOne(row[field.name]);
-          if (file)
+          if (file && file.min_role_read >= (req.user?.role_id || 100))
             form.values[`_content_${field.name}`] = await file.get_contents();
         }
       }
@@ -1748,7 +1748,6 @@ const prepare = async (
 
   const file_fields = form.fields.filter((f) => f.type === "File");
   for (const field of file_fields) {
-    console.log("post file field", field, body);
     if (!field.fieldviewObj?.isEdit || field.fieldviewObj?.isStream) continue;
     if (field.fieldviewObj?.setsFileId) {
       //do nothing
@@ -2145,7 +2144,6 @@ module.exports = {
       filename,
       encoding = "base64"
     ) {
-      console.log("saveQuery", { fieldVal, filename, encoding });
       const field = await Field.findOne({ id: fieldId });
       const column = columns.find(
         (c) => c.type === "Field" && c.field_name === field.name
@@ -2167,7 +2165,7 @@ module.exports = {
 
       const existing_file = await File.findOne(filename1);
       if (existing_file) {
-        if (file.min_role_read >= req.user?.role_id) {
+        if (file.min_role_read >= (req.user?.role_id || 100)) {
           await existing_file.overwrite_contents(buffer);
           return existing_file.path_to_serve;
         } else throw new Error("Not authorized to write file");
