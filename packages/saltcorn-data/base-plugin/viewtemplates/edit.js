@@ -944,6 +944,11 @@ const render = async ({
           const file = await File.findOne({ id: row[field.name] });
           if (file.id) form.values[field.name] = file.filename;
         }
+        if (field.fieldviewObj?.editContent && row[field.name]) {
+          const file = await File.findOne(row[field.name]);
+          if (file)
+            form.values[`_content_${field.name}`] = await file.get_contents();
+        }
       }
     }
     form.hidden(table.pk_name);
