@@ -19,6 +19,7 @@ const {
   audio,
   video,
   source,
+  textarea,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -313,6 +314,39 @@ module.exports = {
           src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
           type: File.nameToMimeType(filePath),
         })
+      );
+    },
+  },
+  TextEditor: {
+    isEdit: true,
+    multipartFormData: true,
+    editContent: true,
+    description:
+      "Capture image, audio, or video with the user's camera or microphone",
+
+    configFields: async () => {
+      const dirs = await File.allDirectories();
+      return [];
+    },
+    run: (nm, file_name, attrs, cls, reqd, field, row) => {
+      console.trace({ nm, file_name, attrs, cls, reqd, field, row });
+      const contents = row?.[`_content_${nm}`].toString();
+      return textarea(
+        {
+          class: ["form-control", "to-code", cls],
+          name: text_attr(nm),
+          "data-fieldname": text_attr(field.name),
+          disabled: attrs.disabled,
+          onChange: attrs.onChange,
+          readonly: attrs.readonly,
+          placeholder: attrs.placeholder,
+          spellcheck: "false",
+          required: !!reqd,
+
+          id: `input${text_attr(nm)}`,
+          mode: File.nameToMimeType(file_name),
+        },
+        contents
       );
     },
   },
