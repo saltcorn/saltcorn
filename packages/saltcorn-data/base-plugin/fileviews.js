@@ -326,14 +326,27 @@ module.exports = {
 
     configFields: async () => {
       const dirs = await File.allDirectories();
-      return [];
+      return [
+        {
+          name: "edit_file_name",
+          label: "Edit file name",
+          type: "String",
+          required: true,
+          attributes: { options: ["Never", "Always", "Only if new file"] },
+        },
+      ];
     },
     run: (nm, file_name, attrs, cls, reqd, field, row) => {
       //console.trace({ nm, file_name, attrs, cls, reqd, field, row });
       const contents = row?.[`_content_${nm}`]?.toString?.() || "";
+      const edit_file_name =
+        attrs?.edit_file_name === "Always" ||
+        (attrs?.edit_file_name === "Only if new file" && !file_name);
       return (
         input({
-          type: "hidden",
+          type: edit_file_name ? "text" : "hidden",
+          class: edit_file_name ? "form-control" : undefined,
+          placeholder: edit_file_name ? "File name" : undefined,
           name: text_attr(nm),
           "data-fieldname": text_attr(field.name),
           value: text_attr(file_name),
