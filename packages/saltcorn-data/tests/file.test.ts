@@ -183,6 +183,6 @@ describe("File", () => {
     expect(File.nameToMimeType("dir/foo.jpg")).toBe("image/jpeg");
     expect(File.nameToMimeType("FOO.JPG")).toBe("image/jpeg");
     expect(File.nameToMimeType("FOO.JPEG")).toBe("image/jpeg");
-    expect(File.nameToMimeType("foo.py")).toBe("text/html");
+    expect(File.nameToMimeType("foo.py")).toBe("text/x-python");
   });
 });
