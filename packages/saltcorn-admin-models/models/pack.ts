@@ -39,6 +39,7 @@ import type { EventLogPack } from "@saltcorn/types/model-abstracts/abstract_even
 import type { ModelPack } from "@saltcorn/types/model-abstracts/abstract_model";
 import type { ModelInstancePack } from "@saltcorn/types/model-abstracts/abstract_model_instance";
 import type { TagPack } from "@saltcorn/types/model-abstracts/abstract_tag";
+import { isEqual } from "lodash";
 
 const { isStale } = require("@saltcorn/data/utils");
 
@@ -528,8 +529,17 @@ const install_pack = async (
       trigger.min_role = old_to_new_role(trigger.min_role);
       await Trigger.create({ table: _table, ...trigger }); //legacy, not in new packs
     }
-    for (const constraint of tableSpec.constraints || [])
-      await TableConstraint.create({ table: _table, ...constraint });
+    const existing_constraints = _table.constraints;
+    for (const constraint of tableSpec.constraints || []) {
+      if (
+        !existing_constraints.find(
+          (excon) =>
+            excon.type === constraint.type &&
+            isEqual(excon.configuration, constraint.configuration)
+        )
+      )
+        await TableConstraint.create({ table: _table, ...constraint });
+    }
     if (tableSpec.ownership_field_name) {
       const owner_field = await Field.findOne({
         table_id: _table.id,

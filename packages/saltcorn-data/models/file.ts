@@ -220,6 +220,7 @@ class File {
 
   static nameToMimeType(filepath: string) {
     const filename = path.basename(filepath);
+    if (filename && filename.endsWith(".py")) return "text/x-python";
     return lookup(filename);
   }
 
@@ -254,7 +255,7 @@ class File {
     } catch (e) {}
 
     const isDirectory = stat.isDirectory();
-    const mimetype = lookup(name);
+    const mimetype = File.nameToMimeType(name);
     const [mime_super, mime_sub] = mimetype ? mimetype.split("/") : ["", ""];
     return new File({
       filename: name,

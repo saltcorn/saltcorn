@@ -176,4 +176,13 @@ describe("File", () => {
     await file1.delete();
     await file2.delete();
   });
+  it("should lookup mime types", async () => {
+    expect(File.nameToMimeType("foo.html")).toBe("text/html");
+    expect(File.nameToMimeType("foo.jpeg")).toBe("image/jpeg");
+    expect(File.nameToMimeType("foo.jpg")).toBe("image/jpeg");
+    expect(File.nameToMimeType("dir/foo.jpg")).toBe("image/jpeg");
+    expect(File.nameToMimeType("FOO.JPG")).toBe("image/jpeg");
+    expect(File.nameToMimeType("FOO.JPEG")).toBe("image/jpeg");
+    expect(File.nameToMimeType("foo.py")).toBe("text/x-python");
+  });
 });
