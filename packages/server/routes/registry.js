@@ -38,6 +38,7 @@ const {
   model_instance_pack,
   event_log_pack,
 } = require("@saltcorn/admin-models/models/pack");
+const Trigger = require("@saltcorn/data/models/trigger");
 /**
  * @type {object}
  * @const
@@ -59,6 +60,7 @@ router.get(
     const tables = await Table.find({}, { orderBy: "name", nocase: true });
     const views = await View.find({}, { orderBy: "name", nocase: true });
     const pages = await Page.find({}, { orderBy: "name", nocase: true });
+    const triggers = await Trigger.find({}, { orderBy: "name", nocase: true });
     const li_link = (etype1, ename1) =>
       li(
         a(
@@ -101,6 +103,12 @@ router.get(
         const ppack = await page_pack(pages.find((v) => v.name === ename));
         edContents = renderForm(mkForm(ppack), req.csrfToken());
         break;
+      case "trigger":
+        const trpack = await trigger_pack(
+          triggers.find((t) => t.name === ename)
+        );
+        edContents = renderForm(mkForm(trpack), req.csrfToken());
+        break;
     }
     send_infoarch_page({
       res,
@@ -142,6 +150,16 @@ router.get(
                   ul(
                     { class: "ps-3" },
                     pages.map((p) => li_link("page", p.name))
+                  )
+                )
+              ),
+              li(
+                details(
+                  { open: etype === "trigger" }, //
+                  summary("Triggers"),
+                  ul(
+                    { class: "ps-3" },
+                    triggers.map((t) => li_link("trigger", t.name))
                   )
                 )
               )
