@@ -55,7 +55,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { etype, ename } = req.query;
-    let edContents = "Registry editor: choose an entity to edit";
+    let edContents = "Choose an entity to edit";
     const views = await View.find({}, { orderBy: "name", nocase: true });
     const pages = await Page.find({}, { orderBy: "name", nocase: true });
     const li_link = (etype1, ename1) =>
@@ -76,7 +76,7 @@ router.get(
         action: `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
           ename
         )}`,
-        blurb: `Registry editor: ${ename} ${etype}`,
+
         values: { regval: JSON.stringify(jsonVal, null, 2) },
         fields: [
           {
@@ -97,37 +97,39 @@ router.get(
       res,
       req,
       active_sub: "Registry editor",
-      contents: [
-        {
-          type: "card",
-          contents: {
-            besides: [
-              {
-                type: "blank",
-                contents: ul(
-                  { class: "katetree" },
-                  li(
-                    details(
-                      { open: etype === "page" }, //
-                      summary("Pages"),
-                      ul(pages.map((p) => li_link("page", p.name)))
-                    )
-                  ),
-                  li(
-                    details(
-                      { open: etype === "view" },
-                      summary("Views"),
-                      ul(views.map((v) => li_link("view", v.name)))
-                    )
-                  )
-                ),
-              },
-              { type: "blank", contents: edContents },
-            ],
-            widths: etype && ename ? [2, 10] : [3, 9],
+      contents: {
+        widths: [3, 9],
+        besides: [
+          {
+            type: "card",
+            contents: ul(
+              { class: "katetree" },
+              li(
+                details(
+                  { open: etype === "page" }, //
+                  summary("Pages"),
+                  ul(pages.map((p) => li_link("page", p.name)))
+                )
+              ),
+              li(
+                details(
+                  { open: etype === "view" },
+                  summary("Views"),
+                  ul(views.map((v) => li_link("view", v.name)))
+                )
+              )
+            ),
           },
-        },
-      ],
+          {
+            type: "card",
+            title:
+              ename && etype
+                ? `Registry editor: ${ename} ${etype}`
+                : "Registry editor",
+            contents: edContents,
+          },
+        ],
+      },
     });
   })
 );
