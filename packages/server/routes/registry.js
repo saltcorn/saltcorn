@@ -37,6 +37,7 @@ const {
   model_pack,
   model_instance_pack,
   event_log_pack,
+  install_pack,
 } = require("@saltcorn/admin-models/models/pack");
 const Trigger = require("@saltcorn/data/models/trigger");
 /**
@@ -176,5 +177,35 @@ router.get(
         ],
       },
     });
+  })
+);
+
+router.post(
+  "/",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { etype, ename } = req.query;
+    const entVal = JSON.parse(req.body.regval);
+    let pack = { plugins: [], tables: [], views: [], pages: [], triggers: [] };
+
+    console.log(req.body);
+    switch (etype) {
+      case "table":
+        pack.tables = [entVal];
+        break;
+      case "view":
+        pack.views = [entVal];
+        break;
+      case "page":
+        pack.pages = [entVal];
+        break;
+      case "trigger":
+        pack.triggers = [entVal];
+        break;
+    }
+    await install_pack(pack);
+    res.redirect(
+      `/registry-editor?etype=${etype}&ename=${encodeURIComponent(ename)}`
+    );
   })
 );
