@@ -36,6 +36,7 @@ const roleadmin = require("../auth/roleadmin");
 const tags = require("./tags");
 const tagentries = require("./tag_entries");
 const diagram = require("./diagram");
+const registry = require("./registry");
 const sync = require("./sync");
 
 module.exports =
@@ -78,5 +79,6 @@ module.exports =
     app.use("/tag", tags);
     app.use("/tag-entries", tagentries);
     app.use("/diagram", diagram);
+    app.use("/registry-editor", registry);
     app.use("/sync", sync);
   };
