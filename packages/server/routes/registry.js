@@ -56,6 +56,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { etype, ename } = req.query;
     let edContents = "Choose an entity to edit";
+    const tables = await Table.find({}, { orderBy: "name", nocase: true });
     const views = await View.find({}, { orderBy: "name", nocase: true });
     const pages = await Page.find({}, { orderBy: "name", nocase: true });
     const li_link = (etype1, ename1) =>
@@ -88,9 +89,17 @@ router.get(
         ],
       });
     switch (etype) {
+      case "table":
+        const tpack = await table_pack(tables.find((t) => t.name === ename));
+        edContents = renderForm(mkForm(tpack), req.csrfToken());
+        break;
       case "view":
         const vpack = await view_pack(views.find((v) => v.name === ename));
         edContents = renderForm(mkForm(vpack), req.csrfToken());
+        break;
+      case "page":
+        const ppack = await page_pack(pages.find((v) => v.name === ename));
+        edContents = renderForm(mkForm(ppack), req.csrfToken());
         break;
     }
     send_infoarch_page({
@@ -102,20 +111,38 @@ router.get(
         besides: [
           {
             type: "card",
+            bodyClass: "p-1",
+            title: "Entities",
             contents: ul(
-              { class: "katetree" },
+              { class: "katetree ps-2" },
               li(
                 details(
-                  { open: etype === "page" }, //
-                  summary("Pages"),
-                  ul(pages.map((p) => li_link("page", p.name)))
+                  { open: etype === "table" },
+                  summary("Tables"),
+                  ul(
+                    { class: "ps-3" },
+                    tables.map((t) => li_link("table", t.name))
+                  )
                 )
               ),
               li(
                 details(
                   { open: etype === "view" },
                   summary("Views"),
-                  ul(views.map((v) => li_link("view", v.name)))
+                  ul(
+                    { class: "ps-3" },
+                    views.map((v) => li_link("view", v.name))
+                  )
+                )
+              ),
+              li(
+                details(
+                  { open: etype === "page" }, //
+                  summary("Pages"),
+                  ul(
+                    { class: "ps-3" },
+                    pages.map((p) => li_link("page", p.name))
+                  )
                 )
               )
             ),
