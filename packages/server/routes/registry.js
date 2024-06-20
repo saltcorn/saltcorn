@@ -1,7 +1,7 @@
 const Router = require("express-promise-router");
 
 const db = require("@saltcorn/data/db");
-const { mkTable, link, post_btn } = require("@saltcorn/markup");
+const { mkTable, link, post_btn, renderForm } = require("@saltcorn/markup");
 const {
   script,
   domReady,
@@ -20,10 +20,24 @@ const {
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { isAdmin, error_catcher } = require("./utils");
-const moment = require("moment");
 const { send_infoarch_page } = require("../markup/admin.js");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
+const Form = require("@saltcorn/data/models/form");
+const {
+  table_pack,
+  view_pack,
+  plugin_pack,
+  page_pack,
+  page_group_pack,
+  role_pack,
+  library_pack,
+  trigger_pack,
+  tag_pack,
+  model_pack,
+  model_instance_pack,
+  event_log_pack,
+} = require("@saltcorn/admin-models/models/pack");
 /**
  * @type {object}
  * @const
@@ -56,7 +70,28 @@ router.get(
           ename1
         )
       );
-    console.log({ p: etype === "page", v: etype === "view", etype });
+    const mkForm = (jsonVal) =>
+      new Form({
+        labelCols: 0,
+        action: `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
+          ename
+        )}`,
+        values: { regval: JSON.stringify(jsonVal, null, 2) },
+        fields: [
+          {
+            name: "regval",
+            label: "",
+            input_type: "code",
+            attributes: { mode: "application/json" },
+          },
+        ],
+      });
+    switch (etype) {
+      case "view":
+        const vpack = await view_pack(views.find((v) => v.name === ename));
+        edContents = renderForm(mkForm(vpack), req.csrfToken());
+        break;
+    }
     send_infoarch_page({
       res,
       req,
@@ -86,7 +121,7 @@ router.get(
                   )
                 ),
               },
-              { type: "blank", contents: "editor here" },
+              { type: "blank", contents: edContents },
             ],
             widths: etype && ename ? [2, 10] : [3, 9],
           },
