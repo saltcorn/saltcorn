@@ -506,3 +506,11 @@ tr[onclick] {
 .modal-header {
   justify-content: space-between;
 }
+
+ul.katetree {
+  list-style-type: none;
+}
+
+ul.katetree details ul {
+  list-style-type: none;
+}
