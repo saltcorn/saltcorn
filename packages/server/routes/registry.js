@@ -56,7 +56,8 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { etype, ename } = req.query;
+    const { etype, ename, q } = req.query;
+    const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
     let edContents = "Choose an entity to edit";
     const tables = await Table.find({}, { orderBy: "name", nocase: true });
     const views = await View.find({}, { orderBy: "name", nocase: true });
@@ -68,7 +69,7 @@ router.get(
           {
             href: `/registry-editor?etype=${etype1}&ename=${encodeURIComponent(
               ename1
-            )}`,
+            )}${qlink}`,
             class: etype1 === etype && ename1 === ename ? "fw-bold" : undefined,
           },
           ename1
@@ -79,7 +80,7 @@ router.get(
         labelCols: 0,
         action: `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
           ename
-        )}`,
+        )}${qlink}`,
 
         values: { regval: JSON.stringify(jsonVal, null, 2) },
         fields: [
@@ -122,45 +123,73 @@ router.get(
             type: "card",
             bodyClass: "p-1",
             title: "Entities",
-            contents: ul(
-              { class: "katetree ps-2" },
-              li(
-                details(
-                  { open: etype === "table" },
-                  summary("Tables"),
-                  ul(
-                    { class: "ps-3" },
-                    tables.map((t) => li_link("table", t.name))
+            contents: div(
+              form(
+                { method: "GET", action: `/registry-editor` },
+                div(
+                  { class: "input-group search-bar mb-2" },
+                  etype &&
+                    input({ type: "hidden", name: "etype", value: etype }),
+                  ename &&
+                    input({ type: "hidden", name: "ename", value: ename }),
+                  input({
+                    type: "search",
+                    class: "form-control search-bar ps-2 hasbl",
+                    placeholder: "Search",
+                    name: "q",
+                    value: q,
+                    "aria-label": "Search",
+                    "aria-describedby": "button-search-submit",
+                  }),
+                  button(
+                    {
+                      class: "btn btn-outline-secondary search-bar",
+                      type: "submit",
+                    },
+                    i({ class: "fas fa-search" })
                   )
                 )
               ),
-              li(
-                details(
-                  { open: etype === "view" },
-                  summary("Views"),
-                  ul(
-                    { class: "ps-3" },
-                    views.map((v) => li_link("view", v.name))
+              ul(
+                { class: "katetree ps-2" },
+                li(
+                  details(
+                    { open: q || etype === "table" },
+                    summary("Tables"),
+                    ul(
+                      { class: "ps-3" },
+                      tables.map((t) => li_link("table", t.name))
+                    )
                   )
-                )
-              ),
-              li(
-                details(
-                  { open: etype === "page" }, //
-                  summary("Pages"),
-                  ul(
-                    { class: "ps-3" },
-                    pages.map((p) => li_link("page", p.name))
+                ),
+                li(
+                  details(
+                    { open: q || etype === "view" },
+                    summary("Views"),
+                    ul(
+                      { class: "ps-3" },
+                      views.map((v) => li_link("view", v.name))
+                    )
                   )
-                )
-              ),
-              li(
-                details(
-                  { open: etype === "trigger" }, //
-                  summary("Triggers"),
-                  ul(
-                    { class: "ps-3" },
-                    triggers.map((t) => li_link("trigger", t.name))
+                ),
+                li(
+                  details(
+                    { open: q || etype === "page" }, //
+                    summary("Pages"),
+                    ul(
+                      { class: "ps-3" },
+                      pages.map((p) => li_link("page", p.name))
+                    )
+                  )
+                ),
+                li(
+                  details(
+                    { open: q || etype === "trigger" }, //
+                    summary("Triggers"),
+                    ul(
+                      { class: "ps-3" },
+                      triggers.map((t) => li_link("trigger", t.name))
+                    )
                   )
                 )
               )
@@ -184,7 +213,9 @@ router.post(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { etype, ename } = req.query;
+    const { etype, ename, q } = req.query;
+    const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
+
     const entVal = JSON.parse(req.body.regval);
     let pack = { plugins: [], tables: [], views: [], pages: [], triggers: [] };
 
@@ -204,7 +235,9 @@ router.post(
     }
     await install_pack(pack);
     res.redirect(
-      `/registry-editor?etype=${etype}&ename=${encodeURIComponent(ename)}`
+      `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
+        ename
+      )}${qlink}`
     );
   })
 );
