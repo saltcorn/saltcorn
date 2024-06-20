@@ -188,7 +188,6 @@ router.post(
     const entVal = JSON.parse(req.body.regval);
     let pack = { plugins: [], tables: [], views: [], pages: [], triggers: [] };
 
-    console.log(req.body);
     switch (etype) {
       case "table":
         pack.tables = [entVal];
