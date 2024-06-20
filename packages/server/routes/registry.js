@@ -55,7 +55,7 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { etype, ename } = req.query;
-    let edContents = "";
+    let edContents = "Registry editor: choose an entity to edit";
     const views = await View.find({}, { orderBy: "name", nocase: true });
     const pages = await Page.find({}, { orderBy: "name", nocase: true });
     const li_link = (etype1, ename1) =>
@@ -76,6 +76,7 @@ router.get(
         action: `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
           ename
         )}`,
+        blurb: `Registry editor: ${ename} ${etype}`,
         values: { regval: JSON.stringify(jsonVal, null, 2) },
         fields: [
           {
