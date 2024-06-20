@@ -52,6 +52,19 @@ const router = new Router();
 // export our router to be mounted by the parent application
 module.exports = router;
 
+async function asyncFilter(arr, cb) {
+  const filtered = [];
+
+  for (const element of arr) {
+    const needAdd = await cb(element);
+
+    if (needAdd) {
+      filtered.push(element);
+    }
+  }
+
+  return filtered;
+}
 router.get(
   "/",
   isAdmin,
@@ -59,10 +72,40 @@ router.get(
     const { etype, ename, q } = req.query;
     const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
     let edContents = "Choose an entity to edit";
-    const tables = await Table.find({}, { orderBy: "name", nocase: true });
-    const views = await View.find({}, { orderBy: "name", nocase: true });
-    const pages = await Page.find({}, { orderBy: "name", nocase: true });
-    const triggers = await Trigger.find({}, { orderBy: "name", nocase: true });
+    const all_tables = await Table.find({}, { orderBy: "name", nocase: true });
+    const all_views = await View.find({}, { orderBy: "name", nocase: true });
+    const all_pages = await Page.find({}, { orderBy: "name", nocase: true });
+    const all_triggers = await Trigger.find(
+      {},
+      { orderBy: "name", nocase: true }
+    );
+    let tables, views, pages, triggers;
+    if (q) {
+      const qlower = q.toLowerCase();
+      const includesQ = (s) => s.toLowerCase().includes(qlower);
+
+      tables = await asyncFilter(all_tables, async (t) => {
+        const pack = await table_pack(t);
+        return includesQ(JSON.stringify(pack));
+      });
+      views = await asyncFilter(all_views, async (t) => {
+        const pack = await view_pack(t);
+        return includesQ(JSON.stringify(pack));
+      });
+      pages = await asyncFilter(all_pages, async (t) => {
+        const pack = await page_pack(t);
+        return includesQ(JSON.stringify(pack));
+      });
+      triggers = await asyncFilter(all_triggers, async (t) => {
+        const pack = await trigger_pack(t);
+        return includesQ(JSON.stringify(pack));
+      });
+    } else {
+      tables = all_tables;
+      views = all_views;
+      pages = all_pages;
+      triggers = all_triggers;
+    }
     const li_link = (etype1, ename1) =>
       li(
         a(
@@ -94,20 +137,22 @@ router.get(
       });
     switch (etype) {
       case "table":
-        const tpack = await table_pack(tables.find((t) => t.name === ename));
+        const tpack = await table_pack(
+          all_tables.find((t) => t.name === ename)
+        );
         edContents = renderForm(mkForm(tpack), req.csrfToken());
         break;
       case "view":
-        const vpack = await view_pack(views.find((v) => v.name === ename));
+        const vpack = await view_pack(all_views.find((v) => v.name === ename));
         edContents = renderForm(mkForm(vpack), req.csrfToken());
         break;
       case "page":
-        const ppack = await page_pack(pages.find((v) => v.name === ename));
+        const ppack = await page_pack(all_pages.find((v) => v.name === ename));
         edContents = renderForm(mkForm(ppack), req.csrfToken());
         break;
       case "trigger":
         const trpack = await trigger_pack(
-          triggers.find((t) => t.name === ename)
+          all_triggers.find((t) => t.name === ename)
         );
         edContents = renderForm(mkForm(trpack), req.csrfToken());
         break;
