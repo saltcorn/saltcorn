@@ -3,6 +3,7 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd $SCRIPT_DIR
+PATH=../../packages/saltcorn-cli/bin/:$PATH
 saltcorn reset-schema -f
 
 echo Starting background Saltcorn server...
