@@ -241,6 +241,7 @@ const send_infoarch_page = (args) => {
       { text: "Pagegroups", href: "/page_group/settings" },
       { text: "Tags", href: "/tag" },
       { text: "Diagram", href: "/diagram" },
+      { text: "Registry editor", href: "/registry-editor" },
     ],
     ...args,
   });

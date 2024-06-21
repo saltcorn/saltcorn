@@ -1425,5 +1425,6 @@
 	"Keystore Alias": "Keystore Alias",
 	"Keystore Password": "Keystore Password",
 	"xcodebuild": "xcodebuild",
-	"Provisioning Profile": "Provisioning Profile"
+	"Provisioning Profile": "Provisioning Profile",
+	"Registry editor": "Registry editor"
 }
