@@ -42,17 +42,20 @@ jobs:
           SKIP_DOCKER_IMAGE_INSTALL: "true"
       - run: npm run tsc
       - name: Install dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./deploy/playwright
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
         working-directory: ./deploy/playwright
+
       - name: Run Playwright tests
-        run: npx playwright test
-        working-directory: ./deploy/playwright
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: deploy/playwright/playwright-report/
-          retention-days: 30
+        run: deploy/playwright/run.sh
+        env:
+          CI: true
+          SALTCORN_MULTI_TENANT: true
+          SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: saltcorn_test
+          PGPASSWORD: postgres
