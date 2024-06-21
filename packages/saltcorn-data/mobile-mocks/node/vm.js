@@ -1,3 +1,6 @@
+/*global document*/
+var iFrame = null;
+
 var indexOf = function (xs, item) {
   if (xs.indexOf) return xs.indexOf(item);
   else
@@ -80,7 +83,17 @@ Context.prototype = {};
 
 var Script = (exports.Script = function NodeScript(code) {
   if (!(this instanceof Script)) return new Script(code);
+
+  if (!iFrame) {
+    iFrame = document.createElement("iframe");
+    if (!iFrame.style) iFrame.style = {};
+    iFrame.style.display = "none";
+
+    document.body.appendChild(iFrame);
+  }
+
   this.code = code;
+  this.iFrame = iFrame;
 });
 
 Script.prototype.runInContext = function (context) {
@@ -88,13 +101,9 @@ Script.prototype.runInContext = function (context) {
     throw new TypeError("needs a 'context' argument.");
   }
 
-  var iframe = document.createElement("iframe");
-  if (!iframe.style) iframe.style = {};
-  iframe.style.display = "none";
-
-  document.body.appendChild(iframe);
-
-  var win = iframe.contentWindow;
+  var win = this.iFrame.contentWindow;
+  var winOriginal = Object_keys(win);
+  let originalToRestore = [];
   var wEval = win.eval,
     wExecScript = win.execScript;
 
@@ -105,35 +114,47 @@ Script.prototype.runInContext = function (context) {
   }
 
   forEach(Object_keys(context), function (key) {
-    win[key] = context[key];
-  });
-  forEach(globals, function (key) {
-    if (context[key]) {
-      win[key] = context[key];
+    if (win[key] !== undefined) {
+      let restore = {
+        key: key,
+        value: win[key],
+      };
+      originalToRestore.push(restore);
     }
+    win[key] = context[key];
   });
 
   var winKeys = Object_keys(win);
 
-  var res = wEval.call(win, this.code);
+  var res;
+  try {
+    res = wEval.call(win, this.code);
+  } finally {
+    forEach(Object_keys(win), function (key) {
+      // Avoid copying circular objects like `top` and `window` by only
+      // updating existing context properties or new properties in the `win`
+      // that was only introduced after the eval.
+      if (key in context || indexOf(winKeys, key) === -1) {
+        context[key] = win[key];
+      }
+    });
 
-  forEach(Object_keys(win), function (key) {
-    // Avoid copying circular objects like `top` and `window` by only
-    // updating existing context properties or new properties in the `win`
-    // that was only introduced after the eval.
-    if (key in context || indexOf(winKeys, key) === -1) {
-      context[key] = win[key];
-    }
-  });
+    forEach(globals, function (key) {
+      if (!(key in context)) {
+        defineProp(context, key, win[key]);
+      }
+    });
 
-  forEach(globals, function (key) {
-    if (!(key in context)) {
-      defineProp(context, key, win[key]);
-    }
-  });
+    // remove new properties from `win`
+    forEach(Object_keys(win), function (key) {
+      if (indexOf(winOriginal, key) === -1) delete win[key];
+    });
 
-  document.body.removeChild(iframe);
-
+    // restore overwritten window vars to original values
+    forEach(originalToRestore, function (orig) {
+      win[orig.key] = orig.value;
+    });
+  }
   return res;
 };
 
