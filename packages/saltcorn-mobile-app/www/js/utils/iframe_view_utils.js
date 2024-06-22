@@ -700,7 +700,13 @@ async function clear_state() {
   }
 }
 
-async function view_post(viewname, route, data, onDone, sendState) {
+async function view_post(viewnameOrElem, route, data, onDone, sendState) {
+  const viewname =
+    typeof viewnameOrElem === "string"
+      ? viewnameOrElem
+      : $(viewnameOrElem)
+          .closest("[data-sc-embed-viewname]")
+          .attr("data-sc-embed-viewname");
   const buildQuery = () => {
     const query = parent.currentQuery();
     return query ? `?${query}` : "";
