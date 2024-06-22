@@ -260,6 +260,15 @@ async function replaceIframeInnerContent(content) {
   iframe.contentWindow.initialize_page();
 }
 
+function clearContentDiv() {
+  const iframe = document.getElementById("content-iframe");
+  if (iframe) {
+    const iframeDocument = iframe.contentWindow.document;
+    const innerContentDiv = iframeDocument.getElementById("page-inner-content");
+    if (innerContentDiv) innerContentDiv.innerHTML = "";
+  }
+}
+
 async function gotoEntryView() {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   try {
@@ -309,6 +318,7 @@ async function handleRoute(route, query, files, data) {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   let routeAdded = false;
   try {
+    clearContentDiv();
     if (
       mobileConfig.networkState === "none" &&
       mobileConfig.allowOfflineMode &&
