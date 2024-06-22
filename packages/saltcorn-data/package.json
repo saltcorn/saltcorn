@@ -8,7 +8,7 @@
     "remote-queries-test": "REMOTE_QUERIES=true jest tests/exact_views.test.ts",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\"",
-    "build": "webpack --mode development"
+    "build": "node ./mobile-mocks/copy_excluded_files.js && webpack --mode development"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
