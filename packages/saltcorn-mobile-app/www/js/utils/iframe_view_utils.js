@@ -572,7 +572,7 @@ async function local_post(url, args) {
       data: args,
     });
     if (result.redirect) await parent.handleRoute(result.redirect);
-    else common_done(result, "", false);
+    else await common_done(result, "", false);
   } catch (error) {
     parent.errorAlert(error);
   } finally {
@@ -590,7 +590,7 @@ async function local_post_json(url, data, cb) {
     });
     if (result.server_eval) await evalServerCode(url);
     if (result.redirect) await parent.handleRoute(result.redirect);
-    else common_done(result, "", false);
+    else await common_done(result, "", false);
     if (cb?.success) cb.success(result);
   } catch (error) {
     parent.errorAlert(error);
@@ -737,8 +737,8 @@ async function view_post(viewnameOrElem, route, data, onDone, sendState) {
 
     if (!respData)
       throw new Error(`The response of '${viewname}/${route}' is ${respData}`);
-    if (onDone) onDone(respData);
-    common_done(respData, viewname, false);
+    if (onDone) await onDone(respData);
+    await common_done(respData, viewname, false);
   } catch (error) {
     parent.errorAlert(error);
   } finally {
