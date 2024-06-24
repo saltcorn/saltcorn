@@ -898,43 +898,57 @@ async function deleteOfflineData(noFeedback) {
 }
 
 function showLoadSpinner() {
-  if (!parent.isHtmlFile() && $("#scspinner").length === 0) {
-    $("body").append(`
-    <div 
-      id="scspinner" 
-      style="position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 9999;"
-    >
+  if (!parent.isHtmlFile()) {
+    const spinner = $("#scspinner");
+    if (spinner.length === 0) {
+      $("body").append(`
       <div 
-        style="position: absolute;
-          left: 50%;
+        id="scspinner" 
+        style="position: fixed;
           top: 50%;
-          height: 60px;
-          width: 250px;
-          margin: 0px auto;"
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 9999;"
+        spinner-count="1"
       >
-        <span 
-          class="spinner-border d-block"
-          role="status"
+        <div 
+          style="position: absolute;
+            left: 50%;
+            top: 50%;
+            height: 60px;
+            width: 250px;
+            margin: 0px auto;"
         >
-          <span class="visually-hidden">Loading...</span>
-        </span>
-        <span 
-          style="margin-left: -125px"
-          id="scspinner-text-id"
-          class="d-none fs-5 fw-bold bg-secondary text-white p-1 rounded"
-        >
-        </span>
-      </div>
-    </div>`);
+          <span 
+            class="spinner-border d-block"
+            role="status"
+          >
+            <span class="visually-hidden">Loading...</span>
+          </span>
+          <span 
+            style="margin-left: -125px"
+            id="scspinner-text-id"
+            class="d-none fs-5 fw-bold bg-secondary text-white p-1 rounded"
+          >
+          </span>
+        </div>
+      </div>`);
+    } else {
+      const count = parseInt(spinner.attr("spinner-count")) + 1;
+      spinner.attr("spinner-count", count);
+    }
   }
 }
 
 function removeLoadSpinner() {
-  if (!parent.isHtmlFile()) $("#scspinner").remove();
+  if (!parent.isHtmlFile()) {
+    const spinner = $("#scspinner");
+    if (spinner.length > 0) {
+      const count = parseInt(spinner.attr("spinner-count")) - 1;
+      if (count === 0) spinner.remove();
+      else spinner.attr("spinner-count", count);
+    }
+  }
 }
 
 /**
