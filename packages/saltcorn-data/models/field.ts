@@ -384,7 +384,7 @@ class Field implements AbstractField {
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
       const whereWithExisting =
-        existingRow && where
+        existingRow?.id && where
           ? { or: [{ id: existingRow.id }, where] } //TODO pk_name
           : where;
 
