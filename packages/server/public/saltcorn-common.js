@@ -204,6 +204,10 @@ function apply_showif() {
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
+      if (dynwhere.whereParsed?.existingRow?.id) {
+        if (!success.find((r) => r.id == dynwhere.whereParsed.existingRow.id))
+          success.push(dynwhere.whereParsed.existingRow);
+      }
       const success1 = dynwhere.nubBy
         ? nubBy(dynwhere.nubBy, success)
         : success;

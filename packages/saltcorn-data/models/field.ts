@@ -292,7 +292,7 @@ class Field implements AbstractField {
     extraCtx: any = {},
     optionsQuery?: any,
     formFieldNames?: string[],
-    existingValue?: any
+    existingRow?: any
   ): Promise<void> {
     let where = where0;
 
@@ -330,19 +330,13 @@ class Field implements AbstractField {
       formFieldNames!.forEach((nm) => {
         fakeEnv[nm] = "$" + nm;
       });
-      const whereWithExisting = existingValue
-        ? {
-            or: [
-              { id: existingValue },
-              jsexprToWhere(this.attributes.where, fakeEnv),
-            ],
-          } //TODO pk_name
-        : jsexprToWhere(this.attributes.where, fakeEnv);
+
       this.attributes.dynamic_where = {
         table: this.reftable_name,
         refname: this.refname,
         where: this.attributes.where,
-        whereParsed: whereWithExisting,
+        whereParsed: jsexprToWhere(this.attributes.where, fakeEnv),
+        existingRow: existingRow || undefined,
         summary_field: this.attributes.summary_field,
         label_formula: this.attributes.label_formula,
         neutral_label: this.attributes.neutral_label,
@@ -390,8 +384,8 @@ class Field implements AbstractField {
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
       const whereWithExisting =
-        existingValue && where
-          ? { or: [{ id: existingValue }, where] } //TODO pk_name
+        existingRow && where
+          ? { or: [{ id: existingRow.id }, where] } //TODO pk_name
           : where;
 
       const rows = !optionsQuery
