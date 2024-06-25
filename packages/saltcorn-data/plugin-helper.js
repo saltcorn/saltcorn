@@ -2081,12 +2081,18 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       }
     }
   });
-  orFields.forEach((orField) => {
-    if (typeof qstate[orField] === "undefined") return;
-    if (!qstate.or) qstate.or = [];
-    qstate.or.push({ [orField]: qstate[orField] });
-    delete qstate[orField];
-  });
+  if (orFields.length === 1) {
+    const orKey = orFields[0];
+    const orVal = qstate[orKey];
+    delete qstate[orKey];
+    return { or: [{ [orKey]: orVal }, qstate] };
+  } else
+    orFields.forEach((orField) => {
+      if (typeof qstate[orField] === "undefined") return;
+      if (!qstate.or) qstate.or = [];
+      qstate.or.push({ [orField]: qstate[orField] });
+      delete qstate[orField];
+    });
 
   return qstate;
 };
