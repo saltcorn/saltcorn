@@ -37,6 +37,7 @@ const { getState } = require("../db/state");
 const { localeDate, localeDateTime } = require("@saltcorn/markup");
 const { freeVariables, eval_expression } = require("../models/expression");
 const Table = require("../models/table");
+const User = require("../models/user");
 const _ = require("underscore");
 const { interpolate } = require("../utils");
 const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
@@ -1390,6 +1391,38 @@ const int = {
                 { for: `input${text_attr(nm)}-${starVal}` },
                 i({ class: "fas fa-star" })
               )
+          )
+        );
+      },
+    },
+    role_select: {
+      isEdit: true,
+      blockDisplay: true,
+      description: "Select a user role",
+      fill_options: async (field) => {
+        const roles = await User.get_roles();
+        field.options = roles;
+      },
+      run: (nm, v, attrs, cls, required, field) => {
+        return select(
+          {
+            class: [
+              "form-control",
+              "form-select",
+              cls,
+              attrs.selectizable ? "selectizable" : false,
+            ],
+            name: text_attr(nm),
+            "data-fieldname": text_attr(field.name),
+            id: `input${text_attr(nm)}`,
+            disabled: attrs.disabled,
+            onChange: attrs.onChange,
+            onBlur: attrs.onChange,
+            autocomplete: "off",
+            required: true,
+          },
+          field.options.map(({ id, role }) =>
+            option({ value: id, selected: v == id }, role)
           )
         );
       },
