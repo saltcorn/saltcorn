@@ -310,8 +310,14 @@ class Field implements AbstractField {
       where = this.attributes.where
         ? jsexprToWhere(this.attributes.where, extraCtx)
         : undefined;
-    if (this.fieldviewObj?.fill_options) {
-      await this.fieldviewObj.fill_options(
+
+    const fieldviewObj =
+      this.fieldviewObj ||
+      (typeof this.type === "string"
+        ? undefined
+        : this.type?.fieldviews?.[this.fieldview || ""]);
+    if (fieldviewObj?.fill_options) {
+      await fieldviewObj.fill_options(
         this,
         force_allow_none,
         where,

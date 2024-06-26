@@ -37,6 +37,7 @@ const { getState } = require("../db/state");
 const { localeDate, localeDateTime } = require("@saltcorn/markup");
 const { freeVariables, eval_expression } = require("../models/expression");
 const Table = require("../models/table");
+const User = require("../models/user");
 const _ = require("underscore");
 const { interpolate } = require("../utils");
 const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
@@ -508,6 +509,125 @@ const getStrOptions = (v, optsStr) =>
 const join_fields_in_formula = (fml) => {
   if (!fml) return [];
   return [...freeVariables(fml)];
+};
+
+const to_locale_string = {
+  description: "Show as in locale-sensitive representation",
+  configFields: (field) => [
+    {
+      type: "String",
+      name: "locale",
+      label: "Locale",
+      sublabel: "Blank for default user locale",
+    },
+    {
+      type: "String",
+      name: "style",
+      label: "Style",
+      required: true,
+      attributes: {
+        options: ["decimal", "currency", "percent", "unit"],
+      },
+    },
+    {
+      type: "String",
+      name: "currency",
+      label: "Currency",
+      sublabel: "ISO 4217. Example: USD or EUR",
+      required: true,
+      showIf: { style: "currency" },
+    },
+    {
+      type: "String",
+      name: "currencyDisplay",
+      label: "Currency display",
+      required: true,
+      showIf: { style: "currency" },
+      attributes: {
+        options: ["symbol", "code", "narrrowSymbol", "name"],
+      },
+    },
+    {
+      type: "String",
+      name: "unit",
+      label: "Unit",
+      required: true,
+      showIf: { style: "unit" },
+      attributes: {
+        options: [
+          "acre",
+          "bit",
+          "byte",
+          "celsius",
+          "centimeter",
+          "day",
+          "degree",
+          "fahrenheit",
+          "fluid-ounce",
+          "foot",
+          "gallon",
+          "gigabit",
+          "gigabyte",
+          "gram",
+          "hectare",
+          "hour",
+          "inch",
+          "kilobit",
+          "kilobyte",
+          "kilogram",
+          "kilometer",
+          "liter",
+          "megabit",
+          "megabyte",
+          "meter",
+          "microsecond",
+          "mile",
+          "mile-scandinavian",
+          "milliliter",
+          "millimeter",
+          "millisecond",
+          "minute",
+          "month",
+          "nanosecond",
+          "ounce",
+          "percent",
+          "petabyte",
+          "pound",
+          "second",
+          "stone",
+          "terabit",
+          "terabyte",
+          "week",
+          "yard",
+          "year",
+        ],
+      },
+    },
+    {
+      type: "String",
+      name: "unitDisplay",
+      label: "Unit display",
+      required: true,
+      showIf: { style: "unit" },
+      attributes: {
+        options: ["short", "narrow", "long"],
+      },
+    },
+  ],
+  isEdit: false,
+  run: (v, req, attrs = {}) => {
+    const v1 = typeof v === "string" ? +v : v;
+    if (typeof v1 === "number") {
+      const locale_ = attrs.locale || locale(req);
+      return v1.toLocaleString(locale_, {
+        style: attrs.style,
+        currency: attrs.currency,
+        currencyDisplay: attrs.currencyDisplay,
+        unit: attrs.unit,
+        unitDisplay: attrs.unitDisplay,
+      });
+    } else return "";
+  },
 };
 
 /**
@@ -1394,6 +1514,39 @@ const int = {
         );
       },
     },
+    to_locale_string,
+    role_select: {
+      isEdit: true,
+      blockDisplay: true,
+      description: "Select a user role",
+      fill_options: async (field) => {
+        const roles = await User.get_roles();
+        field.options = roles;
+      },
+      run: (nm, v, attrs, cls, required, field) => {
+        return select(
+          {
+            class: [
+              "form-control",
+              "form-select",
+              cls,
+              attrs.selectizable ? "selectizable" : false,
+            ],
+            name: text_attr(nm),
+            "data-fieldname": text_attr(field.name),
+            id: `input${text_attr(nm)}`,
+            disabled: attrs.disabled,
+            onChange: attrs.onChange,
+            onBlur: attrs.onChange,
+            autocomplete: "off",
+            required: true,
+          },
+          field.options.map(({ id, role }) =>
+            option({ value: id, selected: v == id }, role)
+          )
+        );
+      },
+    },
   },
   /** @type {object[]}  */
   attributes: [
@@ -1603,6 +1756,7 @@ const float = {
     heat_cell: heat_cell("Float"),
     above_input: float_number_limit("gte"),
     below_input: float_number_limit("lte"),
+    to_locale_string,
     show_with_html,
   },
   /** @type {object[]} */
