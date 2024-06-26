@@ -511,6 +511,125 @@ const join_fields_in_formula = (fml) => {
   return [...freeVariables(fml)];
 };
 
+const to_locale_string = {
+  description: "Show as in locale-sensitive representation",
+  configFields: (field) => [
+    {
+      type: "String",
+      name: "locale",
+      label: "Locale",
+      sublabel: "Blank for default user locale",
+    },
+    {
+      type: "String",
+      name: "style",
+      label: "Style",
+      required: true,
+      attributes: {
+        options: ["decimal", "currency", "percent", "unit"],
+      },
+    },
+    {
+      type: "String",
+      name: "currency",
+      label: "Currency",
+      sublabel: "ISO 4217. Example: USD or EUR",
+      required: true,
+      showIf: { style: "currency" },
+    },
+    {
+      type: "String",
+      name: "currencyDisplay",
+      label: "Currency display",
+      required: true,
+      showIf: { style: "currency" },
+      attributes: {
+        options: ["symbol", "code", "narrrowSymbol", "name"],
+      },
+    },
+    {
+      type: "String",
+      name: "unit",
+      label: "Unit",
+      required: true,
+      showIf: { style: "unit" },
+      attributes: {
+        options: [
+          "acre",
+          "bit",
+          "byte",
+          "celsius",
+          "centimeter",
+          "day",
+          "degree",
+          "fahrenheit",
+          "fluid-ounce",
+          "foot",
+          "gallon",
+          "gigabit",
+          "gigabyte",
+          "gram",
+          "hectare",
+          "hour",
+          "inch",
+          "kilobit",
+          "kilobyte",
+          "kilogram",
+          "kilometer",
+          "liter",
+          "megabit",
+          "megabyte",
+          "meter",
+          "microsecond",
+          "mile",
+          "mile-scandinavian",
+          "milliliter",
+          "millimeter",
+          "millisecond",
+          "minute",
+          "month",
+          "nanosecond",
+          "ounce",
+          "percent",
+          "petabyte",
+          "pound",
+          "second",
+          "stone",
+          "terabit",
+          "terabyte",
+          "week",
+          "yard",
+          "year",
+        ],
+      },
+    },
+    {
+      type: "String",
+      name: "unitDisplay",
+      label: "Unit display",
+      required: true,
+      showIf: { style: "unit" },
+      attributes: {
+        options: ["short", "narrow", "long"],
+      },
+    },
+  ],
+  isEdit: false,
+  run: (v, req, attrs = {}) => {
+    const v1 = typeof v === "string" ? +v : v;
+    if (typeof v1 === "number") {
+      const locale_ = attrs.locale || locale(req);
+      return v1.toLocaleString(locale_, {
+        style: attrs.style,
+        currency: attrs.currency,
+        currencyDisplay: attrs.currencyDisplay,
+        unit: attrs.unit,
+        unitDisplay: attrs.unitDisplay,
+      });
+    } else return "";
+  },
+};
+
 /**
  * string type
  * @namespace
@@ -1395,6 +1514,7 @@ const int = {
         );
       },
     },
+    to_locale_string,
     role_select: {
       isEdit: true,
       blockDisplay: true,
@@ -1636,6 +1756,7 @@ const float = {
     heat_cell: heat_cell("Float"),
     above_input: float_number_limit("gte"),
     below_input: float_number_limit("lte"),
+    to_locale_string,
     show_with_html,
   },
   /** @type {object[]} */
