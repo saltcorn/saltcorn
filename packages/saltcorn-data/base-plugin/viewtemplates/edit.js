@@ -211,6 +211,8 @@ const configuration_workflow = (req) =>
             field_view_options.password = ["password"];
             field_view_options.passwordRepeat = ["password"];
             field_view_options.remember = ["edit"];
+            if (field_view_options.role_id)
+              field_view_options.role_id.push("role_select");
           }
           const library = (await Library.find({})).filter((l) =>
             l.suitableFor("edit")
