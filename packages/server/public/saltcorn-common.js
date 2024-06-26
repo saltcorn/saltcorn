@@ -179,7 +179,11 @@ function apply_showif() {
             is_or ? "&_or_field=" + k : ""
           }`;
     };
-    const qss = Object.entries(dynwhere.whereParsed).map(kvToQs);
+    const qss = Object.entries(dynwhere.whereParsed).map((kv) => kvToQs(kv));
+    if (dynwhere.existingValue) {
+      qss.push(`id=${dynwhere.existingValue}`);
+      qss.push(`_or_field=id`);
+    }
     if (dynwhere.dereference) {
       if (Array.isArray(dynwhere.dereference))
         qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
