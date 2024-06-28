@@ -94,7 +94,7 @@ const pagePropertiesForm = async (req, isNew) => {
           if (groups.includes(s) && isNew)
             return req.__("A page group with this name already exists");
         },
-        sublabel: req.__("A short name that will be in your URL"),
+        sublabel: req.__("A short name that will be in the page URL"),
         type: "String",
         attributes: { autofocus: true },
       }),
@@ -107,13 +107,15 @@ const pagePropertiesForm = async (req, isNew) => {
       new Field({
         label: req.__("Description"),
         name: "description",
-        sublabel: req.__("A longer description"),
+        sublabel: req.__(
+          "A longer description that is not visible but appears in the page header and is indexed by search engines"
+        ),
         input_type: "text",
       }),
       {
         name: "min_role",
         label: req.__("Minimum role"),
-        sublabel: req.__("Role required to access page"),
+        sublabel: req.__("User role required to access page"),
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
       },
@@ -338,6 +340,15 @@ router.get(
         },
         {
           type: "card",
+          title: req.__("Root pages"),
+          titleAjaxIndicator: true,
+          contents: renderForm(
+            getRootPageForm(pages, pageGroups, roles, req),
+            req.csrfToken()
+          ),
+        },
+        {
+          type: "card",
           title: req.__("Your page groups"),
           contents: div(
             p(
@@ -355,15 +366,6 @@ router.get(
               },
               req.__("Create page group")
             )
-          ),
-        },
-        {
-          type: "card",
-          title: req.__("Root pages"),
-          titleAjaxIndicator: true,
-          contents: renderForm(
-            getRootPageForm(pages, pageGroups, roles, req),
-            req.csrfToken()
           ),
         },
       ],
