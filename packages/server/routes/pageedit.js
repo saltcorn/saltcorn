@@ -420,6 +420,7 @@ router.get(
       form.hidden("id");
       form.values = page;
       form.values.no_menu = page.attributes?.no_menu;
+      form.onChange = `saveAndContinue(this)`;
       res.sendWrap(
         req.__(`Page attributes`),
         wrap(renderForm(form, req.csrfToken()), false, req, page)
@@ -479,7 +480,8 @@ router.post(
           pageRow.layout = {};
         }
         await Page.update(+id, pageRow);
-        res.redirect(`/pageedit/`);
+        if (req.xhr) res.json({ success: "ok" });
+        else res.redirect(`/pageedit/`);
       } else {
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
