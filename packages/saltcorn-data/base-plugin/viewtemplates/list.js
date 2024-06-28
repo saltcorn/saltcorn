@@ -626,9 +626,10 @@ const configuration_workflow = (req) =>
           formfields.push({
             name: "_row_click_url_formula",
             label: req.__("Row click URL"),
-            sublabel: req.__(
-              "Formula. Navigate to this URL when row is clicked"
-            ),
+            sublabel:
+              req.__("Formula. Navigate to this URL when row is clicked") +
+              ". " +
+              req.__("Example: <code>`/view/TheOtherView?id=${id}`</code>"),
             type: "String",
             class: "validate-expression",
           });

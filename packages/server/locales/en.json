@@ -1429,5 +1429,6 @@
 	"Registry editor": "Registry editor",
 	"A short name that will be in the page URL": "A short name that will be in the page URL",
 	"A longer description that is not visible but appears in the page header and is indexed by search engines": "A longer description that is not visible but appears in the page header and is indexed by search engines",
-	"User role required to access page": "User role required to access page"
+	"User role required to access page": "User role required to access page",
+	"Example: <code>`/view/TheOtherView?id=${id}`</code>": "Example: <code>`/view/TheOtherView?id=${id}`</code>"
 }
