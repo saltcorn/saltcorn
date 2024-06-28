@@ -76,7 +76,7 @@ describe("page create", () => {
     await request(app)
       .get("/pageedit/new")
       .set("Cookie", loginCookie)
-      .expect(toInclude("A short name that will be in your URL"));
+      .expect(toInclude("A short name that will be in the page URL"));
   });
   it("shows new with html file selector", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -237,7 +237,7 @@ describe("pageedit", () => {
     await request(app)
       .get("/pageedit/edit-properties/a_page")
       .set("Cookie", loginCookie)
-      .expect(toInclude("A short name that will be in your URL"));
+      .expect(toInclude("A short name that will be in the page URL"));
 
     //TODO full context
     const ctx = encodeURIComponent(JSON.stringify({}));
