@@ -394,6 +394,7 @@ const wrap = (contents, noCard, req, page) => ({
     {
       type: noCard ? "container" : "card",
       title: page ? page.name : req.__("New"),
+      titleAjaxIndicator: true,
       contents,
     },
   ],
