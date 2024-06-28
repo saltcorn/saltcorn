@@ -1484,10 +1484,10 @@ const columnSummary = (col) => {
 };
 
 function submitWithEmptyAction(form) {
-  var formAction = form.action;
-  form.action = "javascript:void(0)";
+  var formAction = form.getAttribute("action");
+  form.setAttribute("action", "javascript:void(0)");
   form.submit();
-  form.action = formAction;
+  form.setAttribute("action", formAction);
 }
 
 function unique_field_from_rows(
