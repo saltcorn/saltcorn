@@ -28,10 +28,14 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
     {
       action: url,
       method: "post",
+      onchange: "saveAndContinue(this)",
     },
     csrfField(req),
     select(
-      { name: "role", onchange: "form.submit()" },
+      {
+        name: "role",
+        class: "w-unset form-select form-select-sm",
+      },
       roles.map((role) =>
         option(
           {

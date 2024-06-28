@@ -906,7 +906,7 @@ router.post(
           ? `/${req.query.on_done_redirect}`
           : "/viewedit";
       res.redirect(redirectTarget);
-    } else res.json({ okay: true, responseText: message });
+    } else res.json({ success: "ok" });
   })
 );
 
