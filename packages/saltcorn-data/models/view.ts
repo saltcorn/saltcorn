@@ -743,6 +743,9 @@ class View implements AbstractView {
       extraArgs,
       this.queries(remote, extraArgs.req)
     );
+    if (result?.status && typeof result.stack === "number")
+      res.status(res.status);
+
     if (result && result.json) res.json(result.json);
     else if (result && result.html) res.send(result.html);
     else if (!res.headersSent && (isNode() || (!isNode() && !res.getJson())))
