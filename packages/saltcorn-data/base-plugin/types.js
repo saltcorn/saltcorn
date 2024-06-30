@@ -513,7 +513,6 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
  * @returns {string[]}
  */
 const getStrOptions = (v, optsStr, exclude_values_string) => {
-  console.log({ v, optsStr, exclude_values_string });
   const exclude_values = exclude_values_string
     ? new Set(
         exclude_values_string
