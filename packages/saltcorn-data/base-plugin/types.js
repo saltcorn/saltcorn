@@ -368,8 +368,8 @@ const heat_cell = (type) => ({
       const g = parseInt(hexColor.substr(3, 2), 16) / 255;
       const b = parseInt(hexColor.substr(5, 2), 16) / 255;
 
-      const a = [r, g, b].map(v => {
-        return (v <= 0.03928) ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      const a = [r, g, b].map((v) => {
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
       });
 
       return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
@@ -377,11 +377,13 @@ const heat_cell = (type) => ({
 
     function hslToHex(h, s, l) {
       l /= 100;
-      const a = s * Math.min(l, 1 - l) / 100;
-      const f = n => {
+      const a = (s * Math.min(l, 1 - l)) / 100;
+      const f = (n) => {
         const k = (n + h / 30) % 12;
         const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-        return Math.round(255 * color).toString(16).padStart(2, '0'); // convert to Hex and prefix "0" if needed
+        return Math.round(255 * color)
+          .toString(16)
+          .padStart(2, "0"); // convert to Hex and prefix "0" if needed
       };
       return `#${f(0)}${f(8)}${f(4)}`;
     }
@@ -390,7 +392,7 @@ const heat_cell = (type) => ({
     const hexColor = hslToHex(h, s, l);
     const luminance = getLuminance(hexColor);
 
-    const textColor = luminance > 0.5 ? '#000000' : '#FFFFFF';
+    const textColor = luminance > 0.5 ? "#000000" : "#FFFFFF";
 
     return div(
       {
