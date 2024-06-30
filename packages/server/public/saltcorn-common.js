@@ -190,7 +190,8 @@ function apply_showif() {
       else qss.push(`dereference=${dynwhere.dereference}`);
     }
     const qs = qss.join("&");
-    var current = e.attr("data-selected");
+    let current = e.attr("data-selected");
+    if (current === "null") current = null;
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
     });
@@ -203,8 +204,7 @@ function apply_showif() {
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
-      if (!dynwhere.required)
-        toAppend.push({ label: dynwhere.neutral_label || "", value: "" });
+
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -235,13 +235,24 @@ function apply_showif() {
           ? 1
           : -1
       );
+      if (!dynwhere.required)
+        toAppend.unshift({ label: dynwhere.neutral_label || "", value: "" });
+      if (dynwhere.required && dynwhere.placeholder)
+        toAppend.unshift({
+          disabled: true,
+          label: dynwhere.placeholder,
+          value: "",
+          selected: !current,
+        });
       e.html(
         toAppend
           .map(
-            ({ label, value, selected }) =>
+            ({ label, value, selected, disabled }) =>
               `<option${selected ? ` selected` : ""}${
-                typeof value !== "undefined" ? ` value="${value}"` : ""
-              }>${label || ""}</option>`
+                disabled ? ` disabled` : ""
+              }${typeof value !== "undefined" ? ` value="${value}"` : ""}>${
+                label || ""
+              }</option>`
           )
           .join("")
       );

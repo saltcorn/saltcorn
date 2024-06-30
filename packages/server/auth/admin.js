@@ -99,6 +99,10 @@ const getUserFields = async (req) => {
         input_type: "email",
       };
     }
+    if (f.name === "role_id") {
+      f.fieldview = "role_select";
+      await f.fill_fkey_options();
+    }
   }
   return userFields;
 };
@@ -110,65 +114,59 @@ const getUserFields = async (req) => {
  * @param {User} user
  * @returns {Promise<Form>}
  */
-const userForm = contract(
-  is.fun(
-    [is.obj({}), is.maybe(is.class("User"))],
-    is.promise(is.class("Form"))
-  ),
-  async (req, user) => {
-    const roleField = new Field({
-      label: req.__("Role"),
-      name: "role_id",
-      type: "Key",
-      reftable_name: "roles",
-    });
-    const roles = (await User.get_roles()).filter((r) => r.role !== "public");
-    roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
-    const can_reset = getState().getConfig("smtp_host", "") !== "";
-    const userFields = await getUserFields(req);
-    const form = new Form({
-      fields: [roleField, ...userFields],
-      action: "/useradmin/save",
-      submitLabel: user ? req.__("Save") : req.__("Create"),
-    });
-    if (!user) {
+const userForm = async (req, user) => {
+  const roleField = new Field({
+    label: req.__("Role"),
+    name: "role_id",
+    type: "Key",
+    reftable_name: "roles",
+  });
+  const roles = (await User.get_roles()).filter((r) => r.role !== "public");
+  roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
+  const can_reset = getState().getConfig("smtp_host", "") !== "";
+  const userFields = await getUserFields(req);
+  const form = new Form({
+    fields: userFields,
+    action: "/useradmin/save",
+    submitLabel: user ? req.__("Save") : req.__("Create"),
+  });
+  if (!user) {
+    form.fields.push(
+      new Field({
+        label: req.__("Set random password"),
+        name: "rnd_password",
+        type: "Bool",
+        default: true,
+      })
+    );
+    form.fields.push(
+      new Field({
+        label: req.__("Password"),
+        name: "password",
+        input_type: "password",
+        showIf: { rnd_password: false },
+      })
+    );
+    can_reset &&
       form.fields.push(
         new Field({
-          label: req.__("Set random password"),
-          name: "rnd_password",
+          label: req.__("Send password reset email"),
+          name: "send_pwreset_email",
           type: "Bool",
           default: true,
+          showIf: { rnd_password: true },
         })
       );
-      form.fields.push(
-        new Field({
-          label: req.__("Password"),
-          name: "password",
-          input_type: "password",
-          showIf: { rnd_password: false },
-        })
-      );
-      can_reset &&
-        form.fields.push(
-          new Field({
-            label: req.__("Send password reset email"),
-            name: "send_pwreset_email",
-            type: "Bool",
-            default: true,
-            showIf: { rnd_password: true },
-          })
-        );
-    }
-    if (user) {
-      form.hidden("id");
-      form.values = user;
-      delete form.values.password;
-    } else {
-      form.values.role_id = roles[roles.length - 1].id;
-    }
-    return form;
   }
-);
+  if (user) {
+    form.hidden("id");
+    form.values = user;
+    delete form.values.password;
+  } else {
+    form.values.role_id = roles[roles.length - 1].id;
+  }
+  return form;
+};
 
 /**
  * Dropdown for User Info in left menu

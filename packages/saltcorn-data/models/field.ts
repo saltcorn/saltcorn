@@ -336,6 +336,7 @@ class Field implements AbstractField {
       formFieldNames!.forEach((nm) => {
         fakeEnv[nm] = "$" + nm;
       });
+
       this.attributes.dynamic_where = {
         table: this.reftable_name,
         refname: this.refname,
@@ -345,7 +346,8 @@ class Field implements AbstractField {
         summary_field: this.attributes.summary_field,
         label_formula: this.attributes.label_formula,
         neutral_label: this.attributes.neutral_label,
-        required: this.required,
+        required: this.required || this.attributes.force_required,
+        placeholder: this.attributes.placeholder,
       };
     }
     //console.log({ where, isDynamic, awhere: this.attributes.where });

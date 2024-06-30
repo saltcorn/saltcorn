@@ -368,8 +368,8 @@ const heat_cell = (type) => ({
       const g = parseInt(hexColor.substr(3, 2), 16) / 255;
       const b = parseInt(hexColor.substr(5, 2), 16) / 255;
 
-      const a = [r, g, b].map(v => {
-        return (v <= 0.03928) ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      const a = [r, g, b].map((v) => {
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
       });
 
       return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
@@ -377,11 +377,13 @@ const heat_cell = (type) => ({
 
     function hslToHex(h, s, l) {
       l /= 100;
-      const a = s * Math.min(l, 1 - l) / 100;
-      const f = n => {
+      const a = (s * Math.min(l, 1 - l)) / 100;
+      const f = (n) => {
         const k = (n + h / 30) % 12;
         const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-        return Math.round(255 * color).toString(16).padStart(2, '0'); // convert to Hex and prefix "0" if needed
+        return Math.round(255 * color)
+          .toString(16)
+          .padStart(2, "0"); // convert to Hex and prefix "0" if needed
       };
       return `#${f(0)}${f(8)}${f(4)}`;
     }
@@ -390,7 +392,7 @@ const heat_cell = (type) => ({
     const hexColor = hslToHex(h, s, l);
     const luminance = getLuminance(hexColor);
 
-    const textColor = luminance > 0.5 ? '#000000' : '#FFFFFF';
+    const textColor = luminance > 0.5 ? "#000000" : "#FFFFFF";
 
     return div(
       {
@@ -510,11 +512,20 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
  * @param {string} optsStr
  * @returns {string[]}
  */
-const getStrOptions = (v, optsStr) =>
-  typeof optsStr === "string"
+const getStrOptions = (v, optsStr, exclude_values_string) => {
+  const exclude_values = exclude_values_string
+    ? new Set(
+        exclude_values_string
+          .split(",")
+          .map((o) => o.trim())
+          .filter(Boolean)
+      )
+    : new Set([]);
+  return typeof optsStr === "string"
     ? optsStr
         .split(",")
         .map((o) => o.trim())
+        .filter((o) => !exclude_values.has(o))
         .map((o) =>
           option(
             { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
@@ -536,7 +547,7 @@ const getStrOptions = (v, optsStr) =>
             )
           : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
-
+};
 const join_fields_in_formula = (fml) => {
   if (!fml) return [];
   return [...freeVariables(fml)];
@@ -884,6 +895,17 @@ const string = {
               },
             ]
           : []),
+        ...(field.attributes.options && field.attributes.options.length > 0
+          ? [
+              {
+                name: "exclude_values",
+                label: "Exclude values",
+                sublabel:
+                  "Comma-separated list of value to exclude from the dropdown select",
+                type: "String",
+              },
+            ]
+          : []),
         {
           name: "placeholder",
           label: "Placeholder",
@@ -943,13 +965,13 @@ const string = {
                         { value: "", disabled: true, selected: !v },
                         attrs.placeholder
                       ),
-                      ...getStrOptions(v, attrs.options),
+                      ...getStrOptions(v, attrs.options, attrs.exclude_values),
                     ]
                   : required || attrs.force_required
-                  ? getStrOptions(v, attrs.options)
+                  ? getStrOptions(v, attrs.options, attrs.exclude_values)
                   : [
                       option({ value: "" }, attrs.neutral_label || ""),
-                      ...getStrOptions(v, attrs.options),
+                      ...getStrOptions(v, attrs.options, attrs.exclude_values),
                     ]
               )
           : attrs.options
