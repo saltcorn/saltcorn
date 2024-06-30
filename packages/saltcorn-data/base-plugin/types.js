@@ -512,11 +512,21 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
  * @param {string} optsStr
  * @returns {string[]}
  */
-const getStrOptions = (v, optsStr) =>
-  typeof optsStr === "string"
+const getStrOptions = (v, optsStr, exclude_values_string) => {
+  console.log({ v, optsStr, exclude_values_string });
+  const exclude_values = exclude_values_string
+    ? new Set(
+        exclude_values_string
+          .split(",")
+          .map((o) => o.trim())
+          .filter(Boolean)
+      )
+    : new Set([]);
+  return typeof optsStr === "string"
     ? optsStr
         .split(",")
         .map((o) => o.trim())
+        .filter((o) => !exclude_values.has(o))
         .map((o) =>
           option(
             { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
@@ -538,7 +548,7 @@ const getStrOptions = (v, optsStr) =>
             )
           : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
-
+};
 const join_fields_in_formula = (fml) => {
   if (!fml) return [];
   return [...freeVariables(fml)];
@@ -886,6 +896,17 @@ const string = {
               },
             ]
           : []),
+        ...(field.attributes.options && field.attributes.options.length > 0
+          ? [
+              {
+                name: "exclude_values",
+                label: "Exclude values",
+                sublabel:
+                  "Comma-separated list of value to exclude from the dropdown select",
+                type: "String",
+              },
+            ]
+          : []),
         {
           name: "placeholder",
           label: "Placeholder",
@@ -945,13 +966,13 @@ const string = {
                         { value: "", disabled: true, selected: !v },
                         attrs.placeholder
                       ),
-                      ...getStrOptions(v, attrs.options),
+                      ...getStrOptions(v, attrs.options, attrs.exclude_values),
                     ]
                   : required || attrs.force_required
-                  ? getStrOptions(v, attrs.options)
+                  ? getStrOptions(v, attrs.options, attrs.exclude_values)
                   : [
                       option({ value: "" }, attrs.neutral_label || ""),
-                      ...getStrOptions(v, attrs.options),
+                      ...getStrOptions(v, attrs.options, attrs.exclude_values),
                     ]
               )
           : attrs.options
