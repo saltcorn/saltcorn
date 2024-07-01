@@ -200,6 +200,9 @@ function apply_showif() {
     if (currentOptionsSet === qs) return;
 
     const activate = (success, qs) => {
+      //re-fetch current, because it may have changed
+      let current = e.attr("data-selected");
+      if (current === "null") current = null;
       if (e.prop("data-fetch-options-current-set") === qs) return;
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
@@ -1333,6 +1336,10 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
         if (input.attr("type") === "checkbox")
           input.prop("checked", res.set_fields[k]);
         else input.val(res.set_fields[k]);
+        if (input.attr("data-selected")) {
+          input.attr("data-selected", res.set_fields[k]);
+        }
+
         input.trigger("set_form_field");
       });
     }
