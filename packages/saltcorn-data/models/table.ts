@@ -1454,7 +1454,6 @@ class Table implements AbstractTable {
 
       let calced = await apply_calculated_fields_stored(
         need_to_update ? updated : { ...existing, ...v_in },
-        // @ts-ignore TODO ch throw ?
         this.fields,
         this
       );
@@ -1489,7 +1488,18 @@ class Table implements AbstractTable {
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
     if (!stringified) this.stringify_json_fields(v);
-    await db.update(this.name, v, id, { pk_name });
+    await db.update(this.name, v, id, {
+      pk_name,
+      ...(!isNode()
+        ? {
+            jsonCols: this.fields
+              .filter(
+                (f) => typeof f.type !== "string" && f.type?.name === "JSON"
+              )
+              .map((f) => f.name),
+          }
+        : {}),
+    });
 
     if (this.has_sync_info) {
       const oldInfo = await this.latestSyncInfo(id);
@@ -1836,7 +1846,18 @@ class Table implements AbstractTable {
       v = await apply_calculated_fields_stored(v_in, fields, this);
       this.stringify_json_fields(v);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
-      id = await db.insert(this.name, v, { pk_name });
+      id = await db.insert(this.name, v, {
+        pk_name,
+        ...(!isNode()
+          ? {
+              jsonCols: this.fields
+                .filter(
+                  (f) => typeof f.type !== "string" && f.type?.name === "JSON"
+                )
+                .map((f) => f.name),
+            }
+          : {}),
+      });
     }
     if (user && user.role_id > this.min_role_write && this.ownership_formula) {
       let existing = await this.getJoinedRow({
