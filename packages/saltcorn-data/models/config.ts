@@ -963,6 +963,23 @@ const configTypes: ConfigTypes = {
     label: "Joined log socket ids",
     default: [],
   },
+  ip_filter_mode: {
+    input_type: "select",
+    label: "IP filter mode",
+    default: "Allow",
+    options: [
+      {
+        label:
+          "Deny: block access from the IP addresses selected above, if any",
+        value: "Deny",
+      },
+      {
+        label:
+          "Allow: only allow the IP addresses list above, block all others",
+        value: "Allow",
+      },
+    ],
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
