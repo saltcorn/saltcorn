@@ -1373,15 +1373,15 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
     });
   }
   if (res.eval_js) await handle(res.eval_js, eval_it);
-
-  if (res.goto && !isWeb)
-    // TODO ch
-    notifyAlert({
-      type: "danger",
-      text: "Goto is not supported in a mobile deployment.",
-    });
   else if (res.goto) {
-    if (res.target === "_blank") window.open(res.goto, "_blank").focus();
+    if (!isWeb) {
+      const next = new URL(res.goto, "http://localhost");
+      const pathname = next.pathname;
+      if (pathname.startsWith("/view/") || pathname.startsWith("/page/")) {
+        const route = `get${pathname}${next.search ? "?" + next.search : ""}`;
+        await parent.handleRoute(route);
+      } else parent.cordova.InAppBrowser.open(res.goto, "_system");
+    } else if (res.target === "_blank") window.open(res.goto, "_blank").focus();
     else {
       const prev = new URL(window.location.href);
       const next = new URL(res.goto, prev.origin);
