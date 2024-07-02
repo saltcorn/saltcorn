@@ -47,7 +47,8 @@
       "*.test.js",
       "packages/filemanager/public/build/bundle.js",
       "packages/saltcorn-builder/**",
-      "docs/**"
+      "docs/**",
+      "deploy/"
     ],
     "extends": "eslint:recommended",
     "parserOptions": {
