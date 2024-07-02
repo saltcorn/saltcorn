@@ -9,6 +9,7 @@ const {
   toInclude,
   toSucceed,
 } = require("../auth/testhelp");
+const load_plugins = require("../load_plugins");
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/tests/mocks");
 
@@ -16,6 +17,7 @@ const Table = require("@saltcorn/data/models/table");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const Field = require("@saltcorn/data/models/field");
 const User = require("@saltcorn/data/models/user");
+const Plugin = require("@saltcorn/data/models/plugin");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -33,6 +35,27 @@ const initSyncInfo = async (tbls) => {
       await books.update(books);
     }
   }
+};
+
+const createAnswersTbl = async () => {
+  await load_plugins.loadAndSaveNewPlugin(
+    new Plugin({
+      name: "json",
+      source: "npm",
+      location: "@saltcorn/json",
+      version: "latest",
+    })
+  );
+  const table = await Table.create("Answers", {
+    min_role_read: 100,
+    min_role_write: 100,
+  });
+  await Field.create({
+    table,
+    name: "answer",
+    label: "Answer",
+    type: "JSON",
+  });
 };
 
 describe("load remote insert/updates", () => {
@@ -414,6 +437,42 @@ describe("Upload changes", () => {
           1: 3,
         },
       });
+    });
+
+    it("upload json", async () => {
+      await createAnswersTbl();
+      const table = Table.findOne({ name: "Answers" });
+      expect(table).toBeDefined();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const rows = [
+        {
+          id: 1,
+          answer: true,
+        },
+        {
+          id: 2,
+          answer: false,
+        },
+        {
+          id: 3,
+          answer: 1,
+        },
+        {
+          id: 4,
+          answer: ["latte", "americano", "filter"],
+        },
+      ];
+      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
+        Answers: {
+          inserts: rows,
+        },
+      });
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+      expect(result).toBeDefined();
+      expect(await table.getRows()).toEqual(rows);
     });
 
     it("handles inserts with TableConstraint conflicts", async () => {

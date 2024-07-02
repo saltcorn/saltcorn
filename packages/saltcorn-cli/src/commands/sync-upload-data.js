@@ -11,7 +11,13 @@ const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const pickFields = (table, pkName, row, keepId) => {
   const result = {};
   for (const { name, type, calculated } of table.getFields()) {
-    if ((!keepId && name === pkName) || calculated || !row[name]) continue;
+    if (
+      (!keepId && name === pkName) ||
+      calculated ||
+      row[name] === undefined ||
+      row[name] === null
+    )
+      continue;
     if (type?.name === "Date") {
       result[name] = row[name] ? new Date(row[name]) : undefined;
     } else if (type?.name === "JSON") {
