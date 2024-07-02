@@ -391,6 +391,27 @@ describe("Field Endpoints", () => {
       })
       .expect(toBeTrue((r) => +r.text > 2));
   });
+  it("should show calculated field with two single joinfields", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "patients" });
+    await Field.create({
+      table,
+      label: "pagesp12",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "favbook.pages+1+favbook.id",
+    });
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/patients/pagesp12/show")
+      .set("Cookie", loginCookie)
+      .send({
+        id: 1,
+      })
+      .expect(toBeTrue((r) => +r.text > 2));
+  });
   it("should show calculated field with double joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "readings" });
