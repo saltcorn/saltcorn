@@ -396,7 +396,7 @@ describe("Field Endpoints", () => {
     const table = Table.findOne({ name: "patients" });
     await Field.create({
       table,
-      label: "pagesp1",
+      label: "pagesp12",
       type: "Integer",
       calculated: true,
       stored: true,
@@ -405,7 +405,7 @@ describe("Field Endpoints", () => {
     const app = await getApp({ disableCsrf: true });
 
     await request(app)
-      .post("/field/show-calculated/patients/pagesp1/show")
+      .post("/field/show-calculated/patients/pagesp12/show")
       .set("Cookie", loginCookie)
       .send({
         id: 1,
