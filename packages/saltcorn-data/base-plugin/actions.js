@@ -1597,9 +1597,21 @@ module.exports = {
           type: "String",
           class: "validate-expression",
         },
+        {
+          name: "interval",
+          label: "Periodic interval (ms)",
+          sublabel:
+            "Optional. Reload periodically with given interval in milliseconds, if set",
+          type: "Integer",
+        },
       ];
     },
-    run: async ({ row, user, configuration: { view, new_state_fml } }) => {
+    run: async ({
+      row,
+      user,
+      configuration: { view, new_state_fml, interval },
+    }) => {
+      let eval_js = `reload_embedded_view('${view}')`;
       if (new_state_fml) {
         const new_state = eval_expression(
           new_state_fml,
@@ -1608,10 +1620,10 @@ module.exports = {
           "reload_embedded_view new state formula"
         );
         const newqs = objectToQueryString(new_state);
-        return {
-          eval_js: `reload_embedded_view('${view}', '${newqs}')`,
-        };
-      } else return { eval_js: `reload_embedded_view('${view}')` };
+        eval_js = `reload_embedded_view('${view}', '${newqs}')`;
+      }
+      if (interval) eval_js = `setInterval(()=>{${eval_js}}, ${interval})`;
+      return { eval_js };
     },
   },
   sleep: {
