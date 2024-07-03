@@ -613,6 +613,17 @@ describe("jsexprToWhere", () => {
     expect(
       new Date(jsexprToWhere("foo>=today(-5)").foo.gt) < new Date(today)
     ).toEqual(true);
+    const pp1W = jsexprToWhere("foo >= today(-1) && foo < today()");
+    expect(!!pp1W.foo[0].gt).toBe(true);
+    expect(pp1W.foo[0].equal).toBe(true);
+    expect(!!pp1W.foo[1].lt).toBe(true);
+    const ppW = jsexprToWhere(
+      "createdby == user.id && (foo >= today(-1) && foo < today())",
+      { user: { id: 1 } }
+    );
+    expect(ppW.createdby).toBe(1);
+    expect(!!ppW.foo[0].gt).toBe(true);
+    expect(!!ppW.foo[1].lt).toBe(true);
   });
   it("translates new Date()", () => {
     const todayW = jsexprToWhere("foo>=new Date()");
