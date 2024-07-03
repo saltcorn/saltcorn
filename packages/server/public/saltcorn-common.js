@@ -1729,7 +1729,7 @@ function close_saltcorn_modal() {
 function reload_embedded_view(viewname, new_query_string) {
   const isNode = getIsNode();
   const updater = ($e, res) => {
-    $e.html(res);
+    $e.replaceWith(res);
     initialize_page();
   };
   if (window._sc_loglevel > 4)
