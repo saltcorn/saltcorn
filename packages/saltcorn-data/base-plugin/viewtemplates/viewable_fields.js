@@ -1414,7 +1414,7 @@ const getForm = async (
             .map((jf) => {
               const [ref, target] = jf.split(".");
               const refField = table.getField(ref);
-              if (!refField) return null;
+              if (!refField || !refField?.reftable_name) return null;
               return {
                 ref: ref.replace("?", ""),
                 target,
@@ -1422,6 +1422,7 @@ const getForm = async (
               };
             })
             .filter(Boolean);
+        console.log("show if joinfields", segment.showIfFormulaJoinFields);
       }
     },
   });
