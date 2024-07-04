@@ -21,7 +21,7 @@ import {
 } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
-const { freeVariables } = expressionModule;
+const { freeVariables, jsexprToWhere } = expressionModule;
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -422,6 +422,18 @@ describe("Table get data", () => {
     });
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].last_temp)).toBe(37);
+  });
+  it("should get from and of ors where formula", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const rows = await books.getJoinedRows({
+      where: jsexprToWhere(
+        '(author == "Leo Tolstoy" && pages ==728) || (author=="Newsome" && pages == 345)'
+      ),
+    });
+
+    expect(rows.length).toStrictEqual(1);
+    expect(rows[0].pages).toBe(728); // TODO why string
   });
   it("should get joined rows with earliest aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
