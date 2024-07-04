@@ -584,6 +584,16 @@ describe("jsexprToWhere", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
   });
+  it("translates bools", () => {
+    expect(jsexprToWhere("foo==true")).toEqual({ foo: true });
+    expect(jsexprToWhere("foo==false")).toEqual({ foo: false });
+    expect(jsexprToWhere("foo!==true")).toEqual({ not: { foo: true } });
+    expect(jsexprToWhere("!(foo==true)")).toEqual({ not: { foo: true } });
+    expect(jsexprToWhere('bar == "Zoo" && !(foo==true)')).toEqual({
+      bar: "Zoo",
+      not: { foo: true },
+    });
+  });
   it("translates date limits", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);
   });
