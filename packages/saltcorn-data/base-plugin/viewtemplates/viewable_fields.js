@@ -1422,7 +1422,6 @@ const getForm = async (
               };
             })
             .filter(Boolean);
-        console.log("show if joinfields", segment.showIfFormulaJoinFields);
       }
     },
   });
