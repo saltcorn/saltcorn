@@ -393,6 +393,17 @@ describe("mkWhere", () => {
       values: [5, 7],
       where: 'where ("id"=$1 and "x"=$2)',
     });
+    expect(
+      mkWhere({
+        and: [
+          { or: [{ bar: "Zoo" }, { bar: "Baz" }] },
+          { or: [{ foo: false }, { foo: null }] },
+        ],
+      })
+    ).toStrictEqual({
+      values: ["Zoo", "Baz", false],
+      where: 'where (("bar"=$1 or "bar"=$2) and ("foo"=$3 or "foo" is null))',
+    });
   });
 });
 
