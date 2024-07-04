@@ -593,6 +593,14 @@ describe("jsexprToWhere", () => {
       bar: "Zoo",
       not: { foo: true },
     });
+    expect(
+      jsexprToWhere(
+        '(bar == "Zoo" || bar == "Baz" || bar == "Waz") && !(foo==true)'
+      )
+    ).toEqual({
+      or: [{ or: [{ bar: "Zoo" }, { bar: "Baz" }] }, { bar: "Waz" }],
+      not: { foo: true },
+    });
   });
   it("translates date limits", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);
