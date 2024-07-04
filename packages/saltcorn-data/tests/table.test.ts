@@ -2079,6 +2079,13 @@ describe("json restore", () => {
     await testUpdate("Barh", [51]);
     await testUpdate("Bazah", "bazc");
   });
+  it("should not change json on insert", async () => {
+    const table = await Table.findOne("JsonJson");
+    assertIsSet(table);
+    const newRow = { name: "TJ", stuff: { bar: "foo" } };
+    await table.insertRow(newRow);
+    expect(newRow.stuff).toStrictEqual({ bar: "foo" });
+  });
 });
 
 describe("external tables", () => {
