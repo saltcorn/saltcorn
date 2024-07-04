@@ -525,7 +525,7 @@ const getStrOptions = (v, optsStr, exclude_values_string) => {
     ? optsStr
         .split(",")
         .map((o) => o.trim())
-        .filter((o) => eqStr(v, 0) || !exclude_values.has(o))
+        .filter((o) => eqStr(v, o) || !exclude_values.has(o))
         .map((o) =>
           option(
             { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
