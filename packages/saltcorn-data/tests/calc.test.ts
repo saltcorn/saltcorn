@@ -22,7 +22,7 @@ import { mkWhere } from "@saltcorn/db-common/internal";
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import utils from "../utils";
-const { interpolate } = utils;
+const { interpolate, mergeIntoWhere } = utils;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -501,7 +501,21 @@ describe("jsexprToSQL", () => {
     expect(jsexprToSQL("foo!==null")).toEqual("foo is not null");
   });
 });
-
+describe("mergeIntoWhere", () => {
+  it("merges", () => {
+    expect(mergeIntoWhere({ a: 1 }, { b: 2 })).toEqual({ a: 1, b: 2 });
+    expect(mergeIntoWhere({ a: 1 }, { a: 2 })).toEqual({ a: [1, 2] });
+    expect(
+      mergeIntoWhere({ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] })
+    ).toEqual({
+      and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
+    });
+  });
+});
+let x = {
+  and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
+  or: [{ b: 3 }, { b: 4 }],
+};
 describe("jsexprToWhere", () => {
   it("translates equality", () => {
     expect(jsexprToWhere("foo==4")).toEqual({ foo: 4 });
@@ -583,6 +597,34 @@ describe("jsexprToWhere", () => {
   it("translates sums", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
+  });
+  it("translates bools", () => {
+    expect(jsexprToWhere("foo==true")).toEqual({ foo: true });
+    expect(jsexprToWhere("foo==false")).toEqual({ foo: false });
+    expect(jsexprToWhere("foo!==true")).toEqual({ not: { foo: true } });
+    expect(jsexprToWhere("!(foo==true)")).toEqual({ not: { foo: true } });
+    expect(jsexprToWhere('bar == "Zoo" && !(foo==true)')).toEqual({
+      bar: "Zoo",
+      not: { foo: true },
+    });
+    expect(
+      jsexprToWhere(
+        '(bar == "Zoo" || bar == "Baz" || bar == "Waz") && !(foo==true)'
+      )
+    ).toEqual({
+      or: [{ or: [{ bar: "Zoo" }, { bar: "Baz" }] }, { bar: "Waz" }],
+      not: { foo: true },
+    });
+    expect(
+      jsexprToWhere(
+        '(bar == "Zoo" || bar == "Baz") && (foo==false || foo==null)'
+      )
+    ).toEqual({
+      and: [
+        { or: [{ bar: "Zoo" }, { bar: "Baz" }] },
+        { or: [{ foo: false }, { foo: null }] },
+      ],
+    });
   });
   it("translates date limits", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);

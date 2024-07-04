@@ -1747,12 +1747,13 @@ class Table implements AbstractTable {
    * @returns {Promise<*>}
    */
   async insertRow(
-    v_in: Row,
+    v_in0: Row,
     user?: Row,
     resultCollector?: object,
     noTrigger?: boolean,
     syncTimestamp?: Date
   ): Promise<any> {
+    const v_in = { ...v_in0 };
     const fields = this.fields;
     const pk_name = this.pk_name;
     const joinFields = this.storedExpressionJoinFields();

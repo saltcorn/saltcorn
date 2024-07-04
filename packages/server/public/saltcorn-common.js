@@ -1729,7 +1729,13 @@ function close_saltcorn_modal() {
 function reload_embedded_view(viewname, new_query_string) {
   const isNode = getIsNode();
   const updater = ($e, res) => {
-    $e.html(res);
+    const localState = $e.attr("data-sc-local-state");
+    const parent = $e.parent();
+    $e.replaceWith(res);
+    if (localState && !new_query_string) {
+      const newE = parent.find(`[data-sc-embed-viewname="${viewname}"]`);
+      newE.attr("data-sc-local-state", localState);
+    }
     initialize_page();
   };
   if (window._sc_loglevel > 4)

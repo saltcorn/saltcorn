@@ -307,6 +307,19 @@ const whereOr =
         .join(" or ")
     );
 
+const whereAnd =
+  (phs: PlaceHolderStack): ((ors: any[]) => string) =>
+  (ors: any[]): string =>
+    wrapParens(
+      ors
+        .map((vi: any) =>
+          Object.entries(vi)
+            .map((kv) => whereClause(phs)(kv))
+            .join(" and ")
+        )
+        .join(" and ")
+    );
+
 const equals = ([v1, v2]: [any, any], phs: PlaceHolderStack) => {
   const pVal = (v: any) =>
     typeof v === "symbol"
@@ -348,6 +361,8 @@ const whereClause =
         } (${phs.push(v.in)})`
       : k === "or" && Array.isArray(v)
       ? whereOr(phs)(v)
+      : k === "and" && Array.isArray(v)
+      ? whereAnd(phs)(v)
       : typeof (v || {}).slugify !== "undefined"
       ? slugifyQuery(k, v.slugify, phs)
       : k === "not" && typeof v === "object"
