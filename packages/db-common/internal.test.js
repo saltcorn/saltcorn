@@ -388,6 +388,12 @@ describe("mkWhere", () => {
       where: 'where ("id"=$1 or "x"=$2) and "z"=$3',
     });*/
   });
+  it("should query and", () => {
+    expect(mkWhere({ and: [{ id: 5 }, { x: 7 }] })).toStrictEqual({
+      values: [5, 7],
+      where: 'where ("id"=$1 and "x"=$2)',
+    });
+  });
 });
 
 describe("sqlsanitize", () => {
