@@ -1426,5 +1426,7 @@
 	"Keystore Password": "Keystore Password",
 	"xcodebuild": "xcodebuild",
 	"Provisioning Profile": "Provisioning Profile",
-	"Registry editor": "Registry editor"
+	"Registry editor": "Registry editor",
+	"Mobile HTML": "Mobile HTML",
+	"HTML for the item of the bottom navigation bar. Currently, only supported by the metronic theme.": "HTML for the item of the bottom navigation bar. Currently, only supported by the metronic theme."
 }

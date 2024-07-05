@@ -260,6 +260,16 @@ const menuForm = async (req) => {
         required: false,
       },
       {
+        name: "mobile_item_html",
+        label: req.__("Mobile HTML"),
+        sublabel: req.__(
+          "HTML for the item of the bottom navigation bar. Currently, only supported by the metronic theme."
+        ),
+        type: "String",
+        class: "item-menu",
+        input_type: "textarea",
+      },
+      {
         name: "target_blank",
         label: req.__("Open in new tab"),
         type: "Bool",

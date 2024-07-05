@@ -819,7 +819,7 @@ function initialize_page() {
         const url = new URL(path);
         path = `${url.pathname}${url.search}`;
       }
-      if (path.startsWith("/view/")) {
+      if (path.startsWith("/view/") || path.startsWith("/page/")) {
         const jThis = $(this);
         const skip = jThis.attr("skip-mobile-adjust");
         if (!skip) {
