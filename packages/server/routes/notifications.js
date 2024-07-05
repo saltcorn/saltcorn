@@ -38,6 +38,9 @@ router.get(
     await Notification.mark_as_read({
       id: { in: nots.filter((n) => !n.read).map((n) => n.id) },
     });
+    const form = notificationSettingsForm();
+    const user = await User.findOne({ id: req.user?.id });
+    form.values = { notify_email: user?._attributes?.notify_email };
     const notifyCards = nots.length
       ? nots.map((not) => ({
           type: "card",
@@ -72,7 +75,7 @@ router.get(
               type: "card",
               contents: [
                 req.__("Receive notifications by:"),
-                renderForm(notificationSettingsForm(), req.csrfToken()),
+                renderForm(form, req.csrfToken()),
               ],
             },
             { above: notifyCards },
