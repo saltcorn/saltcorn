@@ -522,3 +522,17 @@ pre.monospace-block {
   padding: unset;
   border-radius: unset;
 }
+
+.d-none-prefer {
+  display: none;
+}
+
+button.monospace-copy-btn:has(+ pre.monospace-block:hover) {
+  display: block !important ;
+}
+button.monospace-copy-btn:hover {
+  display: block !important ;
+}
+button.monospace-copy-btn {
+  position: absolute;
+}

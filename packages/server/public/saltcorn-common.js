@@ -9,10 +9,20 @@ jQuery.fn.swapWith = function (to) {
 };
 
 function monospace_block_click(e) {
-  let e1 = $(e).next();
+  let e1 = $(e).next("pre");
   let mine = $(e).html();
   $(e).html($(e1).html());
   $(e1).html(mine);
+}
+
+function copy_monospace_block(e) {
+  let e1 = $(e).next("pre");
+  let e2 = $(e1).next("pre");
+  if (!e2.length) return navigator.clipboard.writeText($(el).text());
+  const e1t = e1.text();
+  const e2t = e2.text();
+  if (e1t.length > e2t.length) return navigator.clipboard.writeText(e1t);
+  else return navigator.clipboard.writeText(e2t);
 }
 
 function setScreenInfoCookie() {
