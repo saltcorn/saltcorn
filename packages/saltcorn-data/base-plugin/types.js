@@ -826,7 +826,7 @@ const string = {
                   "btn btn-secondary btn-sm monospace-copy-btn m-1 d-none-prefer",
                 onclick: "copy_monospace_block(this)",
               },
-              i({ class: "far fa-copy" })
+              i({ class: "fas fa-copy" })
             )
           : "";
         if (!attrs.max_init_height)
