@@ -823,10 +823,10 @@ const string = {
           ? button(
               {
                 class:
-                  "btn btn-secondary btn-sm monospace-copy-btn d-none-prefer",
+                  "btn btn-secondary btn-sm monospace-copy-btn m-1 d-none-prefer",
                 onclick: "copy_monospace_block(this)",
               },
-              "Copy"
+              i({ class: "far fa-copy" })
             )
           : "";
         if (!attrs.max_init_height)
