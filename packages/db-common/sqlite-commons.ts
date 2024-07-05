@@ -10,8 +10,9 @@ import { Row, sqlsanitize, Value, mkWhere, Where } from "./internal";
  * @returns
  * @function
  */
-export const reprAsJson = (v: any): boolean =>
-  typeof v === "object" && v !== null && !(v instanceof Date);
+export const reprAsJson = (v: any, jsonCol?: boolean): boolean =>
+  (jsonCol && (v === true || v === false)) ||
+  (typeof v === "object" && v !== null && !(v instanceof Date));
 
 /**
  * @param opts
@@ -19,8 +20,8 @@ export const reprAsJson = (v: any): boolean =>
  * @param  opts.v
  * @returns
  */
-export const mkVal = ([k, v]: [string, any]): Value =>
-  reprAsJson(v) ? JSON.stringify(v) : v;
+export const mkVal = ([k, v]: [string, any], jsonCol?: boolean): Value =>
+  reprAsJson(v, jsonCol) ? JSON.stringify(v) : v;
 
 /**
  * return type of buildInsertSql()
@@ -41,7 +42,12 @@ export type SqlAndValues = {
 export const buildInsertSql = (
   tbl: string,
   obj: Row,
-  opts: { noid?: boolean; ignoreExisting?: boolean; replace?: boolean } = {}
+  opts: {
+    noid?: boolean;
+    ignoreExisting?: boolean;
+    replace?: boolean;
+    jsonCols?: string[];
+  } = {}
 ): SqlAndValues => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
@@ -51,14 +57,16 @@ export const buildInsertSql = (
         ? `coalesce((select max(_version) from "${sqlsanitize(
             tbl
           )}" where id=${+v.next_version_by_id}), 0)+1`
-        : reprAsJson(v)
+        : reprAsJson(v, opts.jsonCols?.includes(k))
         ? "json(?)"
         : "?"
     )
     .join();
   const valList = kvs
     .filter(([k, v]: [any, any]) => !(v && v.next_version_by_id))
-    .map(mkVal);
+    .map(([k, v]) => {
+      return mkVal([k, v], opts.jsonCols?.includes(k));
+    });
   const ignoreExisting = opts.ignoreExisting ? "or ignore" : "";
   const replace = opts.replace ? "or replace" : "";
   const sql = `insert ${ignoreExisting} ${replace} into "${sqlsanitize(
@@ -99,7 +107,7 @@ export const buildInsertBulkSql = (
     const fnames = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join(",");
     const vals = kvs
       .filter(([k, v]: [any, any]) => !(v && v.next_version_by_id))
-      .map(mkVal);
+      .map(([k, v]) => mkVal([k, v]));
     if (!fieldsWithRows[fnames])
       fieldsWithRows[fnames] = {
         valPattern: `(${kvs

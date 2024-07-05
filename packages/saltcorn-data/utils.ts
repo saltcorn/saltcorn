@@ -155,6 +155,14 @@ function sleep(ms: number) {
 
 const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
   Object.entries(newWhere).forEach(([k, v]) => {
+    if (k == "or") {
+      if (where.and) where.and.push({ or: v });
+      else if (where.or) {
+        where.and = [{ or: where.or }, { or: v }];
+        delete where.or;
+      } else where.or = v;
+      return;
+    }
     if (typeof where[k] === "undefined") where[k] = v;
     else where[k] = [where[k], v];
   });

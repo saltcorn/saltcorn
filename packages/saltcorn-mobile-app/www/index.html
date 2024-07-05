@@ -335,6 +335,7 @@
           await state.refresh_views();
           await state.refresh_pages();
           await state.refresh_page_groups();
+          await state.refresh_triggers();
           state.mobileConfig.localTableIds = await getTableIds(
             config.localUserTables
           );

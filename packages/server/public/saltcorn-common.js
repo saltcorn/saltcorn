@@ -179,14 +179,19 @@ function apply_showif() {
             is_or ? "&_or_field=" + k : ""
           }`;
     };
-    const qss = Object.entries(dynwhere.whereParsed).map(kvToQs);
+    const qss = Object.entries(dynwhere.whereParsed).map((kv) => kvToQs(kv));
+    if (dynwhere.existingValue) {
+      qss.push(`id=${dynwhere.existingValue}`);
+      qss.push(`_or_field=id`);
+    }
     if (dynwhere.dereference) {
       if (Array.isArray(dynwhere.dereference))
         qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
       else qss.push(`dereference=${dynwhere.dereference}`);
     }
     const qs = qss.join("&");
-    var current = e.attr("data-selected");
+    let current = e.attr("data-selected");
+    if (current === "null") current = null;
     e.change(function (ec) {
       e.attr("data-selected", ec.target.value);
     });
@@ -195,12 +200,14 @@ function apply_showif() {
     if (currentOptionsSet === qs) return;
 
     const activate = (success, qs) => {
+      //re-fetch current, because it may have changed
+      let current = e.attr("data-selected");
+      if (current === "null") current = null;
       if (e.prop("data-fetch-options-current-set") === qs) return;
       e.empty();
       e.prop("data-fetch-options-current-set", qs);
       const toAppend = [];
-      if (!dynwhere.required)
-        toAppend.push({ label: dynwhere.neutral_label || "", value: "" });
+
       let currentDataOption = undefined;
       const dataOptions = [];
       //console.log(success);
@@ -231,13 +238,24 @@ function apply_showif() {
           ? 1
           : -1
       );
+      if (!dynwhere.required)
+        toAppend.unshift({ label: dynwhere.neutral_label || "", value: "" });
+      if (dynwhere.required && dynwhere.placeholder)
+        toAppend.unshift({
+          disabled: true,
+          label: dynwhere.placeholder,
+          value: "",
+          selected: !current,
+        });
       e.html(
         toAppend
           .map(
-            ({ label, value, selected }) =>
+            ({ label, value, selected, disabled }) =>
               `<option${selected ? ` selected` : ""}${
-                typeof value !== "undefined" ? ` value="${value}"` : ""
-              }>${label || ""}</option>`
+                disabled ? ` disabled` : ""
+              }${typeof value !== "undefined" ? ` value="${value}"` : ""}>${
+                label || ""
+              }</option>`
           )
           .join("")
       );
@@ -1318,6 +1336,10 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
         if (input.attr("type") === "checkbox")
           input.prop("checked", res.set_fields[k]);
         else input.val(res.set_fields[k]);
+        if (input.attr("data-selected")) {
+          input.attr("data-selected", res.set_fields[k]);
+        }
+
         input.trigger("set_form_field");
       });
     }
@@ -1351,15 +1373,15 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
     });
   }
   if (res.eval_js) await handle(res.eval_js, eval_it);
-
-  if (res.goto && !isWeb)
-    // TODO ch
-    notifyAlert({
-      type: "danger",
-      text: "Goto is not supported in a mobile deployment.",
-    });
   else if (res.goto) {
-    if (res.target === "_blank") window.open(res.goto, "_blank").focus();
+    if (!isWeb) {
+      const next = new URL(res.goto, "http://localhost");
+      const pathname = next.pathname;
+      if (pathname.startsWith("/view/") || pathname.startsWith("/page/")) {
+        const route = `get${pathname}${next.search ? "?" + next.search : ""}`;
+        await parent.handleRoute(route);
+      } else parent.cordova.InAppBrowser.open(res.goto, "_system");
+    } else if (res.target === "_blank") window.open(res.goto, "_blank").focus();
     else {
       const prev = new URL(window.location.href);
       const next = new URL(res.goto, prev.origin);
@@ -1480,10 +1502,10 @@ const columnSummary = (col) => {
 };
 
 function submitWithEmptyAction(form) {
-  var formAction = form.action;
-  form.action = "javascript:void(0)";
+  var formAction = form.getAttribute("action");
+  form.setAttribute("action", "javascript:void(0)");
   form.submit();
-  form.action = formAction;
+  form.setAttribute("action", formAction);
 }
 
 function unique_field_from_rows(
@@ -1707,7 +1729,13 @@ function close_saltcorn_modal() {
 function reload_embedded_view(viewname, new_query_string) {
   const isNode = getIsNode();
   const updater = ($e, res) => {
-    $e.html(res);
+    const localState = $e.attr("data-sc-local-state");
+    const parent = $e.parent();
+    $e.replaceWith(res);
+    if (localState && !new_query_string) {
+      const newE = parent.find(`[data-sc-embed-viewname="${viewname}"]`);
+      newE.attr("data-sc-local-state", localState);
+    }
     initialize_page();
   };
   if (window._sc_loglevel > 4)

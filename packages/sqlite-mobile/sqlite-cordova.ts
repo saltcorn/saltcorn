@@ -93,7 +93,12 @@ export const query = (statement: string, params?: any): Promise<any> => {
 export const insert = async (
   tbl: string,
   obj: Row,
-  opts: { noid?: boolean; ignoreExisting?: boolean; replace?: boolean } = {}
+  opts: {
+    noid?: boolean;
+    ignoreExisting?: boolean;
+    replace?: boolean;
+    jsonCols?: string[];
+  } = {}
 ): Promise<string | void> => {
   const { sql, valList } = buildInsertSql(tbl, obj, opts);
   await query(sql, valList);
@@ -219,15 +224,26 @@ export const selectOne = async (tbl: string, where: Where): Promise<Row> => {
  * @param tbl
  * @param obj
  * @param id
+ * @param opts
  */
 export const update = async (
   tbl: string,
   obj: Row,
-  id: string | number
+  id: string | number,
+  opts: { jsonCols?: string[] } = {}
 ): Promise<void> => {
   const kvs = Object.entries(obj);
-  const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
-  let valList = kvs.map(mkVal);
+  const assigns = kvs
+    .map(
+      ([k, v], ix) =>
+        `"${sqlsanitize(k)}"=${
+          opts.jsonCols?.includes(k) && (v === true || v === false)
+            ? "json(?)"
+            : "?"
+        }`
+    )
+    .join();
+  let valList = kvs.map(([k, v]) => mkVal([k, v], opts.jsonCols?.includes(k)));
   valList.push(id);
   const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
   await query(q, valList);
