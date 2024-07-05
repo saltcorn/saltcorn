@@ -514,3 +514,11 @@ ul.katetree {
 ul.katetree details ul {
   list-style-type: none;
 }
+
+pre.monospace-block {
+  font-family: monospace;
+  color: unset;
+  background: unset;
+  padding: unset;
+  border-radius: unset;
+}

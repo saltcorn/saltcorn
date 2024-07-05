@@ -8,6 +8,13 @@ jQuery.fn.swapWith = function (to) {
   });
 };
 
+function monospace_block_click(e) {
+  let e1 = $(e).next();
+  let mine = $(e).html();
+  $(e).html($(e1).html());
+  $(e1).html(mine);
+}
+
 function setScreenInfoCookie() {
   document.cookie = `_sc_screen_info_=${JSON.stringify({
     width: window.screen.width,
