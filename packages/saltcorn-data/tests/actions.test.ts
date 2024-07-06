@@ -70,9 +70,9 @@ describe("Action and Trigger model", () => {
     assertIsSet(trig);
     await trig.clone();
     await trig.clone();
-    const trig1 = await Trigger.findOne({ name: "incCount copy" });
+    const trig1 = await Trigger.findOne({ name: "incCount-copy" });
     assertIsSet(trig1);
-    const trig2 = await Trigger.findOne({ name: "incCount copy (1)" });
+    const trig2 = await Trigger.findOne({ name: "incCount-copy-1" });
     assertIsSet(trig2);
   });
   it("should add update trigger", async () => {

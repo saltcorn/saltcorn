@@ -175,10 +175,10 @@ describe("Misc view tests", () => {
     assertIsSet(v);
     await v.clone();
     await v.clone();
-    const v1 = await View.findOne({ name: "authorlist copy" });
+    const v1 = await View.findOne({ name: "authorlist-copy" });
     assertIsSet(v1);
     expect(!!v1).toBe(true);
-    const v2 = await View.findOne({ name: "authorlist copy (1)" });
+    const v2 = await View.findOne({ name: "authorlist-copy-1" });
     assertIsSet(v2);
     expect(!!v2).toBe(true);
 

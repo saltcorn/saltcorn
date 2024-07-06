@@ -40,8 +40,8 @@ afterAll(db.close);
 
 describe("Clone names", () => {
   it("should work", async () => {
-    expect(cloneName("Foo", [])).toBe("Foo copy");
-    expect(cloneName("Foo", ["Foo copy"])).toBe("Foo copy (1)");
+    expect(cloneName("Foo", [])).toBe("Foo-copy");
+    expect(cloneName("Foo", ["Foo-copy"])).toBe("Foo-copy-1");
   });
 });
 
