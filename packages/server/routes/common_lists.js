@@ -600,6 +600,11 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
+    post_dropdown_item(
+      `/actions/clone/${trigger.id}`,
+      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+      req
+    ),
     div({ class: "dropdown-divider" }),
 
     post_dropdown_item(

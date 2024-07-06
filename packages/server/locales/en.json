@@ -1433,5 +1433,6 @@
 	"Example: <code>`/view/TheOtherView?id=${id}`</code>": "Example: <code>`/view/TheOtherView?id=${id}`</code>",
 	"Older": "Older",
 	"Newest": "Newest",
-	"Delete all read": "Delete all read"
+	"Delete all read": "Delete all read",
+	"Trigger %s duplicated as %s": "Trigger %s duplicated as %s"
 }

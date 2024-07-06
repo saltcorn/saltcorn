@@ -34,7 +34,7 @@ class Trigger implements AbstractTrigger {
   channel?: string;
   id?: number | null;
   configuration: any;
-  min_role?: number | null;
+  min_role?: number;
   run?: (row: Row, extraArgs?: any) => Promise<any>;
 
   /**
@@ -58,7 +58,7 @@ class Trigger implements AbstractTrigger {
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
         : o.configuration || {};
-    this.min_role = !o.min_role ? null : +o.min_role;
+    this.min_role = !o.min_role ? 100 : +o.min_role;
   }
 
   /**
@@ -488,11 +488,30 @@ class Trigger implements AbstractTrigger {
     ];
   }
 
+  /**
+   * Clone page
+   * @returns {Promise<Trigger>}
+   */
+  async clone(): Promise<Trigger> {
+    const basename = this.name + " copy";
+    let newname;
+    for (let i = 0; i < 100; i++) {
+      newname = i ? `${basename} (${i})` : basename;
+      const existing = Trigger.findOne({ name: newname });
+      if (!existing) break;
+    }
+    const createObj = {
+      ...this,
+      name: newname,
+    };
+    delete createObj.id;
+    return await Trigger.create(createObj);
+  }
+
   async getTags(): Promise<Array<AbstractTag>> {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ trigger_id: this.id });
   }
 }
-// todo clone trigger
 
 export = Trigger;
