@@ -1681,11 +1681,22 @@ module.exports = {
       user,
       configuration: { title, body, link, user_spec },
     }) => {
-      const user_where = User.valid_email(user_spec)
-        ? { email: user_spec }
-        : user_spec === "*"
-        ? {}
-        : eval_expression(user_spec, row || {}, user, "Notify user user where");
+      const user_where =
+        //first two cases are for programmatic use
+        typeof user_spec === "number"
+          ? { id: user_spec }
+          : typeof user_spec === "object"
+          ? user_spec
+          : User.valid_email(user_spec)
+          ? { email: user_spec }
+          : user_spec === "*"
+          ? {}
+          : eval_expression(
+              user_spec,
+              row || {},
+              user,
+              "Notify user user where"
+            );
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({
