@@ -86,10 +86,10 @@ router.get(
             contents: [h5(req.__("No notifications"))],
           },
         ];
-    const pageLinks =
+    const pageLinks = div(
+      { class: "d-flex mt-3 mb-3" },
       nots.length == 20
         ? div(
-            { class: "mt-3 mb-3" },
             after &&
               a(
                 { href: `/notifications`, class: "me-2" },
@@ -100,7 +100,21 @@ router.get(
               req.__("Older") + " &rarr;"
             )
           )
-        : "";
+        : div(),
+      nots.length > 0 &&
+        div(
+          { class: "ms-auto" },
+          post_btn(
+            `/notifications/delete/read`,
+            req.__("Delete all read"),
+            req.csrfToken(),
+            {
+              icon: "fas fa-trash",
+              klass: "btn-sm btn-danger",
+            }
+          )
+        )
+    );
     res.sendWrap(req.__("Notifications"), {
       above: [
         {
@@ -157,14 +171,15 @@ router.post(
   loggedIn,
   error_catcher(async (req, res) => {
     const { idlike } = req.params;
-    if (idlike == "unread") {
-      await Notification.deleteUnread(req.user.id);
+    if (idlike == "read") {
+      await Notification.deleteRead(req.user.id);
     } else {
       const id = +idlike;
       const notif = await Notification.findOne({ id });
       if (notif?.user_id == req.user?.id) await notif.delete();
     }
-    res.json({ success: "ok" });
+    if (req.xhr) res.json({ success: "ok" });
+    else res.redirect("/notifications");
   })
 );
 

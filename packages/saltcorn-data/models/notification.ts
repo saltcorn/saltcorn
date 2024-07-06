@@ -100,7 +100,7 @@ class Notification {
     await db.deleteWhere("_sc_notifications", { id: this.id });
   }
 
-  static async deleteUnread(user_id: number): Promise<void> {
+  static async deleteRead(user_id: number): Promise<void> {
     await db.deleteWhere("_sc_notifications", { user_id, read: true });
   }
 
