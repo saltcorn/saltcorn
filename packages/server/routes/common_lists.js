@@ -634,6 +634,14 @@ const getTriggerList = async (
   return mkTable(
     [
       { label: req.__("Name"), key: "name" },
+      {
+        label: req.__("Test run"),
+        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
+      },
+      {
+        label: req.__("Configure"),
+        key: (r) => link(`/actions/configure/${r.id}`, req.__("Configure")),
+      },
       ...(tagId
         ? []
         : [
@@ -666,14 +674,6 @@ const getTriggerList = async (
           r.table_name
             ? a({ href: `/table/${r.table_name}` }, r.table_name)
             : r.channel,
-      },
-      {
-        label: req.__("Test run"),
-        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
-      },
-      {
-        label: req.__("Configure"),
-        key: (r) => link(`/actions/configure/${r.id}`, req.__("Configure")),
       },
       !tagId
         ? {
