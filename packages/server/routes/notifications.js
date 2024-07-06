@@ -31,10 +31,14 @@ router.get(
   "/",
   loggedIn,
   error_catcher(async (req, res) => {
-    const nots = await Notification.find(
-      { user_id: req.user.id },
-      { orderBy: "id", orderDesc: true, limit: 20 }
-    );
+    const { after } = req.query;
+    const where = { user_id: req.user.id };
+    if (after) where.id = { lt: after };
+    const nots = await Notification.find(where, {
+      orderBy: "id",
+      orderDesc: true,
+      limit: 20,
+    });
     await Notification.mark_as_read({
       id: { in: nots.filter((n) => !n.read).map((n) => n.id) },
     });
@@ -49,7 +53,13 @@ router.get(
             div(
               { class: "d-flex" },
               span({ class: "fw-bold" }, not.title),
-              span({ class: "ms-2 text-muted" }, moment(not.created).fromNow())
+              span(
+                {
+                  class: "ms-2 text-muted",
+                  title: not.created.toLocaleString(req.getLocale()),
+                },
+                moment(not.created).fromNow()
+              )
             ),
             not.body && p(not.body),
             not.link && a({ href: not.link }, "Link"),
@@ -61,6 +71,21 @@ router.get(
             contents: [h5(req.__("No notifications"))],
           },
         ];
+    const pageLinks =
+      nots.length == 20
+        ? div(
+            { class: "mt-3 mb-3" },
+            after &&
+              a(
+                { href: `/notifications`, class: "me-2" },
+                "&larr; " + req.__("Newest")
+              ),
+            a(
+              { href: `/notifications?after=${nots[19].id}` },
+              req.__("Older") + " &rarr;"
+            )
+          )
+        : "";
     res.sendWrap(req.__("Notifications"), {
       above: [
         {
@@ -78,7 +103,7 @@ router.get(
                 renderForm(form, req.csrfToken()),
               ],
             },
-            { above: notifyCards },
+            { above: [...notifyCards, pageLinks] },
           ],
         },
       ],
