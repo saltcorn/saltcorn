@@ -139,7 +139,14 @@ const formRowWrap = (
           div(
             {
               class: [
-                isHoriz(fStyle) && labelCols && `col-sm-${labelCols} text-end`,
+                hdr.type?.name === "Bool" &&
+                  isHoriz(fStyle) &&
+                  labelCols &&
+                  `col-${labelCols} text-end`,
+                hdr.type?.name !== "Bool" &&
+                  isHoriz(fStyle) &&
+                  labelCols &&
+                  `col-sm-${labelCols} text-md-end`,
                 labelCols === 0 && "d-none",
               ],
             },
@@ -152,7 +159,16 @@ const formRowWrap = (
             hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
           ),
           div(
-            { class: isHoriz(fStyle) && `col-sm-${12 - labelCols}` },
+            {
+              class: [
+                hdr.type?.name === "Bool" &&
+                  isHoriz(fStyle) &&
+                  `col-${12 - labelCols}`,
+                hdr.type?.name !== "Bool" &&
+                  isHoriz(fStyle) &&
+                  `col-sm-${12 - labelCols}`,
+              ],
+            },
             inner,
             text(error),
             mkSubLabelAndHelp(hdr)
