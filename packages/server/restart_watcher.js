@@ -23,6 +23,7 @@ const relevantPackages = [
   "saltcorn-admin-models",
   "saltcorn-markup",
   "saltcorn-sbadmin2",
+  "saltcorn-types",
   "server",
   "sqlite",
   "filemanager",
