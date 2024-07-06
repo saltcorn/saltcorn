@@ -1428,7 +1428,7 @@
 	"Provisioning Profile": "Provisioning Profile",
 	"Registry editor": "Registry editor",
 	"Mobile HTML": "Mobile HTML",
-	"HTML for the item of the bottom navigation bar. Currently, only supported by the metronic theme.": "HTML for the item of the bottom navigation bar. Currently, only supported by the metronic theme.",
+	"HTML for the item in the bottom navigation bar. Currently, only supported by the metronic theme.": "HTML for the item in the bottom navigation bar. Currently, only supported by the metronic theme.",
 	"A short name that will be in the page URL": "A short name that will be in the page URL",
 	"A longer description that is not visible but appears in the page header and is indexed by search engines": "A longer description that is not visible but appears in the page header and is indexed by search engines",
 	"User role required to access page": "User role required to access page",
