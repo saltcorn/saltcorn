@@ -841,7 +841,8 @@ function initialize_page() {
         const jThis = $(this);
         const skip = jThis.attr("skip-mobile-adjust");
         if (!skip) {
-          jThis.attr("href", `javascript:execLink('${path}')`);
+          jThis.removeAttr("href");
+          jThis.attr("onclick", `execLink('${path}')`);
           if (jThis.find("i,img").length === 0 && !jThis.css("color")) {
             jThis.css(
               "color",
