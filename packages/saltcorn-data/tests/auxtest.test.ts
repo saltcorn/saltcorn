@@ -14,7 +14,7 @@ const {
   readState,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
-const { satisfies, urlStringToObject } = require("../utils");
+const { satisfies, urlStringToObject, cloneName } = require("../utils");
 
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
@@ -37,6 +37,13 @@ beforeAll(async () => {
 });
 
 afterAll(db.close);
+
+describe("Clone names", () => {
+  it("should work", async () => {
+    expect(cloneName("Foo", [])).toBe("Foo copy");
+    expect(cloneName("Foo", ["Foo copy"])).toBe("Foo copy (1)");
+  });
+});
 
 describe("plugin helper", () => {
   it("get parent views", async () => {

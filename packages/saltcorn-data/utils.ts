@@ -438,7 +438,20 @@ const safeEnding = (file: string, ending: string): string => {
   return file;
 };
 
+const cloneName = (name: string, allNames: Array<string>): string => {
+  const basename = name + " copy";
+  let newname = basename;
+  // todo there is hard code limitation about 100 copies of view
+  for (let i = 0; i < 100; i++) {
+    newname = i ? `${basename} (${i})` : basename;
+
+    if (!allNames.includes(newname)) break;
+  }
+  return newname;
+};
+
 export = {
+  cloneName,
   dollarizeObject,
   objectToQueryString,
   removeEmptyStrings,
