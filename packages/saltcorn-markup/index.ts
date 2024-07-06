@@ -94,7 +94,11 @@ const post_btn = (
   }>
   ${ajax ? "" : `<input type="hidden" name="_csrf" value="${csrfToken}">`}
 <button ${ajax ? 'type="button"' : 'type="submit"'} ${
-    onClick
+    onClick && ajax
+      ? `onclick="${
+          spinner ? "press_store_button(this);" : ""
+        }${buildButtonCallback(reload_on_done, reload_delay)};${onClick}"`
+      : onClick
       ? `onclick="${spinner ? "press_store_button(this);" : ""}${onClick}"`
       : ajax && confirm
       ? `onclick="if(confirm('${req.__("Are you sure?")}')) {${

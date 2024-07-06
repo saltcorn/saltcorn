@@ -13,7 +13,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
-const { renderForm } = require("@saltcorn/markup");
+const { renderForm, post_btn } = require("@saltcorn/markup");
 
 const router = new Router();
 module.exports = router;
@@ -49,6 +49,7 @@ router.get(
       ? nots.map((not) => ({
           type: "card",
           class: [!not.read && "unread-notify"],
+          id: `notify-${not.id}`,
           contents: [
             div(
               { class: "d-flex" },
@@ -59,6 +60,20 @@ router.get(
                   title: not.created.toLocaleString(req.getLocale()),
                 },
                 moment(not.created).fromNow()
+              ),
+              div(
+                { class: "ms-auto" },
+                post_btn(
+                  `/notifications/delete/${not.id}`,
+                  "",
+                  req.csrfToken(),
+                  {
+                    icon: "fas fa-times-circle",
+                    klass: "btn-link text-muted text-decoration-none p-0",
+                    ajax: true,
+                    onClick: `$('#notify-${not.id}').remove()`,
+                  }
+                )
               )
             ),
             not.body && p(not.body),
@@ -133,6 +148,22 @@ router.post(
     form.validate(req.body);
     const _attributes = { ...user._attributes, ...form.values };
     await user.update({ _attributes });
+    res.json({ success: "ok" });
+  })
+);
+
+router.post(
+  "/delete/:idlike",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const { idlike } = req.params;
+    if (idlike == "unread") {
+      await Notification.deleteUnread(req.user.id);
+    } else {
+      const id = +idlike;
+      const notif = await Notification.findOne({ id });
+      if (notif?.user_id == req.user?.id) await notif.delete();
+    }
     res.json({ success: "ok" });
   })
 );
