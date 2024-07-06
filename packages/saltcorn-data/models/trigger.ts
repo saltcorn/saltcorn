@@ -493,9 +493,12 @@ class Trigger implements AbstractTrigger {
    * @returns {Promise<Trigger>}
    */
   async clone(): Promise<Trigger> {
-    const existingNames = await Trigger.find({ name: { ilike: this.name } });
+    const myname = this.name || "Trigger";
+    const existingNames = Trigger.find({}).filter((t) =>
+      (t.name || "").startsWith(myname)
+    );
     const newname = cloneName(
-      this.name,
+      myname,
       existingNames.map((v) => v.name)
     );
 
