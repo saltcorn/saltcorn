@@ -14,7 +14,7 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import Crash = require("./crash");
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
-const { satisfies, mergeActionResults } = require("../utils");
+const { satisfies, mergeActionResults, cloneName } = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
@@ -493,13 +493,12 @@ class Trigger implements AbstractTrigger {
    * @returns {Promise<Trigger>}
    */
   async clone(): Promise<Trigger> {
-    const basename = this.name + " copy";
-    let newname;
-    for (let i = 0; i < 100; i++) {
-      newname = i ? `${basename} (${i})` : basename;
-      const existing = Trigger.findOne({ name: newname });
-      if (!existing) break;
-    }
+    const existingNames = await Trigger.find({ name: { ilike: this.name } });
+    const newname = cloneName(
+      this.name,
+      existingNames.map((v) => v.name)
+    );
+
     const createObj = {
       ...this,
       name: newname,
