@@ -269,7 +269,7 @@ const menuForm = async (req) => {
         type: "String",
         class: "item-menu",
         input_type: "textarea",
-        showIf: { disable_on_mobile: false },
+        showIf: { disable_on_mobile: false, location: "Mobile Bottom" },
       },
       {
         name: "target_blank",
