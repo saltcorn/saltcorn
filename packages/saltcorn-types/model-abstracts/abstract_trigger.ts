@@ -11,10 +11,12 @@ export interface AbstractTrigger {
   channel?: string;
   id?: number | null;
   configuration: any;
-  min_role?: number | null;
+  min_role?: number;
 
   toJson(): any;
   delete(): Promise<void>;
+  clone(): Promise<AbstractTrigger>;
+
   runWithoutRow(runargs: any): Promise<boolean>;
   getTags(): Promise<Array<AbstractTag>>;
 }

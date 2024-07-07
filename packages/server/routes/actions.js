@@ -887,3 +887,24 @@ router.get(
     }
   })
 );
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ * @function
+ */
+router.post(
+  "/clone/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const trig = await Trigger.findOne({ id });
+    const newtrig = await trig.clone();
+    req.flash(
+      "success",
+      req.__("Trigger %s duplicated as %s", trig.name, newtrig.name)
+    );
+    res.redirect(`/actions`);
+  })
+);
