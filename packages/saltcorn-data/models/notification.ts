@@ -95,6 +95,15 @@ class Notification {
   static async mark_as_read(where: Where): Promise<void> {
     await db.updateWhere("_sc_notifications", { read: true }, where);
   }
+
+  async delete(): Promise<void> {
+    await db.deleteWhere("_sc_notifications", { id: this.id });
+  }
+
+  static async deleteRead(user_id: number): Promise<void> {
+    await db.deleteWhere("_sc_notifications", { user_id, read: true });
+  }
+
   static async count(where: Where): Promise<number> {
     return await db.count("_sc_notifications", where);
   }

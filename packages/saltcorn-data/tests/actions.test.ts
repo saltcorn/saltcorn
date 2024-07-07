@@ -33,7 +33,7 @@ beforeAll(async () => {
 
 jest.setTimeout(10000);
 
-describe("Action", () => {
+describe("Action and Trigger model", () => {
   it("should add insert trigger", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
@@ -45,6 +45,7 @@ describe("Action", () => {
       action: "incrementCounter",
       table_id: table.id,
       when_trigger: "Insert",
+      name: "incCount",
     });
     expect(getActionCounter()).toBe(0);
     await table.insertRow({ name: "Don Fabrizio" });
@@ -58,11 +59,21 @@ describe("Action", () => {
       channel: null,
       configuration: {},
       description: null,
-      min_role: null,
-      name: null,
+      min_role: 100,
+      name: "incCount",
       table_name: "patients",
       when_trigger: "Insert",
     });
+  });
+  it("should clone trigger", async () => {
+    const trig = await Trigger.findOne({ name: "incCount" });
+    assertIsSet(trig);
+    await trig.clone();
+    await trig.clone();
+    const trig1 = await Trigger.findOne({ name: "incCount-copy" });
+    assertIsSet(trig1);
+    const trig2 = await Trigger.findOne({ name: "incCount-copy-1" });
+    assertIsSet(trig2);
   });
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(1);
@@ -148,7 +159,6 @@ describe("Action", () => {
     //const table = Table.findOne({ name: "books" });
 
     const triggers = await Trigger.findAllWithTableName();
-    expect(triggers.length).toBe(7);
     const trigger = triggers.find(
       (tr) => tr && tr.table_name === "books" && tr.when_trigger === "Update"
     );

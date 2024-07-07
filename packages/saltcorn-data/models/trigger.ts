@@ -14,7 +14,7 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import Crash = require("./crash");
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
-const { satisfies, mergeActionResults } = require("../utils");
+const { satisfies, mergeActionResults, cloneName } = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
@@ -34,7 +34,7 @@ class Trigger implements AbstractTrigger {
   channel?: string;
   id?: number | null;
   configuration: any;
-  min_role?: number | null;
+  min_role?: number;
   run?: (row: Row, extraArgs?: any) => Promise<any>;
 
   /**
@@ -58,7 +58,7 @@ class Trigger implements AbstractTrigger {
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
         : o.configuration || {};
-    this.min_role = !o.min_role ? null : +o.min_role;
+    this.min_role = !o.min_role ? 100 : +o.min_role;
   }
 
   /**
@@ -488,11 +488,32 @@ class Trigger implements AbstractTrigger {
     ];
   }
 
+  /**
+   * Clone page
+   * @returns {Promise<Trigger>}
+   */
+  async clone(): Promise<Trigger> {
+    const myname = this.name || "Trigger";
+    const existingNames = Trigger.find({}).filter((t) =>
+      (t.name || "").startsWith(myname)
+    );
+    const newname = cloneName(
+      myname,
+      existingNames.map((v) => v.name)
+    );
+
+    const createObj = {
+      ...this,
+      name: newname,
+    };
+    delete createObj.id;
+    return await Trigger.create(createObj);
+  }
+
   async getTags(): Promise<Array<AbstractTag>> {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ trigger_id: this.id });
   }
 }
-// todo clone trigger
 
 export = Trigger;

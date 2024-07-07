@@ -805,6 +805,65 @@ const string = {
       description: "Show as a code block",
       run: (s) => (s ? pre(code(text_attr(s || ""))) : ""),
     },
+    monospace_block: {
+      isEdit: false,
+      configFields: [
+        {
+          name: "max_init_height",
+          label: "Max initial rows",
+          sublabel: "Only show this many rows until the user clicks",
+          type: "Integer",
+        },
+        { name: "copy_btn", label: "Copy button", type: "Bool" },
+      ],
+      description: "Show as a monospace block",
+      run: (s, req, attrs = {}) => {
+        if (!s) return "";
+        const copy_btn = attrs.copy_btn
+          ? button(
+              {
+                class:
+                  "btn btn-secondary btn-sm monospace-copy-btn m-1 d-none-prefer",
+                onclick: "copy_monospace_block(this)",
+              },
+              i({ class: "fas fa-copy" })
+            )
+          : "";
+        if (!attrs.max_init_height)
+          return (
+            copy_btn +
+            pre(
+              {
+                class: "monospace-block",
+              },
+              s
+            )
+          );
+        const lines = s.split("\n");
+
+        if (lines.length <= attrs.max_init_height)
+          return (
+            copy_btn +
+            pre(
+              {
+                class: "monospace-block",
+              },
+              s
+            )
+          );
+        return (
+          copy_btn +
+          pre(
+            {
+              class: "monospace-block",
+              onclick: `monospace_block_click(this)`,
+            },
+            lines.slice(0, attrs.max_init_height).join("\n") + "\n..."
+          ) +
+          pre({ class: "d-none" }, s)
+        );
+      },
+    },
     ellipsize: {
       isEdit: false,
       configFields: [

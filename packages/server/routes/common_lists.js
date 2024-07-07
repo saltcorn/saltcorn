@@ -304,6 +304,18 @@ const viewsList = async (
             ? `set_state_field('_sortby', 'name', this)`
             : undefined,
         },
+        {
+          label: "",
+          key: (r) =>
+            r.id && r.viewtemplateObj?.configuration_workflow
+              ? link(
+                  `/viewedit/config/${encodeURIComponent(
+                    r.name
+                  )}${on_done_redirect_str}`,
+                  req.__("Configure")
+                )
+              : "",
+        },
         ...(tagId
           ? []
           : [
@@ -339,18 +351,6 @@ const viewsList = async (
             row.id
               ? editViewRoleForm(row, roles, req, on_done_redirect_str)
               : "admin",
-        },
-        {
-          label: "",
-          key: (r) =>
-            r.id && r.viewtemplateObj?.configuration_workflow
-              ? link(
-                  `/viewedit/config/${encodeURIComponent(
-                    r.name
-                  )}${on_done_redirect_str}`,
-                  req.__("Configure")
-                )
-              : "",
         },
         !tagId
           ? {
@@ -428,13 +428,6 @@ const page_dropdown = (page, req) =>
       },
       '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
     ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `/pageedit/edit-properties/${encodeURIComponent(page.name)}`,
-      },
-      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit properties")
-    ),
     post_dropdown_item(
       `/pageedit/add-to-menu/${page.id}`,
       '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
@@ -507,6 +500,22 @@ const getPageList = async (
         label: req.__("Name"),
         key: (r) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
       },
+      {
+        label: "",
+        key: (r) =>
+          link(
+            `/pageedit/edit/${encodeURIComponent(r.name)}`,
+            req.__("Configure")
+          ),
+      },
+      {
+        label: "",
+        key: (r) =>
+          link(
+            `/pageedit/edit-properties/${encodeURIComponent(r.name)}`,
+            req.__("Edit")
+          ),
+      },
       ...(tagId
         ? []
         : [
@@ -522,11 +531,7 @@ const getPageList = async (
         label: req.__("Role to access"),
         key: (row) => editPageRoleForm(row, roles, req),
       },
-      {
-        label: req.__("Edit"),
-        key: (r) =>
-          link(`/pageedit/edit/${encodeURIComponent(r.name)}`, req.__("Edit")),
-      },
+
       !tagId
         ? {
             label: "",
@@ -600,6 +605,11 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
+    post_dropdown_item(
+      `/actions/clone/${trigger.id}`,
+      '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
+      req
+    ),
     div({ class: "dropdown-divider" }),
 
     post_dropdown_item(
@@ -634,6 +644,14 @@ const getTriggerList = async (
   return mkTable(
     [
       { label: req.__("Name"), key: "name" },
+      {
+        label: req.__("Test run"),
+        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
+      },
+      {
+        label: req.__("Configure"),
+        key: (r) => link(`/actions/configure/${r.id}`, req.__("Configure")),
+      },
       ...(tagId
         ? []
         : [
@@ -666,14 +684,6 @@ const getTriggerList = async (
           r.table_name
             ? a({ href: `/table/${r.table_name}` }, r.table_name)
             : r.channel,
-      },
-      {
-        label: req.__("Test run"),
-        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
-      },
-      {
-        label: req.__("Configure"),
-        key: (r) => link(`/actions/configure/${r.id}`, req.__("Configure")),
       },
       !tagId
         ? {
