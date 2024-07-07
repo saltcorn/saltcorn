@@ -854,11 +854,12 @@ function initialize_page() {
         const url = new URL(path);
         path = `${url.pathname}${url.search}`;
       }
-      if (path.startsWith("/view/")) {
+      if (path.startsWith("/view/") || path.startsWith("/page/")) {
         const jThis = $(this);
         const skip = jThis.attr("skip-mobile-adjust");
         if (!skip) {
-          jThis.attr("href", `javascript:execLink('${path}')`);
+          jThis.removeAttr("href");
+          jThis.attr("onclick", `execLink('${path}')`);
           if (jThis.find("i,img").length === 0 && !jThis.css("color")) {
             jThis.css(
               "color",

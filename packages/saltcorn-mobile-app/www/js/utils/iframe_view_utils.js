@@ -26,6 +26,7 @@ async function execLink(url, linkSrc) {
     parent.cordova.InAppBrowser.open(url, "_system");
   } else
     try {
+      if (document.getElementById("scspinner")) return;
       showLoadSpinner();
       if (url.startsWith("javascript:")) eval(url.substring(11));
       else {
@@ -47,6 +48,7 @@ async function runUrl(url, method = "get") {
 }
 
 async function execNavbarLink(url) {
+  if (document.getElementById("scspinner")) return;
   $(".navbar-toggler").click();
   if (typeof KTDrawer === "function") {
     const aside = $("#kt_aside")[0];

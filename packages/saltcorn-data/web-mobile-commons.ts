@@ -60,6 +60,7 @@ const get_extra_menu = (
           target_blank: item.target_blank,
           in_modal: item.in_modal,
           type: item.type,
+          mobile_item_html: item.mobile_item_html,
           link:
             item.type === "Link" && item.url_formula
               ? expression.eval_expression(item.url, { locale, role }, user)
