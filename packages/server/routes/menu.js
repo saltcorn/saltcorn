@@ -195,6 +195,14 @@ const menuForm = async (req) => {
         showIf: { type: "Dynamic" },
       },
       {
+        name: "dyn_tooltip_fml",
+        label: req.__("Tooltip formula"),
+        class: "item-menu",
+        type: "String",
+        required: false,
+        showIf: { type: "Dynamic" },
+      },
+      {
         name: "dyn_url_fml",
         label: req.__("URL formula"),
         class: "item-menu",
@@ -244,6 +252,24 @@ const menuForm = async (req) => {
         name: "icon",
         class: "item-menu",
         input_type: "hidden",
+      },
+      {
+        name: "tooltip",
+        label: req.__("Tooltip"),
+        class: "item-menu",
+        input_type: "text",
+        required: false,
+        showIf: {
+          type: [
+            "View",
+            "Page",
+            "Link",
+            "Header",
+            "Dynamic",
+            "Search",
+            "Action",
+          ],
+        },
       },
       {
         name: "min_role",
