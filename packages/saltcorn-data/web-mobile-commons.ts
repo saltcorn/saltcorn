@@ -81,6 +81,10 @@ const get_extra_menu = (
               ? is_node
                 ? wrapUrl(`/page/${encodeURIComponent(item.pagename)}`)
                 : `javascript:execNavbarLink('/page/${item.pagename}')`
+              : item.type === "Page Group"
+              ? is_node
+                ? wrapUrl(`/page/${encodeURIComponent(item.page_group)}`)
+                : `javascript:execNavbarLink('/page/${item.page_group}')`
               : undefined,
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };
