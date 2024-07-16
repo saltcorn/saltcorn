@@ -865,9 +865,13 @@ router.get(
     if (!module) {
       module = getState().plugins[getState().plugin_module_names[plugin.name]];
     }
+    const userLayout =
+      user._attributes?.layout?.plugin === plugin.name
+        ? user._attributes.layout.config || {}
+        : {};
     const form = await module.user_config_form({
       ...(plugin.configuration || {}),
-      ...(user._attributes?.layout?.config || {}),
+      ...userLayout,
     });
     form.action = `/plugins/user_configure/${encodeURIComponent(plugin.name)}`;
     form.onChange = `applyViewConfig(this, '/plugins/user_saveconfig/${encodeURIComponent(

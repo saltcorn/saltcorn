@@ -61,6 +61,12 @@ const innerSections = (sections?: any[]) => {
   return items;
 };
 
+const tooltip = (text: string, placement: string = "top") => ({
+  "data-bs-toggle": "tooltip",
+  "data-bs-placement": placement,
+  title: text,
+});
+
 type NavSubItemsOpts = {
   label: string;
   subitems: any[];
@@ -80,6 +86,7 @@ const navSubItemsIterator = (si: any) =>
             class: "dropdown-item dropdown-toggle p-0",
             "data-bs-toggle": "dropdown",
             "aria-expanded": "false",
+            ...(si.tooltip ? tooltip(si.tooltip) : {}),
           },
           si.label
         ),
@@ -93,6 +100,7 @@ const navSubItemsIterator = (si: any) =>
           class: ["dropdown-item", si.style || "", si.class],
           href: si.link,
           target: si.target_blank ? "_blank" : undefined,
+          ...(si.tooltip ? tooltip(si.tooltip) : {}),
         },
         si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
         si.label
@@ -164,6 +172,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                   class: ["nav-link js-scroll-trigger", s.style || ""],
                   href: text(s.link),
                   target: s.target_blank ? "_blank" : undefined,
+                  ...(s.tooltip ? tooltip(s.tooltip) : {}),
                 },
                 s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
                 text(s.label)
@@ -195,6 +204,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                     {
                       class: "btn btn-outline-secondary search-bar",
                       type: "submit",
+                      ...(s.tooltip ? tooltip(s.tooltip) : {}),
                     },
                     i({ class: "fas fa-search" })
                   )

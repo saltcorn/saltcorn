@@ -61,6 +61,7 @@ const get_extra_menu = (
           in_modal: item.in_modal,
           type: item.type,
           mobile_item_html: item.mobile_item_html,
+          tooltip: item.tooltip,
           link:
             item.type === "Link" && item.url_formula
               ? expression.eval_expression(item.url, { locale, role }, user)
@@ -80,6 +81,10 @@ const get_extra_menu = (
               ? is_node
                 ? wrapUrl(`/page/${encodeURIComponent(item.pagename)}`)
                 : `javascript:execNavbarLink('/page/${item.pagename}')`
+              : item.type === "Page Group"
+              ? is_node
+                ? wrapUrl(`/page/${encodeURIComponent(item.page_group)}`)
+                : `javascript:execNavbarLink('/page/${item.page_group}')`
               : undefined,
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };

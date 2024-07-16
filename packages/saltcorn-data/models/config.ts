@@ -1145,6 +1145,9 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
           : {};
         const rows = await table.getRows(where, selopts);
         const fLabel = get_expression_function(item.dyn_label_fml, fields);
+        const fTooltip = item.dyn_tooltip_fml
+          ? get_expression_function(item.dyn_tooltip_fml, fields)
+          : undefined;
         const fUrl = get_expression_function(item.dyn_url_fml, fields);
         if (item.dyn_section_field) {
           const section_field = fields.find(
@@ -1169,6 +1172,7 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
                 .map((row) => ({
                   ...item,
                   label: fLabel(row),
+                  tooltip: fTooltip ? fTooltip(row) : undefined,
                   url: fUrl(row),
                   type: "Link",
                 })),
@@ -1179,6 +1183,7 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
             unrolled_menu_items.push({
               ...item,
               label: fLabel(row),
+              tooltip: fTooltip ? fTooltip(row) : undefined,
               url: fUrl(row),
               type: "Link",
             });
