@@ -1319,9 +1319,9 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
   if (res.notify) await handle(res.notify, notifyAlert);
   if (res.error) {
     if (window._sc_loglevel > 4) console.trace("error response", res.error);
-    await handle(res.error, (text) => {
-      notifyAlert({ type: "danger", text: text });
-    });
+    await handle(res.error, (text) =>
+      notifyAlert({ type: "danger", text: text })
+    );
   }
   if (res.notify_success)
     await handle(res.notify_success, (text) =>
