@@ -42,11 +42,11 @@ const load_url_dom = async (url) => {
   class FakeXHR {
     constructor() {
       this.readyState = 0;
-
+      this.requestHeaders = [];
       //return traceMethodCalls(this);
     }
     open(method, url) {
-      console.log("open xhr", method, url);
+      //console.log("open xhr", method, url);
       this.method = method;
       this.url = url;
     }
@@ -54,13 +54,19 @@ const load_url_dom = async (url) => {
     addEventListener(ev, reqListener) {
       if (ev === "load") this.reqListener = reqListener;
     }
-    setRequestHeader() {}
+    setRequestHeader(k, v) {
+      this.requestHeaders.push([k, v]);
+    }
     overrideMimeType() {}
     async send() {
-      console.log("send1", this.url);
+      //console.log("send1", this.url);
       const url1 = this.url.replace("http://localhost", "");
-      console.log("xhr fetching", url1);
-      const res = await request(app).get(url1);
+      //console.log("xhr fetching", url1);
+      let req = request(app).get(url1);
+      for (const [k, v] of this.requestHeaders) {
+        req = req.set(k, v);
+      }
+      const res = await req;
       this.response = res.text;
       this.responseText = res.text;
       this.status = res.status;
@@ -145,7 +151,7 @@ describe("JSDOM test", () => {
     input.dispatchEvent(new dom.window.Event("change"));
     await sleep(2000);
     expect(dom.window.location.href).toBe(
-      "http://localhost/view/authorfilter11?author=Leo"
+      "http://localhost/view/authorfilter1?author=Leo"
     );
 
     //console.log("dom", dom);
