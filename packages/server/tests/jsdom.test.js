@@ -1,24 +1,13 @@
 const request = require("supertest");
 const getApp = require("../app");
-const {
-  toRedirect,
-  getAdminLoginCookie,
-  getStaffLoginCookie,
-  itShouldRedirectUnauthToLogin,
-  toInclude,
-  toNotInclude,
-  resetToFixtures,
-  respondJsonWith,
-  toSucceed,
-} = require("../auth/testhelp");
+const { resetToFixtures } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 
 const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+const { JSDOM, ResourceLoader } = require("jsdom");
 afterAll(db.close);
 beforeAll(async () => {
   await resetToFixtures();
@@ -28,7 +17,7 @@ jest.setTimeout(30000);
 
 const load_url_dom = async (url) => {
   const app = await getApp({ disableCsrf: true });
-  class CustomResourceLoader extends jsdom.ResourceLoader {
+  class CustomResourceLoader extends ResourceLoader {
     async fetch(url, options) {
       const url1 = url.replace("http://localhost", "");
       const res = await request(app).get(url1);
