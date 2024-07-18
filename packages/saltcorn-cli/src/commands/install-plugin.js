@@ -64,7 +64,7 @@ class InstallPluginCommand extends Command {
           });
           await load_plugins.loadAndSaveNewPlugin(plugin);
         } catch (e) {
-          console.error(e.message);
+          console.error(e);
           this.exit(1);
         }
       }
