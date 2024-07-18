@@ -48,7 +48,13 @@ class InstallPluginCommand extends Command {
         }
         delete plugin.id;
 
-        await load_plugins.loadAndSaveNewPlugin(plugin);
+        await load_plugins.loadAndSaveNewPlugin(
+          plugin,
+          undefined,
+          undefined,
+          (s) => s,
+          !!flags.unsafe
+        );
       } else if (flags.directory) {
         const pkgpath = path.join(flags.directory, "package.json");
         if (!fs.existsSync(pkgpath)) {
@@ -93,6 +99,10 @@ InstallPluginCommand.flags = {
   directory: flags.string({
     char: "d",
     description: "Directory with local plugin",
+  }),
+  unsafe: flags.boolean({
+    char: "u",
+    description: "Allow unsafe plugins on tenants",
   }),
 };
 
