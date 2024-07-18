@@ -233,7 +233,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     }
 
     if (vresps.length > 0) {
-      tablesWithResults.push(tableName);
+      tablesWithResults.push({ tableName, label: sectionHeader });
       resp.push({
         type: "card",
         title: span({ id: tableName }, sectionHeader),
@@ -274,8 +274,13 @@ const runSearch = async ({ q, _page, table }, req, res) => {
               req.__("Show only matches in table:"),
               "&nbsp;",
               tablesWithResults
-                .map((t) =>
-                  a({ href: `javascript:set_state_field('table', '${t}')` }, t)
+                .map(({ tableName, label }) =>
+                  a(
+                    {
+                      href: `javascript:set_state_field('table', '${tableName}')`,
+                    },
+                    label
+                  )
                 )
                 .join(" | ")
             )
