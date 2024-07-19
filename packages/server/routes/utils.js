@@ -78,7 +78,7 @@ function loggedIn(req, res, next) {
  */
 function isAdmin(req, res, next) {
   const cur_tenant = db.getTenantSchema();
-  console.log({ cur_tenant, user: req.user });
+  //console.log({ cur_tenant, user: req.user });
   if (req.user && req.user.role_id === 1 && req.user.tenant === cur_tenant) {
     next();
   } else {
@@ -217,6 +217,7 @@ const setTenant = (req, res, next) => {
         const ten = get_tenant_from_req(req);
         const state = getTenant(ten);
         if (!state) {
+          console.log("setTenant: no state found for tenant", ten);
           setLanguage(req, res);
           next();
         } else {
