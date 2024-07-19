@@ -108,6 +108,7 @@ const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
 const { get_help_markup } = require("../help/index.js");
 const Docker = require("dockerode");
+const npmFetch = require("npm-registry-fetch");
 
 const router = new Router();
 module.exports = router;
@@ -1004,6 +1005,7 @@ router.get(
       "custom_ssl_certificate",
       false
     );
+    const rndid = `bs${Math.round(Math.random() * 100000)}`;
     let expiry = "";
     if (custom_ssl_certificate && X509Certificate) {
       const { validTo } = new X509Certificate(custom_ssl_certificate);
@@ -1062,6 +1064,20 @@ router.get(
                 " ",
                 req.__("Clear all"),
                 " &raquo;"
+              ),
+              hr(),
+
+              a(
+                {
+                  id: rndid,
+                  class: "btn btn-secondary",
+                  onClick: "press_store_button(this, true)",
+                  href:
+                    `javascript:ajax_modal('/admin/install_dialog', ` +
+                    `{ onOpen: () => { restore_old_button('${rndid}'); }, ` +
+                    ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
+                },
+                req.__("install a different version")
               )
             ),
           },
@@ -1222,6 +1238,137 @@ const pullCordovaBuilder = (req, res) => {
   });
 };
 
+/*
+ * fetch available saltcorn versions and show a dialog to select one
+ */
+router.get(
+  "/install_dialog",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    try {
+      const pkgInfo = await npmFetch.json(
+        "https://registry.npmjs.org/@saltcorn/cli"
+      );
+      if (!pkgInfo?.versions)
+        throw new Error(req.__("Unable to fetch versions"));
+      const versions = Object.keys(pkgInfo.versions);
+      if (versions.length === 0) throw new Error(req.__("No versions found"));
+      res.set("Page-Title", req.__("%s versions", "Saltcorn"));
+      let selected = packagejson.version;
+      res.send(
+        form(
+          {
+            action: `/admin/install`,
+            method: "post",
+          },
+          input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+          div(
+            { class: "form-group" },
+            label(
+              {
+                for: "version_select",
+                class: "form-label fw-bold",
+              },
+              req.__("Version")
+            ),
+            select(
+              {
+                id: "version_select",
+                class: "form-control form-select",
+                name: "version",
+              },
+              versions.map((version) =>
+                option({
+                  id: `${version}_opt`,
+                  value: version,
+                  label: version,
+                  selected: version === selected,
+                })
+              )
+            )
+          ),
+          div(
+            { class: "d-flex justify-content-end" },
+            button(
+              {
+                type: "button",
+                class: "btn btn-secondary me-2",
+                "data-bs-dismiss": "modal",
+              },
+              req.__("Close")
+            ),
+            button(
+              {
+                type: "submit",
+                class: "btn btn-primary",
+                onClick: "press_store_button(this)",
+              },
+              req.__("Install")
+            )
+          )
+        )
+      );
+    } catch (error) {
+      getState().log(
+        2,
+        `GET /install_dialog: ${error.message || "unknown error"}`
+      );
+      return res.status(500).json({ error: error.message || "unknown error" });
+    }
+  })
+);
+
+const doInstall = async (req, res, version, runPull) => {
+  if (db.getTenantSchema() !== db.connectObj.default_schema) {
+    req.flash("error", req.__("Not possible for tenant"));
+    res.redirect("/admin");
+  } else {
+    res.write(
+      version === "latest"
+        ? req.__("Starting upgrade, please wait...\n")
+        : req.__("Installing %s, please wait...\n", version)
+    );
+    const child = spawn(
+      "npm",
+      ["install", "-g", `@saltcorn/cli@${version}`, "--unsafe"],
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+      }
+    );
+    child.stdout.on("data", (data) => {
+      res.write(data);
+    });
+    child.stderr?.on("data", (data) => {
+      res.write(data);
+    });
+    child.on("exit", async function (code, signal) {
+      if (code === 0 && runPull) {
+        res.write(req.__("Pulling the cordova-builder docker image...") + "\n");
+        const pullCode = await pullCordovaBuilder(req, res);
+        res.write(req.__("Pull done with code %s", pullCode) + "\n");
+      }
+      res.end(
+        version === "latest"
+          ? req.__(
+              `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
+            )
+          : req.__(
+              `Install done with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
+            )
+      );
+      setTimeout(() => {
+        getState().processSend("RestartServer");
+        process.exit(0);
+      }, 100);
+    });
+  }
+};
+
+router.post("/install", isAdmin, async (req, res) => {
+  const { version } = req.body;
+  await doInstall(req, res, version, false);
+});
+
 /**
  * Do Upgrade
  * @name post/upgrade
@@ -1232,43 +1379,7 @@ router.post(
   "/upgrade",
   isAdmin,
   error_catcher(async (req, res) => {
-    if (db.getTenantSchema() !== db.connectObj.default_schema) {
-      req.flash("error", req.__("Not possible for tenant"));
-      res.redirect("/admin");
-    } else {
-      res.write(req.__("Starting upgrade, please wait...\n"));
-      const child = spawn(
-        "npm",
-        ["install", "-g", "@saltcorn/cli@latest", "--unsafe"],
-        {
-          stdio: ["ignore", "pipe", "pipe"],
-        }
-      );
-      child.stdout.on("data", (data) => {
-        res.write(data);
-      });
-      child.stderr?.on("data", (data) => {
-        res.write(data);
-      });
-      child.on("exit", async function (code, signal) {
-        if (code === 0) {
-          res.write(
-            req.__("Pulling the cordova-builder docker image...") + "\n"
-          );
-          const pullCode = await pullCordovaBuilder(req, res);
-          res.write(req.__("Pull done with code %s", pullCode) + "\n");
-        }
-        res.end(
-          req.__(
-            `Upgrade done (if it was available) with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
-          )
-        );
-        setTimeout(() => {
-          getState().processSend("RestartServer");
-          process.exit(0);
-        }, 100);
-      });
-    }
+    await doInstall(req, res, "latest", true);
   })
 );
 /**
