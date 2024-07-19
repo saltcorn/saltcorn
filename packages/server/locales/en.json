@@ -1438,5 +1438,6 @@
 	"Delete all read": "Delete all read",
 	"Trigger %s duplicated as %s": "Trigger %s duplicated as %s",
 	"Tooltip": "Tooltip",
-	"Tooltip formula": "Tooltip formula"
+	"Tooltip formula": "Tooltip formula",
+	"Page group": "Page group"
 }
