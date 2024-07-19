@@ -3,7 +3,7 @@
  * @module commands/install-plugin
  */
 const { Command, flags } = require("@oclif/command");
-const { maybe_as_tenant } = require("../common");
+const { maybe_as_tenant, init_some_tenants } = require("../common");
 const fs = require("fs");
 const path = require("path");
 
@@ -30,12 +30,8 @@ class InstallPluginCommand extends Command {
       );
       this.exit(1);
     }
-    const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
-    const { init_multi_tenant } = require("@saltcorn/data/db/state");
-    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-    await loadAllPlugins();
-    const tenants = await getAllTenants();
-    await init_multi_tenant(loadAllPlugins, undefined, tenants);
+
+    await init_some_tenants(flags.tenant);
 
     const Plugin = require("@saltcorn/data/models/plugin");
 
