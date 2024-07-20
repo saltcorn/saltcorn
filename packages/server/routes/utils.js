@@ -217,7 +217,6 @@ const setTenant = (req, res, next) => {
         const ten = get_tenant_from_req(req);
         const state = getTenant(ten);
         if (!state) {
-          console.log("setTenant: no state found for tenant", ten);
           setLanguage(req, res);
           next();
         } else {
