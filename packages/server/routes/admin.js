@@ -1104,18 +1104,19 @@ router.get(
                             }
                           )
                         : "",
-                      a(
-                        {
-                          id: rndid,
-                          class: "btn btn-sm btn-secondary ms-1 px-1 py-0",
-                          onClick: "press_store_button(this, true)",
-                          href:
-                            `javascript:ajax_modal('/admin/install_dialog', ` +
-                            `{ onOpen: () => { restore_old_button('${rndid}'); }, ` +
-                            ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
-                        },
-                        req.__("Choose version")
-                      )
+                      !git_commit &&
+                        a(
+                          {
+                            id: rndid,
+                            class: "btn btn-sm btn-secondary ms-1 px-1 py-0",
+                            onClick: "press_store_button(this, true)",
+                            href:
+                              `javascript:ajax_modal('/admin/install_dialog', ` +
+                              `{ onOpen: () => { restore_old_button('${rndid}'); }, ` +
+                              ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
+                          },
+                          req.__("Choose version")
+                        )
                     )
                   ),
                   git_commit &&
