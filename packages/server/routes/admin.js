@@ -1065,20 +1065,7 @@ router.get(
                 req.__("Clear all"),
                 " &raquo;"
               ),
-              hr(),
-
-              a(
-                {
-                  id: rndid,
-                  class: "btn btn-secondary",
-                  onClick: "press_store_button(this, true)",
-                  href:
-                    `javascript:ajax_modal('/admin/install_dialog', ` +
-                    `{ onOpen: () => { restore_old_button('${rndid}'); }, ` +
-                    ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
-                },
-                req.__("install a different version")
-              )
+              hr()
             ),
           },
           {
@@ -1091,32 +1078,45 @@ router.get(
                   tr(
                     th(req.__("Saltcorn version")),
                     td(
-                      packagejson.version +
-                        (isRoot && can_update
-                          ? post_btn(
-                              "/admin/upgrade",
-                              req.__("Upgrade"),
-                              req.csrfToken(),
-                              {
-                                btnClass: "btn-primary btn-sm",
-                                formClass: "d-inline",
-                              }
-                            )
-                          : isRoot && is_latest
-                          ? span(
-                              { class: "badge bg-primary ms-2" },
-                              req.__("Latest")
-                            ) +
-                            post_btn(
-                              "/admin/check-for-upgrade",
-                              req.__("Check for updates"),
-                              req.csrfToken(),
-                              {
-                                btnClass: "btn-primary btn-sm px-1 py-0",
-                                formClass: "d-inline",
-                              }
-                            )
-                          : "")
+                      packagejson.version,
+                      isRoot && can_update
+                        ? post_btn(
+                            "/admin/upgrade",
+                            req.__("Upgrade"),
+                            req.csrfToken(),
+                            {
+                              btnClass: "btn-primary btn-sm",
+                              formClass: "d-inline",
+                            }
+                          )
+                        : isRoot && is_latest
+                        ? span(
+                            { class: "badge bg-primary ms-2" },
+                            req.__("Latest")
+                          ) +
+                          post_btn(
+                            "/admin/check-for-upgrade",
+                            req.__("Check updates"),
+                            req.csrfToken(),
+                            {
+                              btnClass: "btn-primary btn-sm px-1 py-0",
+                              formClass: "d-inline",
+                            }
+                          )
+                        : "",
+                      !git_commit &&
+                        a(
+                          {
+                            id: rndid,
+                            class: "btn btn-sm btn-secondary ms-1 px-1 py-0",
+                            onClick: "press_store_button(this, true)",
+                            href:
+                              `javascript:ajax_modal('/admin/install_dialog', ` +
+                              `{ onOpen: () => { restore_old_button('${rndid}'); }, ` +
+                              ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
+                          },
+                          req.__("Choose version")
+                        )
                     )
                   ),
                   git_commit &&

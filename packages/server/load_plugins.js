@@ -104,7 +104,8 @@ const loadAndSaveNewPlugin = async (
   plugin,
   force,
   noSignalOrDB,
-  __ = (str) => str
+  __ = (str) => str,
+  allowUnsafeOnTenantsWithoutConfigSetting
 ) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
@@ -126,7 +127,10 @@ const loadAndSaveNewPlugin = async (
 
     const instore = getRootState().getConfig("available_plugins", []);
     const safes = instore.filter((p) => !p.unsafe).map((p) => p.location);
-    if (!safes.includes(plugin.location)) {
+    if (
+      !safes.includes(plugin.location) &&
+      !allowUnsafeOnTenantsWithoutConfigSetting
+    ) {
       console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
       return;
     }

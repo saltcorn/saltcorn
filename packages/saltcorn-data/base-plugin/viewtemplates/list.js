@@ -1250,7 +1250,26 @@ module.exports = {
    */
   default_state_form: ({ default_state }) => {
     if (!default_state) return default_state;
-    const { _omit_state_form, _create_db_view, ...ds } = default_state;
+    const {
+      _omit_state_form,
+      _create_db_view,
+      _order_field,
+      _descending,
+      include_fml,
+      exclusion_relation,
+      exclusion_where,
+      _rows_per_page,
+      _row_click_url_formula,
+      transpose,
+      transpose_width,
+      transpose_width_units,
+      _omit_header,
+      hide_null_columns,
+      _hover_rows,
+      _striped_rows,
+      _borderless,
+      ...ds
+    } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
   },
   /**
