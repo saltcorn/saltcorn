@@ -351,14 +351,18 @@ const load_url_dom = async (url) => {
       this.requestHeaders.push([k, v]);
     }
     overrideMimeType() {}
-    async send() {
+    async send(body) {
       //console.log("send1", this.url);
       const url1 = this.url.replace("http://localhost", "");
       //console.log("xhr fetching", url1);
-      let req = request(app).get(url1);
+      let req =
+        this.method == "POST"
+          ? request(app).post(url1)
+          : request(app).get(url1);
       for (const [k, v] of this.requestHeaders) {
         req = req.set(k, v);
       }
+      if (this.method === "POST" && body) req.send(body);
       const res = await req;
       this.response = res.text;
       this.responseText = res.text;
