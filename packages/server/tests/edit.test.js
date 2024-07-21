@@ -12,10 +12,12 @@ afterAll(db.close);
 beforeAll(async () => {
   await resetToFixtures();
   const table = Table.findOne("books");
+  await table.update({ min_role_read: 100 });
   await Field.create({
     table,
     name: "sequel_to",
     type: "Key to books",
+    attributes: { summary_field: "author" },
   });
   await table.insertRow({
     author: "Peter Kropotkin",
@@ -28,6 +30,10 @@ beforeAll(async () => {
     pages: 864,
     publisher: 2,
   });
+  const ptable = Table.findOne("publisher");
+  await ptable.update({ min_role_read: 100 });
+
+  await getState().setConfig("log_level", 6);
 });
 
 jest.setTimeout(30000);
