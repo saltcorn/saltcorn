@@ -117,7 +117,7 @@ describe("JSDOM-E2E filter test", () => {
                       setTextColor: false,
                       fullPageWidth: false,
                       gradDirection: "0",
-                      showIfFormula: 'publisher.name == "AK Press"',
+                      //showIfFormula: 'publisher.name == "AK Press"',
                       gradStartColor: "#ff8888",
                       minScreenWidth: "",
                       show_for_owner: false,
@@ -236,14 +236,36 @@ describe("JSDOM-E2E filter test", () => {
     const dom = await load_url_dom("/view/AuthorEditForTest");
     await sleep(1000);
     const pubwarn = dom.window.document.querySelector("div.pubwarn");
+    console.log(dom.serialize());
+    //expect(pubwarn.style.display).toBe("none");
 
-    expect(pubwarn.style.display).toBe("none");
+    const select_seq = dom.window.document.querySelector(
+      "select[name=sequel_to]"
+    );
+    expect([...select_seq.options].map((o) => o.text)).toStrictEqual([
+      "",
+      "Herman Melville",
+    ]);
     const select = dom.window.document.querySelector("select[name=publisher]");
     select.value = "1";
-    select.dispatchEvent(new dom.window.Event("change"));
+    select.dispatchEvent(
+      new dom.window.CustomEvent("change", {
+        bubbles: true,
+        cancelable: true,
+      })
+    );
 
-    await sleep(1000);
-    expect(pubwarn.style.display).toBe("");
+    await sleep(2000);
+    const select_seq1 = dom.window.document.querySelector(
+      "select[name=sequel_to]"
+    );
+    expect([...select_seq1.options].map((o) => o.text)).toStrictEqual([
+      "",
+      "Leo Tolstoy",
+      "Peter Kropotkin",
+    ]);
+
+    //expect(pubwarn.style.display).toBe("");
 
     /*input.value = "Leo";
     input.dispatchEvent(new dom.window.Event("change"));

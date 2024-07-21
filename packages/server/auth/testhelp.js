@@ -364,6 +364,9 @@ const load_url_dom = async (url) => {
       }
       if (this.method === "POST" && body) req.send(body);
       const res = await req;
+      this.responseHeaders = res.headers;
+      if (res.headers["content-type"].includes("json"))
+        this.responseType = "json";
       this.response = res.text;
       this.responseText = res.text;
       this.status = res.status;
@@ -375,7 +378,9 @@ const load_url_dom = async (url) => {
       //console.log("xhr", this);
     }
     getAllResponseHeaders() {
-      return [];
+      return Object.entries(this.responseHeaders)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n");
     }
   }
   dom.window.XMLHttpRequest = FakeXHR;
