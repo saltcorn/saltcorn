@@ -1438,5 +1438,13 @@
 	"Delete all read": "Delete all read",
 	"Trigger %s duplicated as %s": "Trigger %s duplicated as %s",
 	"Tooltip": "Tooltip",
-	"Tooltip formula": "Tooltip formula"
+	"Tooltip formula": "Tooltip formula",
+	"Install a different version": "Install a different version",
+	"Page group": "Page group",
+	"Starting upgrade, please wait...\n": "Starting upgrade, please wait...\n",
+	"Upgrade done (if it was available) with code 0.\n\nPress the BACK button in your browser, then RELOAD the page.": "Upgrade done (if it was available) with code 0.\n\nPress the BACK button in your browser, then RELOAD the page.",
+	"Installing %s, please wait...\n": "Installing %s, please wait...\n",
+	"Install done with code 0.\n\nPress the BACK button in your browser, then RELOAD the page.": "Install done with code 0.\n\nPress the BACK button in your browser, then RELOAD the page.",
+	"Pulling the cordova-builder docker image...": "Pulling the cordova-builder docker image...",
+	"Unknown authentication method %s": "Unknown authentication method %s"
 }

@@ -1155,7 +1155,11 @@ router.get(
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {
-        passport.authenticate(method, auth.parameters)(req, res, next);
+        const passportParams =
+          typeof auth.parameters === "function"
+            ? auth.parameters(req)
+            : auth.parameters;
+        passport.authenticate(method, passportParams)(req, res, next);
       } else {
         req.flash(
           "danger",
@@ -1189,7 +1193,11 @@ router.post(
     const { method } = req.params;
     const auth = getState().auth_methods[method];
     if (auth) {
-      passport.authenticate(method, auth.parameters)(
+      const passportParams =
+        typeof auth.parameters === "function"
+          ? auth.parameters(req)
+          : auth.parameters;
+      passport.authenticate(method, passportParams)(
         req,
         res,
         loginCallback(req, res)
@@ -1227,7 +1235,12 @@ const callbackFn = async (req, res, next) => {
   const { method } = req.params;
   const auth = getState().auth_methods[method];
   if (auth) {
-    passport.authenticate(method, { failureRedirect: "/auth/login" })(
+    const passportParams =
+      typeof auth.parameters === "function"
+        ? auth.parameters(req)
+        : auth.parameters;
+    passportParams.failureRedirect = "/auth/login";
+    passport.authenticate(method, passportParams)(
       req,
       res,
       loginCallback(req, res)
