@@ -1446,5 +1446,7 @@
 	"Installing %s, please wait...\n": "Installing %s, please wait...\n",
 	"Install done with code 0.\n\nPress the BACK button in your browser, then RELOAD the page.": "Install done with code 0.\n\nPress the BACK button in your browser, then RELOAD the page.",
 	"Pulling the cordova-builder docker image...": "Pulling the cordova-builder docker image...",
+	"Check updates": "Check updates",
+	"Choose version": "Choose version",
 	"Unknown authentication method %s": "Unknown authentication method %s"
 }

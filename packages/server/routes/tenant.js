@@ -132,7 +132,7 @@ const is_ip_address = (hostname) => {
 const get_cfg_tenant_base_url = (req) =>
   remove_leading_chars(
     ".",
-    getRootState().getConfig("tenant_baseurl", req.hostname)
+    getRootState().getConfig("tenant_baseurl", req.hostname) || req.hostname
   )
     .replace("http://", "")
     .replace("https://", "");
@@ -268,7 +268,8 @@ router.post(
       return;
     }
     // declare  ui form
-    const form = tenant_form(req);
+    const base_url = get_cfg_tenant_base_url(req);
+    const form = tenant_form(req, base_url);
     // validate ui form
     const valres = form.validate(req.body);
     if (valres.errors)
