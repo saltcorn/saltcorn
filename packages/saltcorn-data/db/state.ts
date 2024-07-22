@@ -1068,6 +1068,7 @@ const features = {
   list_builder: true,
   esm_plugins: true,
   stringify_json_fields: true,
+  dynamic_auth_parameters: true,
 };
 
 export = {
