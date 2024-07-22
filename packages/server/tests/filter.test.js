@@ -58,7 +58,7 @@ describe("JSDOM-E2E filter test", () => {
     const input = dom.window.document.querySelector("input[name=author]");
     input.value = "Leo";
     input.dispatchEvent(new dom.window.Event("change"));
-    await sleep(2000);
+    await sleep(1000);
     expect(dom.window.location.href).toBe(
       "http://localhost/view/authorfilter1?author=Leo"
     );

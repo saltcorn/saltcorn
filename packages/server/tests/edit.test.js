@@ -362,7 +362,7 @@ describe("JSDOM-E2E edit test", () => {
     select.value = "1";
     select.dispatchEvent(newEvent(dom, "change"));
 
-    await sleep(2000);
+    await sleep(1000);
     expect([...select_seq.options].map((o) => o.text)).toStrictEqual([
       "",
       "Leo Tolstoy",
@@ -376,6 +376,18 @@ describe("JSDOM-E2E edit test", () => {
     );
     expect(jf.innerHTML).toBe("AK Press");
   });
+  it("calculated field", async () => {
+    const dom = await load_url_dom("/view/AuthorEditForTest");
+    const input = dom.window.document.querySelector("input[name=pages]");
+    input.value = "13";
+    input.dispatchEvent(newEvent(dom, "change"));
+    await sleep(1000);
+    const cf = dom.window.document.querySelector(
+      `div[data-source-url="/field/show-calculated/books/pagesp1/show?input_type=text"]`
+    );
+    expect(cf.innerHTML).toBe("14");
+  });
+
   it("join select should set dynamic where and show if with no joinfield", async () => {
     await makeJoinSelectView({
       name: "AuthorEditForTest1",
@@ -398,7 +410,7 @@ describe("JSDOM-E2E edit test", () => {
     select.value = "1";
     select.dispatchEvent(newEvent(dom, "change"));
 
-    await sleep(2000);
+    await sleep(1000);
     expect([...select_seq.options].map((o) => o.text)).toStrictEqual([
       "",
       "Leo Tolstoy",
@@ -406,5 +418,9 @@ describe("JSDOM-E2E edit test", () => {
     ]);
 
     expect(pubwarn.style.display).toBe("");
+    const jf = dom.window.document.querySelector(
+      "div.pubwarn div[data-source-url]"
+    );
+    expect(jf.innerHTML).toBe("AK Press");
   });
 });
