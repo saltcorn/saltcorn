@@ -33,7 +33,7 @@ beforeAll(async () => {
   const ptable = Table.findOne("publisher");
   await ptable.update({ min_role_read: 100 });
 
-  await getState().setConfig("log_level", 6);
+  //await getState().setConfig("log_level", 6);
 });
 
 jest.setTimeout(30000);
@@ -236,7 +236,7 @@ describe("JSDOM-E2E filter test", () => {
     const dom = await load_url_dom("/view/AuthorEditForTest");
     await sleep(1000);
     const pubwarn = dom.window.document.querySelector("div.pubwarn");
-    console.log(dom.serialize());
+    //console.log(dom.serialize());
     //expect(pubwarn.style.display).toBe("none");
 
     const select_seq = dom.window.document.querySelector(
@@ -256,10 +256,7 @@ describe("JSDOM-E2E filter test", () => {
     );
 
     await sleep(2000);
-    const select_seq1 = dom.window.document.querySelector(
-      "select[name=sequel_to]"
-    );
-    expect([...select_seq1.options].map((o) => o.text)).toStrictEqual([
+    expect([...select_seq.options].map((o) => o.text)).toStrictEqual([
       "",
       "Leo Tolstoy",
       "Peter Kropotkin",
