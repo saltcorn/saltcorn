@@ -19,6 +19,13 @@ beforeAll(async () => {
     type: "Key to books",
     attributes: { summary_field: "author" },
   });
+  await Field.create({
+    table,
+    label: "pagesp1",
+    type: "Integer",
+    calculated: true,
+    expression: "pages+1",
+  });
   await table.insertRow({
     author: "Peter Kropotkin",
     pages: 189,
@@ -94,30 +101,46 @@ const makeJoinSelectView = async ({ name, showIfFormula }) => {
                     padding: [0, 0, 0, 0],
                     bgFileId: 0,
                     contents: {
-                      font: "",
-                      icon: "",
-                      type: "blank",
-                      block: false,
-                      style: {},
-                      inline: false,
-                      contents: "Warning",
-                      labelFor: "",
-                      isFormula: {},
-                      textStyle: "",
+                      above: [
+                        {
+                          font: "",
+                          icon: "",
+                          type: "blank",
+                          block: false,
+                          style: {},
+                          inline: false,
+                          contents: "Warning",
+                          labelFor: "",
+                          isFormula: {},
+                          textStyle: "",
+                        },
+                        {
+                          type: "join_field",
+                          block: false,
+                          fieldview: "as_text",
+                          textStyle: "",
+                          join_field: "publisher.name",
+                          configuration: {},
+                        },
+                      ],
                     },
                     imageSize: "contain",
                     isFormula: {},
                     minHeight: 0,
                     textColor: "#ffffff",
+                    widthUnit: "px",
+                    heightUnit: "px",
+                    customClass: "pubwarn",
                     htmlElement: "div",
                     showForRole: [],
                     gradEndColor: "#88ff88",
-                    customClass: "pubwarn",
                     setTextColor: false,
                     fullPageWidth: false,
                     gradDirection: "0",
+                    minHeightUnit: "px",
                     showIfFormula,
                     gradStartColor: "#ff8888",
+                    maxScreenWidth: "",
                     minScreenWidth: "",
                     show_for_owner: false,
                   },
@@ -160,6 +183,54 @@ const makeJoinSelectView = async ({ name, showIfFormula }) => {
             breakpoints: ["", ""],
           },
           {
+            gx: null,
+            gy: null,
+            style: {
+              "margin-bottom": "1.5rem",
+            },
+            aligns: ["end", "start"],
+            widths: [2, 10],
+            besides: [
+              {
+                font: "",
+                icon: "",
+                type: "blank",
+                block: false,
+                style: {},
+                inline: false,
+                contents: "Pages",
+                labelFor: "sequel_to",
+                isFormula: {},
+                textStyle: "",
+              },
+              {
+                above: [
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "edit",
+                    textStyle: "",
+                    field_name: "pages",
+                    configuration: {
+                      where: "publisher == $publisher",
+                    },
+                  },
+                  {
+                    type: "field",
+                    block: false,
+                    fieldview: "show",
+                    textStyle: "",
+                    field_name: "pagesp1",
+                    configuration: {
+                      input_type: "text",
+                    },
+                  },
+                ],
+              },
+            ],
+            breakpoints: ["", ""],
+          },
+          {
             type: "action",
             block: false,
             rndid: "cb94bd",
@@ -191,6 +262,14 @@ const makeJoinSelectView = async ({ name, showIfFormula }) => {
           configuration: {},
         },
         {
+          type: "JoinField",
+          block: false,
+          fieldview: "as_text",
+          textStyle: "",
+          join_field: "publisher.name",
+          configuration: {},
+        },
+        {
           type: "Field",
           block: false,
           fieldview: "select",
@@ -198,6 +277,26 @@ const makeJoinSelectView = async ({ name, showIfFormula }) => {
           field_name: "sequel_to",
           configuration: {
             where: "publisher == $publisher",
+          },
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "edit",
+          textStyle: "",
+          field_name: "pages",
+          configuration: {
+            where: "publisher == $publisher",
+          },
+        },
+        {
+          type: "Field",
+          block: false,
+          fieldview: "show",
+          textStyle: "",
+          field_name: "pagesp1",
+          configuration: {
+            input_type: "text",
           },
         },
         {
@@ -271,6 +370,11 @@ describe("JSDOM-E2E edit test", () => {
     ]);
 
     expect(pubwarn.style.display).toBe("");
+
+    const jf = dom.window.document.querySelector(
+      "div.pubwarn div[data-source-url]"
+    );
+    expect(jf.innerHTML).toBe("AK Press");
   });
   it("join select should set dynamic where and show if with no joinfield", async () => {
     await makeJoinSelectView({
