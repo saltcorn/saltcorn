@@ -38,8 +38,8 @@ beforeAll(async () => {
 
 jest.setTimeout(30000);
 
-describe("JSDOM-E2E filter test", () => {
-  it("should user filter to change url", async () => {
+describe("JSDOM-E2E edit test", () => {
+  it("join select should set dynamic where and show if with joinfield", async () => {
     await View.create({
       viewtemplate: "Edit",
       description: "",
@@ -117,7 +117,7 @@ describe("JSDOM-E2E filter test", () => {
                       setTextColor: false,
                       fullPageWidth: false,
                       gradDirection: "0",
-                      //showIfFormula: 'publisher.name == "AK Press"',
+                      showIfFormula: 'publisher?.name == "AK Press"',
                       gradStartColor: "#ff8888",
                       minScreenWidth: "",
                       show_for_owner: false,
@@ -237,7 +237,7 @@ describe("JSDOM-E2E filter test", () => {
     await sleep(1000);
     const pubwarn = dom.window.document.querySelector("div.pubwarn");
     //console.log(dom.serialize());
-    //expect(pubwarn.style.display).toBe("none");
+    expect(pubwarn.style.display).toBe("none");
 
     const select_seq = dom.window.document.querySelector(
       "select[name=sequel_to]"
@@ -262,7 +262,7 @@ describe("JSDOM-E2E filter test", () => {
       "Peter Kropotkin",
     ]);
 
-    //expect(pubwarn.style.display).toBe("");
+    expect(pubwarn.style.display).toBe("");
 
     /*input.value = "Leo";
     input.dispatchEvent(new dom.window.Event("change"));
