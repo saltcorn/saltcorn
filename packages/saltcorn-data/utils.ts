@@ -450,6 +450,14 @@ const cloneName = (name: string, allNames: Array<string>): string => {
   return newname;
 };
 
+/**
+ * @returns if the current schema is the default root schema
+ */
+const isRoot = () => {
+  const db = require("./db");
+  return db.getTenantSchema() === db.connectObj.default_schema;
+};
+
 export = {
   cloneName,
   dollarizeObject,
@@ -495,4 +503,5 @@ export = {
   prepMobileRows,
   fileWithEnding,
   safeEnding,
+  isRoot,
 };
