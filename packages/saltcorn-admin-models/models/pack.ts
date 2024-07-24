@@ -451,6 +451,8 @@ const install_pack = async (
 ): Promise<void> => {
   const Plugin = (await import("@saltcorn/data/models/plugin")).default;
   for (const plugin of pack.plugins) {
+    if (plugin.source === "npm" && plugin.name.startsWith("@saltcorn/"))
+      plugin.name = plugin.name.replace("@saltcorn/", "");
     const existingPlugins = await Plugin.find({});
     if (!existingPlugins.some((ep) => ep.name === plugin.name)) {
       // local plugins can crah
