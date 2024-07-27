@@ -366,7 +366,7 @@ describe("aggregations in stored calculated fields", () => {
         where: "{id: publisher}",
       },
     });
-    await books.insertRow({
+    const wid = await books.insertRow({
       author: "West",
       pages: 210,
       publisher: hid,
@@ -375,6 +375,9 @@ describe("aggregations in stored calculated fields", () => {
 
     const hrow3 = await publisher.getRow({ id: hid });
     expect(hrow3?.number_of_books).toBe(3);
+    await books.deleteRows({ id: wid });
+    const hrow4 = await publisher.getRow({ id: hid });
+    expect(hrow4?.number_of_books).toBe(2);
   });
   it("creates and updates sum field", async () => {
     const publisher = Table.findOne({ name: "publisher" });
