@@ -954,11 +954,24 @@ class Table implements AbstractTable {
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
+    const calc_agg_fields = await Field.find(
+      {
+        calculated: true,
+        stored: true,
+        expression: "__aggregation",
+        attributes: { json: { table: this.name } },
+      },
+      { cached: true }
+    );
     let rows;
-    if (user && user.role_id > this.min_role_write && this.ownership_formula) {
+    if (
+      calc_agg_fields.length ||
+      (user && user.role_id > this.min_role_write && this.ownership_formula)
+    ) {
       rows = await this.getJoinedRows({
         where,
         forUser: user,
+        forPublic: !user,
       });
     }
 
@@ -1005,6 +1018,7 @@ class Table implements AbstractTable {
           )}" in (${delIds.join(",")})`
         );
       }
+      for (const row of rows) await this.auto_update_calc_aggregations(row);
       if (this.has_sync_info) {
         const dbTime = await db.time();
         await this.addDeleteSyncInfo(rows, dbTime);
