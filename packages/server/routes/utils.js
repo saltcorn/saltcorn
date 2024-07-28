@@ -297,7 +297,7 @@ const getGitRevision = () => db.connectObj.git_commit;
  * Gets session store
  * @returns {session|cookieSession}
  */
-const getSessionStore = () => {
+const getSessionStore = (pruneInterval) => {
   /*if (getState().getConfig("cookie_sessions", false)) {
     return cookieSession({
       keys: [db.connectObj.session_secret || is.str.generate()],
@@ -320,6 +320,7 @@ const getSessionStore = () => {
         schemaName: db.connectObj.default_schema,
         pool: db.pool,
         tableName: "_sc_session",
+        pruneSessionInterval: pruneInterval,
       }),
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,

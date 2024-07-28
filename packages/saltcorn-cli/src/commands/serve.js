@@ -47,6 +47,9 @@ class ServeCommand extends Command {
     }
     if (flags.subdomain_offset)
       serveArgs.subdomainOffset = flags.subdomain_offset;
+    if (typeof flags.pruneSessionInterval === "number")
+      serveArgs.pruneSessionInterval =
+        flags.pruneSessionInterval > 0 ? flags.pruneSessionInterval : false;
     const serve = require("@saltcorn/server/serve");
     await serve(serveArgs);
   }
@@ -74,7 +77,14 @@ ServeCommand.flags = {
   noscheduler: flags.boolean({ char: "s", description: "No scheduler" }),
   subdomain_offset: flags.integer({
     string: "subdomain_offset",
-    description: "Number of parts to remove to access subdomain in 'multi_tenant' mode",
+    description:
+      "Number of parts to remove to access subdomain in 'multi_tenant' mode",
+  }),
+  pruneSessionInterval: flags.integer({
+    string: "pruneSessionInterval",
+    description:
+      "Interval in seconds to check for expred sessions in the postgres db. " +
+      "0 or a negative number to disable",
   }),
 };
 

@@ -287,7 +287,11 @@ module.exports =
           })
           .ready((glx) => {
             const httpsServer = glx.httpsServer();
-            setupSocket(appargs?.subdomainOffset, httpsServer);
+            setupSocket(
+              appargs?.subdomainOffset,
+              appargs?.pruneSessionInterval,
+              httpsServer
+            );
             httpsServer.setTimeout(timeout * 1000);
             process.on("message", workerDispatchMsg);
             glx.serveApp(app);
@@ -354,7 +358,12 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // todo timeout to config
     httpServer.setTimeout(timeout * 1000);
     httpsServer.setTimeout(timeout * 1000);
-    setupSocket(appargs?.subdomainOffset, httpServer, httpsServer);
+    setupSocket(
+      appargs?.subdomainOffset,
+      appargs?.pruneSessionInterval,
+      httpServer,
+      httpsServer
+    );
     httpServer.listen(port, () => {
       console.log("HTTP Server running on port 80");
     });
@@ -367,7 +376,11 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // server with http only
     const http = require("http");
     const httpServer = http.createServer(app);
-    setupSocket(appargs?.subdomainOffset, httpServer);
+    setupSocket(
+      appargs?.subdomainOffset,
+      appargs?.pruneSessionInterval,
+      httpServer
+    );
 
     // todo timeout to config
     // todo refer in doc to httpserver doc
@@ -384,7 +397,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
  *
  * @param  {...*} servers
  */
-const setupSocket = (subdomainOffset, ...servers) => {
+const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
   // https://socket.io/docs/v4/middlewares/
   const wrap = (middleware) => (socket, next) =>
     middleware(socket.request, {}, next);
@@ -395,7 +408,7 @@ const setupSocket = (subdomainOffset, ...servers) => {
   }
 
   const passportInit = passport.initialize();
-  const sessionStore = getSessionStore();
+  const sessionStore = getSessionStore(pruneSessionInterval);
   const setupNamespace = (namespace) => {
     //io.of(namespace).use(wrap(setTenant));
     io.of(namespace).use(wrap(sessionStore));

@@ -173,7 +173,7 @@ const getApp = async (opts = {}) => {
   }
   //
   // todo ability to configure session_secret Age
-  app.use(getSessionStore());
+  app.use(getSessionStore(opts.pruneSessionInterval));
 
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
