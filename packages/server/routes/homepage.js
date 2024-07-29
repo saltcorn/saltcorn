@@ -459,8 +459,10 @@ const welcome_page = async (req) => {
           viewCard(views, req),
           pageCard(pages, req),
         ],
+        class: "welcome-page-row1",
       },
       {
+        class: "welcome-page-row2",
         besides: [
           {
             type: "card",
