@@ -44,7 +44,7 @@ const {
 const db = require("@saltcorn/data/db");
 
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
-const { isAdmin, error_catcher } = require("./utils.js");
+const { isAdmin, error_catcher, is_ip_address } = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {
@@ -115,18 +115,6 @@ const create_tenant_allowed = (req) => {
     +getRootState().getConfig("role_to_create_tenant") || 100;
   const user_role = req.user ? req.user.role_id : 100;
   return user_role <= required_role;
-};
-
-/**
- * Check that String is IPv4 address
- * @param {string} hostname
- * @returns {boolean|string[]}
- */
-// TBD not sure that false is correct return if type of is not string
-// TBD Add IPv6 support
-const is_ip_address = (hostname) => {
-  if (typeof hostname !== "string") return false;
-  return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
 };
 
 const get_cfg_tenant_base_url = (req) =>
