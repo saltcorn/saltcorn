@@ -963,6 +963,16 @@ const configTypes: ConfigTypes = {
     label: "Joined log socket ids",
     default: [],
   },
+  prune_session_interval: {
+    type: "Integer",
+    label: "Prune session interval (seconds)",
+    default: 900,
+    blurb:
+      "Interval in seconds to check for expred sessions in the postgres db. " +
+      "0, empty or a negative number to disable",
+    root_only: true,
+    restart_required: true,
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

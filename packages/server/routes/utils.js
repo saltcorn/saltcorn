@@ -322,7 +322,7 @@ const getSessionStore = (pruneInterval) => {
         schemaName: db.connectObj.default_schema,
         pool: db.pool,
         tableName: "_sc_session",
-        pruneSessionInterval: pruneInterval,
+        pruneSessionInterval: pruneInterval > 0 ? pruneInterval : false,
       }),
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,

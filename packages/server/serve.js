@@ -235,6 +235,10 @@ module.exports =
       : defaultNCPUs;
 
     const letsEncrypt = await getConfig("letsencrypt", false);
+    const pruneSessionInterval = +(await getConfig(
+      "prune_session_interval",
+      900
+    ));
     const masterState = {
       started: false,
       listeningTo: new Set([]),
@@ -289,7 +293,7 @@ module.exports =
             const httpsServer = glx.httpsServer();
             setupSocket(
               appargs?.subdomainOffset,
-              appargs?.pruneSessionInterval,
+              pruneSessionInterval,
               httpsServer
             );
             httpsServer.setTimeout(timeout * 1000);
@@ -348,6 +352,10 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
   const cert = getState().getConfig("custom_ssl_certificate", "");
   const key = getState().getConfig("custom_ssl_private_key", "");
   const timeout = +getState().getConfig("timeout", 120);
+  const pruneSessionInterval = +(await getState().getConfig(
+    "prune_session_interval",
+    900
+  ));
   // Server with http on port 80 / https on 443
   // todo  resolve hardcode
   if (port === 80 && cert && key) {
@@ -360,7 +368,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     httpsServer.setTimeout(timeout * 1000);
     setupSocket(
       appargs?.subdomainOffset,
-      appargs?.pruneSessionInterval,
+      pruneSessionInterval,
       httpServer,
       httpsServer
     );
@@ -376,11 +384,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // server with http only
     const http = require("http");
     const httpServer = http.createServer(app);
-    setupSocket(
-      appargs?.subdomainOffset,
-      appargs?.pruneSessionInterval,
-      httpServer
-    );
+    setupSocket(appargs?.subdomainOffset, pruneSessionInterval, httpServer);
 
     // todo timeout to config
     // todo refer in doc to httpserver doc
