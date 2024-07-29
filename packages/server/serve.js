@@ -465,6 +465,11 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             socketIds.push(socket.id);
             await getState().setConfig("joined_log_socket_ids", [...socketIds]);
             callback({ status: "ok" });
+            setTimeout(() => {
+              io.of("/")
+                .to(`_logs_${tenant}_`)
+                .emit("test_conn_msg", { text: "test message" });
+            }, 1000);
           }
         } catch (err) {
           getState().log(1, `Socket join_logs stream: ${err.stack}`);
