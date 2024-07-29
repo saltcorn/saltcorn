@@ -450,7 +450,7 @@ const render = ({
               segment.titleAjaxIndicator &&
                 span(
                   {
-                    class: "float-end sc-ajax-indicator",
+                    class: "float-end ms-auto sc-ajax-indicator",
                     style: { display: "none" },
                   },
                   i({ class: "fas fa-save" })
