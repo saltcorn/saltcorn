@@ -171,9 +171,13 @@ const getApp = async (opts = {}) => {
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, opts.disableMigrate, tenants);
   }
+  const pruneSessionInterval = +getState().getConfig(
+    "prune_session_interval",
+    900
+  );
   //
   // todo ability to configure session_secret Age
-  app.use(getSessionStore());
+  app.use(getSessionStore(pruneSessionInterval));
 
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));

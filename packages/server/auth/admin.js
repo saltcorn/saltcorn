@@ -388,6 +388,7 @@ const http_settings_form = async (req) =>
       "cross_domain_iframe",
       "body_limit",
       "url_encoded_limit",
+      ...(!db.isSQLite ? ["prune_session_interval"] : []),
     ],
     action: "/useradmin/http",
     submitLabel: req.__("Save"),
