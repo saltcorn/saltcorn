@@ -233,6 +233,10 @@ NOTE: the installation builds the 'saltcorn/cordova-builder' docker image, and t
 
 - [@saltcorn-cli](https://github.com/saltcorn/saltcorn/tree/master/packages/saltcorn-cli): command-line interface
 
+## Deployment tips
+
+- If your Saltcorn server is running behind a reverse proxy such as Nginx, refer to the [Socket.io reverse proxy documentation](https://socket.io/docs/v3/reverse-proxy/#nginx). This configuration is essential for Socket.io, which powers the chat, log-viewer, and streaming API functionalities (e.g. for the [recorder plugin](https://www.npmjs.com/package/@saltcorn/recorder)).
+
 ## Development tips
 
 ### Prettier
