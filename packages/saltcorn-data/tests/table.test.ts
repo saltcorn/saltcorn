@@ -21,7 +21,7 @@ import {
 } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
-const { freeVariables } = expressionModule;
+const { freeVariables, jsexprToWhere } = expressionModule;
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -422,6 +422,18 @@ describe("Table get data", () => {
     });
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].last_temp)).toBe(37);
+  });
+  it("should get from and of ors where formula", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const rows = await books.getJoinedRows({
+      where: jsexprToWhere(
+        '(author == "Leo Tolstoy" && pages ==728) || (author=="Newsome" && pages == 345)'
+      ),
+    });
+
+    expect(rows.length).toStrictEqual(1);
+    expect(rows[0].pages).toBe(728); // TODO why string
   });
   it("should get joined rows with earliest aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -1605,7 +1617,11 @@ describe("Table with users and files", () => {
     });
     await table.insertRow({ name: "Rocket", owner: 1, mugshot: rick.filename });
     const rels = await table.get_parent_relations();
-    expect(rels.parent_field_list).toEqual(["owner.email", "owner.id"]);
+    expect(rels.parent_field_list).toEqual([
+      "owner.email",
+      "owner.id",
+      "owner.role_id",
+    ]);
     const joined = await table.getJoinedRows();
     // expect(joined).toEqual("rick.png")
     expect(joined[0].mugshot).toEqual("rick.png");
@@ -2075,6 +2091,13 @@ describe("json restore", () => {
     await testUpdate("Barh", [51]);
     await testUpdate("Bazah", "bazc");
   });
+  it("should not change json on insert", async () => {
+    const table = await Table.findOne("JsonJson");
+    assertIsSet(table);
+    const newRow = { name: "TJ", stuff: { bar: "foo" } };
+    await table.insertRow(newRow);
+    expect(newRow.stuff).toStrictEqual({ bar: "foo" });
+  });
 });
 
 describe("external tables", () => {
@@ -2212,7 +2235,7 @@ describe("getField", () => {
     assertIsSet(table);
     const field = table.getField("name");
     expect(field?.name).toBe("name");
-    expect(field?.id).toBe(7);
+    expect(field?.id).toBe(8);
   });
   it("should find single join field", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -2220,21 +2243,21 @@ describe("getField", () => {
     const field = table.getField("favbook.pages");
     expect(field?.name).toBe("pages");
 
-    expect(field?.id).toBe(5);
+    expect(field?.id).toBe(6);
   });
   it("should find double join field", async () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const field = table.getField("favbook.publisher.name");
     expect(field?.name).toBe("name");
-    expect(field?.id).toBe(19);
+    expect(field?.id).toBe(20);
   });
   it("should find triple join field", async () => {
     const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
     const field = table.getField("patient_id.favbook.publisher.name");
     expect(field?.name).toBe("name");
-    expect(field?.id).toBe(19);
+    expect(field?.id).toBe(20);
   });
   it("should find own key field", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -2242,7 +2265,7 @@ describe("getField", () => {
     const field = table.getField("favbook");
     expect(field?.name).toBe("favbook");
     expect(field?.is_fkey).toBe(true);
-    expect(field?.id).toBe(8);
+    expect(field?.id).toBe(9);
   });
   it("should find single join key field", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -2251,7 +2274,7 @@ describe("getField", () => {
     expect(field?.name).toBe("publisher");
     expect(field?.is_fkey).toBe(true);
 
-    expect(field?.id).toBe(20);
+    expect(field?.id).toBe(21);
   });
 });
 

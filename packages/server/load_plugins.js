@@ -8,6 +8,8 @@
 const db = require("@saltcorn/data/db");
 const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
+const { isRoot } = require("@saltcorn/data/utils");
+const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
 
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
 
@@ -60,7 +62,21 @@ const loadPlugin = async (plugin, force) => {
       console.error(error); // todo i think that situation is not resolved
     }
   }
+
+  if (isRoot() && res.plugin_module.authentication)
+    await eachTenant(reloadAuthFromRoot);
   return res;
+};
+
+const reloadAuthFromRoot = () => {
+  if (isRoot()) return;
+  const rootState = getRootState();
+  const tenantState = getState();
+  if (!rootState || !tenantState || rootState === tenantState) return;
+  tenantState.auth_methods = {};
+  for (const [k, v] of Object.entries(rootState.auth_methods)) {
+    if (v.shareWithTenants) tenantState.auth_methods[k] = v;
+  }
 };
 
 /**
@@ -90,6 +106,7 @@ const loadAllPlugins = async (force) => {
   }
   await getState().refreshUserLayouts();
   await getState().refresh(true);
+  if (!isRoot()) reloadAuthFromRoot();
 };
 
 /**
@@ -104,14 +121,14 @@ const loadAndSaveNewPlugin = async (
   plugin,
   force,
   noSignalOrDB,
-  __ = (str) => str
+  __ = (str) => str,
+  allowUnsafeOnTenantsWithoutConfigSetting
 ) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
     false
   );
-  const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-  if (!isRoot && !tenants_unsafe_plugins) {
+  if (!isRoot() && !tenants_unsafe_plugins) {
     if (plugin.source !== "npm") {
       console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
       return;
@@ -126,7 +143,10 @@ const loadAndSaveNewPlugin = async (
 
     const instore = getRootState().getConfig("available_plugins", []);
     const safes = instore.filter((p) => !p.unsafe).map((p) => p.location);
-    if (!safes.includes(plugin.location)) {
+    if (
+      !safes.includes(plugin.location) &&
+      !allowUnsafeOnTenantsWithoutConfigSetting
+    ) {
       console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
       return;
     }
@@ -196,6 +216,10 @@ const loadAndSaveNewPlugin = async (
     }
   }
   if (version) plugin.version = version;
+
+  if (isRoot() && plugin_module.authentication)
+    await eachTenant(reloadAuthFromRoot);
+
   if (!noSignalOrDB) {
     await plugin.upsert();
     getState().processSend({

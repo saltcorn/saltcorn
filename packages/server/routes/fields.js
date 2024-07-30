@@ -1149,7 +1149,7 @@ router.post(
           const jf = table.getField(ref);
           const jtable = Table.findOne(jf.reftable_name);
           const jrow = await jtable.getRow(
-            { [jtable.pk_name]: row[ref] },
+            { [jtable.pk_name]: row[ref]?.[jtable.pk_name] || row[ref] },
             { forUser: req.user, forPublic: !req.user }
           );
           row[ref] = jrow;

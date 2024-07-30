@@ -371,6 +371,7 @@ router.get(
     const form = await viewForm(req, tableOptions, roles, pages, viewrow);
     const inbound_connected = await viewrow.inbound_connected_objects();
     form.hidden("id");
+    form.onChange = `saveAndContinue(this)`;
     res.sendWrap(req.__(`Edit view`), {
       above: [
         {
@@ -383,6 +384,7 @@ router.get(
         {
           type: "card",
           class: "mt-0",
+          titleAjaxIndicator: true,
           title: req.__(
             `%s view - %s on %s`,
             viewname,
@@ -541,12 +543,14 @@ router.post(
           //console.log(v);
           await View.create(v);
         }
-        res.redirect(
-          addOnDoneRedirect(
-            `/viewedit/config/${encodeURIComponent(v.name)}`,
-            req
-          )
-        );
+        if (req.xhr) res.json({ success: "ok" });
+        else
+          res.redirect(
+            addOnDoneRedirect(
+              `/viewedit/config/${encodeURIComponent(v.name)}`,
+              req
+            )
+          );
       }
     } else {
       sendForm(form);
@@ -902,7 +906,7 @@ router.post(
           ? `/${req.query.on_done_redirect}`
           : "/viewedit";
       res.redirect(redirectTarget);
-    } else res.json({ okay: true, responseText: message });
+    } else res.json({ success: "ok" });
   })
 );
 

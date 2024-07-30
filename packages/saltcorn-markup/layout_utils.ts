@@ -61,11 +61,18 @@ const innerSections = (sections?: any[]) => {
   return items;
 };
 
+const makeTooltip = (text: string, placement: string = "top") => ({
+  "data-bs-toggle": "tooltip",
+  "data-bs-placement": placement,
+  title: text,
+});
+
 type NavSubItemsOpts = {
   label: string;
   subitems: any[];
   icon?: string;
   isUser: boolean;
+  tooltip?: string;
 };
 
 const navSubItemsIterator = (si: any) =>
@@ -73,7 +80,10 @@ const navSubItemsIterator = (si: any) =>
     ? hr({ class: "mx-3 my-1" })
     : si?.subitems
     ? div(
-        { class: "dropdown-item btn-group dropstart" },
+        {
+          class: "dropdown-item btn-group dropstart",
+          ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
+        },
         a(
           {
             type: "button",
@@ -93,6 +103,7 @@ const navSubItemsIterator = (si: any) =>
           class: ["dropdown-item", si.style || "", si.class],
           href: si.link,
           target: si.target_blank ? "_blank" : undefined,
+          ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
         },
         si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
         si.label
@@ -111,9 +122,10 @@ const navSubitems = ({
   subitems,
   icon,
   isUser,
+  tooltip,
 }: NavSubItemsOpts): string => {
   return li(
-    { class: "nav-item dropdown" },
+    { class: "nav-item dropdown", ...(tooltip ? makeTooltip(tooltip) : {}) },
     a(
       {
         class: ["nav-link dropdown-toggle", isUser && "user-nav-section"],
@@ -164,6 +176,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                   class: ["nav-link js-scroll-trigger", s.style || ""],
                   href: text(s.link),
                   target: s.target_blank ? "_blank" : undefined,
+                  ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
                 },
                 s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
                 text(s.label)
@@ -195,6 +208,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                     {
                       class: "btn btn-outline-secondary search-bar",
                       type: "submit",
+                      ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
                     },
                     i({ class: "fas fa-search" })
                   )

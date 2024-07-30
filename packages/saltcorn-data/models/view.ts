@@ -18,6 +18,7 @@ const {
   isWeb,
   prepMobileRows,
   hashString,
+  cloneName,
 } = utils;
 
 import tags from "@saltcorn/markup/tags";
@@ -315,14 +316,11 @@ class View implements AbstractView {
    * @returns {Promise<View>}
    */
   async clone(): Promise<View> {
-    const basename = this.name + " copy";
-    let newname;
-    // todo there is hard code limitation about 100 copies of view
-    for (let i = 0; i < 100; i++) {
-      newname = i ? `${basename} (${i})` : basename;
-      const existing = View.findOne({ name: newname });
-      if (!existing) break;
-    }
+    const existingNames = await View.find({ name: { ilike: this.name } });
+    const newname = cloneName(
+      this.name,
+      existingNames.map((v) => v.name)
+    );
 
     const createObj: View = {
       ...this,
@@ -743,6 +741,9 @@ class View implements AbstractView {
       extraArgs,
       this.queries(remote, extraArgs.req)
     );
+    if (result?.status && typeof result.stack === "number")
+      res.status(result.status);
+
     if (result && result.json) res.json(result.json);
     else if (result && result.html) res.send(result.html);
     else if (!res.headersSent && (isNode() || (!isNode() && !res.getJson())))

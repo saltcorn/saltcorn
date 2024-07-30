@@ -77,11 +77,9 @@ function loggedIn(req, res, next) {
  * @returns {void}
  */
 function isAdmin(req, res, next) {
-  if (
-    req.user &&
-    req.user.role_id === 1 &&
-    req.user.tenant === db.getTenantSchema()
-  ) {
+  const cur_tenant = db.getTenantSchema();
+  //console.log({ cur_tenant, user: req.user });
+  if (req.user && req.user.role_id === 1 && req.user.tenant === cur_tenant) {
     next();
   } else {
     req.flash("danger", req.__("Must be admin"));

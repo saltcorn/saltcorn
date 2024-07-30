@@ -15,6 +15,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const User = require("@saltcorn/data/models/user");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
+const PageGroup = require("@saltcorn/data/models/page_group");
 const { save_menu_items } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
@@ -43,6 +44,10 @@ module.exports = router;
 const menuForm = async (req) => {
   const views = await View.find({}, { orderBy: "name", nocase: true });
   const pages = await Page.find({}, { orderBy: "name", nocase: true });
+  const pageGroups = await PageGroup.find(
+    {},
+    { orderBy: "name", nocase: true }
+  );
   const roles = await User.get_roles();
   const tables = await Table.find_with_external({});
   const dynTableOptions = tables.map((t) => t.name);
@@ -101,6 +106,7 @@ const menuForm = async (req) => {
         options: [
           "View",
           "Page",
+          "Page Group",
           "Link",
           "Header",
           "Dynamic",
@@ -140,6 +146,14 @@ const menuForm = async (req) => {
         required: true,
         attributes: { options: views.map((r) => r.select_option) },
         showIf: { type: "View" },
+      },
+      {
+        name: "page_group",
+        label: req.__("Page group"),
+        input_type: "select",
+        class: "item-menu",
+        options: pageGroups.map((r) => r.name),
+        showIf: { type: "Page Group" },
       },
       {
         name: "action_name",
@@ -195,6 +209,14 @@ const menuForm = async (req) => {
         showIf: { type: "Dynamic" },
       },
       {
+        name: "dyn_tooltip_fml",
+        label: req.__("Tooltip formula"),
+        class: "item-menu",
+        type: "String",
+        required: false,
+        showIf: { type: "Dynamic" },
+      },
+      {
         name: "dyn_url_fml",
         label: req.__("URL formula"),
         class: "item-menu",
@@ -223,6 +245,7 @@ const menuForm = async (req) => {
           type: [
             "View",
             "Page",
+            "Page Group",
             "Link",
             "Header",
             "Dynamic",
@@ -238,12 +261,33 @@ const menuForm = async (req) => {
         attributes: {
           html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
         },
-        showIf: { type: ["View", "Page", "Link", "Header", "Action"] },
+        showIf: {
+          type: ["View", "Page", "Page Group", "Link", "Header", "Action"],
+        },
       },
       {
         name: "icon",
         class: "item-menu",
         input_type: "hidden",
+      },
+      {
+        name: "tooltip",
+        label: req.__("Tooltip"),
+        class: "item-menu",
+        input_type: "text",
+        required: false,
+        showIf: {
+          type: [
+            "View",
+            "Page",
+            "Page Group",
+            "Link",
+            "Header",
+            "Dynamic",
+            "Search",
+            "Action",
+          ],
+        },
       },
       {
         name: "min_role",
@@ -258,6 +302,18 @@ const menuForm = async (req) => {
         type: "Bool",
         class: "item-menu",
         required: false,
+        default: false,
+      },
+      {
+        name: "mobile_item_html",
+        label: req.__("Mobile HTML"),
+        sublabel: req.__(
+          "HTML for the item in the bottom navigation bar. Currently, only supported by the metronic theme."
+        ),
+        type: "String",
+        class: "item-menu",
+        input_type: "textarea",
+        showIf: { disable_on_mobile: false, location: "Mobile Bottom" },
       },
       {
         name: "target_blank",
@@ -265,7 +321,7 @@ const menuForm = async (req) => {
         type: "Bool",
         required: false,
         class: "item-menu",
-        showIf: { type: ["View", "Page", "Link"] },
+        showIf: { type: ["View", "Page", "Page Group", "Link"] },
       },
       {
         name: "in_modal",
@@ -273,7 +329,7 @@ const menuForm = async (req) => {
         type: "Bool",
         required: false,
         class: "item-menu",
-        showIf: { type: ["View", "Page", "Link"] },
+        showIf: { type: ["View", "Page", "Page Group", "Link"] },
       },
       {
         name: "style",
@@ -283,7 +339,15 @@ const menuForm = async (req) => {
         type: "String",
         required: true,
         showIf: {
-          type: ["View", "Page", "Link", "Header", "Dynamic", "Action"],
+          type: [
+            "View",
+            "Page",
+            "Page Group",
+            "Link",
+            "Header",
+            "Dynamic",
+            "Action",
+          ],
         },
         attributes: {
           options: [
@@ -310,6 +374,7 @@ const menuForm = async (req) => {
           type: [
             "View",
             "Page",
+            "Page Group",
             "Link",
             "Header",
             "Dynamic",

@@ -373,15 +373,19 @@ const render = ({
         ix,
         a(
           {
-            href: segment.in_modal
-              ? isWeb
-                ? `javascript:ajax_modal('${segment.url}');`
-                : `javascript:mobile_modal('${segment.url}');`
-              : isWeb
-              ? segment.url
-              : `javascript:execLink('${segment.url}', '${
-                  segment.link_src || "URL"
-                }')`,
+            ...(isWeb
+              ? {
+                  href: segment.in_modal
+                    ? `javascript:ajax_modal('${segment.url}');`
+                    : segment.url,
+                }
+              : {
+                  onclick: segment.in_modal
+                    ? `javascript:mobile_modal('${segment.url}');`
+                    : `execLink('${segment.url}', '${
+                        segment.link_src || "URL"
+                      }')`,
+                }),
             class: [segment.link_style || "", segment.link_size || ""],
             target: isWeb && segment.target_blank ? "_blank" : false,
             title: segment.link_title,

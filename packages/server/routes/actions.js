@@ -375,6 +375,7 @@ router.get(
 
     const form = await triggerForm(req, trigger);
     form.values = trigger;
+    form.onChange = `saveAndContinue(this)`;
     send_events_page({
       res,
       req,
@@ -383,6 +384,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__("Edit trigger %s", id),
+        titleAjaxIndicator: true,
         contents: renderForm(form, req.csrfToken()),
       },
     });
@@ -464,6 +466,10 @@ router.post(
           ...form.values.configuration,
         };
       await Trigger.update(trigger.id, form.values); //{configuration: form.values});
+      if (req.xhr) {
+        res.json({ success: "ok" });
+        return;
+      }
       req.flash("success", req.__("Action information saved"));
       res.redirect(`/actions/`);
     }
@@ -879,5 +885,26 @@ router.get(
         },
       });
     }
+  })
+);
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ * @function
+ */
+router.post(
+  "/clone/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const trig = await Trigger.findOne({ id });
+    const newtrig = await trig.clone();
+    req.flash(
+      "success",
+      req.__("Trigger %s duplicated as %s", trig.name, newtrig.name)
+    );
+    res.redirect(`/actions`);
   })
 );

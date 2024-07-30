@@ -22,7 +22,7 @@ import { mkWhere } from "@saltcorn/db-common/internal";
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import utils from "../utils";
-const { interpolate } = utils;
+const { interpolate, mergeIntoWhere } = utils;
 
 getState().registerPlugin("base", require("../base-plugin"));
 
@@ -366,7 +366,7 @@ describe("aggregations in stored calculated fields", () => {
         where: "{id: publisher}",
       },
     });
-    await books.insertRow({
+    const wid = await books.insertRow({
       author: "West",
       pages: 210,
       publisher: hid,
@@ -375,6 +375,9 @@ describe("aggregations in stored calculated fields", () => {
 
     const hrow3 = await publisher.getRow({ id: hid });
     expect(hrow3?.number_of_books).toBe(3);
+    await books.deleteRows({ id: wid });
+    const hrow4 = await publisher.getRow({ id: hid });
+    expect(hrow4?.number_of_books).toBe(2);
   });
   it("creates and updates sum field", async () => {
     const publisher = Table.findOne({ name: "publisher" });
@@ -501,7 +504,21 @@ describe("jsexprToSQL", () => {
     expect(jsexprToSQL("foo!==null")).toEqual("foo is not null");
   });
 });
-
+describe("mergeIntoWhere", () => {
+  it("merges", () => {
+    expect(mergeIntoWhere({ a: 1 }, { b: 2 })).toEqual({ a: 1, b: 2 });
+    expect(mergeIntoWhere({ a: 1 }, { a: 2 })).toEqual({ a: [1, 2] });
+    expect(
+      mergeIntoWhere({ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] })
+    ).toEqual({
+      and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
+    });
+  });
+});
+let x = {
+  and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
+  or: [{ b: 3 }, { b: 4 }],
+};
 describe("jsexprToWhere", () => {
   it("translates equality", () => {
     expect(jsexprToWhere("foo==4")).toEqual({ foo: 4 });
@@ -584,6 +601,34 @@ describe("jsexprToWhere", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
   });
+  it("translates bools", () => {
+    expect(jsexprToWhere("foo==true")).toEqual({ foo: true });
+    expect(jsexprToWhere("foo==false")).toEqual({ foo: false });
+    expect(jsexprToWhere("foo!==true")).toEqual({ not: { foo: true } });
+    expect(jsexprToWhere("!(foo==true)")).toEqual({ not: { foo: true } });
+    expect(jsexprToWhere('bar == "Zoo" && !(foo==true)')).toEqual({
+      bar: "Zoo",
+      not: { foo: true },
+    });
+    expect(
+      jsexprToWhere(
+        '(bar == "Zoo" || bar == "Baz" || bar == "Waz") && !(foo==true)'
+      )
+    ).toEqual({
+      or: [{ or: [{ bar: "Zoo" }, { bar: "Baz" }] }, { bar: "Waz" }],
+      not: { foo: true },
+    });
+    expect(
+      jsexprToWhere(
+        '(bar == "Zoo" || bar == "Baz") && (foo==false || foo==null)'
+      )
+    ).toEqual({
+      and: [
+        { or: [{ bar: "Zoo" }, { bar: "Baz" }] },
+        { or: [{ foo: false }, { foo: null }] },
+      ],
+    });
+  });
   it("translates date limits", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);
   });
@@ -613,6 +658,17 @@ describe("jsexprToWhere", () => {
     expect(
       new Date(jsexprToWhere("foo>=today(-5)").foo.gt) < new Date(today)
     ).toEqual(true);
+    const pp1W = jsexprToWhere("foo >= today(-1) && foo < today()");
+    expect(!!pp1W.foo[0].gt).toBe(true);
+    expect(pp1W.foo[0].equal).toBe(true);
+    expect(!!pp1W.foo[1].lt).toBe(true);
+    const ppW = jsexprToWhere(
+      "createdby == user.id && (foo >= today(-1) && foo < today())",
+      { user: { id: 1 } }
+    );
+    expect(ppW.createdby).toBe(1);
+    expect(!!ppW.foo[0].gt).toBe(true);
+    expect(!!ppW.foo[1].lt).toBe(true);
   });
   it("translates new Date()", () => {
     const todayW = jsexprToWhere("foo>=new Date()");

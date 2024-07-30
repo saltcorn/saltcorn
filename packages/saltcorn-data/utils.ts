@@ -155,6 +155,14 @@ function sleep(ms: number) {
 
 const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
   Object.entries(newWhere).forEach(([k, v]) => {
+    if (k == "or") {
+      if (where.and) where.and.push({ or: v });
+      else if (where.or) {
+        where.and = [{ or: where.or }, { or: v }];
+        delete where.or;
+      } else where.or = v;
+      return;
+    }
     if (typeof where[k] === "undefined") where[k] = v;
     else where[k] = [where[k], v];
   });
@@ -430,7 +438,28 @@ const safeEnding = (file: string, ending: string): string => {
   return file;
 };
 
+const cloneName = (name: string, allNames: Array<string>): string => {
+  const basename = name + "-copy";
+  let newname = basename;
+  // todo there is hard code limitation about 100 copies of view
+  for (let i = 0; i < 100; i++) {
+    newname = i ? `${basename}-${i}` : basename;
+
+    if (!allNames.includes(newname)) break;
+  }
+  return newname;
+};
+
+/**
+ * @returns if the current schema is the default root schema
+ */
+const isRoot = () => {
+  const db = require("./db");
+  return db.getTenantSchema() === db.connectObj.default_schema;
+};
+
 export = {
+  cloneName,
   dollarizeObject,
   objectToQueryString,
   removeEmptyStrings,
@@ -474,4 +503,5 @@ export = {
   prepMobileRows,
   fileWithEnding,
   safeEnding,
+  isRoot,
 };

@@ -49,6 +49,7 @@ const {
   stringToJSON,
   dollarizeObject,
   getSessionId,
+  cloneName,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
@@ -206,13 +207,12 @@ class Page implements AbstractPage {
    * @returns {Promise<Page>}
    */
   async clone(): Promise<Page> {
-    const basename = this.name + " copy";
-    let newname;
-    for (let i = 0; i < 100; i++) {
-      newname = i ? `${basename} (${i})` : basename;
-      const existing = Page.findOne({ name: newname });
-      if (!existing) break;
-    }
+    const existingNames = await Page.find({ name: { ilike: this.name } });
+    const newname = cloneName(
+      this.name,
+      existingNames.map((v) => v.name)
+    );
+
     const createObj = {
       ...this,
       name: newname,

@@ -754,6 +754,14 @@ router.get(
                   r.typename +
                     span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
+          ...(table.external
+            ? []
+            : [
+                {
+                  label: req.__("Edit"),
+                  key: (r) => link(`/field/${r.id}`, req.__("Edit")),
+                },
+              ]),
           {
             label: "",
             key: (r) => typeBadges(r, req),
@@ -763,14 +771,6 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: (t) => code(t.name) },
-          ...(table.external
-            ? []
-            : [
-                {
-                  label: req.__("Edit"),
-                  key: (r) => link(`/field/${r.id}`, req.__("Edit")),
-                },
-              ]),
           ...(table.external || db.isSQLite
             ? []
             : [

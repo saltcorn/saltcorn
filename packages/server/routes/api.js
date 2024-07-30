@@ -260,6 +260,12 @@ router.get(
     );
     if (!table) {
       getState().log(3, `API get ${tableName} table not found`);
+      getState().log(
+        6,
+        `API get failure additonal info: URL=${req.originalUrl}${
+          getState().getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+        }`
+      );
       res.status(404).json({ error: req.__("Not found") });
       return;
     }

@@ -26,6 +26,7 @@ async function execLink(url, linkSrc) {
     parent.cordova.InAppBrowser.open(url, "_system");
   } else
     try {
+      if (document.getElementById("scspinner")) return;
       showLoadSpinner();
       if (url.startsWith("javascript:")) eval(url.substring(11));
       else {
@@ -47,6 +48,7 @@ async function runUrl(url, method = "get") {
 }
 
 async function execNavbarLink(url) {
+  if (document.getElementById("scspinner")) return;
   $(".navbar-toggler").click();
   if (typeof KTDrawer === "function") {
     const aside = $("#kt_aside")[0];
@@ -572,7 +574,7 @@ async function local_post(url, args) {
       data: args,
     });
     if (result.redirect) await parent.handleRoute(result.redirect);
-    else common_done(result, "", false);
+    else await common_done(result, "", false);
   } catch (error) {
     parent.errorAlert(error);
   } finally {
@@ -590,7 +592,7 @@ async function local_post_json(url, data, cb) {
     });
     if (result.server_eval) await evalServerCode(url);
     if (result.redirect) await parent.handleRoute(result.redirect);
-    else common_done(result, "", false);
+    else await common_done(result, "", false);
     if (cb?.success) cb.success(result);
   } catch (error) {
     parent.errorAlert(error);
@@ -700,7 +702,13 @@ async function clear_state() {
   }
 }
 
-async function view_post(viewname, route, data, onDone, sendState) {
+async function view_post(viewnameOrElem, route, data, onDone, sendState) {
+  const viewname =
+    typeof viewnameOrElem === "string"
+      ? viewnameOrElem
+      : $(viewnameOrElem)
+          .closest("[data-sc-embed-viewname]")
+          .attr("data-sc-embed-viewname");
   const buildQuery = () => {
     const query = parent.currentQuery();
     return query ? `?${query}` : "";
@@ -731,8 +739,8 @@ async function view_post(viewname, route, data, onDone, sendState) {
 
     if (!respData)
       throw new Error(`The response of '${viewname}/${route}' is ${respData}`);
-    if (onDone) onDone(respData);
-    common_done(respData, viewname, false);
+    if (onDone) await onDone(respData);
+    await common_done(respData, viewname, false);
   } catch (error) {
     parent.errorAlert(error);
   } finally {
@@ -892,43 +900,57 @@ async function deleteOfflineData(noFeedback) {
 }
 
 function showLoadSpinner() {
-  if (!parent.isHtmlFile() && $("#scspinner").length === 0) {
-    $("body").append(`
-    <div 
-      id="scspinner" 
-      style="position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 9999;"
-    >
+  if (!parent.isHtmlFile()) {
+    const spinner = $("#scspinner");
+    if (spinner.length === 0) {
+      $("body").append(`
       <div 
-        style="position: absolute;
-          left: 50%;
+        id="scspinner" 
+        style="position: fixed;
           top: 50%;
-          height: 60px;
-          width: 250px;
-          margin: 0px auto;"
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 9999;"
+        spinner-count="1"
       >
-        <span 
-          class="spinner-border d-block"
-          role="status"
+        <div 
+          style="position: absolute;
+            left: 50%;
+            top: 50%;
+            height: 60px;
+            width: 250px;
+            margin: 0px auto;"
         >
-          <span class="visually-hidden">Loading...</span>
-        </span>
-        <span 
-          style="margin-left: -125px"
-          id="scspinner-text-id"
-          class="d-none fs-5 fw-bold bg-secondary text-white p-1 rounded"
-        >
-        </span>
-      </div>
-    </div>`);
+          <span 
+            class="spinner-border d-block"
+            role="status"
+          >
+            <span class="visually-hidden">Loading...</span>
+          </span>
+          <span 
+            style="margin-left: -125px"
+            id="scspinner-text-id"
+            class="d-none fs-5 fw-bold bg-secondary text-white p-1 rounded"
+          >
+          </span>
+        </div>
+      </div>`);
+    } else {
+      const count = parseInt(spinner.attr("spinner-count")) + 1;
+      spinner.attr("spinner-count", count);
+    }
   }
 }
 
 function removeLoadSpinner() {
-  if (!parent.isHtmlFile()) $("#scspinner").remove();
+  if (!parent.isHtmlFile()) {
+    const spinner = $("#scspinner");
+    if (spinner.length > 0) {
+      const count = parseInt(spinner.attr("spinner-count")) - 1;
+      if (count === 0) spinner.remove();
+      else spinner.attr("spinner-count", count);
+    }
+  }
 }
 
 /**

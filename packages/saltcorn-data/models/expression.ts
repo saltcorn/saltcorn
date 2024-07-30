@@ -14,6 +14,9 @@ import { JoinFields, Row, Where } from "@saltcorn/db-common/internal";
 import Field from "./field";
 import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
+import utils from "../utils";
+const { mergeIntoWhere } = utils;
+
 /**
  * @param {string} s
  * @returns {boolean|void}
@@ -340,7 +343,8 @@ function jsexprToWhere(
             "&&"({ left, right }: { left: ExtendedNode; right: ExtendedNode }) {
               const l = compile(left);
               const r = compile(right);
-              Object.assign(l, r);
+              //Object.assign(l, r);
+              mergeIntoWhere(l, r);
               return l;
             },
             "||"({ left, right }: { left: any; right: any }) {

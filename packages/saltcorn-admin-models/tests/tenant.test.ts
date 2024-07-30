@@ -34,6 +34,7 @@ describe("Tenant", () => {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
       await getState().setConfig("base_url", "http://example.com/");
+      await db.query(`drop schema if exists test10 CASCADE `);
 
       add_tenant("test10");
 
@@ -83,7 +84,7 @@ describe("Tenant", () => {
       await getState().setConfig("tenant_template", "test10");
 
       const tenant_template = getState().getConfig("tenant_template");
-
+      await db.query(`drop schema if exists test11 CASCADE `);
       add_tenant("test11");
 
       await switchToTenant(

@@ -349,6 +349,15 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       false,
       dryRun
     );
+    await asyncSudo(
+      [
+        "bash",
+        "-c",
+        "echo 'net.ipv4.ip_unprivileged_port_start=80' >/etc/sysctl.d/user-port-eighty.conf",
+      ],
+      false,
+      dryRun
+    );
     await asyncSudo(["sysctl", "--system"], false, dryRun);
   }
   if (db === "pg-local" && installer === "dnf") {

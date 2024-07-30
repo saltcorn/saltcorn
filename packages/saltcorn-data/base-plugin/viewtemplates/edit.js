@@ -791,13 +791,13 @@ const transformForm = async ({
                 view.table_id,
                 view_select,
                 row.id,
-                segment.owner_field
+                segment.order_field
               )
             : await childTable.getRows(
                 {
                   [view_select.field_name]: row.id,
                 },
-                segment.owner_field ? { orderBy: segment.owner_field } : {}
+                segment.order_field ? { orderBy: segment.order_field } : {}
               );
           fr.metadata.rows = childRows;
           if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))

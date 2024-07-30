@@ -248,7 +248,7 @@ export const update = async (
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
   const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
-  let valList = kvs.map(mkVal);
+  let valList = kvs.map(([k, v]) => mkVal([k, v]));
   valList.push(id);
   const q = `update "${sqlsanitize(tbl)}" set ${assigns} where id=?`;
   await query(q, valList);
@@ -263,7 +263,7 @@ export const updateWhere = async (
   if (kvs.length === 0) return;
   const { where, values } = mkWhere(whereObj, true, kvs.length);
   const assigns = kvs.map(([k, v], ix) => `"${sqlsanitize(k)}"=?`).join();
-  let valList = [...kvs.map(mkVal), ...values];
+  let valList = [...kvs.map(([k, v]) => mkVal([k, v])), ...values];
   const q = `update "${sqlsanitize(tbl)}" set ${assigns} ${where}`;
   await query(q, valList);
 };
