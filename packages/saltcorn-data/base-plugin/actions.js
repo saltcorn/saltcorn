@@ -1773,4 +1773,12 @@ module.exports = {
       }
     },
   },
+
+  install_progressive_web_app: {
+    description: "Install a Progressive Web Application",
+    configFields: () => [],
+    run: async () => {
+      return { eval_js: "installPWA()" };
+    },
+  },
 };

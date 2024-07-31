@@ -1034,6 +1034,17 @@ function execLink(path) {
   window.location.href = `${location.origin}${path}`;
 }
 
+let defferedPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  defferedPrompt = e;
+});
+
+function installPWA() {
+  if (defferedPrompt) defferedPrompt.prompt();
+  else notifyAlert({ type: "danger", text: "The app can't be installed." });
+}
+
 (() => {
   const e = document.querySelector("[data-sidebar-toggler]");
   let closed = localStorage.getItem("sidebarClosed") === "true";
