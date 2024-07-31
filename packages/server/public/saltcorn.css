@@ -536,3 +536,56 @@ button.monospace-copy-btn:hover {
 button.monospace-copy-btn {
   position: absolute;
 }
+
+#page-inner-content.sbadmin2-theme .table.table-card-rows {
+  border-spacing: 0px 8px;
+  border-collapse: separate;
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows tbody {
+  transform: translateY(8px);
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows tr {
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+  border-radius: 6px;
+}
+#page-inner-content.sbadmin2-theme
+  .table.table-card-rows
+  .table-hover
+  > tbody
+  > tr:hover
+  > * {
+  --tblr-table-bg-state: transparent !important;
+  --bs-table-accent-bg: transparent !important;
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows thead th {
+  background-color: #e9edfa;
+  border-block: 1px solid #e3e6f0 !important;
+  padding: 18px 15px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffffff;
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows thead th:first-child {
+  border-left: 1px solid #e3e6f0 !important;
+  border-radius: 6px 0 0 6px;
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows thead th:last-child {
+  border-right: 1px #e3e6f0 !important;
+  border-radius: 0 6px 6px 0;
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows tbody td {
+  border-block: 1px solid #e3e6f0 !important;
+  position: relative;
+  z-index: 11;
+  padding: 15px 15px;
+  font-size: 14px;
+  background-color: #fff;
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows tbody td:first-child {
+  border-left: 1px solid #e3e6f0 !important;
+  border-radius: 6px 0 0 6px;
+}
+#page-inner-content.sbadmin2-theme .table.table-card-rows tbody td:last-child {
+  border-right: 1px #e3e6f0 !important;
+  border-radius: 0 6px 6px 0;
+}
