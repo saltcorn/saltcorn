@@ -1062,9 +1062,20 @@ function validatePWAManifest(manifest) {
   return errors;
 }
 
+function supportsBeforeInstallPrompt() {
+  return "onbeforeinstallprompt" in window;
+}
+
 function installPWA() {
   if (defferedPrompt) defferedPrompt.prompt();
-  else {
+  else if (!supportsBeforeInstallPrompt()) {
+    notifyAlert({
+      type: "danger",
+      text:
+        "It looks like your browser doesn’t support this feature. " +
+        "Please try the standard installation method provided by your browser, or switch to a different browser.",
+    });
+  } else {
     const manifestUrl = `${window.location.origin}/notifications/manifest.json`;
     notifyAlert({
       type: "danger",
