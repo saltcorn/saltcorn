@@ -186,6 +186,7 @@ router.post(
 router.get(
   "/manifest.json",
   error_catcher(async (req, res) => {
+    const { pretty } = req.query;
     const state = getState();
     const manifest = {
       name: state.getConfig("site_name"),
@@ -216,6 +217,11 @@ router.get(
         "red"
       );
     }
-    res.json(manifest);
+    if (!pretty) res.json(manifest);
+    else {
+      const prettyJson = JSON.stringify(manifest, null, 2);
+      res.setHeader("Content-Type", "application/json");
+      res.send(prettyJson);
+    }
   })
 );

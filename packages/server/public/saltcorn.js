@@ -1042,7 +1042,13 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 function installPWA() {
   if (defferedPrompt) defferedPrompt.prompt();
-  else notifyAlert({ type: "danger", text: "The app can't be installed." });
+  else
+    notifyAlert({
+      type: "danger",
+      text:
+        "The app can't be installed. " +
+        `Inspect your manifest.json <a href="${window.location.origin}/notifications/manifest.json?pretty=true">here</a>`,
+    });
 }
 
 (() => {

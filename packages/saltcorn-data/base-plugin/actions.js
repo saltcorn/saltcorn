@@ -1777,8 +1777,11 @@ module.exports = {
   install_progressive_web_app: {
     description: "Install a Progressive Web Application",
     configFields: () => [],
-    run: async () => {
-      return { eval_js: "installPWA()" };
+    run: async ({ req }) => {
+      const pwaEnabled = await getState().getConfig("pwa_enabled", false);
+      return pwaEnabled
+        ? { eval_js: "installPWA()" }
+        : { error: req.__("Progressive Web Application is not enabled") };
     },
   },
 };
