@@ -545,7 +545,6 @@ button.monospace-copy-btn {
   transform: translateY(8px);
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows tr {
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
   border-radius: 6px;
 }
 #page-inner-content.sbadmin2-theme
@@ -558,12 +557,11 @@ button.monospace-copy-btn {
   --bs-table-accent-bg: transparent !important;
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows thead th {
-  background-color: #e9edfa;
+  background-color: #eaecf4;
   border-block: 1px solid #e3e6f0 !important;
   padding: 18px 15px;
   font-size: 14px;
   font-weight: 600;
-  background-color: #ffffff;
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows thead th:first-child {
   border-left: 1px solid #e3e6f0 !important;
