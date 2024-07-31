@@ -1034,6 +1034,73 @@ function execLink(path) {
   window.location.href = `${location.origin}${path}`;
 }
 
+let defferedPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  defferedPrompt = e;
+});
+
+function validatePWAManifest(manifest) {
+  const errors = [];
+  if (!manifest) errors.push("The manifest.json file is missing. ");
+  else {
+    if (!manifest.icons || manifest.icons.length === 0)
+      errors.push("At least one icon is required");
+    else if (
+      manifest.icons.length > 0 &&
+      !manifest.icons.some((icon) => {
+        const sizes = icon.sizes.split("x");
+        const x = parseInt(sizes[0]);
+        const y = parseInt(sizes[1]);
+        return x === y && x >= 144;
+      })
+    )
+      errors.push(
+        "At least one square icon of size 144x144 or larger is required"
+      );
+  }
+  return errors;
+}
+
+function supportsBeforeInstallPrompt() {
+  return "onbeforeinstallprompt" in window;
+}
+
+function installPWA() {
+  if (defferedPrompt) defferedPrompt.prompt();
+  else if (!supportsBeforeInstallPrompt()) {
+    notifyAlert({
+      type: "danger",
+      text:
+        "It looks like your browser doesn’t support this feature. " +
+        "Please try the standard installation method provided by your browser, or switch to a different browser.",
+    });
+  } else {
+    const manifestUrl = `${window.location.origin}/notifications/manifest.json`;
+    notifyAlert({
+      type: "danger",
+      text:
+        "Unable to install the app. " +
+        "Please check if the app is already installed or " +
+        `inspect your manifest.json <a href="${manifestUrl}?pretty=true" target="_blank">here</a>`,
+    });
+    $.ajax(manifestUrl, {
+      success: (res) => {
+        const errors = validatePWAManifest(res);
+        if (errors.length > 0)
+          notifyAlert({
+            type: "warning",
+            text: `${errors.join(", ")}`,
+          });
+      },
+      error: (res) => {
+        console.log("Error fetching manifest.json");
+        console.log(res);
+      },
+    });
+  }
+}
+
 (() => {
   const e = document.querySelector("[data-sidebar-toggler]");
   let closed = localStorage.getItem("sidebarClosed") === "true";

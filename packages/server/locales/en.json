@@ -1450,5 +1450,6 @@
 	"Choose version": "Choose version",
 	"Unknown authentication method %s": "Unknown authentication method %s",
 	"Prune session interval (seconds)": "Prune session interval (seconds)",
-	"Interval in seconds to check for expred sessions in the postgres db. 0, empty or a negative number to disable": "Interval in seconds to check for expred sessions in the postgres db. 0, empty or a negative number to disable"
+	"Interval in seconds to check for expred sessions in the postgres db. 0, empty or a negative number to disable": "Interval in seconds to check for expred sessions in the postgres db. 0, empty or a negative number to disable",
+	"Progressive Web Application is not enabled": "Progressive Web Application is not enabled"
 }
