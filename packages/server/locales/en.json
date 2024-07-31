@@ -1448,5 +1448,7 @@
 	"Pulling the cordova-builder docker image...": "Pulling the cordova-builder docker image...",
 	"Check updates": "Check updates",
 	"Choose version": "Choose version",
-	"Unknown authentication method %s": "Unknown authentication method %s"
+	"Unknown authentication method %s": "Unknown authentication method %s",
+	"Card rows": "Card rows",
+	"Each row in a card. Not supported by all themes": "Each row in a card. Not supported by all themes"
 }
