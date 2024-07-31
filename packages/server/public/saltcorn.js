@@ -1070,7 +1070,8 @@ function installPWA() {
       type: "danger",
       text:
         "Unable to install the app. " +
-        `To inspect your manifest.json click <a href="${manifestUrl}?pretty=true" target="_blank">here</a>`,
+        "Please check if the app is already installed or " +
+        `inspect your manifest.json <a href="${manifestUrl}?pretty=true" target="_blank">here</a>`,
     });
     $.ajax(manifestUrl, {
       success: (res) => {
