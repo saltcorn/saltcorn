@@ -1040,15 +1040,53 @@ window.addEventListener("beforeinstallprompt", (e) => {
   defferedPrompt = e;
 });
 
+function validatePWAManifest(manifest) {
+  const errors = [];
+  if (!manifest) errors.push("The manifest.json file is missing. ");
+  else {
+    if (!manifest.icons || manifest.icons.length === 0)
+      errors.push("At least one icon is required");
+    else if (
+      manifest.icons.length > 0 &&
+      !manifest.icons.some((icon) => {
+        const sizes = icon.sizes.split("x");
+        const x = parseInt(sizes[0]);
+        const y = parseInt(sizes[1]);
+        return x === y && x >= 144;
+      })
+    )
+      errors.push(
+        "At least one square icon of size 144x144 or larger is required"
+      );
+  }
+  return errors;
+}
+
 function installPWA() {
   if (defferedPrompt) defferedPrompt.prompt();
-  else
+  else {
+    const manifestUrl = `${window.location.origin}/notifications/manifest.json`;
     notifyAlert({
       type: "danger",
       text:
-        "The app can't be installed. " +
-        `Inspect your manifest.json <a href="${window.location.origin}/notifications/manifest.json?pretty=true">here</a>`,
+        "Unable to install the app. " +
+        `To inspect your manifest.json click <a href="${manifestUrl}?pretty=true" target="_blank">here</a>`,
     });
+    $.ajax(manifestUrl, {
+      success: (res) => {
+        const errors = validatePWAManifest(res);
+        if (errors.length > 0)
+          notifyAlert({
+            type: "warning",
+            text: `${errors.join(", ")}`,
+          });
+      },
+      error: (res) => {
+        console.log("Error fetching manifest.json");
+        console.log(res);
+      },
+    });
+  }
 }
 
 (() => {
