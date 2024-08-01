@@ -690,6 +690,13 @@ const configuration_workflow = (req) =>
             tab: "Layout options",
           });
           formfields.push({
+            name: "_card_rows",
+            label: req.__("Card rows"),
+            type: "Bool",
+            sublabel: req.__("Each row in a card. Not supported by all themes"),
+            tab: "Layout options",
+          });
+          formfields.push({
             name: "_borderless",
             label: req.__("Remove border"),
             type: "Bool",
@@ -1069,6 +1076,9 @@ const run = async (
   if (default_state?._striped_rows) {
     page_opts.class += "table-striped ";
   }
+  if (default_state?._card_rows) {
+    page_opts.class += "table-card-rows ";
+  }
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
   }
@@ -1267,6 +1277,7 @@ module.exports = {
       hide_null_columns,
       _hover_rows,
       _striped_rows,
+      _card_rows,
       _borderless,
       ...ds
     } = default_state;

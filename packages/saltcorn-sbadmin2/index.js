@@ -489,7 +489,7 @@ const wrap = ({
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-          <div id="page-inner-content" class="container-fluid px-2">
+          <div id="page-inner-content" class="container-fluid px-2 sbadmin2-theme">
             <div id="alerts-area">${/* deprecated */ ""}</div>
             <div>
               ${renderBody(title, body, role, req)}

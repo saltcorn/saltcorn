@@ -509,3 +509,26 @@ div.builder-config-field {
   border: 1px solid black;
   margin-top: 2px;
 }
+
+div.componets-and-library-accordion {
+  padding-right: 0 !important;
+}
+.builder-left-shrunk .componets-and-library-accordion {
+  min-height: 0 !important;
+  padding-right: 0;
+}
+.toolbox-card .builder-layers {
+  min-height: 200px;
+  overflow-y: auto;
+  max-height: max-content !important;
+}
+.toolbox-card:nth-child(2) {
+  margin-bottom: 0px;
+}
+#builder-main-canvas {
+  height: calc(100dvh - 50px) !important;
+  min-height: 600px;
+}
+#builder-main-canvas.h-100 {
+  height: 100% !important;
+}
