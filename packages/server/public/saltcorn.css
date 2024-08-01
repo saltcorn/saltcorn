@@ -558,17 +558,16 @@ button.monospace-copy-btn {
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows thead th {
   background-color: #eaecf4;
-  border-block: 1px solid #e3e6f0 !important;
+  border-block: 1px solid #d3d3d3 !important;
   padding: 18px 15px;
-  font-size: 14px;
   font-weight: 600;
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows thead th:first-child {
-  border-left: 1px solid #e3e6f0 !important;
+  border-left: 1px solid #d3d3d3 !important;
   border-radius: 6px 0 0 6px;
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows thead th:last-child {
-  border-right: 1px #e3e6f0 !important;
+  border-right: 1px #d3d3d3 !important;
   border-radius: 0 6px 6px 0;
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows tbody td {
@@ -576,7 +575,6 @@ button.monospace-copy-btn {
   position: relative;
   z-index: 11;
   padding: 15px 15px;
-  font-size: 14px;
   background-color: #fff;
 }
 #page-inner-content.sbadmin2-theme .table.table-card-rows tbody td:first-child {
