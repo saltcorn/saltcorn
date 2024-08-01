@@ -235,6 +235,10 @@ module.exports =
       : defaultNCPUs;
 
     const letsEncrypt = await getConfig("letsencrypt", false);
+    const pruneSessionInterval = +(await getConfig(
+      "prune_session_interval",
+      900
+    ));
     const masterState = {
       started: false,
       listeningTo: new Set([]),
@@ -287,7 +291,11 @@ module.exports =
           })
           .ready((glx) => {
             const httpsServer = glx.httpsServer();
-            setupSocket(appargs?.subdomainOffset, httpsServer);
+            setupSocket(
+              appargs?.subdomainOffset,
+              pruneSessionInterval,
+              httpsServer
+            );
             httpsServer.setTimeout(timeout * 1000);
             process.on("message", workerDispatchMsg);
             glx.serveApp(app);
@@ -344,6 +352,10 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
   const cert = getState().getConfig("custom_ssl_certificate", "");
   const key = getState().getConfig("custom_ssl_private_key", "");
   const timeout = +getState().getConfig("timeout", 120);
+  const pruneSessionInterval = +(await getState().getConfig(
+    "prune_session_interval",
+    900
+  ));
   // Server with http on port 80 / https on 443
   // todo  resolve hardcode
   if (port === 80 && cert && key) {
@@ -354,7 +366,12 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // todo timeout to config
     httpServer.setTimeout(timeout * 1000);
     httpsServer.setTimeout(timeout * 1000);
-    setupSocket(appargs?.subdomainOffset, httpServer, httpsServer);
+    setupSocket(
+      appargs?.subdomainOffset,
+      pruneSessionInterval,
+      httpServer,
+      httpsServer
+    );
     httpServer.listen(port, () => {
       console.log("HTTP Server running on port 80");
     });
@@ -367,7 +384,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // server with http only
     const http = require("http");
     const httpServer = http.createServer(app);
-    setupSocket(appargs?.subdomainOffset, httpServer);
+    setupSocket(appargs?.subdomainOffset, pruneSessionInterval, httpServer);
 
     // todo timeout to config
     // todo refer in doc to httpserver doc
@@ -384,7 +401,7 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
  *
  * @param  {...*} servers
  */
-const setupSocket = (subdomainOffset, ...servers) => {
+const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
   // https://socket.io/docs/v4/middlewares/
   const wrap = (middleware) => (socket, next) =>
     middleware(socket.request, {}, next);
@@ -395,7 +412,7 @@ const setupSocket = (subdomainOffset, ...servers) => {
   }
 
   const passportInit = passport.initialize();
-  const sessionStore = getSessionStore();
+  const sessionStore = getSessionStore(pruneSessionInterval);
   const setupNamespace = (namespace) => {
     //io.of(namespace).use(wrap(setTenant));
     io.of(namespace).use(wrap(sessionStore));
@@ -452,6 +469,11 @@ const setupSocket = (subdomainOffset, ...servers) => {
             socketIds.push(socket.id);
             await getState().setConfig("joined_log_socket_ids", [...socketIds]);
             callback({ status: "ok" });
+            setTimeout(() => {
+              io.of("/")
+                .to(`_logs_${tenant}_`)
+                .emit("test_conn_msg", { text: "test message" });
+            }, 1000);
           }
         } catch (err) {
           getState().log(1, `Socket join_logs stream: ${err.stack}`);

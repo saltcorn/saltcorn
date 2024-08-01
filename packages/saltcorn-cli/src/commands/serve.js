@@ -74,7 +74,8 @@ ServeCommand.flags = {
   noscheduler: flags.boolean({ char: "s", description: "No scheduler" }),
   subdomain_offset: flags.integer({
     string: "subdomain_offset",
-    description: "Number of parts to remove to access subdomain in 'multi_tenant' mode",
+    description:
+      "Number of parts to remove to access subdomain in 'multi_tenant' mode",
   }),
 };
 

@@ -10,6 +10,9 @@ var logViewerHelpers = (() => {
     second: "2-digit",
   };
   let lostConnection = false;
+  let waitingForTestMessage = false;
+  let startedWaitingAt = null;
+  let waitTimeout = false;
 
   const logLevelColor = (level) => {
     switch (parseInt(level)) {
@@ -94,6 +97,17 @@ var logViewerHelpers = (() => {
     });
   };
 
+  const testMsgWaiter = (waiterStartedAt) => () => {
+    if (waitingForTestMessage && waiterStartedAt === startedWaitingAt) {
+      emptyAlerts();
+      waitTimeout = true;
+      notifyAlert({
+        type: "danger",
+        text: "You are connected but not receiving any messages",
+      });
+    }
+  };
+
   const handleConnect = (socket) => {
     socket.emit("join_log_room", (ack) => {
       if (ack) {
@@ -109,6 +123,10 @@ var logViewerHelpers = (() => {
               text: "You are connected again",
             });
           }
+          waitingForTestMessage = true;
+          waitTimeout = false;
+          startedWaitingAt = new Date().valueOf();
+          setTimeout(testMsgWaiter(startedWaitingAt), 5000);
         } else if (ack.status === "error" && ack.msg) {
           notifyAlert({
             type: "danger",
@@ -127,6 +145,19 @@ var logViewerHelpers = (() => {
         });
       }
     });
+  };
+
+  const handleTestConnMsg = () => {
+    waitingForTestMessage = false;
+    startedWaitingAt = null;
+    if (waitTimeout) {
+      emptyAlerts();
+      notifyAlert({
+        type: "success",
+        text: "You are connected and receiving messages",
+      });
+      waitTimeout = false;
+    }
   };
 
   return {
@@ -152,6 +183,7 @@ var logViewerHelpers = (() => {
       socket.on("connect", () => handleConnect(socket));
       socket.on("disconnect", handleDisconnect);
       socket.on("log_msg", handleLogMsg);
+      socket.on("test_conn_msg", handleTestConnMsg);
     },
     goToLogsPage: (n) => {
       currentPage = n;

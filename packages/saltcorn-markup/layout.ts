@@ -791,6 +791,7 @@ const render = ({
           {
             class: [
               "row",
+              segment.class,
               sameWidths &&
                 `row-cols-1 row-cols-md-${segment.besides.length} g-4`,
               "g-4",
@@ -827,6 +828,7 @@ const render = ({
           {
             class: [
               "row",
+              segment.class,
               segment.style && segment.style.width ? null : "w-100",
               typeof segment.gx !== "undefined" &&
                 segment.gx !== null &&
