@@ -1040,6 +1040,11 @@ window.addEventListener("beforeinstallprompt", (e) => {
   defferedPrompt = e;
 });
 
+function isAndroidMobile() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  return /android/i.test(ua) && /mobile/i.test(ua);
+}
+
 function validatePWAManifest(manifest) {
   const errors = [];
   if (!manifest) errors.push("The manifest.json file is missing. ");
@@ -1054,10 +1059,16 @@ function validatePWAManifest(manifest) {
         const y = parseInt(sizes[1]);
         return x === y && x >= 144;
       })
-    )
+    ) {
       errors.push(
         "At least one square icon of size 144x144 or larger is required"
       );
+    }
+    if (isAndroidMobile() && manifest.display === "browser") {
+      errors.push(
+        "The display property 'browser' may not work on mobile devices"
+      );
+    }
   }
   return errors;
 }
