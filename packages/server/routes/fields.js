@@ -84,6 +84,10 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         sublabel: req.__("Name of the field"),
         type: "String",
         attributes: { autofocus: true },
+        help: {
+          topic: "Field label",
+          context: {},
+        },
         validator(s) {
           if (!s || s === "") return req.__("Missing label");
           if (!id && existing_names.includes(Field.labelToName(s)))

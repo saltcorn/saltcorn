@@ -1,0 +1,11 @@
+A table holds data organised by rows and columns, which you can visualise in a 
+two-dimensional grid. The rows hold the different cases, about which you have similar data.
+Each column is called a Field, and every field must have a label (and a type). 
+
+The field label allows you to recognize the meaning of the values in the column in a 
+human-readable name. In a spreadsheet with a lot of data, it is often used as the header for 
+each column.
+
+In Saltcorn, you can use spaces in field labels. Because we also need a valid identifier to use
+in formulae, a variable name is generated from the label by replacing spaces with underscores and
+converting all uppercase characters to lowercase. 
