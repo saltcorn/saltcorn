@@ -28,3 +28,12 @@ These types are available in your current installation:
 {{# } }}
 
 Further types can be installed from moduels in the [Module store](/plugins)
+
+In addition, a field can have types File and Key to a table.
+
+A File field holds a reference to a file in the Saltcorn file system. This is stored by the,
+path to the file and if the file moves, the reference may become invalid.
+
+A field that is a Key to another table is a reference to a row in that table. This is also known 
+as a foreign key and is used to link data between tables and to create the relational structure 
+of your application.
