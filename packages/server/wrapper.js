@@ -170,6 +170,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
   const favicon = state.getConfig("favicon_id", null);
   const notification_in_menu = state.getConfig("notification_in_menu");
   const pwa_enabled = state.getConfig("pwa_enabled");
+  const is_root = req.user?.role_id === 1;
 
   const iconHeader = favicon
     ? [
@@ -219,7 +220,9 @@ const get_headers = (req, version_tag, description, extras = []) => {
     from_cfg.push({ scriptBody: domReady(`check_saltcorn_notifications()`) });
   if (pwa_enabled) {
     from_cfg.push({
-      headerTag: `<link rel="manifest" href="/notifications/manifest.json">`,
+      headerTag: `<link rel="manifest" href="/notifications/manifest.json${
+        is_root ? new Date().valueOf() : ""
+      }">`,
     });
     from_cfg.push({
       scriptBody: `if('serviceWorker' in navigator) {

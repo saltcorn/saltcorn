@@ -184,7 +184,7 @@ router.post(
 );
 
 router.get(
-  "/manifest.json",
+  "/manifest.json:opt_cache_bust?",
   error_catcher(async (req, res) => {
     const { pretty } = req.query;
     const state = getState();
