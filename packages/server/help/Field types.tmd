@@ -15,6 +15,11 @@ you access to user interface elements that are richer and more appropriate for t
 given field. For example, you could use `String` to store dates, but then you will not 
 be able to use an interactive date picker or to display dates in flexible formats.
 
+Most field types have some additional parameters that will be configured on the next screen.
+`Integer` types have minimum and maximum values and strings can be restricted to a set of 
+options or by a regular expression. This allows you to further narrow what data it is admissible
+in your table.
+
 These types are available in your current installation:
 
 {{# const tys = Object.values(scState.types) }}

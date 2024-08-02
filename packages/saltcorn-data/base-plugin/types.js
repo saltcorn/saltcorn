@@ -681,6 +681,7 @@ const to_locale_string = {
 const string = {
   /** @type {string} */
   name: "String",
+  description: "A sequence of unicode characters of any length.",
   /** @type {string} */
   sql_name: "text",
   js_type: "string",
@@ -1480,6 +1481,7 @@ const is_valid_regexp = (s) => {
 const int = {
   /** @type {string} */
   name: "Integer",
+  description: "Whole numbers, positive and negative.",
   /** @type {string} */
   sql_name: "int",
   js_type: "number",
@@ -1709,6 +1711,7 @@ const int = {
 const color = {
   /** @type {string} */
   name: "Color",
+  description: "Colors, defined as Red, Green and Blue with 256 level each",
   /** @type {string} */
   sql_name: "text",
   js_type: "string",
@@ -1794,6 +1797,7 @@ const color = {
 const float = {
   /** @type {string} */
   name: "Float",
+  description: "Floating-point numbers",
   /** @type {string} */
   sql_name: "double precision",
   js_type: "number",
@@ -1935,6 +1939,7 @@ const logit = (x) => {
 const date = {
   /** @type {string} */
   name: "Date",
+  description: "Dates, with or without time",
   /** @type {string} */
   sql_name: "timestamptz",
   js_type: "Date",
@@ -2154,6 +2159,7 @@ const date = {
 const bool = {
   /** @type {string} */
   name: "Bool",
+  description: "Boolean values: true or false",
   /** @type {string} */
   sql_name: "boolean",
   js_type: "boolean",
