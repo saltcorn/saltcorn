@@ -15,7 +15,7 @@ not to all rows. Some examples are:
   contribute to projects they have been assigned to.
 
 Saltcorn contains an authorization system that can be very simple (limit everything by role),
-slightly more flexible (rows have a user field and if you are that user, you can edit a row)
+more flexible (rows have a user field and if you are that user, you can edit a row)
 to very complex (featuring many-to-many relationships, where the user field can be on a 
 different table; and inheritance, where authorization schemes propagate through relationship).
 
@@ -34,13 +34,14 @@ a row to users that match a Key to users field on the row. To use this, you shou
 1. Set the "Minimum role to read" and "Minimum role to write" to a role that would stop the 
    user from accessing the row. 
 
-2. Create a field with type Key to users. 
+2. Create a field with type Key to users. This field should ideally not be labelled `User` or `user`, 
+   as this variable name will clash with access to logged-in user object in formulae.
 
 3. Make sure this is filled in when the user creates the row.
    For instance in an Edit view under the "Fixed and blocked fields" settings, in the 
    Preset for this field pick the LoggedIn preset.
 
-4. Pick this field as the Ownership field from the dropdown.
+4. Pick this field as the Ownership field from the dropdown in the table settings.
 
 This is an additional access grant
 in addition to that given by the minimum roles to read and write. If your user does *not* 
@@ -49,3 +50,27 @@ You therefore cannot use ownership to limit access, only to grant additional acc
 
 ### Authorization by inheritance
 
+If the table has a relationship (that is, has a field with Key type) with another table which
+has an ownership field (or ownership formula), it can instead inherit the onwership from that 
+table - essentially, take the ownership of the row the Key is pointing to. 
+
+For instance, you have a project management app with a Projects table that has an `owner` Key to users 
+field and this is set as the ownership field; and a Tasks table with a Key to Projects field. 
+In this case "Inherit Projects" is available as an option in the Ownership field dropdown.
+If you pick it and reload the page, you will See that it is in fact implemented as an ownership 
+formula which is created for you.
+
+### Authorization by user groups
+
+If you need to grant access to tables based not on user fields on this table (ownership field) 
+or on tables it has keys to (inheritance), you can declare a table to be a user group. 
+The user group should be a table that has both a key to users and a key to this table. 
+Use this to grant ownership rights to a row to more than one user. For instance, if more than one 
+user is working on a project, you can declare that all users assigned to this project are owners. See 
+the help topic for the User group option.
+
+### Authorisation by formula
+
+You can also grant access to edit the row if an arbitrary formula is true. This can be used
+For very flexible authorisation schemes. Choose formula in the ownership field drop down and then see 
+help for the Ownership formula.
