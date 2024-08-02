@@ -1,0 +1,20 @@
+You can restrict which users can read or write to this table by their role.
+
+Each user in Saltcorn has a role and the roles have a strictly hierachical ordering, 
+which you [can edit](/roleadmin). The ordering means that users in a role can access
+everything the users in the role "below" then can acceess, but the users in the role
+"above" have further access. 
+
+Assigning access by role is a quick way to give users more or less access based on how
+much you trust them.
+
+Using the settings for "Minimum role to read" and "Minimum role to write" you set the roles
+required to read and write to the table, respectively. Users also need to have the roles
+required for running views and pages.
+
+Restricting table access by role is the simplest form of authorisation in Saltcorn, 
+but it is often too limited. Row ownership is much more flexible; see the help topic for 
+Ownership field.
+
+Note that if the user has ownership of the row, they can read and write that row even if 
+they have a role below the minimum role to read and write, respectively.

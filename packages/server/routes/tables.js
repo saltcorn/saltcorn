@@ -93,14 +93,45 @@ const tableForm = async (table, req) => {
     noSubmitButton: true,
     onChange: "saveAndContinue(this)",
     fields: [
+      {
+        label: req.__("Minimum role to read"),
+        sublabel: req.__(
+          "User must have this role or higher to read rows from the table, unless they are the owner"
+        ),
+        help: {
+          topic: "Table roles",
+          context: {},
+        },
+        name: "min_role_read",
+        input_type: "select",
+        options: roleOptions,
+        attributes: { asideNext: !table.external && !table.provider_name },
+      },
       ...(!table.external && !table.provider_name
         ? [
+            {
+              label: req.__("Minimum role to write"),
+              name: "min_role_write",
+              input_type: "select",
+              help: {
+                topic: "Table roles",
+                context: {},
+              },
+              sublabel: req.__(
+                "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
+              ),
+              options: roleOptions,
+            },
             {
               label: req.__("Ownership field"),
               name: "ownership_field_id",
               sublabel: req.__(
                 "The user referred to in this field will be the owner of the row"
               ),
+              help: {
+                topic: "Ownership field",
+                context: {},
+              },
               input_type: "select",
               options: [
                 { value: "", label: req.__("None") },
@@ -114,6 +145,10 @@ const tableForm = async (table, req) => {
               validator: expressionValidator,
               type: "String",
               class: "validate-expression",
+              help: {
+                topic: "Ownership formula",
+                context: {},
+              },
               sublabel:
                 req.__("User is treated as owner if true. In scope: ") +
                 ["user", ...fields.map((f) => f.name)]
@@ -126,6 +161,10 @@ const tableForm = async (table, req) => {
               sublabel: req.__(
                 "Add relations to this table in dropdown options for ownership field"
               ),
+              help: {
+                topic: "User groups",
+                context: {},
+              },
               name: "is_user_group",
               type: "Bool",
             },
@@ -141,28 +180,9 @@ const tableForm = async (table, req) => {
         ),
         //options: roleOptions,
       },
-      {
-        label: req.__("Minimum role to read"),
-        sublabel: req.__(
-          "User must have this role or higher to read rows from the table, unless they are the owner"
-        ),
-        name: "min_role_read",
-        input_type: "select",
-        options: roleOptions,
-        attributes: { asideNext: !table.external && !table.provider_name },
-      },
       ...(table.external || table.provider_name
         ? []
         : [
-            {
-              label: req.__("Minimum role to write"),
-              name: "min_role_write",
-              input_type: "select",
-              sublabel: req.__(
-                "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
-              ),
-              options: roleOptions,
-            },
             {
               label: req.__("Version history"),
               sublabel: req.__("Track table data changes over time"),
