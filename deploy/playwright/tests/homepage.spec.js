@@ -93,7 +93,7 @@ test.describe('E2E Test Suite', () => {
 
     // drag and drop the card source
     await functions.drag_And_Drop(pageobject.cardSource, pageobject.target);
-    await functions.fill_Text(pageobject.cardtextlocator, 'Master Visa Debit Card');
+    await functions.fill_Text(pageobject.cardtextlocator, 'Master VisaDebit Card');
     const cardTitle = page.locator(pageobject.cardtextlocator);
     
     //validate that card title should be master visa debit card
