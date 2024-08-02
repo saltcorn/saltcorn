@@ -67,3 +67,9 @@ Same as above, but the Expenses table also has a `filled_by` field which is Key 
 you want to give ownership to that user or any user in the Finance department:
 
 `user.department === "Finance" || user.id === filled_by`
+
+Similar to above, however department membership is not stored as User field but as in a table 
+named "User In Department" with a Key to user field labelled "Employee" and a string field "Name" for
+the department name.
+
+`user.UserinDepartment_by_employee.map(d=>d.name).includes("Finance") || user.id === filled_by`
