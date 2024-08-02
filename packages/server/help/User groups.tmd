@@ -1,0 +1,35 @@
+User groups are used to grant access to tables based on membership of groups 
+where each user can be a member of many groups and each group can have many 
+users.
+
+Any table that has a field of type Key to User can be designated a user group, by
+checking the User group option. This means that when a User group table has a row with
+a key to a user, that user is a member of a group. 
+
+The consequence of designating a table as a User group is that if there is also a Key from
+the user group table to another table, then the option of group membership appears in the 
+drop-down for the ownership Field option. 
+
+In addition, If a table is designated as a user group. a value indicating group membership
+appears in the user object. For this to appear, the variable has to be referenced in an 
+ownership formula. The name of this variable is 
+`{user group table name}_by_{key to user field name}`.
+
+When changes are made to user group membership, the user needs to login and log out again before these 
+changes are reflected in the user object. If you are removing user group membership you may need to force 
+log out those users.
+
+### Example
+
+In a project management application you have a "Projects" table and a "Tasks" table (with a 
+Key to project). Several people can work on the same project.
+
+You would like to restrict access to the project table such that only uses to work on the project have access.
+
+1. Create a "User Works On Project" table with a Key to projects field and a Key to user field called Participant.
+
+2. Designate the "User Works On Project" table as a user group by checking the user group box.
+
+3. In the project table settings, In the ownership field, There is now an option called "In User Works On Project by Participant".
+
+4. Now add rows to the "User Works On Project" table. When the users logout and login again they will have the required access.

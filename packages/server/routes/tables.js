@@ -161,6 +161,10 @@ const tableForm = async (table, req) => {
               sublabel: req.__(
                 "Add relations to this table in dropdown options for ownership field"
               ),
+              help: {
+                topic: "User groups",
+                context: {},
+              },
               name: "is_user_group",
               type: "Bool",
             },
