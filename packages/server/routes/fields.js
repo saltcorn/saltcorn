@@ -104,6 +104,10 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           "The type determines the kind of data that can be stored in the field"
         ),
         input_type: "select",
+        help: {
+          topic: "Field types",
+          context: {},
+        },
         options: isPrimary
           ? primaryTypes
           : getState().type_names.concat(fkey_opts || []),
