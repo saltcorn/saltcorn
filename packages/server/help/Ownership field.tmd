@@ -64,7 +64,7 @@ formula which is created for you.
 
 If you need to grant access to tables based not on user fields on this table (ownership field) 
 or on tables it has keys to (inheritance), you can declare a table to be a user group. 
-The user group should be a table that has both a key to users and a key to this table. 
+The user group should be a table that has a key to users, and may also have a key to this table. 
 Use this to grant ownership rights to a row to more than one user. For instance, if more than one 
 user is working on a project, you can declare that all users assigned to this project are owners. See 
 the help topic for the User group option.
