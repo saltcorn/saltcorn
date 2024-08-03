@@ -30,7 +30,7 @@ const {
   stateFieldsToQuery,
   readState,
 } = require("../../plugin-helper");
-const { InvalidConfiguration, isNode } = require("../../utils");
+const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
 const { getForm, fill_presets } = require("./viewable_fields");

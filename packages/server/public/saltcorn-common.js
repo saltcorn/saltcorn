@@ -655,6 +655,120 @@ function escapeHtml(text) {
 function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
+
+function doMobileTransforms() {
+  const replaceAttr = (el, attr, web, mobile) => {
+    const jThis = $(el);
+    const skip = jThis.attr("skip-mobile-adjust");
+    if (!skip) {
+      const attrVal = jThis.attr(attr);
+      if (attrVal?.includes(web)) {
+        jThis.attr(attr, attrVal.replace(web, mobile));
+      }
+    }
+  };
+
+  const replacers = {
+    href: [
+      {
+        web: "javascript:history.back()",
+        mobile: "javascript:parent.goBack()",
+      },
+      {
+        web: "javascript:ajax_modal",
+        mobile: "javascript:mobile_modal",
+      },
+    ],
+    onclick: [
+      {
+        web: "history.back()",
+        mobile: "parent.goBack()",
+      },
+      {
+        web: "ajax_modal",
+        mobile: "mobile_modal",
+      },
+      {
+        web: "ajax_post_",
+        mobile: "local_post_",
+      },
+    ],
+  };
+
+  $("a").each(function () {
+    let path = $(this).attr("href") || "";
+    if (path.startsWith("http")) {
+      const url = new URL(path);
+      path = `${url.pathname}${url.search}`;
+    }
+    if (path.startsWith("/view/") || path.startsWith("/page/")) {
+      const jThis = $(this);
+      const skip = jThis.attr("skip-mobile-adjust");
+      if (!skip) {
+        jThis.removeAttr("href");
+        jThis.attr("onclick", `execLink('${path}')`);
+        if (jThis.find("i,img").length === 0 && !jThis.css("color")) {
+          jThis.css(
+            "color",
+            "rgba(var(--bs-link-color-rgb),var(--bs-link-opacity,1))"
+          );
+        }
+      }
+    } else if (path.includes("/files/serve/")) {
+      const tokens = path.split("/files/serve/");
+      if (tokens.length > 1)
+        $(this).attr("href", `javascript:openFile('${tokens[1]}')`);
+    } else if (path.includes("/files/download/")) {
+      const tokens = path.split("/files/download/");
+      if (tokens.length > 1)
+        $(this).attr(
+          "href",
+          `javascript:notifyAlert('File donwloads are not supported.')`
+        );
+    } else {
+      for (const [k, v] of Object.entries(replacers)) {
+        replaceAttr(this, k, v.web, v.mobile);
+      }
+    }
+  });
+
+  $("button").each(function () {
+    for (const [k, v] of Object.entries({ onclick: replacers.onclick })) {
+      replaceAttr(this, k, v.web, v.mobile);
+    }
+  });
+
+  $("[mobile-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-img-path");
+      const base64Encoded = await parent.loadEncodedFile(fileId);
+      this.src = base64Encoded;
+    }
+  });
+
+  $("[mobile-bg-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-bg-img-path");
+      if (fileId) {
+        const base64Encoded = await parent.loadEncodedFile(fileId);
+        this.style.backgroundImage = `url("${base64Encoded}")`;
+      }
+    }
+  });
+
+  $("img").each(async function () {
+    if (parent.loadEncodedFile) {
+      const jThis = $(this);
+      const src = jThis.attr("src");
+      if (src?.startsWith("/files/serve/")) {
+        const fileId = src.replace("/files/serve/", "");
+        const base64Encoded = await parent.loadEncodedFile(fileId);
+        this.src = base64Encoded;
+      }
+    }
+  });
+}
+
 function initialize_page() {
   if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
   const isNode = getIsNode();
@@ -829,59 +943,7 @@ function initialize_page() {
       </form>`
       );
   });
-  if (!isNode) {
-    $("[mobile-img-path]").each(async function () {
-      if (parent.loadEncodedFile) {
-        const fileId = $(this).attr("mobile-img-path");
-        const base64Encoded = await parent.loadEncodedFile(fileId);
-        this.src = base64Encoded;
-      }
-    });
-
-    $("[mobile-bg-img-path]").each(async function () {
-      if (parent.loadEncodedFile) {
-        const fileId = $(this).attr("mobile-bg-img-path");
-        if (fileId) {
-          const base64Encoded = await parent.loadEncodedFile(fileId);
-          this.style.backgroundImage = `url("${base64Encoded}")`;
-        }
-      }
-    });
-
-    $("a").each(function () {
-      let path = $(this).attr("href") || "";
-      if (path.startsWith("http")) {
-        const url = new URL(path);
-        path = `${url.pathname}${url.search}`;
-      }
-      if (path.startsWith("/view/") || path.startsWith("/page/")) {
-        const jThis = $(this);
-        const skip = jThis.attr("skip-mobile-adjust");
-        if (!skip) {
-          jThis.removeAttr("href");
-          jThis.attr("onclick", `execLink('${path}')`);
-          if (jThis.find("i,img").length === 0 && !jThis.css("color")) {
-            jThis.css(
-              "color",
-              "rgba(var(--bs-link-color-rgb),var(--bs-link-opacity,1))"
-            );
-          }
-        }
-      }
-    });
-
-    $("img").each(async function () {
-      if (parent.loadEncodedFile) {
-        const jThis = $(this);
-        const src = jThis.attr("src");
-        if (src?.startsWith("/files/serve/")) {
-          const fileId = src.replace("/files/serve/", "");
-          const base64Encoded = await parent.loadEncodedFile(fileId);
-          this.src = base64Encoded;
-        }
-      }
-    });
-  }
+  if (!isNode) doMobileTransforms();
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
 
