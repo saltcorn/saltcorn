@@ -865,7 +865,7 @@ describe("List fieldviews", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain(
-      `<img src="/files/resize/66/66/magrite.png" onclick="expand_thumbnail('magrite.png', 'magrite.png')" mobile-img-path="magrite.png">`
+      `<img src="/files/resize/66/66/magrite.png" onclick="expand_thumbnail('magrite.png', 'magrite.png')">`
     );
   });
   it("relative date", async () => {
