@@ -756,17 +756,35 @@ function doMobileTransforms() {
     }
   });
 
-  $("img").each(async function () {
-    if (parent.loadEncodedFile) {
-      const jThis = $(this);
-      const src = jThis.attr("src");
-      if (src?.startsWith("/files/serve/")) {
-        const fileId = src.replace("/files/serve/", "");
-        const base64Encoded = await parent.loadEncodedFile(fileId);
-        this.src = base64Encoded;
+  $("img:not([mobile-img-path]):not([mobile-bg-img-path])").each(
+    async function () {
+      if (parent.loadEncodedFile) {
+        const jThis = $(this);
+        const src = jThis.attr("src");
+        if (src?.includes("/files/serve/")) {
+          const tokens = src.split("/files/serve/");
+          if (tokens.length > 1) {
+            const fileId = tokens[1];
+            const base64Encoded = await parent.loadEncodedFile(fileId);
+            this.src = base64Encoded;
+          }
+        } else if (src?.includes("/files/resize/")) {
+          const tokens = src.split("/files/resize/");
+          if (tokens.length > 1) {
+            const idAndDims = tokens[1].split("/");
+            const width = idAndDims[0];
+            const height = idAndDims.length > 2 ? idAndDims[1] : undefined;
+            const fileId = idAndDims[idAndDims.length - 1];
+            const style = { width: `${width || 50}px` };
+            if (height) style.height = `${height}px`;
+            const base64Encoded = await parent.loadEncodedFile(fileId);
+            this.src = base64Encoded;
+            jThis.css(style);
+          }
+        }
       }
     }
-  });
+  );
 }
 
 function initialize_page() {

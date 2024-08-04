@@ -83,7 +83,6 @@ module.exports = {
         return img({
           src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
           style: "width: 100%",
-          "mobile-img-path": filePath,
         });
       else {
         return img({
@@ -261,7 +260,6 @@ module.exports = {
           onclick: expand
             ? `expand_thumbnail('${filePath}', '${path.basename(filePath)}')`
             : undefined,
-          "mobile-img-path": filePath,
         });
       else {
         // TODO resizer on mobile?
