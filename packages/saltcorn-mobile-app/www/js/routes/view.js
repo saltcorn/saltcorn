@@ -138,9 +138,9 @@ const getView = async (context) => {
     );
   }
   state.queriesCache = {};
-  let contents = null;
+  let contents0 = null;
   try {
-    contents = await view.run_possibly_on_page(
+    contents0 = await view.run_possibly_on_page(
       query,
       req,
       res,
@@ -157,5 +157,19 @@ const getView = async (context) => {
       context,
       req
     );
-  else return wrapContents(contents, viewname, context, req);
+  else {
+    const contents =
+      typeof contents0 === "string"
+        ? saltcorn.markup.div(
+            {
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              // "data-sc-view-source": req.originalUrl,
+            },
+            contents0
+          )
+        : contents0;
+
+    return wrapContents(contents, viewname, context, req);
+  }
 };

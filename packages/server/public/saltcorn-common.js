@@ -727,14 +727,14 @@ function doMobileTransforms() {
         );
     } else {
       for (const [k, v] of Object.entries(replacers)) {
-        replaceAttr(this, k, v.web, v.mobile);
+        for ({ web, mobile } of v) replaceAttr(this, k, web, mobile);
       }
     }
   });
 
   $("button").each(function () {
     for (const [k, v] of Object.entries({ onclick: replacers.onclick })) {
-      replaceAttr(this, k, v.web, v.mobile);
+      for ({ web, mobile } of v) replaceAttr(this, k, v.web, v.mobile);
     }
   });
 
