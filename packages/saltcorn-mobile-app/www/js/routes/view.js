@@ -164,7 +164,13 @@ const getView = async (context) => {
             {
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
-              // "data-sc-view-source": req.originalUrl,
+              "data-sc-view-source": `/view/${context.params.viewname}${
+                context.query
+                  ? context.query.startsWith("?")
+                    ? context.query
+                    : `?${context.query}`
+                  : ""
+              }`,
             },
             contents0
           )
