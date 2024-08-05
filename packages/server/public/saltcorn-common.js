@@ -776,7 +776,7 @@ function doMobileTransforms() {
             const height = idAndDims.length > 2 ? idAndDims[1] : undefined;
             const fileId = idAndDims[idAndDims.length - 1];
             const style = { width: `${width || 50}px` };
-            if (height) style.height = `${height}px`;
+            if (height > 0) style.height = `${height}px`;
             const base64Encoded = await parent.loadEncodedFile(fileId);
             this.src = base64Encoded;
             jThis.css(style);
