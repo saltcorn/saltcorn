@@ -40,7 +40,7 @@ const {
   interpolate,
 } = require("../utils");
 const db = require("../db");
-const { isNode, ppVal } = require("../utils");
+const { isNode, isWeb, ppVal } = require("../utils");
 const { available_languages } = require("../models/config");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
@@ -999,7 +999,7 @@ module.exports = {
         showIf: { nav_action: ["Go to URL", "Popup modal"] },
       },
     ],
-    run: async ({ row, user, configuration: { nav_action, url } }) => {
+    run: async ({ row, user, configuration: { nav_action, url }, req }) => {
       let url1 = interpolate(url, row, user);
 
       switch (nav_action) {
@@ -1008,7 +1008,7 @@ module.exports = {
         case "Popup modal":
           return { popup: url1 };
         case "Back":
-          return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+          return { eval_js: isWeb(req) ? "history.back()" : "parent.goBack()" };
         case "Close tab":
           return { eval_js: "window.close()" };
         case "Close modal":

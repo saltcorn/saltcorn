@@ -38,11 +38,13 @@ const {
 const {
   InvalidConfiguration,
   isNode,
-  isOfflineMode,
+  isWeb,
   mergeIntoWhere,
   dollarizeObject,
   getSessionId,
   interpolate,
+  asyncMap,
+  removeEmptyStrings,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -79,7 +81,6 @@ const {
   translateLayout,
   traverseSync,
 } = require("../../models/layout");
-const { asyncMap, isWeb, removeEmptyStrings } = require("../../utils");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
 const { prepare_update_row } = require("../../web-mobile-commons");
@@ -517,7 +518,7 @@ const run = async (
   { res, req },
   { editQuery }
 ) => {
-  const mobileReferrer = isNode() ? undefined : req?.headers?.referer;
+  const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
   return await editQuery(state, mobileReferrer);
 };
 
@@ -938,7 +939,7 @@ const render = async ({
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
-    if (isNode()) {
+    if (isWeb(req)) {
       for (const field of file_fields) {
         if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
           const file = await File.findOne({ id: row[field.name] });
@@ -1776,12 +1777,12 @@ const prepare = async (
         row[field.name] = path_to_serve;
       }
     } else if (req.files && req.files[field.name]) {
-      if (!isNode() && !remote && req.files[field.name].name) {
+      if (!isWeb(req) && !remote && req.files[field.name].name) {
         throw new Error(
           "The mobile-app supports no local files, please use a remote table."
         );
       }
-      if (isNode()) {
+      if (isWeb(req)) {
         const file = await File.from_req_files(
           req.files[field.name],
           req.user ? req.user.id : null,

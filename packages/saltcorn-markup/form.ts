@@ -1137,7 +1137,6 @@ const renderFormLayout = (form: Form): string => {
         field.attributes = { ...field.attributes, ...segment.configuration };
         if (segment.onchange_action)
           field.attributes.onChange = `view_post(this, 'run_action', {onchange_action: '${segment.onchange_action}', onchange_field:'${field.name}',  ...get_form_record(this) })`;
-        // TODO ch: get it more generic, split up editQuery
         field.attributes.isMobile = !isNode || form.req?.smr;
         return (
           innerField(
