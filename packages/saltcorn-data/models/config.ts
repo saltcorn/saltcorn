@@ -559,7 +559,7 @@ const configTypes: ConfigTypes = {
     type: "Integer",
     label: "Cookie duration (hours)",
     sublabel: "Set to 0 for expiration at the end of browser session",
-    default: 0,
+    default: 30 * 24,
   },
   public_cache_maxage: {
     type: "Integer",
