@@ -302,7 +302,9 @@ const getApp = async (opts = {}) => {
         if (
           u &&
           u.last_mobile_login &&
-          u.last_mobile_login <= jwt_payload.iat
+          (typeof u.last_mobile_login === "string"
+            ? new Date(u.last_mobile_login).valueOf()
+            : u.last_mobile_login) <= jwt_payload.iat
         ) {
           return done(null, {
             email: u.email,
