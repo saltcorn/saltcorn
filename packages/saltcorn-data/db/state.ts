@@ -199,6 +199,7 @@ class State {
     this.i18n.configure({
       locales: [],
       directory: join(__dirname, "..", "app-locales"),
+      mustacheConfig: { disable: true },
     });
     this.logLevel = 1;
     this.codeNPMmodules = {};
@@ -373,6 +374,7 @@ class State {
       autoReload: false,
       updateFiles: false,
       syncFiles: false,
+      mustacheConfig: { disable: true },
     });
   }
 

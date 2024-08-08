@@ -1,0 +1,39 @@
+Every field in a table stores values of a specific type. The type limits which
+values this field can take in each row. For instance, if a field has a type `Integer`
+then it cannot take the value `"Simon"` but the value `17` is admissible. 
+
+When building your table, you must therefore think carefully about not only which fields
+to include but also what the types are. Sometimes this is easy - you know that names 
+should be stored as as `String` type. But at other times you need to think ahead a bit 
+and think carefully about what data your table will hold
+
+Some types are more general than others. The `String` type and the `JSON` 
+type (from the json module) can hold values that can be represented by more specific types.
+For instance the number 17 can be stored in a string field where it will be represented by the 
+string `"17"`. You should always try to use the most specific type available. This will give 
+you access to user interface elements that are richer and more appropriate for the data in the 
+given field. For example, you could use `String` to store dates, but then you will not 
+be able to use an interactive date picker or to display dates in flexible formats.
+
+Most field types have some additional parameters that will be configured on the next screen.
+`Integer` types have minimum and maximum values and strings can be restricted to a set of 
+options or by a regular expression. This allows you to further narrow what data it is admissible
+in your table.
+
+These types are available in your current installation:
+
+{{# const tys = Object.values(scState.types) }}
+{{# for (const ty of tys) { }} 
+* {{ ty.name }}{{ty.description ? `: ${ty.description}` : ""}}
+{{# } }}
+
+Further types can be installed from moduels in the [Module store](/plugins)
+
+In addition, a field can have types File and Key to a table.
+
+A File field holds a reference to a file in the Saltcorn file system. This is stored by the,
+path to the file and if the file moves, the reference may become invalid.
+
+A field that is a Key to another table is a reference to a row in that table. This is also known 
+as a foreign key and is used to link data between tables and to create the relational structure 
+of your application.

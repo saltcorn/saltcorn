@@ -414,6 +414,7 @@ const prepMobileRows = (rows: Row[], fields: Field[]) => {
       const newRow = { ...row };
       for (const fn of dateFieldNames) {
         if (newRow[fn]) newRow[fn] = new Date(newRow[fn]);
+        if (newRow.row?.[fn]) newRow.row[fn] = new Date(newRow.row[fn]);
       }
       return newRow;
     });

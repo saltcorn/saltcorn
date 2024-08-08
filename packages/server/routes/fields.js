@@ -84,6 +84,10 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         sublabel: req.__("Name of the field"),
         type: "String",
         attributes: { autofocus: true },
+        help: {
+          topic: "Field label",
+          context: {},
+        },
         validator(s) {
           if (!s || s === "") return req.__("Missing label");
           if (!id && existing_names.includes(Field.labelToName(s)))
@@ -104,6 +108,10 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           "The type determines the kind of data that can be stored in the field"
         ),
         input_type: "select",
+        help: {
+          topic: "Field types",
+          context: {},
+        },
         options: isPrimary
           ? primaryTypes
           : getState().type_names.concat(fkey_opts || []),

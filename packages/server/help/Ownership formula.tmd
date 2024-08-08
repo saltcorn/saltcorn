@@ -1,0 +1,75 @@
+An ownership formula on a table allows you to develop an extremely flexible
+Authorisation scheme. It is also the mechanism by which ownership inheritance 
+and ownership by user groups is implemented. If you pick one of these options
+in the Ownership field drop-down it will essentially generate the corresponding
+formula for you.
+
+The ownership formula is a JavaScript expression which should evaluate to a boolean 
+(true/false) value. If it evaluate to true (or a [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) value), then the logged-in user is an owner and 
+can read and write the row. If it evaluate to false (or a [falsey](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) value), 
+the user is not the owner. However, If they have a role equal or higher than that 
+required to read or write, they can still perform this operation. You cannot use the
+ownership formula to deny access to a user who satisfies the role condition.
+
+When evaluating the formula, the values in scope are as follows:
+
+#### Row fields
+
+All field values for the row being evaluated are in scope and can be addressed by 
+their variable name.
+
+#### Join fields on row keys
+
+For any fields on the current table that are Keys to another table, you can access the values 
+in the linked table by using the dot notation. For instance, if you have a field labelled 
+"Project" (variable name `project`) which is of type Key to Projects, and the Projects
+table has a `name` field, you can refer to this as `project.name`. However, if the Project field 
+is not required, this can trigger an error as accessing a subfield on a `null` variable is a
+JavaScript error. In that case, you can use [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining)
+(`project?.name`) which will evaluate to `null` if `project` is `null`.
+
+#### User object
+
+You can refer to the logged in user using the variable name user. 
+This is an object and you must use the dot to access user fields,
+e.g. user.id for the logged in users id. 
+
+The user object has other fields than the primary key identifier.
+For your login session the user object is:
+
+```
+{{JSON.stringify(user, null, 2)}}
+```
+
+#### User groups
+
+If any tables have been designated as user groups (that is, if they User group option has been 
+checked in the table settings) then a value will appear in the user object, which is the list 
+of an array of user group rows to which the user belongs. The name of that field is 
+`{table name}_by_{user field in user group}`.
+
+Normally you don't have to write theownership formula, you select it from the Ownership field 
+drop-down and the formula is generated for you.
+
+When changes are made to user group membership, the user needs to login and log out again before these 
+changes are reflected in the user object. If you are removing user group membership you may need to force 
+log out those users.
+
+## Examples
+
+User table has a `String` field named `department` which can take options "Finance", "HR",
+or "Warp drive engineering". To give ownership to the Expenses table to users in the Finance 
+department:
+
+`user.department === "Finance"`
+
+Same as above, but the Expenses table also has a `filled_by` field which is Key to user, and
+you want to give ownership to that user or any user in the Finance department:
+
+`user.department === "Finance" || user.id === filled_by`
+
+Similar to above, however department membership is not stored as User field but as in a table 
+named "User In Department" with a Key to user field labelled "Employee" and a string field "Name" for
+the department name.
+
+`user.UserinDepartment_by_employee.map(d=>d.name).includes("Finance") || user.id === filled_by`
