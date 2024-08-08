@@ -1,0 +1,17 @@
+Each user in Saltcorn has a role and the roles have a strictly hierachical ordering, 
+which you [can edit](/roleadmin). The ordering means that users in a role can access
+everything the users in the role "below" then can acceess, but the users in the role
+"above" have further access. 
+
+Assigning access by role is a quick way to give users more or less access based on how
+much you trust them. 
+
+For views, pages and table read/write.
+
+Use table for more refined access control.
+
+public is 100
+
+For each role, you set the theme and the 2fa policy
+
+can create new roles. 
