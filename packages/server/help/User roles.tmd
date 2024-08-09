@@ -4,14 +4,27 @@ everything the users in the role "below" then can acceess, but the users in the 
 "above" have further access. 
 
 Assigning access by role is a quick way to give users more or less access based on how
-much you trust them. 
+much you trust them. Use the role to Determine access to views, pages (by setting the 
+minimum role to run on each entity) and tables (by setting the minimum role to read or write.)
+In addition many components of views, such as actionsm containers or columns in lists have a 
+setting for the minimum role to show or run.
 
-For views, pages and table read/write.
+Sometimes you need more refined access control than that afforded by a simple hierarchical
+role system. For these purposes you can use table ownership (see the help topics in the table
+properties). 
 
-Use table for more refined access control.
+When there is no logged in user, The permissions will treat the session as if it is a user 
+with the role public (role id = 100). You can use this to give access to resources to non-logged-in
+visitors.
 
-public is 100
+For each role, you can set the theme (out of the themes installed in the module store) and the 
+two-factor authentication (2FA) policy, where you can allow users to set up 2FA (Optional), 
+disallow 2FA (Disabled), or force users to set up 2FA (Mandatory)
 
-For each role, you set the theme and the 2fa policy
-
-can create new roles. 
+In the role editor you can also create new roles. When you do so, you set the role name and the 
+role ID. The role ID determines the how high the new role is in the role hierarchy, with a lower 
+role ID indicating a more powerful role. The lowest role ID is the admin user role, with ID = 1, 
+who have access to all resource and in addition can edit views, pages etc. The least powerful role is 
+the public (not logged in) users, with role ID = 100. Normally newly created users have role 80 
+(role ID = 80), but you can set the role of signed up users in the 
+[Login and signup settings](useradmin/settings).
