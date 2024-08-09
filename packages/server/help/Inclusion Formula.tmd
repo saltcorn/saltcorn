@@ -1,0 +1,38 @@
+{{# const srcTable = Table.findOne({ name: query.table_name }) }}
+
+The row inclusion formula allows you to put further restrictions on the rows that are
+included in the list or feed view. The restrictions from this formula are on top 
+of the filter state (from the URL, set by filters), so to be included a row must satisfy
+both the row inclusion Formula and the filter state.
+
+The row inclusion formula is a JavaScript expression that must evaluate to a boolean. Typically
+this involves an equality (`==`) or inequality (`<` or `>`) operator.
+
+In scope is the variables from your table accessed by their variable name. The fields in the current 
+table are: 
+
+| Field | Variable name | Type |
+| ----- | ------------- | ---- |
+{{# for (const field of srcTable.fields) { }} | {{ field.label }} | `{{ field.name }}` | {{ field.pretty_type }} | 
+{{# } }}
+
+In addition, you can use the function `today` to compare a Date field against a specific point in time. Depending
+on its argument, `today` will return different date values:
+
+* `today()` returns the current time
+* `today(x)` where `x` is a positive number returns the time `x` days in the future. Example: `today(1)` is this time, tomorrow.
+* `today(x)` where `x` is a negative number returns the time `x` days ago. Example: `today(-1)` is this time, yesterday.
+* `today({startOf: unit})` where `unit` is a string, one of: "year", "month", "quarter", "week", "day", "hour",
+   "minute" and "second", returns the time at the beginning of the current given time period. Example:
+   `today({startOf: "month"})` is the start of the current month.
+* `today({endOf: unit})` is similar to `today({startOf: unit})` but is the end of the given time unit. Example:
+   `today({endOf: "week"})` is the end of the current week.
+
+### Example
+
+If you have a tasks list with a boolean field `done` and a date field `due`, to display all fields where done is `false` 
+and are due this week:
+
+`done == false && 
+  due > today({startOf: "week"}) && 
+  due < today({endOf: "week"})`

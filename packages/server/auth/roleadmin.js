@@ -145,7 +145,9 @@ router.get(
       active_sub: "Roles",
       contents: {
         type: "card",
-        title: req.__("Roles"),
+        title:
+          req.__("Roles") +
+          `<a href="javascript:ajax_modal('/admin/help/User%20roles?')"><i class="fas fa-question-circle ms-1"></i></a>`,
         contents: [
           mkTable(
             [
@@ -198,7 +200,9 @@ router.get(
       sub2_page: "New",
       contents: {
         type: "card",
-        title: req.__("Roles"),
+        title:
+          req.__("Roles") +
+          `<a href="javascript:ajax_modal('/admin/help/User%20roles?')"><i class="fas fa-question-circle ms-1"></i></a>`,
         contents: [renderForm(form, req.csrfToken())],
       },
     });
