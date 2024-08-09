@@ -1,0 +1,35 @@
+{
+  "cookies": [
+    {
+      "name": "_sc_screen_info_",
+      "value": "{\"width\":1350,\"height\":1080,\"innerWidth\":1350,\"innerHeight\":1080}",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1757094046.043082,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "loggedin",
+      "value": "true",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "connect.sid",
+      "value": "s%3AW0ZX0x_o4-Ou9Wa1SuZVUtAqGB5H4zkt.p8%2ByWbGvI6PWdTdevuN3A5rxghrUP8bcMK5zrcfjmEQ",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
