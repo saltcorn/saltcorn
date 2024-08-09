@@ -5,8 +5,6 @@ const PageObject = require('../pageobject/locators.js');
 const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
 
-let storageState = 'storageState.json';
-
 test.describe('E2E Test Suite', () => {
     let functions;
     let pageobject;
@@ -17,27 +15,33 @@ test.describe('E2E Test Suite', () => {
     test.beforeAll(async ({ browser }) => {
         // Initialize the log file
         Logger.initialize();
-        // Create a new context and page for all tests
-        context = await browser.newContext();
-        page = await context.newPage();
-
-        // Maximize the screen
-        await page.setViewportSize({ width: 1350, height: 720 });
-
-        functions = new PageFunctions(page);
-        pageobject = new PageObject(page);
 
         // Generate a random string for all tests
         randomString = PageFunctions.generate_Random_String(5);
+    });
 
+    test.beforeEach(async ({ browser }) => {
+        // Create a new context and page for each test
+        context = await browser.newContext();
+        page = await context.newPage();
+    
+        // Maximize the screen
+        await page.setViewportSize({ width: 1350, height: 1080 });
+    
+        functions = new PageFunctions(page);
+        pageobject = new PageObject(page);
+    
         // Navigate to base URL and perform login
         await functions.navigate_To_Base_URL(baseURL, derivedURL);
         await functions.login('myproject19july@mailinator.com', 'myproject19july');
         await functions.submit();
-
-        // Save the logged-in state
-        await context.storageState({ path: storageState });
-    });
+      });
+    
+      test.afterEach(async () => {
+        // Close the page and context after each test
+        await page.close();
+        await context.close();
+      });
 
     // Create a new user
     test('Create new user by visiting "Users and Security" tabs', async () => {
@@ -80,6 +84,10 @@ test.describe('E2E Test Suite', () => {
     // Search new user on users tab
     test('Search new user from Users tabs', async () => {
         functions = new PageFunctions(page);
+        // Navigate to setting
+        await functions.navigate_To_Settings();
+        // Navigate to Users and Security
+        await functions.navigate_To_Users_And_Security();
         // search with username as created earlier
         await functions.fill_Text(pageobject.searchbar, randomString);
         await page.keyboard.press('Enter');
@@ -91,6 +99,12 @@ test.describe('E2E Test Suite', () => {
 
     // Delete new user from users tab
     test('Delete new user from users tabs', async () => {
+        // Navigate to setting
+        await functions.navigate_To_Settings();
+        // Navigate to Users and Security
+        await functions.navigate_To_Users_And_Security();
+        // search with username as created earlier
+        await functions.fill_Text(pageobject.searchbar, randomString);
         // Wait for and click the last dropdown menu button
         await customAssert('dropdown menu should be visible', async () => {
             const elements = await page.locator('[id^="dropdownMenuButton"]');

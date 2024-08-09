@@ -6,8 +6,6 @@ const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
 const { TIMEOUT } = require('dns');
 
-let storageState = 'storageState.json';
-
 test.describe('E2E Test Suite', () => {
   let functions;
   let pageobject;
@@ -17,7 +15,9 @@ test.describe('E2E Test Suite', () => {
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
-    // Create a new context and page for all tests
+  });
+  test.beforeEach(async ({ browser }) => {
+    // Create a new context and page for each test
     context = await browser.newContext();
     page = await context.newPage();
 
@@ -31,14 +31,12 @@ test.describe('E2E Test Suite', () => {
     await functions.navigate_To_Base_URL(baseURL, derivedURL);
     await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
-    
-    // Save the logged-in state
-    await context.storageState({ path: storageState });
   });
 
-  test.beforeEach(async () => {
-    // Reuse the existing context and page
-    await functions.navigate_To_Base_URL(baseURL, derivedURL);
+  test.afterEach(async () => {
+    // Close the page and context after each test
+    await page.close();
+    await context.close();
   });
 
   test('Click table button and verify URL', async () => {
@@ -332,7 +330,7 @@ test.describe('E2E Test Suite', () => {
     });
     await functions.Site_Structure_to_Search();
     await customAssert('Assert the lable of Search tab', async () => {
-    await expect(page.locator(pageobject.searchlocator)).toHaveText('Search');
+    await expect(page.locator(pageobject.searchtablocator)).toHaveText('Search');
     });
     await customAssert('page url should be /search/config', async () => {
     expect(page.url()).toBe(baseURL + derivedURL + 'search' + derivedURL + 'config');

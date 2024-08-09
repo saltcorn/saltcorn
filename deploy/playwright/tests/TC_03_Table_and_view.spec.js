@@ -6,8 +6,6 @@ const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
 const fs = require('fs');
 
-let storageState = 'storageState.json';
-
 test.describe('E2E Test Suite', () => {
   let functions;
   let pageobject;
@@ -18,26 +16,31 @@ test.describe('E2E Test Suite', () => {
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
-    // Create a new context and page for all tests
+    // Generate a random string for all tests
+    randomString = PageFunctions.generate_Random_String(5);
+  });
+
+  test.beforeEach(async ({ browser }) => {
+    // Create a new context and page for each test
     context = await browser.newContext();
     page = await context.newPage();
 
     // Maximize the screen
-    await page.setViewportSize({ width: 1350, height: 720 });
+    await page.setViewportSize({ width: 1350, height: 1080 });
 
     functions = new PageFunctions(page);
     pageobject = new PageObject(page);
-
-    // Generate a random string for all tests
-    randomString = PageFunctions.generate_Random_String(5);
 
     // Navigate to base URL and perform login
     await functions.navigate_To_Base_URL(baseURL, derivedURL);
     await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
+  });
 
-    // Save the logged-in state
-    await context.storageState({ path: storageState });
+  test.afterEach(async () => {
+    // Close the page and context after each test
+    await page.close();
+    await context.close();
   });
 
   test('Click table button and verify URL', async () => {
@@ -50,6 +53,8 @@ test.describe('E2E Test Suite', () => {
 
   // Check the "Create table" function
   test('Check the "Create table" Function', async () => {
+    //click table button
+    await functions.click_table();
     await customAssert('Create table button should be visible and working', async () => {
       await expect(page.locator(pageobject.createtablebutton)).toBeVisible();
       // Assert label of Create table button
@@ -85,6 +90,10 @@ test.describe('E2E Test Suite', () => {
 
   // Add Full name field in the table
   test('Add Full name field in the table', async () => {
+    //click table button
+    await functions.click_table();
+    // Go to my table
+    await page.click(pageobject.mytable);
     // click on add field button
     await page.click(pageobject.addFieldButtonLocator);
     //Fill the lable name
@@ -140,6 +149,10 @@ test.describe('E2E Test Suite', () => {
 
   // Add Date of birth field in the table
   test('Add Date of birth field in the table', async () => {
+    //click table button
+    await functions.click_table();
+    // Go to my table
+    await page.click(pageobject.mytable);
     // click on add field button
     await page.click(pageobject.addFieldButtonLocator);
     //Fill the lable name
@@ -179,6 +192,10 @@ test.describe('E2E Test Suite', () => {
 
   // Add Address field in the table
   test('Add Address field in the table', async () => {
+    //click table button
+    await functions.click_table();
+    // Go to my table
+    await page.click(pageobject.mytable);
     // click on add field button
     await page.click(pageobject.addFieldButtonLocator);
     //Fill the lable name
@@ -224,8 +241,10 @@ test.describe('E2E Test Suite', () => {
 
   // Add Row and value in the table
   test('Add row and insert value in the coulmns', async () => {
-    // Generate a random string
-    const randomString = PageFunctions.generate_Random_String(5);
+    //click table button
+    await functions.click_table();
+    // Go to my table
+    await page.click(pageobject.mytable);
     //Click on edit link
     await page.click(pageobject.EditlinkLocator);
     //Click on add row button
@@ -293,7 +312,7 @@ test.describe('E2E Test Suite', () => {
         // Assert the file content (adjust based on your expected content)
         await customAssert('File content should be correct', async () => {
           // Assert the content on table : id,full_name,Date_of_birth,address
-          expect(fileContent).toContain('id,full_name,date_of_birth,address'); 
+          expect(fileContent).toContain('id,full_name,date_of_birth,address');
         });
       } else {
         throw new Error('Downloaded file not found.');

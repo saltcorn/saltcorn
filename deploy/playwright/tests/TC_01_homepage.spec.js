@@ -5,61 +5,71 @@ const PageObject = require('../pageobject/locators.js');
 const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
 
-let storageState = 'storageState.json';
-
 test.describe('E2E Test Suite', () => {
   let functions;
   let pageobject;
   let context;
   let page;
+  let randomString;
 
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
-    // Create a new context and page for all tests
-    context = await browser.newContext();
-    page = await context.newPage();
-
-    // Maximize the screen
-    await page.setViewportSize({ width: 1350, height: 1080 });
-
-    // Initialize page functions and navigate to base URL
-    functions = new PageFunctions(page);
-    await functions.navigate_To_Base_URL(baseURL, derivedURL);
-
-    // Perform login
-    await functions.login('myproject19july@mailinator.com', 'myproject19july');
-    await functions.submit();
-
-    // Save logged-in state
-    await context.storageState({ path: storageState });
   });
 
   test.beforeEach(async ({ browser }) => {
-    // Reuse the existing context with saved storage state
-    context = await browser.newContext({ storageState });
+    // Create a new context and page for each test
+    context = await browser.newContext();
+    page = await context.newPage();
 
-    // Initialize page functions and page object
+    // Assign a value to randomString here
+    randomString = PageFunctions.generate_Random_String(10);
+
+    // Maximize the screen
+    await page.setViewportSize({ width: 1350, height: 1080 });
+    
     functions = new PageFunctions(page);
     pageobject = new PageObject(page);
+    
+    // Navigate to base URL and perform login
+    await functions.navigate_To_Base_URL(baseURL, derivedURL);
+    await functions.login('myproject19july@mailinator.com', 'myproject19july');
+    await functions.submit();
+  });
+
+  test.afterEach(async () => {
+    // Close the page and context after each test
+    await page.close();
+    await context.close();
   });
 
   test('Create a new page with random string', async () => {
-    // Generate a random string
-    const randomString = PageFunctions.generate_Random_String(10);
-    // create a new page
+    // Create a new page with the generated random string
     await functions.create_New_Page('My_project_' + randomString);
-    // drag and drop the text source
+
+    // Drag and drop the text source
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     await functions.fill_Text(pageobject.textlocator, 'Testing');
-
+    //  check hello world have text testing
+    await customAssert('hello world should have text testing', async () => {
+      await expect(page.locator(pageobject.textlocator)).toHaveText('Testing');
+    });
     // Check Text settings
-    await customAssert('Text settings should be visible', async () => await expect(page.getByText('Text settings')).toBeVisible());
-    await customAssert('Text to display should be visible', async () => await expect(page.getByText('Text to display')).toBeVisible());
+    await customAssert('Text settings should be visible', async () => {
+      await expect(page.getByText('Text settings')).toBeVisible();
+    });
+
+    await customAssert('Text to display should be visible', async () => {
+      await expect(page.getByText('Text to display')).toBeVisible();
+    });
   });
 
   // check buttons visibility
   test('Check buttons visibility and text', async () => {
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
+    // Drag and drop the text source
+    await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     // Check delete button
     await customAssert('delete button should be visible', async () => await expect(await page.locator(pageobject.deletebutton)).toBeVisible());
     await expect(page.locator(pageobject.deletebutton)).toHaveText('Delete');
@@ -70,7 +80,9 @@ test.describe('E2E Test Suite', () => {
 
   // Check text and HTML box content
   test('Check text and HTML box content', async () => {
-    await customAssert('hello world should have text testing', async () => await expect(page.locator(pageobject.textlocator)).toHaveText('Testing'));
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
+  
     // drag and drop the html code source
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
     await functions.fill_Text(pageobject.htmltextlocator, '<h3>Hello Sumit</h3>');
@@ -81,6 +93,8 @@ test.describe('E2E Test Suite', () => {
 
   //Check image setting
   test('Check image settings', async () => {
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
     // drag and drop the image source
     await functions.drag_And_Drop(pageobject.imageSource, pageobject.target);
     await customAssert('image settings should be visible', async () => await expect(page.getByText('Image settings')).toBeVisible());
@@ -88,6 +102,8 @@ test.describe('E2E Test Suite', () => {
 
   //Check card setting
   test('Check card settings', async () => {
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
     // drag and drop the card source
     await functions.drag_And_Drop(pageobject.cardSource, pageobject.target);
     await functions.fill_Text(pageobject.cardtextlocator, 'Master Visa Debit Card');
@@ -103,6 +119,8 @@ test.describe('E2E Test Suite', () => {
 
   // Check link setting
   test('Check link settings', async () => {
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
     // drag and drop the link source
     await functions.drag_And_Drop(pageobject.linkSource, pageobject.target);
     await functions.fill_Text(pageobject.linklocator, 'youtube link');
@@ -121,6 +139,8 @@ test.describe('E2E Test Suite', () => {
 
   // Check search setting
   test('Check search settings', async () => {
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the Search Locator
     await functions.drag_And_Drop(pageobject.SearchLocator, pageobject.target);
 
@@ -145,6 +165,8 @@ test.describe('E2E Test Suite', () => {
 
   //Check container settings
   test('Check container settings', async () => {
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the contains drag locator
     await functions.drag_And_Drop(pageobject.containsdraglocator, pageobject.target);
     await customAssert('container settings should be visible', async () => {
@@ -184,6 +206,8 @@ test.describe('E2E Test Suite', () => {
 
   //Check action settings
   test('Check action settings', async () => {
+    // create a new page
+    await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the action locator
     await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.target);
     await customAssert('action settings should be visible', async () => {
@@ -229,23 +253,16 @@ test.describe('E2E Test Suite', () => {
 
   //Create a new page with random string and navigate to new site URL
   test('Create a new page with random string and navigate to new site URL', async ({ browser }) => {
-    // Generate a random string
-    const randomString = PageFunctions.generate_Random_String(10);
-
     // Create a new page with the random string appended to the project name
     await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the page text
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
-
     // Save project
     await functions.Save_Page_Project();
-
     // Construct the URL
     const url = baseURL + `/page/My_project_${randomString}`;
-
     // Navigate to the constructed URL in the same page
     await page.goto(url);
-
     // Assert that the page is not blank
     await customAssert('Page should not be blank', async () => {
       const bodyContent = await page.content();
@@ -264,7 +281,6 @@ test.describe('E2E Test Suite', () => {
     // Navigate to setting
     await functions.navigate_To_Settings();
     // navigate to about application
-    // await functions.navigate_To_about_application();
     await page.click(pageobject.aboutApplicationLink);
     // nevigate to system
     await functions.about_application_to_system();

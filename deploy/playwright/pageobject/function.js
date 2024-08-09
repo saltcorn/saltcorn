@@ -117,8 +117,8 @@ class PageFunctions {
   }
 
   async Site_Structure_to_Search() {
-    await this.page.waitForSelector(this.locators.searchlocator);
-    await this.page.click(this.locators.searchlocator);
+    await this.page.waitForSelector(this.locators.searchtablocator);
+    await this.page.click(this.locators.searchtablocator);
   }
 
   async Site_Structure_to_Library() {
