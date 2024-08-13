@@ -1851,8 +1851,11 @@ router.get(
                     div({ class: "col-sm-4 fw-bold" }, req.__("Platform")),
                     div(
                       {
-                        class:
-                          "col-sm-1 fw-bold d-flex justify-content-center d-none",
+                        class: `col-sm-1 fw-bold d-flex justify-content-center ${
+                          builderSettings.androidPlatform !== "on"
+                            ? "d-none"
+                            : ""
+                        }`,
                         id: "dockerLabelId",
                       },
                       req.__("docker")
