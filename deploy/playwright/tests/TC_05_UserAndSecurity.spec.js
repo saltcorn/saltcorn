@@ -6,46 +6,44 @@ const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
 
 test.describe('E2E Test Suite', () => {
-    let functions;
-    let pageobject;
-    let context;
-    let page;
-    let randomString;
+  let functions;
+  let pageobject;
+  let context;
+  let page;
+  let randomString;
 
-    test.beforeAll(async ({ browser }) => {
-        // Initialize the log file
-        Logger.initialize();
+  test.beforeAll(async ({ browser }) => {
+    // Initialize the log file
+    Logger.initialize();
+    // Create a new context and page for all tests
+    context = await browser.newContext();
+    page = await context.newPage();
 
-        // Generate a random string for all tests
-        randomString = PageFunctions.generate_Random_String(5);
-    });
+    // Maximize the screen
+    await page.setViewportSize({ width: 1350, height: 720 });
 
-    test.beforeEach(async ({ browser }) => {
-        // Create a new context and page for each test
-        context = await browser.newContext();
-        page = await context.newPage();
-    
-        // Maximize the screen
-        await page.setViewportSize({ width: 1350, height: 1080 });
-    
-        functions = new PageFunctions(page);
-        pageobject = new PageObject(page);
-    
-        // Navigate to base URL and perform login
-        await functions.navigate_To_Base_URL(baseURL, derivedURL);
-        await functions.login('myproject19july@mailinator.com', 'myproject19july');
-        await functions.submit();
-      });
-    
-      test.afterEach(async () => {
-        // Close the page and context after each test
-        await page.close();
-        await context.close();
-      });
+    functions = new PageFunctions(page);
+    pageobject = new PageObject(page);
+
+    // Generate a random string for all tests
+    randomString = PageFunctions.generate_Random_String(5);
+
+    // Navigate to base URL and perform login
+    await functions.navigate_To_Base_URL(baseURL, derivedURL);
+    await functions.login('myproject19july@mailinator.com', 'myproject19july');
+    await functions.submit();
+  });
+
+  test.afterAll(async () => {
+    // Close the page and context after all test
+    await page.close();
+    await context.close();
+  });
 
     // Create a new user
     test('Create new user by visiting "Users and Security" tabs', async () => {
         functions = new PageFunctions(page);
+        await functions.SALTCORN();
         // Navigate to setting
         await functions.navigate_To_Settings();
         // Navigate to Users and Security
@@ -78,16 +76,11 @@ test.describe('E2E Test Suite', () => {
         await functions.fill_Text(pageobject.inputpassword, 'Pass@123');
         // click on create user button
         await page.click(pageobject.createuserbutton);
-
     });
 
     // Search new user on users tab
     test('Search new user from Users tabs', async () => {
         functions = new PageFunctions(page);
-        // Navigate to setting
-        await functions.navigate_To_Settings();
-        // Navigate to Users and Security
-        await functions.navigate_To_Users_And_Security();
         // search with username as created earlier
         await functions.fill_Text(pageobject.searchbar, randomString);
         await page.keyboard.press('Enter');
@@ -99,13 +92,7 @@ test.describe('E2E Test Suite', () => {
 
     // Delete new user from users tab
     test('Delete new user from users tabs', async () => {
-        // Navigate to setting
-        await functions.navigate_To_Settings();
-        // Navigate to Users and Security
-        await functions.navigate_To_Users_And_Security();
-        // search with username as created earlier
-        await functions.fill_Text(pageobject.searchbar, randomString);
-        // Wait for and click the last dropdown menu button
+        // click the last dropdown menu button
         await customAssert('dropdown menu should be visible', async () => {
             const elements = await page.locator('[id^="dropdownMenuButton"]');
             const count = await elements.count();

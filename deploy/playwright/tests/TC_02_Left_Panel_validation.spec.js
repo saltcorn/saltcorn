@@ -15,26 +15,24 @@ test.describe('E2E Test Suite', () => {
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
-  });
-  test.beforeEach(async ({ browser }) => {
-    // Create a new context and page for each test
+    // Create a new context and page for all tests
     context = await browser.newContext();
     page = await context.newPage();
 
     // Maximize the screen
-    await page.setViewportSize({ width: 1350, height: 1080 });
-    
+    await page.setViewportSize({ width: 1350, height: 720 });
+
     functions = new PageFunctions(page);
     pageobject = new PageObject(page);
-    
+
     // Navigate to base URL and perform login
     await functions.navigate_To_Base_URL(baseURL, derivedURL);
     await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
   });
 
-  test.afterEach(async () => {
-    // Close the page and context after each test
+  test.afterAll(async () => {
+    // Close the page and context after all test
     await page.close();
     await context.close();
   });
@@ -198,12 +196,13 @@ test.describe('E2E Test Suite', () => {
   
   test('Validate "Module" tabs', async () => {
     functions = new PageFunctions(page);
+    await functions.SALTCORN();
     // Navigate to setting
     await functions.navigate_To_Settings();
     // Navigate to Module
     await functions.navigate_To_module();
     await customAssert('Assert the lable of Modules setting', async () => {
-    await expect(page.locator(pageobject.Modulesettngsidebar)).toHaveText('Modules');
+    await expect(page.locator(pageobject.Modulesettingsidebar)).toHaveText('Modules');
     });
     // Assert the module URL
     await customAssert('page url should be /plugins', async () => {
@@ -250,6 +249,7 @@ test.describe('E2E Test Suite', () => {
   // Assert the presence of "Users and Security" tab
   test('Validate "Users and Security" tabs', async () => {
     functions = new PageFunctions(page);
+    await functions.SALTCORN();
     // Navigate to setting
     await functions.navigate_To_Settings();
     // Navigate to Users and Security
@@ -309,6 +309,7 @@ test.describe('E2E Test Suite', () => {
   // Assert the presence of "Site Structure" tab
   test('Validate "Site Structure" tabs', async () => {
     functions = new PageFunctions(page);
+    await functions.SALTCORN();
     // Navigate to setting
     await functions.navigate_To_Settings();
     // Navigate to Site Structure
@@ -382,6 +383,7 @@ test.describe('E2E Test Suite', () => {
   // Assert the presence of "Files" tab
   test('Validate "Files" tabs', async () => {
     functions = new PageFunctions(page);
+    await functions.SALTCORN();
     // Navigate to setting
     await functions.navigate_To_Settings();
     // Navigate to Files
@@ -420,9 +422,10 @@ test.describe('E2E Test Suite', () => {
   // Assert the presence of "Events" tab
   test('Validate "Events" tabs', async ({browser}) => {
     functions = new PageFunctions(page);
+    await functions.SALTCORN();
     // Navigate to setting
     await functions.navigate_To_Settings();
-    /// Navigate to Events
+    // Navigate to Events
     await functions.navigate_To_Events();
     await customAssert('Assert the lable of Events setting', async () => {
     await expect(page.locator(pageobject.Events)).toHaveText('Events');

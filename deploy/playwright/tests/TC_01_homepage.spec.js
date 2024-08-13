@@ -15,30 +15,29 @@ test.describe('E2E Test Suite', () => {
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
-  });
-
-  test.beforeEach(async ({ browser }) => {
-    // Create a new context and page for each test
+    // Create a new context and page for all tests
     context = await browser.newContext();
     page = await context.newPage();
 
-    // Assign a value to randomString here
-    randomString = PageFunctions.generate_Random_String(10);
-
     // Maximize the screen
-    await page.setViewportSize({ width: 1350, height: 1080 });
-    
+    await page.setViewportSize({ width: 1350, height: 720 });
+
     functions = new PageFunctions(page);
     pageobject = new PageObject(page);
-    
+
     // Navigate to base URL and perform login
     await functions.navigate_To_Base_URL(baseURL, derivedURL);
     await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
   });
 
-  test.afterEach(async () => {
-    // Close the page and context after each test
+  test.beforeEach(async ({ browser }) => {
+    // Assign a value to randomString here
+    randomString = PageFunctions.generate_Random_String(10);
+  });
+
+  test.afterAll(async () => {
+    // Close the page and context after all test
     await page.close();
     await context.close();
   });
@@ -51,7 +50,7 @@ test.describe('E2E Test Suite', () => {
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     await functions.fill_Text(pageobject.textlocator, 'Testing');
     //  check hello world have text testing
-    await customAssert('hello world should have text testing', async () => {
+    await customAssert('Hello world should have text testing', async () => {
       await expect(page.locator(pageobject.textlocator)).toHaveText('Testing');
     });
     // Check Text settings
@@ -71,10 +70,10 @@ test.describe('E2E Test Suite', () => {
     // Drag and drop the text source
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     // Check delete button
-    await customAssert('delete button should be visible', async () => await expect(await page.locator(pageobject.deletebutton)).toBeVisible());
+    await customAssert('Delete button should be visible', async () => await expect(await page.locator(pageobject.deletebutton)).toBeVisible());
     await expect(page.locator(pageobject.deletebutton)).toHaveText('Delete');
     // Check clone button
-    await customAssert('clone button should be visible', async () => await expect(await page.locator(pageobject.clonebutton)).toBeVisible());
+    await customAssert('Clone button should be visible', async () => await expect(await page.locator(pageobject.clonebutton)).toBeVisible());
     await expect(page.locator(pageobject.clonebutton)).toHaveText('Clone');
   });
 
@@ -97,7 +96,7 @@ test.describe('E2E Test Suite', () => {
     await functions.create_New_Page('My_project_' + randomString);
     // drag and drop the image source
     await functions.drag_And_Drop(pageobject.imageSource, pageobject.target);
-    await customAssert('image settings should be visible', async () => await expect(page.getByText('Image settings')).toBeVisible());
+    await customAssert('Image settings should be visible', async () => await expect(page.getByText('Image settings')).toBeVisible());
   });
 
   //Check card setting
@@ -145,19 +144,19 @@ test.describe('E2E Test Suite', () => {
     await functions.drag_And_Drop(pageobject.SearchLocator, pageobject.target);
 
     // validate that check box should be checked
-    await customAssert('dropdown check box should not be checked', async () => {
+    await customAssert('Dropdown check box should not be checked', async () => {
       const hasDropdownCheckbox = await page.locator(pageobject.hasdropdowncheckbox);
       await expect(hasDropdownCheckbox).not.toBeChecked();
     });
 
     // validate that show current state badge check box should not be checked
-    await customAssert('show current state badge check box should not be checked', async () => {
+    await customAssert('Show current state badge check box should not be checked', async () => {
       const showStateBadgesCheckbox = await page.locator(pageobject.statebadgecheckbox);
       await expect(showStateBadgesCheckbox).not.toBeChecked();
     });
 
     // validate that autofocus check box should not be checked
-    await customAssert('auto focus check box should not be checked', async () => {
+    await customAssert('Auto focus check box should not be checked', async () => {
       const autofocusCheckbox = await page.locator(pageobject.Autofocuscheckbox);
       await expect(autofocusCheckbox).not.toBeChecked();
     });
@@ -169,36 +168,36 @@ test.describe('E2E Test Suite', () => {
     await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the contains drag locator
     await functions.drag_And_Drop(pageobject.containsdraglocator, pageobject.target);
-    await customAssert('container settings should be visible', async () => {
+    await customAssert('Container settings should be visible', async () => {
       await expect(page.getByText('Container settings')).toBeVisible();
     });
 
     // container display setting should be visible
-    await customAssert('display settings should be visible', async () => {
+    await customAssert('Display settings should be visible', async () => {
       const displaySection = await page.locator(pageobject.containerdisplaysetting);
       await expect(displaySection).toBeVisible();
     });
 
     //container content setting should be visible
-    await customAssert('content settings should be visible', async () => {
+    await customAssert('Content settings should be visible', async () => {
       const contentsSection = await page.locator(pageobject.containercontentsetting);
       await expect(contentsSection).toBeVisible();
     });
 
     // container flex setting should be visible
-    await customAssert('container flex properties should be visible', async () => {
+    await customAssert('Container flex properties should be visible', async () => {
       const flexPropertiesSection = await page.locator(pageobject.containerflexsetting);
       await expect(flexPropertiesSection).toBeVisible();
     });
 
     // container content link should be visible
-    await customAssert('container contents should be visible', async () => {
+    await customAssert('Container contents should be visible', async () => {
       const containerLinkSection = await page.locator(pageobject.containercontentlink);
       await expect(containerLinkSection).toBeVisible();
     });
 
     // container custom class should be visible
-    await customAssert('container custom class/CSS should be visible', async () => {
+    await customAssert('Container custom class/CSS should be visible', async () => {
       const customClassCSSSection = await page.locator(pageobject.containercustomclass);
       await expect(customClassCSSSection).toBeVisible();
     });
@@ -210,40 +209,40 @@ test.describe('E2E Test Suite', () => {
     await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the action locator
     await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.target);
-    await customAssert('action settings should be visible', async () => {
+    await customAssert('Action settings should be visible', async () => {
       await expect(page.getByText('Action settings')).toBeVisible();
     });
 
     //Action Dropdown should be visible 
-    await customAssert('action dropdown should be visible', async () => {
+    await customAssert('Action dropdown should be visible', async () => {
       const actionDropdown = await page.locator(pageobject.ActionDropdown);
       await expect(actionDropdown).toBeVisible();
       await expect(actionDropdown).toHaveValue('GoBack');
     });
 
     // Action Label should be visible 
-    await customAssert('action label should be visible', async () => {
+    await customAssert('Action label should be visible', async () => {
       const labelInput = await page.locator(pageobject.ActionLabel);
       await expect(labelInput).toBeVisible();
       await expect(labelInput).toHaveValue('');
     });
 
     // Action Style dropdown should be visible 
-    await customAssert('action style dropdown should be visible', async () => {
+    await customAssert('Action style dropdown should be visible', async () => {
       const styleDropdown = await page.locator(pageobject.ActionStyledropdown);
       await expect(styleDropdown).toBeVisible();
       await expect(styleDropdown).toHaveValue('btn-primary');
     });
 
     //Action size dropdown should be visible 
-    await customAssert('action size dropdown should be visible', async () => {
+    await customAssert('Action size dropdown should be visible', async () => {
       const sizeDropdown = await page.locator(pageobject.Actionsizedropdown);
       await expect(sizeDropdown).toBeVisible();
       await expect(sizeDropdown).toHaveValue('');
     });
 
     // Action Hover Title should be visible 
-    await customAssert('action hover title should be visible', async () => {
+    await customAssert('Action hover title should be visible', async () => {
       const hoverTitleInput = await page.locator(pageobject.ActionHoverTitle);
       await expect(hoverTitleInput).toBeVisible();
       await expect(hoverTitleInput).toHaveValue('');
@@ -287,7 +286,7 @@ test.describe('E2E Test Suite', () => {
     // clear all data
     await functions.clear_All();
     // Verify toaster message that clear all deleted all the changes
-    await customAssert('toaster message for clear all should be visible with cleared content names', async () => {
+    await customAssert('Toaster message for clear all should be visible with cleared content names', async () => {
       await functions.wait_For_Toaster_Message();
       const title = functions.get_Toaster_Message_Locator();
       //assert the toaster message

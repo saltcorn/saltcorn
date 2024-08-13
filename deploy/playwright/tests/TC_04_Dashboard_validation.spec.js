@@ -10,19 +10,17 @@ test.describe('E2E Test Suite', () => {
   let pageobject;
   let context;
   let page;
+  let randomString;
 
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
-  });
-
-  test.beforeEach(async ({ browser }) => {
-    // Create a new context and page for each test
+    // Create a new context and page for all tests
     context = await browser.newContext();
     page = await context.newPage();
 
     // Maximize the screen
-    await page.setViewportSize({ width: 1350, height: 1080 });
+    await page.setViewportSize({ width: 1350, height: 720 });
 
     functions = new PageFunctions(page);
     pageobject = new PageObject(page);
@@ -33,12 +31,11 @@ test.describe('E2E Test Suite', () => {
     await functions.submit();
   });
 
-  test.afterEach(async () => {
-    // Close the page and context after each test
+  test.afterAll(async () => {
+    // Close the page and context after all test
     await page.close();
     await context.close();
   });
-
   // Assert the presence of "Tables" section
   test('Verify Saltcorn home page and check "Tables" section', async () => {
     // Saltcorn home page 
