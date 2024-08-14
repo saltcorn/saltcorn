@@ -443,7 +443,7 @@ describe("join-aggregations in stored calculated fields", () => {
   it("check", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
-    const bookrow = await books.getRow({ id: 1 });
+    const bookrow = await books.getRow({ id: 2 });
 
     expect(bookrow?.books_same_pub).toBe(1);
   });

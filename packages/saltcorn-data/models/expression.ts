@@ -667,15 +667,23 @@ const apply_calculated_fields_stored = async (
     ) {
       hasExprs = true;
       // refetch row with agg
+      const _agg_val: any = {
+        ...field.attributes,
+        where: jsexprToWhere(field.attributes.aggwhere),
+        field: field.attributes.agg_field.split("@")[0],
+        orderBy: field.attributes.agg_order_by,
+      };
+      if (_agg_val.table?.includes?.("->")) {
+        const [ttable, dtable] = _agg_val.table.split("->");
+        const [through, rest] = _agg_val.agg_relation.split("->");
+        _agg_val.table = dtable;
+        _agg_val.through = through;
+      }
+
       const reFetchedRow = await table.getJoinedRow({
         where: { [table.pk_name]: row[table.pk_name] },
         aggregations: {
-          _agg_val: {
-            ...field.attributes,
-            where: jsexprToWhere(field.attributes.aggwhere),
-            field: field.attributes.agg_field.split("@")[0],
-            orderBy: field.attributes.agg_order_by,
-          },
+          _agg_val,
         },
       });
 
