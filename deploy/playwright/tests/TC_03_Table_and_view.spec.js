@@ -137,10 +137,10 @@ test.describe('E2E Test Suite', () => {
     });
     // check full name field type is string
     await customAssert('Full Name field should be string type ', async () => {
-      await page.waitForSelector(pageobject.fullnametypelocator);
-      await expect(page.locator(pageobject.fullnametypelocator)).toBeVisible();
+      await page.waitForSelector(pageobject.Stringtypelocator);
+      await expect(page.locator(pageobject.Stringtypelocator)).toBeVisible();
       // Assert the Variable type for Full name field
-      await expect(page.locator(pageobject.fullnametypelocator)).toHaveText('String');
+      await expect(page.locator(pageobject.Stringtypelocator)).toHaveText('String');
     });
     // check variable name for full name field is visible
     await customAssert('Variable name for full name should be full_name and visible ', async () => {
@@ -151,8 +151,8 @@ test.describe('E2E Test Suite', () => {
     });
     // check delete button for full name field is visible
     await customAssert('Delete button for full name field should be exist ', async () => {
-      await page.waitForSelector(pageobject.fullnamedeletebutton);
-      await expect(page.locator(pageobject.fullnamedeletebutton)).toBeVisible();
+      await page.waitForSelector(pageobject.deletefieldbutton);
+      await expect(page.locator(pageobject.deletefieldbutton).nth(0)).toBeVisible();
     });
   });
 
@@ -197,7 +197,7 @@ test.describe('E2E Test Suite', () => {
     });
     // check delete button for DOB field is visible
     await customAssert('Delete button for DOB field should be exist ', async () => {
-      await expect(page.locator(pageobject.deletedobbutton)).toBeVisible();
+      await expect(page.locator(pageobject.deletefieldbutton).nth(0)).toBeVisible();
     });
   });
 
@@ -236,9 +236,9 @@ test.describe('E2E Test Suite', () => {
     });
     // check address field type is string
     await customAssert('Address field type should be string', async () => {
-      await expect(page.locator(pageobject.addresstypelocator)).toBeVisible();
+      await expect(page.locator(pageobject.Stringtypelocator).nth(0)).toBeVisible();
       // Assert the variable type for Address field
-      await expect(page.locator(pageobject.addresstypelocator)).toHaveText('String');
+      await expect(page.locator(pageobject.Stringtypelocator).nth(0)).toHaveText('String');
     });
     // check variable name for address field is visible
     await customAssert('variable name for Address field should be adress and visible ', async () => {
@@ -248,7 +248,7 @@ test.describe('E2E Test Suite', () => {
     });
     // check delete button for address field is visible
     await customAssert('Delete button for Address field should be visible ', async () => {
-      await expect(page.locator(pageobject.deleteaddressbutton)).toBeVisible();
+      await expect(page.locator(pageobject.deletefieldbutton).nth(0)).toBeVisible();
     });
   });
 
@@ -286,20 +286,17 @@ test.describe('E2E Test Suite', () => {
       expect(calendarVisible).toBe(true);
     });
     // enter year value in cell
-    await page.fill(pageobject.yearlocator, '1990')
+    await page.fill(pageobject.yearlocator, '2024')
     // select month in calendar
     await page.selectOption(pageobject.monthlocator, { label: 'June' });
     // Click on the date using the provided selector
     await page.waitForSelector(pageobject.datelocator);
     await page.click(pageobject.datelocator);
-    // Press enter in keyboard
-    await page.keyboard.press('Enter');
     // click on tab cell to activate it
     await page.waitForSelector(pageobject.tab3locator);
     await page.click(pageobject.tab3locator)
     // enter address value in cell
     await page.keyboard.type('HN 01, WN 26 noida india');
-    await page.keyboard.press('Enter');
   });
 
   //download table as csv
@@ -366,6 +363,14 @@ test.describe('E2E Test Suite', () => {
     // input view name and discription
     await page.fill(pageobject.InputName, 'NewView_List');
     await page.fill(pageobject.viewdiscriptiontext, 'view for table');
+
+    // validate the view pattern in table dropdown
+    await customAssert('View Pattern should be list', async () => {
+      // select list pattern
+      const ListPattern = await page.$("#inputviewtemplate");
+      await ListPattern?.selectOption("List");
+    });
+
     // validate the table name in table dropdown
     await customAssert('Table Name should be same as we created earlier', async () => {
       await expect(page.locator('#inputtable_name')).toHaveText(`My_Tableusers`);
@@ -375,12 +380,13 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
+    await page.waitForTimeout(25000);
     // click on add column button on page
     await page.waitForSelector(pageobject.addcolumnbutton);
     await page.click(pageobject.addcolumnbutton);
     // drag and drop the action locator
     await page.waitForSelector(pageobject.ActionLocator);
-    await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.newcolumn);
+    await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.newcolumn1);
     // click on next button
     await page.waitForSelector(pageobject.nextoption);
     await page.click(pageobject.nextoption);
@@ -400,17 +406,18 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.createnewview);
     await page.click(pageobject.createnewview);
     // input view name and discription
-    await page.fill(pageobject.InputName, 'View2_' + randomString);
+    await page.fill(pageobject.InputName, 'View2_Edit');
     await page.fill(pageobject.viewdiscriptiontext, 'view for table');
-    // click on dropdown and select option
-    await page.waitForSelector(pageobject.viewpatterndropdown);
-    await page.click(pageobject.viewpatterndropdown);
-    // click down aero to change options to edit
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    // validate the view pattern in table dropdown
+    await customAssert('View Pattern should be Edit', async () => {
+      // select the Edit pattern
+      const EditPattern = await page.$("#inputviewtemplate");
+      await EditPattern?.selectOption("Edit");
+    });
     // submit the page
     await functions.submit();
     // drag and drop the page source on the page
+    await page.waitForTimeout(25000);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     await functions.fill_Text(pageobject.textlocator, 'I said..');
     // click on delete button
@@ -426,10 +433,15 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.fieldsourrce);
     await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.target);
     // click on field dropdown for field
-    await page.waitForSelector(pageobject.fielddropdown);
-    await page.click(pageobject.fielddropdown);
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+
+    await customAssert('field dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.fielddropdown);
+      await expect(page.locator(pageobject.fielddropdown)).toBeVisible();
+      await page.click(pageobject.fielddropdown);
+      // Select 'Date of birth' from the dropdown
+      await page.selectOption('select.form-control.form-select', 'date_of_birth');
+    });
+
     // click on save button
     await page.waitForSelector(pageobject.saveactionbutton);
     await page.click(pageobject.saveactionbutton);
@@ -439,7 +451,7 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.deletebutton);
     await page.click(pageobject.deletebutton);
     // click on next page
-    await page.waitForTimeout(4000);
+    // await page.waitForTimeout(4000);
     await page.waitForSelector(pageobject.nextoption);
     await page.click(pageobject.nextoption);
     // click on finish button
@@ -463,12 +475,15 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.addcolumnbutton);
     // drag and drop the action view link
     await page.waitForSelector(pageobject.viewlinksource);
-    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
+    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn2);
     // click to view link dropdown
-    await page.waitForSelector(pageobject.viewtolinkdropdown);
-    await page.click(pageobject.viewtolinkdropdown);
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await customAssert('view to link dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.viewtolinkdropdown);
+      await expect(page.locator(pageobject.viewtolinkdropdown)).toBeVisible();
+      await page.click(pageobject.viewtolinkdropdown);
+      // Click the view to edit option in the dropdown
+      await page.click(pageobject.view2editoption);
+    });
     // add lable for link
     await functions.fill_Text(pageobject.lebelforfield, 'Edit');
     await page.waitForSelector(pageobject.viewtolinkdropdown);
@@ -494,8 +509,6 @@ test.describe('E2E Test Suite', () => {
       await page.waitForSelector(pageobject.editfieldlink);
       await page.click(pageobject.editfieldlink);
     });
-    await page.waitForSelector(pageobject.saveprimarybutton);
-    await page.click(pageobject.saveprimarybutton);
   });
 
   // Add link to create new row in table
@@ -516,8 +529,8 @@ test.describe('E2E Test Suite', () => {
     // seslet view to create from dropdown
     await page.waitForSelector(pageobject.viewtocreate);
     await page.click(pageobject.viewtocreate);
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    const viewtocreate = await page.$("#inputview_to_create");
+    await viewtocreate?.selectOption("View2_Edit [Edit]");
     // add lable for view to create
     await functions.fill_Text(pageobject.labeltocreate, 'Add person');
     // click on next button
@@ -555,17 +568,17 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.createnewview);
     await page.click(pageobject.createnewview);
     // input view name and discription
-    await page.fill(pageobject.InputName, 'showView_' + randomString);
+    await page.fill(pageobject.InputName, 'showView');
     await page.fill(pageobject.viewdiscriptiontext, 'view for table');
-    // click on dropdown and select option
-    await page.waitForSelector(pageobject.viewpatterndropdown);
-    await page.click(pageobject.viewpatterndropdown);
-    // click down aero to change options to show
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    // validate the view pattern in table dropdown
+    await customAssert('View Pattern should be Show', async () => {
+      // select show pattern
+      const ShowPattern = await page.$("#inputviewtemplate");
+      await ShowPattern?.selectOption("Show");
+    });
     // submit the page
     await functions.submit();
+    await page.waitForTimeout(25000);
     // select full name lable
     await page.waitForSelector(pageobject.Fullnameshow);
     await page.click(pageobject.Fullnameshow);
@@ -575,12 +588,9 @@ test.describe('E2E Test Suite', () => {
     // drag full name on target
     await functions.drag_And_Drop(pageobject.fullnameuser, pageobject.target);
     // select text style as heading1 for full name
-
     const textstyleLocator = page.locator('.form-control.form-select').nth(2);
-    // Click on the third element
     await textstyleLocator.click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await textstyleLocator?.selectOption("Heading 1");
     // click on next button
     await page.waitForSelector(pageobject.nextoption);
     await page.click(pageobject.nextoption);
@@ -601,14 +611,16 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.addcolumnbutton);
     await page.click(pageobject.addcolumnbutton);
     // drag and drop the viewlink locator
-    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
+    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn3);
     // select view to show from dropdown
-    await page.waitForSelector(pageobject.viewtolinkdropdown);
-    await page.click(pageobject.viewtolinkdropdown);
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await customAssert('view to show dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.viewtolinkdropdown);
+      await expect(page.locator(pageobject.viewtolinkdropdown)).toBeVisible();
+      await page.click(pageobject.viewtolinkdropdown);
+      // Click the view to edit option in the dropdown
+      await page.click(pageobject.view2showoption);
+    });
+
     // add lable for link
     await page.waitForSelector(pageobject.lebelforfield);
     await functions.fill_Text(pageobject.lebelforfield, 'Show');
@@ -654,10 +666,10 @@ test.describe('E2E Test Suite', () => {
     // Click on create button
     await functions.submit();
     // Click on create view from table
-    await page.waitForSelector(pageobject.createviewfromtable);
-    await page.click(pageobject.createviewfromtable);
+    await page.waitForSelector(pageobject.Homecreateview);
+    await page.click(pageobject.Homecreateview);
     // input view name and discription
-    await page.fill(pageobject.InputName, 'csvView_' + randomString);
+    await page.fill(pageobject.InputName, 'csvView_list');
     await page.fill(pageobject.viewdiscriptiontext, 'view for csv table');
     // submit the page
     await functions.submit();

@@ -45,8 +45,9 @@ test.describe('E2E Test Suite', () => {
   test('Create a new page with random string', async () => {
     // Create a new page with the generated random string
     await functions.create_New_Page('My_project_' + randomString);
-
+    await page.waitForTimeout(10000);
     // Drag and drop the text source
+    await page.waitForSelector(pageobject.textSource);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     await functions.fill_Text(pageobject.textlocator, 'Testing');
     //  check hello world have text testing
@@ -68,6 +69,7 @@ test.describe('E2E Test Suite', () => {
     // create a new page
     await functions.create_New_Page('My_project_' + randomString);
     // Drag and drop the text source
+    await page.waitForSelector(pageobject.textSource);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     // Check delete button
     await customAssert('Delete button should be visible', async () => await expect(await page.locator(pageobject.deletebutton)).toBeVisible());
@@ -83,6 +85,7 @@ test.describe('E2E Test Suite', () => {
     await functions.create_New_Page('My_project_' + randomString);
   
     // drag and drop the html code source
+    await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
     await functions.fill_Text(pageobject.htmltextlocator, '<h3>Hello Sumit</h3>');
 
@@ -215,7 +218,7 @@ test.describe('E2E Test Suite', () => {
 
     //Action Dropdown should be visible 
     await customAssert('Action dropdown should be visible', async () => {
-      const actionDropdown = await page.locator(pageobject.ActionDropdown);
+      const actionDropdown = page.locator('.form-control.form-select').nth(0);
       await expect(actionDropdown).toBeVisible();
       await expect(actionDropdown).toHaveValue('GoBack');
     });
@@ -229,14 +232,14 @@ test.describe('E2E Test Suite', () => {
 
     // Action Style dropdown should be visible 
     await customAssert('Action style dropdown should be visible', async () => {
-      const styleDropdown = await page.locator(pageobject.ActionStyledropdown);
+      const styleDropdown = page.locator('.form-control.form-select').nth(1);
       await expect(styleDropdown).toBeVisible();
       await expect(styleDropdown).toHaveValue('btn-primary');
     });
 
     //Action size dropdown should be visible 
     await customAssert('Action size dropdown should be visible', async () => {
-      const sizeDropdown = await page.locator(pageobject.Actionsizedropdown);
+      const sizeDropdown = page.locator('.form-control.form-select').nth(2);
       await expect(sizeDropdown).toBeVisible();
       await expect(sizeDropdown).toHaveValue('');
     });

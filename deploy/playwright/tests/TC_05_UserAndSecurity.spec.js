@@ -69,7 +69,6 @@ test.describe('E2E Test Suite', () => {
         await functions.fill_Text(pageobject.inputemail, randomString + '@mailinator.com');
         // select user role
         await page.click(pageobject.inputrole_id);
-        await page.keyboard.press('Enter');
         // uncheck random password checkbox
         await page.click(pageobject.inputrnd_password);
         // enter password on password field
@@ -83,7 +82,6 @@ test.describe('E2E Test Suite', () => {
         functions = new PageFunctions(page);
         // search with username as created earlier
         await functions.fill_Text(pageobject.searchbar, randomString);
-        await page.keyboard.press('Enter');
         // assert new user is visible
         await customAssert('new user should be visible', async () => {
             await expect(page.getByRole('link', { name: randomString + '@mailinator.com' })).toBeVisible();
@@ -103,7 +101,6 @@ test.describe('E2E Test Suite', () => {
             await lastDropdownButton.scrollIntoViewIfNeeded();
             await expect(lastDropdownButton).toBeVisible();
             await lastDropdownButton.click();
-            await page.keyboard.press('ArrowDown');
         });
 
         await customAssert('Delete button should be visible', async () => {
