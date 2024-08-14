@@ -414,6 +414,40 @@ describe("aggregations in stored calculated fields", () => {
     expect(hrow4?.sum_of_pages).toBe(729);
   });
 });
+describe("join-aggregations in stored calculated fields", () => {
+  it("creates", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await Field.create({
+      table: books,
+      name: "books_same_pub",
+      label: "books_same_pub",
+      calculated: true,
+      stored: true,
+      expression: "__aggregation",
+      type: "Integer",
+      attributes: {
+        ref: "publisher",
+        table: "publisher->books",
+        aggwhere: "",
+        agg_field: "id@Integer",
+        aggregate: "Count",
+        agg_order_by: null,
+        agg_relation: "publisher->books.publisher",
+        unique_error_msg: null,
+      },
+    });
+    await recalculate_for_stored(books);
+  });
+
+  it("check", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const bookrow = await books.getRow({ id: 1 });
+
+    expect(bookrow?.books_same_pub).toBe(1);
+  });
+});
 
 describe("expressionValidator", () => {
   it("validates correct", () => {
