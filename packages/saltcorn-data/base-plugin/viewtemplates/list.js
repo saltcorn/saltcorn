@@ -600,6 +600,10 @@ const configuration_workflow = (req) =>
                 .map((s) => code(s))
                 .join(", "),
             type: "String",
+            help: {
+              topic: "Inclusion Formula",
+              context: { table_name: table.name },
+            },
           });
           formfields.push({
             name: "exclusion_relation",
