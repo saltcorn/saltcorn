@@ -111,7 +111,7 @@ class PageLocators {
     this.inputrnd_password = '#inputrnd_password';
     this.inputpassword = '#inputpassword';
     this.createuserbutton = 'button[type="submit"]:has-text("Create")';
-    this.searchbar = 'input[placeholder="🔍 Search"]';
+    this.searchbar = 'input[type=search]';
     this.userdropdown = '#content > div.dropdown-menu.dropdown-menu-end.show';
     this.deleteuser = '#content > div.dropdown-menu.dropdown-menu-end.show > a:nth-child(11)';
     

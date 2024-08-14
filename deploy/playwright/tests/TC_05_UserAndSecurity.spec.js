@@ -64,7 +64,7 @@ test.describe('E2E Test Suite', () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'useradmin' + derivedURL + 'new');
         });
         // input DOB for user
-        await functions.fill_Text(pageobject.inputdob, '09-08-1997');
+        //await functions.fill_Text(pageobject.inputdob, '09-08-1997');
         // input email address with random name
         await functions.fill_Text(pageobject.inputemail, randomString + '@mailinator.com');
         // select user role
