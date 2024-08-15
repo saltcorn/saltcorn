@@ -138,14 +138,14 @@ class ReleaseCommand extends Command {
       `package.json`,
       JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
     );
-    spawnSync("npm", ["update", "--legacy-peer-deps"], {
+    /*spawnSync("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
     spawnSync("npm", ["audit", "fix"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
-    });
+    });*/
     publish("saltcorn-cli");
     fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile
