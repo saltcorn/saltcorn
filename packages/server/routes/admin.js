@@ -3008,36 +3008,37 @@ router.post(
     });
     const childOutputs = [];
     child.stdout.on("data", (data) => {
-      // console.log(data.toString());
-      if (data) childOutputs.push(data.toString());
+      const outMsg = data.toString();
+      getState().log(5, outMsg);
+      if (data) childOutputs.push(outMsg);
     });
     child.stderr.on("data", (data) => {
-      // console.log(data.toString());
-      childOutputs.push(data ? data.toString() : req.__("An error occurred"));
+      const errMsg = data ? data.toString() : req.__("An error occurred");
+      getState().log(5, errMsg);
+      childOutputs.push(errMsg);
     });
     child.on("exit", (exitCode, signal) => {
       const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";
-      fs.writeFile(
-        path.join(buildDir, logFile),
-        childOutputs.join("\n"),
-        async (error) => {
-          if (error) {
-            console.log(`unable to write '${logFile}' to '${buildDir}'`);
-            console.log(error);
-          } else {
-            // no transaction, '/build-mobile-app/finished' filters for valid attributes
-            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
-          }
+      const exitMsg = childOutputs.join("\n");
+      fs.writeFile(path.join(buildDir, logFile), exitMsg, async (error) => {
+        if (error) {
+          console.log(`unable to write '${logFile}' to '${buildDir}'`);
+          console.log(error);
+        } else {
+          // no transaction, '/build-mobile-app/finished' filters for valid attributes
+          await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
         }
-      );
+      });
     });
     child.on("error", (msg) => {
       const message = msg.message ? msg.message : msg.code;
       const stack = msg.stack ? msg.stack : "";
       const logFile = "error_logs.txt";
+      const errMsg = [message, stack].join("\n");
+      getState().log(5, msg);
       fs.writeFile(
         path.join(buildDir, "error_logs.txt"),
-        [message, stack].join("\n"),
+        errMsg,
         async (error) => {
           if (error) {
             console.log(`unable to write logFile to '${buildDir}'`);

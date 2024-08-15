@@ -5,25 +5,21 @@
   "description": "Apache Cordova application with @saltcorn/markup",
   "main": "index.js",
   "scripts": {
-    "add-platform": "cordova platform add",
-    "add-plugin": "cordova plugin add",
-    "build-app": "cordova build "
+    "add-platform": "npx cap add",
+    "write-gradle-cfg": "node write-gradle-cfg.js"
   },
   "author": "Christian Hugo",
   "license": "MIT",
-  "cordova": {
-    "platforms": [
-      "android"
-    ]
-  },
   "overrides": {
     "ansi-regex": "4.1.1"
   },
   "dependencies": {
-    "cordova": "^12.0.0",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/assets": "^3.0.5",
     "cordova-sqlite-ext": "^6.0.0"
   },
   "devDependencies": {
-    "cordova-android": "^12.0.1"
+    "typescript": "^4.4.4"
   }
 }

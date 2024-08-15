@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 BUILD_TYPE="$1"
 KEYSTORE_FILE="$2"
 KEYSTORE_ALIAS="$3"
@@ -15,28 +17,34 @@ export ANDROID_SDK_ROOT=/android_sdk
 export ANDROID_HOME=/android_sdk
 export GRADLE_HOME=/opt/gradle-8.4
 export PATH=$PATH:/opt/gradle-8.4/bin
-# stop gradle from downloading itself
-export CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-8.4-all.zip
 
 cd /saltcorn-mobile-app
-echo "adding android platform"
+npm install @capacitor/cli @capacitor/core @capacitor/android
 npm run add-platform android
-echo "calling cordova clean";
-cordova clean
-echo "adding plugins"
-npm run add-plugin /init_project/project/plugins/cordova-plugin-inappbrowser
-npm run add-plugin /init_project/project/plugins/cordova-plugin-file
-npm run add-plugin /init_project/project/plugins/cordova-sqlite-ext
-npm run add-plugin /init_project/project/plugins/cordova-plugin-network-information
-npm run add-plugin /init_project/project/plugins/cordova-plugin-geolocation
-npm run add-plugin /init_project/project/plugins/cordova-plugin-camera
+npx capacitor-assets generate
+plugins="cordova-sqlite-ext cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser cordova-plugin-network-information cordova-plugin-geolocation cordova-plugin-camera" && \
+for plugin in $plugins; do \
+  npm install "$plugin"; \
+done
+npx cap sync
+cd ./android
+cat <<EOF > /saltcorn-mobile-app/android/gradle/wrapper/gradle-wrapper.properties
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=file\:/gradle-8.4-all.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
 
 if [ -n "$KEYSTORE_FILE" ]; then
   echo "building signed app with keystore"
-  cordova build android --"$BUILD_TYPE" -- --keystore="$KEYSTORE_FILE" --alias="$KEYSTORE_ALIAS" --storePassword="$KEYSTORE_PASSWORD" --password="$KEYSTORE_PASSWORD"
-else
-  echo "building unsigned app"
-  cordova build android --"$BUILD_TYPE"
+  npm run write-gradle-cfg -- --keystore-file=$KEYSTORE_FILE --keystore-alias=$KEYSTORE_ALIAS --keystore-password=$KEYSTORE_PASSWORD  
 fi
 
-chmod -R o+rwx /saltcorn-mobile-app
+if [ "$BUILD_TYPE" == "release" ]; then
+  ./gradlew assembleRelease
+else
+  ./gradlew assembleDebug
+fi

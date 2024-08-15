@@ -16,9 +16,11 @@ import {
   prepareBuildDir,
   prepareExportOptionsPlist,
   modifyConfigXml,
+  writeCapacitorConfig,
   prepareAppIcon,
   prepareSplashIcon,
   decodeProvisioningProfile,
+  prepAppIcon,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -27,6 +29,7 @@ import {
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
 import { CordovaHelper } from "./utils/cordova_helper";
+import { CapacitorHelper } from "./utils/capacitor-helper";
 import { removeNonWordChars } from "@saltcorn/data/utils";
 
 type EntryPointType = "view" | "page";
@@ -143,76 +146,82 @@ export class MobileBuilder {
    *
    */
   async build() {
-    prepareBuildDir(this.buildDir, this.templateDir);
-    await modifyConfigXml(this.buildDir, {
-      appName: this.appName,
-      appId: this.appId !== appIdDefault ? this.appId : undefined,
-      appVersion: this.appVersion,
-    });
-    if (this.appIcon) {
-      await prepareAppIcon(this.buildDir, this.appIcon, this.platforms);
-      await prepareSplashIcon(this.buildDir, this.appIcon, this.platforms);
-    }
-    let iosParams = null;
-    if (this.platforms.includes("ios")) {
-      iosParams = await decodeProvisioningProfile(
+    try {
+      prepareBuildDir(this.buildDir, this.templateDir);
+      writeCapacitorConfig(this.buildDir, {
+        appName: this.appName,
+        appId: this.appId !== appIdDefault ? this.appId : undefined,
+        appVersion: this.appVersion,
+        unsecureNetwork:
+          this.serverURL.startsWith("http://") || !this.serverURL,
+      });
+      if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
+
+      let iosParams = null;
+      if (this.platforms.includes("ios")) {
+        iosParams = await decodeProvisioningProfile(
+          this.buildDir,
+          this.provisioningProfile!
+        );
+        prepareExportOptionsPlist(this.buildDir, this.appId, iosParams.guuid);
+      }
+      copyServerFiles(this.buildDir);
+      copySbadmin2Deps(this.buildDir);
+      await copySiteLogo(this.buildDir);
+      copyTranslationFiles(this.buildDir);
+      writeCfgFile({
+        buildDir: this.buildDir,
+        entryPoint: this.entryPoint,
+        entryPointType: this.entryPointType,
+        serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
+        localUserTables: this.localUserTables,
+        synchedTables: this.synchedTables,
+        tenantAppName: this.tenantAppName,
+        autoPublicLogin: this.autoPublicLogin,
+        allowOfflineMode: this.allowOfflineMode,
+      });
+      let resultCode = await bundlePackagesAndPlugins(
         this.buildDir,
-        this.provisioningProfile!
+        this.plugins
       );
-      prepareExportOptionsPlist(this.buildDir, this.appId, iosParams.guuid);
+      if (resultCode !== 0) return resultCode;
+      features.version_plugin_serve_path = false;
+      await loadAllPlugins();
+      await copyPublicDirs(this.buildDir);
+      await installNpmPackages(this.buildDir, this.pluginManager);
+      await buildTablesFile(this.buildDir, this.includedPlugins);
+      if (this.splashPage)
+        await prepareSplashPage(
+          this.buildDir,
+          this.splashPage,
+          this.serverURL,
+          this.tenantAppName,
+          this.user
+        );
+      resultCode = await createSqliteDb(this.buildDir);
+      if (resultCode !== 0) return resultCode;
+      if (this.keyStorePath)
+        copySync(
+          this.keyStorePath,
+          join(this.buildDir, basename(this.keyStorePath))
+        );
+      const capacitorHelper = new CapacitorHelper({
+        ...this,
+        appleTeamId: iosParams?.teamId,
+        provisioningGUUID: iosParams?.guuid,
+      });
+      capacitorHelper.buildApp();
+      if (resultCode === 0 && this.copyTargetDir) {
+        capacitorHelper.tryCopyAppFiles(
+          this.copyTargetDir,
+          this.user!,
+          this.appName
+        );
+      }
+      return 0;
+    } catch (e: any) {
+      console.error(e);
+      return 1;
     }
-    copyServerFiles(this.buildDir);
-    copySbadmin2Deps(this.buildDir);
-    await copySiteLogo(this.buildDir);
-    copyTranslationFiles(this.buildDir);
-    writeCfgFile({
-      buildDir: this.buildDir,
-      entryPoint: this.entryPoint,
-      entryPointType: this.entryPointType,
-      serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
-      localUserTables: this.localUserTables,
-      synchedTables: this.synchedTables,
-      tenantAppName: this.tenantAppName,
-      autoPublicLogin: this.autoPublicLogin,
-      allowOfflineMode: this.allowOfflineMode,
-    });
-    let resultCode = await bundlePackagesAndPlugins(
-      this.buildDir,
-      this.plugins
-    );
-    if (resultCode !== 0) return resultCode;
-    features.version_plugin_serve_path = false;
-    await loadAllPlugins();
-    await copyPublicDirs(this.buildDir);
-    await installNpmPackages(this.buildDir, this.pluginManager);
-    await buildTablesFile(this.buildDir, this.includedPlugins);
-    if (this.splashPage)
-      await prepareSplashPage(
-        this.buildDir,
-        this.splashPage,
-        this.serverURL,
-        this.tenantAppName,
-        this.user
-      );
-    resultCode = await createSqliteDb(this.buildDir);
-    if (resultCode !== 0) return resultCode;
-    if (this.keyStorePath)
-      copySync(
-        this.keyStorePath,
-        join(this.buildDir, basename(this.keyStorePath))
-      );
-    const cordovaHelper = new CordovaHelper({
-      ...this,
-      appleTeamId: iosParams?.teamId,
-      provisioningGUUID: iosParams?.guuid,
-    });
-    resultCode = cordovaHelper.buildApp();
-    if (resultCode === 0 && this.copyTargetDir)
-      await cordovaHelper.tryCopyAppFiles(
-        this.copyTargetDir,
-        this.user!,
-        this.appName
-      );
-    return resultCode;
   }
 }

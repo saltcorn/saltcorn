@@ -36,6 +36,48 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   console.log(result.output.toString());
 }
 
+export function writeCapacitorConfig(buildDir: string, config: any) {
+  const cfgFile = join(buildDir, "capacitor.config.ts");
+  const content = `
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig  = {
+  appId: '${config.appId ? config.appId : "com.saltcorn.mobile.app"}',
+  appName: '${config.appName ? config.appName : "SaltcornMobileApp"}',
+  webDir: "www",
+  ios: {
+    scheme: "SaltcornMobileApp",
+  },
+  ${
+    config.unsecureNetwork
+      ? `android: {
+    allowMixedContent: true,
+  },
+  server: {
+    cleartext: true,
+  },`
+      : ""
+  }
+};
+
+export default config;`;
+  writeFileSync(cfgFile, content);
+}
+
+export function prepAppIcon(buildDir: string, appIcon: string) {
+  for (const icon of [
+    "icon-only",
+    "icon-foreground",
+    "icon-background",
+    "splash",
+    "splash-dark",
+  ]) {
+    copySync(appIcon, join(buildDir, "assets", `${icon}.png`), {
+      overwrite: true,
+    });
+  }
+}
+
 export async function modifyConfigXml(buildDir: string, config: any) {
   try {
     const configXml = join(buildDir, "config.xml");
@@ -51,7 +93,7 @@ export async function modifyConfigXml(buildDir: string, config: any) {
     console.log(
       `Unable to modify the config.xml: ${
         error.message ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 }
@@ -64,7 +106,7 @@ export async function modifyConfigXml(buildDir: string, config: any) {
 export async function prepareAppIcon(
   buildDir: string,
   appIcon: string,
-  platforms: string[]
+  platforms: string[],
 ) {
   try {
     if (platforms.includes("android"))
@@ -76,7 +118,7 @@ export async function prepareAppIcon(
     console.log(
       `Unable to set the app icon '${appIcon}': ${
         error.message ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 }
@@ -92,7 +134,7 @@ export async function prepareAppIcon(
 export async function prepareSplashIcon(
   buildDir: string,
   splashIcon: string,
-  platforms: string[]
+  platforms: string[],
 ) {
   try {
     if (platforms.includes("android")) {
@@ -101,7 +143,7 @@ export async function prepareSplashIcon(
         join(buildDir, "res", "screen", "android", "splash-icon.png"),
         {
           overwrite: true,
-        }
+        },
       );
     }
     if (platforms.includes("ios")) {
@@ -112,18 +154,18 @@ export async function prepareSplashIcon(
           "res",
           "screen",
           "ios",
-          "Default@2x~universal~anyany.png"
+          "Default@2x~universal~anyany.png",
         ),
         {
           overwrite: true,
-        }
+        },
       );
     }
   } catch (error: any) {
     console.log(
       `Unable to set the splash icon '${splashIcon}': ${
         error.message ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 }
@@ -165,7 +207,7 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
     console.log(
       `Unable to generate appicon set for '${appIcon}': ${
         error.message ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 }
@@ -173,7 +215,7 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
 export function prepareExportOptionsPlist(
   buildDir: string,
   appId: string,
-  provisioningProfile: string
+  provisioningProfile: string,
 ) {
   try {
     const exportOptionsPlist = join(buildDir, "ExportOptions.plist");
@@ -192,20 +234,20 @@ export function prepareExportOptionsPlist(
           </dict>
         </dict>
 
-      </plist>`
+      </plist>`,
     );
   } catch (error: any) {
     console.log(
       `Unable to set the provisioning profile '${provisioningProfile}': ${
         error.message ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 }
 
 export async function decodeProvisioningProfile(
   buildDir: string,
-  provisioningProfile: string
+  provisioningProfile: string,
 ) {
   console.log("decodeProvisioningProfile", buildDir, provisioningProfile);
   const outFile = join(buildDir, "provisioningProfile.xml");
@@ -221,7 +263,7 @@ export async function decodeProvisioningProfile(
     console.log(
       `Unable to decode the provisioning profile '${provisioningProfile}': ${
         error.message ? error.message : "Unknown error"
-      }`
+      }`,
     );
     throw error;
   }
@@ -271,7 +313,7 @@ export function copySbadmin2Deps(buildDir: string) {
   const sbadmin2Dst = join(
     buildDir,
     "www",
-    "plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5"
+    "sc_plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5",
   );
   if (!existsSync(sbadmin2Dst)) {
     mkdirSync(sbadmin2Dst, { recursive: true });
@@ -279,12 +321,12 @@ export function copySbadmin2Deps(buildDir: string) {
   const devPath = join(
     __dirname,
     "../../../..",
-    "node_modules/startbootstrap-sb-admin-2-bs5"
+    "node_modules/startbootstrap-sb-admin-2-bs5",
   );
   const prodPath = join(
     require.resolve("@saltcorn/cli"),
     "../..",
-    "node_modules/startbootstrap-sb-admin-2-bs5"
+    "node_modules/startbootstrap-sb-admin-2-bs5",
   );
   const srcPrefix = existsSync(devPath) ? devPath : prodPath;
   const srcFiles = [
@@ -318,7 +360,7 @@ export async function copySiteLogo(buildDir: string) {
           const base64 = readFileSync(file.location, "base64");
           writeFileSync(
             join(buildDir, "www", "encoded_site_logo.txt"),
-            `data:${file.mimetype};base64, ${base64}`
+            `data:${file.mimetype};base64, ${base64}`,
           );
         } else {
           console.log(`The file '${siteLogo}' does not exist`);
@@ -329,7 +371,7 @@ export async function copySiteLogo(buildDir: string) {
     console.log(
       `Unable to copy the site logo: ${
         error.message ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 }
@@ -375,7 +417,7 @@ export function writeCfgFile({
  */
 export async function buildTablesFile(
   buildDir: string,
-  includedPlugins?: string[]
+  includedPlugins?: string[],
 ) {
   const wwwDir = join(buildDir, "www");
   const scTables = (await db.listScTables()).filter(
@@ -386,7 +428,7 @@ export async function buildTablesFile(
         "_sc_session",
         "_sc_event_log",
         "_sc_snapshots",
-      ].indexOf(table.name) === -1
+      ].indexOf(table.name) === -1,
   );
   const tablesWithData = await Promise.all(
     scTables.map(async (row: Row) => {
@@ -398,10 +440,10 @@ export async function buildTablesFile(
             ? dbData
             : dbData.filter(
                 (plugin: any) =>
-                  !includedPlugins || includedPlugins.includes(plugin.name)
+                  !includedPlugins || includedPlugins.includes(plugin.name),
               ),
       };
-    })
+    }),
   );
   const createdAt = new Date();
   writeFileSync(
@@ -409,13 +451,13 @@ export async function buildTablesFile(
     JSON.stringify({
       created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
-    })
+    }),
   );
   writeFileSync(
     join(wwwDir, "tables_created_at.json"),
     JSON.stringify({
       created_at: createdAt.valueOf(),
-    })
+    }),
   );
 }
 
@@ -448,7 +490,7 @@ export async function createSqliteDb(buildDir: string) {
     console.log(
       result.output
         ? result.output.toString()
-        : "'reset-schema' finished without output"
+        : "'reset-schema' finished without output",
     );
     return result.status;
   }
@@ -468,7 +510,7 @@ export async function prepareSplashPage(
   pageName: string,
   serverUrl: string,
   tenantAppName?: string,
-  user?: User
+  user?: User,
 ) {
   try {
     const role = user ? user.role_id : 100;
@@ -488,7 +530,7 @@ export async function prepareSplashPage(
           },
           isSplashPage: true,
         },
-      }
+      },
     );
     const sbadmin2 = state.plugins["sbadmin2"];
     const html = (<PluginLayout>sbadmin2.layout).wrap({

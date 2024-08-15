@@ -18,7 +18,60 @@ function getDirEntry(directory) {
       },
       function (error) {
         reject(error);
-      }
+      },
+    );
+  });
+}
+
+const copyFile = async (srcEntry, destEntry) => {
+  return new Promise((resolve, reject) => {
+    srcEntry.copyTo(
+      destEntry,
+      srcEntry.name,
+      function (fileEntry) {
+        resolve(fileEntry);
+      },
+      function (err) {
+        console.log(`unable to copy ${srcEntry.name}`);
+        console.log(err);
+        reject(err);
+      },
+    );
+  });
+};
+
+async function getFile(fileName, dirName) {
+  const dirEntry = await getDirEntry(dirName);
+  return new Promise((resolve, reject) => {
+    dirEntry.getFile(
+      fileName,
+      { create: false, exclusive: false },
+      function (fileEntry) {
+        resolve(fileEntry);
+      },
+      function (err) {
+        console.log(`unable to get ${fileName}`);
+        console.log(err);
+        reject(err);
+      },
+    );
+  });
+}
+
+async function createDir(dirName, location) {
+  const dirEntry = await getDirEntry(location);
+  return new Promise((resolve, reject) => {
+    dirEntry.getDirectory(
+      dirName,
+      { create: true, exclusive: false },
+      function (dirEntry) {
+        resolve(dirEntry);
+      },
+      function (err) {
+        console.log(`unable to create ${dirName}`);
+        console.log(err);
+        reject(err);
+      },
     );
   });
 }
@@ -47,7 +100,7 @@ async function readText(fileName, dirName) {
         console.log(`unable to read  ${fileName}`);
         console.log(err);
         reject(err);
-      }
+      },
     );
   });
 }
@@ -71,7 +124,7 @@ async function readBinary(fileName, dirName) {
         console.log(`unable to read  ${fileName}`);
         console.log(err);
         reject(err);
-      }
+      },
     );
   });
 }
@@ -98,7 +151,7 @@ async function write(fileName, dirName, content) {
         console.log(`unable to get ${fileName}`);
         console.log(err);
         reject(err);
-      }
+      },
     );
   });
 }
