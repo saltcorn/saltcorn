@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/scheduler
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 
 /**
  * ScheduleCommand Class
@@ -14,7 +14,7 @@ class ScheduleCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags } = this.parse(ScheduleCommand);
+    const { flags } = await this.parse(ScheduleCommand);
     if (flags.verbose) {
       const db = require("@saltcorn/data/db");
       db.set_sql_logging();
@@ -33,7 +33,7 @@ ScheduleCommand.description = `Run the Saltcorn scheduler`;
  * @type {object}
  */
 ScheduleCommand.flags = {
-  verbose: flags.boolean({ char: "v", description: "Verbose" }),
+  verbose: Flags.boolean({ char: "v", description: "Verbose" }),
 };
 
 module.exports = ScheduleCommand;

@@ -4,7 +4,7 @@
  * @category saltcorn-cli
  * @module commands/run-tests
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 
 const { spawnSync, spawn } = require("child_process");
 const path = require("path");
@@ -121,7 +121,7 @@ class RunTestsCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = this.parse(RunTestsCommand);
+    const { args, flags } = await this.parse(RunTestsCommand);
     this.validateCall(args, flags);
     let env;
 
@@ -195,9 +195,11 @@ class RunTestsCommand extends Command {
 /**
  * @type {object}
  */
-RunTestsCommand.args = [
-  { name: "package", description: "which package to run tests for" },
-];
+RunTestsCommand.args = {
+  package: Args.string({
+    description: "which package to run tests for",
+  }),
+};
 
 /**
  * @type {string}
@@ -208,27 +210,27 @@ RunTestsCommand.description = `Run test suites`;
  * @type {object}
  */
 RunTestsCommand.flags = {
-  coverage: flags.boolean({ char: "c", description: "Coverage" }),
-  listTests: flags.boolean({ char: "l", description: "List tests" }),
-  verbose: flags.boolean({ char: "v", description: "Verbose" }),
-  detectOpenHandles: flags.boolean({
+  coverage: Flags.boolean({ char: "c", description: "Coverage" }),
+  listTests: Flags.boolean({ char: "l", description: "List tests" }),
+  verbose: Flags.boolean({ char: "v", description: "Verbose" }),
+  detectOpenHandles: Flags.boolean({
     char: "d",
     description: "Detect Open Handles",
   }),
-  testFilter: flags.string({
+  testFilter: Flags.string({
     char: "t",
     description: "Filter tests by suite or test name",
   }),
-  watch: flags.boolean({
+  watch: Flags.boolean({
     string: "watch",
     description:
       "Watch files for changes and rerun tests related to changed files.",
   }),
-  watchAll: flags.boolean({
+  watchAll: Flags.boolean({
     string: "watchAll",
     description: "Watch files for changes and rerun all tests.",
   }),
-  database: flags.string({
+  database: Flags.string({
     string: "database",
     description: "Run on specified database. Default is saltcorn_test",
   }),

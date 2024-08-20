@@ -3,14 +3,13 @@
  * @category saltcorn-cli
  * @module commands/setup
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, ux } = require("@oclif/core");
 const {
   getConnectObject,
   configFilePath,
   configFileDir,
   defaultDataPath,
 } = require("@saltcorn/data/db/connect");
-const { cli } = require("cli-ux");
 const { is } = require("contractis");
 const path = require("path");
 const fs = require("fs");
@@ -169,14 +168,14 @@ const asyncSudoPostgres = (args) => {
  * @returns {Promise<string>}
  */
 const get_password = async (for_who) => {
-  var password = await cli.prompt(`Set ${for_who} to [auto-generate]`, {
+  var password = await ux.prompt(`Set ${for_who} to [auto-generate]`, {
     type: "hide",
     required: false,
   });
   if (!password) {
     password = gen_password();
     console.log(`Setting ${for_who} to:`, password);
-    await cli.anykey();
+    await ux.anykey();
   }
   return password;
 };
@@ -243,17 +242,17 @@ const install_db = async () => {
  */
 const prompt_connection = async () => {
   console.log("Enter database connection parameters");
-  const host = await cli.prompt("Database host [localhost]", {
+  const host = await ux.prompt("Database host [localhost]", {
     required: false,
   });
-  const port = await cli.prompt("Database port [5432]", { required: false });
-  const database = await cli.prompt("Database name [saltcorn]", {
+  const port = await ux.prompt("Database port [5432]", { required: false });
+  const database = await ux.prompt("Database name [saltcorn]", {
     required: false,
   });
-  const user = await cli.prompt("Database user [saltcorn]", {
+  const user = await ux.prompt("Database user [saltcorn]", {
     required: false,
   });
-  const password = await cli.prompt("Database password", {
+  const password = await ux.prompt("Database password", {
     type: "hide",
     required: true,
   });
@@ -353,8 +352,8 @@ const setup_users = async () => {
   const hasUsers = await User.nonEmpty();
   if (!hasUsers) {
     console.log("No users found. Please create an admin user");
-    const email = await cli.prompt("Email address");
-    const password = await cli.prompt("Password", { type: "hide" });
+    const email = await ux.prompt("Email address");
+    const password = await ux.prompt("Password", { type: "hide" });
     await User.create({ email, password, role_id: 1 });
   } else {
     console.log("Users already present");
@@ -400,7 +399,7 @@ configuration file
  * @type {object}
  */
 SetupCommand.flags = {
-  coverage: flags.boolean({ char: "c", description: "Coverage" }),
+  coverage: Flags.boolean({ char: "c", description: "Coverage" }),
 };
 
 module.exports = SetupCommand;

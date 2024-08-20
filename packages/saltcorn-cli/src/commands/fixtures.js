@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/fixtures
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const { maybe_as_tenant, parseJSONorString } = require("../common");
 /**
  * FixturesCommand Class
@@ -16,7 +16,7 @@ class FixturesCommand extends Command {
   async run() {
     const fixtures = require("@saltcorn/data/db/fixtures");
     const reset = require("@saltcorn/data/db/reset_schema");
-    const { flags } = this.parse(FixturesCommand);
+    const { flags } = await this.parse(FixturesCommand);
     if (flags.tenant) {
       const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
       const { init_multi_tenant } = require("@saltcorn/data/db/state");
@@ -48,8 +48,8 @@ This manual step it is never required for users and rarely required for develope
  * @type {object}
  */
 FixturesCommand.flags = {
-  reset: flags.boolean({ char: "r", description: "Also reset schema" }),
-  tenant: flags.string({
+  reset: Flags.boolean({ char: "r", description: "Also reset schema" }),
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),

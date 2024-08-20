@@ -2,9 +2,12 @@
  * @category saltcorn-cli
  * @module commands/run-trigger
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
-const { maybe_as_tenant, init_some_tenants, print_table} = require("../common");
+const { Command, Flags, ux } = require("@oclif/core");
+const {
+  maybe_as_tenant,
+  init_some_tenants,
+  print_table,
+} = require("../common");
 
 /**
  * ListTriggerCommand Class
@@ -16,10 +19,10 @@ class ListTriggersCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const {flags, args} = this.parse(ListTriggersCommand);
+    const { flags, args } = await this.parse(ListTriggersCommand);
     await init_some_tenants(flags.tenant);
 
-    const {mockReqRes} = require("@saltcorn/data/tests/mocks");
+    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
     const Trigger = require(`@saltcorn/data/models/trigger`);
     //const that = this;
     await maybe_as_tenant(flags.tenant, async () => {
@@ -28,16 +31,25 @@ class ListTriggersCommand extends Command {
         console.log(`There are no triggers`);
         this.exit(1);
       }
-      if(!flags.verbose){
-        print_table(triggers,["name"], flags.json);
+      if (!flags.verbose) {
+        print_table(triggers, ["name"], flags.json);
+      } else {
+        print_table(
+          triggers,
+          [
+            "id",
+            "name",
+            "action",
+            "when_trigger",
+            "min_role",
+            "channel",
+            "table_id",
+            "table_name",
+            "description",
+          ],
+          flags.json
+        );
       }
-      else {
-        print_table(triggers,
-          ["id","name","action","when_trigger","min_role",
-            "channel","table_id","table_name","description"],
-          flags.json);
-      }
-
     });
     this.exit(0);
   }
@@ -47,24 +59,23 @@ class ListTriggersCommand extends Command {
  */
 ListTriggersCommand.description = `List triggers`;
 
-
 /**
  * @type {object}
  */
 ListTriggersCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     name: "tenant",
     char: "t",
     description: "tenant",
     required: false,
   }),
-  verbose: flags.boolean({
+  verbose: Flags.boolean({
     name: "verbose",
     char: "v",
     description: "verbose output",
     required: false,
   }),
-  json: flags.boolean({ char: "j", description: "json format" }),
+  json: Flags.boolean({ char: "j", description: "json format" }),
 };
 
 module.exports = ListTriggersCommand;

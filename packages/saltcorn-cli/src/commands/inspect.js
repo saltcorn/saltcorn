@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/create-user
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 // todo update logic based on modify-user command
@@ -19,7 +18,7 @@ class InspectCommand extends Command {
   async run() {
     const User = require("@saltcorn/data/models/user");
 
-    const { flags, args } = this.parse(InspectCommand);
+    const { flags, args } = await this.parse(InspectCommand);
 
     // init tenant
     await init_some_tenants(flags.tenant);
@@ -53,23 +52,21 @@ InspectCommand.description = `Inspect an entity's JSON representation, or list e
  * @type {object}
  */
 InspectCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
 };
 
-InspectCommand.args = [
-  {
-    name: "type",
+InspectCommand.args = {
+  type: Args.string({
     required: true,
     description: "Entity type",
     options: ["view", "page", "trigger", "table"],
-  },
-  {
-    name: "name",
+  }),
+  name: Args.string({
     description: "Entity name. If not supplied, list all names",
-  },
-];
+  }),
+};
 
 module.exports = InspectCommand;

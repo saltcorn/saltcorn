@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/configuration-check-backups
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
@@ -17,7 +16,7 @@ class ConfigurationCheckBackupsCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { argv, flags } = this.parse(ConfigurationCheckBackupsCommand);
+    const { argv, flags } = await this.parse(ConfigurationCheckBackupsCommand);
     //await init_some_tenants(flags.tenant);
     const {
       runConfigurationCheck,
@@ -95,16 +94,16 @@ ConfigurationCheckBackupsCommand.description = `Check configuration`;
 /**
  * @type {object}
  */
-ConfigurationCheckBackupsCommand.args = [
-  {
+ConfigurationCheckBackupsCommand.args = {
+  files: Args.string({
     name: "files",
     required: true,
     description: "backup file to check. can be repeated, e.g. with *",
-  },
-];
+  }),
+};
 
 ConfigurationCheckBackupsCommand.flags = {
-  destructive: flags.boolean({
+  destructive: Flags.boolean({
     char: "d",
     description: "destructive",
   }),

@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/release
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 const { sleep } = require("../../common");
@@ -20,7 +20,7 @@ class ReleaseCommand extends Command {
     const {
       args: { version },
       flags,
-    } = this.parse(ReleaseCommand);
+    } = await this.parse(ReleaseCommand);
     spawnSync("git", ["pull"], {
       stdio: "inherit",
       cwd: ".",
@@ -190,12 +190,15 @@ ReleaseCommand.description = `Release a new saltcorn version`;
 /**
  * @type {object}
  */
-ReleaseCommand.args = [
-  { name: "version", required: true, description: "New version number" },
-];
+ReleaseCommand.args = {
+  version: Args.string({
+    required: true,
+    description: "New version number",
+  }),
+};
 
 ReleaseCommand.flags = {
-  tag: flags.string({
+  tag: Flags.string({
     char: "t",
     description: "NPM tag",
   }),

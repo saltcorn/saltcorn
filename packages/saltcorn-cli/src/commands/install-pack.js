@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/install-pack
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const { maybe_as_tenant } = require("../common");
 const fs = require("fs");
 
@@ -16,7 +16,7 @@ class InstallPackCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags } = this.parse(InstallPackCommand);
+    const { flags } = await this.parse(InstallPackCommand);
     const {
       fetch_pack_by_name,
       install_pack,
@@ -72,15 +72,15 @@ InstallPackCommand.description = `Install a pack or restore a snapshot`;
  * @type {object}
  */
 InstallPackCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  name: flags.string({
+  name: Flags.string({
     char: "n",
     description: "Pack name in store",
   }),
-  file: flags.string({
+  file: Flags.string({
     char: "f",
     description: "File with pack JSON",
   }),

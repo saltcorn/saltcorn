@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/create-tenant
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 
 //const {
 //  getConfig,
@@ -18,8 +18,7 @@ class CreateTenantCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args } = this.parse(CreateTenantCommand);
-    const { flags } = this.parse(CreateTenantCommand);
+    const { args, flags } = await this.parse(CreateTenantCommand);
     const db = require("@saltcorn/data/db");
     const { add_tenant } = require("@saltcorn/data/db/state");
     if (!db.is_it_multi_tenant()) {
@@ -51,9 +50,12 @@ class CreateTenantCommand extends Command {
 /**
  * @type {object}
  */
-CreateTenantCommand.args = [
-  { name: "tenant", required: true, description: "Tenant subdomain to create" },
-];
+CreateTenantCommand.args = {
+  tenant: Args.string({
+    required: true,
+    description: "Tenant subdomain to create",
+  }),
+};
 
 /**
  * @type {string}
@@ -64,17 +66,17 @@ CreateTenantCommand.description = `Create a tenant`;
  * @type {object}
  */
 CreateTenantCommand.flags = {
-  url: flags.string({
+  url: Flags.string({
     name: "url",
     //char: "",
     description: "Url of tenant",
   }),
-  email: flags.string({
+  email: Flags.string({
     name: "email",
     char: "e",
     description: "Email of owner of tenant",
   }),
-  description: flags.string({
+  description: Flags.string({
     name: "description",
     char: "d",
     description: "Description of tenant",

@@ -1,4 +1,4 @@
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
@@ -61,7 +61,7 @@ class BuildAppCommand extends Command {
   }
 
   async run() {
-    const { flags } = await this.parse(BuildAppCommand);
+    const { flags } = await await this.parse(BuildAppCommand);
     this.validateParameters(flags);
     const mobileAppDir = path.join(
       require.resolve("@saltcorn/mobile-app"),
@@ -122,43 +122,43 @@ class BuildAppCommand extends Command {
 BuildAppCommand.description = "Build mobile app";
 
 BuildAppCommand.flags = {
-  tenantAppName: flags.string({
+  tenantAppName: Flags.string({
     name: "tenant",
     string: "tenant",
     description:
       "Optional name of a tenant application, if set, the app will be build for this tenant",
   }),
-  platforms: flags.string({
+  platforms: Flags.string({
     name: "platforms",
     char: "p",
     description: "Platforms to build for, space separated list",
     multiple: true,
   }),
-  entryPoint: flags.string({
+  entryPoint: Flags.string({
     name: "entry point",
     char: "e",
     description: "This is the first view or page (see -t) after the login.",
   }),
-  entryPointType: flags.string({
+  entryPointType: Flags.string({
     name: "entry point type",
     char: "t",
     description:
       "Type of the entry point ('view' or 'page'). The default is 'view'.",
   }),
-  localUserTables: flags.string({
+  localUserTables: Flags.string({
     name: "local user tables",
     char: "l",
     description: "user defined tables that should be replicated into the app",
     multiple: true,
   }),
-  synchedTables: flags.string({
+  synchedTables: Flags.string({
     name: "synched tables",
     string: "synchedTables",
     description:
       "Table names for which the offline should be synchronized with the saltcorn server",
     multiple: true,
   }),
-  includedPlugins: flags.string({
+  includedPlugins: Flags.string({
     name: "included plugins",
     string: "includedPlugins",
     description:
@@ -166,92 +166,92 @@ BuildAppCommand.flags = {
       "If empty, no modules are used.",
     multiple: true,
   }),
-  useDocker: flags.boolean({
+  useDocker: Flags.boolean({
     name: "use docker build container",
     char: "d",
     description: "Use a docker container to build the app.",
   }),
-  buildDirectory: flags.string({
+  buildDirectory: Flags.string({
     name: "build directory",
     char: "b",
     description: "A directory where the app should be build",
   }),
-  copyAppDirectory: flags.string({
+  copyAppDirectory: Flags.string({
     name: "app target-directory",
     char: "c",
     description:
       "If set, the app file will be copied here, please set 'user email', too",
   }),
-  userEmail: flags.string({
+  userEmail: Flags.string({
     name: "user email",
     char: "u",
     description: "Email of the user building the app",
   }),
-  appName: flags.string({
+  appName: Flags.string({
     name: "app name",
     string: "appName",
     description: "Name of the mobile app (default SaltcornMobileApp)",
   }),
-  appId: flags.string({
+  appId: Flags.string({
     name: "app id",
     string: "appId",
     description: "Id of the mobile app (default com.saltcorn.mobileapp)",
   }),
-  appVersion: flags.string({
+  appVersion: Flags.string({
     name: "app version",
     string: "appVersion",
     description: "Version of the mobile app (default 1.0.0)",
   }),
-  appIcon: flags.string({
+  appIcon: Flags.string({
     name: "app icon",
     string: "appIcon",
     description:
       "A png that will be used as launcher icon. The default is a png of a saltcorn symbol.",
   }),
-  serverURL: flags.string({
+  serverURL: Flags.string({
     name: "server URL",
     char: "s",
     description: "URL to a saltcorn server",
   }),
-  splashPage: flags.string({
+  splashPage: Flags.string({
     name: "splash page",
     string: "splashPage",
     description:
       "Name of a page that should be shown while the app is loading.",
   }),
-  autoPublicLogin: flags.boolean({
+  autoPublicLogin: Flags.boolean({
     name: "auto public login",
     string: "autoPublicLogin",
     description: "Show public entry points before the login as a public user.",
   }),
-  allowOfflineMode: flags.boolean({
+  allowOfflineMode: Flags.boolean({
     name: "Allow offline mode",
     string: "allowOfflineMode",
     description:
       "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
   }),
-  provisioningProfile: flags.string({
+  provisioningProfile: Flags.string({
     name: "provisioning profile",
     string: "provisioningProfile",
     description: "This profile will be used to sign your app",
   }),
-  buildType: flags.string({
+  buildType: Flags.string({
     name: "build type",
     string: "buildType",
     description: "debug or release build",
   }),
-  androidKeystore: flags.string({
+  androidKeystore: Flags.string({
     name: "android key store",
     string: "androidKeyStore",
     description:
       "A self-signed certificate that includes the private key used to sign your app.",
   }),
-  androidKeyStoreAlias: flags.string({
+  androidKeyStoreAlias: Flags.string({
     name: "android key store alias",
     string: "keyStoreAlias",
     description: "A unique name to identify the key within the keystore file.",
   }),
-  androidKeystorePassword: flags.string({
+  androidKeystorePassword: Flags.string({
     name: "android key store password",
     string: "keyStorePassword",
     description: "he password to access the keystore file.",

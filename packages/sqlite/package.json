@@ -30,7 +30,7 @@
     "@saltcorn/db-common": "0.9.7"
   },
   "optionalDependencies": {
-    "sqlite3": "^5.0.8"
+    "sqlite3": "5.1.7"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {

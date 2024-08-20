@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/migrate
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const db = require("@saltcorn/data/db");
 const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
 // todo add dryrun mode

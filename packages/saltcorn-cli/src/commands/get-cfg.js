@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/set-cfg
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
@@ -16,7 +15,7 @@ class SetCfgCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = this.parse(SetCfgCommand);
+    const { args, flags } = await this.parse(SetCfgCommand);
     await init_some_tenants(flags.tenant);
 
     await maybe_as_tenant(flags.tenant, async () => {
@@ -54,19 +53,22 @@ SetCfgCommand.description = `Get a configuration value. The value is printed to 
 /**
  * @type {object[]}
  */
-SetCfgCommand.args = [
-  { name: "key", required: false, description: "Configuration key" },
-];
+SetCfgCommand.args = {
+  key: Args.string({
+    required: false,
+    description: "Configuration key",
+  }),
+};
 
 /**
  * @type {object}
  */
 SetCfgCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  plugin: flags.string({
+  plugin: Flags.string({
     char: "p",
     description: "plugin",
   }),

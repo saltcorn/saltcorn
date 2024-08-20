@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/delete-tenants
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 
 /**
  * DeleteTenantsCommand Class
