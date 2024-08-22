@@ -210,17 +210,59 @@ class Trigger implements AbstractTrigger {
       for (const trigger of triggers) {
         state.log(4, `Trigger run ${trigger.name} ${trigger.action} `);
         try {
-          const action = state.actions[trigger.action];
-          action &&
-            action.run &&
-            (await action.run({
-              table,
-              channel,
-              user,
-              configuration: trigger.configuration,
-              row: payload,
-              ...(payload || {}),
-            }));
+          if (trigger.action === "Multi-step action") {
+            let step_count = 0;
+            const MAX_STEPS = 200;
+            for (
+              let i = 0;
+              i < trigger.configuration?.steps?.length &&
+              step_count < MAX_STEPS;
+              i++
+            ) {
+              step_count += 1;
+              const step = trigger.configuration?.steps[i];
+              if (step.step_only_if && payload)
+                if (
+                  !eval_expression(
+                    step.step_only_if,
+                    payload,
+                    user,
+                    "Multistep only if formula"
+                  )
+                )
+                  continue;
+              const stepAction = state.actions[step.step_action_name];
+              const stepRes =
+                stepAction && stepAction.run
+                  ? await stepAction.run({
+                      table,
+                      channel,
+                      user,
+                      configuration: step,
+                      row: payload,
+                      ...(payload || {}),
+                    })
+                  : null;
+              if (stepRes?.goto_step) i = +stepRes.goto_step - 2;
+              if (stepRes?.set_fields && payload) {
+                Object.entries(stepRes?.set_fields).forEach(([k, v]) => {
+                  payload[k] = v;
+                });
+              }
+            }
+          } else {
+            const action = state.actions[trigger.action];
+            action &&
+              action.run &&
+              (await action.run({
+                table,
+                channel,
+                user,
+                configuration: trigger.configuration,
+                row: payload,
+                ...(payload || {}),
+              }));
+          }
         } catch (e) {
           Crash.create(e, {
             url: "/",
