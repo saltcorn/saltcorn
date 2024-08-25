@@ -14,7 +14,7 @@ class SetupBenchmarkCommand extends Command {
   /**
    * @returns {Promise<void>}
    */
-  async install_forum_pack() {
+  async install_forum_pack(flags) {
     const { fetch_pack_by_name, install_pack } = require("@saltcorn/data/pack");
     const load_plugins = require("@saltcorn/server/load_plugins");
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
@@ -36,7 +36,7 @@ class SetupBenchmarkCommand extends Command {
     const { args, flags } = await this.parse(SetupBenchmarkCommand);
     await maybe_as_tenant(flags.tenant, async () => {
       // install pack
-      await this.install_forum_pack();
+      await this.install_forum_pack(flags);
       // create user if one does not exist
       const User = require("@saltcorn/data/models/user");
       const nusers = await User.count();
@@ -91,6 +91,10 @@ SetupBenchmarkCommand.flags = {
   tenant: Flags.string({
     char: "t",
     description: "tenant",
+  }),
+  name: Flags.string({
+    char: "n",
+    description: "name",
   }),
 };
 

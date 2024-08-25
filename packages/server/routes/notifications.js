@@ -14,6 +14,7 @@ const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const { renderForm, post_btn } = require("@saltcorn/markup");
+const db = require("@saltcorn/data/db");
 
 const router = new Router();
 module.exports = router;
@@ -39,9 +40,18 @@ router.get(
       orderDesc: true,
       limit: 20,
     });
-    await Notification.mark_as_read({
-      id: { in: nots.filter((n) => !n.read).map((n) => n.id) },
-    });
+    const unreads = nots.filter((n) => !n.read);
+    if (unreads.length > 0)
+      await Notification.mark_as_read(
+        !db.isSQLite
+          ? {
+              id: { in: unreads.map((n) => n.id) },
+            }
+          : {
+              or: unreads.map((n) => ({ id: n.id })),
+            }
+      );
+
     const form = notificationSettingsForm();
     const user = await User.findOne({ id: req.user?.id });
     form.values = { notify_email: user?._attributes?.notify_email };
