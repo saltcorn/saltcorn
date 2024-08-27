@@ -10,7 +10,7 @@ RUN unzip commandlinetools-linux-8512546_latest.zip
 RUN mkdir android_sdk
 RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;13.0"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager --list
-RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "platforms;android-13"
+RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "platforms;android-14"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;33.0.2"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;34.0.0"
 
