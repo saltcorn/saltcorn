@@ -198,7 +198,7 @@ router.get(
     if (Array.isArray(pwa_icons) && pwa_icons.length > 0)
       manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
         src: `/files/serve/${image}`,
-        type: File.nameToMimeType(site_logo),
+        type: File.nameToMimeType(image),
         sizes: size ? `${size}x${size}` : "144x144",
         ...(maskable ? { purpose: "maskable" } : {}),
       }));
