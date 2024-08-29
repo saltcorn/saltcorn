@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     set -e
     apt update    
-    apt install -qqy nodejs npm
+    apt install -qqy nodejs npm python3-pkg-resources
     sudo -iu vagrant npx -y saltcorn-install -y
     systemctl is-active saltcorn
     wget -qO- http://localhost/ | grep Please   
