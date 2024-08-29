@@ -185,4 +185,17 @@ describe("File", () => {
     expect(File.nameToMimeType("FOO.JPEG")).toBe("image/jpeg");
     expect(File.nameToMimeType("foo.py")).toBe("text/x-python");
   });
+  it("should get the absolute path", async () => {
+    const file = await File.from_contents(
+      "video_stream.webm",
+      "video/webm",
+      "hello",
+      1,
+      100
+    );
+    expect(file.absolutePath).toBe(
+      join(db.connectObj.file_store, db.getTenantSchema(), "video_stream.webm")
+    );
+    await file.delete();
+  });
 });

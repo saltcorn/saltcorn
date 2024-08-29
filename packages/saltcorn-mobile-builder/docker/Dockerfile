@@ -10,7 +10,7 @@ RUN unzip commandlinetools-linux-8512546_latest.zip
 RUN mkdir android_sdk
 RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;13.0"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager --list
-RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "platforms;android-13"
+RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "platforms;android-14"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;33.0.2"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;34.0.0"
 
@@ -27,11 +27,11 @@ WORKDIR /init_project/project
 # download plugins while building
 # so that we can add them later via file reference
 RUN cordova plugin add cordova-sqlite-ext@6.0.0
-RUN cordova plugin add cordova-plugin-file@7.0.0
-RUN cordova plugin add cordova-plugin-inappbrowser@5.0.0
+RUN cordova plugin add cordova-plugin-file@8.1.0
+RUN cordova plugin add cordova-plugin-inappbrowser@6.0.0
 RUN cordova plugin add cordova-plugin-network-information@3.0.0
-RUN cordova plugin add cordova-plugin-geolocation@4.1.0
-RUN cordova plugin add cordova-plugin-camera@6.0.0
+RUN cordova plugin add cordova-plugin-geolocation@5.0.0
+RUN cordova plugin add cordova-plugin-camera@7.0.0
 RUN cordova platform add android
 ENV ANDROID_SDK_ROOT=/android_sdk
 ENV ANDROID_HOME=/android_sdk
