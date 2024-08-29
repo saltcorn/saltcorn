@@ -142,10 +142,12 @@ class ReleaseCommand extends Command {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
-    spawnSync("npm", ["audit", "fix"], {
-      stdio: "inherit",
-      cwd: `packages/saltcorn-cli/`,
-    });
+    // do not run 'audit fix' on full point releases, only on -beta.x, -rc.x etc
+    if (version.includes("-"))
+      spawnSync("npm", ["audit", "fix"], {
+        stdio: "inherit",
+        cwd: `packages/saltcorn-cli/`,
+      });
     publish("saltcorn-cli");
     fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile
