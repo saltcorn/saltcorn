@@ -102,6 +102,23 @@ module.exports = {
 
     configFields: async () => {
       const dirs = await File.allDirectories();
+      const styleOptions = [
+        { name: "default", label: "Default selector" },
+        { name: "btn btn-primary", label: "Primary button" },
+        { name: "btn btn-secondary", label: "Secondary button" },
+        { name: "btn btn-success", label: "Success button" },
+        { name: "btn btn-danger", label: "Danger button" },
+        { name: "btn btn-warning", label: "Warning button" },
+        { name: "btn btn-info", label: "Info button" },
+        {
+          name: "btn btn--outline-primary",
+          label: "Primary outline button",
+        },
+        {
+          name: "btn btn--outline-decondary",
+          label: "Secondary outline button",
+        },
+      ];
       return [
         {
           name: "folder",
@@ -109,10 +126,32 @@ module.exports = {
           type: "String",
           attributes: { options: dirs.map((d) => d.path_to_serve) },
         },
+        {
+          name: "button_style",
+          label: "Button Style",
+          type: "String",
+          attributes: {
+            options: styleOptions,
+          },
+          default: "default",
+        },
+        {
+          name: "label",
+          label: "Button Label",
+          type: "String",
+          showIf: {
+            button_style: styleOptions
+              .filter((opt) => opt.name !== "default")
+              .map((opt) => opt.name),
+          },
+        },
       ];
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
+      const customInput =
+        attrs?.button_style && attrs.button_style !== "default";
+      const id = `input${text_attr(nm)}`;
       return (
         text(file_name || "") +
         (typeof attrs.files_accept_filter !== "undefined" ||
@@ -121,17 +160,44 @@ module.exports = {
               class: `${cls} ${field.class || ""}`,
               "data-fieldname": field.form_name,
               name: text_attr(nm),
-              id: `input${text_attr(nm)}`,
+              id: id,
               type: "file",
               accept: attrs.files_accept_filter,
+              ...(customInput ? { hidden: true } : {}),
             })
           : input({
               class: `${cls} ${field.class || ""}`,
               "data-fieldname": field.form_name,
               name: text_attr(nm),
-              id: `input${text_attr(nm)}`,
+              id: id,
               type: "file",
-            }))
+              ...(customInput ? { hidden: true } : {}),
+            })) +
+        (customInput
+          ? button(
+              {
+                type: "button",
+                id: `${id}-custom-button`,
+                class: attrs.button_style,
+                onclick: `document.getElementById('${id}').click()`,
+              },
+              attrs?.label ? attrs.label : "Choose File"
+            ) +
+            span(
+              {
+                id: `${id}-custom-text`,
+                class: "custom-file-label",
+              },
+              "No file chosen"
+            ) +
+            script(
+              domReady(
+                `document.getElementById('${id}').addEventListener('change', (e) => {
+                  document.getElementById('${id}-custom-text').textContent = e.target.files[0].name;
+                })`
+              )
+            )
+          : "")
       );
     },
   },
