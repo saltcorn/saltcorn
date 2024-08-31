@@ -376,6 +376,25 @@ describe("API action", () => {
       `,
       },
     });
+    await Trigger.create({
+      action: "run_js_code",
+      when_trigger: "API call",
+      name: "apicallraw",
+      min_role: 100,
+      configuration: {
+        code: `return {studio: 54}`,
+        _raw_output: true,
+      },
+    });
+    await Trigger.create({
+      action: "run_js_code",
+      when_trigger: "API call",
+      name: "apicallerror",
+      min_role: 100,
+      configuration: {
+        code: `return {error: "bad"}`,
+      },
+    });
   });
   it("should POST to trigger", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -386,11 +405,35 @@ describe("API action", () => {
       })
       .set("Content-Type", "application/json")
       .set("Accept", "application/json")
-      .expect(succeedJsonWithWholeBody((resp) => resp?.data?.studio === 54));
+      .expect(
+        succeedJsonWithWholeBody(
+          (resp) => resp?.data?.studio === 54 && resp.success === true
+        )
+      );
     const table = Table.findOne({ name: "triggercounter" });
     const counts = await table.getRows({});
     expect(counts.map((c) => c.thing)).toContain("inthebody");
     expect(counts.map((c) => c.thing)).not.toContain("no body");
+  });
+  it("should POST to raw trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/action/apicallraw")
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWithWholeBody((resp) => resp?.studio === 54));
+  });
+  it("should POST to raw trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/action/apicallerror")
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(
+        succeedJsonWithWholeBody(
+          (resp) => resp?.error === "bad" && resp.success === false
+        )
+      );
   });
   it("should GET with query to trigger", async () => {
     const app = await getApp({ disableCsrf: true });
