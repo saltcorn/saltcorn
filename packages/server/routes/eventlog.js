@@ -55,6 +55,25 @@ const logSettingsForm = async (req) => {
   const fields = [
     {
       input_type: "section_header",
+      label: req.__("Periodic trigger timing (next event)"),
+    },
+    {
+      name: "next_hourly_event",
+      label: req.__("Hourly"),
+      input_type: "date",
+    },
+    {
+      name: "next_daily_event",
+      label: req.__("Daily"),
+      input_type: "date",
+    },
+    {
+      name: "next_weekly_event",
+      label: req.__("Weekly"),
+      input_type: "date",
+    },
+    {
+      input_type: "section_header",
       label: req.__("Which events should be logged?"),
     },
   ];
@@ -106,6 +125,16 @@ router.get(
   error_catcher(async (req, res) => {
     const form = await logSettingsForm(req);
     form.values = getState().getConfig("event_log_settings", {});
+    form.values.next_hourly_event = getState().getConfig(
+      "next_hourly_event",
+      {}
+    );
+    form.values.next_daily_event = getState().getConfig("next_daily_event", {});
+    form.values.next_weekly_event = getState().getConfig(
+      "next_weekly_event",
+      {}
+    );
+
     send_events_page({
       res,
       req,

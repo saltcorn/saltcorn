@@ -539,6 +539,25 @@ const innerField =
           });`)
           )
         );
+      case "date":
+        return (
+          `<input class="form-control ${validClass} ${
+            hdr.class || ""
+          }"${maybe_disabled} data-fieldname="${text_attr(
+            hdr.form_name
+          )}" name="${text_attr(name)}" id="input${text_attr(
+            name
+          )}" type="text" placeholder="Select date.." readonly="readonly" value="${text_attr(
+            v[hdr.form_name]
+          )}">` +
+          script(
+            domReady(`$('#input${text_attr(name)}').flatpickr({              
+              enableTime: true,
+              time_24hr: true,
+              timeFormat: 'H:i'
+            });`)
+          )
+        );
       case "file":
         if (hdr.attributes && hdr.attributes.select_file_where) {
           hdr.input_type = "select";
