@@ -380,7 +380,7 @@ router.all(
             else if (req.headers?.scgotourl)
               res.redirect(req.headers?.scgotourl);
             else {
-              if (trigger.configuration?._raw_output) res.json({ resp });
+              if (trigger.configuration?._raw_output) res.json(resp);
               else res.json({ success: true, data: resp });
             }
           } catch (e) {
