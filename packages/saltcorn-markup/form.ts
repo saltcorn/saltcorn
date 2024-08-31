@@ -554,8 +554,19 @@ const innerField =
             domReady(`$('#input${text_attr(name)}').flatpickr({              
               enableTime: true,
               dateFormat: "Z",
+              time_24hr: true,
               altFormat: "Y-m-d H:i",
               altInput: true,
+              ${
+                hdr.attributes.minDate
+                  ? `minDate: new Date("${hdr.attributes.minDate.toISOString()}"),`
+                  : ""
+              }
+              ${
+                hdr.attributes.maxDate
+                  ? `maxDate: new Date("${hdr.attributes.maxDate.toISOString()}"),`
+                  : ""
+              }
             });`)
           )
         );

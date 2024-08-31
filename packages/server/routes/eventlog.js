@@ -52,6 +52,11 @@ const EventLog = require("@saltcorn/data/models/eventlog");
  */
 
 const logSettingsForm = async (req) => {
+  const hoursFuture = (nhrs) => {
+    const t = new Date();
+    t.setHours(t.getHours() + nhrs);
+    return t;
+  };
   const fields = [
     {
       input_type: "section_header",
@@ -61,16 +66,19 @@ const logSettingsForm = async (req) => {
       name: "next_hourly_event",
       label: req.__("Hourly"),
       input_type: "date",
+      attributes: { minDate: new Date(), maxDate: hoursFuture(2) },
     },
     {
       name: "next_daily_event",
       label: req.__("Daily"),
       input_type: "date",
+      attributes: { minDate: new Date(), maxDate: hoursFuture(48) },
     },
     {
       name: "next_weekly_event",
       label: req.__("Weekly"),
       input_type: "date",
+      attributes: { minDate: new Date(), maxDate: hoursFuture(24 * 7 * 2) },
     },
     {
       input_type: "section_header",
