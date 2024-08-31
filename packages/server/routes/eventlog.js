@@ -50,8 +50,14 @@ const EventLog = require("@saltcorn/data/models/eventlog");
  * @param {object} req
  * @returns {Promise<Form>}
  */
+
 const logSettingsForm = async (req) => {
-  const fields = [];
+  const fields = [
+    {
+      input_type: "section_header",
+      label: req.__("Which events should be logged?"),
+    },
+  ];
   for (const w of Trigger.when_options) {
     fields.push({
       name: w,
@@ -82,7 +88,6 @@ const logSettingsForm = async (req) => {
   }
   return new Form({
     action: "/eventlog/settings",
-    blurb: req.__("Which events should be logged?"),
     noSubmitButton: true,
     onChange: "saveAndContinue(this)",
     fields,
@@ -104,12 +109,12 @@ router.get(
     send_events_page({
       res,
       req,
-      active_sub: "Log settings",
+      active_sub: "Settings",
       //sub2_page: "Events to log",
       contents: {
         type: "card",
         titleAjaxIndicator: true,
-        title: req.__("Events to log"),
+        title: req.__("Events and Trigger settings"),
         contents: renderForm(form, req.csrfToken()),
       },
     });
@@ -289,7 +294,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Log settings",
+        active_sub: "Settings",
         //sub2_page: "Events to log",
         contents: {
           type: "card",

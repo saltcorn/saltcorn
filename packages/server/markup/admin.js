@@ -308,7 +308,7 @@ const send_events_page = (args) => {
     sub_sections: [
       { text: "Triggers", href: "/actions" },
       { text: "Custom", href: "/eventlog/custom" },
-      { text: "Log settings", href: "/eventlog/settings" },
+      { text: "Settings", href: "/eventlog/settings" },
       { text: "Event log", href: "/eventlog" },
       ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
     ],
