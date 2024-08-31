@@ -3226,7 +3226,8 @@ router.post(
       const userfields1 = await users1.getFields();
 
       for (const f of userfields1) {
-        if (f.name !== "email" && f.name !== "id") await f.delete();
+        if (f.name !== "email" && f.name !== "id" && f.name !== "role_id")
+          await f.delete();
       }
       await db.deleteWhere("users");
       await db.deleteWhere("_sc_roles", {
