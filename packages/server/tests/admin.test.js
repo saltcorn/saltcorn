@@ -650,7 +650,7 @@ describe("clear all page", () => {
       .expect(toRedirect("/auth/create_first_user"));
   });
   it("restores backup after clear all", async () => {
-    const restore_res = await restore(backup_fnm, (p) => {});
+    const restore_res = await restore(backup_fnm, (p) => {}, true);
     await fs.unlink(backup_fnm);
 
     if (restore_res) console.log("rr", restore_res);
