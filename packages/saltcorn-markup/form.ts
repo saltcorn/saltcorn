@@ -553,8 +553,9 @@ const innerField =
           script(
             domReady(`$('#input${text_attr(name)}').flatpickr({              
               enableTime: true,
-              time_24hr: true,
-              timeFormat: 'H:i'
+              dateFormat: "Z",
+              altFormat: "Y-m-d H:i",
+              altInput: true,
             });`)
           )
         );

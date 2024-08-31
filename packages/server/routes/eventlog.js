@@ -332,6 +332,16 @@ router.post(
         },
       });
     } else {
+      for (const tm of ["hourly", "daily", "weekly"]) {
+        const k = `next_${tm}_event`;
+        if (form.values[k]) {
+          console.log(k, form.values[k]);
+
+          await getState().setConfig(k, form.values[k]);
+          delete form.values[k];
+        }
+      }
+
       await getState().setConfig("event_log_settings", form.values);
 
       if (!req.xhr) res.redirect(`/eventlog/settings`);
