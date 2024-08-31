@@ -343,8 +343,6 @@ router.post(
       for (const tm of ["hourly", "daily", "weekly"]) {
         const k = `next_${tm}_event`;
         if (form.values[k]) {
-          console.log(k, form.values[k]);
-
           await getState().setConfig(k, form.values[k]);
           delete form.values[k];
         }
