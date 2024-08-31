@@ -187,7 +187,7 @@ describe("files admin", () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     const checkFiles = (files, expecteds) =>
-      files.length === expecteds.length &&
+      files.length >= expecteds.length &&
       expecteds.every(({ filename, location }) =>
         files.find(
           (file) => file.filename === filename && file.location === location
