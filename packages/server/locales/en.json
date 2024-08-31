@@ -1453,5 +1453,10 @@
 	"Each row in a card. Not supported by all themes": "Each row in a card. Not supported by all themes",
 	"Prune session interval (seconds)": "Prune session interval (seconds)",
 	"Interval in seconds to check for expred sessions in the postgres db. 0, empty or a negative number to disable": "Interval in seconds to check for expred sessions in the postgres db. 0, empty or a negative number to disable",
-	"Progressive Web Application is not enabled": "Progressive Web Application is not enabled"
+	"Progressive Web Application is not enabled": "Progressive Web Application is not enabled",
+	"Events and Trigger settings": "Events and Trigger settings",
+	"Periodic trigger timing (next event)": "Periodic trigger timing (next event)",
+	"Hourly": "Hourly",
+	"Daily": "Daily",
+	"Weekly": "Weekly"
 }
