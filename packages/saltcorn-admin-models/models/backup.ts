@@ -653,7 +653,7 @@ const auto_backup_now = async () => {
     } catch (e) {
       console.error(e);
       await Crash.create(e, {
-        url: `Scheduler auto backup for tenant`,
+        url: `Scheduler auto backup`,
         headers: {},
       });
     }
