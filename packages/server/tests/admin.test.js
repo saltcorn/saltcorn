@@ -651,6 +651,8 @@ describe("clear all page", () => {
   });
   it("restores backup after clear all", async () => {
     const restore_res = await restore(backup_fnm, (p) => {});
+    await fs.unlink(backup_fnm);
+
     if (restore_res) console.log("rr", restore_res);
     expect(!!restore_res).toBe(false);
   });
