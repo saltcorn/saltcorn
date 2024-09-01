@@ -746,6 +746,25 @@ const install_pack = async (
     }
   }
 
+  if (pack.code_pages) {
+    const code_pages = getState().getConfigCopy("function_code_pages", {});
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
+
+    for (const { name, code, tags } of pack.code_pages) {
+      code_pages[name] = code;
+      function_code_pages_tags[name] = tags;
+    }
+    await getState().setConfig("function_code_pages", code_pages);
+    await getState().setConfig(
+      "function_code_pages_tags",
+      function_code_pages_tags
+    );
+    await getState().refresh_codepages();
+  }
+
   if (name) {
     const existPacks = getState().getConfigCopy("installed_packs", []);
     await getState().setConfig("installed_packs", [...existPacks, name]);
