@@ -456,7 +456,7 @@
               <td>
                 <Fa size="lg" icon={faFolderPlus} />
               </td>
-              <td>Create new folder...</td>
+              <td>Create new foldersdf...</td>
               {#if search}<td />{/if}
               <td />
               <td />

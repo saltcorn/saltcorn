@@ -216,6 +216,21 @@ module.exports = {
           type: "String",
           attributes: { options: dirs.map((d) => d.path_to_serve) },
         },
+        {
+          name: "use_picker",
+          label: "Use picker",
+          sublabel: "Use the file picker dialog",
+          type: "Bool",
+          default: false,
+        },
+        {
+          name: "show_subdirs",
+          type: "Bool",
+          label: "navigate subdirectories",
+          sublabel: "Show and allow to navigate directories",
+          showIf: { use_picker: true },
+          default: false,
+        },
         /*{
           name: "name_regex",
           label: "Name regex",
@@ -230,22 +245,53 @@ module.exports = {
     },
     // run
     run: (nm, file_id, attrs, cls, reqd, field) => {
-      return select(
-        {
-          class: `form-control form-select selectizable ${cls} ${
-            field.class || ""
-          }`,
-          "data-fieldname": field.form_name,
-          name: text_attr(nm),
-          id: `input${text_attr(nm)}`,
-        },
-        select_options(
-          file_id,
-          field,
-          (attrs || {}).force_required, // todo force_required is unresolved!
-          (attrs || {}).neutral_label
-        )
-      );
+      if (attrs?.use_picker) {
+        const folder = attrs?.folder || "";
+        const inputId = `input${text_attr(nm)}`;
+        return span(
+          a(
+            {
+              class: "btn btn-primary",
+              href: `javascript:ajax_modal('/files/picker?folder=${encodeURIComponent(
+                folder
+              )}&input_id=${encodeURIComponent(inputId)}${
+                attrs?.show_subdirs === false ? "&no_subdirs=true" : ""
+              }')`,
+            },
+            "select"
+          ),
+          span(
+            {
+              id: `${inputId}-custom-text`,
+              class: "custom-file-label",
+            },
+            "No file chosen"
+          ),
+          input({
+            type: "hidden",
+            id: inputId,
+            name: text_attr(nm),
+            "data-fieldname": field.form_name,
+          })
+        );
+      } else {
+        return select(
+          {
+            class: `form-control form-select selectizable ${cls} ${
+              field.class || ""
+            }`,
+            "data-fieldname": field.form_name,
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+          },
+          select_options(
+            file_id,
+            field,
+            (attrs || {}).force_required, // todo force_required is unresolved!
+            (attrs || {}).neutral_label
+          )
+        );
+      }
     },
   },
   // Capture
