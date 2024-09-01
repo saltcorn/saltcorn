@@ -395,6 +395,15 @@ describe("API action", () => {
         code: `return {error: "bad"}`,
       },
     });
+    await Trigger.create({
+      action: "run_js_code",
+      when_trigger: "API call",
+      name: "apicallundef",
+      min_role: 100,
+      configuration: {
+        code: `return;`,
+      },
+    });
   });
   it("should POST to trigger", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -434,6 +443,14 @@ describe("API action", () => {
           (resp) => resp?.error === "bad" && resp.success === false
         )
       );
+  });
+  it("should POST to undefiend trigger", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/action/apicallundef")
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(succeedJsonWithWholeBody((resp) => resp.success === true));
   });
   it("should GET with query to trigger", async () => {
     const app = await getApp({ disableCsrf: true });

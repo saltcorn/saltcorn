@@ -381,7 +381,7 @@ router.all(
               res.redirect(req.headers?.scgotourl);
             else {
               if (trigger.configuration?._raw_output) res.json(resp);
-              else if (resp.error) {
+              else if (resp?.error) {
                 const { error, ...rest } = resp;
                 res.json({ success: false, error, data: rest });
               } else res.json({ success: true, data: resp });
