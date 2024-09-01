@@ -109,6 +109,7 @@ const Crash = require("@saltcorn/data/models/crash");
 const { get_help_markup } = require("../help/index.js");
 const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
+const Tag = require("@saltcorn/data/models/tag");
 
 const router = new Router();
 module.exports = router;
@@ -3452,7 +3453,64 @@ router.get(
         },
       ],
     });
-
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
+    const tags = await Tag.find();
+    const tagMarkup = div(
+      "Tags:",
+      (function_code_pages_tags[name] || []).map((tagnm) =>
+        span(
+          {
+            class: ["ms-2 badge bg-secondary"],
+          },
+          tagnm,
+          a(
+            {
+              onclick: `rm_cp_tag('${tagnm}')`,
+            },
+            i({ class: "ms-1 fas fa-lg fa-times" })
+          )
+        )
+      ),
+      span(
+        { class: "dropdown", id: `ddcodetags` },
+        span(
+          {
+            class: ["ms-2 badge", "bg-secondary", "dropdown-toggle"],
+            "data-bs-toggle": "dropdown",
+            "aria-haspopup": "true",
+            "aria-expanded": "false",
+          },
+          i({ class: "fas fa-lg fa-plus" })
+        ),
+        div(
+          { class: "dropdown-menu", "aria-labelledby": "ddcodetags" },
+          tags
+            .map((t) =>
+              a(
+                {
+                  class: "dropdown-item",
+                  onclick: `add_cp_tag('${t.name}')`,
+                },
+                t.name
+              )
+            )
+            .join("")
+        )
+      ),
+      script(`function add_cp_tag(nm) {
+        ajax_post("/admin/add-codepage-tag/${encodeURIComponent(
+          name
+        )}/"+encodeURIComponent(nm))
+      }
+      function rm_cp_tag(nm) {
+        ajax_post("/admin/rm-codepage-tag/${encodeURIComponent(
+          name
+        )}/"+encodeURIComponent(nm))
+      }`)
+    );
     send_admin_page({
       res,
       req,
@@ -3461,7 +3519,7 @@ router.get(
       contents: {
         type: "card",
         title: req.__(`%s code page`, name),
-        contents: [renderForm(form, req.csrfToken())],
+        contents: [renderForm(form, req.csrfToken()), tagMarkup],
       },
     });
   })
@@ -3497,7 +3555,50 @@ router.post(
     res.json({ goto: `/admin/dev` });
   })
 );
+router.post(
+  "/add-codepage-tag/:cpname/:tagnm",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { cpname, tagnm } = req.params;
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
 
+    function_code_pages_tags[cpname] = [
+      ...(function_code_pages_tags[cpname] || []),
+      tagnm,
+    ];
+    await getState().setConfig(
+      "function_code_pages_tags",
+      function_code_pages_tags
+    );
+
+    res.json({ reload_page: true });
+  })
+);
+router.post(
+  "/rm-codepage-tag/:cpname/:tagnm",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { cpname, tagnm } = req.params;
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
+
+    function_code_pages_tags[cpname] = (
+      function_code_pages_tags[cpname] || []
+    ).filter((t) => t != tagnm);
+
+    await getState().setConfig(
+      "function_code_pages_tags",
+      function_code_pages_tags
+    );
+
+    res.json({ reload_page: true });
+  })
+);
 /**
  * Notifications
  */
