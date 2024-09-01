@@ -1,4 +1,4 @@
-const { a, text, i } = require("@saltcorn/markup/tags");
+const { a, text, i, div } = require("@saltcorn/markup/tags");
 
 const Tag = require("@saltcorn/data/models/tag");
 const Router = require("express-promise-router");
@@ -171,6 +171,13 @@ router.get(
     const viewsDomId = "viewsListId";
     const pagesDomId = "pagesDomId";
     const triggersDomId = "triggerDomId";
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
+    const code_pages = Object.entries(function_code_pages_tags)
+      .filter(([nm, tags]) => (tags || []).includes(tag.name))
+      .map(([nm, tags]) => nm);
     res.sendWrap(req.__("%s Tag", tag.name), {
       above: [
         {
@@ -269,6 +276,20 @@ router.get(
               req.__("Add triggers")
             ),
           ],
+        },
+        {
+          type: "card",
+          title: req.__("Code pages") + ` (${code_pages.length})`,
+
+          contents: code_pages.map((cp) =>
+            a(
+              {
+                class: "me-2",
+                href: `/admin/edit-codepage/${encodeURIComponent(cp)}`,
+              },
+              cp
+            )
+          ),
         },
         {
           type: "card",

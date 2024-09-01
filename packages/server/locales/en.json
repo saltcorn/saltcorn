@@ -1458,5 +1458,6 @@
 	"Periodic trigger timing (next event)": "Periodic trigger timing (next event)",
 	"Hourly": "Hourly",
 	"Daily": "Daily",
-	"Weekly": "Weekly"
+	"Weekly": "Weekly",
+	"Code pages": "Code pages"
 }
