@@ -555,6 +555,11 @@ const configTypes: ConfigTypes = {
     label: "Function code pages",
     default: {},
   },
+  function_code_pages_tags: {
+    type: "hidden",
+    label: "Function code pages tags",
+    default: {},
+  },
   cookie_duration: {
     type: "Integer",
     label: "Cookie duration (hours)",
