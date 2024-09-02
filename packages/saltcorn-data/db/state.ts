@@ -873,7 +873,8 @@ class State {
       .filter((s) => s);
     if (moduleNames.length === 0) return;
     if (!this.pluginManager) this.pluginManager = new PluginManager();
-    for (const moduleName of moduleNames) {
+    for (const moduleNameWithVersion of moduleNames) {
+      const [moduleName, version] = moduleNameWithVersion.split("==");
       if (!this.codeNPMmodules[moduleName]) {
         try {
           if (
@@ -897,8 +898,11 @@ class State {
             this.codeNPMmodules[moduleName] = require(moduleName);
           } else {
             await this.pluginManager.install(moduleName);
-            this.codeNPMmodules[moduleName] =
-              this.pluginManager.require(moduleName);
+
+            this.codeNPMmodules[moduleName] = this.pluginManager.require(
+              moduleName,
+              version || undefined
+            );
           }
         } catch (e) {
           console.error("npm install error module", moduleName, e);
