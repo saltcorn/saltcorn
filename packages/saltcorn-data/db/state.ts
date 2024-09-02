@@ -897,12 +897,10 @@ class State {
           ) {
             this.codeNPMmodules[moduleName] = require(moduleName);
           } else {
-            await this.pluginManager.install(moduleName);
+            await this.pluginManager.install(moduleName, version || undefined);
 
-            this.codeNPMmodules[moduleName] = this.pluginManager.require(
-              moduleName,
-              version || undefined
-            );
+            this.codeNPMmodules[moduleName] =
+              this.pluginManager.require(moduleName);
           }
         } catch (e) {
           console.error("npm install error module", moduleName, e);
