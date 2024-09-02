@@ -901,7 +901,7 @@ class State {
               this.pluginManager.require(moduleName);
           }
         } catch (e) {
-          console.error("npm install error", e);
+          console.error("npm install error module", moduleName, e);
         }
       }
     }
