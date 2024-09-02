@@ -6,7 +6,7 @@
   "author": "Tom Nielsen @glutamate",
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {
-    "cli-ux": "^5.6.3",
+    "cli-ux": "^6.0.9",
     "contractis": "^0.1.0",
     "dateformat": "^3.0.3",
     "env-paths": "^2.2.0",
