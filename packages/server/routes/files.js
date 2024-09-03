@@ -89,16 +89,16 @@ router.get(
 router.get(
   "/visible_entries",
   error_catcher(async (req, res) => {
-    const user = req.user;
+    const role = req.user?.role_id ? req.user.role_id : 100;
     const { dir, no_subdirs } = req.query;
+    const noSubdirs = no_subdirs === "true";
     const safeDir = File.normalise(dir || "/");
     const rows = (
       await File.find({ folder: dir }, { orderBy: "filename" })
-    ).filter((f) =>
-      user.role_id <= f.min_role_read && no_subdirs === "true"
-        ? !f.isDirectory
-        : true
-    );
+    ).filter((f) => {
+      if (noSubdirs && f.isDirectory) return false;
+      else return role <= f.min_role_read;
+    });
     const roles = await User.get_roles();
     if (!no_subdirs && safeDir && safeDir !== "/" && safeDir !== ".") {
       let dirname = path.dirname(safeDir);

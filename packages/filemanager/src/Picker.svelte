@@ -135,7 +135,7 @@
 
 <main>
   <div class="row">
-    <div class="col-8">
+    <div class="col-12">
       <!-- breadcrumbs only if subdirs are shown -->
       {#if !noSubdirs}
         <div>
