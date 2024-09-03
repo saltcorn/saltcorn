@@ -50,8 +50,41 @@ const EventLog = require("@saltcorn/data/models/eventlog");
  * @param {object} req
  * @returns {Promise<Form>}
  */
+
 const logSettingsForm = async (req) => {
-  const fields = [];
+  const hoursFuture = (nhrs) => {
+    const t = new Date();
+    t.setHours(t.getHours() + nhrs);
+    return t;
+  };
+  const fields = [
+    {
+      input_type: "section_header",
+      label: req.__("Periodic trigger timing (next event)"),
+    },
+    {
+      name: "next_hourly_event",
+      label: req.__("Hourly"),
+      input_type: "date",
+      attributes: { minDate: new Date(), maxDate: hoursFuture(2) },
+    },
+    {
+      name: "next_daily_event",
+      label: req.__("Daily"),
+      input_type: "date",
+      attributes: { minDate: new Date(), maxDate: hoursFuture(48) },
+    },
+    {
+      name: "next_weekly_event",
+      label: req.__("Weekly"),
+      input_type: "date",
+      attributes: { minDate: new Date(), maxDate: hoursFuture(24 * 7 * 2) },
+    },
+    {
+      input_type: "section_header",
+      label: req.__("Which events should be logged?"),
+    },
+  ];
   for (const w of Trigger.when_options) {
     fields.push({
       name: w,
@@ -82,7 +115,6 @@ const logSettingsForm = async (req) => {
   }
   return new Form({
     action: "/eventlog/settings",
-    blurb: req.__("Which events should be logged?"),
     noSubmitButton: true,
     onChange: "saveAndContinue(this)",
     fields,
@@ -101,15 +133,25 @@ router.get(
   error_catcher(async (req, res) => {
     const form = await logSettingsForm(req);
     form.values = getState().getConfig("event_log_settings", {});
+    form.values.next_hourly_event = getState().getConfig(
+      "next_hourly_event",
+      {}
+    );
+    form.values.next_daily_event = getState().getConfig("next_daily_event", {});
+    form.values.next_weekly_event = getState().getConfig(
+      "next_weekly_event",
+      {}
+    );
+
     send_events_page({
       res,
       req,
-      active_sub: "Log settings",
+      active_sub: "Settings",
       //sub2_page: "Events to log",
       contents: {
         type: "card",
         titleAjaxIndicator: true,
-        title: req.__("Events to log"),
+        title: req.__("Events and Trigger settings"),
         contents: renderForm(form, req.csrfToken()),
       },
     });
@@ -289,7 +331,7 @@ router.post(
       send_events_page({
         res,
         req,
-        active_sub: "Log settings",
+        active_sub: "Settings",
         //sub2_page: "Events to log",
         contents: {
           type: "card",
@@ -298,6 +340,14 @@ router.post(
         },
       });
     } else {
+      for (const tm of ["hourly", "daily", "weekly"]) {
+        const k = `next_${tm}_event`;
+        if (form.values[k]) {
+          await getState().setConfig(k, form.values[k]);
+          delete form.values[k];
+        }
+      }
+
       await getState().setConfig("event_log_settings", form.values);
 
       if (!req.xhr) res.redirect(`/eventlog/settings`);

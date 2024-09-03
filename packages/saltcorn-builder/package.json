@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "0.9.8",
+  "version": "1.0.0-beta.2",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
@@ -20,7 +20,7 @@
     "@babel/preset-react": "7.9.4",
     "@craftjs/core": "0.1.0-beta.20",
     "@craftjs/utils": "0.1.0-beta.20",
-    "@saltcorn/common-code": "0.9.8",
+    "@saltcorn/common-code": "1.0.0-beta.2",
     "saltcorn-craft-layers-noeye": "0.1.0-beta.22",
     "@fonticonpicker/react-fonticonpicker": "1.2.0",
     "@fortawesome/fontawesome-svg-core": "1.2.34",
@@ -46,7 +46,7 @@
     "webpack": "5.68.0",
     "webpack-cli": "4.9.2",
     "lodash": "4.17.21",
-    "immer": ">=9.0.6",
+    "immer": "9.0.6",
     "glob-parent": "^5.1.2"
   },
   "publishConfig": {

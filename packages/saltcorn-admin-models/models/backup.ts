@@ -647,7 +647,16 @@ const auto_backup_now = async () => {
         });
       }
     });
-  else await auto_backup_now_tenant(state);
+  else
+    try {
+      await auto_backup_now_tenant(state);
+    } catch (e) {
+      console.error(e);
+      await Crash.create(e, {
+        url: `Scheduler auto backup`,
+        headers: {},
+      });
+    }
 };
 export = {
   create_backup,

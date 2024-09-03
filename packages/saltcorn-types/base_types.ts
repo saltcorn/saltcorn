@@ -362,6 +362,12 @@ export type Plugin = {
   [key: string]: any;
 };
 
+export type CodePagePack = {
+  name: string;
+  code: string;
+  tags?: Array<string>;
+};
+
 export type Pack = {
   tables: Array<TablePack>;
   views: Array<ViewPack>;
@@ -375,6 +381,7 @@ export type Pack = {
   models: Array<ModelPack>;
   model_instances: Array<ModelInstancePack>;
   event_logs?: Array<EventLogPack>;
+  code_pages?: Array<CodePagePack>;
   config?: object;
 };
 

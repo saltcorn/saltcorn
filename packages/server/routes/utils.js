@@ -239,8 +239,14 @@ const setTenant = (req, res, next) => {
       }
     }
   } else {
-    setLanguage(req, res);
-    getState().log(5, `${req.method} ${req.originalUrl}`);
+    const state = getState();
+    setLanguage(req, res, state);
+    state.log(
+      5,
+      `${req.method} ${req.originalUrl}${
+        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+      }`
+    );
     next();
   }
 };
