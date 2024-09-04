@@ -962,6 +962,66 @@ module.exports = {
     },
   },
 
+  delete_rows: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Modify the triggering row",
+    configFields: async ({ mode, when_trigger }) => {
+      const tables = await Table.find({}, { cached: true });
+
+      return [
+        {
+          name: "delete_triggering_row",
+          label: "Delete triggering row",
+          type: "Bool",
+        },
+        {
+          name: "table_name",
+          label: "Table",
+          sublabel: "Table on which to delete rows",
+          input_type: "select",
+          showIf: { delete_triggering_row: false },
+          options: tables.map((t) => t.name),
+        },
+        {
+          name: "delete_where",
+          label: "Delete where",
+          type: "String",
+          sublabel: "Where expression, ex. <code>{manager: id}</code>",
+          required: true,
+          class: "validate-expression",
+          showIf: { delete_triggering_row: false },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      table,
+      configuration: { delete_triggering_row, delete_where, table_name },
+      user,
+      ...rest
+    }) => {
+      if (delete_triggering_row) {
+        if (!table || !row?.[table.pk_name])
+          throw new Error("delete_rows cannot find triggering row");
+        await table.deleteRows({ [table.pk_name]: row[table.pk_name] }, user);
+        return;
+      }
+      const where = eval_expression(
+        delete_where,
+        row || {},
+        user,
+        "recalculate_stored_fields where"
+      );
+      const tbl = Table.findOne({ name: table_name });
+      await tbl.deleteRows(where, user);
+      return;
+    },
+  },
+
   /**
    * @namespace
    * @category saltcorn-data
