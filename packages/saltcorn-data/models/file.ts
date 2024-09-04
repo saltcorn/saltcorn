@@ -168,7 +168,7 @@ class File {
 
   get absolutePath(): string {
     const tenant = db.getTenantSchema();
-    const safeDir = File.normalise(this.location);
+    const safeDir = File.absPathToServePath(File.normalise(this.location));
     return path.join(db.connectObj.file_store, tenant, safeDir);
   }
 

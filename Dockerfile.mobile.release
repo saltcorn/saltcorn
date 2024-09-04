@@ -10,7 +10,7 @@ RUN unzip commandlinetools-linux-8512546_latest.zip
 RUN mkdir android_sdk
 RUN yes | cmdline-tools/bin/sdkmanager --sdk_root=android_sdk --install "cmdline-tools;13.0"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager --list
-RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "platforms;android-13"
+RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "platforms;android-14"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;33.0.2"
 RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;34.0.0"
 
@@ -27,11 +27,11 @@ WORKDIR /init_project/project
 # download plugins while building
 # so that we can add them later via file reference
 RUN cordova plugin add cordova-sqlite-ext@6.0.0
-RUN cordova plugin add cordova-plugin-file@7.0.0
-RUN cordova plugin add cordova-plugin-inappbrowser@5.0.0
+RUN cordova plugin add cordova-plugin-file@8.1.0
+RUN cordova plugin add cordova-plugin-inappbrowser@6.0.0
 RUN cordova plugin add cordova-plugin-network-information@3.0.0
-RUN cordova plugin add cordova-plugin-geolocation@4.1.0
-RUN cordova plugin add cordova-plugin-camera@6.0.0
+RUN cordova plugin add cordova-plugin-geolocation@5.0.0
+RUN cordova plugin add cordova-plugin-camera@7.0.0
 RUN cordova platform add android
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk
@@ -52,6 +52,6 @@ RUN chmod -R o+rwx "/root/.npm"
 ENV NODE_ENV "production"
 ENV SALTCORN_DISABLE_UPGRADE "true"
 
-RUN npm install -g @saltcorn/cli@0.9.7 --unsafe
+RUN npm install -g @saltcorn/cli@1.0.0-beta.2 --unsafe
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]

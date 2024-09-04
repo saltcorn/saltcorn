@@ -586,3 +586,7 @@ button.monospace-copy-btn {
   border-right: 1px #e3e6f0 !important;
   border-radius: 0 6px 6px 0;
 }
+
+.custom-file-label {
+  margin-left: 10px;
+}

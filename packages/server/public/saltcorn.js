@@ -391,6 +391,9 @@ function ajax_modal(url, opts = {}) {
       : {}),
   });
 }
+function closeModal() {
+  $("#scmodal").modal("toggle");
+}
 
 function selectVersionError(res, btnId) {
   notifyAlert({

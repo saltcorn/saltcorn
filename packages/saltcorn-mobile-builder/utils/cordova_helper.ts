@@ -173,12 +173,12 @@ export class CordovaHelper {
       });
       console.log(result.output.toString());
     };
-    addFn("cordova-sqlite-ext");
-    addFn("cordova-plugin-file@7.0.0");
-    addFn("cordova-plugin-inappbrowser");
-    addFn("cordova-plugin-network-information");
-    addFn("cordova-plugin-geolocation");
-    addFn("cordova-plugin-camera");
+    addFn("cordova-sqlite-ext@6.0.0");
+    addFn("cordova-plugin-file@8.1.0");
+    addFn("cordova-plugin-inappbrowser@6.0.0");
+    addFn("cordova-plugin-network-information@3.0.0");
+    addFn("cordova-plugin-geolocation@5.0.0");
+    addFn("cordova-plugin-camera@7.0.0");
   }
 
   private addPlatforms() {

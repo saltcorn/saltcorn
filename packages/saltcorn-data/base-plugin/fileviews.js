@@ -27,6 +27,52 @@ const { select_options } = require("@saltcorn/markup/helpers");
 const File = require("../models/file");
 const path = require("path");
 
+const btnStyles = [
+  { name: "default", label: "Default selector" },
+  { name: "btn btn-primary", label: "Primary button" },
+  { name: "btn btn-secondary", label: "Secondary button" },
+  { name: "btn btn-success", label: "Success button" },
+  { name: "btn btn-danger", label: "Danger button" },
+  { name: "btn btn-warning", label: "Warning button" },
+  { name: "btn btn-info", label: "Info button" },
+  {
+    name: "btn btn--outline-primary",
+    label: "Primary outline button",
+  },
+  {
+    name: "btn btn--outline-decondary",
+    label: "Secondary outline button",
+  },
+];
+
+const buildCustomInput = (id, attrs) => {
+  return (
+    button(
+      {
+        type: "button",
+        id: `${id}-custom-button`,
+        class: attrs.button_style,
+        onclick: `document.getElementById('${id}').click()`,
+      },
+      attrs?.label ? attrs.label : "Choose File"
+    ) +
+    span(
+      {
+        id: `${id}-custom-text`,
+        class: "custom-file-label",
+      },
+      "No file chosen"
+    ) +
+    script(
+      domReady(
+        `document.getElementById('${id}').addEventListener('change', (e) => {
+          document.getElementById('${id}-custom-text').textContent = e.target.files[0].name;
+        })`
+      )
+    )
+  );
+};
+
 module.exports = {
   // download link
   "Download link": {
@@ -109,10 +155,32 @@ module.exports = {
           type: "String",
           attributes: { options: dirs.map((d) => d.path_to_serve) },
         },
+        {
+          name: "button_style",
+          label: "Button Style",
+          type: "String",
+          attributes: {
+            options: btnStyles,
+          },
+          default: "default",
+        },
+        {
+          name: "label",
+          label: "Button Label",
+          type: "String",
+          showIf: {
+            button_style: btnStyles
+              .filter((opt) => opt.name !== "default")
+              .map((opt) => opt.name),
+          },
+        },
       ];
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
+      const customInput =
+        attrs?.button_style && attrs.button_style !== "default";
+      const id = `input${text_attr(nm)}`;
       return (
         text(file_name || "") +
         (typeof attrs.files_accept_filter !== "undefined" ||
@@ -121,17 +189,20 @@ module.exports = {
               class: `${cls} ${field.class || ""}`,
               "data-fieldname": field.form_name,
               name: text_attr(nm),
-              id: `input${text_attr(nm)}`,
+              id: id,
               type: "file",
               accept: attrs.files_accept_filter,
+              ...(customInput ? { hidden: true } : {}),
             })
           : input({
               class: `${cls} ${field.class || ""}`,
               "data-fieldname": field.form_name,
               name: text_attr(nm),
-              id: `input${text_attr(nm)}`,
+              id: id,
               type: "file",
-            }))
+              ...(customInput ? { hidden: true } : {}),
+            })) +
+        (customInput ? buildCustomInput(id, attrs) : "")
       );
     },
   },
@@ -150,6 +221,21 @@ module.exports = {
           type: "String",
           attributes: { options: dirs.map((d) => d.path_to_serve) },
         },
+        {
+          name: "use_picker",
+          label: "Use picker",
+          sublabel: "Use the file picker dialog",
+          type: "Bool",
+          default: false,
+        },
+        {
+          name: "show_subdirs",
+          type: "Bool",
+          label: "navigate subdirectories",
+          sublabel: "Show and allow to navigate directories",
+          showIf: { use_picker: true },
+          default: false,
+        },
         /*{
           name: "name_regex",
           label: "Name regex",
@@ -164,22 +250,53 @@ module.exports = {
     },
     // run
     run: (nm, file_id, attrs, cls, reqd, field) => {
-      return select(
-        {
-          class: `form-control form-select selectizable ${cls} ${
-            field.class || ""
-          }`,
-          "data-fieldname": field.form_name,
-          name: text_attr(nm),
-          id: `input${text_attr(nm)}`,
-        },
-        select_options(
-          file_id,
-          field,
-          (attrs || {}).force_required, // todo force_required is unresolved!
-          (attrs || {}).neutral_label
-        )
-      );
+      if (attrs?.use_picker) {
+        const folder = attrs?.folder || "";
+        const inputId = `input${text_attr(nm)}`;
+        return span(
+          a(
+            {
+              class: "btn btn-primary",
+              href: `javascript:ajax_modal('/files/picker?folder=${encodeURIComponent(
+                folder
+              )}&input_id=${encodeURIComponent(inputId)}${
+                attrs?.show_subdirs === false ? "&no_subdirs=true" : ""
+              }')`,
+            },
+            "select"
+          ),
+          span(
+            {
+              id: `${inputId}-custom-text`,
+              class: "custom-file-label",
+            },
+            "No file chosen"
+          ),
+          input({
+            type: "hidden",
+            id: inputId,
+            name: text_attr(nm),
+            "data-fieldname": field.form_name,
+          })
+        );
+      } else {
+        return select(
+          {
+            class: `form-control form-select selectizable ${cls} ${
+              field.class || ""
+            }`,
+            "data-fieldname": field.form_name,
+            name: text_attr(nm),
+            id: `input${text_attr(nm)}`,
+          },
+          select_options(
+            file_id,
+            field,
+            (attrs || {}).force_required, // todo force_required is unresolved!
+            (attrs || {}).neutral_label
+          )
+        );
+      }
     },
   },
   // Capture
@@ -206,16 +323,41 @@ module.exports = {
           required: true,
           attributes: { options: ["camera", "camcorder", "microphone"] },
         },
+        {
+          name: "button_style",
+          label: "Button Style",
+          type: "String",
+          attributes: {
+            options: btnStyles,
+          },
+          default: "default",
+        },
+        {
+          name: "label",
+          label: "Button Label",
+          type: "String",
+          showIf: {
+            button_style: btnStyles
+              .filter((opt) => opt.name !== "default")
+              .map((opt) => opt.name),
+          },
+        },
       ];
     },
     run: (nm, file_name, attrs, cls, reqd, field) => {
+      const customInput =
+        attrs?.button_style && attrs.button_style !== "default";
+      const id = `input${text_attr(nm)}`;
+
       if (attrs.device === "camera" && attrs.isMobile) {
         return div(
           { class: "text-nowrap overflow-hidden text-truncate" },
           button(
             {
               id: `cptbtn${text_attr(nm)}`,
-              class: "btn btn-primary",
+              class: attrs?.button_style
+                ? attrs.button_style
+                : "btn btn-primary",
               onclick: `getPicture('${text_attr(nm)}')`,
             },
             "use camera",
@@ -229,14 +371,17 @@ module.exports = {
           camcorder: "video",
           microphone: "audio",
         }[attrs.device];
-        return input({
-          class: `${cls} ${field.class || ""}`,
-          "data-fieldname": field.form_name,
-          name: text_attr(nm),
-          id: `input${text_attr(nm)}`,
-          type: "file",
-          accept: `${mimebase}/*;capture=${attrs.device}`,
-        });
+        return (
+          input({
+            class: `${cls} ${field.class || ""}`,
+            "data-fieldname": field.form_name,
+            name: text_attr(nm),
+            id: id,
+            type: "file",
+            accept: `${mimebase}/*;capture=${attrs.device}`,
+            ...(customInput ? { hidden: true } : {}),
+          }) + (customInput ? buildCustomInput(id, attrs) : "")
+        );
       }
     },
   },
