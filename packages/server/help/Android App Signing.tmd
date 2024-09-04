@@ -8,7 +8,7 @@ To build an Android app for the Play Store, you need to create an Android Applic
 
 *Note: You need a [Play Console developer account](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en&ref_topic=3450769&sjid=11090022771305927482-EU) to publish your app on the Play Store.*
 
-### Create a Keysore file
+### Create a Keystore file
 On any Unix-based system, you can use the `keytool` command to create the keystore file. For example:
 ```sh
 keytool -genkey -v -keystore my-app-key.jks 

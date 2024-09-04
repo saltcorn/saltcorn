@@ -20,7 +20,15 @@ const {
   setTenant,
   is_relative_url,
 } = require("./utils.js");
-const { h1, div, text } = require("@saltcorn/markup/tags");
+const {
+  h1,
+  div,
+  text,
+  script,
+  style,
+  link,
+  domReady,
+} = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
 const {
@@ -43,20 +51,98 @@ const { extract } = require("@saltcorn/admin-models/models/backup");
 const router = new Router();
 module.exports = router;
 
-/**
- * Edit file Role form
- * @param {*} file
- * @param {*} roles
- * @param {*} req
- * @returns {Form}
- */
-const editFileRoleForm = (file, roles, req) =>
-  editRoleForm({
-    url: `/files/setrole/${file.path_to_serve}`,
-    current_role: file.min_role_read,
-    roles,
-    req,
+const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
+  res.set("SaltcornModalWidth", "1200px");
+  res.sendWrap(req.__("Please select a file"), {
+    above: [
+      script({
+        src: `/static_assets/${db.connectObj.version_tag}/bundle.js`,
+        defer: true,
+      }),
+      script(
+        domReady(
+          `$("head").append('${link({
+            rel: "stylesheet",
+            href: `/static_assets/${db.connectObj.version_tag}/bundle.css`,
+          })}')`
+        )
+      ),
+      div({
+        id: "saltcorn-file-manager",
+        full_manager: "false",
+        folder: folder,
+        input_id: inputId,
+        ...(noSubdirs ? { no_subdirs: "true" } : {}),
+      }),
+    ],
   });
+};
+
+router.get(
+  "/picker",
+  error_catcher(async (req, res) => {
+    const { folder, input_id, no_subdirs } = req.query;
+    send_files_picker(folder, no_subdirs, input_id, req, res);
+  })
+);
+
+router.get(
+  "/visible_entries",
+  error_catcher(async (req, res) => {
+    const role = req.user?.role_id ? req.user.role_id : 100;
+    const userId = req.user?.id;
+    const { dir, no_subdirs } = req.query;
+    const noSubdirs = no_subdirs === "true";
+    const safeDir = File.normalise(dir || "/");
+    const absFolder = path.join(
+      db.connectObj.file_store,
+      db.getTenantSchema(),
+      safeDir
+    );
+    const dirOnDisk = await File.from_file_on_disk(
+      path.basename(absFolder),
+      path.dirname(absFolder)
+    );
+    if (dirOnDisk.min_role_read < role) {
+      getState().log(5, `Directory denied. path=${dir} role=${role}`);
+      res.json({ files: [], roles: [], directories: [] });
+      return;
+    }
+    const rows = (
+      await File.find({ folder: dir }, { orderBy: "filename" })
+    ).filter((f) => {
+      if (noSubdirs && f.isDirectory) return false;
+      else return role <= f.min_role_read || (userId && userId === f.user_id);
+    });
+    const roles = await User.get_roles();
+    if (!no_subdirs && safeDir && safeDir !== "/" && safeDir !== ".") {
+      let dirname = path.dirname(safeDir);
+      if (dirname === ".") dirname = "/";
+      rows.unshift(
+        new File({
+          filename: "..",
+          location: dirname,
+          isDirectory: true,
+          mime_super: "",
+          mime_sub: "",
+        })
+      );
+    }
+
+    for (const file of rows) {
+      file.location = file.path_to_serve;
+    }
+    const directories = !noSubdirs
+      ? (await File.allDirectories(true)).filter(
+          (dir) => role <= dir.min_role_read
+        )
+      : [];
+    for (const dir of directories) {
+      dir.location = dir.path_to_serve;
+    }
+    res.json({ files: rows, roles, directories });
+  })
+);
 
 /**
  * @name get
@@ -116,7 +202,7 @@ router.get(
       contents: {
         type: "card",
         contents: [
-          div({ id: "saltcorn-file-manager" }),
+          div({ full_manager: "true", id: "saltcorn-file-manager" }),
           fileUploadForm(req, safeDir),
         ],
       },
