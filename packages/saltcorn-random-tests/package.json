@@ -9,7 +9,7 @@
     "@saltcorn/server": "0.9.7"
   },
   "devDependencies": {
-    "chaos-guinea-pig": "github:christianhugoch/chaos-guinea-pig#fixed-cheerio-version",
+    "chaos-guinea-pig": "0.1.6",
     "jest": "^29.7.0",
     "supertest": "^6.3.3"
   },

@@ -32,7 +32,7 @@
     "@saltcorn/db-common": "0.9.7",
     "@saltcorn/data": "0.9.7",
     "adm-zip": "0.5.5",
-    "chaos-guinea-pig": "github:christianhugoch/chaos-guinea-pig#fixed-cheerio-version",
+    "chaos-guinea-pig": "0.1.6",
     "csv-stringify": "^5.5.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
