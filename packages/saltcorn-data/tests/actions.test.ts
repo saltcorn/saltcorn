@@ -17,8 +17,13 @@ const {
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
-const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
-  baseactions;
+const {
+  duplicate_row,
+  insert_any_row,
+  insert_joined_row,
+  modify_row,
+  delete_rows,
+} = baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
 import { run_action_column } from "../plugin-helper";
@@ -266,6 +271,38 @@ describe("base plugin actions", () => {
     assertIsSet(row1);
 
     expect(row1.favbook).toBe(1);
+  });
+  it("should delete_rows", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const id1 = await patients.insertRow({ name: "Del1" });
+    await patients.insertRow({ name: "Del2" });
+    const row = await patients.getRow({ id: id1 });
+    assertIsSet(row);
+    const result = await delete_rows.run({
+      row,
+      table: patients,
+      configuration: { delete_triggering_row: true },
+      user: { id: 1, role_id: 1 },
+    } as any);
+    expect(result).toStrictEqual(undefined);
+
+    const row1 = await patients.getRow({ name: "Del1" });
+    expect(row1).toBe(null);
+    const row1a = await patients.getRow({ name: "Del2" });
+    expect(!!row1a).toBe(true);
+
+    const result1 = await delete_rows.run({
+      configuration: {
+        delete_triggering_row: false,
+        delete_where: "{name: 'Del2'}",
+        table_name: "patients",
+      },
+      user: { id: 1, role_id: 1 },
+    } as any);
+    expect(result1).toStrictEqual(undefined);
+    const row2 = await patients.getRow({ name: "Del2" });
+    expect(row2).toBe(null);
   });
   it("should duplicate_row", async () => {
     const patients = Table.findOne({ name: "patients" });
