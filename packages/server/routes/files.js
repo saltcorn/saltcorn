@@ -90,14 +90,29 @@ router.get(
   "/visible_entries",
   error_catcher(async (req, res) => {
     const role = req.user?.role_id ? req.user.role_id : 100;
+    const userId = req.user?.id;
     const { dir, no_subdirs } = req.query;
     const noSubdirs = no_subdirs === "true";
     const safeDir = File.normalise(dir || "/");
+    const absFolder = path.join(
+      db.connectObj.file_store,
+      db.getTenantSchema(),
+      safeDir
+    );
+    const dirOnDisk = await File.from_file_on_disk(
+      path.basename(absFolder),
+      path.dirname(absFolder)
+    );
+    if (dirOnDisk.min_role_read < role) {
+      getState().log(5, `Directory denied. path=${dir} role=${role}`);
+      res.json({ files: [], roles: [], directories: [] });
+      return;
+    }
     const rows = (
       await File.find({ folder: dir }, { orderBy: "filename" })
     ).filter((f) => {
       if (noSubdirs && f.isDirectory) return false;
-      else return role <= f.min_role_read;
+      else return role <= f.min_role_read || (userId && userId === f.user_id);
     });
     const roles = await User.get_roles();
     if (!no_subdirs && safeDir && safeDir !== "/" && safeDir !== ".") {
@@ -117,9 +132,13 @@ router.get(
     for (const file of rows) {
       file.location = file.path_to_serve;
     }
-    const directories = await File.allDirectories(true);
-    for (const file of directories) {
-      file.location = file.path_to_serve;
+    const directories = !noSubdirs
+      ? (await File.allDirectories(true)).filter(
+          (dir) => role <= dir.min_role_read
+        )
+      : [];
+    for (const dir of directories) {
+      dir.location = dir.path_to_serve;
     }
     res.json({ files: rows, roles, directories });
   })
