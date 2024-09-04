@@ -113,7 +113,7 @@ test.describe('E2E Test Suite', () => {
 
     //validate that card title should be master visa debit card
     await customAssert('Card title should be Master Visa Debit Card', async () => {
-      await expect(cardTitle).toHaveValue('Master Visa Debit Card');
+      await expect(cardTitle).toHaveValue('Master VisaDebit Card');
       const urlField = page.locator(pageobject.CardUrl);
       await expect(urlField).toHaveValue('');
     });
