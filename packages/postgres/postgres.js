@@ -410,7 +410,7 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   return await promisify(pipeline)(fileStream, stream);
 };
 
-const copyTo = async (filePath, tableName) => {
+const copyToJson = async (filePath, tableName) => {
   const sql = `COPY (SELECT json_agg(row_to_json("${sqlsanitize(
     tableName
   )}")) :: text
@@ -508,7 +508,7 @@ const postgresExports = {
   reset_sequence,
   getVersion,
   copyFrom,
-  copyTo,
+  copyToJson,
   slugify,
   time,
   listTables,

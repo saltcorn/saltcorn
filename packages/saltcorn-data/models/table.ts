@@ -2513,8 +2513,8 @@ class Table implements AbstractTable {
   }
 
   async dump_to_json(filePath: string) {
-    if (db.copyTo) {
-      await db.copyTo(filePath, this.name);
+    if (db.copyToJson) {
+      await db.copyToJson(filePath, this.name);
     } else {
       const rows = await this.getRows({}, { ignore_errors: true });
       await writeFile(filePath, JSON.stringify(rows));
