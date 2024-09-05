@@ -421,7 +421,14 @@ function apply_showif() {
     navigator.systemLanguage ||
     "en";
   window.detected_locale = locale;
-  const parse = (s) => JSON.parse(decodeURIComponent(s));
+  const parse = (s, def = {}) => {
+    try {
+      return JSON.parse(decodeURIComponent(s));
+    } catch (e) {
+      console.error("failed to parse time format", e);
+      return def;
+    }
+  };
   $("time[locale-time-options]").each(function () {
     var el = $(this);
     var date = new Date(el.attr("datetime"));
@@ -443,8 +450,9 @@ function apply_showif() {
   $("time[locale-date-format]").each(function () {
     var el = $(this);
     var date = el.attr("datetime");
-    const format = parse(el.attr("locale-date-format"));
-    el.text(dayjs(date).format(format));
+    const format = parse(el.attr("locale-date-format"), "");
+    if (format) el.text(dayjs(date).format(format));
+    else el.text(dayjs(date));
   });
 
   _apply_showif_plugins.forEach((p) => p());
