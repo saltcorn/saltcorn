@@ -10,7 +10,7 @@
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {
     "@oclif/core": "^2.16.0",
-    "@oclif/plugin-plugins": "^3.9.4",
+    "@oclif/plugin-plugins": "^5.1.2",
     "@saltcorn/admin-models": "1.0.0-beta.2",
     "@saltcorn/common-code": "1.0.0-beta.2",
     "@saltcorn/data": "1.0.0-beta.2",
