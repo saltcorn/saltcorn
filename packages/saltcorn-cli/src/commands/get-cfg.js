@@ -10,12 +10,12 @@ const { maybe_as_tenant, init_some_tenants } = require("../common");
  * @extends oclif.Command
  * @category saltcorn-cli
  */
-class SetCfgCommand extends Command {
+class GetCfgCommand extends Command {
   /**
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = await this.parse(SetCfgCommand);
+    const { args, flags } = await this.parse(GetCfgCommand);
     await init_some_tenants(flags.tenant);
 
     await maybe_as_tenant(flags.tenant, async () => {
@@ -48,12 +48,12 @@ class SetCfgCommand extends Command {
 /**
  * @type {string}
  */
-SetCfgCommand.description = `Get a configuration value. The value is printed to stdout as a JSON value`;
+GetCfgCommand.description = `Get a configuration value. The value is printed to stdout as a JSON value`;
 
 /**
  * @type {object[]}
  */
-SetCfgCommand.args = {
+GetCfgCommand.args = {
   key: Args.string({
     required: false,
     description: "Configuration key",
@@ -63,7 +63,7 @@ SetCfgCommand.args = {
 /**
  * @type {object}
  */
-SetCfgCommand.flags = {
+GetCfgCommand.flags = {
   tenant: Flags.string({
     char: "t",
     description: "tenant",
@@ -74,4 +74,4 @@ SetCfgCommand.flags = {
   }),
 };
 
-module.exports = SetCfgCommand;
+module.exports = GetCfgCommand;

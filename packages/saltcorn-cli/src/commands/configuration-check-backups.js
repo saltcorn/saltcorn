@@ -96,7 +96,6 @@ ConfigurationCheckBackupsCommand.description = `Check configuration`;
  */
 ConfigurationCheckBackupsCommand.args = {
   files: Args.string({
-    name: "files",
     required: true,
     description: "backup file to check. can be repeated, e.g. with *",
   }),

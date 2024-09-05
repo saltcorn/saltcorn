@@ -15,7 +15,10 @@ class SetupBenchmarkCommand extends Command {
    * @returns {Promise<void>}
    */
   async install_forum_pack(flags) {
-    const { fetch_pack_by_name, install_pack } = require("@saltcorn/data/pack");
+    const {
+      fetch_pack_by_name,
+      install_pack,
+    } = require("@saltcorn/admin-models/models/pack");
     const load_plugins = require("@saltcorn/server/load_plugins");
     const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
     const { init_multi_tenant } = require("@saltcorn/data/db/state");

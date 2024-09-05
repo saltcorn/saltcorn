@@ -18,7 +18,7 @@ class AddSchemaCommand extends Command {
     const reset = require("@saltcorn/data/db/reset_schema");
     if (!flags.force) {
       const ans = await ux.confirm(
-        `This add Saltcorn schema to existing database\nContinue (y/n)?`
+        `This adds Saltcorn schema to existing database\nContinue (y/n)?`
       );
       if (!ans) {
         console.log(`Success: Command execution canceled`);
