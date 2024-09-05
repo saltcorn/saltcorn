@@ -4,8 +4,7 @@
  */
 
 // todo support for  users without emails (using user.id)
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const { maybe_as_tenant } = require("../common");
 
 /**
@@ -20,8 +19,8 @@ class DeleteUserCommand extends Command {
   async run() {
     const User = require("@saltcorn/data/models/user");
 
-    const { args } = this.parse(DeleteUserCommand);
-    const { flags } = this.parse(DeleteUserCommand);
+    const { args } = await this.parse(DeleteUserCommand);
+    const { flags } = await this.parse(DeleteUserCommand);
 
     // run function as specified tenant
     await maybe_as_tenant(flags.tenant, async () => {
@@ -39,7 +38,7 @@ class DeleteUserCommand extends Command {
       // make changes
       // todo handle errors
       if (!flags.force) {
-        const ans = await cli.confirm(
+        const ans = await ux.confirm(
           `This will delete user ${args.user_email} ${
             typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
           }.\nContinue (y/n)?`
@@ -65,9 +64,12 @@ class DeleteUserCommand extends Command {
 /**
  * @type {object}
  */
-DeleteUserCommand.args = [
-  { name: "user_email", required: true, description: "User to delete" },
-];
+DeleteUserCommand.args = {
+  user_email: Args.string({
+    required: true,
+    description: "User to delete",
+  }),
+};
 
 /**
  * @type {string}
@@ -91,8 +93,8 @@ Command deletes the user specified by USER_EMAIL.
  * @type {object}
  */
 DeleteUserCommand.flags = {
-  force: flags.boolean({ char: "f", description: "force command execution" }),
-  tenant: flags.string({
+  force: Flags.boolean({ char: "f", description: "force command execution" }),
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),

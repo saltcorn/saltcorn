@@ -4,8 +4,7 @@
  */
 
 // todo support for  users without emails (using user.id)
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
@@ -20,8 +19,7 @@ class ModifyUserCommand extends Command {
   async run() {
     const User = require("@saltcorn/data/models/user");
 
-    const { args } = this.parse(ModifyUserCommand);
-    const { flags } = this.parse(ModifyUserCommand);
+    const { args, flags } = await this.parse(ModifyUserCommand);
 
     if (flags.admin && flags.role && flags.role !== "admin") {
       console.error("Error: specify at most one of admin and role");
@@ -49,7 +47,7 @@ class ModifyUserCommand extends Command {
       let email;
       if (flags.email) email = flags.email;
       else if (flags.imode)
-        email = await cli.prompt("New Email address", {
+        email = await ux.prompt("New Email address", {
           default: args.user_email,
         });
       if (email === args.user_email) email = undefined; // little trick - we won't update email if it already same
@@ -64,7 +62,7 @@ class ModifyUserCommand extends Command {
       let password;
       if (flags.password) password = flags.password;
       else if (flags.imode)
-        password = await cli.prompt("New Password", { type: "hide" });
+        password = await ux.prompt("New Password", { type: "hide" });
       if (password)
         if (User.unacceptable_password_reason(password)) {
           console.error(
@@ -113,9 +111,12 @@ class ModifyUserCommand extends Command {
 /**
  * @type {object}
  */
-ModifyUserCommand.args = [
-  { name: "user_email", required: true, description: "User to modify" },
-];
+ModifyUserCommand.args = {
+  user_email: Args.string({
+    required: true,
+    description: "User to modify",
+  }),
+};
 
 /**
  * @type {string}
@@ -145,24 +146,24 @@ NOTE that -a and -r role (--role=role) can give conflict.
  * @type {object}
  */
 ModifyUserCommand.flags = {
-  admin: flags.boolean({ char: "a", description: "make user be Admin" }),
-  tenant: flags.string({
+  admin: Flags.boolean({ char: "a", description: "make user be Admin" }),
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  email: flags.string({
+  email: Flags.string({
     char: "e",
     description: "new email",
   }),
-  role: flags.string({
+  role: Flags.string({
     char: "r",
     description: "new role (can conflict with -a option)",
   }),
-  password: flags.string({
+  password: Flags.string({
     char: "p",
     description: "new password",
   }),
-  imode: flags.boolean({ char: "i", description: "interactive mode" }),
+  imode: Flags.boolean({ char: "i", description: "interactive mode" }),
 };
 
 module.exports = ModifyUserCommand;

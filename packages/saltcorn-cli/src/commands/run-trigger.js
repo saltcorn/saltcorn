@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/run-trigger
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
@@ -16,7 +15,7 @@ class RunTriggerCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags, args } = this.parse(RunTriggerCommand);
+    const { flags, args } = await this.parse(RunTriggerCommand);
     await init_some_tenants(flags.tenant);
 
     const { mockReqRes } = require("@saltcorn/data/tests/mocks");
@@ -37,16 +36,22 @@ class RunTriggerCommand extends Command {
  */
 RunTriggerCommand.description = `Run a trigger`;
 
-RunTriggerCommand.args = [
-  /* { name: "tenant", required: false, description: "tenant name" }, */
-  { name: "trigger", required: true, description: "trigger name" },
-];
+RunTriggerCommand.args = {
+  trigger: Args.string({
+    required: true,
+    description: "trigger name",
+  }),
+  // tenant: Args.string({
+  //   required: false,
+  //   description: "tenant",
+  // }),
+};
 
 /**
  * @type {object}
  */
 RunTriggerCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     name: "tenant",
     char: "t",
     description: "tenant",

@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/run-trigger
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
@@ -16,10 +15,10 @@ class ListUsersCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const {flags, args} = this.parse(ListUsersCommand);
+    const { flags, args } = await this.parse(ListUsersCommand);
     await init_some_tenants(flags.tenant);
 
-    const {mockReqRes} = require("@saltcorn/data/tests/mocks");
+    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
     const User = require(`@saltcorn/data/models/user`);
     //const that = this;
     await maybe_as_tenant(flags.tenant, async () => {
@@ -29,17 +28,11 @@ class ListUsersCommand extends Command {
         this.exit(1);
       }
 
-      if(!flags.verbose){
-        console.table(users,
-          ["email"]
-        );
+      if (!flags.verbose) {
+        console.table(users, ["email"]);
+      } else {
+        console.table(users, ["id", "email", "language", "role_id"]);
       }
-      else {
-        console.table(users,
-          ["id","email","language","role_id"]
-        );
-      }
-
     });
     this.exit(0);
   }
@@ -57,13 +50,13 @@ ListUsersCommand.help = `List users`;
  * @type {object}
  */
 ListUsersCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     name: "tenant",
     char: "t",
     description: "tenant",
     required: false,
   }),
-  verbose: flags.boolean({
+  verbose: Flags.boolean({
     name: "verbose",
     char: "v",
     description: "verbose output",

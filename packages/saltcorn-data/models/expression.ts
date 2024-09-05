@@ -106,6 +106,7 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           return `${value}`;
         },
       })[node.type](node);
+    // @ts-ignore
     return compile(ast);
   } catch (e: any) {
     console.error(e);
@@ -363,6 +364,7 @@ function jsexprToWhere(
           return value;
         },
       })[node.type](node);
+    // @ts-ignore
     return compile(ast);
   } catch (e: any) {
     console.error(e);

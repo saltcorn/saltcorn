@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/post-release
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 const fs = require("fs");
 const fsp = fs.promises;
 const { spawnSync, spawn } = require("child_process");
@@ -124,7 +124,7 @@ class PostReleaseCommand extends Command {
   async run() {
     const {
       args: { task },
-    } = this.parse(PostReleaseCommand);
+    } = await this.parse(PostReleaseCommand);
     this.version = require(path.join(
       __dirname,
       "..",
@@ -149,12 +149,11 @@ PostReleaseCommand.description = `Post-release tasks: docker and vagrant builds`
 /**
  * @type {object}
  */
-PostReleaseCommand.args = [
-  {
-    name: "task",
+PostReleaseCommand.args = {
+  task: Args.string({
     options: ["docker", "vagrant", "all", "none"],
     description: "What to do",
-  },
-];
+  }),
+};
 
 module.exports = PostReleaseCommand;

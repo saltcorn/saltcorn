@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/create-user
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 // todo update logic based on modify-user command
@@ -19,7 +18,7 @@ class CreateUserCommand extends Command {
   async run() {
     const User = require("@saltcorn/data/models/user");
 
-    const { flags } = this.parse(CreateUserCommand);
+    const { flags } = await this.parse(CreateUserCommand);
     if (flags.admin && flags.role && flags.role !== "admin") {
       console.error("Error: specify at most one of admin and role");
       this.exit(1);
@@ -39,9 +38,9 @@ class CreateUserCommand extends Command {
         }
         role_id = role.id;
       }
-      const email = flags.email || (await cli.prompt("Email address"));
+      const email = flags.email || (await ux.prompt("Email address"));
       const password =
-        flags.password || (await cli.prompt("Password", { type: "hide" }));
+        flags.password || (await ux.prompt("Password", { type: "hide" }));
       const u = await User.create({ email, password, role_id });
       if (u instanceof User)
         console.log(
@@ -66,20 +65,20 @@ CreateUserCommand.description = `Create a new user`;
  * @type {object}
  */
 CreateUserCommand.flags = {
-  admin: flags.boolean({ char: "a", description: "Admin user" }),
-  tenant: flags.string({
+  admin: Flags.boolean({ char: "a", description: "Admin user" }),
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  email: flags.string({
+  email: Flags.string({
     char: "e",
     description: "email",
   }),
-  role: flags.string({
+  role: Flags.string({
     char: "r",
     description: "role",
   }),
-  password: flags.string({
+  password: Flags.string({
     char: "p",
     description: "password",
   }),

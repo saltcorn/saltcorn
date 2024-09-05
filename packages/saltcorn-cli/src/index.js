@@ -40,4 +40,4 @@
  * @category saltcorn-cli
  */
 
-module.exports = require("@oclif/command");
+module.exports = require("@oclif/core");

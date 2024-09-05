@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/plugins
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 
 /**
  * Plugins list and update command
@@ -19,7 +19,7 @@ class PluginsCommand extends Command {
     const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     const Plugin = require("@saltcorn/data/models/plugin");
     var plugins = [];
-    const { flags } = this.parse(PluginsCommand);
+    const { flags } = await this.parse(PluginsCommand);
 
     const tenantList = [
       db.connectObj.default_schema,
@@ -109,19 +109,19 @@ class PluginsCommand extends Command {
  */
 PluginsCommand.flags = {
   //list: flags.boolean({ char: "l", description: "List" }),
-  upgrade: flags.boolean({ char: "u", description: "Upgrade" }),
-  dryRun: flags.boolean({ char: "d", description: "Upgrade dry-run" }),
-  verbose: flags.boolean({
+  upgrade: Flags.boolean({ char: "u", description: "Upgrade" }),
+  dryRun: Flags.boolean({ char: "d", description: "Upgrade dry-run" }),
+  verbose: Flags.boolean({
     char: "v",
     description: "Verbose output",
     default: false,
   }),
-  force: flags.boolean({
+  force: Flags.boolean({
     char: "f",
     description: "Force update",
     default: false,
   }),
-  name: flags.string({
+  name: Flags.string({
     char: "n",
     description: "Plugin name",
   }),

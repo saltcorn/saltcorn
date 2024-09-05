@@ -1367,9 +1367,17 @@ module.exports = {
             )
           : {};
         const relRows = await relTable.getRows(relWhere);
-        mergeIntoWhere(where, {
-          id: { not: { in: relRows.map((r) => r[relfld]) } },
-        });
+        if (relRows.length > 0)
+          mergeIntoWhere(
+            where,
+            !db.isSQLite
+              ? {
+                  id: { not: { in: relRows.map((r) => r[relfld]) } },
+                }
+              : {
+                  not: { or: relRows.map((r) => ({ id: r[relfld] })) },
+                }
+          );
       }
       let rows = await table.getJoinedRows({
         where,

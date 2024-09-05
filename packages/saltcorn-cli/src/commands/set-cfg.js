@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/set-cfg
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const {
   maybe_as_tenant,
   init_some_tenants,
@@ -20,7 +19,7 @@ class SetCfgCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = this.parse(SetCfgCommand);
+    const { args, flags } = await this.parse(SetCfgCommand);
     if (args.key && !!args.value + !!flags.stdin + !!flags.file !== 1) {
       console.error(
         "Must supply one value, as argument, stdin (with -i), or file (with -f)"
@@ -68,31 +67,33 @@ SetCfgCommand.description = `Set a configuration value. The supplied value (argu
 /**
  * @type {object[]}
  */
-SetCfgCommand.args = [
-  { name: "key", required: false, description: "Configuration key" },
-  {
-    name: "value",
+SetCfgCommand.args = {
+  key: Args.string({
+    required: false,
+    description: "Configuration key",
+  }),
+  value: Args.string({
     description: "Configuration value (JSON or string)",
-  },
-];
+  }),
+};
 
 /**
  * @type {object}
  */
 SetCfgCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  plugin: flags.string({
+  plugin: Flags.string({
     char: "p",
     description: "plugin",
   }),
-  file: flags.string({
+  file: Flags.string({
     char: "f",
     description: "file",
   }),
-  stdin: flags.boolean({
+  stdin: Flags.boolean({
     char: "i",
     description: "read value from stdin",
   }),

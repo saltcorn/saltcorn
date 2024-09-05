@@ -1,4 +1,4 @@
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const { join } = require("path");
 const { spawnSync } = require("child_process");
 
@@ -9,7 +9,7 @@ const { spawnSync } = require("child_process");
  */
 class BuildCordovaBuilder extends Command {
   async run() {
-    const { flags } = this.parse(BuildCordovaBuilder);
+    const { flags } = await this.parse(BuildCordovaBuilder);
     const dockerDir = join(
       require.resolve("@saltcorn/mobile-builder"),
       "..",
@@ -38,7 +38,7 @@ BuildCordovaBuilder.help =
   "Please make sure docker is callable without using root (see rootless mode, or add the user to the docker group).";
 
 BuildCordovaBuilder.flags = {
-  buildClean: flags.boolean({
+  buildClean: Flags.boolean({
     name: "build clean",
     string: "clean",
     description: "run a clean build with --no-cache",

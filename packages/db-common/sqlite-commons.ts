@@ -14,6 +14,9 @@ export const reprAsJson = (v: any, jsonCol?: boolean): boolean =>
   (jsonCol && (v === true || v === false)) ||
   (typeof v === "object" && v !== null && !(v instanceof Date));
 
+const isDate = (value: any): boolean =>
+  value && Object.prototype.toString.call(value) === "[object Date]";
+
 /**
  * @param opts
  * @param opts.k
@@ -21,7 +24,7 @@ export const reprAsJson = (v: any, jsonCol?: boolean): boolean =>
  * @returns
  */
 export const mkVal = ([k, v]: [string, any], jsonCol?: boolean): Value =>
-  reprAsJson(v, jsonCol) ? JSON.stringify(v) : v;
+  reprAsJson(v, jsonCol) ? JSON.stringify(v) : isDate(v) ? v.valueOf() : v;
 
 /**
  * return type of buildInsertSql()

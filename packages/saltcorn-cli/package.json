@@ -9,10 +9,8 @@
   },
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {
-    "@oclif/command": "^1.8.16",
-    "@oclif/config": "^1.18.3",
-    "@oclif/plugin-plugins": "^2.1.0",
-    "@oclif/plugin-help": "^3.3.1",
+    "@oclif/core": "^2.16.0",
+    "@oclif/plugin-plugins": "^3.9.4",
     "@saltcorn/admin-models": "1.0.0-beta.2",
     "@saltcorn/common-code": "1.0.0-beta.2",
     "@saltcorn/data": "1.0.0-beta.2",
@@ -20,7 +18,6 @@
     "@saltcorn/mobile-builder": "1.0.0-beta.2",
     "@saltcorn/plugins-loader": "1.0.0-beta.2",
     "@saltcorn/server": "1.0.0-beta.2",
-    "cli-ux": "^5.6.7",
     "contractis": "^0.1.0",
     "dateformat": "^3.0.3",
     "inquirer": "^7.3.3",
@@ -34,7 +31,6 @@
     "wrk": "^1.2.1"
   },
   "devDependencies": {
-    "@oclif/dev-cli": "^1.26.10",
     "globby": "^10.0.2",
     "ts-node": "^9.1.1"
   },
@@ -55,15 +51,7 @@
   "oclif": {
     "commands": "./src/commands",
     "bin": "saltcorn",
-    "plugins": [
-      "@oclif/plugin-help"
-    ],
-    "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/saltcorn-cli/<%- commandPath %>",
-    "topics": {
-      "dev": {
-        "description": "Tools for core and plugin developers"
-      }
-    }
+    "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/saltcorn-cli/<%- commandPath %>"
   },
   "repository": "github:saltcorn/saltcorn",
   "scripts": {

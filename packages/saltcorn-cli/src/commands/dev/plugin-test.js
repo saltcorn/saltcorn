@@ -1,4 +1,4 @@
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const { getState } = require("@saltcorn/data/db/state");
@@ -148,7 +148,7 @@ const testReleasedPlugin = async (pluginName, env, backupFile) => {
  */
 class PluginTestCommand extends Command {
   async run() {
-    const { flags } = this.parse(PluginTestCommand);
+    const { flags } = await this.parse(PluginTestCommand);
     const dbname = flags.database ? flags.database : "saltcorn_test";
     let env = null;
     const db = require("@saltcorn/data/db");
@@ -194,20 +194,20 @@ class PluginTestCommand extends Command {
 }
 
 PluginTestCommand.flags = {
-  directory: flags.string({
+  directory: Flags.string({
     char: "d",
     description: "Directory of local plugin",
   }),
-  name: flags.string({
+  name: Flags.string({
     char: "n",
     description: "Plugin name in store of a released plugin",
   }),
-  backupFile: flags.string({
+  backupFile: Flags.string({
     char: "f",
     description:
       "Optional name of a backup file in the tests folder. If you ommit this, then the test has to create its own data.",
   }),
-  database: flags.string({
+  database: Flags.string({
     string: "database",
     description: "Run on specified database. Default is 'saltcorn_test''",
   }),

@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/make-migration
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 
 /**
  * MigrationCommand Class
