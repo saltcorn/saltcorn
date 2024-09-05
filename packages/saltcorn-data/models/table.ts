@@ -2514,8 +2514,7 @@ class Table implements AbstractTable {
 
   async dump_to_json(filePath: string) {
     if (db.copyTo) {
-      const client = db.isSQLite ? db : await db.getClient();
-      await db.copyTo(filePath, this.name, client);
+      await db.copyTo(filePath, this.name);
     } else {
       const rows = await this.getRows({}, { ignore_errors: true });
       await writeFile(filePath, JSON.stringify(rows));

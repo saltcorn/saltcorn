@@ -410,16 +410,14 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   return await promisify(pipeline)(fileStream, stream);
 };
 
-const copyTo = async (filePath, tableName, client) => {
-  console.log("copy to json", tableName);
-
+const copyTo = async (filePath, tableName) => {
   const sql = `COPY (SELECT json_agg(row_to_json("${sqlsanitize(
     tableName
   )}")) :: text
   FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO '${filePath}'`;
   sql_log(sql);
 
-  await client.query(sql);
+  await pool.query(sql);
 };
 
 const slugify = (s) =>
