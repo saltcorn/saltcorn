@@ -57,7 +57,7 @@ import type TableConstraint from "./table_constraints";
 import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream } from "fs";
-import { stat, readFile } from "fs/promises";
+import { stat, readFile, writeFile } from "fs/promises";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
 import utils from "../utils";
@@ -2512,6 +2512,15 @@ class Table implements AbstractTable {
     return errorString || state;
   }
 
+  async dump_to_json(filePath: string) {
+    if (db.copyTo) {
+      const client = db.isSQLite ? db : await db.getClient();
+      await db.copyTo(filePath, this.name, client);
+    } else {
+      const rows = await this.getRows({}, { ignore_errors: true });
+      await writeFile(filePath, JSON.stringify(rows));
+    }
+  }
   /**
    * Import CSV file to existing table
    * @param filePath

@@ -397,40 +397,9 @@ const drop_index = async (table_name, field_name) => {
  * @param {string} tableName - table name
  * @param {string[]} fieldNames - list of columns
  * @param {object} client - db connection
- * @returns {Promise<function>} new Promise
- */
-const copyFrom1 = (fileStream, tableName, fieldNames, client) => {
-  // TBD describe difference between CopyFrom and CopyFrom1
-  //  1. No tenant support
-  //  2. Manual promisification.
-  //  3. ???
-  //  4. Not exported nor used anywhere
-  const quote = (s) => `"${s}"`;
-  const sql = `COPY "${sqlsanitize(tableName)}" (${fieldNames
-    .map(quote)
-    .join(",")}) FROM STDIN CSV HEADER`;
-  sql_log(sql);
-
-  var stream = client.query(copyStreams.from(sql));
-
-  return new Promise((resolve, reject) => {
-    fileStream.on("error", reject);
-    stream.on("error", reject);
-    stream.on("finish", resolve);
-    fileStream.pipe(stream).on("error", reject);
-  });
-};
-/**
- * Copy data from CSV to table?
- * Only for PG
- * @param {object} fileStream - file stream
- * @param {string} tableName - table name
- * @param {string[]} fieldNames - list of columns
- * @param {object} client - db connection
  * @returns {Promise<void>} no results
  */
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
-  // TBD describe difference between CopyFrom and CopyFrom1
   const quote = (s) => `"${s}"`;
   const sql = `COPY "${getTenantSchema()}"."${sqlsanitize(
     tableName
@@ -439,6 +408,18 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
 
   const stream = client.query(copyStreams.from(sql));
   return await promisify(pipeline)(fileStream, stream);
+};
+
+const copyTo = async (filePath, tableName, client) => {
+  console.log("copy to json", tableName);
+
+  const sql = `COPY (SELECT json_agg(row_to_json("${sqlsanitize(
+    tableName
+  )}")) :: text
+  FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO '${filePath}'`;
+  sql_log(sql);
+
+  await client.query(sql);
 };
 
 const slugify = (s) =>
@@ -529,6 +510,7 @@ const postgresExports = {
   reset_sequence,
   getVersion,
   copyFrom,
+  copyTo,
   slugify,
   time,
   listTables,

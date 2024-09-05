@@ -189,8 +189,7 @@ const create_table_json = async (
   table: Table,
   dirpath: string
 ): Promise<void> => {
-  const rows = await table.getRows({}, { ignore_errors: true });
-  await writeFile(join(dirpath, table.name + ".json"), JSON.stringify(rows));
+  await table.dump_to_json(join(dirpath, table.name + ".json"));
 };
 
 /**
