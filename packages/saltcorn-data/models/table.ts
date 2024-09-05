@@ -2522,7 +2522,7 @@ class Table implements AbstractTable {
       writeStream.destroy();
       const h = await open(filePath, "r+");
       const stat = await h.stat();
-      if (stat.size > 2) await h.write("]", stat.size - 1);
+      if (stat.size > 2) await h.write("]", stat.size - 2);
       else await h.write("]", stat.size);
       await h.close();
     } else {
