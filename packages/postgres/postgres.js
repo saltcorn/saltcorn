@@ -414,7 +414,7 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
 const copyToJson = async (fileStream, tableName, client) => {
   const sql = `COPY (SELECT json_agg(row_to_json("${sqlsanitize(
     tableName
-  )}")) :: text
+  )}".*)) :: text
   FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO STDOUT`;
   sql_log(sql);
   const stream = (client || pool).query(copyStreams.to(sql));
