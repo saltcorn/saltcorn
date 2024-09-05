@@ -2514,17 +2514,7 @@ class Table implements AbstractTable {
 
   async dump_to_json(filePath: string) {
     if (db.copyToJson) {
-      const writeStream = createWriteStream(filePath);
-      const client = db.isSQLite ? db : await db.getClient();
-      writeStream.write("[");
-      await db.copyToJson(writeStream, this.name, client);
-      if (!db.isSQLite) await client.release(true);
-      writeStream.destroy();
-      const h = await open(filePath, "r+");
-      const stat = await h.stat();
-      if (stat.size > 2) await h.write("]", stat.size - 2);
-      else await h.write("]", stat.size);
-      await h.close();
+      await dump_table_to_json_file(filePath, this.name);
     } else {
       const rows = await this.getRows({}, { ignore_errors: true });
       await writeFile(filePath, JSON.stringify(rows));
@@ -2532,17 +2522,10 @@ class Table implements AbstractTable {
   }
   async dump_history_to_json(filePath: string) {
     if (db.copyToJson) {
-      const writeStream = createWriteStream(filePath);
-      const client = db.isSQLite ? db : await db.getClient();
-
-      await db.copyToJson(
-        writeStream,
-        `${sqlsanitize(this.name)}__history`,
-        client
+      await dump_table_to_json_file(
+        filePath,
+        `${sqlsanitize(this.name)}__history`
       );
-      if (!db.isSQLite) await client.release(true);
-
-      writeStream.destroy();
     } else {
       const rows = await this.get_history();
       await writeFile(filePath, JSON.stringify(rows));
@@ -2899,7 +2882,6 @@ class Table implements AbstractTable {
     skip_first_data_row?: boolean
   ): Promise<any> {
     const contents = (await readFile(filePath)).toString();
-    console.log("import json", this.name, contents);
 
     // todo argument type buffer is not assignable for type String...
     const file_rows = contents === "\\N\n" ? [] : JSON.parse(contents);
@@ -3672,6 +3654,20 @@ class Table implements AbstractTable {
       this.fields.filter((f) => !f.calculated)
     );
   }
+}
+
+async function dump_table_to_json_file(filePath: string, tableName: string) {
+  const writeStream = createWriteStream(filePath);
+  const client = db.isSQLite ? db : await db.getClient();
+  writeStream.write("[");
+  await db.copyToJson(writeStream, tableName, client);
+  if (!db.isSQLite) await client.release(true);
+  writeStream.destroy();
+  const h = await open(filePath, "r+");
+  const stat = await h.stat();
+  if (stat.size > 2) await h.write("]", stat.size - 2);
+  else await h.write("]", stat.size);
+  await h.close();
 }
 
 // declaration merging
