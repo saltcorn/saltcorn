@@ -8,6 +8,7 @@ const { Pool } = require("pg");
 const copyStreams = require("pg-copy-streams");
 const { promisify } = require("util");
 const { pipeline } = require("stream/promises");
+const { Transform } = require("stream");
 
 const {
   sqlsanitize,
@@ -412,13 +413,32 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
 };
 
 const copyToJson = async (fileStream, tableName, client) => {
-  const sql = `COPY (SELECT json_agg(row_to_json("${sqlsanitize(
-    tableName
-  )}".*)) :: text
+  const sql = `COPY (SELECT row_to_json("${sqlsanitize(tableName)}".*)
   FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO STDOUT`;
   sql_log(sql);
+  console.log(sql);
+
   const stream = (client || pool).query(copyStreams.to(sql));
-  return await pipeline(stream, fileStream);
+  let first = true;
+  const comma = Buffer.from(",");
+  const xform = new Transform({
+    readableObjectMode: true,
+    writableObjectMode: true,
+
+    transform(chunk, encoding, callback) {
+      // if (first) {
+      //console.log("got chunk", chunk.toString());
+      const lines = chunk.toString().split("\n");
+      lines.forEach((line) => {
+        if (first) {
+          this.push(line);
+          first = false;
+        } else this.push([",", line].join(""));
+      });
+      callback();
+    },
+  });
+  return await pipeline(stream, xform, fileStream);
 };
 
 const slugify = (s) =>

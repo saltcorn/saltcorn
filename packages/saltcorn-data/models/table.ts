@@ -57,7 +57,7 @@ import type TableConstraint from "./table_constraints";
 import csvtojson from "csvtojson";
 import moment from "moment";
 import { createReadStream, createWriteStream } from "fs";
-import { stat, readFile, writeFile } from "fs/promises";
+import { stat, readFile, writeFile, open } from "fs/promises";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
 import utils from "../utils";
@@ -2516,11 +2516,15 @@ class Table implements AbstractTable {
     if (db.copyToJson) {
       const writeStream = createWriteStream(filePath);
       const client = db.isSQLite ? db : await db.getClient();
-
+      writeStream.write("[");
       await db.copyToJson(writeStream, this.name, client);
       if (!db.isSQLite) await client.release(true);
-
       writeStream.destroy();
+      const h = await open(filePath, "r+");
+      const stat = await h.stat();
+      if (stat.size > 2) await h.write("]", stat.size - 1);
+      else await h.write("]", stat.size);
+      await h.close();
     } else {
       const rows = await this.getRows({}, { ignore_errors: true });
       await writeFile(filePath, JSON.stringify(rows));
@@ -2895,6 +2899,7 @@ class Table implements AbstractTable {
     skip_first_data_row?: boolean
   ): Promise<any> {
     const contents = (await readFile(filePath)).toString();
+    console.log("import json", this.name, contents);
 
     // todo argument type buffer is not assignable for type String...
     const file_rows = contents === "\\N\n" ? [] : JSON.parse(contents);
