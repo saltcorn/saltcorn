@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/localize-plugin
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 const { maybe_as_tenant } = require("../../common");
 const path = require("path");
 
@@ -18,7 +18,7 @@ class LocalizePluginCommand extends Command {
   async run() {
     const db = require("@saltcorn/data/db");
     const Plugin = require("@saltcorn/data/models/plugin");
-    const { args, flags } = this.parse(LocalizePluginCommand);
+    const { args, flags } = await this.parse(LocalizePluginCommand);
     await maybe_as_tenant(flags.tenant, async () => {
       const plugin = await Plugin.findOne({ name: args.plugin });
       if (
@@ -50,13 +50,15 @@ class LocalizePluginCommand extends Command {
   }
 }
 
-LocalizePluginCommand.args = [
-  { name: "plugin", required: true, description: "Current plugin name" },
-  {
-    name: "path",
+LocalizePluginCommand.args = {
+  plugin: Args.string({
+    required: true,
+    description: "Current plugin name",
+  }),
+  path: Args.string({
     description: "Absolute path to local plugin",
-  },
-];
+  }),
+};
 
 /**
  * @type {string}
@@ -67,11 +69,11 @@ LocalizePluginCommand.description = `Convert plugin to local plugin`;
  * @type {object}
  */
 LocalizePluginCommand.flags = {
-  unlocalize: flags.boolean({
+  unlocalize: Flags.boolean({
     char: "u",
     description: "Unlocalize plugin (local to npm)",
   }),
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),

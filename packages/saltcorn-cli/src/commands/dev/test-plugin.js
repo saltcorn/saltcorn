@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/test-plugin
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 
 /**
  *
@@ -27,7 +27,7 @@ class TestPluginCommand extends Command {
     const { auto_test_plugin } = require("@saltcorn/data/plugin-testing");
     const db = require("@saltcorn/data/db");
     const { requirePlugin } = require("@saltcorn/server/load_plugins");
-    const { args } = this.parse(TestPluginCommand);
+    const { args } = await this.parse(TestPluginCommand);
     await db.changeConnection({ database: "saltcorn_test" });
     await reset();
     await fixtures();
@@ -52,9 +52,12 @@ class TestPluginCommand extends Command {
 /**
  * @type {object}
  */
-TestPluginCommand.args = [
-  { name: "path", description: "path to plugin package", required: true },
-];
+TestPluginCommand.args = {
+  path: Args.string({
+    required: true,
+    description: "path to plugin package",
+  }),
+};
 
 /**
  * @type {string}

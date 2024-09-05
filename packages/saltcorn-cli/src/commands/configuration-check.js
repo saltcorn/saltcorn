@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/configuration-check
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
@@ -16,7 +15,7 @@ class ConfigurationCheckCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags } = this.parse(ConfigurationCheckCommand);
+    const { flags } = await this.parse(ConfigurationCheckCommand);
     await init_some_tenants(flags.tenant);
     const {
       runConfigurationCheck,
@@ -56,11 +55,11 @@ ConfigurationCheckCommand.description = `Check configuration`;
  * @type {object}
  */
 ConfigurationCheckCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  /*destructive: flags.boolean({
+  /*destructive: Flags.boolean({
     char: "d",
     description: "destructive",
   }),*/

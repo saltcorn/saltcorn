@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/rm-tenant
  */
-const { Command, flags } = require("@oclif/command");
-const {cli} = require("cli-ux");
+const { Command, Flags, ux } = require("@oclif/core");
 
 /**
  * RmTenantCommand Class
@@ -15,15 +14,14 @@ class RmTenantCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-
-
-    const { flags } = this.parse(RmTenantCommand);
+    const { flags } = await this.parse(RmTenantCommand);
 
     const { deleteTenant } = require("@saltcorn/admin-models/models/tenant");
 
     if (!flags.force) {
-      const ans = await cli.confirm(
-        `This will delete tenant ${flags.tenant}. Attention! All tenant data will be lost!\nContinue (y/n)?`);
+      const ans = await ux.confirm(
+        `This will delete tenant ${flags.tenant}. Attention! All tenant data will be lost!\nContinue (y/n)?`
+      );
       if (!ans) {
         console.log(`Success: Command execution canceled`);
         this.exit(1);
@@ -63,8 +61,8 @@ It recommended to make backup of tenant before perform this command.
  * @type {object}
  */
 RmTenantCommand.flags = {
-  force: flags.boolean({ char: "f", description: "force command execution" }),
-  tenant: flags.string({
+  force: Flags.boolean({ char: "f", description: "force command execution" }),
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
     required: true,

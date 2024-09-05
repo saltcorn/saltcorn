@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/restore
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 const { spawnSync } = require("child_process");
 const path = require("path");
 const { maybe_as_tenant } = require("../common");
@@ -60,7 +60,7 @@ class RestoreCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = this.parse(RestoreCommand);
+    const { args, flags } = await this.parse(RestoreCommand);
     switch (path.extname(args.file)) {
       case ".sqlc":
         if (flags.tenant) {
@@ -82,9 +82,9 @@ class RestoreCommand extends Command {
 /**
  * @type {object}
  */
-RestoreCommand.args = [
-  { name: "file", required: true, description: "backup file to restore" },
-];
+RestoreCommand.args = {
+  file: Args.string({ required: true, description: "backup file to restore" }),
+};
 
 /**
  * @type {string}
@@ -100,7 +100,7 @@ RestoreCommand.help = `Restore a previously backed up database (zip or sqlc form
  * @type {object}
  */
 RestoreCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),

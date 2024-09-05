@@ -2133,7 +2133,7 @@ const date = {
    */
   read: (v, attrs) => {
     if (v instanceof Date && !isNaN(v)) return v;
-    if (typeof v === "string") {
+    if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
       if (attrs && attrs.locale) {
         const d = moment(v, "L LT", attrs.locale).toDate();
         if (d instanceof Date && !isNaN(d)) return d;

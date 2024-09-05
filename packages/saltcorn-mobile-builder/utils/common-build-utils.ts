@@ -30,9 +30,22 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
   copySync(templateDir, buildDir);
   rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
-  const result = spawnSync("npm", ["install", "--legacy-peer-deps"], {
+  let result = spawnSync("npm", ["install", "--legacy-peer-deps"], {
     cwd: buildDir,
   });
+  console.log(result.output.toString());
+  result = spawnSync(
+    "npm",
+    [
+      "install",
+      "cordova@^12.0.0",
+      "cordova-sqlite-ext@^6.0.0",
+      "cordova-android@^12.0.1",
+    ],
+    {
+      cwd: buildDir,
+    }
+  );
   console.log(result.output.toString());
 }
 
