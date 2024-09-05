@@ -88,6 +88,7 @@
     await fetchAndReset(false, true);
   });
   function rowClick(file, e) {
+    if(file.filename=="..") return
     file.selected = true;
     const prev = selectedFiles[file.filename];
     if (!e.shiftKey) selectedFiles = {};
@@ -115,13 +116,14 @@
       const selectedLength = Object.values(selectedFiles).filter(
         (v) => v
       ).length;
-      const select = selectedLength !== files.length;
+      const eligibleForSelection = files.filter(f=>f.filename!=="..")
+      const select = selectedLength !== eligibleForSelection.length;
       if (!select) lastSelected = undefined;
-      for (const file of files) {
+      for (const file of eligibleForSelection) {
         file.selected = select;
         selectedFiles[file.filename] = select;
       }
-      if (select && !lastSelected) lastSelected = files[files.length - 1];
+      if (select && !lastSelected) lastSelected = eligibleForSelection[eligibleForSelection.length - 1];      
     }
   }
 
