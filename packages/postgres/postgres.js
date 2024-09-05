@@ -7,7 +7,8 @@
 const { Pool } = require("pg");
 const copyStreams = require("pg-copy-streams");
 const { promisify } = require("util");
-const { pipeline } = require("stream");
+const { pipeline } = require("stream/promises");
+
 const {
   sqlsanitize,
   mkWhere,
@@ -407,17 +408,17 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   sql_log(sql);
 
   const stream = client.query(copyStreams.from(sql));
-  return await promisify(pipeline)(fileStream, stream);
+  return await pipeline(fileStream, stream);
 };
 
-const copyToJson = async (filePath, tableName) => {
+const copyToJson = async (fileStream, tableName, client) => {
   const sql = `COPY (SELECT json_agg(row_to_json("${sqlsanitize(
     tableName
   )}")) :: text
-  FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO '${filePath}'`;
+  FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO STDOUT`;
   sql_log(sql);
-
-  await pool.query(sql);
+  const stream = (client || pool).query(copyStreams.to(sql));
+  return await pipeline(stream, fileStream);
 };
 
 const slugify = (s) =>

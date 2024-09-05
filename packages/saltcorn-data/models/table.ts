@@ -56,7 +56,7 @@ import type TableConstraint from "./table_constraints";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
-import { createReadStream } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import { stat, readFile, writeFile } from "fs/promises";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
@@ -2514,7 +2514,13 @@ class Table implements AbstractTable {
 
   async dump_to_json(filePath: string) {
     if (db.copyToJson) {
-      await db.copyToJson(filePath, this.name);
+      const writeStream = createWriteStream(filePath);
+      const client = db.isSQLite ? db : await db.getClient();
+
+      await db.copyToJson(writeStream, this.name, client);
+      if (!db.isSQLite) await client.release(true);
+
+      writeStream.destroy();
     } else {
       const rows = await this.getRows({}, { ignore_errors: true });
       await writeFile(filePath, JSON.stringify(rows));
@@ -2522,7 +2528,17 @@ class Table implements AbstractTable {
   }
   async dump_history_to_json(filePath: string) {
     if (db.copyToJson) {
-      await db.copyToJson(filePath, `${sqlsanitize(this.name)}__history`);
+      const writeStream = createWriteStream(filePath);
+      const client = db.isSQLite ? db : await db.getClient();
+
+      await db.copyToJson(
+        writeStream,
+        `${sqlsanitize(this.name)}__history`,
+        client
+      );
+      if (!db.isSQLite) await client.release(true);
+
+      writeStream.destroy();
     } else {
       const rows = await this.get_history();
       await writeFile(filePath, JSON.stringify(rows));
