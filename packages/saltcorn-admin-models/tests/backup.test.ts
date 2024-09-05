@@ -19,6 +19,7 @@ import {
   assertsObjectIsUser,
 } from "@saltcorn/data/tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import Field from "@saltcorn/data/models/field";
 
 afterAll(db.close);
 
@@ -53,6 +54,18 @@ describe("Backup and restore", () => {
     expect(sn1).toBe("backups rule!");
     await Role.create({ role: "paid", id: 60 });
     await Table.create("myblanktable", { min_role_read: 60 });
+    const vtbl = await Table.create("myversionedtable", {
+      min_role_read: 80,
+      versioned: true,
+    });
+    await Field.create({
+      name: "name",
+      type: "String",
+      table: vtbl,
+    });
+    await vtbl.insertRow({ name: "Fred" });
+    await vtbl.updateRow({ name: "Sam" }, 1);
+
     await Trigger.create({
       name: "footrig",
       table_id: 1,
@@ -102,6 +115,11 @@ describe("Backup and restore", () => {
     expect(!!t3).toBe(true);
     const t5 = Table.findOne({ name: "myblanktable" });
     assertIsSet(t5);
+    const t6 = Table.findOne({ name: "myversionedtable" });
+    assertIsSet(t6);
+    const vhist = await t6.get_history();
+    expect(vhist.length).toBe(2);
+
     expect(!!t5).toBe(true);
     expect(t5.min_role_read).toBe(60);
     const t3c = await t3.countRows();
