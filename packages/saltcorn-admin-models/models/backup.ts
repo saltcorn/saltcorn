@@ -207,11 +207,7 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
     if (!t.external && !t.provider_name) {
       await create_table_json(t, dirpath);
       if (t.versioned && backup_history) {
-        const rows = await t.get_history();
-        await writeFile(
-          join(dirpath, t.name + "__history.json"),
-          JSON.stringify(rows)
-        );
+        await t.dump_history_to_json(join(dirpath, t.name + "__history.json"));
       }
     }
   }

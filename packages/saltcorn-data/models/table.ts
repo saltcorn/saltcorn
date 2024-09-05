@@ -2520,6 +2520,14 @@ class Table implements AbstractTable {
       await writeFile(filePath, JSON.stringify(rows));
     }
   }
+  async dump_history_to_json(filePath: string) {
+    if (db.copyToJson) {
+      await db.copyToJson(filePath, `${sqlsanitize(this.name)}__history`);
+    } else {
+      const rows = await this.get_history();
+      await writeFile(filePath, JSON.stringify(rows));
+    }
+  }
   /**
    * Import CSV file to existing table
    * @param filePath
