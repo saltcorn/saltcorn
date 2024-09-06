@@ -754,7 +754,7 @@ const configTypes: ConfigTypes = {
   },
   backup_system_zip_level: {
     type: "Integer",
-    label: "Zip",
+    label: "Zip compression level",
     sublabel: "1=Fast, larger file, 9=Slow, smaller files",
     default: 5,
   },
