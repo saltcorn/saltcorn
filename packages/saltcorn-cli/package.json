@@ -31,6 +31,7 @@
     "wrk": "^1.2.1"
   },
   "devDependencies": {
+    "oclif": "3.17.2",
     "globby": "^10.0.2",
     "ts-node": "^9.1.1"
   },
