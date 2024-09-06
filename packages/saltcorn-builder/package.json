@@ -53,7 +53,7 @@
     "access": "public"
   },
   "dependencies": {
-    "styled-components": "4.4.1"
+    "styled-components": "6.1.0"
   },
   "overrides": {
     "immer": "9.0.6",
