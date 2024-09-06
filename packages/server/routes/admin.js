@@ -846,8 +846,10 @@ const autoBackupForm = (req) => {
       },
       {
         type: "Bool",
-        label: req.__("Backup with system zip"),
-        sublabel: req.__("Executable <code>zip</code> must be installed"),
+        label: req.__("Use system zip"),
+        sublabel: req.__(
+          "Recommended. Executable <code>zip</code> must be installed"
+        ),
         name: "backup_with_system_zip",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
@@ -858,8 +860,13 @@ const autoBackupForm = (req) => {
         label: req.__("Zip compression level"),
         sublabel: req.__("1=Fast, larger file, 9=Slow, smaller files"),
         name: "backup_system_zip_level",
+        attributes: {
+          min: 1,
+          max: 9,
+        },
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
+          backup_with_system_zip: true,
         },
       },
     ],
