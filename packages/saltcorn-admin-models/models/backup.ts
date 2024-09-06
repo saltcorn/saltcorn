@@ -50,6 +50,7 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
+const { exec } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
 
@@ -189,8 +190,7 @@ const create_table_json = async (
   table: Table,
   dirpath: string
 ): Promise<void> => {
-  const rows = await table.getRows({}, { ignore_errors: true });
-  await writeFile(join(dirpath, table.name + ".json"), JSON.stringify(rows));
+  await table.dump_to_json(join(dirpath, table.name + ".json"));
 };
 
 /**
@@ -208,11 +208,7 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
     if (!t.external && !t.provider_name) {
       await create_table_json(t, dirpath);
       if (t.versioned && backup_history) {
-        const rows = await t.get_history();
-        await writeFile(
-          join(dirpath, t.name + "__history.json"),
-          JSON.stringify(rows)
-        );
+        await t.dump_history_to_json(join(dirpath, t.name + "__history.json"));
       }
     }
   }
@@ -289,6 +285,32 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
   }
 };
 
+const zipFolder = async (folder: string, zipFileName: string) => {
+  const backup_with_system_zip = getState().getConfig(
+    "backup_with_system_zip",
+    false
+  );
+  if (backup_with_system_zip) {
+    const backup_system_zip_level = getState().getConfig(
+      "backup_system_zip_level",
+      5
+    );
+    return await new Promise((resolve, reject) => {
+      const absZipPath = path.join(process.cwd(), zipFileName);
+      const cmd = `zip ${
+        backup_system_zip_level ? `-${backup_system_zip_level} ` : ""
+      }-r ${absZipPath} .`;
+      exec(cmd, { cwd: folder }, (error: any) => {
+        if (error) reject(error);
+        else resolve(undefined);
+      });
+    });
+  } else {
+    const zip = new Zip();
+    zip.addLocalFolder(folder);
+    zip.writeZip(zipFileName);
+  }
+};
 /**
  * Create backup
  * @param fnm
@@ -312,9 +334,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
   const backup_file_prefix = getState().getConfig("backup_file_prefix");
   const zipFileName = fnm || `${backup_file_prefix}${tens}-${day}.zip`;
 
-  const zip = new Zip();
-  zip.addLocalFolder(tmpDir.path);
-  zip.writeZip(zipFileName);
+  await zipFolder(tmpDir.path, zipFileName);
   await tmpDir.cleanup();
   return zipFileName;
 };

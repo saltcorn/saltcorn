@@ -746,6 +746,22 @@ const configTypes: ConfigTypes = {
     label: "Backup with event log",
     default: false,
   },
+  backup_with_system_zip: {
+    type: "Bool",
+    label: "Backup with system zip",
+    sublabel: "Recommended. Executable <code>zip</code> must be installed",
+    default: false,
+  },
+  backup_system_zip_level: {
+    type: "Integer",
+    label: "Zip compression level",
+    sublabel: "1=Fast, larger file, 9=Slow, smaller files",
+    default: 5,
+    attributes: {
+      min: 1,
+      max: 9,
+    },
+  },
   snapshots_enabled: {
     type: "Bool",
     label: "Snapshots enabled",

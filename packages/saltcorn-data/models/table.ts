@@ -56,8 +56,8 @@ import type TableConstraint from "./table_constraints";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
-import { createReadStream } from "fs";
-import { stat, readFile } from "fs/promises";
+import { createReadStream, createWriteStream } from "fs";
+import { stat, readFile, writeFile, open } from "fs/promises";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
 import utils from "../utils";
@@ -2512,6 +2512,25 @@ class Table implements AbstractTable {
     return errorString || state;
   }
 
+  async dump_to_json(filePath: string) {
+    if (db.copyToJson) {
+      await dump_table_to_json_file(filePath, this.name);
+    } else {
+      const rows = await this.getRows({}, { ignore_errors: true });
+      await writeFile(filePath, JSON.stringify(rows));
+    }
+  }
+  async dump_history_to_json(filePath: string) {
+    if (db.copyToJson) {
+      await dump_table_to_json_file(
+        filePath,
+        `${sqlsanitize(this.name)}__history`
+      );
+    } else {
+      const rows = await this.get_history();
+      await writeFile(filePath, JSON.stringify(rows));
+    }
+  }
   /**
    * Import CSV file to existing table
    * @param filePath
@@ -2862,8 +2881,10 @@ class Table implements AbstractTable {
     filePath: string,
     skip_first_data_row?: boolean
   ): Promise<any> {
+    const contents = (await readFile(filePath)).toString();
+
     // todo argument type buffer is not assignable for type String...
-    const file_rows = JSON.parse((await readFile(filePath)).toString());
+    const file_rows = contents === "\\N\n" ? [] : JSON.parse(contents);
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -3633,6 +3654,20 @@ class Table implements AbstractTable {
       this.fields.filter((f) => !f.calculated)
     );
   }
+}
+
+async function dump_table_to_json_file(filePath: string, tableName: string) {
+  const writeStream = createWriteStream(filePath);
+  const client = db.isSQLite ? db : await db.getClient();
+  writeStream.write("[");
+  await db.copyToJson(writeStream, tableName, client);
+  if (!db.isSQLite) await client.release(true);
+  writeStream.destroy();
+  const h = await open(filePath, "r+");
+  const stat = await h.stat();
+  if (stat.size > 2) await h.write("]", stat.size - 2);
+  else await h.write("]", stat.size);
+  await h.close();
 }
 
 // declaration merging
