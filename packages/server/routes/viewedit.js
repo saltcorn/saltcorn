@@ -186,7 +186,11 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
         disabled: isEdit,
-        showIf: { viewtemplate: hasTable },
+        showIf: isEdit
+          ? hasTable.includes(values.viewtemplate)
+            ? undefined
+            : { nosuchvar: true }
+          : { viewtemplate: hasTable },
       }),
       new Field({
         name: "min_role",
@@ -242,7 +246,11 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
             mapObjectValues(slugOptions, (lvs) => lvs.map((lv) => lv.label)),
           ],
         },
-        showIf: { viewtemplate: hasTable },
+        showIf: isEdit
+          ? hasTable.includes(values.viewtemplate)
+            ? undefined
+            : { nosuchvar: true }
+          : { viewtemplate: hasTable },
       }),
       new Field({
         name: "no_menu",
