@@ -1460,5 +1460,9 @@
 	"Daily": "Daily",
 	"Weekly": "Weekly",
 	"Code pages": "Code pages",
-	"Please select a file": "Please select a file"
+	"Please select a file": "Please select a file",
+	"Backup with system zip": "Backup with system zip",
+	"Executable <code>zip</code> must be installed": "Executable <code>zip</code> must be installed",
+	"Zip compression level": "Zip compression level",
+	"1=Fast, larger file, 9=Slow, smaller files": "1=Fast, larger file, 9=Slow, smaller files"
 }

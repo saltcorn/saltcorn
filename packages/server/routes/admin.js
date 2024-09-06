@@ -312,6 +312,12 @@ router.get(
     backupForm.values.backup_with_event_log = getState().getConfig(
       "backup_with_event_log"
     );
+    backupForm.values.backup_with_system_zip = getState().getConfig(
+      "backup_with_system_zip"
+    );
+    backupForm.values.backup_system_zip_level = getState().getConfig(
+      "backup_system_zip_level"
+    );
     //
     const aSnapshotForm = snapshotForm(req);
     aSnapshotForm.values.snapshots_enabled =
@@ -834,6 +840,24 @@ const autoBackupForm = (req) => {
         label: req.__("Include Event Logs"),
         sublabel: req.__("Backup with event logs"),
         name: "backup_with_event_log",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+        },
+      },
+      {
+        type: "Bool",
+        label: req.__("Backup with system zip"),
+        sublabel: req.__("Executable <code>zip</code> must be installed"),
+        name: "backup_with_system_zip",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+        },
+      },
+      {
+        type: "Integer",
+        label: req.__("Zip compression level"),
+        sublabel: req.__("1=Fast, larger file, 9=Slow, smaller files"),
+        name: "backup_system_zip_level",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
         },
