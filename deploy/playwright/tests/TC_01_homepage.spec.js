@@ -16,7 +16,9 @@ test.describe('E2E Test Suite', () => {
     // Initialize the log file
     Logger.initialize();
     // Create a new context and page for all tests
-    context = await browser.newContext();
+    context = await browser.newContext({
+      ignoreHTTPSErrors: true
+    });
     page = await context.newPage();
 
     // Maximize the screen
@@ -45,7 +47,7 @@ test.describe('E2E Test Suite', () => {
   test('Create a new page with random string', async () => {
     // Create a new page with the generated random string
     await functions.create_New_Page('My_project_' + randomString);
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(5000);
     // Drag and drop the text source
     await page.waitForSelector(pageobject.textSource);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
@@ -296,5 +298,4 @@ test.describe('E2E Test Suite', () => {
       await expect(title).toHaveText(pageobject.expectedtoastermsg);
     });
   });
-
 });

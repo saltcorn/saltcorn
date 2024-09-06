@@ -4,7 +4,7 @@ const PageFunctions = require('../pageobject/function.js');
 const PageObject = require('../pageobject/locators.js');
 const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
-const { TIMEOUT } = require('dns');
+//const { TIMEOUT } = require('dns');
 
 test.describe('E2E Test Suite', () => {
   let functions;
@@ -16,7 +16,9 @@ test.describe('E2E Test Suite', () => {
     // Initialize the log file
     Logger.initialize();
     // Create a new context and page for all tests
-    context = await browser.newContext();
+    context = await browser.newContext({
+      ignoreHTTPSErrors: true
+    });
     page = await context.newPage();
 
     // Maximize the screen
@@ -450,7 +452,7 @@ test.describe('E2E Test Suite', () => {
     expect(page.url()).toBe(baseURL + derivedURL + 'eventlog' + derivedURL +'custom');
     });
     await functions.Events_to_Log_settings();
-    await customAssert('Assert the lable of Log settings tab', async () => {
+    await customAssert('Assert the lable of event log settings tab', async () => {
     await expect(page.locator(pageobject.logsettinglocator)).toHaveText('Settings');
     });
     await customAssert('page url should be /eventlog/settings', async () => {
@@ -465,4 +467,24 @@ test.describe('E2E Test Suite', () => {
     });
   });
 
+  // Assert the presence of "User" tab
+  test('Validate "User" tabs', async ({ browser }) => {
+    functions = new PageFunctions(page);
+    await functions.SALTCORN();
+    await page.click(pageobject.userNavLink);
+    await customAssert('Assert the lable of User menu', async () => {
+      await expect(page.locator(pageobject.userNavLink)).toHaveText('User');
+    });
+    await page.click(pageobject.userSettingsLink);
+    await customAssert('Assert the lable of User Setting', async () => {
+      await expect(page.locator(pageobject.userSettingsLink)).toHaveText('User Settings');
+    });
+    await customAssert('page url should be /eventlog', async () => {
+      expect(page.url()).toBe(baseURL + derivedURL + 'auth/settings');
+    });
+    await customAssert('Assert the lable of Logout option', async () => {
+      await expect(page.locator(pageobject.logout)).toHaveText('Logout');
+      await page.click(pageobject.logout);
+    });
+  });
 });

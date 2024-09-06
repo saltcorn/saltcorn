@@ -32,21 +32,21 @@ class PageFunctions {
   }
 
   async fill_Text(selector, text) {
-    await this.page.fill(selector, text,{timeout:20000});
+    await this.page.fill(selector, text, { timeout: 20000 });
   }
 
   async navigate_To_Settings() {
-    await this.page.waitForSelector(this.locators.settingsTab, { timeout:20000 });
+    await this.page.waitForSelector(this.locators.settingsTab, { timeout: 20000 });
     await this.page.click(this.locators.settingsTab, { force: true });
   }
 
   async navigate_To_about_application() {
-    await this.page.waitForSelector(this.locators.aboutApplicationLink, { timeout: 30000});
+    await this.page.waitForSelector(this.locators.aboutApplicationLink, { timeout: 30000 });
     await this.page.click(this.locators.aboutApplicationLink, { force: true });
   }
 
   async about_application_to_site_identity() {
-    await this.page.waitForTimeout(10000);
+    await this.page.waitForTimeout(5000);
     await this.page.screenshot({ path: 'screenshot-before-wait.png' });
     await this.page.waitForSelector(this.locators.siteidentitylocator, { timeout: 30000 });
     await this.page.click(this.locators.siteidentitylocator, { force: true });
@@ -215,12 +215,12 @@ class PageFunctions {
   async navigate_modules_To_Installed() {
     await this.page.waitForSelector(this.locators.Installedlocator);
     await this.page.click(this.locators.Installedlocator);
-  }  
+  }
 
   async navigate_To_Users_And_Security() {
-    await this.page.waitForTimeout(10000);
+    await this.page.waitForTimeout(5000);
     await this.page.waitForSelector(this.locators.UsersAndSecurity, { timeout: 25000 });
-    await this.page.click(this.locators.UsersAndSecurity, { force:true });
+    await this.page.click(this.locators.UsersAndSecurity, { force: true });
   }
 
   async navigate_To_Site_Structure() {
@@ -289,6 +289,19 @@ class PageFunctions {
     return result;
   }
 
+  static generate_Random_Year() {
+    return Math.floor(Math.random() * (2000 - 1970 + 1)) + 1970;
+  }
+
+  static generate_Random_Month() {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[Math.floor(Math.random() * 12)];
+  }
+
+  static generate_Random_Day() {
+    return Math.floor(Math.random() * 28) + 1;
+  }
+
   async enter_Value_In_Div(page, selector, value) {
     await page.evaluate((selector, value) => {
       const element = document.querySelector(selector);
@@ -324,41 +337,68 @@ class PageFunctions {
   // Helper function to wait for an element to be visible and then click it
   async waitForVisibleAndClick(selector, description) {
     await customAssert(description, async () => {
-        const elements = await page.locator(selector).elementHandles();
-        if (elements.length === 0) {
-            throw new Error('No elements found for selector: ' + selector);
-        }
-        const lastElement = elements[elements.length - 1];
-        await lastElement.scrollIntoViewIfNeeded();
-        await expect(lastElement).toBeVisible();
-        await lastElement.click();
+      const elements = await page.locator(selector).elementHandles();
+      if (elements.length === 0) {
+        throw new Error('No elements found for selector: ' + selector);
+      }
+      const lastElement = elements[elements.length - 1];
+      await lastElement.scrollIntoViewIfNeeded();
+      await expect(lastElement).toBeVisible();
+      await lastElement.click();
     });
-}
+  }
 
-async clickDeleteButton() {
-  // Listen for the confirmation dialog
-  this.page.on('dialog', async dialog => {
-    console.log(`Dialog message: ${dialog.message()}`);
-    await dialog.accept(); // Accept the dialog
-  });
+  async clickDeleteButton() {
+    // Listen for the confirmation dialog
+    this.page.on('dialog', async dialog => {
+      console.log(`Dialog message: ${dialog.message()}`);
+      await dialog.accept(); // Accept the dialog
+    });
 
-  // Ensure the dropdown is visible
-  await this.page.waitForSelector(this.locators.userdropdown, { state: 'visible' });
+    // Ensure the dropdown is visible
+    await this.page.waitForSelector(this.locators.userdropdown, { state: 'visible' });
 
-  // Click on the specific button within the dropdown
-  await this.page.click(this.locators.deleteuser, { force: true });
-}
+    // Click on the specific button within the dropdown
+    await this.page.click(this.locators.deleteuser, { force: true });
+  }
 
-async clear_Data() {
+  async clickDeleteTrigger() {
+    // Listen for the confirmation dialog
+    this.page.on('dialog', async dialog => {
+      console.log(`Dialog message: ${dialog.message()}`);
+      await dialog.accept(); // Accept the dialog
+    });
+
+    // Ensure the dropdown is visible
+    await this.page.waitForSelector(this.locators.deleteLink, { state: 'visible' });
+
+    // Click on the specific button within the dropdown
+    await this.page.click(this.locators.deleteLink, { force: true });
+  }
+
+  async clear_Data() {
     await this.SALTCORN();
     await this.navigate_To_Settings();
     await this.page.waitForSelector(this.locators.aboutApplicationLink);
     await this.page.click(this.locators.aboutApplicationLink);
     await this.about_application_to_system();
     await this.clear_All();
-}
+  }
 
-
+  async setYear(desiredYear) {
+    let currentYear = await this.page.$eval('.cur-year', input => parseInt(input.value));
+    while (currentYear !== desiredYear) {
+      if (currentYear < desiredYear) {
+        // Click the up arrow
+        await this.page.click('.flatpickr-current-month .arrowUp');
+      } else if (currentYear > desiredYear) {
+        // Click the down arrow
+        await this.page.click('.flatpickr-current-month .arrowDown');
+      }
+      // Re-evaluate the current year after clicking
+      currentYear = await this.page.$eval('.cur-year', input => parseInt(input.value));
+    }
+  }
 
 }
 
