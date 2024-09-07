@@ -125,7 +125,10 @@ class ReleaseCommand extends Command {
     });
     for (const p of Object.values(pkgs)) {
       updatePkgJson(p.dir);
-      if (p.publish) publish(p.dir);
+      if (p.publish) {
+        publish(p.dir);
+        await sleep(1000);
+      }
     }
 
     // for cli:
