@@ -127,9 +127,10 @@ class ReleaseCommand extends Command {
       updatePkgJson(p.dir);
       if (p.publish) {
         publish(p.dir);
-        await sleep(1000);
+        await sleep(3000);
       }
     }
+    await sleep(5000);
 
     // for cli:
     // 1. update version
