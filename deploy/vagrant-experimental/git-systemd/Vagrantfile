@@ -1,0 +1,81 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "debian/bookworm64"
+
+  config.ssh.forward_agent = true
+
+  config.ssh.insert_key = false
+
+  config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+    vb.memory = "4096"
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+
+    set -e
+    apt update    
+    apt install -qqy nodejs npm libpq-dev build-essential python-is-python3 postgresql postgresql-client fail2ban git libcap2-bin unattended-upgrades libsystemd-dev chromium python3-pip python3-pytest
+    sudo -iu postgres psql -U postgres -d template1 -c 'create extension if not exists "uuid-ossp";'
+
+    sudo -iu postgres createdb saltcorn 
+    sudo -iu postgres createdb saltcorn_test
+    sudo -iu postgres psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'foobar';"
+    sudo -iu vagrant mkdir -p /home/vagrant/.config/
+
+    cat <<EOF > /home/vagrant/.config/.saltcorn
+    {
+        "host":"localhost",
+        "port":5432,
+        "database":"saltcorn",
+        "user":"postgres",
+        "password":"foobar",
+        "session_secret":"jjtrjtyjd",
+        "multi_tenant": true
+    }
+EOF
+    chown vagrant:vagrant /home/vagrant/.config/.saltcorn
+    chmod 600 /home/vagrant/.config/.saltcorn
+    sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
+    sudo -iu vagrant bash -c "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true cd saltcorn && npm install --legacy-peer-deps && npm install --legacy-peer-deps && npm run tsc"
+       cat <<EOF > /lib/systemd/system/saltcorn.service
+   [Unit]
+Description=saltcorn
+Documentation=https://saltcorn.com
+After=network.target
+
+[Service]
+Type=notify
+WatchdogSec=30
+User=vagrant
+WorkingDirectory=/home/vagrant
+ExecStart=/home/vagrant/saltcorn/packages/saltcorn-cli/bin/saltcorn serve -p 80
+Restart=always
+Environment="NODE_ENV=production"
+Environment="PATH=//home/vagrant/saltcorn/packages/saltcorn-cli/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    setcap 'cap_net_bind_service=+ep' `which node`
+    sudo -iu vagrant bash -c "/home/vagrant/saltcorn/packages/saltcorn-cli/bin/saltcorn reset-schema -f"
+    systemctl start saltcorn
+    wget -qO- http://localhost/ | grep Please
+  SHELL
+end
+
+#then:
+
+# git clone https://github.com/saltcorn/saltcorn.git
+# git checkout <branch>
+# packages/saltcorn-cli/bin/saltcorn run-tests

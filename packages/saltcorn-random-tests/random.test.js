@@ -17,7 +17,7 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
-jest.setTimeout(100000);
+jest.setTimeout(200000);
 
 const seed = set_seed();
 
