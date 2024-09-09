@@ -61,16 +61,17 @@ module.exports =
    */
   (opts) => {
     try {
-      const notify = require("sd-notify");
+      const notify = require("sd-notify-lite");
       getState().log(4, `systemd notify ready`);
-      notify.ready();
-      const watchdogInterval = notify.watchdogInterval();
+      notify.notifyReady();
+      /*const watchdogInterval = process.env.WATCHDOG_USEC / 1000;
       if (watchdogInterval && watchdogInterval > 0) {
         const interval = Math.floor(watchdogInterval / 2);
         setInterval(() => {
           watchDog(interval, notify, opts);
         }, interval);
-      }
+      }*/
+      notify.startWatchdog();
     } catch (e) {
       //ignore, systemd lib not installed
       getState().log(

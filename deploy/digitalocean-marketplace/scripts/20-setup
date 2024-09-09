@@ -13,7 +13,7 @@ chmod 600 /swapfile
 mkswap /swapfile
 swapon /swapfile
 sudo -iu saltcorn NODE_ENV=production ATTTACH_DOCKER_IMAGE_BUILD=true npm install -g @saltcorn/cli@latest --unsafe
-sudo -iu saltcorn NODE_ENV=production npm install -g sd-notify
+sudo -iu saltcorn NODE_ENV=production npm install -g sd-notify-lite
 swapoff /swapfile
 rm /swapfile
 echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc

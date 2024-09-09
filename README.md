@@ -78,11 +78,11 @@ If this fails, you may need to tell npm to disregard file permissions during com
 
 `npm install -g @saltcorn/cli --unsafe`
 
-Sometimes, the above commands fail to install the library `sd-notify` (which is useful for
+Sometimes, the above commands fail to install the library `sd-notify-lite` (which is useful for
 integrating with systemd) even though it is installable. You can rectify that by installing
 it subsequently:
 
-`npm install -g sd-notify`
+`npm install -g sd-notify-lite`
 
 ### Setup (automated)
 
