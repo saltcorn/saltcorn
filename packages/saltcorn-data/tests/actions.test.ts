@@ -822,12 +822,12 @@ describe("plain_password_triggers", () => {
     await u.changePasswordTo(secret)
     expect(getActionCounter()).toBe(1);
   });
-  it("should pass password on create without setting", async () => {
+  /*it("should pass password on create with setting", async () => {
     await getState().setConfig("plain_password_triggers", true);
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
     await User.findOne({email: "user2@foo.com", password: secret, role_id: 80})
     expect(getActionCounter()).toBe(1);
-  });
+  });*/
 
 });

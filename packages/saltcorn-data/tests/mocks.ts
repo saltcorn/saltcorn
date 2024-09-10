@@ -8,7 +8,7 @@ import Workflow from "../models/workflow";
 import db from "../db";
 import tags from "@saltcorn/markup/tags";
 import { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
-import exprMod from "models/expression";
+import exprMod from "../models/expression";
 const {eval_expression} = exprMod
 const { getState } = require("../db/state");
 const { input } = tags;
