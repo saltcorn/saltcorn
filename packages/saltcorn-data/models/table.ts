@@ -1435,7 +1435,7 @@ class Table implements AbstractTable {
       await Trigger.runTableTriggers(
         "Validate",
         this,
-        { ...(additionalTriggerValues||{}), ...existing, ...v },
+        { ...(additionalTriggerValues || {}), ...existing, ...v },
         valResCollector,
         user,
         { old_row: existing, updated_fields: v_in }
@@ -1534,7 +1534,7 @@ class Table implements AbstractTable {
       const trigPromise = Trigger.runTableTriggers(
         "Update",
         this,
-        {...(additionalTriggerValues||{}), ...newRow},
+        { ...(additionalTriggerValues || {}), ...newRow },
         resultCollector,
         role === 100 ? undefined : user,
         { old_row: existing, updated_fields: v_in }

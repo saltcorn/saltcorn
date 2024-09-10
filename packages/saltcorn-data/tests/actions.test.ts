@@ -777,9 +777,8 @@ describe("run_action_column", () => {
   });
 });
 
-
 describe("plain_password_triggers", () => {
-  const secret = "fw78fgfw$Efgy"
+  const secret = "fw78fgfw$Efgy";
   it("should set up trigger", async () => {
     getState().registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
@@ -789,45 +788,56 @@ describe("plain_password_triggers", () => {
       table_id: User.table.id,
       when_trigger: "Insert",
       name: "incCountIfPlainPassIns",
-      configuration: {number_expr:`row.plain_password==="${secret}" ? 1 : 0`}
+      configuration: {
+        number_expr: `row.plain_password==="${secret}" ? 1 : 0`,
+      },
     });
     await Trigger.create({
       action: "evalCounter",
       table_id: User.table.id,
       when_trigger: "Update",
       name: "incCountIfPlainPassUpd",
-      configuration: {number_expr:`row.plain_password==="${secret}" ? 1 : 0`}
+      configuration: {
+        number_expr: `row.plain_password==="${secret}" ? 1 : 0`,
+      },
     });
   });
   it("should not pass password on update without setting", async () => {
-    const u = await User.findOne({email: "staff@foo.com"})
-    assertIsSet(u)
+    const u = await User.findOne({ email: "staff@foo.com" });
+    assertIsSet(u);
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
-    await u.changePasswordTo(secret)
+    await u.changePasswordTo(secret);
     expect(getActionCounter()).toBe(0);
   });
   it("should not pass password on create without setting", async () => {
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
-    await User.create({email: "user1@foo.com", password: secret, role_id: 80})
+    await User.create({
+      email: "user1@foo.com",
+      password: secret,
+      role_id: 80,
+    });
     expect(getActionCounter()).toBe(0);
   });
   it("should pass password on update with setting", async () => {
     await getState().setConfig("plain_password_triggers", true);
-    const u = await User.findOne({email: "staff@foo.com"})
-    assertIsSet(u)
+    const u = await User.findOne({ email: "staff@foo.com" });
+    assertIsSet(u);
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
-    await u.changePasswordTo(secret)
+    await u.changePasswordTo(secret);
     expect(getActionCounter()).toBe(1);
   });
   it("should pass password on create with setting", async () => {
     await getState().setConfig("plain_password_triggers", true);
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
-    await User.create({email: "user2@foo.com", password: secret, role_id: 80})
+    await User.create({
+      email: "user2@foo.com",
+      password: secret,
+      role_id: 80,
+    });
     expect(getActionCounter()).toBe(1);
   });
-
 });

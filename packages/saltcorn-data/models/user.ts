@@ -135,10 +135,9 @@ class User {
     const upd: Row = { password };
     if (expireToken) upd.reset_password_token = null;
     const { getState } = require("../db/state");
-    if(getState().getConfig("plain_password_triggers", false))
+    if (getState().getConfig("plain_password_triggers", false))
       await this.update(upd, newpw);
-    else
-      await this.update(upd);
+    else await this.update(upd);
   }
 
   /**
@@ -198,8 +197,10 @@ class User {
       return { error: `This user already exists` };
 
     const { getState } = require("../db/state");
-    const plain_password_triggers = 
-      getState().getConfig("plain_password_triggers", false)
+    const plain_password_triggers = getState().getConfig(
+      "plain_password_triggers",
+      false
+    );
 
     const urecord = {
       email: u.email,
@@ -213,7 +214,9 @@ class User {
     await Trigger.runTableTriggers(
       "Validate",
       user_table,
-      plain_password_triggers ? { plain_password: password, ...urecord } : { ...urecord },
+      plain_password_triggers
+        ? { plain_password: password, ...urecord }
+        : { ...urecord },
       valResCollector
     );
     if ("error" in valResCollector)
@@ -222,8 +225,10 @@ class User {
       Object.assign(urecord, valResCollector.set_fields);
 
     u.id = await db.insert("users", urecord);
-    await Trigger.runTableTriggers("Insert", user_table, 
-      plain_password_triggers ? { plain_password: password, ...u } : { ...u },
+    await Trigger.runTableTriggers(
+      "Insert",
+      user_table,
+      plain_password_triggers ? { plain_password: password, ...u } : { ...u }
     );
     return u;
   }
@@ -428,9 +433,9 @@ class User {
    * @returns {Promise<void>}
    */
   async update(row: Row, plainPassword?: string): Promise<void> {
-    if(plainPassword)
+    if (plainPassword)
       await User.table.updateRow(
-        row, 
+        row,
         this.id!,
         undefined,
         undefined,

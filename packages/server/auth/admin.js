@@ -365,7 +365,7 @@ const auth_settings_form = async (req) =>
       "signup_role",
       "elevate_verified",
       "email_mask",
-      "plain_password_triggers"
+      "plain_password_triggers",
     ],
     action: "/useradmin/settings",
     submitLabel: req.__("Save"),

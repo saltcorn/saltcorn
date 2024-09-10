@@ -9,7 +9,7 @@ import db from "../db";
 import tags from "@saltcorn/markup/tags";
 import { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import exprMod from "../models/expression";
-const {eval_expression} = exprMod
+const { eval_expression } = exprMod;
 const { getState } = require("../db/state");
 const { input } = tags;
 const { json_list_to_external_table } = require("../plugin-helper");
@@ -251,14 +251,14 @@ const plugin_with_routes = () => ({
       configFields: [{ name: "number_expr", type: "String" }],
       run: ({
         configuration: { number_expr },
-        row, 
-        user
+        row,
+        user,
       }: {
         configuration: { number_expr: string };
         row: any;
         user: any;
       }) => {
-        actionCounter = eval_expression(number_expr, row, user); 
+        actionCounter = eval_expression(number_expr, row, user);
       },
     },
   },

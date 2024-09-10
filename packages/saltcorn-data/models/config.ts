@@ -236,7 +236,8 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Plain password trigger row",
     default: false,
-    blurb: "Send plaintext password changes to Users table triggers (Insert, Update and Validate).",
+    blurb:
+      "Send plaintext password changes to Users table triggers (Insert, Update and Validate).",
   },
   /** @type {object} */
   signup_role: {
