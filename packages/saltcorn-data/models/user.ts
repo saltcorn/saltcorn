@@ -134,7 +134,11 @@ class User {
     this.password = password;
     const upd: Row = { password };
     if (expireToken) upd.reset_password_token = null;
-    await this.update(upd);
+    const { getState } = require("../db/state");
+    if(getState().getConfig("plain_password_triggers", false))
+      await this.update(upd, newpw);
+    else
+      await this.update(upd);
   }
 
   /**
@@ -417,8 +421,19 @@ class User {
    * @param row
    * @returns {Promise<void>}
    */
-  async update(row: Row): Promise<void> {
-    await User.table.updateRow(row, this.id!);
+  async update(row: Row, plainPassword?: string): Promise<void> {
+    if(plainPassword)
+      await User.table.updateRow(
+        row, 
+        this.id!,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { plain_password: plainPassword }
+      );
+    else await User.table.updateRow(row, this.id!);
     Object.assign(this, row);
   }
 
