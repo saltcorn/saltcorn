@@ -232,6 +232,12 @@ const configTypes: ConfigTypes = {
     blurb:
       "Elevate users to a higher role when their email addresses have been verified",
   },
+  plain_password_triggers: {
+    type: "Bool",
+    label: "Plain password trigger row",
+    default: false,
+    blurb: "Send plaintext password changes to Users table triggers (Insert, Update and Validate).",
+  },
   /** @type {object} */
   signup_role: {
     type: "Role",
