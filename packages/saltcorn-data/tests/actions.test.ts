@@ -813,5 +813,21 @@ describe("plain_password_triggers", () => {
     await User.findOne({email: "user1@foo.com", password: secret, role_id: 80})
     expect(getActionCounter()).toBe(0);
   });
+  it("should pass password on update with setting", async () => {
+    await getState().setConfig("plain_password_triggers", true);
+    const u = await User.findOne({email: "staff@foo.com"})
+    assertIsSet(u)
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+    await u.changePasswordTo(secret)
+    expect(getActionCounter()).toBe(1);
+  });
+  it("should pass password on create without setting", async () => {
+    await getState().setConfig("plain_password_triggers", true);
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+    await User.findOne({email: "user2@foo.com", password: secret, role_id: 80})
+    expect(getActionCounter()).toBe(1);
+  });
 
 });
