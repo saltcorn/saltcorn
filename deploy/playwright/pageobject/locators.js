@@ -379,6 +379,9 @@ class PageLocators {
     this.textInput = 'input[name="text"]';
     this.toastMessage = 'div.toast[role="alert"][aria-live="assertive"]';
     this.closetoast = 'button.btn-close[data-bs-dismiss="toast"]';
+    this.configurelistview = 'a[href="/viewedit/config/NewView_List"]';
+    this.addresscolumn = 'div:has-text("Column 0: Address")';
+    this.headerlabelInput = 'input.form-control[value="Address"]';
   }
 }
 

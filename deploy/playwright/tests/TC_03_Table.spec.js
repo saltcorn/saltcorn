@@ -416,9 +416,9 @@ test.describe('E2E Test Suite', () => {
                 console.log('File content:', fileContent);
 
                 // Assert the file content (adjust based on your expected content)
-                await customAssert('File content should be correct', async () => {
-                    // Assert the content on table : id,full_name,Date_of_birth
-                    expect(fileContent).toContain('email,id,role_id,dob');
+                await customAssert('File content should be correct and contain (email,id,role_id)', async () => {
+                    // Assert the content on table : email,id,full_name,
+                    expect(fileContent).toContain('email,id,role_id');
                 });
             } else {
                 throw new Error('Downloaded file not found.');

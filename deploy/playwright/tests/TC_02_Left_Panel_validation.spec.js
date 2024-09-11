@@ -393,17 +393,19 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Assert the lable of Files setting', async () => {
     await expect(page.locator(pageobject.File)).toHaveText('Files');
     });
+    await page.waitForTimeout(2000);
     // assert the files url
-    await customAssert('page url should be /files', async () => {
-    expect(page.url()).toBe(baseURL + derivedURL + 'files');
+    await customAssert('page url should be /files?sortBy=filename', async () => {
+    expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
     });
     // validate each tab of files and assert urls
     await functions.Files_to_Files();
     await customAssert('Assert the lable of Files tab', async () => {
     await expect(page.locator(pageobject.fileslocator)).toHaveText('Files');
     });
-    await customAssert('page url should be /files', async () => {
-    expect(page.url()).toBe(baseURL + derivedURL + 'files');
+    await page.waitForTimeout(2000);
+    await customAssert('page url should be /files?sortBy=filename', async () => {
+    expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
     });
     await functions.Files_to_Storage();
     await customAssert('Assert the lable of Storage tab', async () => {
