@@ -22,6 +22,8 @@ class PageLocators {
     this.databaseoption = '#tab82036chead1';
     this.finishbutton = '#tab82036chead1 > button';
     this.target = 'div.canvas.root-canvas';
+    this.DatelocatorByName = 'input[name="date_of_birth"]';
+    this.DatepickReadonly = 'input[readonly="readonly"]';
     this.destinationtype = '#inputdestination_type';
     this.destinationview = '#inputview_when_done';
     this.htmlCodeSource = 'div[title="HTML code"]';
@@ -138,11 +140,18 @@ class PageLocators {
     this.datetypelocator = '//td[text()="Date"]';
     this.Fullnameshow = 'div.d-inline:has-text("Full name")';
     this.fullnameuser = 'div.d-inline:has-text("First Name")';
+    this.DateTimeUser = 'time[locale-options="%7B%7D"]';
+    this.localDateOption = 'time[locale-date-options]';
+    this.LocalDateFormat = 'time[locale-date-format]';
+    this.DateYearsAgo = 'tr:has-text("years ago")';
+    this.divYearAgo = "//div[contains(text(),'years ago')]";
+    this.inputFormat = 'input[type="text"].form-control';
     this.csvnamestringtype = '(//td[text()="String"])[2]';
     this.csvaddressstringtype = '(//td[text()="String"])[1]';
     this.deleteviewbutton = '(//a[text()="Delete"])[1]';
     this.editfieldlink = '(//a[text()="Edit"])[1]';
     this.showfieldlink = '(//a[text()="Show"])[1]';
+    this.listshowlink = '(//a[text()="ListShow"])[1]';
     this.ActionLabel = 'input[type="text"].form-control';
     this.ActionHoverTitle = 'input.form-control:not([type])';
     this.containsdraglocator= 'div[title="Container"]';
@@ -151,7 +160,14 @@ class PageLocators {
     this.containerflexsetting = '//div[contains(text(), "Flex properties")]';
     this.containercontentlink = '//div[contains(text(), "Container link")]';
     this.containercustomclass = '//div[contains(text(), "Custom class/CSS")]';
-    this.SearchLocator= 'div[title="Search bar"]';  
+    this.SearchLocator = 'div[title="Search bar"]';  
+    this.SearchModule = 'input.form-control.search-bar';
+    this.searchicon = 'i.fas.fa-search';
+    this.flatpickrDateHeader = 'h5:has-text("flatpickr-date")';
+    this.ckeditorHeader = 'h5:has-text("ckeditor4")';
+    this.installButton = 'button.store-install:has-text("Install")';
+    this.installflatpickr = 'form[action="/plugins/install/flatpickr-date"] button:has-text("Install")';
+    this.installCkeditor4 = 'form[action="/plugins/install/ckeditor4"] button:has-text("Install")';
     this.hasdropdowncheckbox = '//div[2]/div/div[1]/input[@type="checkbox"]';
     this.Autofocuscheckbox = '(//input[@class="form-check-input" and @name="block"])[3]';
     this.statebadgecheckbox = '(//input[@class="form-check-input" and @name="block"])[2]';
@@ -160,7 +176,10 @@ class PageLocators {
     this.newcolumn1 = 'div:nth-child(4) > div:nth-child(2) > .canvas';
     this.newcolumn2 = 'div:nth-child(5) > div:nth-child(2) > .canvas';
     this.newcolumn3 = 'div:nth-child(6) > div:nth-child(2) > .canvas';
+    this.newcolumn4 = 'div:nth-child(7) > div:nth-child(2) > .canvas';
     this.newviewlink = 'a[href="/view/NewView_List"]';
+    this.view2editlink = 'a[href="/view/View2_Edit"]';
+    this.undoIcon = 'svg.fa-undo';
     this.addpersonlink = 'a:has-text("Add person")';
     this.newviewfromtable = 'a[href="/view/csvView_list"]';
     this.Homecreateview = 'a:has-text("Create view")';
@@ -176,8 +195,10 @@ class PageLocators {
     this.viewtocreate = '#inputview_to_create';
     this.labeltocreate = '#inputcreate_view_label';
     this.fielddropdown = '(//select[@class="form-control form-select"])[1]'
+    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]'
     this.view2editoption = 'text=View2_Edit [Edit] My_Table';
     this.view2showoption = 'text=showView [Show] My_Table';
+    this.view2listshow = 'text=ListShowListView [ListShowList] My_Table';
     this.viewtolinkdropdown = '//div[contains(@class, "css-1uccc91-singleValue")]';
     this.deletefieldbutton = '//i[@class="fas fa-trash-alt"]';
     this.errormessagelocator = '//input[@id="inputre_invalid_error"]';

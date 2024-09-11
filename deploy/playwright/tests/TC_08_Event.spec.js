@@ -112,7 +112,9 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.saveactionbutton)).toHaveText('Save');
             await page.click(pageobject.saveactionbutton);
         });
+
         await customAssert('control Flow Category should be visible and clickable', async () => {
+            await page.waitForSelector(pageobject.controlFlowCategory);
             await expect(page.locator(pageobject.controlFlowCategory)).toBeVisible();
             await page.click(pageobject.controlFlowCategory);
         });
@@ -187,7 +189,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Action dropdown should have value blocks', async () => {
             await page.locator(pageobject.inputaction).nth(0).selectOption({ label: 'toast' });
         });
-        await customAssert('Eenter Description in textbox', async () => {
+        await customAssert('Enter Description in textbox', async () => {
             await functions.fill_Text(pageobject.discriptiontext, 'Toast message');
         });
         await functions.submit();

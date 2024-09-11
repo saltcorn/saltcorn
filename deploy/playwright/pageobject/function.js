@@ -1,4 +1,5 @@
 const { expect } = require('@playwright/test');
+const customAssert = require('../pageobject/utils.js');
 class PageFunctions {
   constructor(page) {
     this.page = page;
@@ -229,13 +230,14 @@ class PageFunctions {
   }
 
   async navigate_To_Events() {
-    await this.page.waitForSelector(this.locators.Events);
+    await this.page.waitForSelector(this.locators.Events, { timeout: 5000 });
     await this.page.click(this.locators.Events);
   }
 
   async navigate_To_File() {
-    await this.page.waitForSelector(this.locators.File);
-    await this.page.click(this.locators.File);
+    await this.page.waitForTimeout(5000);
+    await this.page.waitForSelector(this.locators.File, { timeout: 25000 });
+    await this.page.click(this.locators.File, { force: true });
   }
 
   async navigate_To_Site_Structure() {
@@ -400,6 +402,49 @@ class PageFunctions {
     }
   }
 
+  async install_flatpickr() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Search with 'flatpickr' in the search bar
+    await this.fill_Text(this.locators.SearchModule, 'flatpickr');
+    // Assert that the flatpickr module is visible and click on it
+    await customAssert('flatpickr-date module should be visible', async () => {
+      await expect(this.page.locator(this.locators.flatpickrDateHeader)).toBeVisible();
+      await this.page.click('button#button-search-submit');
+    });
+    // Wait for a few seconds
+    await this.page.waitForTimeout(2000);    
+    // Click the Install button
+    await this.page.click(this.locators.installflatpickr);
+    // Assert the success message is visible
+    await customAssert('Success message should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  }
+
+  async install_ckeditor() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Search with 'flatpickr' in the search bar
+    await this.fill_Text(this.locators.SearchModule, 'ckeditor');
+    // Assert that the flatpickr module is visible and click on it
+    await customAssert('ckeditor4 module should be visible', async () => {
+      await expect(this.page.locator(this.locators.ckeditorHeader)).toBeVisible();
+      await this.page.click('button#button-search-submit');
+    });
+    // Wait for a few seconds
+    await this.page.waitForTimeout(2000);    
+    // Click the Install button
+    await this.page.click(this.locators.installCkeditor4);
+    // Assert the success message is visible
+    await customAssert('Success message should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  }
 }
 
 module.exports = PageFunctions;

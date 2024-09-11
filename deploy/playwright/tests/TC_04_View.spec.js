@@ -18,7 +18,7 @@ test.describe('E2E Test Suite', () => {
     context = await browser.newContext({
       ignoreHTTPSErrors: true
     });
-    
+
     page = await context.newPage();
 
     // Maximize the screen
@@ -140,7 +140,7 @@ test.describe('E2E Test Suite', () => {
       // Select 'Date of birth' from the dropdown
       await page.selectOption('select.form-control.form-select', 'date_of_birth');
     });
-
+    await page.waitForTimeout(2000);
     // click on save button
     await page.waitForSelector(pageobject.saveactionbutton);
     await page.click(pageobject.saveactionbutton);
@@ -345,4 +345,192 @@ test.describe('E2E Test Suite', () => {
       await page.click(pageobject.showfieldlink);
     });
   });
+
+  // Change Date Field view as showDay in Form
+  test('Edit Date Field view as showDay in Form', async () => {
+    await functions.views();
+    await page.click(pageobject.newviewlink);
+    await page.waitForSelector(pageobject.editviewlink);
+    await page.click(pageobject.editviewlink);
+    // submit the page
+    await functions.submit();
+
+    await page.click(pageobject.DateTimeUser);
+    await customAssert('field view dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.fieldViewdropdown);
+      await expect(page.locator(pageobject.fieldViewdropdown)).toBeVisible();
+      // Select 'showDay' from the dropdown
+      await page.selectOption(pageobject.fieldViewdropdown, { label: 'showDay' }); // If using a select dropdown
+    });
+    await page.waitForSelector(pageobject.nextoption);
+    await page.click(pageobject.nextoption);
+    // click on finish button
+    await functions.submit();
+    await page.click(pageobject.newviewlink);
+    await customAssert('Date format should be DD/MM/YYYY and not showing time', async () => {
+      // Assert the date is in DD/MM/YYYY format using a regex
+      await expect(page.locator(pageobject.localDateOption)).toHaveText(/^\d{1,2}\/\d{1,2}\/\d{4}$/);
+    });
+  });
+
+  // Change Date Field view as relative in Form
+  test('Edit Date Field view as relative in Form', async () => {
+    await functions.views();
+    await page.click(pageobject.newviewlink);
+    await page.waitForSelector(pageobject.editviewlink);
+    await page.click(pageobject.editviewlink);
+    // submit the page
+    await functions.submit();
+
+    await page.click(pageobject.localDateOption);
+    await customAssert('field view dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.fieldViewdropdown);
+      await expect(page.locator(pageobject.fieldViewdropdown)).toBeVisible();
+      // Select 'relative' from the dropdown
+      await page.selectOption(pageobject.fieldViewdropdown, { label: 'relative' }); // If using a select dropdown
+    });
+    await page.waitForSelector(pageobject.nextoption);
+    await page.click(pageobject.nextoption);
+    // click on finish button
+    await functions.submit();
+    await page.click(pageobject.newviewlink);
+    await customAssert('The table cell should contain text in the format "X years ago"', async () => {
+      // Assert that the row contains the text "years ago"
+      await expect(page.locator(pageobject.DateYearsAgo)).toContainText('years ago');
+    });
+  });
+
+  // Change Date Field view as Format in Form
+  test('Edit Date Field view as Format in Form', async () => {
+    await functions.views();
+    await page.click(pageobject.newviewlink);
+    await page.waitForSelector(pageobject.editviewlink);
+    await page.click(pageobject.editviewlink);
+    // submit the page
+    await functions.submit();
+    await page.click(pageobject.divYearAgo);
+    await customAssert('field view dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.fieldViewdropdown);
+      await expect(page.locator(pageobject.fieldViewdropdown)).toBeVisible();
+      // Select 'format' from the dropdown
+      await page.selectOption(pageobject.fieldViewdropdown, { label: 'format' }); // If using a select dropdown
+    });
+    await page.fill(pageobject.inputFormat, 'YYYY-MM-DD');
+    await page.waitForSelector(pageobject.nextoption);
+    await page.click(pageobject.nextoption);
+    // click on finish button
+    await functions.submit();
+    await page.click(pageobject.newviewlink);
+    await customAssert('The Date Format should be in the format "YYYY-MM-DD"', async () => {
+      // Assert that the Date format should be YYYY-MM-DD
+      await expect(page.locator(pageobject.LocalDateFormat)).toHaveText(/^\d{4}-\d{2}-\d{2}$/); // Regular expression for YYYY-MM-DD format
+    });
+  });
+
+   // Add Flatepicker in Date Field view in Form
+   test('Add Flatepicker in Date Field view in Form', async () => {
+    await functions.install_flatpickr();
+    await functions.views();
+    await page.click(pageobject.view2editlink);
+    await page.click(pageobject.editviewlink);
+    await functions.submit();
+    await page.click(pageobject.DatelocatorByName);
+    await customAssert('field view dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.fieldViewdropdown);
+      await expect(page.locator(pageobject.fieldViewdropdown)).toBeVisible();
+      // Select 'flatepickr' from the dropdown
+      await page.waitForTimeout(2000); 
+      await page.selectOption(pageobject.fieldViewdropdown, { label: 'flatpickr' }); // If using a select dropdown
+    });
+     await page.waitForTimeout(5000); 
+     await page.click(pageobject.nextoption);
+     await functions.views();
+     await page.click(pageobject.view2editlink);
+     await page.click(pageobject.DatepickReadonly);
+     // Check if the calendar is visible
+     await customAssert('Calander should be open after clicking on date column ', async () => {
+       const calendarVisible = await page.isVisible(pageobject.calendarlocator);
+       expect(calendarVisible).toBe(true);
+     });
+   });
+
+  // create view with ListShowList view pattern
+  test('create view with ListshowList view pattern', async () => {
+    await functions.views();
+    // click on create new view
+    await page.waitForSelector(pageobject.createnewview);
+    await page.click(pageobject.createnewview);
+    // input view name and discription
+    await page.fill(pageobject.InputName, 'ListShowListView');
+    await page.fill(pageobject.discriptiontext, 'view for table');
+    // validate the view pattern in table dropdown
+    await customAssert('View Pattern should be Show', async () => {
+      // select show pattern
+      const ShowPattern = await page.$("#inputviewtemplate");
+      await ShowPattern?.selectOption("ListShowList");
+    });
+    // submit the page
+    await functions.submit();
+    // Select List View in dropdown
+    await customAssert('Select List View in dropdown', async () => {
+      const ListView = await page.$("#inputlist_view");
+      await ListView?.selectOption("NewView_List");
+    });
+    // Select Show View in dropdown
+    await customAssert('Select Show View in dropdown', async () => {
+      const ShowView = await page.$("#inputshow_view");
+      await ShowView?.selectOption("showView");
+    });
+    // click on next button
+    await page.waitForSelector(pageobject.nextoption);
+    await page.click(pageobject.nextoption);
+    await functions.submit();
+  });
+
+  // add listshowlist link in list view
+  test('Add listshow link in list view by by connecting listshowlist view', async () => {
+    await functions.views();
+    await page.click(pageobject.newviewlink);
+    await page.waitForSelector(pageobject.editviewlink);
+    await page.click(pageobject.editviewlink);
+    // submit the page
+    await functions.submit();
+    // click on add column button on page
+    await page.waitForSelector(pageobject.addcolumnbutton);
+    await page.click(pageobject.addcolumnbutton);
+    // drag and drop the viewlink locator
+    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn4);
+    // select view to show from dropdown
+    await customAssert('view to link dropdown should be visible', async () => {
+      await page.waitForSelector(pageobject.viewtolinkdropdown);
+      await expect(page.locator(pageobject.viewtolinkdropdown)).toHaveText('ListShowListView [ListShowList] My_Table');
+    });
+
+    // add lable for link
+    await page.waitForSelector(pageobject.lebelforfield);
+    await functions.fill_Text(pageobject.lebelforfield, 'ListShow');
+    // click on next button
+    await page.waitForSelector(pageobject.nextoption);
+    await page.click(pageobject.nextoption);
+    // click next button again
+    await functions.submit();
+    //submit the page
+    await functions.submit();
+    // click finish button
+    await page.waitForSelector(pageobject.finishbuttonprimary);
+    await page.click(pageobject.finishbuttonprimary);
+    // click to new view link again
+    await page.waitForSelector(pageobject.newviewlink);
+    await page.click(pageobject.newviewlink);
+    // check that show link is visible and working
+    await customAssert('Assert listshow link is visible and working', async () => {
+      await page.waitForSelector(pageobject.listshowlink);
+      await expect(page.locator(pageobject.listshowlink)).toBeVisible();
+      // assert the lable for show link
+      await expect(page.locator(pageobject.listshowlink)).toHaveText('ListShow');
+      // Click on show link
+      await page.click(pageobject.listshowlink);
+    });
+  });
+
 });

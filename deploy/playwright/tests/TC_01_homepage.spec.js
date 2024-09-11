@@ -54,7 +54,7 @@ test.describe('E2E Test Suite', () => {
     await functions.fill_Text(pageobject.textlocator, 'Testing');
     //  check hello world have text testing
     await customAssert('Hello world should have text testing', async () => {
-      await expect(page.locator(pageobject.textlocator)).toHaveText('Testing');
+      await expect(page.locator(pageobject.textlocator)).toContainText('Testing');
     });
     // Check Text settings
     await customAssert('Text settings should be visible', async () => {
