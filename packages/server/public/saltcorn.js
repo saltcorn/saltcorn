@@ -190,7 +190,8 @@ function pjax_to(href, e) {
         initialize_page();
       },
       error: function (res) {
-        notifyAlert({ type: "danger", text: res.responseText });
+        if (!checkNetworkError(res))
+          notifyAlert({ type: "danger", text: res.responseText });
       },
     });
   }
@@ -264,7 +265,8 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
       reset_spinners();
     })
     .fail(function (res) {
-      notifyAlert({ type: "danger", text: res.responseText });
+      if (!checkNetworkError(res))
+        notifyAlert({ type: "danger", text: res.responseText });
       reset_spinners();
     });
 }
@@ -388,7 +390,7 @@ function ajax_modal(url, opts = {}) {
       ? {
           error: opts.onError,
         }
-      : {}),
+      : { error: checkNetworkError }),
   });
 }
 function closeModal() {
@@ -451,7 +453,8 @@ function saveAndContinue(e, k, event) {
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
-      if (ct.startsWith && ct.startsWith("application/json")) {
+      if (checkNetworkError(request)) {
+      } else if (ct.startsWith && ct.startsWith("application/json")) {
         notifyAlert({ type: "danger", text: request.responseJSON.error });
       } else {
         $("#page-inner-content").html(request.responseText);
@@ -500,6 +503,7 @@ function applyViewConfig(e, url, k, event) {
     },
     data: JSON.stringify(cfg),
     error: function (request) {
+      checkNetworkError(request);
       window.savingViewConfig = false;
       ajax_indicate_error(e, request);
     },
@@ -578,6 +582,7 @@ function ajaxSubmitForm(e, force_no_reload) {
       else common_done(res, form.attr("data-viewname"));
     },
     error: function (request) {
+      checkNetworkError(request);
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       var body = request.responseText;
@@ -594,6 +599,9 @@ function ajax_post_json(url, data, args = {}) {
     ...args,
   });
 }
+
+let scNetworkErrorSignaled = false;
+
 function ajax_post(url, args) {
   $.ajax(url, {
     type: "POST",
@@ -603,10 +611,30 @@ function ajax_post(url, args) {
     ...(args || {}),
   })
     .done(ajax_done)
-    .fail((e) =>
-      ajax_done(e.responseJSON || { error: "Unknown error: " + e.responseText })
-    );
+    .fail((e, ...more) => {
+      if (!checkNetworkError(e))
+        return ajax_done(
+          e.responseJSON || { error: "Unknown error: " + e.responseText }
+        );
+    });
 }
+
+function checkNetworkError(e) {
+  if (e.readyState == 0 && !e.responseText && !e.responseJSON) {
+    //network error
+    if (scNetworkErrorSignaled) return true;
+    scNetworkErrorSignaled = true;
+    setTimeout(() => {
+      scNetworkErrorSignaled = false;
+    }, 1000);
+    notifyAlert({
+      type: "danger",
+      text: "Network connection error",
+    });
+    return true;
+  }
+}
+
 function ajax_post_btn(e, reload_on_done, reload_delay) {
   var form = $(e).closest("form");
   var url = form.attr("action");
@@ -620,6 +648,7 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
     success: function () {
       if (reload_on_done) location.reload();
     },
+    error: checkNetworkError,
     complete: function () {
       if (reload_delay)
         setTimeout(function () {
@@ -641,6 +670,7 @@ function api_action_call(name, body) {
     success: function (res) {
       common_done(res.data);
     },
+    error: checkNetworkError,
   });
 }
 
