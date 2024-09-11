@@ -323,9 +323,7 @@ function apply_showif() {
             });
           }
         })
-        .fail((e) => {
-          checkNetworkError(e);
-        });
+        .fail(checkNetworkError);
     }
   });
   $("[data-filter-table]").each(function (ix, element) {
@@ -534,9 +532,7 @@ function get_form_record(e_in, select_labels) {
             $(e_in).prop("data-join-values", jvs);
             apply_showif();
           },
-          error: function (request) {
-            checkNetworkError(request);
-          },
+          error: checkNetworkError,
         });
       }
       $(e_in).prop("data-join-key-values", keyVals);
@@ -927,9 +923,7 @@ function initialize_page() {
             );
           }
         })
-        .fail((e) => {
-          checkNetworkError(e);
-        });
+        .fail(checkNetworkError);
     };
     if (type === "JSON" && schema && schema.type.startsWith("Key to ")) {
       const tblName = schema.type.replace("Key to ", "");
