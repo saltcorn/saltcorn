@@ -594,6 +594,9 @@ function ajax_post_json(url, data, args = {}) {
     ...args,
   });
 }
+
+let scNetworkErrorSignaled = false;
+
 function ajax_post(url, args) {
   $.ajax(url, {
     type: "POST",
@@ -603,9 +606,23 @@ function ajax_post(url, args) {
     ...(args || {}),
   })
     .done(ajax_done)
-    .fail((e) =>
-      ajax_done(e.responseJSON || { error: "Unknown error: " + e.responseText })
-    );
+    .fail((e, ...more) => {
+      if (e.readyState == 0 && !e.responseText && !e.responseJSON) {
+        //network error
+        if (scNetworkErrorSignaled) return;
+        scNetworkErrorSignaled = true;
+        setTimeout(() => {
+          scNetworkErrorSignaled = false;
+        }, 1000);
+        notifyAlert({
+          type: "danger",
+          text: "Network connection error",
+        });
+      } else
+        return ajax_done(
+          e.responseJSON || { error: "Unknown error: " + e.responseText }
+        );
+    });
 }
 function ajax_post_btn(e, reload_on_done, reload_delay) {
   var form = $(e).closest("form");
