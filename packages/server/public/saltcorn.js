@@ -452,7 +452,8 @@ function saveAndContinue(e, k, event) {
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";
-      if (ct.startsWith && ct.startsWith("application/json")) {
+      if (checkNetworkError(request)) {
+      } else if (ct.startsWith && ct.startsWith("application/json")) {
         notifyAlert({ type: "danger", text: request.responseJSON.error });
       } else {
         $("#page-inner-content").html(request.responseText);
