@@ -190,7 +190,8 @@ function pjax_to(href, e) {
         initialize_page();
       },
       error: function (res) {
-        notifyAlert({ type: "danger", text: res.responseText });
+        if (!checkNetworkError(res))
+          notifyAlert({ type: "danger", text: res.responseText });
       },
     });
   }
@@ -389,7 +390,7 @@ function ajax_modal(url, opts = {}) {
       ? {
           error: opts.onError,
         }
-      : {}),
+      : { error: checkNetworkError }),
   });
 }
 function closeModal() {
@@ -502,6 +503,7 @@ function applyViewConfig(e, url, k, event) {
     },
     data: JSON.stringify(cfg),
     error: function (request) {
+      checkNetworkError(request);
       window.savingViewConfig = false;
       ajax_indicate_error(e, request);
     },
@@ -580,6 +582,7 @@ function ajaxSubmitForm(e, force_no_reload) {
       else common_done(res, form.attr("data-viewname"));
     },
     error: function (request) {
+      checkNetworkError(request);
       var title = request.getResponseHeader("Page-Title");
       if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
       var body = request.responseText;
@@ -645,6 +648,7 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
     success: function () {
       if (reload_on_done) location.reload();
     },
+    error: checkNetworkError,
     complete: function () {
       if (reload_delay)
         setTimeout(function () {
@@ -666,6 +670,7 @@ function api_action_call(name, body) {
     success: function (res) {
       common_done(res.data);
     },
+    error: checkNetworkError,
   });
 }
 

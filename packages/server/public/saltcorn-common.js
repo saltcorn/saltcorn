@@ -534,6 +534,9 @@ function get_form_record(e_in, select_labels) {
             $(e_in).prop("data-join-values", jvs);
             apply_showif();
           },
+          error: function (request) {
+            checkNetworkError(request);
+          },
         });
       }
       $(e_in).prop("data-join-key-values", keyVals);
@@ -898,31 +901,35 @@ function initialize_page() {
       })
     );
     const doAjaxOptionsFetch = (tblName, target) => {
-      $.ajax(`/api/${tblName}`).then((resp) => {
-        if (resp.success) {
-          resp.success.sort((a, b) =>
-            a[target]?.toLowerCase?.() > b[target]?.toLowerCase?.() ? 1 : -1
-          );
+      $.ajax(`/api/${tblName}`)
+        .then((resp) => {
+          if (resp.success) {
+            resp.success.sort((a, b) =>
+              a[target]?.toLowerCase?.() > b[target]?.toLowerCase?.() ? 1 : -1
+            );
 
-          const selopts = resp.success.map(
-            (r) =>
-              `<option ${current == r.id ? `selected ` : ``}value="${
-                r.id
-              }">${escapeHtml(r[target])}</option>`
-          );
-          $(this).replaceWith(
-            `<form method="post" action="${url}" ${
-              ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
-            }>
+            const selopts = resp.success.map(
+              (r) =>
+                `<option ${current == r.id ? `selected ` : ``}value="${
+                  r.id
+                }">${escapeHtml(r[target])}</option>`
+            );
+            $(this).replaceWith(
+              `<form method="post" action="${url}" ${
+                ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
+              }>
           <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
           <select name="${key}" value="${current}">${selopts}
           </select>
           <button type="submit" class="btn btn-sm btn-primary">OK</button>
           <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
           </form>`
-          );
-        }
-      });
+            );
+          }
+        })
+        .fail((e) => {
+          checkNetworkError(e);
+        });
     };
     if (type === "JSON" && schema && schema.type.startsWith("Key to ")) {
       const tblName = schema.type.replace("Key to ", "");
@@ -1101,7 +1108,8 @@ function initialize_page() {
           initialize_page();
         },
         error: function (res) {
-          notifyAlert({ type: "danger", text: res.responseText });
+          if (!checkNetworkError(res))
+            notifyAlert({ type: "danger", text: res.responseText });
           if ($e.html() === "Loading...") $e.html("");
         },
       });
@@ -1176,9 +1184,10 @@ function inline_ajax_submit(e, opts1) {
       inline_submit_success(e, form, opts);
     },
     error: function (e) {
-      ajax_done(
-        e.responseJSON || { error: "Unknown error: " + e.responseText }
-      );
+      if (!checkNetworkError(e))
+        ajax_done(
+          e.responseJSON || { error: "Unknown error: " + e.responseText }
+        );
     },
   });
 }
@@ -1221,6 +1230,7 @@ function enable_codemirror(f) {
     dataType: "script",
     cache: true,
     success: f,
+    error: checkNetworkError,
   });
 }
 function tristateClick(e, required) {
@@ -1528,7 +1538,8 @@ function reloadEmbeddedEditOwnViews(form, id) {
         initialize_page();
       },
       error: function (res) {
-        notifyAlert({ type: "danger", text: res.responseText });
+        if (!checkNetworkError(res))
+          notifyAlert({ type: "danger", text: res.responseText });
       },
     });
   });
@@ -1761,24 +1772,26 @@ function is_paging_param(key) {
   return key.endsWith("_page") || key.endsWith("_pagesize");
 }
 function check_saltcorn_notifications() {
-  $.ajax(`/notifications/count-unread`).then((resp) => {
-    if (resp.success) {
-      const n = resp.success;
-      const menu_item = $(`a.notify-menu-item`);
+  $.ajax(`/notifications/count-unread`)
+    .then((resp) => {
+      if (resp.success) {
+        const n = resp.success;
+        const menu_item = $(`a.notify-menu-item`);
 
-      menu_item.html(
-        `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
-      );
-      $(".user-nav-section").html(
-        `<i class="fa-fw mr-05 fas fa-user"></i>User (${n})`
-      );
-      $(".user-nav-section-with-span").html(
-        `<i class="fa-fw mr-05 fas fa-user"></i><span>User (${n})</span>`
-      );
-      window.update_theme_notification_count &&
-        window.update_theme_notification_count(n);
-    }
-  });
+        menu_item.html(
+          `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
+        );
+        $(".user-nav-section").html(
+          `<i class="fa-fw mr-05 fas fa-user"></i>User (${n})`
+        );
+        $(".user-nav-section-with-span").html(
+          `<i class="fa-fw mr-05 fas fa-user"></i><span>User (${n})</span>`
+        );
+        window.update_theme_notification_count &&
+          window.update_theme_notification_count(n);
+      }
+    })
+    .fail(checkNetworkError);
 }
 
 function disable_inactive_tab_inputs(id) {
@@ -1874,7 +1887,8 @@ function reload_embedded_view(viewname, new_query_string) {
           updater($e, res);
         },
         error: function (res) {
-          notifyAlert({ type: "danger", text: res.responseText });
+          if (!checkNetworkError(res))
+            notifyAlert({ type: "danger", text: res.responseText });
         },
       });
     } else {
