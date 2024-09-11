@@ -299,7 +299,7 @@ const zipFolder = async (folder: string, zipFileName: string) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
       const cmd = `zip ${
         backup_system_zip_level ? `-${backup_system_zip_level} ` : ""
-      }-r ${absZipPath} .`;
+      }-r "${absZipPath}" .`;
       exec(cmd, { cwd: folder }, (error: any) => {
         if (error) reject(error);
         else resolve(undefined);

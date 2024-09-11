@@ -346,7 +346,7 @@ describe("JSDOM-E2E edit test", () => {
       showIfFormula: 'publisher?.name == "AK Press"',
     });
     const dom = await load_url_dom("/view/AuthorEditForTest");
-    await sleep(1000);
+    await sleep(2000);
     const pubwarn = dom.window.document.querySelector("div.pubwarn");
     //console.log(dom.serialize());
     expect(pubwarn.style.display).toBe("none");
@@ -362,7 +362,7 @@ describe("JSDOM-E2E edit test", () => {
     select.value = "1";
     select.dispatchEvent(newEvent(dom, "change"));
 
-    await sleep(1000);
+    await sleep(2000);
     expect([...select_seq.options].map((o) => o.text)).toStrictEqual([
       "",
       "Leo Tolstoy",
@@ -381,7 +381,7 @@ describe("JSDOM-E2E edit test", () => {
     const input = dom.window.document.querySelector("input[name=pages]");
     input.value = "13";
     input.dispatchEvent(newEvent(dom, "change"));
-    await sleep(1000);
+    await sleep(2000);
     const cf = dom.window.document.querySelector(
       `div[data-source-url="/field/show-calculated/books/pagesp1/show?input_type=text"]`
     );
@@ -394,7 +394,7 @@ describe("JSDOM-E2E edit test", () => {
       showIfFormula: "publisher == 1",
     });
     const dom = await load_url_dom("/view/AuthorEditForTest1");
-    await sleep(1000);
+    await sleep(2000);
     const pubwarn = dom.window.document.querySelector("div.pubwarn");
 
     expect(pubwarn.style.display).toBe("none");
@@ -410,7 +410,7 @@ describe("JSDOM-E2E edit test", () => {
     select.value = "1";
     select.dispatchEvent(newEvent(dom, "change"));
 
-    await sleep(1000);
+    await sleep(2000);
     expect([...select_seq.options].map((o) => o.text)).toStrictEqual([
       "",
       "Leo Tolstoy",
