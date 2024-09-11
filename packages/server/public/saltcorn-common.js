@@ -303,25 +303,29 @@ function apply_showif() {
         ...cache,
         [qs]: "fetching",
       });
-      $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
-        if (resp.success) {
-          if (window._sc_loglevel > 4)
-            console.log("dynwhere fetch", qs, resp.success);
+      $.ajax(`/api/${dynwhere.table}?${qs}`)
+        .then((resp) => {
+          if (resp.success) {
+            if (window._sc_loglevel > 4)
+              console.log("dynwhere fetch", qs, resp.success);
 
-          activate(resp.success, qs);
-          const cacheNow = e.prop("data-fetch-options-cache") || {};
-          e.prop("data-fetch-options-cache", {
-            ...cacheNow,
-            [qs]: resp.success,
-          });
-        } else {
-          const cacheNow = e.prop("data-fetch-options-cache") || {};
-          e.prop("data-fetch-options-cache", {
-            ...cacheNow,
-            [qs]: undefined,
-          });
-        }
-      });
+            activate(resp.success, qs);
+            const cacheNow = e.prop("data-fetch-options-cache") || {};
+            e.prop("data-fetch-options-cache", {
+              ...cacheNow,
+              [qs]: resp.success,
+            });
+          } else {
+            const cacheNow = e.prop("data-fetch-options-cache") || {};
+            e.prop("data-fetch-options-cache", {
+              ...cacheNow,
+              [qs]: undefined,
+            });
+          }
+        })
+        .fail((e) => {
+          checkNetworkError(e);
+        });
     }
   });
   $("[data-filter-table]").each(function (ix, element) {

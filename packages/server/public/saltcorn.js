@@ -619,7 +619,7 @@ function ajax_post(url, args) {
 function checkNetworkError(e) {
   if (e.readyState == 0 && !e.responseText && !e.responseJSON) {
     //network error
-    if (scNetworkErrorSignaled) return;
+    if (scNetworkErrorSignaled) return true;
     scNetworkErrorSignaled = true;
     setTimeout(() => {
       scNetworkErrorSignaled = false;
