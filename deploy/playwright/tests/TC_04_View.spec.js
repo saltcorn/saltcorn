@@ -117,11 +117,6 @@ test.describe('E2E Test Suite', () => {
     await functions.submit();
     // drag and drop the page source on the page
     await page.waitForTimeout(5000);
-    await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
-    await functions.fill_Text(pageobject.textlocator, 'I said..');
-    // click on delete button
-    await page.waitForSelector(pageobject.deletebutton);
-    await page.click(pageobject.deletebutton);
     // select inputbox and delete
     await page.waitForSelector(pageobject.inputbox2);
     await page.click(pageobject.inputbox2);
@@ -141,6 +136,11 @@ test.describe('E2E Test Suite', () => {
       await page.selectOption('select.form-control.form-select', 'date_of_birth');
     });
     await page.waitForTimeout(2000);
+    await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
+    await functions.fill_Text(pageobject.textlocator, 'I said..');
+    // click on delete button
+    await page.waitForSelector(pageobject.deletebutton);
+    await page.click(pageobject.deletebutton);
     // click on save button
     await page.waitForSelector(pageobject.saveactionbutton);
     await page.click(pageobject.saveactionbutton);
@@ -505,7 +505,6 @@ test.describe('E2E Test Suite', () => {
       await page.waitForSelector(pageobject.viewtolinkdropdown);
       await expect(page.locator(pageobject.viewtolinkdropdown)).toHaveText('ListShowListView [ListShowList] My_Table');
     });
-
     // add lable for link
     await page.waitForSelector(pageobject.lebelforfield);
     await functions.fill_Text(pageobject.lebelforfield, 'ListShow');

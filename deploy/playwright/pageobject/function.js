@@ -422,6 +422,10 @@ class PageFunctions {
       await this.page.waitForSelector(this.locators.successmessage);
       await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
     });
+    await this.navigate_modules_To_Installed();
+    await customAssert('flatpickr-date module should be present in installed tab', async () => {
+      await expect(this.page.locator(this.locators.flatpickrDateHeader)).toBeVisible();
+    });
   }
 
   async install_ckeditor() {
@@ -443,6 +447,10 @@ class PageFunctions {
     await customAssert('Success message should be visible', async () => {
       await this.page.waitForSelector(this.locators.successmessage);
       await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+    await this.navigate_modules_To_Installed();
+    await customAssert('ckeditor4 module should be present in installed tab', async () => {
+      await expect(this.page.locator(this.locators.ckeditorHeader)).toBeVisible();
     });
   }
 }

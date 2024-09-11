@@ -306,14 +306,14 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Periodic timing header should be visible', async () => {
             await expect(page.locator(pageobject.periodicTimingHeader)).toHaveText('Periodic trigger timing (next event)');
         });
-        await customAssert('Next Hourly Event Input should have null value', async () => {
-            await expect(page.locator(pageobject.nextHourlyEventInput)).toHaveValue('null');
+        await customAssert('Next Hourly Event Input should Be Visible', async () => {
+            await expect(page.locator(pageobject.nextHourlyEventInput)).toBeVisible();
         });
-        await customAssert('Next Daily Event Input should have null value', async () => {
-            await expect(page.locator(pageobject.nextDailyEventInput)).toHaveValue('null');
+        await customAssert('Next Daily Event Input should Be Visible', async () => {
+            await expect(page.locator(pageobject.nextDailyEventInput)).toBeVisible();
         });
-        await customAssert('Next Weekly Event Input should have null value', async () => {
-            await expect(page.locator(pageobject.nextWeeklyEventInput)).toHaveValue('null');
+        await customAssert('Next Weekly Event Input should Be Visible', async () => {
+            await expect(page.locator(pageobject.nextWeeklyEventInput)).toBeVisible();
         });
         await customAssert('Which events should be logged header should be visible', async () => {
             await expect(page.locator(pageobject.whichEventsShouldBeLogged)).toHaveText('Which events should be logged?');

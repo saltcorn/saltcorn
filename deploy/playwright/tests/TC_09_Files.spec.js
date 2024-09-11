@@ -54,7 +54,7 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.File)).toHaveText('Files');
         });
         await page.waitForTimeout(2000);
-        await customAssert('Page URL should be /files', async () => {
+        await customAssert('Page URL should be /files?sortBy=filename', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
         });
     });
@@ -69,7 +69,7 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.fileslocator)).toHaveText('Files');
         });
         await page.waitForTimeout(2000);
-        await customAssert('Page URL should be /files', async () => {
+        await customAssert('Page URL should be /files?sortBy=filename', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
         });
         await customAssert('Assert the breadcrumb on Files tab', async () => {
