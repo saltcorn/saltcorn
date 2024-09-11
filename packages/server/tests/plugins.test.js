@@ -10,6 +10,7 @@ const {
   toInclude,
   toNotInclude,
   toRedirect,
+  toSucceed,
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
@@ -21,7 +22,7 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
-jest.setTimeout(30000);
+jest.setTimeout(40000);
 
 describe("Plugin Endpoints", () => {
   it("should show list", async () => {
@@ -308,11 +309,148 @@ describe("config endpoints", () => {
       .post("/admin")
       .send("site_name=FooSiteName")
       .send("multitenancy_enabled=on")
+      .send("plugins_store_endpoint=https://store.saltcorn.com/api/extensions")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/admin/"));
     await request(app)
       .get("/admin")
       .set("Cookie", loginCookie)
       .expect(toInclude(">FooSiteName<"));
+  });
+});
+
+const installPlugin = async (name, version) => {
+  const loginCookie = await getAdminLoginCookie();
+  const app = await getApp({ disableCsrf: true });
+  await request(app)
+    .post("/plugins")
+    .send(
+      `name=${encodeURIComponent(name)}&location=${encodeURIComponent(
+        name
+      )}&source=npm&version=${version}`
+    )
+    .set("Cookie", loginCookie)
+    .expect(toRedirect("/plugins"));
+};
+
+const uninstallPlugin = async (plugin) => {
+  const loginCookie = await getAdminLoginCookie();
+  const app = await getApp({ disableCsrf: true });
+  await request(app)
+    .post(`/plugins/delete/${encodeURIComponent(plugin.name)}`)
+    .set("Cookie", loginCookie)
+    .expect(toRedirect("/plugins"));
+};
+describe("Upgrade plugin to supported version", () => {
+  it("upgrades to latest", async () => {
+    await installPlugin("@christianhugoch/empty_sc_test_plugin_two", "0.0.1");
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(oldPlugin.version).toBe("0.0.1");
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/plugins/upgrade")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    const upgradedPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(upgradedPlugin.version).toBe("0.0.3");
+    await uninstallPlugin(upgradedPlugin);
+  });
+
+  it("upgrades to the most current fixed version", async () => {
+    await installPlugin("@christianhugoch/empty_sc_test_plugin_two", "0.0.1");
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(oldPlugin.version).toBe("0.0.1");
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post(
+        `/plugins/install/${encodeURIComponent(
+          "@christianhugoch/empty_sc_test_plugin_two"
+        )}`
+      )
+      .send("version=0.0.3")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    const upgradedPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(upgradedPlugin.version).toBe("0.0.3");
+    await uninstallPlugin(upgradedPlugin);
+  });
+
+  it("upgrades with a downgrade of the latest version", async () => {
+    await installPlugin("@christianhugoch/empty_sc_test_plugin", "0.0.1");
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(oldPlugin.version).toBe("0.0.1");
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/plugins/upgrade")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    const upgradedPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(upgradedPlugin.version).toBe("0.0.5");
+    await uninstallPlugin(upgradedPlugin);
+  });
+
+  it("upgrades with a downgrade of the most current version", async () => {
+    await installPlugin("@christianhugoch/empty_sc_test_plugin", "0.0.1");
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(oldPlugin.version).toBe("0.0.1");
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post(
+        `/plugins/install/${encodeURIComponent(
+          "@christianhugoch/empty_sc_test_plugin"
+        )}`
+      )
+      .send("version=0.1.0")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/plugins"));
+    const upgradedPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(upgradedPlugin.version).toBe("0.0.5");
+    await uninstallPlugin(upgradedPlugin);
+  });
+});
+
+describe("install a different version dialog", () => {
+  it("sends the dialog", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/plugins/versions_dialog/any-bootstrap-theme")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(["0.5.14", "0.5.14", "0.5.13", "0.5.12", "0.1.0"]));
+  });
+
+  it("filters not supported versions", async () => {
+    await installPlugin("@christianhugoch/empty_sc_test_plugin", "latest");
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get(
+        `/plugins/versions_dialog/${encodeURIComponent(
+          "@christianhugoch/empty_sc_test_plugin"
+        )}`
+      )
+      .set("Cookie", loginCookie)
+      .expect(toInclude(["0.0.1", "0.0.2", "0.0.3", "0.0.4", "0.0.5", "0.0.6"]))
+      .expect(toNotInclude("0.1.0"));
   });
 });

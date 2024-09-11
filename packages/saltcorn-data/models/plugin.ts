@@ -113,11 +113,12 @@ class Plugin {
    * @returns {Promise<void>}
    */
   async upgrade_version(
-    requirePlugin: (arg0: Plugin, arg1: boolean) => Plugin
+    requirePlugin: (arg0: Plugin, arg1: boolean) => Plugin,
+    newVersion?: string,
   ): Promise<void> {
     if (this.source === "npm") {
       const old_version = this.version;
-      this.version = "latest";
+      this.version = newVersion || "latest";
       const { version } = await requirePlugin(this, true);
       if (version && version !== old_version) {
         this.version = version;
