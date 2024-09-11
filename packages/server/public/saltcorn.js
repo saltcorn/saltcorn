@@ -264,7 +264,8 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
       reset_spinners();
     })
     .fail(function (res) {
-      notifyAlert({ type: "danger", text: res.responseText });
+      if (!checkNetworkError(res))
+        notifyAlert({ type: "danger", text: res.responseText });
       reset_spinners();
     });
 }
@@ -607,23 +608,29 @@ function ajax_post(url, args) {
   })
     .done(ajax_done)
     .fail((e, ...more) => {
-      if (e.readyState == 0 && !e.responseText && !e.responseJSON) {
-        //network error
-        if (scNetworkErrorSignaled) return;
-        scNetworkErrorSignaled = true;
-        setTimeout(() => {
-          scNetworkErrorSignaled = false;
-        }, 1000);
-        notifyAlert({
-          type: "danger",
-          text: "Network connection error",
-        });
-      } else
+      if (!checkNetworkError(e))
         return ajax_done(
           e.responseJSON || { error: "Unknown error: " + e.responseText }
         );
     });
 }
+
+function checkNetworkError(e) {
+  if (e.readyState == 0 && !e.responseText && !e.responseJSON) {
+    //network error
+    if (scNetworkErrorSignaled) return;
+    scNetworkErrorSignaled = true;
+    setTimeout(() => {
+      scNetworkErrorSignaled = false;
+    }, 1000);
+    notifyAlert({
+      type: "danger",
+      text: "Network connection error",
+    });
+    return true;
+  }
+}
+
 function ajax_post_btn(e, reload_on_done, reload_delay) {
   var form = $(e).closest("form");
   var url = form.attr("action");
