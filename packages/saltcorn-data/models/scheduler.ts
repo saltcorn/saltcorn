@@ -265,4 +265,4 @@ const runScheduler = async ({
   }
 };
 
-export = runScheduler;
+export = { runScheduler, getDailyTriggersDueNow };

@@ -19,7 +19,7 @@ class ScheduleCommand extends Command {
       const db = require("@saltcorn/data/db");
       db.set_sql_logging();
     }
-    const runScheduler = require("@saltcorn/data/models/scheduler");
+    const { runScheduler } = require("@saltcorn/data/models/scheduler");
     await runScheduler({});
   }
 }
