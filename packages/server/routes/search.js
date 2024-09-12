@@ -202,7 +202,12 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   let tablesWithResults = [];
   let tablesConfigured = 0;
   for (const [tableName, viewName] of Object.entries(cfg)) {
-    if (!viewName || viewName === "" || viewName === "search_table_description")
+    if (
+      !viewName ||
+      viewName === "" ||
+      viewName === "search_table_description" ||
+      tableName === "search_table_description"
+    )
       continue;
     tablesConfigured += 1;
     if (table && tableName !== table) continue;
