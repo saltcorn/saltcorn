@@ -257,10 +257,16 @@ const mergeConnectedObjects = (
   };
 };
 
-const objectToQueryString = (o: Object): string =>
-  Object.entries(o || {})
-    .map(([k, v]: any) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+const objectToQueryString = (o: Object): string => {
+  const f = ([k, v]: any) =>
+    v?.or
+      ? v.or.map((val: any) => f([k, val])).join("&")
+      : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+
+  return Object.entries(o || {})
+    .map(f)
     .join("&");
+};
 
 const urlStringToObject = (url: string): any => {
   if (!url) return {};

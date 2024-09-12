@@ -239,6 +239,13 @@ const triggerForm = async (req, trigger) => {
       },
       {
         name: "channel",
+        label: req.__("Time to run"),
+        input_type: "time_of_week",
+        showIf: { when_trigger: "Weekly" },
+        sublabel: req.__("UTC timezone"),
+      },
+      {
+        name: "channel",
         label: req.__("Channel"),
         type: "String",
         sublabel: req.__("Leave blank for all channels"),
