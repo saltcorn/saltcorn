@@ -1892,3 +1892,16 @@ function reload_embedded_view(viewname, new_query_string) {
     }
   });
 }
+
+function update_time_of_week(nm) {
+  return function () {
+    const day = $(`#input${nm}__day`).val();
+    const flat = document.querySelector(`#input${nm}__time`)._flatpickr;
+
+    const time = flat.selectedDates?.[0];
+    const s = `${day} ${time.getHours()} ${time.getMinutes()}`;
+    console.log({ time, day, flat, s, nm });
+
+    $(`#inputh${nm}`).val(s).trigger("change");
+  };
+}
