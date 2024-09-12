@@ -77,7 +77,7 @@ const getWeeklyTriggersDueNow = (tickSeconds: number): Array<Trigger> => {
     if (m[1] !== now.toLocaleString("en-us", { weekday: "long" })) return false;
 
     const time_to_run = new Date();
-    time_to_run.setHours(+m[2]);
+    time_to_run.setUTCHours(+m[2]);
     time_to_run.setMinutes(+m[3]);
 
     const nextTick = new Date();
