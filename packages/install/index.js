@@ -301,7 +301,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   }
   const packages =
     installer === "apt"
-      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev"]
+      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev", "zip"]
       : ["systemd-devel"];
   if (!skipChromium) {
     if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");

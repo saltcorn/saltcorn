@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/plugins-loader",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.9",
   "description": "Saltcorn plugin loader",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -10,12 +10,8 @@
   },
   "dependencies": {
     "env-paths": "^2.2.0",
-    "@saltcorn/data": "1.0.0-beta.6",
-    "npm-registry-fetch": "17.1.0"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "npm-registry-fetch": "17.1.0"
+    "npm-registry-fetch": "17.1.0",
+    "@saltcorn/data": "1.0.0-beta.9"
   },
   "author": "Christian Hugo",
   "license": "MIT",

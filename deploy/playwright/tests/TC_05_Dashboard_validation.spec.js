@@ -16,7 +16,9 @@ test.describe('E2E Test Suite', () => {
     // Initialize the log file
     Logger.initialize();
     // Create a new context and page for all tests
-    context = await browser.newContext();
+    context = await browser.newContext({
+      ignoreHTTPSErrors: true
+    });
     page = await context.newPage();
 
     // Maximize the screen
