@@ -1899,9 +1899,9 @@ function update_time_of_week(nm) {
     const flat = document.querySelector(`#input${nm}__time`)._flatpickr;
 
     const time = flat.selectedDates?.[0];
-    const s = `${day} ${time.getHours()} ${time.getMinutes()}`;
-    console.log({ time, day, flat, s, nm });
-
+    let s;
+    if (time) s = `${day} ${time.getHours()} ${time.getMinutes()}`;
+    else s = day;
     $(`#inputh${nm}`).val(s).trigger("change");
   };
 }
