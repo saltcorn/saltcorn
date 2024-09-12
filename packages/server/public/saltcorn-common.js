@@ -1900,8 +1900,11 @@ function update_time_of_week(nm) {
 
     const time = flat.selectedDates?.[0];
     let s;
-    if (time) s = `${day} ${time.getHours()} ${time.getMinutes()}`;
-    else s = day;
+    if (time) {
+      const m = time.getMinutes();
+
+      s = `${day} ${time.getHours()} ${m < 10 ? `0${m}` : m}`;
+    } else s = day;
     $(`#inputh${nm}`).val(s).trigger("change");
   };
 }

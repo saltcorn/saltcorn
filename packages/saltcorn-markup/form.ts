@@ -568,7 +568,7 @@ const innerField =
           }"${maybe_disabled} id="input${text_attr(
             name
           )}__time" type="text" placeholder="Select time of day.." ${
-            tow_h && tow_m ? `value="${tow_h}:${tow_m}"` : ""
+            tow_h && tow_m ? `value="${tow_h}:${tow_m}" ` : 'value="12:00" '
           }readonly="readonly"></div>` +
           script(
             domReady(`$('#input${text_attr(name)}__time').flatpickr({
