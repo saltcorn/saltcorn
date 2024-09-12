@@ -22,7 +22,7 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
-jest.setTimeout(40000);
+jest.setTimeout(30000);
 
 describe("Plugin Endpoints", () => {
   it("should show list", async () => {
@@ -342,6 +342,15 @@ const uninstallPlugin = async (plugin) => {
     .expect(toRedirect("/plugins"));
 };
 describe("Upgrade plugin to supported version", () => {
+  beforeEach(async () => {
+    for (const plugin of [
+      "@christianhugoch/empty_sc_test_plugin",
+      "@christianhugoch/empty_sc_test_plugin_two",
+    ]) {
+      const dbPlugin = await Plugin.findOne({ name: plugin });
+      if (dbPlugin) await dbPlugin.delete();
+    }
+  });
   it("upgrades to latest", async () => {
     await installPlugin("@christianhugoch/empty_sc_test_plugin_two", "0.0.1");
     const oldPlugin = await Plugin.findOne({
@@ -358,7 +367,6 @@ describe("Upgrade plugin to supported version", () => {
       name: "@christianhugoch/empty_sc_test_plugin_two",
     });
     expect(upgradedPlugin.version).toBe("0.0.3");
-    await uninstallPlugin(upgradedPlugin);
   });
 
   it("upgrades to the most current fixed version", async () => {
@@ -382,7 +390,6 @@ describe("Upgrade plugin to supported version", () => {
       name: "@christianhugoch/empty_sc_test_plugin_two",
     });
     expect(upgradedPlugin.version).toBe("0.0.3");
-    await uninstallPlugin(upgradedPlugin);
   });
 
   it("upgrades with a downgrade of the latest version", async () => {
@@ -400,8 +407,7 @@ describe("Upgrade plugin to supported version", () => {
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.0.5");
-    await uninstallPlugin(upgradedPlugin);
+    expect(upgradedPlugin.version).toBe("0.0.6");
   });
 
   it("upgrades with a downgrade of the most current version", async () => {
@@ -424,8 +430,7 @@ describe("Upgrade plugin to supported version", () => {
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.0.5");
-    await uninstallPlugin(upgradedPlugin);
+    expect(upgradedPlugin.version).toBe("0.0.6");
   });
 });
 
