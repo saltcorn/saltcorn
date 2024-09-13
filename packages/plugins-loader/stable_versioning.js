@@ -1,18 +1,26 @@
 const semver = require("semver");
+const { getState } = require("@saltcorn/data/db/state");
 
+/*
+ internal helper
+*/
 const doCheck = (version, versionInfos, scVersion) => {
   if (!versionInfos[version])
     throw new Error(`Version ${version} not found in available versions`);
   const scEngine = versionInfos[version].engines?.saltcorn;
   if (!scEngine) return true;
+  if (semver.validRange(scEngine) === null) {
+    getState().log(4, `invalid engine property: ${scEngine}`);
+    return true;
+  }
   return semver.satisfies(scVersion, scEngine);
 };
 
 /**
- *
- * @param {*} wantedVersion
- * @param {*} versionInfos
- * @param {*} scVersion
+ * check if wanted version is supported or find the latest supported version
+ * @param {*} wantedVersion - wanted version
+ * @param {*} versionInfos - version infos from the npm registry (resembles the package.json version)
+ * @param {*} scVersion - saltcorn version
  * @returns
  */
 const supportedVersion = (
@@ -36,20 +44,18 @@ const supportedVersion = (
 };
 
 /**
- *
- * @param {*} version
- * @param {*} versionInfos
- * @param {*} scVersion
- * @returns
+ * Check if the version is supported
+ * @param version - wanted version
+ * @param versionInfos - version infos from the npm registry (resembles the package.json version)
+ * @param scVersion - saltcorn version
  */
 const isVersionSupported = (version, versionInfos, scVersion) => {
   return doCheck(version, versionInfos, scVersion);
 };
 
 /**
- *
- * @param {*} versionInfos
- * @returns
+ * change latest to the actual version
+ * @param versionInfos - version infos from the npm registry (resembles the package.json version)
  */
 const resolveLatest = (versionInfos) => {
   const keys = Object.keys(versionInfos);

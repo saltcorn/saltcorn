@@ -333,14 +333,6 @@ const installPlugin = async (name, version) => {
     .expect(toRedirect("/plugins"));
 };
 
-const uninstallPlugin = async (plugin) => {
-  const loginCookie = await getAdminLoginCookie();
-  const app = await getApp({ disableCsrf: true });
-  await request(app)
-    .post(`/plugins/delete/${encodeURIComponent(plugin.name)}`)
-    .set("Cookie", loginCookie)
-    .expect(toRedirect("/plugins"));
-};
 describe("Upgrade plugin to supported version", () => {
   beforeEach(async () => {
     for (const plugin of [
@@ -410,7 +402,7 @@ describe("Upgrade plugin to supported version", () => {
     expect(upgradedPlugin.version).toBe("0.0.6");
   });
 
-  it("upgrades with a downgrade of the most current version", async () => {
+  it("upgrades with a downgrade of the most current fixed version", async () => {
     await installPlugin("@christianhugoch/empty_sc_test_plugin", "0.0.1");
     const oldPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",

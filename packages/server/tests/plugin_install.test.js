@@ -120,6 +120,15 @@ describe("Stable versioning install", () => {
     empty_sc_test_plugin_two:
       - has no engine property in any version
   */
+  beforeEach(async () => {
+    for (const plugin of [
+      "@christianhugoch/empty_sc_test_plugin",
+      "@christianhugoch/empty_sc_test_plugin_two",
+    ]) {
+      const dbPlugin = await Plugin.findOne({ name: plugin });
+      if (dbPlugin) await dbPlugin.delete();
+    }
+  });
   it("installs latest", async () => {
     const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
     await loadAndSaveNewPlugin(
@@ -135,7 +144,6 @@ describe("Stable versioning install", () => {
     });
     expect(dbPlugin).not.toBe(null);
     expect(dbPlugin.version).toBe("0.0.3");
-    await dbPlugin.delete();
   });
 
   it("installs and downgrades latest", async () => {
@@ -154,7 +162,6 @@ describe("Stable versioning install", () => {
     });
     expect(dbPlugin).not.toBe(null);
     expect(dbPlugin.version).toBe("0.0.6");
-    await dbPlugin.delete();
   });
 
   it("installs a fixed version", async () => {
@@ -172,7 +179,6 @@ describe("Stable versioning install", () => {
     });
     expect(dbPlugin).not.toBe(null);
     expect(dbPlugin.version).toBe("0.0.6");
-    await dbPlugin.delete();
   });
 
   it("installs and downgrades a fixed version", async () => {
@@ -191,7 +197,6 @@ describe("Stable versioning install", () => {
     });
     expect(dbPlugin).not.toBe(null);
     expect(dbPlugin.version).toBe("0.0.6");
-    await dbPlugin.delete();
   });
 });
 
@@ -205,7 +210,42 @@ describe("Stable versioning upgrade", () => {
       if (dbPlugin) await dbPlugin.delete();
     }
   });
-  it("upgrade to latest with downgrade", async () => {
+
+  it("upgrades to latest", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "0.0.1",
+      }),
+      true
+    );
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(oldPlugin).not.toBe(null);
+    expect(oldPlugin.version).toBe("0.0.1");
+
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        id: oldPlugin.id,
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "latest",
+      }),
+      true
+    );
+    const newPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(newPlugin).not.toBe(null);
+    expect(newPlugin.version).toBe("0.0.3");
+  });
+
+  it("upgrades to latest with downgrade", async () => {
     const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
     await loadAndSaveNewPlugin(
       new Plugin({
@@ -239,7 +279,41 @@ describe("Stable versioning upgrade", () => {
     expect(newPlugin.version).toBe("0.0.6");
   });
 
-  it("upgrade to fixed version with downgrade", async () => {
+  it("upgrades to fixed version", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "0.0.1",
+      }),
+      true
+    );
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(oldPlugin).not.toBe(null);
+    expect(oldPlugin.version).toBe("0.0.1");
+
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        id: oldPlugin.id,
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "0.0.3",
+      }),
+      true
+    );
+    const newPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(newPlugin).not.toBe(null);
+    expect(newPlugin.version).toBe("0.0.3");
+  });
+
+  it("upgrades to fixed version with downgrade", async () => {
     const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
     await loadAndSaveNewPlugin(
       new Plugin({
