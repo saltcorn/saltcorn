@@ -1911,7 +1911,7 @@ router.post(
     const table = Table.findOne({ name });
 
     try {
-      await table.deleteRows({});
+      await table.deleteRows({}, req.user);
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
       req.flash("error", e.message);

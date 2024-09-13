@@ -539,6 +539,47 @@ const innerField =
           });`)
           )
         );
+      case "time_of_week":
+        const tow_val = v[hdr.form_name];
+        let tow_d, tow_h, tow_m;
+        if (tow_val) {
+          [tow_d, tow_h, tow_m] = tow_val.split(" ");
+        }
+        return (
+          `<input type="hidden" name="${text_attr(name)}" id="inputh${text_attr(
+            name
+          )}" data-fieldname="${text_attr(hdr.form_name)}" value="${text_attr(
+            tow_val
+          )}"><div class="d-flex"><select class="form-control form-select" id="input${text_attr(
+            name
+          )}__day" onchange="update_time_of_week('${text_attr(name)}')(this)">
+             <option ${tow_d === "Monday" ? "selected" : ""}>Monday</option>
+             <option ${tow_d === "Tuesday" ? "selected" : ""}>Tuesday</option>
+             <option ${
+               tow_d === "Wednesday" ? "selected" : ""
+             }>Wednesday</option>
+             <option ${tow_d === "Thursday" ? "selected" : ""}>Thursday</option>
+             <option ${tow_d === "Friday" ? "selected" : ""}>Friday</option>
+             <option ${tow_d === "Saturday" ? "selected" : ""}>Saturday</option>
+             <option ${tow_d === "Sunday" ? "selected" : ""}>Sunday</option>
+             </select>
+             <input class="form-control ${validClass} ${
+            hdr.class || ""
+          }"${maybe_disabled} id="input${text_attr(
+            name
+          )}__time" type="text" placeholder="Select time of day.." ${
+            tow_h && tow_m ? `value="${tow_h}:${tow_m}" ` : 'value="12:00" '
+          }readonly="readonly"></div>` +
+          script(
+            domReady(`$('#input${text_attr(name)}__time').flatpickr({
+            noCalendar: true,
+            enableTime: true,
+            time_24hr: true,
+            timeFormat: 'H:i',
+            onChange: update_time_of_week('${text_attr(name)}')
+          });`)
+          )
+        );
       case "date":
         return (
           `<input class="form-control ${validClass} ${

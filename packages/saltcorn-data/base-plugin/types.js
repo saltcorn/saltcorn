@@ -572,6 +572,22 @@ const to_locale_string = {
       },
     },
     {
+      type: "Integer",
+      name: "maximumFractionDigits",
+      label: "Max Fraction Digits",
+      attributes: {
+        min: 0,
+      },
+    },
+    {
+      type: "Integer",
+      name: "maximumSignificantDigits",
+      label: "Max Significant Digits",
+      attributes: {
+        min: 0,
+      },
+    },
+    {
       type: "String",
       name: "currency",
       label: "Currency",
@@ -667,6 +683,8 @@ const to_locale_string = {
         currencyDisplay: attrs.currencyDisplay,
         unit: attrs.unit,
         unitDisplay: attrs.unitDisplay,
+        maximumSignificantDigits: attrs.maximumSignificantDigits,
+        maximumFractionDigits: attrs.maximumFractionDigits,
       });
     } else return "";
   },

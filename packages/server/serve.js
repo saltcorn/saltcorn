@@ -4,7 +4,7 @@
  * @category server
  * @module serve
  */
-const runScheduler = require("@saltcorn/data/models/scheduler");
+const { runScheduler } = require("@saltcorn/data/models/scheduler");
 const User = require("@saltcorn/data/models/user");
 const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
