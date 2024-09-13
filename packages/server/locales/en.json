@@ -1464,5 +1464,6 @@
 	"Zip compression level": "Zip compression level",
 	"1=Fast, larger file, 9=Slow, smaller files": "1=Fast, larger file, 9=Slow, smaller files",
 	"Use system zip": "Use system zip",
-	"Recommended. Executable <code>zip</code> must be installed": "Recommended. Executable <code>zip</code> must be installed"
+	"Recommended. Executable <code>zip</code> must be installed": "Recommended. Executable <code>zip</code> must be installed",
+	"Mobile": "Mobile"
 }

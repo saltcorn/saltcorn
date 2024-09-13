@@ -114,7 +114,7 @@ class Plugin {
    */
   async upgrade_version(
     requirePlugin: (arg0: Plugin, arg1: boolean) => Plugin,
-    newVersion?: string,
+    newVersion?: string
   ): Promise<void> {
     if (this.source === "npm") {
       const old_version = this.version;
@@ -149,6 +149,13 @@ class Plugin {
       .filter((v) => vt_names.includes(v.viewtemplate) && !v.singleton)
       .map((v) => v.name);
   }
+
+  ready_for_mobile(): boolean {
+    const { getState } = require("../db/state");
+    const module = getState().plugins[this.name];
+    return module?.ready_for_mobile === true;
+  }
+
   static get_cached_plugins(): Array<Plugin> {
     const { getState } = require("../db/state");
 

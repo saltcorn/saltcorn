@@ -181,6 +181,8 @@ const get_store_items = async () => {
       has_auth: plugin.has_auth,
       unsafe: plugin.unsafe,
       source: plugin.source,
+      ready_for_mobile:
+        plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
     }))
     .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
@@ -194,6 +196,8 @@ const get_store_items = async () => {
       github: plugin.source === "github",
       git: plugin.source === "git",
       local: plugin.source === "local",
+      ready_for_mobile:
+        plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
     }));
 
   const pack_items = packs_available.map((pack) => ({
@@ -278,7 +282,8 @@ const store_item_html = (req) => (item) => ({
       item.github && badge("GitHub"),
       item.git && badge("Git"),
       item.local && badge(req.__("Local")),
-      item.installed && badge(req.__("Installed"))
+      item.installed && badge(req.__("Installed")),
+      item.ready_for_mobile && badge(req.__("Mobile"))
     ),
     div(item.description || ""),
     item.documentation_link
