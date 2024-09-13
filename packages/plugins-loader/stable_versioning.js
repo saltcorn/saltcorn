@@ -13,11 +13,15 @@ const doCheck = (version, versionInfos, scVersion) => {
     getState().log(4, `invalid engine property: ${scEngine}`);
     return true;
   }
+  if (semver.valid(scVersion) === null) {
+    getState().log(4, `invalid saltcorn version: ${scVersion}`);
+    return true;
+  }
   return semver.satisfies(scVersion, scEngine);
 };
 
 /**
- * check if wanted version is supported or find the latest supported version
+ * check if 'wantedVersion' is supported or find the latest supported version
  * @param {*} wantedVersion - wanted version
  * @param {*} versionInfos - version infos from the npm registry (resembles the package.json version)
  * @param {*} scVersion - saltcorn version
