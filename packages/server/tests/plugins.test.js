@@ -333,21 +333,25 @@ const installPlugin = async (name, version) => {
     .expect(toRedirect("/plugins"));
 };
 
-describe("Upgrade plugin to supported version", () => {
-  beforeEach(async () => {
-    for (const plugin of [
-      "@christianhugoch/empty_sc_test_plugin",
-      "@christianhugoch/empty_sc_test_plugin_two",
-    ]) {
-      const dbPlugin = await Plugin.findOne({ name: plugin });
-      if (dbPlugin) await dbPlugin.delete();
-    }
+const setupPluginVersion = async (name, version) => {
+  let oldPlugin = await Plugin.findOne({
+    name: name,
   });
+  if (!oldPlugin) await installPlugin(name, version);
+  else {
+    oldPlugin.version = version;
+    await oldPlugin.upsert();
+  }
+  return await Plugin.findOne({
+    name: name,
+  });
+};
+describe("Upgrade plugin to supported version", () => {
   it("upgrades to latest", async () => {
-    await installPlugin("@christianhugoch/empty_sc_test_plugin_two", "0.0.1");
-    const oldPlugin = await Plugin.findOne({
-      name: "@christianhugoch/empty_sc_test_plugin_two",
-    });
+    const oldPlugin = await setupPluginVersion(
+      "@christianhugoch/empty_sc_test_plugin_two",
+      "0.0.1"
+    );
     expect(oldPlugin.version).toBe("0.0.1");
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -362,10 +366,11 @@ describe("Upgrade plugin to supported version", () => {
   });
 
   it("upgrades to the most current fixed version", async () => {
-    await installPlugin("@christianhugoch/empty_sc_test_plugin_two", "0.0.1");
-    const oldPlugin = await Plugin.findOne({
-      name: "@christianhugoch/empty_sc_test_plugin_two",
-    });
+    const oldPlugin = await setupPluginVersion(
+      "@christianhugoch/empty_sc_test_plugin_two",
+      "0.0.1"
+    );
+    await oldPlugin.upsert();
     expect(oldPlugin.version).toBe("0.0.1");
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -385,10 +390,10 @@ describe("Upgrade plugin to supported version", () => {
   });
 
   it("upgrades with a downgrade of the latest version", async () => {
-    await installPlugin("@christianhugoch/empty_sc_test_plugin", "0.0.1");
-    const oldPlugin = await Plugin.findOne({
-      name: "@christianhugoch/empty_sc_test_plugin",
-    });
+    const oldPlugin = await setupPluginVersion(
+      "@christianhugoch/empty_sc_test_plugin",
+      "0.0.1"
+    );
     expect(oldPlugin.version).toBe("0.0.1");
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
@@ -403,10 +408,10 @@ describe("Upgrade plugin to supported version", () => {
   });
 
   it("upgrades with a downgrade of the most current fixed version", async () => {
-    await installPlugin("@christianhugoch/empty_sc_test_plugin", "0.0.1");
-    const oldPlugin = await Plugin.findOne({
-      name: "@christianhugoch/empty_sc_test_plugin",
-    });
+    const oldPlugin = await setupPluginVersion(
+      "@christianhugoch/empty_sc_test_plugin",
+      "0.0.1"
+    );
     expect(oldPlugin.version).toBe("0.0.1");
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });
