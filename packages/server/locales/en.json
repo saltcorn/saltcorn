@@ -1466,5 +1466,7 @@
 	"Use system zip": "Use system zip",
 	"Recommended. Executable <code>zip</code> must be installed": "Recommended. Executable <code>zip</code> must be installed",
 	"Time to run": "Time to run",
-	"Mobile": "Mobile"
+	"Mobile": "Mobile",
+	"Plain password trigger row": "Plain password trigger row",
+	"Send plaintext password changes to Users table triggers (Insert, Update and Validate).": "Send plaintext password changes to Users table triggers (Insert, Update and Validate)."
 }
