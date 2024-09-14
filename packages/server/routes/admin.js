@@ -3538,6 +3538,7 @@ router.get(
     send_admin_page({
       res,
       req,
+      page_title: req.__(`%s code page`, name),
       active_sub: "Development",
       sub2_page: req.__(`%s code page`, name),
       contents: {
