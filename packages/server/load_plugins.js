@@ -28,7 +28,7 @@ const ensurePluginSupport = async (plugin) => {
     `https://registry.npmjs.org/${plugin.location}`
   );
   const supported = supportedVersion(
-    plugin.version,
+    plugin.version || "latest",
     pkgInfo.versions,
     packagejson.version
   );
