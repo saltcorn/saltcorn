@@ -32,9 +32,11 @@ const ensurePluginSupport = async (plugin) => {
     pkgInfo.versions,
     packagejson.version
   );
-  if (!supported) {
-  }
-  if (
+  if (!supported)
+    throw new Error(
+      `Unable to find a supported version for '${plugin.location}'`
+    );
+  else if (
     supported !== plugin.version ||
     (plugin.version === "latest" &&
       supported !== resolveLatest(pkgInfo.versions))
@@ -49,7 +51,15 @@ const ensurePluginSupport = async (plugin) => {
  * @param force - force flag
  */
 const loadPlugin = async (plugin, force) => {
-  if (plugin.source === "npm") await ensurePluginSupport(plugin);
+  if (plugin.source === "npm") {
+    try {
+      await ensurePluginSupport(plugin);
+    } catch (e) {
+      console.log(
+        `Warning: Unable to find a supported version for '${plugin.location}' Continuing with the installed version`
+      );
+    }
+  }
   // load plugin
   const loader = new PluginInstaller(plugin);
   const res = await loader.install(force);
@@ -269,4 +279,6 @@ module.exports = {
   loadAllPlugins,
   loadPlugin,
   requirePlugin,
+  supportedVersion,
+  ensurePluginSupport,
 };

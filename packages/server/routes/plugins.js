@@ -1515,12 +1515,23 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
-    const msgs = await load_plugins.loadAndSaveNewPlugin(
-      plugin,
-      forceReInstall,
-      undefined,
-      req.__
-    );
+
+    let msgs = null;
+    try {
+      msgs = await load_plugins.loadAndSaveNewPlugin(
+        plugin,
+        forceReInstall,
+        undefined,
+        req.__
+      );
+    } catch (e) {
+      req.flash(
+        "error",
+        e.message || req.__("Error installing module %s", plugin.name)
+      );
+      res.redirect(`/plugins`);
+      return;
+    }
     const plugin_module = getState().plugins[name];
     await sleep(1000); // Allow other workers to load this plugin
     await getState().refresh_views();

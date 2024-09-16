@@ -1237,6 +1237,8 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
   await getState().setConfig("unrolled_menu_items", await unroll(menu_items));
 };
 
+// For now latestVersion() ignores the supported version
+// Do we have to move this into server, so that it can access the stable_versioning utils?
 /**
  * Get latest npm version
  * @param {string} pkg
