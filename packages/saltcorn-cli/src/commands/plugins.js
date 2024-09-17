@@ -15,7 +15,10 @@ class PluginsCommand extends Command {
    */
   async run() {
     const db = require("@saltcorn/data/db");
-    const { requirePlugin } = require("@saltcorn/server/load_plugins");
+    const {
+      requirePlugin,
+      ensurePluginSupport,
+    } = require("@saltcorn/server/load_plugins");
     const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     const Plugin = require("@saltcorn/data/models/plugin");
     var plugins = [];
@@ -57,10 +60,19 @@ class PluginsCommand extends Command {
     if (flags.upgrade || flags.dryRun) {
       var new_versions = {};
       for (let plugin of plugins) {
-        plugin.version = "latest";
-        const { version } = await requirePlugin(plugin, true);
-        //console.log(plinfo)
-        if (version) new_versions[plugin.location] = version;
+        const oldVersion = plugin.version;
+        try {
+          plugin.version = "latest";
+          await ensurePluginSupport(plugin);
+          const { version } = await requirePlugin(plugin, true);
+          //console.log(plinfo)
+          if (version) new_versions[plugin.location] = version;
+        } catch (e) {
+          plugin.version = oldVersion;
+          console.log(
+            `Unable to find a supported version for '${plugin.location}'`
+          );
+        }
       }
       console.log(new_versions);
       for (const domain of tenantList) {

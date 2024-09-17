@@ -156,6 +156,7 @@ class State {
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
   queriesCache?: Record<string, any>;
+  scVersion: string;
 
   /**
    * State constructor
@@ -205,6 +206,11 @@ class State {
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
     this.hasJoinedLogSockets = false;
+    try {
+      this.scVersion = require("../../package.json").version;
+    } catch (e) {
+      this.scVersion = require("../package.json").version;
+    }
   }
 
   processSend(v: any) {

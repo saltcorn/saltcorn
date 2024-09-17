@@ -12,6 +12,37 @@ const { isRoot } = require("@saltcorn/data/utils");
 const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
 
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
+const npmFetch = require("npm-registry-fetch");
+const packagejson = require("./package.json");
+const {
+  supportedVersion,
+  resolveLatest,
+} = require("@saltcorn/plugins-loader/stable_versioning");
+
+/**
+ * checks the saltcorn engine property and changes the plugin version if necessary
+ * @param plugin plugin to load
+ */
+const ensurePluginSupport = async (plugin) => {
+  const pkgInfo = await npmFetch.json(
+    `https://registry.npmjs.org/${plugin.location}`
+  );
+  const supported = supportedVersion(
+    plugin.version || "latest",
+    pkgInfo.versions,
+    packagejson.version
+  );
+  if (!supported)
+    throw new Error(
+      `Unable to find a supported version for '${plugin.location}'`
+    );
+  else if (
+    supported !== plugin.version ||
+    (plugin.version === "latest" &&
+      supported !== resolveLatest(pkgInfo.versions))
+  )
+    plugin.version = supported;
+};
 
 /**
  * Load one plugin
@@ -20,6 +51,15 @@ const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
  * @param force - force flag
  */
 const loadPlugin = async (plugin, force) => {
+  if (plugin.source === "npm") {
+    try {
+      await ensurePluginSupport(plugin);
+    } catch (e) {
+      console.log(
+        `Warning: Unable to find a supported version for '${plugin.location}' Continuing with the installed version`
+      );
+    }
+  }
   // load plugin
   const loader = new PluginInstaller(plugin);
   const res = await loader.install(force);
@@ -151,11 +191,14 @@ const loadAndSaveNewPlugin = async (
       return;
     }
   }
-  const msgs = [];
-  const loader = new PluginInstaller(plugin);
-  const { version, plugin_module, location, loadedWithReload } =
+  if (plugin.source === "npm") await ensurePluginSupport(plugin);
+  const loadMsgs = [];
+  const loader = new PluginInstaller(plugin, {
+    scVersion: packagejson.version,
+  });
+  const { version, plugin_module, location, loadedWithReload, msgs } =
     await loader.install(force);
-
+  if (msgs) loadMsgs.push(...msgs);
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
     const existing = await Plugin.findOne({ location: loc });
@@ -201,7 +244,7 @@ const loadAndSaveNewPlugin = async (
     }
   }
   if (loadedWithReload || registeredWithReload) {
-    msgs.push(
+    loadMsgs.push(
       __(
         "The plugin was corrupted and had to be repaired. We recommend restarting your server.",
         plugin.name
@@ -228,7 +271,7 @@ const loadAndSaveNewPlugin = async (
       force: false, // okay ??
     });
   }
-  return msgs;
+  return loadMsgs;
 };
 
 module.exports = {
@@ -236,4 +279,6 @@ module.exports = {
   loadAllPlugins,
   loadPlugin,
   requirePlugin,
+  supportedVersion,
+  ensurePluginSupport,
 };

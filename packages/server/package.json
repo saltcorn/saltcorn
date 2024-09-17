@@ -46,7 +46,7 @@
     "node-fetch": "2.6.9",
     "node-watch": "^0.7.2",
     "notp": "2.0.3",
-    "npm-registry-fetch": "16.0.0",
+    "npm-registry-fetch": "17.1.0",
     "passport": "^0.6.0",
     "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",

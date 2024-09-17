@@ -59,6 +59,10 @@ const { sleep, removeNonWordChars } = require("@saltcorn/data/utils");
 const { loadAllPlugins } = require("../load_plugins");
 const npmFetch = require("npm-registry-fetch");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
+const {
+  supportedVersion,
+  isVersionSupported,
+} = require("@saltcorn/plugins-loader/stable_versioning");
 
 /**
  * @type {object}
@@ -177,6 +181,8 @@ const get_store_items = async () => {
       has_auth: plugin.has_auth,
       unsafe: plugin.unsafe,
       source: plugin.source,
+      ready_for_mobile:
+        plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
     }))
     .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
@@ -190,6 +196,8 @@ const get_store_items = async () => {
       github: plugin.source === "github",
       git: plugin.source === "git",
       local: plugin.source === "local",
+      ready_for_mobile:
+        plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
     }));
 
   const pack_items = packs_available.map((pack) => ({
@@ -274,7 +282,8 @@ const store_item_html = (req) => (item) => ({
       item.github && badge("GitHub"),
       item.git && badge("Git"),
       item.local && badge(req.__("Local")),
-      item.installed && badge(req.__("Installed"))
+      item.installed && badge(req.__("Installed")),
+      item.ready_for_mobile && badge(req.__("Mobile"))
     ),
     div(item.description || ""),
     item.documentation_link
@@ -584,7 +593,9 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const withoutOrg = name.replace(/^@saltcorn\//, "");
-    const plugin = await Plugin.store_by_name(decodeURIComponent(withoutOrg));
+    let plugin = await Plugin.store_by_name(decodeURIComponent(withoutOrg));
+    if (!plugin)
+      plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
       getState().log(
         2,
@@ -609,6 +620,7 @@ router.get(
           if (mod) selected = mod.version;
         }
         if (!selected) selected = versions[versions.length - 1];
+        const packageJson = require("../package.json");
         return res.send(
           form(
             {
@@ -631,14 +643,18 @@ router.get(
                   class: "form-control form-select",
                   name: "version",
                 },
-                versions.map((version) =>
-                  option({
-                    id: `${version}_opt`,
-                    value: version,
-                    label: version,
-                    selected: version === selected,
-                  })
-                )
+                versions
+                  .filter((v) =>
+                    isVersionSupported(v, pkgInfo.versions, packageJson.version)
+                  )
+                  .map((version) =>
+                    option({
+                      id: `${version}_opt`,
+                      value: version,
+                      label: version,
+                      selected: version === selected,
+                    })
+                  )
               )
             ),
             div(
@@ -1354,7 +1370,17 @@ router.get(
     const { name } = req.params;
 
     const plugin = await Plugin.findOne({ name });
-    await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+    const pkgInfo = await npmFetch.json(
+      `https://registry.npmjs.org/${plugin.location}`
+    );
+    await plugin.upgrade_version(
+      (p, f) => load_plugins.loadPlugin(p, f),
+      supportedVersion(
+        "latest",
+        pkgInfo.versions,
+        require("../package.json").version
+      )
+    );
     req.flash("success", req.__(`Module up-to-date`));
 
     res.redirect(`/plugins/info/${encodeURIComponent(plugin.name)}`);
@@ -1385,11 +1411,12 @@ router.post(
       res.redirect(`/plugins`);
     } else {
       try {
-        await load_plugins.loadAndSaveNewPlugin(
+        const msgs = await load_plugins.loadAndSaveNewPlugin(
           plugin,
           schema === db.connectObj.default_schema || plugin.source === "github"
         );
         req.flash("success", req.__(`Module %s installed`, plugin.name));
+        for (const msg of msgs) req.flash("warning", msg);
         res.redirect(`/plugins`);
       } catch (e) {
         req.flash("error", `${e.message}`);
@@ -1488,12 +1515,23 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
-    const msgs = await load_plugins.loadAndSaveNewPlugin(
-      plugin,
-      forceReInstall,
-      undefined,
-      req.__
-    );
+
+    let msgs = null;
+    try {
+      msgs = await load_plugins.loadAndSaveNewPlugin(
+        plugin,
+        forceReInstall,
+        undefined,
+        req.__
+      );
+    } catch (e) {
+      req.flash(
+        "error",
+        e.message || req.__("Error installing module %s", plugin.name)
+      );
+      res.redirect(`/plugins`);
+      return;
+    }
     const plugin_module = getState().plugins[name];
     await sleep(1000); // Allow other workers to load this plugin
     await getState().refresh_views();
