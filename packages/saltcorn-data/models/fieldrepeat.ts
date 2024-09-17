@@ -7,7 +7,7 @@
 const { contract, is } = require("contractis");
 import Field from "./field";
 import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_field";
-import { SuccessMessage } from "@saltcorn/types/common_types";
+import { instanceOfType, SuccessMessage } from "@saltcorn/types/common_types";
 import type { Layout } from "@saltcorn/types/base_types";
 
 /**
@@ -80,8 +80,10 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.fields.forEach((f) => {
       const fval = whole_rec[`${f.name}_${ix}`];
       if (typeof fval !== "undefined") {
+        if (instanceOfType(f.type) && f.type?.read) {
+          res[f.name] = f.type.read(fval);
+        } else res[f.name] = fval;
         has_any = true;
-        res[f.name] = fval;
       }
       if (
         f.type === "File" &&
