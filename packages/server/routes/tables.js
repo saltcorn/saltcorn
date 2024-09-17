@@ -708,6 +708,7 @@ const attribBadges = (f) => {
         ].includes(k)
       )
         return;
+      if(Array.isArray(v) && !v.length) return;
       if (v || v === 0) s += badge("secondary", k);
     });
   }
