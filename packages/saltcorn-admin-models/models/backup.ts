@@ -464,7 +464,7 @@ const restore_tables = async (
       );
       if (existsSync(fnm_hist_json)) {
         const fileContents = (await readFile(fnm_hist_json)).toString();
-        const rows = JSON.parse(fileContents);
+        const rows = JSON.parse(fileContents.replaceAll("\\\\", "\\"));
         for (const row of rows) {
           await table.insert_history_row(row);
         }

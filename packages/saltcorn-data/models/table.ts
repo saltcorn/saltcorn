@@ -2885,7 +2885,8 @@ class Table implements AbstractTable {
     const contents = (await readFile(filePath)).toString();
 
     // todo argument type buffer is not assignable for type String...
-    const file_rows = contents === "\\N\n" ? [] : JSON.parse(contents);
+    const file_rows =
+      contents === "\\N\n" ? [] : JSON.parse(contents.replaceAll("\\\\", "\\"));
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
