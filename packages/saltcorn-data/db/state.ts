@@ -903,7 +903,13 @@ class State {
           ) {
             this.codeNPMmodules[moduleName] = require(moduleName);
           } else {
-            await this.pluginManager.install(moduleName, version || undefined);
+            const defaultVersion: any = {
+              cheerio: "1.0.0-rc.12",
+            };
+            await this.pluginManager.install(
+              moduleName,
+              version || defaultVersion[moduleName]
+            );
 
             this.codeNPMmodules[moduleName] =
               this.pluginManager.require(moduleName);
