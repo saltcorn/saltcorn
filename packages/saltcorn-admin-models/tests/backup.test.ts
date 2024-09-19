@@ -65,7 +65,7 @@ describe("Backup and restore", () => {
     });
     await vtbl.insertRow({ name: "Fred" });
     await vtbl.updateRow({ name: "Sam" }, 1);
-    await vtbl.insertRow({ name: 'My Sp\\ecial "Friend"' });
+    await vtbl.insertRow({ name: 'My \nSp\\ecial "Friend"' });
 
     await Trigger.create({
       name: "footrig",
@@ -122,7 +122,7 @@ describe("Backup and restore", () => {
     expect(vhist.length).toBe(3);
     const t6row = await t6.getRow({ id: 2 });
     assertIsSet(t6row);
-    expect(t6row.name).toBe('My Sp\\ecial "Friend"');
+    expect(t6row.name).toBe('My \nSp\\ecial "Friend"');
 
     expect(!!t5).toBe(true);
     expect(t5.min_role_read).toBe(60);
