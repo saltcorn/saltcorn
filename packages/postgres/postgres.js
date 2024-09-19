@@ -9,7 +9,7 @@ const copyStreams = require("pg-copy-streams");
 const { promisify } = require("util");
 const { pipeline } = require("stream/promises");
 const { Transform } = require("stream");
-
+const replace = require("replacestream");
 const {
   sqlsanitize,
   mkWhere,
@@ -418,7 +418,7 @@ const copyToJson = async (fileStream, tableName, client) => {
   sql_log(sql);
   const stream = (client || pool).query(copyStreams.to(sql));
 
-  return await pipeline(stream, fileStream);
+  return await pipeline(stream, replace("\\\\", "\\"), fileStream);
 };
 
 const slugify = (s) =>
