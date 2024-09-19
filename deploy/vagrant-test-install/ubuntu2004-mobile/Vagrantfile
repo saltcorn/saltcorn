@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "file", source: "../../../packages/saltcorn-mobile-builder/appium_tests/ui.test.js", destination: "$HOME/tests/ui.test.js"
 
   config.vm.provision "shell", inline: <<-SHELL
-    #set -e
+    set -e
     sudo apt update -q
     sudo apt upgrade -qqy
 
