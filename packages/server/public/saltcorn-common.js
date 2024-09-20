@@ -90,12 +90,12 @@ function rep_del(e) {
   var myrep = $(e).closest(".form-repeat");
   var ix = myrep.index();
   var parent = myrep.parent();
+  myrep.remove();
   parent.children().each(function (childix, element) {
     if (childix > ix) {
       reindex(element, childix, childix - 1);
     }
   });
-  myrep.remove();
 }
 
 function reindex(element, oldix, newix) {
