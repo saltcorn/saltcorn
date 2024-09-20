@@ -1358,7 +1358,7 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (v[owner_field.name] && v[owner_field.name] !== user.id) {
+        if (v[owner_field.name] && v[owner_field.name] != user.id) {
           state.log(
             4,
             `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in updates`
