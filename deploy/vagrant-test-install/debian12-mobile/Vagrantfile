@@ -7,28 +7,29 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "generic/ubuntu2204"
+  config.vm.box = "debian/bookworm64"
 
   config.ssh.forward_agent = true
 
   config.ssh.insert_key = false
 
-
-  config.vm.provider "libvirt" do |vb|  
-    # Customize the amount of memory on the VM:
-    vb.memory = "8192"
-  end
-
   config.vm.provision "file", source: "../../../packages/saltcorn-mobile-builder/appium_tests/package.json", destination: "$HOME/tests/package.json"
   config.vm.provision "file", source: "../../../packages/saltcorn-mobile-builder/appium_tests/ui.test.js", destination: "$HOME/tests/ui.test.js"
 
+  config.vm.provider :libvirt do |libvirt|  
+    # Customize the amount of memory on the VM:
+    libvirt.memory = "8192"
+    # libvirt.storage :file, :size => '40G'
+    # libvirt.machine_virtual_size = 40
+  end
+
   config.vm.provision "shell", inline: <<-SHELL
     set -e
-    sudo apt update -q
-    sudo apt upgrade -qqy
+    sudo DEBIAN_FRONTEND=noninteractive apt update -yq
+    sudo DEBIAN_FRONTEND=noninteractive apt upgrade -qqy
 
-    sudo apt-get -y install libpulse0 pulseaudio libxcursor-dev libxdamage-dev
-    sudo apt-get -y install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+    sudo DEBIAN_FRONTEND=noninteractive apt-get -y install libpulse0 pulseaudio libxcursor-dev libxdamage-dev
+    sudo DEBIAN_FRONTEND=noninteractive apt-get -y install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
 
     wget -qO - https://deb.nodesource.com/setup_16.x | bash -
     apt-get install -qqy nodejs
@@ -50,10 +51,11 @@ Vagrant.configure("2") do |config|
     sudo adduser saltcorn kvm
     yes | sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/13.0/bin/sdkmanager "system-images;android-34;google_apis;x86_64"
     echo "no" | sudo -u saltcorn /home/saltcorn/android_sdk/cmdline-tools/13.0/bin/avdmanager create avd --force -n test -k "system-images;android-34;google_apis;x86_64" --device "pixel_xl"
-
+    
     #sudo -u saltcorn sed -i 's/^disk.dataPartition.size\s*=.*/disk.dataPartition.size=2G/' "/home/saltcorn/.android/avd/test.avd/config.ini"
 
     npm install -g npm@9.2.0
+
     sudo -u saltcorn wget https://services.gradle.org/distributions/gradle-8.4-all.zip
     unzip gradle-8.4-all.zip -d /opt
     npm install -g cordova
@@ -68,30 +70,31 @@ Vagrant.configure("2") do |config|
 
     sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn create-user -e user@foo.com -r admin -p foobarbarfoo
     sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn install-pack -n "Address book"
-    
+
     echo "build apk"
     sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/.local/bin/saltcorn build-app -c /home/saltcorn -u "user@foo.com" -p "android" -s "http://10.0.2.2:3000" -b "/home/saltcorn/build_dir" -e "EditMeeting" --includedPlugins markdown
     sudo --preserve-env=SALTCORN_NWORKERS -u saltcorn /home/saltcorn/.local/bin/saltcorn serve -p 3000 &
     set +e
 
     echo "start emulator"
-    sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/android_sdk/emulator/emulator -avd test -memory 3072 -grpc 8554 -partition-size 2047 -no-audio -no-window -no-boot-anim -accel on -gpu auto -no-snapshot-load &
+    sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/android_sdk/emulator/emulator -avd test -memory 3072 -grpc 8554 -no-audio -no-window -no-boot-anim -accel on -gpu auto -no-snapshot-load &
     # sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb wait-for-device
+    echo "sleep 500"
     sleep 500
 
     echo "install apk"
     sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb -s emulator-5554 install /home/saltcorn/build_dir/platforms/android/app/build/outputs/apk/debug/app-debug.apk
     sleep 20
-
+    
     echo "start app"
     START_TRY=0
     sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell am start -n saltcorn.mobile.app/.MainActivity
-    LINES=$(sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell ps | grep saltcorn.mobile.app | wc -l)
+    LINES=$(sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell ps | grep saltcorn.mobile.app | wc -l)
     while [ $LINES -eq 0 ] && [ $START_TRY -lt 50 ]; do
       let START_TRY++
       sleep 5
       echo "re-try start app"
-      sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell am start -n saltcorn.mobile.app/.MainActivity
+      sudo --preserve-env=JAVA_HOME,ANDROID_SDK_ROOT,ANDROID_HOME,GRADLE_HOME,PATH,CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL  -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell am start -n saltcorn.mobile.app/.MainActivity
       LINES=$(sudo -u saltcorn /home/saltcorn/android_sdk/platform-tools/adb shell ps | grep saltcorn.mobile.app | wc -l)
     done
 
@@ -110,11 +113,12 @@ Vagrant.configure("2") do |config|
     appium --allow-insecure chromedriver_autodownload &
     sleep 10
 
-    set -e
     echo "run tests"
     cd /home/vagrant/tests
     npm install
     npm run test
-
-    SHELL
-  end
+    
+    set -e
+    npm run test
+  SHELL
+end
