@@ -40,7 +40,7 @@ test.describe('E2E Test Suite', () => {
         await page.close();
         await context.close();
     });
-
+      
     // Test to verify the "Event" section presence and URL validation
     test('Verify Files Setting and check "Tab" section', async () => {
         // Clear existing data and navigate to settings page
