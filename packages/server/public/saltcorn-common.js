@@ -102,8 +102,8 @@ function reindex(element, oldix, newix) {
   $(element).html(
     $(element)
       .html()
-      .split("_" + oldix)
-      .join("_" + newix)
+      .split("_" + oldix + '"')
+      .join("_" + newix + '"')
   );
 }
 
