@@ -63,13 +63,14 @@ function reset_nearest_form(that) {
 
 function add_repeater(nm) {
   var es = $("div.form-repeat.repeat-" + nm);
-  var e = es.first();
+  const ncopy = es.length - 1;
+  var e = es.last();
   var newix = es.length;
   var newe = $(e).clone();
   newe.find("[name]").each(function (ix, element) {
     if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
-    var newnm = (element.name || "").replace("_0", "_" + newix);
-    var newid = (element.id || "").replace("_0", "_" + newix);
+    var newnm = (element.name || "").replace("_" + ncopy, "_" + newix);
+    var newid = (element.id || "").replace("_" + ncopy, "_" + newix);
     $(element).attr("name", newnm).attr("id", newid);
   });
   newe.appendTo($("div.repeats-" + nm));
@@ -78,6 +79,27 @@ function add_repeater(nm) {
       return eval(str);
     }).call(element, $(element).attr("data-on-cloned"));
   });
+}
+
+function rep_del(e) {
+  var myrep = $(e).closest(".form-repeat");
+  var ix = myrep.index();
+  var parent = myrep.parent();
+  parent.children().each(function (childix, element) {
+    if (childix > ix) {
+      reindex(element, childix, childix - 1);
+    }
+  });
+  myrep.remove();
+}
+
+function reindex(element, oldix, newix) {
+  $(element).html(
+    $(element)
+      .html()
+      .split("_" + oldix)
+      .join("_" + newix)
+  );
 }
 
 const _apply_showif_plugins = [];
@@ -561,27 +583,6 @@ function showIfFormulaInputs(e, fml) {
       )}: ${e.message}`
     );
   }
-}
-
-function rep_del(e) {
-  var myrep = $(e).closest(".form-repeat");
-  var ix = myrep.index();
-  var parent = myrep.parent();
-  parent.children().each(function (childix, element) {
-    if (childix > ix) {
-      reindex(element, childix, childix - 1);
-    }
-  });
-  myrep.remove();
-}
-
-function reindex(element, oldix, newix) {
-  $(element).html(
-    $(element)
-      .html()
-      .split("_" + oldix)
-      .join("_" + newix)
-  );
 }
 
 function get_form_subset_record(e) {
