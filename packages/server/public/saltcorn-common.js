@@ -69,9 +69,14 @@ function add_repeater(nm) {
   var newe = $(e).clone();
   newe.find("[name]").each(function (ix, element) {
     if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
+    const oldnm = element.name || "";
     var newnm = (element.name || "").replace("_" + ncopy, "_" + newix);
     var newid = (element.id || "").replace("_" + ncopy, "_" + newix);
     $(element).attr("name", newnm).attr("id", newid);
+    if (element.tagName === "SELECT") {
+      const original = document.getElementsByName(oldnm)[0];
+      if (original) element.selectedIndex = original.selectedIndex;
+    }
   });
   newe.appendTo($("div.repeats-" + nm));
   newe.find("[data-on-cloned]").each(function (ix, element) {
