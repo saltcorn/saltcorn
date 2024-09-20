@@ -25,6 +25,7 @@ const {
   stateFieldsToWhere,
   readState,
 } = require("@saltcorn/data/plugin-helper");
+const { getState } = require("@saltcorn/data/db/state");
 
 /**
  * @type {object}
@@ -300,6 +301,24 @@ router.get(
           const configVars = await Config.getAllConfig();
 
           res.json({ success: configVars });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
+router.get(
+  "/reload",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          await getState().refresh_plugins();
+          res.json({ success: true });
         } else {
           res.status(401).json({ error: req.__("Not authorized") });
         }

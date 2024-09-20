@@ -115,16 +115,18 @@ function apply_showif() {
       }
       if (!e.data("data-closest-form-ns"))
         e.data("data-closest-form-ns", e.closest(".form-namespace"));
-      if (to_show(e))
-        e.show()
-          .find("input, textarea, button, select, [data-show-if]")
-          .prop("disabled", e.attr("data-disabled") || false);
-      else
-        e.hide()
-          .find(
-            "input:enabled, textarea:enabled, button:enabled, select:enabled, [data-show-if]:not([disabled])"
-          )
-          .prop("disabled", true);
+      if (to_show(e)) {
+        e.find("input, textarea, button, select, [data-show-if]").prop(
+          "disabled",
+          e.attr("data-disabled") || false
+        );
+        element.style.display = "";
+      } else {
+        e.find(
+          "input:enabled, textarea:enabled, button:enabled, select:enabled, [data-show-if]:not([disabled])"
+        ).prop("disabled", true);
+        element.style.setProperty("display", "none", "important");
+      }
     } catch (e) {
       console.error(e);
     }

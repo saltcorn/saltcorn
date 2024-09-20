@@ -51,7 +51,7 @@ const ensurePluginSupport = async (plugin) => {
  * @param force - force flag
  */
 const loadPlugin = async (plugin, force) => {
-  if (plugin.source === "npm") {
+  if (plugin.source === "npm" && isRoot()) {
     try {
       await ensurePluginSupport(plugin);
     } catch (e) {
