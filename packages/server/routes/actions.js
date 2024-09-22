@@ -173,21 +173,23 @@ const triggerForm = async (req, trigger) => {
     .filter(Boolean) //Other last
     .sort();
   action_namespaces.push("Other");
-  const allActions = action_namespaces.map((ns) => {
-    const options = actions
-      .filter((a) => (ns === "Other" ? !a.namespace : a.namespace === ns))
-      .map((t) => t.name)
-      .sort();
-
-    return { optgroup: true, label: ns, options };
-  }); //actions.map((t) => t.name);
-  allActions.push("Multi-step action");
+  const mkActionList = (notRequireRow) =>
+    action_namespaces.map((ns) => {
+      const options = actions
+        .filter(
+          (a) =>
+            (ns === "Other" ? !a.namespace : a.namespace === ns) &&
+            (!notRequireRow || !a.requireRow)
+        )
+        .map((t) => t.name)
+        .sort();
+      if (ns === "Other") options.push("Multi-step action");
+      return { optgroup: true, label: ns, options };
+    });
+  const allActions = mkActionList(false);
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
-  const actionsNotRequiringRow = actions
-    .filter((a) => !a.requireRow)
-    .map((t) => t.name);
-  actionsNotRequiringRow.push("Multi-step action");
+  const actionsNotRequiringRow = mkActionList(true);
 
   Trigger.when_options.forEach((t) => {
     if (table_triggers.includes(t)) action_options[t] = allActions;
