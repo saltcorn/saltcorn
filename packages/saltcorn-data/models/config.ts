@@ -1001,6 +1001,17 @@ const configTypes: ConfigTypes = {
     root_only: true,
     restart_required: true,
   },
+  engines_cache: {
+    type: "JSON",
+    label: "Cached plugin version infos",
+    default: {},
+  },
+  // when this is different from the current version, the engines cache is cleared
+  engines_cache_sc_version: {
+    type: "String",
+    label: "Saltcorn version for engines cache",
+    default: "",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

@@ -1370,16 +1370,11 @@ router.get(
     const { name } = req.params;
 
     const plugin = await Plugin.findOne({ name });
-    const pkgInfo = await npmFetch.json(
-      `https://registry.npmjs.org/${plugin.location}`
-    );
+    const versions = await load_plugins.getEngineInfos();
+
     await plugin.upgrade_version(
       (p, f) => load_plugins.loadPlugin(p, f),
-      supportedVersion(
-        "latest",
-        pkgInfo.versions,
-        require("../package.json").version
-      )
+      supportedVersion("latest", versions, require("../package.json").version)
     );
     req.flash("success", req.__(`Module up-to-date`));
 

@@ -22,10 +22,10 @@ const doCheck = (pluginVersion, versionInfos, scVersion) => {
 
 /**
  * check if 'pluginVersion' is supported or find the latest supported version
- * @param {*} pluginVersion - wanted version
- * @param {*} versionInfos - version infos from the npm registry (resembles the package.json version).
+ * @param pluginVersion - wanted version
+ * @param versionInfos - version infos from the npm registry (resembles the package.json version).
  *                            Here you'll find the engines.saltcorn property.
- * @param {*} scVersion - saltcorn version
+ * @param scVersion - saltcorn version
  * @returns
  */
 const supportedVersion = (
