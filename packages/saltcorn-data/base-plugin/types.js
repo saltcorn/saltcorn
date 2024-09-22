@@ -24,6 +24,7 @@ const {
   text_attr,
   label,
   script,
+  optgroup,
   domReady,
   section,
   pre,
@@ -45,6 +46,8 @@ const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
 const eqStr = (x, y) => `${x}` === `${y}`;
+
+const or_if_undefined = (x, def) => (typeof x === "undefined" ? def : x);
 
 const number_slider = (type) => ({
   configFields: (field) => [
@@ -533,7 +536,20 @@ const getStrOptions = (v, optsStr, exclude_values_string) => {
           )
         )
     : optsStr.map((o, ix) =>
-        o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
+        o?.optgroup
+          ? optgroup(
+              { label: o.label },
+              o.options.map((oi) =>
+                option(
+                  {
+                    selected: v == or_if_undefined(oi.value, oi),
+                    value: or_if_undefined(oi.value, oi),
+                  },
+                  or_if_undefined(oi.label, oi)
+                )
+              )
+            )
+          : o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
           ? option(
               {
                 value: o.name,
