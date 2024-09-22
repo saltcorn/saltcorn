@@ -254,6 +254,7 @@ module.exports = {
         payload ? JSON.parse(payload) : row
       );
     },
+    namespace: "Control",
   },
 
   /**
@@ -374,6 +375,7 @@ module.exports = {
         return { goto: `/view/${viewname}?id=${room_id}` };
       }
     },
+    namespace: "Communication",
   },
 
   /**
@@ -681,6 +683,7 @@ module.exports = {
         }
       }
     },
+    namespace: "Communication",
   },
 
   /**
@@ -1127,6 +1130,7 @@ module.exports = {
           break;
       }
     },
+    namespace: "Control",
   },
   form_action: {
     /**
@@ -1486,6 +1490,7 @@ module.exports = {
       }
       return { reload_page: true };
     },
+    namespace: "User interface",
   },
   /**
    * @namespace
@@ -1718,6 +1723,7 @@ module.exports = {
         }));`,
       };
     },
+    namespace: "Control",
   },
   notify_user: {
     description: "Send a notification to a specific user",
@@ -1782,6 +1788,7 @@ module.exports = {
         });
       }
     },
+    namespace: "Communication",
   },
 
   convert_session_to_user: {
