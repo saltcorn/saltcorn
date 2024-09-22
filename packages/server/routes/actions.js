@@ -68,6 +68,7 @@ const getActions = async () => {
       name: k,
       hasConfig,
       requireRow,
+      namespace: v.namespace,
     };
   });
 };
@@ -168,7 +169,18 @@ const triggerForm = async (req, trigger) => {
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
-  const allActions = actions.map((t) => t.name);
+  const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
+    .filter(Boolean) //Other last
+    .sort();
+  action_namespaces.push("Other");
+  const allActions = action_namespaces.map((ns) => {
+    const options = actions
+      .filter((a) => (ns === "Other" ? !a.namespace : a.namespace === ns))
+      .map((t) => t.name)
+      .sort();
+
+    return { optgroup: true, label: ns, options };
+  }); //actions.map((t) => t.name);
   allActions.push("Multi-step action");
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
