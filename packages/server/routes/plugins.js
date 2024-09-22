@@ -1332,8 +1332,8 @@ router.get(
   error_catcher(async (req, res) => {
     const schema = db.getTenantSchema();
     if (schema === db.connectObj.default_schema) {
-      await upgrade_all_tenants_plugins((p, f) =>
-        load_plugins.loadPlugin(p, f)
+      await upgrade_all_tenants_plugins((p, f, forceFetch) =>
+        load_plugins.loadPlugin(p, f, forceFetch)
       );
       req.flash(
         "success",
@@ -1344,7 +1344,9 @@ router.get(
     } else {
       const installed_plugins = await Plugin.find({});
       for (const plugin of installed_plugins) {
-        await plugin.upgrade_version((p, f) => load_plugins.loadPlugin(p, f));
+        await plugin.upgrade_version((p, f, forceFetch) =>
+          load_plugins.loadPlugin(p, f, forceFetch)
+        );
       }
       req.flash("success", req.__(`Modules up-to-date`));
       await restart_tenant(loadAllPlugins);
@@ -1370,7 +1372,7 @@ router.get(
     const { name } = req.params;
 
     const plugin = await Plugin.findOne({ name });
-    const versions = await load_plugins.getEngineInfos();
+    const versions = await load_plugins.getEngineInfos(plugin, true);
 
     await plugin.upgrade_version(
       (p, f) => load_plugins.loadPlugin(p, f),

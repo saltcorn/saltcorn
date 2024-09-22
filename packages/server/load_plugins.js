@@ -27,10 +27,10 @@ const isFixedPlugin = (plugin) =>
  * return the cached engine infos or fetch them from npm and update the cache
  * @param plugin plugin to load
  */
-const getEngineInfos = async (plugin) => {
+const getEngineInfos = async (plugin, forceFetch) => {
   const rootState = getRootState();
   const cached = rootState.getConfig("engines_cache", {}) || {};
-  if (cached[plugin.location]) {
+  if (cached[plugin.location] && !forceFetch) {
     return cached[plugin.location];
   } else {
     getState().log(5, `Fetching versions for '${plugin.location}'`);
@@ -54,8 +54,8 @@ const getEngineInfos = async (plugin) => {
  * checks the saltcorn engine property and changes the plugin version if necessary
  * @param plugin plugin to load
  */
-const ensurePluginSupport = async (plugin) => {
-  const versions = await getEngineInfos(plugin);
+const ensurePluginSupport = async (plugin, forceFetch) => {
+  const versions = await getEngineInfos(plugin, forceFetch);
   const supported = supportedVersion(
     plugin.version || "latest",
     versions,
@@ -78,10 +78,10 @@ const ensurePluginSupport = async (plugin) => {
  * @param plugin - plugin to load
  * @param force - force flag
  */
-const loadPlugin = async (plugin, force) => {
+const loadPlugin = async (plugin, force, forceFetch) => {
   if (plugin.source === "npm" && !isFixedPlugin(plugin)) {
     try {
-      await ensurePluginSupport(plugin);
+      await ensurePluginSupport(plugin, forceFetch);
     } catch (e) {
       console.log(
         `Warning: Unable to find a supported version for '${plugin.location}' Continuing with the installed version`
