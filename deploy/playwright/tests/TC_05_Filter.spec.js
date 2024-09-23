@@ -141,17 +141,18 @@ test.describe('E2E Test Suite', () => {
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select NewView_List in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
-            await page.click('text=NewView_List [List on My_Table]');
+            await page.click(pageobject.view2list, { force: true });
         });
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select Filter in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
-            await page.click('text=Filter [Filter on My_Table]');
+            await page.click(pageobject.view2Filter, { force: true });
         });
+        await page.waitForTimeout(2000);
         await functions.Save_Page_Project();
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FilterPage);
-        await page.waitForTimeout(2000);
+        // await page.waitForTimeout(2000);
         await customAssert('Select Status dropdown should be present', async () => {
             await expect(page.locator(pageobject.pagestatusdropdown)).toBeVisible();
             await page.click(pageobject.pagestatusdropdown);
@@ -249,12 +250,13 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.nextoption);
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FilterPage);
-        await functions.fill_Text(pageobject.searchbar, 'First Name');
-        await page.click(pageobject.dropdownButton);
+        await page.click(pageobject.memberCell);
+        await page.click(pageobject.dropdownButton, { force: true });
         await customAssert('Member checkbox in searchbar dropdown should be visible', async () => {
             await expect(page.locator(pageobject.memberDDCheckbox)).toBeVisible();
             await page.click(pageobject.memberDDCheckbox);
         })
+        await functions.fill_Text(pageobject.searchbar, 'First Name');
     });
 
     // Create new page for fixed status
@@ -264,7 +266,7 @@ test.describe('E2E Test Suite', () => {
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select NewView_List in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
-            await page.click('text=NewView_List [List on My_Table]');
+            await page.click(pageobject.view2list, { force: true });
         });
         await customAssert('Select Fixed in state dropdown', async () => {
             await page.selectOption(pageobject.statedropdown, { label: 'Fixed' });

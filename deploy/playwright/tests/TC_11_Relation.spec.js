@@ -509,7 +509,9 @@ test.describe('E2E Test Suite', () => {
         });
         await functions.drag_And_Drop(pageobject.linkSource, pageobject.thirdrowcolumn3);
         await functions.fill_Text(pageobject.texttodisplay, 'Add Employee');
-        await functions.fill_Text(pageobject.urltextbox, addemployee);
+        // Construct the full URL
+        const addemployeeURL = `${baseURL}${addemployee}`;
+        await functions.fill_Text(pageobject.urltextbox, addemployeeURL);
         await customAssert('Select Primary button in View link style dropdown', async () => {
             const styleDropdown = page.locator('.form-control.form-select').nth(2);
             await styleDropdown.click();

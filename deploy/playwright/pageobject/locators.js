@@ -1,5 +1,3 @@
-const { baseURL } = require('./base_url');
-
 class PageLocators {
   constructor(page) {
     this.page = page;
@@ -410,8 +408,6 @@ class PageLocators {
     this.prospectCheckbox = 'input.form-check-input[type="checkbox"][name="status"][value="Prospect"]';
     this.lapsedCheckbox = 'input.form-check-input[type="checkbox"][name="status"][value="Lapsed"]';
     this.searchInputGroup = 'div.input-group.selected-node';
-    this.dropdownButton = 'button.btn.btn-outline-secondary.dropdown-toggle.search-bar';
-    this.memberDDCheckbox = 'input#inputstatus0.form-check-input';
     this.statedropdown = 'select.form-control.form-select:first-of-type';
     this.statusfixed = 'div.builder-config-field:nth-of-type(7) select.form-control.form-select';
     this.FixedStatePage = 'a[href="/page/Fixed_state"]';
@@ -459,7 +455,11 @@ class PageLocators {
     this.texttodisplay = 'input.form-control.text-to-display[type="text"]';
     this.plusicon = 'i.fas.fa-plus';
     this.urltextbox = 'input.form-control[type="text"][value="https://saltcorn.com/"]';
-    this.addemployeebutton = `a.btn.btn-primary[href="${baseURL}/view/Edit_Employee"]`;
+    this.addemployeebutton = '//a[contains(@class, "btn-primary") and contains(text(), "Add Employee")]';
+    this.view2Filter = 'text=Filter [Filter on My_Table]';
+    this.view2list = 'text=NewView_List [List on My_Table]';
+    this.dropdownButton = 'button.btn.btn-outline-secondary.dropdown-toggle.search-bar';
+    this.memberDDCheckbox = 'input#inputstatus0.form-check-input';
   }
 }
 

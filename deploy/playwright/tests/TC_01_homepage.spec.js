@@ -51,6 +51,7 @@ test.describe('E2E Test Suite', () => {
     // Drag and drop the text source
     await page.waitForSelector(pageobject.textSource);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
+    await functions.fill_Text(pageobject.textlocator, '');
     await functions.fill_Text(pageobject.textlocator, 'Testing');
     //  check hello world have text testing
     await customAssert('Hello world should have text testing', async () => {
