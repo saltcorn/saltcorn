@@ -151,8 +151,10 @@ class Plugin {
   }
 
   ready_for_mobile(): boolean {
-    const { getState } = require("../db/state");
-    const module = getState().plugins[this.name];
+    const state = require("../db/state").getState();
+    let module = state.plugins[this.name];
+    if (!module && state.plugin_module_names[this.name])
+      module = state.plugins[state.plugin_module_names[this.name]];
     return module?.ready_for_mobile === true;
   }
 
