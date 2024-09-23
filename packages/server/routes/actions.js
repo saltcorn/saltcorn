@@ -58,22 +58,6 @@ const {
 } = require("../markup/blockly.js");
 
 /**
- * @returns {Promise<object>}
- */
-const getActions = async () => {
-  return Object.entries(getState().actions).map(([k, v]) => {
-    const hasConfig = !!v.configFields;
-    const requireRow = !!v.requireRow;
-    return {
-      name: k,
-      hasConfig,
-      requireRow,
-      namespace: v.namespace,
-    };
-  });
-};
-
-/**
  * Show list of Actions (Triggers) (HTTP GET)
  * @name get
  * @function
@@ -97,7 +81,7 @@ router.get(
       triggers = triggers.filter((t) => tagged_trigger_ids.has(t.id));
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
-    const actions = await getActions();
+    const actions = Trigger.abbreviated_actions;
     send_events_page({
       res,
       req,
@@ -157,7 +141,7 @@ const triggerForm = async (req, trigger) => {
     value: r.id,
     label: r.role,
   }));
-  const actions = await getActions();
+  const actions = Trigger.abbreviated_actions;
   const tables = await Table.find({});
   let id;
   let form_action;
@@ -169,27 +153,11 @@ const triggerForm = async (req, trigger) => {
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
-  const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
-    .filter(Boolean) //Other last
-    .sort();
-  action_namespaces.push("Other");
-  const mkActionList = (notRequireRow) =>
-    action_namespaces.map((ns) => {
-      const options = actions
-        .filter(
-          (a) =>
-            (ns === "Other" ? !a.namespace : a.namespace === ns) &&
-            (!notRequireRow || !a.requireRow)
-        )
-        .map((t) => t.name)
-        .sort();
-      if (ns === "Other") options.push("Multi-step action");
-      return { optgroup: true, label: ns, options };
-    });
-  const allActions = mkActionList(false);
+
+  const allActions = Trigger.action_options(false);
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
-  const actionsNotRequiringRow = mkActionList(true);
+  const actionsNotRequiringRow = Trigger.action_options(true);
 
   Trigger.when_options.forEach((t) => {
     if (table_triggers.includes(t)) action_options[t] = allActions;
