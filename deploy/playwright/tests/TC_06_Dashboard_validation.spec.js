@@ -38,6 +38,7 @@ test.describe('E2E Test Suite', () => {
     await page.close();
     await context.close();
   });
+
   // Assert the presence of "Tables" section
   test('Verify Saltcorn home page and check "Tables" section', async () => {
     // Saltcorn home page 

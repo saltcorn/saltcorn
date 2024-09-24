@@ -37,6 +37,7 @@ test.describe('E2E Test Suite', () => {
         await page.close();
         await context.close();
     });
+
     // Assert the presence of "About Application" section
     test('Verify About Aplication setting and check "Tab" section', async () => {
         // Navigate to setting

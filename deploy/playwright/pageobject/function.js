@@ -453,6 +453,32 @@ class PageFunctions {
       await expect(this.page.locator(this.locators.ckeditorHeader)).toBeVisible();
     });
   }
+
+  async install_kanban() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Search with 'flatpickr' in the search bar
+    await this.fill_Text(this.locators.SearchModule, 'kanban');
+    // Assert that the flatpickr module is visible and click on it
+    await customAssert('kanban module should be visible', async () => {
+      await expect(this.page.locator(this.locators.kanbanHeader)).toBeVisible();
+      await this.page.click('button#button-search-submit');
+    });
+    // Wait for a few seconds
+    await this.page.waitForTimeout(2000);    
+    // Click the Install button
+    await this.page.click(this.locators.installkanban);
+    // Assert the success message is visible
+    await customAssert('Success message should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+    await this.navigate_modules_To_Installed();
+    await customAssert('ckeditor4 module should be present in installed tab', async () => {
+      await expect(this.page.locator(this.locators.kanbanHeader)).toBeVisible();
+    });
+  }
 }
 
 module.exports = PageFunctions;
