@@ -1231,9 +1231,16 @@ router.get(
     const update_permitted =
       db.getTenantSchema() === db.connectObj.default_schema &&
       plugin_db.source === "npm";
-    const latest =
+
+    let latest =
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
+    if (latest)
+      latest = supportedVersion(
+        latest,
+        await load_plugins.getEngineInfos(plugin_db, true),
+        getState().scVersion
+      );
     const can_update = update_permitted && latest && mod.version !== latest;
     const can_select_version = update_permitted && plugin_db.source === "npm";
     let pkgjson;
