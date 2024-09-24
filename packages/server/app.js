@@ -447,6 +447,9 @@ Sitemap: ${base}sitemap.xml
   app.get("*", function (req, res) {
     res.status(404).sendWrap(req.__("Not found"), h1(req.__("Page not found")));
   });
+
+  //prevent prototype pollution
+  delete Object.prototype.__proto__;
   return app;
 };
 module.exports = getApp;
