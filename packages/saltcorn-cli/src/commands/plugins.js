@@ -63,7 +63,7 @@ class PluginsCommand extends Command {
         const oldVersion = plugin.version;
         try {
           plugin.version = "latest";
-          await ensurePluginSupport(plugin);
+          await ensurePluginSupport(plugin, true);
           const { version } = await requirePlugin(plugin, true);
           //console.log(plinfo)
           if (version) new_versions[plugin.location] = version;

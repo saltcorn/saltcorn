@@ -19,17 +19,46 @@ const {
   resolveLatest,
 } = require("@saltcorn/plugins-loader/stable_versioning");
 
+const isFixedPlugin = (plugin) =>
+  plugin.location === "@saltcorn/sbadmin2" ||
+  plugin.location === "@saltcorn/base-plugin";
+
+/**
+ * return the cached engine infos or fetch them from npm and update the cache
+ * @param plugin plugin to load
+ */
+const getEngineInfos = async (plugin, forceFetch) => {
+  const rootState = getRootState();
+  const cached = rootState.getConfig("engines_cache", {}) || {};
+  if (cached[plugin.location] && !forceFetch) {
+    return cached[plugin.location];
+  } else {
+    getState().log(5, `Fetching versions for '${plugin.location}'`);
+    const pkgInfo = await npmFetch.json(
+      `https://registry.npmjs.org/${plugin.location}`
+    );
+    const versions = pkgInfo.versions;
+    const newCached = {};
+    for (const [k, v] of Object.entries(versions)) {
+      newCached[k] = v.engines?.saltcorn
+        ? { engines: { saltcorn: v.engines.saltcorn } }
+        : {};
+    }
+    cached[plugin.location] = newCached;
+    await rootState.setConfig("engines_cache", { ...cached });
+    return newCached;
+  }
+};
+
 /**
  * checks the saltcorn engine property and changes the plugin version if necessary
  * @param plugin plugin to load
  */
-const ensurePluginSupport = async (plugin) => {
-  const pkgInfo = await npmFetch.json(
-    `https://registry.npmjs.org/${plugin.location}`
-  );
+const ensurePluginSupport = async (plugin, forceFetch) => {
+  const versions = await getEngineInfos(plugin, forceFetch);
   const supported = supportedVersion(
     plugin.version || "latest",
-    pkgInfo.versions,
+    versions,
     packagejson.version
   );
   if (!supported)
@@ -38,8 +67,7 @@ const ensurePluginSupport = async (plugin) => {
     );
   else if (
     supported !== plugin.version ||
-    (plugin.version === "latest" &&
-      supported !== resolveLatest(pkgInfo.versions))
+    (plugin.version === "latest" && supported !== resolveLatest(versions))
   )
     plugin.version = supported;
 };
@@ -50,10 +78,10 @@ const ensurePluginSupport = async (plugin) => {
  * @param plugin - plugin to load
  * @param force - force flag
  */
-const loadPlugin = async (plugin, force) => {
-  if (plugin.source === "npm" && isRoot()) {
+const loadPlugin = async (plugin, force, forceFetch) => {
+  if (plugin.source === "npm" && !isFixedPlugin(plugin)) {
     try {
-      await ensurePluginSupport(plugin);
+      await ensurePluginSupport(plugin, forceFetch);
     } catch (e) {
       console.log(
         `Warning: Unable to find a supported version for '${plugin.location}' Continuing with the installed version`
@@ -279,6 +307,6 @@ module.exports = {
   loadAllPlugins,
   loadPlugin,
   requirePlugin,
-  supportedVersion,
+  getEngineInfos,
   ensurePluginSupport,
 };

@@ -27,7 +27,7 @@ const {
   loadAndSaveNewPlugin,
   loadPlugin,
 } = require("./load_plugins");
-const { getConfig } = require("@saltcorn/data/models/config");
+const { getConfig, setConfig } = require("@saltcorn/data/models/config");
 const { migrate } = require("@saltcorn/data/migrate");
 const socketio = require("socket.io");
 const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
@@ -74,6 +74,17 @@ const ensureJwtSecret = () => {
         }`
       );
     }
+  }
+};
+
+/**
+ * Ensure the engines cache is up to date with the current sc version
+ */
+const ensureEnginesCache = async () => {
+  const cacheScVersion = await getConfig("engines_cache_sc_version", "");
+  if (!cacheScVersion || cacheScVersion !== getState().scVersion) {
+    await setConfig("engines_cache", {});
+    await setConfig("engines_cache_sc_version", getState().scVersion);
   }
 };
 
@@ -222,7 +233,10 @@ module.exports =
     dev,
     ...appargs
   } = {}) => {
-    ensureJwtSecret();
+    if (cluster.isMaster) {
+      ensureJwtSecret();
+      await ensureEnginesCache();
+    }
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");
     });

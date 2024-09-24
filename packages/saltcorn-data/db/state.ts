@@ -563,9 +563,8 @@ class State {
   /**
    *
    * Set value of config parameter
-   * @param {string} key - key of parameter
-   * @param {*} value - value of parameter
-   * @returns {Promise<void>}
+   * @param key - key of parameter
+   * @param value - value of parameter
    */
   async setConfig(key: string, value: any) {
     if (
@@ -573,35 +572,44 @@ class State {
       typeof this.configs[key].value === "undefined" ||
       this.configs[key].value !== value
     ) {
-      await setConfig(key, value);
-      this.configs[key] = { value };
-      if (key.startsWith("localizer_")) await this.refresh_i18n();
-      if (key === "log_level") this.logLevel = +value;
-      if (key === "joined_log_socket_ids")
-        this.hasJoinedLogSockets = (value || []).length > 0;
-      if (db.is_node)
-        process_send({ refresh: "config", tenant: db.getTenantSchema() });
-      else {
-        await this.refresh_config(true);
-      }
+      const fn = async () => {
+        await setConfig(key, value);
+        this.configs[key] = { value };
+        if (key.startsWith("localizer_")) await this.refresh_i18n();
+        if (key === "log_level") this.logLevel = +value;
+        if (key === "joined_log_socket_ids")
+          this.hasJoinedLogSockets = (value || []).length > 0;
+        if (db.is_node)
+          process_send({ refresh: "config", tenant: db.getTenantSchema() });
+        else {
+          await this.refresh_config(true);
+        }
+      };
+      if (db.getTenantSchema() !== this.tenant)
+        await db.runWithTenant(this.tenant, fn);
+      else await fn();
     }
   }
 
   /**
    * Delete config parameter by key
-   * @param {string} keys - key of parameter
-   * @returns {Promise<void>}
+   * @param keys - key of parameter
    */
   async deleteConfig(...keys: string[]) {
-    for (const key of keys) {
-      await deleteConfig(key);
-      delete this.configs[key];
-    }
-    if (db.is_node)
-      process_send({ refresh: "config", tenant: db.getTenantSchema() });
-    else {
-      await this.refresh_config(true);
-    }
+    const fn = async () => {
+      for (const key of keys) {
+        await deleteConfig(key);
+        delete this.configs[key];
+      }
+      if (db.is_node)
+        process_send({ refresh: "config", tenant: db.getTenantSchema() });
+      else {
+        await this.refresh_config(true);
+      }
+    };
+    if (db.getTenantSchema() !== this.tenant)
+      await db.runWithTenant(this.tenant, fn);
+    else await fn();
   }
 
   /**
