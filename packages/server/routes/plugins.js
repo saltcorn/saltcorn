@@ -49,6 +49,8 @@ const {
   input,
   label,
   text,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const fs = require("fs");
@@ -614,13 +616,14 @@ router.get(
         res.set("Page-Title", req.__("%s versions", text(withoutOrg)));
         const versions = Object.keys(pkgInfo.versions);
         if (versions.length === 0) throw new Error(req.__("No versions found"));
+        const tags = pkgInfo["dist-tags"] || {};
         let selected = null;
         if (getState().plugins[plugin.name]) {
           const mod = await load_plugins.requirePlugin(plugin);
           if (mod) selected = mod.version;
         }
         if (!selected) selected = versions[versions.length - 1];
-        const packageJson = require("../package.json");
+        const scVersion = getState().scVersion;
         return res.send(
           form(
             {
@@ -630,6 +633,7 @@ router.get(
             input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
             div(
               { class: "form-group" },
+              // version
               label(
                 {
                   for: "version_select",
@@ -645,7 +649,7 @@ router.get(
                 },
                 versions
                   .filter((v) =>
-                    isVersionSupported(v, pkgInfo.versions, packageJson.version)
+                    isVersionSupported(v, pkgInfo.versions, scVersion)
                   )
                   .map((version) =>
                     option({
@@ -653,6 +657,37 @@ router.get(
                       value: version,
                       label: version,
                       selected: version === selected,
+                    })
+                  )
+              ),
+              // tag
+              label(
+                {
+                  for: "tag_select",
+                  class: "form-label fw-bold mt-2",
+                },
+                req.__("Tags")
+              ),
+              select(
+                {
+                  id: "tag_select",
+                  class: "form-control form-select",
+                },
+                option({
+                  id: "empty_opt",
+                  value: "",
+                  label: req.__("Select tag"),
+                  selected: true,
+                }),
+                Object.keys(tags)
+                  .filter((tag) =>
+                    isVersionSupported(tags[tag], pkgInfo.versions, scVersion)
+                  )
+                  .map((tag) =>
+                    option({
+                      id: `${tag}_opt`,
+                      value: tags[tag],
+                      label: `${tag} (${tags[tag]})`,
                     })
                   )
               )
@@ -676,7 +711,19 @@ router.get(
                 req.__("Install")
               )
             )
-          )
+          ) +
+            script(
+              domReady(`
+document.getElementById('tag_select').onchange = () => {
+  const version = document.getElementById('tag_select').value;
+  if (version) document.getElementById('version_select').value = version;
+};
+document.getElementById('version_select').onchange = () => {
+  const tagSelect = document.getElementById('tag_select');
+  tagSelect.value = '';
+}; 
+`)
+            )
         );
       } catch (error) {
         getState().log(
@@ -1184,9 +1231,20 @@ router.get(
     const update_permitted =
       db.getTenantSchema() === db.connectObj.default_schema &&
       plugin_db.source === "npm";
-    const latest =
+
+    let latest =
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
+    if (
+      latest &&
+      !isVersionSupported(latest, await load_plugins.getEngineInfos(plugin_db)) // with cache
+    ) {
+      // with force fetch
+      latest = supportedVersion(
+        latest,
+        await load_plugins.getEngineInfos(plugin_db, true)
+      );
+    }
     const can_update = update_permitted && latest && mod.version !== latest;
     const can_select_version = update_permitted && plugin_db.source === "npm";
     let pkgjson;
