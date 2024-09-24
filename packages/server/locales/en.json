@@ -1469,6 +1469,7 @@
 	"Mobile": "Mobile",
 	"Plain password trigger row": "Plain password trigger row",
 	"Send plaintext password changes to Users table triggers (Insert, Update and Validate).": "Send plaintext password changes to Users table triggers (Insert, Update and Validate).",
+	"Select tag": "Select tag",
 	"Invalid build directory path": "Invalid build directory path",
 	"Invalid build directory name": "Invalid build directory name"
 }
