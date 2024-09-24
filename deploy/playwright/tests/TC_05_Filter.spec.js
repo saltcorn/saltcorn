@@ -65,8 +65,8 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.EditlinkLocator);
         // Click on add row button
         await customAssert('status field on table should be visible ', async () => {
-            await expect(page.locator(pageobject.tab4locator)).toBeVisible();
-            await page.click(pageobject.tab4locator);
+            await expect(page.locator(pageobject.statustab)).toBeVisible();
+            await page.click(pageobject.statustab);
             await page.click('text=Member');
         });
     });

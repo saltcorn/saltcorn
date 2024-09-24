@@ -52,16 +52,16 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.textSource);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     await functions.fill_Text(pageobject.textlocator, '');
-    await functions.fill_Text(pageobject.textlocator, 'Testing');
+    await page.waitForTimeout(2000);
+    await functions.fill_Text(pageobject.textlocator, 'Testing the placeholder');
     //  check hello world have text testing
-    await customAssert('Hello world should have text testing', async () => {
-      await expect(page.locator(pageobject.textlocator)).toContainText('Testing');
+    await customAssert('Hello world should have text Testing the placeholder', async () => {
+      await expect(page.locator(pageobject.textlocator)).toContainText('Testing the placeholder');
     });
     // Check Text settings
     await customAssert('Text settings should be visible', async () => {
       await expect(page.getByText('Text settings')).toBeVisible();
     });
-
     await customAssert('Text to display should be visible', async () => {
       await expect(page.getByText('Text to display')).toBeVisible();
     });
@@ -86,7 +86,6 @@ test.describe('E2E Test Suite', () => {
   test('Check text and HTML box content', async () => {
     // create a new page
     await functions.create_New_Page('My_project_' + randomString);
-  
     // drag and drop the html code source
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
