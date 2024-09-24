@@ -10,17 +10,16 @@ class PageLocators {
     this.passwordInput = 'input[type="password"]';
     this.textSource = 'div.wrap-builder-elem[title="Text"]';
     this.textlocator = '#saltcorn-builder > div.row > div.col-sm-auto.builder-sidebar > div > div.settings-panel.card.mt-1 > div.card-body.p-2 > div > div.border > div';
-    this.inputbox1 = '#inputaddress';
+    // this.inputbox1 = '#inputaddress';
     this.inputbox2 = '#inputdate_of_birth';
     this.saveprimarybutton = '#page-inner-content > div:nth-child(2) > div.d-inline > form > button';
     this.InputName = '#inputname';
     this.addFieldButtonLocator = 'a.btn.btn-primary.add-field.mt-2:has-text("Add field")';
-        
-    this.datelocator = 'span.flatpickr-day:has-text("14")';
-    this.rowsperpage = '#input_rows_per_page';
-    this.layoutoption = '#tab82036chead0';
-    this.databaseoption = '#tab82036chead1';
-    this.finishbutton = '#tab82036chead1 > button';
+    this.columnsElement = 'div[title="Split into columns"]';
+    this.firstColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(1)';
+    this.secondColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(2)';
+
+    // this.rowsperpage = '#input_rows_per_page';
     this.target = 'div.canvas.root-canvas';
     this.DatelocatorByName = 'input[name="date_of_birth"]';
     this.DatepickReadonly = 'input[readonly="readonly"]';
@@ -113,7 +112,8 @@ class PageLocators {
     this.searchbar = 'input[type=search]';
     this.userdropdown = '#content > div.dropdown-menu.dropdown-menu-end.show';
     this.deleteuser = '#content > div.dropdown-menu.dropdown-menu-end.show > a:nth-child(11)';
-    
+    this.helloWorldElement = 'div.d-inline:has-text("Hello world")';
+    this.optionBio = 'select.form-control.form-select';
     this.mytable = 'a:has-text("My_Table")';
     this.saveactionbutton = '//button[text()="Save"]';
     this.EditlinkLocator = 'a:has(i.fas.fa-2x.fa-edit)';
@@ -129,7 +129,6 @@ class PageLocators {
     this.nextoption = 'button:has-text("Next »")';
     this.finishprimary = '[role="button"][name="Finish »"]';
     this.calendarlocator = 'div.flatpickr-calendar.hasTime.animate.open.arrowTop.arrowLeft';
-    this.yearlocator = 'input.numInput.cur-year';
     this.monthlocator = 'select.flatpickr-monthDropdown-months';
     this.addressvariablelocator = '(//code[text()="address"])[1]';
     this.DOBvariablelocator = '(//code[text()="date_of_birth"])[1]';
@@ -141,6 +140,7 @@ class PageLocators {
     this.Fullnameshow = 'div.d-inline:has-text("Full name")';
     this.fullnameuser = 'div.d-inline:has-text("First Name")';
     this.DateTimeUser = 'time[locale-options="%7B%7D"]';
+    this.dateOfBirthElement = 'div.undefined.selected-node.d-inline-block:has-text("[show date_of_birth]")';
     this.localDateOption = 'time[locale-date-options]';
     this.LocalDateFormat = 'time[locale-date-format]';
     this.DateYearsAgo = 'tr:has-text("years ago")';
@@ -173,10 +173,6 @@ class PageLocators {
     this.statebadgecheckbox = '(//input[@class="form-check-input" and @name="block"])[2]';
     this.saveButton = 'button.builder-save:has-text("Done »")';
     this.addcolumnbutton = 'button:has-text("Add column")';
-    this.newcolumn1 = 'div:nth-child(4) > div:nth-child(2) > .canvas';
-    this.newcolumn2 = 'div:nth-child(5) > div:nth-child(2) > .canvas';
-    this.newcolumn3 = 'div:nth-child(6) > div:nth-child(2) > .canvas';
-    this.newcolumn4 = 'div:nth-child(7) > div:nth-child(2) > .canvas';
     this.newviewlink = 'a[href="/view/NewView_List"]';
     this.view2editlink = 'a[href="/view/View2_Edit"]';
     this.undoIcon = 'svg.fa-undo';
@@ -195,7 +191,6 @@ class PageLocators {
     this.viewtocreate = '#inputview_to_create';
     this.labeltocreate = '#inputcreate_view_label';
     this.fielddropdown = '(//select[@class="form-control form-select"])[1]'
-    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]'
     this.view2editoption = 'text=View2_Edit [Edit] My_Table';
     this.view2showoption = 'text=showView [Show] My_Table';
     this.view2listshow = 'text=ListShowListView [ListShowList] My_Table';
@@ -379,9 +374,111 @@ class PageLocators {
     this.textInput = 'input[name="text"]';
     this.toastMessage = 'div.toast[role="alert"][aria-live="assertive"]';
     this.closetoast = 'button.btn-close[data-bs-dismiss="toast"]';
+    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]'
+    this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]'
     this.configurelistview = 'a[href="/viewedit/config/NewView_List"]';
-    this.addresscolumn = 'div:has-text("Column 0: Address")';
-    this.headerlabelInput = 'input.form-control[value="Address"]';
+    this.configureEditview = 'a[href="/viewedit/config/View2_Edit"]';
+    this.configureShowview = 'a[href="/viewedit/config/showView"]';
+    this.angleDownIconLocator = 'i.fipicon-angle-down[role="presentation"][aria-label="Open"]';
+    this.searchIconLocator = 'input.rfipsearch__input[placeholder="Search Icons"]';
+    this.editIconLocator = 'i.far.fa-edit';
+    this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
+    this.secondrowcolumn = '.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
+    this.fifthrowcolumn = '.row:nth-of-type(5) .split-col:nth-of-type(1) .canvas';
+    this.optioninput = 'input[name="options"]';
+    this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
+    this.headerlabel = 'input.form-control[value=""]';
+    this.Filterview = 'a[href="/view/Filter"]';
+    this.statusDropdown = 'select.form-control.form-select#inputstatus[data-fieldname="status"]';
+    this.viewsource = 'div.d-inline-flex.wrap-builder-elem[title="Embed a view"]';
+    this.View2Showdropdown = 'div.css-1uccc91-singleValue';
+    this.FilterPage = 'a[href="/page/Filtered_page"]';
+    this.pagestatusdropdown = '//select[@id="inputstatus"]';
+    this.pageinputstatus = 'input[name="status"]';
+    this.configureFilterview = 'a[href="/viewedit/config/Filter"]';
+    this.togglesource = 'div[title="Toggle filter"]';
+    this.inputValueField = 'input.w-100:first-of-type';
+    this.membertoggle = 'button:has-text("Member")';
+    this.Prospecttoggle = 'button:has-text("Prospect")';
+    this.Lapsedtoggle = 'button:has-text("Lapsed")';
+    this.statusfield = 'span:has-text("Status")';
+    this.deletecontentButton = 'button.btn.btn-sm.btn-danger:has-text("Delete contents")';
+    this.memberCheckbox = 'input.form-check-input[type="checkbox"][name="status"][value="Member"]';
+    this.prospectCheckbox = 'input.form-check-input[type="checkbox"][name="status"][value="Prospect"]';
+    this.lapsedCheckbox = 'input.form-check-input[type="checkbox"][name="status"][value="Lapsed"]';
+    this.searchInputGroup = 'div.input-group.selected-node';
+    this.statedropdown = 'select.form-control.form-select:first-of-type';
+    this.statusfixed = 'div.builder-config-field:nth-of-type(7) select.form-control.form-select';
+    this.FixedStatePage = 'a[href="/page/Fixed_state"]';
+    this.memberCell = 'table tbody tr td:has-text("Member")';
+    this.EmployeeTable = 'a:has-text("Employee")';
+    this.DepartmentTable = 'a:has-text("Department")';
+    this.Nametab = 'div.tabulator-cell[tabulator-field="name"]';
+    this.summaryFieldSelect = 'select[data-fieldname="summary_field"]';
+    this.onDeleteSelect = 'select[data-fieldname="on_delete"]';
+    this.manageCell = 'div.tabulator-cell[tabulator-field="manage"]';
+    this.departmentCell1 = 'div.tabulator-cell[tabulator-field="department"]';
+    this.departmentCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="department"])[2]';
+    this.departmentCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="department"])[3]';
+    this.view2showDepartment = 'text=Show_Department [Show] Department';
+    this.view2showEmployee = 'text=Show_Employee [Show] Employee';
+    this.EmployeeListlink = 'a[href="/view/List_Employee"]';
+    this.DepartmentListlink = 'a[href="/view/List_Department"]';
+    this.showDepartmentlink = '(//a[text()="Show Department"])[1]';
+    this.showDepartmentlink2 = '(//a[text()="Show Department"])[2]';
+    this.showEmployeelink = '(//a[text()="Managed by"])[1]';
+    this.showEmployeelink2 = '(//a[text()="Managed by"])[2]';
+    this.newcolumn3 = 'div:nth-child(3) > div:nth-child(2) > .canvas';
+    this.newcolumn4 = 'div:nth-child(4) > div:nth-child(2) > .canvas';
+    this.newcolumn5 = 'div:nth-child(5) > div:nth-child(2) > .canvas';
+    this.newcolumn6 = 'div:nth-child(6) > div:nth-child(2) > .canvas';
+    this.newcolumn7 = 'div:nth-child(7) > div:nth-child(2) > .canvas';
+    this.configureEmployeelist = 'a[href="/viewedit/config/List_Employee"]';
+    this.configureDepartmentlist = 'a[href="/viewedit/config/List_Department"]';
+    this.view2editEmployee = 'text=Edit_Employee [Edit] Employee';
+    this.view2editDepartment = 'text=Edit_Department [Edit] Department';
+    this.addEmployeelink = 'a:has-text("+ Add Employee")';
+    this.departmentSelect = 'select#inputdepartment';
+    this.ManagerSelect = 'select#inputmanage';
+    this.relationshipLabel = '//text[@id="rel1" and text()="manage"]';
+    this.column = 'input.form-control.form-select[readonly]';
+    this.AutoSaveCheckbox = 'input#inputauto_save[name="auto_save"]';
+    this.thirdrowcolumn1 = '.row:nth-of-type(3) .split-col:nth-of-type(1) .canvas';
+    this.thirdrowcolumn2 = '.row:nth-of-type(3) .split-col:nth-of-type(2) .canvas';
+    this.thirdrowcolumn3 = '.row:nth-of-type(3) .split-col:nth-of-type(3) .canvas';
+    this.editemployeebutton = 'a.btn.btn-primary[href="/view/Edit_Employee?id=1"]';
+    this.Savebuttonlocator = '//button[text()="Save"]';
+    this.linkstyleLocator = 'select#inputcreate_link_style[name="create_link_style"]';
+    this.linksizeLocator = 'select#inputcreate_link_size[name="create_link_size"]';
+    this.numbercolumn = 'input.form-control[type="number"]';
+    this.texttodisplay = 'input.form-control.text-to-display[type="text"]';
+    this.plusicon = 'i.fas.fa-plus';
+    this.urltextbox = 'input.form-control[type="text"][value="https://saltcorn.com/"]';
+    this.addemployeebutton = '//a[contains(@class, "btn-primary") and contains(text(), "Add Employee")]';
+    this.view2Filter = 'text=Filter [Filter on My_Table]';
+    this.view2list = 'text=NewView_List [List on My_Table]';
+    this.dropdownButton = 'button.btn.btn-outline-secondary.dropdown-toggle.search-bar';
+    this.memberDDCheckbox = 'input#inputstatus0.form-check-input';
+    this.kanbanHeader = 'h5:has-text("kanban")';
+    this.installkanban = 'form[action="/plugins/install/kanban"] button:has-text("Install")';
+    this.Discriptiontab = 'div.tabulator-cell[tabulator-field="discription"]';
+    this.Tasktable = 'a:has-text("Task")';
+    this.statustab = 'div.tabulator-cell[tabulator-field="status"]';
+    this.Uniquecheckbox = "//input[@id='inputis_unique' and @type='checkbox']";
+    this.Cardviewdropdown = 'select.form-control.form-select[name="show_view"]';
+    this.columnsbydropdown = 'select.form-control.form-select[name="column_field"]';
+    this.PositionFieldDropdown = 'select.form-control.form-select[name="position_field"]';
+    this.kanbanboardlink = 'a[href="/view/Kanban_Board"]';
+    this.firstrowcolumn1 = '.split-col.col-sm-12.text-undefined .canvas';
+    this.secondrowcolumn1 = '.row:nth-of-type(1) .split-col:nth-of-type(1) .canvas';
+    this.firstfield = 'div.d-inline:first-of-type';
+    this.TaskCard1 = 'div.kancard.card[data-id="1"]'; // Click on the "Buy Milk" card
+    this.TaskCard2 = 'div.kancard.card[data-id="2"]'; // Click on the "Take out trash" card
+    this.TaskCard3 = 'div.kancard.card[data-id="3"]'; // Click on the "Empty Fridge" card
+    this.reviewstatus = 'div.kancontainer[data-column-value="Review"]';
+    this.iterationstatus = 'div.kancontainer[data-column-value="Iteration"]';
+    this.configurekanban = 'a[href="/viewedit/config/Kanban_Board"]';
+    this.InProgressStatus = 'div.kancontainer[data-column-value="InProgress"]';
   }
 }
 
