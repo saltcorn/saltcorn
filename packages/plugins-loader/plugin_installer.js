@@ -27,10 +27,10 @@ const readPackageJson = async (filePath) => {
 };
 
 const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
-  const oldDeps = oldPckJSON.dependencies || {};
-  const oldDevDeps = oldPckJSON.devDependencies || {};
-  const newDeps = newPckJSON.dependencies || {};
-  const newDevDeps = newPckJSON.devDependencies || {};
+  const oldDeps = oldPckJSON.dependencies || Object.create(null);
+  const oldDevDeps = oldPckJSON.devDependencies || Object.create(null);
+  const newDeps = newPckJSON.dependencies || Object.create(null);
+  const newDevDeps = newPckJSON.devDependencies || Object.create(null);
   return (
     JSON.stringify(oldDeps) !== JSON.stringify(newDeps) ||
     JSON.stringify(oldDevDeps) !== JSON.stringify(newDevDeps)
@@ -38,7 +38,7 @@ const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
 };
 
 class PluginInstaller {
-  constructor(plugin, opts = {}) {
+  constructor(plugin, opts = Object.create(null)) {
     this.plugin = plugin;
     this.rootFolder =
       opts.rootFolder || envPaths("saltcorn", { suffix: "plugins" }).data;
