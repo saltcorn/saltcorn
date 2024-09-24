@@ -2877,17 +2877,66 @@ router.get(
   })
 );
 
+const validateBuildDirName = (buildDirName) => {
+  // ensure characters
+  if (!/^[a-zA-Z0-9_-]+$/.test(buildDirName)) {
+    getState().log(
+      4,
+      `Invalid characters in build directory name '${buildDirName}'`
+    );
+    return false;
+  }
+  // ensure format is 'build_1234567890'
+  if (!/^build_\d+$/.test(buildDirName)) {
+    getState().log(4, `Invalid build directory name format '${buildDirName}'`);
+    return false;
+  }
+  return true;
+};
+
+const validateBuildDir = (buildDir, rootPath) => {
+  const resolvedBuildDir = path.resolve(buildDir);
+  if (!resolvedBuildDir.startsWith(path.join(rootPath, "mobile_app"))) {
+    getState().log(4, `Invalid build directory path '${buildDir}'`);
+    return false;
+  }
+  return true;
+};
+
 router.get(
   "/build-mobile-app/result",
   isAdmin,
   error_catcher(async (req, res) => {
     const { build_dir_name } = req.query;
+    if (!validateBuildDirName(build_dir_name)) {
+      return res.sendWrap(req.__(`Admin`), {
+        above: [
+          {
+            type: "card",
+            title: req.__("Build Result"),
+            contents: div(req.__("Invalid build directory name")),
+          },
+        ],
+      });
+    }
     const rootFolder = await File.rootFolder();
     const buildDir = path.join(
       rootFolder.location,
       "mobile_app",
       build_dir_name
     );
+    if (!validateBuildDir(buildDir, rootFolder.location)) {
+      return res.sendWrap(req.__(`Admin`), {
+        above: [
+          {
+            type: "card",
+            title: req.__("Build Result"),
+            contents: div(req.__("Invalid build directory path")),
+          },
+        ],
+      });
+    }
+
     const files = await Promise.all(
       fs
         .readdirSync(buildDir)
