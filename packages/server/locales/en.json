@@ -1468,5 +1468,6 @@
 	"Time to run": "Time to run",
 	"Mobile": "Mobile",
 	"Plain password trigger row": "Plain password trigger row",
-	"Send plaintext password changes to Users table triggers (Insert, Update and Validate).": "Send plaintext password changes to Users table triggers (Insert, Update and Validate)."
+	"Send plaintext password changes to Users table triggers (Insert, Update and Validate).": "Send plaintext password changes to Users table triggers (Insert, Update and Validate).",
+	"Minimum user role required to create a new tenant<div class=\"alert alert-danger fst-normal\" role=\"alert\" data-show-if=\"showIfFormulaInputs($('select[name=role_to_create_tenant]'), '+role_to_create_tenant>1')\">Giving non-trusted users access to create tenants is a security risk and not recommended.</div>": "Minimum user role required to create a new tenant<div class=\"alert alert-danger fst-normal\" role=\"alert\" data-show-if=\"showIfFormulaInputs($('select[name=role_to_create_tenant]'), '+role_to_create_tenant>1')\">Giving non-trusted users access to create tenants is a security risk and not recommended.</div>"
 }
