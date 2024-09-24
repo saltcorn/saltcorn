@@ -1468,5 +1468,6 @@
 	"Time to run": "Time to run",
 	"Mobile": "Mobile",
 	"Plain password trigger row": "Plain password trigger row",
-	"Send plaintext password changes to Users table triggers (Insert, Update and Validate).": "Send plaintext password changes to Users table triggers (Insert, Update and Validate)."
+	"Send plaintext password changes to Users table triggers (Insert, Update and Validate).": "Send plaintext password changes to Users table triggers (Insert, Update and Validate).",
+	"Select tag": "Select tag"
 }

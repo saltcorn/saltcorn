@@ -1235,12 +1235,16 @@ router.get(
     let latest =
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
-    if (latest)
+    if (
+      latest &&
+      !isVersionSupported(latest, await load_plugins.getEngineInfos(plugin_db)) // with cache
+    ) {
+      // with force fetch
       latest = supportedVersion(
         latest,
-        await load_plugins.getEngineInfos(plugin_db, true),
-        getState().scVersion
+        await load_plugins.getEngineInfos(plugin_db, true)
       );
+    }
     const can_update = update_permitted && latest && mod.version !== latest;
     const can_select_version = update_permitted && plugin_db.source === "npm";
     let pkgjson;
