@@ -120,9 +120,10 @@ export const process_aggregations = (
       ) {
         const dateField = aggregate.split(" ")[1];
         const isLatest = aggregate.startsWith("Latest ");
-        let whereClause = ref ? `"${sqlsanitize(ref)}"=a."${ownField}"` : "";
-        if (whereStr) whereClause += (whereClause ? ` and ` : "") + whereStr;
-        if (whereClause) whereClause = ` where ` + whereClause;
+        let whereClause = "";
+        let whereClause1 = ref ? `"${sqlsanitize(ref)}"=a."${ownField}"` : "";
+        if (whereStr) whereClause1 += (whereClause1 ? ` and ` : "") + whereStr;
+        if (whereClause1) whereClause = ` where ` + whereClause1;
         fldNms.push(
           `(select "${sqlsanitize(field)}" from ${schema}"${sqlsanitize(
             table
@@ -130,7 +131,9 @@ export const process_aggregations = (
             isLatest ? `max` : `min`
           }("${dateField}") from ${schema}"${sqlsanitize(
             table
-          )}" ${whereClause}) limit 1) ${sqlsanitize(fldnm)}`
+          )}" ${whereClause})${
+            whereClause1 ? ` and ${whereClause1}` : ""
+          } limit 1) ${sqlsanitize(fldnm)}`
         );
       } else if (subselect && ref)
         fldNms.push(
