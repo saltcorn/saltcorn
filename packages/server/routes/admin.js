@@ -673,7 +673,10 @@ router.get(
     const backup_file_prefix = getState().getConfig("backup_file_prefix");
     if (
       !isRoot ||
-      !(filename.startsWith(backup_file_prefix) && filename.endsWith(".zip"))
+      !(
+        path.resolve(filename).startsWith(backup_file_prefix) &&
+        filename.endsWith(".zip")
+      )
     ) {
       res.redirect("/admin/backup");
       return;
