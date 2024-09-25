@@ -64,7 +64,7 @@ const close = async () => {
  * @param {object} [connObj = {}] - connection object
  * @returns {Promise<void>}
  */
-const changeConnection = async (connObj = {}) => {
+const changeConnection = async (connObj = Object.create(null)) => {
   await close();
   pool = new Pool(getConnectObject(connObj));
 };
@@ -93,7 +93,7 @@ const rollback = async () => {
  * @param {object} [selectopts = {}] - select options
  * @returns {Promise<*>} return rows
  */
-const select = async (tbl, whereObj, selectopts = {}) => {
+const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
   const schema = selectopts.schema || getTenantSchema();
   const sql = `SELECT ${
@@ -167,7 +167,7 @@ const getVersion = async (short) => {
  * @param {object} [opts = {}]
  * @returns {Promise<object[]>} result of delete execution
  */
-const deleteWhere = async (tbl, whereObj, opts = {}) => {
+const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
   const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
     tbl
@@ -186,7 +186,7 @@ const deleteWhere = async (tbl, whereObj, opts = {}) => {
  * @param {object} [opts = {}] - columns attributes
  * @returns {Promise<string>} returns primary key column or Id column value. If primary key column is not defined then return value of Id column.
  */
-const insert = async (tbl, obj, opts = {}) => {
+const insert = async (tbl, obj, opts = Object.create(null)) => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   var valPosList = [];
@@ -231,7 +231,7 @@ const insert = async (tbl, obj, opts = {}) => {
  * @param {object} [opts = {}] - columns attributes
  * @returns {Promise<void>} no result
  */
-const update = async (tbl, obj, id, opts = {}) => {
+const update = async (tbl, obj, id, opts = Object.create(null)) => {
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
   const assigns = kvs
@@ -256,7 +256,7 @@ const update = async (tbl, obj, id, opts = {}) => {
  * @param {object} opts - can contain a db client for transactions
  * @returns {Promise<void>} no result
  */
-const updateWhere = async (tbl, obj, whereObj, opts = {}) => {
+const updateWhere = async (tbl, obj, whereObj, opts = Object.create(null)) => {
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
   const { where, values } = mkWhere(whereObj, false, kvs.length);
@@ -280,7 +280,7 @@ const updateWhere = async (tbl, obj, whereObj, opts = {}) => {
  * @returns {Promise<object>} return first record from sql result
  * @throws {Error}
  */
-const selectOne = async (tbl, where, selectopts = {}) => {
+const selectOne = async (tbl, where, selectopts = Object.create(null)) => {
   const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) {
     const w = mkWhere(where);
@@ -295,7 +295,7 @@ const selectOne = async (tbl, where, selectopts = {}) => {
  * @param {object} [selectopts = {}] - select options
  * @returns {Promise<null|object>} - null if no record or first record data
  */
-const selectMaybeOne = async (tbl, where, selectopts = {}) => {
+const selectMaybeOne = async (tbl, where, selectopts = Object.create(null)) => {
   const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) return null;
   else return rows[0];

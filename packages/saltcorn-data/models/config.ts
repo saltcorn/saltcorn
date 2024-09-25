@@ -325,8 +325,9 @@ const configTypes: ConfigTypes = {
   role_to_create_tenant: {
     type: "Role",
     label: "Role to create tenants",
-    blurb: "Minimum user role required to create a new tenant",
+    blurb: `Minimum user role required to create a new tenant<div class="alert alert-danger fst-normal" role="alert" data-show-if="showIfFormulaInputs($('select[name=role_to_create_tenant]'), '+role_to_create_tenant>1')">Giving non-trusted users access to create tenants is a security risk and not recommended.</div>`,
     default: "1",
+    required: true,
   },
   /** @type {object} */
   create_tenant_warning: {
