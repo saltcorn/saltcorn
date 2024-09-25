@@ -184,8 +184,21 @@ function apply_showif() {
     var current = e.attr("data-selected") || e.val();
     //console.log({ field: e.attr("name"), target: data[0], val, current });
     e.empty();
+    //TODO clean repetition in following cose
     (options || []).forEach((o) => {
-      if (
+      if (o && o.optgroup) {
+        const opts = o.options
+          .map(
+            (innero) =>
+              `<option ${
+                `${current}` === `${innero.value || innero}` ? "selected " : ""
+              }value="${innero.value || innero}">${
+                innero.label || innero
+              }</option>`
+          )
+          .join("");
+        e.append($(`<optgroup label="${o.label}">` + opts + "</optgroup>"));
+      } else if (
         !(o && typeof o.label !== "undefined" && typeof o.value !== "undefined")
       ) {
         if (`${current}` === `${o}`)

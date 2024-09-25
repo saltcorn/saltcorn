@@ -200,6 +200,7 @@ module.exports = {
      * @see base-plugin/actions~run_code
      */
     run: run_code,
+    namespace: "Code",
   },
 
   /**
@@ -253,6 +254,7 @@ module.exports = {
         payload ? JSON.parse(payload) : row
       );
     },
+    namespace: "Control",
   },
 
   /**
@@ -373,6 +375,7 @@ module.exports = {
         return { goto: `/view/${viewname}?id=${room_id}` };
       }
     },
+    namespace: "Communication",
   },
 
   /**
@@ -680,6 +683,7 @@ module.exports = {
         }
       }
     },
+    namespace: "Communication",
   },
 
   /**
@@ -739,6 +743,7 @@ module.exports = {
       }
       return await joinTable.insertRow(newRow, user);
     },
+    namespace: "Database",
   },
 
   /**
@@ -766,6 +771,7 @@ module.exports = {
       delete newRow[table.pk_name];
       await table.insertRow(newRow, user);
     },
+    namespace: "Database",
   },
 
   /**
@@ -836,6 +842,7 @@ module.exports = {
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
+    namespace: "Database",
   },
 
   /**
@@ -897,6 +904,7 @@ module.exports = {
       if (res.error) return res;
       else return true;
     },
+    namespace: "Database",
   },
   /**
    * @namespace
@@ -960,6 +968,7 @@ module.exports = {
       if (res.error) return res;
       else return;
     },
+    namespace: "Database",
   },
 
   delete_rows: {
@@ -1020,6 +1029,7 @@ module.exports = {
       await tbl.deleteRows(where, user);
       return;
     },
+    namespace: "Database",
   },
 
   /**
@@ -1080,6 +1090,7 @@ module.exports = {
           break;
       }
     },
+    namespace: "User interface",
   },
   step_control_flow: {
     /**
@@ -1119,6 +1130,7 @@ module.exports = {
           break;
       }
     },
+    namespace: "Control",
   },
   form_action: {
     /**
@@ -1179,6 +1191,7 @@ module.exports = {
           return { eval_js: jqGet + ".submit()" };
       }
     },
+    namespace: "User interface",
   },
 
   toast: {
@@ -1218,6 +1231,7 @@ module.exports = {
           return { notify: text1 };
       }
     },
+    namespace: "User interface",
   },
 
   /**
@@ -1320,6 +1334,7 @@ module.exports = {
      * @see base-plugin/actions~run_code
      **/
     run: run_code,
+    namespace: "Code",
   },
   run_js_code_in_field: {
     /**
@@ -1395,6 +1410,7 @@ module.exports = {
         configuration: { run_where, code },
       });
     },
+    namespace: "Code",
   },
 
   duplicate_row_prefill_edit: {
@@ -1433,6 +1449,7 @@ module.exports = {
         .join("&");
       return { goto: `/view/${viewname}?${qs}` };
     },
+    namespace: "User interface",
   },
   /**
    * @namespace
@@ -1473,6 +1490,7 @@ module.exports = {
       }
       return { reload_page: true };
     },
+    namespace: "User interface",
   },
   /**
    * @namespace
@@ -1637,6 +1655,7 @@ module.exports = {
           );
       }
     },
+    namespace: "Database",
   },
   reload_embedded_view: {
     description: "Reload an embedded view without full page reload",
@@ -1685,6 +1704,7 @@ module.exports = {
       if (interval) eval_js = `setInterval(()=>{${eval_js}}, ${interval})`;
       return { eval_js };
     },
+    namespace: "User interface",
   },
   sleep: {
     description: "Delay for a set number of seconds",
@@ -1703,6 +1723,7 @@ module.exports = {
         }));`,
       };
     },
+    namespace: "Control",
   },
   notify_user: {
     description: "Send a notification to a specific user",
@@ -1767,6 +1788,7 @@ module.exports = {
         });
       }
     },
+    namespace: "Communication",
   },
 
   convert_session_to_user: {
@@ -1832,6 +1854,7 @@ module.exports = {
         await table.updateRow({ [user_field]: user.id }, dbrow[table.pk_name]);
       }
     },
+    namespace: "Database",
   },
 
   install_progressive_web_app: {

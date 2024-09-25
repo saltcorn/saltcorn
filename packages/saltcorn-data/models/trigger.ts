@@ -556,6 +556,42 @@ class Trigger implements AbstractTrigger {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ trigger_id: this.id });
   }
+
+  static get abbreviated_actions() {
+    const { getState } = require("../db/state");
+
+    return Object.entries(getState().actions).map(([k, v]: [string, any]) => {
+      const hasConfig = !!v.configFields;
+      const requireRow = !!v.requireRow;
+      return {
+        name: k,
+        hasConfig,
+        requireRow,
+        namespace: v.namespace,
+      };
+    });
+  }
+
+  static action_options(notRequireRow: boolean): any {
+    const actions = Trigger.abbreviated_actions;
+    const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
+      .filter(Boolean) //Other last
+      .sort();
+    action_namespaces.push("Other");
+
+    return action_namespaces.map((ns) => {
+      const options = actions
+        .filter(
+          (a) =>
+            (ns === "Other" ? !a.namespace : a.namespace === ns) &&
+            (!notRequireRow || !a.requireRow)
+        )
+        .map((t) => t.name)
+        .sort();
+      if (ns === "Other") options.push("Multi-step action");
+      return { optgroup: true, label: ns, options };
+    });
+  }
 }
 
 export = Trigger;
