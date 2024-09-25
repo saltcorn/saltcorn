@@ -2296,6 +2296,32 @@ describe("field_options", () => {
     expect(opts).toStrictEqual(["name", "favbook.author", "parent.name"]);
   });
 });
+describe("agg latest multiple test", () => {
+  it("should get latest aggregations with the right rows", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const now = new Date();
+    await readings.insertRow({ patient_id: 1, temperature: 42, date: now });
+    await readings.insertRow({ patient_id: 2, temperature: 45, date: now });
+    await readings.insertRow({ patient_id: 1, temperature: 42, date: now });
+
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      where: { id: 2 },
+      aggregations: {
+        last_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "Latest date",
+        },
+      },
+    });
+    expect(Math.round(michaels[0].last_temp)).toBe(45);
+  });
+});
 
 describe("grandparent join", () => {
   it("should define rows", async () => {
