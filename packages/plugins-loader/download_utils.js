@@ -2,7 +2,7 @@ const fs = require("fs");
 const { rm } = require("fs").promises;
 const { mkdir, pathExists } = require("fs-extra");
 const { tmpName } = require("tmp-promise");
-const { execSync } = require("child_process");
+const { execFileSync } = require("child_process");
 const { extract } = require("tar");
 const { join } = require("path");
 const { createWriteStream, unlink } = require("fs");
@@ -93,7 +93,10 @@ const loadTarball = (rootFolder, url, name) => {
  */
 const gitPullOrClone = async (plugin, pluginDir) => {
   let keyfnm,
-    setKey = `-c core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no'" `;
+    setKey = [
+      "-c",
+      `core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no'"`,
+    ];
   if (plugin.deploy_private_key) {
     keyfnm = await tmpName();
     await fs.promises.writeFile(
@@ -104,12 +107,15 @@ const gitPullOrClone = async (plugin, pluginDir) => {
         encoding: "ascii",
       }
     );
-    setKey = `-c core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no' -i ${keyfnm}" `;
+    setKey = [
+      "-c",
+      `core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no' -i ${keyfnm}"`,
+    ];
   }
   if (fs.existsSync(pluginDir)) {
-    execSync(`git ${setKey} -C ${pluginDir} pull`);
+    execFileSync("git", [...setKey, "-C", pluginDir, "pull"]);
   } else {
-    execSync(`git ${setKey} clone ${plugin.location} ${pluginDir}`);
+    execFileSync("git", [...setKey, "clone", plugin.location, pluginDir]);
   }
   if (plugin.deploy_private_key && keyfnm) await fs.promises.unlink(keyfnm);
 };
