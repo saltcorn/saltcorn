@@ -1313,6 +1313,23 @@ router.get(
             )
           ),
           div(
+            { class: "form-group" },
+            input({
+              id: "deep_clean",
+              class: "form-check-input",
+              type: "checkbox",
+              name: "deep_clean",
+              checked: false,
+            }),
+            label(
+              {
+                for: "deep_clean",
+                class: "form-label ms-2",
+              },
+              req.__("clean node_modules")
+            )
+          ),
+          div(
             { class: "d-flex justify-content-end" },
             button(
               {
@@ -1343,7 +1360,17 @@ router.get(
   })
 );
 
-const doInstall = async (req, res, version, runPull) => {
+const cleanNodeModules = async () => {
+  const topSaltcornDir = path.join(__dirname, "..", "..", "..", "..", "..");
+  if (path.basename(topSaltcornDir) === "@saltcorn")
+    await fs.promises.rm(topSaltcornDir, { recursive: true, force: true });
+  else
+    throw new Error(
+      `'${topSaltcornDir}' is not a Saltcorn installation directory`
+    );
+};
+
+const doInstall = async (req, res, version, deepClean, runPull) => {
   if (db.getTenantSchema() !== db.connectObj.default_schema) {
     req.flash("error", req.__("Not possible for tenant"));
     res.redirect("/admin");
@@ -1353,6 +1380,14 @@ const doInstall = async (req, res, version, runPull) => {
         ? req.__("Starting upgrade, please wait...\n")
         : req.__("Installing %s, please wait...\n", version)
     );
+    if (deepClean) {
+      res.write(req.__("Cleaning node_modules...\n"));
+      try {
+        await cleanNodeModules();
+      } catch (e) {
+        res.write(req.__("Error cleaning node_modules: %s\n", e.message));
+      }
+    }
     const child = spawn(
       "npm",
       ["install", "-g", `@saltcorn/cli@${version}`, "--unsafe"],
@@ -1390,8 +1425,8 @@ const doInstall = async (req, res, version, runPull) => {
 };
 
 router.post("/install", isAdmin, async (req, res) => {
-  const { version } = req.body;
-  await doInstall(req, res, version, false);
+  const { version, deep_clean } = req.body;
+  await doInstall(req, res, version, deep_clean === "on", false);
 });
 
 /**
@@ -1404,7 +1439,7 @@ router.post(
   "/upgrade",
   isAdmin,
   error_catcher(async (req, res) => {
-    await doInstall(req, res, "latest", true);
+    await doInstall(req, res, "latest", false, true);
   })
 );
 /**
