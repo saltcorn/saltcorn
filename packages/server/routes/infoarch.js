@@ -234,7 +234,14 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { lang, defstring } = req.params;
-
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
     const cfgStrings = getState().getConfigCopy("localizer_strings");
     if (cfgStrings[lang]) cfgStrings[lang][defstring] = text(req.body.value);
     else cfgStrings[lang] = { [defstring]: text(req.body.value) };
