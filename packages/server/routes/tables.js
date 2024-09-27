@@ -670,7 +670,10 @@ router.get(
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col, lbl) => `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
+const badge = (col, lbl, title) =>
+  `<span ${
+    title ? `title="${title}" ` : ""
+  }class="badge bg-${col}">${lbl}</span>&nbsp;`;
 
 /**
  * @param {object} f
@@ -708,8 +711,11 @@ const attribBadges = (f) => {
         ].includes(k)
       )
         return;
-      if(Array.isArray(v) && !v.length) return;
-      if (v || v === 0) s += badge("secondary", k);
+      if (Array.isArray(v) && !v.length) return;
+      const title = ["string", "number", "boolean"].includes(typeof v)
+        ? `${v}`
+        : null;
+      if (v || v === 0) s += badge("secondary", k, title);
     });
   }
   return s;
