@@ -1281,6 +1281,7 @@ router.get(
         throw new Error(req.__("Unable to fetch versions"));
       const versions = Object.keys(pkgInfo.versions);
       if (versions.length === 0) throw new Error(req.__("No versions found"));
+      const tags = pkgInfo["dist-tags"] || {};
       res.set("Page-Title", req.__("%s versions", "Saltcorn"));
       let selected = packagejson.version;
       res.send(
@@ -1290,6 +1291,7 @@ router.get(
             method: "post",
           },
           input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+          // version select
           div(
             { class: "form-group" },
             label(
@@ -1315,6 +1317,37 @@ router.get(
               )
             )
           ),
+          // tag select
+          div(
+            { class: "form-group" },
+            label(
+              {
+                for: "tag_select",
+                class: "form-label fw-bold",
+              },
+              req.__("Tags")
+            ),
+            select(
+              {
+                id: "tag_select",
+                class: "form-control form-select",
+              },
+              option({
+                id: "empty_opt",
+                value: "",
+                label: req.__("Select tag"),
+                selected: true,
+              }),
+              Object.keys(tags).map((tag) =>
+                option({
+                  id: `${tag}_opt`,
+                  value: tags[tag],
+                  label: `${tag} (${tags[tag]})`,
+                })
+              )
+            )
+          ),
+          // deep clean checkbox
           div(
             { class: "form-group" },
             input({
@@ -1351,7 +1384,18 @@ router.get(
               req.__("Install")
             )
           )
-        )
+        ) +
+          script(
+            domReady(`
+document.getElementById('tag_select').addEventListener('change', () => {
+  const version = document.getElementById('tag_select').value;
+  if (version) document.getElementById('version_select').value = version;
+});
+document.getElementById('version_select').addEventListener('change', () => {
+  document.getElementById('tag_select').value = '';
+});
+`)
+          )
       );
     } catch (error) {
       getState().log(
