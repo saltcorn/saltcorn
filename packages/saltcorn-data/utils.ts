@@ -465,6 +465,21 @@ const isRoot = () => {
   return db.getTenantSchema() === db.connectObj.default_schema;
 };
 
+/**
+ * flat comparison of two objects (fast for comparing objects with primitive values, only first level)
+ * @param a lhs
+ * @param b rhs
+ * @returns true or false
+ */
+const flatEqual = (a: any, b: any) => {
+  if (typeof a !== "object" || typeof b !== "object") return false;
+  if (Object.keys(a).length !== Object.keys(b).length) return false;
+  for (const k in a) {
+    if (!(k in b) || a[k] !== b[k]) return false;
+  }
+  return true;
+};
+
 export = {
   cloneName,
   dollarizeObject,
@@ -511,4 +526,5 @@ export = {
   fileWithEnding,
   safeEnding,
   isRoot,
+  flatEqual,
 };
