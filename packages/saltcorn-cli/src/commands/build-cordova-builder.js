@@ -22,7 +22,8 @@ class BuildCordovaBuilder extends Command {
       "-f",
       join(dockerDir, "Dockerfile"),
       "-t",
-      "saltcorn/cordova-builder"
+      "saltcorn/cordova-builder",
+      "--progress=plain"
     );
     const result = spawnSync("docker", dArgs, { cwd: ".", stdio: "inherit" });
     if (result.error) console.log(result.error.toString());

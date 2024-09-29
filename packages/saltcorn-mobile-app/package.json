@@ -7,7 +7,7 @@
   "scripts": {
     "add-platform": "cordova platform add",
     "add-plugin": "cordova plugin add",
-    "build-app": "cordova build "
+    "build-app": "cordova build --verbose"
   },
   "author": "Christian Hugo",
   "license": "MIT",
