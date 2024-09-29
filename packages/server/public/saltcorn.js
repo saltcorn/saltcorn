@@ -870,7 +870,7 @@ function build_mobile_app(button) {
 
   if (
     params.useDocker &&
-    !cordovaBuilderAvailable &&
+    !window.cordovaBuilderAvailable &&
     !confirm(
       "Docker is selected but the Cordova builder seems not to be installed. " +
         "Do you really want to continue?"
@@ -878,6 +878,21 @@ function build_mobile_app(button) {
   ) {
     return;
   }
+
+  const notSupportedPlugins = params.includedPlugins.filter(
+    (plugin) => !window.pluginsReadyForMobile.includes(plugin)
+  );
+  if (
+    notSupportedPlugins.length > 0 &&
+    !confirm(
+      `It seems that the plugins '${notSupportedPlugins.join(
+        ", "
+      )}' are not ready for mobile. Do you really want to continue?`
+    )
+  ) {
+    return;
+  }
+
   ajax_post("/admin/build-mobile-app", {
     data: params,
     success: (data) => {
@@ -949,8 +964,8 @@ function check_cordova_builder() {
   $.ajax("/admin/mobile-app/check-cordova-builder", {
     type: "GET",
     success: function (res) {
-      cordovaBuilderAvailable = !!res.installed;
-      if (cordovaBuilderAvailable) {
+      window.cordovaBuilderAvailable = !!res.installed;
+      if (window.cordovaBuilderAvailable) {
         $("#dockerBuilderStatusId").html(
           `<span>
             installed<i class="ps-2 fas fa-check text-success"></i>
@@ -1044,7 +1059,7 @@ function toggle_tbl_sync() {
 function toggle_android_platform() {
   if ($("#androidCheckboxId")[0].checked === true) {
     $("#dockerCheckboxId").attr("hidden", false);
-    $("#dockerCheckboxId").attr("checked", cordovaBuilderAvailable);
+    $("#dockerCheckboxId").attr("checked", window.cordovaBuilderAvailable);
     $("#dockerLabelId").removeClass("d-none");
   } else {
     $("#dockerCheckboxId").attr("hidden", true);
