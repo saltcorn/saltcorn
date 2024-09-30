@@ -127,15 +127,25 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
         props.isFormula = segment.isFormula;
       if (related.hasContents)
         return (
-          <Element key={ix} canvas {...props} is={MatchElement}>
+          <Element
+            key={ix}
+            canvas
+            {...props}
+            is={MatchElement}
+            custom={segment._custom || {}}
+          >
             {toTag(segment.contents)}
           </Element>
         );
-      else return <MatchElement key={ix} {...props} />;
+      else
+        return (
+          <MatchElement key={ix} custom={segment._custom || {}} {...props} />
+        );
     }
     if (segment.type === "blank") {
       return (
         <Text
+          custom={segment._custom || {}}
           key={ix}
           text={segment.contents}
           isFormula={segment.isFormula || {}}
@@ -151,6 +161,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
     } else if (segment.type === "view") {
       return (
         <View
+          custom={segment._custom || {}}
           key={ix}
           view={segment.view}
           relation={segment.relation}
@@ -165,6 +176,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
     } else if (segment.type === "action") {
       return (
         <Action
+          custom={segment._custom || {}}
           key={ix}
           name={segment.action_name}
           rndid={segment.rndid || "not_assigned"}
@@ -193,6 +205,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
       return (
         <Element
           key={ix}
+          custom={segment._custom || {}}
           canvas
           gradStartColor={segment.gradStartColor}
           gradEndColor={segment.gradEndColor}
@@ -259,6 +272,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
       return (
         <Tabs
           key={ix}
+          custom={segment._custom || {}}
           titles={segment.titles}
           showif={segment.showif}
           ntabs={segment.ntabs}
@@ -278,6 +292,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
       return (
         <Table
           key={ix}
+          custom={segment._custom || {}}
           rows={segment.rows || 2}
           columns={segment.columns || 2}
           bs_style={segment.bs_style || false}
@@ -301,6 +316,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
         });
         return (
           <ListColumn
+            custom={segment._custom || {}}
             key={jx}
             alignment={col.alignment}
             header_label={col.header_label}
@@ -316,6 +332,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
       return (
         <Columns
           key={ix}
+          custom={segment._custom || {}}
           breakpoints={segment.breakpoints || default_breakpoints(segment)}
           ncols={segment.besides.length}
           widths={getColWidths(segment)}
@@ -423,6 +440,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
    */
   const go = (node) => {
     if (!node) return;
+    let customProps = {};
+    if (Object.keys(node?.custom || {}).length)
+      customProps = { _custom: { ...node?.custom } };
     const matchElement = allElements.find(
       (e) =>
         e.craft.related &&
@@ -432,7 +452,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
     );
     if (matchElement) {
       const related = matchElement.craft.related;
-      const s = { type: related.segment_type };
+      const s = { type: related.segment_type, ...customProps };
       if (related.hasContents) s.contents = get_nodes(node);
       related.fields.forEach((f) => {
         if (f.type === "Nodes" && f.nodeID) {
@@ -459,6 +479,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return {
         besides: node.nodes.map((nm) => go(nodes[nm])),
         list_columns: true,
+        ...customProps,
       };
     }
     if (node.displayName === ListColumn.craft.displayName) {
@@ -471,6 +492,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         alignment: node.props.alignment,
         header_label: node.props.header_label,
         showif: node.props.showif,
+        ...customProps,
       };
       (addFields || []).forEach((f) => {
         lc[f.name] = node.props[f.name];
@@ -519,6 +541,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
           click_action: node.props.click_action,
           rotate: node.props.rotate,
           style: node.props.style,
+          ...customProps,
         };
       else return get_nodes(node);
     }
@@ -535,6 +558,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         style: node.props.style,
         icon: node.props.icon,
         font: node.props.font,
+        ...customProps,
       };
     }
 
@@ -556,6 +580,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         bs_bordered: node.props.bs_bordered,
         bs_borderless: node.props.bs_borderless,
         bs_wauto: node.props.bs_wauto,
+        ...customProps,
       };
     }
 
@@ -572,6 +597,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         colStyles: node.props.colStyles,
         style: node.props.style,
         widths,
+        ...customProps,
       };
     }
     if (node.displayName === Tabs.craft.displayName) {
@@ -600,6 +626,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         serverRendered: node.props.serverRendered,
         tabId: node.props.tabId,
         ntabs: node.props.ntabs,
+        ...customProps,
       };
     }
 
@@ -614,6 +641,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         state: node.props.state,
         configuration: node.props.configuration,
         extra_state_fml: node.props.extra_state_fml,
+        ...customProps,
       };
     }
     if (node.displayName === Action.craft.displayName) {
@@ -672,6 +700,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         minRole: node.props.minRole,
         isFormula: node.props.isFormula,
         rndid: node.props.rndid === "not_assigned" ? newid : node.props.rndid,
+        ...customProps,
       };
     }
   };
