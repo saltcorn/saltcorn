@@ -70,35 +70,38 @@ const migrate = async (schema0, verbose) => {
   const schema = schema0 || db.connectObj.default_schema;
   //console.log("migrating database schema %s", schema);
 
-  const dbmigrations = await getMigrationsInDB();
   //https://stackoverflow.com/questions/5364928/node-js-require-all-files-in-a-folder
-  let files = null;
   if (db.is_node) {
-    files = fs
+    const dbmigrations = new Set(await getMigrationsInDB());
+    const files = fs
       .readdirSync(path.join(__dirname, "migrations"))
-      .filter((file) => file.match(/\.js$/) !== null);
-  }
-  const client = is_sqlite ? db : await db.getClient();
-  if (!is_sqlite) {
-    db.sql_log(`SET search_path TO "${schema}";`);
-    await client.query(`SET search_path TO "${schema}";`);
-  }
-  if (db.is_node) {
-    for (const file of files) {
-      const name = file.replace(".js", "");
-      if (!dbmigrations.includes(name)) {
-        if (verbose)
-          console.log("Tenant %s running migration %s", schema0, name);
-        const contents = require(path.join(__dirname, "migrations", name));
-        await doMigrationStep(name, contents, client);
+      .filter(
+        (file) =>
+          file.match(/\.js$/) !== null &&
+          !dbmigrations.has(file.replace(".js", ""))
+      );
+    if (files.length > 0) {
+      const client = is_sqlite ? db : await db.getClient();
+      if (!is_sqlite) {
+        db.sql_log(`SET search_path TO "${schema}";`);
+        await client.query(`SET search_path TO "${schema}";`);
       }
+      for (const file of files) {
+        const name = file.replace(".js", "");
+        if (!dbmigrations.has(name)) {
+          if (verbose)
+            console.log("Tenant %s running migration %s", schema0, name);
+          const contents = require(path.join(__dirname, "migrations", name));
+          await doMigrationStep(name, contents, client);
+        }
+      }
+      if (!is_sqlite) client.release(true);
     }
   } else {
     for (let [k, v] of Object.entries(window.saltcorn.data.migrations)) {
-      await doMigrationStep(k, v, client);
+      await doMigrationStep(k, v, db);
     }
   }
-  if (!is_sqlite) client.release(true);
 };
 /**
  * Create blank migration

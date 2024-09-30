@@ -173,7 +173,7 @@ const loadAllPlugins = async (force) => {
     }
   }
   await getState().refreshUserLayouts();
-  await getState().refresh(true);
+  await getState().refresh(true, true);
   if (!isRoot()) reloadAuthFromRoot();
 };
 

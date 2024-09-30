@@ -41,6 +41,7 @@ const {
   sleep,
   interpolate,
   isNode,
+  flatEqual,
 } = utils;
 import I18n from "i18n";
 import { tz } from "moment-timezone";
@@ -158,6 +159,8 @@ class State {
   queriesCache?: Record<string, any>;
   scVersion: string;
 
+  private oldCodePages: Record<string, string> | undefined;
+
   /**
    * State constructor
    * @param {string} tenant description
@@ -211,6 +214,7 @@ class State {
     } catch (e) {
       this.scVersion = require("../package.json").version;
     }
+    this.codepage_context = {};
   }
 
   processSend(v: any) {
@@ -289,10 +293,10 @@ class State {
 
   /**
    * Refresh State cache for all Saltcorn main objects
-   * @param {boolean} noSignal - Do not signal - refresh to other cluster processes.
-   * @returns {Promise<void>}
+   * @param noSignal - Do not signal - refresh to other cluster processes.
+   * @param keepUnchanged - Some members don't need rebuilding if they did not change
    */
-  async refresh(noSignal: boolean) {
+  async refresh(noSignal: boolean, keepUnchanged?: boolean) {
     await this.refresh_tables(noSignal);
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
@@ -300,7 +304,7 @@ class State {
     await this.refresh_page_groups(noSignal);
     await this.refresh_config(noSignal);
     await this.refresh_npmpkgs(noSignal);
-    await this.refresh_codepages(noSignal);
+    await this.refresh_codepages(noSignal, keepUnchanged);
   }
 
   /**
@@ -766,44 +770,51 @@ class State {
     return { ...this.function_context, ...this.codepage_context };
   }
 
-  async refresh_codepages(noSignal?: boolean) {
-    this.codepage_context = {};
+  /**
+   * Take the config 'function_code_pages' and build the 'codepage_context' member
+   * @param noSignal - Do not signal reload to other cluster processes.
+   * @param keepUnchanged - When 'function_code_pages' didn't change, true skips building it again
+   */
+  async refresh_codepages(noSignal?: boolean, keepUnchanged?: boolean) {
     const code_pages: Record<string, string> = this.getConfig(
       "function_code_pages",
       {}
     );
-    const fetch = require("node-fetch");
+    if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
+    this.codepage_context = {};
+    if (Object.keys(code_pages).length > 0) {
+      const fetch = require("node-fetch");
+      try {
+        const myContext = {
+          ...this.function_context,
+          Table,
+          File,
+          User,
+          setTimeout,
+          fetch,
+          sleep,
+          interpolate,
+          URL,
+          console, //TODO consoleInterceptor
+          require: (nm: string) => this.codeNPMmodules[nm],
+        };
+        const funCtxKeys = new Set(Object.keys(myContext));
+        const sandbox = createContext(myContext);
+        const codeStr = Object.values(code_pages).join(";\n");
+        runInContext(codeStr, sandbox);
 
-    try {
-      const myContext = {
-        ...this.function_context,
-        Table,
-        File,
-        User,
-        setTimeout,
-        fetch,
-        sleep,
-        interpolate,
-        URL,
-        console, //TODO consoleInterceptor
-        require: (nm: string) => this.codeNPMmodules[nm],
-      };
-      const funCtxKeys = new Set(Object.keys(myContext));
-      const sandbox = createContext(myContext);
-      const codeStr = Object.values(code_pages).join(";\n");
-      runInContext(codeStr, sandbox);
-
-      Object.keys(sandbox).forEach((k) => {
-        if (!funCtxKeys.has(k)) {
-          this.codepage_context[k] = sandbox[k];
-        }
-      });
-    } catch (e) {
-      //console.error(e);
+        Object.keys(sandbox).forEach((k) => {
+          if (!funCtxKeys.has(k)) {
+            this.codepage_context[k] = sandbox[k];
+          }
+        });
+      } catch (e) {
+        //console.error(e);
+      }
     }
-
     if (!noSignal && db.is_node)
       process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
+    this.oldCodePages = code_pages;
   }
 
   /**
