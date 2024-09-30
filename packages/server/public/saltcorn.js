@@ -225,8 +225,10 @@ function ajax_done(res, viewname) {
 function spin_action_link(e) {
   const $e = $(e);
   const width = $e.width();
+  const height = $e.height();
+
   $e.attr("data-innerhtml-prespin", $e.html());
-  $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+  $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width).height(height);
 }
 
 function reset_spinners() {
