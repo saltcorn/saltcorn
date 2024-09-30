@@ -222,7 +222,6 @@ const create_tenant = async ({
       });
     }
     if (db.is_node) {
-      // TODO ch
       process_send({ createTenant: t });
     }
   }

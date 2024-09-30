@@ -686,7 +686,6 @@ class State {
     });
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
-        // TODO ch
         if (!v.name) v.name = k;
         this.external_tables[k] = v;
       }

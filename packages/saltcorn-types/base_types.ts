@@ -310,7 +310,7 @@ export type ViewTemplate = {
   default_state_form?: (arg0: { default_state: any }) => any;
   routes?: Record<string, Action>;
   virtual_triggers?: (
-    table_id: number | undefined, // TODO ch
+    table_id: number | undefined,
     name: string,
     configuration: any
   ) => Promise<Array<AbstractTrigger>>;
