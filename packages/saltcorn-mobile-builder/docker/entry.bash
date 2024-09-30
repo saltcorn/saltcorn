@@ -20,23 +20,33 @@ export CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-8.4-all.zip
 
 cd /saltcorn-mobile-app
 echo "adding android platform"
-npm run add-platform android
-echo "calling cordova clean";
-cordova clean
+cordova platform add android
+echo "writing gradle.properties"
+cat <<EOF > /saltcorn-mobile-app/platforms/android/gradle.properties
+org.gradle.jvmargs=-Xmx2048m
+android.useAndroidX=true
+android.enableJetifier=true
+distributionUrl=file\:/gradle-8.4-all.zip
+EOF
+
 echo "adding plugins"
-npm run add-plugin /init_project/project/plugins/cordova-plugin-inappbrowser
-npm run add-plugin /init_project/project/plugins/cordova-plugin-file
-npm run add-plugin /init_project/project/plugins/cordova-sqlite-ext
-npm run add-plugin /init_project/project/plugins/cordova-plugin-network-information
-npm run add-plugin /init_project/project/plugins/cordova-plugin-geolocation
-npm run add-plugin /init_project/project/plugins/cordova-plugin-camera
+cordova plugin add /init_project/project/plugins/cordova-plugin-inappbrowser
+cordova plugin add /init_project/project/plugins/cordova-plugin-file
+cordova plugin add /init_project/project/plugins/cordova-sqlite-ext
+cordova plugin add /init_project/project/plugins/cordova-plugin-network-information
+cordova plugin add /init_project/project/plugins/cordova-plugin-geolocation
+cordova plugin add /init_project/project/plugins/cordova-plugin-camera
+
+echo "calling cordova build"
+cordova build android --verbose
+
 
 if [ -n "$KEYSTORE_FILE" ]; then
   echo "building signed app with keystore"
-  cordova build android --"$BUILD_TYPE" -- --keystore="$KEYSTORE_FILE" --alias="$KEYSTORE_ALIAS" --storePassword="$KEYSTORE_PASSWORD" --password="$KEYSTORE_PASSWORD"
+  cordova build android --"$BUILD_TYPE" --verbose -- --keystore="$KEYSTORE_FILE" --alias="$KEYSTORE_ALIAS" --storePassword="$KEYSTORE_PASSWORD" --password="$KEYSTORE_PASSWORD"
 else
   echo "building unsigned app"
-  cordova build android --"$BUILD_TYPE"
+  cordova build android --"$BUILD_TYPE" --verbose
 fi
 
 chmod -R o+rwx /saltcorn-mobile-app

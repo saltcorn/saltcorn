@@ -40,7 +40,7 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
       "install",
       "cordova@^12.0.0",
       "cordova-sqlite-ext@^6.0.0",
-      "cordova-android@^12.0.1",
+      "cordova-android@^13.0.0",
     ],
     {
       cwd: buildDir,

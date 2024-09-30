@@ -1824,8 +1824,8 @@ router.get(
     });
   })
 );
-const buildDialogScript = (cordovaBuilderAvailable) => {
-  return `<script>
+const buildDialogScript = (cordovaBuilderAvailable) =>
+  `<script>
   var cordovaBuilderAvailable = ${cordovaBuilderAvailable};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
@@ -1851,7 +1851,6 @@ const buildDialogScript = (cordovaBuilderAvailable) => {
     notifyAlert("Building the app, please wait.", true)
   }
   </script>`;
-};
 
 const imageAvailable = async () => {
   try {
@@ -1909,6 +1908,9 @@ router.get(
     const plugins = (await Plugin.find()).filter(
       (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
     );
+    const pluginsReadyForMobile = plugins
+      .filter((plugin) => plugin.ready_for_mobile())
+      .map((plugin) => plugin.name);
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
     const dockerAvailable = await imageAvailable();
@@ -1922,6 +1924,11 @@ router.get(
       headers: [
         {
           headerTag: buildDialogScript(dockerAvailable),
+        },
+        {
+          headerTag: `<script>var pluginsReadyForMobile = ${JSON.stringify(
+            pluginsReadyForMobile
+          )}</script>`,
         },
       ],
       contents: {

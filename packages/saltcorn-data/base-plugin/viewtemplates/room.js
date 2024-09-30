@@ -547,7 +547,6 @@ module.exports = {
     room_id,
     user
   ) => {
-    // TODO ch authorize_join query
     if (!user || user.role_id > min_role) return false;
     if (!participant_field) {
       const table = Table.findOne({ id: table_id });

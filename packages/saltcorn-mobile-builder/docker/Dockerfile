@@ -32,7 +32,7 @@ RUN cordova plugin add cordova-plugin-inappbrowser@6.0.0
 RUN cordova plugin add cordova-plugin-network-information@3.0.0
 RUN cordova plugin add cordova-plugin-geolocation@5.0.0
 RUN cordova plugin add cordova-plugin-camera@7.0.0
-RUN cordova platform add android
+RUN cordova platform add android@^13.0.0
 ENV ANDROID_SDK_ROOT=/android_sdk
 ENV ANDROID_HOME=/android_sdk
 ENV GRADLE_HOME=/opt/gradle-8.4
