@@ -183,6 +183,10 @@ const pageBuilderData = async (req, context) => {
       });
     }
   }
+  const actionsNotRequiringRow = [
+    { optgroup: true, label: "Page Actions", options: ["GoBack"] },
+    ...Trigger.action_options(true),
+  ];
   const library = (await Library.find({})).filter((l) => l.suitableFor("page"));
   const fixed_state_fields = {};
   for (const view of views) {
@@ -228,7 +232,7 @@ const pageBuilderData = async (req, context) => {
     images,
     pages,
     page_groups,
-    actions,
+    actions: actionsNotRequiringRow,
     builtInActions: ["GoBack"],
     library,
     min_role: context.min_role,

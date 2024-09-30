@@ -185,14 +185,21 @@ const ActionSettings = () => {
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
               >
-                {options.actions.map((f, ix) => (
-                  <option key={ix} value={f}>
-                    {f}
-                  </option>
-                ))}
-                {options.allowMultiStepAction ? (
-                  <option value={"Multi-step action"}>Multi-step action</option>
-                ) : null}
+                {options.actions.map((f, ix) =>
+                  f.optgroup ? (
+                    <optgroup key={ix} label={f.label}>
+                      {f.options.map((a, jx) => (
+                        <option key={jx} value={a}>
+                          {a}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : (
+                    <option key={ix} value={f}>
+                      {f}
+                    </option>
+                  )
+                )}
               </select>
             </td>
           </tr>
