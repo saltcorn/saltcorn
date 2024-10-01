@@ -457,7 +457,11 @@ const ActionElem = ({ connectors, options }) => (
     title="Action button"
   >
     <Action
-      name={options.actions[0].optgroup ? options.actions[0].options[0] : options.actions[0] }
+      name={
+        options.actions[0].optgroup
+          ? options.actions[0].options[0]
+          : options.actions[0]
+      }
       action_row_variable={""}
       block={false}
       minRole={100}

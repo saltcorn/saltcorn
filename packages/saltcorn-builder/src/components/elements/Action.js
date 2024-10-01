@@ -186,8 +186,7 @@ const ActionSettings = () => {
                 }}
               >
                 {options.actions.map((f, ix) =>
-                  f.optgroup && !f.options.length ? null :
-                  f.optgroup ? (
+                  f.optgroup && !f.options.length ? null : f.optgroup ? (
                     <optgroup key={ix} label={f.label}>
                       {f.options.map((a, jx) => (
                         <option key={jx} value={a}>
@@ -363,22 +362,29 @@ const ActionSettings = () => {
             </option>
             {options.actions
               .filter((f) => !(options.builtInActions || []).includes(f))
-              .map((f, ix) => (
+              .map((f, ix) =>
                 f.optgroup ? (
                   <optgroup key={ix} label={f.label}>
-                    {f.options.filter((f) => 
-                    !(["Multi-step action", ...(options.builtInActions || [])]).includes(f)).map((a, jx) => (
-                      <option key={jx} value={a}>
-                        {a}
-                      </option>
-                    ))}
+                    {f.options
+                      .filter(
+                        (f) =>
+                          ![
+                            "Multi-step action",
+                            ...(options.builtInActions || []),
+                          ].includes(f)
+                      )
+                      .map((a, jx) => (
+                        <option key={jx} value={a}>
+                          {a}
+                        </option>
+                      ))}
                   </optgroup>
                 ) : (
                   <option key={ix} value={f}>
                     {f}
                   </option>
-                )               
-              ))}
+                )
+              )}
           </select>
           {options.mode !== "page" ? (
             <Fragment>
