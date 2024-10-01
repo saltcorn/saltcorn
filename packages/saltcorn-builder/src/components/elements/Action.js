@@ -186,6 +186,7 @@ const ActionSettings = () => {
                 }}
               >
                 {options.actions.map((f, ix) =>
+                  f.optgroup && !f.options.length ? null :
                   f.optgroup ? (
                     <optgroup key={ix} label={f.label}>
                       {f.options.map((a, jx) => (
