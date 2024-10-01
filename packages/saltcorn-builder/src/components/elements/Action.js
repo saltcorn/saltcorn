@@ -363,9 +363,20 @@ const ActionSettings = () => {
             {options.actions
               .filter((f) => !(options.builtInActions || []).includes(f))
               .map((f, ix) => (
-                <option key={ix} value={f}>
-                  {f}
-                </option>
+                f.optgroup ? (
+                  <optgroup key={ix} label={f.label}>
+                    {f.options.filter((f) => 
+                    !(["Multi-step action", ...(options.builtInActions || [])]).includes(f)).map((a, jx) => (
+                      <option key={jx} value={a}>
+                        {a}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : (
+                  <option key={ix} value={f}>
+                    {f}
+                  </option>
+                )               
               ))}
           </select>
           {options.mode !== "page" ? (
