@@ -392,6 +392,12 @@ const comparingCaseInsensitive = (k: string) => (a: any, b: any) => {
   return fa > fb ? 1 : fb > fa ? -1 : 0;
 };
 
+const comparingCaseInsensitiveValue = (a: any, b: any) => {
+  const fa = a?.toLowerCase?.();
+  const fb = b?.toLowerCase?.();
+  return fa > fb ? 1 : fb > fa ? -1 : 0;
+};
+
 const ppVal = (x: any) =>
   typeof x === "string"
     ? x
@@ -520,6 +526,7 @@ export = {
   urlStringToObject,
   comparing,
   comparingCaseInsensitive,
+  comparingCaseInsensitiveValue,
   ppVal,
   interpolate,
   prepMobileRows,

@@ -185,7 +185,7 @@ const pageBuilderData = async (req, context) => {
   }
   const actionsNotRequiringRow = [
     { optgroup: true, label: "Page Actions", options: ["GoBack"] },
-    ...Trigger.action_options(true),
+    ...Trigger.action_options({ notRequireRow: true, apiNeverTriggers: true }),
   ];
   const library = (await Library.find({})).filter((l) => l.suitableFor("page"));
   const fixed_state_fields = {};
