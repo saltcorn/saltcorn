@@ -987,7 +987,12 @@ const mkFormRowForField =
     const errorFeedback = errors[name]
       ? `<div class="invalid-feedback">${text(errors[name])}</div>`
       : "";
-    if (hdr.input_type === "hidden") {
+    if (hdr.input_type === "hidden" && hdr.showIf) {
+      return span(
+        { "data-show-if": mkShowIf(hdr.showIf) },
+        innerField(v, errors, nameAdd)(hdr)
+      );
+    } else if (hdr.input_type === "hidden") {
       return innerField(v, errors, nameAdd)(hdr);
     } else
       return formRowWrap(

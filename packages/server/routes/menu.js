@@ -269,6 +269,9 @@ const menuForm = async (req) => {
         name: "icon",
         class: "item-menu",
         input_type: "hidden",
+        showIf: {
+          type: ["View", "Page", "Page Group", "Link", "Header", "Action"],
+        },
       },
       {
         name: "tooltip",
