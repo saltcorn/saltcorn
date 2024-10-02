@@ -154,10 +154,12 @@ const triggerForm = async (req, trigger) => {
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
 
-  const allActions = Trigger.action_options(false);
+  const allActions = Trigger.action_options({ notRequireRow: false });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
-  const actionsNotRequiringRow = Trigger.action_options(true);
+  const actionsNotRequiringRow = Trigger.action_options({
+    notRequireRow: true,
+  });
 
   Trigger.when_options.forEach((t) => {
     if (table_triggers.includes(t)) action_options[t] = allActions;

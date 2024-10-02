@@ -129,28 +129,17 @@ const configuration_workflow = (req) =>
           const stateActions = Object.entries(getState().actions).filter(
             ([k, v]) => !v.disableInBuilder
           );
-          const actions = [
-            ...builtInActions,
-            ...stateActions.map(([k, v]) => k),
-          ];
-          const triggerActions = [];
-          (
-            await Trigger.find({
-              when_trigger: { or: ["API call", "Never"] },
-              table_id: null,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
           });
-          (
-            await Trigger.find({
-              table_id: context.table_id,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+          const actions = Trigger.action_options({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            builtInLabel: "Edit Actions",
+            builtIns: builtInActions,
           });
+
           const actionConfigForms = {
             Delete: [
               {

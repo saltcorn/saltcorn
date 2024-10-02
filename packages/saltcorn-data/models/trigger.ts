@@ -14,7 +14,12 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import Crash = require("./crash");
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
-const { satisfies, mergeActionResults, cloneName } = require("../utils");
+const {
+  comparingCaseInsensitiveValue,
+  satisfies,
+  mergeActionResults,
+  cloneName,
+} = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
@@ -572,14 +577,66 @@ class Trigger implements AbstractTrigger {
     });
   }
 
-  static action_options(notRequireRow: boolean): any {
+  static trigger_actions({
+    tableTriggers,
+    apiNeverTriggers,
+  }: {
+    tableTriggers?: number;
+    apiNeverTriggers?: boolean;
+  }): string[] {
+    let triggerActions: Array<string> = [];
+    if (tableTriggers) {
+      const trs = Trigger.find({
+        table_id: tableTriggers,
+      });
+      triggerActions = trs.map((tr) => tr.name as string);
+    }
+    if (apiNeverTriggers) {
+      const trs = Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+        table_id: null,
+      });
+      triggerActions = [
+        ...triggerActions,
+        ...trs.map((tr) => tr.name as string),
+      ];
+    }
+
+    return triggerActions.sort(comparingCaseInsensitiveValue);
+  }
+
+  static action_options({
+    notRequireRow,
+    tableTriggers,
+    apiNeverTriggers,
+    builtIns,
+    builtInLabel,
+  }: {
+    notRequireRow?: boolean;
+    tableTriggers?: number;
+    apiNeverTriggers?: boolean;
+    builtIns?: string[];
+    builtInLabel?: string;
+  }): any[] {
+    const triggerActions = Trigger.trigger_actions({
+      tableTriggers,
+      apiNeverTriggers,
+    });
     const actions = Trigger.abbreviated_actions;
     const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
       .filter(Boolean) //Other last
       .sort();
+    if (builtInLabel) action_namespaces.unshift(builtInLabel);
+    if (triggerActions.length) action_namespaces.push("Triggers");
+
     action_namespaces.push("Other");
 
     return action_namespaces.map((ns) => {
+      if (ns === "Triggers")
+        return { optgroup: true, label: ns, options: triggerActions };
+      if (ns === builtInLabel)
+        return { optgroup: true, label: builtInLabel, options: builtIns || [] };
+
       const options = actions
         .filter(
           (a) =>

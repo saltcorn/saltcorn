@@ -117,17 +117,16 @@ const configuration_workflow = () =>
           const stateActions = Object.entries(getState().actions).filter(
             ([k, v]) => !v.disableInBuilder
           );
-          const actions = ["Clear", ...stateActions.map(([k, v]) => k)];
-          (
-            await Trigger.find({
-              when_trigger: { or: ["API call", "Never"] },
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
+          const actions1 = ["Clear", ...stateActions.map(([k, v]) => k)];
+          const actions = Trigger.action_options({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            builtInLabel: "Filter Actions",
+            builtIns: ["Clear"],
           });
           const actionConstraints = {};
           const stateActionsObj = getState().actions;
-          for (const action of actions) {
+          for (const action of actions1) {
             if (stateActionsObj[action]?.requireRow)
               actionConstraints[action] = { requireRow: true };
           }
