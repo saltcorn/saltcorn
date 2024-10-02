@@ -577,15 +577,13 @@ class Trigger implements AbstractTrigger {
     });
   }
 
-  static action_options({
-    notRequireRow,
+  static trigger_actions({
     tableTriggers,
     apiNeverTriggers,
   }: {
-    notRequireRow?: boolean;
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
-  }): any {
+  }): string[] {
     let triggerActions: Array<string> = [];
     if (tableTriggers) {
       const trs = Trigger.find({
@@ -604,12 +602,31 @@ class Trigger implements AbstractTrigger {
       ];
     }
 
-    triggerActions = triggerActions.sort(comparingCaseInsensitiveValue);
+    return triggerActions.sort(comparingCaseInsensitiveValue);
+  }
 
+  static action_options({
+    notRequireRow,
+    tableTriggers,
+    apiNeverTriggers,
+    builtIns,
+    builtInLabel,
+  }: {
+    notRequireRow?: boolean;
+    tableTriggers?: number;
+    apiNeverTriggers?: boolean;
+    builtIns?: string[];
+    builtInLabel?: string;
+  }): any[] {
+    const triggerActions = Trigger.trigger_actions({
+      tableTriggers,
+      apiNeverTriggers,
+    });
     const actions = Trigger.abbreviated_actions;
     const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
       .filter(Boolean) //Other last
       .sort();
+    if (builtInLabel) action_namespaces.unshift(builtInLabel);
     if (triggerActions.length) action_namespaces.push("Triggers");
 
     action_namespaces.push("Other");
@@ -617,6 +634,8 @@ class Trigger implements AbstractTrigger {
     return action_namespaces.map((ns) => {
       if (ns === "Triggers")
         return { optgroup: true, label: ns, options: triggerActions };
+      if (ns === builtInLabel)
+        return { optgroup: true, label: builtInLabel, options: builtIns || [] };
 
       const options = actions
         .filter(
