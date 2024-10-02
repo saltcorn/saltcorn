@@ -144,6 +144,13 @@ const ActionSettings = () => {
       : null;
   const cfg_link = (options.triggerActions || []).includes(name)
     ? `/actions/configure/${encodeURIComponent(name)}`
+    : name === "Multi-step action" &&
+      (options.triggerActions || []).includes(
+        step_action_names?.[use_setting_action_n]
+      )
+    ? `/actions/configure/${encodeURIComponent(
+        step_action_names?.[use_setting_action_n]
+      )}`
     : "";
   return (
     <div>
