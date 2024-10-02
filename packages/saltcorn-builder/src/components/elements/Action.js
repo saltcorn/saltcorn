@@ -142,7 +142,9 @@ const ActionSettings = () => {
     name === "Multi-step action"
       ? getCfgFields(step_action_names?.[use_setting_action_n])
       : null;
-
+  const cfg_link = (options.triggerActions || []).includes(name)
+    ? `/actions/configure/${encodeURIComponent(name)}`
+    : "";
   return (
     <div>
       <table className="w-100">
@@ -431,6 +433,11 @@ const ActionSettings = () => {
           setProp={setProp}
           node={node}
         />
+      ) : null}
+      {cfg_link ? (
+        <a className="d-block mt-2" target="_blank" href={cfg_link}>
+          Configure this action
+        </a>
       ) : null}
     </div>
   );
