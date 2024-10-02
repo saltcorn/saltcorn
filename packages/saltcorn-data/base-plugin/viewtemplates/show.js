@@ -723,6 +723,7 @@ const render = (
     card(segment) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
+      evalMaybeExpr(segment, "class");
     },
     image(segment) {
       evalMaybeExpr(segment, "url");

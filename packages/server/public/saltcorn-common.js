@@ -18,7 +18,7 @@ function monospace_block_click(e) {
 function copy_monospace_block(e) {
   let e1 = $(e).next("pre");
   let e2 = $(e1).next("pre");
-  if (!e2.length) return navigator.clipboard.writeText($(el).text());
+  if (!e2.length) return navigator.clipboard.writeText($(e1).text());
   const e1t = e1.text();
   const e2t = e2.text();
   if (e1t.length > e2t.length) return navigator.clipboard.writeText(e1t);

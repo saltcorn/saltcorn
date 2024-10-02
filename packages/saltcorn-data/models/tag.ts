@@ -7,6 +7,8 @@ import db from "../db";
 import TagEntry from "./tag_entry";
 import type { TagEntryCfg } from "./tag_entry";
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import utils from "../utils";
+const { comparing } = utils;
 
 class Tag implements AbstractTag {
   name: string;
@@ -86,6 +88,7 @@ class Tag implements AbstractTag {
         if (modelObj) result.push(modelObj);
       }
     }
+    result.sort(comparing((t) => t.name?.toLowerCase?.()));
     return result;
   }
 
