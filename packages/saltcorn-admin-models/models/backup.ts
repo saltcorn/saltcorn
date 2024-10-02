@@ -507,6 +507,9 @@ const restore = async (
   loadAndSaveNewPlugin: (plugin: Plugin) => void,
   restore_first_user?: boolean
 ): Promise<string | void> => {
+  const state = getState();
+  state.log(1, `Starting restore to tenant ${db.getTenantSchema()}`);
+
   const tmpDir = await dir({ unsafeCleanup: true });
   //unzip
   await extract(fnm, tmpDir.path);
@@ -555,6 +558,13 @@ const restore = async (
   await restore_file_users(file_users);
 
   await tmpDir.cleanup();
+  state.log(
+    1,
+    `Completed restore to tenant ${db.getTenantSchema()}${
+      err ? ` with errors ${err}` : " successfully"
+    }`
+  );
+
   return err;
 };
 
