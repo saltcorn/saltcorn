@@ -25,6 +25,8 @@ const {
   gen_password,
   genJwtSecret,
   pullWithSudo,
+  writeAppArmoreFile,
+  runDockerRootlessScript,
 } = require("./utils");
 //const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
 
@@ -251,6 +253,44 @@ const askOsService = async () => {
     },
   ]);
   return responses.osService;
+};
+
+const askDockerMode = async () => {
+  if (yes) return "rootless";
+  let responses = await inquirer.prompt([
+    {
+      name: "setupdocker",
+      message:
+        "Do you want to set up Docker?\n Docker is used to build mobile Android apps. You can also set it up later or use your own Android SDK.",
+      type: "confirm",
+      default: true,
+    },
+  ]);
+  if (!responses.setupdocker) return null;
+  else {
+    responses = await inquirer.prompt([
+      {
+        name: "dockermode",
+        message: "Which docker mode are you using?",
+        type: "list",
+        choices: [
+          {
+            name: "Standard: Root privileges are required",
+            value: "standard",
+          },
+          {
+            name: "Rootless: Docker is available without root privileges",
+            value: "rootless",
+          },
+          {
+            name: "Cancel",
+            value: null,
+          },
+        ],
+      },
+    ]);
+    return responses.dockermode;
+  }
 };
 
 /**
@@ -582,7 +622,7 @@ const handleCordovaBuilder = async (user, dryRun) => {
         false,
         dryRun
       );
-    } else pullWithSudo(user);
+    } else await pullWithSudo(user, "rootless");
   }
 };
 
@@ -615,6 +655,10 @@ const handleCordovaBuilder = async (user, dryRun) => {
   // ask for system service name
   const osService = expert ? await askOsService() : "saltcorn";
   if (verbose) console.log({ osService });
+
+  // ask for docker mode
+  const dockerMode = await askDockerMode();
+  if (verbose) console.log({ dockerMode });
 
   // install system pkg
   await installSystemPackages(osInfo, user, db, mode, port, dryRun);
@@ -707,10 +751,14 @@ User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
 Restart=always
-Environment="NODE_ENV=production"
+Environment="NODE_ENV=production" ${
+        dockerMode === "rootless"
+          ? `"DOCKER_HOST=unix:///run/user/${"1001"}/docker.sock" "DOCKER_BIN=/home/${user}/bin"`
+          : ""
+      }
 
-[Install]
-WantedBy=multi-user.target`
+  [Install]
+  WantedBy=multi-user.target`
     );
   await asyncSudo(
     [
@@ -777,6 +825,18 @@ WantedBy=multi-user.target`
   await asyncSudo(["systemctl", "start", osService], false, dryRun);
   await asyncSudo(["systemctl", "enable", osService], false, dryRun);
   if (!hasSDnotify) await asyncSudo(["sleep", "5"], false, dryRun);
+
+  await asyncSudo(
+    ["apt", "install", "-y", "uidmap", "dbus-user-session"],
+    false,
+    dryRun
+  );
+
+  await writeAppArmoreFile(user);
+  await asyncSudo(["systemctl", "restart", "apparmor.service"]);
+  await runDockerRootlessScript(user);
+
+  // await asyncSudo(["systemctl", "enable", "docker"], false, dryRun);
 
   // ask if and how the cordova-builder image should be set up
   await handleCordovaBuilder(user, dryRun);

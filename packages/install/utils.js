@@ -1,8 +1,9 @@
 const sudo = require("sudo");
 const { is } = require("contractis");
-const { execSync, spawnSync } = require("child_process");
+const { execSync, spawnSync, spawn } = require("child_process");
 const os = require("os");
 const crypto = require("crypto");
+const { writeFileSync } = require("fs");
 
 /**
  * Execute os  sudo command with args
@@ -30,24 +31,83 @@ const asyncSudo = (args, allowFail, dryRun) => {
     });
 };
 
+const writeAppArmoreFile = async (user) => {
+  const fileName = `/home/${user}/bin/rootlesskit`
+    .replace(/^\/?/, "")
+    .replace(/\//g, ".");
+
+  writeFileSync(
+    os.homedir() + "/" + fileName,
+    `abi <abi/4.0>,
+include <tunables/global>
+
+"/home/saltcorn/bin/rootlesskit" flags=(unconfined) {
+  userns,
+
+  include if exists <local/${fileName}>
+}`
+  );
+  await asyncSudo([
+    "mv",
+    os.homedir() + "/" + fileName,
+    `/etc/apparmor.d/${fileName}`,
+  ]);
+};
+
+const runDockerRootlessScript = async (user) => {
+  await asyncSudoUser(user, ["mkdir", "-p", `/home/${user}/bin`], false, false);
+  await asyncSudoUser(
+    user,
+    ["curl", "-fsSL", "https://get.docker.com/rootless", "-o", "get-docker.sh"],
+    false,
+    false
+  );
+  await asyncSudo(["loginctl", "enable-linger", "saltcorn"], false, false);
+  await asyncSudo(
+    ["apt-get", "install", "-y", "systemd-container"],
+    false,
+    false
+  );
+  await asyncSudo(
+    ["machinectl", "shell", "saltcorn@", "/bin/bash", "get-docker.sh"],
+    false,
+    false
+  );
+};
+
 /**
  * run docker pull saltcorn/cordova-builder as another user
  * and preserver DOCKER_HOST environment variable
  * @param user - user to run docker with
  */
-const pullWithSudo = (user) => {
-  const res = spawnSync("sudo", [
-    "--preserve-env=DOCKER_HOST",
-    "-iu",
-    user,
-    "docker",
-    "pull",
-    "saltcorn/cordova-builder",
-  ]);
-  console.log(res.stdout.toString());
-  if (res.status !== 0) {
-    console.error("Error pulling docker image");
-    console.log(res.stderr?.toString());
+const pullWithSudo = async (user, dockerMode) => {
+  if (dockerMode === "rootless") {
+    await asyncSudo(
+      [
+        "machinectl",
+        "shell",
+        `${user}@`,
+        "/bin/bash",
+        "--login",
+        "-c",
+        "docker pull saltcorn/cordova-builder",
+      ],
+      false,
+      false
+    );
+  } else {
+    const res = spawnSync("sudo", [
+      "-iu",
+      user,
+      "docker",
+      "pull",
+      "saltcorn/cordova-builder",
+    ]);
+    console.log(res.stdout.toString());
+    if (res.status !== 0) {
+      console.error("Error pulling docker image");
+      console.log(res.stderr?.toString());
+    }
   }
 };
 /**
@@ -101,4 +161,6 @@ module.exports = {
   gen_password,
   genJwtSecret,
   pullWithSudo,
+  writeAppArmoreFile,
+  runDockerRootlessScript,
 };
