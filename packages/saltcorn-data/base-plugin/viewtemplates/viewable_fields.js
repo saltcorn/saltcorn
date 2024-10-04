@@ -191,6 +191,8 @@ const make_link = (
     in_modal,
     link_icon,
     icon,
+    link_style,
+    link_size,
   },
   fields,
   __ = (s) => s
@@ -211,7 +213,9 @@ const make_link = (
 
       const attrs = { href };
       if (link_target_blank) attrs.target = "_blank";
-      if (in_dropdown) attrs.class = "dropdown-item";
+      if (in_dropdown) attrs.class = ["dropdown-item"];
+      if (link_style) attrs.class = [...(attrs.class || []), link_style];
+      if (link_size) attrs.class = [...(attrs.class || []), link_size];
       if (in_modal)
         return a(
           {
