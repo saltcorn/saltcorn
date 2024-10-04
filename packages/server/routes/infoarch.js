@@ -14,7 +14,7 @@ const {
 } = require("../markup/admin.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { div, a, i, text } = require("@saltcorn/markup/tags");
-const { mkTable, renderForm } = require("@saltcorn/markup");
+const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 
 /**
@@ -118,6 +118,15 @@ router.get(
                         class: "fas fa-check-circle text-success",
                       })
                     : "",
+              },
+              {
+                label: req.__("Delete"),
+                key: (r) =>
+                  post_delete_btn(
+                    `/site-structure/localizer/delete-lang/${r.locale}`,
+                    req,
+                    r.name
+                  ),
               },
             ],
             Object.values(cfgLangs)
@@ -285,5 +294,27 @@ router.post(
         res.redirect(`/site-structure/localizer/edit/${lang.locale}`);
       else res.json({ success: "ok" });
     }
+  })
+);
+
+/**
+ * @name post/localizer/save-lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.post(
+  "/localizer/delete-lang/:lang",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { lang } = req.params;
+
+    const cfgLangs = getState().getConfig("localizer_languages");
+    if (cfgLangs[lang]) {
+      delete cfgLangs[lang];
+      await getState().setConfig("localizer_languages", cfgLangs);
+    }
+    if (!req.xhr) res.redirect(`/site-structure/localizer`);
+    else res.json({ success: "ok" });
   })
 );
