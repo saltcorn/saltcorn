@@ -162,7 +162,7 @@ test.describe('E2E Test Suite', () => {
     test('Add aggregation on people show view', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(4000);
         // Remove the edit button
         await page.click(pageobject.editIconLocator);
         await page.click(pageobject.deletebutton);
@@ -203,7 +203,7 @@ test.describe('E2E Test Suite', () => {
     test('Add Show person link on people list', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(4000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
             await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn7);
@@ -213,7 +213,7 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.view2showpeople);
         });
         await functions.fill_Text(pageobject.lebelforfield, 'Show');
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
         await page.click(pageobject.nextoption);
         await functions.views();
         await page.click(pageobject.PeopleList);

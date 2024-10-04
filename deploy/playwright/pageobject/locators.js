@@ -506,7 +506,7 @@ class PageLocators {
     this.AddressInput = '#inputaddress';
     this.Addresstext = 'div.d-inline:has-text("HN 01, WN 26 noida india")';
     this.LineBreakElement = 'div.wrap-builder-elem[title="Line break"]';
-    this.EditButton6 = 'a.btn.btn-primary[href="/view/Edit_People?id=6"]';
+    this.EditButton2 = 'a.btn.btn-primary[href="/view/Edit_People?id=2"]';
     this.assignedToTab = 'div.tabulator-cell[tabulator-field="assigned_to"]';
     this.assignedToTab2 = '(//div[@class="tabulator-cell" and @tabulator-field="assigned_to"])[2]';
     this.assignedToTab3 = '(//div[@class="tabulator-cell" and @tabulator-field="assigned_to"])[3]';
@@ -571,7 +571,15 @@ class PageLocators {
     this.inputrelation = '#inputrelation';
     this.view2taskbadge = 'text=PersonTaskBadges [Badges] People';
     this.badgeLocator = 'span.badge.bg-secondary:has-text("Buy Milk")';
-
+    this.taskHelper = 'a:has-text("Task_Helper")';
+    this.HelperCell = 'div.tabulator-cell[tabulator-field="helper"]';
+    this.TaskCell = 'div.tabulator-cell[tabulator-field="task"]';
+    this.TaskCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="task"])[2]';
+    this.TaskCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="task"])[3]';
+    this.view2editHelper = 'text=Edit_Helper [EditBadges] People';
+    this.txttaskbadge = 'text=View: PersonTaskBadges [Badges] People';
+    this.closeIcon = 'i.ms-1.fas.fa-lg.fa-times';
+    this.plusIconbadge = 'i.fas.fa-lg.fa-plus';
   }
 }
 

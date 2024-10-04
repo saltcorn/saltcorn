@@ -129,6 +129,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // select full name lable
+        await page.waitForTimeout(4000);
         await page.click(pageobject.Fullnameshow);
         // delete lable for full name
         await page.click(pageobject.deletebutton);
@@ -161,7 +162,7 @@ test.describe('E2E Test Suite', () => {
         await functions.drag_And_Drop(pageobject.addresslabel, pageobject.thirdrowcolumn1);
         await page.click(pageobject.firstrowcolumn1);
         await functions.fill_Text(pageobject.NumberInput, '6');
-
+        await page.waitForTimeout(4000);
         // click on next button
         await page.click(pageobject.nextoption);
     });
@@ -225,7 +226,7 @@ test.describe('E2E Test Suite', () => {
             await expect(page.getByText('Edward')).toBeVisible();
         });
         await customAssert('Edit Newly added record in table', async () => {
-            await page.click(pageobject.EditButton6);
+            await page.click(pageobject.EditButton2);
             await functions.fill_Text(pageobject.AddressInput, 'HN 02, WN 27 Noida India ');
             await page.click(pageobject.saveactionbutton);
         });
