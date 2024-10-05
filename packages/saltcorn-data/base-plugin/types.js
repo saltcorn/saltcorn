@@ -2043,7 +2043,9 @@ const date = {
           name: "format",
           label: "Format",
           type: "String",
-          sublabel: "moment.js format specifier",
+          help: {
+            topic: "Date format",
+          },
         },
       ],
       run: (d, req, options) => {

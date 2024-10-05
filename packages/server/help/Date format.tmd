@@ -1,0 +1,4 @@
+You can define how a state value should be shown by specifying a date format String
+which supports a range of formatting options. The formatting is provided by the 
+[Day.js](https://day.js.org/docs/en/display/format) library with the 
+[AdvancedFormat](https://day.js.org/docs/en/plugin/advanced-format) extension.
