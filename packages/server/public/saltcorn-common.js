@@ -1365,10 +1365,14 @@ function notifyAlert(note, spin) {
   if (typeof note == "string") {
     txt = note;
     type = "info";
-  } else {
+  } else if (note.text) {
     txt = note.text;
-    type = note.type;
+    type = note.type || "info";
+  } else {
+    type = "info";
+    txt = JSON.stringify(note, null, 2);
   }
+
   const { id, html } = buildToast(txt, type, spin);
   let $modal = $("#scmodal");
   if ($modal.length && $modal.hasClass("show"))

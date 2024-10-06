@@ -5,6 +5,7 @@ const _ = require("underscore");
 const fs = require("fs").promises;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
+const moment = require("moment");
 
 const { pre } = require("@saltcorn/markup/tags");
 const path = require("path");
@@ -33,6 +34,7 @@ const get_help_markup = async (topic, query, req) => {
       scState: getState(),
       query,
       oneOf,
+      moment,
     };
     const mdTemplate = await get_md_file(topic);
     if (!mdTemplate) return { markup: "Topic not found" };
