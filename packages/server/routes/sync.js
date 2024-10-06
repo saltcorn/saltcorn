@@ -335,7 +335,7 @@ router.post(
   "/clean_sync_dir",
   error_catcher(async (req, res) => {
     const { dir_name } = req.body;
-    const safe_dir_name = File.normalize(dir_name);
+    const safe_dir_name = File.normalise(dir_name);
     try {
       const rootFolder = await File.rootFolder();
       const syncDir = path.join(
