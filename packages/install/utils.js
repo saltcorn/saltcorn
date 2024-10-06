@@ -51,6 +51,19 @@ const getDockerEnvVars = (user, dockerMode) => {
   return result;
 };
 
+const armorFileNeeded = (osInfo) => {
+  if (osInfo.distro === "Ubuntu") {
+    const tokens = osInfo.release.split(".");
+    if (tokens.length >= 2) {
+      const major = parseInt(tokens[0]);
+      const minor = parseInt(tokens[1]);
+      if (major > 24) return true;
+      else if (major === 24) return minor >= 4;
+    }
+  }
+  return false;
+};
+
 const setupDocker = async (
   user,
   dockerMode,
@@ -65,10 +78,7 @@ const setupDocker = async (
       false,
       dryRun
     );
-    if (!dryRun) {
-      // TODO check if ubuntu and osInfo.version needs an appArmor file
-      await writeAppArmoreFile(user);
-    }
+    if (armorFileNeeded(osInfo)) await writeAppArmoreFile(user, dryRun);
     await asyncSudo(
       ["systemctl", "restart", "apparmor.service"],
       false,
@@ -110,11 +120,11 @@ const pullCordovaBuilder = async (user, dockerMode, dryRun) => {
   } else throw new Error(`Unknown docker mode ${dockerMode}`);
 };
 
-const writeAppArmoreFile = async (user) => {
+const writeAppArmoreFile = async (user, dryRun) => {
   const fileName = `/home/${user}/bin/rootlesskit`
     .replace(/^\/?/, "")
     .replace(/\//g, ".");
-
+  if (dryRun) return;
   writeFileSync(
     os.homedir() + "/" + fileName,
     `abi <abi/4.0>,
@@ -218,7 +228,6 @@ module.exports = {
   asyncSudoUser,
   gen_password,
   genJwtSecret,
-  writeAppArmoreFile,
   setupDocker,
   pullCordovaBuilder,
   getDockerEnvVars,
