@@ -372,7 +372,7 @@ describe("Misc Show views", () => {
           style: {},
           inline: false,
           contents:
-            'publisher.name[0] + ". " + (publisher.name).match(/([ ][^ ])(?=[^ ])/g)[0]',
+            'publisher.name[0] + ". " + (publisher.name).match(/(.*?)/g)[0]',
           labelFor: "",
           isFormula: {
             text: true,
@@ -382,9 +382,7 @@ describe("Misc Show views", () => {
         columns: [],
       },
     });
-    const vres1 = await view.run({ id: 1 }, mockReqRes);
-    expect(vres1).toContain(
-      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist"><div class="table-responsive"><table'
-    );
+    const vres1 = await view.run({ id: 2 }, mockReqRes);
+    expect(vres1).toBe("A. ");
   });
 });
