@@ -646,6 +646,7 @@ class State {
     this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
+    let hasFunctions = false;
     const withCfg = (key: string, def?: any) =>
       plugin.configuration_workflow
         ? plugin[key]
@@ -661,6 +662,7 @@ class State {
     });
     Object.entries(withCfg("functions", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
+        hasFunctions = true;
         this.functions[k] = v;
         this.function_context[k] = typeof v === "function" ? v : v.run;
       }
@@ -726,6 +728,8 @@ class State {
     const routes = withCfg("routes", []);
     this.plugin_routes[name] = routes;
     if (routes.length > 0 && this.routesChangedCb) this.routesChangedCb();
+    if (hasFunctions)
+      this.refresh_codepages(true).catch((e) => console.error(e));
   }
 
   /**
