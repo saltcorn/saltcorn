@@ -484,12 +484,19 @@ describe("free variables", () => {
     expect([...freeVariables("x.k.y+x.z")]).toEqual(["x.k.y", "x.z"]);
   });
   it("record double access with function", () => {
-    expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["x.k.y"]);
+    expect([...freeVariables("Math.floor(x.k)")]).toEqual(["Math", "x.k"]);
+    expect([...freeVariables("Math.floor(x)")]).toEqual(["Math", "x"]);
+    expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["Math", "x.k.y"]);
+    expect([...freeVariables("Math.floor(x.k.y.w)")]).toEqual([
+      "Math",
+      "x.k.y.w",
+    ]);
   });
   it("does not include match function calls", () => {
     expect([...freeVariables("x.k.match(/xx/)")]).toEqual(["x.k"]);
     expect([...freeVariables("myFun(k)")]).toEqual(["myFun", "k"]);
     expect([...freeVariables("myFun(x.k)")]).toEqual(["myFun", "x.k"]);
+    expect([...freeVariables("Foo.myFun(x.k)")]).toEqual(["Foo", "x.k"]);
     expect([...freeVariables("foo.match(/xx/)")]).toEqual(["foo"]);
     expect([...freeVariables("foo[0]")]).toEqual(["foo"]);
   });

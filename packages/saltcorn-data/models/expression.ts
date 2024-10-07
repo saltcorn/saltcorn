@@ -393,7 +393,12 @@ function freeVariables(expression: string): Set<string> {
   });
   //console.log(JSON.stringify(ast, null, 2));
 
+  const fvsAtCall: any = {};
   traverse(ast, {
+    enter: function (node) {
+      if (node.type === "CallExpression")
+        fvsAtCall[(node as any).start] = [...freeVars];
+    },
     leave: function (node) {
       //console.log(node);
 
@@ -401,10 +406,14 @@ function freeVariables(expression: string): Set<string> {
         node.type === "CallExpression" &&
         node.callee.type == "MemberExpression"
       ) {
-        const last = freeVars[freeVars.length - 1];
-        const parts = last.split(".");
-        parts.pop();
-        freeVars[freeVars.length - 1] = parts.join(".");
+        const prevFreeVars = fvsAtCall[(node as any).start];
+        const last = freeVars[prevFreeVars.length];
+
+        if (last) {
+          const parts = last.split(".");
+          parts.pop();
+          freeVars[prevFreeVars.length] = parts.join(".");
+        }
       }
       if (node.type === "Identifier") {
         freeVars.push(node.name);
@@ -428,7 +437,7 @@ function freeVariables(expression: string): Set<string> {
           node.object.property.type === "Identifier" &&
           node.property.type === "Identifier"
         ) {
-          freeVars.pop();
+          //freeVars.pop();
           freeVars.pop();
           freeVars.pop();
           freeVars.push(
@@ -442,8 +451,8 @@ function freeVariables(expression: string): Set<string> {
           node.object.property.type === "Identifier" &&
           node.property.type === "Identifier"
         ) {
-          freeVars.pop();
-          freeVars.pop();
+          //freeVars.pop();
+          //freeVars.pop();
           freeVars.pop();
           freeVars.pop();
           freeVars.push(
