@@ -572,8 +572,6 @@ function eval_expression(
   user?: any,
   errorLocation?: string
 ): any {
-  console.log("row", row);
-
   try {
     const field_names = Object.keys(row).filter(
       (nm) =>
