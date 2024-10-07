@@ -20,6 +20,7 @@ docker run -d -v /tmp/scfiles:/db --name saltdocktest -e SQLITE_FILEPATH=/db/db.
 sleep 8
 
 wget -v -O /dev/null http://localhost:3000/files/serve/1.webp
+wget -v -O /dev/null http://localhost:3000/files/resize/100/100/1.webp
 sleep 5
 echo "Logs:"
 docker logs saltdocktest
