@@ -411,6 +411,11 @@ function freeVariables(expression: string): Set<string> {
       }
       if (node.type === "MemberExpression") {
         if (
+          node.property.type === "Identifier" &&
+          node.property.name === "length"
+        ) {
+          freeVars.pop();
+        } else if (
           node.object.type === "Identifier" &&
           node.property.type === "Identifier"
         ) {
