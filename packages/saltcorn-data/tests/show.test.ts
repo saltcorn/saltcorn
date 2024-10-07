@@ -361,4 +361,30 @@ describe("Misc Show views", () => {
       '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist"><div class="table-responsive"><table'
     );
   });
+  it("fixes issue 2632", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          font: "",
+          icon: "",
+          type: "blank",
+          block: false,
+          style: {},
+          inline: false,
+          contents:
+            'publisher.name[0] + ". " + (publisher.name).match(/([ ][^ ])(?=[^ ])/g)[0]',
+          labelFor: "",
+          isFormula: {
+            text: true,
+          },
+          textStyle: "",
+        },
+        columns: [],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain(
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist"><div class="table-responsive"><table'
+    );
+  });
 });
