@@ -283,7 +283,9 @@ const show_with_html = {
   isEdit: false,
   description: "Show value with any HTML code",
   run: (v, req, attrs = {}) => {
-    const rendered = interpolate(attrs?.code, { it: v }, req?.user);
+    const ctx = { ...getState().eval_context };
+    ctx.it = v;
+    const rendered = interpolate(attrs?.code, ctx, req?.user);
     return rendered;
   },
 };

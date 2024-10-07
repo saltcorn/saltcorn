@@ -546,7 +546,10 @@ router.get(
     let trigger;
     let id = parseInt(idorname);
     if (id) trigger = await Trigger.findOne({ id });
-    else trigger = await Trigger.findOne({ name: idorname });
+    else {
+      trigger = await Trigger.findOne({ name: idorname });
+      id = trigger.id;
+    }
 
     if (!trigger) {
       req.flash("warning", req.__("Action not found"));

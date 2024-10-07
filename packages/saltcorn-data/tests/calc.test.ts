@@ -484,10 +484,36 @@ describe("free variables", () => {
     expect([...freeVariables("x.k.y+x.z")]).toEqual(["x.k.y", "x.z"]);
   });
   it("record double access with function", () => {
-    expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["x.k.y"]);
+    expect([...freeVariables("Math.floor(x.k)")]).toEqual(["Math", "x.k"]);
+    expect([...freeVariables("Math.floor(x)")]).toEqual(["Math", "x"]);
+    expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["Math", "x.k.y"]);
+    expect([...freeVariables("Math.floor(x.k.y.w)")]).toEqual([
+      "Math",
+      "x.k.y.w",
+    ]);
   });
+  it("does not include match function calls", () => {
+    expect([...freeVariables("x.k.match(/xx/)")]).toEqual(["x.k"]);
+    expect([...freeVariables("x.k.map(g).includes(y)")]).toContain("x.k");
+    expect([...freeVariables("myFun(k)")]).toEqual(["myFun", "k"]);
+    expect([...freeVariables("myFun(x.k)")]).toEqual(["myFun", "x.k"]);
+    expect([...freeVariables("Foo.myFun(x.k)")]).toEqual(["Foo", "x.k"]);
+    expect([...freeVariables("foo.match(/xx/)")]).toEqual(["foo"]);
+    expect([...freeVariables("foo[0]")]).toEqual(["foo"]);
+    expect([...freeVariables("x.k.map(g)")]).toEqual(["x.k", "g"]);
+  });
+  it("does not include length", () => {
+    expect([...freeVariables("x.k.length")]).toEqual(["x.k"]);
+    expect([...freeVariables("x.length")]).toEqual(["x"]);
+  });
+
   it("chain record access", () => {
     expect([...freeVariables("1+x?.k")]).toEqual(["x.k"]);
+  });
+  it("user ownership with group", () => {
+    expect([
+      ...freeVariables("user.books_by_editor.map(b=>b.id).includes(id)"),
+    ]).toContain("user.books_by_editor");
   });
   it("in interpolation", () => {
     expect([...freeVariablesInInterpolation("hello {{2+x.k}}")]).toEqual([
