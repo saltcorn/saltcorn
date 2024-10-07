@@ -486,6 +486,13 @@ describe("free variables", () => {
   it("record double access with function", () => {
     expect([...freeVariables("Math.floor(x.k.y)")]).toEqual(["x.k.y"]);
   });
+  it("does not include match function calls", () => {
+    expect([...freeVariables("x.k.match(/xx/)")]).toEqual(["x.k"]);
+  });
+  it("does not include length", () => {
+    expect([...freeVariables("x.k.length")]).toEqual(["x.k"]);
+  });
+
   it("chain record access", () => {
     expect([...freeVariables("1+x?.k")]).toEqual(["x.k"]);
   });
