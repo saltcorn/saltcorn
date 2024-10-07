@@ -385,38 +385,40 @@ function freeVariablesInInterpolation(interpString: string): Set<string> {
 
 function freeVariables(expression: string): Set<string> {
   if (!expression) return new Set();
-  const freeVars: string[] = [];
   const ast: any = parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,
     allowAwaitOutsideFunction: true,
     locations: false,
   });
+  return new Set(freeVariablesAST(ast));
+}
+function freeVariablesAST(ast: any): Array<string> {
+  const freeVars: string[] = [];
   //console.log(JSON.stringify(ast, null, 2));
 
-  const fvsAtCall: any = {};
+  //const fvsAtCall: any = {};
   traverse(ast, {
     enter: function (node) {
-      if (node.type === "CallExpression")
-        fvsAtCall[(node as any).start] = [...freeVars];
+      if (node.type === "CallExpression") {
+        // the rule here is: if the callee of a CallExpression is a member, the
+        // last member get removed.
+        const calleeFvs = freeVariablesAST(node.callee);
+        const argFvs = node.arguments.map(freeVariablesAST).flat();
+        if (calleeFvs.length === 1) {
+          const parts = calleeFvs[0].split(".");
+          if (parts.length > 1) {
+            parts.pop();
+            calleeFvs[0] = parts.join(".");
+          }
+        }
+        freeVars.push(...calleeFvs.filter(Boolean));
+        freeVars.push(...argFvs);
+        return this.skip();
+      }
     },
     leave: function (node) {
       //console.log(node);
 
-      if (
-        node.type === "CallExpression" &&
-        node.callee.type == "MemberExpression"
-      ) {
-        // the rule here is: if the callee of a CallExpression is a member, the
-        // last member get removed.
-        const prevFreeVars = fvsAtCall[(node as any).start];
-        const last = freeVars[prevFreeVars.length];
-
-        if (last) {
-          const parts = last.split(".");
-          parts.pop();
-          freeVars[prevFreeVars.length] = parts.join(".");
-        }
-      }
       if (node.type === "Identifier") {
         freeVars.push(node.name);
       }
@@ -466,7 +468,7 @@ function freeVariables(expression: string): Set<string> {
   });
   //console.log(expression, freeVars);
 
-  return new Set(freeVars);
+  return freeVars;
 }
 
 /**

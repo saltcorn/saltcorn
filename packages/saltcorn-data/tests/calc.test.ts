@@ -494,11 +494,13 @@ describe("free variables", () => {
   });
   it("does not include match function calls", () => {
     expect([...freeVariables("x.k.match(/xx/)")]).toEqual(["x.k"]);
+    expect([...freeVariables("x.k.map(g).includes(y)")]).toContain("x.k");
     expect([...freeVariables("myFun(k)")]).toEqual(["myFun", "k"]);
     expect([...freeVariables("myFun(x.k)")]).toEqual(["myFun", "x.k"]);
     expect([...freeVariables("Foo.myFun(x.k)")]).toEqual(["Foo", "x.k"]);
     expect([...freeVariables("foo.match(/xx/)")]).toEqual(["foo"]);
     expect([...freeVariables("foo[0]")]).toEqual(["foo"]);
+    expect([...freeVariables("x.k.map(g)")]).toEqual(["x.k", "g"]);
   });
   it("does not include length", () => {
     expect([...freeVariables("x.k.length")]).toEqual(["x.k"]);
@@ -507,6 +509,11 @@ describe("free variables", () => {
 
   it("chain record access", () => {
     expect([...freeVariables("1+x?.k")]).toEqual(["x.k"]);
+  });
+  it("user ownership with group", () => {
+    expect([
+      ...freeVariables("user.books_by_editor.map(b=>b.id).includes(id)"),
+    ]).toContain("user.books_by_editor");
   });
   it("in interpolation", () => {
     expect([...freeVariablesInInterpolation("hello {{2+x.k}}")]).toEqual([
