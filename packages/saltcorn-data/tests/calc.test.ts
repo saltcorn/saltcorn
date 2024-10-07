@@ -488,9 +488,14 @@ describe("free variables", () => {
   });
   it("does not include match function calls", () => {
     expect([...freeVariables("x.k.match(/xx/)")]).toEqual(["x.k"]);
+    expect([...freeVariables("myFun(k)")]).toEqual(["myFun", "k"]);
+    expect([...freeVariables("myFun(x.k)")]).toEqual(["myFun", "x.k"]);
+    expect([...freeVariables("foo.match(/xx/)")]).toEqual(["foo"]);
+    expect([...freeVariables("foo[0]")]).toEqual(["foo"]);
   });
   it("does not include length", () => {
     expect([...freeVariables("x.k.length")]).toEqual(["x.k"]);
+    expect([...freeVariables("x.length")]).toEqual(["x"]);
   });
 
   it("chain record access", () => {
