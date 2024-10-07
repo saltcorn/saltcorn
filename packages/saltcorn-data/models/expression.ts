@@ -397,6 +397,15 @@ function freeVariables(expression: string): Set<string> {
     leave: function (node) {
       //console.log(node);
 
+      if (
+        node.type === "CallExpression" &&
+        node.callee.type == "MemberExpression"
+      ) {
+        const last = freeVars[freeVars.length - 1];
+        const parts = last.split(".");
+        parts.pop();
+        freeVars[freeVars.length - 1] = parts.join(".");
+      }
       if (node.type === "Identifier") {
         freeVars.push(node.name);
       }
@@ -558,6 +567,8 @@ function eval_expression(
   user?: any,
   errorLocation?: string
 ): any {
+  console.log("row", row);
+
   try {
     const field_names = Object.keys(row).filter(
       (nm) =>
