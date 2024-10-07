@@ -2,7 +2,8 @@
 
 set -e
 
-docker run -it -v ~/tmp:/db -e SQLITE_FILEPATH=/db/db.sqlite -e SALTCORN_SESSION_SECRET=s3cr3t saltcorn/saltcorn reset-schema -f
+docker run -it -v ~/tmp:/db --name saltdocktest -e SQLITE_FILEPATH=/db/db.sqlite -e SALTCORN_SESSION_SECRET=s3cr3t saltcorn/saltcorn reset-schema -f
+trap "docker rm -f saltdocktest" EXIT
 mkdir /tmp/scfiles
 docker run -d -v ~/tmp:/db -e SQLITE_FILEPATH=/db/db.sqlite -e SALTCORN_FILE_STORE=/db/scfiles -p 3000:3000 saltcorn/saltcorn serve
 cd /tmp/scfiles
