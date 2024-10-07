@@ -3224,8 +3224,8 @@ router.post(
   error_catcher(async (req, res) => {
     const state = getState();
     const child = spawn(
-      "docker",
-      ["image", "pull", "saltcorn/cordova-builder:latest"],
+      `${process.env.DOCKER_BIN ? `${process.env.DOCKER_BIN}/` : ""}docker`,
+      ["pull", "saltcorn/cordova-builder:latest"],
       {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: ".",
