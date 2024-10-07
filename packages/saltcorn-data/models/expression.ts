@@ -406,6 +406,8 @@ function freeVariables(expression: string): Set<string> {
         node.type === "CallExpression" &&
         node.callee.type == "MemberExpression"
       ) {
+        // the rule here is: if the callee of a CallExpression is a member, the
+        // last member get removed.
         const prevFreeVars = fvsAtCall[(node as any).start];
         const last = freeVars[prevFreeVars.length];
 
