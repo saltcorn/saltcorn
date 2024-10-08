@@ -479,7 +479,15 @@ const install_pack = async (
     else await Library.create(lib);
   }
   // create tables (users skipped because created by other ways)
-  for (const tableSpec of pack.tables) {
+
+  // tables with a provider go last because they can depend on presence 
+  // of other tables
+  const packTables = pack.tables.sort((left, right) =>
+    left.provider_name
+      ? 1
+      : right.provider_name ? -1
+        : 0)
+  for (const tableSpec of packTables) {
     if (tableSpec.name !== "users") {
       let tbl_pk;
       const existing = Table.findOne({ name: tableSpec.name });
