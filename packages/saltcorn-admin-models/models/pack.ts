@@ -432,7 +432,10 @@ const add_to_menu = async (item: {
   item.min_role = old_to_new_role(item.min_role);
   const current_menu = getState().getConfigCopy("menu_items", []);
   const existing = current_menu.findIndex((m: any) => m.label === item.label);
-  if (existing >= 0) current_menu[existing] = item;
+  if (existing >= 0) {
+    //current_menu[existing] = item;
+    //do not change exisiting menu item
+  }
   else current_menu.push(item);
   await save_menu_items(current_menu);
 };
