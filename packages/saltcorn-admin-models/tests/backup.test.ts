@@ -20,12 +20,15 @@ import {
 } from "@saltcorn/data/tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import Field from "@saltcorn/data/models/field";
+import mocks from "@saltcorn/data/tests/mocks";
+const { mockReqRes, plugin_with_routes } = mocks;
 
 afterAll(db.close);
 
 beforeAll(async () => {
   await require("@saltcorn/data/db/reset_schema")();
   await require("@saltcorn/data/db/fixtures")();
+  getState().registerPlugin("mock_plugin", plugin_with_routes());
 });
 jest.setTimeout(30000);
 
@@ -85,6 +88,13 @@ describe("Backup and restore", () => {
       icon: "fa-bar",
       layout: { baz: "bar" },
     });
+
+
+    await Table.create("JoeTable", {
+      provider_name: "provtab",
+      provider_cfg: { middle_name: "Robinette" },
+    });
+    await getState().refresh_tables();
 
     const fnm = await create_backup();
     const t1 = Table.findOne({ name: "books" });
@@ -150,6 +160,9 @@ describe("Backup and restore", () => {
     expect(!!htrig).toBe(true);
     const lib = await Library.findOne({ name: "foo" });
     expect(!!lib).toBe(true);
+    const tp = Table.findOne({ name: "JoeTable" });
+    expect(tp?.provider_name).toBe("provtab")
+    expect(tp?.provider_cfg?.middle_name).toBe("Robinette")
 
     expect(staff.checkPassword("ghrarhr54hg")).toBe(true);
   });
