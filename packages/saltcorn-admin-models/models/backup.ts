@@ -508,7 +508,7 @@ const restore = async (
   restore_first_user?: boolean
 ): Promise<string | void> => {
   const state = getState();
-  state.log(1, `Starting restore to tenant ${db.getTenantSchema()}`);
+  state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
   //unzip
@@ -559,7 +559,7 @@ const restore = async (
 
   await tmpDir.cleanup();
   state.log(
-    1,
+    2,
     `Completed restore to tenant ${db.getTenantSchema()}${
       err ? ` with errors ${err}` : " successfully"
     }`
