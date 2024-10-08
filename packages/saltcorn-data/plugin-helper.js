@@ -2333,7 +2333,9 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       (x) =>
       ([k, v]) => {
         if (Array.isArray(v)) return v.every((v1) => sat(x)([k, v1]));
+        else if (v?.lt && v?.equal) return x[k] <= +v.lt;
         else if (v?.lt) return x[k] < +v.lt;
+        else if (v?.gt && v?.equal) return x[k] >= +v.gt;
         else if (v?.gt) return x[k] > +v.gt;
         else if (v?.ilike) return (x[k] || "").includes(v.ilike);
         else return x[k] == v;
