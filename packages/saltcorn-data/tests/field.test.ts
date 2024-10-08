@@ -39,6 +39,16 @@ describe("Field", () => {
     expect(fs.length).toBe(0);
     const fs1 = await Field.find({ name: "height1" }, { cached: true });
     expect(fs1.length).toBe(0);
+    const fc_recreate = await Field.create({
+      table: patients,
+      label: "Height1",
+      type: "Integer",
+      required: true,
+      attributes: { default: 6 },
+    });
+    assertIsSet(fc_recreate.id);
+    expect(fc_recreate.id > 0).toBe(true);
+    
   });
   it("should add and then delete nonrequired field", async () => {
     const patients = Table.findOne({ name: "patients" });
