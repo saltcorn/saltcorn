@@ -798,7 +798,7 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: (t) => code(t.name) },
-          ...(table.external || db.isSQLite
+          ...(table.external
             ? []
             : [
                 {
