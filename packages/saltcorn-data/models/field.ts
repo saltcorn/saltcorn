@@ -956,6 +956,7 @@ class Field implements AbstractField {
     await db.deleteWhere("_sc_fields", { id: this.id }, { client });
 
     if (!this.calculated || this.stored) {
+      if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
       await client.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
