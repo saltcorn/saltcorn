@@ -677,7 +677,7 @@ const ConfigForm = ({
         if (noshow) return null;
       }
       return (
-        <div key={ix} className="builder-config-field">
+        <div key={ix} className="builder-config-field" data-field-name={f.name}>
           {!isCheckbox(f) ? (
             <label>
               {f.label || f.name}
