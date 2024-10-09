@@ -1513,7 +1513,7 @@ const picked_fields_to_query = (columns, fields, layout, req, table) => {
   let joinFields = {};
   let aggregations = {};
   let freeVars = new Set(); // for join fields
-  const locale = req.getLocale();
+  const locale = req?.getLocale?.();
 
   (columns || []).forEach((column) => {
     if (column.type === "JoinField") {
