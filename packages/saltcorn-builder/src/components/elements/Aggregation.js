@@ -14,6 +14,7 @@ import {
   setAPropGen,
   buildOptions,
   ConfigForm,
+  HelpTopicLink,
 } from "./utils";
 
 export /**
@@ -215,7 +216,16 @@ const AggregationSettings = () => {
           </tr>
           <tr>
             <td>
-              <label>Where</label>
+              <label>
+                Where
+                <HelpTopicLink
+                  topic="Aggregation where formula"
+                  table_name={options.tableName}
+                  mode={options.mode}
+                  agg_relation={agg_relation}
+                  agg_field={agg_field}
+                ></HelpTopicLink>
+              </label>
             </td>
             <td>
               <input

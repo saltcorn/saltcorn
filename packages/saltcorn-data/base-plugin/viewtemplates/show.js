@@ -134,9 +134,19 @@ const configuration_workflow = (req) =>
           const actionConfigForms = {
             Delete: [
               {
+                name: "after_delete_action",
+                label: req.__("After delete"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: ["Go to URL", "Reload page"],
+                },
+              },
+              {
                 name: "after_delete_url",
                 label: req.__("URL after delete"),
                 type: "String",
+                showIf: { after_delete_action: "Go to URL" },
               },
             ],
           };
@@ -921,7 +931,17 @@ const render = (
         "rndid",
         segment.confirm
       );
-      if (segment.action_name === "Delete")
+      if (
+        segment.action_name === "Delete" &&
+        segment.configuration?.after_delete_action == "Reload page"
+      ) {
+        url = {
+          javascript: `ajax_post('/delete/${table.name}/${
+            row[table.pk_name]
+          }', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+        };
+        return action_link(url, req, segment);
+      } else if (segment.action_name === "Delete")
         url = `/delete/${table.name}/${
           row[table.pk_name]
         }?redirect=${encodeURIComponent(
