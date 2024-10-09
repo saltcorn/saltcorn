@@ -867,6 +867,7 @@ const string = {
               {
                 class:
                   "btn btn-secondary btn-sm monospace-copy-btn m-1 d-none-prefer",
+                type: "button",
                 onclick: "copy_monospace_block(this)",
               },
               i({ class: "fas fa-copy" })
