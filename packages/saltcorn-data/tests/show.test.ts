@@ -100,12 +100,13 @@ const accordionConfig = {
   },
 };
 
-const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
+const mkViewWithCfg = async (viewCfgIn: any): Promise<View> => {
+  const { name, ...viewCfg } = viewCfgIn;
   return await View.create({
     viewtemplate: "Show",
     description: "",
     min_role: 1,
-    name: `someView${Math.round(Math.random() * 100000)}`,
+    name: name || `someView${Math.round(Math.random() * 100000)}`,
     table_id: Table.findOne("books")?.id,
     default_render_page: "",
     slug: {
@@ -384,5 +385,69 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 2 }, mockReqRes);
     expect(vres1).toBe("A. ");
+  });
+});
+
+describe("field localisation in show view", () => {
+  it("should setup", async () => {
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    await Field.create({
+      name: "german_name",
+      label: "German name",
+      type: "String",
+      table: books,
+      attributes: {
+        locale: "de",
+
+        localizes_field: "author",
+      },
+    });
+    await books.updateRow({ german_name: "Thomas Mann" }, 1);
+    await mkViewWithCfg({
+      name: "just_author",
+      configuration: {
+        layout: {
+          above: [
+            {
+              font: "",
+              icon: "",
+              type: "blank",
+              block: false,
+              style: {},
+              inline: false,
+              contents: "Author:",
+              labelFor: "",
+              isFormula: {},
+              textStyle: "",
+            },
+            {
+              type: "field",
+              block: false,
+              fieldview: "as_text",
+              textStyle: "",
+              field_name: "author",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "author",
+            configuration: {},
+          },
+        ],
+      },
+    });
+  });
+  it("should run", async () => {
+    const view = View.findOne({ name: "just_author" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe("Author:Herman Melville");
   });
 });
