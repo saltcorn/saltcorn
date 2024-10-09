@@ -118,8 +118,8 @@ test.describe('E2E Test Suite', () => {
     // drag and drop the page source on the page
     await page.waitForTimeout(2000);
     // select inputbox and delete
-    await page.waitForSelector(pageobject.inputbox2);
-    await page.click(pageobject.inputbox2);
+    await page.waitForSelector(pageobject.inputDateOfBirth);
+    await page.click(pageobject.inputDateOfBirth);
     await page.waitForSelector(pageobject.deletebutton);
     await page.click(pageobject.deletebutton);
     // add new input box in page
@@ -136,7 +136,7 @@ test.describe('E2E Test Suite', () => {
     });
     await page.waitForTimeout(2000);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
-    await functions.fill_Text(pageobject.textlocator, 'I said..');
+    await functions.fill_Text(pageobject.richTextEditor, 'I said..');
     // click on delete button
     await page.waitForSelector(pageobject.deletebutton);
     await page.click(pageobject.deletebutton);
@@ -259,42 +259,42 @@ test.describe('E2E Test Suite', () => {
   });
 
   // create view with show view pattern
-  test('create view with show view pattern', async () => {
+  test('Create view with show view pattern', async () => {
     await functions.views();
     // click on create new view
-    await page.waitForSelector(pageobject.createnewview);
     await page.click(pageobject.createnewview);
     // input view name and discription
     await page.fill(pageobject.InputName, 'showView');
     await page.fill(pageobject.discriptiontext, 'view for table');
-    // validate the view pattern in table dropdown
-    await customAssert('View Pattern should be Show', async () => {
-      // select show pattern
-      const ShowPattern = await page.$("#inputviewtemplate");
-      await ShowPattern?.selectOption("Show");
+    // select show pattern
+    await customAssert('Select show view pattern for view', async () => {
+        const ShowPattern = await page.$("#inputviewtemplate");
+        await ShowPattern?.selectOption("Show");
     });
     // submit the page
     await functions.submit();
     await page.waitForTimeout(2000);
     // select full name lable
-    await page.waitForSelector(pageobject.Fullnameshow);
     await page.click(pageobject.Fullnameshow);
     // delete lable for full name
-    await page.waitForSelector(pageobject.deletebutton);
     await page.click(pageobject.deletebutton);
-    // drag full name on target
-    await functions.drag_And_Drop(pageobject.fullnameuser, pageobject.target);
-    // select text style as heading1 for full name
-    const textstyleLocator = page.locator('.form-control.form-select').nth(2);
-    await textstyleLocator.click();
-    await textstyleLocator?.selectOption("Heading 1");
+    await customAssert('Drag Name on top of the page set heading', async () => {
+        await functions.drag_And_Drop(pageobject.fullnameuser, pageobject.addresslabel);
+        // select text style as heading1 for full name
+        const textstyleLocator = page.locator('.form-control.form-select').nth(2);
+        await textstyleLocator.click();
+        await textstyleLocator?.selectOption("Heading 1");
+    });
+    await page.waitForTimeout(2000);
+    await customAssert('Drag address row on third column', async () => {
+        await functions.drag_And_Drop(pageobject.Addresstext, pageobject.thirdrowcolumn2);
+    });
+    await functions.drag_And_Drop(pageobject.addresslabel, pageobject.thirdrowcolumn1);
+    await page.click(pageobject.firstrowcolumn1);
+    await functions.fill_Text(pageobject.NumberInput, '4');
     // click on next button
-    await page.waitForSelector(pageobject.nextoption);
     await page.click(pageobject.nextoption);
-    // click on new view link
-    await page.waitForSelector(pageobject.newviewlink);
-    await page.click(pageobject.newviewlink);
-  });
+});
 
   // add show link in list view
   test('Add show link in list view by by connecting show view', async () => {
@@ -502,10 +502,10 @@ test.describe('E2E Test Suite', () => {
       await page.selectOption(pageobject.Toolbardropdown, { label: 'Reduced' }); // If using a select dropdown
     });
     await page.click(pageobject.helloWorldElement);
-    await functions.fill_Text(pageobject.textlocator, '');
-    await functions.fill_Text(pageobject.textlocator, 'Bio');
+    await functions.clearText(pageobject.richTextEditor);
+    await page.keyboard.type('Bio');
     await page.selectOption(pageobject.optionBio, { label: 'Bio' });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.newviewlink);
@@ -539,20 +539,19 @@ test.describe('E2E Test Suite', () => {
       await page.waitForSelector(pageobject.fielddropdown);
       await page.selectOption(pageobject.fielddropdown, { label: 'Bio' });
     });
-    await customAssert('Select ckeditor4 from field view dropdown', async () => {
+    await customAssert('Select showAll from field view dropdown', async () => {
       await page.waitForSelector(pageobject.fieldViewdropdown);
-      // Select 'CKEditor4' from the dropdown
-      await page.waitForTimeout(2000);
+      // Select 'showAll' from the dropdown
       await page.selectOption(pageobject.fieldViewdropdown, { label: 'showAll' }); // If using a select dropdown
     });
     await page.click(pageobject.helloWorldElement);
-    await functions.fill_Text(pageobject.textlocator, '');
-    await functions.fill_Text(pageobject.textlocator, 'Bio');
+    await functions.clearText(pageobject.richTextEditor);
+    await page.keyboard.type('Bio');
     await page.waitForTimeout(2000);
 
     // drag and drop the action view link
     await page.waitForSelector(pageobject.viewlinksource);
-    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.fifthrowcolumn);
+    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.target);
     // click to view link dropdown
     await customAssert('view to link dropdown should be visible', async () => {
       await page.waitForSelector(pageobject.viewtolinkdropdown);
