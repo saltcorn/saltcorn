@@ -783,7 +783,7 @@ const ConfigField = ({
     field.options =
       typeof field.attributes?.options === "string"
         ? field.attributes?.options.split(",").map((s) => s.trim())
-        : field.attributes?.options;
+        : [...field.attributes?.options];
     if (!field.required && field.options) field.options.unshift("");
   }
   const field_type = field.input_type || field.type.name || field.type;
