@@ -215,6 +215,7 @@ class Field implements AbstractField {
       attributes: this.attributes,
       required: this.required,
       primary_key: this.primary_key,
+      preset_options: this.preset_options,
     };
   }
 
