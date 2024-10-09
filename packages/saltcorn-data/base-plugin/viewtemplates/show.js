@@ -1086,7 +1086,8 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        tbl
       );
       readState(state, fields);
       const qstate = await stateFieldsToWhere({
@@ -1129,7 +1130,8 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        tbl
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);
