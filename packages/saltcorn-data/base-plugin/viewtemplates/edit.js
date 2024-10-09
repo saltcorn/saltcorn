@@ -1024,7 +1024,13 @@ const render = async ({
       ? script(
           domReady(`
     $("#scmodal").on("hidden.bs.modal", function (e) {
-      setTimeout(()=>location.reload(),0);
+     const on_close_reload_view = $("#scmodal").attr(
+        "data-on-close-reload-view"
+      );
+      if(on_close_reload_view)
+        reload_embedded_view(on_close_reload_view)
+      else
+        setTimeout(()=>location.reload(),0);
     });`)
         )
       : "";
