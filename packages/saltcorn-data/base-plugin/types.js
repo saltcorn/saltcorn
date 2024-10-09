@@ -701,8 +701,14 @@ const to_locale_string = {
         currencyDisplay: attrs.currencyDisplay,
         unit: attrs.unit,
         unitDisplay: attrs.unitDisplay,
-        maximumSignificantDigits: attrs.maximumSignificantDigits,
-        maximumFractionDigits: attrs.maximumFractionDigits,
+        maximumSignificantDigits:
+          attrs.maximumSignificantDigits === 0
+            ? 0
+            : attrs.maximumSignificantDigits || undefined,
+        maximumFractionDigits:
+          attrs.maximumFractionDigits == 0
+            ? 0
+            : attrs.maximumFractionDigits || undefined,
       });
     } else return "";
   },

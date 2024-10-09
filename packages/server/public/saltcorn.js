@@ -629,6 +629,7 @@ function checkNetworkError(e) {
     setTimeout(() => {
       scNetworkErrorSignaled = false;
     }, 1000);
+    console.error("Network error", e);
     notifyAlert({
       type: "danger",
       text: "Network connection error",

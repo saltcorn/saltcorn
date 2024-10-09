@@ -1870,6 +1870,8 @@ function close_saltcorn_modal() {
   }
 }
 
+let _sc_currently_reloading;
+
 function reload_embedded_view(viewname, new_query_string) {
   const isNode = getIsNode();
   const updater = ($e, res) => {
@@ -1897,15 +1899,19 @@ function reload_embedded_view(viewname, new_query_string) {
       url = url.split("?")[0] + "?" + new_query_string;
     }
     if (isNode) {
+      if (url === _sc_currently_reloading) return;
+      _sc_currently_reloading = url;
       $.ajax(url, {
         headers: {
           pjaxpageload: "true",
           localizedstate: "true", //no admin bar
         },
         success: function (res, textStatus, request) {
+          _sc_currently_reloading = null;
           updater($e, res);
         },
         error: function (res) {
+          _sc_currently_reloading = null;
           if (!checkNetworkError(res))
             notifyAlert({ type: "danger", text: res.responseText });
         },
