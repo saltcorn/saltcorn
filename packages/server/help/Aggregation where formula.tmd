@@ -1,0 +1,11 @@
+The where formula allows you to restrict the rows included in the aggregations. 
+
+The formula should take the form of a JavaScript boolean expression such as
+`a === b` or `x>y && w==1` when is based on the row values in the rows in the target table for 
+inclusion in the aggregation. For instance, if you are displaying aggregations about 
+a row from a Projects table, and a Task table has a key to projects field and a Boolean
+field called `completed`, you may want to show the number of not-completed tasks for the Project.
+In this case use the where expression `completed == false`.
+
+You cannot here use view state or values from the row about which you are displaying aggregations. However, 
+if a user is logged in, the `user` variable can be used to access user fields, such as `user.id`.
