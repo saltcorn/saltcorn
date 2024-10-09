@@ -2768,7 +2768,12 @@ class Table implements AbstractTable {
                             pk_name,
                           });
                         } catch (e: any) {
-                          rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
+                          if (
+                            !(e?.message || "").includes(
+                              "current transaction is aborted, commands ignored until end of transaction"
+                            )
+                          )
+                            rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
                           rejects += 1;
                         }
                     } else if (options?.no_table_write) {
@@ -2808,9 +2813,8 @@ class Table implements AbstractTable {
       }
     } catch (e: any) {
       return {
-        error: `Error processing CSV file: ${
-          !e ? e : e.error || e.message || e
-        }`,
+        error: `Error processing CSV file: ${!e ? e : e.error || e.message || e}
+${rejectDetails}`,
       };
     }
 
