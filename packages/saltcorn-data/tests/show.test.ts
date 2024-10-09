@@ -399,7 +399,6 @@ describe("field localisation in show view", () => {
       table: books,
       attributes: {
         locale: "de",
-
         localizes_field: "author",
       },
     });
@@ -443,11 +442,25 @@ describe("field localisation in show view", () => {
         ],
       },
     });
+    await getState().refresh_tables();
+    const afield = Table.findOne("books")?.getField("author");
+    expect(afield?.attributes?.localized_by?.de).toBe("german_name");
   });
-  it("should run", async () => {
+  it("should run in english", async () => {
     const view = View.findOne({ name: "just_author" });
     assertIsSet(view);
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toBe("Author:Herman Melville");
+  });
+  it("should run in german", async () => {
+    const reqRes = {
+      res: mockReqRes.res,
+      req: { ...mockReqRes.req, getLocale: () => "de" },
+    };
+
+    const view = View.findOne({ name: "just_author" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 1 }, reqRes);
+    expect(vres1).toBe("Author:Thomas Mann");
   });
 });
