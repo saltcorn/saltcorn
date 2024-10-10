@@ -1102,7 +1102,7 @@ const get_viewable_fields = (
         let f = fields.find((fld) => fld.name === column.field_name);
         let f_with_val = f;
         if (f && f.attributes && f.attributes.localized_by) {
-          const locale = req.getLocale();
+          const locale = req?.getLocale?.();
           const localized_fld_nm = f.attributes.localized_by[locale];
           f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
         }
