@@ -100,13 +100,14 @@ const accordionConfig = {
   },
 };
 
-const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
+const mkViewWithCfg = async (viewCfgIn: any): Promise<View> => {
+  const { name, table_id, ...viewCfg } = viewCfgIn;
   return await View.create({
     viewtemplate: "Show",
     description: "",
     min_role: 1,
-    name: `someView${Math.round(Math.random() * 100000)}`,
-    table_id: Table.findOne("books")?.id,
+    name: name || `someView${Math.round(Math.random() * 100000)}`,
+    table_id: table_id || Table.findOne("books")?.id,
     default_render_page: "",
     slug: {
       label: "",
@@ -384,5 +385,154 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 2 }, mockReqRes);
     expect(vres1).toBe("A. ");
+  });
+});
+
+const deReqRes = {
+  res: mockReqRes.res,
+  req: { ...mockReqRes.req, getLocale: () => "de" },
+};
+
+describe("simple field localisation in show view", () => {
+  it("should setup", async () => {
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    await Field.create({
+      name: "german_name",
+      label: "German name",
+      type: "String",
+      table: books,
+      attributes: {
+        locale: "de",
+        localizes_field: "author",
+      },
+    });
+    await books.updateRow({ german_name: "Thomas Mann" }, 1);
+    await mkViewWithCfg({
+      name: "just_author",
+      configuration: {
+        layout: {
+          above: [
+            {
+              font: "",
+              icon: "",
+              type: "blank",
+              block: false,
+              style: {},
+              inline: false,
+              contents: "Author:",
+              labelFor: "",
+              isFormula: {},
+              textStyle: "",
+            },
+            {
+              type: "field",
+              block: false,
+              fieldview: "as_text",
+              textStyle: "",
+              field_name: "author",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "author",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    await getState().refresh_tables();
+    const afield = Table.findOne("books")?.getField("author");
+    expect(afield?.attributes?.localized_by?.de).toBe("german_name");
+  });
+  it("should run in english", async () => {
+    const view = View.findOne({ name: "just_author" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe("Author:Herman Melville");
+  });
+  it("should run in german", async () => {
+    const view = View.findOne({ name: "just_author" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 1 }, deReqRes);
+    expect(vres1).toBe("Author:Thomas Mann");
+  });
+});
+
+describe("joinfield localisation in show view", () => {
+  it("should setup", async () => {
+    const books = Table.findOne("publisher");
+    assertIsSet(books);
+    await Field.create({
+      name: "german_name",
+      label: "German name",
+      type: "String",
+      table: books,
+      attributes: {
+        locale: "de",
+        localizes_field: "name",
+      },
+    });
+    await books.updateRow({ german_name: "Deutsche AK" }, 1);
+    await mkViewWithCfg({
+      name: "just_publisher",
+      configuration: {
+        layout: {
+          above: [
+            {
+              font: "",
+              icon: "",
+              type: "blank",
+              block: false,
+              style: {},
+              inline: false,
+              contents: "Publisher:",
+              labelFor: "",
+              isFormula: {},
+              textStyle: "",
+            },
+            {
+              type: "join_field",
+              block: false,
+              fieldview: "as_text",
+              textStyle: "",
+              join_field: "publisher.name",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            join_field: "publisher.name",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    await getState().refresh_tables();
+    const afield = Table.findOne("publisher")?.getField("name");
+    expect(afield?.attributes?.localized_by?.de).toBe("german_name");
+  });
+  it("should run in english", async () => {
+    const view = View.findOne({ name: "just_publisher" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 2 }, mockReqRes);
+    expect(vres1).toBe("Publisher:AK Press");
+  });
+  it("should run in german", async () => {
+    const view = View.findOne({ name: "just_publisher" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 2 }, deReqRes);
+    expect(vres1).toBe("Publisher:Deutsche AK");
   });
 });

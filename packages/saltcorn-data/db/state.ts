@@ -495,6 +495,8 @@ class State {
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));
       table.fields.forEach((f: Field) => {
+        if (db.isSQLite && typeof f.attributes === "string")
+          f.attributes = JSON.parse(f.attributes);
         if (
           f.attributes &&
           f.attributes.localizes_field &&
@@ -504,6 +506,8 @@ class State {
             (lf: Field) => lf.name === f.attributes.localizes_field
           );
           if (localized) {
+            if (db.isSQLite && typeof localized.attributes === "string")
+              localized.attributes = JSON.parse(localized.attributes);
             if (!localized.attributes) localized.attributes = {};
 
             if (!localized.attributes.localized_by)

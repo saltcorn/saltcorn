@@ -1509,10 +1509,11 @@ const get_onetoone_views = async (table, viewname) => {
  * @throws {InvalidConfiguration}
  * @returns {object}
  */
-const picked_fields_to_query = (columns, fields, layout, req) => {
+const picked_fields_to_query = (columns, fields, layout, req, table) => {
   let joinFields = {};
   let aggregations = {};
   let freeVars = new Set(); // for join fields
+  const locale = req?.getLocale?.();
 
   (columns || []).forEach((column) => {
     if (column.type === "JoinField") {
@@ -1527,26 +1528,35 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
           };
         } else {
           const kpath = column.join_field.split(".");
+          let jfKey;
           if (kpath.length === 2) {
             const [refNm, targetNm] = kpath;
-            joinFields[`${refNm}_${targetNm}`] = {
+            jfKey = `${refNm}_${targetNm}`;
+            joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
             };
           } else if (kpath.length === 3) {
             const [refNm, through, targetNm] = kpath;
-            joinFields[`${refNm}_${through}_${targetNm}`] = {
+            jfKey = `${refNm}_${through}_${targetNm}`;
+            joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
               through,
             };
           } else if (kpath.length === 4) {
             const [refNm, through1, through2, targetNm] = kpath;
-            joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+            jfKey = `${refNm}_${through1}_${through2}_${targetNm}`;
+            joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
               through: [through1, through2],
             };
+          }
+          const targetField = table ? table.getField(column.join_field) : null;
+          if (locale && targetField?.attributes?.localized_by?.[locale]) {
+            joinFields[jfKey].target =
+              targetField?.attributes?.localized_by?.[locale];
           }
         }
       } else {

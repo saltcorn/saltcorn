@@ -88,7 +88,8 @@ const create_db_view = async (context, req) => {
     context.columns,
     fields,
     undefined,
-    req
+    req,
+    table
   );
 
   const { sql } = await table.getJoinedQuery({
@@ -1314,7 +1315,8 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        table
       );
       const where = await stateFieldsToWhere({ fields, state, table });
       const q = await stateFieldsToQuery({
