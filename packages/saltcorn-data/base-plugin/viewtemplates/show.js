@@ -680,11 +680,13 @@ const render = (
   extra
 ) => {
   const session_id = getSessionId(req);
+  const locale = req.getLocale();
+
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       segment[key] = eval_expression(
         segment[key],
-        { session_id, ...row },
+        { session_id, locale, ...row },
         req.user,
         `property ${key} in segment of type ${segment.type}`
       );
@@ -766,7 +768,6 @@ const render = (
       }
     },
   });
-  const locale = req.getLocale();
   translateLayout(layout, locale);
   const blockDispatch = {
     field({ field_name, fieldview, configuration, click_to_edit }) {
@@ -983,7 +984,7 @@ const render = (
     },
     blank(segment) {
       if (segment.isHTML) {
-        return interpolate(segment.contents, row, req?.user);
+        return interpolate(segment.contents, { locale, ...row }, req?.user);
       } else return segment.contents;
     },
   };
