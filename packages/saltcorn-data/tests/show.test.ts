@@ -522,6 +522,13 @@ describe("joinfield localisation in show view", () => {
     await getState().refresh_tables();
     const afield = Table.findOne("publisher")?.getField("name");
     expect(afield?.attributes?.localized_by?.de).toBe("german_name");
+    await getState().setConfig("localizer_languages", {
+      de: "German",
+    });
+    await getState().setConfig("localizer_strings", {
+      de: { "Publisher:": "Verlag:" },
+    });
+    await getState().refresh_i18n();
   });
   it("should run in english", async () => {
     const view = View.findOne({ name: "just_publisher" });
@@ -533,6 +540,6 @@ describe("joinfield localisation in show view", () => {
     const view = View.findOne({ name: "just_publisher" });
     assertIsSet(view);
     const vres1 = await view.run({ id: 2 }, deReqRes);
-    expect(vres1).toBe("Publisher:Deutsche AK");
+    expect(vres1).toBe("Verlag:Deutsche AK");
   });
 });
