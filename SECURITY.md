@@ -22,8 +22,8 @@ Please read the [license](https://github.com/saltcorn/saltcorn/blob/master/LICEN
 Nothing in this document or in any other document or communication provided by the
 Saltcorn developers should be construed as an implicit warranty or guarantee of
 fitness for any particular purpose. Nor should anything we say be construed as an
-implicit promise, warrenty or guarantee that Saltcorn has been created with a
-professional development methodology, or by individuals with suitable professional
+implicit promise, warrenty or guarantee that Saltcorn has been created with an adequate
+development methodology, or by individuals with suitable professional
 qualifications, for any particular purpose.
 
 ## Risks
