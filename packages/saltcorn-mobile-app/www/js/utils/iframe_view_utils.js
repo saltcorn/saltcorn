@@ -666,6 +666,25 @@ function openFile(fileId) {
   );
 }
 
+function openInAppBrowser(url) {
+  try {
+    showLoadSpinner();
+    const currentRoute = parent.currentLocation();
+    const currentQuery = parent.currentQuery();
+    parent.localStorage.setItem(
+      "lastLocation",
+      JSON.stringify({ route: currentRoute, query: currentQuery })
+    );
+    parent.cordova.InAppBrowser.open(
+      url,
+      "_self",
+      "clearcache=yes,clearsessioncache=yes,location=no"
+    );
+  } finally {
+    removeLoadSpinner();
+  }
+}
+
 async function select_id(id) {
   try {
     showLoadSpinner();

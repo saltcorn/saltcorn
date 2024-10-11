@@ -764,6 +764,25 @@ function doMobileTransforms() {
     }
   });
 
+  $("[mobile-youtube-video]").each(function () {
+    const jThis = $(this);
+    const src = jThis.attr("src");
+    if (src) {
+      const url = new URL(src);
+      const path = url.pathname;
+      const imageId = path.split("/").pop();
+      const img = document.createElement("img");
+      img.src = `https://img.youtube.com/vi/${imageId}/0.jpg`;
+      img.style.width = "100%";
+      img.style["max-width"] = "600px";
+      img.setAttribute(
+        "onclick",
+        `openInAppBrowser('${src.replace("com/embed", "com/watch")}')`
+      );
+      jThis.replaceWith(img);
+    }
+  });
+
   $("button").each(function () {
     for (const [k, v] of Object.entries({ onclick: replacers.onclick })) {
       for ({ web, mobile } of v) replaceAttr(this, k, v.web, v.mobile);
