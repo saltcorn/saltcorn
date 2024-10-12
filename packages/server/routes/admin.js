@@ -1267,7 +1267,7 @@ const pullCordovaBuilder = (req, res) => {
 };
 
 const pruneDocker = (req, res) => {
-  const child = spawn("docker", ["system", "prune", "-f"], {
+  const child = spawn("docker", ["image", "prune", "-f"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
   return new Promise((resolve, reject) => {
