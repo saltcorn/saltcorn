@@ -590,3 +590,20 @@ button.monospace-copy-btn {
 .custom-file-label {
   margin-left: 10px;
 }
+
+.mobile-thumbnail-container {
+  position: relative;
+  display: inline-block;
+}
+
+.mobile-thumbnail-spinner-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.mobile-thumbnail-container img {
+  display: block;
+}

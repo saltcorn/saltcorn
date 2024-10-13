@@ -666,9 +666,9 @@ function openFile(fileId) {
   );
 }
 
-function openInAppBrowser(url) {
+function openInAppBrowser(url, domId) {
   try {
-    showLoadSpinner();
+    $(`#${domId}`).find(".spinner-border").removeClass("d-none");
     const currentRoute = parent.currentLocation();
     const currentQuery = parent.currentQuery();
     parent.localStorage.setItem(
@@ -680,8 +680,9 @@ function openInAppBrowser(url) {
       "_self",
       "clearcache=yes,clearsessioncache=yes,location=no"
     );
-  } finally {
-    removeLoadSpinner();
+  } catch (error) {
+    $(`#${domId}`).find(".spinner-border").addClass("d-none");
+    parent.errorAlert(error);
   }
 }
 
