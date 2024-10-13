@@ -764,6 +764,42 @@ function doMobileTransforms() {
     }
   });
 
+  $("[mobile-youtube-video]").each(function () {
+    const jThis = $(this);
+    const src = jThis.attr("src");
+    if (src) {
+      const rndid = `m-video-${Math.floor(Math.random() * 16777215).toString(
+        16
+      )}`;
+      const url = new URL(src);
+      const path = url.pathname;
+      const imageId = path.split("/").pop();
+      const thumbnailContainer = document.createElement("div");
+      thumbnailContainer.className = "mobile-thumbnail-container";
+      thumbnailContainer.id = rndid;
+      const img = document.createElement("img");
+      img.src = `https://img.youtube.com/vi/${imageId}/0.jpg`;
+      img.style = "width: 100%; max-width: 600px;";
+      img.id = rndid;
+      img.setAttribute(
+        "onclick",
+        `openInAppBrowser('${src.replace(
+          "com/embed",
+          "com/watch"
+        )}', '${rndid}')`
+      );
+      thumbnailContainer.appendChild(img);
+      const spinner = document.createElement("div");
+      spinner.className = "mobile-thumbnail-spinner-overlay";
+      const spinnerInner = document.createElement("div");
+      spinnerInner.className = "d-none spinner-border text-light";
+      spinnerInner.setAttribute("role", "status");
+      spinner.appendChild(spinnerInner);
+      thumbnailContainer.appendChild(spinner);
+      jThis.replaceWith(thumbnailContainer);
+    }
+  });
+
   $("button").each(function () {
     for (const [k, v] of Object.entries({ onclick: replacers.onclick })) {
       for ({ web, mobile } of v) replaceAttr(this, k, v.web, v.mobile);

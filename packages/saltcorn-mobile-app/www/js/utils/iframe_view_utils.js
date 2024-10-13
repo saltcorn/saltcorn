@@ -666,6 +666,26 @@ function openFile(fileId) {
   );
 }
 
+function openInAppBrowser(url, domId) {
+  try {
+    $(`#${domId}`).find(".spinner-border").removeClass("d-none");
+    const currentRoute = parent.currentLocation();
+    const currentQuery = parent.currentQuery();
+    parent.localStorage.setItem(
+      "lastLocation",
+      JSON.stringify({ route: currentRoute, query: currentQuery })
+    );
+    parent.cordova.InAppBrowser.open(
+      url,
+      "_self",
+      "clearcache=yes,clearsessioncache=yes,location=no"
+    );
+  } catch (error) {
+    $(`#${domId}`).find(".spinner-border").addClass("d-none");
+    parent.errorAlert(error);
+  }
+}
+
 async function select_id(id) {
   try {
     showLoadSpinner();
