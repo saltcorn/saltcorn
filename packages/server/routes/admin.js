@@ -1494,11 +1494,13 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
     });
     child.on("exit", async function (code, signal) {
       if (code === 0) {
-        res.write(req.__("Installing sd-notify") + "\n");
-        const sdNotifyCode = await tryInstallSdNotify(req, res);
-        res.write(
-          req.__("sd-notify install done with code %s", sdNotifyCode) + "\n"
-        );
+        if (deepClean) {
+          res.write(req.__("Installing sd-notify") + "\n");
+          const sdNotifyCode = await tryInstallSdNotify(req, res);
+          res.write(
+            req.__("sd-notify install done with code %s", sdNotifyCode) + "\n"
+          );
+        }
         if (runPull) {
           res.write(
             req.__("Pulling the cordova-builder docker image...") + "\n"
