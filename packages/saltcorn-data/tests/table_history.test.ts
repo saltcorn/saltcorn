@@ -34,6 +34,8 @@ describe("Table history", () => {
     assertIsSet(table);
     table.versioned = true;
     await table.update(table);
+    const vtables = await Table.find({ versioned: true });
+    expect(vtables.map(t=>t.name)).toContain("patients")
   });
   it("should save version on insert", async () => {
     const table = Table.findOne({ name: "patients" });
