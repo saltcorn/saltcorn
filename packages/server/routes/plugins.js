@@ -1235,10 +1235,10 @@ router.get(
     let latest =
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
-    if (
-      latest &&
-      !isVersionSupported(latest, await load_plugins.getEngineInfos(plugin_db)) // with cache
-    ) {
+    let engineInfos = await load_plugins.getEngineInfos(plugin_db); // with cache
+    if (latest && !engineInfos[latest])
+      engineInfos = await load_plugins.getEngineInfos(plugin_db, true); // force fetch
+    if (latest && !isVersionSupported(latest, engineInfos)) {
       // with force fetch
       latest = supportedVersion(
         latest,

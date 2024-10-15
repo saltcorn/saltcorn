@@ -55,7 +55,15 @@ const getEngineInfos = async (plugin, forceFetch) => {
  * @param plugin plugin to load
  */
 const ensurePluginSupport = async (plugin, forceFetch) => {
-  const versions = await getEngineInfos(plugin, forceFetch);
+  let versions = await getEngineInfos(plugin, forceFetch);
+  if (
+    plugin.version &&
+    plugin.version !== "latest" &&
+    !versions[plugin.version] &&
+    !forceFetch
+  ) {
+    versions = await getEngineInfos(plugin, true);
+  }
   const supported = supportedVersion(
     plugin.version || "latest",
     versions,
