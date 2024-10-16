@@ -1236,13 +1236,15 @@ router.get(
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
     let engineInfos = await load_plugins.getEngineInfos(plugin_db); // with cache
-    if (latest && !engineInfos[latest])
-      engineInfos = await load_plugins.getEngineInfos(plugin_db, true); // force fetch
+    let forceFetch = true;
+    if (latest && !engineInfos[latest]) {
+      engineInfos = await load_plugins.getEngineInfos(plugin_db, forceFetch);
+      forceFetch = false;
+    }
     if (latest && !isVersionSupported(latest, engineInfos)) {
-      // with force fetch
       latest = supportedVersion(
         latest,
-        await load_plugins.getEngineInfos(plugin_db, true)
+        await load_plugins.getEngineInfos(plugin_db, forceFetch)
       );
     }
     const can_update = update_permitted && latest && mod.version !== latest;
