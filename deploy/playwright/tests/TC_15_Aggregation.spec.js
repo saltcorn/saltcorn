@@ -43,7 +43,7 @@ test.describe('E2E Test Suite', () => {
     test('Add Aggregation to field on People list view', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
         // Click on add column button
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
@@ -61,7 +61,7 @@ test.describe('E2E Test Suite', () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
             await StatisticDropdown.selectOption({ value: 'Count' });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(5000);
         await page.click(pageobject.nextoption);
         await functions.views();
         await page.click(pageobject.PeopleList);
@@ -109,7 +109,7 @@ test.describe('E2E Test Suite', () => {
     test('Add Estimated hours on aggregation on people list', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
             await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn5);
@@ -162,10 +162,12 @@ test.describe('E2E Test Suite', () => {
     test('Add aggregation on people show view', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
         // Remove the edit button
-        await page.click(pageobject.editIconLocator);
-        await page.click(pageobject.deletebutton);
+        const edit_button = await page.getByText('Edit');
+        await edit_button.click();
+        await page.waitForTimeout(5000);
+        await page.click(pageobject.deletebutton,{timeout:20000});
         // remove the column
         await page.click(pageobject.target);
         await page.click(pageobject.deletebutton);
@@ -203,12 +205,13 @@ test.describe('E2E Test Suite', () => {
     test('Add Show person link on people list', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
             await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn7);
         });
         await customAssert('Select show_people on view to link dropdown', async () => {
+            await page.waitForTimeout(5000);
             await page.click(pageobject.viewtolinkdropdown);
             await page.click(pageobject.view2showpeople);
         });

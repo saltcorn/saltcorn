@@ -70,17 +70,18 @@ test.describe('E2E Test Suite', () => {
     test('Add badges view in show people', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select task badge view in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2taskbadge, { force: true });
         });
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
         await page.click(pageobject.nextoption);
 
         await functions.views();
         await page.click(pageobject.PeopleList);
+        await page.waitForTimeout(5000);
         await page.click(pageobject.showfieldlink);
         await customAssert('Task badge should be visible on people list', async () => {
             await expect(page.locator(pageobject.badgeLocator)).toBeVisible();
@@ -139,8 +140,9 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Select name for helper', async () => {
             await page.click(pageobject.addrowlocator);
             await page.click(pageobject.HelperCell);
-            await page.click('text=Adam');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(5000);
+            await page.click('text=Adam', { force: true });
+            await page.waitForTimeout(5000);
 
             await page.click(pageobject.addrowlocator);
             await page.click(pageobject.HelperCell);
@@ -200,11 +202,12 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2editHelper, { force: true });
         });
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
         await page.click(pageobject.nextoption);
 
         await functions.views();
         // Click to open people list
+        await page.waitForTimeout(5000);
         await page.click(pageobject.PeopleList);
         // click on show link
         await page.click(pageobject.showfieldlink);

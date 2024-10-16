@@ -285,7 +285,7 @@ test.describe('E2E Test Suite', () => {
         await textstyleLocator.click();
         await textstyleLocator?.selectOption("Heading 1");
     });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
     await customAssert('Drag address row on third column', async () => {
         await functions.drag_And_Drop(pageobject.Addresstext, pageobject.thirdrowcolumn2);
     });
@@ -510,7 +510,7 @@ test.describe('E2E Test Suite', () => {
     await functions.views();
     await page.click(pageobject.newviewlink);
     await page.click(pageobject.editfieldlink);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(4000);
     await customAssert('Input bio in iframe/html textbox', async () => {
     // Wait for the iframe to be available
     await page.waitForSelector('iframe');
