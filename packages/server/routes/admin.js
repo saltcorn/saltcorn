@@ -1266,6 +1266,50 @@ const pullCordovaBuilder = (req, res) => {
   });
 };
 
+const tryInstallSdNotify = (req, res) => {
+  const child = spawn("npm", ["install", "-g", "sd-notify"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return new Promise((resolve, reject) => {
+    child.stdout.on("data", (data) => {
+      res.write(data);
+    });
+    child.stderr?.on("data", (data) => {
+      res.write(data);
+    });
+    child.on("exit", function (code, signal) {
+      resolve(code);
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      res.write(req.__("Error: ") + message + "\n");
+      resolve(msg.code);
+    });
+  });
+};
+
+const pruneDocker = (req, res) => {
+  const child = spawn("docker", ["image", "prune", "-f"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return new Promise((resolve, reject) => {
+    child.stdout.on("data", (data) => {
+      res.write(data);
+    });
+    child.stderr?.on("data", (data) => {
+      res.write(data);
+    });
+    child.on("exit", function (code, signal) {
+      resolve(code);
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      res.write(req.__("Error: ") + message + "\n");
+      resolve(msg.code);
+    });
+  });
+};
+
 /*
  * fetch available saltcorn versions and show a dialog to select one
  */
@@ -1449,10 +1493,26 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
       res.write(data);
     });
     child.on("exit", async function (code, signal) {
-      if (code === 0 && runPull) {
-        res.write(req.__("Pulling the cordova-builder docker image...") + "\n");
-        const pullCode = await pullCordovaBuilder(req, res);
-        res.write(req.__("Pull done with code %s", pullCode) + "\n");
+      if (code === 0) {
+        if (deepClean) {
+          res.write(req.__("Installing sd-notify") + "\n");
+          const sdNotifyCode = await tryInstallSdNotify(req, res);
+          res.write(
+            req.__("sd-notify install done with code %s", sdNotifyCode) + "\n"
+          );
+        }
+        if (runPull) {
+          res.write(
+            req.__("Pulling the cordova-builder docker image...") + "\n"
+          );
+          const pullCode = await pullCordovaBuilder(req, res);
+          res.write(req.__("Pull done with code %s", pullCode) + "\n");
+          if (pullCode === 0) {
+            res.write(req.__("Pruning docker...") + "\n");
+            const pruneCode = await pruneDocker(req, res);
+            res.write(req.__("Prune done with code %s", pruneCode) + "\n");
+          }
+        }
       }
       res.end(
         version === "latest"
@@ -3224,8 +3284,8 @@ router.post(
   error_catcher(async (req, res) => {
     const state = getState();
     const child = spawn(
-      "docker",
-      ["image", "pull", "saltcorn/cordova-builder:latest"],
+      `${process.env.DOCKER_BIN ? `${process.env.DOCKER_BIN}/` : ""}docker`,
+      ["pull", "saltcorn/cordova-builder:latest"],
       {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: ".",

@@ -350,6 +350,38 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude(" is: <pre>2</pre>"));
   });
+  it("should show on stored expression with joinfield", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/test-formula")
+      .send({
+        formula: "publisher.name",
+        tablename: "books",
+        stored: true,
+      })
+      .set("Cookie", loginCookie)
+      .expect(toInclude(" is: <pre>"));
+  });
+  it("should fail on non-stored expression with joinfield", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/test-formula")
+      .send({
+        formula: "publisher.name",
+        tablename: "books",
+        stored: false,
+      })
+      .set("Cookie", loginCookie)
+      .expect(400);
+  });
   it("should show calculated", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "books" });

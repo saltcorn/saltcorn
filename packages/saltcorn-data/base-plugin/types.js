@@ -283,7 +283,9 @@ const show_with_html = {
   isEdit: false,
   description: "Show value with any HTML code",
   run: (v, req, attrs = {}) => {
-    const rendered = interpolate(attrs?.code, { it: v }, req?.user);
+    const ctx = { ...getState().eval_context };
+    ctx.it = v;
+    const rendered = interpolate(attrs?.code, ctx, req?.user);
     return rendered;
   },
 };
@@ -699,8 +701,14 @@ const to_locale_string = {
         currencyDisplay: attrs.currencyDisplay,
         unit: attrs.unit,
         unitDisplay: attrs.unitDisplay,
-        maximumSignificantDigits: attrs.maximumSignificantDigits,
-        maximumFractionDigits: attrs.maximumFractionDigits,
+        maximumSignificantDigits:
+          attrs.maximumSignificantDigits === 0
+            ? 0
+            : attrs.maximumSignificantDigits || undefined,
+        maximumFractionDigits:
+          attrs.maximumFractionDigits == 0
+            ? 0
+            : attrs.maximumFractionDigits || undefined,
       });
     } else return "";
   },
@@ -859,6 +867,7 @@ const string = {
               {
                 class:
                   "btn btn-secondary btn-sm monospace-copy-btn m-1 d-none-prefer",
+                type: "button",
                 onclick: "copy_monospace_block(this)",
               },
               i({ class: "fas fa-copy" })
@@ -2043,7 +2052,9 @@ const date = {
           name: "format",
           label: "Format",
           type: "String",
-          sublabel: "moment.js format specifier",
+          help: {
+            topic: "Date format",
+          },
         },
       ],
       run: (d, req, options) => {

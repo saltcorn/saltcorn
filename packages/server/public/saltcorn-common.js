@@ -764,6 +764,42 @@ function doMobileTransforms() {
     }
   });
 
+  $("[mobile-youtube-video]").each(function () {
+    const jThis = $(this);
+    const src = jThis.attr("src");
+    if (src) {
+      const rndid = `m-video-${Math.floor(Math.random() * 16777215).toString(
+        16
+      )}`;
+      const url = new URL(src);
+      const path = url.pathname;
+      const imageId = path.split("/").pop();
+      const thumbnailContainer = document.createElement("div");
+      thumbnailContainer.className = "mobile-thumbnail-container";
+      thumbnailContainer.id = rndid;
+      const img = document.createElement("img");
+      img.src = `https://img.youtube.com/vi/${imageId}/0.jpg`;
+      img.style = "width: 100%; max-width: 600px;";
+      img.id = rndid;
+      img.setAttribute(
+        "onclick",
+        `openInAppBrowser('${src.replace(
+          "com/embed",
+          "com/watch"
+        )}', '${rndid}')`
+      );
+      thumbnailContainer.appendChild(img);
+      const spinner = document.createElement("div");
+      spinner.className = "mobile-thumbnail-spinner-overlay";
+      const spinnerInner = document.createElement("div");
+      spinnerInner.className = "d-none spinner-border text-light";
+      spinnerInner.setAttribute("role", "status");
+      spinner.appendChild(spinnerInner);
+      thumbnailContainer.appendChild(spinner);
+      jThis.replaceWith(thumbnailContainer);
+    }
+  });
+
   $("button").each(function () {
     for (const [k, v] of Object.entries({ onclick: replacers.onclick })) {
       for ({ web, mobile } of v) replaceAttr(this, k, v.web, v.mobile);
@@ -1365,10 +1401,14 @@ function notifyAlert(note, spin) {
   if (typeof note == "string") {
     txt = note;
     type = "info";
-  } else {
+  } else if (note.text) {
     txt = note.text;
-    type = note.type;
+    type = note.type || "info";
+  } else {
+    type = "info";
+    txt = JSON.stringify(note, null, 2);
   }
+
   const { id, html } = buildToast(txt, type, spin);
   let $modal = $("#scmodal");
   if ($modal.length && $modal.hasClass("show"))
@@ -1866,6 +1906,8 @@ function close_saltcorn_modal() {
   }
 }
 
+let _sc_currently_reloading;
+
 function reload_embedded_view(viewname, new_query_string) {
   const isNode = getIsNode();
   const updater = ($e, res) => {
@@ -1893,15 +1935,19 @@ function reload_embedded_view(viewname, new_query_string) {
       url = url.split("?")[0] + "?" + new_query_string;
     }
     if (isNode) {
+      if (url === _sc_currently_reloading) return;
+      _sc_currently_reloading = url;
       $.ajax(url, {
         headers: {
           pjaxpageload: "true",
           localizedstate: "true", //no admin bar
         },
         success: function (res, textStatus, request) {
+          _sc_currently_reloading = null;
           updater($e, res);
         },
         error: function (res) {
+          _sc_currently_reloading = null;
           if (!checkNetworkError(res))
             notifyAlert({ type: "danger", text: res.responseText });
         },

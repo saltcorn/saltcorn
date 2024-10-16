@@ -134,9 +134,19 @@ const configuration_workflow = (req) =>
           const actionConfigForms = {
             Delete: [
               {
+                name: "after_delete_action",
+                label: req.__("After delete"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: ["Go to URL", "Reload page"],
+                },
+              },
+              {
                 name: "after_delete_url",
                 label: req.__("URL after delete"),
                 type: "String",
+                showIf: { after_delete_action: "Go to URL" },
               },
             ],
           };
@@ -670,11 +680,13 @@ const render = (
   extra
 ) => {
   const session_id = getSessionId(req);
+  const locale = req.getLocale();
+
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       segment[key] = eval_expression(
         segment[key],
-        { session_id, ...row },
+        { session_id, locale, ...row },
         req.user,
         `property ${key} in segment of type ${segment.type}`
       );
@@ -756,7 +768,6 @@ const render = (
       }
     },
   });
-  const locale = req.getLocale();
   translateLayout(layout, locale);
   const blockDispatch = {
     field({ field_name, fieldview, configuration, click_to_edit }) {
@@ -921,7 +932,17 @@ const render = (
         "rndid",
         segment.confirm
       );
-      if (segment.action_name === "Delete")
+      if (
+        segment.action_name === "Delete" &&
+        segment.configuration?.after_delete_action == "Reload page"
+      ) {
+        url = {
+          javascript: `ajax_post('/delete/${table.name}/${
+            row[table.pk_name]
+          }', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+        };
+        return action_link(url, req, segment);
+      } else if (segment.action_name === "Delete")
         url = `/delete/${table.name}/${
           row[table.pk_name]
         }?redirect=${encodeURIComponent(
@@ -963,7 +984,7 @@ const render = (
     },
     blank(segment) {
       if (segment.isHTML) {
-        return interpolate(segment.contents, row, req?.user);
+        return interpolate(segment.contents, { locale, ...row }, req?.user);
       } else return segment.contents;
     },
   };
@@ -1066,7 +1087,8 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        tbl
       );
       readState(state, fields);
       const qstate = await stateFieldsToWhere({
@@ -1109,7 +1131,8 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        tbl
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);

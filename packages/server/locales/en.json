@@ -1473,5 +1473,6 @@
 	"Select tag": "Select tag",
 	"Invalid build directory path": "Invalid build directory path",
 	"Invalid build directory name": "Invalid build directory name",
-	"clean node_modules": "clean node_modules"
+	"clean node_modules": "clean node_modules",
+	"After delete": "After delete"
 }

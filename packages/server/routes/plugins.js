@@ -1235,14 +1235,16 @@ router.get(
     let latest =
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
-    if (
-      latest &&
-      !isVersionSupported(latest, await load_plugins.getEngineInfos(plugin_db)) // with cache
-    ) {
-      // with force fetch
+    let engineInfos = await load_plugins.getEngineInfos(plugin_db); // with cache
+    let forceFetch = true;
+    if (latest && !engineInfos[latest]) {
+      engineInfos = await load_plugins.getEngineInfos(plugin_db, forceFetch);
+      forceFetch = false;
+    }
+    if (latest && !isVersionSupported(latest, engineInfos)) {
       latest = supportedVersion(
         latest,
-        await load_plugins.getEngineInfos(plugin_db, true)
+        await load_plugins.getEngineInfos(plugin_db, forceFetch)
       );
     }
     const can_update = update_permitted && latest && mod.version !== latest;

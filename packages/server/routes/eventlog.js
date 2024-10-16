@@ -41,6 +41,7 @@ const {
   i,
   th,
   pre,
+  text,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { send_events_page } = require("../markup/admin.js");
@@ -442,7 +443,7 @@ router.get(
           ) +
           div(
             { class: "eventpayload" },
-            ev.payload ? pre(JSON.stringify(ev.payload, null, 2)) : ""
+            ev.payload ? pre(text(JSON.stringify(ev.payload, null, 2))) : ""
           ),
       },
     });

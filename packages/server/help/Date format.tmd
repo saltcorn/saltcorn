@@ -1,0 +1,55 @@
+You can define how a date value should be shown by specifying a date format string
+which supports a range of formatting options. The formatting is provided by the 
+[Day.js](https://day.js.org/docs/en/display/format) library with the 
+[AdvancedFormat](https://day.js.org/docs/en/plugin/advanced-format) extension. Those links
+give the full definition for the available format options.
+
+When a date is rendered with a format string, certain specific character sequences are
+substituted for parts of the date value. Any unrecognized characters are repeated verbatim
+in the output and you can used that for separator charcters such as hyphens (-) or slashes (/).
+
+For example, the timepoint 11.15am on Friday, 4 October 2024 is rendered, according to the 
+format string:
+
+{{# const d = new Date('2024-10-04T11:15:00.000')}}
+
+| Format string       | Output       |
+| ------------------- | ------------ |
+| YYYY-MM-DD          | {{ moment(d).format("YYYY-MM-DD")}} |
+| H:mm on dddd, D MMMM YYYY | {{ moment(d).format("H:mm on dddd, D MMMM YYYY")}} |
+
+The full list of supported format sequences are:
+
+| Format | Output | Description |
+| --- | --- | --- |
+| `YY` | 18  | Two-digit year |
+| `YYYY` | 2018 | Four-digit year |
+| `M` | 1-12 | The month, beginning at 1 |
+| `MM` | 01-12 | The month, 2-digits |
+| `MMM` | Jan-Dec | The abbreviated month name |
+| `MMMM` | January-December | The full month name |
+| `D` | 1-31 | The day of the month |
+| `DD` | 01-31 | The day of the month, 2-digits |
+| `d` | 0-6 | The day of the week, with Sunday as 0 |
+| `dd` | Su-Sa | The min name of the day of the week |
+| `ddd` | Sun-Sat | The short name of the day of the week |
+| `dddd` | Sunday-Saturday | The name of the day of the week |
+| `H` | 0-23 | The hour |
+| `HH` | 00-23 | The hour, 2-digits |
+| `h` | 1-12 | The hour, 12-hour clock |
+| `hh` | 01-12 | The hour, 12-hour clock, 2-digits |
+| `m` | 0-59 | The minute |
+| `mm` | 00-59 | The minute, 2-digits |
+| `s` | 0-59 | The second |
+| `ss` | 00-59 | The second, 2-digits |
+| `SSS` | 000-999 | The millisecond, 3-digits |
+| `Z` | +05:00 | The offset from UTC, ±HH:mm |
+| `ZZ` | +0500 | The offset from UTC, ±HHmm |
+| `A` | AM PM |     |
+| `a` | am pm |     |
+| `Q` | 1-4 | Quarter |
+| `Do` | 1st 2nd ... 31st | Day of Month with ordinal |
+| `k` | 1-24 | The hour, beginning at 1 |
+| `kk` | 01-24 | The hour, 2-digits, beginning at 1 |
+| `X` | 1360013296 | Unix Timestamp in second |
+| `x` | 1360013296123 | Unix Timestamp in millisecond |

@@ -215,6 +215,7 @@ class Field implements AbstractField {
       attributes: this.attributes,
       required: this.required,
       primary_key: this.primary_key,
+      preset_options: this.preset_options,
     };
   }
 
@@ -955,7 +956,8 @@ class Field implements AbstractField {
 
     await db.deleteWhere("_sc_fields", { id: this.id }, { client });
 
-    if (!db.isSQLite && (!this.calculated || this.stored)) {
+    if (!this.calculated || this.stored) {
+      if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
       await client.query(
         `alter table ${schema}"${sqlsanitize(
           table.name

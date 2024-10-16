@@ -1024,7 +1024,13 @@ const render = async ({
       ? script(
           domReady(`
     $("#scmodal").on("hidden.bs.modal", function (e) {
-      setTimeout(()=>location.reload(),0);
+     const on_close_reload_view = $("#scmodal").attr(
+        "data-on-close-reload-view"
+      );
+      if(on_close_reload_view)
+        reload_embedded_view(on_close_reload_view)
+      else
+        setTimeout(()=>location.reload(),0);
     });`)
         )
       : "";
@@ -2016,7 +2022,7 @@ module.exports = {
       if (Object.keys(uniques).length > 0) {
         // add joinfields from certain locations if they are not fields in columns
         const joinFields = {};
-        const picked = picked_fields_to_query([], fields, layout, req);
+        const picked = picked_fields_to_query([], fields, layout, req, table);
         const colFields = new Set(
           columns.map((c) =>
             c.join_field ? c.join_field.split(".")[0] : c.field_name
@@ -2058,7 +2064,8 @@ module.exports = {
         columns,
         fields,
         undefined,
-        req
+        req,
+        table
       );
       const qstate = await stateFieldsToWhere({ fields, state, table });
       const q = await stateFieldsToQuery({ state, fields });

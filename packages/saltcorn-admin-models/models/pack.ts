@@ -432,7 +432,10 @@ const add_to_menu = async (item: {
   item.min_role = old_to_new_role(item.min_role);
   const current_menu = getState().getConfigCopy("menu_items", []);
   const existing = current_menu.findIndex((m: any) => m.label === item.label);
-  if (existing >= 0) current_menu[existing] = item;
+  if (existing >= 0) {
+    //current_menu[existing] = item;
+    //do not change exisiting menu item
+  }
   else current_menu.push(item);
   await save_menu_items(current_menu);
 };
@@ -476,7 +479,15 @@ const install_pack = async (
     else await Library.create(lib);
   }
   // create tables (users skipped because created by other ways)
-  for (const tableSpec of pack.tables) {
+
+  // tables with a provider go last because they can depend on presence 
+  // of other tables
+  const packTables = pack.tables.sort((left, right) =>
+    left.provider_name
+      ? 1
+      : right.provider_name ? -1
+        : 0)
+  for (const tableSpec of packTables) {
     if (tableSpec.name !== "users") {
       let tbl_pk;
       const existing = Table.findOne({ name: tableSpec.name });

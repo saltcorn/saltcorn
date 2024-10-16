@@ -839,7 +839,8 @@ module.exports = {
             columns,
             fields,
             undefined,
-            req
+            req,
+            table
           );
           const where = stateFieldsToWhere({ fields, state, table });
           const q = stateFieldsToQuery({

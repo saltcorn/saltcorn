@@ -335,13 +335,14 @@ router.post(
   "/clean_sync_dir",
   error_catcher(async (req, res) => {
     const { dir_name } = req.body;
+    const safe_dir_name = File.normalise(dir_name);
     try {
       const rootFolder = await File.rootFolder();
       const syncDir = path.join(
         rootFolder.location,
         "mobile_app",
         "sync",
-        dir_name
+        safe_dir_name
       );
       await fs.rm(syncDir, { recursive: true, force: true });
       res.status(200).send("");

@@ -306,13 +306,7 @@ const getApp = async (opts = {}) => {
             ? new Date(u.last_mobile_login).valueOf()
             : u.last_mobile_login) <= jwt_payload.iat
         ) {
-          return done(null, {
-            email: u.email,
-            id: u.id,
-            role_id: u.role_id,
-            language: u.language,
-            tenant: db.getTenantSchema(),
-          });
+          return done(null, u.session_object);
         } else {
           return done(null, { role_id: 100 });
         }

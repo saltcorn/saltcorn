@@ -256,6 +256,12 @@ class State {
           `Warning: ${user.email} layout plugin ${pluginName} not found`
         );
     }
+    const role_id = user ? +user.role_id : 100;
+    const layout_by_role = this.getConfig("layout_by_role");
+    if (layout_by_role && layout_by_role[role_id]) {
+      const chosen = this.plugins[layout_by_role[role_id]];
+      if (chosen) return chosen;
+    }
     const layoutvs = Object.keys(this.layouts);
     const name = layoutvs[layoutvs.length - 1];
     return this.plugins[name];
@@ -495,6 +501,8 @@ class State {
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));
       table.fields.forEach((f: Field) => {
+        if (db.isSQLite && typeof f.attributes === "string")
+          f.attributes = JSON.parse(f.attributes);
         if (
           f.attributes &&
           f.attributes.localizes_field &&
@@ -504,6 +512,8 @@ class State {
             (lf: Field) => lf.name === f.attributes.localizes_field
           );
           if (localized) {
+            if (db.isSQLite && typeof localized.attributes === "string")
+              localized.attributes = JSON.parse(localized.attributes);
             if (!localized.attributes) localized.attributes = {};
 
             if (!localized.attributes.localized_by)
@@ -646,6 +656,7 @@ class State {
     this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
+    let hasFunctions = false;
     const withCfg = (key: string, def?: any) =>
       plugin.configuration_workflow
         ? plugin[key]
@@ -661,6 +672,7 @@ class State {
     });
     Object.entries(withCfg("functions", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
+        hasFunctions = true;
         this.functions[k] = v;
         this.function_context[k] = typeof v === "function" ? v : v.run;
       }
@@ -726,6 +738,8 @@ class State {
     const routes = withCfg("routes", []);
     this.plugin_routes[name] = routes;
     if (routes.length > 0 && this.routesChangedCb) this.routesChangedCb();
+    if (hasFunctions)
+      this.refresh_codepages(true).catch((e) => console.error(e));
   }
 
   /**

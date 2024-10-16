@@ -48,6 +48,7 @@ export const init = (getConnectObject: () => Database): void => {
     connectObj = getConnectObject();
     current_filepath = get_db_filepath();
     sqliteDatabase = new Database(current_filepath);
+    query("PRAGMA foreign_keys = ON;");
   }
 };
 
