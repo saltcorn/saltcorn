@@ -136,6 +136,9 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         sublabel: req.__("Calculated from other fields with a formula"),
         type: "Bool",
         disabled: !!id,
+        help: {
+          topic: "Calculated fields",
+        },
       }),
       new Field({
         label: req.__("Required"),
@@ -169,6 +172,9 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
         type: "Bool",
         disabled: !!id,
         showIf: { calculated: true },
+        help: {
+          topic: "Calculated fields",
+        },
       }),
       new Field({
         label: req.__("Protected"),
