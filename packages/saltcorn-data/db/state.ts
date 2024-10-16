@@ -256,6 +256,12 @@ class State {
           `Warning: ${user.email} layout plugin ${pluginName} not found`
         );
     }
+    const role_id = user ? +user.role_id : 100;
+    const layout_by_role = this.getConfig("layout_by_role");
+    if (layout_by_role && layout_by_role[role_id]) {
+      const chosen = this.plugins[layout_by_role[role_id]];
+      if (chosen) return chosen;
+    }
     const layoutvs = Object.keys(this.layouts);
     const name = layoutvs[layoutvs.length - 1];
     return this.plugins[name];
