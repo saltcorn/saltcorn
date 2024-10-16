@@ -192,6 +192,9 @@ const tableForm = async (table, req) => {
                   "if(!this.checked && !confirm('Are you sure? This will delete all history')) {this.checked = true; return false}",
               },
               type: "Bool",
+              help: {
+                topic: "Table history",
+              },
             },
             ...(table.name === "users"
               ? []

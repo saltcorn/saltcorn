@@ -1,0 +1,19 @@
+A snapshot is a saved format of your application that includes all of 
+your application structure (table and fields definitions, views pages 
+and configuration settings) but excludes all of your data, that is, 
+table rows and files. A snapshot is the same format as a pack - a snapshot 
+is in fact merely a full pack of the application. (To create a partial 
+pack of the application, use tags or the pack export in the module store). 
+
+Snapshots have several possible uses:
+
+* If you have two different servers one for production and one for development 
+  then you can make changes to the development server and use a snapshot to 
+  move those changes to the production instance 
+
+* By enabling periodic snapshots Saltcorn allows you to restore versions of 
+  views, pages and triggers after you have made changes. This allows you to 
+  undo mistakes that you have made in building. 
+
+* If your application contains a large amount of data that can quickly be 
+  regenerated you may want to use snapshots instead of backups to save your application.

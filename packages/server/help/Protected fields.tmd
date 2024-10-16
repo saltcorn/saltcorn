@@ -1,0 +1,4 @@
+Mmark a field as protected in order to set a minimum role required
+to write to this field. This will be checked in addition to the role
+required to write to the whole table; it will also stop changing the 
+field value even if the user is the owner of the row.
