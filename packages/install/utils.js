@@ -95,7 +95,12 @@ const setupDocker = async (
   }
 };
 
-const pullCordovaBuilder = async (user, dockerMode, dryRun) => {
+const pullCordovaBuilder = async (
+  user,
+  dockerMode,
+  addToDockerGroup,
+  dryRun
+) => {
   if (dockerMode === "rootless") {
     await asyncSudo(
       [
@@ -111,12 +116,26 @@ const pullCordovaBuilder = async (user, dockerMode, dryRun) => {
       dryRun
     );
   } else if (dockerMode === "standard") {
-    await asyncSudoUser(
-      user,
-      ["docker", "pull", "saltcorn/cordova-builder"],
-      false,
-      dryRun
-    );
+    if (addToDockerGroup) {
+      await asyncSudo(
+        [
+          "bash",
+          "-c",
+          `newgrp docker <<EOF  
+  docker pull saltcorn/cordova-builder
+EOF`,
+        ],
+        false,
+        dryRun
+      );
+    } else {
+      await asyncSudoUser(
+        user,
+        ["docker", "pull", "saltcorn/cordova-builder"],
+        false,
+        dryRun
+      );
+    }
   } else throw new Error(`Unknown docker mode ${dockerMode}`);
 };
 

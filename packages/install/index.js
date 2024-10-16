@@ -738,7 +738,7 @@ WantedBy=multi-user.target`
   if (dockerMode) {
     try {
       await setupDocker(user, dockerMode, addToDockerGroup, osInfo, dryRun);
-      await pullCordovaBuilder(user, dockerMode, dryRun);
+      await pullCordovaBuilder(user, dockerMode, addToDockerGroup, dryRun);
       // restart to apply the docker group membership
       await asyncSudo(["systemctl", "restart", osService], false, dryRun);
     } catch (error) {
