@@ -91,7 +91,7 @@ export class CordovaHelper {
           `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningGUUID}" ` +
           ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
           ` DEVELOPMENT_TEAM="${this.appleTeamId}"`,
-        { cwd: this.buildDir }
+        { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
       );
       console.log(buffer.toString());
       if (!existsSync(join(this.buildDir, "MyArchive.xcarchive"))) {
@@ -104,7 +104,7 @@ export class CordovaHelper {
         buffer = execSync(
           "xcodebuild -exportArchive -archivePath MyArchive.xcarchive " +
             `-exportPath ${this.buildDir} -exportOptionsPlist ExportOptions.plist`,
-          { cwd: this.buildDir }
+          { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
         );
         console.log(buffer.toString());
         // to upload it automatically:
@@ -158,7 +158,7 @@ export class CordovaHelper {
     const result = spawnSync(
       `${process.env.DOCKER_BIN ? `${process.env.DOCKER_BIN}/` : ""}docker`,
       spawnParams,
-      { cwd: "." }
+      { cwd: ".", maxBuffer: 1024 * 1024 * 10 }
     );
     if (result.output) console.log(result.output.toString());
     else if (result.error) console.log(result.error.toString());
@@ -174,6 +174,7 @@ export class CordovaHelper {
           ...process.env,
           NODE_ENV: "development",
         },
+        maxBuffer: 1024 * 1024 * 10,
       });
       console.log(result.output.toString());
     };
@@ -195,6 +196,7 @@ export class CordovaHelper {
           ...process.env,
           NODE_ENV: "development",
         },
+        maxBuffer: 1024 * 1024 * 10,
       }
     );
     console.log(result.output.toString());
@@ -224,6 +226,7 @@ export class CordovaHelper {
       ["run", "build-app", "--", ...buildParams],
       {
         cwd: this.buildDir,
+        maxBuffer: 1024 * 1024 * 10,
       }
     );
     console.log(result.output.toString());
