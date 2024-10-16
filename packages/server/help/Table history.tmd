@@ -1,0 +1,42 @@
+When version history on a database table is enabled in Saltcorn,
+changes to row values are recorded in a secondary, hidden table. 
+This allows you to restore previous versions of individual rows 
+and undelete deleted rows. 
+
+The downside to enabling version history on tables is that this 
+can lead to a lot of data being retained which may mean your 
+database disk requirements will grow. In addition it will impact 
+performance when making changes to rows. There should be no 
+performance impact on reading data from the database.
+
+Note that when the history is first enabled the existing rows in 
+the table are not copied into the history table in their present 
+state. Only when a change is made to a row (or a row is created) 
+is the new row copied into the history table. 
+
+Enabling version history gives the administrator access to the 
+version history in the administrator's data edit facility (Edit 
+button on the table page). Each row will show the number of versions 
+recorded and by clicking this you will see the list of versions. 
+Each version shows the value for each field, the user who made the 
+change, the time at which the change was made and an option to 
+restore. This is the only facility for interacting with the version
+history in core Saltcorn.
+
+The history-control module provides additional facilities for 
+interacting with the history. The history-control module provides:
+
+* Actions to undo and redo row changes that will move the current 
+  row backwards and forwards in the table history
+
+* A history field difference view pattern that allows users to 
+  compare different versions of a field value
+
+* A "History for database table" table provider that can be used to create a "virtual"
+  table based on the history of an existing table. This table will have 
+  all the fields of the original table and fields for the user making 
+  the change and the time of the change being made 
+
+* A restore_from_history action that can be used on a view of the table
+  history (on the provided table) to restore or undelete any version of 
+  a specific row
