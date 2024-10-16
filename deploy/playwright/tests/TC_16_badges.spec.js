@@ -139,8 +139,9 @@ test.describe('E2E Test Suite', () => {
 
         await customAssert('Select name for helper', async () => {
             await page.click(pageobject.addrowlocator);
+            await page.waitForTimeout(1000);
             await page.click(pageobject.HelperCell);
-            await page.waitForTimeout(5000);
+            await page.waitForTimeout(1000);
             await page.click('text=Adam', { force: true });
             await page.waitForTimeout(5000);
 

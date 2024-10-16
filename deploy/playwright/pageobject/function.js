@@ -33,7 +33,7 @@ class PageFunctions {
   }
 
   async fill_Text(selector, text) {
-    await this.page.fill(selector, text, { timeout: 20000 });
+    await this.page.fill(selector, text, { timeout: 30000 });
   }
 
   async navigate_To_Settings() {

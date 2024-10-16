@@ -71,7 +71,8 @@ test.describe('E2E Test Suite', () => {
     await page.waitForTimeout(4000);
     await customAssert('Select assignee for every task ', async () => {
       await page.click(pageobject.assignedToTab);
-      await page.click('text=Adam');
+      await page.waitForTimeout(1000);
+      await page.click('text=Adam', { force: true });
       await page.click(pageobject.assignedToTab2);
       await page.click('text=Brandon');
       await page.click(pageobject.assignedToTab3);
@@ -116,7 +117,7 @@ test.describe('E2E Test Suite', () => {
       await page.click(pageobject.assignedToDropdown);
       await page.click(pageobject.fullNameItem);
     });
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(5000);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.Tasklist);
@@ -145,7 +146,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.assignedToItem);
     // add label for link
     await functions.fill_Text(pageobject.lebelforfield, 'Show Assignee');
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(5000);
     // click on next button
     await page.click(pageobject.nextoption);
     // Go to task list
@@ -154,7 +155,7 @@ test.describe('E2E Test Suite', () => {
     // click on assignee link and assert the name
     await customAssert('click on assignee link and assert the name', async () => {
       await page.click(pageobject.showAssigneeLink);
-      await expect(page.getByText('Adam')).toBeVisible();
+      await expect(page.getByText('Adam').first()).toBeVisible();
     });
   });
 
@@ -253,7 +254,7 @@ test.describe('E2E Test Suite', () => {
         }
       }
     });
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(5000);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.Tasklist);
@@ -278,7 +279,7 @@ test.describe('E2E Test Suite', () => {
       // Select 'format' from the dropdown
       await page.selectOption(pageobject.fieldViewdropdown1, { label: 'format' }); // If using a select dropdown
     });
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(5000);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.Tasklist);

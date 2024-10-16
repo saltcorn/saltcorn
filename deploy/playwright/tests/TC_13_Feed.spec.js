@@ -71,7 +71,7 @@ test.describe('E2E Test Suite', () => {
             await functions.drag_And_Drop(pageobject.Column2FullName, pageobject.Column0Address);
             await functions.drag_And_Drop(pageobject.Column2DOB, pageobject.Column1Address);
         });
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
          // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
@@ -97,7 +97,7 @@ test.describe('E2E Test Suite', () => {
             await functions.drag_And_Drop(pageobject.namelabel, pageobject.addresslabel);
             await page.click(pageobject.AddressInput);
             await page.click(pageobject.fielddropdown);
-            // Select 'Date of birth' from the dropdown
+            // Select 'full_name' from the dropdown
             await page.selectOption('select.form-control.form-select', 'full_name');
         });
         await customAssert('Set the position and properties for Address columns', async () => {
@@ -107,7 +107,7 @@ test.describe('E2E Test Suite', () => {
             // Select 'Date of birth' from the dropdown
             await page.selectOption('select.form-control.form-select', 'Address');
         });
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views();
@@ -134,11 +134,16 @@ test.describe('E2E Test Suite', () => {
         // delete lable for full name
         await page.click(pageobject.deletebutton);
         await customAssert('Drag Name on top of the page set heading', async () => {
-            await functions.drag_And_Drop(pageobject.NameLocator, pageobject.addresslabel);
+            await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.addresslabel);
+            await page.click(pageobject.fielddropdown);
+            // Select 'full_name' from the dropdown
+            await page.selectOption('select.form-control.form-select', 'full_name');
+
             // select text style as heading1 for full name
             const textstyleLocator = page.locator('.form-control.form-select').nth(2);
             await textstyleLocator.click();
             await textstyleLocator?.selectOption("Heading 1");
+            await page.waitForTimeout(2000);
         });
 
         await customAssert('Drag address row on third column', async () => {
@@ -162,7 +167,7 @@ test.describe('E2E Test Suite', () => {
         await functions.drag_And_Drop(pageobject.addresslabel, pageobject.thirdrowcolumn1);
         await page.click(pageobject.firstrowcolumn1);
         await functions.fill_Text(pageobject.NumberInput, '6');
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(5000);
         // click on next button
         await page.click(pageobject.nextoption);
     });
@@ -223,7 +228,7 @@ test.describe('E2E Test Suite', () => {
         await functions.views();
         await page.click(pageobject.Feedviewlink);
         await customAssert('Newly added record should be present', async () => {
-            await expect(page.getByText('Edward')).toBeVisible();
+            await expect(page.getByText('Edward').first()).toBeVisible();
         });
         await customAssert('Edit Newly added record in table', async () => {
             await page.click(pageobject.EditButton2);

@@ -250,8 +250,8 @@ test.describe('E2E Test Suite', () => {
       await page.click(pageobject.addpersonlink);
     });
     // click on save button
-    await page.waitForSelector(pageobject.saveprimarybutton);
-    await page.click(pageobject.saveprimarybutton);
+    await page.waitForSelector(pageobject.saveactionbutton);
+    await page.click(pageobject.saveactionbutton);
     // go to view again and click to see new view link
     await functions.views();
     await page.waitForSelector(pageobject.newviewlink);
@@ -510,7 +510,7 @@ test.describe('E2E Test Suite', () => {
     await functions.views();
     await page.click(pageobject.newviewlink);
     await page.click(pageobject.editfieldlink);
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(3000);
     await customAssert('Input bio in iframe/html textbox', async () => {
     // Wait for the iframe to be available
     await page.waitForSelector('iframe');

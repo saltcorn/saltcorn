@@ -4,21 +4,18 @@ class PageLocators {
     this.tryItNowLink = 'a[href="https://saltcorn.com/tenant/create"]';
     this.subdomainInput = 'input[name="subdomain"]';
     this.submitButton = 'button[type="submit"]';
-    // this.successMessage = '#page-inner-content > section.page-section.pt-2 > div > div > div:nth-child(1)';
-    // this.newApplicationLink = '#page-inner-content > section.page-section.pt-2 > div > div > div.my-3 > a';
+
     this.emailInput = 'input[type="email"]';
     this.passwordInput = 'input[type="password"]';
     this.textSource = 'div.wrap-builder-elem[title="Text"]';
     this.textlocator = '#saltcorn-builder > div.row > div.col-sm-auto.builder-sidebar > div > div.settings-panel.card.mt-1 > div.card-body.p-2 > div > div.border > div';
 
-    this.saveprimarybutton = '#page-inner-content > div:nth-child(2) > div.d-inline > form > button';
     this.InputName = '#inputname';
     this.addFieldButtonLocator = 'a.btn.btn-primary.add-field.mt-2:has-text("Add field")';
     this.columnsElement = 'div[title="Split into columns"]';
     this.firstColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(1)';
     this.secondColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(2)';
 
-    // this.rowsperpage = '#input_rows_per_page';
     this.target = 'div.canvas.root-canvas';
     this.DatelocatorByName = 'input[name="date_of_birth"]';
     this.DatepickReadonly = 'input[readonly="readonly"]';
@@ -34,11 +31,11 @@ class PageLocators {
     this.settingsTab = 'span:has-text("Settings")';
     this.settingdropdown='#collapseSettings > div';
     this.aboutApplicationLink = 'a.collapse-item:has-text("About application")';
-    this.Modulesettingsidebar = '#collapseSettings > div > a:nth-child(2)';
-    this.UsersAndSecurity = '#collapseSettings > div > a:nth-child(3)';
-    this.SiteStructure = '#collapseSettings > div > a:nth-child(4)';
-    this.File = '#collapseSettings > div > a:nth-child(5)';
-    this.Events = '#collapseSettings > div > a:nth-child(6)';
+    this.Modulesettingsidebar = 'a.collapse-item[href="/plugins"]';
+    this.UsersAndSecurity = 'a.collapse-item[href="/useradmin"]';
+    this.SiteStructure = 'a.collapse-item[href="/site-structure"]';
+    this.File = 'a.collapse-item[href="/files"]';
+    this.Events = 'a.collapse-item[href="/events"]';
     this.clearAllButton = 'a[href="/admin/clear-all"]';
     this.toasterSelector = '#toasts-area > div > div.toast-body.py-2.fs-6.fw-bold > strong';
     this.htmltextlocator = 'textarea.form-control';
@@ -53,7 +50,7 @@ class PageLocators {
     this.createtablebutton='a[href="/table/new"]';
     this.SaltCornButton='#accordionSidebar > a > div';
     this.createviewbutton='#accordionSidebar > li.nav-item.active > a';
-    this.sidebarviewbutton='#accordionSidebar > li:nth-child(5) > a';
+    this.sidebarviewbutton = 'a.nav-link[href="/viewedit"]';
     this.createnewview = 'a[href="/viewedit/new"]';
     this.createtablefromCSV = 'a[href="/table/create-from-csv"]';
     this.homeCSVuplaod = 'a:has-text("CSV upload")';
@@ -384,7 +381,6 @@ class PageLocators {
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
     this.secondrowcolumn = '.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
     this.secondrowcolumn1 = '.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
-    // this.forthrowcolumn = '.row:nth-of-type(5) .split-col:nth-of-type(1) .canvas';
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
@@ -487,7 +483,7 @@ class PageLocators {
     this.AddressInput = 'div.split-col.col-sm-10.text-start:has(input#inputaddress)';
     this.addresslabel = 'div.d-inline:text("Address")';
     this.namelabel = 'div.d-inline:text("Full name")'
-    this.NameLocator = 'div.d-inline:has-text("Adam")';
+    // this.NameLocator = 'div.d-inline:has-text("Adam")';
     this.ShowViewSelect = 'select[name="show_view"]';
     this.ViewToCreateSelect = 'select[name="view_to_create"]';
     this.OrderFieldSelect = 'select[name="order_field"]';
@@ -496,8 +492,6 @@ class PageLocators {
     this.Feedviewlink = 'a[href="/view/People_Feed"]';
     this.NumberInput = 'input.form-control[type="number"][min="1"][max="11"][value="2"]';
     this.NumberInputW = 'input.form-control[type="number"][min="1"][max="11"][value="6"]';
-    // this.ColumnSettings = 'div.bg-secondary.ps-1.text-white.w-100.mt-1:has(span > svg[aria-hidden="true"][data-icon="chevron-right"])';
-    // this.SvgIcon = 'svg[viewBox="0 0 16 16"][width="1em"][height="1em"]';
     this.AddressLocator = 'div.d-inline:has-text("132 east Greater Noida new delhi india")';
     this.firstrowcolumn1 = '.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
     this.NewPersonLink = 'a[href="/view/Edit_People"]:has-text("New person")';
@@ -538,7 +532,6 @@ class PageLocators {
     this.configurePeopleList = 'a[href="/viewedit/config/People_list"]';
     this.aggregationDiv = 'div[title="Aggregation"]';
     this.RelationDropdown = 'select.form-control.form-select:first-of-type';
-    // this.Childtablefield = 'select.form-control.form-select';
     this.StatisticDropdown = 'select.form-control.form-select:nth-of-type(3)';
     this.PeopleList = 'a[href="/view/People_list"]';
     this.IDOption = 'select.form-control.form-select option[value="id"]';
