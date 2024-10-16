@@ -185,12 +185,13 @@ const runDockerScript = async (dryRun) => {
  * @param dryRun - if true than it does not execute sudo but displays commands (to test purposes)
  * @returns {Promise<*>}
  */
-const asyncSudoUser = (user, args, allowFail, dryRun) => {
+const asyncSudoUser = (user, args, allowFail, dryRun, envVars = {}) => {
   if (os.userInfo().username === user) {
     console.log(">", args.join(" "));
     if (!dryRun)
       execSync(args.join(" "), {
         stdio: "inherit",
+        env: { ...process.env, ...envVars },
       });
   } else return asyncSudo(["sudo", "-iu", user, ...args], allowFail, dryRun);
 };

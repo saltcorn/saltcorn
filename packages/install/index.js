@@ -463,9 +463,10 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
   const { configFileDir } = get_paths(user);
 
   await asyncSudoUser(user, ["mkdir", "-p", configFileDir], false, dryRun);
+  const npmPrefix = `/home/${user}/.local/`;
   await asyncSudoUser(
     user,
-    ["npm", "config", "set", "prefix", `/home/${user}/.local/`],
+    ["npm", "config", "set", "prefix", npmPrefix],
     false,
     dryRun
   );
@@ -480,13 +481,15 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
       "--unsafe",
     ],
     false,
-    dryRun
+    dryRun,
+    { npm_config_prefix: npmPrefix }
   );
   await asyncSudoUser(
     user,
     ["npm", "install", "-g", "sd-notify"],
     true,
-    dryRun
+    dryRun,
+    { npm_config_prefix: npmPrefix }
   );
   await asyncSudo(
     [
