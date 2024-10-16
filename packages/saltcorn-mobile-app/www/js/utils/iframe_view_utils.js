@@ -669,17 +669,14 @@ function openFile(fileId) {
 function openInAppBrowser(url, domId) {
   try {
     $(`#${domId}`).find(".spinner-border").removeClass("d-none");
-    const currentRoute = parent.currentLocation();
-    const currentQuery = parent.currentQuery();
-    parent.localStorage.setItem(
-      "lastLocation",
-      JSON.stringify({ route: currentRoute, query: currentQuery })
-    );
-    parent.cordova.InAppBrowser.open(
+    const ref = parent.cordova.InAppBrowser.open(
       url,
-      "_self",
-      "clearcache=yes,clearsessioncache=yes,location=no"
+      "_blank",
+      "clearcache=yes,clearsessioncache=yes,location=no,toolbar=yes,toolbarposition=top"
     );
+    ref.addEventListener("exit", function () {
+      $(`#${domId}`).find(".spinner-border").addClass("d-none");
+    });
   } catch (error) {
     $(`#${domId}`).find(".spinner-border").addClass("d-none");
     parent.errorAlert(error);
