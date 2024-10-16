@@ -4,22 +4,18 @@ class PageLocators {
     this.tryItNowLink = 'a[href="https://saltcorn.com/tenant/create"]';
     this.subdomainInput = 'input[name="subdomain"]';
     this.submitButton = 'button[type="submit"]';
-    // this.successMessage = '#page-inner-content > section.page-section.pt-2 > div > div > div:nth-child(1)';
-    // this.newApplicationLink = '#page-inner-content > section.page-section.pt-2 > div > div > div.my-3 > a';
+
     this.emailInput = 'input[type="email"]';
     this.passwordInput = 'input[type="password"]';
     this.textSource = 'div.wrap-builder-elem[title="Text"]';
     this.textlocator = '#saltcorn-builder > div.row > div.col-sm-auto.builder-sidebar > div > div.settings-panel.card.mt-1 > div.card-body.p-2 > div > div.border > div';
-    // this.inputbox1 = '#inputaddress';
-    this.inputbox2 = '#inputdate_of_birth';
-    this.saveprimarybutton = '#page-inner-content > div:nth-child(2) > div.d-inline > form > button';
+
     this.InputName = '#inputname';
     this.addFieldButtonLocator = 'a.btn.btn-primary.add-field.mt-2:has-text("Add field")';
     this.columnsElement = 'div[title="Split into columns"]';
     this.firstColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(1)';
     this.secondColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(2)';
 
-    // this.rowsperpage = '#input_rows_per_page';
     this.target = 'div.canvas.root-canvas';
     this.DatelocatorByName = 'input[name="date_of_birth"]';
     this.DatepickReadonly = 'input[readonly="readonly"]';
@@ -35,11 +31,11 @@ class PageLocators {
     this.settingsTab = 'span:has-text("Settings")';
     this.settingdropdown='#collapseSettings > div';
     this.aboutApplicationLink = 'a.collapse-item:has-text("About application")';
-    this.Modulesettingsidebar = '#collapseSettings > div > a:nth-child(2)';
-    this.UsersAndSecurity = '#collapseSettings > div > a:nth-child(3)';
-    this.SiteStructure = '#collapseSettings > div > a:nth-child(4)';
-    this.File = '#collapseSettings > div > a:nth-child(5)';
-    this.Events = '#collapseSettings > div > a:nth-child(6)';
+    this.Modulesettingsidebar = 'a.collapse-item[href="/plugins"]';
+    this.UsersAndSecurity = 'a.collapse-item[href="/useradmin"]';
+    this.SiteStructure = 'a.collapse-item[href="/site-structure"]';
+    this.File = 'a.collapse-item[href="/files"]';
+    this.Events = 'a.collapse-item[href="/events"]';
     this.clearAllButton = 'a[href="/admin/clear-all"]';
     this.toasterSelector = '#toasts-area > div > div.toast-body.py-2.fs-6.fw-bold > strong';
     this.htmltextlocator = 'textarea.form-control';
@@ -54,7 +50,7 @@ class PageLocators {
     this.createtablebutton='a[href="/table/new"]';
     this.SaltCornButton='#accordionSidebar > a > div';
     this.createviewbutton='#accordionSidebar > li.nav-item.active > a';
-    this.sidebarviewbutton='#accordionSidebar > li:nth-child(5) > a';
+    this.sidebarviewbutton = 'a.nav-link[href="/viewedit"]';
     this.createnewview = 'a[href="/viewedit/new"]';
     this.createtablefromCSV = 'a[href="/table/create-from-csv"]';
     this.homeCSVuplaod = 'a:has-text("CSV upload")';
@@ -384,7 +380,7 @@ class PageLocators {
     this.editIconLocator = 'i.far.fa-edit';
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
     this.secondrowcolumn = '.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
-    this.fifthrowcolumn = '.row:nth-of-type(5) .split-col:nth-of-type(1) .canvas';
+    this.secondrowcolumn1 = '.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
@@ -463,14 +459,11 @@ class PageLocators {
     this.installkanban = 'form[action="/plugins/install/kanban"] button:has-text("Install")';
     this.Discriptiontab = 'div.tabulator-cell[tabulator-field="discription"]';
     this.Tasktable = 'a:has-text("Task")';
-    this.statustab = 'div.tabulator-cell[tabulator-field="status"]';
     this.Uniquecheckbox = "//input[@id='inputis_unique' and @type='checkbox']";
     this.Cardviewdropdown = 'select.form-control.form-select[name="show_view"]';
     this.columnsbydropdown = 'select.form-control.form-select[name="column_field"]';
     this.PositionFieldDropdown = 'select.form-control.form-select[name="position_field"]';
     this.kanbanboardlink = 'a[href="/view/Kanban_Board"]';
-    this.firstrowcolumn1 = '.split-col.col-sm-12.text-undefined .canvas';
-    this.secondrowcolumn1 = '.row:nth-of-type(1) .split-col:nth-of-type(1) .canvas';
     this.firstfield = 'div.d-inline:first-of-type';
     this.TaskCard1 = 'div.kancard.card[data-id="1"]'; // Click on the "Buy Milk" card
     this.TaskCard2 = 'div.kancard.card[data-id="2"]'; // Click on the "Take out trash" card
@@ -479,6 +472,107 @@ class PageLocators {
     this.iterationstatus = 'div.kancontainer[data-column-value="Iteration"]';
     this.configurekanban = 'a[href="/viewedit/config/Kanban_Board"]';
     this.InProgressStatus = 'div.kancontainer[data-column-value="InProgress"]';
+    this.statustab = 'div.tabulator-cell[tabulator-field="status"]';
+    this.statusCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="status"])[2]';
+    this.statusCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="status"])[3]';
+    this.Column2FullName = 'div.d-flex.justify-content-between.h-100:has-text("Column 2: Full name")';
+    this.Column0Address = 'div.d-flex.justify-content-between.h-100:has-text("Column 0: Address")';
+    this.Column1Address = 'div.d-flex.justify-content-between.h-100:has-text("Column 1: Address")';
+    this.Column2DOB = 'div.d-flex.justify-content-between.h-100:has-text("Column 2: Date of birth")';
+    this.FullNameInput = 'div.split-col.col-sm-10.text-start:has(input#inputfull_name)';
+    this.AddressInput = 'div.split-col.col-sm-10.text-start:has(input#inputaddress)';
+    this.addresslabel = 'div.d-inline:text("Address")';
+    this.namelabel = 'div.d-inline:text("Full name")'
+    // this.NameLocator = 'div.d-inline:has-text("Adam")';
+    this.ShowViewSelect = 'select[name="show_view"]';
+    this.ViewToCreateSelect = 'select[name="view_to_create"]';
+    this.OrderFieldSelect = 'select[name="order_field"]';
+    this.ViewDecorationSelect = 'select[name="view_decoration"]';
+    this.ColsXlInput = 'input[name="cols_xl"]';
+    this.Feedviewlink = 'a[href="/view/People_Feed"]';
+    this.NumberInput = 'input.form-control[type="number"][min="1"][max="11"][value="2"]';
+    this.NumberInputW = 'input.form-control[type="number"][min="1"][max="11"][value="6"]';
+    this.AddressLocator = 'div.d-inline:has-text("132 east Greater Noida new delhi india")';
+    this.firstrowcolumn1 = '.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
+    this.NewPersonLink = 'a[href="/view/Edit_People"]:has-text("New person")';
+    this.InputFullName = '#inputfull_name';
+    this.inputDateOfBirth = '#inputdate_of_birth';
+    this.AddressInput = '#inputaddress';
+    this.Addresstext = 'div.d-inline:has-text("HN 01, WN 26 noida india")';
+    this.LineBreakElement = 'div.wrap-builder-elem[title="Line break"]';
+    this.EditButton2 = 'a.btn.btn-primary[href="/view/Edit_People?id=2"]';
+    this.assignedToTab = 'div.tabulator-cell[tabulator-field="assigned_to"]';
+    this.assignedToTab2 = '(//div[@class="tabulator-cell" and @tabulator-field="assigned_to"])[2]';
+    this.assignedToTab3 = '(//div[@class="tabulator-cell" and @tabulator-field="assigned_to"])[3]';
+    this.joinField = 'div[title="Join field"]';
+    this.fieldsButton = '#f-top-dropdown';
+    this.assignedToDropdown = '#_field_assigned_to';
+    this.fullNameItem = 'li.dropdown-item.field-val-item:nth-of-type(3)';
+    this.DobItem = 'li.dropdown-item.field-val-item:nth-of-type(2)';
+    this.Tasklist = 'a[href="/view/TaskList"]';
+    this.configureTasklist = 'a[href="/viewedit/config/TaskList"]';
+    this.fullNameSpan = 'span.link-style:has-text("full_name")';
+    this.view2showpeople = 'text=Show_People [Show] People';
+    this.selectButton = '#_relation_picker_toggle_';
+    this.assignedToItem = 'li.dropdown-item';
+    this.showAssigneeLink = 'a[href="/view/Show_People?id=2"]';
+    this.Peopletable = 'a:has-text("People")';
+    this.teamsCell = 'div.tabulator-cell[tabulator-field="team"]';
+    this.teamsCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[2]';
+    this.teamsCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[3]';
+    this.teamsCell4 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[4]';
+    this.teamsCell5 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[5]';
+    this.teamDropdown = '#_field_assigned_to\\.team'; // Escape the dot
+    this.nameItem = 'ul.ps-0 li.dropdown-item.field-val-item:nth-of-type(2)';
+    this.nameSpan = 'span.link-style:has-text("name")';
+    this.TeamNameSpan = 'span:has-text("[assigned_to.team.name]")';
+    this.fieldViewdropdown1 = '(//select[@class="form-control form-select"])[1]'
+    this.textInputformat = 'input.form-control:nth-of-type(2)';
+    this.dateOfBirthSpan = 'span.link-style:has-text("date_of_birth")';
+    this.configurePeopleList = 'a[href="/viewedit/config/People_list"]';
+    this.aggregationDiv = 'div[title="Aggregation"]';
+    this.RelationDropdown = 'select.form-control.form-select:first-of-type';
+    this.StatisticDropdown = 'select.form-control.form-select:nth-of-type(3)';
+    this.PeopleList = 'a[href="/view/People_list"]';
+    this.IDOption = 'select.form-control.form-select option[value="id"]';
+    this.countTaskLocator = 'span.link-style:has-text("Count Task")';
+    this.minInputLocator = 'input[type="number"]#inputmin';
+    this.estimatedHourscell = 'div.tabulator-cell[tabulator-field="estimated_hours"]';
+    this.estimatedHourscell2 = '(//div[@class="tabulator-cell" and @tabulator-field="estimated_hours"])[1]';
+    this.estimatedHourscell3 = '(//div[@class="tabulator-cell" and @tabulator-field="estimated_hours"])[2]';
+    this.SumTaskLocator = 'span.link-style:has-text("Sum Task")';
+    this.Array_AggLocator = 'span.link-style:has-text("Array_Agg Task")';
+    this.configureShowPeople = 'a[href="/viewedit/config/Show_People"]';
+    this.editButtonLocator = 'span.selected-node.btn.btn-primary:has-text("Edit")';
+    this.teamDropdownLocator = 'div#_field_team.dropdown-toggle[role="button"]';
+    this.teamnameitem = 'li.dropdown-item.field-val-item:nth-of-type(2)';
+    this.richTextEditor = 'div.cke_editable[contenteditable="true"]';
+    this.view2showteam = 'text=Show_Team [Show] Teams';
+    this.textInputLabel = 'input.viewlink-label.form-control[type="text"]';
+    this.popupcheckbox = 'input.form-check-input[type="checkbox"][name="block"]';
+    this.showTeamLink = 'a[href*="Show_Team?id=1"]';
+    this.showTeamspan = 'span.btn.btn-secondary.btn-sm.is-builder-link:has-text("Show team")';
+    this.IDDivLocator = 'div.col-2.text-end:has-text("ID")';
+    this.view2tasklist = 'text=TaskList [List] Task';
+    this.listOfAssignedTasks = 'a:has-text("List of assigned tasks")';
+    this.maintenanceDiv = 'div.d-inline:has-text("Maintenance")';
+    this.nameDivLocator1 = 'div.d-inline:has-text("Name")';
+    this.columnSettings = 'div.bg-secondary:has-text("Column settings")';
+    this.rightButtonalign = 'button[title="Right"].btn-outline-secondary';
+    this.badgesHeader = 'h5:has-text("badges")';
+    this.installbadges = 'form[action="/plugins/install/badges"] button:has-text("Install")';
+    this.inputrelation = '#inputrelation';
+    this.view2taskbadge = 'text=PersonTaskBadges [Badges] People';
+    this.badgeLocator = 'span.badge.bg-secondary:has-text("Buy Milk")';
+    this.taskHelper = 'a:has-text("Task_Helper")';
+    this.HelperCell = 'div.tabulator-cell[tabulator-field="helper"]';
+    this.TaskCell = 'div.tabulator-cell[tabulator-field="task"]';
+    this.TaskCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="task"])[2]';
+    this.TaskCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="task"])[3]';
+    this.view2editHelper = 'text=Edit_Helper [EditBadges] People';
+    this.txttaskbadge = 'text=View: PersonTaskBadges [Badges] People';
+    this.closeIcon = 'i.ms-1.fas.fa-lg.fa-times';
+    this.plusIconbadge = 'i.fas.fa-lg.fa-plus';
   }
 }
 

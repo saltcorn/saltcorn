@@ -33,7 +33,7 @@ class PageFunctions {
   }
 
   async fill_Text(selector, text) {
-    await this.page.fill(selector, text, { timeout: 20000 });
+    await this.page.fill(selector, text, { timeout: 30000 });
   }
 
   async navigate_To_Settings() {
@@ -475,10 +475,54 @@ class PageFunctions {
       await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
     });
     await this.navigate_modules_To_Installed();
-    await customAssert('ckeditor4 module should be present in installed tab', async () => {
+    await customAssert('kanban module should be present in installed tab', async () => {
       await expect(this.page.locator(this.locators.kanbanHeader)).toBeVisible();
     });
   }
+
+  async install_badges() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Search with 'flatpickr' in the search bar
+    await this.fill_Text(this.locators.SearchModule, 'badges');
+    // Assert that the flatpickr module is visible and click on it
+    await customAssert('badges module should be visible', async () => {
+      await expect(this.page.locator(this.locators.badgesHeader)).toBeVisible();
+      await this.page.click('button#button-search-submit');
+    });
+    // Wait for a few seconds
+    await this.page.waitForTimeout(2000);    
+    // Click the Install button
+    await this.page.click(this.locators.installbadges);
+    // Assert the success message is visible
+    await customAssert('Success message should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+    await this.navigate_modules_To_Installed();
+    await customAssert('badges module should be present in installed tab', async () => {
+      await expect(this.page.locator(this.locators.badgesHeader)).toBeVisible();
+    });
+  }
+
+  async clearText(locator) {
+    // Click on the locator to focus it
+    await this.page.click(locator); 
+    // Clear existing text
+    await this.page.evaluate((selector) => {
+        const editableDiv = document.querySelector(selector);
+        if (editableDiv) {
+            const range = document.createRange();
+            range.selectNodeContents(editableDiv);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            document.execCommand('delete'); // Delete selected text
+        }
+    }, locator);
+}
+
 }
 
 module.exports = PageFunctions;

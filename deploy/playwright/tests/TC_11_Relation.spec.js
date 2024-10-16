@@ -93,7 +93,6 @@ test.describe('E2E Test Suite', () => {
         await functions.fill_Text(pageobject.InputName, 'Department');
         // click on Create button
         await page.click(pageobject.submitButton);
-        // await page.click(pageobject.DepartmentTable);
         // click on add field button
         await page.click(pageobject.addFieldButtonLocator);
         // Fill the lable name
