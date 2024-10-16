@@ -378,7 +378,9 @@ router.get(
             : { type: "blank", contents: "" },
           {
             type: "card",
-            title: req.__("Snapshots"),
+            title:
+              req.__("Snapshots") +
+              `<a href="javascript:ajax_modal('/admin/help/Snapshots?')"><i class="fas fa-question-circle ms-1"></i></a>`,
             titleAjaxIndicator: true,
             contents: div(
               p(
