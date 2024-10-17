@@ -146,7 +146,8 @@ const count = async (tbl, whereObj) => {
       / pg_catalog.current_setting('block_size')::int)
        )::bigint
 FROM   pg_catalog.pg_class c
-WHERE  c.oid = '${getTenantSchema()}.${sqlsanitize(tbl)}'::regclass`;
+WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
+      sql_log(sql);
       const tq = await (client || pool).query(sql, []);
       const n = +tq.rows[0].int8;
       if (n && n > 10000) return n;
