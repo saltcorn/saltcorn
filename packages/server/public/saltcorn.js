@@ -881,7 +881,16 @@ function build_mobile_app(button) {
   ) {
     return;
   }
-
+  if (
+    isSbadmin2 &&
+    !confirm(
+      "It seems you are using the standard sbadmin2 layout. " +
+        "This layout is not optimized for mobile, consider using any-bootstrap-theme. " +
+        "Do you really want to continue?"
+    )
+  ) {
+    return;
+  }
   const notSupportedPlugins = params.includedPlugins.filter(
     (plugin) => !window.pluginsReadyForMobile.includes(plugin)
   );
