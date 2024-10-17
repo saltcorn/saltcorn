@@ -1957,7 +1957,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       field &&
       field.type.name === "String" &&
       !(field.attributes && field.attributes.options) &&
-      approximate
+      approximate &&
+      !field.attributes?.exact_search_only
     ) {
       qstate[k] = { ilike: v };
     } else if (field && field.type.name === "Bool" && state[k] === "?") {
@@ -2056,7 +2057,10 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         const [jtNm, jFieldNm, lblField] = kpath;
         let isString = false;
         const labelField = Table.findOne({ name: jtNm })?.getField?.(lblField);
-        if (labelField) isString = labelField.type?.name === "String";
+        if (labelField)
+          isString =
+            labelField.type?.name === "String" &&
+            !labelField.attributes?.exact_search_only;
         qstate.id = [
           ...(qstate.id ? [qstate.id] : []),
           {
