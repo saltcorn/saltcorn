@@ -751,6 +751,7 @@ const string = {
         required: false,
         sublabel:
           'Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class="fst-normal">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.',
+        attributes: { autofocus: true },
       },
       {
         name: "min_length",
@@ -785,7 +786,13 @@ const string = {
         required: false,
         sublabel: "Error message when regular expression does not match",
       },
-
+      {
+        name: "exact_search_only",
+        label: "Exact search only",
+        type: "Bool",
+        sublabel:
+          "Search only on exact match, not substring match. Useful for large tables",
+      },
       ...(table
         ? [
             {

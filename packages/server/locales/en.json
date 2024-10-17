@@ -1474,5 +1474,6 @@
 	"Invalid build directory path": "Invalid build directory path",
 	"Invalid build directory name": "Invalid build directory name",
 	"clean node_modules": "clean node_modules",
-	"After delete": "After delete"
+	"After delete": "After delete",
+	"Search only on exact match, not substring match. Useful for large tables": "Search only on exact match, not substring match. Useful for large tables"
 }
