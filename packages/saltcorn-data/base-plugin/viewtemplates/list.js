@@ -617,6 +617,11 @@ const configuration_workflow = (req) =>
             attributes: { min: 0 },
           });
           formfields.push({
+            name: "_hide_pagination",
+            label: req.__("Hide pagination"),
+            type: "Bool",
+          });
+          formfields.push({
             name: "_row_click_url_formula",
             label: req.__("Row click URL"),
             sublabel:
@@ -1048,7 +1053,12 @@ const run = async (
   }
   page_opts.class = "";
 
-  if ((rows && rows.length === rows_per_page) || current_page > 1) {
+  if (
+    (!default_state?._hide_pagination &&
+      rows &&
+      rows.length === rows_per_page) ||
+    current_page > 1
+  ) {
     const nrows = rowCount;
     if (nrows > rows_per_page || current_page > 1) {
       page_opts.pagination = {
@@ -1262,6 +1272,7 @@ module.exports = {
       exclusion_relation,
       exclusion_where,
       _rows_per_page,
+      _hide_pagination,
       _row_click_url_formula,
       transpose,
       transpose_width,
@@ -1378,10 +1389,12 @@ module.exports = {
         forUser: req.user,
       });
 
-      const rowCount = await table.countRows(where, {
-        forPublic: !req.user,
-        forUser: req.user,
-      });
+      const rowCount = default_state?._hide_pagination
+        ? undefined
+        : await table.countRows(where, {
+            forPublic: !req.user,
+            forUser: req.user,
+          });
       return { rows, rowCount };
     },
     async getRowQuery(id) {
