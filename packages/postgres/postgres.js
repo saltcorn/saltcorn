@@ -134,6 +134,27 @@ const drop_reset_schema = async (schema) => {
  */
 const count = async (tbl, whereObj) => {
   const { where, values } = mkWhere(whereObj);
+  if (!where) {
+    try {
+      // fast count for large table but may be stale
+      // https://stackoverflow.com/questions/7943233/fast-way-to-discover-the-row-count-of-a-table-in-postgresql
+      //https://www.citusdata.com/blog/2016/10/12/count-performance/
+      const sql = `SELECT (CASE WHEN c.reltuples < 0 THEN NULL
+             WHEN c.relpages = 0 THEN float8 '0'  -- empty table
+             ELSE c.reltuples / c.relpages END
+     * (pg_catalog.pg_relation_size(c.oid)
+      / pg_catalog.current_setting('block_size')::int)
+       )::bigint
+FROM   pg_catalog.pg_class c
+WHERE  c.oid = '${getTenantSchema()}.${sqlsanitize(tbl)}'::regclass`;
+      const tq = await (client || pool).query(sql, []);
+      const n = +tq.rows[0].int8;
+      if (n && n > 10000) return n;
+    } catch {
+      //skip fast estimate
+    }
+  }
+
   const sql = `SELECT COUNT(*) FROM "${getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
