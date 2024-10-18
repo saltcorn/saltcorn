@@ -1886,9 +1886,10 @@ router.get(
     });
   })
 );
-const buildDialogScript = (cordovaBuilderAvailable) =>
+const buildDialogScript = (cordovaBuilderAvailable, isSbadmin2) =>
   `<script>
   var cordovaBuilderAvailable = ${cordovaBuilderAvailable};
+  var isSbadmin2 = ${isSbadmin2};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
       const tab = $('#' + currentType + 'NavLinkID');
@@ -1979,13 +1980,15 @@ router.get(
     const xcodeCheckRes = await checkXcodebuild();
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
+    const layout = getState().getLayout(req.user);
+    const isSbadmin2 = layout === getState().layouts.sbadmin2;
     send_admin_page({
       res,
       req,
       active_sub: "Mobile app",
       headers: [
         {
-          headerTag: buildDialogScript(dockerAvailable),
+          headerTag: buildDialogScript(dockerAvailable, isSbadmin2),
         },
         {
           headerTag: `<script>var pluginsReadyForMobile = ${JSON.stringify(
@@ -3140,6 +3143,11 @@ router.post(
     } = req.body;
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
+    if (!entryPoint) {
+      return res.json({
+        error: req.__("Please select an entry point."),
+      });
+    }
     if (!androidPlatform && !iOSPlatform) {
       return res.json({
         error: req.__("Please select at least one platform (android or iOS)."),
