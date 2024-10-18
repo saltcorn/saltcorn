@@ -24,6 +24,8 @@ const {
   InvalidConfiguration,
 
   mergeActionResults,
+  structuredClone,
+  mergeIntoWhere,
 } = require("./utils");
 const {
   jsexprToWhere,
@@ -1500,6 +1502,78 @@ const get_onetoone_views = async (table, viewname) => {
   return child_views;
 };
 
+const generate_joined_query = ({
+  table,
+  columns,
+  layout,
+  req,
+  state,
+  stateHash,
+  formulas,
+  include_fml,
+  user,
+  forPublic,
+  prefix,
+  limit,
+  orderBy,
+  orderDesc,
+}) => {
+  const q = {};
+  const use_user = user || req?.user;
+  if (columns)
+    Object.assign(
+      q,
+      picked_fields_to_query(columns, table.fields, layout, req, table)
+    );
+
+  const use_state = structuredClone(state) || {};
+  readState(use_state, table.fields, req);
+  q.where = stateFieldsToWhere({
+    fields: table.fields,
+    state: use_state,
+    table,
+  });
+
+  if (include_fml) {
+    const ctx = { ...state, user_id: use_user?.id || null, user: use_user };
+    let where1 = jsexprToWhere(include_fml, ctx, table.fields);
+    mergeIntoWhere(q.where, where1 || {});
+  }
+
+  Object.assign(
+    q,
+    stateFieldsToQuery({
+      state: use_state,
+      fields: table.fields,
+      prefix,
+      stateHash,
+    })
+  );
+
+  if (formulas) {
+    const use_formulas =
+      typeof formulas == String ? [formulas] : new Set(formulas);
+    let freeVars = new Set(); // for join fields
+
+    for (const fml of use_formulas)
+      freeVars = new Set([...freeVars, ...freeVariables(fml)]);
+    if (freeVars.size > 0) {
+      if (!q.joinFields) q.joinFields = {};
+      add_free_variables_to_joinfields(freeVars, q.joinFields, table.fields);
+    }
+  }
+
+  if (user) {
+    q.forUser = use_user;
+  } else if (forPublic) {
+    q.forPublic = true;
+  }
+  if (!q.limit && limit) q.limit = limit;
+  if (!q.orderBy && orderBy) q.orderBy = orderBy;
+  if (typeof q.orderDesc == "undefined" && orderDesc) q.orderDesc = orderDesc;
+  return q;
+};
+
 /**
  * Picked fields to query
  * @function
@@ -2634,6 +2708,7 @@ const pathToState = (relation, getRowVal) => {
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
+  generate_joined_query,
   get_child_views,
   get_parent_views,
   stateFieldsToWhere,
