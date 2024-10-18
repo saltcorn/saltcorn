@@ -98,19 +98,31 @@ class ReleaseCommand extends Command {
         cwd: ".",
       });
     };
-    const publish = (dir) =>
+    const publish = async (dir, tags0) => {
+      const tags = !tags ? [] : Array.isArray(tags0) ? tags0 : [tags0];
+      if (flags.tag) tags.push(flags.tag);
+      const firstTag = tags[0];
       spawnSync(
         "npm",
         [
           "publish",
           "--access=public",
-          ...(flags.tag ? [`--tag=${flags.tag}`] : []),
+          ...(firstTag ? [`--tag ${firstTag}`] : []),
         ],
         {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
         }
       );
+      tags.shift();
+      for (const tag of tags) {
+        await sleep(3000);
+        spawnSync("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
+          stdio: "inherit",
+          cwd: `packages/${dir}/`,
+        });
+      }
+    };
 
     const rootPackageJson = require(`../../../../../package.json`);
 
@@ -126,7 +138,7 @@ class ReleaseCommand extends Command {
     for (const p of Object.values(pkgs)) {
       updatePkgJson(p.dir);
       if (p.publish) {
-        publish(p.dir);
+        await publish(p.dir);
         await sleep(3000);
       }
     }
@@ -152,7 +164,7 @@ class ReleaseCommand extends Command {
         stdio: "inherit",
         cwd: `packages/saltcorn-cli/`,
       });
-    publish("saltcorn-cli");
+    await publish("saltcorn-cli", ["latest", "stable-1.0.x"]);
     fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
