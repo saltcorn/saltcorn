@@ -1526,7 +1526,7 @@ const generate_joined_query = ({
       picked_fields_to_query(columns, table.fields, layout, req, table)
     );
 
-  const use_state = structuredClone(state);
+  const use_state = structuredClone(state) || {};
   readState(use_state, table.fields, req);
   q.where = stateFieldsToWhere({
     fields: table.fields,

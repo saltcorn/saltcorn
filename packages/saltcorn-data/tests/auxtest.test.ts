@@ -52,11 +52,17 @@ describe("Clone names", () => {
 });
 
 describe("generate_joined_query", () => {
-  it("should for state", async () => {
+  it("should generate state", async () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const q = generate_joined_query({ table, state: { author: "Leo" } });
     expect(q?.where?.author?.ilike).toBe("Leo");
+  });
+  it("should generate formulas", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const q = generate_joined_query({ table, formulas: ["publisher.name"] });
+    expect(q?.joinFields?.publisher_name?.target).toBe("name");
   });
 });
 
