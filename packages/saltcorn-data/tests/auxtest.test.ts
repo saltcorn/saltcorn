@@ -64,6 +64,24 @@ describe("generate_joined_query", () => {
     const q = generate_joined_query({ table, formulas: ["publisher.name"] });
     expect(q?.joinFields?.publisher_name?.target).toBe("name");
   });
+  it("should generate for show view", async () => {
+    const user = { id: 1 };
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const view = View.findOne({ name: "authorshow" });
+    assertIsSet(view);
+    const q = generate_joined_query({
+      table,
+      state: { id: "1" },
+      ...view.configuration,
+      user,
+    });
+    expect(q?.where?.id).toBe(1);
+    expect(q?.forUser?.id).toBe(1);
+    expect(q.aggregations.count_patients_favbook_name_undefined.field).toBe(
+      "name"
+    );
+  });
 });
 
 describe("plugin helper", () => {
