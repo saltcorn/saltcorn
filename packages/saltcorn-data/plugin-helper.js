@@ -1519,7 +1519,7 @@ const generate_joined_query = ({
   orderDesc,
 }) => {
   const q = {};
-  const use_user = user || req.user;
+  const use_user = user || req?.user;
   if (columns)
     Object.assign(
       q,

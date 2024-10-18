@@ -12,6 +12,7 @@ const {
   stateFieldsToWhere,
   field_picker_fields,
   readState,
+  generate_joined_query,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
 const {
@@ -47,6 +48,15 @@ describe("Clone names", () => {
   it("should work", async () => {
     expect(cloneName("Foo", [])).toBe("Foo-copy");
     expect(cloneName("Foo", ["Foo-copy"])).toBe("Foo-copy-1");
+  });
+});
+
+describe("generate_joined_query", () => {
+  it("should for state", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const q = generate_joined_query({ table, state: { author: "Leo" } });
+    expect(q?.where?.author?.ilike).toBe("Leo");
   });
 });
 
