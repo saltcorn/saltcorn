@@ -525,10 +525,3 @@ div.componets-and-library-accordion {
 .toolbox-card:nth-child(2) {
   margin-bottom: 0px;
 }
-#builder-main-canvas {
-  height: calc(100dvh - 50px) !important;
-  min-height: 600px;
-}
-#builder-main-canvas.h-100 {
-  height: 100% !important;
-}
