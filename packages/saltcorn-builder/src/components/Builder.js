@@ -257,6 +257,32 @@ const SettingsPanel = () => {
   );
 };
 
+// https://stackoverflow.com/questions/36862334/get-viewport-window-height-in-reactjs
+function getWindowDimensions() {
+  const { innerWidth: windowWidth, innerHeight: windowHeight } = window;
+  return {
+    windowWidth,
+    windowHeight,
+  };
+}
+
+function useWindowDimensions() {
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimensions()
+  );
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowDimensions(getWindowDimensions());
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return windowDimensions;
+}
+
 const AddColumnButton = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
@@ -369,6 +395,23 @@ const Builder = ({ options, layout, mode }) => {
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [isLeftEnlarged, setIsLeftEnlarged] = useState(false);
   const [relationsCache, setRelationsCache] = useState({});
+  const { windowWidth, windowHeight } = useWindowDimensions();
+
+  const [builderHeight, setBuilderHeight] = useState(0);
+  const [builderTop, setBuilderTop] = useState(0);
+
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    setBuilderHeight(ref.current.clientHeight);
+    const rect = ref.current.getBoundingClientRect();
+    setBuilderTop(rect.top);
+  });
+
+  const canvasHeight =
+    Math.max(windowHeight - builderTop, builderHeight, 600) - 10;
+
   return (
     <ErrorBoundary>
       <Editor onRender={RenderNode}>
@@ -382,7 +425,7 @@ const Builder = ({ options, layout, mode }) => {
                 setRelationsCache,
               }}
             >
-              <div className="row" style={{ marginTop: "-5px" }}>
+              <div className="row" ref={ref} style={{ marginTop: "-5px" }}>
                 <div
                   className={`col-sm-auto left-builder-col ${
                     isLeftEnlarged
@@ -437,6 +480,7 @@ const Builder = ({ options, layout, mode }) => {
                 </div>
                 <div
                   id="builder-main-canvas"
+                  style={{ height: canvasHeight }}
                   className={`col builder-mode-${options.mode} ${
                     options.mode !== "list" ? "emptymsg" : ""
                   }`}
