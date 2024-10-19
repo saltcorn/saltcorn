@@ -874,7 +874,9 @@ module.exports = {
         forPublic: !req?.user,
       });
     },
-    async runManyQuery(state, qextra, selectOpts) {
+    async runManyQuery(state, qextra, selectOpts0) {
+      // remove where
+      const { where, ...selectOpts } = selectOpts0;
       const sview = View.findOne({ name: show_view });
       const extraArgs = { req, res, ...selectOpts };
       return await sview.runMany(state, {
