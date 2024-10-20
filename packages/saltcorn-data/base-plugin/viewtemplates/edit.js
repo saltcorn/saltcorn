@@ -1160,6 +1160,7 @@ const runPost = async (
         if (req.xhr) {
           res.json({ error: ins_upd_error });
         } else {
+          await form.fill_fkey_options(false, optionsQuery, req.user);
           req.flash("error", text_attr(ins_upd_error));
           res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
         }
