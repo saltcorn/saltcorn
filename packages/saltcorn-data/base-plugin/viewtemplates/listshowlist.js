@@ -278,10 +278,29 @@ const run = async (
     return div(
       { class: "row" },
       div({ class: `col-sm-${list_width || 6}` }, lresp),
-      div({ class: `col-sm-${12 - (list_width || 6)}` }, sresp, relTblResp)
+      div(
+        { class: `col-sm-${12 - (list_width || 6)}` },
+        div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": show_view,
+          },
+          sresp
+        ),
+        relTblResp
+      )
     );
   } else {
-    return div(sresp, relTblResp);
+    return div(
+      div(
+        {
+          class: "d-inline",
+          "data-sc-embed-viewname": show_view,
+        },
+        sresp
+      ),
+      relTblResp
+    );
   }
 };
 
