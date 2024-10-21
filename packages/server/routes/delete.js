@@ -38,7 +38,10 @@ router.post(
     try {
       if (role <= table.min_role_write)
         await table.deleteRows({ id }, req.user || { role_id: 100 });
-      else if (table.ownership_field_id && req.user) {
+      else if (
+        (table.ownership_field_id || table.ownership_formula) &&
+        req.user
+      ) {
         const row = await table.getRow(
           { id },
           { forUser: req.user, forPublic: !req.user }
