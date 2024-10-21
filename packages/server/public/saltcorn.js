@@ -350,16 +350,18 @@ function expand_thumbnail(img_id, filename) {
 }
 
 function ajax_modal(url, opts = {}) {
-  ensure_modal_exists_and_closed();
-  $("#scmodal").removeClass("no-submit-reload");
-  $("#scmodal").attr("data-on-close-reload-view", opts.reload_view || null);
-
-  if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
   $.ajax(url, {
     headers: {
       SaltcornModalRequest: "true",
     },
     success: function (res, textStatus, request) {
+      ensure_modal_exists_and_closed();
+      $("#scmodal").removeClass("no-submit-reload");
+      $("#scmodal").attr("data-on-close-reload-view", opts.reload_view || null);
+
+      if (opts.submitReload === false)
+        $("#scmodal").addClass("no-submit-reload");
+
       var title = request.getResponseHeader("Page-Title");
       var width = request.getResponseHeader("SaltcornModalWidth");
       var minwidth = request.getResponseHeader("SaltcornModalMinWidth");
