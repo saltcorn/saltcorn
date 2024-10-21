@@ -1492,17 +1492,25 @@ class Table implements AbstractTable {
     if (this.versioned) {
       const existing1 = await db.selectOne(this.name, { [pk_name]: id });
       if (!existing) existing = existing1;
-      await this.insert_history_row({
-        ...existing1,
-        ...v,
-        [pk_name]: id,
-        _version: {
-          next_version_by_id: id,
-        },
-        _time: new Date(),
-        _userid: user?.id,
-        _restore_of_version: restore_of_version || null,
-      });
+      //store all changes EXCEPT users with only last_mobile_login
+      if (
+        !(
+          this.name === "users" &&
+          Object.keys(v_in).length == 1 &&
+          v_in.last_mobile_login
+        )
+      )
+        await this.insert_history_row({
+          ...existing1,
+          ...v,
+          [pk_name]: id,
+          _version: {
+            next_version_by_id: id,
+          },
+          _time: new Date(),
+          _userid: user?.id,
+          _restore_of_version: restore_of_version || null,
+        });
     }
     if (typeof existing === "undefined") {
       const triggers = await Trigger.getTableTriggers("Update", this);
