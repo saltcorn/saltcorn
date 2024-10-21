@@ -99,7 +99,7 @@ class ReleaseCommand extends Command {
       });
     };
     const publish = async (dir, tags0) => {
-      const tags = !tags ? [] : Array.isArray(tags0) ? tags0 : [tags0];
+      const tags = !tags0 ? [] : Array.isArray(tags0) ? tags0 : [tags0];
       if (flags.tag) tags.push(flags.tag);
       const firstTag = tags[0];
       spawnSync(
