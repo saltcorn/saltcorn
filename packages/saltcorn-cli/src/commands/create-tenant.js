@@ -3,6 +3,7 @@
  * @module commands/create-tenant
  */
 const { Command, Flags, Args } = require("@oclif/core");
+const { init_some_tenants } = require("../common");
 
 //const {
 //  getConfig,
@@ -26,6 +27,7 @@ class CreateTenantCommand extends Command {
       this.exit(0);
       return;
     }
+    await init_some_tenants(); //init root tenant
     const {
       insertTenant,
       switchToTenant,
