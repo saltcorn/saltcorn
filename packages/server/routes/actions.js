@@ -755,7 +755,7 @@ router.post(
       req.flash("success", req.__("Action configuration saved"));
       res.redirect(
         req.query.on_done_redirect &&
-          is_relative_url(req.query.on_done_redirect)
+          is_relative_url("/" + req.query.on_done_redirect)
           ? `/${req.query.on_done_redirect}`
           : "/actions/"
       );
