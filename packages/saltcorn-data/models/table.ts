@@ -501,7 +501,10 @@ class Table implements AbstractTable {
     if (this.name === "users" && !field_name)
       return user.id && `${row?.id}` === `${user.id}`;
 
-    return typeof field_name === "string" && row[field_name] === user.id;
+    return (
+      typeof field_name === "string" &&
+      (row[field_name] === user.id || row[field_name]?.id === user.id)
+    );
   }
 
   /**
