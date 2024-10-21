@@ -398,7 +398,8 @@ describe("Users history", () => {
 
     await u.update({ email: "foo@bar.com" });
     const u1 = await User.findOne({ id: 3 });
-    assertIsSet(u);
-    expect(u.email).toBe("foo@bar.com");
+    assertIsSet(u1);
+    expect(u1.email).toBe("foo@bar.com");
+    await u1.update({ last_mobile_login: new Date() });
   });
 });

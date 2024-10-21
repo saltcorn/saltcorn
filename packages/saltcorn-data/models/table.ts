@@ -1554,6 +1554,7 @@ class Table implements AbstractTable {
     calcFields.forEach((f) => {
       // delete v1[f.name];
     });
+    if (this.name === "users") delete v1.last_mobile_login;
 
     this.stringify_json_fields(v1);
 
@@ -2099,7 +2100,22 @@ class Table implements AbstractTable {
   private async create_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    const fields = this.fields;
+    const fields = [...this.fields];
+    if (this.name === "users")
+      fields.push(
+        new Field({ name: "password", type: "String" }),
+        new Field({ name: "reset_password_token", type: "String" }),
+        new Field({ name: "reset_password_expiry", type: "Date" }),
+        new Field({ name: "language", type: "String" }),
+        new Field({ name: "disabled", type: "Bool" }),
+        new Field({ name: "api_token", type: "String" }),
+        new Field({ name: "verification_token", type: "String" }),
+        new Field({ name: "verified_on", type: "Date" })
+
+        // Not last_mobile_login - we do not want to store this in history.
+        // Deleted in Table.insert_history_row instead
+        //new Field({ name: "last_mobile_login", type: "Date" })
+      );
     const flds = fields
       .filter((f) => !f.calculated || f.stored)
       .map((f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`);
@@ -2116,6 +2132,7 @@ class Table implements AbstractTable {
           _restore_of_version integer,
           _userid integer
           ${flds.join("")}
+          ${this.name === "users" ? ",_attributes JSONB" : ""}
           ,PRIMARY KEY("${pk}", _version)
           );`
     );
