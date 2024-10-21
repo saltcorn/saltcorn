@@ -201,6 +201,10 @@ const check_view_columns = async (view, columns) => {
           break;
         if (
           column.action_name !== "Multi-step action" &&
+          !(
+            column.action_name == "UpdateMatchingRows" &&
+            view.viewtemplate == "Edit"
+          ) &&
           !getState().actions[column.action_name] &&
           !trigger_actions.includes(column.action_name)
         )
