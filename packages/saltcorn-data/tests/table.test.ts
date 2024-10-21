@@ -325,15 +325,19 @@ describe("Table get data", () => {
         },
       },
     };
-    if (!db.isSQLite) {
-      const rows = await books.getJoinedRows(arg);
-      expect(rows.length).toStrictEqual(2);
-      expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
-      const { sql } = await books.getJoinedQuery(arg);
+
+    const rows = await books.getJoinedRows(arg);
+    expect(rows.length).toStrictEqual(2);
+    expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
+    const { sql } = await books.getJoinedQuery(arg);
+    if (!db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg(aggjoin."name") from "public"."patients" aggto join "public"."patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
       );
-    }
+    else
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array(aggjoin."name") from "patients" aggto join "patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "books" a    order by "a"."id"'
+      );
   });
   it("should get array aggregations", async () => {
     const books = Table.findOne({ name: "books" });
@@ -379,15 +383,20 @@ describe("Table get data", () => {
         },
       },
     };
-    if (!db.isSQLite) {
-      const rows = await books.getJoinedRows(arg);
-      expect(rows.length).toStrictEqual(2);
-      expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
-      const { sql } = await books.getJoinedQuery(arg);
+
+    const rows = await books.getJoinedRows(arg);
+    expect(rows.length).toStrictEqual(2);
+    expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
+
+    const { sql } = await books.getJoinedQuery(arg);
+    if (!db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name" order by "id") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
       );
-    }
+    else
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array("name" order by "id") from "patients"  where "favbook"=a."id") fans FROM "books" a    order by "a"."id"'
+      );
   });
   it("should get join-aggregations", async () => {
     //how many books has my publisher published

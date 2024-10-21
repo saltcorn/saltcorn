@@ -93,7 +93,9 @@ export const process_aggregations = (
           : "";
         if (whereStr) whereClause += (whereClause ? ` and ` : "") + whereStr;
         if (whereClause) whereClause = ` where ` + whereClause;
-        const newFld = `(select array_agg(aggjoin."${sqlsanitize(
+        const newFld = `(select ${
+          db.isSQLite ? "json_group_array" : "array_agg"
+        }(aggjoin."${sqlsanitize(
           aggField.attributes.summary_field
         )}") from ${schema}"${sqlsanitize(
           table
