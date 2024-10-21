@@ -99,21 +99,17 @@ class Library {
         notPage = true;
       },
       field() {
-        notFilter = true;
         notPage = true;
       },
       view_link() {
         notFilter = true;
-        notEdit = true;
       },
       aggregation() {
-        notFilter = true;
         notEdit = true;
         notPage = true;
       },
       join_field() {
         notFilter = true;
-        notEdit = true;
         notPage = true;
       },
     });
