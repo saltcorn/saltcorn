@@ -26,9 +26,11 @@ export const getAggAndField = (
 ) =>
   aggregate.toLowerCase() === "countunique"
     ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
-    : `${sqlsanitize(aggregate)}(${
-        field ? `"${sqlsanitize(field)}"` : valueFormula || "*"
-      }${
+    : `${
+        aggregate.toLowerCase() === "array_agg" && db.isSQLite
+          ? "json_group_array"
+          : sqlsanitize(aggregate)
+      }(${field ? `"${sqlsanitize(field)}"` : valueFormula || "*"}${
         orderBy && aggregate.toLowerCase() === "array_agg"
           ? ` order by "${sqlsanitize(orderBy)}"`
           : ""
