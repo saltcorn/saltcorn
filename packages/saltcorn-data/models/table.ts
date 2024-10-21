@@ -501,7 +501,10 @@ class Table implements AbstractTable {
     if (this.name === "users" && !field_name)
       return user.id && `${row?.id}` === `${user.id}`;
 
-    return typeof field_name === "string" && row[field_name] === user.id;
+    return (
+      typeof field_name === "string" &&
+      (row[field_name] === user.id || row[field_name]?.id === user.id)
+    );
   }
 
   /**
@@ -3470,7 +3473,7 @@ ${rejectDetails}`,
       db.is_sqlite
     )}`;
 
-    return { sql, values, joinFields };
+    return { sql, values, joinFields, aggregations };
   }
 
   /**
@@ -3526,7 +3529,7 @@ ${rejectDetails}`,
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
-    const { sql, values, notAuthorized, joinFields } =
+    const { sql, values, notAuthorized, joinFields, aggregations } =
       await this.getJoinedQuery(opts);
 
     if (notAuthorized) return [];
@@ -3538,7 +3541,21 @@ ${rejectDetails}`,
       fields,
       !!opts?.ignore_errors
     );
-
+    //need to json parse array agg values on sqlite
+    if (
+      db.isSQLite &&
+      Object.values(aggregations || {}).some(
+        (agg: any) => agg.aggregate.toLowerCase() === "array_agg"
+      )
+    ) {
+      Object.entries(aggregations || {}).forEach(([k, agg]: any) => {
+        if (agg.aggregate.toLowerCase() === "array_agg") {
+          calcRow.forEach((row) => {
+            if (row[k]) row[k] = JSON.parse(row[k]);
+          });
+        }
+      });
+    }
     //rename joinfields
     if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {
       let f = (x: any) => x;

@@ -35,12 +35,12 @@ This has been [tested on Debian 10, 11 and 12, Ubuntu 18.04, 20.04 and 22.04, Op
 three lines on the command line shell, as root or as a user with sudo access:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_16.x | sudo bash -
+wget -qO - https://deb.nodesource.com/setup_18.x | sudo bash -
 sudo apt-get install -qqy nodejs
 npx saltcorn-install -y
 ```
 
-The first two lines will install Node.js 16 (you can also use 18 or 20). The last line will call the Saltcorn install script
+The first two lines will install Node.js 18 (you can also use 20). The last line will call the Saltcorn install script
 accepting all the defaults, which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
@@ -48,7 +48,7 @@ If you want a different port, different database backend, or to not install as a
 can omit the final `-y` to get an interactive installation:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_16.x | sudo bash -
+wget -qO - https://deb.nodesource.com/setup_18.x | sudo bash -
 sudo apt-get install -qqy nodejs
 npx saltcorn-install
 ```
@@ -61,10 +61,10 @@ TL;DR: `npm install -g @saltcorn/cli && saltcorn setup`
 
 ### Installing node and npm
 
-For a recent version (v16) of Node.js:
+For a recent version (v18) of Node.js:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_16.x | sudo -E bash -
+wget -qO - https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
 
@@ -199,10 +199,10 @@ Use [Let's Encrypt](https://letsencrypt.org/) or [Cloudflare](https://www.cloudf
 
 `sudo apt install nodejs npm libpq-dev`
 
-will give you a usable version. For a more recent version (v16) of Node.js:
+will give you a usable version. For a more recent version (v18) of Node.js:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_16.x | sudo -E bash -
+wget -qO - https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev
 ```
 

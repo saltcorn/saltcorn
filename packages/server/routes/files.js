@@ -594,6 +594,9 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await storage_form(req);
+    form.blurb = [
+      `<div class="alert alert-warning">S3 storage options may not work for this release. Enabling S3 storage is not recommended</div>`,
+    ];
     send_files_page({
       res,
       req,
