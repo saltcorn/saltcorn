@@ -1133,7 +1133,10 @@ router.post(
     }
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
-    } else if (req.body.dest && is_relative_url(req.body.dest)) {
+    } else if (
+      req.body.dest &&
+      is_relative_url(decodeURIComponent(req.body.dest))
+    ) {
       res.redirect(decodeURIComponent(req.body.dest));
     } else res.redirect("/");
   })
