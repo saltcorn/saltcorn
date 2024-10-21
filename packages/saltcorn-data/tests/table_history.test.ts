@@ -19,6 +19,7 @@ import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { text } from "stream/consumers";
 import utils from "../utils";
+import User from "../models/user";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -35,7 +36,7 @@ describe("Table history", () => {
     table.versioned = true;
     await table.update(table);
     const vtables = await Table.find({ versioned: true });
-    expect(vtables.map(t=>t.name)).toContain("patients")
+    expect(vtables.map((t) => t.name)).toContain("patients");
   });
   it("should save version on insert", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -264,6 +265,14 @@ describe("unique history clash", () => {
       stored: true,
       expression: "age ? age+1:null",
     });
+    await Field.create({
+      table,
+      label: "agep1ns",
+      type: "Integer",
+      calculated: true,
+      stored: false,
+      expression: "age ? age+1:null",
+    });
   });
   it("should enable versioning", async () => {
     const table = Table.findOne({ name: "unihistory" });
@@ -382,4 +391,23 @@ describe("Table history with UUID pks", () => {
       expect(history2.length).toBe(2);
     });
   }
+});
+
+describe("Users history", () => {
+  it("should enable versioning", async () => {
+    const table = User.table;
+    assertIsSet(table);
+    table.versioned = true;
+    await table.update(table);
+  });
+  it("should insert stuff in table", async () => {
+    const u = await User.findOne({ id: 3 });
+    assertIsSet(u);
+
+    await u.update({ email: "foo@bar.com" });
+    const u1 = await User.findOne({ id: 3 });
+    assertIsSet(u1);
+    expect(u1.email).toBe("foo@bar.com");
+    await u1.update({ last_mobile_login: new Date() });
+  });
 });
