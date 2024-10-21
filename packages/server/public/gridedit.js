@@ -87,7 +87,9 @@ function isoDateFormatter(cell, formatterParams, onRendered) {
   if (formatterParams && formatterParams.format)
     return dayjs(val).format(formatterParams.format);
 
-  return new Date(val).toLocaleDateString(window.detected_locale || "en");
+  return new Date(val).toLocaleDateString(window.detected_locale || "en", {
+    timeZone: "UTC",
+  });
 }
 function colorFormatter(cell, formatterParams, onRendered) {
   const val = cell.getValue();
