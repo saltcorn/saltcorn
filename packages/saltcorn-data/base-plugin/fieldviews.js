@@ -190,6 +190,12 @@ const select = {
               ),
             }
           : {}),
+        ...(field.in_auto_save
+          ? {
+              "previous-val": v,
+              onFocus: "this.setAttribute('sc-received-focus', true);",
+            }
+          : {}),
       },
       attrs.placeholder &&
         (field.required || attrs.force_required) &&
