@@ -432,6 +432,20 @@ function saveAndContinue(e, k, event) {
   )
     return;
   var form = $(e).closest("form");
+  let focusedEl = null;
+  if (!event.srcElement) {
+    const el = form.find("select[sc-received-focus]")[0];
+    if (el) {
+      el.removeAttribute("sc-received-focus");
+      if (el.getAttribute("previous-val") === el.value) return;
+    }
+  } else if (
+    event.srcElement.tagName === "SELECT" &&
+    event.srcElement.getAttribute("previous-val") !== undefined
+  ) {
+    focusedEl = event.srcElement;
+  }
+
   const valres = form[0].reportValidity();
   if (!valres) return;
   submitWithEmptyAction(form[0]);
@@ -454,6 +468,7 @@ function saveAndContinue(e, k, event) {
         reloadEmbeddedEditOwnViews(form, res.id);
       }
       common_done(res, form.attr("data-viewname"));
+      if (focusedEl) focusedEl.setAttribute("previous-val", focusedEl.value);
     },
     error: function (request) {
       var ct = request.getResponseHeader("content-type") || "";

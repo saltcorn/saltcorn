@@ -92,6 +92,7 @@ class Field implements AbstractField {
   attributes: GenObj;
   table_id?: number;
   table?: AbstractTable | null;
+  in_auto_save?: boolean;
 
   // to use 'this[k] = v'
   [key: string]: any;
@@ -166,6 +167,7 @@ class Field implements AbstractField {
       this.table = o.table;
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
+    this.in_auto_save = o.in_auto_save;
   }
 
   /**
@@ -191,7 +193,7 @@ class Field implements AbstractField {
       primary_key: this.primary_key,
       reftype: this.reftype,
       refname: this.refname,
-      description: this.description, //
+      description: this.description,
     };
   }
 
