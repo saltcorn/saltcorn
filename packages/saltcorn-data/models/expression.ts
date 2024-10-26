@@ -767,7 +767,8 @@ const recalculate_for_stored = async (
   where?: Where
 ): Promise<void> => {
   let rows = [];
-  let maxid = 0;
+  let maxid = null;
+  let limit = 20;
   const { getState } = require("../db/state");
   const go = async (rows: any) => {
     for (const row of rows) {
@@ -787,13 +788,13 @@ const recalculate_for_stored = async (
     await go(rows);
   } else {
     do {
-      rows = await table.getRows(
-        { id: { gt: maxid } },
-        { orderBy: "id", limit: 20 }
-      );
+      rows = await table.getRows(maxid !== null ? { id: { gt: maxid } } : {}, {
+        orderBy: "id",
+        limit: limit,
+      });
       await go(rows);
       if (rows.length > 0) maxid = rows[rows.length - 1].id;
-    } while (rows.length === 20);
+    } while (rows.length === limit);
   }
 };
 //https://stackoverflow.com/a/59094308/19839414
