@@ -198,4 +198,20 @@ describe("File", () => {
     );
     await file.delete();
   });
+  it("should normalise_in_base", async () => {
+    const file = await File.from_contents(
+      "video_stream.webm",
+      "video/webm",
+      "hello",
+      1,
+      100
+    );
+    const base = join(db.connectObj.file_store, db.getTenantSchema());
+    expect(await File.normalise_in_base(base, "video_stream.webm")).toBe(
+      join(base, "video_stream.webm")
+    );
+    expect(await File.normalise_in_base(base, "../video_stream.webm")).toBe(
+      null
+    );
+  });
 });

@@ -151,6 +151,19 @@ class File {
     return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
   }
 
+  static async normalise_in_base(
+    base: string,
+    ...unsafe_paths: string[]
+  ): Promise<string | null> {
+    const joined_path = path.join(base, ...unsafe_paths);
+    try {
+      const canonicalPath = await fsp.realpath(joined_path);
+      if (canonicalPath.startsWith(base)) return canonicalPath;
+      else return null;
+    } catch {
+      return null;
+    }
+  }
   static async rootFolder(): Promise<File> {
     const tenant = db.getTenantSchema();
 
