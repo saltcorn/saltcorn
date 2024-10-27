@@ -799,7 +799,7 @@ const ConfigField = ({
     //pick first value to mimic html form behaviour
     const options = getOptions();
     let o;
-    if ((o = options[0]))
+    if (options && (o = options[0]))
       useEffect(() => {
         myOnChange(typeof o === "string" ? o : o.value || o.name || o);
       }, []);
@@ -939,7 +939,7 @@ const ConfigField = ({
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
           >
-            {field.options.map((o, ix) =>
+            {(field.options || []).map((o, ix) =>
               o.name && o.label ? (
                 <option key={ix} value={o.name}>
                   {o.label}
