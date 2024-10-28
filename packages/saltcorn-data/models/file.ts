@@ -151,18 +151,14 @@ class File {
     return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
   }
 
-  static async normalise_in_base(
+  static normalise_in_base(
     base: string,
     ...unsafe_paths: string[]
-  ): Promise<string | null> {
-    const joined_path = path.join(base, ...unsafe_paths);
-    try {
-      const canonicalPath = await fsp.realpath(joined_path);
-      if (canonicalPath.startsWith(base)) return canonicalPath;
-      else return null;
-    } catch {
-      return null;
-    }
+  ): string | null {
+    const safe_paths = unsafe_paths.map((p) => File.normalise(p));
+    const joined_path = path.join(base, ...safe_paths);
+    if (joined_path.startsWith(base)) return joined_path;
+    else return null;
   }
   static async rootFolder(): Promise<File> {
     const tenant = db.getTenantSchema();
