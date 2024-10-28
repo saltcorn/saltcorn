@@ -5,7 +5,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
 const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
-const { spawn, spawnSync } = require("child_process");
+const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs").promises;
 
@@ -335,16 +335,24 @@ router.post(
   "/clean_sync_dir",
   error_catcher(async (req, res) => {
     const { dir_name } = req.body;
-    const safe_dir_name = File.normalise(dir_name);
     try {
+      path.resolve(dir_name);
       const rootFolder = await File.rootFolder();
       const syncDir = path.join(
         rootFolder.location,
         "mobile_app",
         "sync",
-        safe_dir_name
+        dir_name
       );
-      await fs.rm(syncDir, { recursive: true, force: true });
+      const canonicalPath = await fs.realpath(syncDir);
+      if (
+        !canonicalPath.startsWith(
+          path.join(rootFolder.location, "mobile_app", "sync")
+        )
+      ) {
+        throw new Error("Invalid directory path");
+      }
+      await fs.rm(canonicalPath, { recursive: true, force: true });
       res.status(200).send("");
     } catch (error) {
       getState().log(2, `POST /sync/clean_sync_dir: '${error.message}'`);
