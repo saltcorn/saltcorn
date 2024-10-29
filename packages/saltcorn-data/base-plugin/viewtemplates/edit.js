@@ -973,11 +973,7 @@ const render = async ({
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
-      form.values[k] = field.type.read
-        ? field.type.read(v)
-        : field.is_fkey && !isNaN(v)
-        ? +v
-        : v;
+      form.values[k] = field.type.read ? field.type.read(v) : v;
     } else {
       const tbl_field = fields.find((f) => f.name === k);
       if (tbl_field && !field) {
