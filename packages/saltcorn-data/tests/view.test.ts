@@ -381,6 +381,27 @@ describe("nested views", () => {
   });
 });
 
+describe("view with two level select", () => {
+  it("should preselect the state value", async () => {
+    const v = View.findOne({ name: "view_with_two_level_select" });
+    assertIsSet(v);
+    const resA = await v.run({ album: 1 }, mockReqRes);
+    expect(resA).toContain(`value=\"1\" selected`);
+    expect(resA).toContain(`data-selected=\"1\"`);
+    const resB = await v.run({ album: 2 }, mockReqRes);
+    expect(resB).toContain(`value=\"2\" selected`);
+    expect(resB).toContain(`data-selected=\"2\"`);
+  });
+
+  it("should render without any state", async () => {
+    const v = View.findOne({ name: "view_with_two_level_select" });
+    assertIsSet(v);
+    const resA = await v.run({ album: 1 }, mockReqRes);
+    expect(resA).toContain(`value=\"1\" selected`);
+    expect(resA).toContain(`data-selected=\"1\"`);
+  });
+});
+
 describe("subviews with relations", () => {
   it("show_user_with_independent_feed", async () => {
     const testser = (res: any) => {

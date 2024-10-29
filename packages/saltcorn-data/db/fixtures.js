@@ -2595,4 +2595,39 @@ module.exports =
 
       min_role: null,
     });
+
+    await View.create({
+      table_id: tracksOnAlbum.id,
+      name: "view_with_two_level_select",
+      viewtemplate: "Edit",
+      configuration: {
+        layout: {
+          above: [
+            {
+              type: "field",
+              block: false,
+              fieldview: "two_level_select",
+              textStyle: "",
+              field_name: "album",
+              configuration: {
+                relation: "cover",
+              },
+            },
+          ],
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "two_level_select",
+            textStyle: "",
+            field_name: "album",
+            configuration: {
+              relation: "cover",
+            },
+          },
+        ],
+      },
+      min_role: 100,
+    });
   };
