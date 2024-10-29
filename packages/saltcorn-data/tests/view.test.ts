@@ -381,6 +381,12 @@ describe("nested views", () => {
   });
 });
 
+describe("view with two level select", () => {
+  it("should preselect the state value", async () => {});
+
+  it("should render without any state", async () => {});
+});
+
 describe("subviews with relations", () => {
   it("show_user_with_independent_feed", async () => {
     const testser = (res: any) => {
