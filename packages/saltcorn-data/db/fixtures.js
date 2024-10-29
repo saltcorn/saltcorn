@@ -64,7 +64,7 @@ module.exports =
       type: "Key",
       reftable: table,
       required: false,
-      attributes: { summary_field: "author" },
+      attributes: { summary_field: "author", include_fts: true },
     });
     await Field.create({
       table: patients,

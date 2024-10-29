@@ -1946,6 +1946,7 @@ const handleRelationPath = (queryObj, qstate) => {
  * @param {object} opts
  * @param {Field[]} opts.fields
  * @param {object} opts.state
+ * @param {string} [opts.prefix = ""]
  * @param {boolean} [opts.approximate = true]
  * @param {Table} opts.table
  * @returns {object}
@@ -1955,7 +1956,7 @@ const stateFieldsToWhere = ({
   state,
   approximate = true,
   table,
-  prefix,
+  prefix = "",
 }) => {
   let qstate = {};
   const orFields = [];
