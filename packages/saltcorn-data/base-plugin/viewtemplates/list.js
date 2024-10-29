@@ -1329,7 +1329,17 @@ module.exports = {
         req,
         table
       );
-      const where = await stateFieldsToWhere({ fields, state, table });
+      const where = await stateFieldsToWhere({
+        fields,
+        state,
+        table,
+        prefix: "a.",
+      });
+      const whereForCount = await stateFieldsToWhere({
+        fields,
+        state,
+        table,
+      });
       const q = await stateFieldsToQuery({
         state,
         fields,
@@ -1391,7 +1401,7 @@ module.exports = {
 
       const rowCount = default_state?._hide_pagination
         ? undefined
-        : await table.countRows(where, {
+        : await table.countRows(whereForCount, {
             forPublic: !req.user,
             forUser: req.user,
           });

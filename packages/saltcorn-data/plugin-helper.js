@@ -1950,7 +1950,13 @@ const handleRelationPath = (queryObj, qstate) => {
  * @param {Table} opts.table
  * @returns {object}
  */
-const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
+const stateFieldsToWhere = ({
+  fields,
+  state,
+  approximate = true,
+  table,
+  prefix,
+}) => {
   let qstate = {};
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
@@ -1958,6 +1964,11 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
+        table: prefix
+          ? prefix.replaceAll(".", "")
+          : table
+          ? table.name
+          : undefined,
         schema: db.getTenantSchema(),
       };
       return;
