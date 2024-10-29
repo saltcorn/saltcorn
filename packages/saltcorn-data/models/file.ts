@@ -155,8 +155,12 @@ class File {
     base: string,
     ...unsafe_paths: string[]
   ): string | null {
-    const safe_paths = unsafe_paths.map((p) => File.normalise(p));
-    const joined_path = path.join(base, ...safe_paths);
+    function relativize(s: string): string {
+      return s[0] === "/" ? relativize(s.slice(1)) : s;
+    }
+    const safe_paths = unsafe_paths.map((p) => File.normalise(relativize(p)));
+    const joined_path = path.resolve(base, ...safe_paths);
+
     if (joined_path.startsWith(base)) return joined_path;
     else return null;
   }
