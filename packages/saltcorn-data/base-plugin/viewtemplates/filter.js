@@ -292,7 +292,7 @@ const run = async (
   await traverse(layout, {
     aggregation: async (segment) => {
       const { stat, agg_field, agg_fieldview, aggwhere } = segment;
-      const where = stateFieldsToWhere({ fields, state, table });
+      const where = stateFieldsToWhere({ fields, state, table, prefix: "a." });
       if (aggwhere) {
         const ctx = {
           ...state,
@@ -842,7 +842,12 @@ module.exports = {
             req,
             table
           );
-          const where = stateFieldsToWhere({ fields, state, table });
+          const where = stateFieldsToWhere({
+            fields,
+            state,
+            table,
+            prefix: "a.",
+          });
           const q = stateFieldsToQuery({
             state,
             prefix: "a.",

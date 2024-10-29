@@ -299,6 +299,7 @@ router.get(
               approximate: !!approximate,
               state: req_query,
               table,
+              prefix: "a.",
             });
             const joinFields = {};
             const derefs = Array.isArray(dereference)
