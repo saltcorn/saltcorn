@@ -1096,6 +1096,7 @@ module.exports = {
         state,
         approximate: true,
         table: tbl,
+        prefix: "a.",
       });
       if (Object.keys(qstate).length === 0)
         return {
@@ -1136,7 +1137,12 @@ module.exports = {
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);
-      const qstate = await stateFieldsToWhere({ fields, state, table: tbl });
+      const qstate = await stateFieldsToWhere({
+        fields,
+        state,
+        table: tbl,
+        prefix: "a.",
+      });
       const q = await stateFieldsToQuery({ state, fields, stateHash });
       if (where) mergeIntoWhere(qstate, where);
       const role = req && req.user ? req.user.role_id : 100;
