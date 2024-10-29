@@ -1532,6 +1532,7 @@ const generate_joined_query = ({
     fields: table.fields,
     state: use_state,
     table,
+    prefix,
   });
 
   if (include_fml) {
