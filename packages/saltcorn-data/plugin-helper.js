@@ -1975,7 +1975,7 @@ const stateFieldsToWhere = ({
           : table
           ? table.name
           : undefined,
-        schema: db.getTenantSchema(),
+        schema: db.isSQLite ? undefined : db.getTenantSchema(),
       };
       return;
     }
