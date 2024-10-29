@@ -1329,18 +1329,18 @@ module.exports = {
         req,
         table
       );
-      const where = await stateFieldsToWhere({
+      const where = stateFieldsToWhere({
         fields,
         state,
         table,
         prefix: "a.",
       });
-      const whereForCount = await stateFieldsToWhere({
+      const whereForCount = stateFieldsToWhere({
         fields,
         state,
         table,
       });
-      const q = await stateFieldsToQuery({
+      const q = stateFieldsToQuery({
         state,
         fields,
         prefix: "a.",

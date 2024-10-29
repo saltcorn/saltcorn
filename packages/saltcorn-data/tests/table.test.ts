@@ -596,7 +596,7 @@ describe("Table get data", () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const fields = table.getFields();
-    const where = await stateFieldsToWhere({
+    const where = stateFieldsToWhere({
       fields,
       state: { _fts_patients: "Herman" },
       table,
@@ -612,7 +612,7 @@ describe("Table get data", () => {
     const table = Table.findOne({ name: "patients" });
     assertIsSet(table);
     const fields = table.getFields();
-    const where = await stateFieldsToWhere({
+    const where = stateFieldsToWhere({
       fields,
       state: { _fts_patients: "Herman" },
       table,

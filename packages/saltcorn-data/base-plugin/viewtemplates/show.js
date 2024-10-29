@@ -1091,7 +1091,7 @@ module.exports = {
         tbl
       );
       readState(state, fields);
-      const qstate = await stateFieldsToWhere({
+      const qstate = stateFieldsToWhere({
         fields,
         state,
         approximate: true,
@@ -1137,13 +1137,13 @@ module.exports = {
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);
-      const qstate = await stateFieldsToWhere({
+      const qstate = stateFieldsToWhere({
         fields,
         state,
         table: tbl,
         prefix: "a.",
       });
-      const q = await stateFieldsToQuery({ state, fields, stateHash });
+      const q = stateFieldsToQuery({ state, fields, stateHash });
       if (where) mergeIntoWhere(qstate, where);
       const role = req && req.user ? req.user.role_id : 100;
       if (tbl.ownership_field_id && role > tbl.min_role_read && req) {
