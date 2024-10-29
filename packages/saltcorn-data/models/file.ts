@@ -103,12 +103,12 @@ class File {
     } else {
       const relativeSearchFolder = where?.folder || "/";
       const tenant = db.getTenantSchema();
-      const safeDir = File.normalise(relativeSearchFolder);
-      const absoluteFolder = path.join(
+      const absoluteFolder = File.normalise_in_base(
         db.connectObj.file_store,
         tenant,
-        safeDir
+        relativeSearchFolder
       );
+      if (absoluteFolder === null) return [];
       const files: File[] = [];
       const searcher = async (folder: string, recursive?: boolean) => {
         let fileNms;
