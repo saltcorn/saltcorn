@@ -94,11 +94,15 @@ router.get(
     const { dir, no_subdirs } = req.query;
     const noSubdirs = no_subdirs === "true";
     const safeDir = File.normalise(dir || "/");
-    const absFolder = path.join(
+    const absFolder = File.normalise_in_base(
       db.connectObj.file_store,
       db.getTenantSchema(),
-      safeDir
+      dir || "/"
     );
+    if (absFolder === null) {
+      res.json({ error: "Invalid path" });
+      return;
+    }
     const dirOnDisk = await File.from_file_on_disk(
       path.basename(absFolder),
       path.dirname(absFolder)
