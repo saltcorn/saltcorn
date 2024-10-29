@@ -535,7 +535,7 @@ const run = async (
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: cannot find view ${show_view}`
     );
-  const q = await stateFieldsToQuery({ state, fields });
+  const q = stateFieldsToQuery({ state, fields });
   let qextra = {};
   if (!q.orderBy) {
     qextra.orderBy = order_field;

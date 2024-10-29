@@ -1513,12 +1513,16 @@ const generate_joined_query = ({
   include_fml,
   user,
   forPublic,
-  prefix,
   limit,
   orderBy,
   orderDesc,
+  joinFields,
+  aggregations,
 }) => {
   const q = {};
+  if (joinFields) q.joinFields = joinFields;
+  if (aggregations) q.aggregations = aggregations;
+  const prefix = "a.";
   const use_user = user || req?.user;
   if (columns)
     Object.assign(
@@ -1532,6 +1536,7 @@ const generate_joined_query = ({
     fields: table.fields,
     state: use_state,
     table,
+    prefix,
   });
 
   if (include_fml) {
@@ -1946,11 +1951,18 @@ const handleRelationPath = (queryObj, qstate) => {
  * @param {object} opts
  * @param {Field[]} opts.fields
  * @param {object} opts.state
+ * @param {string} [opts.prefix = ""]
  * @param {boolean} [opts.approximate = true]
  * @param {Table} opts.table
  * @returns {object}
  */
-const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
+const stateFieldsToWhere = ({
+  fields,
+  state,
+  approximate = true,
+  table,
+  prefix = "",
+}) => {
   let qstate = {};
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
@@ -1958,7 +1970,12 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
-        schema: db.getTenantSchema(),
+        table: prefix
+          ? prefix.replaceAll(".", "")
+          : table
+          ? table.name
+          : undefined,
+        schema: db.isSQLite ? undefined : db.getTenantSchema(),
       };
       return;
     }

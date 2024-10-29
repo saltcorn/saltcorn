@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import {
   add_free_variables_to_joinfields,
   stateFieldsToQuery,
+  stateFieldsToWhere,
 } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
@@ -579,6 +580,46 @@ describe("Table get data", () => {
     });
 
     expect(rows.length).toBe(2);
+  });
+  it("should get rows from full text search with key summary", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const fields = table.getFields();
+
+    const rows = await table.getRows({
+      _fts: { fields, searchTerm: "Herman" },
+    });
+
+    expect(rows.length).toBe(1);
+  });
+  it("should get joined rows from full text search with key summary", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const fields = table.getFields();
+    const where = stateFieldsToWhere({
+      fields,
+      state: { _fts_patients: "Herman" },
+      table,
+      prefix: "a.",
+    });
+    const rows = await table.getJoinedRows({
+      where,
+    });
+
+    expect(rows.length).toBe(1);
+  });
+  it("should count rows from full text search with key summary", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const fields = table.getFields();
+    const where = stateFieldsToWhere({
+      fields,
+      state: { _fts_patients: "Herman" },
+      table,
+    });
+    const nrows = await table.countRows(where);
+
+    expect(nrows).toBe(1);
   });
 
   it("should support full text search with calculated", async () => {

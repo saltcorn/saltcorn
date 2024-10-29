@@ -433,7 +433,7 @@ function saveAndContinue(e, k, event) {
     return;
   var form = $(e).closest("form");
   let focusedEl = null;
-  if (!event.srcElement) {
+  if (!event || !event.srcElement) {
     const el = form.find("select[sc-received-focus]")[0];
     if (el) {
       el.removeAttribute("sc-received-focus");

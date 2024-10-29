@@ -294,11 +294,12 @@ router.get(
           } else {
             const tbl_fields = table.getFields();
             readState(req_query, tbl_fields, req);
-            const qstate = await stateFieldsToWhere({
+            const qstate = stateFieldsToWhere({
               fields: tbl_fields,
               approximate: !!approximate,
               state: req_query,
               table,
+              prefix: "a.",
             });
             const joinFields = {};
             const derefs = Array.isArray(dereference)
