@@ -57,12 +57,42 @@ describe("generate_joined_query", () => {
     assertIsSet(table);
     const q = generate_joined_query({ table, state: { author: "Leo" } });
     expect(q?.where?.author?.ilike).toBe("Leo");
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(1);
+    expect(rows[0].author).toBe("Leo Tolstoy");
+  });
+  it("should generate FTS state", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const q = generate_joined_query({ table, state: { _fts_books: "Leo" } });
+    expect(q?.where?._fts?.searchTerm).toBe("Leo");
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(1);
+    expect(rows[0].author).toBe("Leo Tolstoy");
+  });
+  it("should generate FTS state with inlcude key summary", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const q = generate_joined_query({
+      table,
+      state: { _fts_patients: "Herman" },
+      joinFields: {
+        pages: { ref: "favbook", target: "pages" },
+        author: { ref: "favbook", target: "author" },
+      },
+    });
+    expect(q?.where?._fts?.searchTerm).toBe("Herman");
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(1);
+    expect(rows[0].author).toBe("Herman Melville");
   });
   it("should generate formulas", async () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const q = generate_joined_query({ table, formulas: ["publisher.name"] });
     expect(q?.joinFields?.publisher_name?.target).toBe("name");
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(2);
   });
   it("should generate for show view", async () => {
     const user = { id: 1 };
@@ -81,6 +111,8 @@ describe("generate_joined_query", () => {
     expect(q.aggregations.count_patients_favbook_name_undefined.field).toBe(
       "name"
     );
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(1);
   });
 });
 
