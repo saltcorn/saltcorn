@@ -103,12 +103,12 @@ class File {
     } else {
       const relativeSearchFolder = where?.folder || "/";
       const tenant = db.getTenantSchema();
-      const safeDir = File.normalise(relativeSearchFolder);
-      const absoluteFolder = path.join(
+      const absoluteFolder = File.normalise_in_base(
         db.connectObj.file_store,
         tenant,
-        safeDir
+        relativeSearchFolder
       );
+      if (absoluteFolder === null) return [];
       const files: File[] = [];
       const searcher = async (folder: string, recursive?: boolean) => {
         let fileNms;
@@ -151,6 +151,19 @@ class File {
     return path.normalize(fpath).replace(/^(\.\.(\/|\\|$))+/, "");
   }
 
+  static normalise_in_base(
+    base: string,
+    ...unsafe_paths: string[]
+  ): string | null {
+    function relativize(s: string): string {
+      return s[0] === "/" ? relativize(s.slice(1)) : s;
+    }
+    const safe_paths = unsafe_paths.map((p) => File.normalise(relativize(p)));
+    const joined_path = path.resolve(base, ...safe_paths);
+
+    if (joined_path.startsWith(base)) return joined_path;
+    else return null;
+  }
   static async rootFolder(): Promise<File> {
     const tenant = db.getTenantSchema();
 

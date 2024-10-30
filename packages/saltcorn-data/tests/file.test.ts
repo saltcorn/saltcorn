@@ -23,6 +23,7 @@ import Library from "../models/library";
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { existsSync } from "fs";
+import { open } from "fs/promises";
 import { join, basename } from "path";
 
 getState().registerPlugin("base", require("../base-plugin"));
@@ -197,5 +198,65 @@ describe("File", () => {
       join(db.connectObj.file_store, db.getTenantSchema(), "video_stream.webm")
     );
     await file.delete();
+  });
+  it("should normalise_in_base", async () => {
+    const file = await File.from_contents(
+      "video_stream.webm",
+      "video/webm",
+      "hello",
+      1,
+      100
+    );
+    const base = join(db.connectObj.file_store, db.getTenantSchema());
+    expect(File.normalise_in_base(base, "video_stream.webm")).toBe(
+      join(base, "video_stream.webm")
+    );
+    expect(File.normalise_in_base(base, "../video_stream.webm")).toBe(
+      join(base, "video_stream.webm")
+    );
+    await file.delete();
+    expect(File.normalise_in_base("/var/files/", "foo/bar")).toBe(
+      "/var/files/foo/bar"
+    );
+    expect(File.normalise_in_base("/var/files/", "/foo/bar")).toBe(
+      "/var/files/foo/bar"
+    );
+
+    expect(File.normalise_in_base("/var/files/", "../../etc/passwd")).toBe(
+      "/var/files/etc/passwd"
+    );
+    expect(File.normalise_in_base("/var/files/", "path/../../etc/passwd")).toBe(
+      "/var/files/etc/passwd"
+    );
+    expect(File.normalise_in_base("/var/files/", "//etc/passwd")).toBe(
+      "/var/files/etc/passwd"
+    );
+    expect(File.normalise_in_base("/var/files/", "..\\../etc/passwd")).toBe(
+      "/var/files/etc/passwd"
+    );
+    expect(File.normalise_in_base("/var/files/", "..\\/../etc/passwd")).toBe(
+      "/var/files/etc/passwd"
+    );
+    expect(File.normalise_in_base("/var/files/", "/////../../etc/passwd")).toBe(
+      "/var/files/etc/passwd"
+    );
+    expect(
+      File.normalise_in_base("/var/files/", "..%255c/..%255c/etc/passwd")
+    ).toBe("/var/files/..%255c/..%255c/etc/passwd");
+    expect(File.normalise_in_base("/var/files/", "..%2F..%2F/etc/passwd")).toBe(
+      "/var/files/..%2F..%2F/etc/passwd"
+    );
+    expect(
+      File.normalise_in_base(
+        "/var/files/",
+        "\u002e\u002e\u2215\u002e\u002e\u2215/etc/passwd"
+      )
+    ).toBe("/var/files/..\u2215..\u2215/etc/passwd");
+    let fh = await open("/tmp/myfile", "a");
+    await fh.close();
+    expect(existsSync("/var/lib/..%255c/..%255c/tmp/myfile")).toBe(false);
+    expect(existsSync("/var/lib/..%2F..%2F/tmp/myfile")).toBe(false);
+    expect(existsSync("/var/lib/..\u2215..\u2215/tmp/myfile")).toBe(false);
+    expect(existsSync("/var/lib/../../tmp/myfile")).toBe(true);
   });
 });
