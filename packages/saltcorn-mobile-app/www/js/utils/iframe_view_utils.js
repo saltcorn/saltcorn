@@ -654,15 +654,16 @@ async function make_unique_field(
 }
 
 function openFile(fileId) {
-  // TODO fileIds with whitespaces do not work
   const config = parent.saltcorn.data.state.getState().mobileConfig;
   const serverPath = config.server_path;
   const token = config.jwt;
-  const url = `${serverPath}/files/serve/${fileId}?jwt=${token}`;
+  const url = `${serverPath}/files/serve/${encodeURIComponent(
+    fileId
+  )}?jwt=${token}`;
   parent.cordova.InAppBrowser.open(
     url,
-    "_self",
-    "clearcache=yes,clearsessioncache=yes,location=no"
+    "_blank",
+    "clearcache=yes,clearsessioncache=yes,location=no,toolbar=yes,toolbarposition=top"
   );
 }
 
