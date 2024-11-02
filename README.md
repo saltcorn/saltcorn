@@ -90,7 +90,7 @@ sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 
 You can also use Node 18 or 20.
 
-### Install saltcorn
+### Install Saltcorn
 
 `npm install -g @saltcorn/cli`
 
@@ -167,7 +167,7 @@ Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
 
 ### Server install
 
-#### Install saltcorn as a service
+#### Install Saltcorn as a service
 
 Installing saltcorn as a service will mean it runs in the background and restarts automatically if the system reboots.
 
@@ -213,7 +213,7 @@ sudo setcap 'cap_net_bind_service=+ep' `which node`
 
 Use [Let's Encrypt](https://letsencrypt.org/) or [Cloudflare](https://www.cloudflare.com/ssl/) to get a free SSL certificate (for https).
 
-## Install from source (for saltcorn developers)
+## Install from source (for Saltcorn developers)
 
 ### Installing node and npm on Ubuntu
 
