@@ -14,10 +14,14 @@ Saltcorn is using [PostgreSQL](https://github.com/postgres/postgres), [node.js](
 
 ## Trying out Saltcorn
 
+#### Online
+
 A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new application under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create).
 This service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of Saltcorn.
 
-To try out Saltcorn on you desktop, make sure you have node.js 16+ (18+ preferred) and npm installed. Then run these commands on the command line:
+#### Desktop
+
+To try out Saltcorn on your desktop, make sure you have node.js 16+ (18+ preferred) and npm installed. Then run these commands on the command line:
 
 ```
 npm config set prefix ~/.local
@@ -28,6 +32,8 @@ export SQLITE_FILEPATH=~/saltcorn.sqlite
 ```
 
 Now open http://localhost:3000/ in your browser. When you want to run this again, you need to run the `export` line and the `saltcorn serve` line. or simply run `SQLITE_FILEPATH=~/saltcorn.sqlite .local/bin/saltcorn serve`.
+
+#### Server
 
 To install Saltcorn on a fresh virtual machine, simply install node.js and run `npx saltcorn-install -y`; see [Quick install server on Linux](#quick-install-server-on-linux). To try out Saltcorn with docker-compose see [Quickstart with Docker](#quickstart-with-docker).
 
