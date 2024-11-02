@@ -152,16 +152,17 @@ class File {
   }
 
   static normalise_in_base(
-    base: string,
+    trusted_base: string,
     ...unsafe_paths: string[]
   ): string | null {
-    function relativize(s: string): string {
-      return s[0] === "/" ? relativize(s.slice(1)) : s;
-    }
-    const safe_paths = unsafe_paths.map((p) => File.normalise(relativize(p)));
-    const joined_path = path.resolve(base, ...safe_paths);
-
-    if (joined_path.startsWith(base)) return joined_path;
+    //normalise paths: legacy support for ../files/ paths
+    const norm_paths = unsafe_paths.map((p) => File.normalise(p));
+    // combine the paths via path.join() which also normalizes
+    // traversal sequences
+    const joined_path = path.join(trusted_base, ...norm_paths);
+    // validate that the resulting path is still within the trusted
+    // base
+    if (joined_path.startsWith(trusted_base)) return joined_path;
     else return null;
   }
   static async rootFolder(): Promise<File> {
