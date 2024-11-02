@@ -19,7 +19,7 @@ Saltcorn is using [PostgreSQL](https://github.com/postgres/postgres), [node.js](
 A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new application under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create).
 This service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of Saltcorn.
 
-#### Desktop
+#### Desktop
 
 To try out Saltcorn on your desktop, make sure you have node.js 16+ (18+ preferred) and npm installed. Then run these commands on the command line:
 
