@@ -118,7 +118,7 @@ const Container = ({
     htmlElement,
     {
       ref: (dom) => connect(drag(dom)),
-      className: `${customClass || ""} container canvas text-${hAlign} ${
+      className: `${customClass || ""} kontainer canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
