@@ -58,6 +58,7 @@ class PluginInstaller {
     this.tempDir = join(this.tempRootFolder, "temp_install", ...tokens);
     this.tempPckJsonPath = join(this.tempDir, "package.json");
     this.scVersion = opts.scVersion;
+    this.envVars = opts.envVars || {};
   }
 
   /**
@@ -257,6 +258,7 @@ class PluginInstaller {
     ) {
       const child = spawn("npm", ["install"], {
         cwd: this.tempDir,
+        env: { ...process.env, ...this.envVars },
         ...(isWindows ? { shell: true } : {}),
       });
       return new Promise((resolve, reject) => {

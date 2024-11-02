@@ -338,9 +338,7 @@ router.post(
     try {
       const rootFolder = await File.rootFolder();
       const syncDir = File.normalise_in_base(
-        rootFolder.location,
-        "mobile_app",
-        "sync",
+        path.join(rootFolder.location, "mobile_app", "sync"),
         dir_name
       );
       if (syncDir) await fs.rm(syncDir, { recursive: true, force: true });
