@@ -231,6 +231,7 @@ const loadAndSaveNewPlugin = async (
   const loadMsgs = [];
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
+    envVars: { PUPPETEER_SKIP_DOWNLOAD: "1" },
   });
   const { version, plugin_module, location, loadedWithReload, msgs } =
     await loader.install(force);
