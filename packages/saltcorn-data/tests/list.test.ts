@@ -35,7 +35,7 @@ const mkViewWithCfg = async (viewCfg: any): Promise<View> => {
     description: "",
     min_role: 1,
     name: `someView${Math.round(Math.random() * 100000)}`,
-    table_id: Table.findOne("books")?.id,
+    table_id: viewCfg.table_id || Table.findOne("books")?.id,
     default_render_page: "",
     slug: {
       label: "",
@@ -935,6 +935,86 @@ describe("List fieldviews", () => {
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain(`years ago<`);
     expect(vres1).toContain(`>1971</time>`);
+  });
+});
+
+describe("one-to-one joinfields", () => {
+  it("should setup", async () => {
+    const parents = await Table.create("O2O Parent");
+    const children = await Table.create("O2O Child");
+    await Field.create({
+      name: "name",
+      label: "Name",
+      type: "String",
+      table: parents,
+    });
+    await Field.create({
+      name: "name",
+      label: "Name",
+      type: "String",
+      table: children,
+    });
+    await Field.create({
+      name: "other",
+      label: "Other",
+      type: "Key to O2O Parent",
+      is_unique: true,
+      table: children,
+    });
+    const parid = await parents.insertRow({ name: "TheParent" });
+    await children.insertRow({ name: "TheChild", other: parid });
+    await mkViewWithCfg({
+      name: "list_o2o",
+      table_id: parents.id,
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                fieldview: "as_text",
+                field_name: "name",
+                configuration: {},
+              },
+              header_label: "name",
+            },
+            {
+              contents: {
+                type: "join_field",
+                block: false,
+                fieldview: "as_text",
+                textStyle: "",
+                join_field: "O2O Child.other->name",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            fieldview: "as_text",
+            field_name: "name",
+            configuration: {},
+          },
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            join_field: "O2O Child.other->name",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const view = View.findOne({ name: "list_o2o" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toContain("TheChild");
   });
 });
 
