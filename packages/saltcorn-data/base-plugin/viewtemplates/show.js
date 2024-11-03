@@ -839,7 +839,10 @@ const render = (
       if (join_field.includes("->")) {
         const [relation, target] = join_field.split("->");
         const [ontable, ref] = relation.split(".");
-        value = row[`${ref}_${ontable}_${target}`];
+        const key =
+          jf.targetNm ||
+          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
+        value = row[key];
       } else {
         value = row[join_field.split(".").join("_")];
       }
