@@ -1600,7 +1600,11 @@ const picked_fields_to_query = (columns, fields, layout, req, table) => {
         if (column.join_field.includes("->")) {
           const [relation, target] = column.join_field.split("->");
           const [ontable, ref] = relation.split(".");
-          joinFields[`${ref}_${ontable}_${target}`] = {
+          const targetNm = `${ref}_${ontable
+            .replaceAll(" ", "")
+            .toLowerCase()}_${target}`;
+          column.targetNm = targetNm;
+          joinFields[targetNm] = {
             ref,
             target,
             ontable,

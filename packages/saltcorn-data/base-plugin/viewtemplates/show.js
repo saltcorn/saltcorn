@@ -839,7 +839,10 @@ const render = (
       if (join_field.includes("->")) {
         const [relation, target] = join_field.split("->");
         const [ontable, ref] = relation.split(".");
-        value = row[`${ref}_${ontable}_${target}`];
+        const key =
+          jf.targetNm ||
+          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
+        value = row[key];
       } else {
         value = row[join_field.split(".").join("_")];
       }
@@ -1107,6 +1110,8 @@ module.exports = {
         const freeVars = freeVariables(tbl.ownership_formula);
         add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
+      console.log("all jfs", joinFields);
+
       const rows = await tbl.getJoinedRows({
         where: qstate,
         joinFields,
