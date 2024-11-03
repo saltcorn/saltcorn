@@ -465,6 +465,62 @@ describe("simple field localisation in show view", () => {
   });
 });
 
+describe("one-to-one joinfields", () => {
+  it("should setup", async () => {
+    const parents = await Table.create("O2O Parent");
+    const children = await Table.create("O2O Child");
+    await Field.create({
+      name: "name",
+      label: "Name",
+      type: "String",
+      table: parents,
+    });
+    await Field.create({
+      name: "name",
+      label: "Name",
+      type: "String",
+      table: children,
+    });
+    await Field.create({
+      name: "other",
+      label: "Other",
+      type: "Key to O2O Parent",
+      is_unique: true,
+      table: children,
+    });
+    const parid = await parents.insertRow({ name: "TheParent" });
+    await children.insertRow({ name: "TheChild", other: parid });
+    await mkViewWithCfg({
+      name: "show_o2o",
+      table_id: parents.id,
+      configuration: {
+        layout: {
+          type: "join_field",
+          block: false,
+          fieldview: "as_text",
+          textStyle: "",
+          join_field: "O2O Child.other->name",
+          configuration: {},
+        },
+        columns: [
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            join_field: "O2O Child.other->name",
+            configuration: {},
+          },
+        ],
+      },
+    });
+    const view = View.findOne({ name: "show_o2o" });
+    assertIsSet(view);
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe("TheChild");
+  });
+});
+
 describe("joinfield localisation in show view", () => {
   it("should setup", async () => {
     const books = Table.findOne("publisher");
