@@ -919,7 +919,9 @@ const get_viewable_fields = (
           const [ontable, ref] = relation.split(".");
           targetNm = target;
           refNm = ref;
-          key = `${ref}_${ontable}_${target}`;
+          key =
+            column.targetNm ||
+            `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
         } else {
           const keypath = column.join_field.split(".");
           refNm = keypath[0];
