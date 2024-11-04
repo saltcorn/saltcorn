@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/common-code",
-  "version": "1.0.0-rc.5",
+  "version": "1.0.0-rc.6",
   "description": "Code that can be used on both server and client",
   "homepage": "https://saltcorn.com",
   "scripts": {

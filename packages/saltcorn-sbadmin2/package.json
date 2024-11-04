@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/sbadmin2",
-  "version": "1.0.0-rc.5",
+  "version": "1.0.0-rc.6",
   "description": "SB Admin 2 layout plugin",
   "main": "index.js",
   "scripts": {
@@ -9,8 +9,8 @@
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "dependencies": {
-    "@saltcorn/data": "1.0.0-rc.5",
-    "@saltcorn/markup": "1.0.0-rc.5",
+    "@saltcorn/data": "1.0.0-rc.6",
+    "@saltcorn/markup": "1.0.0-rc.6",
     "startbootstrap-sb-admin-2-bs5": "^4.1.5-beta.8",
     "nunito-fontface": "0.7.3"
   },
