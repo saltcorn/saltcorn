@@ -273,7 +273,7 @@ const select_from_table = {
   async fill_options(
     field,
     force_allow_none,
-    where,
+    where0,
     extraCtx,
     optionsQuery,
     formFieldNames
@@ -281,6 +281,12 @@ const select_from_table = {
     const [tableNm, fieldNm] = field.attributes.source_field.split(".");
     const srcTable = Table.findOne(tableNm);
     const srcField = srcTable.getField(fieldNm);
+    const where = { ...where0 };
+    const srcFields = new Set(srcTable.fields.map((f) => f.name));
+    Object.keys(where).forEach((k) => {
+      if (!srcFields.has(k)) delete where[k];
+    });
+
     const rows = await Field.select_options_query(
       tableNm,
       where,
