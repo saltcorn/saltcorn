@@ -1476,5 +1476,6 @@
 	"clean node_modules": "clean node_modules",
 	"After delete": "After delete",
 	"Search only on exact match, not substring match. Useful for large tables": "Search only on exact match, not substring match. Useful for large tables",
-	"Please select an entry point.": "Please select an entry point."
+	"Please select an entry point.": "Please select an entry point.",
+	"Group by": "Group by"
 }
