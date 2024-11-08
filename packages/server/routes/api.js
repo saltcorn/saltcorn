@@ -189,6 +189,39 @@ router.post(
     )(req, res, next);
   })
 );
+
+router.get(
+  "/serve-files/*",
+  //passport.authenticate("api-bearer", { session: false }),
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        const role = req?.user?.role_id || user?.role_id || 100;
+        const user_id = req?.user?.id || user?.id;
+        const serve_path = req.params[0];
+        const file = await File.findOne(serve_path);
+        if (
+          file &&
+          (role <= file.min_role_read || (user_id && user_id === file.user_id))
+        ) {
+          res.type(file.mimetype);
+          const cacheability =
+            file.min_role_read === 100 ? "public" : "private";
+          const maxAge = getState().getConfig("files_cache_maxage", 86400);
+          res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
+          if (file.s3_store)
+            res.status(404).json({ error: req.__("Not found") });
+          else res.sendFile(file.location);
+        } else {
+          res.status(404).json({ error: req.__("Not found") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
 /**
  *
  */
