@@ -373,6 +373,14 @@ describe("API authentication", () => {
       .get("/api/serve-files/rick1.png")
       .expect(respondJsonWith(404, (b) => b.error === "Not found"));
   });
+  it("should show file to user", async () => {
+    const app = await getApp();
+    const u = await User.findOne({ id: 1 });
+    await request(app)
+      .get("/api/serve-files/rick1.png")
+      .set("Authorization", "Bearer " + u.api_token)
+      .status(200);
+  });
 });
 
 describe("API action", () => {
