@@ -1164,13 +1164,37 @@ const run = async (
     ? div({ class: "float-end" }, create_link)
     : create_link;
 
-  const tableHtml = mkTable(
-    default_state?.hide_null_columns
-      ? remove_null_cols(tfields, rows)
-      : tfields,
-    rows,
-    page_opts
-  );
+  let tableHtml;
+
+  if (default_state?._group_by) {
+    const groups = {};
+    for (const row of rows) {
+      const group = eval_expression(
+        default_state?._group_by,
+        row,
+        extraOpts.req.user,
+        "Group by expression"
+      );
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(row);
+    }
+    page_opts.grouped = true;
+    tableHtml = mkTable(
+      default_state?.hide_null_columns
+        ? remove_null_cols(tfields, rows)
+        : tfields,
+      groups,
+      page_opts
+    );
+  } else {
+    tableHtml = mkTable(
+      default_state?.hide_null_columns
+        ? remove_null_cols(tfields, rows)
+        : tfields,
+      rows,
+      page_opts
+    );
+  }
 
   return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
 };
@@ -1364,7 +1388,7 @@ module.exports = {
       if (!q.orderDesc && !sort_from_state)
         q.orderDesc = default_state && default_state._descending;
 
-      if (default_state._group_by)
+      if (default_state?._group_by)
         add_free_variables_to_joinfields(
           freeVariables(default_state._group_by || ""),
           joinFields,
