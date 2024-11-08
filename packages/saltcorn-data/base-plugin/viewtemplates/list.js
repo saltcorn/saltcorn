@@ -571,6 +571,13 @@ const configuration_workflow = (req) =>
             required: true,
           });
           formfields.push({
+            name: "_group_by",
+            label: req.__("Group by"),
+            type: "String",
+            sublabel: "Formula for the group headings",
+            class: "validate-expression",
+          });
+          formfields.push({
             name: "include_fml",
             label: req.__("Row inclusion formula"),
             class: "validate-expression",
@@ -1272,6 +1279,7 @@ module.exports = {
       exclusion_relation,
       exclusion_where,
       _rows_per_page,
+      _group_by,
       _hide_pagination,
       _row_click_url_formula,
       transpose,
@@ -1356,6 +1364,12 @@ module.exports = {
       if (!q.orderDesc && !sort_from_state)
         q.orderDesc = default_state && default_state._descending;
 
+      if (default_state._group_by)
+        add_free_variables_to_joinfields(
+          freeVariables(default_state._group_by || ""),
+          joinFields,
+          fields
+        );
       const role = req && req.user ? req.user.role_id : 100;
 
       //console.log({ i: default_state.include_fml });
