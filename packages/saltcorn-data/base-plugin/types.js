@@ -201,17 +201,17 @@ const progress_bar = (type) => ({
   run: (v, req, attrs = {}) => {
     let max = attrs.max;
     let min = attrs.min;
-    if (attrs.max_min_formula && attrs.min_formula && attrs.row)
+    if (attrs.max_min_formula && attrs.min_formula)
       min = eval_expression(
         attrs.min_formula,
-        attrs.row,
+        attrs.row || {},
         req.user,
         "Progress bar min formula"
       );
-    if (attrs.max_min_formula && attrs.max_formula && attrs.row)
+    if (attrs.max_min_formula && attrs.max_formula)
       max = eval_expression(
         attrs.max_formula,
-        attrs.row,
+        attrs.row || {},
         req.user,
         "Progress bar max formula"
       );
@@ -260,7 +260,7 @@ const progress_bar = (type) => ({
         div({
           class: "progress-bar",
           style: {
-            width: `${(100 * (v - attrs.min)) / (attrs.max - attrs.min)}%`,
+            width: `${pcnt}%`,
             height: `${attrs.px_height || 8}px`,
             backgroundColor: attrs.bar_color || "#0000ff",
           },
