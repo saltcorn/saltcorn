@@ -15,20 +15,15 @@ import {
   prepareSplashPage,
   prepareBuildDir,
   prepareExportOptionsPlist,
-  modifyConfigXml,
   writeCapacitorConfig,
-  prepareAppIcon,
-  prepareSplashIcon,
   decodeProvisioningProfile,
   prepAppIcon,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
-  installNpmPackages,
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
-import { CordovaHelper } from "./utils/cordova_helper";
 import { CapacitorHelper } from "./utils/capacitor-helper";
 import { removeNonWordChars } from "@saltcorn/data/utils";
 
@@ -188,7 +183,6 @@ export class MobileBuilder {
       features.version_plugin_serve_path = false;
       await loadAllPlugins();
       await copyPublicDirs(this.buildDir);
-      await installNpmPackages(this.buildDir, this.pluginManager);
       await buildTablesFile(this.buildDir, this.includedPlugins);
       if (this.splashPage)
         await prepareSplashPage(

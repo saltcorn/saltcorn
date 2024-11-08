@@ -1,7 +1,12 @@
-/*global window, MobileRequest, parseQuery, MobileResponse, wrapContents, saltcorn, loadFileAsText*/
+/*global saltcorn */
+
+import { MobileRequest } from "../mocks/request";
+import { MobileResponse } from "../mocks/response";
+import { parseQuery, wrapContents } from "../utils";
+import { loadFileAsText } from "../../helpers/common";
 
 // post/page/:pagename/action/:rndid
-const postPageAction = async (context) => {
+export const postPageAction = async (context) => {
   const state = saltcorn.data.state.getState();
   const req = new MobileRequest({ xhr: context.xhr });
   const { page_name, rndid } = context.params;
@@ -79,7 +84,7 @@ const runPageGroup = async (pageGroup, state, context, { req, res }) => {
 };
 
 // get/page/pagename
-const getPage = async (context) => {
+export const getPage = async (context) => {
   const state = saltcorn.data.state.getState();
   const query = context.query ? parseQuery(context.query) : {};
   const req = new MobileRequest({ xhr: context.xhr, query: query });

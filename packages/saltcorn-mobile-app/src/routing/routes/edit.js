@@ -1,7 +1,9 @@
-/*global i18next, apiCall, saltcorn, offlineHelper*/
+/*global i18next, saltcorn */
+import { apiCall } from "../../helpers/api";
+import { setHasOfflineData } from "../../helpers/offline_mode";
 
 // /toggle/:name/:id/:field_name
-const postToggleField = async (context) => {
+export const postToggleField = async (context) => {
   const { name, id, field_name } = context.params;
   const table = await saltcorn.data.models.Table.findOne({ name });
   const state = saltcorn.data.state.getState();
@@ -10,7 +12,7 @@ const postToggleField = async (context) => {
     if (role_id > table.min_role_write)
       throw new saltcorn.data.utils.NotAuthorized(i18next.t("Not authorized"));
     await table.toggleBool(+id, field_name); //TODO call with user
-    if (isOfflineMode) await offlineHelper.setHasOfflineData(true);
+    if (isOfflineMode) await setHasOfflineData(true);
   } else {
     await apiCall({
       method: "POST",

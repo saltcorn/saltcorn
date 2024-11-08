@@ -28,7 +28,7 @@ const is_node = isNode();
 const initDbModule = (): any => {
   let dbmodule = null;
   if (!isNode()) {
-    dbmodule = require("@saltcorn/sqlite-mobile/sqlite-cordova");
+    dbmodule = require("@saltcorn/sqlite-mobile/sqlite_capacitor");
     dbmodule.setConnectionObject(connectObj);
   } else if (isSQLite) {
     dbmodule = require("@saltcorn/sqlite/sqlite");

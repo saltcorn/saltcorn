@@ -1,8 +1,3 @@
-/**
- * This is the sqlite-cordova module
- * @module
- */
-
 import {
   Row,
   sqlsanitize,
@@ -23,11 +18,16 @@ import {
   do_add_index,
   do_drop_index,
 } from "@saltcorn/db-common/sqlite-commons";
+import {
+  CapacitorSQLite,
+  SQLiteConnection,
+  SQLiteDBConnection,
+} from "@capacitor-community/sqlite";
 
 declare let window: any;
 
 let connobj: any = null;
-let db: any = null;
+let db: SQLiteDBConnection | null = null;
 
 /**
  *
@@ -37,59 +37,36 @@ export const setConnectionObject = (connobjPara: any): void => {
   connobj = connobjPara;
 };
 
-/**
- *
- */
-export const init = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    db = window.sqlitePlugin.openDatabase(
-      {
-        name: connobj?.sqlite_db_name || "scdb.sqlite",
-        location: connobj?.sqlite_path || "default",
-        createFromLocation: 1,
-      },
-      resolve,
-      reject
+export const init = async () => {
+  try {
+    const sqlite = new SQLiteConnection(CapacitorSQLite);
+    const dbExists = await sqlite.isDatabase("prepopulated");
+    if (!dbExists.result) await sqlite.copyFromAssets();
+    try {
+      await sqlite.closeConnection("prepopulated", false);
+      console.log("Connection was open, reopening it");
+    } catch (e) {
+      console.log("Connection wasn't open");
+    }
+    db = await sqlite.createConnection(
+      "prepopulated",
+      false,
+      "no-encryption",
+      1,
+      false
     );
-  });
-};
-
-/**
- *
- * @param statement
- * @param params
- * @returns
- */
-export const query = (statement: string, params?: any): Promise<any> => {
-  if (params?.length) {
-    // https://github.com/storesafe/cordova-sqlite-storage/issues/545
-    params = params.map((param: any) =>
-      param === false ? 0 : param === true ? 1 : param
-    );
+    await db.open();
+  } catch (e) {
+    console.log("Unable to init the sqlite db: ", e);
+    throw e;
   }
-  return new Promise((resolve, reject) => {
-    db.executeSql(
-      statement,
-      params,
-      (results: any) => {
-        let rows = Array<any>();
-        for (let i = 0; i < results.rows.length; i++)
-          rows.push(results.rows.item(i));
-        return resolve({ rows });
-      },
-      (err: Error) => {
-        return reject(err);
-      }
-    );
-  });
 };
 
-/**
- *
- * @param tbl
- * @param obj
- * @param opts
- */
+export const query = async (statement: string, params?: any) => {
+  const result = await db?.query(statement, params);
+  return { rows: result?.values || [] };
+};
+
 export const insert = async (
   tbl: string,
   obj: Row,
@@ -99,24 +76,18 @@ export const insert = async (
     replace?: boolean;
     jsonCols?: string[];
   } = {}
-): Promise<string | void> => {
+) => {
   const { sql, valList } = buildInsertSql(tbl, obj, opts);
   await query(sql, valList);
   const ids = await query("SELECT last_insert_rowid() as id");
   return ids.rows[0].id;
 };
 
-/**
- * Insert multiple rows
- * @param tbl
- * @param rows
- * @param opts
- */
 export const insertRows = async (
   tbl: string,
   rows: Row[],
   opts: { noid?: boolean; ignoreExisting?: boolean; replace?: boolean } = {}
-): Promise<void> => {
+) => {
   if (rows.length === 0) return;
   const bulkCmds = buildInsertBulkSql(tbl, rows, opts);
   for (const { sql, vals } of bulkCmds) {
@@ -124,13 +95,6 @@ export const insertRows = async (
   }
 };
 
-/**
- *
- * @param tbl
- * @param whereObj
- * @param selectopts
- * @returns
- */
 export const select = async (
   tbl: string,
   whereObj: Where,
@@ -146,26 +110,9 @@ export const select = async (
   return tq.rows;
 };
 
-/**
- *
- */
 export const drop_reset_schema = () => {
-  window.sqlitePlugin.deleteDatabase(
-    {
-      name: connobj?.sqlite_db_name || "scdb.sqlite",
-      location: connobj?.sqlite_path || "default",
-    },
-    () => {
-      db = window.sqlitePlugin.openDatabase({
-        name: connobj?.sqlite_db_name || "scdb.sqlite",
-        location: connobj?.sqlite_path || "default",
-      });
-    },
-    (error: Error) => {
-      console.log("drop_reset_schema: error");
-      console.log(error);
-    }
-  );
+  // propably not needed on mobile ?
+  throw new Error("Not implemented");
 };
 
 /**
@@ -178,11 +125,6 @@ export const count = async (tbl: string, whereObj: Where) => {
   return await doCount(tbl, whereObj, query);
 };
 
-/**
- *
- * @param tbl
- * @param whereObj
- */
 export const deleteWhere = async (
   tbl: string,
   whereObj: Where

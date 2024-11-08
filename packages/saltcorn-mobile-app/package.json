@@ -5,8 +5,10 @@
   "description": "Apache Cordova application with @saltcorn/markup",
   "main": "index.js",
   "scripts": {
+    "build": "webpack",
     "add-platform": "npx cap add",
-    "write-gradle-cfg": "node write-gradle-cfg.js"
+    "write-gradle-cfg": "node build_scripts/write_gradle_cfg.js",
+    "modify-android-manifest": "node build_scripts/modify_android_manifest.js"
   },
   "author": "Christian Hugo",
   "license": "MIT",
@@ -17,9 +19,20 @@
     "@capacitor/cli": "^6.1.2",
     "@capacitor/core": "^6.1.2",
     "@capacitor/assets": "^3.0.5",
-    "cordova-sqlite-ext": "^6.0.0"
+    "@capacitor/filesystem": "6.0.1",
+    "cordova-sqlite-ext": "^6.0.0",
+    "universal-router": "9.2.0",
+    "axios": "^1.7.7",
+    "jwt-decode": "4.0.0",
+    "i18next": "23.16.4",
+    "i18next-sprintf-postprocessor": "0.2.2"
   },
   "devDependencies": {
-    "typescript": "^4.4.4"
+    "xml2js": "0.6.0",
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-loader": "^9.2.1",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
   }
 }

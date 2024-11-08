@@ -52,7 +52,7 @@ WORKDIR /init_project/android
 RUN ./gradlew assembleDebug
 
 WORKDIR /
-COPY entry_wip.bash ./
-RUN chmod u+x entry_wip.bash
+COPY entry.bash ./
+RUN chmod u+x entry.bash
 
 ENTRYPOINT ["./entry.bash"]

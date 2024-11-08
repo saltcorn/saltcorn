@@ -21,13 +21,50 @@ export PATH=$PATH:/opt/gradle-8.4/bin
 cd /saltcorn-mobile-app
 npm install @capacitor/cli @capacitor/core @capacitor/android
 npm run add-platform android
-npx capacitor-assets generate
+
+
+
+# npx capacitor-assets generate
 plugins="cordova-sqlite-ext cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser cordova-plugin-network-information cordova-plugin-geolocation cordova-plugin-camera" && \
 for plugin in $plugins; do \
   npm install "$plugin"; \
 done
 npx cap sync
-cd ./android
+
+npm install @capacitor/filesystem
+npm install --save @capacitor-community/sqlite
+
+cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
+EOF
+
+cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/network_security_config.xml
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">10.0.2.2</domain>
+  </domain-config>
+</network-security-config>
+EOF
+
+npm run modify-android-manifest
+
+npx cap sync
+
 cat <<EOF > /saltcorn-mobile-app/android/gradle/wrapper/gradle-wrapper.properties
 distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
@@ -37,6 +74,15 @@ validateDistributionUrl=true
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 EOF
+
+npm run build
+npx cap sync
+
+mkdir -p /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases
+cp /saltcorn-mobile-app/www/scdb.sqlite /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases/prepopulated.db
+
+
+cd ./android
 
 if [ -n "$KEYSTORE_FILE" ]; then
   echo "building signed app with keystore"

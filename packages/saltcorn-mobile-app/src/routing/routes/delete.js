@@ -1,7 +1,9 @@
-/*global i18next, apiCall, saltcorn, offlineHelper*/
+/*global i18next, saltcorn */
+import { apiCall } from "../../helpers/api";
+import { setHasOfflineData, hasOfflineRows } from "../../helpers/offline_mode";
 
 // post/delete/:name/:id
-const deleteRows = async (context) => {
+export const deleteRows = async (context) => {
   const { name, id } = context.params;
   const table = await saltcorn.data.models.Table.findOne({ name });
   const { isOfflineMode, localTableIds, role_id } =
@@ -12,8 +14,8 @@ const deleteRows = async (context) => {
       // TODO 'table.is_owner' check?
     } else
       throw new saltcorn.data.utils.NotAuthorized(i18next.t("Not authorized"));
-    if (isOfflineMode && (await offlineHelper.hasOfflineRows()))
-      await offlineHelper.setHasOfflineData(true);
+    if (isOfflineMode && (await hasOfflineRows()))
+      await setHasOfflineData(true);
     // if (isOfflineMode && !(await offlineHelper.hasOfflineRows())) {
     //   await offlineHelper.setOfflineSession(null);
     // }

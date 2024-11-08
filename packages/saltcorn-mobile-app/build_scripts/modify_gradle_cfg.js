@@ -15,7 +15,7 @@ const newGradleContent = gradleContent
   .replace(
     /release\s*{/,
     `release { 
-            signingConfig signingConfigs.release`,
+            signingConfig signingConfigs.release`
   )
   .replace(
     /buildTypes\s*{/,
@@ -28,7 +28,7 @@ const newGradleContent = gradleContent
               storePassword '${keyStorePassword}'
           }
         }
-    buildTypes {`,
+    buildTypes {`
   );
 console.log("newGradleContent", newGradleContent);
 writeFileSync(gradleFile, newGradleContent, "utf8");

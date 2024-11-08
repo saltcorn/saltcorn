@@ -12,7 +12,7 @@ const { getState } = require("@saltcorn/data/db/state");
  */
 export async function bundlePackagesAndPlugins(
   buildDir: string,
-  plugins: Plugin[],
+  plugins: Plugin[]
 ) {
   const result = spawnSync(
     "npm",
@@ -27,7 +27,7 @@ export async function bundlePackagesAndPlugins(
     ],
     {
       cwd: join(__dirname, "../../"),
-    },
+    }
   );
   console.log(result.output.toString());
   rmSync(join(__dirname, "../..", "plugin_packages"), {
@@ -40,7 +40,7 @@ export async function bundlePackagesAndPlugins(
 async function copyHeaderToApp(
   pluginLocation: string,
   header: string,
-  wwwDir: string,
+  wwwDir: string
 ) {
   const pathArr = header.split(sep);
   if (pathArr.length > 4) {
@@ -53,7 +53,7 @@ async function copyHeaderToApp(
     try {
       copySync(
         join(pluginLocation, "public", pluginSubDir, headerFile),
-        join(dstPublicDir, headerFile),
+        join(dstPublicDir, headerFile)
       );
     } catch (e) {
       console.log(`Error copying header ${header} to ${dstPublicDir}`);
@@ -101,46 +101,8 @@ export async function copyPublicDirs(buildDir: string) {
         copySync(
           altCssFile.location,
           join(wwwDir, "sc_plugins", "public", k, pluginCfgs[k].alt_css_file),
-          { recursive: true },
+          { recursive: true }
         );
     }
   }
-}
-
-/**
- *
- * @param buildDir directory where the app will be build
- * @param manager live-plugin-manager to load a npm pacakage (change to dependency??)
- */
-export async function installNpmPackages(buildDir: string, manager: any) {
-  const npmTargetDir = join(buildDir, "www", "npm_packages");
-  if (!existsSync(npmTargetDir)) mkdirSync(npmTargetDir, { recursive: true });
-  const jwtInfo = await manager.install("jwt-decode", "3.1.2");
-  copySync(
-    join(jwtInfo.location, "build/jwt-decode.js"),
-    join(npmTargetDir, "jwt-decode.js"),
-  );
-  const routerInfo = await manager.install("universal-router", "9.1.0");
-  copySync(
-    join(routerInfo.location, "universal-router.min.js"),
-    join(npmTargetDir, "universal-router.min.js"),
-  );
-  const axiosInfo = await manager.install("axios", "0.27.2");
-  copySync(
-    join(axiosInfo.location, "dist", "axios.min.js"),
-    join(npmTargetDir, "axios.min.js"),
-  );
-  const i18nNextInfo = await manager.install("i18next", "21.8.16");
-  copySync(
-    join(i18nNextInfo.location, "i18next.min.js"),
-    join(npmTargetDir, "i18next.min.js"),
-  );
-  const postProcInfo = await manager.install(
-    "i18next-sprintf-postprocessor",
-    "0.2.2",
-  );
-  copySync(
-    join(postProcInfo.location, "i18nextSprintfPostProcessor.min.js"),
-    join(npmTargetDir, "i18nextSprintfPostProcessor.min.js"),
-  );
 }

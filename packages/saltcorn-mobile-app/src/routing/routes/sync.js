@@ -1,7 +1,10 @@
-/*global saltcorn, wrapContents, MobileRequest, */
+/*global saltcorn */
+
+import { MobileRequest } from "../mocks/request";
+import { wrapContents } from "../utils";
 
 // get/sync/sync_settings
-const getSyncSettingsView = (context) => {
+export const getSyncSettingsView = (context) => {
   const state = saltcorn.data.state.getState();
   const { isOfflineMode } = state.mobileConfig;
   const content = saltcorn.markup.div(
@@ -99,7 +102,7 @@ const getSyncSettingsView = (context) => {
 };
 
 // get/sync/ask_upload_not_ended
-const getAskUploadNotEnded = (context) => {
+export const getAskUploadNotEnded = (context) => {
   const content = saltcorn.markup.div(
     saltcorn.markup.div(
       { class: "mb-3 h6" },
@@ -127,7 +130,7 @@ const getAskUploadNotEnded = (context) => {
 };
 
 // get/sync/ask_delete_offline_data
-const getAskDeleteOfflineData = (context) => {
+export const getAskDeleteOfflineData = (context) => {
   const content = saltcorn.markup.div(
     saltcorn.markup.div(
       { class: "mb-3 h6" },
@@ -145,7 +148,8 @@ const getAskDeleteOfflineData = (context) => {
       {
         class: "btn btn-primary close",
         type: "button",
-        onClick: "closeModal(); deleteOfflineData()",
+        onClick:
+          "closeModal(); parent.saltcorn.mobileApp.offlineMode.deleteOfflineData()",
       },
       "Delete"
     )

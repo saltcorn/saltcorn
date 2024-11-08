@@ -1,11 +1,16 @@
-/*global MobileRequest, MobileResponse, parseQuery, wrapContents, saltcorn, offlineHelper, routingHistory*/
+/*global saltcorn,*/
 
+import { MobileRequest } from "../mocks/request";
+import { MobileResponse } from "../mocks/response";
+import { parseQuery, wrapContents } from "../utils";
+import { setHasOfflineData } from "../../helpers/offline_mode";
+import { routingHistory } from "../../helpers/navigation";
 /**
  *
  * @param {*} context
  * @returns
  */
-const postView = async (context) => {
+export const postView = async (context) => {
   let body = {};
   let redirect = undefined;
   for (const [k, v] of new URLSearchParams(context.query).entries()) {
@@ -45,7 +50,7 @@ const postView = async (context) => {
     },
     view.isRemoteTable()
   );
-  if (mobileCfg.isOfflineMode) await offlineHelper.setHasOfflineData(true);
+  if (mobileCfg.isOfflineMode) await setHasOfflineData(true);
   const wrapped = res.getWrapHtml();
   if (wrapped) {
     return wrapContents(
@@ -64,7 +69,7 @@ const postView = async (context) => {
  *
  * @param {*} context
  */
-const postViewRoute = async (context) => {
+export const postViewRoute = async (context) => {
   const query = context.query ? parseQuery(context.query) : {};
   const refererRoute =
     routingHistory?.length > 1
@@ -92,7 +97,7 @@ const postViewRoute = async (context) => {
     { req, res },
     view.isRemoteTable()
   );
-  if (isOfflineMode) await offlineHelper.setHasOfflineData(true);
+  if (isOfflineMode) await setHasOfflineData(true);
   const wrapped = res.getWrapHtml();
   if (wrapped)
     return wrapContents(
@@ -116,7 +121,7 @@ const postViewRoute = async (context) => {
  * @param {*} context
  * @returns
  */
-const getView = async (context) => {
+export const getView = async (context) => {
   const state = saltcorn.data.state.getState();
   const query = context.query ? parseQuery(context.query) : {};
   const refererRoute =

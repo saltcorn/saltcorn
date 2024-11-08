@@ -1,0 +1,21 @@
+{
+  "extends": "eslint:recommended",
+
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+
+    // typescript-eslint specific options
+    "warnOnUnsupportedTypeScriptVersion": true
+  },
+  "env": {
+    "browser": true
+  },
+  "ignorePatterns": ["dist/**"],
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-case-declarations": "off",
+    "no-empty": "warn",
+    "no-fallthrough": "warn"
+  }
+}

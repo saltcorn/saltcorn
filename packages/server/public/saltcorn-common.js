@@ -989,11 +989,13 @@ function initialize_page() {
       }
     }
   }
+
   setTimeout(() => {
     $("#toasts-area")
       .find(".show[rendered='server-side'][type='success']")
       .removeClass("show");
   }, 5000);
+
   $(".lazy-accoordion").on("show.bs.collapse", function (e) {
     const $e = $(e.target).find("[data-sc-view-source]");
     if ($.trim($e.html()) == "") {

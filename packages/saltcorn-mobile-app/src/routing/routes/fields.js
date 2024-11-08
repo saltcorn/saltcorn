@@ -1,6 +1,11 @@
-/*global saltcorn, apiCall, MobileRequest, MobileResponse, offlineHelper, parseQuery */
+/*global saltcorn */
 
-const postShowCalculated = async (context) => {
+import { MobileRequest } from "../mocks/request";
+import { MobileResponse } from "../mocks/response";
+import { parseQuery } from "../utils";
+import { apiCall } from "../../helpers/api";
+
+export const postShowCalculated = async (context) => {
   const { tableName, fieldName, fieldview } = context.params;
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   const table = saltcorn.data.models.Table.findOne({ name: tableName });

@@ -1,4 +1,4 @@
-function MobileResponse() {
+export function MobileResponse() {
   let jsonData = null;
   let sendData = null;
   let wrapHtml = null;
@@ -44,7 +44,7 @@ function MobileResponse() {
   }
 
   function getStatus() {
-    return status;
+    return resStatus;
   }
 
   return {

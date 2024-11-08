@@ -1,4 +1,6 @@
-/*global saltcorn, offlineHelper*/
+/*global saltcorn */
+
+import { getOfflineMsg } from "../helpers/offline_mode";
 
 const getHeaders = () => {
   const state = saltcorn.data.state.getState();
@@ -8,7 +10,7 @@ const getHeaders = () => {
     { css: `static_assets/${versionTag}/saltcorn.css` },
     { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: `static_assets/${versionTag}/dayjs.min.js` },
-    { script: "js/utils/iframe_view_utils.js" },
+    { script: "js/iframe_view_utils.js" },
   ];
 
   let from_cfg = [];
@@ -19,7 +21,7 @@ const getHeaders = () => {
   return [...stdHeaders, ...config.pluginHeaders, ...from_cfg];
 };
 
-const parseQuery = (queryStr) => {
+export const parseQuery = (queryStr) => {
   let result = {};
   const parsedQuery =
     typeof queryStr === "string" ? new URLSearchParams(queryStr) : undefined;
@@ -36,7 +38,7 @@ const layout = () => {
   return state.getLayout({ role_id: state.mobileConfig.role_id || 100 });
 };
 
-const sbAdmin2Layout = () => {
+export const sbAdmin2Layout = () => {
   return saltcorn.data.state.getState().layouts["sbadmin2"];
 };
 
@@ -129,14 +131,14 @@ const prepareAlerts = (context, req) => {
   return [...(context.alerts || []), ...req.flashMessages()];
 };
 
-const wrapContents = (contents, title, context, req) => {
+export const wrapContents = (contents, title, context, req) => {
   const state = saltcorn.data.state.getState();
   const body = {
     above: [
       saltcorn.markup.div(
         { id: "top-alert" },
         state.mobileConfig.isOfflineMode
-          ? saltcorn.markup.alert("info", offlineHelper.getOfflineMsg())
+          ? saltcorn.markup.alert("info", getOfflineMsg())
           : ""
       ),
       contents,

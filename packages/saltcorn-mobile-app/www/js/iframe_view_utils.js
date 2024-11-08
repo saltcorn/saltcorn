@@ -30,8 +30,12 @@ async function execLink(url, linkSrc) {
       showLoadSpinner();
       if (url.startsWith("javascript:")) eval(url.substring(11));
       else {
-        const { path, query } = parent.splitPathQuery(url);
-        await parent.handleRoute(`get${path}`, query);
+        const { path, query } =
+          parent.saltcorn.mobileApp.navigation.splitPathQuery(url);
+        await parent.saltcorn.mobileApp.navigation.handleRoute(
+          `get${path}`,
+          query
+        );
       }
     } finally {
       removeLoadSpinner();
@@ -39,8 +43,9 @@ async function execLink(url, linkSrc) {
 }
 
 async function runUrl(url, method = "get") {
-  const { path, query } = parent.splitPathQuery(url);
-  const page = await parent.router.resolve({
+  const { path, query } =
+    parent.saltcorn.mobileApp.navigation.splitPathQuery(url);
+  const page = await parent.saltcorn.mobileApp.navigation.router.resolve({
     pathname: `${method}${path}`,
     query: query,
   });
@@ -85,7 +90,10 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
           const fileName = tokens[tokens.length - 1];
           const directory = tokens.splice(0, tokens.length - 1).join("/");
           // read and add file to submit
-          const binary = await parent.readBinary(fileName, directory);
+          const binary = await parent.saltcorn.mobileApp.fileSystem.readBinary(
+            fileName,
+            directory
+          );
           files[entry[0]] = new File([binary], fileName);
         } else if (!matchingState) urlParams.append(entry[0], entry[1]);
         else data[entry[0]] = entry[1];
@@ -93,8 +101,8 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
     }
     const queryStr = !matchingState
       ? urlParams.toString()
-      : parent.currentQuery() || "";
-    await parent.handleRoute(
+      : parent.saltcorn.mobileApp.navigation.currentQuery() || "";
+    await parent.saltcorn.mobileApp.navigation.handleRoute(
       `post${urlSuffix}${viewname}`,
       queryStr,
       files,
@@ -116,13 +124,13 @@ async function inline_local_submit(e, opts1) {
       urlParams.append(entry[0], entry[1]);
     }
     const url = form.attr("action");
-    await parent.router.resolve({
+    await parent.saltcorn.mobileApp.navigation.router.resolve({
       pathname: `post${url}`,
       query: urlParams.toString(),
     });
     inline_submit_success(e, form, opts);
   } catch (error) {
-    parent.showAlerts([
+    parent.saltcorn.mobileApp.common.showAlerts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
@@ -145,7 +153,7 @@ async function saveAndContinue(e, action, k) {
     const form = $(e).closest("form");
     submitWithEmptyAction(form[0]);
     const queryStr = new URLSearchParams(new FormData(form[0])).toString();
-    const res = await parent.router.resolve({
+    const res = await parent.saltcorn.mobileApp.navigation.router.resolve({
       pathname: `post${action}`,
       query: queryStr,
       xhr: true,
@@ -162,95 +170,16 @@ async function saveAndContinue(e, action, k) {
   }
 }
 
-async function loginRequest({ email, password, isSignup, isPublic }) {
-  const opts = isPublic
-    ? {
-        method: "GET",
-        path: "/auth/login-with/jwt",
-      }
-    : isSignup
-    ? {
-        method: "POST",
-        path: "/auth/signup",
-        body: {
-          email,
-          password,
-        },
-      }
-    : {
-        method: "GET",
-        path: "/auth/login-with/jwt",
-        params: {
-          email,
-          password,
-        },
-      };
-  const response = await parent.apiCall(opts);
-  return response.data;
-}
-
 async function login(e, entryPoint, isSignup) {
   try {
     showLoadSpinner();
     const formData = new FormData(e);
-    const loginResult = await loginRequest({
+    await parent.saltcorn.mobileApp.auth.login({
       email: formData.get("email"),
       password: formData.get("password"),
       isSignup,
+      entryPoint,
     });
-    if (typeof loginResult === "string") {
-      // use it as a token
-      const decodedJwt = parent.jwt_decode(loginResult);
-      const state = parent.saltcorn.data.state.getState();
-      const config = state.mobileConfig;
-      config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 100;
-      config.user_name = decodedJwt.user.email;
-      config.user_id = decodedJwt.user.id;
-      config.language = decodedJwt.user.language;
-      config.user = decodedJwt.user;
-      config.isPublicUser = false;
-      config.isOfflineMode = false;
-      await parent.insertUser(config.user);
-      await parent.setJwt(loginResult);
-      config.jwt = loginResult;
-      await parent.i18next.changeLanguage(config.language);
-      const alerts = [];
-      if (config.allowOfflineMode) {
-        const { offlineUser, hasOfflineData } =
-          (await parent.offlineHelper.getLastOfflineSession()) || {};
-        if (!offlineUser || offlineUser === config.user_name) {
-          await parent.offlineHelper.sync();
-        } else {
-          if (hasOfflineData)
-            alerts.push({
-              type: "warning",
-              msg: `'${offlineUser}' has not yet uploaded offline data.`,
-            });
-          else {
-            await deleteOfflineData(true);
-            await parent.offlineHelper.sync();
-          }
-        }
-      }
-      alerts.push({
-        type: "success",
-        msg: parent.i18next.t("Welcome, %s!", {
-          postProcess: "sprintf",
-          sprintf: [config.user_name],
-        }),
-      });
-      parent.addRoute({ route: entryPoint, query: undefined });
-      const page = await parent.router.resolve({
-        pathname: entryPoint,
-        fullWrap: true,
-        alerts,
-      });
-      if (page.content) await parent.replaceIframe(page.content, page.isFile);
-    } else if (loginResult?.alerts) {
-      parent.showAlerts(loginResult?.alerts);
-    } else {
-      throw new Error("The login failed.");
-    }
   } finally {
     removeLoadSpinner();
   }
@@ -259,77 +188,16 @@ async function login(e, entryPoint, isSignup) {
 async function publicLogin(entryPoint) {
   try {
     showLoadSpinner();
-    const loginResult = await loginRequest({ isPublic: true });
-    if (typeof loginResult === "string") {
-      const config = parent.saltcorn.data.state.getState().mobileConfig;
-      config.user = {
-        role_id: 100,
-        user_name: "public",
-        language: "en",
-      };
-      // TODO remove these, use 'user' everywhere
-      config.role_id = 100;
-      config.user_name = "public";
-      config.language = "en";
-
-      config.isPublicUser = true;
-      await parent.setJwt(loginResult);
-      config.jwt = loginResult;
-      parent.i18next.changeLanguage(config.language);
-      parent.addRoute({ route: entryPoint, query: undefined });
-      const page = await parent.router.resolve({
-        pathname: entryPoint,
-        fullWrap: true,
-        alerts: [
-          {
-            type: "success",
-            msg: parent.i18next.t("Welcome to %s!", {
-              postProcess: "sprintf",
-              sprintf: [
-                parent.saltcorn.data.state.getState().getConfig("site_name") ||
-                  "Saltcorn",
-              ],
-            }),
-          },
-        ],
-      });
-      if (page.content) await parent.replaceIframe(page.content, page.isFile);
-    } else if (loginResult?.alerts) {
-      parent.showAlerts(loginResult?.alerts);
-    } else {
-      throw new Error("The login failed.");
-    }
-  } catch (error) {
-    console.log(error);
-    parent.showAlerts([
-      {
-        type: "error",
-        msg: error.message ? error.message : "An error occured.",
-      },
-    ]);
-    throw error;
+    await parent.saltcorn.mobileApp.auth.publicLogin(entryPoint);
   } finally {
     removeLoadSpinner();
   }
 }
 
 async function logout() {
-  const config = parent.saltcorn.data.state.getState().mobileConfig;
   try {
     showLoadSpinner();
-    const page = await parent.router.resolve({
-      pathname: "get/auth/logout",
-      entryView: config.entry_point,
-      versionTag: config.version_tag,
-    });
-    await parent.replaceIframe(page.content);
-  } catch (error) {
-    parent.showAlerts([
-      {
-        type: "error",
-        msg: error.message ? error.message : "An error occured.",
-      },
-    ]);
+    await parent.saltcorn.mobileApp.auth.logout();
   } finally {
     removeLoadSpinner();
   }
@@ -339,7 +207,7 @@ async function signupFormSubmit(e, entryView) {
   try {
     await login(e, entryView, true);
   } catch (error) {
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   }
 }
 
@@ -353,7 +221,7 @@ async function loginFormSubmit(e, entryView) {
     }
     await login(e, safeEntryView, false);
   } catch (error) {
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   }
 }
 
@@ -363,8 +231,9 @@ async function local_post_btn(e) {
     const form = $(e).closest("form");
     const url = form.attr("action");
     const method = form.attr("method");
-    const { path, query } = parent.splitPathQuery(url);
-    await parent.handleRoute(
+    const { path, query } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(url);
+    await parent.saltcorn.mobileApp.navigation.handleRoute(
       `${method}${path}`,
       combineFormAndQuery(form, query)
     );
@@ -382,7 +251,7 @@ async function stateFormSubmit(e, path) {
   try {
     showLoadSpinner();
     const formQuery = new URLSearchParams(new FormData(e)).toString();
-    await parent.handleRoute(path, formQuery);
+    await parent.saltcorn.mobileApp.navigation.handleRoute(path, formQuery);
   } finally {
     removeLoadSpinner();
   }
@@ -432,7 +301,7 @@ async function set_state_fields(kvs, href) {
   try {
     showLoadSpinner();
     let queryParams = [];
-    let currentQuery = parent.currentQuery();
+    let currentQuery = parent.saltcorn.mobileApp.navigation.currentQuery();
     if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
       currentQuery = invalidate_pagings(currentQuery);
     }
@@ -446,7 +315,10 @@ async function set_state_fields(kvs, href) {
     for (const [k, v] of new URLSearchParams(currentQuery).entries()) {
       queryParams.push(`${k}=${v}`);
     }
-    await parent.handleRoute(href, queryParams.join("&"));
+    await parent.saltcorn.mobileApp.navigation.handleRoute(
+      href,
+      queryParams.join("&")
+    );
   } finally {
     removeLoadSpinner();
   }
@@ -455,8 +327,15 @@ async function set_state_fields(kvs, href) {
 async function set_state_field(key, value) {
   try {
     showLoadSpinner();
-    const query = updateQueryStringParameter(parent.currentQuery(), key, value);
-    await parent.handleRoute(parent.currentLocation(), query);
+    const query = updateQueryStringParameter(
+      parent.saltcorn.mobileApp.navigation.currentQuery(),
+      key,
+      value
+    );
+    await parent.saltcorn.mobileApp.navigation.handleRoute(
+      parent.saltcorn.mobileApp.navigation.currentLocation(),
+      query
+    );
   } finally {
     removeLoadSpinner();
   }
@@ -465,9 +344,12 @@ async function set_state_field(key, value) {
 async function unset_state_field(key) {
   try {
     showLoadSpinner();
-    const href = parent.currentLocation();
-    const query = removeQueryStringParameter(parent.currentLocation(), key);
-    await parent.handleRoute(href, query);
+    const href = parent.saltcorn.mobileApp.navigation.currentLocation();
+    const query = removeQueryStringParameter(
+      parent.saltcorn.mobileApp.navigation.currentLocation(),
+      key
+    );
+    await parent.saltcorn.mobileApp.navigation.handleRoute(href, query);
   } finally {
     removeLoadSpinner();
   }
@@ -479,7 +361,7 @@ async function sortby(k, desc, viewIdentifier) {
       [`_${viewIdentifier}_sortby`]: k,
       [`_${viewIdentifier}_sortdesc`]: desc ? "on" : { unset: true },
     },
-    parent.currentLocation()
+    parent.saltcorn.mobileApp.navigation.currentLocation()
   );
 }
 
@@ -490,7 +372,7 @@ async function gopage(n, pagesize, viewIdentifier, extra) {
       [`_${viewIdentifier}_page`]: n,
       [`_${viewIdentifier}_pagesize`]: pagesize,
     },
-    parent.currentLocation()
+    parent.saltcorn.mobileApp.navigation.currentLocation()
   );
 }
 
@@ -529,18 +411,19 @@ async function mobile_modal(url, opts = {}) {
   if (opts.submitReload === false) $("#scmodal").addClass("no-submit-reload");
   else $("#scmodal").removeClass("no-submit-reload");
   try {
-    const { path, query } = parent.splitPathQuery(url);
+    const { path, query } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(url);
     const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
     if (
       mobileConfig.networkState === "none" &&
       mobileConfig.allowOfflineMode &&
       !mobileConfig.isOfflineMode
     ) {
-      await parent.offlineHelper.startOfflineMode();
-      parent.clearHistory();
-      await parent.gotoEntryView();
+      await parent.saltcorn.mobileApp.offlineMode.startOfflineMode();
+      parent.saltcorn.mobileApp.navigation.clearHistory();
+      await parent.saltcorn.mobileApp.navigation.gotoEntryView();
     } else {
-      const page = await parent.router.resolve({
+      const page = await parent.saltcorn.mobileApp.navigation.router.resolve({
         pathname: `get${path}`,
         query: query,
         alerts: [],
@@ -553,7 +436,7 @@ async function mobile_modal(url, opts = {}) {
       // onOpen onClose initialize_page?
     }
   } catch (error) {
-    parent.showAlerts([
+    parent.saltcorn.mobileApp.common.showAlerts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
@@ -569,14 +452,15 @@ function closeModal() {
 async function local_post(url, args) {
   try {
     showLoadSpinner();
-    const result = await parent.router.resolve({
+    const result = await parent.saltcorn.mobileApp.navigation.router.resolve({
       pathname: `post${url}`,
       data: args,
     });
-    if (result.redirect) await parent.handleRoute(result.redirect);
+    if (result.redirect)
+      await parent.saltcorn.mobileApp.navigation.handleRoute(result.redirect);
     else await common_done(result, "", false);
   } catch (error) {
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -585,17 +469,18 @@ async function local_post(url, args) {
 async function local_post_json(url, data, cb) {
   try {
     showLoadSpinner();
-    const result = await parent.router.resolve({
+    const result = await parent.saltcorn.mobileApp.navigation.router.resolve({
       pathname: `post${url}`,
       data: data,
-      query: parent.currentQuery(),
+      query: parent.saltcorn.mobileApp.navigation.currentQuery(),
     });
     if (result.server_eval) await evalServerCode(url);
-    if (result.redirect) await parent.handleRoute(result.redirect);
+    if (result.redirect)
+      await parent.saltcorn.mobileApp.navigation.handleRoute(result.redirect);
     else await common_done(result, "", false);
     if (cb?.success) cb.success(result);
   } catch (error) {
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
     if (cb?.error) cb.error(error);
   } finally {
     removeLoadSpinner();
@@ -603,7 +488,7 @@ async function local_post_json(url, data, cb) {
 }
 
 async function evalServerCode(url) {
-  await parent.apiCall({
+  await parent.saltcorn.mobileApp.api.apiCall({
     method: "POST",
     path: url,
   });
@@ -626,7 +511,7 @@ async function make_unique_field(
   )}=${encodeURIComponent(value)}&fields=${encodeURIComponent(field_name)}`;
   try {
     // TODO ch support local tables
-    const response = await parent.apiCall({
+    const response = await parent.saltcorn.mobileApp.api.apiCall({
       method: "GET",
       path,
     });
@@ -643,7 +528,7 @@ async function make_unique_field(
       );
     }
   } catch (error) {
-    parent.showAlerts([
+    parent.saltcorn.mobileApp.common.showAlerts([
       {
         type: "error",
         msg: "unable to 'make_unique_field'",
@@ -670,11 +555,14 @@ async function select_id(id) {
   try {
     showLoadSpinner();
     const newQuery = updateQueryStringParameter(
-      parent.currentQuery(),
+      parent.saltcorn.mobileApp.navigation.currentQuery(),
       "id",
       id
     );
-    await parent.handleRoute(parent.currentLocation(), newQuery);
+    await parent.handleRoute(
+      parent.saltcorn.mobileApp.navigation.currentLocation(),
+      newQuery
+    );
   } finally {
     removeLoadSpinner();
   }
@@ -685,9 +573,16 @@ async function check_state_field(that) {
     showLoadSpinner();
     const name = that.name;
     const newQuery = that.checked
-      ? updateQueryStringParameter(parent.currentQuery(), name, that.value)
+      ? updateQueryStringParameter(
+          parent.saltcorn.mobileApp.navigation.currentQuery(),
+          name,
+          that.value
+        )
       : removeQueryStringParameter(name);
-    await parent.handleRoute(parent.currentLocation(), newQuery);
+    await parent.saltcorn.mobileApp.navigation.handleRoute(
+      parent.saltcorn.mobileApp.navigation.currentLocation(),
+      newQuery
+    );
   } finally {
     removeLoadSpinner();
   }
@@ -696,7 +591,10 @@ async function check_state_field(that) {
 async function clear_state() {
   try {
     showLoadSpinner();
-    await parent.handleRoute(parent.currentLocation(), undefined);
+    await parent.saltcorn.mobileApp.navigation.handleRoute(
+      parent.saltcorn.mobileApp.navigation.currentLocation(),
+      undefined
+    );
   } finally {
     removeLoadSpinner();
   }
@@ -710,7 +608,7 @@ async function view_post(viewnameOrElem, route, data, onDone, sendState) {
           .closest("[data-sc-embed-viewname]")
           .attr("data-sc-embed-viewname");
   const buildQuery = () => {
-    const query = parent.currentQuery();
+    const query = parent.saltcorn.mobileApp.navigation.currentQuery();
     return query ? `?${query}` : "";
   };
   const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
@@ -723,13 +621,13 @@ async function view_post(viewnameOrElem, route, data, onDone, sendState) {
       mobileConfig.isOfflineMode ||
       (view?.table_id && mobileConfig.localTableIds.indexOf(view.table_id) >= 0)
     ) {
-      respData = await parent.router.resolve({
+      respData = await parent.saltcorn.mobileApp.navigation.router.resolve({
         pathname: `post/view/${viewname}/${route}`,
         data,
         query,
       });
     } else {
-      const response = await parent.apiCall({
+      const response = await parent.saltcorn.mobileApp.api.apiCall({
         method: "POST",
         path: "/view/" + viewname + "/" + route + query,
         body: data,
@@ -742,7 +640,7 @@ async function view_post(viewnameOrElem, route, data, onDone, sendState) {
     if (onDone) await onDone(respData);
     await common_done(respData, viewname, false);
   } catch (error) {
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -765,37 +663,41 @@ async function switchNetworkMode() {
     const state = parent.saltcorn.data.state.getState();
     const { isOfflineMode, networkState } = state.mobileConfig;
     if (!isOfflineMode) {
-      await parent.offlineHelper.startOfflineMode();
-      parent.clearHistory();
-      parent.addRoute({ route: "/" });
-      parent.addRoute({ route: "get/sync/sync_settings" });
-      parent.showAlerts(
+      await parent.saltcorn.mobileApp.offlineMode.startOfflineMode();
+      parent.saltcorn.mobileApp.navigation.clearHistory();
+      parent.saltcorn.mobileApp.navigation.addRoute({ route: "/" });
+      parent.saltcorn.mobileApp.navigation.addRoute({
+        route: "get/sync/sync_settings",
+      });
+      parent.saltcorn.mobileApp.common.showAlerts(
         [
           {
             type: "info",
-            msg: parent.offlineHelper.getOfflineMsg(),
+            msg: parent.saltcorn.mobileApp.offlineMode.getOfflineMsg(),
           },
         ],
         false
       );
-      parent.clearAlerts();
+      parent.saltcorn.mobileApp.common.clearAlerts();
     } else {
       if (networkState === "none")
         throw new Error("No internet connection is available.");
-      await parent.offlineHelper.endOfflineMode();
-      parent.clearHistory();
-      parent.addRoute({ route: "/" });
-      parent.addRoute({ route: "get/sync/sync_settings" });
-      parent.showAlerts([
+      await parent.saltcorn.mobileApp.offlineMode.endOfflineMode();
+      parent.saltcorn.mobileApp.navigation.clearHistory();
+      parent.saltcorn.mobileApp.navigation.addRoute({ route: "/" });
+      parent.saltcorn.mobileApp.navigation.addRoute({
+        route: "get/sync/sync_settings",
+      });
+      parent.saltcorn.mobileApp.common.showAlerts([
         {
           type: "info",
           msg: "You are online again.",
         },
       ]);
-      parent.clearTopAlerts();
+      parent.saltcorn.mobileApp.common.clearTopAlerts();
     }
   } catch (error) {
-    parent.showAlerts([
+    parent.saltcorn.mobileApp.common.showAlerts([
       {
         type: "error",
         msg: `Unable to change the network mode: ${
@@ -815,7 +717,7 @@ async function callSync() {
   try {
     const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
     if (mobileConfig.networkState === "none") {
-      parent.showAlerts([
+      parent.saltcorn.mobileApp.common.showAlerts([
         {
           type: "error",
           msg: "You don't have an internet connection.",
@@ -824,10 +726,10 @@ async function callSync() {
     } else {
       const wasOffline = mobileConfig.isOfflineMode;
       showLoadSpinner();
-      await parent.offlineHelper.sync();
-      parent.clearAlerts();
+      await parent.saltcorn.mobileApp.offlineMode.sync();
+      parent.saltcorn.mobileApp.common.clearAlerts();
       if (!wasOffline) {
-        parent.showAlerts([
+        parent.saltcorn.mobileApp.common.showAlerts([
           {
             type: "info",
             msg: "Synchronized your offline data.",
@@ -835,38 +737,41 @@ async function callSync() {
         ]);
       } else {
         setNetworSwitcherOn();
-        parent.clearHistory();
-        parent.addRoute({ route: "/" });
-        parent.addRoute({ route: "get/sync/sync_settings" });
-        parent.showAlerts([
+        parent.saltcorn.mobileApp.navigation.clearHistory();
+        parent.saltcorn.mobileApp.navigation.addRoute({ route: "/" });
+        parent.saltcorn.mobileApp.navigation.addRoute({
+          route: "get/sync/sync_settings",
+        });
+        parent.saltcorn.mobileApp.common.showAlerts([
           {
             type: "info",
             msg: "Synchronized your offline data, you are online again.",
           },
         ]);
-        parent.clearTopAlerts();
+        parent.saltcorn.mobileApp.navigation.clearTopAlerts();
       }
     }
   } catch (error) {
     console.log(error);
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
 }
 
 async function deleteOfflineDataClicked() {
-  const lastOfflineSession = await parent.offlineHelper.getLastOfflineSession();
+  const lastOfflineSession =
+    await parent.saltcorn.mobileApp.offlineMode.getLastOfflineSession();
   const { user_name } = parent.saltcorn.data.state.getState().mobileConfig;
   if (!lastOfflineSession?.offlineUser) {
-    parent.showAlerts([
+    parent.saltcorn.mobileApp.common.showAlerts([
       {
         type: "error",
         msg: "You don't have any offline data.",
       },
     ]);
   } else if (lastOfflineSession.offlineUser !== user_name) {
-    parent.showAlerts([
+    parent.saltcorn.mobileApp.common.showAlerts([
       {
         type: "error",
         msg: `The offline data is owned by '${lastOfflineSession.offlineUser}'.`,
@@ -877,30 +782,8 @@ async function deleteOfflineDataClicked() {
   }
 }
 
-async function deleteOfflineData(noFeedback) {
-  const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
-  try {
-    mobileConfig.inLoadState = true;
-    if (!noFeedback) showLoadSpinner();
-    await parent.offlineHelper.clearLocalData(false);
-    await parent.offlineHelper.setHasOfflineData(false);
-    if (!noFeedback)
-      parent.showAlerts([
-        {
-          type: "info",
-          msg: "Deleted your offline data.",
-        },
-      ]);
-  } catch (error) {
-    parent.errorAlert(error);
-  } finally {
-    mobileConfig.inLoadState = false;
-    if (!noFeedback) removeLoadSpinner();
-  }
-}
-
 function showLoadSpinner() {
-  if (!parent.isHtmlFile()) {
+  if (!parent.saltcorn.mobileApp.navigation.isHtmlFile()) {
     const spinner = $("#scspinner");
     if (spinner.length === 0) {
       $("body").append(`
@@ -943,7 +826,7 @@ function showLoadSpinner() {
 }
 
 function removeLoadSpinner() {
-  if (!parent.isHtmlFile()) {
+  if (!parent.saltcorn.mobileApp.navigation.isHtmlFile()) {
     const spinner = $("#scspinner");
     if (spinner.length > 0) {
       const count = parseInt(spinner.attr("spinner-count")) - 1;
@@ -991,7 +874,7 @@ async function getPicture(fieldName) {
     const tokens = fileURI.split("/");
     $(`#cpt-file-name-${fieldName}`).text(tokens[tokens.length - 1]);
   } catch (error) {
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   }
 }
 
@@ -1006,7 +889,7 @@ async function updateMatchingRows(e, viewname) {
       true
     );
   } catch (error) {
-    parent.errorAlert(error);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   }
 }
 

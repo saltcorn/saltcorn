@@ -1,4 +1,10 @@
-/*global sbAdmin2Layout, apiCall, removeJwt, saltcorn, clearHistory, MobileRequest, MobileResponse, getHeaders*/
+/*global saltcorn */
+import { MobileRequest } from "../mocks/request";
+import { MobileResponse } from "../mocks/response";
+import { apiCall } from "../../helpers/api";
+import { removeJwt } from "../../helpers/auth";
+import { sbAdmin2Layout, getHeaders } from "../utils";
+import { clearHistory } from "../../helpers/navigation";
 
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
@@ -75,7 +81,7 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
     alerts,
     headers: [
       { css: `static_assets/${versionTag}/saltcorn.css` },
-      { script: "js/utils/iframe_view_utils.js" },
+      { script: "js/iframe_view_utils.js" },
     ],
     csrfToken: false,
   });
@@ -92,13 +98,13 @@ const renderSignupView = (entryPoint, versionTag) => {
     alerts: [],
     headers: [
       { css: `static_assets/${versionTag}/saltcorn.css` },
-      { script: "js/utils/iframe_view_utils.js" },
+      { script: "js/iframe_view_utils.js" },
     ],
     csrfToken: false,
   });
 };
 
-const getLoginView = async (context) => {
+export const getLoginView = async (context) => {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   return {
     content: await renderLoginView(
@@ -110,7 +116,7 @@ const getLoginView = async (context) => {
   };
 };
 
-const getSignupView = async () => {
+export const getSignupView = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   return {
     content: renderSignupView(config.entry_point, config.version_tag),
@@ -118,7 +124,7 @@ const getSignupView = async () => {
   };
 };
 
-const logoutAction = async () => {
+export const logoutAction = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   const response = await apiCall({ method: "GET", path: "/auth/logout" });
   if (response.data.success) {

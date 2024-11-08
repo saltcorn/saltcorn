@@ -1,13 +1,15 @@
-/*global readJSON, cordova, fileExists, writeJSON, saltcorn*/
+/*global saltcorn, cordova*/
 
 const historyFile = "update_history";
 const jwtTableName = "jwt_table";
+
+import { read_new, fileExists_new, writeJSON_new } from "./file_system";
 
 /**
  * drop tables that are no longer in the 'tables.json' file
  * the server db uses a serial (with postgres), so checking ids should suffice
  */
-async function dropDeletedTables(incomingTables) {
+export async function dropDeletedTables(incomingTables) {
   const existingTables = await saltcorn.data.models.Table.find();
   for (const table of existingTables) {
     if (
@@ -27,7 +29,7 @@ async function dropDeletedTables(incomingTables) {
  * @param {*} rows
  * @returns
  */
-async function safeRows(table, rows) {
+export async function safeRows(table, rows) {
   const existingFields = (
     await saltcorn.data.db.query(
       `PRAGMA table_info('${saltcorn.data.db.sqlsanitize(table)}')`
@@ -45,7 +47,7 @@ async function safeRows(table, rows) {
   });
 }
 
-async function updateScTables(tablesJSON, skipScPlugins = true) {
+export async function updateScTables(tablesJSON, skipScPlugins = true) {
   await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
   for (const { table, rows } of tablesJSON.sc_tables) {
     if (skipScPlugins && table === "_sc_plugins") continue;
@@ -56,7 +58,7 @@ async function updateScTables(tablesJSON, skipScPlugins = true) {
   await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
 }
 
-async function updateScPlugins(tablesJSON) {
+export async function updateScPlugins(tablesJSON) {
   const { table, rows } = tablesJSON.sc_tables.find(
     ({ table }) => table === "_sc_plugins"
   );
@@ -66,7 +68,7 @@ async function updateScPlugins(tablesJSON) {
   }
 }
 
-async function updateUserDefinedTables() {
+export async function updateUserDefinedTables() {
   const existingTables = await saltcorn.data.db.listUserDefinedTables();
   const tables = await saltcorn.data.models.Table.find();
   for (const table of tables) {
@@ -92,7 +94,7 @@ async function updateUserDefinedTables() {
   }
 }
 
-async function createSyncInfoTables(synchTbls) {
+export async function createSyncInfoTables(synchTbls) {
   const infoTbls = (await saltcorn.data.db.listTables()).filter(({ name }) => {
     name.endsWith("_sync_info");
   });
@@ -139,11 +141,8 @@ async function createSyncInfoTables(synchTbls) {
   }
 }
 
-async function tablesUptodate(createdAt, historyFile) {
-  const { updated_at } = await readJSON(
-    historyFile,
-    cordova.file.dataDirectory
-  );
+export async function tablesUptodate(createdAt, historyFile) {
+  const { updated_at } = await read_new(historyFile, "DATA");
   if (!updated_at) {
     console.log("No updated_at in history file");
     return false;
@@ -155,52 +154,30 @@ async function tablesUptodate(createdAt, historyFile) {
  * Do a table update when the history file doesn't exist or is older than createdAt
  * @param {number} createdAt UTC Date number when the tables.json file was created on the server
  */
-async function dbUpdateNeeded(createdAt) {
+export async function dbUpdateNeeded(createdAt) {
   return (
-    !(await fileExists(`${cordova.file.dataDirectory}${historyFile}`)) ||
+    !(await fileExists_new(`${cordova.file.dataDirectory}${historyFile}`)) ||
     !(await tablesUptodate(createdAt, historyFile))
   );
 }
 
-async function updateDb(tablesJSON) {
+export async function updateDb(tablesJSON) {
   await updateScTables(tablesJSON);
   await saltcorn.data.state.getState().refresh_tables();
   await updateUserDefinedTables();
-  await writeJSON(historyFile, cordova.file.dataDirectory, {
+  await writeJSON_new(historyFile, "DATA", {
     updated_at: new Date().valueOf(),
   });
 }
 
-async function getTableIds(tableNames) {
+export async function getTableIds(tableNames) {
   return (await saltcorn.data.models.Table.find())
     .filter((table) => tableNames.indexOf(table.name) > -1)
     .map((table) => table.id);
 }
 
-async function createJwtTable() {
+export async function createJwtTable() {
   await saltcorn.data.db.query(`CREATE TABLE IF NOT EXISTS ${jwtTableName} (
     jwt VARCHAR(500)
   )`);
-}
-
-async function getJwt() {
-  const rows = await saltcorn.data.db.select(jwtTableName);
-  return rows?.length > 0 ? rows[0].jwt : null;
-}
-
-async function removeJwt() {
-  await saltcorn.data.db.deleteWhere(jwtTableName);
-}
-
-async function setJwt(jwt) {
-  await removeJwt();
-  await saltcorn.data.db.insert(jwtTableName, { jwt: jwt });
-}
-
-async function insertUser({ id, email, role_id, language }) {
-  await saltcorn.data.db.insert(
-    "users",
-    { id, email, role_id, language },
-    { ignoreExisting: true }
-  );
 }

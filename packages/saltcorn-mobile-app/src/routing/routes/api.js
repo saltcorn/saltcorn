@@ -1,7 +1,10 @@
-/*global saltcorn, apiCall, MobileRequest, offlineHelper*/
+/*global saltcorn */
+
+import { apiCall } from "../../helpers/api";
+import { setHasOfflineData } from "../../helpers/offline_mode";
 
 // post/api/:tableName/:id
-const updateTableRow = async (context) => {
+export const updateTableRow = async (context) => {
   const { tableName, id } = context.params;
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   const user = {
@@ -27,7 +30,7 @@ const updateTableRow = async (context) => {
     const ins_res = await table.tryUpdateRow(row, id, user);
     if (ins_res.error)
       throw new Error(`Update '${table.name}' error: ${ins_res.error}`);
-    if (mobileConfig.isOfflineMode) await offlineHelper.setHasOfflineData(true);
+    if (mobileConfig.isOfflineMode) await setHasOfflineData(true);
     return ins_res;
   } else {
     const response = await apiCall({
@@ -40,7 +43,7 @@ const updateTableRow = async (context) => {
 };
 
 // post/api/:tableName
-const insertTableRow = async (context) => {
+export const insertTableRow = async (context) => {
   const { tableName } = context.params;
   const table = saltcorn.data.models.Table.findOne({ name: tableName });
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
@@ -66,7 +69,7 @@ const insertTableRow = async (context) => {
     if (ins_res.error) {
       throw new Error(`Insert '${table.name}' error: ${ins_res.error}`);
     }
-    if (mobileConfig.isOfflineMode) await offlineHelper.setHasOfflineData(true);
+    if (mobileConfig.isOfflineMode) await setHasOfflineData(true);
     return ins_res;
   } else {
     const response = await apiCall({

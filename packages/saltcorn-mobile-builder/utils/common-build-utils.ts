@@ -55,9 +55,33 @@ const config: CapacitorConfig  = {
   },
   server: {
     cleartext: true,
+    androidScheme: 'http',
+    
   },`
       : ""
   }
+  plugins: {
+    CapacitorSQLite: {
+      iosDatabaseLocation: 'Library/CapacitorDatabase',
+      iosIsEncryption: true,
+      iosKeychainPrefix: 'angular-sqlite-app-starter',
+      iosBiometric: {
+        biometricAuth: false,
+        biometricTitle : "Biometric login for capacitor sqlite"
+      },
+      androidIsEncryption: true,
+      androidBiometric: {
+        biometricAuth : false,
+        biometricTitle : "Biometric login for capacitor sqlite",
+        biometricSubTitle : "Log in using your biometric"
+      },
+      electronIsEncryption: true,
+      electronWindowsLocation: "C:\\ProgramData\\CapacitorDatabases",
+      electronMacLocation: "/Volumes/Development_Lacie/Development/Databases",
+      electronLinuxLocation: "Databases"
+    }
+  }
+
 };
 
 export default config;`;
@@ -78,6 +102,35 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
+export async function modifyAndroidManifest(buildDir: string, config: any) {
+  try {
+    const androidManifest = join(
+      buildDir,
+      "android",
+      "app",
+      "src",
+      "main",
+      "AndroidManifest.xml"
+    );
+    const content = readFileSync(androidManifest);
+    const parsed = await parseStringPromise(content);
+
+    // if (config.appName) parsed.manifest.application[0].$["android:label"] = config.appName;
+    // if (config.appId) parsed.manifest.$.package = config.appId;
+    // if (config.appVersion) parsed.manifest.$.versionName = config.appVersion;
+
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(androidManifest, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to modify the AndroidManifest.xml: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
 export async function modifyConfigXml(buildDir: string, config: any) {
   try {
     const configXml = join(buildDir, "config.xml");
@@ -93,7 +146,7 @@ export async function modifyConfigXml(buildDir: string, config: any) {
     console.log(
       `Unable to modify the config.xml: ${
         error.message ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }
@@ -106,7 +159,7 @@ export async function modifyConfigXml(buildDir: string, config: any) {
 export async function prepareAppIcon(
   buildDir: string,
   appIcon: string,
-  platforms: string[],
+  platforms: string[]
 ) {
   try {
     if (platforms.includes("android"))
@@ -118,7 +171,7 @@ export async function prepareAppIcon(
     console.log(
       `Unable to set the app icon '${appIcon}': ${
         error.message ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }
@@ -134,7 +187,7 @@ export async function prepareAppIcon(
 export async function prepareSplashIcon(
   buildDir: string,
   splashIcon: string,
-  platforms: string[],
+  platforms: string[]
 ) {
   try {
     if (platforms.includes("android")) {
@@ -143,7 +196,7 @@ export async function prepareSplashIcon(
         join(buildDir, "res", "screen", "android", "splash-icon.png"),
         {
           overwrite: true,
-        },
+        }
       );
     }
     if (platforms.includes("ios")) {
@@ -154,18 +207,18 @@ export async function prepareSplashIcon(
           "res",
           "screen",
           "ios",
-          "Default@2x~universal~anyany.png",
+          "Default@2x~universal~anyany.png"
         ),
         {
           overwrite: true,
-        },
+        }
       );
     }
   } catch (error: any) {
     console.log(
       `Unable to set the splash icon '${splashIcon}': ${
         error.message ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }
@@ -207,7 +260,7 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
     console.log(
       `Unable to generate appicon set for '${appIcon}': ${
         error.message ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }
@@ -215,7 +268,7 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
 export function prepareExportOptionsPlist(
   buildDir: string,
   appId: string,
-  provisioningProfile: string,
+  provisioningProfile: string
 ) {
   try {
     const exportOptionsPlist = join(buildDir, "ExportOptions.plist");
@@ -234,20 +287,20 @@ export function prepareExportOptionsPlist(
           </dict>
         </dict>
 
-      </plist>`,
+      </plist>`
     );
   } catch (error: any) {
     console.log(
       `Unable to set the provisioning profile '${provisioningProfile}': ${
         error.message ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }
 
 export async function decodeProvisioningProfile(
   buildDir: string,
-  provisioningProfile: string,
+  provisioningProfile: string
 ) {
   console.log("decodeProvisioningProfile", buildDir, provisioningProfile);
   const outFile = join(buildDir, "provisioningProfile.xml");
@@ -263,7 +316,7 @@ export async function decodeProvisioningProfile(
     console.log(
       `Unable to decode the provisioning profile '${provisioningProfile}': ${
         error.message ? error.message : "Unknown error"
-      }`,
+      }`
     );
     throw error;
   }
@@ -313,7 +366,7 @@ export function copySbadmin2Deps(buildDir: string) {
   const sbadmin2Dst = join(
     buildDir,
     "www",
-    "sc_plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5",
+    "sc_plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5"
   );
   if (!existsSync(sbadmin2Dst)) {
     mkdirSync(sbadmin2Dst, { recursive: true });
@@ -321,12 +374,12 @@ export function copySbadmin2Deps(buildDir: string) {
   const devPath = join(
     __dirname,
     "../../../..",
-    "node_modules/startbootstrap-sb-admin-2-bs5",
+    "node_modules/startbootstrap-sb-admin-2-bs5"
   );
   const prodPath = join(
     require.resolve("@saltcorn/cli"),
     "../..",
-    "node_modules/startbootstrap-sb-admin-2-bs5",
+    "node_modules/startbootstrap-sb-admin-2-bs5"
   );
   const srcPrefix = existsSync(devPath) ? devPath : prodPath;
   const srcFiles = [
@@ -360,7 +413,7 @@ export async function copySiteLogo(buildDir: string) {
           const base64 = readFileSync(file.location, "base64");
           writeFileSync(
             join(buildDir, "www", "encoded_site_logo.txt"),
-            `data:${file.mimetype};base64, ${base64}`,
+            `data:${file.mimetype};base64, ${base64}`
           );
         } else {
           console.log(`The file '${siteLogo}' does not exist`);
@@ -371,7 +424,7 @@ export async function copySiteLogo(buildDir: string) {
     console.log(
       `Unable to copy the site logo: ${
         error.message ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }
@@ -417,7 +470,7 @@ export function writeCfgFile({
  */
 export async function buildTablesFile(
   buildDir: string,
-  includedPlugins?: string[],
+  includedPlugins?: string[]
 ) {
   const wwwDir = join(buildDir, "www");
   const scTables = (await db.listScTables()).filter(
@@ -428,7 +481,7 @@ export async function buildTablesFile(
         "_sc_session",
         "_sc_event_log",
         "_sc_snapshots",
-      ].indexOf(table.name) === -1,
+      ].indexOf(table.name) === -1
   );
   const tablesWithData = await Promise.all(
     scTables.map(async (row: Row) => {
@@ -440,10 +493,10 @@ export async function buildTablesFile(
             ? dbData
             : dbData.filter(
                 (plugin: any) =>
-                  !includedPlugins || includedPlugins.includes(plugin.name),
+                  !includedPlugins || includedPlugins.includes(plugin.name)
               ),
       };
-    }),
+    })
   );
   const createdAt = new Date();
   writeFileSync(
@@ -451,13 +504,13 @@ export async function buildTablesFile(
     JSON.stringify({
       created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
-    }),
+    })
   );
   writeFileSync(
     join(wwwDir, "tables_created_at.json"),
     JSON.stringify({
       created_at: createdAt.valueOf(),
-    }),
+    })
   );
 }
 
@@ -490,7 +543,7 @@ export async function createSqliteDb(buildDir: string) {
     console.log(
       result.output
         ? result.output.toString()
-        : "'reset-schema' finished without output",
+        : "'reset-schema' finished without output"
     );
     return result.status;
   }
@@ -510,7 +563,7 @@ export async function prepareSplashPage(
   pageName: string,
   serverUrl: string,
   tenantAppName?: string,
-  user?: User,
+  user?: User
 ) {
   try {
     const role = user ? user.role_id : 100;
@@ -530,7 +583,7 @@ export async function prepareSplashPage(
           },
           isSplashPage: true,
         },
-      },
+      }
     );
     const sbadmin2 = state.plugins["sbadmin2"];
     const html = (<PluginLayout>sbadmin2.layout).wrap({
@@ -561,4 +614,79 @@ export async function prepareSplashPage(
     console.log("Unable to build a splash page");
     console.log(error);
   }
+}
+
+export function writePodfile(buildDir: string) {
+  const podfileContent = `
+  require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+  
+  platform :ios, '13.0'
+  use_frameworks!
+  
+  # workaround to avoid Xcode caching of Pods that requires
+  # Product -> Clean Build Folder after new Cordova plugins installed
+  # Requires CocoaPods 1.6 or newer
+  install! 'cocoapods', :disable_input_output_paths => true
+  
+  def capacitor_pods
+    pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+    pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+    pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
+  end
+  
+  target 'App' do
+    capacitor_pods
+    # Add your Pods here
+  end
+  
+  post_install do |installer|
+    assertDeploymentTarget(installer)
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''
+        config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      end
+    end
+  end`;
+  const podfilePath = join(buildDir, "ios", "App", "Podfile");
+  writeFileSync(podfilePath, podfileContent, "utf8");
+  // run pod install
+  const result = spawnSync("pod", ["install"], {
+    cwd: join(buildDir, "ios", "App"),
+    env: {
+      ...process.env,
+      NODE_ENV: "development",
+    },
+  });
+}
+
+export function modifyGradleConfig(
+  buildDir: string,
+  keyStoreFile: string,
+  keyStoreAlias: string,
+  keyStorePassword: string
+) {
+  const gradleFile = join(buildDir, "android", "app", "build.gradle");
+  const gradleContent = readFileSync(gradleFile, "utf8");
+  const newGradleContent = gradleContent
+    .replace(
+      /release\s*{/,
+      `release { 
+          signingConfig signingConfigs.release`
+    )
+    .replace(
+      /buildTypes\s*{/,
+      `
+    signingConfigs {
+        release {
+            keyAlias '${keyStoreAlias}'
+            keyPassword '${keyStorePassword}'
+            storeFile file('${keyStoreFile}')
+            storePassword '${keyStorePassword}'
+        }
+      }
+  buildTypes {`
+    );
+  writeFileSync(gradleFile, newGradleContent, "utf8");
 }
