@@ -379,7 +379,7 @@ describe("API authentication", () => {
     await request(app)
       .get("/api/serve-files/rick1.png")
       .set("Authorization", "Bearer " + u.api_token)
-      .status(200);
+      .expect(200);
   });
 });
 
