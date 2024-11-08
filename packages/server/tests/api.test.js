@@ -2,6 +2,8 @@ const request = require("supertest");
 const getApp = require("../app");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
+const File = require("@saltcorn/data/models/file");
+const fs = require("fs").promises;
 
 const Field = require("@saltcorn/data/models/field");
 const {
@@ -19,6 +21,19 @@ const User = require("@saltcorn/data/models/user");
 
 beforeAll(async () => {
   await resetToFixtures();
+  await File.ensure_file_store();
+  await File.from_req_files(
+    {
+      mimetype: "image/png",
+      name: "rick1.png",
+      mv: async (fnm) => {
+        await fs.writeFile(fnm, "nevergonnagiveyouup");
+      },
+      size: 245752,
+    },
+    1,
+    80
+  );
 });
 afterAll(db.close);
 
@@ -351,6 +366,20 @@ describe("API authentication", () => {
       .set("Authorization", "Bearer " + u.api_token)
 
       .expect(succeedJsonWith((rows) => rows.length == 2));
+  });
+  it("should not show file to public", async () => {
+    const app = await getApp();
+    await request(app)
+      .get("/api/serve-files/rick1.png")
+      .expect(respondJsonWith(404, (b) => b.error === "Not found"));
+  });
+  it("should show file to user", async () => {
+    const app = await getApp();
+    const u = await User.findOne({ id: 1 });
+    await request(app)
+      .get("/api/serve-files/rick1.png")
+      .set("Authorization", "Bearer " + u.api_token)
+      .expect(200);
   });
 });
 
