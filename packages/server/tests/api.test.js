@@ -371,7 +371,6 @@ describe("API authentication", () => {
     const app = await getApp();
     await request(app)
       .get("/api/serve-files/rick1.png")
-      .expect(404)
       .expect(respondJsonWith(404, (b) => b.error === "Not found"));
   });
 });
