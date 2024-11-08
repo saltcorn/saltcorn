@@ -345,17 +345,17 @@ const heat_cell = (type) => ({
   run: (v, req, attrs = {}) => {
     let max = attrs.max;
     let min = attrs.min;
-    if (attrs.max_min_formula && attrs.min_formula && attrs.row)
+    if (attrs.max_min_formula && attrs.min_formula)
       min = eval_expression(
         attrs.min_formula,
-        attrs.row,
+        attrs.row || {},
         req.user,
         "Heat cell min formula"
       );
-    if (attrs.max_min_formula && attrs.max_formula && attrs.row)
+    if (attrs.max_min_formula && attrs.max_formula)
       max = eval_expression(
         attrs.max_formula,
-        attrs.row,
+        attrs.row || {},
         req.user,
         "Heat cell max formula"
       );
