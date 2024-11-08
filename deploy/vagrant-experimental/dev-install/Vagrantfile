@@ -14,17 +14,16 @@ Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
   config.vm.provider "virtualbox" do |vb|  
     # Customize the amount of memory on the VM:
-    vb.memory = "2048"
+    vb.memory = "4096"
   end
 
   # change branch to checkout, node version etc below
   config.vm.provision "shell", inline: <<-SHELL
     set -e
-    wget -qO - https://deb.nodesource.com/setup_19.x | bash -
+    wget -qO - https://deb.nodesource.com/setup_16.x | bash -
     apt-get install -qqy nodejs
     sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
     cd /home/vagrant/saltcorn/packages/install/
-    sudo -u vagrant git checkout node-18
     sudo -u vagrant npm install
     sudo -u vagrant node index.js -y
     systemctl is-active saltcorn

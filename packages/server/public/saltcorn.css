@@ -586,3 +586,24 @@ button.monospace-copy-btn {
   border-right: 1px #e3e6f0 !important;
   border-radius: 0 6px 6px 0;
 }
+
+.custom-file-label {
+  margin-left: 10px;
+}
+
+.mobile-thumbnail-container {
+  position: relative;
+  display: inline-block;
+}
+
+.mobile-thumbnail-spinner-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.mobile-thumbnail-container img {
+  display: block;
+}

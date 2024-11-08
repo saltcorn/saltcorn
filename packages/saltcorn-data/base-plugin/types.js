@@ -24,6 +24,7 @@ const {
   text_attr,
   label,
   script,
+  optgroup,
   domReady,
   section,
   pre,
@@ -45,6 +46,8 @@ const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
 const eqStr = (x, y) => `${x}` === `${y}`;
+
+const or_if_undefined = (x, def) => (typeof x === "undefined" ? def : x);
 
 const number_slider = (type) => ({
   configFields: (field) => [
@@ -280,7 +283,9 @@ const show_with_html = {
   isEdit: false,
   description: "Show value with any HTML code",
   run: (v, req, attrs = {}) => {
-    const rendered = interpolate(attrs?.code, { it: v }, req?.user);
+    const ctx = { ...getState().eval_context };
+    ctx.it = v;
+    const rendered = interpolate(attrs?.code, ctx, req?.user);
     return rendered;
   },
 };
@@ -533,7 +538,20 @@ const getStrOptions = (v, optsStr, exclude_values_string) => {
           )
         )
     : optsStr.map((o, ix) =>
-        o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
+        o?.optgroup
+          ? optgroup(
+              { label: o.label },
+              o.options.map((oi) =>
+                option(
+                  {
+                    selected: v == or_if_undefined(oi.value, oi),
+                    value: or_if_undefined(oi.value, oi),
+                  },
+                  or_if_undefined(oi.label, oi)
+                )
+              )
+            )
+          : o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
           ? option(
               {
                 value: o.name,
@@ -569,6 +587,22 @@ const to_locale_string = {
       required: true,
       attributes: {
         options: ["decimal", "currency", "percent", "unit"],
+      },
+    },
+    {
+      type: "Integer",
+      name: "maximumFractionDigits",
+      label: "Max Fraction Digits",
+      attributes: {
+        min: 0,
+      },
+    },
+    {
+      type: "Integer",
+      name: "maximumSignificantDigits",
+      label: "Max Significant Digits",
+      attributes: {
+        min: 0,
       },
     },
     {
@@ -667,6 +701,14 @@ const to_locale_string = {
         currencyDisplay: attrs.currencyDisplay,
         unit: attrs.unit,
         unitDisplay: attrs.unitDisplay,
+        maximumSignificantDigits:
+          attrs.maximumSignificantDigits === 0
+            ? 0
+            : attrs.maximumSignificantDigits || undefined,
+        maximumFractionDigits:
+          attrs.maximumFractionDigits == 0
+            ? 0
+            : attrs.maximumFractionDigits || undefined,
       });
     } else return "";
   },
@@ -709,6 +751,7 @@ const string = {
         required: false,
         sublabel:
           'Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class="fst-normal">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.',
+        attributes: { autofocus: true },
       },
       {
         name: "min_length",
@@ -743,7 +786,13 @@ const string = {
         required: false,
         sublabel: "Error message when regular expression does not match",
       },
-
+      {
+        name: "exact_search_only",
+        label: "Exact search only",
+        type: "Bool",
+        sublabel:
+          "Search only on exact match, not substring match. Useful for large tables",
+      },
       ...(table
         ? [
             {
@@ -825,6 +874,7 @@ const string = {
               {
                 class:
                   "btn btn-secondary btn-sm monospace-copy-btn m-1 d-none-prefer",
+                type: "button",
                 onclick: "copy_monospace_block(this)",
               },
               i({ class: "fas fa-copy" })
@@ -2009,7 +2059,9 @@ const date = {
           name: "format",
           label: "Format",
           type: "String",
-          sublabel: "moment.js format specifier",
+          help: {
+            topic: "Date format",
+          },
         },
       ],
       run: (d, req, options) => {
@@ -2133,7 +2185,7 @@ const date = {
    */
   read: (v, attrs) => {
     if (v instanceof Date && !isNaN(v)) return v;
-    if (typeof v === "string") {
+    if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
       if (attrs && attrs.locale) {
         const d = moment(v, "L LT", attrs.locale).toDate();
         if (d instanceof Date && !isNaN(d)) return d;

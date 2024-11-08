@@ -109,6 +109,7 @@ const Crash = require("@saltcorn/data/models/crash");
 const { get_help_markup } = require("../help/index.js");
 const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
+const Tag = require("@saltcorn/data/models/tag");
 
 const router = new Router();
 module.exports = router;
@@ -308,8 +309,14 @@ router.get(
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
-    backupForm.values.backup_with_event_log = getState().getConfig(
+    aBackupFilePrefixForm.values.backup_with_event_log = getState().getConfig(
       "backup_with_event_log"
+    );
+    aBackupFilePrefixForm.values.backup_with_system_zip = getState().getConfig(
+      "backup_with_system_zip"
+    );
+    aBackupFilePrefixForm.values.backup_system_zip_level = getState().getConfig(
+      "backup_system_zip_level"
     );
     //
     const aSnapshotForm = snapshotForm(req);
@@ -371,7 +378,9 @@ router.get(
             : { type: "blank", contents: "" },
           {
             type: "card",
-            title: req.__("Snapshots"),
+            title:
+              req.__("Snapshots") +
+              `<a href="javascript:ajax_modal('/admin/help/Snapshots?')"><i class="fas fa-question-circle ms-1"></i></a>`,
             titleAjaxIndicator: true,
             contents: div(
               p(
@@ -666,7 +675,10 @@ router.get(
     const backup_file_prefix = getState().getConfig("backup_file_prefix");
     if (
       !isRoot ||
-      !(filename.startsWith(backup_file_prefix) && filename.endsWith(".zip"))
+      !(
+        path.resolve(filename).startsWith(backup_file_prefix) &&
+        filename.endsWith(".zip")
+      )
     ) {
       res.redirect("/admin/backup");
       return;
@@ -700,6 +712,33 @@ const backupFilePrefixForm = (req) =>
         name: "backup_history",
         sublabel: req.__("Include table history in backup"),
         default: true,
+      },
+      {
+        type: "Bool",
+        label: req.__("Include Event Logs"),
+        sublabel: req.__("Backup with event logs"),
+        name: "backup_with_event_log",
+      },
+      {
+        type: "Bool",
+        label: req.__("Use system zip"),
+        sublabel: req.__(
+          "Recommended. Executable <code>zip</code> must be installed"
+        ),
+        name: "backup_with_system_zip",
+      },
+      {
+        type: "Integer",
+        label: req.__("Zip compression level"),
+        sublabel: req.__("1=Fast, larger file, 9=Slow, smaller files"),
+        name: "backup_system_zip_level",
+        attributes: {
+          min: 1,
+          max: 9,
+        },
+        showIf: {
+          backup_with_system_zip: true,
+        },
       },
     ],
   });
@@ -828,15 +867,6 @@ const autoBackupForm = (req) => {
             },
           ]
         : []),
-      {
-        type: "Bool",
-        label: req.__("Include Event Logs"),
-        sublabel: req.__("Backup with event logs"),
-        name: "backup_with_event_log",
-        showIf: {
-          auto_backup_frequency: ["Daily", "Weekly"],
-        },
-      },
     ],
   });
 };
@@ -1238,6 +1268,50 @@ const pullCordovaBuilder = (req, res) => {
   });
 };
 
+const tryInstallSdNotify = (req, res) => {
+  const child = spawn("npm", ["install", "-g", "sd-notify"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return new Promise((resolve, reject) => {
+    child.stdout.on("data", (data) => {
+      res.write(data);
+    });
+    child.stderr?.on("data", (data) => {
+      res.write(data);
+    });
+    child.on("exit", function (code, signal) {
+      resolve(code);
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      res.write(req.__("Error: ") + message + "\n");
+      resolve(msg.code);
+    });
+  });
+};
+
+const pruneDocker = (req, res) => {
+  const child = spawn("docker", ["image", "prune", "-f"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return new Promise((resolve, reject) => {
+    child.stdout.on("data", (data) => {
+      res.write(data);
+    });
+    child.stderr?.on("data", (data) => {
+      res.write(data);
+    });
+    child.on("exit", function (code, signal) {
+      resolve(code);
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      res.write(req.__("Error: ") + message + "\n");
+      resolve(msg.code);
+    });
+  });
+};
+
 /*
  * fetch available saltcorn versions and show a dialog to select one
  */
@@ -1253,6 +1327,7 @@ router.get(
         throw new Error(req.__("Unable to fetch versions"));
       const versions = Object.keys(pkgInfo.versions);
       if (versions.length === 0) throw new Error(req.__("No versions found"));
+      const tags = pkgInfo["dist-tags"] || {};
       res.set("Page-Title", req.__("%s versions", "Saltcorn"));
       let selected = packagejson.version;
       res.send(
@@ -1262,6 +1337,7 @@ router.get(
             method: "post",
           },
           input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+          // version select
           div(
             { class: "form-group" },
             label(
@@ -1287,6 +1363,54 @@ router.get(
               )
             )
           ),
+          // tag select
+          div(
+            { class: "form-group" },
+            label(
+              {
+                for: "tag_select",
+                class: "form-label fw-bold",
+              },
+              req.__("Tags")
+            ),
+            select(
+              {
+                id: "tag_select",
+                class: "form-control form-select",
+              },
+              option({
+                id: "empty_opt",
+                value: "",
+                label: req.__("Select tag"),
+                selected: true,
+              }),
+              Object.keys(tags).map((tag) =>
+                option({
+                  id: `${tag}_opt`,
+                  value: tags[tag],
+                  label: `${tag} (${tags[tag]})`,
+                })
+              )
+            )
+          ),
+          // deep clean checkbox
+          div(
+            { class: "form-group" },
+            input({
+              id: "deep_clean",
+              class: "form-check-input",
+              type: "checkbox",
+              name: "deep_clean",
+              checked: false,
+            }),
+            label(
+              {
+                for: "deep_clean",
+                class: "form-label ms-2",
+              },
+              req.__("clean node_modules")
+            )
+          ),
           div(
             { class: "d-flex justify-content-end" },
             button(
@@ -1306,7 +1430,18 @@ router.get(
               req.__("Install")
             )
           )
-        )
+        ) +
+          script(
+            domReady(`
+document.getElementById('tag_select').addEventListener('change', () => {
+  const version = document.getElementById('tag_select').value;
+  if (version) document.getElementById('version_select').value = version;
+});
+document.getElementById('version_select').addEventListener('change', () => {
+  document.getElementById('tag_select').value = '';
+});
+`)
+          )
       );
     } catch (error) {
       getState().log(
@@ -1318,7 +1453,17 @@ router.get(
   })
 );
 
-const doInstall = async (req, res, version, runPull) => {
+const cleanNodeModules = async () => {
+  const topSaltcornDir = path.join(__dirname, "..", "..", "..", "..", "..");
+  if (path.basename(topSaltcornDir) === "@saltcorn")
+    await fs.promises.rm(topSaltcornDir, { recursive: true, force: true });
+  else
+    throw new Error(
+      `'${topSaltcornDir}' is not a Saltcorn installation directory`
+    );
+};
+
+const doInstall = async (req, res, version, deepClean, runPull) => {
   if (db.getTenantSchema() !== db.connectObj.default_schema) {
     req.flash("error", req.__("Not possible for tenant"));
     res.redirect("/admin");
@@ -1328,6 +1473,14 @@ const doInstall = async (req, res, version, runPull) => {
         ? req.__("Starting upgrade, please wait...\n")
         : req.__("Installing %s, please wait...\n", version)
     );
+    if (deepClean) {
+      res.write(req.__("Cleaning node_modules...\n"));
+      try {
+        await cleanNodeModules();
+      } catch (e) {
+        res.write(req.__("Error cleaning node_modules: %s\n", e.message));
+      }
+    }
     const child = spawn(
       "npm",
       ["install", "-g", `@saltcorn/cli@${version}`, "--unsafe"],
@@ -1342,10 +1495,26 @@ const doInstall = async (req, res, version, runPull) => {
       res.write(data);
     });
     child.on("exit", async function (code, signal) {
-      if (code === 0 && runPull) {
-        res.write(req.__("Pulling the cordova-builder docker image...") + "\n");
-        const pullCode = await pullCordovaBuilder(req, res);
-        res.write(req.__("Pull done with code %s", pullCode) + "\n");
+      if (code === 0) {
+        if (deepClean) {
+          res.write(req.__("Installing sd-notify") + "\n");
+          const sdNotifyCode = await tryInstallSdNotify(req, res);
+          res.write(
+            req.__("sd-notify install done with code %s", sdNotifyCode) + "\n"
+          );
+        }
+        if (runPull) {
+          res.write(
+            req.__("Pulling the cordova-builder docker image...") + "\n"
+          );
+          const pullCode = await pullCordovaBuilder(req, res);
+          res.write(req.__("Pull done with code %s", pullCode) + "\n");
+          if (pullCode === 0) {
+            res.write(req.__("Pruning docker...") + "\n");
+            const pruneCode = await pruneDocker(req, res);
+            res.write(req.__("Prune done with code %s", pruneCode) + "\n");
+          }
+        }
       }
       res.end(
         version === "latest"
@@ -1365,8 +1534,8 @@ const doInstall = async (req, res, version, runPull) => {
 };
 
 router.post("/install", isAdmin, async (req, res) => {
-  const { version } = req.body;
-  await doInstall(req, res, version, false);
+  const { version, deep_clean } = req.body;
+  await doInstall(req, res, version, deep_clean === "on", false);
 });
 
 /**
@@ -1379,7 +1548,7 @@ router.post(
   "/upgrade",
   isAdmin,
   error_catcher(async (req, res) => {
-    await doInstall(req, res, "latest", true);
+    await doInstall(req, res, "latest", false, true);
   })
 );
 /**
@@ -1717,9 +1886,10 @@ router.get(
     });
   })
 );
-const buildDialogScript = (cordovaBuilderAvailable) => {
-  return `<script>
+const buildDialogScript = (cordovaBuilderAvailable, isSbadmin2) =>
+  `<script>
   var cordovaBuilderAvailable = ${cordovaBuilderAvailable};
+  var isSbadmin2 = ${isSbadmin2};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
       const tab = $('#' + currentType + 'NavLinkID');
@@ -1744,7 +1914,6 @@ const buildDialogScript = (cordovaBuilderAvailable) => {
     notifyAlert("Building the app, please wait.", true)
   }
   </script>`;
-};
 
 const imageAvailable = async () => {
   try {
@@ -1802,19 +1971,29 @@ router.get(
     const plugins = (await Plugin.find()).filter(
       (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
     );
+    const pluginsReadyForMobile = plugins
+      .filter((plugin) => plugin.ready_for_mobile())
+      .map((plugin) => plugin.name);
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
     const dockerAvailable = await imageAvailable();
     const xcodeCheckRes = await checkXcodebuild();
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
+    const layout = getState().getLayout(req.user);
+    const isSbadmin2 = layout === getState().layouts.sbadmin2;
     send_admin_page({
       res,
       req,
       active_sub: "Mobile app",
       headers: [
         {
-          headerTag: buildDialogScript(dockerAvailable),
+          headerTag: buildDialogScript(dockerAvailable, isSbadmin2),
+        },
+        {
+          headerTag: `<script>var pluginsReadyForMobile = ${JSON.stringify(
+            pluginsReadyForMobile
+          )}</script>`,
         },
       ],
       contents: {
@@ -1851,8 +2030,11 @@ router.get(
                     div({ class: "col-sm-4 fw-bold" }, req.__("Platform")),
                     div(
                       {
-                        class:
-                          "col-sm-1 fw-bold d-flex justify-content-center d-none",
+                        class: `col-sm-1 fw-bold d-flex justify-content-center ${
+                          builderSettings.androidPlatform !== "on"
+                            ? "d-none"
+                            : ""
+                        }`,
                         id: "dockerLabelId",
                       },
                       req.__("docker")
@@ -2849,17 +3031,66 @@ router.get(
   })
 );
 
+const validateBuildDirName = (buildDirName) => {
+  // ensure characters
+  if (!/^[a-zA-Z0-9_-]+$/.test(buildDirName)) {
+    getState().log(
+      4,
+      `Invalid characters in build directory name '${buildDirName}'`
+    );
+    return false;
+  }
+  // ensure format is 'build_1234567890'
+  if (!/^build_\d+$/.test(buildDirName)) {
+    getState().log(4, `Invalid build directory name format '${buildDirName}'`);
+    return false;
+  }
+  return true;
+};
+
+const validateBuildDir = (buildDir, rootPath) => {
+  const resolvedBuildDir = path.resolve(buildDir);
+  if (!resolvedBuildDir.startsWith(path.join(rootPath, "mobile_app"))) {
+    getState().log(4, `Invalid build directory path '${buildDir}'`);
+    return false;
+  }
+  return true;
+};
+
 router.get(
   "/build-mobile-app/result",
   isAdmin,
   error_catcher(async (req, res) => {
     const { build_dir_name } = req.query;
+    if (!validateBuildDirName(build_dir_name)) {
+      return res.sendWrap(req.__(`Admin`), {
+        above: [
+          {
+            type: "card",
+            title: req.__("Build Result"),
+            contents: div(req.__("Invalid build directory name")),
+          },
+        ],
+      });
+    }
     const rootFolder = await File.rootFolder();
     const buildDir = path.join(
       rootFolder.location,
       "mobile_app",
       build_dir_name
     );
+    if (!validateBuildDir(buildDir, rootFolder.location)) {
+      return res.sendWrap(req.__(`Admin`), {
+        above: [
+          {
+            type: "card",
+            title: req.__("Build Result"),
+            contents: div(req.__("Invalid build directory path")),
+          },
+        ],
+      });
+    }
+
     const files = await Promise.all(
       fs
         .readdirSync(buildDir)
@@ -2912,6 +3143,11 @@ router.post(
     } = req.body;
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
+    if (!entryPoint) {
+      return res.json({
+        error: req.__("Please select an entry point."),
+      });
+    }
     if (!androidPlatform && !iOSPlatform) {
       return res.json({
         error: req.__("Please select at least one platform (android or iOS)."),
@@ -3059,8 +3295,8 @@ router.post(
   error_catcher(async (req, res) => {
     const state = getState();
     const child = spawn(
-      "docker",
-      ["image", "pull", "saltcorn/cordova-builder:latest"],
+      `${process.env.DOCKER_BIN ? `${process.env.DOCKER_BIN}/` : ""}docker`,
+      ["pull", "saltcorn/cordova-builder:latest"],
       {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: ".",
@@ -3224,7 +3460,8 @@ router.post(
       const userfields1 = await users1.getFields();
 
       for (const f of userfields1) {
-        if (f.name !== "email" && f.name !== "id") await f.delete();
+        if (f.name !== "email" && f.name !== "id" && f.name !== "role_id")
+          await f.delete();
       }
       await db.deleteWhere("users");
       await db.deleteWhere("_sc_roles", {
@@ -3449,16 +3686,74 @@ router.get(
         },
       ],
     });
-
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
+    const tags = await Tag.find();
+    const tagMarkup = div(
+      "Tags:",
+      (function_code_pages_tags[name] || []).map((tagnm) =>
+        span(
+          {
+            class: ["ms-2 badge bg-secondary"],
+          },
+          tagnm,
+          a(
+            {
+              onclick: `rm_cp_tag('${tagnm}')`,
+            },
+            i({ class: "ms-1 fas fa-lg fa-times" })
+          )
+        )
+      ),
+      span(
+        { class: "dropdown", id: `ddcodetags` },
+        span(
+          {
+            class: ["ms-2 badge", "bg-secondary", "dropdown-toggle"],
+            "data-bs-toggle": "dropdown",
+            "aria-haspopup": "true",
+            "aria-expanded": "false",
+          },
+          i({ class: "fas fa-lg fa-plus" })
+        ),
+        div(
+          { class: "dropdown-menu", "aria-labelledby": "ddcodetags" },
+          tags
+            .map((t) =>
+              a(
+                {
+                  class: "dropdown-item",
+                  onclick: `add_cp_tag('${t.name}')`,
+                },
+                t.name
+              )
+            )
+            .join("")
+        )
+      ),
+      script(`function add_cp_tag(nm) {
+        ajax_post("/admin/add-codepage-tag/${encodeURIComponent(
+          name
+        )}/"+encodeURIComponent(nm))
+      }
+      function rm_cp_tag(nm) {
+        ajax_post("/admin/rm-codepage-tag/${encodeURIComponent(
+          name
+        )}/"+encodeURIComponent(nm))
+      }`)
+    );
     send_admin_page({
       res,
       req,
+      page_title: req.__(`%s code page`, name),
       active_sub: "Development",
       sub2_page: req.__(`%s code page`, name),
       contents: {
         type: "card",
         title: req.__(`%s code page`, name),
-        contents: [renderForm(form, req.csrfToken())],
+        contents: [renderForm(form, req.csrfToken()), tagMarkup],
       },
     });
   })
@@ -3494,7 +3789,50 @@ router.post(
     res.json({ goto: `/admin/dev` });
   })
 );
+router.post(
+  "/add-codepage-tag/:cpname/:tagnm",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { cpname, tagnm } = req.params;
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
 
+    function_code_pages_tags[cpname] = [
+      ...(function_code_pages_tags[cpname] || []),
+      tagnm,
+    ];
+    await getState().setConfig(
+      "function_code_pages_tags",
+      function_code_pages_tags
+    );
+
+    res.json({ reload_page: true });
+  })
+);
+router.post(
+  "/rm-codepage-tag/:cpname/:tagnm",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { cpname, tagnm } = req.params;
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
+
+    function_code_pages_tags[cpname] = (
+      function_code_pages_tags[cpname] || []
+    ).filter((t) => t != tagnm);
+
+    await getState().setConfig(
+      "function_code_pages_tags",
+      function_code_pages_tags
+    );
+
+    res.json({ reload_page: true });
+  })
+);
 /**
  * Notifications
  */

@@ -30,7 +30,7 @@ const {
   stateFieldsToQuery,
   readState,
 } = require("../../plugin-helper");
-const { InvalidConfiguration, isNode } = require("../../utils");
+const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
 const { getForm, fill_presets } = require("./viewable_fields");
@@ -547,7 +547,6 @@ module.exports = {
     room_id,
     user
   ) => {
-    // TODO ch authorize_join query
     if (!user || user.role_id > min_role) return false;
     if (!participant_field) {
       const table = Table.findOne({ id: table_id });

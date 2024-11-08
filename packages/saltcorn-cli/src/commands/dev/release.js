@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/release
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 const { sleep } = require("../../common");
@@ -20,7 +20,7 @@ class ReleaseCommand extends Command {
     const {
       args: { version },
       flags,
-    } = this.parse(ReleaseCommand);
+    } = await this.parse(ReleaseCommand);
     spawnSync("git", ["pull"], {
       stdio: "inherit",
       cwd: ".",
@@ -98,19 +98,31 @@ class ReleaseCommand extends Command {
         cwd: ".",
       });
     };
-    const publish = (dir) =>
+    const publish = async (dir, tags0) => {
+      const tags = !tags0 ? [] : Array.isArray(tags0) ? tags0 : [tags0];
+      if (flags.tag) tags.push(flags.tag);
+      const firstTag = tags[0];
       spawnSync(
         "npm",
         [
           "publish",
           "--access=public",
-          ...(flags.tag ? [`--tag=${flags.tag}`] : []),
+          ...(firstTag ? [`--tag ${firstTag}`] : []),
         ],
         {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
         }
       );
+      tags.shift();
+      for (const tag of tags) {
+        await sleep(3000);
+        spawnSync("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
+          stdio: "inherit",
+          cwd: `packages/${dir}/`,
+        });
+      }
+    };
 
     const rootPackageJson = require(`../../../../../package.json`);
 
@@ -125,8 +137,12 @@ class ReleaseCommand extends Command {
     });
     for (const p of Object.values(pkgs)) {
       updatePkgJson(p.dir);
-      if (p.publish) publish(p.dir);
+      if (p.publish) {
+        await publish(p.dir);
+        await sleep(3000);
+      }
     }
+    await sleep(5000);
 
     // for cli:
     // 1. update version
@@ -142,11 +158,13 @@ class ReleaseCommand extends Command {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
-    spawnSync("npm", ["audit", "fix"], {
-      stdio: "inherit",
-      cwd: `packages/saltcorn-cli/`,
-    });
-    publish("saltcorn-cli");
+    // do not run 'audit fix' on full point releases, only on -beta.x, -rc.x etc
+    if (version.includes("-"))
+      spawnSync("npm", ["audit", "fix"], {
+        stdio: "inherit",
+        cwd: `packages/saltcorn-cli/`,
+      });
+    await publish("saltcorn-cli", ["latest", "stable-1.0.x"]);
     fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
@@ -190,12 +208,15 @@ ReleaseCommand.description = `Release a new saltcorn version`;
 /**
  * @type {object}
  */
-ReleaseCommand.args = [
-  { name: "version", required: true, description: "New version number" },
-];
+ReleaseCommand.args = {
+  version: Args.string({
+    required: true,
+    description: "New version number",
+  }),
+};
 
 ReleaseCommand.flags = {
-  tag: flags.string({
+  tag: Flags.string({
     char: "t",
     description: "NPM tag",
   }),

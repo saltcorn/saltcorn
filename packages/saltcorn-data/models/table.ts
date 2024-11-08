@@ -56,8 +56,8 @@ import type TableConstraint from "./table_constraints";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
-import { createReadStream } from "fs";
-import { stat, readFile } from "fs/promises";
+import { createReadStream, createWriteStream } from "fs";
+import { stat, readFile, writeFile, open } from "fs/promises";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
 import utils from "../utils";
@@ -501,7 +501,10 @@ class Table implements AbstractTable {
     if (this.name === "users" && !field_name)
       return user.id && `${row?.id}` === `${user.id}`;
 
-    return typeof field_name === "string" && row[field_name] === user.id;
+    return (
+      typeof field_name === "string" &&
+      (row[field_name] === user.id || row[field_name]?.id === user.id)
+    );
   }
 
   /**
@@ -1307,7 +1310,8 @@ class Table implements AbstractTable {
     noTrigger?: boolean,
     resultCollector?: object,
     restore_of_version?: any,
-    syncTimestamp?: Date
+    syncTimestamp?: Date,
+    additionalTriggerValues?: Row
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
@@ -1357,7 +1361,7 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (v[owner_field.name] && v[owner_field.name] !== user.id) {
+        if (v[owner_field.name] && v[owner_field.name] != user.id) {
           state.log(
             4,
             `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in updates`
@@ -1434,7 +1438,7 @@ class Table implements AbstractTable {
       await Trigger.runTableTriggers(
         "Validate",
         this,
-        { ...existing, ...v },
+        { ...(additionalTriggerValues || {}), ...existing, ...v },
         valResCollector,
         user,
         { old_row: existing, updated_fields: v_in }
@@ -1491,17 +1495,25 @@ class Table implements AbstractTable {
     if (this.versioned) {
       const existing1 = await db.selectOne(this.name, { [pk_name]: id });
       if (!existing) existing = existing1;
-      await this.insert_history_row({
-        ...existing1,
-        ...v,
-        [pk_name]: id,
-        _version: {
-          next_version_by_id: id,
-        },
-        _time: new Date(),
-        _userid: user?.id,
-        _restore_of_version: restore_of_version || null,
-      });
+      //store all changes EXCEPT users with only last_mobile_login
+      if (
+        !(
+          this.name === "users" &&
+          Object.keys(v_in).length == 1 &&
+          v_in.last_mobile_login
+        )
+      )
+        await this.insert_history_row({
+          ...existing1,
+          ...v,
+          [pk_name]: id,
+          _version: {
+            next_version_by_id: id,
+          },
+          _time: new Date(),
+          _userid: user?.id,
+          _restore_of_version: restore_of_version || null,
+        });
     }
     if (typeof existing === "undefined") {
       const triggers = await Trigger.getTableTriggers("Update", this);
@@ -1533,7 +1545,7 @@ class Table implements AbstractTable {
       const trigPromise = Trigger.runTableTriggers(
         "Update",
         this,
-        newRow,
+        { ...(additionalTriggerValues || {}), ...newRow },
         resultCollector,
         role === 100 ? undefined : user,
         { old_row: existing, updated_fields: v_in }
@@ -1553,6 +1565,7 @@ class Table implements AbstractTable {
     calcFields.forEach((f) => {
       // delete v1[f.name];
     });
+    if (this.name === "users") delete v1.last_mobile_login;
 
     this.stringify_json_fields(v1);
 
@@ -1795,7 +1808,7 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (v_in[owner_field.name] !== user.id) {
+        if (v_in[owner_field.name] != user.id) {
           state.log(
             4,
             `Not authorized to insertRow in table ${this.name}. ${user.id} does not match owner field`
@@ -2098,7 +2111,22 @@ class Table implements AbstractTable {
   private async create_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    const fields = this.fields;
+    const fields = [...this.fields];
+    if (this.name === "users")
+      fields.push(
+        new Field({ name: "password", type: "String" }),
+        new Field({ name: "reset_password_token", type: "String" }),
+        new Field({ name: "reset_password_expiry", type: "Date" }),
+        new Field({ name: "language", type: "String" }),
+        new Field({ name: "disabled", type: "Bool" }),
+        new Field({ name: "api_token", type: "String" }),
+        new Field({ name: "verification_token", type: "String" }),
+        new Field({ name: "verified_on", type: "Date" })
+
+        // Not last_mobile_login - we do not want to store this in history.
+        // Deleted in Table.insert_history_row instead
+        //new Field({ name: "last_mobile_login", type: "Date" })
+      );
     const flds = fields
       .filter((f) => !f.calculated || f.stored)
       .map((f: Field) => `,"${sqlsanitize(f.name)}" ${f.sql_bare_type}`);
@@ -2115,6 +2143,7 @@ class Table implements AbstractTable {
           _restore_of_version integer,
           _userid integer
           ${flds.join("")}
+          ${this.name === "users" ? ",_attributes JSONB" : ""}
           ,PRIMARY KEY("${pk}", _version)
           );`
     );
@@ -2512,6 +2541,25 @@ class Table implements AbstractTable {
     return errorString || state;
   }
 
+  async dump_to_json(filePath: string) {
+    if (db.copyToJson) {
+      await dump_table_to_json_file(filePath, this.name);
+    } else {
+      const rows = await this.getRows({}, { ignore_errors: true });
+      await writeFile(filePath, JSON.stringify(rows));
+    }
+  }
+  async dump_history_to_json(filePath: string) {
+    if (db.copyToJson) {
+      await dump_table_to_json_file(
+        filePath,
+        `${sqlsanitize(this.name)}__history`
+      );
+    } else {
+      const rows = await this.get_history();
+      await writeFile(filePath, JSON.stringify(rows));
+    }
+  }
   /**
    * Import CSV file to existing table
    * @param filePath
@@ -2748,7 +2796,12 @@ class Table implements AbstractTable {
                             pk_name,
                           });
                         } catch (e: any) {
-                          rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
+                          if (
+                            !(e?.message || "").includes(
+                              "current transaction is aborted, commands ignored until end of transaction"
+                            )
+                          )
+                            rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
                           rejects += 1;
                         }
                     } else if (options?.no_table_write) {
@@ -2788,9 +2841,8 @@ class Table implements AbstractTable {
       }
     } catch (e: any) {
       return {
-        error: `Error processing CSV file: ${
-          !e ? e : e.error || e.message || e
-        }`,
+        error: `Error processing CSV file: ${!e ? e : e.error || e.message || e}
+${rejectDetails}`,
       };
     }
 
@@ -2862,8 +2914,11 @@ class Table implements AbstractTable {
     filePath: string,
     skip_first_data_row?: boolean
   ): Promise<any> {
+    const contents = (await readFile(filePath)).toString();
+
     // todo argument type buffer is not assignable for type String...
-    const file_rows = JSON.parse((await readFile(filePath)).toString());
+    const file_rows = contents === "\\N\n" ? [] : JSON.parse(contents);
+
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -3418,7 +3473,7 @@ class Table implements AbstractTable {
       db.is_sqlite
     )}`;
 
-    return { sql, values, joinFields };
+    return { sql, values, joinFields, aggregations };
   }
 
   /**
@@ -3474,7 +3529,7 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
-    const { sql, values, notAuthorized, joinFields } =
+    const { sql, values, notAuthorized, joinFields, aggregations } =
       await this.getJoinedQuery(opts);
 
     if (notAuthorized) return [];
@@ -3486,7 +3541,21 @@ class Table implements AbstractTable {
       fields,
       !!opts?.ignore_errors
     );
-
+    //need to json parse array agg values on sqlite
+    if (
+      db.isSQLite &&
+      Object.values(aggregations || {}).some(
+        (agg: any) => agg.aggregate.toLowerCase() === "array_agg"
+      )
+    ) {
+      Object.entries(aggregations || {}).forEach(([k, agg]: any) => {
+        if (agg.aggregate.toLowerCase() === "array_agg") {
+          calcRow.forEach((row) => {
+            if (row[k]) row[k] = JSON.parse(row[k]);
+          });
+        }
+      });
+    }
     //rename joinfields
     if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {
       let f = (x: any) => x;
@@ -3633,6 +3702,20 @@ class Table implements AbstractTable {
       this.fields.filter((f) => !f.calculated)
     );
   }
+}
+
+async function dump_table_to_json_file(filePath: string, tableName: string) {
+  const writeStream = createWriteStream(filePath);
+  const client = db.isSQLite ? db : await db.getClient();
+  writeStream.write("[");
+  await db.copyToJson(writeStream, tableName, client);
+  if (!db.isSQLite) await client.release(true);
+  writeStream.destroy();
+  const h = await open(filePath, "r+");
+  const stat = await h.stat();
+  if (stat.size > 2) await h.write("]", stat.size - 2);
+  else await h.write("]", stat.size);
+  await h.close();
 }
 
 // declaration merging

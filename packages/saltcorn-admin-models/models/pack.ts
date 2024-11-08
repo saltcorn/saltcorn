@@ -24,7 +24,7 @@ import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog, { EventLogCfg } from "@saltcorn/data/models/eventlog";
 import User from "@saltcorn/data/models/user";
 import config from "@saltcorn/data/models/config";
-import type { Pack } from "@saltcorn/types/base_types";
+import type { CodePagePack, Pack } from "@saltcorn/types/base_types";
 import type { PagePack } from "@saltcorn/types/model-abstracts/abstract_page";
 const { save_menu_items } = config;
 import type Plugin from "@saltcorn/data/models/plugin";
@@ -432,7 +432,10 @@ const add_to_menu = async (item: {
   item.min_role = old_to_new_role(item.min_role);
   const current_menu = getState().getConfigCopy("menu_items", []);
   const existing = current_menu.findIndex((m: any) => m.label === item.label);
-  if (existing >= 0) current_menu[existing] = item;
+  if (existing >= 0) {
+    //current_menu[existing] = item;
+    //do not change exisiting menu item
+  }
   else current_menu.push(item);
   await save_menu_items(current_menu);
 };
@@ -476,7 +479,15 @@ const install_pack = async (
     else await Library.create(lib);
   }
   // create tables (users skipped because created by other ways)
-  for (const tableSpec of pack.tables) {
+
+  // tables with a provider go last because they can depend on presence 
+  // of other tables
+  const packTables = pack.tables.sort((left, right) =>
+    left.provider_name
+      ? 1
+      : right.provider_name ? -1
+        : 0)
+  for (const tableSpec of packTables) {
     if (tableSpec.name !== "users") {
       let tbl_pk;
       const existing = Table.findOne({ name: tableSpec.name });
@@ -746,6 +757,25 @@ const install_pack = async (
     }
   }
 
+  if (pack.code_pages) {
+    const code_pages = getState().getConfigCopy("function_code_pages", {});
+    const function_code_pages_tags = getState().getConfigCopy(
+      "function_code_pages_tags",
+      {}
+    );
+
+    for (const { name, code, tags } of pack.code_pages) {
+      code_pages[name] = code;
+      function_code_pages_tags[name] = tags;
+    }
+    await getState().setConfig("function_code_pages", code_pages);
+    await getState().setConfig(
+      "function_code_pages_tags",
+      function_code_pages_tags
+    );
+    await getState().refresh_codepages();
+  }
+
   if (name) {
     const existPacks = getState().getConfigCopy("installed_packs", []);
     await getState().setConfig("installed_packs", [...existPacks, name]);
@@ -830,6 +860,22 @@ const fetch_pack_by_name = async (
   else return null;
 };
 
+const code_pages_from_tag = async (tag: Tag): Promise<Array<CodePagePack>> => {
+  const function_code_pages_tags: { string: [string] } =
+    getState().getConfigCopy("function_code_pages_tags", {});
+  const function_code_pages = getState().getConfigCopy(
+    "function_code_pages",
+    {}
+  );
+
+  const cps: Array<CodePagePack> = [];
+  Object.entries(function_code_pages_tags || {}).forEach(([cpname, tags]) => {
+    const code = function_code_pages[cpname];
+    if (tags.includes(tag.name) && code) cps.push({ name: cpname, code, tags });
+  });
+  return cps;
+};
+
 const create_pack_from_tag = async (tag: Tag): Promise<any> => {
   const pack: Pack = {
     tables: [],
@@ -844,6 +890,7 @@ const create_pack_from_tag = async (tag: Tag): Promise<any> => {
     models: [],
     model_instances: [],
     event_logs: [],
+    code_pages: [],
   };
   const tables = await tag.getTables();
   for (const t of tables) pack.tables.push(await table_pack(t));
@@ -854,6 +901,7 @@ const create_pack_from_tag = async (tag: Tag): Promise<any> => {
   const triggers = await tag.getTriggers();
   for (const t of triggers) pack.triggers.push(await trigger_pack(t));
   pack.tags.push(await tag_pack(tag));
+  pack.code_pages = await code_pages_from_tag(tag);
   return pack;
 
   //TODO add models, plugins

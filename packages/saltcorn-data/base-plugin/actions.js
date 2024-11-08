@@ -40,7 +40,7 @@ const {
   interpolate,
 } = require("../utils");
 const db = require("../db");
-const { isNode, ppVal } = require("../utils");
+const { isNode, isWeb, ppVal } = require("../utils");
 const { available_languages } = require("../models/config");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
@@ -200,6 +200,7 @@ module.exports = {
      * @see base-plugin/actions~run_code
      */
     run: run_code,
+    namespace: "Code",
   },
 
   /**
@@ -253,6 +254,7 @@ module.exports = {
         payload ? JSON.parse(payload) : row
       );
     },
+    namespace: "Control",
   },
 
   /**
@@ -373,6 +375,7 @@ module.exports = {
         return { goto: `/view/${viewname}?id=${room_id}` };
       }
     },
+    namespace: "Communication",
   },
 
   /**
@@ -680,6 +683,7 @@ module.exports = {
         }
       }
     },
+    namespace: "Communication",
   },
 
   /**
@@ -739,6 +743,7 @@ module.exports = {
       }
       return await joinTable.insertRow(newRow, user);
     },
+    namespace: "Database",
   },
 
   /**
@@ -766,6 +771,7 @@ module.exports = {
       delete newRow[table.pk_name];
       await table.insertRow(newRow, user);
     },
+    namespace: "Database",
   },
 
   /**
@@ -836,6 +842,7 @@ module.exports = {
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
+    namespace: "Database",
   },
 
   /**
@@ -897,6 +904,7 @@ module.exports = {
       if (res.error) return res;
       else return true;
     },
+    namespace: "Database",
   },
   /**
    * @namespace
@@ -960,6 +968,68 @@ module.exports = {
       if (res.error) return res;
       else return;
     },
+    namespace: "Database",
+  },
+
+  delete_rows: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Modify the triggering row",
+    configFields: async ({ mode, when_trigger }) => {
+      const tables = await Table.find({}, { cached: true });
+
+      return [
+        {
+          name: "delete_triggering_row",
+          label: "Delete triggering row",
+          type: "Bool",
+        },
+        {
+          name: "table_name",
+          label: "Table",
+          sublabel: "Table on which to delete rows",
+          input_type: "select",
+          showIf: { delete_triggering_row: false },
+          options: tables.map((t) => t.name),
+        },
+        {
+          name: "delete_where",
+          label: "Delete where",
+          type: "String",
+          sublabel: "Where expression, ex. <code>{manager: id}</code>",
+          required: true,
+          class: "validate-expression",
+          showIf: { delete_triggering_row: false },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      table,
+      configuration: { delete_triggering_row, delete_where, table_name },
+      user,
+      ...rest
+    }) => {
+      if (delete_triggering_row) {
+        if (!table || !row?.[table.pk_name])
+          throw new Error("delete_rows cannot find triggering row");
+        await table.deleteRows({ [table.pk_name]: row[table.pk_name] }, user);
+        return;
+      }
+      const where = eval_expression(
+        delete_where,
+        row || {},
+        user,
+        "recalculate_stored_fields where"
+      );
+      const tbl = Table.findOne({ name: table_name });
+      await tbl.deleteRows(where, user);
+      return;
+    },
+    namespace: "Database",
   },
 
   /**
@@ -999,7 +1069,7 @@ module.exports = {
         showIf: { nav_action: ["Go to URL", "Popup modal"] },
       },
     ],
-    run: async ({ row, user, configuration: { nav_action, url } }) => {
+    run: async ({ row, user, configuration: { nav_action, url }, req }) => {
       let url1 = interpolate(url, row, user);
 
       switch (nav_action) {
@@ -1008,7 +1078,7 @@ module.exports = {
         case "Popup modal":
           return { popup: url1 };
         case "Back":
-          return { eval_js: isNode() ? "history.back()" : "parent.goBack()" };
+          return { eval_js: isWeb(req) ? "history.back()" : "parent.goBack()" };
         case "Close tab":
           return { eval_js: "window.close()" };
         case "Close modal":
@@ -1020,6 +1090,7 @@ module.exports = {
           break;
       }
     },
+    namespace: "User interface",
   },
   step_control_flow: {
     /**
@@ -1059,6 +1130,7 @@ module.exports = {
           break;
       }
     },
+    namespace: "Control",
   },
   form_action: {
     /**
@@ -1119,6 +1191,7 @@ module.exports = {
           return { eval_js: jqGet + ".submit()" };
       }
     },
+    namespace: "User interface",
   },
 
   toast: {
@@ -1158,6 +1231,7 @@ module.exports = {
           return { notify: text1 };
       }
     },
+    namespace: "User interface",
   },
 
   /**
@@ -1260,6 +1334,7 @@ module.exports = {
      * @see base-plugin/actions~run_code
      **/
     run: run_code,
+    namespace: "Code",
   },
   run_js_code_in_field: {
     /**
@@ -1335,6 +1410,7 @@ module.exports = {
         configuration: { run_where, code },
       });
     },
+    namespace: "Code",
   },
 
   duplicate_row_prefill_edit: {
@@ -1373,6 +1449,7 @@ module.exports = {
         .join("&");
       return { goto: `/view/${viewname}?${qs}` };
     },
+    namespace: "User interface",
   },
   /**
    * @namespace
@@ -1413,6 +1490,7 @@ module.exports = {
       }
       return { reload_page: true };
     },
+    namespace: "User interface",
   },
   /**
    * @namespace
@@ -1577,6 +1655,7 @@ module.exports = {
           );
       }
     },
+    namespace: "Database",
   },
   reload_embedded_view: {
     description: "Reload an embedded view without full page reload",
@@ -1625,6 +1704,7 @@ module.exports = {
       if (interval) eval_js = `setInterval(()=>{${eval_js}}, ${interval})`;
       return { eval_js };
     },
+    namespace: "User interface",
   },
   sleep: {
     description: "Delay for a set number of seconds",
@@ -1643,6 +1723,7 @@ module.exports = {
         }));`,
       };
     },
+    namespace: "Control",
   },
   notify_user: {
     description: "Send a notification to a specific user",
@@ -1707,6 +1788,7 @@ module.exports = {
         });
       }
     },
+    namespace: "Communication",
   },
 
   convert_session_to_user: {
@@ -1772,6 +1854,7 @@ module.exports = {
         await table.updateRow({ [user_field]: user.id }, dbrow[table.pk_name]);
       }
     },
+    namespace: "Database",
   },
 
   install_progressive_web_app: {

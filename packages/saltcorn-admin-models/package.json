@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/admin-models",
-  "version": "0.9.6-beta.19",
+  "version": "1.0.0-rc.6",
   "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -27,12 +27,12 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
-    "@saltcorn/types": "0.9.6-beta.19",
-    "@saltcorn/markup": "0.9.6-beta.19",
-    "@saltcorn/db-common": "0.9.6-beta.19",
-    "@saltcorn/data": "0.9.6-beta.19",
+    "@saltcorn/types": "1.0.0-rc.6",
+    "@saltcorn/markup": "1.0.0-rc.6",
+    "@saltcorn/db-common": "1.0.0-rc.6",
+    "@saltcorn/data": "1.0.0-rc.6",
     "adm-zip": "0.5.5",
-    "chaos-guinea-pig": "^0.1.4",
+    "chaos-guinea-pig": "0.1.6",
     "csv-stringify": "^5.5.0",
     "csvtojson": "^2.0.10",
     "dateformat": "^3.0.3",
@@ -48,15 +48,13 @@
     "access": "public"
   },
   "devDependencies": {
-    "@saltcorn/sbadmin2": "0.9.6-beta.19",
+    "@saltcorn/sbadmin2": "1.0.0-rc.6",
     "@types/adm-zip": "^0.4.34",
-    "@types/csvtojson": "^2.0.0",
     "@types/dateformat": "^5.0.0",
     "@types/jest": "^29.5.11",
     "@types/node": "^14.14.31",
     "@types/node-fetch": "2.5.12",
     "@types/tmp": "^0.2.3",
-    "chaos-guinea-pig": "^0.1.4",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
     "typescript": "^4.4.4"

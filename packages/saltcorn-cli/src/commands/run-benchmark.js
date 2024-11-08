@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/run-benchmark
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 const si = require("systeminformation");
 const fetch = require("node-fetch");
 
@@ -11,16 +11,16 @@ const { sleep } = require("../common");
 const packagejson = require("../../package.json");
 
 /**
- * 
- * @param {string} s 
+ *
+ * @param {string} s
  * @returns {number}
  */
 const parseMillisecs = (s) =>
   s.endsWith("ms") ? parseFloat(s) : parseFloat(s) * 1000;
 
 /**
- * 
- * @param {*} args 
+ *
+ * @param {*} args
  * @returns {Promise<object>}
  */
 const wrk = (args) =>
@@ -37,8 +37,8 @@ const wrk = (args) =>
   });
 
 /**
- * 
- * @param {string} s 
+ *
+ * @param {string} s
  * @returns {string}
  */
 const ensure_no_final_slash = (s) => (s.endsWith("/") ? s.slice(0, -1) : s);
@@ -56,7 +56,7 @@ class RunBenchmarkCommand extends Command {
     const {
       args: { baseurl },
       flags: { token, delay, benchmark },
-    } = this.parse(RunBenchmarkCommand);
+    } = await this.parse(RunBenchmarkCommand);
     const File = require("@saltcorn/data/models/file");
     const file = await File.findOne({ filename: "rick.png" });
     if (!file) {
@@ -138,9 +138,12 @@ class RunBenchmarkCommand extends Command {
 /**
  * @type {object}
  */
-RunBenchmarkCommand.args = [
-  { name: "baseurl", required: false, description: "Base URL" },
-];
+RunBenchmarkCommand.args = {
+  baseurl: Args.string({
+    required: false,
+    description: "Base URL",
+  }),
+};
 
 /**
  * @type {string}
@@ -151,15 +154,15 @@ RunBenchmarkCommand.description = `Run benchmark`;
  * @type {object}
  */
 RunBenchmarkCommand.flags = {
-  token: flags.string({
+  token: Flags.string({
     char: "t",
     description: "API Token for reporting results",
   }),
-  benchmark: flags.string({
+  benchmark: Flags.string({
     char: "b",
     description: "Which benchmark to run",
   }),
-  delay: flags.integer({
+  delay: Flags.integer({
     char: "d",
     description: "delay between runs (s)",
     default: 30,

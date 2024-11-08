@@ -25,8 +25,8 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 jest.setTimeout(30000);
-const non_owner_user = { id: 3, email: "foo@bar.com", role_id: 8 };
-const owner_user = { id: 1, email: "foo@bar.com", role_id: 8 };
+const non_owner_user = { id: 3, email: "foo@bar.com", role_id: 80 };
+const owner_user = { id: 1, email: "foo@bar.com", role_id: 80 };
 
 const test_person_table = async (persons: Table) => {
   const row = await persons.getRow({ age: 12 });
@@ -328,6 +328,11 @@ describe("Table with row ownership formula", () => {
       owner_user
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.deleteRows({ lastname: "Tim" }, non_owner_user);
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.deleteRows({ lastname: "Tim" }, owner_user);
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+
     await persons.delete();
   });
 });

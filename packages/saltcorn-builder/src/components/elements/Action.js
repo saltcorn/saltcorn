@@ -142,7 +142,16 @@ const ActionSettings = () => {
     name === "Multi-step action"
       ? getCfgFields(step_action_names?.[use_setting_action_n])
       : null;
-
+  const cfg_link = (options.triggerActions || []).includes(name)
+    ? `/actions/configure/${encodeURIComponent(name)}`
+    : name === "Multi-step action" &&
+      (options.triggerActions || []).includes(
+        step_action_names?.[use_setting_action_n]
+      )
+    ? `/actions/configure/${encodeURIComponent(
+        step_action_names?.[use_setting_action_n]
+      )}`
+    : "";
   return (
     <div>
       <table className="w-100">
@@ -185,14 +194,21 @@ const ActionSettings = () => {
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
               >
-                {options.actions.map((f, ix) => (
-                  <option key={ix} value={f}>
-                    {f}
-                  </option>
-                ))}
-                {options.allowMultiStepAction ? (
-                  <option value={"Multi-step action"}>Multi-step action</option>
-                ) : null}
+                {options.actions.map((f, ix) =>
+                  f.optgroup && !f.options.length ? null : f.optgroup ? (
+                    <optgroup key={ix} label={f.label}>
+                      {f.options.map((a, jx) => (
+                        <option key={jx} value={a}>
+                          {a}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : (
+                    <option key={ix} value={f}>
+                      {f}
+                    </option>
+                  )
+                )}
               </select>
             </td>
           </tr>
@@ -355,11 +371,29 @@ const ActionSettings = () => {
             </option>
             {options.actions
               .filter((f) => !(options.builtInActions || []).includes(f))
-              .map((f, ix) => (
-                <option key={ix} value={f}>
-                  {f}
-                </option>
-              ))}
+              .map((f, ix) =>
+                f.optgroup ? (
+                  <optgroup key={ix} label={f.label}>
+                    {f.options
+                      .filter(
+                        (f) =>
+                          ![
+                            "Multi-step action",
+                            ...(options.builtInActions || []),
+                          ].includes(f)
+                      )
+                      .map((a, jx) => (
+                        <option key={jx} value={a}>
+                          {a}
+                        </option>
+                      ))}
+                  </optgroup>
+                ) : (
+                  <option key={ix} value={f}>
+                    {f}
+                  </option>
+                )
+              )}
           </select>
           {options.mode !== "page" ? (
             <Fragment>
@@ -406,6 +440,11 @@ const ActionSettings = () => {
           setProp={setProp}
           node={node}
         />
+      ) : null}
+      {cfg_link ? (
+        <a className="d-block mt-2" target="_blank" href={cfg_link}>
+          Configure this action
+        </a>
       ) : null}
     </div>
   );

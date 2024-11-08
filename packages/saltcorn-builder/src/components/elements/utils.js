@@ -677,7 +677,7 @@ const ConfigForm = ({
         if (noshow) return null;
       }
       return (
-        <div key={ix} className="builder-config-field">
+        <div key={ix} className="builder-config-field" data-field-name={f.name}>
           {!isCheckbox(f) ? (
             <label>
               {f.label || f.name}
@@ -783,7 +783,7 @@ const ConfigField = ({
     field.options =
       typeof field.attributes?.options === "string"
         ? field.attributes?.options.split(",").map((s) => s.trim())
-        : field.attributes?.options;
+        : [...field.attributes?.options];
     if (!field.required && field.options) field.options.unshift("");
   }
   const field_type = field.input_type || field.type.name || field.type;
@@ -799,7 +799,7 @@ const ConfigField = ({
     //pick first value to mimic html form behaviour
     const options = getOptions();
     let o;
-    if ((o = options[0]))
+    if (options && (o = options[0]))
       useEffect(() => {
         myOnChange(typeof o === "string" ? o : o.value || o.name || o);
       }, []);
@@ -939,7 +939,7 @@ const ConfigField = ({
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
           >
-            {field.options.map((o, ix) =>
+            {(field.options || []).map((o, ix) =>
               o.name && o.label ? (
                 <option key={ix} value={o.name}>
                   {o.label}

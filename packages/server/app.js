@@ -302,15 +302,11 @@ const getApp = async (opts = {}) => {
         if (
           u &&
           u.last_mobile_login &&
-          u.last_mobile_login <= jwt_payload.iat
+          (typeof u.last_mobile_login === "string"
+            ? new Date(u.last_mobile_login).valueOf()
+            : u.last_mobile_login) <= jwt_payload.iat
         ) {
-          return done(null, {
-            email: u.email,
-            id: u.id,
-            role_id: u.role_id,
-            language: u.language,
-            tenant: db.getTenantSchema(),
-          });
+          return done(null, u.session_object);
         } else {
           return done(null, { role_id: 100 });
         }
@@ -445,6 +441,9 @@ Sitemap: ${base}sitemap.xml
   app.get("*", function (req, res) {
     res.status(404).sendWrap(req.__("Not found"), h1(req.__("Page not found")));
   });
+
+  //prevent prototype pollution
+  delete Object.prototype.__proto__;
   return app;
 };
 module.exports = getApp;

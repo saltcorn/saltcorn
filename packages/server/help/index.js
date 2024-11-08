@@ -5,6 +5,7 @@ const _ = require("underscore");
 const fs = require("fs").promises;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
+const moment = require("moment");
 
 const { pre } = require("@saltcorn/markup/tags");
 const path = require("path");
@@ -12,7 +13,8 @@ const { getState } = require("@saltcorn/data/db/state");
 const { oneOf } = require("@saltcorn/types/generators");
 const get_md_file = async (topic) => {
   try {
-    const fp = path.join(__dirname, `${File.normalise(topic)}.tmd`);
+    const fp = File.normalise_in_base(__dirname, `${topic}.tmd`);
+    if (!fp) return false;
     const fileBuf = await fs.readFile(fp);
     return fileBuf.toString();
   } catch (e) {
@@ -33,6 +35,7 @@ const get_help_markup = async (topic, query, req) => {
       scState: getState(),
       query,
       oneOf,
+      moment,
     };
     const mdTemplate = await get_md_file(topic);
     if (!mdTemplate) return { markup: "Topic not found" };

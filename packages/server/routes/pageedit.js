@@ -183,6 +183,12 @@ const pageBuilderData = async (req, context) => {
       });
     }
   }
+  const actionsNotRequiringRow = Trigger.action_options({
+    notRequireRow: true,
+    apiNeverTriggers: true,
+    builtInLabel: "Page Actions",
+    builtIns: ["GoBack"],
+  });
   const library = (await Library.find({})).filter((l) => l.suitableFor("page"));
   const fixed_state_fields = {};
   for (const view of views) {
@@ -228,7 +234,7 @@ const pageBuilderData = async (req, context) => {
     images,
     pages,
     page_groups,
-    actions,
+    actions: actionsNotRequiringRow,
     builtInActions: ["GoBack"],
     library,
     min_role: context.min_role,
@@ -642,7 +648,8 @@ router.post(
     const { pagename } = req.params;
 
     let redirectTarget =
-      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : "/pageedit";
     const page = await Page.findOne({ name: pagename });

@@ -257,10 +257,16 @@ const mergeConnectedObjects = (
   };
 };
 
-const objectToQueryString = (o: Object): string =>
-  Object.entries(o || {})
-    .map(([k, v]: any) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+const objectToQueryString = (o: Object): string => {
+  const f = ([k, v]: any) =>
+    v?.or
+      ? v.or.map((val: any) => f([k, val])).join("&")
+      : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+
+  return Object.entries(o || {})
+    .map(f)
     .join("&");
+};
 
 const urlStringToObject = (url: string): any => {
   if (!url) return {};
@@ -386,6 +392,12 @@ const comparingCaseInsensitive = (k: string) => (a: any, b: any) => {
   return fa > fb ? 1 : fb > fa ? -1 : 0;
 };
 
+const comparingCaseInsensitiveValue = (a: any, b: any) => {
+  const fa = a?.toLowerCase?.();
+  const fb = b?.toLowerCase?.();
+  return fa > fb ? 1 : fb > fa ? -1 : 0;
+};
+
 const ppVal = (x: any) =>
   typeof x === "string"
     ? x
@@ -414,6 +426,7 @@ const prepMobileRows = (rows: Row[], fields: Field[]) => {
       const newRow = { ...row };
       for (const fn of dateFieldNames) {
         if (newRow[fn]) newRow[fn] = new Date(newRow[fn]);
+        if (newRow.row?.[fn]) newRow.row[fn] = new Date(newRow.row[fn]);
       }
       return newRow;
     });
@@ -458,6 +471,21 @@ const isRoot = () => {
   return db.getTenantSchema() === db.connectObj.default_schema;
 };
 
+/**
+ * flat comparison of two objects (fast for comparing objects with primitive values, only first level)
+ * @param a lhs
+ * @param b rhs
+ * @returns true or false
+ */
+const flatEqual = (a: any, b: any) => {
+  if (typeof a !== "object" || typeof b !== "object") return false;
+  if (Object.keys(a).length !== Object.keys(b).length) return false;
+  for (const k in a) {
+    if (!(k in b) || a[k] !== b[k]) return false;
+  }
+  return true;
+};
+
 export = {
   cloneName,
   dollarizeObject,
@@ -498,10 +526,12 @@ export = {
   urlStringToObject,
   comparing,
   comparingCaseInsensitive,
+  comparingCaseInsensitiveValue,
   ppVal,
   interpolate,
   prepMobileRows,
   fileWithEnding,
   safeEnding,
   isRoot,
+  flatEqual,
 };

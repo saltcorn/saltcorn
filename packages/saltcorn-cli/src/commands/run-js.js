@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/run-js
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, ux } = require("@oclif/core");
 const {
   maybe_as_tenant,
   init_some_tenants,
@@ -24,7 +23,7 @@ class RunJSCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags, args } = this.parse(RunJSCommand);
+    const { flags, args } = await this.parse(RunJSCommand);
     await init_some_tenants(flags.tenant);
 
     const that = this;
@@ -58,17 +57,17 @@ RunJSCommand.description = `Run javascript code`;
  * @type {object}
  */
 RunJSCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     name: "tenant",
     char: "t",
     description: "tenant name",
   }),
-  code: flags.string({
+  code: Flags.string({
     name: "code",
     char: "c",
     description: "js code",
   }),
-  file: flags.string({
+  file: Flags.string({
     name: "file",
     char: "f",
     description: "path to script file",

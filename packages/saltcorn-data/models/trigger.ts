@@ -14,7 +14,12 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import Crash = require("./crash");
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
-const { satisfies, mergeActionResults, cloneName } = require("../utils");
+const {
+  comparingCaseInsensitiveValue,
+  satisfies,
+  mergeActionResults,
+  cloneName,
+} = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
@@ -210,17 +215,59 @@ class Trigger implements AbstractTrigger {
       for (const trigger of triggers) {
         state.log(4, `Trigger run ${trigger.name} ${trigger.action} `);
         try {
-          const action = state.actions[trigger.action];
-          action &&
-            action.run &&
-            (await action.run({
-              table,
-              channel,
-              user,
-              configuration: trigger.configuration,
-              row: payload,
-              ...(payload || {}),
-            }));
+          if (trigger.action === "Multi-step action") {
+            let step_count = 0;
+            const MAX_STEPS = 200;
+            for (
+              let i = 0;
+              i < trigger.configuration?.steps?.length &&
+              step_count < MAX_STEPS;
+              i++
+            ) {
+              step_count += 1;
+              const step = trigger.configuration?.steps[i];
+              if (step.step_only_if && payload)
+                if (
+                  !eval_expression(
+                    step.step_only_if,
+                    payload,
+                    user,
+                    "Multistep only if formula"
+                  )
+                )
+                  continue;
+              const stepAction = state.actions[step.step_action_name];
+              const stepRes =
+                stepAction && stepAction.run
+                  ? await stepAction.run({
+                      table,
+                      channel,
+                      user,
+                      configuration: step,
+                      row: payload,
+                      ...(payload || {}),
+                    })
+                  : null;
+              if (stepRes?.goto_step) i = +stepRes.goto_step - 2;
+              if (stepRes?.set_fields && payload) {
+                Object.entries(stepRes?.set_fields).forEach(([k, v]) => {
+                  payload[k] = v;
+                });
+              }
+            }
+          } else {
+            const action = state.actions[trigger.action];
+            action &&
+              action.run &&
+              (await action.run({
+                table,
+                channel,
+                user,
+                configuration: trigger.configuration,
+                row: payload,
+                ...(payload || {}),
+              }));
+          }
         } catch (e) {
           Crash.create(e, {
             url: "/",
@@ -513,6 +560,94 @@ class Trigger implements AbstractTrigger {
   async getTags(): Promise<Array<AbstractTag>> {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ trigger_id: this.id });
+  }
+
+  static get abbreviated_actions() {
+    const { getState } = require("../db/state");
+
+    return Object.entries(getState().actions).map(([k, v]: [string, any]) => {
+      const hasConfig = !!v.configFields;
+      const requireRow = !!v.requireRow;
+      return {
+        name: k,
+        hasConfig,
+        requireRow,
+        namespace: v.namespace,
+      };
+    });
+  }
+
+  static trigger_actions({
+    tableTriggers,
+    apiNeverTriggers,
+  }: {
+    tableTriggers?: number;
+    apiNeverTriggers?: boolean;
+  }): string[] {
+    let triggerActions: Array<string> = [];
+    if (tableTriggers) {
+      const trs = Trigger.find({
+        table_id: tableTriggers,
+      });
+      triggerActions = trs.map((tr) => tr.name as string);
+    }
+    if (apiNeverTriggers) {
+      const trs = Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+        table_id: null,
+      });
+      triggerActions = [
+        ...triggerActions,
+        ...trs.map((tr) => tr.name as string),
+      ];
+    }
+
+    return triggerActions.sort(comparingCaseInsensitiveValue);
+  }
+
+  static action_options({
+    notRequireRow,
+    tableTriggers,
+    apiNeverTriggers,
+    builtIns,
+    builtInLabel,
+  }: {
+    notRequireRow?: boolean;
+    tableTriggers?: number;
+    apiNeverTriggers?: boolean;
+    builtIns?: string[];
+    builtInLabel?: string;
+  }): any[] {
+    const triggerActions = Trigger.trigger_actions({
+      tableTriggers,
+      apiNeverTriggers,
+    });
+    const actions = Trigger.abbreviated_actions;
+    const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
+      .filter(Boolean) //Other last
+      .sort();
+    if (builtInLabel) action_namespaces.unshift(builtInLabel);
+    if (triggerActions.length) action_namespaces.push("Triggers");
+
+    action_namespaces.push("Other");
+
+    return action_namespaces.map((ns) => {
+      if (ns === "Triggers")
+        return { optgroup: true, label: ns, options: triggerActions };
+      if (ns === builtInLabel)
+        return { optgroup: true, label: builtInLabel, options: builtIns || [] };
+
+      const options = actions
+        .filter(
+          (a) =>
+            (ns === "Other" ? !a.namespace : a.namespace === ns) &&
+            (!notRequireRow || !a.requireRow)
+        )
+        .map((t) => t.name)
+        .sort();
+      if (ns === "Other") options.push("Multi-step action");
+      return { optgroup: true, label: ns, options };
+    });
   }
 }
 

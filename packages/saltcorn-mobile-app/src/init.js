@@ -290,34 +290,28 @@ const showLogin = async (alerts) => {
   await replaceIframe(page.content);
 };
 
-// const copyPrepopulatedDb = async () => {
-//   const srcDb = await getFile(
-//     "scdb.sqlite",
-//     `${cordova.file.applicationDirectory}public`
-//   );
-//   let dbDir = null;
-//   switch (cordova.platformId) {
-//     case "android":
-//       dbDir = await createDir(
-//         "databases",
-//         cordova.file.applicationStorageDirectory
-//       );
-//       break;
-//     case "ios":
-//       dbDir = await createDir(
-//         "LocalDatabase",
-//         cordova.file.applicationStorageDirectory + "Library"
-//       );
-//       break;
-//     default:
-//       throw new Error("Unsupported platform");
-//   }
-//   await copyFile(srcDb, dbDir);
-// };
+const takeLastLocation = () => {
+  let result = null;
+  const lastLocation = localStorage.getItem("lastLocation");
+  localStorage.removeItem("lastLocation");
+  if (lastLocation) {
+    try {
+      result = JSON.parse(lastLocation);
+    } catch (error) {
+      console.log(
+        `Unable to parse the last location: ${
+          error.message ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+  return result;
+};
 
 // device is ready
 export async function init() {
   try {
+    const lastLocation = takeLastLocation();
     document.addEventListener("resume", onResume, false);
     const config = await readJSON(
       "config",
@@ -429,12 +423,26 @@ export async function init() {
           });
         }
       }
-      addRoute({ route: entryPoint, query: undefined });
-      const page = await router.resolve({
-        pathname: entryPoint,
-        fullWrap: true,
-        alerts,
-      });
+      let page = null;
+      if (!lastLocation) {
+        addRoute({ route: entryPoint, query: undefined });
+        page = await router.resolve({
+          pathname: entryPoint,
+          fullWrap: true,
+          alerts,
+        });
+      } else {
+        addRoute({
+          route: lastLocation.route,
+          query: lastLocation.query,
+        });
+        page = await router.resolve({
+          pathname: lastLocation.route,
+          query: lastLocation.query,
+          fullWrap: true,
+          alerts,
+        });
+      }
       if (page.content) await replaceIframe(page.content, page.isFile);
     } else if (isPublicJwt(jwt)) {
       const config = state.mobileConfig;

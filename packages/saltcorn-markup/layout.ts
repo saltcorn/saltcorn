@@ -792,9 +792,13 @@ const render = ({
             class: [
               "row",
               segment.class,
-              sameWidths &&
-                `row-cols-1 row-cols-md-${segment.besides.length} g-4`,
-              "g-4",
+              sameWidths && `row-cols-1 row-cols-md-${segment.besides.length}`,
+              typeof segment.gx !== "undefined" &&
+                segment.gx !== null &&
+                `gx-${segment.gx}`,
+              typeof segment.gy !== "undefined" &&
+                segment.gy !== null &&
+                `gy-${segment.gy}`,
               !segment.style?.["margin-bottom"] && `mb-3`,
             ],
             style: segment.style,
@@ -829,7 +833,6 @@ const render = ({
             class: [
               "row",
               segment.class,
-              segment.style && segment.style.width ? null : "w-100",
               typeof segment.gx !== "undefined" &&
                 segment.gx !== null &&
                 `gx-${segment.gx}`,

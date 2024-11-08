@@ -44,7 +44,7 @@ const {
   InvalidConfiguration,
   satisfies,
   structuredClone,
-  isNode,
+  isWeb,
   objectToQueryString,
   stringToJSON,
   dollarizeObject,
@@ -351,9 +351,11 @@ class Page implements AbstractPage {
         }
         const url =
           segment.action_name === "GoBack"
-            ? `javascript:${isNode() ? "history.back()" : "parent.goBack()"}`
+            ? `javascript:${
+                isWeb(extraArgs.req) ? "history.back()" : "parent.goBack()"
+              }`
             : `javascript:${
-                isNode() ? "ajax_post_json" : "local_post_json"
+                isWeb(extraArgs.req) ? "ajax_post_json" : "local_post_json"
               }('/page/${pagename}/action/${segment.rndid}')`;
         const html = action_link(url, extraArgs.req, segment);
         segment.type = "blank";

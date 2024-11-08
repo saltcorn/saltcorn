@@ -79,7 +79,7 @@ class Library {
    * @returns {object}
    */
   suitableFor(what: string): any {
-    let notPage, notShow, notEdit, notFilter;
+    let notPage, notShow, notEdit, notFilter, notList;
     if (!this.layout) return false;
     const layout = this.layout.layout ? this.layout.layout : this.layout;
     traverseSync(layout, {
@@ -87,6 +87,7 @@ class Library {
         //eg: search - only page and filter
         notShow = true;
         notEdit = true;
+        notList = true;
       },
       dropdown_filter() {
         notShow = true;
@@ -97,23 +98,20 @@ class Library {
         notShow = true;
         notEdit = true;
         notPage = true;
+        notList = true;
       },
       field() {
-        notFilter = true;
         notPage = true;
       },
       view_link() {
         notFilter = true;
-        notEdit = true;
       },
       aggregation() {
-        notFilter = true;
         notEdit = true;
         notPage = true;
       },
       join_field() {
         notFilter = true;
-        notEdit = true;
         notPage = true;
       },
     });
@@ -122,6 +120,7 @@ class Library {
       show: !notShow,
       edit: !notEdit,
       filter: !notFilter,
+      list: !notList,
     }[what];
   }
 

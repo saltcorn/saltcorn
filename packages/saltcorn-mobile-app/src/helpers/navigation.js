@@ -94,11 +94,28 @@ function clearContentDiv() {
   }
 }
 
+function isModalOpen() {
+  const iframe = document.getElementById("content-iframe");
+  if (!iframe) return false;
+  const openModal = iframe.contentWindow.$("#scmodal.modal.show");
+  return openModal.length > 0;
+}
+function replaceModalContent(content) {
+  const iframe = document.getElementById("content-iframe");
+  if (!iframe) throw new Error("No iframe found");
+  const openModal = iframe.contentWindow.$("#scmodal.modal.show");
+  if (openModal.length === 0) throw new Error("No modal open");
+  const modalBody = openModal.find(".modal-body");
+  if (modalBody.length === 0) throw new Error("No modal content");
+  modalBody.html(content);
+}
+
 export async function handleRoute(route, query, files, data) {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   let routeAdded = false;
+  const isModal = isModalOpen();
   try {
-    clearContentDiv();
+    if (!isModal) clearContentDiv();
     if (
       mobileConfig.networkState === "none" &&
       mobileConfig.allowOfflineMode &&
@@ -140,7 +157,9 @@ export async function handleRoute(route, query, files, data) {
           );
         }
       } else if (page.content) {
-        if (!page.replaceIframe) await replaceIframeInnerContent(page.content);
+        if (isModal) replaceModalContent(page.content);
+        else if (!page.replaceIframe)
+          await replaceIframeInnerContent(page.content);
         else await replaceIframe(page.content, page.isFile);
       } else {
         showAlerts([

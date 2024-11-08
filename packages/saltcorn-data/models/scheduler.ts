@@ -40,6 +40,8 @@ const intervalIsNow = async (name: string): Promise<boolean> => {
 };
 
 const regexHHMM = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+const regexDDHHMM = /^([a-zA-Z]*) ([0-1]?[0-9]|2[0-3]) ([0-5][0-9])$/;
+
 /**
  * @param {string} name
  * @param {number} hours
@@ -57,6 +59,27 @@ const getDailyTriggersDueNow = (tickSeconds: number): Array<Trigger> => {
     time_to_run.setHours(+m[1]);
     time_to_run.setMinutes(+m[2]);
     const now = new Date();
+    const nextTick = new Date();
+    nextTick.setSeconds(nextTick.getSeconds() + tickSeconds);
+    return time_to_run >= now && time_to_run < nextTick;
+  });
+};
+
+const getWeeklyTriggersDueNow = (tickSeconds: number): Array<Trigger> => {
+  let triggers = Trigger.find({ when_trigger: "Weekly" });
+
+  return triggers.filter((tr) => {
+    if (!tr.channel) return false;
+    const m = tr.channel.match?.(regexDDHHMM);
+    if (!m) return false;
+
+    const now = new Date();
+    if (m[1] !== now.toLocaleString("en-us", { weekday: "long" })) return false;
+
+    const time_to_run = new Date();
+    time_to_run.setUTCHours(+m[2]);
+    time_to_run.setMinutes(+m[3]);
+
     const nextTick = new Date();
     nextTick.setSeconds(nextTick.getSeconds() + tickSeconds);
     return time_to_run >= now && time_to_run < nextTick;
@@ -89,6 +112,11 @@ const getIntervalTriggersDueNow = async (
   if (name === "Daily") {
     triggers = triggers.filter(
       (tr) => !tr.channel || !tr.channel.match?.(regexHHMM)
+    );
+  }
+  if (name === "Weekly") {
+    triggers = triggers.filter(
+      (tr) => !tr.channel || !tr.channel.match?.(regexDDHHMM)
     );
   }
   due.setHours(due.getHours() + hours);
@@ -199,6 +227,7 @@ const runScheduler = async ({
         const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);
         const trsDaily = await getIntervalTriggersDueNow("Daily", 24);
         const trsDailyNowTime = getDailyTriggersDueNow(tickSeconds);
+        const trsWeeklyNowTime = getWeeklyTriggersDueNow(tickSeconds);
         const trsWeekly = await getIntervalTriggersDueNow("Weekly", 24 * 7);
         const allTriggers = [
           ...triggers,
@@ -206,6 +235,7 @@ const runScheduler = async ({
           ...trsDaily,
           ...trsWeekly,
           ...trsDailyNowTime,
+          ...trsWeeklyNowTime,
         ];
         for (const trigger of allTriggers) {
           try {
@@ -265,4 +295,4 @@ const runScheduler = async ({
   }
 };
 
-export = runScheduler;
+export = { runScheduler, getDailyTriggersDueNow, getWeeklyTriggersDueNow };

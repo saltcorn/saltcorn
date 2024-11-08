@@ -1103,15 +1103,20 @@ router.post(
       res.redirect("/auth/twofa/login/totp");
       return;
     }
+    let maxAge = null;
     if (req.session.cookie)
       if (req.body.remember) {
-        const setDur = +getState().getConfig("cookie_duration_remember", 0);
-        if (setDur) req.session.cookie.maxAge = setDur * 60 * 60 * 1000;
-        else req.session.cookie.expires = false;
+        const setDur = +getState().getConfig("cookie_duration_remember", 720);
+        if (setDur) {
+          maxAge = setDur * 60 * 60 * 1000;
+          req.session.cookie.maxAge = maxAge;
+        } else req.session.cookie.expires = false;
       } else {
-        const setDur = +getState().getConfig("cookie_duration", 0);
-        if (setDur) req.session.cookie.maxAge = setDur * 60 * 60 * 1000;
-        else req.session.cookie.expires = false;
+        const setDur = +getState().getConfig("cookie_duration", 720);
+        if (setDur) {
+          maxAge = setDur * 60 * 60 * 1000;
+          req.session.cookie.maxAge = maxAge;
+        } else req.session.cookie.expires = false;
       }
     const session_id = getSessionId(req);
 
@@ -1119,7 +1124,7 @@ router.post(
       session_id,
       old_session_id: req.old_session_id,
     });
-    res?.cookie?.("loggedin", "true");
+    res?.cookie?.("loggedin", "true", maxAge ? { maxAge } : undefined);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.smr) {
       const dbUser = await User.findOne({ id: req.user.id });
@@ -1128,7 +1133,10 @@ router.post(
     }
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
-    } else if (req.body.dest && is_relative_url(req.body.dest)) {
+    } else if (
+      req.body.dest &&
+      is_relative_url(decodeURIComponent(req.body.dest))
+    ) {
       res.redirect(decodeURIComponent(req.body.dest));
     } else res.redirect("/");
   })

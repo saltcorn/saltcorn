@@ -186,7 +186,11 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
         disabled: isEdit,
-        showIf: { viewtemplate: hasTable },
+        showIf: isEdit
+          ? hasTable.includes(values.viewtemplate)
+            ? undefined
+            : { nosuchvar: true }
+          : { viewtemplate: hasTable },
       }),
       new Field({
         name: "min_role",
@@ -242,7 +246,11 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
             mapObjectValues(slugOptions, (lvs) => lvs.map((lv) => lv.label)),
           ],
         },
-        showIf: { viewtemplate: hasTable },
+        showIf: isEdit
+          ? hasTable.includes(values.viewtemplate)
+            ? undefined
+            : { nosuchvar: true }
+          : { viewtemplate: hasTable },
       }),
       new Field({
         name: "no_menu",
@@ -758,7 +766,8 @@ router.post(
       )
     );
     let redirectTarget =
-      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : "/viewedit";
     res.redirect(redirectTarget);
@@ -783,7 +792,8 @@ router.post(
       req.__("View %s duplicated as %s", view.name, newview.name)
     );
     let redirectTarget =
-      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : "/viewedit";
     res.redirect(redirectTarget);
@@ -804,7 +814,8 @@ router.post(
     await View.delete({ id });
     req.flash("success", req.__("View deleted"));
     let redirectTarget =
-      req.query.on_done_redirect && is_relative_url(req.query.on_done_redirect)
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : "/viewedit";
     res.redirect(redirectTarget);
@@ -902,7 +913,7 @@ router.post(
       req.flash("success", message);
       let redirectTarget =
         req.query.on_done_redirect &&
-        is_relative_url(req.query.on_done_redirect)
+        is_relative_url("/" + req.query.on_done_redirect)
           ? `/${req.query.on_done_redirect}`
           : "/viewedit";
       res.redirect(redirectTarget);

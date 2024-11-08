@@ -58,21 +58,6 @@ const {
 } = require("../markup/blockly.js");
 
 /**
- * @returns {Promise<object>}
- */
-const getActions = async () => {
-  return Object.entries(getState().actions).map(([k, v]) => {
-    const hasConfig = !!v.configFields;
-    const requireRow = !!v.requireRow;
-    return {
-      name: k,
-      hasConfig,
-      requireRow,
-    };
-  });
-};
-
-/**
  * Show list of Actions (Triggers) (HTTP GET)
  * @name get
  * @function
@@ -96,7 +81,7 @@ router.get(
       triggers = triggers.filter((t) => tagged_trigger_ids.has(t.id));
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
-    const actions = await getActions();
+    const actions = Trigger.abbreviated_actions;
     send_events_page({
       res,
       req,
@@ -156,7 +141,7 @@ const triggerForm = async (req, trigger) => {
     value: r.id,
     label: r.role,
   }));
-  const actions = await getActions();
+  const actions = Trigger.abbreviated_actions;
   const tables = await Table.find({});
   let id;
   let form_action;
@@ -168,14 +153,13 @@ const triggerForm = async (req, trigger) => {
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
-  const allActions = actions.map((t) => t.name);
-  allActions.push("Multi-step action");
+
+  const allActions = Trigger.action_options({ notRequireRow: false });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
-  const actionsNotRequiringRow = actions
-    .filter((a) => !a.requireRow)
-    .map((t) => t.name);
-  actionsNotRequiringRow.push("Multi-step action");
+  const actionsNotRequiringRow = Trigger.action_options({
+    notRequireRow: true,
+  });
 
   Trigger.when_options.forEach((t) => {
     if (table_triggers.includes(t)) action_options[t] = allActions;
@@ -235,6 +219,13 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Time of day"),
         input_type: "time_of_day",
         showIf: { when_trigger: "Daily" },
+        sublabel: req.__("UTC timezone"),
+      },
+      {
+        name: "channel",
+        label: req.__("Time to run"),
+        input_type: "time_of_week",
+        showIf: { when_trigger: "Weekly" },
         sublabel: req.__("UTC timezone"),
       },
       {
@@ -555,7 +546,10 @@ router.get(
     let trigger;
     let id = parseInt(idorname);
     if (id) trigger = await Trigger.findOne({ id });
-    else trigger = await Trigger.findOne({ name: idorname });
+    else {
+      trigger = await Trigger.findOne({ name: idorname });
+      id = trigger.id;
+    }
 
     if (!trigger) {
       req.flash("warning", req.__("Action not found"));
@@ -761,7 +755,7 @@ router.post(
       req.flash("success", req.__("Action configuration saved"));
       res.redirect(
         req.query.on_done_redirect &&
-          is_relative_url(req.query.on_done_redirect)
+          is_relative_url("/" + req.query.on_done_redirect)
           ? `/${req.query.on_done_redirect}`
           : "/actions/"
       );

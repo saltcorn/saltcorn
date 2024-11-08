@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/plugins
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 
 /**
  * Plugins list and update command
@@ -15,11 +15,14 @@ class PluginsCommand extends Command {
    */
   async run() {
     const db = require("@saltcorn/data/db");
-    const { requirePlugin } = require("@saltcorn/server/load_plugins");
+    const {
+      requirePlugin,
+      ensurePluginSupport,
+    } = require("@saltcorn/server/load_plugins");
     const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     const Plugin = require("@saltcorn/data/models/plugin");
     var plugins = [];
-    const { flags } = this.parse(PluginsCommand);
+    const { flags } = await this.parse(PluginsCommand);
 
     const tenantList = [
       db.connectObj.default_schema,
@@ -57,10 +60,19 @@ class PluginsCommand extends Command {
     if (flags.upgrade || flags.dryRun) {
       var new_versions = {};
       for (let plugin of plugins) {
-        plugin.version = "latest";
-        const { version } = await requirePlugin(plugin, true);
-        //console.log(plinfo)
-        if (version) new_versions[plugin.location] = version;
+        const oldVersion = plugin.version;
+        try {
+          plugin.version = "latest";
+          await ensurePluginSupport(plugin, true);
+          const { version } = await requirePlugin(plugin, true);
+          //console.log(plinfo)
+          if (version) new_versions[plugin.location] = version;
+        } catch (e) {
+          plugin.version = oldVersion;
+          console.log(
+            `Unable to find a supported version for '${plugin.location}'`
+          );
+        }
       }
       console.log(new_versions);
       for (const domain of tenantList) {
@@ -109,19 +121,19 @@ class PluginsCommand extends Command {
  */
 PluginsCommand.flags = {
   //list: flags.boolean({ char: "l", description: "List" }),
-  upgrade: flags.boolean({ char: "u", description: "Upgrade" }),
-  dryRun: flags.boolean({ char: "d", description: "Upgrade dry-run" }),
-  verbose: flags.boolean({
+  upgrade: Flags.boolean({ char: "u", description: "Upgrade" }),
+  dryRun: Flags.boolean({ char: "d", description: "Upgrade dry-run" }),
+  verbose: Flags.boolean({
     char: "v",
     description: "Verbose output",
     default: false,
   }),
-  force: flags.boolean({
+  force: Flags.boolean({
     char: "f",
     description: "Force update",
     default: false,
   }),
-  name: flags.string({
+  name: Flags.string({
     char: "n",
     description: "Plugin name",
   }),

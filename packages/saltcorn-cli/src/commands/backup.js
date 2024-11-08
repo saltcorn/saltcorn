@@ -3,7 +3,7 @@
  * @category saltcorn-cli
  * @module commands/backup
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const { execSync } = require("child_process");
 const dateFormat = require("dateformat");
 const os = require("os");
@@ -26,7 +26,7 @@ class BackupCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags } = this.parse(BackupCommand);
+    const { flags } = await this.parse(BackupCommand);
 
     if (flags.tenant) {
       // for tenant do saltcorn backup
@@ -106,16 +106,16 @@ BackupCommand.help = `Backup the PostgreSQL database to a file with pg_dump or s
  * @type {object}
  */
 BackupCommand.flags = {
-  verbose: flags.boolean({ char: "v", description: "Verbose" }),
-  output: flags.string({
+  verbose: Flags.boolean({ char: "v", description: "Verbose" }),
+  output: Flags.string({
     char: "o",
     description: "output filename",
   }),
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "Backup tenant in saltcorn zip format",
   }),
-  zip: flags.boolean({
+  zip: Flags.boolean({
     char: "z",
     description: "Backup public in saltcorn zip format",
   }),

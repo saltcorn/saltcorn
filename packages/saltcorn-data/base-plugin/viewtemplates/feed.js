@@ -364,6 +364,10 @@ const configuration_workflow = (req) =>
                     .map((s) => code(s))
                     .join(", "),
                 type: "String",
+                help: {
+                  topic: "Inclusion Formula",
+                  context: { table_name: table.name },
+                },
               },
               {
                 name: "exclusion_relation",
@@ -511,7 +515,7 @@ const run = async (
   },
   state,
   extraArgs,
-  { countRowsQuery }
+  { countRowsQuery, runManyQuery }
 ) => {
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
@@ -526,12 +530,12 @@ const run = async (
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: Single item view not specified`
     );
-  const sview = await View.findOne({ name: show_view });
+  const sview = View.findOne({ name: show_view });
   if (!sview)
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: cannot find view ${show_view}`
     );
-  const q = await stateFieldsToQuery({ state, fields });
+  const q = stateFieldsToQuery({ state, fields });
   let qextra = {};
   if (!q.orderBy) {
     qextra.orderBy = order_field;
@@ -566,6 +570,7 @@ const run = async (
       : {};
     const relRows = await relTable.getRows(relWhere);
     if (!qextra.where) qextra.where = {};
+    // TODO sqlite not in
     qextra.where.id = { not: { in: relRows.map((r) => r[relfld]) } };
   }
   qextra.joinFields = {};
@@ -579,14 +584,12 @@ const run = async (
     qextra.joinFields,
     fields
   );
-  const sresp = await sview.runMany(state, {
-    ...extraArgs,
-    ...qextra,
-  });
+  const { req, res, ...selectOpts } = extraArgs;
+  const sresp = await runManyQuery(state, qextra, selectOpts);
   let paginate = "";
 
   if (sresp.length === 0 && empty_view) {
-    const emptyView = await View.findOne({ name: empty_view });
+    const emptyView = View.findOne({ name: empty_view });
     if (!emptyView)
       throw new InvalidConfiguration(
         `View ${viewname} incorrectly configured: cannot find empty view ${empty_view}`
@@ -858,16 +861,27 @@ module.exports = {
   queries: ({
     table_id,
     viewname,
-    configuration: { columns, default_state },
+    configuration: { show_view },
     req,
+    res,
   }) => ({
     async countRowsQuery(state) {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
-      const where = await stateFieldsToWhere({ fields, state, table });
+      const where = stateFieldsToWhere({ fields, state, table });
       return await table.countRows(where, {
         forUser: req?.user,
         forPublic: !req?.user,
+      });
+    },
+    async runManyQuery(state, qextra, selectOpts0) {
+      // remove where
+      const { where, ...selectOpts } = selectOpts0;
+      const sview = View.findOne({ name: show_view });
+      const extraArgs = { req, res, ...selectOpts };
+      return await sview.runMany(state, {
+        ...extraArgs,
+        ...qextra,
       });
     },
   }),

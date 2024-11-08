@@ -294,11 +294,12 @@ router.get(
           } else {
             const tbl_fields = table.getFields();
             readState(req_query, tbl_fields, req);
-            const qstate = await stateFieldsToWhere({
+            const qstate = stateFieldsToWhere({
               fields: tbl_fields,
               approximate: !!approximate,
               state: req_query,
               table,
+              prefix: "a.",
             });
             const joinFields = {};
             const derefs = Array.isArray(dereference)
@@ -380,8 +381,11 @@ router.all(
             else if (req.headers?.scgotourl)
               res.redirect(req.headers?.scgotourl);
             else {
-              if (trigger.configuration?._raw_output) res.json({ resp });
-              else res.json({ success: true, data: resp });
+              if (trigger.configuration?._raw_output) res.json(resp);
+              else if (resp?.error) {
+                const { error, ...rest } = resp;
+                res.json({ success: false, error, data: rest });
+              } else res.json({ success: true, data: resp });
             }
           } catch (e) {
             Crash.create(e, req);

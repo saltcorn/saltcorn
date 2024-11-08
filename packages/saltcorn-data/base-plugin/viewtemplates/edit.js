@@ -38,11 +38,13 @@ const {
 const {
   InvalidConfiguration,
   isNode,
-  isOfflineMode,
+  isWeb,
   mergeIntoWhere,
   dollarizeObject,
   getSessionId,
   interpolate,
+  asyncMap,
+  removeEmptyStrings,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -79,7 +81,6 @@ const {
   translateLayout,
   traverseSync,
 } = require("../../models/layout");
-const { asyncMap, isWeb, removeEmptyStrings } = require("../../utils");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
 const { prepare_update_row } = require("../../web-mobile-commons");
@@ -128,28 +129,17 @@ const configuration_workflow = (req) =>
           const stateActions = Object.entries(getState().actions).filter(
             ([k, v]) => !v.disableInBuilder
           );
-          const actions = [
-            ...builtInActions,
-            ...stateActions.map(([k, v]) => k),
-          ];
-          const triggerActions = [];
-          (
-            await Trigger.find({
-              when_trigger: { or: ["API call", "Never"] },
-              table_id: null,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
           });
-          (
-            await Trigger.find({
-              table_id: context.table_id,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+          const actions = Trigger.action_options({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            builtInLabel: "Edit Actions",
+            builtIns: builtInActions,
           });
+
           const actionConfigForms = {
             Delete: [
               {
@@ -517,7 +507,7 @@ const run = async (
   { res, req },
   { editQuery }
 ) => {
-  const mobileReferrer = isNode() ? undefined : req?.headers?.referer;
+  const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
   return await editQuery(state, mobileReferrer);
 };
 
@@ -938,7 +928,7 @@ const render = async ({
   if (row) {
     form.values = row;
     const file_fields = form.fields.filter((f) => f.type === "File");
-    if (isNode()) {
+    if (isWeb(req)) {
       for (const field of file_fields) {
         if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
           const file = await File.findOne({ id: row[field.name] });
@@ -1034,10 +1024,21 @@ const render = async ({
       ? script(
           domReady(`
     $("#scmodal").on("hidden.bs.modal", function (e) {
-      setTimeout(()=>location.reload(),0);
+     const on_close_reload_view = $("#scmodal").attr(
+        "data-on-close-reload-view"
+      );
+      if(on_close_reload_view)
+        reload_embedded_view(on_close_reload_view)
+      else
+        setTimeout(()=>location.reload(),0);
     });`)
         )
       : "";
+  if (actually_auto_save) {
+    for (const field of form.fields) {
+      if (field.fieldview === "select") field.in_auto_save = true;
+    }
+  }
   await form.fill_fkey_options(false, optionsQuery, req.user);
   await transformForm({
     form,
@@ -1164,6 +1165,7 @@ const runPost = async (
         if (req.xhr) {
           res.json({ error: ins_upd_error });
         } else {
+          await form.fill_fkey_options(false, optionsQuery, req.user);
           req.flash("error", text_attr(ins_upd_error));
           res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
         }
@@ -1776,12 +1778,12 @@ const prepare = async (
         row[field.name] = path_to_serve;
       }
     } else if (req.files && req.files[field.name]) {
-      if (!isNode() && !remote && req.files[field.name].name) {
+      if (!isWeb(req) && !remote && req.files[field.name].name) {
         throw new Error(
           "The mobile-app supports no local files, please use a remote table."
         );
       }
-      if (isNode()) {
+      if (isWeb(req)) {
         const file = await File.from_req_files(
           req.files[field.name],
           req.user ? req.user.id : null,
@@ -2026,7 +2028,7 @@ module.exports = {
       if (Object.keys(uniques).length > 0) {
         // add joinfields from certain locations if they are not fields in columns
         const joinFields = {};
-        const picked = picked_fields_to_query([], fields, layout, req);
+        const picked = picked_fields_to_query([], fields, layout, req, table);
         const colFields = new Set(
           columns.map((c) =>
             c.join_field ? c.join_field.split(".")[0] : c.field_name
@@ -2068,10 +2070,16 @@ module.exports = {
         columns,
         fields,
         undefined,
-        req
+        req,
+        table
       );
-      const qstate = await stateFieldsToWhere({ fields, state, table });
-      const q = await stateFieldsToQuery({ state, fields });
+      const qstate = stateFieldsToWhere({
+        fields,
+        state,
+        table,
+        prefix: "a.",
+      });
+      const q = stateFieldsToQuery({ state, fields });
       if (where) mergeIntoWhere(qstate, where);
       const rows = await table.getJoinedRows({
         where: qstate,

@@ -18,7 +18,7 @@ function monospace_block_click(e) {
 function copy_monospace_block(e) {
   let e1 = $(e).next("pre");
   let e2 = $(e1).next("pre");
-  if (!e2.length) return navigator.clipboard.writeText($(el).text());
+  if (!e2.length) return navigator.clipboard.writeText($(e1).text());
   const e1t = e1.text();
   const e2t = e2.text();
   if (e1t.length > e2t.length) return navigator.clipboard.writeText(e1t);
@@ -63,14 +63,20 @@ function reset_nearest_form(that) {
 
 function add_repeater(nm) {
   var es = $("div.form-repeat.repeat-" + nm);
-  var e = es.first();
+  const ncopy = es.length - 1;
+  var e = es.last();
   var newix = es.length;
   var newe = $(e).clone();
   newe.find("[name]").each(function (ix, element) {
     if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
-    var newnm = (element.name || "").replace("_0", "_" + newix);
-    var newid = (element.id || "").replace("_0", "_" + newix);
+    const oldnm = element.name || "";
+    var newnm = (element.name || "").replace("_" + ncopy, "_" + newix);
+    var newid = (element.id || "").replace("_" + ncopy, "_" + newix);
     $(element).attr("name", newnm).attr("id", newid);
+    if (element.tagName === "SELECT") {
+      const original = document.getElementsByName(oldnm)[0];
+      if (original) element.selectedIndex = original.selectedIndex;
+    }
   });
   newe.appendTo($("div.repeats-" + nm));
   newe.find("[data-on-cloned]").each(function (ix, element) {
@@ -78,6 +84,27 @@ function add_repeater(nm) {
       return eval(str);
     }).call(element, $(element).attr("data-on-cloned"));
   });
+}
+
+function rep_del(e) {
+  var myrep = $(e).closest(".form-repeat");
+  var ix = myrep.index();
+  var parent = myrep.parent();
+  myrep.remove();
+  parent.children().each(function (childix, element) {
+    if (childix > ix) {
+      reindex(element, childix, childix - 1);
+    }
+  });
+}
+
+function reindex(element, oldix, newix) {
+  $(element).html(
+    $(element)
+      .html()
+      .split("_" + oldix + '"')
+      .join("_" + newix + '"')
+  );
 }
 
 const _apply_showif_plugins = [];
@@ -115,16 +142,18 @@ function apply_showif() {
       }
       if (!e.data("data-closest-form-ns"))
         e.data("data-closest-form-ns", e.closest(".form-namespace"));
-      if (to_show(e))
-        e.show()
-          .find("input, textarea, button, select, [data-show-if]")
-          .prop("disabled", e.attr("data-disabled") || false);
-      else
-        e.hide()
-          .find(
-            "input:enabled, textarea:enabled, button:enabled, select:enabled, [data-show-if]:not([disabled])"
-          )
-          .prop("disabled", true);
+      if (to_show(e)) {
+        e.find("input, textarea, button, select, [data-show-if]").prop(
+          "disabled",
+          e.attr("data-disabled") || false
+        );
+        element.style.display = "";
+      } else {
+        e.find(
+          "input:enabled, textarea:enabled, button:enabled, select:enabled, [data-show-if]:not([disabled])"
+        ).prop("disabled", true);
+        element.style.setProperty("display", "none", "important");
+      }
     } catch (e) {
       console.error(e);
     }
@@ -155,8 +184,21 @@ function apply_showif() {
     var current = e.attr("data-selected") || e.val();
     //console.log({ field: e.attr("name"), target: data[0], val, current });
     e.empty();
+    //TODO clean repetition in following cose
     (options || []).forEach((o) => {
-      if (
+      if (o && o.optgroup) {
+        const opts = o.options
+          .map(
+            (innero) =>
+              `<option ${
+                `${current}` === `${innero.value || innero}` ? "selected " : ""
+              }value="${innero.value || innero}">${
+                innero.label || innero
+              }</option>`
+          )
+          .join("");
+        e.append($(`<optgroup label="${o.label}">` + opts + "</optgroup>"));
+      } else if (
         !(o && typeof o.label !== "undefined" && typeof o.value !== "undefined")
       ) {
         if (`${current}` === `${o}`)
@@ -303,25 +345,27 @@ function apply_showif() {
         ...cache,
         [qs]: "fetching",
       });
-      $.ajax(`/api/${dynwhere.table}?${qs}`).then((resp) => {
-        if (resp.success) {
-          if (window._sc_loglevel > 4)
-            console.log("dynwhere fetch", qs, resp.success);
+      $.ajax(`/api/${dynwhere.table}?${qs}`)
+        .then((resp) => {
+          if (resp.success) {
+            if (window._sc_loglevel > 4)
+              console.log("dynwhere fetch", qs, resp.success);
 
-          activate(resp.success, qs);
-          const cacheNow = e.prop("data-fetch-options-cache") || {};
-          e.prop("data-fetch-options-cache", {
-            ...cacheNow,
-            [qs]: resp.success,
-          });
-        } else {
-          const cacheNow = e.prop("data-fetch-options-cache") || {};
-          e.prop("data-fetch-options-cache", {
-            ...cacheNow,
-            [qs]: undefined,
-          });
-        }
-      });
+            activate(resp.success, qs);
+            const cacheNow = e.prop("data-fetch-options-cache") || {};
+            e.prop("data-fetch-options-cache", {
+              ...cacheNow,
+              [qs]: resp.success,
+            });
+          } else {
+            const cacheNow = e.prop("data-fetch-options-cache") || {};
+            e.prop("data-fetch-options-cache", {
+              ...cacheNow,
+              [qs]: undefined,
+            });
+          }
+        })
+        .fail(checkNetworkError);
     }
   });
   $("[data-filter-table]").each(function (ix, element) {
@@ -421,7 +465,14 @@ function apply_showif() {
     navigator.systemLanguage ||
     "en";
   window.detected_locale = locale;
-  const parse = (s) => JSON.parse(decodeURIComponent(s));
+  const parse = (s, def = {}) => {
+    try {
+      return JSON.parse(decodeURIComponent(s));
+    } catch (e) {
+      console.error("failed to parse time format", e);
+      return def;
+    }
+  };
   $("time[locale-time-options]").each(function () {
     var el = $(this);
     var date = new Date(el.attr("datetime"));
@@ -443,8 +494,9 @@ function apply_showif() {
   $("time[locale-date-format]").each(function () {
     var el = $(this);
     var date = el.attr("datetime");
-    const format = parse(el.attr("locale-date-format"));
-    el.text(dayjs(date).format(format));
+    const format = parse(el.attr("locale-date-format"), "");
+    if (format) el.text(dayjs(date).format(format));
+    else el.text(dayjs(date));
   });
 
   _apply_showif_plugins.forEach((p) => p());
@@ -522,6 +574,7 @@ function get_form_record(e_in, select_labels) {
             $(e_in).prop("data-join-values", jvs);
             apply_showif();
           },
+          error: checkNetworkError,
         });
       }
       $(e_in).prop("data-join-key-values", keyVals);
@@ -548,27 +601,6 @@ function showIfFormulaInputs(e, fml) {
       )}: ${e.message}`
     );
   }
-}
-
-function rep_del(e) {
-  var myrep = $(e).closest(".form-repeat");
-  var ix = myrep.index();
-  var parent = myrep.parent();
-  parent.children().each(function (childix, element) {
-    if (childix > ix) {
-      reindex(element, childix, childix - 1);
-    }
-  });
-  myrep.remove();
-}
-
-function reindex(element, oldix, newix) {
-  $(element).html(
-    $(element)
-      .html()
-      .split("_" + oldix)
-      .join("_" + newix)
-  );
 }
 
 function get_form_subset_record(e) {
@@ -655,6 +687,174 @@ function escapeHtml(text) {
 function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
+
+function doMobileTransforms() {
+  const replaceAttr = (el, attr, web, mobile) => {
+    const jThis = $(el);
+    const skip = jThis.attr("skip-mobile-adjust");
+    if (!skip) {
+      const attrVal = jThis.attr(attr);
+      if (attrVal?.includes(web)) {
+        jThis.attr(attr, attrVal.replace(web, mobile));
+      }
+    }
+  };
+
+  const replacers = {
+    href: [
+      {
+        web: "javascript:history.back()",
+        mobile: "javascript:parent.goBack()",
+      },
+      {
+        web: "javascript:ajax_modal",
+        mobile: "javascript:mobile_modal",
+      },
+    ],
+    onclick: [
+      {
+        web: "history.back()",
+        mobile: "parent.goBack()",
+      },
+      {
+        web: "ajax_modal",
+        mobile: "mobile_modal",
+      },
+      {
+        web: "ajax_post_",
+        mobile: "local_post_",
+      },
+    ],
+  };
+
+  $("a").each(function () {
+    let path = $(this).attr("href") || "";
+    if (path.startsWith("http")) {
+      const url = new URL(path);
+      path = `${url.pathname}${url.search}`;
+    }
+    if (path.startsWith("/view/") || path.startsWith("/page/")) {
+      const jThis = $(this);
+      const skip = jThis.attr("skip-mobile-adjust");
+      if (!skip) {
+        jThis.removeAttr("href");
+        jThis.attr("onclick", `execLink('${path}')`);
+        if (jThis.find("i,img").length === 0 && !jThis.css("color")) {
+          jThis.css(
+            "color",
+            "rgba(var(--bs-link-color-rgb),var(--bs-link-opacity,1))"
+          );
+        }
+      }
+    } else if (path.includes("/files/serve/")) {
+      const tokens = path.split("/files/serve/");
+      if (tokens.length > 1)
+        $(this).attr("href", `javascript:openFile('${tokens[1]}')`);
+    } else if (path.includes("/files/download/")) {
+      const tokens = path.split("/files/download/");
+      if (tokens.length > 1)
+        $(this).attr(
+          "href",
+          `javascript:notifyAlert('File donwloads are not supported.')`
+        );
+    } else {
+      for (const [k, v] of Object.entries(replacers)) {
+        for ({ web, mobile } of v) replaceAttr(this, k, web, mobile);
+      }
+    }
+  });
+
+  $("[mobile-youtube-video]").each(function () {
+    const jThis = $(this);
+    const src = jThis.attr("src");
+    if (src) {
+      const rndid = `m-video-${Math.floor(Math.random() * 16777215).toString(
+        16
+      )}`;
+      const url = new URL(src);
+      const path = url.pathname;
+      const imageId = path.split("/").pop();
+      const thumbnailContainer = document.createElement("div");
+      thumbnailContainer.className = "mobile-thumbnail-container";
+      thumbnailContainer.id = rndid;
+      const img = document.createElement("img");
+      img.src = `https://img.youtube.com/vi/${imageId}/0.jpg`;
+      img.style = "width: 100%; max-width: 600px;";
+      img.id = rndid;
+      img.setAttribute(
+        "onclick",
+        `openInAppBrowser('${src.replace(
+          "com/embed",
+          "com/watch"
+        )}', '${rndid}')`
+      );
+      thumbnailContainer.appendChild(img);
+      const spinner = document.createElement("div");
+      spinner.className = "mobile-thumbnail-spinner-overlay";
+      const spinnerInner = document.createElement("div");
+      spinnerInner.className = "d-none spinner-border text-light";
+      spinnerInner.setAttribute("role", "status");
+      spinner.appendChild(spinnerInner);
+      thumbnailContainer.appendChild(spinner);
+      jThis.replaceWith(thumbnailContainer);
+    }
+  });
+
+  $("button").each(function () {
+    for (const [k, v] of Object.entries({ onclick: replacers.onclick })) {
+      for ({ web, mobile } of v) replaceAttr(this, k, v.web, v.mobile);
+    }
+  });
+
+  $("[mobile-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-img-path");
+      const base64Encoded = await parent.loadEncodedFile(fileId);
+      this.src = base64Encoded;
+    }
+  });
+
+  $("[mobile-bg-img-path]").each(async function () {
+    if (parent.loadEncodedFile) {
+      const fileId = $(this).attr("mobile-bg-img-path");
+      if (fileId) {
+        const base64Encoded = await parent.loadEncodedFile(fileId);
+        this.style.backgroundImage = `url("${base64Encoded}")`;
+      }
+    }
+  });
+
+  $("img:not([mobile-img-path]):not([mobile-bg-img-path])").each(
+    async function () {
+      if (parent.loadEncodedFile) {
+        const jThis = $(this);
+        const src = jThis.attr("src");
+        if (src?.includes("/files/serve/")) {
+          const tokens = src.split("/files/serve/");
+          if (tokens.length > 1) {
+            const fileId = tokens[1];
+            const base64Encoded = await parent.loadEncodedFile(fileId);
+            this.src = base64Encoded;
+          }
+        } else if (src?.includes("/files/resize/")) {
+          const tokens = src.split("/files/resize/");
+          if (tokens.length > 1) {
+            const idAndDims = tokens[1].split("/");
+            const width = idAndDims[0];
+            const height = idAndDims.length > 2 ? idAndDims[1] : undefined;
+            const fileId = idAndDims[idAndDims.length - 1];
+            const style = { width: `${width || 50}px` };
+            if (height > 0) style.height = `${height}px`;
+            const base64Encoded = await parent.loadEncodedFile(fileId);
+            this.src = base64Encoded;
+            jThis.css(style);
+          }
+        }
+      }
+    }
+  );
+}
+
 function initialize_page() {
   if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
   const isNode = getIsNode();
@@ -754,31 +954,33 @@ function initialize_page() {
       })
     );
     const doAjaxOptionsFetch = (tblName, target) => {
-      $.ajax(`/api/${tblName}`).then((resp) => {
-        if (resp.success) {
-          resp.success.sort((a, b) =>
-            a[target]?.toLowerCase?.() > b[target]?.toLowerCase?.() ? 1 : -1
-          );
+      $.ajax(`/api/${tblName}`)
+        .then((resp) => {
+          if (resp.success) {
+            resp.success.sort((a, b) =>
+              a[target]?.toLowerCase?.() > b[target]?.toLowerCase?.() ? 1 : -1
+            );
 
-          const selopts = resp.success.map(
-            (r) =>
-              `<option ${current == r.id ? `selected ` : ``}value="${
-                r.id
-              }">${escapeHtml(r[target])}</option>`
-          );
-          $(this).replaceWith(
-            `<form method="post" action="${url}" ${
-              ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
-            }>
+            const selopts = resp.success.map(
+              (r) =>
+                `<option ${current == r.id ? `selected ` : ``}value="${
+                  r.id
+                }">${escapeHtml(r[target])}</option>`
+            );
+            $(this).replaceWith(
+              `<form method="post" action="${url}" ${
+                ajax ? `onsubmit="inline_ajax_submit(event, '${opts}')"` : ""
+              }>
           <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
           <select name="${key}" value="${current}">${selopts}
           </select>
           <button type="submit" class="btn btn-sm btn-primary">OK</button>
           <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
           </form>`
-          );
-        }
-      });
+            );
+          }
+        })
+        .fail(checkNetworkError);
     };
     if (type === "JSON" && schema && schema.type.startsWith("Key to ")) {
       const tblName = schema.type.replace("Key to ", "");
@@ -829,59 +1031,7 @@ function initialize_page() {
       </form>`
       );
   });
-  if (!isNode) {
-    $("[mobile-img-path]").each(async function () {
-      if (parent.loadEncodedFile) {
-        const fileId = $(this).attr("mobile-img-path");
-        const base64Encoded = await parent.loadEncodedFile(fileId);
-        this.src = base64Encoded;
-      }
-    });
-
-    $("[mobile-bg-img-path]").each(async function () {
-      if (parent.loadEncodedFile) {
-        const fileId = $(this).attr("mobile-bg-img-path");
-        if (fileId) {
-          const base64Encoded = await parent.loadEncodedFile(fileId);
-          this.style.backgroundImage = `url("${base64Encoded}")`;
-        }
-      }
-    });
-
-    $("a").each(function () {
-      let path = $(this).attr("href") || "";
-      if (path.startsWith("http")) {
-        const url = new URL(path);
-        path = `${url.pathname}${url.search}`;
-      }
-      if (path.startsWith("/view/") || path.startsWith("/page/")) {
-        const jThis = $(this);
-        const skip = jThis.attr("skip-mobile-adjust");
-        if (!skip) {
-          jThis.removeAttr("href");
-          jThis.attr("onclick", `execLink('${path}')`);
-          if (jThis.find("i,img").length === 0 && !jThis.css("color")) {
-            jThis.css(
-              "color",
-              "rgba(var(--bs-link-color-rgb),var(--bs-link-opacity,1))"
-            );
-          }
-        }
-      }
-    });
-
-    $("img").each(async function () {
-      if (parent.loadEncodedFile) {
-        const jThis = $(this);
-        const src = jThis.attr("src");
-        if (src?.startsWith("/files/serve/")) {
-          const fileId = src.replace("/files/serve/", "");
-          const base64Encoded = await parent.loadEncodedFile(fileId);
-          this.src = base64Encoded;
-        }
-      }
-    });
-  }
+  if (!isNode) doMobileTransforms();
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
 
@@ -1011,7 +1161,8 @@ function initialize_page() {
           initialize_page();
         },
         error: function (res) {
-          notifyAlert({ type: "danger", text: res.responseText });
+          if (!checkNetworkError(res))
+            notifyAlert({ type: "danger", text: res.responseText });
           if ($e.html() === "Loading...") $e.html("");
         },
       });
@@ -1086,9 +1237,10 @@ function inline_ajax_submit(e, opts1) {
       inline_submit_success(e, form, opts);
     },
     error: function (e) {
-      ajax_done(
-        e.responseJSON || { error: "Unknown error: " + e.responseText }
-      );
+      if (!checkNetworkError(e))
+        ajax_done(
+          e.responseJSON || { error: "Unknown error: " + e.responseText }
+        );
     },
   });
 }
@@ -1131,6 +1283,7 @@ function enable_codemirror(f) {
     dataType: "script",
     cache: true,
     success: f,
+    error: checkNetworkError,
   });
 }
 function tristateClick(e, required) {
@@ -1250,10 +1403,14 @@ function notifyAlert(note, spin) {
   if (typeof note == "string") {
     txt = note;
     type = "info";
-  } else {
+  } else if (note.text) {
     txt = note.text;
-    type = note.type;
+    type = note.type || "info";
+  } else {
+    type = "info";
+    txt = JSON.stringify(note, null, 2);
   }
+
   const { id, html } = buildToast(txt, type, spin);
   let $modal = $("#scmodal");
   if ($modal.length && $modal.hasClass("show"))
@@ -1438,7 +1595,8 @@ function reloadEmbeddedEditOwnViews(form, id) {
         initialize_page();
       },
       error: function (res) {
-        notifyAlert({ type: "danger", text: res.responseText });
+        if (!checkNetworkError(res))
+          notifyAlert({ type: "danger", text: res.responseText });
       },
     });
   });
@@ -1671,24 +1829,26 @@ function is_paging_param(key) {
   return key.endsWith("_page") || key.endsWith("_pagesize");
 }
 function check_saltcorn_notifications() {
-  $.ajax(`/notifications/count-unread`).then((resp) => {
-    if (resp.success) {
-      const n = resp.success;
-      const menu_item = $(`a.notify-menu-item`);
+  $.ajax(`/notifications/count-unread`)
+    .then((resp) => {
+      if (resp.success) {
+        const n = resp.success;
+        const menu_item = $(`a.notify-menu-item`);
 
-      menu_item.html(
-        `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
-      );
-      $(".user-nav-section").html(
-        `<i class="fa-fw mr-05 fas fa-user"></i>User (${n})`
-      );
-      $(".user-nav-section-with-span").html(
-        `<i class="fa-fw mr-05 fas fa-user"></i><span>User (${n})</span>`
-      );
-      window.update_theme_notification_count &&
-        window.update_theme_notification_count(n);
-    }
-  });
+        menu_item.html(
+          `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
+        );
+        $(".user-nav-section").html(
+          `<i class="fa-fw mr-05 fas fa-user"></i>User (${n})`
+        );
+        $(".user-nav-section-with-span").html(
+          `<i class="fa-fw mr-05 fas fa-user"></i><span>User (${n})</span>`
+        );
+        window.update_theme_notification_count &&
+          window.update_theme_notification_count(n);
+      }
+    })
+    .fail(checkNetworkError);
 }
 
 function disable_inactive_tab_inputs(id) {
@@ -1748,6 +1908,8 @@ function close_saltcorn_modal() {
   }
 }
 
+let _sc_currently_reloading;
+
 function reload_embedded_view(viewname, new_query_string) {
   const isNode = getIsNode();
   const updater = ($e, res) => {
@@ -1775,16 +1937,21 @@ function reload_embedded_view(viewname, new_query_string) {
       url = url.split("?")[0] + "?" + new_query_string;
     }
     if (isNode) {
+      if (url === _sc_currently_reloading) return;
+      _sc_currently_reloading = url;
       $.ajax(url, {
         headers: {
           pjaxpageload: "true",
           localizedstate: "true", //no admin bar
         },
         success: function (res, textStatus, request) {
+          _sc_currently_reloading = null;
           updater($e, res);
         },
         error: function (res) {
-          notifyAlert({ type: "danger", text: res.responseText });
+          _sc_currently_reloading = null;
+          if (!checkNetworkError(res))
+            notifyAlert({ type: "danger", text: res.responseText });
         },
       });
     } else {
@@ -1793,4 +1960,20 @@ function reload_embedded_view(viewname, new_query_string) {
       });
     }
   });
+}
+
+function update_time_of_week(nm) {
+  return function () {
+    const day = $(`#input${nm}__day`).val();
+    const flat = document.querySelector(`#input${nm}__time`)._flatpickr;
+
+    const time = flat.selectedDates?.[0];
+    let s;
+    if (time) {
+      const m = time.getMinutes();
+
+      s = `${day} ${time.getHours()} ${m < 10 ? `0${m}` : m}`;
+    } else s = day;
+    $(`#inputh${nm}`).val(s).trigger("change");
+  };
 }

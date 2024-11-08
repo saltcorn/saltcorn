@@ -24,6 +24,8 @@ const {
   InvalidConfiguration,
 
   mergeActionResults,
+  structuredClone,
+  mergeIntoWhere,
 } = require("./utils");
 const {
   jsexprToWhere,
@@ -1500,6 +1502,83 @@ const get_onetoone_views = async (table, viewname) => {
   return child_views;
 };
 
+const generate_joined_query = ({
+  table,
+  columns,
+  layout,
+  req,
+  state,
+  stateHash,
+  formulas,
+  include_fml,
+  user,
+  forPublic,
+  limit,
+  orderBy,
+  orderDesc,
+  joinFields,
+  aggregations,
+}) => {
+  const q = {};
+  if (joinFields) q.joinFields = joinFields;
+  if (aggregations) q.aggregations = aggregations;
+  const prefix = "a.";
+  const use_user = user || req?.user;
+  if (columns)
+    Object.assign(
+      q,
+      picked_fields_to_query(columns, table.fields, layout, req, table)
+    );
+
+  const use_state = structuredClone(state) || {};
+  readState(use_state, table.fields, req);
+  q.where = stateFieldsToWhere({
+    fields: table.fields,
+    state: use_state,
+    table,
+    prefix,
+  });
+
+  if (include_fml) {
+    const ctx = { ...state, user_id: use_user?.id || null, user: use_user };
+    let where1 = jsexprToWhere(include_fml, ctx, table.fields);
+    mergeIntoWhere(q.where, where1 || {});
+  }
+
+  Object.assign(
+    q,
+    stateFieldsToQuery({
+      state: use_state,
+      fields: table.fields,
+      prefix,
+      stateHash,
+    })
+  );
+
+  if (formulas) {
+    const use_formulas =
+      typeof formulas == String ? [formulas] : new Set(formulas);
+    let freeVars = new Set(); // for join fields
+
+    for (const fml of use_formulas)
+      freeVars = new Set([...freeVars, ...freeVariables(fml)]);
+    if (freeVars.size > 0) {
+      if (!q.joinFields) q.joinFields = {};
+      add_free_variables_to_joinfields(freeVars, q.joinFields, table.fields);
+    }
+  }
+
+  if (user) {
+    q.forUser = use_user;
+  } else if (forPublic) {
+    q.forPublic = true;
+  }
+  if (!q.limit && limit) q.limit = limit;
+  if (!q.orderBy && orderBy) q.orderBy = orderBy;
+  if (typeof q.orderDesc == "undefined" && orderDesc) q.orderDesc = orderDesc;
+  return q;
+};
+
 /**
  * Picked fields to query
  * @function
@@ -1509,10 +1588,11 @@ const get_onetoone_views = async (table, viewname) => {
  * @throws {InvalidConfiguration}
  * @returns {object}
  */
-const picked_fields_to_query = (columns, fields, layout, req) => {
+const picked_fields_to_query = (columns, fields, layout, req, table) => {
   let joinFields = {};
   let aggregations = {};
   let freeVars = new Set(); // for join fields
+  const locale = req?.getLocale?.();
 
   (columns || []).forEach((column) => {
     if (column.type === "JoinField") {
@@ -1520,33 +1600,46 @@ const picked_fields_to_query = (columns, fields, layout, req) => {
         if (column.join_field.includes("->")) {
           const [relation, target] = column.join_field.split("->");
           const [ontable, ref] = relation.split(".");
-          joinFields[`${ref}_${ontable}_${target}`] = {
+          const targetNm = `${ref}_${ontable
+            .replaceAll(" ", "")
+            .toLowerCase()}_${target}`;
+          column.targetNm = targetNm;
+          joinFields[targetNm] = {
             ref,
             target,
             ontable,
           };
         } else {
           const kpath = column.join_field.split(".");
+          let jfKey;
           if (kpath.length === 2) {
             const [refNm, targetNm] = kpath;
-            joinFields[`${refNm}_${targetNm}`] = {
+            jfKey = `${refNm}_${targetNm}`;
+            joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
             };
           } else if (kpath.length === 3) {
             const [refNm, through, targetNm] = kpath;
-            joinFields[`${refNm}_${through}_${targetNm}`] = {
+            jfKey = `${refNm}_${through}_${targetNm}`;
+            joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
               through,
             };
           } else if (kpath.length === 4) {
             const [refNm, through1, through2, targetNm] = kpath;
-            joinFields[`${refNm}_${through1}_${through2}_${targetNm}`] = {
+            jfKey = `${refNm}_${through1}_${through2}_${targetNm}`;
+            joinFields[jfKey] = {
               ref: refNm,
               target: targetNm,
               through: [through1, through2],
             };
+          }
+          const targetField = table ? table.getField(column.join_field) : null;
+          if (locale && targetField?.attributes?.localized_by?.[locale]) {
+            joinFields[jfKey].target =
+              targetField?.attributes?.localized_by?.[locale];
           }
         }
       } else {
@@ -1862,11 +1955,18 @@ const handleRelationPath = (queryObj, qstate) => {
  * @param {object} opts
  * @param {Field[]} opts.fields
  * @param {object} opts.state
+ * @param {string} [opts.prefix = ""]
  * @param {boolean} [opts.approximate = true]
  * @param {Table} opts.table
  * @returns {object}
  */
-const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
+const stateFieldsToWhere = ({
+  fields,
+  state,
+  approximate = true,
+  table,
+  prefix = "",
+}) => {
   let qstate = {};
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
@@ -1874,7 +1974,12 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
-        schema: db.getTenantSchema(),
+        table: prefix
+          ? prefix.replaceAll(".", "")
+          : table
+          ? table.name
+          : undefined,
+        schema: db.isSQLite ? undefined : db.getTenantSchema(),
       };
       return;
     }
@@ -1947,7 +2052,8 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
       field &&
       field.type.name === "String" &&
       !(field.attributes && field.attributes.options) &&
-      approximate
+      approximate &&
+      !field.attributes?.exact_search_only
     ) {
       qstate[k] = { ilike: v };
     } else if (field && field.type.name === "Bool" && state[k] === "?") {
@@ -2046,7 +2152,10 @@ const stateFieldsToWhere = ({ fields, state, approximate = true, table }) => {
         const [jtNm, jFieldNm, lblField] = kpath;
         let isString = false;
         const labelField = Table.findOne({ name: jtNm })?.getField?.(lblField);
-        if (labelField) isString = labelField.type?.name === "String";
+        if (labelField)
+          isString =
+            labelField.type?.name === "String" &&
+            !labelField.attributes?.exact_search_only;
         qstate.id = [
           ...(qstate.id ? [qstate.id] : []),
           {
@@ -2333,7 +2442,13 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       (x) =>
       ([k, v]) => {
         if (Array.isArray(v)) return v.every((v1) => sat(x)([k, v1]));
+        else if (k === "_fts")
+          return JSON.stringify(x)
+            .toLowerCase()
+            .includes((v.searchTerm || "").toLowerCase());
+        else if (v?.lt && v?.equal) return x[k] <= +v.lt;
         else if (v?.lt) return x[k] < +v.lt;
+        else if (v?.gt && v?.equal) return x[k] >= +v.gt;
         else if (v?.gt) return x[k] > +v.gt;
         else if (v?.ilike) return (x[k] || "").includes(v.ilike);
         else return x[k] == v;
@@ -2614,6 +2729,7 @@ const pathToState = (relation, getRowVal) => {
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
+  generate_joined_query,
   get_child_views,
   get_parent_views,
   stateFieldsToWhere,

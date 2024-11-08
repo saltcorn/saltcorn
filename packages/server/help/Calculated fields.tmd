@@ -1,0 +1,28 @@
+A calculated field is a column that holds values that are not entered 
+or changed directly but are instead calculated automatically from other 
+values in that row of from rows in other tables related by a key field. 
+
+There are two types of calculated field values:
+
+*Not stored*: calculated fields that are not stored in the database are 
+recalculated every time the row is accessed. They are defined by a 
+JavaScript expression where the values of the other fields are in scope.
+They are suitable for quick calculations that depend only on other values 
+in the same row. Because they are recalculated they are guaranteed to be 
+up to date. Non-stored fields cannot access data in related rows by join 
+fields or aggregations and cannot use asynchronous functions provided by
+modules. They can use synchronous functions.
+
+*Stored*: the values of stored fields are stored in the database table. 
+They are more flexible in the way they can be defined. Stored fields can 
+be defined either by a JavaScript expression or by an aggregation. When 
+defined by a JavaScript expression, join fields can be accessed by the 
+dot notation. Stored fields may also use both synchronous and asynchronous f
+unctions provided by modules. Asynchronous functions can in principle do 
+input/output including calling APIs. This expression will be evaluated 
+every time the row changes.
+
+Stored fields that are defined by an aggregation are automatically updated 
+when one of the child rows is updated. Stored fields that are based on 
+JavaScript expressions involving join felds are not automatically updated. 
+You need to run the recalculate stored fields action to update them 

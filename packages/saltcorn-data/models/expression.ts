@@ -385,15 +385,37 @@ function freeVariablesInInterpolation(interpString: string): Set<string> {
 
 function freeVariables(expression: string): Set<string> {
   if (!expression) return new Set();
-  const freeVars: string[] = [];
   const ast: any = parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,
     allowAwaitOutsideFunction: true,
     locations: false,
   });
+  return new Set(freeVariablesAST(ast));
+}
+function freeVariablesAST(ast: any): Array<string> {
+  const freeVars: string[] = [];
   //console.log(JSON.stringify(ast, null, 2));
 
+  //const fvsAtCall: any = {};
   traverse(ast, {
+    enter: function (node) {
+      if (node.type === "CallExpression") {
+        // the rule here is: if the callee of a CallExpression is a member, the
+        // last member get removed.
+        const calleeFvs = freeVariablesAST(node.callee);
+        const argFvs = node.arguments.map(freeVariablesAST).flat();
+        if (calleeFvs.length === 1) {
+          const parts = calleeFvs[0].split(".");
+          if (parts.length > 1) {
+            parts.pop();
+            calleeFvs[0] = parts.join(".");
+          }
+        }
+        freeVars.push(...calleeFvs.filter(Boolean));
+        freeVars.push(...argFvs);
+        return this.skip();
+      }
+    },
     leave: function (node) {
       //console.log(node);
 
@@ -402,6 +424,11 @@ function freeVariables(expression: string): Set<string> {
       }
       if (node.type === "MemberExpression") {
         if (
+          node.property.type === "Identifier" &&
+          node.property.name === "length"
+        ) {
+          freeVars.pop();
+        } else if (
           node.object.type === "Identifier" &&
           node.property.type === "Identifier"
         ) {
@@ -414,7 +441,7 @@ function freeVariables(expression: string): Set<string> {
           node.object.property.type === "Identifier" &&
           node.property.type === "Identifier"
         ) {
-          freeVars.pop();
+          //freeVars.pop();
           freeVars.pop();
           freeVars.pop();
           freeVars.push(
@@ -428,8 +455,8 @@ function freeVariables(expression: string): Set<string> {
           node.object.property.type === "Identifier" &&
           node.property.type === "Identifier"
         ) {
-          freeVars.pop();
-          freeVars.pop();
+          //freeVars.pop();
+          //freeVars.pop();
           freeVars.pop();
           freeVars.pop();
           freeVars.push(
@@ -441,7 +468,7 @@ function freeVariables(expression: string): Set<string> {
   });
   //console.log(expression, freeVars);
 
-  return new Set(freeVars);
+  return freeVars;
 }
 
 /**
@@ -669,15 +696,23 @@ const apply_calculated_fields_stored = async (
     ) {
       hasExprs = true;
       // refetch row with agg
+      const _agg_val: any = {
+        ...field.attributes,
+        where: jsexprToWhere(field.attributes.aggwhere),
+        field: field.attributes.agg_field.split("@")[0],
+        orderBy: field.attributes.agg_order_by,
+      };
+      if (_agg_val.table?.includes?.("->")) {
+        const [ttable, dtable] = _agg_val.table.split("->");
+        const [through, rest] = _agg_val.agg_relation.split("->");
+        _agg_val.table = dtable;
+        _agg_val.through = through;
+      }
+
       const reFetchedRow = await table.getJoinedRow({
         where: { [table.pk_name]: row[table.pk_name] },
         aggregations: {
-          _agg_val: {
-            ...field.attributes,
-            where: jsexprToWhere(field.attributes.aggwhere),
-            field: field.attributes.agg_field.split("@")[0],
-            orderBy: field.attributes.agg_order_by,
-          },
+          _agg_val,
         },
       });
 
@@ -732,7 +767,8 @@ const recalculate_for_stored = async (
   where?: Where,
 ): Promise<void> => {
   let rows = [];
-  let maxid = 0;
+  let maxid = null;
+  let limit = 20;
   const { getState } = require("../db/state");
   const go = async (rows: any) => {
     for (const row of rows) {
@@ -752,13 +788,13 @@ const recalculate_for_stored = async (
     await go(rows);
   } else {
     do {
-      rows = await table.getRows(
-        { id: { gt: maxid } },
-        { orderBy: "id", limit: 20 },
-      );
+      rows = await table.getRows(maxid !== null ? { id: { gt: maxid } } : {}, {
+        orderBy: "id",
+        limit: limit,
+      });
       await go(rows);
       if (rows.length > 0) maxid = rows[rows.length - 1].id;
-    } while (rows.length === 20);
+    } while (rows.length === limit);
   }
 };
 //https://stackoverflow.com/a/59094308/19839414

@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/set-cfg
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 
 /**
@@ -11,12 +10,12 @@ const { maybe_as_tenant, init_some_tenants } = require("../common");
  * @extends oclif.Command
  * @category saltcorn-cli
  */
-class SetCfgCommand extends Command {
+class GetCfgCommand extends Command {
   /**
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = this.parse(SetCfgCommand);
+    const { args, flags } = await this.parse(GetCfgCommand);
     await init_some_tenants(flags.tenant);
 
     await maybe_as_tenant(flags.tenant, async () => {
@@ -49,27 +48,30 @@ class SetCfgCommand extends Command {
 /**
  * @type {string}
  */
-SetCfgCommand.description = `Get a configuration value. The value is printed to stdout as a JSON value`;
+GetCfgCommand.description = `Get a configuration value. The value is printed to stdout as a JSON value`;
 
 /**
  * @type {object[]}
  */
-SetCfgCommand.args = [
-  { name: "key", required: false, description: "Configuration key" },
-];
+GetCfgCommand.args = {
+  key: Args.string({
+    required: false,
+    description: "Configuration key",
+  }),
+};
 
 /**
  * @type {object}
  */
-SetCfgCommand.flags = {
-  tenant: flags.string({
+GetCfgCommand.flags = {
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  plugin: flags.string({
+  plugin: Flags.string({
     char: "p",
     description: "plugin",
   }),
 };
 
-module.exports = SetCfgCommand;
+module.exports = GetCfgCommand;

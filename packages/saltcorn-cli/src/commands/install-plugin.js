@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/install-plugin
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 const fs = require("fs");
 const path = require("path");
@@ -17,7 +17,7 @@ class InstallPluginCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags } = this.parse(InstallPluginCommand);
+    const { flags } = await this.parse(InstallPluginCommand);
     const {
       fetch_pack_by_name,
       install_pack,
@@ -84,19 +84,19 @@ InstallPluginCommand.description = `Install a plugin`;
  * @type {object}
  */
 InstallPluginCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),
-  name: flags.string({
+  name: Flags.string({
     char: "n",
     description: "Plugin name in store",
   }),
-  directory: flags.string({
+  directory: Flags.string({
     char: "d",
     description: "Directory with local plugin",
   }),
-  unsafe: flags.boolean({
+  unsafe: Flags.boolean({
     char: "u",
     description: "Allow unsafe plugins on tenants",
   }),

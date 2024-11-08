@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "ubuntu/noble64"
+  config.vm.box = "bento/ubuntu-24.04"
 
   config.ssh.forward_agent = true
 
@@ -26,10 +26,11 @@ Vagrant.configure("2") do |config|
      end
   config.vm.provision "shell", inline: <<-SHELL
     set -e
-    apt update    
-    apt install -qqy nodejs npm
+    sudo apt update -q
+    wget -qO - https://deb.nodesource.com/setup_18.x | bash -
+    apt-get install -qqy nodejs
     sudo -iu vagrant npx -y saltcorn-install -y
     systemctl is-active saltcorn
-    wget -qO- http://localhost/ | grep Please   
+    wget -qO- http://localhost/ | grep Please 
   SHELL
 end

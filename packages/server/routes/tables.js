@@ -192,6 +192,9 @@ const tableForm = async (table, req) => {
                   "if(!this.checked && !confirm('Are you sure? This will delete all history')) {this.checked = true; return false}",
               },
               type: "Bool",
+              help: {
+                topic: "Table history",
+              },
             },
             ...(table.name === "users"
               ? []
@@ -670,7 +673,10 @@ router.get(
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col, lbl) => `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
+const badge = (col, lbl, title) =>
+  `<span ${
+    title ? `title="${title}" ` : ""
+  }class="badge bg-${col}">${lbl}</span>&nbsp;`;
 
 /**
  * @param {object} f
@@ -708,7 +714,11 @@ const attribBadges = (f) => {
         ].includes(k)
       )
         return;
-      if (v || v === 0) s += badge("secondary", k);
+      if (Array.isArray(v) && !v.length) return;
+      const title = ["string", "number", "boolean"].includes(typeof v)
+        ? `${v}`
+        : null;
+      if (v || v === 0) s += badge("secondary", k, title);
     });
   }
   return s;
@@ -791,7 +801,7 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: (t) => code(t.name) },
-          ...(table.external || db.isSQLite
+          ...(table.external
             ? []
             : [
                 {
@@ -1911,7 +1921,7 @@ router.post(
     const table = Table.findOne({ name });
 
     try {
-      await table.deleteRows({});
+      await table.deleteRows({}, req.user);
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
       req.flash("error", e.message);

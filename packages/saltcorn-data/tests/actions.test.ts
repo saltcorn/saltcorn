@@ -3,7 +3,8 @@ import Table from "../models/table";
 import Field from "../models/field";
 import User from "../models/user";
 import EventLog from "../models/eventlog";
-import runScheduler from "../models/scheduler";
+import scheduler from "../models/scheduler";
+const { runScheduler } = scheduler;
 import db from "../db";
 const { getState } = require("../db/state");
 import mocks from "../tests/mocks";
@@ -17,8 +18,13 @@ const {
 import { assertIsSet } from "../tests/assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
-const { duplicate_row, insert_any_row, insert_joined_row, modify_row } =
-  baseactions;
+const {
+  duplicate_row,
+  insert_any_row,
+  insert_joined_row,
+  modify_row,
+  delete_rows,
+} = baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
 import { run_action_column } from "../plugin-helper";
@@ -266,6 +272,38 @@ describe("base plugin actions", () => {
     assertIsSet(row1);
 
     expect(row1.favbook).toBe(1);
+  });
+  it("should delete_rows", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const id1 = await patients.insertRow({ name: "Del1" });
+    await patients.insertRow({ name: "Del2" });
+    const row = await patients.getRow({ id: id1 });
+    assertIsSet(row);
+    const result = await delete_rows.run({
+      row,
+      table: patients,
+      configuration: { delete_triggering_row: true },
+      user: { id: 1, role_id: 1 },
+    } as any);
+    expect(result).toStrictEqual(undefined);
+
+    const row1 = await patients.getRow({ name: "Del1" });
+    expect(row1).toBe(null);
+    const row1a = await patients.getRow({ name: "Del2" });
+    expect(!!row1a).toBe(true);
+
+    const result1 = await delete_rows.run({
+      configuration: {
+        delete_triggering_row: false,
+        delete_where: "{name: 'Del2'}",
+        table_name: "patients",
+      },
+      user: { id: 1, role_id: 1 },
+    } as any);
+    expect(result1).toStrictEqual(undefined);
+    const row2 = await patients.getRow({ name: "Del2" });
+    expect(row2).toBe(null);
   });
   it("should duplicate_row", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -737,5 +775,70 @@ describe("run_action_column", () => {
     expect(runres.error).toBe("errrr");
     expect(runres.notify).toBe("note");
     expect(runres.notify_success).toBe("fooo");
+  });
+});
+
+describe("plain_password_triggers", () => {
+  const secret = "fw78fgfw$Efgy";
+  it("should set up trigger", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+    await Trigger.create({
+      action: "evalCounter",
+      table_id: User.table.id,
+      when_trigger: "Insert",
+      name: "incCountIfPlainPassIns",
+      configuration: {
+        number_expr: `row.plain_password==="${secret}" ? 1 : 0`,
+      },
+    });
+    await Trigger.create({
+      action: "evalCounter",
+      table_id: User.table.id,
+      when_trigger: "Update",
+      name: "incCountIfPlainPassUpd",
+      configuration: {
+        number_expr: `row.plain_password==="${secret}" ? 1 : 0`,
+      },
+    });
+  });
+  it("should not pass password on update without setting", async () => {
+    const u = await User.findOne({ email: "staff@foo.com" });
+    assertIsSet(u);
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+    await u.changePasswordTo(secret);
+    expect(getActionCounter()).toBe(0);
+  });
+  it("should not pass password on create without setting", async () => {
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+    await User.create({
+      email: "user1@foo.com",
+      password: secret,
+      role_id: 80,
+    });
+    expect(getActionCounter()).toBe(0);
+  });
+  it("should pass password on update with setting", async () => {
+    await getState().setConfig("plain_password_triggers", true);
+    const u = await User.findOne({ email: "staff@foo.com" });
+    assertIsSet(u);
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+    await u.changePasswordTo(secret);
+    expect(getActionCounter()).toBe(1);
+  });
+  it("should pass password on create with setting", async () => {
+    await getState().setConfig("plain_password_triggers", true);
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+    await User.create({
+      email: "user2@foo.com",
+      password: secret,
+      role_id: 80,
+    });
+    expect(getActionCounter()).toBe(1);
   });
 });

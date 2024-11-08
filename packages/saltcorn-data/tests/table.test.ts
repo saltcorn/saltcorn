@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import {
   add_free_variables_to_joinfields,
   stateFieldsToQuery,
+  stateFieldsToWhere,
 } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
@@ -325,15 +326,19 @@ describe("Table get data", () => {
         },
       },
     };
-    if (!db.isSQLite) {
-      const rows = await books.getJoinedRows(arg);
-      expect(rows.length).toStrictEqual(2);
-      expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
-      const { sql } = await books.getJoinedQuery(arg);
+
+    const rows = await books.getJoinedRows(arg);
+    expect(rows.length).toStrictEqual(2);
+    expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
+    const { sql } = await books.getJoinedQuery(arg);
+    if (!db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg(aggjoin."name") from "public"."patients" aggto join "public"."patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
       );
-    }
+    else
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array(aggjoin."name") from "patients" aggto join "patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "books" a    order by "a"."id"'
+      );
   });
   it("should get array aggregations", async () => {
     const books = Table.findOne({ name: "books" });
@@ -349,15 +354,20 @@ describe("Table get data", () => {
         },
       },
     };
-    if (!db.isSQLite) {
-      const rows = await books.getJoinedRows(arg);
-      expect(rows.length).toStrictEqual(2);
-      expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
-      const { sql } = await books.getJoinedQuery(arg);
+
+    const rows = await books.getJoinedRows(arg);
+    expect(rows.length).toStrictEqual(2);
+    expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
+
+    const { sql } = await books.getJoinedQuery(arg);
+    if (!db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
       );
-    }
+    else
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array("name") from "patients"  where "favbook"=a."id") fans FROM "books" a    order by "a"."id"'
+      );
   });
   it("should get array aggregations with order", async () => {
     const books = Table.findOne({ name: "books" });
@@ -374,15 +384,20 @@ describe("Table get data", () => {
         },
       },
     };
-    if (!db.isSQLite) {
-      const rows = await books.getJoinedRows(arg);
-      expect(rows.length).toStrictEqual(2);
-      expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
-      const { sql } = await books.getJoinedQuery(arg);
+
+    const rows = await books.getJoinedRows(arg);
+    expect(rows.length).toStrictEqual(2);
+    expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
+
+    const { sql } = await books.getJoinedQuery(arg);
+    if (!db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name" order by "id") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
       );
-    }
+    else
+      expect(sql).toBe(
+        'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array("name" order by "id") from "patients"  where "favbook"=a."id") fans FROM "books" a    order by "a"."id"'
+      );
   });
   it("should get join-aggregations", async () => {
     //how many books has my publisher published
@@ -565,6 +580,46 @@ describe("Table get data", () => {
     });
 
     expect(rows.length).toBe(2);
+  });
+  it("should get rows from full text search with key summary", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const fields = table.getFields();
+
+    const rows = await table.getRows({
+      _fts: { fields, searchTerm: "Herman" },
+    });
+
+    expect(rows.length).toBe(1);
+  });
+  it("should get joined rows from full text search with key summary", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const fields = table.getFields();
+    const where = stateFieldsToWhere({
+      fields,
+      state: { _fts_patients: "Herman" },
+      table,
+      prefix: "a.",
+    });
+    const rows = await table.getJoinedRows({
+      where,
+    });
+
+    expect(rows.length).toBe(1);
+  });
+  it("should count rows from full text search with key summary", async () => {
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    const fields = table.getFields();
+    const where = stateFieldsToWhere({
+      fields,
+      state: { _fts_patients: "Herman" },
+      table,
+    });
+    const nrows = await table.countRows(where);
+
+    expect(nrows).toBe(1);
   });
 
   it("should support full text search with calculated", async () => {
@@ -2294,6 +2349,32 @@ describe("field_options", () => {
     const table = Table.findOne({ name: "patients" });
     const opts = await table?.field_options(1, (f) => f.type_name === "String");
     expect(opts).toStrictEqual(["name", "favbook.author", "parent.name"]);
+  });
+});
+describe("agg latest multiple test", () => {
+  it("should get latest aggregations with the right rows", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const now = new Date();
+    await readings.insertRow({ patient_id: 1, temperature: 42, date: now });
+    await readings.insertRow({ patient_id: 2, temperature: 45, date: now });
+    await readings.insertRow({ patient_id: 1, temperature: 42, date: now });
+
+    const michaels = await patients.getJoinedRows({
+      orderBy: "id",
+      where: { id: 2 },
+      aggregations: {
+        last_temp: {
+          table: "readings",
+          ref: "patient_id",
+          field: "temperature",
+          aggregate: "Latest date",
+        },
+      },
+    });
+    expect(Math.round(michaels[0].last_temp)).toBe(45);
   });
 });
 

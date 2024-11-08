@@ -18,6 +18,11 @@ const fs = require("fs").promises;
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const EventLog = require("@saltcorn/data/models/eventlog");
+const {
+  create_backup,
+  restore,
+  auto_backup_now,
+} = require("@saltcorn/admin-models/models/backup");
 
 jest.setTimeout(30000);
 
@@ -615,6 +620,11 @@ describe("server logs viewer", () => {
  */
 describe("clear all page", () => {
   itShouldRedirectUnauthToLogin("/admin/clear-all");
+  let backup_fnm;
+  it("backs up before clear all", async () => {
+    backup_fnm = await create_backup();
+  });
+
   it("show page", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -638,5 +648,12 @@ describe("clear all page", () => {
       .send("config=on")
       .send("plugins=on")
       .expect(toRedirect("/auth/create_first_user"));
+  });
+  it("restores backup after clear all", async () => {
+    const restore_res = await restore(backup_fnm, (p) => {}, true);
+    await fs.unlink(backup_fnm);
+
+    if (restore_res) console.log("rr", restore_res);
+    expect(!!restore_res).toBe(false);
   });
 });

@@ -30,6 +30,14 @@ const createTestFile = async (folder, name, mimetype, content) => {
   }
 };
 
+const checkFiles = (files, expecteds) =>
+  files.length >= expecteds.length &&
+  expecteds.every(({ filename, location }) =>
+    files.find(
+      (file) => file.filename === filename && file.location === location
+    )
+  );
+
 beforeAll(async () => {
   await resetToFixtures();
   await File.ensure_file_store();
@@ -186,13 +194,7 @@ describe("files admin", () => {
   it("search files by name", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
-    const checkFiles = (files, expecteds) =>
-      files.length === expecteds.length &&
-      expecteds.every(({ filename, location }) =>
-        files.find(
-          (file) => file.filename === filename && file.location === location
-        )
-      );
+
     const searchTestHelper = async (dir, search, expected) => {
       await request(app)
         .get("/files")
@@ -343,5 +345,83 @@ describe("files edit", () => {
     const row = await table.getRow({ first_name: "elvis" });
     const file = await File.findOne({ id: row.mugshot });
     expect(!!file).toBe(true);
+  });
+});
+
+describe("visible_entries test", () => {
+  const setRole = async (role, entry) => {
+    const app = await getApp({ disableCsrf: true });
+    const adminCookie = await getAdminLoginCookie();
+    await request(app)
+      .post(`/files/setrole/${entry}`)
+      .set("Cookie", adminCookie)
+      .send(`role=${role}`)
+      .expect(toRedirect("/files?dir=_sc_test_subfolder_one"));
+  };
+
+  it("shows allowed files", async () => {
+    await setRole(100, path.join("_sc_test_subfolder_one", "foo_image.png"));
+
+    const app = await getApp({ disableCsrf: true });
+    const staffCookie = await getStaffLoginCookie();
+    await request(app)
+      .get("/files/visible_entries?dir=_sc_test_subfolder_one")
+      .set("Cookie", staffCookie)
+      .expect(
+        respondJsonWith(200, (data) =>
+          checkFiles(data.files, [
+            {
+              filename: "foo_image.png",
+              location: path.join("_sc_test_subfolder_one", "foo_image.png"),
+            },
+            {
+              filename: "bar_image.png",
+              location: path.join("_sc_test_subfolder_one", "bar_image.png"),
+            },
+          ])
+        )
+      );
+  });
+
+  it("shows no disallowed files", async () => {
+    await setRole(1, path.join("_sc_test_subfolder_one", "foo_image.png"));
+    const app = await getApp({ disableCsrf: true });
+    const staffCookie = await getStaffLoginCookie();
+    const resp = await request(app)
+      .get("/files/visible_entries?dir=_sc_test_subfolder_one")
+      .set("Cookie", staffCookie);
+    expect(resp.statusCode).toBe(200);
+    const files = resp.body.files;
+    expect(
+      files.find((file) => file.filename === "foo_image.png")
+    ).toBeUndefined();
+  });
+
+  it("shows allowed directories", async () => {
+    const dir = path.join("_sc_test_subfolder_one", "subsubfolder");
+    await setRole(80, dir);
+    const app = await getApp({ disableCsrf: true });
+    const staffCookie = await getStaffLoginCookie();
+    const resp = await request(app)
+      .get(`/files/visible_entries?dir=${dir}`)
+      .set("Cookie", staffCookie);
+    expect(resp.statusCode).toBe(200);
+    expect(
+      resp.body.directories.find((file) => file.filename === "subsubfolder")
+    ).toBeDefined();
+  });
+
+  it("shows no disallowed directories", async () => {
+    const dir = path.join("_sc_test_subfolder_one", "subsubfolder");
+    await setRole(1, dir);
+    const app = await getApp({ disableCsrf: true });
+    const staffCookie = await getStaffLoginCookie();
+    const resp = await request(app)
+      .get(`/files/visible_entries?dir=${dir}`)
+      .set("Cookie", staffCookie);
+    expect(resp.statusCode).toBe(200);
+    const body = resp.body;
+    expect(body.files.length).toBe(0);
+    expect(body.directories.length).toBe(0);
   });
 });

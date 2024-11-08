@@ -41,6 +41,7 @@ const {
   sleep,
   interpolate,
   isNode,
+  flatEqual,
 } = utils;
 import I18n from "i18n";
 import { tz } from "moment-timezone";
@@ -156,6 +157,9 @@ class State {
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
   queriesCache?: Record<string, any>;
+  scVersion: string;
+
+  private oldCodePages: Record<string, string> | undefined;
 
   /**
    * State constructor
@@ -205,6 +209,12 @@ class State {
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
     this.hasJoinedLogSockets = false;
+    try {
+      this.scVersion = require("../../package.json").version;
+    } catch (e) {
+      this.scVersion = require("../package.json").version;
+    }
+    this.codepage_context = {};
   }
 
   processSend(v: any) {
@@ -246,6 +256,12 @@ class State {
           `Warning: ${user.email} layout plugin ${pluginName} not found`,
         );
     }
+    const role_id = user ? +user.role_id : 100;
+    const layout_by_role = this.getConfig("layout_by_role");
+    if (layout_by_role && layout_by_role[role_id]) {
+      const chosen = this.plugins[layout_by_role[role_id]];
+      if (chosen) return chosen;
+    }
     const layoutvs = Object.keys(this.layouts);
     const name = layoutvs[layoutvs.length - 1];
     return this.plugins[name];
@@ -283,10 +299,10 @@ class State {
 
   /**
    * Refresh State cache for all Saltcorn main objects
-   * @param {boolean} noSignal - Do not signal - refresh to other cluster processes.
-   * @returns {Promise<void>}
+   * @param noSignal - Do not signal - refresh to other cluster processes.
+   * @param keepUnchanged - Some members don't need rebuilding if they did not change
    */
-  async refresh(noSignal: boolean) {
+  async refresh(noSignal: boolean, keepUnchanged?: boolean) {
     await this.refresh_tables(noSignal);
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
@@ -294,7 +310,7 @@ class State {
     await this.refresh_page_groups(noSignal);
     await this.refresh_config(noSignal);
     await this.refresh_npmpkgs(noSignal);
-    await this.refresh_codepages(noSignal);
+    await this.refresh_codepages(noSignal, keepUnchanged);
   }
 
   /**
@@ -485,6 +501,8 @@ class State {
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));
       table.fields.forEach((f: Field) => {
+        if (db.isSQLite && typeof f.attributes === "string")
+          f.attributes = JSON.parse(f.attributes);
         if (
           f.attributes &&
           f.attributes.localizes_field &&
@@ -494,6 +512,8 @@ class State {
             (lf: Field) => lf.name === f.attributes.localizes_field,
           );
           if (localized) {
+            if (db.isSQLite && typeof localized.attributes === "string")
+              localized.attributes = JSON.parse(localized.attributes);
             if (!localized.attributes) localized.attributes = {};
 
             if (!localized.attributes.localized_by)
@@ -557,9 +577,8 @@ class State {
   /**
    *
    * Set value of config parameter
-   * @param {string} key - key of parameter
-   * @param {*} value - value of parameter
-   * @returns {Promise<void>}
+   * @param key - key of parameter
+   * @param value - value of parameter
    */
   async setConfig(key: string, value: any) {
     if (
@@ -567,35 +586,44 @@ class State {
       typeof this.configs[key].value === "undefined" ||
       this.configs[key].value !== value
     ) {
-      await setConfig(key, value);
-      this.configs[key] = { value };
-      if (key.startsWith("localizer_")) await this.refresh_i18n();
-      if (key === "log_level") this.logLevel = +value;
-      if (key === "joined_log_socket_ids")
-        this.hasJoinedLogSockets = (value || []).length > 0;
-      if (db.is_node)
-        process_send({ refresh: "config", tenant: db.getTenantSchema() });
-      else {
-        await this.refresh_config(true);
-      }
+      const fn = async () => {
+        await setConfig(key, value);
+        this.configs[key] = { value };
+        if (key.startsWith("localizer_")) await this.refresh_i18n();
+        if (key === "log_level") this.logLevel = +value;
+        if (key === "joined_log_socket_ids")
+          this.hasJoinedLogSockets = (value || []).length > 0;
+        if (db.is_node)
+          process_send({ refresh: "config", tenant: db.getTenantSchema() });
+        else {
+          await this.refresh_config(true);
+        }
+      };
+      if (db.getTenantSchema() !== this.tenant)
+        await db.runWithTenant(this.tenant, fn);
+      else await fn();
     }
   }
 
   /**
    * Delete config parameter by key
-   * @param {string} keys - key of parameter
-   * @returns {Promise<void>}
+   * @param keys - key of parameter
    */
   async deleteConfig(...keys: string[]) {
-    for (const key of keys) {
-      await deleteConfig(key);
-      delete this.configs[key];
-    }
-    if (db.is_node)
-      process_send({ refresh: "config", tenant: db.getTenantSchema() });
-    else {
-      await this.refresh_config(true);
-    }
+    const fn = async () => {
+      for (const key of keys) {
+        await deleteConfig(key);
+        delete this.configs[key];
+      }
+      if (db.is_node)
+        process_send({ refresh: "config", tenant: db.getTenantSchema() });
+      else {
+        await this.refresh_config(true);
+      }
+    };
+    if (db.getTenantSchema() !== this.tenant)
+      await db.runWithTenant(this.tenant, fn);
+    else await fn();
   }
 
   /**
@@ -628,6 +656,7 @@ class State {
     this.headers[name] = [];
     if (modname) this.plugin_module_names[modname] = name;
 
+    let hasFunctions = false;
     const withCfg = (key: string, def?: any) =>
       plugin.configuration_workflow
         ? plugin[key]
@@ -643,6 +672,7 @@ class State {
     });
     Object.entries(withCfg("functions", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
+        hasFunctions = true;
         this.functions[k] = v;
         this.function_context[k] = typeof v === "function" ? v : v.run;
       },
@@ -672,7 +702,6 @@ class State {
     });
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
-        // TODO ch
         if (!v.name) v.name = k;
         this.external_tables[k] = v;
       },
@@ -709,6 +738,8 @@ class State {
     const routes = withCfg("routes", []);
     this.plugin_routes[name] = routes;
     if (routes.length > 0 && this.routesChangedCb) this.routesChangedCb();
+    if (hasFunctions)
+      this.refresh_codepages(true).catch((e) => console.error(e));
   }
 
   /**
@@ -752,44 +783,51 @@ class State {
     return { ...this.function_context, ...this.codepage_context };
   }
 
-  async refresh_codepages(noSignal?: boolean) {
-    this.codepage_context = {};
+  /**
+   * Take the config 'function_code_pages' and build the 'codepage_context' member
+   * @param noSignal - Do not signal reload to other cluster processes.
+   * @param keepUnchanged - When 'function_code_pages' didn't change, true skips building it again
+   */
+  async refresh_codepages(noSignal?: boolean, keepUnchanged?: boolean) {
     const code_pages: Record<string, string> = this.getConfig(
       "function_code_pages",
       {},
     );
-    const fetch = require("node-fetch");
+    if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
+    this.codepage_context = {};
+    if (Object.keys(code_pages).length > 0) {
+      const fetch = require("node-fetch");
+      try {
+        const myContext = {
+          ...this.function_context,
+          Table,
+          File,
+          User,
+          setTimeout,
+          fetch,
+          sleep,
+          interpolate,
+          URL,
+          console, //TODO consoleInterceptor
+          require: (nm: string) => this.codeNPMmodules[nm],
+        };
+        const funCtxKeys = new Set(Object.keys(myContext));
+        const sandbox = createContext(myContext);
+        const codeStr = Object.values(code_pages).join(";\n");
+        runInContext(codeStr, sandbox);
 
-    try {
-      const myContext = {
-        ...this.function_context,
-        Table,
-        File,
-        User,
-        setTimeout,
-        fetch,
-        sleep,
-        interpolate,
-        URL,
-        console, //TODO consoleInterceptor
-        require: (nm: string) => this.codeNPMmodules[nm],
-      };
-      const funCtxKeys = new Set(Object.keys(myContext));
-      const sandbox = createContext(myContext);
-      const codeStr = Object.values(code_pages).join(";\n");
-      runInContext(codeStr, sandbox);
-
-      Object.keys(sandbox).forEach((k) => {
-        if (!funCtxKeys.has(k)) {
-          this.codepage_context[k] = sandbox[k];
-        }
-      });
-    } catch (e) {
-      //console.error(e);
+        Object.keys(sandbox).forEach((k) => {
+          if (!funCtxKeys.has(k)) {
+            this.codepage_context[k] = sandbox[k];
+          }
+        });
+      } catch (e) {
+        //console.error(e);
+      }
     }
-
     if (!noSignal && db.is_node)
       process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
+    this.oldCodePages = code_pages;
   }
 
   /**
@@ -873,7 +911,8 @@ class State {
       .filter((s) => s);
     if (moduleNames.length === 0) return;
     if (!this.pluginManager) this.pluginManager = new PluginManager();
-    for (const moduleName of moduleNames) {
+    for (const moduleNameWithVersion of moduleNames) {
+      const [moduleName, version] = moduleNameWithVersion.split("==");
       if (!this.codeNPMmodules[moduleName]) {
         try {
           if (
@@ -896,12 +935,19 @@ class State {
           ) {
             this.codeNPMmodules[moduleName] = require(moduleName);
           } else {
-            await this.pluginManager.install(moduleName);
+            const defaultVersion: any = {
+              cheerio: "1.0.0-rc.12",
+            };
+            await this.pluginManager.install(
+              moduleName,
+              version || defaultVersion[moduleName]
+            );
+
             this.codeNPMmodules[moduleName] =
               this.pluginManager.require(moduleName);
           }
         } catch (e) {
-          console.error("npm install error", e);
+          console.error("npm install error module", moduleName, e);
         }
       }
     }

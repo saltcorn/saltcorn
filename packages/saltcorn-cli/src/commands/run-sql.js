@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/run-sql
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, ux } = require("@oclif/core");
 const {
   maybe_as_tenant,
   init_some_tenants,
@@ -21,7 +20,7 @@ class RunSQLCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { flags, args } = this.parse(RunSQLCommand);
+    const { flags, args } = await this.parse(RunSQLCommand);
 
     if (!flags.sql && !flags.file) {
       console.log(
@@ -79,17 +78,17 @@ RunSQLCommand.description = `Run sql expression`;
  * @type {object}
  */
 RunSQLCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     name: "tenant",
     char: "t",
     description: "tenant name",
   }),
-  sql: flags.string({
+  sql: Flags.string({
     name: "sql",
     char: "s",
     description: "sql statement",
   }),
-  file: flags.string({
+  file: Flags.string({
     name: "file",
     char: "f",
     description: "path to sql file name",

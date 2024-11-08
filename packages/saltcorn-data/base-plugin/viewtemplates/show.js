@@ -112,27 +112,16 @@ const configuration_workflow = (req) =>
             "GoBack",
             ...boolfields.map((f) => `Toggle ${f.name}`),
           ];
-          const actions = [
-            ...builtInActions,
-            ...stateActions.map(([k, v]) => k),
-          ];
-          const triggerActions = [];
-          (
-            await Trigger.find({
-              when_trigger: { or: ["API call", "Never"] },
-              table_id: null,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
           });
-          (
-            await Trigger.find({
-              table_id: context.table_id,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+          const actions = Trigger.action_options({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            builtInLabel: "Show Actions",
+            builtIns: builtInActions,
           });
           for (const field of fields) {
             if (field.type === "Key") {
@@ -145,9 +134,19 @@ const configuration_workflow = (req) =>
           const actionConfigForms = {
             Delete: [
               {
+                name: "after_delete_action",
+                label: req.__("After delete"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: ["Go to URL", "Reload page"],
+                },
+              },
+              {
                 name: "after_delete_url",
                 label: req.__("URL after delete"),
                 type: "String",
+                showIf: { after_delete_action: "Go to URL" },
               },
             ],
           };
@@ -681,11 +680,13 @@ const render = (
   extra
 ) => {
   const session_id = getSessionId(req);
+  const locale = req.getLocale();
+
   const evalMaybeExpr = (segment, key, fmlkey) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key]) {
       segment[key] = eval_expression(
         segment[key],
-        { session_id, ...row },
+        { session_id, locale, ...row },
         req.user,
         `property ${key} in segment of type ${segment.type}`
       );
@@ -734,6 +735,7 @@ const render = (
     card(segment) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
+      evalMaybeExpr(segment, "class");
     },
     image(segment) {
       evalMaybeExpr(segment, "url");
@@ -766,7 +768,6 @@ const render = (
       }
     },
   });
-  const locale = req.getLocale();
   translateLayout(layout, locale);
   const blockDispatch = {
     field({ field_name, fieldview, configuration, click_to_edit }) {
@@ -838,7 +839,10 @@ const render = (
       if (join_field.includes("->")) {
         const [relation, target] = join_field.split("->");
         const [ontable, ref] = relation.split(".");
-        value = row[`${ref}_${ontable}_${target}`];
+        const key =
+          jf.targetNm ||
+          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
+        value = row[key];
       } else {
         value = row[join_field.split(".").join("_")];
       }
@@ -931,7 +935,17 @@ const render = (
         "rndid",
         segment.confirm
       );
-      if (segment.action_name === "Delete")
+      if (
+        segment.action_name === "Delete" &&
+        segment.configuration?.after_delete_action == "Reload page"
+      ) {
+        url = {
+          javascript: `ajax_post('/delete/${table.name}/${
+            row[table.pk_name]
+          }', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+        };
+        return action_link(url, req, segment);
+      } else if (segment.action_name === "Delete")
         url = `/delete/${table.name}/${
           row[table.pk_name]
         }?redirect=${encodeURIComponent(
@@ -973,7 +987,7 @@ const render = (
     },
     blank(segment) {
       if (segment.isHTML) {
-        return interpolate(segment.contents, row, req?.user);
+        return interpolate(segment.contents, { locale, ...row }, req?.user);
       } else return segment.contents;
     },
   };
@@ -1076,14 +1090,16 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        tbl
       );
       readState(state, fields);
-      const qstate = await stateFieldsToWhere({
+      const qstate = stateFieldsToWhere({
         fields,
         state,
         approximate: true,
         table: tbl,
+        prefix: "a.",
       });
       if (Object.keys(qstate).length === 0)
         return {
@@ -1119,12 +1135,18 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        tbl
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);
-      const qstate = await stateFieldsToWhere({ fields, state, table: tbl });
-      const q = await stateFieldsToQuery({ state, fields, stateHash });
+      const qstate = stateFieldsToWhere({
+        fields,
+        state,
+        table: tbl,
+        prefix: "a.",
+      });
+      const q = stateFieldsToQuery({ state, fields, stateHash });
       if (where) mergeIntoWhere(qstate, where);
       const role = req && req.user ? req.user.role_id : 100;
       if (tbl.ownership_field_id && role > tbl.min_role_read && req) {

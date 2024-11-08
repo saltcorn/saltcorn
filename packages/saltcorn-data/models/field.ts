@@ -92,6 +92,7 @@ class Field implements AbstractField {
   attributes: GenObj;
   table_id?: number;
   table?: AbstractTable | null;
+  in_auto_save?: boolean;
 
   // to use 'this[k] = v'
   [key: string]: any;
@@ -166,6 +167,7 @@ class Field implements AbstractField {
       this.table = o.table;
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
+    this.in_auto_save = o.in_auto_save;
   }
 
   /**
@@ -191,7 +193,7 @@ class Field implements AbstractField {
       primary_key: this.primary_key,
       reftype: this.reftype,
       refname: this.refname,
-      description: this.description, //
+      description: this.description,
     };
   }
 
@@ -215,6 +217,7 @@ class Field implements AbstractField {
       attributes: this.attributes,
       required: this.required,
       primary_key: this.primary_key,
+      preset_options: this.preset_options,
     };
   }
 
@@ -955,7 +958,8 @@ class Field implements AbstractField {
 
     await db.deleteWhere("_sc_fields", { id: this.id }, { client });
 
-    if (!db.isSQLite && (!this.calculated || this.stored)) {
+    if (!this.calculated || this.stored) {
+      if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
       await client.query(
         `alter table ${schema}"${sqlsanitize(
           table.name

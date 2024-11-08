@@ -2,8 +2,7 @@
  * @category saltcorn-cli
  * @module commands/set-cfg
  */
-const { Command, flags } = require("@oclif/command");
-const { cli } = require("cli-ux");
+const { Command, Flags, Args, ux } = require("@oclif/core");
 const {
   maybe_as_tenant,
   init_some_tenants,
@@ -20,7 +19,7 @@ class SetDailyTimeCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
-    const { args, flags } = this.parse(SetDailyTimeCommand);
+    const { args, flags } = await this.parse(SetDailyTimeCommand);
     if (typeof args.mins === "undefined") {
       console.error("Must supply minutes value");
       this.exit(1);
@@ -48,18 +47,17 @@ SetDailyTimeCommand.description = `Set the time the default daily event will run
 /**
  * @type {object[]}
  */
-SetDailyTimeCommand.args = [
-  {
-    name: "mins",
+SetDailyTimeCommand.args = {
+  mins: Args.string({
     description: "Number of minutes in the futute (negative for past)",
-  },
-];
+  }),
+};
 
 /**
  * @type {object}
  */
 SetDailyTimeCommand.flags = {
-  tenant: flags.string({
+  tenant: Flags.string({
     char: "t",
     description: "tenant",
   }),

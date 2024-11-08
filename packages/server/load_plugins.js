@@ -12,6 +12,73 @@ const { isRoot } = require("@saltcorn/data/utils");
 const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
 
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
+const npmFetch = require("npm-registry-fetch");
+const packagejson = require("./package.json");
+const {
+  supportedVersion,
+  resolveLatest,
+} = require("@saltcorn/plugins-loader/stable_versioning");
+
+const isFixedPlugin = (plugin) =>
+  plugin.location === "@saltcorn/sbadmin2" ||
+  plugin.location === "@saltcorn/base-plugin";
+
+/**
+ * return the cached engine infos or fetch them from npm and update the cache
+ * @param plugin plugin to load
+ */
+const getEngineInfos = async (plugin, forceFetch) => {
+  const rootState = getRootState();
+  const cached = rootState.getConfig("engines_cache", {}) || {};
+  if (cached[plugin.location] && !forceFetch) {
+    return cached[plugin.location];
+  } else {
+    getState().log(5, `Fetching versions for '${plugin.location}'`);
+    const pkgInfo = await npmFetch.json(
+      `https://registry.npmjs.org/${plugin.location}`
+    );
+    const versions = pkgInfo.versions;
+    const newCached = {};
+    for (const [k, v] of Object.entries(versions)) {
+      newCached[k] = v.engines?.saltcorn
+        ? { engines: { saltcorn: v.engines.saltcorn } }
+        : {};
+    }
+    cached[plugin.location] = newCached;
+    await rootState.setConfig("engines_cache", { ...cached });
+    return newCached;
+  }
+};
+
+/**
+ * checks the saltcorn engine property and changes the plugin version if necessary
+ * @param plugin plugin to load
+ */
+const ensurePluginSupport = async (plugin, forceFetch) => {
+  let versions = await getEngineInfos(plugin, forceFetch);
+  if (
+    plugin.version &&
+    plugin.version !== "latest" &&
+    !versions[plugin.version] &&
+    !forceFetch
+  ) {
+    versions = await getEngineInfos(plugin, true);
+  }
+  const supported = supportedVersion(
+    plugin.version || "latest",
+    versions,
+    packagejson.version
+  );
+  if (!supported)
+    throw new Error(
+      `Unable to find a supported version for '${plugin.location}'`
+    );
+  else if (
+    supported !== plugin.version ||
+    (plugin.version === "latest" && supported !== resolveLatest(versions))
+  )
+    plugin.version = supported;
+};
 
 /**
  * Load one plugin
@@ -19,7 +86,16 @@ const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
  * @param plugin - plugin to load
  * @param force - force flag
  */
-const loadPlugin = async (plugin, force) => {
+const loadPlugin = async (plugin, force, forceFetch) => {
+  if (plugin.source === "npm" && !isFixedPlugin(plugin)) {
+    try {
+      await ensurePluginSupport(plugin, forceFetch);
+    } catch (e) {
+      console.log(
+        `Warning: Unable to find a supported version for '${plugin.location}' Continuing with the installed version`
+      );
+    }
+  }
   // load plugin
   const loader = new PluginInstaller(plugin);
   const res = await loader.install(force);
@@ -105,7 +181,7 @@ const loadAllPlugins = async (force) => {
     }
   }
   await getState().refreshUserLayouts();
-  await getState().refresh(true);
+  await getState().refresh(true, true);
   if (!isRoot()) reloadAuthFromRoot();
 };
 
@@ -151,11 +227,15 @@ const loadAndSaveNewPlugin = async (
       return;
     }
   }
-  const msgs = [];
-  const loader = new PluginInstaller(plugin);
-  const { version, plugin_module, location, loadedWithReload } =
+  if (plugin.source === "npm") await ensurePluginSupport(plugin);
+  const loadMsgs = [];
+  const loader = new PluginInstaller(plugin, {
+    scVersion: packagejson.version,
+    envVars: { PUPPETEER_SKIP_DOWNLOAD: "1" },
+  });
+  const { version, plugin_module, location, loadedWithReload, msgs } =
     await loader.install(force);
-
+  if (msgs) loadMsgs.push(...msgs);
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
     const existing = await Plugin.findOne({ location: loc });
@@ -201,7 +281,7 @@ const loadAndSaveNewPlugin = async (
     }
   }
   if (loadedWithReload || registeredWithReload) {
-    msgs.push(
+    loadMsgs.push(
       __(
         "The plugin was corrupted and had to be repaired. We recommend restarting your server.",
         plugin.name
@@ -228,7 +308,7 @@ const loadAndSaveNewPlugin = async (
       force: false, // okay ??
     });
   }
-  return msgs;
+  return loadMsgs;
 };
 
 module.exports = {
@@ -236,4 +316,6 @@ module.exports = {
   loadAllPlugins,
   loadPlugin,
   requirePlugin,
+  getEngineInfos,
+  ensurePluginSupport,
 };

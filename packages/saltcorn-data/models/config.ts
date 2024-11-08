@@ -232,6 +232,13 @@ const configTypes: ConfigTypes = {
     blurb:
       "Elevate users to a higher role when their email addresses have been verified",
   },
+  plain_password_triggers: {
+    type: "Bool",
+    label: "Plain password trigger row",
+    default: false,
+    blurb:
+      "Send plaintext password changes to Users table triggers (Insert, Update and Validate).",
+  },
   /** @type {object} */
   signup_role: {
     type: "Role",
@@ -318,8 +325,9 @@ const configTypes: ConfigTypes = {
   role_to_create_tenant: {
     type: "Role",
     label: "Role to create tenants",
-    blurb: "Minimum user role required to create a new tenant",
+    blurb: `Minimum user role required to create a new tenant<div class="alert alert-danger fst-normal" role="alert" data-show-if="showIfFormulaInputs($('select[name=role_to_create_tenant]'), '+role_to_create_tenant>1')">Giving non-trusted users access to create tenants is a security risk and not recommended.</div>`,
     default: "1",
+    required: true,
   },
   /** @type {object} */
   create_tenant_warning: {
@@ -555,11 +563,16 @@ const configTypes: ConfigTypes = {
     label: "Function code pages",
     default: {},
   },
+  function_code_pages_tags: {
+    type: "hidden",
+    label: "Function code pages tags",
+    default: {},
+  },
   cookie_duration: {
     type: "Integer",
     label: "Cookie duration (hours)",
     sublabel: "Set to 0 for expiration at the end of browser session",
-    default: 0,
+    default: 30 * 24,
   },
   public_cache_maxage: {
     type: "Integer",
@@ -740,6 +753,22 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Backup with event log",
     default: false,
+  },
+  backup_with_system_zip: {
+    type: "Bool",
+    label: "Backup with system zip",
+    sublabel: "Recommended. Executable <code>zip</code> must be installed",
+    default: false,
+  },
+  backup_system_zip_level: {
+    type: "Integer",
+    label: "Zip compression level",
+    sublabel: "1=Fast, larger file, 9=Slow, smaller files",
+    default: 5,
+    attributes: {
+      min: 1,
+      max: 9,
+    },
   },
   snapshots_enabled: {
     type: "Bool",
@@ -972,6 +1001,17 @@ const configTypes: ConfigTypes = {
       "0, empty or a negative number to disable",
     root_only: true,
     restart_required: true,
+  },
+  engines_cache: {
+    type: "JSON",
+    label: "Cached plugin version infos",
+    default: {},
+  },
+  // when this is different from the current version, the engines cache is cleared
+  engines_cache_sc_version: {
+    type: "String",
+    label: "Saltcorn version for engines cache",
+    default: "",
   },
 };
 // TODO move list of languages from code to configuration
@@ -1209,6 +1249,8 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
   await getState().setConfig("unrolled_menu_items", await unroll(menu_items));
 };
 
+// For now latestVersion() ignores the supported version
+// Do we have to move this into server, so that it can access the stable_versioning utils?
 /**
  * Get latest npm version
  * @param {string} pkg

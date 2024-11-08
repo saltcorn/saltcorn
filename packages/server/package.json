@@ -1,20 +1,20 @@
 {
   "name": "@saltcorn/server",
-  "version": "0.9.6-beta.19",
+  "version": "1.0.0-rc.6",
   "description": "Server app for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.451.0",
-    "@saltcorn/base-plugin": "0.9.6-beta.19",
-    "@saltcorn/builder": "0.9.6-beta.19",
-    "@saltcorn/data": "0.9.6-beta.19",
-    "@saltcorn/admin-models": "0.9.6-beta.19",
-    "@saltcorn/filemanager": "0.9.6-beta.19",
-    "@saltcorn/markup": "0.9.6-beta.19",
-    "@saltcorn/plugins-loader": "0.9.6-beta.19",
-    "@saltcorn/sbadmin2": "0.9.6-beta.19",
+    "@saltcorn/base-plugin": "1.0.0-rc.6",
+    "@saltcorn/builder": "1.0.0-rc.6",
+    "@saltcorn/data": "1.0.0-rc.6",
+    "@saltcorn/admin-models": "1.0.0-rc.6",
+    "@saltcorn/filemanager": "1.0.0-rc.6",
+    "@saltcorn/markup": "1.0.0-rc.6",
+    "@saltcorn/plugins-loader": "1.0.0-rc.6",
+    "@saltcorn/sbadmin2": "1.0.0-rc.6",
     "@socket.io/cluster-adapter": "^0.2.1",
     "@socket.io/sticky": "^1.0.1",
     "adm-zip": "0.5.10",
@@ -46,7 +46,7 @@
     "node-fetch": "2.6.9",
     "node-watch": "^0.7.2",
     "notp": "2.0.3",
-    "npm-registry-fetch": "16.0.0",
+    "npm-registry-fetch": "17.1.0",
     "passport": "^0.6.0",
     "passport-custom": "^1.1.1",
     "passport-http-bearer": "^1.0.1",
@@ -55,7 +55,7 @@
     "pg": "^8.2.1",
     "pluralize": "^8.0.0",
     "qrcode": "1.5.1",
-    "resize-with-sharp-or-jimp": "0.1.7",
+    "resize-with-sharp-or-jimp": "0.1.8",
     "semver": "^7.6.0",
     "socket.io": "4.6.0",
     "systeminformation": "^5.21.7",
@@ -63,7 +63,7 @@
     "tmp-promise": "^3.0.2",
     "ua-parser-js": "^1.0.37",
     "underscore": "1.13.6",
-    "uuid": "^8.2.0"
+    "uuid": "^10.0.0"
   },
   "optionalDependencies": {
     "connect-sqlite3": "^0.9.11",
@@ -71,9 +71,9 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "^28.1.3",
-    "jest-environment-jsdom": "28.1.3",
-    "supertest": "^6.3.3"
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "29.7.0",
+    "supertest": "7.0.0"
   },
   "scripts": {
     "dev": "nodemon index.js",

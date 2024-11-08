@@ -38,6 +38,7 @@ const safeUserFields = (o: UserCfg | User): any => {
     reset_password_token,
     reset_password_expiry,
     role_id,
+    last_mobile_login,
     ...rest
   } = o;
   return rest;
@@ -134,7 +135,10 @@ class User {
     this.password = password;
     const upd: Row = { password };
     if (expireToken) upd.reset_password_token = null;
-    await this.update(upd);
+    const { getState } = require("../db/state");
+    if (getState().getConfig("plain_password_triggers", false))
+      await this.update(upd, newpw);
+    else await this.update(upd);
   }
 
   /**
@@ -193,6 +197,12 @@ class User {
     if (await User.matches_existing_user(uo))
       return { error: `This user already exists` };
 
+    const { getState } = require("../db/state");
+    const plain_password_triggers = getState().getConfig(
+      "plain_password_triggers",
+      false
+    );
+
     const urecord = {
       email: u.email,
       password: hashpw,
@@ -205,7 +215,9 @@ class User {
     await Trigger.runTableTriggers(
       "Validate",
       user_table,
-      { ...urecord },
+      plain_password_triggers
+        ? { plain_password: password, ...urecord }
+        : { ...urecord },
       valResCollector
     );
     if ("error" in valResCollector)
@@ -214,7 +226,11 @@ class User {
       Object.assign(urecord, valResCollector.set_fields);
 
     u.id = await db.insert("users", urecord);
-    await Trigger.runTableTriggers("Insert", user_table, u);
+    await Trigger.runTableTriggers(
+      "Insert",
+      user_table,
+      plain_password_triggers ? { plain_password: password, ...u } : { ...u }
+    );
     return u;
   }
 
@@ -417,8 +433,19 @@ class User {
    * @param row
    * @returns {Promise<void>}
    */
-  async update(row: Row): Promise<void> {
-    await User.table.updateRow(row, this.id!);
+  async update(row: Row, plainPassword?: string): Promise<void> {
+    if (plainPassword)
+      await User.table.updateRow(
+        row,
+        this.id!,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { plain_password: plainPassword }
+      );
+    else await User.table.updateRow(row, this.id!);
     Object.assign(this, row);
   }
 

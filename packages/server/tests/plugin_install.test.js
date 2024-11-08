@@ -112,3 +112,238 @@ describe("Tenant cannot install unsafe plugins", () => {
     });
   }
 });
+
+describe("Stable versioning install", () => {
+  /*
+    empty_sc_test_plugin:
+      - starts without engine property but from the second version on it has
+    empty_sc_test_plugin_two:
+      - has no engine property in any version
+  */
+  beforeEach(async () => {
+    for (const plugin of [
+      "@christianhugoch/empty_sc_test_plugin",
+      "@christianhugoch/empty_sc_test_plugin_two",
+    ]) {
+      const dbPlugin = await Plugin.findOne({ name: plugin });
+      if (dbPlugin) await dbPlugin.delete();
+    }
+  });
+  it("installs latest", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "latest",
+      })
+    );
+    const dbPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(dbPlugin).not.toBe(null);
+    expect(dbPlugin.version).toBe("0.0.3");
+  });
+
+  it("installs and downgrades latest", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin",
+        location: "@christianhugoch/empty_sc_test_plugin",
+        source: "npm",
+        version: "latest",
+      }),
+      true
+    );
+    const dbPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(dbPlugin).not.toBe(null);
+    expect(dbPlugin.version).toBe("0.0.6");
+  });
+
+  it("installs a fixed version", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin",
+        location: "@christianhugoch/empty_sc_test_plugin",
+        source: "npm",
+        version: "0.0.5",
+      })
+    );
+    const dbPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(dbPlugin).not.toBe(null);
+    expect(dbPlugin.version).toBe("0.0.6");
+  });
+
+  it("installs and downgrades a fixed version", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin",
+        location: "@christianhugoch/empty_sc_test_plugin",
+        source: "npm",
+        version: "0.0.6",
+      }),
+      true
+    );
+    const dbPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(dbPlugin).not.toBe(null);
+    expect(dbPlugin.version).toBe("0.0.6");
+  });
+});
+
+describe("Stable versioning upgrade", () => {
+  beforeEach(async () => {
+    for (const plugin of [
+      "@christianhugoch/empty_sc_test_plugin",
+      "@christianhugoch/empty_sc_test_plugin_two",
+    ]) {
+      const dbPlugin = await Plugin.findOne({ name: plugin });
+      if (dbPlugin) await dbPlugin.delete();
+    }
+  });
+
+  it("upgrades to latest", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "0.0.1",
+      }),
+      true
+    );
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(oldPlugin).not.toBe(null);
+    expect(oldPlugin.version).toBe("0.0.1");
+
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        id: oldPlugin.id,
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "latest",
+      }),
+      true
+    );
+    const newPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(newPlugin).not.toBe(null);
+    expect(newPlugin.version).toBe("0.0.3");
+  });
+
+  it("upgrades to latest with downgrade", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin",
+        location: "@christianhugoch/empty_sc_test_plugin",
+        source: "npm",
+        version: "0.0.1",
+      }),
+      true
+    );
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(oldPlugin).not.toBe(null);
+    expect(oldPlugin.version).toBe("0.0.1");
+
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        id: oldPlugin.id,
+        name: "@christianhugoch/empty_sc_test_plugin",
+        location: "@christianhugoch/empty_sc_test_plugin",
+        source: "npm",
+        version: "latest",
+      }),
+      true
+    );
+    const newPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(newPlugin).not.toBe(null);
+    expect(newPlugin.version).toBe("0.0.6");
+  });
+
+  it("upgrades to fixed version", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "0.0.1",
+      }),
+      true
+    );
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(oldPlugin).not.toBe(null);
+    expect(oldPlugin.version).toBe("0.0.1");
+
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        id: oldPlugin.id,
+        name: "@christianhugoch/empty_sc_test_plugin_two",
+        location: "@christianhugoch/empty_sc_test_plugin_two",
+        source: "npm",
+        version: "0.0.3",
+      }),
+      true
+    );
+    const newPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin_two",
+    });
+    expect(newPlugin).not.toBe(null);
+    expect(newPlugin.version).toBe("0.0.3");
+  });
+
+  it("upgrades to fixed version with downgrade", async () => {
+    const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        name: "@christianhugoch/empty_sc_test_plugin",
+        location: "@christianhugoch/empty_sc_test_plugin",
+        source: "npm",
+        version: "0.0.1",
+      }),
+      true
+    );
+    const oldPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(oldPlugin).not.toBe(null);
+    expect(oldPlugin.version).toBe("0.0.1");
+
+    await loadAndSaveNewPlugin(
+      new Plugin({
+        id: oldPlugin.id,
+        name: "@christianhugoch/empty_sc_test_plugin",
+        location: "@christianhugoch/empty_sc_test_plugin",
+        source: "npm",
+        version: "0.0.6",
+      }),
+      true
+    );
+    const newPlugin = await Plugin.findOne({
+      name: "@christianhugoch/empty_sc_test_plugin",
+    });
+    expect(newPlugin).not.toBe(null);
+    expect(newPlugin.version).toBe("0.0.6");
+  });
+});

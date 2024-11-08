@@ -11,6 +11,7 @@ const {
 const { getState } = require("@saltcorn/data/db/state");
 const { rm, rename, cp, readFile } = require("fs").promises;
 const envPaths = require("env-paths");
+const semver = require("semver");
 
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
@@ -26,10 +27,10 @@ const readPackageJson = async (filePath) => {
 };
 
 const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
-  const oldDeps = oldPckJSON.dependencies || {};
-  const oldDevDeps = oldPckJSON.devDependencies || {};
-  const newDeps = newPckJSON.dependencies || {};
-  const newDevDeps = newPckJSON.devDependencies || {};
+  const oldDeps = oldPckJSON.dependencies || Object.create(null);
+  const oldDevDeps = oldPckJSON.devDependencies || Object.create(null);
+  const newDeps = newPckJSON.dependencies || Object.create(null);
+  const newDevDeps = newPckJSON.devDependencies || Object.create(null);
   return (
     JSON.stringify(oldDeps) !== JSON.stringify(newDeps) ||
     JSON.stringify(oldDevDeps) !== JSON.stringify(newDevDeps)
@@ -37,7 +38,7 @@ const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
 };
 
 class PluginInstaller {
-  constructor(plugin, opts = {}) {
+  constructor(plugin, opts = Object.create(null)) {
     this.plugin = plugin;
     this.rootFolder =
       opts.rootFolder || envPaths("saltcorn", { suffix: "plugins" }).data;
@@ -56,13 +57,34 @@ class PluginInstaller {
     this.pckJsonPath = join(this.pluginDir, "package.json");
     this.tempDir = join(this.tempRootFolder, "temp_install", ...tokens);
     this.tempPckJsonPath = join(this.tempDir, "package.json");
+    this.scVersion = opts.scVersion;
+    this.envVars = opts.envVars || {};
+  }
+
+  /**
+   * check if the host supports the plugin and return a warning if not
+   * @param pckJSON
+   * @returns
+   */
+  checkEngineWarning(pckJSON) {
+    const scEngine = pckJSON.engines?.saltcorn;
+    if (
+      this.scVersion &&
+      scEngine &&
+      !semver.satisfies(this.scVersion, scEngine)
+    ) {
+      const warnMsg = `Plugin ${this.plugin.name} requires Saltcorn version ${scEngine} but running ${this.scVersion}`;
+      getState().log(4, warnMsg);
+      return warnMsg;
+    }
+    return null;
   }
 
   async install(force) {
     await this.ensurePluginsRootFolders();
     if (fixedPlugins.includes(this.plugin.location))
       return { plugin_module: require(this.plugin.location) };
-
+    const msgs = [];
     let pckJSON = await readPackageJson(this.pckJsonPath);
     const installer = async () => {
       if (await this.prepPluginsFolder(force, pckJSON)) {
@@ -80,6 +102,8 @@ class PluginInstaller {
           await removeTarball(this.rootFolder, this.plugin);
       }
       pckJSON = await readPackageJson(this.pckJsonPath);
+      const msg = this.checkEngineWarning(pckJSON);
+      if (msg && !msgs.includes(msg)) msgs.push(msg);
     };
     await installer();
     let module = null;
@@ -108,6 +132,7 @@ class PluginInstaller {
       location: this.pluginDir,
       name: this.plugin.name,
       loadedWithReload,
+      msgs,
     };
   }
 
@@ -233,6 +258,7 @@ class PluginInstaller {
     ) {
       const child = spawn("npm", ["install"], {
         cwd: this.tempDir,
+        env: { ...process.env, ...this.envVars },
         ...(isWindows ? { shell: true } : {}),
       });
       return new Promise((resolve, reject) => {

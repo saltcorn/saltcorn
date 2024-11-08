@@ -411,7 +411,7 @@ router.get(
                   ajax_indicator(false);
                   //if (item._versions) item._versions = +item._versions + 1;
                   //data.resolve(fixKeys(item));
-                  if(resp.success &&typeof resp.success ==="number" && !row.id) {
+                  if(resp.success &&(typeof resp.success ==="number" || typeof resp.success ==="string") && !row.id) {
                     window.tabulator_table.updateRow(cell.getRow(), {id: resp.success});
                   }
 

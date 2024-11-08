@@ -1,4 +1,4 @@
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags } = require("@oclif/core");
 const path = require("path");
 const { init_multi_tenant } = require("@saltcorn/data/db/state");
 const User = require("@saltcorn/data/models/user");
@@ -232,7 +232,7 @@ class SyncUploadData extends Command {
   async run() {
     let returnCode = 0,
       inTransaction = false;
-    const { flags } = await this.parse(SyncUploadData);
+    const { flags } = await await this.parse(SyncUploadData);
     if (db.is_it_multi_tenant() && flags.tenantAppName) {
       await init_multi_tenant(loadAllPlugins, true, [flags.tenantAppName]);
     }
@@ -282,22 +282,22 @@ class SyncUploadData extends Command {
 SyncUploadData.description = "Runs a sync for data supplied by the mobile app";
 
 SyncUploadData.flags = {
-  tenantAppName: flags.string({
+  tenantAppName: Flags.string({
     name: "tenant",
     string: "tenant",
     description: "Optional name of a tenant application",
   }),
-  userEmail: flags.string({
+  userEmail: Flags.string({
     name: "user email",
     string: "userEmail",
     description: "email of the user running the sync",
   }),
-  directory: flags.string({
+  directory: Flags.string({
     name: "directory",
     string: "directory",
     description: "directory name for input output data",
   }),
-  syncTimestamp: flags.integer({
+  syncTimestamp: Flags.integer({
     name: "syncTimestamp",
     string: "syncTimestamp",
     description: "new timestamp for the sync_info rows",

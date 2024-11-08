@@ -222,14 +222,17 @@ const create_tenant = async ({
       });
     }
     if (db.is_node) {
-      // TODO ch
       process_send({ createTenant: t });
     }
   }
 };
 
 const upgrade_all_tenants_plugins = async (
-  loadPlugin: (arg0: Plugin, arg1: boolean) => Promise<{ version: string }>
+  loadPlugin: (
+    arg0: Plugin,
+    arg1: boolean,
+    arg2: boolean
+  ) => Promise<{ version: string }>
 ): Promise<void> => {
   const tenantList = [db.connectObj.default_schema, ...(await getAllTenants())];
   const latest_versions: any = {};
@@ -247,7 +250,7 @@ const upgrade_all_tenants_plugins = async (
           } else {
             const prevVersion = plugin.version;
             plugin.version = "latest";
-            const { version } = await loadPlugin(plugin, true);
+            const { version } = await loadPlugin(plugin, true, true);
             getState().log(
               5,
               `Plugin ${plugin.location} latest version ${version} (previously ${prevVersion})`

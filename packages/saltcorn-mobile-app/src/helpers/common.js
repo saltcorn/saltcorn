@@ -15,10 +15,26 @@ export function showAlerts(alerts, toast = true) {
     console.log(alerts);
   } else {
     const iframe = document.getElementById("content-iframe");
-    const area = iframe.contentWindow.document.getElementById(
+    let area = iframe.contentWindow.document.getElementById(
       toast ? "toasts-area" : "top-alert"
     );
-    if (!area) return false;
+    if (!area) {
+      const areaHtml = `<div class="container">
+  <div 
+    id="toasts-area" 
+    class="toast-container position-fixed bottom-0 start-50 p-0" 
+    style="z-index: 999;" 
+    aria-live="polite" 
+    aria-atomic="true">
+  </div>
+</div>`;
+      iframe.contentWindow.document
+        .getElementById("page-inner-content")
+        .insertAdjacentHTML("beforeend", areaHtml);
+      area = iframe.contentWindow.document.getElementById(
+        toast ? "toasts-area" : "top-alert"
+      );
+    }
     const successIds = [];
     area.innerHTML = "";
     for (const { type, msg } of alerts) {

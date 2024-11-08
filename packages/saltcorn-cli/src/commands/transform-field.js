@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/transform-field
  */
-const { Command, flags } = require("@oclif/command");
+const { Command, Flags, Args } = require("@oclif/core");
 
 /**
  * TransformFieldCommand Class
@@ -23,7 +23,7 @@ class TransformFieldCommand extends Command {
     const {
       get_async_expression_function,
     } = require("@saltcorn/data/models/expression");
-    const { args } = this.parse(TransformFieldCommand);
+    const { args } = await this.parse(TransformFieldCommand);
     await loadAllPlugins();
     if (args.tenant && db.is_it_multi_tenant()) {
       const tenants = await getAllTenants();
@@ -54,16 +54,15 @@ class TransformFieldCommand extends Command {
 /**
  * @type {object}
  */
-TransformFieldCommand.args = [
-  {
-    name: "expression",
+TransformFieldCommand.args = {
+  expression: Args.string({
     required: true,
     description: "expression to calculate field",
-  },
-  { name: "field", required: true, description: "field name" },
-  { name: "table", required: true, description: "table name" },
-  { name: "tenant", required: false, description: "tenant name" },
-];
+  }),
+  field: Args.string({ required: true, description: "field name" }),
+  table: Args.string({ required: true, description: "table name" }),
+  tenant: Args.string({ required: false, description: "tenant name" }),
+};
 
 /**
  * @type {string}

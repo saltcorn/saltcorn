@@ -24,7 +24,9 @@ const {
   asyncSudoPostgres,
   gen_password,
   genJwtSecret,
-  pullWithSudo,
+  setupDocker,
+  getDockerEnvVars,
+  pullCordovaBuilder,
 } = require("./utils");
 //const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
 
@@ -253,6 +255,61 @@ const askOsService = async () => {
   return responses.osService;
 };
 
+const askDockerMode = async () => {
+  if (yes) return { dockerMode: "rootless" };
+  let responses = await inquirer.prompt([
+    {
+      name: "setupdocker",
+      message:
+        "Do you want to set up Docker?\n" +
+        "Docker is used to build mobile Android apps. You can also set it up later or install your own Android SDK.",
+      type: "confirm",
+      default: true,
+    },
+  ]);
+  if (!responses.setupdocker) return { dockerMode: null };
+  else {
+    responses = await inquirer.prompt([
+      {
+        name: "dockermode",
+        message: "Which docker mode are you using?",
+        type: "list",
+        choices: [
+          {
+            name: "Standard: Root privileges are required",
+            value: "standard",
+          },
+          {
+            name: "Rootless: Docker is available without root privileges",
+            value: "rootless",
+          },
+          {
+            name: "Cancel",
+            value: null,
+          },
+        ],
+        default: "rootless",
+      },
+    ]);
+    const dockerMode = responses.dockermode;
+    let addToDockerGroup = false;
+    if (dockerMode === "standard") {
+      responses = await inquirer.prompt([
+        {
+          name: "dockerGroup",
+          message:
+            "Do you want to add your user to the docker group?\n" +
+            "Adding the user to the docker group allows you to run docker commands without root privileges.",
+          type: "confirm",
+          default: true,
+        },
+      ]);
+      addToDockerGroup = responses.dockerGroup;
+    }
+    return { dockerMode, addToDockerGroup };
+  }
+};
+
 /**
  * Install System packages
  * @param osInfo - OS Info
@@ -301,7 +358,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   }
   const packages =
     installer === "apt"
-      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev"]
+      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev", "zip"]
       : ["systemd-devel"];
   if (!skipChromium) {
     if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");
@@ -406,9 +463,10 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
   const { configFileDir } = get_paths(user);
 
   await asyncSudoUser(user, ["mkdir", "-p", configFileDir], false, dryRun);
+  const npmPrefix = `/home/${user}/.local/`;
   await asyncSudoUser(
     user,
-    ["npm", "config", "set", "prefix", `/home/${user}/.local/`],
+    ["npm", "config", "set", "prefix", npmPrefix],
     false,
     dryRun
   );
@@ -423,13 +481,15 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
       "--unsafe",
     ],
     false,
-    dryRun
+    dryRun,
+    { npm_config_prefix: npmPrefix }
   );
   await asyncSudoUser(
     user,
     ["npm", "install", "-g", "sd-notify"],
     true,
-    dryRun
+    dryRun,
+    { npm_config_prefix: npmPrefix }
   );
   await asyncSudo(
     [
@@ -479,113 +539,6 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   );
 };
 
-const handleCordovaBuilder = async (user, dryRun) => {
-  console.log();
-  if (!yes) {
-    console.log(
-      "Saltcorn is now installed, but before you finish, you could set up the cordova-builder docker image."
-    );
-    console.log(
-      "This image has all needed dependencies to build Android mobile apps."
-    );
-    console.log("Please make sure you have docker installed.");
-    console.log(
-      "If you skip this or if it fails, you can also pull it later, or configure an Android SDK on your own."
-    );
-  } else {
-    console.log(
-      "saltcorn is now installed, trying to set up the cordova-builder docker image."
-    );
-    console.log(
-      "This image has all needed dependencies to build Android mobile apps."
-    );
-    console.log(
-      "if it fails, you can also pull it later, or configure an Android SDK on your own."
-    );
-  }
-  console.log();
-  const askPullCordovaBuilder = async () => {
-    const responses = await inquirer.prompt([
-      {
-        name: "cordovabuilder",
-        message: "Do you want to pull the Cordova builder?",
-        type: "confirm",
-        default: true,
-      },
-    ]);
-    return responses.cordovabuilder;
-  };
-
-  const askDockerMode = async () => {
-    const responses = await inquirer.prompt([
-      {
-        name: "dockermode",
-        message: "Which docker mode are you using?",
-        type: "list",
-        choices: [
-          {
-            name: "Standard: Root privileges are required",
-            value: "standard",
-          },
-          {
-            name: "Rootless: Docker is available without root privileges",
-            value: "rootless",
-          },
-          {
-            name: "Cancel",
-            value: "cancel",
-          },
-        ],
-      },
-    ]);
-    return responses.dockermode;
-  };
-
-  const askDockerGroup = async () => {
-    const responses = await inquirer.prompt([
-      {
-        name: "dockergroup",
-        message:
-          "Would you like to add your user to the docker group?" +
-          os.EOL +
-          "This could be needed for later upgrades.",
-        type: "confirm",
-        default: true,
-      },
-    ]);
-    return responses.dockergroup;
-  };
-
-  const doPull = yes || (await askPullCordovaBuilder());
-  if (doPull) {
-    const dockerMode = yes || (await askDockerMode());
-    if (dockerMode === "standard") {
-      const addToDockerGroup = await askDockerGroup();
-      if (addToDockerGroup) {
-        await asyncSudo(["usermod", "-aG", "docker", user], false, dryRun);
-      }
-    } else if (dockerMode === "cancel") {
-      return;
-    }
-    console.log();
-    console.log("Pulling the Cordova builder image.");
-    console.log(
-      "This might take some time, but the Saltcorn server is already running, " +
-        "and you can open the 'Mobile builder' menu to check if the image is available."
-    );
-    console.log();
-
-    if (os.userInfo().username === user) {
-      await asyncSudoUser(
-        user,
-        ["docker", "pull", "saltcorn/cordova-builder"],
-        false,
-        dryRun
-      );
-    } else pullWithSudo(user);
-  }
-};
-
 /** main logic of script **/
 (async () => {
   // get OS info
@@ -615,6 +568,10 @@ const handleCordovaBuilder = async (user, dryRun) => {
   // ask for system service name
   const osService = expert ? await askOsService() : "saltcorn";
   if (verbose) console.log({ osService });
+
+  // ask for docker mode
+  const { dockerMode, addToDockerGroup } = await askDockerMode();
+  if (verbose) console.log({ dockerMode, addToDockerGroup });
 
   // install system pkg
   await installSystemPackages(osInfo, user, db, mode, port, dryRun);
@@ -707,7 +664,7 @@ User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
 Restart=always
-Environment="NODE_ENV=production"
+Environment="NODE_ENV=production" ${getDockerEnvVars(user, dockerMode)}
 
 [Install]
 WantedBy=multi-user.target`
@@ -778,8 +735,19 @@ WantedBy=multi-user.target`
   await asyncSudo(["systemctl", "enable", osService], false, dryRun);
   if (!hasSDnotify) await asyncSudo(["sleep", "5"], false, dryRun);
 
-  // ask if and how the cordova-builder image should be set up
-  await handleCordovaBuilder(user, dryRun);
+  if (dockerMode) {
+    try {
+      await setupDocker(user, dockerMode, addToDockerGroup, osInfo, dryRun);
+      await pullCordovaBuilder(user, dockerMode, addToDockerGroup, dryRun);
+      // restart to apply the docker group membership
+      await asyncSudo(["systemctl", "restart", osService], false, dryRun);
+    } catch (error) {
+      console.log(
+        "The saltcorn server is up and running, but I wasn't able to set up docker with the cordova-builder image"
+      );
+      console.log(error);
+    }
+  }
 })().catch((e) => {
   console.error(e ? e.message || e : e);
   process.exit(1);

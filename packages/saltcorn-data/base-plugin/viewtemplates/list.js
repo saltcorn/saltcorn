@@ -88,7 +88,8 @@ const create_db_view = async (context, req) => {
     context.columns,
     fields,
     undefined,
-    req
+    req,
+    table
   );
 
   const { sql } = await table.getJoinedQuery({
@@ -158,27 +159,15 @@ const configuration_workflow = (req) =>
             "GoBack",
             ...boolfields.map((f) => `Toggle ${f.name}`),
           ];
-          const actions = [
-            ...builtInActions,
-            ...stateActions.map(([k, v]) => k),
-          ];
-          const triggerActions = [];
-          (
-            await Trigger.find({
-              when_trigger: { or: ["API call", "Never"] },
-              table_id: null,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
           });
-          (
-            await Trigger.find({
-              table_id: context.table_id,
-            })
-          ).forEach((tr) => {
-            actions.push(tr.name);
-            triggerActions.push(tr.name);
+          const actions = Trigger.action_options({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            builtInLabel: "List Actions",
+            builtIns: builtInActions,
           });
           for (const field of fields) {
             if (field.type === "Key") {
@@ -600,6 +589,10 @@ const configuration_workflow = (req) =>
                 .map((s) => code(s))
                 .join(", "),
             type: "String",
+            help: {
+              topic: "Inclusion Formula",
+              context: { table_name: table.name },
+            },
           });
           formfields.push({
             name: "exclusion_relation",
@@ -622,6 +615,11 @@ const configuration_workflow = (req) =>
             type: "Integer",
             default: 20,
             attributes: { min: 0 },
+          });
+          formfields.push({
+            name: "_hide_pagination",
+            label: req.__("Hide pagination"),
+            type: "Bool",
           });
           formfields.push({
             name: "_row_click_url_formula",
@@ -1055,7 +1053,12 @@ const run = async (
   }
   page_opts.class = "";
 
-  if ((rows && rows.length === rows_per_page) || current_page > 1) {
+  if (
+    (!default_state?._hide_pagination &&
+      rows &&
+      rows.length === rows_per_page) ||
+    current_page > 1
+  ) {
     const nrows = rowCount;
     if (nrows > rows_per_page || current_page > 1) {
       page_opts.pagination = {
@@ -1269,6 +1272,7 @@ module.exports = {
       exclusion_relation,
       exclusion_where,
       _rows_per_page,
+      _hide_pagination,
       _row_click_url_formula,
       transpose,
       transpose_width,
@@ -1322,10 +1326,21 @@ module.exports = {
         columns,
         fields,
         layout,
-        req
+        req,
+        table
       );
-      const where = await stateFieldsToWhere({ fields, state, table });
-      const q = await stateFieldsToQuery({
+      const where = stateFieldsToWhere({
+        fields,
+        state,
+        table,
+        prefix: "a.",
+      });
+      const whereForCount = stateFieldsToWhere({
+        fields,
+        state,
+        table,
+      });
+      const q = stateFieldsToQuery({
         state,
         fields,
         prefix: "a.",
@@ -1363,9 +1378,17 @@ module.exports = {
             )
           : {};
         const relRows = await relTable.getRows(relWhere);
-        mergeIntoWhere(where, {
-          id: { not: { in: relRows.map((r) => r[relfld]) } },
-        });
+        if (relRows.length > 0)
+          mergeIntoWhere(
+            where,
+            !db.isSQLite
+              ? {
+                  id: { not: { in: relRows.map((r) => r[relfld]) } },
+                }
+              : {
+                  not: { or: relRows.map((r) => ({ id: r[relfld] })) },
+                }
+          );
       }
       let rows = await table.getJoinedRows({
         where,
@@ -1376,10 +1399,12 @@ module.exports = {
         forUser: req.user,
       });
 
-      const rowCount = await table.countRows(where, {
-        forPublic: !req.user,
-        forUser: req.user,
-      });
+      const rowCount = default_state?._hide_pagination
+        ? undefined
+        : await table.countRows(whereForCount, {
+            forPublic: !req.user,
+            forUser: req.user,
+          });
       return { rows, rowCount };
     },
     async getRowQuery(id) {
