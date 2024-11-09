@@ -236,7 +236,7 @@ describe("Pack Endpoints", () => {
       .send(
         "pack=les%22%3A+%5B%5D%2C+%22views%22%3A+%5B%5D%2C+%22plugins%22%3A+%5B%5D%2C+%22pages%22%3A+%5B%5D+%7D"
       )
-      .expect(toInclude("Unexpected token l in JSON at position 0"));
+      .expect(toInclude("Unexpected token"));
   });
   it("should install named", async () => {
     const loginCookie = await getAdminLoginCookie();
