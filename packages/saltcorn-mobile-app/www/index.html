@@ -7,6 +7,11 @@
     />
     <script src="cordova.js"></script>
 
+    <script src="data/tables.js"></script>
+    <script src="data/tables_created_at.js"></script>
+    <script src="data/config.js"></script>
+    <script src="data/translations.js"></script>
+    <script src="data/encoded_site_logo.js"></script>
     <script type="module" src="./dist/bundle.js"></script>
     <script src="js/iframe_view_utils.js"></script>
 
@@ -15,7 +20,15 @@
       if (window.saltcorn) window.saltcorn.mobileApp = mobileApp;
       else window.saltcorn = { mobileApp };
 
-      document.addEventListener("deviceready", saltcorn.mobileApp.init);
+      document.addEventListener("deviceready", () =>
+        saltcorn.mobileApp.init({
+          mobileConfig: _sc_mobile_config,
+          tablesSchema: _sc_tables,
+          schemaCreatedAt: _sc_tables_created_at,
+          translations: _sc_translations,
+          siteLogo: _sc_site_logo,
+        })
+      );
       document.addEventListener("backbutton", async () => {
         await saltcorn.mobileApp.navigation.goBack(1, true);
       });

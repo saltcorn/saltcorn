@@ -7,8 +7,6 @@ import {
   sync,
   getLastOfflineSession,
 } from "./helpers/offline_mode.js";
-
-import { readJSON, readText } from "./helpers/file_system.js";
 import {
   updateScPlugins,
   createSyncInfoTables,
@@ -152,40 +150,11 @@ const initJwt = async () => {
   }
 };
 
-const initI18Next = async () => {
-  const resources = {};
-  for (const key of Object.keys(
-    saltcorn.data.models.config.available_languages
-  )) {
-    const localeFile = await readJSON(
-      `${key}.json`,
-      `${cordova.file.applicationDirectory}public/locales`
-    );
-    resources[key] = {
-      translation: localeFile,
-    };
-  }
+const initI18Next = async (allLanguages) => {
   await i18next.use(i18nextSprintfPostProcessor).init({
     lng: "en",
-    resources,
+    allLanguages,
   });
-  saltcorn.mobileApp.i18next = i18next;
-};
-
-const readSiteLogo = async (state) => {
-  try {
-    const base64 = await readText(
-      "encoded_site_logo.txt",
-      `${cordova.file.applicationDirectory}public`
-    );
-    state.mobileConfig.encodedSiteLogo = base64;
-  } catch (error) {
-    console.log(
-      `Unable to read the site logo file: ${
-        error.message ? error.message : "Unknown error"
-      }`
-    );
-  }
 };
 
 const showErrorPage = async (error) => {
@@ -309,49 +278,34 @@ const takeLastLocation = () => {
 };
 
 // device is ready
-export async function init() {
+export async function init({
+  mobileConfig,
+  tablesSchema,
+  schemaCreatedAt,
+  translations,
+  siteLogo,
+}) {
   try {
     const lastLocation = takeLastLocation();
     document.addEventListener("resume", onResume, false);
-    const config = await readJSON(
-      "config",
-      `${cordova.file.applicationDirectory}public`
-    );
-    const { created_at } = await readJSON(
-      "tables_created_at.json",
-      `${cordova.file.applicationDirectory}${"public"}`
-    );
-    let tablesJSON = null;
-    await addScripts(config.version_tag);
-    saltcorn.data.db.connectObj.version_tag = config.version_tag;
-
-    // const prePopDb = await copyPrepopulatedDb();
+    const { created_at } = schemaCreatedAt;
+    await addScripts(mobileConfig.version_tag);
+    saltcorn.data.db.connectObj.version_tag = mobileConfig.version_tag;
 
     await saltcorn.data.db.init();
     const updateNeeded = await dbUpdateNeeded(created_at);
     if (updateNeeded) {
-      tablesJSON = await readJSON(
-        "tables.json",
-        `${cordova.file.applicationDirectory}${"public"}`
-      );
       // update '_sc_plugins' first because of loadPlugins()
-      await updateScPlugins(tablesJSON);
+      await updateScPlugins(tablesSchema);
     }
     saltcorn.data.state.features.version_plugin_serve_path = false;
     const state = saltcorn.data.state.getState();
-    state.mobileConfig = config;
+    state.mobileConfig = mobileConfig;
     state.registerPlugin("base", saltcorn.base_plugin);
     state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
     collectPluginHeaders(await loadPlugins(state));
-    if (updateNeeded) {
-      if (!tablesJSON)
-        tablesJSON = await readJSON(
-          "tables.json",
-          `${cordova.file.applicationDirectory}${"public"}`
-        );
-      await updateDb(tablesJSON);
-    }
-    await createSyncInfoTables(config.synchedTables);
+    if (updateNeeded) await updateDb(tablesSchema);
+    await createSyncInfoTables(mobileConfig.synchedTables);
     await initJwt();
     await state.refresh_tables();
     await state.refresh_views();
@@ -359,13 +313,13 @@ export async function init() {
     await state.refresh_page_groups();
     await state.refresh_triggers();
     state.mobileConfig.localTableIds = await getTableIds(
-      config.localUserTables
+      mobileConfig.localUserTables
     );
-    await state.setConfig("base_url", config.server_path);
-    // saltcorn.mobileApp.navigation.router = await initRoutes();;
-    const entryPoint = config.entry_point;
-    await initI18Next();
-    await readSiteLogo(state);
+    await state.setConfig("base_url", mobileConfig.server_path);
+    const entryPoint = mobileConfig.entry_point;
+    await initI18Next(translations);
+    state.mobileConfig.encodedSiteLogo = siteLogo;
+
     state.mobileConfig.networkState = navigator.connection.type;
     document.addEventListener("offline", offlineCallback, false);
     document.addEventListener("online", onlineCallback, false);

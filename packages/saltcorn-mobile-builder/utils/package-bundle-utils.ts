@@ -37,6 +37,14 @@ export async function bundlePackagesAndPlugins(
   return result.status;
 }
 
+export function bundleMobileAppCode(buildDir: string) {
+  const result = spawnSync("npm", ["run", "build"], {
+    cwd: buildDir,
+  });
+  console.log(result.output.toString());
+  return result.status;
+}
+
 async function copyHeaderToApp(
   pluginLocation: string,
   header: string,

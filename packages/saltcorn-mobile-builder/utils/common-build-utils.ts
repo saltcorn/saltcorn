@@ -10,6 +10,7 @@ import {
   readFileSync,
   rmSync,
 } from "fs-extra";
+import fs from "fs";
 import { Row } from "@saltcorn/db-common/internal";
 import { spawnSync, execSync } from "child_process";
 import Page from "@saltcorn/data/models/page";
@@ -18,6 +19,7 @@ import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
+import { available_languages } from "@saltcorn/data/models/config";
 
 const resizer = require("resize-with-sharp-or-jimp");
 
@@ -33,19 +35,6 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   let result = spawnSync("npm", ["install", "--legacy-peer-deps"], {
     cwd: buildDir,
   });
-  console.log(result.output.toString());
-  result = spawnSync(
-    "npm",
-    [
-      "install",
-      "cordova@^12.0.0",
-      "cordova-sqlite-ext@^6.0.0",
-      "cordova-android@^13.0.0",
-    ],
-    {
-      cwd: buildDir,
-    }
-  );
   console.log(result.output.toString());
 }
 
@@ -115,7 +104,7 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
-export async function modifyAndroidManifest(buildDir: string, config: any) {
+export async function modifyAndroidManifest(buildDir: string) {
   try {
     const androidManifest = join(
       buildDir,
@@ -128,9 +117,19 @@ export async function modifyAndroidManifest(buildDir: string, config: any) {
     const content = readFileSync(androidManifest);
     const parsed = await parseStringPromise(content);
 
-    // if (config.appName) parsed.manifest.application[0].$["android:label"] = config.appName;
-    // if (config.appId) parsed.manifest.$.package = config.appId;
-    // if (config.appVersion) parsed.manifest.$.versionName = config.appVersion;
+    parsed.manifest["uses-permission"] = [
+      { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
+      { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
+      { $: { "android:name": "android.permission.INTERNET" } },
+    ];
+    parsed.manifest.application[0].$ = {
+      ...parsed.manifest.application[0].$,
+      "android:allowBackup": "false",
+      "android:fullBackupContent": "false",
+      "android:dataExtractionRules": "@xml/data_extraction_rules",
+      "android:networkSecurityConfig": "@xml/network_security_config",
+      "android:usesCleartextTraffic": "true",
+    };
 
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);
@@ -142,6 +141,79 @@ export async function modifyAndroidManifest(buildDir: string, config: any) {
       }`
     );
   }
+}
+
+export function writeDataExtractionRules(buildDir: string) {
+  const dataExtractionRules = join(
+    buildDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "res",
+    "xml",
+    "data_extraction_rules.xml"
+  );
+  writeFileSync(
+    dataExtractionRules,
+    `<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
+`
+  );
+}
+
+export function copyPrepopulatedDb(buildDir: string) {
+  copySync(
+    join(buildDir, "www", "scdb.sqlite"),
+    join(
+      buildDir,
+      "android",
+      "app",
+      "src",
+      "main",
+      "assets",
+      "public",
+      "assets",
+      "databases",
+      "prepopulated.db"
+    )
+  );
+}
+
+export function writeNetworkSecurityConfig(buildDir: string) {
+  const networkSecurityConfig = join(
+    buildDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "res",
+    "xml",
+    "network_security_config.xml"
+  );
+  writeFileSync(
+    networkSecurityConfig,
+    `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">10.0.2.2</domain>
+  </domain-config>
+</network-security-config>
+  `
+  );
 }
 
 export async function modifyConfigXml(buildDir: string, config: any) {
@@ -425,8 +497,8 @@ export async function copySiteLogo(buildDir: string) {
         if (file) {
           const base64 = readFileSync(file.location, "base64");
           writeFileSync(
-            join(buildDir, "www", "encoded_site_logo.txt"),
-            `data:${file.mimetype};base64, ${base64}`
+            join(buildDir, "www", "data", "encoded_site_logo.js"),
+            `var _sc_site_logo = "data:${file.mimetype};base64, ${base64}"`
           );
         } else {
           console.log(`The file '${siteLogo}' does not exist`);
@@ -472,7 +544,10 @@ export function writeCfgFile({
     allowOfflineMode,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
-  writeFileSync(join(wwwDir, "config"), JSON.stringify(cfg));
+  writeFileSync(
+    join(buildDir, "www", "data", "config.js"),
+    `var _sc_mobile_config = ${JSON.stringify(cfg)}`
+  );
 }
 
 /**
@@ -485,7 +560,7 @@ export async function buildTablesFile(
   buildDir: string,
   includedPlugins?: string[]
 ) {
-  const wwwDir = join(buildDir, "www");
+  const wwwDir = join(buildDir, "www", "data");
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
       [
@@ -513,17 +588,17 @@ export async function buildTablesFile(
   );
   const createdAt = new Date();
   writeFileSync(
-    join(wwwDir, "tables.json"),
-    JSON.stringify({
+    join(wwwDir, "tables.js"),
+    `var _sc_tables = ${JSON.stringify({
       created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
-    })
+    })}`
   );
   writeFileSync(
-    join(wwwDir, "tables_created_at.json"),
-    JSON.stringify({
+    join(wwwDir, "tables_created_at.js"),
+    `var _sc_tables_created_at = ${JSON.stringify({
       created_at: createdAt.valueOf(),
-    })
+    })}`
   );
 }
 
@@ -533,7 +608,19 @@ export async function buildTablesFile(
  */
 export function copyTranslationFiles(buildDir: string) {
   const localesDir = join(require.resolve("@saltcorn/server"), "..", "locales");
-  copySync(localesDir, join(buildDir, "www", "locales"));
+  const translations = new Array<string>();
+  for (const key of Object.keys(available_languages)) {
+    const buffer = fs.readFileSync(join(localesDir, `${key}.json`));
+    translations.push(
+      `${key}: { translations: ${JSON.stringify(
+        JSON.parse(buffer.toString())
+      )} }`
+    );
+  }
+  fs.writeFileSync(
+    join(buildDir, "www", "data", "translations.js"),
+    `var _sc_translations = { ${translations.join(",")} }`
+  );
 }
 
 /**

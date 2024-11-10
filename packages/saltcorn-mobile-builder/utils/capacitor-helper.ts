@@ -10,6 +10,9 @@ import {
   writePodfile,
   modifyGradleConfig,
   modifyAndroidManifest,
+  writeDataExtractionRules,
+  writeNetworkSecurityConfig,
+  copyPrepopulatedDb,
 } from "./common-build-utils";
 
 export type CapacitorCfg = {
@@ -64,7 +67,7 @@ export class CapacitorHelper {
     this.isIOS = this.platforms.includes("ios");
   }
 
-  public buildApp() {
+  public async buildApp() {
     if (!this.useDocker) {
       this.addPlatforms();
       this.capCopy();
@@ -73,6 +76,10 @@ export class CapacitorHelper {
       this.generateAssets();
       this.capSync();
       if (this.isAndroid) {
+        await modifyAndroidManifest(this.buildDir);
+        writeDataExtractionRules(this.buildDir);
+        writeNetworkSecurityConfig(this.buildDir);
+        copyPrepopulatedDb(this.buildDir);
         if (this.keyStoreFile && this.keyStoreAlias && this.keyStorePassword)
           modifyGradleConfig(
             this.buildDir,
@@ -169,7 +176,6 @@ export class CapacitorHelper {
     };
 
     for (const plugin of [
-      "cordova-sqlite-ext",
       "cordova-plugin-file@7.0.0",
       "cordova-plugin-inappbrowser",
       "cordova-plugin-network-information",
@@ -180,20 +186,27 @@ export class CapacitorHelper {
   }
 
   private addCapacitorPlugins() {
-    // npm install @capacitor/filesystem
-    let result = spawnSync("npm", ["install", "@capacitor/filesystem"], {
-      cwd: this.buildDir,
-      env: {
-        ...process.env,
-        NODE_ENV: "development",
-      },
-    });
-    if (result.output) console.log(result.output.toString());
-    else if (result.error)
-      throw new Error(
-        `Unable to add ${"TODO"} (code ${result.status})` +
-          `\n\n${result.error.toString()}`
-      );
+    const addFn = (plugin: string) => {
+      let result = spawnSync("npm", ["install", plugin], {
+        cwd: this.buildDir,
+        env: {
+          ...process.env,
+          NODE_ENV: "development",
+        },
+      });
+      if (result.output) console.log(result.output.toString());
+      else if (result.error)
+        throw new Error(
+          `Unable to add ${plugin} (code ${result.status})` +
+            `\n\n${result.error.toString()}`
+        );
+    };
+
+    for (const plugin of [
+      "@capacitor-community/sqlite",
+      "@capacitor/filesystem",
+    ])
+      addFn(plugin);
   }
 
   private generateAssets() {

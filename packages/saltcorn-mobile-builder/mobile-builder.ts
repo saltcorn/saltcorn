@@ -22,6 +22,7 @@ import {
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
+  bundleMobileAppCode,
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
 import { CapacitorHelper } from "./utils/capacitor-helper";
@@ -180,6 +181,8 @@ export class MobileBuilder {
         this.plugins
       );
       if (resultCode !== 0) return resultCode;
+      resultCode = bundleMobileAppCode(this.buildDir);
+      if (resultCode !== 0) return resultCode;
       features.version_plugin_serve_path = false;
       await loadAllPlugins();
       await copyPublicDirs(this.buildDir);
@@ -204,7 +207,7 @@ export class MobileBuilder {
         appleTeamId: iosParams?.teamId,
         provisioningGUUID: iosParams?.guuid,
       });
-      capacitorHelper.buildApp();
+      await capacitorHelper.buildApp();
       if (resultCode === 0 && this.copyTargetDir) {
         capacitorHelper.tryCopyAppFiles(
           this.copyTargetDir,

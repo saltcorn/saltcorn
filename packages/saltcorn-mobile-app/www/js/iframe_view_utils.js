@@ -90,10 +90,12 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
           const fileName = tokens[tokens.length - 1];
           const directory = tokens.splice(0, tokens.length - 1).join("/");
           // read and add file to submit
-          const binary = await parent.saltcorn.mobileApp.fileSystem.readBinary(
-            fileName,
-            directory
-          );
+          // TODO replace the cordova implementation with capacitor filesystem
+          const binary =
+            await parent.saltcorn.mobileApp.fileSystem.readBinaryCordova(
+              fileName,
+              directory
+            );
           files[entry[0]] = new File([binary], fileName);
         } else if (!matchingState) urlParams.append(entry[0], entry[1]);
         else data[entry[0]] = entry[1];
