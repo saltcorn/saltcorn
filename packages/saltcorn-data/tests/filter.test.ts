@@ -477,3 +477,65 @@ describe("Filter view components", () => {
     expect(vres3).toContain("More Than 800");
   });
 });
+
+describe("Filter FTS agg", () => {
+  it("runs", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          above: [
+            {
+              type: "search_bar",
+              autofocus: false,
+              show_badges: false,
+              has_dropdown: false,
+            },
+            {
+              font: "",
+              icon: "",
+              type: "blank",
+              block: false,
+              style: {},
+              inline: false,
+              contents: "Bookcount ",
+              labelFor: "",
+              isFormula: {},
+              textStyle: "",
+            },
+            {
+              stat: "Count",
+              type: "aggregation",
+              block: false,
+              aggwhere: "",
+              agg_field: "author",
+              textStyle: "",
+              agg_relation: "books",
+              configuration: {},
+            },
+          ],
+        },
+        columns: [
+          {
+            stat: "Count",
+            type: "Aggregation",
+            block: false,
+            aggwhere: "",
+            agg_field: "author",
+            textStyle: "",
+            agg_relation: "books",
+            configuration: {},
+          },
+        ],
+      },
+    });
+
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("Bookcount 2");
+
+    const view1 = View.findOne({ name: view.name }); //needed bec view mutates its layout
+    assertIsSet(view1);
+    const vres2 = await view1.run({ _fts_books: "Herman" }, mockReqRes);
+
+    expect(vres2).toContain("Bookcount 1");
+  });
+});
