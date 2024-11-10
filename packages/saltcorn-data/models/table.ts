@@ -3286,7 +3286,7 @@ ${rejectDetails}`,
           let newWhere = where;
           if (groupBy) {
             const newClauses = groupBy
-              .map((f) => `innertbl."${f}" = mt."${f}"`)
+              .map((f) => `innertbl."${f}" = a."${f}"`)
               .join(" AND ");
             if (!newWhere) newWhere = "where " + newClauses;
             else newWhere = `${newWhere} AND ${newClauses}`;
@@ -3316,7 +3316,7 @@ ${rejectDetails}`,
 
     const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
       this.name
-    )}" mt ${where}${
+    )}" a ${where}${
       groupBy
         ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}`
         : ""
