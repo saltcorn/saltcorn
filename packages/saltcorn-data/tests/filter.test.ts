@@ -532,7 +532,7 @@ describe("Filter FTS agg", () => {
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain("Bookcount 2");
 
-    const view1 = View.findOne({ name: view.name }); //TODO why is this necessary???
+    const view1 = View.findOne({ name: view.name }); //needed bec view mutates its layout
     assertIsSet(view1);
     const vres2 = await view1.run({ _fts_books: "Herman" }, mockReqRes);
 
