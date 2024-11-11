@@ -25,6 +25,7 @@ const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
+const path = require("path");
 
 /**
  * @type {object}
@@ -597,5 +598,28 @@ router.post(
         res.status(400).json({ error: e.message || e });
       }
     else res.status(404).json({ error: "Action not found" });
+  })
+);
+
+router.get(
+  "/icon-options",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { format } = req.query;
+    const icons = require(path.join(__dirname, "fa5-icons.json"));   
+    switch (format) {
+      case "bootstrap-iconpicker":
+        res.type("text/javascript");
+        res.send(
+          `jQuery.iconset_fontawesome_5={iconClass:"",iconClassFix:"",version:"5.3.1",icons:${JSON.stringify(
+            icons
+          )}}`
+        );
+        break;
+
+      default:
+        res.send("");
+        break;
+    }
   })
 );
