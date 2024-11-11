@@ -44,7 +44,7 @@ function MobileResponse() {
   }
 
   function getStatus() {
-    return status;
+    return resStatus;
   }
 
   return {
