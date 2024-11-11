@@ -498,7 +498,7 @@ router.get(
           script: static_pre + "/jquery-menu-editor.min.js",
         },
         {
-          script: static_pre + "/iconset-fontawesome5-3-1.min.js",
+          script: "/menu/icon-options?format=bootstrap-iconpicker",
         },
         {
           script: static_pre + "/bootstrap-iconpicker.js",
