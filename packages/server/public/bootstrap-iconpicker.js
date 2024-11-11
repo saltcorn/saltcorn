@@ -164,8 +164,7 @@
             if(op.inline === false){
                 el.find('input').val(icon);
                 el.find('i').attr('class', '').addClass(op.iconClass).addClass(icon);
-                if(icon.startsWith("unicode-")) {
-                    el.find('i').attr('class', '')
+                if(icon.startsWith("unicode-")) {                    
                     el.find('i').text(String.fromCharCode(parseInt(icon.substr(8, 4), 16)));
                 } else {
                     el.find('i').text("");
