@@ -14,8 +14,9 @@ class PageLocators {
     this.addFieldButtonLocator = 'a.btn.btn-primary.add-field.mt-2:has-text("Add field")';
     this.columnsElement = 'div[title="Split into columns"]';
     this.firstColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(1)';
+    //'(//div[contains(@class, "row")]/div[contains(@class, "split-col") and contains(@class, "col-sm-6")])[1]'
     this.secondColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(2)';
-
+    //'(//div[contains(@class, "row")]/div[contains(@class, "split-col") and contains(@class, "col-sm-6")])[2]'
     this.target = 'div.canvas.root-canvas';
     this.DatelocatorByName = 'input[name="date_of_birth"]';
     this.DatepickReadonly = 'input[readonly="readonly"]';
@@ -98,6 +99,11 @@ class PageLocators {
     this.choosefilebutton = '#inputfile';
     this.createviewfromtable = '#table-views > div > a';
     this.textstyle = '.form-control form-select';
+    this.fielddropdown = '(//select[@class="form-control form-select"])[1]';
+    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]';
+    this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]';
+    this.textstyleLocator = '(//select[@class="form-control form-select"])[3]';
+    this.Childtablefield = '(//select[@class="form-control form-select"])[2]';
     this.createuserlink = 'a[href="/useradmin/new"]';
     this.inputdob = '#inputdob';
     this.inputemail = '#inputemail';
@@ -116,7 +122,7 @@ class PageLocators {
     this.downloadlinklocator = 'a:has(i.fas.fa-2x.fa-download)';
     this.uploadcsvlinklocator = 'label:has-text("Upload CSV")';
     this.addrowlocator = 'button.btn.btn-sm.btn-primary.me-2:has-text("Add row")';
-    this.fieldsourrce = '//div[@title="Field"]';
+    this.fieldsource = '//div[@title="Field"]';
     this.createfromcsvupload = '//a[@href="/table/create-from-csv"]';
     this.ActionLocator = 'div[title="Action button"]';
     this.lebelforfield = 'input[class*="viewlink-label"]';
@@ -186,7 +192,6 @@ class PageLocators {
     this.maxlengthlocator = '//input[@id="inputmax_length"]';
     this.viewtocreate = '#inputview_to_create';
     this.labeltocreate = '#inputcreate_view_label';
-    this.fielddropdown = '(//select[@class="form-control form-select"])[1]'
     this.view2editoption = 'text=View2_Edit [Edit] My_Table';
     this.view2showoption = 'text=showView [Show] My_Table';
     this.view2listshow = 'text=ListShowListView [ListShowList] My_Table';
@@ -370,8 +375,6 @@ class PageLocators {
     this.textInput = 'input[name="text"]';
     this.toastMessage = 'div.toast[role="alert"][aria-live="assertive"]';
     this.closetoast = 'button.btn-close[data-bs-dismiss="toast"]';
-    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]'
-    this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]'
     this.configurelistview = 'a[href="/viewedit/config/NewView_List"]';
     this.configureEditview = 'a[href="/viewedit/config/View2_Edit"]';
     this.configureShowview = 'a[href="/viewedit/config/showView"]';
@@ -424,11 +427,7 @@ class PageLocators {
     this.showDepartmentlink2 = '(//a[text()="Show Department"])[2]';
     this.showEmployeelink = '(//a[text()="Managed by"])[1]';
     this.showEmployeelink2 = '(//a[text()="Managed by"])[2]';
-    this.newcolumn3 = 'div:nth-child(3) > div:nth-child(2) > .canvas';
-    this.newcolumn4 = 'div:nth-child(4) > div:nth-child(2) > .canvas';
-    this.newcolumn5 = 'div:nth-child(5) > div:nth-child(2) > .canvas';
-    this.newcolumn6 = 'div:nth-child(6) > div:nth-child(2) > .canvas';
-    this.newcolumn7 = 'div:nth-child(7) > div:nth-child(2) > .canvas';
+    this.newcolumn = 'div.canvas.list-empty-msg.list-col-canvas:empty';
     this.configureEmployeelist = 'a[href="/viewedit/config/List_Employee"]';
     this.configureDepartmentlist = 'a[href="/viewedit/config/List_Department"]';
     this.view2editEmployee = 'text=Edit_Employee [Edit] Employee';
@@ -483,7 +482,6 @@ class PageLocators {
     this.AddressInput = 'div.split-col.col-sm-10.text-start:has(input#inputaddress)';
     this.addresslabel = 'div.d-inline:text("Address")';
     this.namelabel = 'div.d-inline:text("Full name")'
-    // this.NameLocator = 'div.d-inline:has-text("Adam")';
     this.ShowViewSelect = 'select[name="show_view"]';
     this.ViewToCreateSelect = 'select[name="view_to_create"]';
     this.OrderFieldSelect = 'select[name="order_field"]';
@@ -526,13 +524,11 @@ class PageLocators {
     this.nameItem = 'ul.ps-0 li.dropdown-item.field-val-item:nth-of-type(2)';
     this.nameSpan = 'span.link-style:has-text("name")';
     this.TeamNameSpan = 'span:has-text("[assigned_to.team.name]")';
-    this.fieldViewdropdown1 = '(//select[@class="form-control form-select"])[1]'
     this.textInputformat = 'input.form-control:nth-of-type(2)';
     this.dateOfBirthSpan = 'span.link-style:has-text("date_of_birth")';
     this.configurePeopleList = 'a[href="/viewedit/config/People_list"]';
     this.aggregationDiv = 'div[title="Aggregation"]';
     this.RelationDropdown = 'select.form-control.form-select:first-of-type';
-    this.StatisticDropdown = 'select.form-control.form-select:nth-of-type(3)';
     this.PeopleList = 'a[href="/view/People_list"]';
     this.IDOption = 'select.form-control.form-select option[value="id"]';
     this.countTaskLocator = 'span.link-style:has-text("Count Task")';
@@ -573,6 +569,14 @@ class PageLocators {
     this.txttaskbadge = 'text=View: PersonTaskBadges [Badges] People';
     this.closeIcon = 'i.ms-1.fas.fa-lg.fa-times';
     this.plusIconbadge = 'i.fas.fa-lg.fa-plus';
+    this.bootstraptheme = 'h5:has-text("any-bootstrap-theme")';
+    this.installbootstap = 'form[action="/plugins/install/any-bootstrap-theme"] button:has-text("Install")';
+    this.Installedthemelocator = 'a[href="/plugins?set=installed&amp;q=theme"]';
+    this.UploadImageSelector = 'table[accordiontitle="Select image"] tr:nth-child(2) select';
+    this.UploadImageSave ='button.btn.btn-sm.btn-primary.builder-save';
+    this.CreatedPageName = 'a:has-text("saltcorn_image")';
+    this.FileInputForUpload = 'input[type="file"]';
+    this.ImageLocator = 'img[src="/files/serve/a.jpg"]';
   }
 }
 
