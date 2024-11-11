@@ -607,3 +607,7 @@ button.monospace-copy-btn {
 .mobile-thumbnail-container img {
   display: block;
 }
+
+i.unicode {
+  font-style: normal;
+}
