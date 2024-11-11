@@ -68,7 +68,7 @@ const makeSegments = (
                 class: `toast-container position-fixed ${
                   isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
                 } `,
-                style: `z-index: 999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
+                style: `z-index: 9999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
                 "aria-live": "polite",
                 "aria-atomic": "true",
               },

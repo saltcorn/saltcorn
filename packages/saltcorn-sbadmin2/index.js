@@ -447,7 +447,7 @@ const authWrap = ({
         class="toast-container position-fixed p-2 top-0 ${
           isNode() ? "end-0" : "start-50"
         }
-        style: "z-index: 999;"
+        style: "z-index: 9999;"
         aria-live="polite" 
         aria-atomic="true"
       >
@@ -502,7 +502,7 @@ const wrap = ({
         class="toast-container position-fixed ${
           isNode() ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
         } end-0 p-2"
-        style: "z-index: 999; ${!isNode() ? "margin-bottom: 1.0rem" : ""}"
+        style: "z-index: 9999; ${!isNode() ? "margin-bottom: 1.0rem" : ""}"
         aria-live="polite"
         aria-atomic="true"
       >
@@ -529,7 +529,7 @@ const exportRenderBody = ({ title, body, alerts, role, req }) =>
     class="toast-container position-fixed ${
       isNode() ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
     }"
-    style: "z-index: 999; ${!isNode() ? "margin-bottom: 1.0rem" : ""}"
+    style: "z-index: 9999; ${!isNode() ? "margin-bottom: 1.0rem" : ""}"
     aria-live="polite"
     aria-atomic="true"
   >
