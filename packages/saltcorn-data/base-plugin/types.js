@@ -1068,6 +1068,13 @@ const string = {
                   autocomplete: "off",
                   required:
                     attrs.placeholder && (required || attrs.force_required),
+                  ...(field.in_auto_save
+                    ? {
+                        "previous-val": v,
+                        onFocus:
+                          "this.setAttribute('sc-received-focus', true);",
+                      }
+                    : {}),
                 },
                 attrs.placeholder && (required || attrs.force_required)
                   ? [
