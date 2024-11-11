@@ -165,7 +165,7 @@
                 el.find('input').val(icon);
                 el.find('i').attr('class', '').addClass(op.iconClass).addClass(icon);
                 if(icon.startsWith("unicode-")) {
-                    el.find('i').attr('class', '').addClass("unicode")
+                    el.find('i').attr('class', '')
                     el.find('i').text(String.fromCharCode(parseInt(icon.substr(8, 4), 16)));
                 } else {
                     el.find('i').text("");
@@ -251,7 +251,7 @@
                     var v = op.iconClassFix + op.icons[pos];
                     if(v.startsWith("unicode-"))
                        btn.val(v).attr('title', v)
-                          .append('<i class="unicode ' + v + '">'+String.fromCharCode(parseInt(v.substr(8, 4), 16))+'</i>').show();                        
+                          .append('<i class="' + v + '">'+String.fromCharCode(parseInt(v.substr(8, 4), 16))+'</i>').show();                        
                     else
                     btn.val(v).attr('title', v).append('<i class="' + op.iconClass + ' ' + v + '"></i>').show();
                     if (op.icon === v) {
