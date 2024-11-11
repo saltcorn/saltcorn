@@ -32,6 +32,15 @@ const {
 const db = require("@saltcorn/data/db");
 const { isNode } = require("@saltcorn/data/utils");
 
+const show_icon = (icon, cls) =>
+  icon
+    ? icon.startsWith("unicode")
+      ? i(
+          { class: `fa-fw fst-normal ${cls || ""}` },
+          String.fromCharCode(parseInt(icon.substr(8, 4), 16))
+        )
+      : i({ class: `fa-fw ${cls || ""} ${icon}` })
+    : "";
 /**
  * @param {string} currentUrl
  * @returns {function}
@@ -65,7 +74,7 @@ const subItem = (currentUrl) => (item) =>
           href: text(item.link),
           target: item.target_blank ? "_blank" : undefined,
         },
-        item.icon ? i({ class: `fa-fw mr-05 ${item.icon}` }) : "",
+        show_icon(item.icon, "mr-05"),
         item.label
       )
     : item.type === "Separator"
@@ -128,7 +137,7 @@ const sideBarItem = (currentUrl) => (item) => {
               "aria-expanded": "true",
               "aria-controls": `collapse${labelToId(item)}`,
             },
-            item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
+            show_icon(item.icon),
             span(text(item.label))
           ),
           div(
@@ -150,7 +159,7 @@ const sideBarItem = (currentUrl) => (item) => {
             href: text(item.link),
             target: item.target_blank ? "_blank" : undefined,
           },
-          item.icon ? i({ class: `fa-fw ${item.icon}` }) : "",
+          show_icon(item.icon),
           span(text(item.label))
         )
       : item.type === "Search"
