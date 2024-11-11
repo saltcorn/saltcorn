@@ -37,7 +37,7 @@ const show_icon = (icon, cls) =>
     ? icon.startsWith("unicode")
       ? i(
           { class: `fa-fw fst-normal ${cls || ""}` },
-          String.fromCharCode(parseInt(icon.substr(8, 4), 16))
+          String.fromCharCode(parseInt(icon.substring(8,12), 16))
         )
       : i({ class: `fa-fw ${cls || ""} ${icon}` })
     : "";
