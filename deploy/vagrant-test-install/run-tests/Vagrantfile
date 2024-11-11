@@ -51,7 +51,12 @@ EOF
     sudo -iu vagrant git clone https://github.com/saltcorn/saltcorn.git
     echo 'export PATH=/home/vagrant/saltcorn/packages/saltcorn-cli/bin:$PATH' >> /home/vagrant/.bashrc
     sudo -iu vagrant bash -c "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true cd saltcorn && npm install --legacy-peer-deps && npm install --legacy-peer-deps && npm run tsc"
-    sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests"
+    echo "saltcorn-data tests"
+    sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data"
+    echo "server tests"
+    sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests server"
+    echo "saltcorn-admin-models tests"
+    sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-admin-models"
     sudo -iu vagrant bash -c "cd saltcorn && pytest-3 infosec-scan/"
     sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data"
     sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests server"
@@ -64,10 +69,4 @@ end
 # git checkout <branch>
 # packages/saltcorn-cli/bin/saltcorn run-tests
 
-#echo "saltcorn-data tests"
-#sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data"
-#echo "server tests"
-#sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests server"
-#echo "saltcorn-admin-models tests"
-#sudo -iu vagrant bash -c "cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-admin-models"
     
