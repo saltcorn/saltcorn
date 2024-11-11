@@ -134,15 +134,13 @@ test.describe('E2E Test Suite', () => {
         // delete lable for full name
         await page.click(pageobject.deletebutton);
         await customAssert('Drag Name on top of the page set heading', async () => {
-            await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.addresslabel);
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.addresslabel);
             await page.click(pageobject.fielddropdown);
             // Select 'full_name' from the dropdown
             await page.selectOption('select.form-control.form-select', 'full_name');
 
-            // select text style as heading1 for full name
-            const textstyleLocator = page.locator('.form-control.form-select').nth(2);
-            await textstyleLocator.click();
-            await textstyleLocator?.selectOption("Heading 1");
+            // select text style as Heading 1 for full name
+            await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 1' });
             await page.waitForTimeout(2000);
         });
 

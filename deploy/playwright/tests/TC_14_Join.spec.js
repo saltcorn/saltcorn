@@ -110,7 +110,7 @@ test.describe('E2E Test Suite', () => {
     });
     await customAssert('Add join field in new columm', async () => {
       await page.click(pageobject.addcolumnbutton);
-      await functions.drag_And_Drop(pageobject.joinField, pageobject.newcolumn4);
+      await functions.drag_And_Drop(pageobject.joinField, pageobject.newcolumn);
     });
     await customAssert('Select full name for join field', async () => {
       await page.click(pageobject.fieldsButton);
@@ -134,7 +134,8 @@ test.describe('E2E Test Suite', () => {
     await page.waitForTimeout(4000);
     await customAssert('Add link to view in new columm', async () => {
       await page.click(pageobject.addcolumnbutton);
-      await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn5);
+      await page.waitForTimeout(1000);
+      await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
     });
     await customAssert('view to link dropdown should be visible', async () => {
       await page.click(pageobject.viewtolinkdropdown);
@@ -239,7 +240,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.deletebutton);
     await customAssert('Add join field in new columm', async () => {
       await page.click(pageobject.addcolumnbutton);
-      await functions.drag_And_Drop(pageobject.joinField, pageobject.newcolumn5);
+      await functions.drag_And_Drop(pageobject.joinField, pageobject.newcolumn);
     });
     await customAssert('Select Name from teams for join field', async () => {
       await page.click(pageobject.fieldsButton);
@@ -277,7 +278,7 @@ test.describe('E2E Test Suite', () => {
     });
     await customAssert('Select format from the dropdown', async () => {
       // Select 'format' from the dropdown
-      await page.selectOption(pageobject.fieldViewdropdown1, { label: 'format' }); // If using a select dropdown
+      await page.selectOption(pageobject.fielddropdown, { label: 'format' }); // using field view dropdown
     });
     await page.waitForTimeout(5000);
     await page.click(pageobject.nextoption);

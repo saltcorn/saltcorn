@@ -173,14 +173,12 @@ test.describe('E2E Test Suite', () => {
         });
         await customAssert('Drag and drop field source on target ', async () => {
             // drag field source on column
-            await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.target);
-            await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.target);
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
             await page.click(pageobject.firstfield);
             await page.selectOption(pageobject.fielddropdown, { label: 'Name' });
-            // select text style as heading1 for full name
-            const textstyleLocator = page.locator('.form-control.form-select').nth(2);
-            // await textstyleLocator.click();
-            await textstyleLocator?.selectOption("Heading 4");
+            // select text style as heading 4 for task name
+            await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 4' });
         });
         await page.waitForTimeout(4000);
         // click on next button
