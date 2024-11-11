@@ -611,3 +611,7 @@ button.monospace-copy-btn {
 i.unicode {
   font-style: normal;
 }
+
+i[class^="unicode-"], i[class*=" unicode-"] {
+  font-style: normal;
+}
