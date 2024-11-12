@@ -94,6 +94,7 @@ class PluginInstaller {
         );
         if (
           !pckJSON ||
+          this.plugin.source === "local" ||
           npmInstallNeeded(await this.removeDependencies(pckJSON), tmpPckJSON)
         )
           await this.npmInstall(tmpPckJSON);
@@ -167,6 +168,9 @@ class PluginInstaller {
       case "local":
         if (force || !folderExists) {
           await copy(this.plugin.location, this.tempDir);
+          // if tempdir has a node_modules folder, remove it
+          if (await pathExists(join(this.tempDir, "node_modules")))
+            await rm(join(this.tempDir, "node_modules"), { recursive: true });
           wasLoaded = true;
         }
         break;
