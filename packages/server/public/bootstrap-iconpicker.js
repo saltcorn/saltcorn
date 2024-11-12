@@ -157,18 +157,11 @@
             op.selected = 0;
             icon = op.iconClassFix + op.icons[op.selected];
         }
-        console.log("inline", op.inline, icon);
-        
         if (icon !== '' && op.selected >= 0) {
             op.icon = icon;
             if(op.inline === false){
                 el.find('input').val(icon);
                 el.find('i').attr('class', '').addClass(op.iconClass).addClass(icon);
-                if(icon.startsWith("unicode-")) {                    
-                    el.find('i').text(String.fromCharCode(parseInt(icon.substring(8,12), 16)));
-                } else {
-                    el.find('i').text("");
-                }
             }
             if(icon === op.iconClassFix){
                 el.trigger({ type: "change", icon: 'empty' });
@@ -248,10 +241,6 @@
                 var btn = $('<button class="btn ' + op.unselectedClass + ' btn-icon"></button>').hide();
                 if (pos < op.icons.length) {
                     var v = op.iconClassFix + op.icons[pos];
-                    if(v.startsWith("unicode-"))
-                       btn.val(v).attr('title', v)
-                          .append('<i class="' + v + '">'+String.fromCharCode(parseInt(v.substring(8,12), 16))+'</i>').show();                        
-                    else
                     btn.val(v).attr('title', v).append('<i class="' + op.iconClass + ' ' + v + '"></i>').show();
                     if (op.icon === v) {
                         btn.addClass(op.selectedClass).addClass('btn-icon-selected');
