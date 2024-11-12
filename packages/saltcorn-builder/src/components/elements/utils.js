@@ -60,7 +60,8 @@ const BlockSetting = ({ block, setProp }) => (
 );
 
 export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
-  !textStyle || !textStyle.startsWith("h") ? (
+  !textStyle ||
+  !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h")) ? (
     <BlockSetting block={block} setProp={setProp} />
   ) : (
     <div className="form-check">
@@ -325,6 +326,38 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
     </select>
   );
 };
+const textStyleToArray = (textStyle) =>
+  Array.isArray(textStyle) ? textStyle : !textStyle ? [] : [textStyle];
+const TextStyleSelectBtns = ({ textStyle, setProp }) => {
+  const styleArray = textStyleToArray(textStyle);
+  const clickH = (h) => {
+    const noH = styleArray.filter((s) => !(s.length == 2 && s[0] === "h"));
+    const selected = styleArray.includes(`h${h}`);
+    if (!selected) noH.push(`h${h}`);
+    console.log("noH", noH);
+
+    setProp((prop) => (prop.textStyle = noH));
+  };
+  return (
+    <div>
+      <div className="btn-group w-100" role="group">
+        {[1, 2, 3, 4, 5, 6].map((h) => (
+          <button
+            key={h}
+            type="button"
+            onClick={() => clickH(h)}
+            className={`btn btn-sm btn-${
+              !styleArray.includes(`h${h}`) ? "outline-" : ""
+            }secondary`}
+          >
+            H{h}
+          </button>
+        ))}
+      </div>
+      <div className="btn-group w-100" role="group"></div>
+    </div>
+  );
+};
 
 export /**
  * @param {object} props
@@ -356,11 +389,8 @@ export /**
 const TextStyleRow = ({ textStyle, setProp }) => {
   return (
     <tr>
-      <td>
-        <label>Text Style</label>
-      </td>
-      <td>
-        <TextStyleSelect textStyle={textStyle} setProp={setProp} />
+      <td colSpan={2}>
+        <TextStyleSelectBtns textStyle={textStyle} setProp={setProp} />
       </td>
     </tr>
   );
@@ -1481,7 +1511,10 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
 };
 
 export const isBlock = (block, inline, textStyle) =>
-  !textStyle || !textStyle.startsWith("h") ? block : !inline;
+  !textStyle ||
+  !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h"))
+    ? block
+    : !inline;
 
 export const setAPropGen =
   (setProp) =>
