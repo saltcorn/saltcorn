@@ -23,7 +23,6 @@ import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
 import CKEditor from "ckeditor4-react";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./faicons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import fas from "@fortawesome/free-solid-svg-icons";
 import far from "@fortawesome/free-regular-svg-icons";
@@ -177,7 +176,7 @@ const TextSettings = () => {
     font,
     style,
   } = node;
-  const { mode, fields } = useContext(optionsCtx);
+  const { mode, fields, icons } = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
   const allowFormula = mode === "show" || mode === "list";
 
@@ -251,7 +250,7 @@ const TextSettings = () => {
               <FontIconPicker
                 className="w-100"
                 value={icon}
-                icons={faIcons}
+                icons={icons}
                 onChange={(value) => setProp((prop) => (prop.icon = value))}
                 isMulti={false}
               />
