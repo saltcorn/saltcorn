@@ -610,13 +610,7 @@ router.post(
 );
 
 const getIcons = () => {
-  const icons = require(path.join(__dirname, "fa5-icons.json"));
-  icons.push(
-    "unicode-2605-black-star",
-    "unicode-2606-white-star",
-    "unicode-2608-thunderstorm"
-  );
-  return icons;
+  return getState().icons
 };
 
 const setIconStyle = () => {

@@ -103,6 +103,16 @@ const standard_fonts = {
   Verdana: "Verdana, Geneva, sans-serif",
 };
 
+const get_standard_icons = () => {
+  const icons = require(join(__dirname, "fa5-icons.json"));
+  icons.push(
+    "unicode-2605-black-star",
+    "unicode-2606-white-star",
+    "unicode-2608-thunderstorm"
+  );
+  return icons;
+};
+
 const withRenderBody = (layouts: any) => {
   for (let i = layouts.length - 1; i >= 0; i--)
     if (layouts[i].renderBody) return layouts[i];
@@ -139,6 +149,7 @@ class State {
   routesChangedCb?: Function;
   eventTypes: any;
   fonts: Record<string, string>;
+  icons: Array<string>;
   layouts: Record<string, PluginLayout>;
   userLayouts: Record<string, PluginLayout>;
   headers: any;
@@ -190,6 +201,7 @@ class State {
     this.table_providers = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
+    this.icons = get_standard_icons();
     this.layouts = { emergency: emergency_layout };
     this.userLayouts = {};
     this.headers = {};
@@ -694,6 +706,9 @@ class State {
     Object.entries(withCfg("fonts", {})).forEach(([k, v]) => {
       this.fonts[k] = v as string;
     });
+    withCfg("icons", []).forEach((icon: string) => {
+      this.icons.push(icon)
+    });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
       this.table_providers[k] = v;
     });
@@ -853,6 +868,8 @@ class State {
     this.eventTypes = {};
     this.verifier = null;
     this.fonts = standard_fonts;
+    this.icons = get_standard_icons();
+
     Object.entries(this.plugins).forEach(([k, v]: [k: string, v: Plugin]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
     });
