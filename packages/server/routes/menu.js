@@ -610,7 +610,7 @@ router.post(
 );
 
 const getIcons = () => {
-  return getState().icons
+  return getState().icons;
 };
 
 const setIconStyle = () => {
@@ -642,7 +642,7 @@ router.get(
         );
         break;
       case "json":
-        res.json(icons)
+        res.json(icons);
 
       default:
         res.send("");

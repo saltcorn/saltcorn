@@ -49,6 +49,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 import { runInContext, createContext } from "vm";
+import faIcons from "./fa5-icons"
 
 /**
  * @param v
@@ -104,7 +105,7 @@ const standard_fonts = {
 };
 
 const get_standard_icons = () => {
-  const icons = require(join(__dirname, "fa5-icons.json"));
+  const icons = [...faIcons];
   icons.push(
     "unicode-2605-black-star",
     "unicode-2606-white-star",
