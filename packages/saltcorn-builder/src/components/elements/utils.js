@@ -15,7 +15,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./faicons";
 import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
@@ -1265,6 +1264,7 @@ const ButtonOrLinkSettingsRows = ({
   linkFirst = false,
   linkIsBlank = false,
   allowRunOnLoad = false,
+  faIcons = [],
 }) => {
   const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
@@ -1353,7 +1353,7 @@ const ButtonOrLinkSettingsRows = ({
               setProp((prop) => (prop[keyPrefix + "icon"] = value))
             }
             isMulti={false}
-            icons={faIcons}
+            icons={faIcons || []}
           />
         </td>
       </tr>
