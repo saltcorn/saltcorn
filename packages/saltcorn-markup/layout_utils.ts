@@ -85,14 +85,18 @@ const show_icon = (icon: string | undefined, cls?: string, no_fw?: Boolean) =>
       : i({ class: `${no_fw ? "" : "fa-fw "}${cls || ""} ${icon}` })
     : "";
 
-const show_icon_and_label = (icon: string | undefined, label: string) =>
+const show_icon_and_label = (
+  icon: string | undefined,
+  label: string,
+  cls?: string
+) =>
   (icon && icon !== "empty"
     ? (icon.startsWith("unicode")
         ? i(
-            { class: `fst-normal` },
+            { class: [`fst-normal`, cls] },
             String.fromCharCode(parseInt(icon.substring(8, 12), 16))
           )
-        : i({ class: icon })) + (label === " " ? "" : "&nbsp;")
+        : i({ class: [icon, cls] })) + (label === " " ? "" : "&nbsp;")
     : "") + (label === " " && icon ? "" : label);
 
 const navSubItemsIterator = (si: any) =>

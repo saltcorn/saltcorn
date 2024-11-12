@@ -31,7 +31,13 @@ const {
   script,
   text_attr,
 } = tags;
-const { toast, breadcrumbs, renderTabs } = require("./layout_utils");
+const {
+  toast,
+  breadcrumbs,
+  renderTabs,
+  show_icon,
+  show_icon_and_label,
+} = require("./layout_utils");
 import type { Layout } from "@saltcorn/types/base_types";
 import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
 import helpers = require("./helpers");
@@ -166,7 +172,9 @@ const render = ({
   const isWeb = typeof window === "undefined" && !req?.smr;
   //const hints = blockDispatch?.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
-    const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
+    const iconTag = segment.icon
+      ? show_icon(segment.icon, "", true) + "&nbsp;"
+      : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop && !layout?.noWrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
@@ -336,15 +344,14 @@ const render = ({
             "aria-expanded": "false",
             style,
           },
-          segment.action_icon &&
-            segment.action_icon !== "empty" &&
-            i({
-              class: [segment.action_icon, segment.label && "me-1"],
-            }),
-          segment.label ||
-            (!segment.action_icon || segment.action_icon == "empty"
-              ? "Actions"
-              : "")
+          show_icon_and_label(
+            segment.action_icon,
+            segment.label ||
+              (!segment.action_icon || segment.action_icon == "empty"
+                ? "Actions"
+                : ""),
+            segment.label && "me-1"
+          )
         ),
         div(
           {
@@ -392,10 +399,7 @@ const render = ({
             rel: segment.nofollow ? "nofollow" : false,
             style,
           },
-          segment.link_icon
-            ? i({ class: segment.link_icon }) + (segment.text ? "&nbsp;" : "")
-            : "",
-          segment.text
+          show_icon_and_label(segment.link_icon, segment.text)
         )
       );
     }
