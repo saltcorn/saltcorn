@@ -75,15 +75,25 @@ type NavSubItemsOpts = {
   tooltip?: string;
 };
 
-const show_icon = (icon: string|undefined, cls?:string, no_fw?: Boolean) =>
-  icon
+const show_icon = (icon: string | undefined, cls?: string, no_fw?: Boolean) =>
+  icon && icon !== "empty"
     ? icon.startsWith("unicode")
       ? i(
-          { class: `${no_fw ? '' : "fa-fw "}fst-normal ${cls || ""}` },
-          String.fromCharCode(parseInt(icon.substring(8,12), 16))
+          { class: `${no_fw ? "" : "fa-fw "}fst-normal ${cls || ""}` },
+          String.fromCharCode(parseInt(icon.substring(8, 12), 16))
         )
-      : i({ class: `${no_fw ? '' : "fa-fw "}${cls || ""} ${icon}` })
+      : i({ class: `${no_fw ? "" : "fa-fw "}${cls || ""} ${icon}` })
     : "";
+
+const show_icon_and_label = (icon: string | undefined, label: string) =>
+  (icon && icon !== "empty"
+    ? (icon.startsWith("unicode")
+        ? i(
+            { class: `fst-normal` },
+            String.fromCharCode(parseInt(icon.substring(8, 12), 16))
+          )
+        : i({ class: icon })) + (label === " " ? "" : "&nbsp;")
+    : "") + (label === " " && icon ? "" : label);
 
 const navSubItemsIterator = (si: any) =>
   si?.type === "Separator"
@@ -850,5 +860,6 @@ export = {
   cardHeaderTabs,
   mobileBottomNavBar,
   renderTabs,
-  show_icon
+  show_icon,
+  show_icon_and_label,
 };
