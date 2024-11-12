@@ -20,7 +20,14 @@ const { save_menu_items } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const { renderForm } = require("@saltcorn/markup");
-const { script, domReady, div, ul, i } = require("@saltcorn/markup/tags");
+const {
+  script,
+  domReady,
+  div,
+  ul,
+  i,
+  style,
+} = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
@@ -527,7 +534,8 @@ router.get(
                 ),
                 div(
                   renderForm(form, req.csrfToken()),
-                  script(domReady(menuEditorScript(menu_items)))
+                  script(domReady(menuEditorScript(menu_items))),
+                  style(setIconStyle())
                 ),
               ],
             },
@@ -601,12 +609,35 @@ router.post(
   })
 );
 
+const getIcons = () => {
+  const icons = require(path.join(__dirname, "fa5-icons.json"));
+  icons.push(
+    "unicode-2605-black-star",
+    "unicode-2606-white-star",
+    "unicode-2608-thunderstorm"
+  );
+  return icons;
+};
+
+const setIconStyle = () => {
+  const icons = getIcons();
+  return icons
+    .filter((icon) => icon.startsWith("unicode-"))
+    .map(
+      (icon) =>
+        `i.${icon}:after {content: '${String.fromCharCode(
+          parseInt(icon.substring(8, 12), 16)
+        )}'}`
+    )
+    .join("\n");
+};
+
 router.get(
   "/icon-options",
   isAdmin,
   error_catcher(async (req, res) => {
     const { format } = req.query;
-    const icons = require(path.join(__dirname, "fa5-icons.json"));   
+    const icons = getIcons();
     switch (format) {
       case "bootstrap-iconpicker":
         res.type("text/javascript");
