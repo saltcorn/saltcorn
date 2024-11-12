@@ -75,14 +75,14 @@ type NavSubItemsOpts = {
   tooltip?: string;
 };
 
-const show_icon = (icon: string|undefined, cls?:string) =>
+const show_icon = (icon: string|undefined, cls?:string, no_fw?: Boolean) =>
   icon
     ? icon.startsWith("unicode")
       ? i(
-          { class: `fa-fw fst-normal ${cls || ""}` },
+          { class: `${no_fw ? '' : "fa-fw "}fst-normal ${cls || ""}` },
           String.fromCharCode(parseInt(icon.substring(8,12), 16))
         )
-      : i({ class: `fa-fw ${cls || ""} ${icon}` })
+      : i({ class: `${no_fw ? '' : "fa-fw "}${cls || ""} ${icon}` })
     : "";
 
 const navSubItemsIterator = (si: any) =>
@@ -276,7 +276,7 @@ const mobileBottomNavBar = (
                     href: text(s.link),
                     target: s.target_blank ? "_blank" : undefined,
                   },
-                  show_icon(s.icon, "fa-lg"),
+                  show_icon(s.icon, "fa-lg", true),
                   br(),
                   small(text(s.label))
                 )
@@ -850,4 +850,5 @@ export = {
   cardHeaderTabs,
   mobileBottomNavBar,
   renderTabs,
+  show_icon
 };
