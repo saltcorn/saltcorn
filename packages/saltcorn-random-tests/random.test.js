@@ -24,7 +24,7 @@ const seed = set_seed();
 describe("app", () => {
   it("obeys the chaos guinea pig with seed " + seed, async () => {
     const packs_available = await fetch_available_packs();
-    console.log(packs_available);
+    //console.log(packs_available);
 
     for (const { name } of packs_available) {
       await resetToFixtures();
