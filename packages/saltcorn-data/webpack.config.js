@@ -38,6 +38,10 @@ const dbMocks = {
 };
 
 module.exports = {
+  externals: {
+    "@saltcorn/sqlite": "@saltcorn/sqlite",
+    "@saltcorn/postgres": "@saltcorn/postgres",
+  },
   optimization: {
     minimize: false, // debug
     //runtimeChunk: "single",

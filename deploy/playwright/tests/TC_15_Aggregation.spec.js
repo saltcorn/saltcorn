@@ -47,15 +47,14 @@ test.describe('E2E Test Suite', () => {
         // Click on add column button
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
-            await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn4);
+            await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn);
         });
         // await page.click(pageobject.RelationDropdown);
         await customAssert('Select Task.assigned_to in relation dropdown', async () => {
             await page.selectOption(pageobject.RelationDropdown, { label: 'Task.assigned_to' });
         });
         await customAssert('Select id field in on field dropdown', async () => {
-            const Childtablefield = await page.locator('select.form-control.form-select').nth(1);
-            await Childtablefield.selectOption({ value: 'id' });
+            await page.selectOption(pageobject.Childtablefield, { value: 'id' });
         });
         await customAssert('Select Count in static dropdown', async () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
@@ -112,11 +111,10 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(5000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
-            await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn5);
+            await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn);
         });
         await customAssert('Select id field in on field dropdown', async () => {
-            const Childtablefield = await page.locator('select.form-control.form-select').nth(1);
-            await Childtablefield.selectOption({ value: 'estimated_hours' });
+            await page.selectOption(pageobject.Childtablefield, { value: 'estimated_hours' });
         });
         await customAssert('Select Sum in static dropdown', async () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
@@ -138,11 +136,10 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(3000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
-            await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn6);
+            await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn);
         });
         await customAssert('Select name field in on field dropdown', async () => {
-            const Childtablefield = await page.locator('select.form-control.form-select').nth(1);
-            await Childtablefield.selectOption({ value: 'name' });
+            await page.selectOption(pageobject.Childtablefield, { value: 'name' });
         });
         await customAssert('Select Array_Agg in static dropdown', async () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
@@ -190,8 +187,7 @@ test.describe('E2E Test Suite', () => {
         // await functions.fill_Text(pageobject.richTextEditor, 'Task Assigned');
         await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.secondrowcolumn);
         await customAssert('Select id field in on field dropdown', async () => {
-            const Childtablefield = await page.locator('select.form-control.form-select').nth(1);
-            await Childtablefield.selectOption({ value: 'id' });
+            await page.selectOption(pageobject.Childtablefield, { value: 'id' });
         });
         await customAssert('Select Count in static dropdown', async () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
@@ -208,7 +204,7 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(5000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
-            await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn7);
+            await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
         });
         await customAssert('Select show_people on view to link dropdown', async () => {
             await page.waitForTimeout(5000);
@@ -264,7 +260,7 @@ test.describe('E2E Test Suite', () => {
             await functions.drag_And_Drop(pageobject.textSource, pageobject.secondrowcolumn1);
             await functions.clearText(pageobject.richTextEditor);
             await page.keyboard.type('Name');
-            await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.secondrowcolumn);
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.secondrowcolumn);
             await page.click(pageobject.fielddropdown);
             // Select name' from the dropdown
             await page.selectOption('select.form-control.form-select', 'name');

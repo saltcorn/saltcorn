@@ -83,7 +83,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Add status field in view', async () => {
             await page.click(pageobject.addcolumnbutton);
             await functions.fill_Text(pageobject.headerlabel, 'Status');
-            await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.newcolumn6);
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.newcolumn);
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
             await page.selectOption(pageobject.fieldViewdropdown, { label: 'as_text' });
         });
@@ -115,7 +115,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         await page.waitForTimeout(2000);
         // add new input box in page
-        await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.target);
+        await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
         // click on field dropdown for field
         await customAssert('Select Status in field dropdown', async () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
@@ -215,7 +215,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.configureFilterview);
         await page.click(pageobject.target);
         await page.click(pageobject.deletecontentButton);
-        await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.target);
+        await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
         await customAssert('Select Status in field dropdown', async () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
         });
@@ -241,7 +241,7 @@ test.describe('E2E Test Suite', () => {
         // Check the has dropdown for searchbox
         await page.click(pageobject.hasdropdowncheckbox);
         await customAssert('Drag checkboxes in search box', async () => {
-            await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.searchInputGroup);
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.searchInputGroup);
         });
         await customAssert('Select Status in field dropdown', async () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });

@@ -85,7 +85,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.addcolumnbutton);
     // drag and drop the action locator
     await page.waitForSelector(pageobject.ActionLocator);
-    await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.newcolumn4);
+    await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.newcolumn);
     // click on next button
     await page.waitForSelector(pageobject.nextoption);
     await page.click(pageobject.nextoption);
@@ -123,9 +123,9 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.deletebutton);
     await page.click(pageobject.deletebutton);
     // add new input box in page
-    await page.waitForSelector(pageobject.fieldsourrce);
-    await page.click(pageobject.fieldsourrce);
-    await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.secondrowcolumn);
+    await page.waitForSelector(pageobject.fieldsource);
+    await page.click(pageobject.fieldsource);
+    await functions.drag_And_Drop(pageobject.fieldsource, pageobject.secondrowcolumn);
     // click on field dropdown for field
     await customAssert('field dropdown should be visible', async () => {
       await page.waitForSelector(pageobject.fielddropdown);
@@ -172,7 +172,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.addcolumnbutton);
     // drag and drop the action view link
     await page.waitForSelector(pageobject.viewlinksource);
-    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn5);
+    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
     // click to view link dropdown
     await customAssert('view to link dropdown should be visible', async () => {
       await page.waitForSelector(pageobject.viewtolinkdropdown);
@@ -280,12 +280,10 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.deletebutton);
     await customAssert('Drag Name on top of the page set heading', async () => {
         await functions.drag_And_Drop(pageobject.fullnameuser, pageobject.addresslabel);
-        // select text style as heading1 for full name
-        const textstyleLocator = page.locator('.form-control.form-select').nth(2);
-        await textstyleLocator.click();
-        await textstyleLocator?.selectOption("Heading 1");
+        // select text style as Heading 1 for full name
+        await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 1' });
     });
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(4000);
     await customAssert('Drag address row on third column', async () => {
         await functions.drag_And_Drop(pageobject.Addresstext, pageobject.thirdrowcolumn2);
     });
@@ -308,7 +306,7 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.addcolumnbutton);
     await page.click(pageobject.addcolumnbutton);
     // drag and drop the viewlink locator
-    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn6);
+    await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
     // select view to show from dropdown
     await customAssert('view to show dropdown should be visible', async () => {
       await page.waitForSelector(pageobject.viewtolinkdropdown);
@@ -442,7 +440,7 @@ test.describe('E2E Test Suite', () => {
       await page.selectOption(pageobject.fieldViewdropdown, { label: 'flatpickr' }); // If using a select dropdown
     });
     await page.waitForTimeout(5000);
-    // await page.click(pageobject.nextoption);
+    await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.view2editlink);
     await page.click(pageobject.DatepickReadonly);
@@ -476,14 +474,15 @@ test.describe('E2E Test Suite', () => {
     await functions.submit();
     // click on next button again
     await functions.submit();
+    // Go to views
     await functions.views();
+    // Configure the Edit view
     await page.click(pageobject.configureEditview);
     // add new column on page
     await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
     // Add text in first column
     await functions.drag_And_Drop(pageobject.textSource, pageobject.firstColumn);
-    // await page.waitForTimeout(2000);
-    await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.secondColumn);
+    await functions.drag_And_Drop(pageobject.fieldsource, pageobject.secondColumn);
     await customAssert('Select Bio from field dropdown', async () => {
       await page.waitForSelector(pageobject.fielddropdown);
       await page.selectOption(pageobject.fielddropdown, { label: 'Bio' });
@@ -520,7 +519,8 @@ test.describe('E2E Test Suite', () => {
     // Optionally, ensure the body is visible before filling it
     await frame.locator('body').waitFor({ state: 'visible' });
     // Fill the content inside the iframe
-    await frame.locator('body').fill('Rebecca is very sporty\n- Football\n- Tennis');
+    await frame.locator('body').click(); // Ensure the body is focused
+    await frame.locator('body').type('Rebecca is very sporty\n- Football\n- Tennis');
     });
     await functions.submit();
   });
@@ -533,8 +533,7 @@ test.describe('E2E Test Suite', () => {
     await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
     // Add text in first column
     await functions.drag_And_Drop(pageobject.textSource, pageobject.firstColumn);
-    // await page.waitForTimeout(2000);
-    await functions.drag_And_Drop(pageobject.fieldsourrce, pageobject.secondColumn);
+    await functions.drag_And_Drop(pageobject.fieldsource, pageobject.secondColumn);
     await customAssert('Select Bio from field dropdown', async () => {
       await page.waitForSelector(pageobject.fielddropdown);
       await page.selectOption(pageobject.fielddropdown, { label: 'Bio' });

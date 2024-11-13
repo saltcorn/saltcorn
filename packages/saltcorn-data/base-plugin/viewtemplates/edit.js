@@ -1036,7 +1036,7 @@ const render = async ({
       : "";
   if (actually_auto_save) {
     for (const field of form.fields) {
-      if (field.fieldview === "select") field.in_auto_save = true;
+      field.in_auto_save = true;
     }
   }
   await form.fill_fkey_options(false, optionsQuery, req.user);
