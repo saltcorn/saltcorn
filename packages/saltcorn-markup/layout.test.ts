@@ -53,6 +53,74 @@ describe("layout", () => {
       '<div style="padding:2rem;    ">bar</div>'
     );
   });
+  it("renders styled text in container with single textStyle", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "container",
+      contents: { type: "blank", contents: "bar", textStyle: "h1" },
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<div style="    "><h1>bar</h1></div>'
+    );
+    const markup1 = {
+      type: "container",
+      contents: { type: "blank", contents: "bar", textStyle: "fw-bold" },
+    };
+    expect(render({ blockDispatch, layout: markup1 })).toBe(
+      '<div style="    "><span class="fw-bold">bar</span></div>'
+    );
+  });
+  it("renders styled text in container with array textStyle", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "container",
+      contents: { type: "blank", contents: "bar", textStyle: ["h1"] },
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<div style="    "><h1>bar</h1></div>'
+    );
+    const markup1 = {
+      type: "container",
+      contents: {
+        type: "blank",
+        contents: "bar",
+        textStyle: ["fw-bold", "small"],
+      },
+    };
+    expect(render({ blockDispatch, layout: markup1 })).toBe(
+      '<div style="    "><span class="fw-bold small">bar</span></div>'
+    );
+    const markup2 = {
+      type: "container",
+      contents: {
+        type: "blank",
+        contents: "bar",
+        textStyle: ["h1", "fw-bold", "small"],
+      },
+    };
+    expect(render({ blockDispatch, layout: markup2 })).toBe(
+      '<div style="    "><h1 class="fw-bold small">bar</h1></div>'
+    );
+  });
+  it("renders top-level text styled with array textStyle", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "blank",
+      contents: "bar",
+      textStyle: ["h1"],
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<h1>bar</h1>'
+    );
+    const markup1 = {
+      type: "blank",
+      contents: "bar",
+      textStyle: ["fw-bold","small"],
+    };
+    expect(render({ blockDispatch, layout: markup1 })).toBe(
+      '<span class="fw-bold small">bar</span>'
+    );
+  });
 });
 
 describe("MJML layout", () => {
