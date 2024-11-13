@@ -761,7 +761,7 @@ router.post(
     req.flash(
       "success",
       req.__(
-        "View %s added to menu. Adjust access permissions in Settings &raquo; Menu",
+        "View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
         view.name
       )
     );

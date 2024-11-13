@@ -1477,5 +1477,7 @@
 	"After delete": "After delete",
 	"Search only on exact match, not substring match. Useful for large tables": "Search only on exact match, not substring match. Useful for large tables",
 	"Please select an entry point.": "Please select an entry point.",
-	"Group by": "Group by"
+	"Group by": "Group by",
+	"View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
+	"Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>"
 }
