@@ -105,33 +105,43 @@ const makeSegments = (
  */
 const selfStylingTypes = new Set(["card", "container", "besides", "image"]);
 
+const textStyleToArray = (textStyle: any) =>
+  Array.isArray(textStyle) ? textStyle : !textStyle ? [] : [textStyle];
+
 const applyTextStyle = (segment: any, inner: string): string => {
+  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
+  const styleArray = textStyleToArray(segment.textStyle);
+  const hs = styleArray.find((s) => s[0] === "h");
+  const no_hs = styleArray.filter((s) => s[0] !== "h").map(to_bs5);
+  const inline_h = segment.textStyle && hs && segment.inline;
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
   const hasStyle =
     Object.keys(style).length > 0 && !selfStylingTypes.has(segment.type);
-  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
-  if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
-    style.display = "inline-block";
-  switch (segment.textStyle) {
+
+  if (inline_h) style.display = "inline-block";
+
+  const klass = no_hs.join(" ");
+  
+  switch (hs) {
     case "h1":
-      return h1({ style }, inner);
+      return h1({ style, class: klass }, inner);
     case "h2":
-      return h2({ style }, inner);
+      return h2({ style, class: klass }, inner);
     case "h3":
-      return h3({ style }, inner);
+      return h3({ style, class: klass }, inner);
     case "h4":
-      return h4({ style }, inner);
+      return h4({ style, class: klass }, inner);
     case "h5":
-      return h5({ style }, inner);
+      return h5({ style, class: klass }, inner);
     case "h6":
-      return h6({ style }, inner);
+      return h6({ style, class: klass }, inner);
     default:
       return segment.block || (segment.display === "block" && hasStyle)
-        ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
+        ? div({ class: klass, style }, inner)
         : segment.textStyle || hasStyle
-        ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
+        ? span({ class: klass, style }, inner)
         : inner;
   }
 };
