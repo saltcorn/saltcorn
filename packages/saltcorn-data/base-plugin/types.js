@@ -1064,7 +1064,7 @@ const string = {
                   id: `input${text_attr(nm)}`,
                   disabled: attrs.disabled,
                   onChange: attrs.onChange,
-                  onBlur: attrs.noOnChangeInBlur ? undefined : attrs.onChange,
+                  onBlur: attrs.onChange,
                   autocomplete: "off",
                   required:
                     attrs.placeholder && (required || attrs.force_required),
