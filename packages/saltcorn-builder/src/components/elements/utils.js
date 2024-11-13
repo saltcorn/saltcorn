@@ -12,6 +12,12 @@ import {
   faChevronRight,
   faInfoCircle,
   faQuestionCircle,
+  faBold,
+  faItalic,
+  faFont,
+  faCommentSlash,
+  faUnderline, 
+  faTerminal
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
@@ -334,10 +340,27 @@ const TextStyleSelectBtns = ({ textStyle, setProp }) => {
     const noH = styleArray.filter((s) => !(s.length == 2 && s[0] === "h"));
     const selected = styleArray.includes(`h${h}`);
     if (!selected) noH.push(`h${h}`);
-    console.log("noH", noH);
-
     setProp((prop) => (prop.textStyle = noH));
   };
+  const clickStyle = (style) => {
+    const noH = styleArray.filter((s) => s !== style);
+    const selected = styleArray.includes(style);
+    if (!selected) noH.push(style);
+    setProp((prop) => (prop.textStyle = noH));
+  };
+  const StyleButton = ({ styleName, icon, title, size }) => (
+    <button
+      type="button"
+      title={title}
+      onClick={() => clickStyle(styleName)}
+      className={`btn btn-sm btn-${
+        !styleArray.includes(styleName) ? "outline-" : ""
+      }secondary`}
+    >
+      <FontAwesomeIcon icon={icon} size={size || undefined} />
+    </button>
+  );
+
   return (
     <div>
       <div className="btn-group w-100" role="group">
@@ -345,6 +368,7 @@ const TextStyleSelectBtns = ({ textStyle, setProp }) => {
           <button
             key={h}
             type="button"
+            title={`Heading ${h}`}
             onClick={() => clickH(h)}
             className={`btn btn-sm btn-${
               !styleArray.includes(`h${h}`) ? "outline-" : ""
@@ -354,7 +378,39 @@ const TextStyleSelectBtns = ({ textStyle, setProp }) => {
           </button>
         ))}
       </div>
-      <div className="btn-group w-100" role="group"></div>
+      <div className="btn-group w-100" role="group">
+        <StyleButton
+          styleName="fw-bold"
+          icon={faBold}
+          title="Bold"
+        ></StyleButton>
+        <StyleButton
+          styleName="fst-italic"
+          icon={faItalic}
+          title="Italics"
+        ></StyleButton>
+        <StyleButton
+          styleName="small"
+          icon={faFont}
+          title="Small"
+          size="xs"
+        ></StyleButton>
+        <StyleButton
+          styleName="text-muted"
+          icon={faCommentSlash}
+          title="Muted"
+        ></StyleButton>      
+         <StyleButton
+          styleName="text-underline"
+          icon={faUnderline}
+          title="Underline"
+        ></StyleButton>
+         <StyleButton
+          styleName="font-monospace"
+          icon={faTerminal}
+          title="Monospace"
+        ></StyleButton>
+      </div>
     </div>
   );
 };

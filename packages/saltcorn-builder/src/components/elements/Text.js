@@ -103,9 +103,9 @@ const Text = ({
     <div
       className={`${
         isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
-      } ${textStyle} is-text ${isFormula.text ? "font-monospace" : ""} ${
-        selected ? "selected-node" : ""
-      }`}
+      } ${Array.isArray(textStyle) ? textStyle.join(" ") : textStyle} is-text ${
+        isFormula.text ? "font-monospace" : ""
+      } ${selected ? "selected-node" : ""}`}
       ref={(dom) => connect(drag(dom))}
       onClick={(e) => selected && setEditable(true)}
       style={{
