@@ -17,6 +17,9 @@
     "tcp-port-used": "^1.0.2",
     "wrk": "^1.2.1"
   },
+  "scripts": {
+    "test": "echo NO TESTS"
+  },
   "bin": {
     "saltcorn-install": "./index.js"
   },
