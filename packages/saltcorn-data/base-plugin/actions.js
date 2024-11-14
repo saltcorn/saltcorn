@@ -1159,7 +1159,7 @@ module.exports = {
       },
     ],
 
-    run: async ({ row, table, configuration: { form_action } }) => {
+    run: async ({ row, table, user, configuration: { form_action } }) => {
       const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
@@ -1167,7 +1167,7 @@ module.exports = {
         case "Save":
           if (!row[table.pk_name]) {
             //we will save server side so we can set id
-            const result = await table.tryInsertRow(row);
+            const result = await table.tryInsertRow(row, user);
             if (result.success)
               return { set_fields: { [table.pk_name]: result.success } };
             else {
