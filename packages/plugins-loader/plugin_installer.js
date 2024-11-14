@@ -272,22 +272,31 @@ class PluginInstaller {
   }
 
   async npmInstall(pckJSON) {
-    getState().log(5, `NPM install plugin: ${pckJSON.name}`);
     const isWindows = process.platform === "win32";
     if (
       Object.keys(pckJSON.dependencies || {}).length > 0 ||
       Object.keys(pckJSON.devDependencies || {}).length > 0
     ) {
+      getState().log(5, `NPM install plugin: ${pckJSON.name}`);
       const child = spawn("npm", ["install"], {
         cwd: this.tempDir,
         env: { ...process.env, ...this.envVars },
         ...(isWindows ? { shell: true } : {}),
       });
       return new Promise((resolve, reject) => {
+        if (child.stdout) {
+          child.stdout.on("data", (data) => {
+            getState().log(5, data.toString());
+          });
+        }
+        if (child.stderr) {
+          child.stderr.on("data", (data) => {
+            getState().log(5, data.toString());
+          });
+        }
         child.on("exit", (exitCode, signal) => {
           resolve({ success: exitCode === 0 });
         });
-
         child.on("error", (msg) => {
           reject(msg);
         });
