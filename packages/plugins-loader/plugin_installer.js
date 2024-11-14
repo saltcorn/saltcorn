@@ -34,22 +34,15 @@ const readPackageJson = async (filePath) => {
  * @param newPckJSON
  * @returns
  */
-const npmInstallNeeded = (source, oldPckJSON, newPckJSON) => {
-  if (source === "local") {
-    return (
-      Object.keys(newPckJSON.dependencies || {}).length > 0 ||
-      Object.keys(newPckJSON.devDependencies || {}).length > 0
-    );
-  } else {
-    const oldDeps = oldPckJSON.dependencies || Object.create(null);
-    const oldDevDeps = oldPckJSON.devDependencies || Object.create(null);
-    const newDeps = newPckJSON.dependencies || Object.create(null);
-    const newDevDeps = newPckJSON.devDependencies || Object.create(null);
-    return (
-      JSON.stringify(oldDeps) !== JSON.stringify(newDeps) ||
-      JSON.stringify(oldDevDeps) !== JSON.stringify(newDevDeps)
-    );
-  }
+const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
+  const oldDeps = oldPckJSON.dependencies || Object.create(null);
+  const oldDevDeps = oldPckJSON.devDependencies || Object.create(null);
+  const newDeps = newPckJSON.dependencies || Object.create(null);
+  const newDevDeps = newPckJSON.devDependencies || Object.create(null);
+  return (
+    JSON.stringify(oldDeps) !== JSON.stringify(newDeps) ||
+    JSON.stringify(oldDevDeps) !== JSON.stringify(newDevDeps)
+  );
 };
 
 class PluginInstaller {
@@ -109,11 +102,7 @@ class PluginInstaller {
         );
         if (
           !pckJSON ||
-          npmInstallNeeded(
-            this.plugin.source,
-            await this.removeDependencies(pckJSON),
-            tmpPckJSON
-          )
+          npmInstallNeeded(await this.removeDependencies(pckJSON), tmpPckJSON)
         )
           await this.npmInstall(tmpPckJSON);
         await this.movePlugin();
