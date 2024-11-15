@@ -38,11 +38,12 @@ if (process.argv.includes("--help")) {
   console.log("OPTIONS:");
   console.log(
     "  -y, --yes\tNon-interactive, accept all defaults: \n" +
-      "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit\n" +
+      "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit, install docker, pull cordova-builder\n" +
       "  -v, --verbose\tVerbose mode, show debug information\n" +
       "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n" +
       "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n" +
-      "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n"
+      "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n" +
+      "  -sd --skip-docker\tSkip the docker and cordova-builder installation\n"
   );
   process.exit(0);
 }
@@ -53,7 +54,8 @@ const expert = process.argv.includes("-e") || process.argv.includes("--expert");
 const dryRun = process.argv.includes("-d") || process.argv.includes("--dryrun");
 const skipChromium =
   process.argv.includes("-s") || process.argv.includes("--skip-chromium");
-
+const skipDocker =
+  process.argv.includes("--skip-docker") || process.argv.includes("-sd");
 /**
  * Define saltcorn config dir and path
  * @param user
@@ -570,8 +572,10 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   if (verbose) console.log({ osService });
 
   // ask for docker mode
-  const { dockerMode, addToDockerGroup } = await askDockerMode();
-  if (verbose) console.log({ dockerMode, addToDockerGroup });
+  const { dockerMode, addToDockerGroup } = !skipDocker
+    ? await askDockerMode()
+    : { dockerMode: null, addToDockerGroup: false };
+  if (verbose && !skipDocker) console.log({ dockerMode, addToDockerGroup });
 
   // install system pkg
   await installSystemPackages(osInfo, user, db, mode, port, dryRun);
@@ -740,6 +744,7 @@ WantedBy=multi-user.target`
       await setupDocker(user, dockerMode, addToDockerGroup, osInfo, dryRun);
       await pullCordovaBuilder(user, dockerMode, addToDockerGroup, dryRun);
       // restart to apply the docker group membership
+      await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
       await asyncSudo(["systemctl", "restart", osService], false, dryRun);
     } catch (error) {
       console.log(
