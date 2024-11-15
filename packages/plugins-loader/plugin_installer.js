@@ -34,22 +34,15 @@ const readPackageJson = async (filePath) => {
  * @param newPckJSON
  * @returns
  */
-const npmInstallNeeded = (source, oldPckJSON, newPckJSON) => {
-  if (source === "local") {
-    return (
-      Object.keys(newPckJSON.dependencies || {}).length > 0 ||
-      Object.keys(newPckJSON.devDependencies || {}).length > 0
-    );
-  } else {
-    const oldDeps = oldPckJSON.dependencies || Object.create(null);
-    const oldDevDeps = oldPckJSON.devDependencies || Object.create(null);
-    const newDeps = newPckJSON.dependencies || Object.create(null);
-    const newDevDeps = newPckJSON.devDependencies || Object.create(null);
-    return (
-      JSON.stringify(oldDeps) !== JSON.stringify(newDeps) ||
-      JSON.stringify(oldDevDeps) !== JSON.stringify(newDevDeps)
-    );
-  }
+const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
+  const oldDeps = oldPckJSON.dependencies || Object.create(null);
+  const oldDevDeps = oldPckJSON.devDependencies || Object.create(null);
+  const newDeps = newPckJSON.dependencies || Object.create(null);
+  const newDevDeps = newPckJSON.devDependencies || Object.create(null);
+  return (
+    JSON.stringify(oldDeps) !== JSON.stringify(newDeps) ||
+    JSON.stringify(oldDevDeps) !== JSON.stringify(newDevDeps)
+  );
 };
 
 class PluginInstaller {
@@ -107,16 +100,15 @@ class PluginInstaller {
           await readPackageJson(this.tempPckJsonPath),
           true
         );
+        let wasInstalled = false;
         if (
           !pckJSON ||
-          npmInstallNeeded(
-            this.plugin.source,
-            await this.removeDependencies(pckJSON),
-            tmpPckJSON
-          )
-        )
+          npmInstallNeeded(await this.removeDependencies(pckJSON), tmpPckJSON)
+        ) {
+          wasInstalled = true;
           await this.npmInstall(tmpPckJSON);
-        await this.movePlugin();
+        }
+        await this.movePlugin(wasInstalled);
         if (await tarballExists(this.rootFolder, this.plugin))
           await removeTarball(this.rootFolder, this.plugin);
       }
@@ -304,7 +296,7 @@ class PluginInstaller {
     }
   }
 
-  async movePlugin() {
+  async movePlugin(wasInstalled) {
     const isWindows = process.platform === "win32";
     const copyMove = async () => {
       await cp(this.tempDir, this.pluginDir, { recursive: true, force: true });
@@ -314,15 +306,17 @@ class PluginInstaller {
         getState().log(2, `Error removing temp folder ${this.tempDir}`);
       }
     };
-    if (await pathExists(this.pluginDir))
-      await rm(this.pluginDir, { recursive: true });
-    await mkdir(this.pluginDir, { recursive: true });
-    if (!isWindows) {
-      try {
-        await rename(this.tempDir, this.pluginDir);
-      } catch (error) {
-        await copyMove();
-      }
+    if (this.plugin.source === "npm" || wasInstalled) {
+      if (await pathExists(this.pluginDir))
+        await rm(this.pluginDir, { recursive: true });
+      await mkdir(this.pluginDir, { recursive: true });
+      if (!isWindows) {
+        try {
+          await rename(this.tempDir, this.pluginDir);
+        } catch (error) {
+          await copyMove();
+        }
+      } else await copyMove();
     } else await copyMove();
   }
 }
