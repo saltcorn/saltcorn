@@ -100,12 +100,15 @@ class PluginInstaller {
           await readPackageJson(this.tempPckJsonPath),
           true
         );
+        let wasInstalled = false;
         if (
           !pckJSON ||
           npmInstallNeeded(await this.removeDependencies(pckJSON), tmpPckJSON)
-        )
+        ) {
+          wasInstalled = true;
           await this.npmInstall(tmpPckJSON);
-        await this.movePlugin();
+        }
+        await this.movePlugin(wasInstalled);
         if (await tarballExists(this.rootFolder, this.plugin))
           await removeTarball(this.rootFolder, this.plugin);
       }
@@ -293,7 +296,7 @@ class PluginInstaller {
     }
   }
 
-  async movePlugin() {
+  async movePlugin(wasInstalled) {
     const isWindows = process.platform === "win32";
     const copyMove = async () => {
       await cp(this.tempDir, this.pluginDir, { recursive: true, force: true });
@@ -303,7 +306,7 @@ class PluginInstaller {
         getState().log(2, `Error removing temp folder ${this.tempDir}`);
       }
     };
-    if (this.plugin.source === "npm") {
+    if (this.plugin.source === "npm" || wasInstalled) {
       if (await pathExists(this.pluginDir))
         await rm(this.pluginDir, { recursive: true });
       await mkdir(this.pluginDir, { recursive: true });
