@@ -43,7 +43,7 @@ if (process.argv.includes("--help")) {
       "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n" +
       "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n" +
       "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n" +
-      "  -sd --skip-docker\tSkip the docker and cordova-builder installation\n"
+      "  -sd --skip-docker\n\t\tSkip the Docker and saltcorn/cordova-builder installation\n"
   );
   process.exit(0);
 }
