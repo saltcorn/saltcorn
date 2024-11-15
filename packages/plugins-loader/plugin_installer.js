@@ -303,15 +303,17 @@ class PluginInstaller {
         getState().log(2, `Error removing temp folder ${this.tempDir}`);
       }
     };
-    if (await pathExists(this.pluginDir))
-      await rm(this.pluginDir, { recursive: true });
-    await mkdir(this.pluginDir, { recursive: true });
-    if (!isWindows) {
-      try {
-        await rename(this.tempDir, this.pluginDir);
-      } catch (error) {
-        await copyMove();
-      }
+    if (this.plugin.source === "npm") {
+      if (await pathExists(this.pluginDir))
+        await rm(this.pluginDir, { recursive: true });
+      await mkdir(this.pluginDir, { recursive: true });
+      if (!isWindows) {
+        try {
+          await rename(this.tempDir, this.pluginDir);
+        } catch (error) {
+          await copyMove();
+        }
+      } else await copyMove();
     } else await copyMove();
   }
 }
