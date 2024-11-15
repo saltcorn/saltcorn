@@ -278,12 +278,12 @@ class PluginInstaller {
       return new Promise((resolve, reject) => {
         if (child.stdout) {
           child.stdout.on("data", (data) => {
-            getState().log(5, data.toString());
+            getState().log(6, data.toString());
           });
         }
         if (child.stderr) {
           child.stderr.on("data", (data) => {
-            getState().log(5, data.toString());
+            getState().log(6, data.toString());
           });
         }
         child.on("exit", (exitCode, signal) => {
