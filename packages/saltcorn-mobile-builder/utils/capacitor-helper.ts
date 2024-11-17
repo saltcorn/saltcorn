@@ -205,6 +205,7 @@ export class CapacitorHelper {
     for (const plugin of [
       "@capacitor-community/sqlite",
       "@capacitor/filesystem",
+      "@capacitor/camera",
     ])
       addFn(plugin);
   }

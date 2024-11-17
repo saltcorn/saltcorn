@@ -89,14 +89,15 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
           const tokens = entry[1].split("/");
           const fileName = tokens[tokens.length - 1];
           const directory = tokens.splice(0, tokens.length - 1).join("/");
-          // read and add file to submit
-          // TODO replace the cordova implementation with capacitor filesystem
-          const binary =
+          const { buffer, file } =
             await parent.saltcorn.mobileApp.fileSystem.readBinaryCordova(
               fileName,
               directory
             );
-          files[entry[0]] = new File([binary], fileName);
+          files[entry[0]] = {
+            blob: new Blob([buffer], { type: file.type }),
+            fileObj: file,
+          };
         } else if (!matchingState) urlParams.append(entry[0], entry[1]);
         else data[entry[0]] = entry[1];
       }
@@ -862,29 +863,11 @@ function removeLoadSpinner() {
  * @param {*} fieldName
  */
 async function getPicture(fieldName) {
-  const cameraOptions = {
-    quality: 50,
-    encodingType: parent.Camera.EncodingType.JPEG,
-    destinationType: parent.Camera.DestinationType.FILE_URI,
-  };
-  const getPictureWithPromise = () => {
-    return new Promise((resolve, reject) => {
-      parent.navigator.camera.getPicture(
-        (imageDate) => {
-          return resolve(imageDate);
-        },
-        (message) => {
-          return reject(message);
-        },
-        cameraOptions
-      );
-    });
-  };
   try {
     const form = $(`#cptbtn${fieldName}`).closest("form");
     const onsubmit = form.attr("onsubmit");
     form.attr("onsubmit", "javascript:void(0)");
-    const fileURI = await getPictureWithPromise();
+    const fileURI = await parent.saltcorn.mobileApp.common.takePhoto("uri");
     form.attr("onsubmit", onsubmit);
     const inputId = `input${fieldName}`;
     form.find(`#${inputId}`).remove();

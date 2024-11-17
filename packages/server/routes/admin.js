@@ -2713,7 +2713,7 @@ router.get(
                         div(
                           label(
                             { class: "form-label fw-bold" },
-                            req.__("Cordova builder") +
+                            req.__("Capacitor builder") +
                               a(
                                 {
                                   href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",

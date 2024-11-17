@@ -23,14 +23,16 @@ npm install @capacitor/cli @capacitor/core @capacitor/android
 npm run add-platform android
 
 npx capacitor-assets generate
-plugins="cordova-sqlite-ext cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser cordova-plugin-network-information cordova-plugin-geolocation cordova-plugin-camera" && \
+plugins="cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser cordova-plugin-network-information cordova-plugin-geolocation" && \
 for plugin in $plugins; do \
   npm install "$plugin"; \
 done
 npx cap sync
 
 npm install @capacitor/filesystem
-npm install --save @capacitor-community/sqlite
+npm install @capacitor-community/sqlite
+npm install @capacitor/camera
+
 
 # data extraction rules
 cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml

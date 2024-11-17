@@ -1,6 +1,7 @@
 /*global saltcorn, $*/
 
 import { apiCall } from "./api";
+import { Camera, CameraResultType } from "@capacitor/camera";
 
 export function clearAlerts() {
   const iframe = document.getElementById("content-iframe");
@@ -139,5 +140,24 @@ export async function loadEncodedFile(fileId) {
         msg: error.message ? error.message : "An error occured.",
       },
     ]);
+  }
+}
+
+export async function takePhoto() {
+  try {
+    const image = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: false,
+      resultType: CameraResultType.Uri,
+    });
+    return image.path;
+  } catch (error) {
+    showAlerts([
+      {
+        type: "error",
+        msg: error.message ? error.message : "An error occured.",
+      },
+    ]);
+    return null;
   }
 }

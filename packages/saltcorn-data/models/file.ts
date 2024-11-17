@@ -704,17 +704,17 @@ class File {
 
   /**
    * This is a mobile-app function, it uploads a file to the saltcorn server.
-   * @param f file to upload
+   * @param file file to upload
    * @returns JSON response from POST 'file/upload'
    */
-  static async upload(f: any): Promise<any> {
+  static async upload(file: { blob: Blob; fileObj: any }): Promise<any> {
     const { getState } = require("../db/state");
     const state = getState();
     const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000";
     const url = `${base_url}/files/upload`;
     const token = state.mobileConfig.jwt;
     const formData = new FormData();
-    formData.append("file", f);
+    formData.append("file", file.blob, file.fileObj.name);
     const response = await axios.post(url, formData, {
       headers: {
         "Content-Type": "multipart/form-data",

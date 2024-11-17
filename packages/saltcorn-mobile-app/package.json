@@ -20,6 +20,7 @@
     "@capacitor/core": "^6.1.2",
     "@capacitor/assets": "^3.0.5",
     "@capacitor/filesystem": "6.0.1",
+    "@capacitor/camera": "6.1.0",
     "cordova-sqlite-ext": "^6.0.0",
     "universal-router": "9.2.0",
     "axios": "^1.7.7",

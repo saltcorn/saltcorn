@@ -1,4 +1,4 @@
-import { Filesystem, Encoding } from "@capacitor/filesystem";
+import { Filesystem, Encoding, Directory } from "@capacitor/filesystem";
 
 export async function writeFile(name, directory, content) {
   try {
@@ -66,7 +66,7 @@ export async function readBinaryCordova(fileName, dirName) {
         fileEntry.file(function (file) {
           let reader = new FileReader();
           reader.onloadend = function (e) {
-            resolve(this.result);
+            resolve({ buffer: this.result, file: file });
           };
           reader.readAsArrayBuffer(file);
         });
@@ -79,3 +79,24 @@ export async function readBinaryCordova(fileName, dirName) {
     );
   });
 }
+
+// TODO get this working
+// export function normalizeFilePath(filePath) {
+//   if (filePath.startsWith("file:///")) {
+//     return filePath.replace("file:///storage/emulated/0/", "");
+//   }
+//   return filePath;
+// }
+
+// export async function readBinary(name, directory) {
+//   try {
+//     const file = await Filesystem.readFile({
+//       path: normalizeFilePath(`${directory}/${name}`),
+//       directory: Directory.ExternalStorage,
+//     });
+//     return Uint8Array.from(file.data, (char) => char.charCodeAt(0));
+//   } catch (error) {
+//     console.log("Unable to read file", error);
+//     throw error;
+//   }
+// }

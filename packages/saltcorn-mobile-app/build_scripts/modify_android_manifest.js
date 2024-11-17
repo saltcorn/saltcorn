@@ -18,6 +18,7 @@ const { readFileSync, writeFileSync } = require("fs");
       { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
       { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
       { $: { "android:name": "android.permission.INTERNET" } },
+      { $: { "android:name": "android.permission.CAMERA" } },
     ];
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
