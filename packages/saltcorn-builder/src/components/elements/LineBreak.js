@@ -35,17 +35,19 @@ const LineBreak = ({ hr, page_break_after }) => {
   );
 };
 
+const fields = [
+  { label: "Page break", name: "page_break_after", type: "Bool" },
+  { label: "Horizontal rule", name: "hr", type: "Bool" },
+];
+
 /**
  * @type {object}
  */
 LineBreak.craft = {
   displayName: "LineBreak",
   related: {
-    settings: SettingsFromFields([
-      { label: "Page break", name: "page_break_after", type: "Bool" },
-      { label: "Horizontal rule", name: "hr", type: "Bool" },
-    ]),
+    settings: SettingsFromFields(fields),
     segment_type: "line_break",
-    fields: [],
+    fields,
   },
 };
