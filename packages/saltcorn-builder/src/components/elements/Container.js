@@ -349,7 +349,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "top",
-                  label: "Tom",
+                  label: "Top",
                   type: "DimUnits",
                 }}
                 node={node}
