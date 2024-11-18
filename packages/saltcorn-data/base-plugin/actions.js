@@ -1504,7 +1504,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description:
-      "Synchronize a database table with an external table by copying rows from the external table",
+      "Synchronize a database table with an external/provider table by copying rows from the external table",
     configFields: async ({ table }) => {
       const tables = await Table.find_with_external();
       const pk_options = {};
@@ -1518,14 +1518,14 @@ module.exports = {
           label: "Source table",
           sublabel: "External table to sync from",
           input_type: "select",
-          options: tables.filter((t) => t.external).map((t) => t.name),
+          options: tables.filter((t) => t.external || t.provider_name).map((t) => t.name),
         },
         {
           name: "table_dest",
           label: "Destination table",
           sublabel: "Table to sync to",
           input_type: "select",
-          options: tables.filter((t) => !t.external).map((t) => t.name),
+          options: tables.filter((t) => !(t.external || t.provider_name)).map((t) => t.name),
         },
         {
           name: "pk_field",
