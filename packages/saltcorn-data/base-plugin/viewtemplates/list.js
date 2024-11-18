@@ -659,7 +659,7 @@ const configuration_workflow = (req) =>
             fieldview: "radio_group",
             attributes: {
               inline: true,
-              options: ["px", "%", "vw", "em", "rem"],
+              options: ["px", "%", "vw", "em", "rem", "cm"],
             },
             tab: "Layout options",
             showIf: { transpose: true },

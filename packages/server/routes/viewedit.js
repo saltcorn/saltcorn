@@ -286,7 +286,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         parent_field: "attributes",
         attributes: {
           inline: true,
-          options: ["px", "%", "vw", "em", "rem"],
+          options: ["px", "%", "vw", "em", "rem", "cm"],
         },
       },
       {
@@ -306,7 +306,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         parent_field: "attributes",
         attributes: {
           inline: true,
-          options: ["px", "%", "vw", "em", "rem"],
+          options: ["px", "%", "vw", "em", "rem", "cm"],
         },
       },
       {

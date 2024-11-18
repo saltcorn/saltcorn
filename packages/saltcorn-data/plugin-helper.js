@@ -1379,7 +1379,7 @@ const field_picker_fields = async ({
       required: true,
       attributes: {
         inline: true,
-        options: ["px", "%", "vw", "em", "rem"],
+        options: ["px", "%", "vw", "em", "rem", "cm"],
       },
     },
     ...(has_align

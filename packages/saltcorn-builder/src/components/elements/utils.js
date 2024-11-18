@@ -16,8 +16,8 @@ import {
   faItalic,
   faFont,
   faCommentSlash,
-  faUnderline, 
-  faTerminal
+  faUnderline,
+  faTerminal,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
@@ -399,13 +399,13 @@ const TextStyleSelectBtns = ({ textStyle, setProp }) => {
           styleName="text-muted"
           icon={faCommentSlash}
           title="Muted"
-        ></StyleButton>      
-         <StyleButton
+        ></StyleButton>
+        <StyleButton
           styleName="text-underline"
           icon={faUnderline}
           title="Underline"
         ></StyleButton>
-         <StyleButton
+        <StyleButton
           styleName="font-monospace"
           icon={faTerminal}
           title="Monospace"
@@ -629,7 +629,7 @@ export /**
  * @namespace
  */
 const SelectUnits = ({ vert, autoable, ...props }) => {
-  const options = ["px", "%", vert ? "vh" : "vw", "em", "rem"];
+  const options = ["px", "%", vert ? "vh" : "vw", "em", "rem", "cm"];
   if (autoable) options.push("auto");
   return <select {...props}>{buildOptions(options)}</select>;
 };
