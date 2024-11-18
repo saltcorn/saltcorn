@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     set -e  
     sudo zypper -n install nodejs16 npm16 git nodejs16-devel wget
-    sudo -iu vagrant npx -y saltcorn-install -y
+    sudo -iu vagrant npx -y saltcorn-install -y -sd
     systemctl is-active saltcorn
     wget -qO- http://localhost/ | grep Please
   SHELL
