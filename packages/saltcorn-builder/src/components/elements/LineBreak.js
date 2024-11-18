@@ -15,12 +15,12 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const LineBreak = ({ hr }) => {
+const LineBreak = ({ hr, page_break_after }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  return hr ? (
+  return hr || page_break_after ? (
     <hr></hr>
   ) : (
     <Fragment>
