@@ -74,7 +74,9 @@ const makeSegments = (
                 class: `toast-container position-fixed ${
                   isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
                 } `,
-                style: `z-index: 9999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
+                style: `z-index: 9999; ${
+                  !isWeb ? "margin-bottom: 1.0rem" : ""
+                }`,
                 "aria-live": "polite",
                 "aria-atomic": "true",
               },
@@ -123,7 +125,7 @@ const applyTextStyle = (segment: any, inner: string): string => {
   if (inline_h) style.display = "inline-block";
 
   const klass = no_hs.join(" ");
-  
+
   switch (hs) {
     case "h1":
       return h1({ style, class: klass }, inner);
@@ -771,6 +773,9 @@ const render = ({
     }
 
     if (segment.type === "line_break") {
+      if (segment.hr) return "<hr>";
+      if (segment.page_break_after)
+        return '<div style="break-after:page"></div>';
       return "<br />";
     }
     if (segment.type === "search_bar") {
