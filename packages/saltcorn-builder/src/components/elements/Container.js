@@ -259,7 +259,6 @@ const ContainerSettings = () => {
   const { uploadedFiles } = useContext(previewCtx);
 
   const ownership = !!options.ownership;
-  console.log("style", style);
 
   /**
    * @param {string} key
