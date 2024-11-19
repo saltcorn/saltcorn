@@ -334,6 +334,7 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
 };
 const textStyleToArray = (textStyle) =>
   Array.isArray(textStyle) ? textStyle : !textStyle ? [] : [textStyle];
+
 const TextStyleSelectBtns = ({ textStyle, setProp }) => {
   const styleArray = textStyleToArray(textStyle);
   const clickH = (h) => {
@@ -355,7 +356,7 @@ const TextStyleSelectBtns = ({ textStyle, setProp }) => {
       onClick={() => clickStyle(styleName)}
       className={`btn btn-sm btn-${
         !styleArray.includes(styleName) ? "outline-" : ""
-      }secondary`}
+      }secondary style-${styleName}`}
     >
       <FontAwesomeIcon icon={icon} size={size || undefined} />
     </button>
@@ -372,7 +373,7 @@ const TextStyleSelectBtns = ({ textStyle, setProp }) => {
             onClick={() => clickH(h)}
             className={`btn btn-sm btn-${
               !styleArray.includes(`h${h}`) ? "outline-" : ""
-            }secondary`}
+            }secondary style-h${h}`}
           >
             H{h}
           </button>
