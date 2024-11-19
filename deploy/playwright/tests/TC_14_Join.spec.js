@@ -278,7 +278,7 @@ test.describe('E2E Test Suite', () => {
     });
     await customAssert('Select format from the dropdown', async () => {
       // Select 'format' from the dropdown
-      await page.selectOption(pageobject.fielddropdown, { label: 'format' }); // using field view dropdown
+      await page.selectOption(pageobject.fieldViewdropdown, { label: 'format' }); // using field view dropdown
     });
     await page.waitForTimeout(5000);
     await page.click(pageobject.nextoption);
