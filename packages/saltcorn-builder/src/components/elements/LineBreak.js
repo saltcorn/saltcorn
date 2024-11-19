@@ -15,12 +15,14 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const LineBreak = () => {
+const LineBreak = ({ hr, page_break_after }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  return (
+  return hr || page_break_after ? (
+    <hr></hr>
+  ) : (
     <Fragment>
       <span
         className={selected ? "selected-node" : ""}
@@ -33,14 +35,19 @@ const LineBreak = () => {
   );
 };
 
+const fields = [
+  { label: "Page break", name: "page_break_after", type: "Bool" },
+  { label: "Horizontal rule", name: "hr", type: "Bool" },
+];
+
 /**
  * @type {object}
  */
 LineBreak.craft = {
   displayName: "LineBreak",
   related: {
-    settings: SettingsFromFields([]),
+    settings: SettingsFromFields(fields),
     segment_type: "line_break",
-    fields: [],
+    fields,
   },
 };

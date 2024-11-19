@@ -10,7 +10,7 @@ import tabs = require("./tabs");
 import tags = require("./tags");
 const { a, text, div, button, hr, time, i, input, text_attr } = tags;
 import layoutUtils = require("./layout_utils");
-const { alert, toast } = layoutUtils;
+const { alert, toast, show_icon_and_label } = layoutUtils;
 
 /**
  * @param {string} href
@@ -113,11 +113,10 @@ const post_btn = (
       : ""
   } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
     style ? ` style="${style}"` : ""
-  }${title ? ` title=${text_attr(title)}` : ""}>${
-    icon && icon !== "empty"
-      ? `<i class="${icon}"></i>${s ? "&nbsp;" : ""}`
-      : ""
-  }${s}</button></form>`;
+  }${title ? ` title=${text_attr(title)}` : ""}>${show_icon_and_label(
+    icon,
+    s
+  )}</button></form>`;
 
 /**
  * UI Form for Delete Item confirmation
