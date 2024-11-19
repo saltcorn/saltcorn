@@ -99,10 +99,9 @@ class PageLocators {
     this.choosefilebutton = '#inputfile';
     this.createviewfromtable = '#table-views > div > a';
     this.textstyle = '.form-control form-select';
-    this.fielddropdown = '(//select[@class="form-control form-select"])[1]';
-    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]';
-    this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]';
-    this.textstyleLocator = '(//select[@class="form-control form-select"])[3]';
+    this.fielddropdown = 'select.field';
+    this.fieldViewdropdown = 'select.fieldview';
+    this.Toolbardropdown = 'select.field-toolbar';
     this.Childtablefield = 'select.agg_field';
     this.createuserlink = 'a[href="/useradmin/new"]';
     this.inputdob = '#inputdob';

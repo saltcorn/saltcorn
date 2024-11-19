@@ -897,7 +897,7 @@ const ConfigField = ({
         const options = getOptions();
         return (
           <select
-            className="form-control form-select"
+            className={`field-${field?.name} form-control form-select`}
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
@@ -916,7 +916,7 @@ const ConfigField = ({
         return (
           <input
             type="text"
-            className="form-control"
+            className={`field-${field?.name} form-control`}
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
           />
@@ -924,7 +924,7 @@ const ConfigField = ({
     },
     Font: () => (
       <select
-        className="form-control form-select"
+        className="fontselect form-control form-select"
         value={value || ""}
         onChange={(e) => e.target && myOnChange(e.target.value)}
         onBlur={(e) => e.target && myOnChange(e.target.value)}
@@ -942,7 +942,7 @@ const ConfigField = ({
     Integer: () => (
       <input
         type="number"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         step={field.step || 1}
         min={field.min}
         max={field.max}
@@ -953,7 +953,7 @@ const ConfigField = ({
     Float: () => (
       <input
         type="number"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         value={value || ""}
         step={0.01}
         onChange={(e) => e.target && myOnChange(e.target.value)}
@@ -964,7 +964,7 @@ const ConfigField = ({
       <div className="form-check">
         <input
           type="checkbox"
-          className="form-check-input"
+          className={`field-${field?.name} form-check-input`}
           checked={value}
           onChange={(e) => e.target && myOnChange(e.target.checked)}
         />
@@ -975,7 +975,7 @@ const ConfigField = ({
       <textarea
         rows="6"
         type="text"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         value={value}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
@@ -984,7 +984,7 @@ const ConfigField = ({
       <textarea
         rows="6"
         type="text"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         value={value}
         onChange={(e) => e.target && myOnChange(e.target.value)}
         spellCheck={false}
@@ -1020,7 +1020,7 @@ const ConfigField = ({
       } else
         return (
           <select
-            className="form-control form-select"
+            className={`field-${field?.name} form-control form-select`}
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
@@ -1049,7 +1049,7 @@ const ConfigField = ({
             title={o.title || o.value}
             type="button"
             style={{ width: `${Math.floor(100 / field.options.length)}%` }}
-            className={`btn btn-sm btn-${
+            className={`field-${field?.name} btn btn-sm btn-${
               value !== o.value ? "outline-" : ""
             }secondary ${field.btnClass || ""}`}
             onClick={() => myOnChange(o.value)}
@@ -1077,7 +1077,7 @@ const ConfigField = ({
             <input
               type="number"
               value={(isStyle ? styleVal : value) || ""}
-              className="w-50 form-control-sm d-inline dimunit"
+              className={`field-${field?.name} w-50 form-control-sm d-inline dimunit`}
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
                 e?.target &&
@@ -1099,7 +1099,7 @@ const ConfigField = ({
               "px"
             )}
             autoable={field.autoable}
-            className={`w-${
+            className={`field-${field?.name} w-${
               styleDim === "auto" ? 100 : 50
             } form-control-sm d-inline dimunit`}
             vert={!field.horiz}
