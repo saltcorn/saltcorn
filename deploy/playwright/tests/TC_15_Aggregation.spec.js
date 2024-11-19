@@ -156,7 +156,7 @@ test.describe('E2E Test Suite', () => {
     });
 
     // Add aggregation on people show view
-    /*test('Add aggregation on people show view', async () => {
+    test('Add aggregation on people show view', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
         await page.waitForTimeout(5000);
@@ -170,10 +170,10 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.deletebutton);
         await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
         await functions.fill_Text(pageobject.numbercolumn, '2');
-        await functions.drag_And_Drop(pageobject.textSource, pageobject.secondrowcolumn1);
+        await functions.drag_And_Drop(pageobject.textSource, pageobject.firstrowcolumn1);
         await functions.clearText(pageobject.richTextEditor);
         await page.keyboard.type('team');
-        await functions.drag_And_Drop(pageobject.joinField, pageobject.secondrowcolumn);
+        await functions.drag_And_Drop(pageobject.joinField, pageobject.firstrowcolumn);
         await customAssert('Select Name from teams for join field', async () => {
             await page.click(pageobject.fieldsButton);
             await page.click(pageobject.teamDropdownLocator);
@@ -195,7 +195,7 @@ test.describe('E2E Test Suite', () => {
         });
         await page.waitForTimeout(5000);
         await page.click(pageobject.nextoption);
-    });*/
+    });
 
     // Add Show person link on people list
     test('Add Show person link on people list', async () => {
