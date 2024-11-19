@@ -187,10 +187,10 @@ test.describe('E2E Test Suite', () => {
         // await functions.fill_Text(pageobject.richTextEditor, 'Task Assigned');
         await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.secondrowcolumn);
         await customAssert('Select id field in on field dropdown', async () => {
-            await page.selectOption(pageobject.Childtablefield, { value: 'id' });
+            await page.selectOption("select.agg_field", { value: 'id' });
         });
         await customAssert('Select Count in static dropdown', async () => {
-            const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
+            const StatisticDropdown = await page.locator('select.stat');
             await StatisticDropdown.selectOption({ value: 'Count' });
         });
         await page.waitForTimeout(5000);
