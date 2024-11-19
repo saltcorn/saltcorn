@@ -2341,7 +2341,7 @@ module.exports = {
         return { json: { error: e.message || e } };
       }
     },
-    async optionsQuery(reftable_name, type, attributes, where) {
+    async optionsQuery(reftable_name, type, attributes, where, user) {
       const rows = await db.select(
         reftable_name,
         type === "File" ? attributes.select_file_where : where
