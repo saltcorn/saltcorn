@@ -75,6 +75,30 @@ type NavSubItemsOpts = {
   tooltip?: string;
 };
 
+const show_icon = (icon: string | undefined, cls?: string, no_fw?: Boolean) =>
+  icon && icon !== "empty"
+    ? icon.startsWith("unicode")
+      ? i(
+          { class: `${no_fw ? "" : "fa-fw "}fst-normal ${cls || ""}` },
+          String.fromCharCode(parseInt(icon.substring(8, 12), 16))
+        )
+      : i({ class: `${no_fw ? "" : "fa-fw "}${cls || ""} ${icon}` })
+    : "";
+
+const show_icon_and_label = (
+  icon: string | undefined,
+  label: string,
+  cls?: string
+) =>
+  (icon && icon !== "empty"
+    ? (icon.startsWith("unicode")
+        ? i(
+            { class: [`fst-normal`, cls] },
+            String.fromCharCode(parseInt(icon.substring(8, 12), 16))
+          )
+        : i({ class: [icon, cls] })) + (label === " " ? "" : "&nbsp;")
+    : "") + (label === " " && icon ? "" : label);
+
 const navSubItemsIterator = (si: any) =>
   si?.type === "Separator"
     ? hr({ class: "mx-3 my-1" })
@@ -105,7 +129,7 @@ const navSubItemsIterator = (si: any) =>
           target: si.target_blank ? "_blank" : undefined,
           ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
         },
-        si.icon ? i({ class: `fa-fw mr-05 ${si.icon}` }) : "",
+        show_icon(si.icon, "mr-05"),
         si.label
       );
 
@@ -137,7 +161,7 @@ const navSubitems = ({
         "aria-expanded": "false",
         "data-bs-auto-close": "outside",
       },
-      icon ? i({ class: `fa-fw mr-05 ${icon}` }) : "",
+      show_icon(icon, "mr-05"),
       label
     ),
     div(
@@ -178,7 +202,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
                   target: s.target_blank ? "_blank" : undefined,
                   ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
                 },
-                s.icon ? i({ class: `fa-fw mr-05 ${s.icon}` }) : "",
+                show_icon(s.icon, "mr-05"),
                 text(s.label)
               )
             )
@@ -266,7 +290,7 @@ const mobileBottomNavBar = (
                     href: text(s.link),
                     target: s.target_blank ? "_blank" : undefined,
                   },
-                  s.icon ? i({ class: `fa-lg ${s.icon}` }) : "",
+                  show_icon(s.icon, "fa-lg", true),
                   br(),
                   small(text(s.label))
                 )
@@ -840,4 +864,6 @@ export = {
   cardHeaderTabs,
   mobileBottomNavBar,
   renderTabs,
+  show_icon,
+  show_icon_and_label,
 };

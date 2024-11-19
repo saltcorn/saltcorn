@@ -31,7 +31,13 @@ const {
   script,
   text_attr,
 } = tags;
-const { toast, breadcrumbs, renderTabs } = require("./layout_utils");
+const {
+  toast,
+  breadcrumbs,
+  renderTabs,
+  show_icon,
+  show_icon_and_label,
+} = require("./layout_utils");
 import type { Layout } from "@saltcorn/types/base_types";
 import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
 import helpers = require("./helpers");
@@ -68,7 +74,9 @@ const makeSegments = (
                 class: `toast-container position-fixed ${
                   isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
                 } `,
-                style: `z-index: 9999; ${!isWeb ? "margin-bottom: 1.0rem" : ""}`,
+                style: `z-index: 9999; ${
+                  !isWeb ? "margin-bottom: 1.0rem" : ""
+                }`,
                 "aria-live": "polite",
                 "aria-atomic": "true",
               },
@@ -99,33 +107,43 @@ const makeSegments = (
  */
 const selfStylingTypes = new Set(["card", "container", "besides", "image"]);
 
+const textStyleToArray = (textStyle: any) =>
+  Array.isArray(textStyle) ? textStyle : !textStyle ? [] : [textStyle];
+
 const applyTextStyle = (segment: any, inner: string): string => {
+  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
+  const styleArray = textStyleToArray(segment.textStyle);
+  const hs = styleArray.find((s) => s[0] === "h");
+  const no_hs = styleArray.filter((s) => s[0] !== "h").map(to_bs5);
+  const inline_h = segment.textStyle && hs && segment.inline;
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
     : segment.style || {};
   const hasStyle =
     Object.keys(style).length > 0 && !selfStylingTypes.has(segment.type);
-  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
-  if (segment.textStyle && segment.textStyle.startsWith("h") && segment.inline)
-    style.display = "inline-block";
-  switch (segment.textStyle) {
+
+  if (inline_h) style.display = "inline-block";
+
+  const klass = no_hs.join(" ");
+
+  switch (hs) {
     case "h1":
-      return h1({ style }, inner);
+      return h1({ style, class: klass }, inner);
     case "h2":
-      return h2({ style }, inner);
+      return h2({ style, class: klass }, inner);
     case "h3":
-      return h3({ style }, inner);
+      return h3({ style, class: klass }, inner);
     case "h4":
-      return h4({ style }, inner);
+      return h4({ style, class: klass }, inner);
     case "h5":
-      return h5({ style }, inner);
+      return h5({ style, class: klass }, inner);
     case "h6":
-      return h6({ style }, inner);
+      return h6({ style, class: klass }, inner);
     default:
       return segment.block || (segment.display === "block" && hasStyle)
-        ? div({ class: to_bs5(segment.textStyle || ""), style }, inner)
+        ? div({ class: klass, style }, inner)
         : segment.textStyle || hasStyle
-        ? span({ class: to_bs5(segment.textStyle || ""), style }, inner)
+        ? span({ class: klass, style }, inner)
         : inner;
   }
 };
@@ -166,7 +184,9 @@ const render = ({
   const isWeb = typeof window === "undefined" && !req?.smr;
   //const hints = blockDispatch?.hints || {};
   function wrap(segment: any, isTop: boolean, ix: number, inner: string) {
-    const iconTag = segment.icon ? i({ class: segment.icon }) + "&nbsp;" : "";
+    const iconTag = segment.icon
+      ? show_icon(segment.icon, "", true) + "&nbsp;"
+      : "";
     if (isTop && blockDispatch && blockDispatch.wrapTop && !layout?.noWrapTop)
       return blockDispatch.wrapTop(segment, ix, inner);
     else
@@ -336,15 +356,14 @@ const render = ({
             "aria-expanded": "false",
             style,
           },
-          segment.action_icon &&
-            segment.action_icon !== "empty" &&
-            i({
-              class: [segment.action_icon, segment.label && "me-1"],
-            }),
-          segment.label ||
-            (!segment.action_icon || segment.action_icon == "empty"
-              ? "Actions"
-              : "")
+          show_icon_and_label(
+            segment.action_icon,
+            segment.label ||
+              (!segment.action_icon || segment.action_icon == "empty"
+                ? "Actions"
+                : ""),
+            segment.label && "me-1"
+          )
         ),
         div(
           {
@@ -392,10 +411,7 @@ const render = ({
             rel: segment.nofollow ? "nofollow" : false,
             style,
           },
-          segment.link_icon
-            ? i({ class: segment.link_icon }) + (segment.text ? "&nbsp;" : "")
-            : "",
-          segment.text
+          show_icon_and_label(segment.link_icon, segment.text)
         )
       );
     }
@@ -757,6 +773,9 @@ const render = ({
     }
 
     if (segment.type === "line_break") {
+      if (segment.hr) return "<hr>";
+      if (segment.page_break_after)
+        return '<div style="break-after:page"></div>';
       return "<br />";
     }
     if (segment.type === "search_bar") {

@@ -477,7 +477,7 @@ const JoinFieldSettings = () => {
               <td>
                 <select
                   value={fieldview}
-                  className="form-control form-select"
+                  className="fieldview form-control form-select"
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;
@@ -500,7 +500,7 @@ const JoinFieldSettings = () => {
               <td>
                 <div className="form-check">
                   <input
-                    className="form-check-input"
+                    className="click-to-edit form-check-input"
                     name="inline"
                     type="checkbox"
                     checked={click_to_edit}

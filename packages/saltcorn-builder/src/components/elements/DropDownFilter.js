@@ -82,7 +82,7 @@ const DropDownFilterSettings = () => {
           <td>
             <select
               value={name}
-              className="form-control form-select"
+              className="field form-control form-select"
               onChange={setAProp("name")}
             >
               {options.fields.map((f, ix) => (

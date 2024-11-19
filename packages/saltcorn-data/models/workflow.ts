@@ -82,8 +82,7 @@ class Workflow implements AbstractWorkflow {
         await addApplyButtonToForm(form, this, context);
       } else if (this.onStepSave) {
         const saveRes = await this.onStepSave(step, context, valres.success);
-        if (saveRes)
-          savingErrors = saveRes.savingErrors;
+        if (saveRes) savingErrors = saveRes.savingErrors;
       }
       return {
         renderForm: form,
@@ -276,6 +275,7 @@ class Workflow implements AbstractWorkflow {
         "max_relations_layer_depth",
         6
       );
+      options.icons = getState().icons;
       return {
         renderBuilder: {
           options,
