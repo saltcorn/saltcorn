@@ -103,7 +103,7 @@ class PageLocators {
     this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]';
     this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]';
     this.textstyleLocator = '(//select[@class="form-control form-select"])[3]';
-    this.Childtablefield = '(//select[@class="form-control form-select"])[2]';
+    this.Childtablefield = 'select.agg_field';
     this.createuserlink = 'a[href="/useradmin/new"]';
     this.inputdob = '#inputdob';
     this.inputemail = '#inputemail';

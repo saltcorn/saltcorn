@@ -160,7 +160,7 @@ const FieldSettings = () => {
             <td>
               <select
                 value={name}
-                className="form-control form-select"
+                className="field form-control form-select"
                 onChange={(e) => {
                   if (!e.target) return;
                   const value = e.target.value;
@@ -200,7 +200,7 @@ const FieldSettings = () => {
               <td>
                 <select
                   value={fieldview}
-                  className="form-control form-select"
+                  className="fieldview form-control form-select"
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;
@@ -225,7 +225,7 @@ const FieldSettings = () => {
               <td>
                 <div className="form-check">
                   <input
-                    className="form-check-input"
+                    className="click-to-edit form-check-input"
                     name="inline"
                     type="checkbox"
                     checked={click_to_edit}
@@ -275,7 +275,7 @@ const FieldSettings = () => {
           <label>On change action</label>
           <select
             value={onchange_action}
-            className="form-control form-select"
+            className="on-change-action form-control form-select"
             onChange={(e) => {
               if (!e.target) return;
               const value = e.target.value;
