@@ -4,7 +4,8 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "sirv public --no-clear"
+    "start": "sirv public --no-clear",
+    "test": "echo NO TESTS"
   },
   "devDependencies": {
     "@fortawesome/free-regular-svg-icons": "5.15.4",
