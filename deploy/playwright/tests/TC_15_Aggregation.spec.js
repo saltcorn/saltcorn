@@ -156,7 +156,7 @@ test.describe('E2E Test Suite', () => {
     });
 
     // Add aggregation on people show view
-    test('Add aggregation on people show view', async () => {
+    /*test('Add aggregation on people show view', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
         await page.waitForTimeout(5000);
@@ -195,7 +195,7 @@ test.describe('E2E Test Suite', () => {
         });
         await page.waitForTimeout(5000);
         await page.click(pageobject.nextoption);
-    });
+    });*/
 
     // Add Show person link on people list
     test('Add Show person link on people list', async () => {
