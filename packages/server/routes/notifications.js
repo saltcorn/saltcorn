@@ -215,7 +215,7 @@ router.post(
           req.body.title || req.body.text || req.body.url || ""
         )
       );
-      res.redirect("/");
+      res.status(303).redirect("/");
     }
   })
 );

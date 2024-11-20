@@ -1477,5 +1477,8 @@
 	"After delete": "After delete",
 	"Search only on exact match, not substring match. Useful for large tables": "Search only on exact match, not substring match. Useful for large tables",
 	"Please select an entry point.": "Please select an entry point.",
-	"Group by": "Group by"
+	"Group by": "Group by",
+	"Shared: %s": "Shared: %s",
+	"Sharing not enabled": "Sharing not enabled",
+	"You must be logged in to share": "You must be logged in to share"
 }
