@@ -3,9 +3,12 @@ const getApp = require("../app");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
 const File = require("@saltcorn/data/models/file");
+const Field = require("@saltcorn/data/models/field");
+const User = require("@saltcorn/data/models/user");
+const { getState } = require("@saltcorn/data/db/state");
+
 const fs = require("fs").promises;
 
-const Field = require("@saltcorn/data/models/field");
 const {
   getStaffLoginCookie,
   getAdminLoginCookie,
@@ -14,10 +17,11 @@ const {
   succeedJsonWith,
   notAuthorized,
   toRedirect,
+  toInclude,
   succeedJsonWithWholeBody,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
-const User = require("@saltcorn/data/models/user");
+const { sleep } = require("@saltcorn/data/tests/mocks");
 
 beforeAll(async () => {
   await resetToFixtures();
@@ -503,5 +507,87 @@ describe("API action", () => {
     const table = Table.findOne({ name: "triggercounter" });
     const counts = await table.getRows({});
     expect(counts.map((c) => c.thing)).toContain("no body");
+  });
+});
+
+describe("test share handler", () => {
+  beforeAll(async () => {
+    await getState().setConfig("pwa_share_to_enabled", true);
+
+    const sharedData = await Table.create("shared_data");
+    await Field.create({
+      table: sharedData,
+      name: "title",
+      label: "Title",
+      type: "String",
+    });
+    await Field.create({
+      table: sharedData,
+      name: "user",
+      label: "user",
+      type: "String",
+    });
+    await Trigger.create({
+      action: "run_js_code",
+      when_trigger: "ReceiveMobileShareData",
+      name: "my_receive_share",
+      min_role: 100,
+      configuration: {
+        code: `
+        const sharedData = Table.findOne({ name: "shared_data" });
+        await sharedData.insertRow({
+          title: row.title, user: JSON.stringify(user)
+        });`,
+      },
+    });
+  });
+
+  it("shares as admin", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/notifications/share-handler")
+      .set("Cookie", loginCookie)
+      .send({ title: "share_as_admin" })
+      .expect(toRedirect("/"));
+    await sleep(1000);
+    const sharedData = Table.findOne({ name: "shared_data" });
+    const rows = await sharedData.getRows({});
+    const row = rows.find(
+      (r) =>
+        r.title === "share_as_admin" &&
+        r.user ===
+          '{"email":"admin@foo.com","id":1,"role_id":1,"language":null,"tenant":"public","attributes":{}}'
+    );
+    expect(row).toBeDefined();
+  });
+
+  it("pwa_disabled as admin", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await getState().setConfig("pwa_share_to_enabled", false);
+    await request(app)
+      .post("/notifications/share-handler")
+      .set("Cookie", loginCookie)
+      .send({ title: "pwa_disabled_as_admin" })
+      .expect(toRedirect("/"));
+    await sleep(1000);
+    const sharedData = Table.findOne({ name: "shared_data" });
+    const rows = await sharedData.getRows({});
+    const row = rows.find((r) => r.title === "pwa_disabled_as_admin");
+    expect(row).toBeUndefined();
+  });
+
+  it("does not share as public", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/notifications/share-handler")
+      .send({ title: "does_not_share_as_public" })
+      .expect(toRedirect("/auth/login"));
+    await sleep(1000);
+    const sharedData = Table.findOne({ name: "shared_data" });
+    const rows = await sharedData.getRows({});
+    const row = rows.find((r) => r.title === "does_not_share_as_public");
+    expect(row).toBeUndefined();
   });
 });

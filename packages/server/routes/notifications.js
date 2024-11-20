@@ -13,6 +13,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
+const Trigger = require("@saltcorn/data/models/trigger");
 const { renderForm, post_btn } = require("@saltcorn/markup");
 const db = require("@saltcorn/data/db");
 
@@ -193,6 +194,32 @@ router.post(
   })
 );
 
+router.post(
+  "/share-handler",
+  error_catcher(async (req, res) => {
+    const role = req.user?.role_id || 100;
+    if (role === 100) {
+      req.flash("error", req.__("You must be logged in to share"));
+      res.redirect("/auth/login");
+    } else if (!getState().getConfig("pwa_share_to_enabled", false)) {
+      req.flash("error", req.__("Sharing not enabled"));
+      res.redirect("/");
+    } else {
+      Trigger.emitEvent("ReceiveMobileShareData", null, req.user, {
+        row: req.body,
+      });
+      req.flash(
+        "success",
+        req.__(
+          "Shared: %s",
+          req.body.title || req.body.text || req.body.url || ""
+        )
+      );
+      res.redirect("/");
+    }
+  })
+);
+
 router.get(
   "/manifest.json:opt_cache_bust?",
   error_catcher(async (req, res) => {
@@ -205,6 +232,19 @@ router.get(
     };
     const site_logo = state.getConfig("site_logo_id");
     const pwa_icons = state.getConfig("pwa_icons");
+    const pwa_share_to_enabled = state.getConfig("pwa_share_to_enabled", false);
+    if (pwa_share_to_enabled) {
+      manifest.share_target = {
+        action: "/notifications/share-handler",
+        method: "POST",
+        enctype: "multipart/form-data",
+        params: {
+          title: "title",
+          text: "text",
+          url: "url",
+        },
+      };
+    }
     if (Array.isArray(pwa_icons) && pwa_icons.length > 0)
       manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
         src: `/files/serve/${image}`,
