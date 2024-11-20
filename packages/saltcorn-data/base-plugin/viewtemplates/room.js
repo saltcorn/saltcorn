@@ -289,7 +289,11 @@ const run = async (
   form.class = `room-${state.id}`;
   form.hidden("room_id");
   form.values = { room_id: state.id };
-  await form.fill_fkey_options(false, optionsQuery);
+  await form.fill_fkey_options(
+    false,
+    optionsQuery,
+    req.user || { role_id: 100 }
+  );
   return div(
     n_retrieved === limit &&
       button(

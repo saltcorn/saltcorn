@@ -2342,15 +2342,19 @@ module.exports = {
       }
     },
     async optionsQuery(reftable_name, type, attributes, where) {
-      const rows = await db.select(
-        reftable_name,
-        type === "File" ? attributes.select_file_where : where
-      );
+      const refTable = Table.findOne({ name: reftable_name });
+      const rows = await refTable.getRows(where, {
+        forUser: req.user,
+        forPublic: !req.user,
+      });
       return rows;
     },
     async updateMatchingQuery(where, updateVals, repeatFields, childRows) {
       const table = Table.findOne(table_id);
-      const rows = await table.getRows(where);
+      const rows = await table.getRows(where, {
+        forUser: req.user,
+        forPublic: !req.user,
+      });
       const results = [];
       let inTransaction = false;
       try {
