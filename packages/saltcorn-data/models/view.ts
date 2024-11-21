@@ -462,7 +462,7 @@ class View implements AbstractView {
     else if (!this.viewtemplateObj) return "";
     const table_id = this.exttable_name || this.table_id;
     const role = extraArgs.req?.user?.role_id || 100;
-    if (role > this.min_role) return "";
+    if (role > this.min_role && !extraArgs.req.bypassViewRoleCheck) return "";
     const state = require("../db/state").getState();
     try {
       const viewState = removeEmptyStrings(query);
@@ -562,7 +562,7 @@ class View implements AbstractView {
     query: any,
     req: any,
     res: any,
-    remote: boolean = false
+    remote: boolean = false,
   ): Promise<string | { goto?: string }> {
     const view = this;
     if (isWeb(req)) this.check_viewtemplate();
@@ -604,7 +604,7 @@ class View implements AbstractView {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return [];
     const role = extraArgs.req?.user?.role_id || 100;
-    if (role > this.min_role) return [];
+    if (role > this.min_role && !extraArgs.req.bypassViewRoleCheck) return [];
     require("../db/state")
       .getState()
       .log(5, `runMany view ${this.name} with state ${JSON.stringify(query)}`);
@@ -683,7 +683,7 @@ class View implements AbstractView {
       remote = false;
     }
     const role = extraArgs.req.user?.role_id || 100;
-    if (role > this.min_role) return "";
+    if (role > this.min_role && !extraArgs.req.bypassViewRoleCheck) return "";
     try {
       if (isWeb(extraArgs.req)) this.check_viewtemplate();
       else if (!this.viewtemplateObj) return;
