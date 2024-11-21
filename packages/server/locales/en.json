@@ -1480,6 +1480,9 @@
 	"Group by": "Group by",
 	"View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
 	"Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
+	"Signup and login views": "Signup and login views",
+	"Additional login and signup settings": "Additional login and signup settings",
+	"Login and signup views should be accessible by public users": "Login and signup views should be accessible by public users",
 	"Shared: %s": "Shared: %s",
 	"Sharing not enabled": "Sharing not enabled",
 	"You must be logged in to share": "You must be logged in to share"
