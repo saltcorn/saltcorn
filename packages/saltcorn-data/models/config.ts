@@ -580,8 +580,8 @@ const configTypes: ConfigTypes = {
     restart_required: true,
     sublabel:
       "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication",
-    default: "None",
-    options: ["None", "Lax", "Strict"],
+    default: "Unset",
+    options: ["Unset", "None", "Lax", "Strict"],
   },
   content_security_policy: {
     input_type: "select",

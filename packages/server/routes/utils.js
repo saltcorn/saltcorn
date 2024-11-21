@@ -312,8 +312,9 @@ const getSessionStore = (pruneInterval) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
-  } else*/ 
-   const sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase()
+  } else*/
+  let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
+  if (sameSite === "Unset") sameSite = undefined;
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
