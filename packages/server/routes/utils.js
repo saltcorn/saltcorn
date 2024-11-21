@@ -314,7 +314,7 @@ const getSessionStore = (pruneInterval) => {
     });
   } else*/
   let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
-  if (sameSite === "Unset") sameSite = undefined;
+  if (sameSite === "unset") sameSite = undefined;
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
