@@ -306,7 +306,9 @@ router.get(
           getAuthLinks("login")
         );
       else {
-        const resp = await login_form.run_possibly_on_page({}, req, res);
+        //prevent user from being shut out completely. TODO remove with other matches of bypassViewRoleCheck
+        req.bypassViewRoleCheck = true
+        const resp = await login_form.run_possibly_on_page({}, req, res, false, true);
         if (login_form.default_render_page) {
           const page = Page.findOne({ name: login_form.default_render_page });
           res.sendWrap(
@@ -508,6 +510,7 @@ router.get(
       const signup_form = await View.findOne({ name: signup_form_name });
       if (!signup_form) await defaultSignup();
       else {
+        req.bypassViewRoleCheck = true
         const resp = await signup_form.run_possibly_on_page({}, req, res);
         if (signup_form.default_render_page) {
           const page = Page.findOne({ name: signup_form.default_render_page });

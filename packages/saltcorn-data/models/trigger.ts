@@ -531,6 +531,7 @@ class Trigger implements AbstractTrigger {
       "Error",
       "Startup",
       "UserVerified",
+      "ReceiveMobileShareData",
       ...Object.keys(getState().eventTypes),
     ];
   }
