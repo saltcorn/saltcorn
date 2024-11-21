@@ -574,6 +574,13 @@ const configTypes: ConfigTypes = {
     sublabel: "Set to 0 for expiration at the end of browser session",
     default: 30 * 24,
   },
+  cookie_samesite: {
+    input_type: "select",
+    label: "SameSite",
+    sublabel:"Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication", 
+    default: "None",
+    options: ["None", "Lax", "Strict"],
+  },
   public_cache_maxage: {
     type: "Integer",
     label: "Public cache TTL (minutes)",
