@@ -673,7 +673,7 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
     layout,
     submitLabel: req.__("Sign up"),
   });
-  await form.fill_fkey_options();
+  await form.fill_fkey_options(false, undefined, req.user || { role_id: 100 });
   if (askEmail) {
     form.fields.push(
       new Field({

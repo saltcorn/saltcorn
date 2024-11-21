@@ -286,7 +286,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         parent_field: "attributes",
         attributes: {
           inline: true,
-          options: ["px", "%", "vw", "em", "rem"],
+          options: ["px", "%", "vw", "em", "rem", "cm"],
         },
       },
       {
@@ -306,7 +306,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         parent_field: "attributes",
         attributes: {
           inline: true,
-          options: ["px", "%", "vw", "em", "rem"],
+          options: ["px", "%", "vw", "em", "rem", "cm"],
         },
       },
       {
@@ -761,7 +761,7 @@ router.post(
     req.flash(
       "success",
       req.__(
-        "View %s added to menu. Adjust access permissions in Settings &raquo; Menu",
+        "View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
         view.name
       )
     );

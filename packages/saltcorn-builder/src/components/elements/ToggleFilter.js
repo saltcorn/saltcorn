@@ -90,7 +90,7 @@ const ToggleFilterSettings = () => {
           <td>
             <select
               value={name}
-              className="form-control form-select"
+              className="field form-control form-select"
               onChange={(e) => {
                 if (e?.target) {
                   if (!e.target) return;

@@ -284,6 +284,7 @@ const ActionSettings = () => {
             keyPrefix="action_"
             values={node}
             allowRunOnLoad={true}
+            faIcons={options.icons}
           />
           <MinRoleSettingRow minRole={minRole} setProp={setProp} />
         </tbody>

@@ -99,11 +99,10 @@ class PageLocators {
     this.choosefilebutton = '#inputfile';
     this.createviewfromtable = '#table-views > div > a';
     this.textstyle = '.form-control form-select';
-    this.fielddropdown = '(//select[@class="form-control form-select"])[1]';
-    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]';
-    this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]';
-    this.textstyleLocator = '(//select[@class="form-control form-select"])[3]';
-    this.Childtablefield = '(//select[@class="form-control form-select"])[2]';
+    this.fielddropdown = 'select.field';
+    this.fieldViewdropdown = 'select.fieldview';
+    this.Toolbardropdown = 'select.field-toolbar';
+    this.Childtablefield = 'select.agg_field';
     this.createuserlink = 'a[href="/useradmin/new"]';
     this.inputdob = '#inputdob';
     this.inputemail = '#inputemail';
@@ -382,8 +381,8 @@ class PageLocators {
     this.searchIconLocator = 'input.rfipsearch__input[placeholder="Search Icons"]';
     this.editIconLocator = 'i.far.fa-edit';
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
-    this.secondrowcolumn = '.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
-    this.secondrowcolumn1 = '.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
+    this.secondrowcolumn = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
+    this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
@@ -491,7 +490,8 @@ class PageLocators {
     this.NumberInput = 'input.form-control[type="number"][min="1"][max="11"][value="2"]';
     this.NumberInputW = 'input.form-control[type="number"][min="1"][max="11"][value="6"]';
     this.AddressLocator = 'div.d-inline:has-text("132 east Greater Noida new delhi india")';
-    this.firstrowcolumn1 = '.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
+    this.firstrowcolumn = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(1) .canvas';
+    this.firstrowcolumn1 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
     this.NewPersonLink = 'a[href="/view/Edit_People"]:has-text("New person")';
     this.InputFullName = '#inputfull_name';
     this.inputDateOfBirth = '#inputdate_of_birth';

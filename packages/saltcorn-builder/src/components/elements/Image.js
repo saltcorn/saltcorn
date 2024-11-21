@@ -216,7 +216,7 @@ const ImageSettings = () => {
               <td>
                 <select
                   value={field}
-                  className="form-control form-select"
+                  className="field form-control form-select"
                   onChange={setAProp("field")}
                 >
                   <option value=""></option>

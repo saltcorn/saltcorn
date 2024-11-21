@@ -229,6 +229,7 @@ const pageBuilderData = async (req, context) => {
   }
 
   //console.log(fixed_state_fields.ListTasks);
+  const icons = getState().icons;
   return {
     views: views.map((v) => v.select_option),
     images,
@@ -244,6 +245,7 @@ const pageBuilderData = async (req, context) => {
     page_id: context.id,
     mode: "page",
     roles,
+    icons,
     fixed_state_fields,
     next_button_label: "Done",
     fonts: getState().fonts,
@@ -780,7 +782,7 @@ router.post(
     req.flash(
       "success",
       req.__(
-        "Page %s added to menu. Adjust access permissions in Settings &raquo; Menu",
+        "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
         page.name
       )
     );

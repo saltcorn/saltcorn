@@ -20,11 +20,19 @@ const { save_menu_items } = require("@saltcorn/data/models/config");
 const db = require("@saltcorn/data/db");
 
 const { renderForm } = require("@saltcorn/markup");
-const { script, domReady, div, ul, i } = require("@saltcorn/markup/tags");
+const {
+  script,
+  domReady,
+  div,
+  ul,
+  i,
+  style,
+} = require("@saltcorn/markup/tags");
 const { send_infoarch_page } = require("../markup/admin.js");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
+const path = require("path");
 
 /**
  * @type {object}
@@ -497,7 +505,7 @@ router.get(
           script: static_pre + "/jquery-menu-editor.min.js",
         },
         {
-          script: static_pre + "/iconset-fontawesome5-3-1.min.js",
+          script: "/menu/icon-options?format=bootstrap-iconpicker",
         },
         {
           script: static_pre + "/bootstrap-iconpicker.js",
@@ -526,7 +534,8 @@ router.get(
                 ),
                 div(
                   renderForm(form, req.csrfToken()),
-                  script(domReady(menuEditorScript(menu_items)))
+                  script(domReady(menuEditorScript(menu_items))),
+                  style(setIconStyle())
                 ),
               ],
             },
@@ -597,5 +606,47 @@ router.post(
         res.status(400).json({ error: e.message || e });
       }
     else res.status(404).json({ error: "Action not found" });
+  })
+);
+
+const getIcons = () => {
+  return getState().icons;
+};
+
+const setIconStyle = () => {
+  const icons = getIcons();
+  return icons
+    .filter((icon) => icon.startsWith("unicode-"))
+    .map(
+      (icon) =>
+        `i.${icon}:after {content: '${String.fromCharCode(
+          parseInt(icon.substring(8, 12), 16)
+        )}'}`
+    )
+    .join("\n");
+};
+
+router.get(
+  "/icon-options",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { format } = req.query;
+    const icons = getIcons();
+    switch (format) {
+      case "bootstrap-iconpicker":
+        res.type("text/javascript");
+        res.send(
+          `jQuery.iconset_fontawesome_5={iconClass:"",iconClassFix:"",version:"5.3.1",icons:${JSON.stringify(
+            icons
+          )}}`
+        );
+        break;
+      case "json":
+        res.json(icons);
+
+      default:
+        res.send("");
+        break;
+    }
   })
 );

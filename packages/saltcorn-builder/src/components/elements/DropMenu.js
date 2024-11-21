@@ -4,7 +4,8 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useContext } from "react";
+import optionsCtx from "../context";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -109,6 +110,7 @@ const DropMenuSettings = () => {
     label,
     block,
   } = node;
+  const options = useContext(optionsCtx);
   return (
     <table className="w-100">
       <tbody>
@@ -126,6 +128,7 @@ const DropMenuSettings = () => {
           keyPrefix="action_"
           values={node}
           allowRunOnLoad={false}
+          faIcons={options.icons}
         />
         <tr>
           <td colSpan="2">
