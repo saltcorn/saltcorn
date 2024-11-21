@@ -461,6 +461,8 @@ class View implements AbstractView {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return "";
     const table_id = this.exttable_name || this.table_id;
+    const role = extraArgs.req?.user?.role_id || 100;
+    if (role > this.min_role) return "";
     const state = require("../db/state").getState();
     try {
       const viewState = removeEmptyStrings(query);
@@ -601,6 +603,8 @@ class View implements AbstractView {
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return [];
+    const role = extraArgs.req?.user?.role_id || 100;
+    if (role > this.min_role) return [];
     require("../db/state")
       .getState()
       .log(5, `runMany view ${this.name} with state ${JSON.stringify(query)}`);
@@ -678,6 +682,8 @@ class View implements AbstractView {
     ) {
       remote = false;
     }
+    const role = extraArgs.req.user?.role_id || 100;
+    if (role > this.min_role) return "";
     try {
       if (isWeb(extraArgs.req)) this.check_viewtemplate();
       else if (!this.viewtemplateObj) return;
