@@ -156,8 +156,6 @@ const getApp = async (opts = {}) => {
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
   app.use(helmet(helmetOptions));
 
-  console.log(helmetOptions);
-
   // TODO ch find a better solution
   app.use(cors());
   const bodyLimit = getState().getConfig("body_limit");
