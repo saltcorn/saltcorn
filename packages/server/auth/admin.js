@@ -384,6 +384,7 @@ const http_settings_form = async (req) =>
       "cookie_duration",
       "cookie_duration_remember",
       "cookie_samesite",
+      "content_security_policy",
       "public_cache_maxage",
       "custom_http_headers",
       "cross_domain_iframe",

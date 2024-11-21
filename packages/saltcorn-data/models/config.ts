@@ -582,6 +582,13 @@ const configTypes: ConfigTypes = {
     default: "Unset",
     options: ["Unset", "None", "Lax", "Strict"],
   },
+  content_security_policy: {
+    input_type: "select",
+    label: "Content Security Policy",
+    default: "Disabled",
+    options: ["Disabled", "Enabled"],
+    restart_required: true,
+  },
   public_cache_maxage: {
     type: "Integer",
     label: "Public cache TTL (minutes)",
