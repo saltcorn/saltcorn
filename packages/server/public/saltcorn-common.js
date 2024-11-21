@@ -33,7 +33,7 @@ function setScreenInfoCookie() {
     innerHeight: window.innerHeight,
   })}; expires=Thu, 01 Jan 2100 00:00:00 GMT; path=/; domain=.${
     window.location.hostname
-  }`;
+  }; samesite=strict`;
 }
 setScreenInfoCookie();
 $(window).resize(() => {

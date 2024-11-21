@@ -133,17 +133,31 @@ const getApp = async (opts = {}) => {
   );
 
   const helmetOptions = {
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        "script-src-attr": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        fontSrc: ["'self'", "data:"],
+        "form-action": ["'self'"],
+      },
+    },
     referrerPolicy: {
       policy: ["same-origin"],
     },
   };
+  if (
+    getState().getConfig("content_security_policy", "Disabled") === "Disabled"
+  )
+    helmetOptions.contentSecurityPolicy = false;
 
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
   app.use(helmet(helmetOptions));
 
   // TODO ch find a better solution
-  app.use(cors());
+  if (getState().getConfig("cors_enabled", true)) app.use(cors());
   const bodyLimit = getState().getConfig("body_limit");
   app.use(
     express.json({

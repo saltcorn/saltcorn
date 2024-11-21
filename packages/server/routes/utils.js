@@ -312,14 +312,17 @@ const getSessionStore = (pruneInterval) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
-  } else*/ if (db.isSQLite) {
+  } else*/
+  let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
+  if (sameSite === "unset") sameSite = undefined;
+  if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
       store: new SQLiteStore({ db: "sessions.sqlite" }),
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "strict" }, // 30 days
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite }, // 30 days
     });
   } else {
     const pgSession = require("connect-pg-simple")(session);
@@ -333,7 +336,7 @@ const getSessionStore = (pruneInterval) => {
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite }, // 30 days
     });
   }
 };

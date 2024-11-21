@@ -574,6 +574,29 @@ const configTypes: ConfigTypes = {
     sublabel: "Set to 0 for expiration at the end of browser session",
     default: 30 * 24,
   },
+  cookie_samesite: {
+    input_type: "select",
+    label: "SameSite",
+    restart_required: true,
+    sublabel:
+      "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication",
+    default: "Unset",
+    options: ["Unset", "None", "Lax", "Strict"],
+  },
+  content_security_policy: {
+    input_type: "select",
+    label: "Content Security Policy",
+    default: "Disabled",
+    options: ["Disabled", "Enabled"],
+    restart_required: true,
+  },
+  cors_enabled: {
+    type: "Bool",
+    label: "CORS",
+    sublabel: "Cross-origin resource sharing",
+    default: true,
+    restart_required: true,
+  },
   public_cache_maxage: {
     type: "Integer",
     label: "Public cache TTL (minutes)",
