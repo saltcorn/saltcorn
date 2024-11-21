@@ -1014,13 +1014,13 @@ router.get(
                 '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
               ),
             post_dropdown_item(
-              `/table/recalc-stored/${table.name}`,
+              `/table/recalc-stored/${encodeURIComponent(table.name)}`,
               '<i class="fas fa-sync"></i>&nbsp;' +
                 req.__("Recalculate stored fields"),
               req
             ),
             post_dropdown_item(
-              `/table/delete-all-rows/${table.name}`,
+              `/table/delete-all-rows/${encodeURIComponent(table.name)}`,
               '<i class="far fa-trash-alt"></i>&nbsp;' +
                 req.__("Delete all rows"),
               req,
