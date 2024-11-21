@@ -358,7 +358,7 @@ const auth_settings_form = async (req) =>
       "allow_forgot",
       {
         section_header: req.__("Signup and login views"),
-        sublabel: "All views should be accessible by public users",
+        sublabel: "Login and signup views should be accessible by public users",
       },
       "new_user_form",
       "login_form",
