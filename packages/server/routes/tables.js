@@ -949,7 +949,7 @@ router.get(
       div(
         { class: "mx-auto" },
         a(
-          { href: `/table/download/${table.name}` },
+          { href: `/table/download/${encodeURIComponent(table.name)}` },
           i({ class: "fas fa-2x fa-download" }),
           "<br/>",
           req.__("Download CSV")
