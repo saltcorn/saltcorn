@@ -488,7 +488,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // drag and drop the Viewlink source on the page
-        await functions.drag_And_Drop(pageobject.columnsElement, pageobject.saveactionbutton);
+        await functions.drag_And_Drop(pageobject.columnsElement, ".root-canvas");
         await functions.fill_Text(pageobject.numbercolumn, '3');
         await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.thirdrowcolumn2);
         await page.waitForTimeout(2000);
