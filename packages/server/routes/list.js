@@ -303,7 +303,10 @@ router.get(
             type: "breadcrumbs",
             crumbs: [
               { text: req.__("Tables"), href: "/table" },
-              { href: `/table/${table.id || table.name}`, text: table.name },
+              {
+                href: `/table/${table.id || encodeURIComponent(table.name)}`,
+                text: table.name,
+              },
               { text: req.__("Data") },
             ],
             right: div(
@@ -376,7 +379,7 @@ router.get(
                 })
               })   
               window.tabulator_table = new Tabulator("#jsGrid", {
-                  ajaxURL:"/api/${table.name}${
+                  ajaxURL:"/api/${encodeURIComponent(table.name)}${
                   table.versioned ? "?versioncount=on" : ""
                 }",                   
                   layout:"fitColumns", 
