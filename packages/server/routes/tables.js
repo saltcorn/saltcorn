@@ -926,7 +926,7 @@ router.get(
                 ? `/useradmin/`
                 : fields.length === 1
                 ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
-                : `/list/${table.name}`,
+                : `/list/${encodeURIComponent(table.name)}`,
           },
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
@@ -949,7 +949,7 @@ router.get(
       div(
         { class: "mx-auto" },
         a(
-          { href: `/table/download/${table.name}` },
+          { href: `/table/download/${encodeURIComponent(table.name)}` },
           i({ class: "fas fa-2x fa-download" }),
           "<br/>",
           req.__("Download CSV")
@@ -1014,13 +1014,13 @@ router.get(
                 '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
               ),
             post_dropdown_item(
-              `/table/recalc-stored/${table.name}`,
+              `/table/recalc-stored/${encodeURIComponent(table.name)}`,
               '<i class="fas fa-sync"></i>&nbsp;' +
                 req.__("Recalculate stored fields"),
               req
             ),
             post_dropdown_item(
-              `/table/delete-all-rows/${table.name}`,
+              `/table/delete-all-rows/${encodeURIComponent(table.name)}`,
               '<i class="far fa-trash-alt"></i>&nbsp;' +
                 req.__("Delete all rows"),
               req,
@@ -1111,6 +1111,7 @@ router.post(
     const v = req.body;
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
+      v.name = v.name.trim()
       const { name, ...rest } = v;
       const alltables = await Table.find({});
       const existing_tables = [
