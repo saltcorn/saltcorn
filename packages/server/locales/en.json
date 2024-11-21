@@ -1481,5 +1481,6 @@
 	"View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
 	"Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
 	"SameSite": "SameSite",
-	"Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication": "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication"
+	"Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication": "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication",
+	"Content Security Policy": "Content Security Policy"
 }
