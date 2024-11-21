@@ -1479,5 +1479,8 @@
 	"Please select an entry point.": "Please select an entry point.",
 	"Group by": "Group by",
 	"View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
-	"Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>"
+	"Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
+	"Shared: %s": "Shared: %s",
+	"Sharing not enabled": "Sharing not enabled",
+	"You must be logged in to share": "You must be logged in to share"
 }
