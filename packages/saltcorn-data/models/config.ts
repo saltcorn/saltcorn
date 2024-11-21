@@ -590,6 +590,13 @@ const configTypes: ConfigTypes = {
     options: ["Disabled", "Enabled"],
     restart_required: true,
   },
+  cors_enabled: {
+    type: "Bool",
+    label: "CORS",
+    sublabel: "Cross-origin resource sharing",
+    default: true,
+    restart_required: true,
+  },
   public_cache_maxage: {
     type: "Integer",
     label: "Public cache TTL (minutes)",

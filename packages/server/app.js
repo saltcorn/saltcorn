@@ -157,7 +157,7 @@ const getApp = async (opts = {}) => {
   app.use(helmet(helmetOptions));
 
   // TODO ch find a better solution
-  app.use(cors());
+  if (getState().getConfig("cors_enabled", true)) app.use(cors());
   const bodyLimit = getState().getConfig("body_limit");
   app.use(
     express.json({
