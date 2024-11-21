@@ -1111,6 +1111,7 @@ router.post(
     const v = req.body;
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
+      v.name = v.name.trim()
       const { name, ...rest } = v;
       const alltables = await Table.find({});
       const existing_tables = [
