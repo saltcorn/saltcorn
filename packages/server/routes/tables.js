@@ -926,7 +926,7 @@ router.get(
                 ? `/useradmin/`
                 : fields.length === 1
                 ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
-                : `/list/${table.name}`,
+                : `/list/${encodeURIComponent(table.name)}`,
           },
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
