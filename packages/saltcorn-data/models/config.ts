@@ -577,9 +577,10 @@ const configTypes: ConfigTypes = {
   cookie_samesite: {
     input_type: "select",
     label: "SameSite",
-    sublabel:"Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication", 
-    default: "None",
-    options: ["None", "Lax", "Strict"],
+    sublabel:
+      "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication",
+    default: "Unset",
+    options: ["Unset", "None", "Lax", "Strict"],
   },
   public_cache_maxage: {
     type: "Integer",
