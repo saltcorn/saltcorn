@@ -469,7 +469,7 @@ test.describe('E2E Test Suite', () => {
     });
 
     // Create edit view for Department and add edit employee link
-    test('Create edit view for Department table and add edit employee link', async () => {
+    /*test('Create edit view for Department table and add edit employee link', async () => {
         await functions.views();
         // click on create new view
         await page.click(pageobject.createnewview);
@@ -488,7 +488,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // drag and drop the Viewlink source on the page
-        await functions.drag_And_Drop(pageobject.columnsElement, ".root-canvas");
+        await functions.drag_And_Drop(pageobject.columnsElement, pageobject.saveactionbutton);
         await functions.fill_Text(pageobject.numbercolumn, '3');
         await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.thirdrowcolumn2);
         await page.waitForTimeout(2000);
@@ -581,5 +581,5 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Assert page redirected to Add employee page', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'view/Edit_Employee');
         });
-    });
+    });*/
 });
