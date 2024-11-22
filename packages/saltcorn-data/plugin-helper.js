@@ -2308,10 +2308,18 @@ const initial_config_all_fields =
     });
     if (isEdit)
       aboves.push({
-        type: "action",
-        block: false,
-        minRole: 100,
-        action_name: "Save",
+        widths: [2, 10],
+        aligns: ["end", "start"],
+        style,
+        besides: [
+          null,
+          {
+            type: "action",
+            block: false,
+            minRole: 100,
+            action_name: "Save",
+          },
+        ],
       });
     cfg.layout = { above: aboves };
     return cfg;

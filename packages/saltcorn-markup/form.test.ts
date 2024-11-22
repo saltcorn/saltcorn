@@ -36,7 +36,8 @@ describe("form render", () => {
 <div><label for="inputname">Name</label></div>
 <div><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname">
 </div></div><div class="form-group row">
-  <div class="col-sm-12">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-10">
         <button type="submit" class="btn btn-primary">Save</button>
   </div>
 </div>
@@ -111,7 +112,8 @@ describe("form render", () => {
 <div><label for="inputname">Name</label></div>
 <div><input type="text" class="form-control is-invalid  " data-fieldname="name" name="name" id="inputname" value="Bar"><div>Not a foo</div>
 </div></div><div class="form-group row">
-  <div class="col-sm-12">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-10">
         <button type="submit" class="btn btn-primary">Save</button>
   </div>
 </div>
