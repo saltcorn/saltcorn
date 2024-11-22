@@ -135,25 +135,70 @@ router.get(
           },
         ],
       });
+    let cfg_link = "";
     switch (etype) {
       case "table":
         const tpack = await table_pack(
           all_tables.find((t) => t.name === ename)
         );
+        cfg_link = a(
+          { href: `/table/${encodeURIComponent(ename)}` },
+          `${ename} ${etype}`
+        );
         edContents = renderForm(mkForm(tpack), req.csrfToken());
         break;
       case "view":
+        cfg_link =
+          `${ename} ${etype}` +
+          a(
+            {
+              class: "ms-2",
+              href: `/viewedit/edit/${encodeURIComponent(ename)}`,
+            },
+            "Edit&nbsp;",
+            i({ class: "fas fa-edit" })
+          ) +
+          a(
+            {
+              class: "ms-1 me-3",
+              href: `/viewedit/config/${encodeURIComponent(ename)}`,
+            },
+            "Configure&nbsp;",
+            i({ class: "fas fa-cog" })
+          );
         const vpack = await view_pack(all_views.find((v) => v.name === ename));
         edContents = renderForm(mkForm(vpack), req.csrfToken());
         break;
       case "page":
+        cfg_link = a(
+          { href: `/pageedit/edit/${encodeURIComponent(ename)}` },
+          `${ename} ${etype}`
+        );
         const ppack = await page_pack(all_pages.find((v) => v.name === ename));
         edContents = renderForm(mkForm(ppack), req.csrfToken());
         break;
       case "trigger":
-        const trpack = await trigger_pack(
-          all_triggers.find((t) => t.name === ename)
-        );
+        const trigger = all_triggers.find((t) => t.name === ename);
+        const trpack = await trigger_pack(trigger);
+        cfg_link =
+          `${ename} ${etype}` +
+          a(
+            {
+              class: "ms-2",
+              href: `/actions/edit/${trigger?.id}`,
+            },
+            "Edit&nbsp;",
+            i({ class: "fas fa-edit" })
+          ) +
+          a(
+            {
+              class: "ms-1 me-3",
+              href: `/actions/configure/${trigger?.id}`,
+            },
+            "Configure&nbsp;",
+            i({ class: "fas fa-cog" })
+          );
+
         edContents = renderForm(mkForm(trpack), req.csrfToken());
         break;
     }
@@ -243,10 +288,11 @@ router.get(
           },
           {
             type: "card",
-            title:
-              ename && etype
-                ? `Registry editor: ${ename} ${etype}`
-                : "Registry editor",
+            title: cfg_link
+              ? `Registry editor: ${cfg_link}`
+              : ename && etype
+              ? `Registry editor: ${ename} ${etype}`
+              : "Registry editor",
             contents: edContents,
           },
         ],
