@@ -141,7 +141,7 @@ const getApp = async (opts = {}) => {
         styleSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:"],
         fontSrc: ["'self'", "data:", "https://fonts.gstatic.com",],
-        "form-action": ["'self'"],
+        "form-action": ["'self'", "javascript:"],
       },
     },
     referrerPolicy: {
