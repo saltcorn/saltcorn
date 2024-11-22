@@ -200,6 +200,7 @@ router.post(
           });
           res.json({ success: "ok", ...(result || {}) });
         } catch (e) {
+          getState().log(2, e?.stack)
           res.status(400).json({ error: e.message || e });
         }
       } else res.status(404).json({ error: "Action not found" });
