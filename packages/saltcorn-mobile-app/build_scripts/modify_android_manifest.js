@@ -19,7 +19,13 @@ const { readFileSync, writeFileSync } = require("fs");
       { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
       { $: { "android:name": "android.permission.INTERNET" } },
       { $: { "android:name": "android.permission.CAMERA" } },
+      { $: { "android:name": "android.permission.ACCESS_COARSE_LOCATION" } },
+      { $: { "android:name": "android.permission.ACCESS_FINE_LOCATION" } },
     ];
+    parsed.manifest["uses-feature"] = [
+      { $: { "android:name": "android.hardware.location.gps" } },
+    ];
+
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
       "android:allowBackup": "false",

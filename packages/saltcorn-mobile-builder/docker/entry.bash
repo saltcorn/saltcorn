@@ -23,7 +23,7 @@ npm install @capacitor/cli @capacitor/core @capacitor/android
 npm run add-platform android
 
 npx capacitor-assets generate
-plugins="cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser cordova-plugin-network-information cordova-plugin-geolocation" && \
+plugins="cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser" && \
 for plugin in $plugins; do \
   npm install "$plugin"; \
 done
@@ -32,6 +32,8 @@ npx cap sync
 npm install @capacitor/filesystem
 npm install @capacitor-community/sqlite
 npm install @capacitor/camera
+npm install @capacitor/geolocation
+npm install @capacitor/network
 
 
 # data extraction rules

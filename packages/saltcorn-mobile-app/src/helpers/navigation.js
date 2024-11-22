@@ -301,7 +301,8 @@ export async function replaceIframeInnerContent(content) {
     }
   }
   const scmodal = iframe.contentWindow.$("#scmodal");
-  if (scmodal) {
+  if (scmodal.length > 0) {
+    // TODO test
     scmodal.modal("hide");
   }
   iframe.contentWindow.scrollTo(0, 0);

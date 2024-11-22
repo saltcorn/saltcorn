@@ -51,7 +51,8 @@ async function copyHeaderToApp(
   wwwDir: string
 ) {
   const pathArr = header.split(sep);
-  if (pathArr.length > 4) {
+  // TODO
+  if (pathArr.length > 3) {
     const pluginSubDir = pathArr.slice(4, pathArr.length - 1).join(sep);
     const dstPublicDir = join(wwwDir, dirname(header));
     if (!existsSync(dstPublicDir)) {
@@ -96,12 +97,16 @@ export async function copyPublicDirs(buildDir: string) {
   for (const [k, v] of <[string, any]>Object.entries(state.plugins)) {
     const location = state.plugin_locations[k];
     if (location) {
+      const pckJson = require(join(location, "package.json"));
       for (const { script, css } of state.headers[k] || []) {
         if (script) copyHeaderToApp(location, script, wwwDir);
         if (css) copyHeaderToApp(location, css, wwwDir);
       }
       if (k !== "sbadmin2")
-        copyAllPublicFiles(location, join(wwwDir, "sc_plugins", "public", k));
+        copyAllPublicFiles(
+          location,
+          join(wwwDir, "sc_plugins", "public", `${k}@${pckJson.version}`)
+        );
     }
     if (pluginCfgs[k] && pluginCfgs[k].alt_css_file) {
       const altCssFile = await File.findOne(pluginCfgs[k].alt_css_file);

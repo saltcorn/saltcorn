@@ -2,8 +2,7 @@
 
 import {
   startOfflineMode,
-  offlineCallback,
-  onlineCallback,
+  networkChangeCallback,
   sync,
   getLastOfflineSession,
 } from "./helpers/offline_mode.js";
@@ -27,6 +26,8 @@ import {
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
 import { jwtDecode } from "jwt-decode";
+
+import { Network } from "@capacitor/network";
 
 async function addScript(scriptObj) {
   let waited = 0;
@@ -298,7 +299,6 @@ export async function init({
       // update '_sc_plugins' first because of loadPlugins()
       await updateScPlugins(tablesSchema);
     }
-    saltcorn.data.state.features.version_plugin_serve_path = false;
     const state = saltcorn.data.state.getState();
     state.mobileConfig = mobileConfig;
     state.registerPlugin("base", saltcorn.base_plugin);
@@ -320,9 +320,8 @@ export async function init({
     await initI18Next(translations);
     state.mobileConfig.encodedSiteLogo = siteLogo;
 
-    state.mobileConfig.networkState = navigator.connection.type;
-    document.addEventListener("offline", offlineCallback, false);
-    document.addEventListener("online", onlineCallback, false);
+    state.mobileConfig.networkState = await Network.getStatus();
+    Network.addListener("networkStatusChange", networkChangeCallback);
     const networkDisabled = state.mobileConfig.networkState === "none";
     const jwt = state.mobileConfig.jwt;
     const alerts = [];

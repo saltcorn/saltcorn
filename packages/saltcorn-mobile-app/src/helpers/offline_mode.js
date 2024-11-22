@@ -8,6 +8,7 @@ import {
   showLoadSpinner,
   removeLoadSpinner,
 } from "./common";
+import { Network } from "@capacitor/network";
 
 const setUploadStarted = async (started, time) => {
   const state = saltcorn.data.state.getState();
@@ -577,14 +578,10 @@ export async function clearLocalData(inTransaction) {
   }
 }
 
-export async function offlineCallback() {
+export function networkChangeCallback(status) {
+  console.log("Network status changed", status);
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  mobileConfig.networkState = navigator.connection.type;
-}
-
-export async function onlineCallback() {
-  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  if (mobileConfig.isOfflineMode) {
+  if (status !== "none") {
     const iframeWindow = $("#content-iframe")[0].contentWindow;
     if (iframeWindow) {
       clearAlerts();
@@ -598,7 +595,7 @@ export async function onlineCallback() {
       );
     }
   }
-  mobileConfig.networkState = navigator.connection.type;
+  mobileConfig.networkState = status;
 }
 
 export async function hasOfflineRows() {

@@ -21,6 +21,8 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/filesystem": "6.0.1",
     "@capacitor/camera": "6.1.0",
+    "@capacitor/geolocation": "6.0.2",
+    "@capacitor/network": "6.0.3",
     "cordova-sqlite-ext": "^6.0.0",
     "universal-router": "9.2.0",
     "axios": "^1.7.7",

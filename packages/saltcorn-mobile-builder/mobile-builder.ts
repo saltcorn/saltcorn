@@ -183,7 +183,6 @@ export class MobileBuilder {
       if (resultCode !== 0) return resultCode;
       resultCode = bundleMobileAppCode(this.buildDir);
       if (resultCode !== 0) return resultCode;
-      features.version_plugin_serve_path = false;
       await loadAllPlugins();
       await copyPublicDirs(this.buildDir);
       await buildTablesFile(this.buildDir, this.includedPlugins);
