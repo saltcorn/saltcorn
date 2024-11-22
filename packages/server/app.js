@@ -136,6 +136,7 @@ const getApp = async (opts = {}) => {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
+        connectSrc: ["'self'", "data:"],
         scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
         "script-src-attr": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
         styleSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "'unsafe-inline'"],
