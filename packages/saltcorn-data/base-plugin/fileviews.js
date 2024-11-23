@@ -45,6 +45,24 @@ const btnStyles = [
   },
 ];
 
+const btnStylesForLink = [
+  { name: " ", label: "Link" },
+  { name: "btn btn-primary", label: "Primary button" },
+  { name: "btn btn-secondary", label: "Secondary button" },
+  { name: "btn btn-success", label: "Success button" },
+  { name: "btn btn-danger", label: "Danger button" },
+  { name: "btn btn-warning", label: "Warning button" },
+  { name: "btn btn-info", label: "Info button" },
+  {
+    name: "btn btn-outline-primary",
+    label: "Primary outline button",
+  },
+  {
+    name: "btn btn-outline-decondary",
+    label: "Secondary outline button",
+  },
+];
+
 const buildCustomInput = (id, attrs) => {
   return (
     button(
@@ -76,6 +94,17 @@ const buildCustomInput = (id, attrs) => {
 module.exports = {
   // download link
   "Download link": {
+    configFields: [
+      {
+        name: "button_style",
+        label: "Style",
+        type: "String",
+        required: true,
+        attributes: {
+          options: btnStylesForLink,
+        },
+      },
+    ],
     description: "Link to download file",
     run: (filePath, file_name, cfg = {}) => {
       if (!filePath) return "";
@@ -83,12 +112,26 @@ module.exports = {
         isNode()
           ? `${cfg.targetPrefix || ""}/files/download/${filePath}`
           : `javascript:notifyAlert('File donwloads are not supported.')`,
-        path.basename(filePath) || "Download"
+        path.basename(filePath) || "Download",
+        cfg?.button_style && cfg?.button_style !== " "
+          ? { class: cfg?.button_style }
+          : undefined
       );
     },
   },
   // Link
   Link: {
+    configFields: [
+      {
+        name: "button_style",
+        label: "Style",
+        type: "String",
+        required: true,
+        attributes: {
+          options: btnStylesForLink,
+        },
+      },
+    ],
     description: "Link to open file",
 
     run: (filePath, file_name, cfg = {}) =>
@@ -98,25 +141,38 @@ module.exports = {
             isNode()
               ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
               : `javascript:openFile('${filePath}')`,
-            path.basename(filePath) || "Open"
+            path.basename(filePath) || "Open",
+            cfg?.button_style && cfg?.button_style !== " "
+              ? { class: cfg?.button_style }
+              : undefined
           ),
   },
 
   // Link (new tab)
   "Link (new tab)": {
     description: "Link to open file in new tab",
-
+    configFields: [
+      {
+        name: "button_style",
+        label: "Style",
+        type: "String",
+        required: true,
+        attributes: {
+          options: btnStylesForLink,
+        },
+      },
+    ],
     run: (filePath, file_name, cfg = {}) =>
       !filePath
         ? ""
-        : a(
+        : link(
             isNode()
-              ? {
-                  href: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
-                  target: "_blank",
-                }
-              : { href: `javascript:openFile('${filePath}')` },
-            path.basename(filePath) || "Open"
+              ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
+              : `javascript:openFile('${filePath}')`,
+            path.basename(filePath) || "Open",
+            cfg?.button_style && cfg?.button_style !== " "
+              ? { target: "_blank", class: cfg?.button_style }
+              : { target: "_blank" }
           ),
   },
   // Show Image
