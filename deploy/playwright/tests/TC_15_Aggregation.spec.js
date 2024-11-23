@@ -186,6 +186,7 @@ test.describe('E2E Test Suite', () => {
         await page.keyboard.type('Task Assigned');
         // await functions.fill_Text(pageobject.richTextEditor, 'Task Assigned');
         await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.secondrowcolumn);
+        await page.waitForTimeout(1000);
         await customAssert('Select id field in on field dropdown', async () => {
             await page.selectOption(pageobject.Childtablefield, { value: 'id' });
         });
