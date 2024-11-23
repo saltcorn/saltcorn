@@ -23,18 +23,9 @@ npm install @capacitor/cli @capacitor/core @capacitor/android
 npm run add-platform android
 
 npx capacitor-assets generate
-plugins="cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser" && \
-for plugin in $plugins; do \
-  npm install "$plugin"; \
-done
-npx cap sync
 
-npm install @capacitor/filesystem
-npm install @capacitor-community/sqlite
-npm install @capacitor/camera
-npm install @capacitor/geolocation
-npm install @capacitor/network
-
+npm install cordova-plugin-file@8.1.2
+npm install cordova-plugin-inappbrowser
 
 # data extraction rules
 cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
@@ -82,10 +73,6 @@ EOF
 npm run build
 npx cap sync
 
-# install the corodva-file-plugin
-npm install cordova-plugin-file@8.1.2
-npx cap sync
-
 # copy prepopulated db
 mkdir -p /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases
 cp /saltcorn-mobile-app/www/scdb.sqlite /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases/prepopulated.db
@@ -95,7 +82,7 @@ cd ./android
 # modify gradle config for keystore
 if [ -n "$KEYSTORE_FILE" ]; then
   echo "building signed app with keystore"
-  npm run write-gradle-cfg -- --keystore-file=$KEYSTORE_FILE --keystore-alias=$KEYSTORE_ALIAS --keystore-password=$KEYSTORE_PASSWORD  
+  npm run modify-gradle-cfg -- --keystore-file=$KEYSTORE_FILE --keystore-alias=$KEYSTORE_ALIAS --keystore-password=$KEYSTORE_PASSWORD  
 fi
 
 if [ "$BUILD_TYPE" == "release" ]; then

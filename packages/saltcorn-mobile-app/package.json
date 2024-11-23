@@ -7,7 +7,7 @@
   "scripts": {
     "build": "webpack",
     "add-platform": "npx cap add",
-    "write-gradle-cfg": "node build_scripts/write_gradle_cfg.js",
+    "modify-gradle-cfg": "node build_scripts/modify_gradle_cfg.js",
     "modify-android-manifest": "node build_scripts/modify_android_manifest.js"
   },
   "author": "Christian Hugo",
@@ -16,14 +16,6 @@
     "ansi-regex": "4.1.1"
   },
   "dependencies": {
-    "@capacitor/cli": "^6.1.2",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/filesystem": "6.0.1",
-    "@capacitor/camera": "6.1.0",
-    "@capacitor/geolocation": "6.0.2",
-    "@capacitor/network": "6.0.3",
-    "cordova-sqlite-ext": "^6.0.0",
     "universal-router": "9.2.0",
     "axios": "^1.7.7",
     "jwt-decode": "4.0.0",

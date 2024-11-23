@@ -26,11 +26,6 @@ RUN touch www/index.html
 RUN npm install @capacitor/cli @capacitor/core @capacitor/android
 RUN npx cap init MyApp com.example.myapp --web-dir www
 RUN npx cap add android
-RUN set -e && \
-    plugins="cordova-sqlite-ext cordova-plugin-file@7.0.0 cordova-plugin-inappbrowser cordova-plugin-network-information cordova-plugin-geolocation cordova-plugin-camera" && \
-    for plugin in $plugins; do \
-      npm install "$plugin"; \
-    done
 RUN npx cap sync
 
 ENV ANDROID_SDK_ROOT=/android_sdk

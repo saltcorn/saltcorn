@@ -206,6 +206,8 @@ export class CapacitorHelper {
       "@capacitor-community/sqlite",
       "@capacitor/filesystem",
       "@capacitor/camera",
+      "@capacitor/network",
+      "@capacitor/geolocation",
     ])
       addFn(plugin);
   }

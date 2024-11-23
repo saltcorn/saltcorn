@@ -32,10 +32,26 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
   copySync(templateDir, buildDir);
   rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
-  let result = spawnSync("npm", ["install", "--legacy-peer-deps"], {
+  let result = spawnSync("npm", ["install"], {
     cwd: buildDir,
   });
   console.log(result.output.toString());
+
+  for (const pkg of [
+    "@capacitor/cli@6.1.2",
+    "@capacitor/core@6.1.2",
+    "@capacitor/assets@3.0.5",
+    "@capacitor/filesystem@6.0.1",
+    "@capacitor/camera@6.1.0",
+    "@capacitor/geolocation@6.0.2",
+    "@capacitor/network@6.0.3",
+    "@capacitor-community/sqlite@6.0.2",
+  ]) {
+    result = spawnSync("npm", ["install", pkg], {
+      cwd: buildDir,
+    });
+    console.log(result.output.toString());
+  }
 }
 
 export function writeCapacitorConfig(buildDir: string, config: any) {

@@ -294,7 +294,9 @@ const leftNavBar = (namelogo?: LeftNavBarOpts): string[] => {
     a(
       {
         class: "navbar-brand js-scroll-trigger",
-        href: isNode ? "/" : "javascript:parent.gotoEntryView()",
+        href: isNode
+          ? "/"
+          : "javascript:parent.saltcorn.mobileApp.navigation.gotoEntryView()",
       },
       logo &&
         img({

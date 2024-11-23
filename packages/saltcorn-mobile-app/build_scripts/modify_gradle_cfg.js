@@ -9,7 +9,7 @@ const keyStoreFile = args[0].split("=")[1];
 const keyStoreAlias = args[1].split("=")[1];
 const keyStorePassword = args[2].split("=")[1];
 
-const gradleFile = join(__dirname, "android", "app", "build.gradle");
+const gradleFile = join(__dirname, "..", "android", "app", "build.gradle");
 const gradleContent = readFileSync(gradleFile, "utf8");
 const newGradleContent = gradleContent
   .replace(

@@ -60,7 +60,7 @@ const getMenu = (req) => {
             section: "Reload",
             items: [
               {
-                link: `javascript:parent.gotoEntryView()`,
+                link: "javascript:parent.saltcorn.mobileApp.navigation.gotoEntryView()",
                 icon: "fas fa-sync",
                 label: "Reload",
               },
