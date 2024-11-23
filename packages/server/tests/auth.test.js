@@ -372,7 +372,7 @@ describe("User fields", () => {
           ],
         },
       },
-      min_role: 1,
+      min_role: 100,
     });
     await getState().setConfig("new_user_form", "newuser");
   });
@@ -508,7 +508,7 @@ describe("signup with custom login form", () => {
         viewname: "loginform",
         view_when_done: "publicissueboard",
       },
-      min_role: 1,
+      min_role: 100,
       //default_render_page: "loginpage",
     });
 
@@ -598,7 +598,7 @@ describe("signup with custom login form", () => {
         viewname: "loginform",
         view_when_done: "publicissueboard",
       },
-      min_role: 1,
+      min_role: 100,
       //default_render_page: "signuppage",
     });
     await getState().setConfig("signup_form", "signupform");
