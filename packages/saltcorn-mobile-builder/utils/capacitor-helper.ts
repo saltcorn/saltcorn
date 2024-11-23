@@ -130,6 +130,7 @@ export class CapacitorHelper {
     const addFn = (platform: string) => {
       let result = spawnSync("npm", ["install", `@capacitor/${platform}`], {
         cwd: this.buildDir,
+        maxBuffer: 1024 * 1024 * 10,
         env: {
           ...process.env,
           NODE_ENV: "development",
@@ -143,6 +144,7 @@ export class CapacitorHelper {
         );
       result = spawnSync("npm", ["run", "add-platform", "--", platform], {
         cwd: this.buildDir,
+        maxBuffer: 1024 * 1024 * 10,
         env: {
           ...process.env,
           NODE_ENV: "development",
@@ -162,6 +164,7 @@ export class CapacitorHelper {
     const addFn = (plugin: string) => {
       let result = spawnSync("npm", ["install", plugin], {
         cwd: this.buildDir,
+        maxBuffer: 1024 * 1024 * 10,
         env: {
           ...process.env,
           NODE_ENV: "development",
@@ -189,6 +192,7 @@ export class CapacitorHelper {
     const addFn = (plugin: string) => {
       let result = spawnSync("npm", ["install", plugin], {
         cwd: this.buildDir,
+        maxBuffer: 1024 * 1024 * 10,
         env: {
           ...process.env,
           NODE_ENV: "development",
@@ -215,6 +219,7 @@ export class CapacitorHelper {
   private generateAssets() {
     const result = spawnSync("npx", ["capacitor-assets", "generate"], {
       cwd: this.buildDir,
+      maxBuffer: 1024 * 1024 * 10,
       env: {
         ...process.env,
       },
@@ -233,6 +238,7 @@ export class CapacitorHelper {
       [this.buildType === "release" ? "bundleRelease" : "assembleDebug"],
       {
         cwd: this.buildDir + "/android",
+        maxBuffer: 1024 * 1024 * 10,
         env: {
           ...process.env,
           NODE_ENV: "development",
@@ -263,7 +269,10 @@ export class CapacitorHelper {
         this.keyStoreAlias || "??",
         this.keyStorePassword || "??"
       );
-    const result = spawnSync("docker", spawnParams, { cwd: "." });
+    const result = spawnSync("docker", spawnParams, {
+      cwd: ".",
+      maxBuffer: 1024 * 1024 * 10,
+    });
     if (result.output) console.log(result.output.toString());
     else if (result.error)
       throw new Error(
@@ -283,7 +292,7 @@ export class CapacitorHelper {
           `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningGUUID}" ` +
           ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
           ` DEVELOPMENT_TEAM="${this.appleTeamId}" `,
-        { cwd: this.buildDir }
+        { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
       );
 
       if (!existsSync(join(this.buildDir, "MyArchive.xcarchive"))) {
@@ -296,7 +305,7 @@ export class CapacitorHelper {
         buffer = execSync(
           "xcodebuild -exportArchive -archivePath MyArchive.xcarchive " +
             `-exportPath ${this.buildDir} -exportOptionsPlist ExportOptions.plist`,
-          { cwd: this.buildDir }
+          { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
         );
         console.log(buffer.toString());
         // to upload it automatically:
@@ -312,6 +321,7 @@ export class CapacitorHelper {
   private capSync() {
     const result = spawnSync("npx", ["cap", "sync"], {
       cwd: this.buildDir,
+      maxBuffer: 1024 * 1024 * 10,
       env: {
         ...process.env,
         NODE_ENV: "development",
@@ -328,6 +338,7 @@ export class CapacitorHelper {
   private capCopy() {
     const result = spawnSync("npx", ["cap", "sync"], {
       cwd: this.buildDir,
+      maxBuffer: 1024 * 1024 * 10,
       env: {
         ...process.env,
         NODE_ENV: "development",
