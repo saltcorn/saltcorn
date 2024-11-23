@@ -1475,5 +1475,21 @@
   "Invalid build directory path": "Nieprawidłowa ścieżka katalogu kompilacji",
   "Invalid build directory name": "Nieprawidłowa nazwa katalogu kompilacji",
   "clean node_modules": "wyczyść node_modules",
-  "After delete": "Po usunięciu"
+  "After delete": "Po usunięciu",
+  "Search only on exact match, not substring match. Useful for large tables": "Wyszukuj tylko dokładne dopasowania, nie dopasowania do podciągów. Przydatne w przypadku dużych tabel",
+	"Please select an entry point.": "Proszę wybrać punkt wejścia",
+	"Group by": "Grupuj według",
+	"View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Widok %s został dodany do menu. Dostosuj uprawnienia dostępu w <a href=\"/menu\">Ustawienia &raquo; Menu</a>",
+	"Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Strona %s została dodana do menu. Dostosuj uprawnienia dostępu w <a href=\"/menu\">Ustawienia &raquo; Menu</a>",
+	"SameSite": "SameSite",
+	"Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication": "Ogranicz użycie ciasteczka na stronach trzecich. Tryb „Strict” jest bardziej bezpieczny, ale może wpływać na uwierzytelnianie",
+	"Content Security Policy": "Polityka bezpieczeństwa treści",
+	"CORS": "CORS",
+	"Cross-origin resource sharing": "Udostępnianie zasobów między źródłami (CORS)",
+	"Signup and login views": "Widoki rejestracji i logowania",
+	"Additional login and signup settings": "Dodatkowe ustawienia logowania i rejestracji",
+	"Login and signup views should be accessible by public users": "Widoki logowania i rejestracji powinny być dostępne dla użytkowników publicznych",
+	"Shared: %s": "Udostępnione: %s",
+	"Sharing not enabled": "Udostępnianie nie jest włączone",
+	"You must be logged in to share": "Musisz być zalogowany, aby udostępniać"
 }
