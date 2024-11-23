@@ -278,7 +278,7 @@ const configuration_workflow = (req) =>
               },
               {
                 name: "groupby",
-                label: "Group by",
+                label: req.__("Group by"),
                 type: "String",
                 sublabel: "Formula for the group headings",
                 class: "validate-expression",

@@ -306,8 +306,20 @@ router.get(
           getAuthLinks("login")
         );
       else {
-        const resp = await login_form.run_possibly_on_page({}, req, res);
-        if (login_form.default_render_page) {
+        const resp = await login_form.run_possibly_on_page(
+          {},
+          req,
+          res,
+          false,
+          true
+        );
+        if (!resp) {
+          res.sendAuthWrap(
+            req.__(`Login`),
+            loginForm(req),
+            getAuthLinks("login")
+          );
+        } else if (login_form.default_render_page) {
           const page = Page.findOne({ name: login_form.default_render_page });
           res.sendWrap(
             { title: req.__(`Login`), no_menu: page?.attributes?.no_menu },
@@ -509,7 +521,8 @@ router.get(
       if (!signup_form) await defaultSignup();
       else {
         const resp = await signup_form.run_possibly_on_page({}, req, res);
-        if (signup_form.default_render_page) {
+        if (!resp) await defaultSignup();
+        else if (signup_form.default_render_page) {
           const page = Page.findOne({ name: signup_form.default_render_page });
           res.sendWrap(
             { title: req.__(`Sign up`), no_menu: page?.attributes?.no_menu },
@@ -673,7 +686,7 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
     layout,
     submitLabel: req.__("Sign up"),
   });
-  await form.fill_fkey_options();
+  await form.fill_fkey_options(false, undefined, req.user || { role_id: 100 });
   if (askEmail) {
     form.fields.push(
       new Field({

@@ -33,7 +33,7 @@ function setScreenInfoCookie() {
     innerHeight: window.innerHeight,
   })}; expires=Thu, 01 Jan 2100 00:00:00 GMT; path=/; domain=.${
     window.location.hostname
-  }`;
+  }; samesite=strict`;
 }
 setScreenInfoCookie();
 $(window).resize(() => {
@@ -1370,7 +1370,7 @@ function buildToast(txt, type, spin) {
       role="alert"
       aria-live="assertive"
       aria-atomic="true"
-      style="min-width: 350px; max-width: 50vw; width: auto; z-index: 999; ${
+      style="min-width: 350px; max-width: 50vw; width: auto; z-index: 9999; ${
         !isNode ? "transform: translateX(-50%);" : ""
       }" 
     >

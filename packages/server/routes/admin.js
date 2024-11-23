@@ -3845,6 +3845,10 @@ admin_config_route({
     { section_header: "Progressive Web Application" },
     "pwa_enabled",
     { name: "pwa_display", showIf: { pwa_enabled: true } },
+    {
+      name: "pwa_share_to_enabled",
+      showIf: { pwa_enabled: true },
+    },
     { name: "pwa_set_colors", showIf: { pwa_enabled: true } },
     {
       name: "pwa_theme_color",

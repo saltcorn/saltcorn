@@ -1158,6 +1158,8 @@ router.post(
     try {
       if (!field.calculated) {
         result = row[field.name];
+      } else if (field.stored && field.expression === "__aggregation") {
+        result = row[field.name];
       } else if (field.stored) {
         const f = get_async_expression_function(formula, fields);
         //are there join fields in formula?

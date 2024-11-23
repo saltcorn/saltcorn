@@ -283,6 +283,7 @@ const LinkSettings = () => {
             linkFirst={true}
             linkIsBlank={true}
             allowRunOnLoad={false}
+            faIcons={options.icons}
           />
         </tbody>
       </table>

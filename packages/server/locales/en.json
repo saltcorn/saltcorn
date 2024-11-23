@@ -1476,5 +1476,19 @@
 	"clean node_modules": "clean node_modules",
 	"After delete": "After delete",
 	"Search only on exact match, not substring match. Useful for large tables": "Search only on exact match, not substring match. Useful for large tables",
-	"Please select an entry point.": "Please select an entry point."
+	"Please select an entry point.": "Please select an entry point.",
+	"Group by": "Group by",
+	"View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "View %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
+	"Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>": "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
+	"SameSite": "SameSite",
+	"Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication": "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication",
+	"Content Security Policy": "Content Security Policy",
+	"CORS": "CORS",
+	"Cross-origin resource sharing": "Cross-origin resource sharing",
+	"Signup and login views": "Signup and login views",
+	"Additional login and signup settings": "Additional login and signup settings",
+	"Login and signup views should be accessible by public users": "Login and signup views should be accessible by public users",
+	"Shared: %s": "Shared: %s",
+	"Sharing not enabled": "Sharing not enabled",
+	"You must be logged in to share": "You must be logged in to share"
 }

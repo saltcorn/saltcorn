@@ -12,10 +12,15 @@ import {
   faChevronRight,
   faInfoCircle,
   faQuestionCircle,
+  faBold,
+  faItalic,
+  faFont,
+  faCommentSlash,
+  faUnderline,
+  faTerminal,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./faicons";
 import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
@@ -61,7 +66,8 @@ const BlockSetting = ({ block, setProp }) => (
 );
 
 export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
-  !textStyle || !textStyle.startsWith("h") ? (
+  !textStyle ||
+  !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h")) ? (
     <BlockSetting block={block} setProp={setProp} />
   ) : (
     <div className="form-check">
@@ -326,6 +332,89 @@ const TextStyleSelect = ({ textStyle, setProp }) => {
     </select>
   );
 };
+const textStyleToArray = (textStyle) =>
+  Array.isArray(textStyle) ? textStyle : !textStyle ? [] : [textStyle];
+
+const TextStyleSelectBtns = ({ textStyle, setProp }) => {
+  const styleArray = textStyleToArray(textStyle);
+  const clickH = (h) => {
+    const noH = styleArray.filter((s) => !(s.length == 2 && s[0] === "h"));
+    const selected = styleArray.includes(`h${h}`);
+    if (!selected) noH.push(`h${h}`);
+    setProp((prop) => (prop.textStyle = noH));
+  };
+  const clickStyle = (style) => {
+    const noH = styleArray.filter((s) => s !== style);
+    const selected = styleArray.includes(style);
+    if (!selected) noH.push(style);
+    setProp((prop) => (prop.textStyle = noH));
+  };
+  const StyleButton = ({ styleName, icon, title, size }) => (
+    <button
+      type="button"
+      title={title}
+      onClick={() => clickStyle(styleName)}
+      className={`btn btn-sm btn-${
+        !styleArray.includes(styleName) ? "outline-" : ""
+      }secondary style-${styleName}`}
+    >
+      <FontAwesomeIcon icon={icon} size={size || undefined} />
+    </button>
+  );
+
+  return (
+    <div>
+      <div className="btn-group w-100" role="group">
+        {[1, 2, 3, 4, 5, 6].map((h) => (
+          <button
+            key={h}
+            type="button"
+            title={`Heading ${h}`}
+            onClick={() => clickH(h)}
+            className={`btn btn-sm btn-${
+              !styleArray.includes(`h${h}`) ? "outline-" : ""
+            }secondary style-h${h}`}
+          >
+            H{h}
+          </button>
+        ))}
+      </div>
+      <div className="btn-group w-100" role="group">
+        <StyleButton
+          styleName="fw-bold"
+          icon={faBold}
+          title="Bold"
+        ></StyleButton>
+        <StyleButton
+          styleName="fst-italic"
+          icon={faItalic}
+          title="Italics"
+        ></StyleButton>
+        <StyleButton
+          styleName="small"
+          icon={faFont}
+          title="Small"
+          size="xs"
+        ></StyleButton>
+        <StyleButton
+          styleName="text-muted"
+          icon={faCommentSlash}
+          title="Muted"
+        ></StyleButton>
+        <StyleButton
+          styleName="text-underline"
+          icon={faUnderline}
+          title="Underline"
+        ></StyleButton>
+        <StyleButton
+          styleName="font-monospace"
+          icon={faTerminal}
+          title="Monospace"
+        ></StyleButton>
+      </div>
+    </div>
+  );
+};
 
 export /**
  * @param {object} props
@@ -357,11 +446,8 @@ export /**
 const TextStyleRow = ({ textStyle, setProp }) => {
   return (
     <tr>
-      <td>
-        <label>Text Style</label>
-      </td>
-      <td>
-        <TextStyleSelect textStyle={textStyle} setProp={setProp} />
+      <td colSpan={2}>
+        <TextStyleSelectBtns textStyle={textStyle} setProp={setProp} />
       </td>
     </tr>
   );
@@ -544,7 +630,7 @@ export /**
  * @namespace
  */
 const SelectUnits = ({ vert, autoable, ...props }) => {
-  const options = ["px", "%", vert ? "vh" : "vw", "em", "rem"];
+  const options = ["px", "%", vert ? "vh" : "vw", "em", "rem", "cm"];
   if (autoable) options.push("auto");
   return <select {...props}>{buildOptions(options)}</select>;
 };
@@ -811,7 +897,7 @@ const ConfigField = ({
         const options = getOptions();
         return (
           <select
-            className="form-control form-select"
+            className={`field-${field?.name} form-control form-select`}
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
@@ -830,7 +916,7 @@ const ConfigField = ({
         return (
           <input
             type="text"
-            className="form-control"
+            className={`field-${field?.name} form-control`}
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
           />
@@ -838,7 +924,7 @@ const ConfigField = ({
     },
     Font: () => (
       <select
-        className="form-control form-select"
+        className="fontselect form-control form-select"
         value={value || ""}
         onChange={(e) => e.target && myOnChange(e.target.value)}
         onBlur={(e) => e.target && myOnChange(e.target.value)}
@@ -856,7 +942,7 @@ const ConfigField = ({
     Integer: () => (
       <input
         type="number"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         step={field.step || 1}
         min={field.min}
         max={field.max}
@@ -867,7 +953,7 @@ const ConfigField = ({
     Float: () => (
       <input
         type="number"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         value={value || ""}
         step={0.01}
         onChange={(e) => e.target && myOnChange(e.target.value)}
@@ -878,7 +964,7 @@ const ConfigField = ({
       <div className="form-check">
         <input
           type="checkbox"
-          className="form-check-input"
+          className={`field-${field?.name} form-check-input`}
           checked={value}
           onChange={(e) => e.target && myOnChange(e.target.checked)}
         />
@@ -889,7 +975,7 @@ const ConfigField = ({
       <textarea
         rows="6"
         type="text"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         value={value}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
@@ -898,7 +984,7 @@ const ConfigField = ({
       <textarea
         rows="6"
         type="text"
-        className="form-control"
+        className={`field-${field?.name} form-control`}
         value={value}
         onChange={(e) => e.target && myOnChange(e.target.value)}
         spellCheck={false}
@@ -934,7 +1020,7 @@ const ConfigField = ({
       } else
         return (
           <select
-            className="form-control form-select"
+            className={`field-${field?.name} form-control form-select`}
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
@@ -963,7 +1049,7 @@ const ConfigField = ({
             title={o.title || o.value}
             type="button"
             style={{ width: `${Math.floor(100 / field.options.length)}%` }}
-            className={`btn btn-sm btn-${
+            className={`field-${field?.name} btn btn-sm btn-${
               value !== o.value ? "outline-" : ""
             }secondary ${field.btnClass || ""}`}
             onClick={() => myOnChange(o.value)}
@@ -991,7 +1077,7 @@ const ConfigField = ({
             <input
               type="number"
               value={(isStyle ? styleVal : value) || ""}
-              className="w-50 form-control-sm d-inline dimunit"
+              className={`field-${field?.name} w-50 form-control-sm d-inline dimunit`}
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
                 e?.target &&
@@ -1013,7 +1099,7 @@ const ConfigField = ({
               "px"
             )}
             autoable={field.autoable}
-            className={`w-${
+            className={`field-${field?.name} w-${
               styleDim === "auto" ? 100 : 50
             } form-control-sm d-inline dimunit`}
             vert={!field.horiz}
@@ -1265,6 +1351,7 @@ const ButtonOrLinkSettingsRows = ({
   linkFirst = false,
   linkIsBlank = false,
   allowRunOnLoad = false,
+  faIcons = [],
 }) => {
   const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
@@ -1353,7 +1440,7 @@ const ButtonOrLinkSettingsRows = ({
               setProp((prop) => (prop[keyPrefix + "icon"] = value))
             }
             isMulti={false}
-            icons={faIcons}
+            icons={faIcons || []}
           />
         </td>
       </tr>
@@ -1481,7 +1568,10 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
 };
 
 export const isBlock = (block, inline, textStyle) =>
-  !textStyle || !textStyle.startsWith("h") ? block : !inline;
+  !textStyle ||
+  !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h"))
+    ? block
+    : !inline;
 
 export const setAPropGen =
   (setProp) =>

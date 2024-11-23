@@ -564,9 +564,16 @@ router.get(
 
     const subtitle =
       span(
-        { class: "ms-3" },
+        { class: "ms-2" },
         trigger.action,
+        "&nbsp;",
+        trigger.when_trigger,
         table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
+      ) +
+      a(
+        { href: `/actions/edit/${id}`, class: "ms-2" },
+        req.__("Edit"),
+        '&nbsp;<i class="fas fa-edit"></i>'
       ) +
       a(
         { href: `/actions/testrun/${id}`, class: "ms-2" },

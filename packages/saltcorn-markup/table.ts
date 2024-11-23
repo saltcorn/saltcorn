@@ -4,7 +4,8 @@
  */
 
 import tags = require("./tags");
-const { a, td, tr, th, text, div, table, thead, tbody, ul, li, span } = tags;
+const { a, td, tr, th, text, div, table, thead, tbody, ul, li, span, h4 } =
+  tags;
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 const { pagination } = helpers;
@@ -45,6 +46,7 @@ namespace TableExports {
     transpose?: boolean;
     tableClass?: string;
     tableId?: string;
+    grouped?: string;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
@@ -92,6 +94,27 @@ const mkTable = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string => {
+  const val_row = (v: any) =>
+    tr(
+      mkClickHandler(opts, v),
+      hdrs.map((hdr: HeadersParams) =>
+        td(
+          {
+            style: {
+              ...(hdr.align ? { "text-align": hdr.align } : {}),
+              ...(hdr.width && opts.noHeader ? { width: hdr.width } : {}),
+            },
+          },
+          typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
+        )
+      )
+    );
+  const groupedBody = (groups: any) =>
+    Object.entries(groups).map(
+      ([group, rows]: [string, any]) =>
+        tr(td({ colspan: "1000" }, h4({ class: "list-group-header" }, group))) +
+        rows.map(val_row).join("")
+    );
   return div(
     {
       class: ["table-responsive", opts.tableClass],
@@ -114,24 +137,9 @@ const mkTable = (
       tbody(
         opts.transpose
           ? transposedBody(hdrs, vs, opts)
-          : (vs || []).map((v: any) =>
-              tr(
-                mkClickHandler(opts, v),
-                hdrs.map((hdr: HeadersParams) =>
-                  td(
-                    {
-                      style: {
-                        ...(hdr.align ? { "text-align": hdr.align } : {}),
-                        ...(hdr.width && opts.noHeader
-                          ? { width: hdr.width }
-                          : {}),
-                      },
-                    },
-                    typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
-                  )
-                )
-              )
-            )
+          : opts.grouped
+          ? groupedBody(vs)
+          : (vs || []).map(val_row)
       )
     ),
     opts.pagination && pagination(opts.pagination)

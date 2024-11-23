@@ -899,12 +899,13 @@ router.post(
         };
         await plugin.upsert();
         await load_plugins.loadPlugin(plugin);
+
+        getState().processSend({
+          refresh_plugin_cfg: plugin.name,
+          tenant: db.getTenantSchema(),
+        });
+        res.json({ success: "ok" });
       }
-      getState().processSend({
-        refresh_plugin_cfg: plugin.name,
-        tenant: db.getTenantSchema(),
-      });
-      res.json({ success: "ok" });
     }
   })
 );

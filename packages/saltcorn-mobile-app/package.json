@@ -1,14 +1,15 @@
 {
   "name": "@saltcorn/mobile-app",
   "displayName": "Saltcorn mobile app",
-  "version": "1.0.0-rc.6",
+  "version": "1.0.0",
   "description": "Apache Cordova application with @saltcorn/markup",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
     "add-platform": "npx cap add",
     "modify-gradle-cfg": "node build_scripts/modify_gradle_cfg.js",
-    "modify-android-manifest": "node build_scripts/modify_android_manifest.js"
+    "modify-android-manifest": "node build_scripts/modify_android_manifest.js",
+    "test": "echo NO TESTS"
   },
   "author": "Christian Hugo",
   "license": "MIT",

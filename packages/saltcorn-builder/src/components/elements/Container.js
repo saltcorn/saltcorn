@@ -253,6 +253,7 @@ const ContainerSettings = () => {
     htmlElement,
     imgResponsiveWidths,
     click_action,
+    style,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -331,6 +332,61 @@ const ContainerSettings = () => {
             node={node}
             setProp={setProp}
           />
+          <SettingsRow
+            field={{
+              name: "position",
+              label: "Position",
+              type: "select",
+              options: ["static", "relative", "fixed", "absolute", "sticky"],
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          {style?.position && style?.position !== "static" ? (
+            <Fragment>
+              <SettingsRow
+                field={{
+                  name: "top",
+                  label: "Top",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "right",
+                  label: "Right",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "bottom",
+                  label: "Bottom",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+              <SettingsRow
+                field={{
+                  name: "left",
+                  label: "Left",
+                  type: "DimUnits",
+                }}
+                node={node}
+                setProp={setProp}
+                isStyle={true}
+              />
+            </Fragment>
+          ) : null}
           <tr>
             <td colSpan="2">
               <div className="form-check">

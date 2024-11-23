@@ -461,7 +461,13 @@ class View implements AbstractView {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return "";
     const table_id = this.exttable_name || this.table_id;
+    const role = extraArgs.req?.user?.role_id || 100;
     const state = require("../db/state").getState();
+    if (role > this.min_role)
+      state.log(
+        1,
+        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
+      );
     try {
       const viewState = removeEmptyStrings(query);
       state.log(
@@ -601,9 +607,17 @@ class View implements AbstractView {
   ): Promise<string[] | Array<{ html: string; row: any }>> {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return [];
-    require("../db/state")
-      .getState()
-      .log(5, `runMany view ${this.name} with state ${JSON.stringify(query)}`);
+    const role = extraArgs.req?.user?.role_id || 100;
+    const state = require("../db/state").getState();
+    if (role > this.min_role)
+      state.log(
+        1,
+        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
+      );
+    state.log(
+      5,
+      `runMany view ${this.name} with state ${JSON.stringify(query)}`
+    );
     try {
       if (this.viewtemplateObj?.runMany) {
         if (!this.table_id) {
@@ -678,6 +692,12 @@ class View implements AbstractView {
     ) {
       remote = false;
     }
+    const role = extraArgs.req.user?.role_id || 100;
+    if (role > this.min_role)
+      state.log(
+        1,
+        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
+      );
     try {
       if (isWeb(extraArgs.req)) this.check_viewtemplate();
       else if (!this.viewtemplateObj) return;

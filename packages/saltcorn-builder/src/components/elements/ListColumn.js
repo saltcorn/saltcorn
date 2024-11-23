@@ -150,7 +150,7 @@ const fields = [
     required: true,
     attributes: {
       inline: true,
-      options: ["px", "%", "vw", "em", "rem"],
+      options: ["px", "%", "vw", "em", "rem", "cm"],
     },
   },
   {

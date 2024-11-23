@@ -241,7 +241,7 @@ export const runConfigurationCheck = async (
         stop_urls: ["/auth/login", "/auth/signup"],
         steps: 100,
       });
-      console.log("GCP Log", gcpres.log);
+      //console.log("GCP Log", gcpres.log);
       passes.push(`Chaos Guinea Pig pass with seed ${seed}`);
     } catch (e: any) {
       errors.push(`Chaos Guinea Pig with seed ${seed}: ${e.message}`);

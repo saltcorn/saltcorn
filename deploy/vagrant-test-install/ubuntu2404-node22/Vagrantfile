@@ -6,13 +6,17 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure("2") do |config|
-  
-  config.vm.box = "debian/buster64"
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "bento/ubuntu-24.04"
 
   config.ssh.forward_agent = true
 
   config.ssh.insert_key = false
-
   config.vm.provider "virtualbox" do |vb|
     #   # Display the VirtualBox GUI when booting the machine
     #   vb.gui = true
@@ -20,11 +24,13 @@ Vagrant.configure("2") do |config|
     #   # Customize the amount of memory on the VM:
        vb.memory = "2048"
      end
-     
   config.vm.provision "shell", inline: <<-SHELL
-    wget -qO - https://deb.nodesource.com/setup_16.x | bash -
+    set -e
+    sudo apt update -q
+    wget -qO - https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -qqy nodejs
-    sudo -iu vagrant npx -y saltcorn-install -y -sd
-    wget -qO- http://localhost/ | grep Please      
+    sudo -iu vagrant npx -y saltcorn-install -y
+    systemctl is-active saltcorn
+    wget -qO- http://localhost/ | grep Please 
   SHELL
 end

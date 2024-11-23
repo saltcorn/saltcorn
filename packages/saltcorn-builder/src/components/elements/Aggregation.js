@@ -127,7 +127,7 @@ const AggregationSettings = () => {
               </td>
               <td>
                 <select
-                  className="form-control form-select"
+                  className="relation form-control form-select"
                   value={agg_relation}
                   onChange={(e) => {
                     if (!e.target) return;
@@ -156,7 +156,7 @@ const AggregationSettings = () => {
             </td>
             <td>
               <select
-                className="form-control form-select"
+                className="agg_field form-control form-select"
                 value={agg_field}
                 onChange={setAProp("agg_field")}
               >
@@ -175,7 +175,7 @@ const AggregationSettings = () => {
             <td>
               <select
                 value={stat}
-                className="form-control form-select"
+                className="stat form-control form-select"
                 onChange={setAProp("stat")}
                 onBlur={setAProp("stat")}
               >
@@ -245,7 +245,7 @@ const AggregationSettings = () => {
               <td>
                 <select
                   value={agg_fieldview}
-                  className="form-control form-select"
+                  className="agg_fieldview form-control form-select"
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;

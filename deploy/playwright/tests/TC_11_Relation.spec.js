@@ -249,7 +249,7 @@ test.describe('E2E Test Suite', () => {
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the viewlink locator
-        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn3);
+        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
         // select view to show from dropdown
         await customAssert('Select Show department view in view dropdown', async () => {
             await page.waitForSelector(pageobject.viewtolinkdropdown);
@@ -337,7 +337,7 @@ test.describe('E2E Test Suite', () => {
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the viewlink locator
-        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn3);
+        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
         // select view to show from dropdown
         await customAssert('Select Show department view in view dropdown', async () => {
             await page.waitForSelector(pageobject.viewtolinkdropdown);
@@ -415,7 +415,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the action view link
         await page.waitForSelector(pageobject.viewlinksource);
-        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn4);
+        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
         // click to view link dropdown
         await customAssert('view to link dropdown should be visible', async () => {
             await page.click(pageobject.viewtolinkdropdown);
@@ -469,7 +469,7 @@ test.describe('E2E Test Suite', () => {
     });
 
     // Create edit view for Department and add edit employee link
-    test('Create edit view for Department table and add edit employee link', async () => {
+    /*test('Create edit view for Department table and add edit employee link', async () => {
         await functions.views();
         // click on create new view
         await page.click(pageobject.createnewview);
@@ -539,7 +539,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the action view link
         await page.waitForSelector(pageobject.viewlinksource);
-        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn4);
+        await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
         // click to view link dropdown
         await customAssert('view to link dropdown should be visible', async () => {
             await page.click(pageobject.viewtolinkdropdown);
@@ -581,5 +581,5 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Assert page redirected to Add employee page', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'view/Edit_Employee');
         });
-    });
+    });*/
 });

@@ -26,6 +26,14 @@ const readPackageJson = async (filePath) => {
   else return null;
 };
 
+/**
+ * install when the new package.json has different dependencies
+ * or when the source is local and there are any dependencies
+ * @param source
+ * @param oldPckJSON
+ * @param newPckJSON
+ * @returns
+ */
 const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
   const oldDeps = oldPckJSON.dependencies || Object.create(null);
   const oldDevDeps = oldPckJSON.devDependencies || Object.create(null);
@@ -92,12 +100,15 @@ class PluginInstaller {
           await readPackageJson(this.tempPckJsonPath),
           true
         );
+        let wasInstalled = false;
         if (
           !pckJSON ||
           npmInstallNeeded(await this.removeDependencies(pckJSON), tmpPckJSON)
-        )
+        ) {
+          wasInstalled = true;
           await this.npmInstall(tmpPckJSON);
-        await this.movePlugin();
+        }
+        await this.movePlugin(wasInstalled);
         if (await tarballExists(this.rootFolder, this.plugin))
           await removeTarball(this.rootFolder, this.plugin);
       }
@@ -167,6 +178,9 @@ class PluginInstaller {
       case "local":
         if (force || !folderExists) {
           await copy(this.plugin.location, this.tempDir);
+          // if tempdir has a node_modules folder, remove it
+          if (await pathExists(join(this.tempDir, "node_modules")))
+            await rm(join(this.tempDir, "node_modules"), { recursive: true });
           wasLoaded = true;
         }
         break;
@@ -250,22 +264,31 @@ class PluginInstaller {
   }
 
   async npmInstall(pckJSON) {
-    getState().log(5, `NPM install plugin: ${pckJSON.name}`);
     const isWindows = process.platform === "win32";
     if (
       Object.keys(pckJSON.dependencies || {}).length > 0 ||
       Object.keys(pckJSON.devDependencies || {}).length > 0
     ) {
+      getState().log(5, `NPM install plugin: ${pckJSON.name}`);
       const child = spawn("npm", ["install"], {
         cwd: this.tempDir,
         env: { ...process.env, ...this.envVars },
         ...(isWindows ? { shell: true } : {}),
       });
       return new Promise((resolve, reject) => {
+        if (child.stdout) {
+          child.stdout.on("data", (data) => {
+            getState().log(6, data.toString());
+          });
+        }
+        if (child.stderr) {
+          child.stderr.on("data", (data) => {
+            getState().log(6, data.toString());
+          });
+        }
         child.on("exit", (exitCode, signal) => {
           resolve({ success: exitCode === 0 });
         });
-
         child.on("error", (msg) => {
           reject(msg);
         });
@@ -273,7 +296,7 @@ class PluginInstaller {
     }
   }
 
-  async movePlugin() {
+  async movePlugin(wasInstalled) {
     const isWindows = process.platform === "win32";
     const copyMove = async () => {
       await cp(this.tempDir, this.pluginDir, { recursive: true, force: true });
@@ -283,15 +306,17 @@ class PluginInstaller {
         getState().log(2, `Error removing temp folder ${this.tempDir}`);
       }
     };
-    if (await pathExists(this.pluginDir))
-      await rm(this.pluginDir, { recursive: true });
-    await mkdir(this.pluginDir, { recursive: true });
-    if (!isWindows) {
-      try {
-        await rename(this.tempDir, this.pluginDir);
-      } catch (error) {
-        await copyMove();
-      }
+    if (this.plugin.source === "npm" || wasInstalled) {
+      if (await pathExists(this.pluginDir))
+        await rm(this.pluginDir, { recursive: true });
+      await mkdir(this.pluginDir, { recursive: true });
+      if (!isWindows) {
+        try {
+          await rename(this.tempDir, this.pluginDir);
+        } catch (error) {
+          await copyMove();
+        }
+      } else await copyMove();
     } else await copyMove();
   }
 }

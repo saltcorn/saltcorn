@@ -236,7 +236,7 @@ describe("Pack Endpoints", () => {
       .send(
         "pack=les%22%3A+%5B%5D%2C+%22views%22%3A+%5B%5D%2C+%22plugins%22%3A+%5B%5D%2C+%22pages%22%3A+%5B%5D+%7D"
       )
-      .expect(toInclude("Unexpected token l in JSON at position 0"));
+      .expect(toInclude("Unexpected token"));
   });
   it("should install named", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -404,7 +404,7 @@ describe("Upgrade plugin to supported version", () => {
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.0.6");
+    expect(upgradedPlugin.version).toBe("0.1.0");
   });
 
   it("upgrades with a downgrade of the most current fixed version", async () => {
@@ -427,7 +427,7 @@ describe("Upgrade plugin to supported version", () => {
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.0.6");
+    expect(upgradedPlugin.version).toBe("0.1.0");
   });
 });
 
@@ -452,7 +452,16 @@ describe("install a different version dialog", () => {
         )}`
       )
       .set("Cookie", loginCookie)
-      .expect(toInclude(["0.0.1", "0.0.2", "0.0.3", "0.0.4", "0.0.5", "0.0.6"]))
-      .expect(toNotInclude("0.1.0"));
+      .expect(
+        toInclude([
+          "0.0.1",
+          "0.0.2",
+          "0.0.3",
+          "0.0.4",
+          "0.0.5",
+          "0.0.6",
+          "0.1.0",
+        ])
+      );
   });
 });

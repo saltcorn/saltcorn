@@ -12,6 +12,7 @@ const Tag = require("./models/tag");
 const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
+const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 const {
   Relation,
   RelationType,
@@ -102,10 +103,7 @@ const link_view = (
           title: link_title,
           class: [textStyle, link_style, link_size, extraClass],
         },
-        link_icon && link_icon !== "empty"
-          ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
-          : "",
-        label === " " && link_icon ? "" : label
+        show_icon_and_label(link_icon, label)
       );
     else
       return button(
@@ -125,10 +123,7 @@ const link_view = (
             : `mobile_modal('${url}')`,
           style,
         },
-        link_icon && link_icon !== "empty"
-          ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
-          : "",
-        label === " " && link_icon ? "" : label
+        show_icon_and_label(link_icon, label)
       );
   } else
     return a(
@@ -140,10 +135,7 @@ const link_view = (
         title: link_title,
         target: link_target_blank ? "_blank" : undefined,
       },
-      link_icon && link_icon !== "empty"
-        ? i({ class: link_icon }) + (label === " " ? "" : "&nbsp;")
-        : "",
-      text(label === " " && link_icon ? "" : label)
+      show_icon_and_label(link_icon, label)
     );
 };
 
@@ -1387,7 +1379,7 @@ const field_picker_fields = async ({
       required: true,
       attributes: {
         inline: true,
-        options: ["px", "%", "vw", "em", "rem"],
+        options: ["px", "%", "vw", "em", "rem", "cm"],
       },
     },
     ...(has_align
@@ -2316,10 +2308,18 @@ const initial_config_all_fields =
     });
     if (isEdit)
       aboves.push({
-        type: "action",
-        block: false,
-        minRole: 100,
-        action_name: "Save",
+        widths: [2, 10],
+        aligns: ["end", "start"],
+        style,
+        besides: [
+          null,
+          {
+            type: "action",
+            block: false,
+            minRole: 100,
+            action_name: "Save",
+          },
+        ],
       });
     cfg.layout = { above: aboves };
     return cfg;

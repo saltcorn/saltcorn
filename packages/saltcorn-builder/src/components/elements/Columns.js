@@ -93,7 +93,7 @@ const Columns = ({
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <div
-      className={`row ${selected ? "selected-node" : ""} ${
+      className={`row builder-columns ${selected ? "selected-node" : ""} ${
         typeof gx !== "undefined" && gx !== null ? `gx-${gx}` : ""
       } ${typeof gy !== "undefined" && gy !== null ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}

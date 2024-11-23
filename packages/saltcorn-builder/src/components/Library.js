@@ -16,7 +16,6 @@ import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import faIcons from "./elements/faicons";
 import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
@@ -272,7 +271,7 @@ const Library = ({ expanded }) => {
           <FontIconPicker
             className="w-100"
             value={icon}
-            icons={faIcons}
+            icons={options.icons}
             onChange={setIcon}
             isMulti={false}
           />

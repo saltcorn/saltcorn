@@ -411,7 +411,6 @@ const Builder = ({ options, layout, mode }) => {
 
   const canvasHeight =
     Math.max(windowHeight - builderTop, builderHeight, 600) - 10;
-
   return (
     <ErrorBoundary>
       <Editor onRender={RenderNode}>
@@ -558,6 +557,17 @@ const Builder = ({ options, layout, mode }) => {
         </Provider>
         <div className="d-none preview-scratchpad"></div>
       </Editor>
+      <style>
+        {options.icons
+          .filter((icon) => icon.startsWith("unicode-"))
+          .map(
+            (icon) =>
+              `i.${icon}:after {content: '${String.fromCharCode(
+                parseInt(icon.substring(8, 12), 16)
+              )}'}`
+          )
+          .join("\n")}
+      </style>
     </ErrorBoundary>
   );
 };

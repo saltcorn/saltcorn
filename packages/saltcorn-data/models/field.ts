@@ -276,7 +276,12 @@ class Field implements AbstractField {
       );
     }
 
-    return await table.getJoinedRows({ where, joinFields, forUser: user });
+    return await table.getJoinedRows({
+      where,
+      joinFields,
+      forUser: user,
+      forPublic: user?.role_id === 100,
+    });
   }
 
   /**
@@ -295,7 +300,8 @@ class Field implements AbstractField {
     extraCtx: any = {},
     optionsQuery?: any,
     formFieldNames?: string[],
-    existingValue?: any
+    existingValue?: any,
+    user?: any
   ): Promise<void> {
     let where = where0;
 
@@ -326,7 +332,8 @@ class Field implements AbstractField {
         where,
         extraCtx,
         optionsQuery,
-        formFieldNames
+        formFieldNames,
+        user
       );
       return;
     }
@@ -368,6 +375,8 @@ class Field implements AbstractField {
       );
 
       const rows = await refTable.getJoinedRows({
+        forUser: user,
+        forPublic: user?.role_id === 100,
         joinFields: {
           first_level: {
             ref: this.attributes.relation,
@@ -404,13 +413,16 @@ class Field implements AbstractField {
             this.type === "File"
               ? this.attributes.select_file_where
               : whereWithExisting,
-            this.attributes
+            this.attributes,
+            undefined,
+            user
           )
         : await optionsQuery(
             this.reftable_name,
             this.type,
             this.attributes,
-            whereWithExisting
+            whereWithExisting,
+            user
           );
       const summary_field =
         this.attributes.summary_field ||

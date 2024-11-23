@@ -360,7 +360,10 @@ const run = async (
         false,
         undefined,
         extra.req.user ? { ...state, user_id: extra.req.user } : state,
-        undefined
+        undefined,
+        undefined,
+        undefined,
+        extra.req.user || { role_id: 100 }
       );
       segment.field = field;
     },

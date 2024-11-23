@@ -1,10 +1,11 @@
 {
   "name": "@saltcorn/filemanager",
-  "version": "1.0.0-rc.6",
+  "version": "1.0.0",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "sirv public --no-clear"
+    "start": "sirv public --no-clear",
+    "test": "echo NO TESTS"
   },
   "devDependencies": {
     "@fortawesome/free-regular-svg-icons": "5.15.4",

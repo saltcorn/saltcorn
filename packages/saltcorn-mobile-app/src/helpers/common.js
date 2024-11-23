@@ -25,7 +25,7 @@ export function showAlerts(alerts, toast = true) {
   <div 
     id="toasts-area" 
     class="toast-container position-fixed bottom-0 start-50 p-0" 
-    style="z-index: 999;" 
+    style="z-index: 9999;" 
     aria-live="polite" 
     aria-atomic="true">
   </div>
