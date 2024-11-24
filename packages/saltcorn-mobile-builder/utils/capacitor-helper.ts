@@ -70,8 +70,6 @@ export class CapacitorHelper {
   public async buildApp() {
     if (!this.useDocker) {
       this.addPlatforms();
-      this.addCordovaPlugins();
-      this.addCapacitorPlugins();
       this.generateAssets();
       this.capSync();
       if (this.isAndroid) {
@@ -157,62 +155,6 @@ export class CapacitorHelper {
         );
     };
     for (const platform of this.platforms) addFn(platform);
-  }
-
-  private addCordovaPlugins() {
-    const addFn = (plugin: string) => {
-      let result = spawnSync("npm", ["install", plugin], {
-        cwd: this.buildDir,
-        maxBuffer: 1024 * 1024 * 10,
-        env: {
-          ...process.env,
-          NODE_ENV: "development",
-        },
-      });
-      if (result.output) console.log(result.output.toString());
-      else if (result.error)
-        throw new Error(
-          `Unable to add ${plugin} (code ${result.status})` +
-            `\n\n${result.error.toString()}`
-        );
-    };
-
-    for (const plugin of [
-      "cordova-plugin-file@7.0.0",
-      "cordova-plugin-inappbrowser",
-      "cordova-plugin-network-information",
-      "cordova-plugin-geolocation",
-      "cordova-plugin-camera",
-    ])
-      addFn(plugin);
-  }
-
-  private addCapacitorPlugins() {
-    const addFn = (plugin: string) => {
-      let result = spawnSync("npm", ["install", plugin], {
-        cwd: this.buildDir,
-        maxBuffer: 1024 * 1024 * 10,
-        env: {
-          ...process.env,
-          NODE_ENV: "development",
-        },
-      });
-      if (result.output) console.log(result.output.toString());
-      else if (result.error)
-        throw new Error(
-          `Unable to add ${plugin} (code ${result.status})` +
-            `\n\n${result.error.toString()}`
-        );
-    };
-
-    for (const plugin of [
-      "@capacitor-community/sqlite",
-      "@capacitor/filesystem",
-      "@capacitor/camera",
-      "@capacitor/network",
-      "@capacitor/geolocation",
-    ])
-      addFn(plugin);
   }
 
   private generateAssets() {

@@ -25,6 +25,7 @@ const resizer = require("resize-with-sharp-or-jimp");
 
 /**
  * copy saltcorn-mobile-app as a template to buildDir
+ * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
  */
@@ -37,7 +38,8 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   });
   console.log(result.output.toString());
 
-  for (const pkg of [
+  console.log("installing capacitor deps and plugins");
+  const capDepsAndPlugins = [
     "@capacitor/cli@6.1.2",
     "@capacitor/core@6.1.2",
     "@capacitor/assets@3.0.5",
@@ -46,12 +48,22 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/geolocation@6.0.2",
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
-  ]) {
-    result = spawnSync("npm", ["install", pkg], {
-      cwd: buildDir,
-    });
-    console.log(result.output.toString());
-  }
+  ];
+  result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
+    cwd: buildDir,
+    maxBuffer: 1024 * 1024 * 10,
+  });
+  console.log(result.output.toString());
+
+  console.log("installing cordova plugins");
+  const cordovaPlugins = [
+    "cordova-plugin-file@8.1.3",
+    "cordova-plugin-inappbrowser@6.0.0",
+  ];
+  result = spawnSync("npm", ["install", ...cordovaPlugins], {
+    cwd: buildDir,
+    maxBuffer: 1024 * 1024 * 10,
+  });
 }
 
 export function writeCapacitorConfig(buildDir: string, config: any) {
