@@ -2,7 +2,7 @@
 
 import { getOfflineMsg } from "../helpers/offline_mode";
 
-const getHeaders = () => {
+export const getHeaders = () => {
   const state = saltcorn.data.state.getState();
   const config = state.mobileConfig;
   const versionTag = config.version_tag;

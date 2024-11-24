@@ -70,7 +70,6 @@ export class CapacitorHelper {
   public async buildApp() {
     if (!this.useDocker) {
       this.addPlatforms();
-      this.capCopy();
       this.addCordovaPlugins();
       this.addCapacitorPlugins();
       this.generateAssets();
@@ -142,7 +141,7 @@ export class CapacitorHelper {
           `Unable to install ${platform} (code ${result.status})` +
             `\n\n${result.error.toString()}`
         );
-      result = spawnSync("npm", ["run", "add-platform", "--", platform], {
+      result = spawnSync("npx", ["cap", "add", platform], {
         cwd: this.buildDir,
         maxBuffer: 1024 * 1024 * 10,
         env: {
@@ -284,8 +283,6 @@ export class CapacitorHelper {
   private xCodeBuild() {
     try {
       console.log("xcodebuild -workspace");
-
-      // xcodebuild archive -workspace App.xcworkspace -scheme App -configuration Release -archivePath ./build/App.xcarchive
       let buffer = execSync(
         `xcodebuild -workspace ios/App/App.xcworkspace ` +
           `-scheme App -destination "generic/platform=iOS" ` +
@@ -331,23 +328,6 @@ export class CapacitorHelper {
     else if (result.error)
       throw new Error(
         `Unable to sync the native directory (code ${result.status})` +
-          `\n\n${result.error.toString()}`
-      );
-  }
-
-  private capCopy() {
-    const result = spawnSync("npx", ["cap", "sync"], {
-      cwd: this.buildDir,
-      maxBuffer: 1024 * 1024 * 10,
-      env: {
-        ...process.env,
-        NODE_ENV: "development",
-      },
-    });
-    if (result.output) console.log(result.output.toString());
-    else if (result.error)
-      throw new Error(
-        `Unable to update the native directory (code ${result.status})` +
           `\n\n${result.error.toString()}`
       );
   }

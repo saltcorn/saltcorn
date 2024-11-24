@@ -20,12 +20,12 @@ export PATH=$PATH:/opt/gradle-8.4/bin
 
 cd /saltcorn-mobile-app
 npm install @capacitor/cli @capacitor/core @capacitor/android
-npm run add-platform android
-
+npx cap add android
 npx capacitor-assets generate
+npx cap sync
 
 npm install cordova-plugin-file@8.1.2
-npm install cordova-plugin-inappbrowser
+npm install cordova-plugin-inappbrowser@6.0.0
 
 # data extraction rules
 cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
