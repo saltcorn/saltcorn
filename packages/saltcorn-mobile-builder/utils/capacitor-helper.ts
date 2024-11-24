@@ -13,6 +13,8 @@ import {
   writeDataExtractionRules,
   writeNetworkSecurityConfig,
   copyPrepopulatedDb,
+  modifyInfoPlist,
+  writePrivacyInfo,
 } from "./common-build-utils";
 
 export type CapacitorCfg = {
@@ -88,6 +90,8 @@ export class CapacitorHelper {
       }
       if (this.isIOS) {
         writePodfile(this.buildDir);
+        await modifyInfoPlist(this.buildDir);
+        writePrivacyInfo(this.buildDir);
         this.xCodeBuild();
       }
     } else this.buildWithDocker();

@@ -43,8 +43,8 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/cli@6.1.2",
     "@capacitor/core@6.1.2",
     "@capacitor/assets@3.0.5",
-    "@capacitor/filesystem@6.0.1",
-    "@capacitor/camera@6.1.0",
+    "@capacitor/filesystem@6.0.2",
+    "@capacitor/camera@6.1.1",
     "@capacitor/geolocation@6.0.2",
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
@@ -411,6 +411,34 @@ export function prepareExportOptionsPlist(
   }
 }
 
+export async function modifyInfoPlist(buildDir: string) {
+  const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
+  const content = readFileSync(infoPlist, "utf8");
+
+  const newCfgs = `
+  <key>NSCameraUsageDescription</key>
+  <string>This app requires access to the camera to take photos</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>This app requires access to the photo library to select photos</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>This app requires access to the photo library to save photos</string>
+
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>This app requires access to your location to save it in the database</string>
+
+  <key>UIFileSharingEnabled</key>
+  <true/>
+  <key>LSSupportsOpeningDocumentsInPlace</key>
+  <true/>
+  `;
+  // add newCfgs after the first <dict> tag
+  const newContent = content.replace(
+    /<dict>/,
+    `<dict>${newCfgs}`
+  );
+  // writeFileSync(infoPlist, newContent, "utf8");
+}
+
 export async function decodeProvisioningProfile(
   buildDir: string,
   provisioningProfile: string
@@ -433,6 +461,29 @@ export async function decodeProvisioningProfile(
     );
     throw error;
   }
+}
+
+export function writePrivacyInfo(buildDir: string) {
+  const infoFile = join(buildDir, "ios", "App", "PrivacyInfo.xcprivacy");
+  const content = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+      <!-- Add this dict entry to the array if the PrivacyInfo file already exists -->
+      <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array>
+          <string>C617.1</string>
+        </array>
+      </dict>
+    </array>
+  </dict>
+</plist>`;
+  writeFileSync(infoFile, content);
 }
 
 /**

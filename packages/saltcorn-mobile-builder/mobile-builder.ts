@@ -1,6 +1,5 @@
 const { PluginManager } = require("live-plugin-manager");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
-const { features } = require("@saltcorn/data/db/state");
 import { join, basename } from "path";
 import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
