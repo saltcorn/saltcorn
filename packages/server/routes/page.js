@@ -66,6 +66,7 @@ const runPage = async (page, req, res, tic) => {
           description: page.description,
           bodyClass: "page_" + db.sqlsanitize(page.name),
           no_menu: page.attributes?.no_menu,
+          requestFluidLayout: page.attributes?.request_fluid_layout,
         } || `${page.name} page`,
         add_edit_bar({
           role,
