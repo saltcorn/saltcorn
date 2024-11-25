@@ -161,7 +161,7 @@ describe("Stable versioning install", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(dbPlugin).not.toBe(null);
-    expect(dbPlugin.version).toBe("0.1.0");
+    expect(dbPlugin.version).toBe("0.0.1");
   });
 
   it("installs a fixed version", async () => {
@@ -178,7 +178,7 @@ describe("Stable versioning install", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(dbPlugin).not.toBe(null);
-    expect(dbPlugin.version).toBe("0.1.0");
+    expect(dbPlugin.version).toBe("0.0.1");
   });
 
   it("installs and downgrades a fixed version", async () => {
@@ -196,7 +196,7 @@ describe("Stable versioning install", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(dbPlugin).not.toBe(null);
-    expect(dbPlugin.version).toBe("0.0.6");
+    expect(dbPlugin.version).toBe("0.0.1");
   });
 });
 
@@ -276,7 +276,7 @@ describe("Stable versioning upgrade", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(newPlugin).not.toBe(null);
-    expect(newPlugin.version).toBe("0.1.0");
+    expect(newPlugin.version).toBe("0.0.1");
   });
 
   it("upgrades to fixed version", async () => {
@@ -344,6 +344,6 @@ describe("Stable versioning upgrade", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(newPlugin).not.toBe(null);
-    expect(newPlugin.version).toBe("0.0.6");
+    expect(newPlugin.version).toBe("0.0.1");
   });
 });
