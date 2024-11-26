@@ -21,7 +21,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
@@ -1528,44 +1527,6 @@ export const bstyleopt = (style) => ({
 export const rand_ident = () =>
   Math.floor(Math.random() * 16777215).toString(16);
 
-export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
-  const { data } = query.node(nodeId).get();
-  const { type, props, nodes } = data;
-  const newProps = { ...props };
-  if (newProps.rndid) {
-    newProps.rndid = rand_ident();
-  }
-  const children = (nodes || []).map(recursivelyCloneToElems(query));
-  if (data.displayName === "Columns") {
-    const cols = ntimes(data.props.ncols, (ix) =>
-      recursivelyCloneToElems(query)(data.linkedNodes["Col" + ix])
-    );
-    return React.createElement(Columns, {
-      ...newProps,
-      ...(typeof ix !== "undefined" ? { key: ix } : {}),
-      contents: cols,
-    });
-  }
-  if (data.isCanvas)
-    return React.createElement(
-      Element,
-      {
-        ...newProps,
-        canvas: true,
-        is: type,
-        ...(typeof ix !== "undefined" ? { key: ix } : {}),
-      },
-      children
-    );
-  return React.createElement(
-    type,
-    {
-      ...newProps,
-      ...(typeof ix !== "undefined" ? { key: ix } : {}),
-    },
-    children
-  );
-};
 
 export const isBlock = (block, inline, textStyle) =>
   !textStyle ||

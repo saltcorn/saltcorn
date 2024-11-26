@@ -1,19 +1,16 @@
 import React, { Fragment, useState, useEffect } from "react";
-import ListColumn from "./ListColumn";
+import { ListColumn } from "./ListColumn";
 import { Columns, ntimes } from "./Columns";
 import { rand_ident } from "./utils";
 import { Element } from "@craftjs/core";
 
 export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
-    console.log("clone nodeid", nodeId);
-
-    const { data } = query.node(nodeId).get();
+  const { data } = query.node(nodeId).get();
   const { type, props, nodes } = data;
   const newProps = { ...props };
   if (newProps.rndid) {
     newProps.rndid = rand_ident();
   }
-  
 
   // console.log("cloning", data.displayName, data.linkedNodes["listcol"]);
 
