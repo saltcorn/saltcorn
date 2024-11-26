@@ -203,22 +203,39 @@ export function writeDataExtractionRules(buildDir: string) {
   );
 }
 
-export function copyPrepopulatedDb(buildDir: string) {
-  copySync(
-    join(buildDir, "www", "scdb.sqlite"),
-    join(
-      buildDir,
-      "android",
-      "app",
-      "src",
-      "main",
-      "assets",
-      "public",
-      "assets",
-      "databases",
-      "prepopulated.db"
-    )
-  );
+export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
+  if (platforms.includes("android")) {
+    copySync(
+      join(buildDir, "www", "scdb.sqlite"),
+      join(
+        buildDir,
+        "android",
+        "app",
+        "src",
+        "main",
+        "assets",
+        "public",
+        "assets",
+        "databases",
+        "prepopulated.db"
+      )
+    );
+  }
+  if (platforms.includes("ios")) {
+    copySync(
+      join(buildDir, "www", "scdb.sqlite"),
+      join(
+        buildDir,
+        "ios",
+        "App",
+        "App",
+        "public",
+        "assets",
+        "databases",
+        "prepopulated.db"
+      )
+    );
+  }
 }
 
 export function writeNetworkSecurityConfig(buildDir: string) {
@@ -432,11 +449,8 @@ export async function modifyInfoPlist(buildDir: string) {
   <true/>
   `;
   // add newCfgs after the first <dict> tag
-  const newContent = content.replace(
-    /<dict>/,
-    `<dict>${newCfgs}`
-  );
-  // writeFileSync(infoPlist, newContent, "utf8");
+  const newContent = content.replace(/<dict>/, `<dict>${newCfgs}`);
+  writeFileSync(infoPlist, newContent, "utf8");
 }
 
 export async function decodeProvisioningProfile(
@@ -810,7 +824,13 @@ export function writePodfile(buildDir: string) {
   def capacitor_pods
     pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
     pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+    pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
+    pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
+    pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
+    pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
+    pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
+    pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
   end
   
   target 'App' do

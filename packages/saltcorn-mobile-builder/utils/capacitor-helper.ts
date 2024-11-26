@@ -74,11 +74,11 @@ export class CapacitorHelper {
       this.addPlatforms();
       this.generateAssets();
       this.capSync();
+      copyPrepopulatedDb(this.buildDir, this.platforms);
       if (this.isAndroid) {
         await modifyAndroidManifest(this.buildDir);
         writeDataExtractionRules(this.buildDir);
         writeNetworkSecurityConfig(this.buildDir);
-        copyPrepopulatedDb(this.buildDir);
         if (this.keyStoreFile && this.keyStoreAlias && this.keyStorePassword)
           modifyGradleConfig(
             this.buildDir,
