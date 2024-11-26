@@ -632,6 +632,7 @@ router.get(
             // TBD make more pretty view - in ideal with charts
             contents: [
               table(
+                { class: "table table-sm" },
                 tr(
                   th(req.__("First user E-mail")),
                   td(
