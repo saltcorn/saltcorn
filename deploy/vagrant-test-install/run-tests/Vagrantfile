@@ -54,8 +54,8 @@ EOF
     sudo -iu vagrant bash -c "cd saltcorn && git checkout fix-pytest"   
     sudo -iu vagrant bash -c "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true cd saltcorn && npm install --legacy-peer-deps && npm install --legacy-peer-deps && npm run tsc"   
     sudo -iu vagrant bash -c "python3 -m venv .env"
-    sudo -iu vagrant bash -c ".env/bin/pip install pip3 install requests pytest pyotp python-socketio[client]"
-    sudo -iu vagrant bash -c "cd saltcorn && ~/.env/bin/pytest-3 infosec-scan/"
+    sudo -iu vagrant bash -c ".env/bin/pip install requests pytest pyotp python-socketio[client]"
+    sudo -iu vagrant bash -c "cd saltcorn && ~/.env/bin/pytest infosec-scan/"
     sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data"
     sudo -iu vagrant bash -c "SQLITE_FILEPATH=/tmp/db cd saltcorn && packages/saltcorn-cli/bin/saltcorn run-tests server"
   SHELL
