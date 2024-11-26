@@ -614,7 +614,9 @@ router.get(
     const { subdomain } = req.params;
     // get tenant info
     const info = await get_tenant_info(subdomain);
+    const letsencrypt = getState().getConfig("letsencrypt", false);
     // get list of files
+
     let files;
     await db.runWithTenant(subdomain, async () => {
       files = await File.find({});
@@ -724,6 +726,20 @@ router.get(
                   submitLabel: req.__("Save"),
                   submitButtonClass: "btn-outline-primary",
                   onChange: "remove_outline(this)",
+                  additionalButtons: [
+                    ...(letsencrypt
+                      ? [
+                          {
+                            label: req.__("Acquire LetsEncrypt certificate"),
+                            id: "btnAcqCert",
+                            class: "btn btn-secondary",
+                            onclick: `press_store_button(this);ajax_post('/admin/acq-ssl-tenant/${encodeURIComponent(
+                              subdomain
+                            )}')`,
+                          },
+                        ]
+                      : []),
+                  ],
                   fields: [
                     {
                       name: "base_url",

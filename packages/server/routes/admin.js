@@ -985,7 +985,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const state = getState();
-  
+
     //TODO check this is a config key
     const validKeyName = (k) =>
       k !== "_csrf" && k !== "constructor" && k !== "__proto__";
@@ -1725,6 +1725,62 @@ const clearAllForm = (req) =>
       },
     ],
   });
+
+router.post(
+  "/acq-ssl-tenant/:subdomain",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (
+      db.is_it_multi_tenant() &&
+      db.getTenantSchema() === db.connectObj.default_schema
+    ) {
+      const { subdomain } = req.params;
+      const saneDomain = domain_sanitize(subdomain);
+      const domain = getBaseDomain();
+
+      let altname;
+      await db.runWithTenant(saneDomain, async () => {
+        altname = getState()
+          .getConfig("base_url", "")
+          .replace("https://", "")
+          .replace("http://", "")
+          .replace("/", "");
+      });
+
+      if (!altname || domain) {
+        req.json({ error: "Set Base URL for both tenant and root first." });
+        return;
+      }
+
+      try {
+        const file_store = db.connectObj.file_store;
+        const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+        // greenlock logic
+        const Greenlock = require("greenlock");
+        const greenlock = Greenlock.create({
+          packageRoot: path.resolve(__dirname, ".."),
+          configDir: path.join(file_store, "greenlock.d"),
+          maintainerEmail: admin_users[0].email,
+        });
+
+        await greenlock.sites.add({
+          subject: altname,
+        });
+        // letsencrypt
+        res.json({
+          success: true,
+          notify: "Certificate added, please restart server",
+        });
+      } catch (e) {
+        req.flash("error", e.message);
+        res.redirect("/useradmin/ssl");
+      }
+    } else {
+      req.flash("error", req.__("Not possible for tenant"));
+      res.redirect("/useradmin/ssl");
+    }
+  })
+);
 
 /**
  * Do Enable letsencrypt

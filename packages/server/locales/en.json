@@ -1494,5 +1494,6 @@
 	"Fluid layout": "Fluid layout",
 	"Request fluid layout from theme for a wider display for this page": "Request fluid layout from theme for a wider display for this page",
 	"Tenant certificates": "Tenant certificates",
-	"Also acquire certificates for tenants": "Also acquire certificates for tenants"
+	"Also acquire certificates for tenants": "Also acquire certificates for tenants",
+	"Acquire certificate": "Acquire certificate"
 }
