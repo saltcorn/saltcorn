@@ -40,10 +40,7 @@ class SaltcornSession(Session):
                              capture_output = True,
                              check= True,
                              text = True)
-    print(result.stdout)
-    print(result.stderr)
-    result.check_returncode()
-
+                             
   @staticmethod
   def asset_path(name):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "assets", name)
