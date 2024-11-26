@@ -380,6 +380,12 @@ const configTypes: ConfigTypes = {
     blurb: "Also acquire certificates for tenants",
   },
   /** @type {object} */
+  tenant_letsencrypt_sites: {
+    type: "hidden",
+    label: "Tenant LetsEncrypt sites",
+    default: [],
+  },
+  /** @type {object} */
   development_mode: {
     type: "Bool",
     label: "Development mode",
