@@ -143,6 +143,12 @@ const pagePropertiesForm = async (req, isNew) => {
         sublabel: req.__("Omit the menu from this page"),
         type: "Bool",
       },
+      {
+        name: "request_fluid_layout",
+        label: req.__("Fluid layout"),
+        sublabel: req.__("Request fluid layout from theme for a wider display for this page"),
+        type: "Bool",
+      },
     ],
   });
   return form;
@@ -429,6 +435,7 @@ router.get(
       form.hidden("id");
       form.values = page;
       form.values.no_menu = page.attributes?.no_menu;
+      form.values.request_fluid_layout = page.attributes?.request_fluid_layout;
       form.onChange = `saveAndContinue(this)`;
       res.sendWrap(
         req.__(`Page attributes`),
@@ -475,9 +482,16 @@ router.post(
         wrap(renderForm(form, req.csrfToken()), false, req)
       );
     } else {
-      const { id, columns, no_menu, html_file, ...pageRow } = form.values;
+      const {
+        id,
+        columns,
+        no_menu,
+        request_fluid_layout,
+        html_file,
+        ...pageRow
+      } = form.values;
       pageRow.min_role = +pageRow.min_role;
-      pageRow.attributes = { no_menu };
+      pageRow.attributes = { no_menu, request_fluid_layout };
       if (html_file) {
         pageRow.layout = {
           html_file: html_file,

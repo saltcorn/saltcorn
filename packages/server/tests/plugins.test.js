@@ -404,7 +404,7 @@ describe("Upgrade plugin to supported version", () => {
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.1.0");
+    expect(upgradedPlugin.version).toBe("0.0.1");
   });
 
   it("upgrades with a downgrade of the most current fixed version", async () => {
@@ -427,7 +427,7 @@ describe("Upgrade plugin to supported version", () => {
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.1.0");
+    expect(upgradedPlugin.version).toBe("0.0.1");
   });
 });
 
