@@ -111,7 +111,7 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
   } catch (e: any) {
     console.error(e);
     throw new Error(
-      `Expression "${expression}" is too complicated, I do not understand`,
+      `Expression "${expression}" is too complicated, I do not understand`
     );
   }
 }
@@ -122,7 +122,7 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
     offset?:
       | number
       | { startOf: moment.unitOfTime.StartOf }
-      | { endOf: moment.unitOfTime.StartOf },
+      | { endOf: moment.unitOfTime.StartOf }
   ) => {
     let d = new Date();
     if (typeof offset === "number") d.setDate(d.getDate() + offset);
@@ -180,7 +180,7 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
       ) {
         const theProperty = node.object.properties.find(
           // @ts-ignore
-          (p) => p.key.value === node.property.name,
+          (p) => p.key.value === node.property.name
         );
         // @ts-ignore
         if (theProperty && theProperty.value) return theProperty.value;
@@ -227,7 +227,7 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
 function jsexprToWhere(
   expression: string,
   extraCtx: any = {},
-  fields: Field[] = [],
+  fields: Field[] = []
 ): Where {
   if (!expression) return {};
   const now = new Date();
@@ -256,12 +256,12 @@ function jsexprToWhere(
             typeof cright === "function"
               ? cright(cleft)
               : typeof cleft === "function"
-                ? cleft(cright)
-                : typeof cleft === "string" || cleft === null
-                  ? { eq: [cleft, cright] }
-                  : typeof cright === "symbol" && typeof cleft !== "symbol"
-                    ? { [crightName]: cleft }
-                    : { [cleftName]: cright };
+              ? cleft(cright)
+              : typeof cleft === "string" || cleft === null
+              ? { eq: [cleft, cright] }
+              : typeof cright === "symbol" && typeof cleft !== "symbol"
+              ? { [crightName]: cleft }
+              : { [cleftName]: cright };
           //console.log({ cleft, cleftName, cright, cmp });
 
           const operators: StringToFunction = {
@@ -298,7 +298,7 @@ function jsexprToWhere(
             ({ key, value }: { key: ExtendedNode; value: ExtendedNode }) => {
               // @ts-ignore
               rec[key.value as string] = value.value;
-            },
+            }
           );
           return rec;
         },
@@ -369,7 +369,7 @@ function jsexprToWhere(
   } catch (e: any) {
     console.error(e);
     throw new Error(
-      `Expression "${expression}" is too complicated, I do not understand`,
+      `Expression "${expression}" is too complicated, I do not understand`
     );
   }
 }
@@ -445,7 +445,7 @@ function freeVariablesAST(ast: any): Array<string> {
           freeVars.pop();
           freeVars.pop();
           freeVars.push(
-            `${node.object.object.name}.${node.object.property.name}.${node.property.name}`,
+            `${node.object.object.name}.${node.object.property.name}.${node.property.name}`
           );
         } else if (
           node.object.type === "MemberExpression" &&
@@ -460,7 +460,7 @@ function freeVariablesAST(ast: any): Array<string> {
           freeVars.pop();
           freeVars.pop();
           freeVars.push(
-            `${node.object.object.object.name}.${node.object.object.property.name}.${node.object.property.name}.${node.property.name}`,
+            `${node.object.object.object.name}.${node.object.object.property.name}.${node.object.property.name}.${node.property.name}`
           );
         }
       }
@@ -480,10 +480,10 @@ function freeVariablesAST(ast: any): Array<string> {
 const add_free_variables_to_joinfields = (
   freeVars: Set<string>,
   joinFields: JoinFields,
-  fields: Field[],
+  fields: Field[]
 ) => {
   const joinFieldNames = new Set(
-    fields.filter((f) => f.is_fkey).map((f) => f.name),
+    fields.filter((f) => f.is_fkey).map((f) => f.name)
   );
   [...freeVars]
     .filter((v) => v.includes("."))
@@ -528,7 +528,7 @@ function isIdentifierWithName(node: any): node is Identifier {
  */
 function transform_for_async(
   expression: string,
-  statefuns: Record<string, PluginFunction>,
+  statefuns: Record<string, PluginFunction>
 ) {
   var isAsync = false;
   const ast: any = parseExpressionAt(expression, 0, {
@@ -560,7 +560,7 @@ function transform_for_async(
  */
 function get_expression_function(
   expression: string,
-  fields: Array<Field>,
+  fields: Array<Field>
 ): Function {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
@@ -569,7 +569,7 @@ function get_expression_function(
   const { getState } = require("../db/state");
   const f = runInNewContext(
     `(${args})=>(${expression})`,
-    getState().eval_context,
+    getState().eval_context
   );
   return (row: any, user: any) => f(row, row, user);
 }
@@ -583,14 +583,14 @@ function eval_expression(
   expression: string,
   row: any,
   user?: any,
-  errorLocation?: string,
+  errorLocation?: string
 ): any {
   try {
     const field_names = Object.keys(row).filter(
       (nm) =>
         nm.indexOf(".") === -1 &&
         nm.indexOf(">") === -1 &&
-        nm.indexOf("-") === -1,
+        nm.indexOf("-") === -1
     );
     const args = field_names.includes("user")
       ? `row, {${field_names.join()}}`
@@ -598,7 +598,7 @@ function eval_expression(
     const { getState } = require("../db/state");
     return runInNewContext(
       `(${args})=>(${expression})`,
-      getState().eval_context,
+      getState().eval_context
     )(row, row, user);
   } catch (e: any) {
     e.message = `In evaluating the expression ${expression}${
@@ -617,7 +617,7 @@ function eval_expression(
 function get_async_expression_function(
   expression: string,
   fields: Array<Field>,
-  extraContext = {},
+  extraContext = {}
 ): any {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
@@ -641,7 +641,7 @@ function get_async_expression_function(
 function apply_calculated_fields(
   rows: Array<Row>,
   fields: Array<Field>,
-  ignore_errors?: boolean,
+  ignore_errors?: boolean
 ): Array<Row> {
   let hasExprs = false;
   let transform = (x: Row): Row => x;
@@ -664,7 +664,7 @@ function apply_calculated_fields(
         } catch (e: any) {
           if (!ignore_errors)
             throw new Error(
-              `Error in calculating "${field.name}": ${e.message}`,
+              `Error in calculating "${field.name}": ${e.message}`
             );
         }
         return oldf(row);
@@ -684,7 +684,7 @@ function apply_calculated_fields(
 const apply_calculated_fields_stored = async (
   row: Row,
   fields: Array<Field>,
-  table: Table,
+  table: Table
 ): Promise<Row> => {
   let hasExprs = false;
   let transform = (x: Row) => x;
@@ -764,7 +764,7 @@ const apply_calculated_fields_stored = async (
  */
 const recalculate_for_stored = async (
   table: Table,
-  where?: Where,
+  where?: Where
 ): Promise<void> => {
   let rows = [];
   let maxid = null;
@@ -775,7 +775,7 @@ const recalculate_for_stored = async (
       try {
         getState().log(
           6,
-          `recalculate_for_stored on table ${table.name} row ${row.id}`,
+          `recalculate_for_stored on table ${table.name} row ${row.id}`
         );
         await table.updateRow({}, row.id, undefined, true);
       } catch (e: any) {

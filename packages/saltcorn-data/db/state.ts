@@ -49,7 +49,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 import { runInContext, createContext } from "vm";
-import faIcons from "./fa5-icons"
+import faIcons from "./fa5-icons";
 
 /**
  * @param v
@@ -266,7 +266,7 @@ class State {
       else
         this.log(
           5,
-          `Warning: ${user.email} layout plugin ${pluginName} not found`,
+          `Warning: ${user.email} layout plugin ${pluginName} not found`
         );
     }
     const role_id = user ? +user.role_id : 100;
@@ -351,7 +351,7 @@ class State {
   async refreshUserLayouts() {
     this.userLayouts = {};
     const usersWithLayout = (await User.find({})).filter(
-      (user) => user._attributes?.layout,
+      (user) => user._attributes?.layout
     );
     for (const user of usersWithLayout) {
       let pluginName = user._attributes.layout.plugin;
@@ -391,7 +391,7 @@ class State {
       if (strings)
         await writeFile(
           join(localeDir, `${lang}.json`),
-          JSON.stringify(strings, null, 2),
+          JSON.stringify(strings, null, 2)
         );
     }
     this.log(5, "Refresh i18n");
@@ -421,7 +421,7 @@ class State {
           view.table_id,
           view.name,
 
-          view.configuration,
+          view.configuration
         );
         this.virtual_triggers.push(...trs);
       }
@@ -481,12 +481,12 @@ class State {
     const allTables = await db.select(
       "_sc_tables",
       {},
-      { orderBy: "name", nocase: true },
+      { orderBy: "name", nocase: true }
     );
     this.fields = await db.select(
       "_sc_fields",
       {},
-      { orderBy: "name", nocase: true },
+      { orderBy: "name", nocase: true }
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
     const Model = require("../models/model");
@@ -522,7 +522,7 @@ class State {
           f.attributes.locale
         ) {
           const localized = table.fields.find(
-            (lf: Field) => lf.name === f.attributes.localizes_field,
+            (lf: Field) => lf.name === f.attributes.localizes_field
           );
           if (localized) {
             if (db.isSQLite && typeof localized.attributes === "string")
@@ -653,7 +653,7 @@ class State {
     plugin: Plugin,
     cfg?: SingleConfig,
     location?: string,
-    modname?: string,
+    modname?: string
   ) {
     this.log(6, `Register Plugin: ${name} at ${location}`);
     this.plugins[name] = plugin;
@@ -688,12 +688,12 @@ class State {
         hasFunctions = true;
         this.functions[k] = v;
         this.function_context[k] = typeof v === "function" ? v : v.run;
-      },
+      }
     );
     Object.entries(withCfg("modelpatterns", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
         this.modelpatterns[k] = v;
-      },
+      }
     );
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
       this.fileviews[k] = v;
@@ -708,7 +708,7 @@ class State {
       this.fonts[k] = v as string;
     });
     withCfg("icons", []).forEach((icon: string) => {
-      this.icons.push(icon)
+      this.icons.push(icon);
     });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
       this.table_providers[k] = v;
@@ -720,7 +720,7 @@ class State {
       ([k, v]: [k: string, v: any]) => {
         if (!v.name) v.name = k;
         this.external_tables[k] = v;
-      },
+      }
     );
     Object.entries(withCfg("fieldviews", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
@@ -737,7 +737,7 @@ class State {
             this.stashed_fieldviews[v.type] = {};
           this.stashed_fieldviews[v.type][k] = v;
         }
-      },
+      }
     );
     const layout = withCfg("layout");
     if (layout) {
@@ -807,7 +807,7 @@ class State {
   async refresh_codepages(noSignal?: boolean, keepUnchanged?: boolean) {
     const code_pages: Record<string, string> = this.getConfig(
       "function_code_pages",
-      {},
+      {}
     );
     if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
     this.codepage_context = {};
@@ -890,7 +890,7 @@ class State {
     const menu = this.getConfig("menu_items", []);
     strings.push(...menu.map(({ label }: { label: string }) => label));
     return Array.from(new Set(strings)).filter(
-      (s) => s && removeAllWhiteSpace(s),
+      (s) => s && removeAllWhiteSpace(s)
     );
   }
 
@@ -1059,7 +1059,7 @@ const set_tenant_base_url = (tenant_subdomain: string, value?: string) => {
 const init_multi_tenant = async (
   plugin_loader: Function,
   disableMigrate: boolean,
-  tenantList: string[],
+  tenantList: string[]
 ) => {
   // for each domain
   if (singleton?.configs?.base_url?.value) {
@@ -1081,7 +1081,7 @@ const init_multi_tenant = async (
     } catch (err: any) {
       console.error(
         `init_multi_tenant error in domain ${domain}: `,
-        err.message,
+        err.message
       );
     }
   }
