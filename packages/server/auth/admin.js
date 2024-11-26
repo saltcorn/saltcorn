@@ -631,7 +631,7 @@ router.get(
     const tenantCertForm = await config_fields_form({
       req,
       field_names: ["tenants_certificates"],
-      action: "/admin/save_config",
+      action: "/admin/save-config?boolcheck=tenants_certificates",
     });
     const letsencrypt = getState().getConfig("letsencrypt", false);
     const has_custom =
