@@ -628,6 +628,11 @@ router.get(
       return;
     }
     // TBD describe logic around letsencrypt
+    const tenantCertForm = await config_fields_form({
+      req,
+      field_names: ["tenants_certificates"],
+      action: "/admin/save_config",
+    });
     const letsencrypt = getState().getConfig("letsencrypt", false);
     const has_custom =
       getState().getConfig("custom_ssl_certificate", false) &&
@@ -705,6 +710,9 @@ router.get(
                     )
                   )
                 ),
+              db.is_it_multi_tenant()
+                ? renderForm(tenantCertForm, req.csrfToken())
+                : "",
             ],
           },
           {

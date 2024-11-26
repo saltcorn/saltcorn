@@ -374,6 +374,11 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Unsafe modules",
   },
+  tenants_certificates: {
+    type: "Bool",
+    label: "Tenant certificates",
+    blurb: "Also acquire certificates for tenants",
+  },
   /** @type {object} */
   development_mode: {
     type: "Bool",
