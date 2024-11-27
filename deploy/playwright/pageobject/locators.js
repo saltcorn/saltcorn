@@ -1,3 +1,5 @@
+const { baseURL } = require('./base_url.js');
+
 class PageLocators {
   constructor(page) {
     this.page = page;
@@ -602,12 +604,12 @@ class PageLocators {
     this.view_Click = 'a[href="/viewedit"]';
     this.inputmenu_style = '#inputmenu_style';
     this.finish_button = 'button.btn.btn-primary[type="submit"]';
-    this.base_urls ='https://e2etest.saltcorn.co/';
+    this.base_urls =baseURL+'/';
     this.saltcorntableclick = 'h1:has-text("Tables")';
-    this.tableclick = 'https://e2etest.saltcorn.co/table';
-    this.viewclick = 'https://e2etest.saltcorn.co/viewedit';
-    this.pageclick = 'https://e2etest.saltcorn.co/pageedit';
-    this.create_CSV ='https://e2etest.saltcorn.co/table/create-from-csv';
+    this.tableclick = baseURL+'/table';
+    this.viewclick = baseURL+'/viewedit';
+    this.pageclick = baseURL+'pageedit';
+    this.create_CSV =baseURL+'/create-from-csv';
     this.admin_Clear_All ='admin/clear-all';
     this.admin_Build_Mobile_App = 'Page url should be /admin/build-mobile-app';
     this.plugins_Set_All ='Page url should be /plugins?set=all';
