@@ -178,7 +178,7 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.firstfield);
             await page.selectOption(pageobject.fielddropdown, { label: 'Name' });
             // select text style as heading 4 for task name
-            await page.click("button.style-h4");
+            await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 4' });
         });
         await page.waitForTimeout(4000);
         // click on next button

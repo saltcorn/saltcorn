@@ -281,7 +281,7 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Drag Name on top of the page set heading', async () => {
         await functions.drag_And_Drop(pageobject.fullnameuser, pageobject.addresslabel);
         // select text style as Heading 1 for full name
-        await page.click("button.style-h1");
+        await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 1' });
     });
     await page.waitForTimeout(4000);
     await customAssert('Drag address row on third column', async () => {

@@ -170,10 +170,10 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.deletebutton);
         await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
         await functions.fill_Text(pageobject.numbercolumn, '2');
-        await functions.drag_And_Drop(pageobject.textSource, pageobject.firstrowcolumn1);
+        await functions.drag_And_Drop(pageobject.textSource, pageobject.secondrowcolumn1);
         await functions.clearText(pageobject.richTextEditor);
         await page.keyboard.type('team');
-        await functions.drag_And_Drop(pageobject.joinField, pageobject.firstrowcolumn);
+        await functions.drag_And_Drop(pageobject.joinField, pageobject.secondrowcolumn);
         await customAssert('Select Name from teams for join field', async () => {
             await page.click(pageobject.fieldsButton);
             await page.click(pageobject.teamDropdownLocator);
@@ -186,12 +186,11 @@ test.describe('E2E Test Suite', () => {
         await page.keyboard.type('Task Assigned');
         // await functions.fill_Text(pageobject.richTextEditor, 'Task Assigned');
         await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.secondrowcolumn);
-        await page.waitForTimeout(1000);
         await customAssert('Select id field in on field dropdown', async () => {
             await page.selectOption(pageobject.Childtablefield, { value: 'id' });
         });
         await customAssert('Select Count in static dropdown', async () => {
-            const StatisticDropdown = await page.locator('select.stat');
+            const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
             await StatisticDropdown.selectOption({ value: 'Count' });
         });
         await page.waitForTimeout(5000);

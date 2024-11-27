@@ -4,12 +4,10 @@ class PageLocators {
     this.tryItNowLink = 'a[href="https://saltcorn.com/tenant/create"]';
     this.subdomainInput = 'input[name="subdomain"]';
     this.submitButton = 'button[type="submit"]';
-
     this.emailInput = 'input[type="email"]';
     this.passwordInput = 'input[type="password"]';
     this.textSource = 'div.wrap-builder-elem[title="Text"]';
     this.textlocator = '#saltcorn-builder > div.row > div.col-sm-auto.builder-sidebar > div > div.settings-panel.card.mt-1 > div.card-body.p-2 > div > div.border > div';
-
     this.InputName = '#inputname';
     this.addFieldButtonLocator = 'a.btn.btn-primary.add-field.mt-2:has-text("Add field")';
     this.columnsElement = 'div[title="Split into columns"]';
@@ -49,7 +47,7 @@ class PageLocators {
     this.CardUrl = '//table//tr[2]//td//input';
     this.click_table='a[href="/table"]';
     this.createtablebutton='a[href="/table/new"]';
-    this.SaltCornButton='#accordionSidebar > a > div';
+    this.SaltCornButton='a:has-text("Saltcorn")';
     this.createviewbutton='#accordionSidebar > li.nav-item.active > a';
     this.sidebarviewbutton = 'a.nav-link[href="/viewedit"]';
     this.createnewview = 'a[href="/viewedit/new"]';
@@ -99,10 +97,11 @@ class PageLocators {
     this.choosefilebutton = '#inputfile';
     this.createviewfromtable = '#table-views > div > a';
     this.textstyle = '.form-control form-select';
-    this.fielddropdown = 'select.field';
-    this.fieldViewdropdown = 'select.fieldview';
-    this.Toolbardropdown = 'select.field-toolbar';
-    this.Childtablefield = 'select.agg_field';
+    this.fielddropdown = '(//select[@class="form-control form-select"])[1]';
+    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]';
+    this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]';
+    this.textstyleLocator = '(//select[@class="form-control form-select"])[3]';
+    this.Childtablefield = '(//select[@class="form-control form-select"])[2]';
     this.createuserlink = 'a[href="/useradmin/new"]';
     this.inputdob = '#inputdob';
     this.inputemail = '#inputemail';
@@ -381,8 +380,8 @@ class PageLocators {
     this.searchIconLocator = 'input.rfipsearch__input[placeholder="Search Icons"]';
     this.editIconLocator = 'i.far.fa-edit';
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
-    this.secondrowcolumn = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
-    this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
+    this.secondrowcolumn = '.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
+    this.secondrowcolumn1 = '.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
@@ -490,8 +489,7 @@ class PageLocators {
     this.NumberInput = 'input.form-control[type="number"][min="1"][max="11"][value="2"]';
     this.NumberInputW = 'input.form-control[type="number"][min="1"][max="11"][value="6"]';
     this.AddressLocator = 'div.d-inline:has-text("132 east Greater Noida new delhi india")';
-    this.firstrowcolumn = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(1) .canvas';
-    this.firstrowcolumn1 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
+    this.firstrowcolumn1 = '.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
     this.NewPersonLink = 'a[href="/view/Edit_People"]:has-text("New person")';
     this.InputFullName = '#inputfull_name';
     this.inputDateOfBirth = '#inputdate_of_birth';
@@ -576,7 +574,55 @@ class PageLocators {
     this.UploadImageSave ='button.btn.btn-sm.btn-primary.builder-save';
     this.CreatedPageName = 'a:has-text("saltcorn_image")';
     this.FileInputForUpload = 'input[type="file"]';
-    this.ImageLocator = 'img[src="/files/serve/a.jpg"]';
+    this.ImageLocator = 'img[src="/files/serve/images.jpg"]';
+    this.settingsDropdown = '#dropdownSettings';
+    this.aboutApplicationLink2 ='a.dropdown-item:has-text("About application")';
+    this.backupTab = 'a.nav-link:has-text("Backup")';
+    this.emailTab = 'a.nav-link:has-text("Email")';
+    this.systemTab = 'a.nav-link[href="/admin/system"]';
+    this.mobileAppLink = 'a.nav-link:has-text("Mobile app")';
+    this.viewNavLinkID = '#viewNavLinkID';
+    this.androidCheckbox ='.form-check-input[name="androidPlatform"]';
+    this.appName = '#appNameInputId';
+    this.appId ='#appIdInputId';
+    this.appVersion = '#appVersionInputId';
+    this.serverURL='#serverURLInputId';
+    this.appIcon = '#appIconInputId';
+    this.splashPage ='#splashPageInputId';
+    this.debugBuild   = '#debugBuildTypeId';
+    this.buildMobile = '#buildMobileAppBtnId';
+    this.inputviewtemplate = '#inputviewtemplate';
+    this.inputtable_name  = '#inputtable_name';
+    this.view_Click = 'a[href="/viewedit"]';
+    this.inputmenu_style = '#inputmenu_style';
+    this.finish_button = 'button.btn.btn-primary[type="submit"]';
+    this.base_urls ='https://e2etest.saltcorn.co/';
+    this.saltcorntableclick = 'h1:has-text("Tables")';
+    this.tableclick = 'https://e2etest.saltcorn.co/table';
+    this.viewclick = 'https://e2etest.saltcorn.co/viewedit';
+    this.pageclick = 'https://e2etest.saltcorn.co/pageedit';
+    this.create_CSV ='https://e2etest.saltcorn.co/table/create-from-csv';
+    this.admin_Clear_All ='admin/clear-all';
+    this.admin_Build_Mobile_App = 'Page url should be /admin/build-mobile-app';
+    this.plugins_Set_All ='Page url should be /plugins?set=all';
+    this.views = 'Page url should be /views';
+    this.View_Pattern ='View Pattern should be list';
+    this.table_Create_View = 'Select users table to create view';
+    this.all_Tab_label_All = 'All tab label should be All';
+    this.Module_Setting_label='Module setting label should be Modules';
+    this.Page_Url_Plugins = 'Page url should be /plugins';
+    this.Create_Page =  'span.card-header h5.m-0.fw-bold.d-inline a[href="/pageedit"]';
+    this.createpage = 'a.btn[href="/pageedit/new"]';
+    this.Pack_locator = 'a.nav-link.active[href="#tab-Packs"][role="tab"]';
+    this.htmltextdone  ='button.btn.btn-sm.btn-primary.builder-save';
+    this.Theme_Locator = 'a.nav-link.active[href="#tab-Theme"]';
+    this.Trigger_Locator =  'div.card-header ul.nav-tabs li:nth-of-type(1) a';
+    this.Files_Locator = 'div.card-header ul.nav-tabs li:nth-of-type(2) a';
+    this.Help_Locator = 'div.card-header ul.nav-tabs li:nth-of-type(3) a';
+    this.Theme_Locator = 'a.nav-link.active[href="#tab-Theme"][role="tab"]';
+    this.Users_Locator = 'a.nav-link.active[href="#tab-Users"][role="tab"]';
+    this.saltcornImageLink = '.navbar-brand.mt-1.ms-3.mb-2';
+
   }
 }
 
