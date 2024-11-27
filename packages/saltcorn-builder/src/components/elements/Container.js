@@ -681,34 +681,34 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "rotate",
-              label: "Rotate °",
+              label: "Rotate°",
               type: "Integer",
             }}
             node={node}
             setProp={setProp}
           />
           <SettingsRow
-            field={{ name: "skewX", label: "SkewX °", type: "Integer" }}
+            field={{ name: "skewX", label: "SkewX°", type: "Integer" }}
             node={node}
             setProp={setProp}
             subProp="transform"
             valuePostfix="deg"
           />
           <SettingsRow
-            field={{ name: "skewY", label: "SkewY °", type: "Integer" }}
+            field={{ name: "skewY", label: "SkewY°", type: "Integer" }}
             node={node}
             setProp={setProp}
             subProp="transform"
             valuePostfix="deg"
           />
-           <SettingsRow
+          <SettingsRow
             field={{ name: "scaleX", label: "Scale X", type: "Float" }}
             node={node}
             setProp={setProp}
             subProp="transform"
           />
           <SettingsRow
-            field={{ name: "scaleY", label: "Scale y", type: "Float" }}
+            field={{ name: "scaleY", label: "Scale Y", type: "Float" }}
             node={node}
             setProp={setProp}
             subProp="transform"

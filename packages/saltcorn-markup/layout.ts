@@ -681,7 +681,7 @@ const render = ({
         : "";
 
       const transforms: any = { ...transform };
-      if (rotate) transforms.rotate = `${rotate}deg`;
+      if (rotate && rotate !== "0") transforms.rotate = `${rotate}deg`;
       let stransform = Object.keys(transforms).length
         ? "transform: " +
           Object.entries(transforms)
@@ -689,6 +689,7 @@ const render = ({
             .map(([k, v]) => `${k}(${v})`)
             .join(" ")
         : "";
+      console.log({ rotate, transform });
 
       return wrap(
         segment,

@@ -1085,7 +1085,7 @@ const ConfigField = ({
       if (isStyle && value === "auto") {
         styleVal = "";
         styleDim = "auto";
-      } else if (isStyle && value && typeof value === "string") {
+      } else if ((isStyle || subProp) && value && typeof value === "string") {
         const matches = value.match(/^([-]?[0-9]+\.?[0-9]*)(.*)/);
         if (matches) {
           styleVal = matches[1];
@@ -1097,13 +1097,13 @@ const ConfigField = ({
           {styleDim !== "auto" && (
             <input
               type="number"
-              value={(isStyle ? styleVal : value) || ""}
+              value={(isStyle || subProp ? styleVal : value) || ""}
               className={`field-${field?.name} w-50 form-control-sm d-inline dimunit`}
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
                 e?.target &&
                 myOnChange(
-                  isStyle
+                  isStyle || subProp
                     ? `${e.target.value}${styleDim || "px"}`
                     : e.target.value
                 )
@@ -1114,7 +1114,7 @@ const ConfigField = ({
             value={or_if_undef(
               configuration
                 ? configuration[field.name + "Unit"]
-                : isStyle
+                : isStyle || subProp
                 ? styleDim
                 : props[field.name + "Unit"],
               "px"
@@ -1136,6 +1136,13 @@ const ConfigField = ({
                   prop.configuration[field.name + "Unit"] = target_value;
                 else if (isStyle) {
                   prop.style[field.name] = `${or_if_undef(
+                    myStyleVal,
+                    0
+                  )}${target_value}`;
+                }
+                if (subProp) {
+                  if (!prop[subProp]) prop[subProp] = {};
+                  prop[subProp][field.name] = `${or_if_undef(
                     myStyleVal,
                     0
                   )}${target_value}`;
