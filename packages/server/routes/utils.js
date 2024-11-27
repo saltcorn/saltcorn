@@ -33,6 +33,7 @@ const {
 const path = require("path");
 const { UAParser } = require("ua-parser-js");
 const crypto = require("crypto");
+const { domain_sanitize } = require("@saltcorn/admin-models/models/tenant");
 
 const get_sys_info = async () => {
   const disks = await si.fsSize();
@@ -372,6 +373,19 @@ const is_ip_address = (hostname) => {
   return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
 };
 
+const tenant_letsencrypt_name = async (subdomain) => {
+  const saneDomain = domain_sanitize(subdomain);
+  let altname;
+  await db.runWithTenant(saneDomain, async () => {
+    altname = getState()
+      .getConfig("base_url", "")
+      .replace("https://", "")
+      .replace("http://", "")
+      .replace("/", "");
+  });
+  return altname;
+};
+
 const admin_config_route = ({
   router,
   path,
@@ -587,4 +601,5 @@ module.exports = {
   setRole,
   getEligiblePage,
   getRandomPage,
+  tenant_letsencrypt_name,
 };

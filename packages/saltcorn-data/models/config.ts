@@ -375,6 +375,12 @@ const configTypes: ConfigTypes = {
     label: "Unsafe modules",
   },
   /** @type {object} */
+  tenant_letsencrypt_sites: {
+    type: "hidden",
+    label: "Tenant LetsEncrypt sites",
+    default: [],
+  },
+  /** @type {object} */
   development_mode: {
     type: "Bool",
     label: "Development mode",

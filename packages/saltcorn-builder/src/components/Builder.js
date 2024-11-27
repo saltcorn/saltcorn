@@ -208,6 +208,7 @@ const SettingsPanel = () => {
       sibIx + 1
     );
   };
+  
   return (
     <div className="settings-panel card mt-1">
       <div className="card-header px-2 py-1">

@@ -44,7 +44,12 @@ const {
 const db = require("@saltcorn/data/db");
 
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
-const { isAdmin, error_catcher, is_ip_address } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  is_ip_address,
+  tenant_letsencrypt_name,
+} = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {
@@ -612,8 +617,18 @@ router.get(
       return;
     }
     const { subdomain } = req.params;
+
     // get tenant info
     const info = await get_tenant_info(subdomain);
+    const letsencrypt = getState().getConfig("letsencrypt", false);
+
+    let altname = await tenant_letsencrypt_name(subdomain);
+    const tenant_letsencrypt_sites = getState().getConfig(
+      "tenant_letsencrypt_sites",
+      []
+    );
+    const has_cert = tenant_letsencrypt_sites.includes(altname);
+    
     // get list of files
     let files;
     await db.runWithTenant(subdomain, async () => {
@@ -632,6 +647,7 @@ router.get(
             // TBD make more pretty view - in ideal with charts
             contents: [
               table(
+                { class: "table table-sm" },
                 tr(
                   th(req.__("First user E-mail")),
                   td(
@@ -723,6 +739,20 @@ router.get(
                   submitLabel: req.__("Save"),
                   submitButtonClass: "btn-outline-primary",
                   onChange: "remove_outline(this)",
+                  additionalButtons: [
+                    ...(letsencrypt && !has_cert
+                      ? [
+                          {
+                            label: req.__("Acquire LetsEncrypt certificate"),
+                            id: "btnAcqCert",
+                            class: "btn btn-secondary",
+                            onclick: `press_store_button(this);ajax_post('/admin/acq-ssl-tenant/${encodeURIComponent(
+                              subdomain
+                            )}')`,
+                          },
+                        ]
+                      : []),
+                  ],
                   fields: [
                     {
                       name: "base_url",
