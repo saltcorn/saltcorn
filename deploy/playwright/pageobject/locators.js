@@ -608,7 +608,7 @@ class PageLocators {
     this.saltcorntableclick = 'h1:has-text("Tables")';
     this.tableclick = baseURL+'/table';
     this.viewclick = baseURL+'/viewedit';
-    this.pageclick = baseURL+'pageedit';
+    this.pageclick = baseURL+'/pageedit';
     this.create_CSV =baseURL+'/table/create-from-csv';
     this.admin_Clear_All ='admin/clear-all';
     this.admin_Build_Mobile_App = 'Page url should be /admin/build-mobile-app';
