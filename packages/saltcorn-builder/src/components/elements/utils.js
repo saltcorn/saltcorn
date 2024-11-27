@@ -665,7 +665,7 @@ export const parseStyles = (styles) =>
  * @param {object} styles
  * @returns {object}
  */
-export const reactifyStyles = (styles) => {
+export const reactifyStyles = (styles, transform) => {
   const toCamel = (s) => {
     return s.replace(/([-][a-z])/gi, ($1) => {
       return $1.toUpperCase().replace("-", "");
@@ -675,6 +675,14 @@ export const reactifyStyles = (styles) => {
   Object.keys(styles).forEach((k) => {
     reactified[toCamel(k)] = styles[k];
   });
+  if (transform) {
+    reactified.transform = Object.entries(transform)
+      .filter(([k, v]) => v !== "")
+      .map(([k, v]) => `${k}(${v})`)
+      .join(" ");
+  }
+  console.log("style", reactified);
+
   return reactified;
 };
 
@@ -830,6 +838,8 @@ const ConfigField = ({
   props,
   setter,
   isStyle,
+  subProp,
+  valuePostfix,
 }) => {
   /**
    * @param {object} v
@@ -837,7 +847,8 @@ const ConfigField = ({
    */
   const options = React.useContext(optionsCtx);
 
-  const myOnChange = (v) => {
+  const myOnChange = (v0) => {
+    const v = valuePostfix && (v0 || v0 === 0) ? v0 + valuePostfix : v0;
     setProp((prop) => {
       if (setter) setter(prop, field.name, v);
       else if (configuration) {
@@ -846,18 +857,25 @@ const ConfigField = ({
       } else if (isStyle) {
         if (!prop.style) prop.style = {};
         prop.style[field.name] = v;
+      } else if (subProp) {
+        if (!prop[subProp]) prop[subProp] = {};
+        prop[subProp][field.name] = v;
       } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v, setProp);
   };
-  const value = or_if_undef(
+  let value = or_if_undef(
     configuration
       ? configuration[field.name]
       : isStyle
       ? props.style[field.name]
+      : subProp
+      ? props[subProp]?.[field.name]
       : props[field.name],
     field.default
   );
+  if (valuePostfix)
+    value = `${value}`.replaceAll(valuePostfix || "__nosuchstring", "");
   if (field.input_type === "fromtype") field.input_type = null;
   if (
     field.type &&
@@ -1213,7 +1231,15 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
+const SettingsRow = ({
+  field,
+  node,
+  setProp,
+  onChange,
+  isStyle,
+  subProp,
+  valuePostfix,
+}) => {
   const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
@@ -1236,6 +1262,8 @@ const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
       setProp={setProp}
       onChange={onChange}
       isStyle={isStyle}
+      subProp={subProp}
+      valuePostfix={valuePostfix}
     />
   );
   return (
@@ -1526,7 +1554,6 @@ export const bstyleopt = (style) => ({
 
 export const rand_ident = () =>
   Math.floor(Math.random() * 16777215).toString(16);
-
 
 export const isBlock = (block, inline, textStyle) =>
   !textStyle ||

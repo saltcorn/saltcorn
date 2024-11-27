@@ -108,6 +108,7 @@ const Container = ({
   rotate,
   style,
   htmlElement,
+  transform
 }) => {
   const {
     selected,
@@ -125,7 +126,7 @@ const Container = ({
       } ${selected ? "selected-node" : ""}`,
       style: {
         ...parseStyles(customCSS || ""),
-        ...reactifyStyles(style),
+        ...reactifyStyles(style, transform),
         display,
         //padding: padding.map((p) => p + "px").join(" "),
         //margin: margin.map((p) => p + "px").join(" "),
@@ -221,6 +222,7 @@ const ContainerSettings = () => {
     rotate: node.data.props.rotate,
     display: node.data.props.display,
     style: node.data.props.style,
+    transform: node.data.props.transform,
     imgResponsiveWidths: node.data.props.imgResponsiveWidths,
     click_action: node.data.props.click_action,
   }));
@@ -254,6 +256,7 @@ const ContainerSettings = () => {
     imgResponsiveWidths,
     click_action,
     style,
+    transform
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -265,6 +268,8 @@ const ContainerSettings = () => {
    * @returns {function}
    */
   const setAProp = setAPropGen(setProp);
+  console.log("transform", transform);
+  
   return (
     <Accordion>
       <div accordiontitle="Box" className="w-100">
@@ -674,6 +679,33 @@ const ContainerSettings = () => {
               </td>
             </tr>
           )}
+        </tbody>
+      </table>
+      <table className="w-100" accordiontitle="Transform">
+        <tbody>
+          <SettingsRow
+            field={{
+              name: "rotate",
+              label: "Rotate °",
+              type: "Integer",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "skewX", label: "SkewX °", type: "Integer" }}
+            node={node}
+            setProp={setProp}
+            subProp="transform"
+            valuePostfix="deg"
+          />
+          <SettingsRow
+            field={{ name: "skewY", label: "SkewY °", type: "Integer" }}
+            node={node}
+            setProp={setProp}
+            subProp="transform"
+            valuePostfix="deg"
+          />
         </tbody>
       </table>
       <table className="w-100" accordiontitle="Flex properties">
