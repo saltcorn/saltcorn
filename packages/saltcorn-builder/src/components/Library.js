@@ -90,6 +90,8 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   });
   const options = useContext(optionsCtx);
   const doSave = (query) => {
+    console.log("doSave");
+
     if (!query.serialize) return;
 
     const data = craftToSaltcorn(
@@ -142,6 +144,11 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
         }
       });
   };
+  useEffect(() => {
+    window.addEventListener("beforeunload", () => doSave(query));
+    window.addEventListener("blur", () => doSave(query));
+    window.addEventListener("pagehide", () => doSave(query));
+  }, []);
   const throttledSave = useThrottle(() => {
     doSave(query);
   });
