@@ -161,12 +161,12 @@ class ReleaseCommand extends Command {
     fs.writeFileSync(
       `package.json`,
       JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
-    );
-    spawnSync("npm", ["install", "--legacy-peer-deps"], {
+    );    
+    spawnSync("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
-    spawnSync("npm", ["update", "--legacy-peer-deps"], {
+    spawnSync("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
