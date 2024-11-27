@@ -628,7 +628,6 @@ router.get(
       []
     );
     const has_cert = tenant_letsencrypt_sites.includes(altname);
-    console.log({has_cert, tenant_letsencrypt_sites});
     
     // get list of files
     let files;
