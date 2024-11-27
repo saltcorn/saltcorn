@@ -509,10 +509,10 @@ test.describe('E2E Test Suite', () => {
     await functions.views();
     await page.click(pageobject.newviewlink);
     await page.click(pageobject.editfieldlink);
-    await page.waitForTimeout(3000);
+    await page.waitForSelector('iframe');
     await customAssert('Input bio in iframe/html textbox', async () => {
     // Wait for the iframe to be available
-    await page.waitForSelector('iframe');
+    // await page.waitForSelector('iframe');
     const frame = page.frameLocator('iframe');
     // Wait for the body inside the iframe to be available
     await frame.locator('body').waitFor();

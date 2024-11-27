@@ -40,6 +40,7 @@ test.describe('E2E Test Suite', () => {
         await context.close();
     });
 
+
     // Add table by uplaoding csv
     test('Add table by uploading csv file', async () => {
         // click table button

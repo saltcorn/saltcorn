@@ -10,7 +10,7 @@ test.describe('E2E Test Suite', () => {
   let pageobject;
   let context;
   let page;
-
+   
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
@@ -30,13 +30,16 @@ test.describe('E2E Test Suite', () => {
     await functions.navigate_To_Base_URL(baseURL, derivedURL);
     await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
+  
     await functions.clear_Data();
+    
   });
 
   test.afterAll(async () => {
     // Ensure the page and context close properly after tests
     await page.close();
     await context.close();
+   
   });
 
   test('validate image name', async () => {
@@ -57,9 +60,10 @@ test.describe('E2E Test Suite', () => {
 
     // Handle file upload
     const fileInput = await page.waitForSelector(pageobject.FileInputForUpload);
-    const filePath = 'Csv_file_to_uplaod/a.jpg';
+    const filePath = 'Csv_file_to_uplaod/images.jpg';
     await fileInput.setInputFiles(filePath);
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(10000);
+    
     // Wait for the save button and click to save the uploaded image
     await page.waitForSelector(pageobject.UploadImageSave, { state: 'visible' });
     await page.click(pageobject.UploadImageSave);
@@ -73,7 +77,7 @@ test.describe('E2E Test Suite', () => {
     await expect(page).toHaveURL(/saltcorn_image/);
     // Verify that the uploaded image is present on the new page
     const imageLocator = page.locator(pageobject.ImageLocator);
-    await page.waitForTimeout(3000);
     await expect(imageLocator).toBeVisible(); // Assert that the image is loaded
+    await functions.clear_Data();
   });
 });

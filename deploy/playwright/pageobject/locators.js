@@ -1,15 +1,15 @@
+const { baseURL } = require('./base_url.js');
+
 class PageLocators {
   constructor(page) {
     this.page = page;
     this.tryItNowLink = 'a[href="https://saltcorn.com/tenant/create"]';
     this.subdomainInput = 'input[name="subdomain"]';
     this.submitButton = 'button[type="submit"]';
-
     this.emailInput = 'input[type="email"]';
     this.passwordInput = 'input[type="password"]';
     this.textSource = 'div.wrap-builder-elem[title="Text"]';
     this.textlocator = '#saltcorn-builder > div.row > div.col-sm-auto.builder-sidebar > div > div.settings-panel.card.mt-1 > div.card-body.p-2 > div > div.border > div';
-
     this.InputName = '#inputname';
     this.addFieldButtonLocator = 'a.btn.btn-primary.add-field.mt-2:has-text("Add field")';
     this.columnsElement = 'div[title="Split into columns"]';
@@ -49,7 +49,7 @@ class PageLocators {
     this.CardUrl = '//table//tr[2]//td//input';
     this.click_table='a[href="/table"]';
     this.createtablebutton='a[href="/table/new"]';
-    this.SaltCornButton='#accordionSidebar > a > div';
+    this.SaltCornButton='a:has-text("Saltcorn")';
     this.createviewbutton='#accordionSidebar > li.nav-item.active > a';
     this.sidebarviewbutton = 'a.nav-link[href="/viewedit"]';
     this.createnewview = 'a[href="/viewedit/new"]';
@@ -176,6 +176,7 @@ class PageLocators {
     this.addcolumnbutton = 'button:has-text("Add column")';
     this.newviewlink = 'a[href="/view/NewView_List"]';
     this.view2editlink = 'a[href="/view/View2_Edit"]';
+    this.newviewlinktabulator = 'a[href="/view/Tabulator_view"]';
     this.undoIcon = 'svg.fa-undo';
     this.addpersonlink = 'a:has-text("Add person")';
     this.newviewfromtable = 'a[href="/view/csvView_list"]';
@@ -184,6 +185,7 @@ class PageLocators {
     this.idfieldlocator = '//td[text()="ID"]';
     this.idtypelocator = '//td[text()="Integer"]';
     this.Stringtypelocator = '//td[text()="String"]';
+    this.JSONtypelocator = '//td[text()="JSON"]';
     this.tab1locater = 'div.tabulator-cell[tabulator-field="full_name"]';
     this.tab2locator = 'div.tabulator-cell[tabulator-field="date_of_birth"]';
     this.tab3locator = 'div.tabulator-cell[tabulator-field="address"]';
@@ -382,7 +384,7 @@ class PageLocators {
     this.editIconLocator = 'i.far.fa-edit';
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
     this.secondrowcolumn = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
-    this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
+    this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas'
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
@@ -570,13 +572,65 @@ class PageLocators {
     this.closeIcon = 'i.ms-1.fas.fa-lg.fa-times';
     this.plusIconbadge = 'i.fas.fa-lg.fa-plus';
     this.bootstraptheme = 'h5:has-text("any-bootstrap-theme")';
+    this.json = 'h5:has-text("json")';
+    this.tabulator = 'h5:has-text("tabulator")';
     this.installbootstap = 'form[action="/plugins/install/any-bootstrap-theme"] button:has-text("Install")';
+    this.installjson = 'form[action="/plugins/install/json"] >> button.store-install';
+    this.installtabulator = 'form[action="/plugins/install/tabulator"] button:has-text("Install")';
     this.Installedthemelocator = 'a[href="/plugins?set=installed&amp;q=theme"]';
     this.UploadImageSelector = 'table[accordiontitle="Select image"] tr:nth-child(2) select';
     this.UploadImageSave ='button.btn.btn-sm.btn-primary.builder-save';
     this.CreatedPageName = 'a:has-text("saltcorn_image")';
     this.FileInputForUpload = 'input[type="file"]';
-    this.ImageLocator = 'img[src="/files/serve/a.jpg"]';
+    this.ImageLocator = 'img[src="/files/serve/images.jpg"]';
+    this.settingsDropdown = '#dropdownSettings';
+    this.aboutApplicationLink2 ='a.dropdown-item:has-text("About application")';
+    this.backupTab = 'a.nav-link:has-text("Backup")';
+    this.emailTab = 'a.nav-link:has-text("Email")';
+    this.systemTab = 'a.nav-link[href="/admin/system"]';
+    this.mobileAppLink = 'a.nav-link:has-text("Mobile app")';
+    this.viewNavLinkID = '#viewNavLinkID';
+    this.androidCheckbox ='.form-check-input[name="androidPlatform"]';
+    this.appName = '#appNameInputId';
+    this.appId ='#appIdInputId';
+    this.appVersion = '#appVersionInputId';
+    this.serverURL='#serverURLInputId';
+    this.appIcon = '#appIconInputId';
+    this.splashPage ='#splashPageInputId';
+    this.debugBuild   = '#debugBuildTypeId';
+    this.buildMobile = '#buildMobileAppBtnId';
+    this.inputviewtemplate = '#inputviewtemplate';
+    this.inputtable_name  = '#inputtable_name';
+    this.view_Click = 'a[href="/viewedit"]';
+    this.inputmenu_style = '#inputmenu_style';
+    this.finish_button = 'button.btn.btn-primary[type="submit"]';
+    this.base_urls =baseURL+'/';
+    this.saltcorntableclick = 'h1:has-text("Tables")';
+    this.tableclick = baseURL+'/table';
+    this.viewclick = baseURL+'/viewedit';
+    this.pageclick = baseURL+'/pageedit';
+    this.create_CSV =baseURL+'/table/create-from-csv';
+    this.admin_Clear_All ='admin/clear-all';
+    this.admin_Build_Mobile_App = 'Page url should be /admin/build-mobile-app';
+    this.plugins_Set_All ='Page url should be /plugins?set=all';
+    this.views = 'Page url should be /views';
+    this.View_Pattern ='View Pattern should be list';
+    this.table_Create_View = 'Select users table to create view';
+    this.all_Tab_label_All = 'All tab label should be All';
+    this.Module_Setting_label='Module setting label should be Modules';
+    this.Page_Url_Plugins = 'Page url should be /plugins';
+    this.Create_Page =  'span.card-header h5.m-0.fw-bold.d-inline a[href="/pageedit"]';
+    this.createpage = 'a.btn[href="/pageedit/new"]';
+    this.Pack_locator = 'a.nav-link.active[href="#tab-Packs"][role="tab"]';
+    this.htmltextdone  ='button.btn.btn-sm.btn-primary.builder-save';
+    this.Theme_Locator = 'a.nav-link.active[href="#tab-Theme"]';
+    this.Trigger_Locator =  'div.card-header ul.nav-tabs li:nth-of-type(1) a';
+    this.Files_Locator = 'div.card-header ul.nav-tabs li:nth-of-type(2) a';
+    this.Help_Locator = 'div.card-header ul.nav-tabs li:nth-of-type(3) a';
+    this.Theme_Locator = 'a.nav-link.active[href="#tab-Theme"][role="tab"]';
+    this.Users_Locator = 'a.nav-link.active[href="#tab-Users"][role="tab"]';
+    this.saltcornImageLink = '.navbar-brand.mt-1.ms-3.mb-2';
+
   }
 }
 

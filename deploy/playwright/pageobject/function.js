@@ -1,5 +1,6 @@
 const { expect } = require('@playwright/test');
 const customAssert = require('../pageobject/utils.js');
+const { TIMEOUT } = require('dns');
 class PageFunctions {
   constructor(page) {
     this.page = page;
@@ -27,6 +28,7 @@ class PageFunctions {
     await this.page.fill(this.locators.InputName, pageName);
     await this.page.click(this.locators.submitButton);
   }
+ 
 
   async drag_And_Drop(source, target) {
     await this.page.locator(source).dragTo(this.page.locator(target), { force: true });
@@ -34,6 +36,7 @@ class PageFunctions {
 
   async fill_Text(selector, text) {
     await this.page.fill(selector, text, { timeout: 30000 });
+    
   }
 
   async navigate_To_Settings() {
@@ -240,10 +243,6 @@ class PageFunctions {
     await this.page.click(this.locators.File, { force: true });
   }
 
-  async navigate_To_Site_Structure() {
-    await this.page.waitForSelector(this.locators.SiteStructure);
-    await this.page.click(this.locators.SiteStructure);
-  }
 
   async clear_All() {
     await this.page.click(this.locators.clearAllButton);
@@ -270,15 +269,19 @@ class PageFunctions {
     await this.page.waitForSelector(this.locators.click_table);
     await this.page.click(this.locators.click_table)
   }
-
+  async view_Click(){
+  await this.page.waitForSelector(this.locators.view_Click);
+  await this.page.click(this.locators.view_Click); 
+  }
+    
   async SALTCORN() {
     await this.page.waitForSelector(this.locators.SaltCornButton);
-    await this.page.click(this.locators.SaltCornButton)
+    await this.page.click(this.locators.SaltCornButton);
   }
-
+  
   async views() {
     await this.page.waitForSelector(this.locators.sidebarviewbutton);
-    await this.page.click(this.locators.sidebarviewbutton)
+    await this.page.click(this.locators.sidebarviewbutton);
   }
 
   static generate_Random_String(length) {
@@ -382,7 +385,7 @@ class PageFunctions {
     await this.SALTCORN();
     await this.navigate_To_Settings();
     await this.page.waitForSelector(this.locators.aboutApplicationLink);
-    await this.page.click(this.locators.aboutApplicationLink);
+    await this.page.click(this.locators.aboutApplicationLink,{timeout:5000});
     await this.about_application_to_system();
     await this.clear_All();
   }
@@ -506,6 +509,123 @@ class PageFunctions {
     });
   }
 
+  async install_any_bootstrap_theme() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Search with 'flatpickr' in the search bar
+    await this.fill_Text(this.locators.SearchModule, 'bootstrap-theme');
+    // Assert that the flatpickr module is visible and click on it
+    await customAssert('any-bootstrap-theme module should be visible', async () => {
+      await expect(this.page.locator(this.locators.bootstraptheme)).toBeVisible();
+      await this.page.click('button#button-search-submit');
+    });
+    
+    await this.page.click(this.locators.installbootstap);
+    // Assert the success message is visible
+    await customAssert('Success message should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  }
+
+  async navigateSettingsTabs(page, pageobject) {
+    // Click on settings dropdown
+    const settingsDropdown = page.locator(pageobject.settingsDropdown);
+    await settingsDropdown.click();
+  
+    // Click on "About Application" link
+    const aboutApplicationLink2 = page.locator(pageobject.aboutApplicationLink2);
+    await aboutApplicationLink2.click();
+  
+    // Click on the "Mobile App" link
+    const mobileAppLink = page.locator(pageobject.mobileAppLink);
+    await mobileAppLink.click();
+   
+  }
+   async navi_Setting_Dropdown_Clear(page, pageobject)   {
+    
+     await this.page.click('#inputusers');
+     await this.page.waitForSelector(this.locators.submitButton);
+     await this.page.click(this.locators.submitButton);
+
+   }
+
+  async assertMobileAppTabElements(page, pageobject) {
+    // Assert the view link is visible
+    await customAssert('Assert the view link in mobile app tab', async () => {
+      await expect(this.page.locator(this.locators.viewNavLink),{timeout:30000}).toBeVisible();
+    });
+  
+    // Assert the page link is visible
+    await customAssert('Assert the page link in mobile app tab', async () => {
+      await expect(this.page.locator(this.locators.pageNavLink)).toBeVisible();
+    });
+  
+    // Assert the page group link is visible
+    await customAssert('Assert the page group link in mobile app tab', async () => {
+      await expect(this.page.locator(this.locators.pagegroupNavLink)).toBeVisible();
+    });
+  
+    // Assert the Android checkbox is not checked
+    await page.locator(pageobject.androidCheckbox).check();
+    await customAssert('Assert the android Checkbox checkbox in Mobile app tab is checked', async () => {
+      await expect(this.page.locator(this.locators.androidCheckbox)).toBeChecked();
+    });
+    
+  
+    // Assert the app name text box is empty
+    // Step 2: Fill the app name text box with "Mobile App"
+    this.fill_Text(pageobject.appName,'Mobile App');
+    await customAssert('Assert the app name text box is empty', async () => {
+      await expect(this.page.locator(this.locators.appName)).toHaveValue('Mobile App');
+    });
+  
+    // Assert the app ID text box is visible
+    this.fill_Text(pageobject.appId,'myproject19july@mailinator.com');
+    await customAssert('Assert the app id text box is visible', async () => {
+      await expect(this.page.locator(this.locators.appId)).toHaveValue('myproject19july@mailinator.com');
+    });
+  
+    // Assert the app version text box is empty
+    this.fill_Text(pageobject.appVersion,'0.0.1');
+    await customAssert('Assert the app version text box is empty', async () => {
+      await expect(this.page.locator(this.locators.appVersion)).toHaveValue('0.0.1');
+    });
+  
+    // Assert the server URL text box is empty
+    this.fill_Text(pageobject.serverURL,'http://10.0.2.2:3000');
+    await customAssert('Assert the server URL text box is empty', async () => {
+      await expect(this.page.locator(this.locators.serverURL)).toHaveValue('http://10.0.2.2:3000');
+    });
+  
+    // Assert the debug radio button is not checked
+    await page.locator(pageobject.debugBuildType).check();
+    await customAssert('Assert the debug radio button in Mobile app tab is not checked', async () => {
+      await expect(this.page.locator(this.locators.debugBuildType)).toBeChecked();
+    });
+  
+    // Assert the build Mobile App Button has correct text
+    await customAssert('Assert the build Mobile App Button', async () => {
+      await expect(this.page.locator(this.locators.buildMobileAppBtn)).toHaveText('Build mobile app');
+    });
+    await this.page.click(pageobject.buildMobileAppBtn);
+  }
+
+  async showSuccessMessage() {
+    
+    await new Promise(resolve => setTimeout(resolve, 2000)); 
+    await this.page.evaluate(() => {
+  alert('The build was successful!');
+});
+
+// Assert that the alert was triggered
+await this.page.on('dialog', async dialog => {
+  expect(dialog.message()).toBe('The build was successful!');
+  await dialog.accept();
+});
+}
+  
   async clearText(locator) {
     // Click on the locator to focus it
     await this.page.click(locator); 
