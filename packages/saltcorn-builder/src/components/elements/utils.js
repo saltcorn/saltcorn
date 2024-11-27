@@ -21,7 +21,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
-import { Columns, ntimes } from "./Columns";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
@@ -666,7 +665,7 @@ export const parseStyles = (styles) =>
  * @param {object} styles
  * @returns {object}
  */
-export const reactifyStyles = (styles) => {
+export const reactifyStyles = (styles, transform, rotate) => {
   const toCamel = (s) => {
     return s.replace(/([-][a-z])/gi, ($1) => {
       return $1.toUpperCase().replace("-", "");
@@ -676,6 +675,17 @@ export const reactifyStyles = (styles) => {
   Object.keys(styles).forEach((k) => {
     reactified[toCamel(k)] = styles[k];
   });
+  if (transform) {
+    reactified.transform = Object.entries(transform)
+      .filter(([k, v]) => v !== "")
+      .map(([k, v]) => `${k}(${v})`)
+      .join(" ");
+  }
+  if (rotate) {
+    if (!reactified.transform) reactified.transform = `rotate(${rotate}deg)`;
+    else reactified.transform = `${reactified.transform} rotate(${rotate}deg)`;
+  }
+
   return reactified;
 };
 
@@ -831,6 +841,8 @@ const ConfigField = ({
   props,
   setter,
   isStyle,
+  subProp,
+  valuePostfix,
 }) => {
   /**
    * @param {object} v
@@ -838,7 +850,8 @@ const ConfigField = ({
    */
   const options = React.useContext(optionsCtx);
 
-  const myOnChange = (v) => {
+  const myOnChange = (v0) => {
+    const v = valuePostfix && (v0 || v0 === 0) ? v0 + valuePostfix : v0;
     setProp((prop) => {
       if (setter) setter(prop, field.name, v);
       else if (configuration) {
@@ -847,18 +860,25 @@ const ConfigField = ({
       } else if (isStyle) {
         if (!prop.style) prop.style = {};
         prop.style[field.name] = v;
+      } else if (subProp) {
+        if (!prop[subProp]) prop[subProp] = {};
+        prop[subProp][field.name] = v;
       } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v, setProp);
   };
-  const value = or_if_undef(
+  let value = or_if_undef(
     configuration
       ? configuration[field.name]
       : isStyle
       ? props.style[field.name]
+      : subProp
+      ? props[subProp]?.[field.name]
       : props[field.name],
     field.default
   );
+  if (valuePostfix)
+    value = `${value}`.replaceAll(valuePostfix || "__nosuchstring", "");
   if (field.input_type === "fromtype") field.input_type = null;
   if (
     field.type &&
@@ -1064,7 +1084,7 @@ const ConfigField = ({
       if (isStyle && value === "auto") {
         styleVal = "";
         styleDim = "auto";
-      } else if (isStyle && value && typeof value === "string") {
+      } else if ((isStyle || subProp) && value && typeof value === "string") {
         const matches = value.match(/^([-]?[0-9]+\.?[0-9]*)(.*)/);
         if (matches) {
           styleVal = matches[1];
@@ -1076,13 +1096,13 @@ const ConfigField = ({
           {styleDim !== "auto" && (
             <input
               type="number"
-              value={(isStyle ? styleVal : value) || ""}
+              value={(isStyle || subProp ? styleVal : value) || ""}
               className={`field-${field?.name} w-50 form-control-sm d-inline dimunit`}
               disabled={field.autoable && styleDim === "auto"}
               onChange={(e) =>
                 e?.target &&
                 myOnChange(
-                  isStyle
+                  isStyle || subProp
                     ? `${e.target.value}${styleDim || "px"}`
                     : e.target.value
                 )
@@ -1093,7 +1113,7 @@ const ConfigField = ({
             value={or_if_undef(
               configuration
                 ? configuration[field.name + "Unit"]
-                : isStyle
+                : isStyle || subProp
                 ? styleDim
                 : props[field.name + "Unit"],
               "px"
@@ -1115,6 +1135,13 @@ const ConfigField = ({
                   prop.configuration[field.name + "Unit"] = target_value;
                 else if (isStyle) {
                   prop.style[field.name] = `${or_if_undef(
+                    myStyleVal,
+                    0
+                  )}${target_value}`;
+                }
+                if (subProp) {
+                  if (!prop[subProp]) prop[subProp] = {};
+                  prop[subProp][field.name] = `${or_if_undef(
                     myStyleVal,
                     0
                   )}${target_value}`;
@@ -1214,7 +1241,15 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
+const SettingsRow = ({
+  field,
+  node,
+  setProp,
+  onChange,
+  isStyle,
+  subProp,
+  valuePostfix,
+}) => {
   const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
@@ -1237,6 +1272,8 @@ const SettingsRow = ({ field, node, setProp, onChange, isStyle }) => {
       setProp={setProp}
       onChange={onChange}
       isStyle={isStyle}
+      subProp={subProp}
+      valuePostfix={valuePostfix}
     />
   );
   return (
@@ -1527,45 +1564,6 @@ export const bstyleopt = (style) => ({
 
 export const rand_ident = () =>
   Math.floor(Math.random() * 16777215).toString(16);
-
-export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
-  const { data } = query.node(nodeId).get();
-  const { type, props, nodes } = data;
-  const newProps = { ...props };
-  if (newProps.rndid) {
-    newProps.rndid = rand_ident();
-  }
-  const children = (nodes || []).map(recursivelyCloneToElems(query));
-  if (data.displayName === "Columns") {
-    const cols = ntimes(data.props.ncols, (ix) =>
-      recursivelyCloneToElems(query)(data.linkedNodes["Col" + ix])
-    );
-    return React.createElement(Columns, {
-      ...newProps,
-      ...(typeof ix !== "undefined" ? { key: ix } : {}),
-      contents: cols,
-    });
-  }
-  if (data.isCanvas)
-    return React.createElement(
-      Element,
-      {
-        ...newProps,
-        canvas: true,
-        is: type,
-        ...(typeof ix !== "undefined" ? { key: ix } : {}),
-      },
-      children
-    );
-  return React.createElement(
-    type,
-    {
-      ...newProps,
-      ...(typeof ix !== "undefined" ? { key: ix } : {}),
-    },
-    children
-  );
-};
 
 export const isBlock = (block, inline, textStyle) =>
   !textStyle ||

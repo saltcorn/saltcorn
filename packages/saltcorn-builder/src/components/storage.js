@@ -246,6 +246,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           imgResponsiveWidths={segment.imgResponsiveWidths}
           bgType={segment.bgType || "None"}
           style={segment.style || {}}
+          transform={segment.transform || {}}
           bgColor={segment.bgColor || "#ffffff"}
           setTextColor={!!segment.setTextColor}
           textColor={segment.textColor || "#000000"}
@@ -541,6 +542,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
           click_action: node.props.click_action,
           rotate: node.props.rotate,
           style: node.props.style,
+          transform: node.props.transform,
           ...customProps,
         };
       else return get_nodes(node);

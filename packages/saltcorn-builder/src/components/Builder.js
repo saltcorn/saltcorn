@@ -60,15 +60,13 @@ import {
   faCaretSquareLeft,
   faCaretSquareRight,
 } from "@fortawesome/free-regular-svg-icons";
-import {
-  Accordion,
-  ErrorBoundary,
-  recursivelyCloneToElems,
-} from "./elements/utils";
+import { Accordion, ErrorBoundary } from "./elements/utils";
 import { InitNewElement, Library } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
+import { recursivelyCloneToElems } from "./elements/Clone";
+
 const { Provider } = optionsCtx;
 
 /**
