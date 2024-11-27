@@ -263,7 +263,7 @@ const ContainerSettings = () => {
    * @returns {function}
    */
   const setAProp = setAPropGen(setProp);
-  console.log("transform", transform);
+  //console.log("transform", transform);
 
   return (
     <Accordion>

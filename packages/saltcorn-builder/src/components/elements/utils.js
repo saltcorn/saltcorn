@@ -685,7 +685,6 @@ export const reactifyStyles = (styles, transform, rotate) => {
     if (!reactified.transform) reactified.transform = `rotate(${rotate}deg)`;
     else reactified.transform = `${reactified.transform} rotate(${rotate}deg)`;
   }
-  console.log("style", reactified);
 
   return reactified;
 };
