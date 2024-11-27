@@ -108,7 +108,7 @@ const Container = ({
   rotate,
   style,
   htmlElement,
-  transform
+  transform,
 }) => {
   const {
     selected,
@@ -126,7 +126,7 @@ const Container = ({
       } ${selected ? "selected-node" : ""}`,
       style: {
         ...parseStyles(customCSS || ""),
-        ...reactifyStyles(style, transform),
+        ...reactifyStyles(style, transform, rotate),
         display,
         //padding: padding.map((p) => p + "px").join(" "),
         //margin: margin.map((p) => p + "px").join(" "),
@@ -165,11 +165,6 @@ const Container = ({
         ...(typeof width !== "undefined"
           ? {
               width: `${width}${widthUnit || "px"}`,
-            }
-          : {}),
-        ...(rotate
-          ? {
-              transform: `rotate(${rotate}deg)`,
             }
           : {}),
       },
@@ -256,7 +251,7 @@ const ContainerSettings = () => {
     imgResponsiveWidths,
     click_action,
     style,
-    transform
+    transform,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -269,7 +264,7 @@ const ContainerSettings = () => {
    */
   const setAProp = setAPropGen(setProp);
   console.log("transform", transform);
-  
+
   return (
     <Accordion>
       <div accordiontitle="Box" className="w-100">

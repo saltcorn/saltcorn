@@ -665,7 +665,7 @@ export const parseStyles = (styles) =>
  * @param {object} styles
  * @returns {object}
  */
-export const reactifyStyles = (styles, transform) => {
+export const reactifyStyles = (styles, transform, rotate) => {
   const toCamel = (s) => {
     return s.replace(/([-][a-z])/gi, ($1) => {
       return $1.toUpperCase().replace("-", "");
@@ -680,6 +680,10 @@ export const reactifyStyles = (styles, transform) => {
       .filter(([k, v]) => v !== "")
       .map(([k, v]) => `${k}(${v})`)
       .join(" ");
+  }
+  if (rotate) {
+    if (!reactified.transform) reactified.transform = `rotate(${rotate}deg)`;
+    else reactified.transform = `${reactified.transform} rotate(${rotate}deg)`;
   }
   console.log("style", reactified);
 
