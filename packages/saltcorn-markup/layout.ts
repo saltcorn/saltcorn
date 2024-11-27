@@ -609,6 +609,7 @@ const render = ({
         overflow,
         rotate,
         style,
+        transform,
         imgResponsiveWidths,
         htmlElement,
       } = segment;
@@ -678,6 +679,17 @@ const render = ({
             borderWidth || 0
           }px ${borderStyle || "none"} ${borderColor || "black"};`
         : "";
+
+      const transforms: any = { ...transform };
+      if (rotate) transforms.rotate = `${rotate}deg`;
+      let stransform = Object.keys(transforms).length
+        ? "transform: " +
+          Object.entries(transforms)
+            .filter(([k, v]) => v !== "")
+            .map(([k, v]) => `${k}(${v})`)
+            .join(" ")
+        : "";
+
       return wrap(
         segment,
         isTop,
@@ -741,9 +753,9 @@ const render = ({
                     gradDirection || 0
                   }deg, ${gradStartColor}, ${gradEndColor});`
                 : ""
-            } ${setTextColor ? `color: ${textColor};` : ""}${
-              rotate ? `transform: rotate(${rotate}deg);` : ""
-            }${showIfFormulaInputs ? ` display: none;` : ``}`,
+            } ${setTextColor ? `color: ${textColor};` : ""}${stransform}${
+              showIfFormulaInputs ? ` display: none;` : ``
+            }`,
             ...(showIfFormulaInputs
               ? {
                   "data-show-if": encodeURIComponent(
