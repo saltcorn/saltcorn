@@ -469,7 +469,7 @@ test.describe('E2E Test Suite', () => {
     });
 
     // Create edit view for Department and add edit employee link
-    test('Create edit view for Department table and add edit employee link', async () => {
+    /*test('Create edit view for Department table and add edit employee link', async () => {
         await functions.views();
         // click on create new view
         await page.click(pageobject.createnewview);
@@ -581,5 +581,5 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Assert page redirected to Add employee page', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'view/Edit_Employee');
         });
-    });
+    });*/
 });

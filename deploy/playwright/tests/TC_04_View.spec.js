@@ -281,7 +281,7 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Drag Name on top of the page set heading', async () => {
         await functions.drag_And_Drop(pageobject.fullnameuser, pageobject.addresslabel);
         // select text style as Heading 1 for full name
-        await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 1' });
+        await page.click("button.style-h1");
     });
     await page.waitForTimeout(4000);
     await customAssert('Drag address row on third column', async () => {
@@ -509,10 +509,10 @@ test.describe('E2E Test Suite', () => {
     await functions.views();
     await page.click(pageobject.newviewlink);
     await page.click(pageobject.editfieldlink);
-    await page.waitForTimeout(3000);
+    await page.waitForSelector('iframe');
     await customAssert('Input bio in iframe/html textbox', async () => {
     // Wait for the iframe to be available
-    await page.waitForSelector('iframe');
+    // await page.waitForSelector('iframe');
     const frame = page.frameLocator('iframe');
     // Wait for the body inside the iframe to be available
     await frame.locator('body').waitFor();

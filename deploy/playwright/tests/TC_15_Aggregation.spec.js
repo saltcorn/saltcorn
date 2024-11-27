@@ -90,17 +90,17 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         await page.click(pageobject.EditlinkLocator);
         await customAssert('Input Estimated hours for every task ', async () => {
-        await page.click(pageobject.estimatedHourscell);
-        await page.keyboard.type('2');
+            await page.click(pageobject.estimatedHourscell);
+            await page.keyboard.type('2');
 
-        await page.click(pageobject.estimatedHourscell2);
-        await page.keyboard.type('1');
-        await page.waitForTimeout(1000);
+            await page.click(pageobject.estimatedHourscell2);
+            await page.keyboard.type('1');
+            await page.waitForTimeout(1000);
 
-        await page.click(pageobject.estimatedHourscell3);
-        await page.keyboard.type('3');
-        await page.waitForTimeout(2000);
-        await functions.click_table();
+            await page.click(pageobject.estimatedHourscell3);
+            await page.keyboard.type('3');
+            await page.waitForTimeout(2000);
+            await functions.click_table();
         });
     });
 
@@ -151,7 +151,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.PeopleList);
         await customAssert('Sum Task field should be visible on people list', async () => {
             await expect(page.locator(pageobject.Array_AggLocator)).toBeVisible();
-            await expect(page.getByText('Buy Milk')).toBeVisible();    
+            await expect(page.getByText('Buy Milk')).toBeVisible();
         });
     });
 
@@ -159,38 +159,40 @@ test.describe('E2E Test Suite', () => {
     test('Add aggregation on people show view', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
-        await page.waitForTimeout(5000);
         // Remove the edit button
         const edit_button = await page.getByText('Edit');
         await edit_button.click();
-        await page.waitForTimeout(5000);
-        await page.click(pageobject.deletebutton,{timeout:20000});
+        await page.click(pageobject.deletebutton, { timeout: 20000 });
         // remove the column
         await page.click(pageobject.target);
         await page.click(pageobject.deletebutton);
         await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
         await functions.fill_Text(pageobject.numbercolumn, '2');
-        await functions.drag_And_Drop(pageobject.textSource, pageobject.secondrowcolumn1);
+        await functions.drag_And_Drop(pageobject.textSource, pageobject.firstrowcolumn1);
         await functions.clearText(pageobject.richTextEditor);
         await page.keyboard.type('team');
-        await functions.drag_And_Drop(pageobject.joinField, pageobject.secondrowcolumn);
+        await functions.drag_And_Drop(pageobject.joinField, pageobject.firstrowcolumn);
         await customAssert('Select Name from teams for join field', async () => {
             await page.click(pageobject.fieldsButton);
             await page.click(pageobject.teamDropdownLocator);
             await page.click(pageobject.teamnameitem);
         });
+        await page.waitForSelector(pageobject.columnsElement);
         await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
         await functions.fill_Text(pageobject.numbercolumn, '2');
         await functions.drag_And_Drop(pageobject.textSource, pageobject.secondrowcolumn1);
         await functions.clearText(pageobject.richTextEditor);
         await page.keyboard.type('Task Assigned');
         // await functions.fill_Text(pageobject.richTextEditor, 'Task Assigned');
-        await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.secondrowcolumn);
+        await page.waitForSelector(pageobject.secondrowcolumn);
+        await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.target);
+        await page.waitForTimeout(1000);
         await customAssert('Select id field in on field dropdown', async () => {
+            // await page.waitForSelector(pageobject.Childtablefield1, { timeout: 10000 });
             await page.selectOption(pageobject.Childtablefield, { value: 'id' });
         });
         await customAssert('Select Count in static dropdown', async () => {
-            const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
+            const StatisticDropdown = await page.locator('select.stat');
             await StatisticDropdown.selectOption({ value: 'Count' });
         });
         await page.waitForTimeout(5000);
@@ -282,7 +284,7 @@ test.describe('E2E Test Suite', () => {
         // Add lable for link
         await functions.fill_Text(pageobject.textInputLabel, 'Show team');
         await customAssert('Check open popup checkbox', async () => {
-        await page.locator(pageobject.popupcheckbox).nth(1).click();
+            await page.locator(pageobject.popupcheckbox).nth(1).click();
         });
         await page.waitForTimeout(5000);
         // click on next button
@@ -335,8 +337,8 @@ test.describe('E2E Test Suite', () => {
         });
         // click on select button and select assignedto
         await customAssert('Select assigned to task to show task for person', async () => {
-        await page.click(pageobject.selectButton);
-        await page.locator(pageobject.assignedToItem).nth(1).click();
+            await page.click(pageobject.selectButton);
+            await page.locator(pageobject.assignedToItem).nth(1).click();
         });
         // Add lable for link
         await functions.fill_Text(pageobject.textInputLabel, 'List of assigned tasks');

@@ -39,6 +39,7 @@ test.describe('E2E Test Suite', () => {
         await context.close();
     });
 
+
     // Create the Task table
     test('Create task table', async () => {
         await functions.clear_Data();
@@ -178,7 +179,7 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.firstfield);
             await page.selectOption(pageobject.fielddropdown, { label: 'Name' });
             // select text style as heading 4 for task name
-            await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 4' });
+            await page.click("button.style-h4");
         });
         await page.waitForTimeout(4000);
         // click on next button

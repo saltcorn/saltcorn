@@ -40,6 +40,7 @@ test.describe('E2E Test Suite', () => {
         await context.close();
     });
 
+
     // Add table by uplaoding csv
     test('Add table by uploading csv file', async () => {
         // click table button
@@ -140,7 +141,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption('select.form-control.form-select', 'full_name');
 
             // select text style as Heading 1 for full name
-            await page.selectOption(pageobject.textstyleLocator, { label: 'Heading 1' });
+            await page.click("button.style-h1");
             await page.waitForTimeout(2000);
         });
 

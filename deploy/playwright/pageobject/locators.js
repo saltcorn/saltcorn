@@ -97,11 +97,10 @@ class PageLocators {
     this.choosefilebutton = '#inputfile';
     this.createviewfromtable = '#table-views > div > a';
     this.textstyle = '.form-control form-select';
-    this.fielddropdown = '(//select[@class="form-control form-select"])[1]';
-    this.fieldViewdropdown = '(//select[@class="form-control form-select"])[2]';
-    this.Toolbardropdown = '(//select[@class="form-control form-select"])[3]';
-    this.textstyleLocator = '(//select[@class="form-control form-select"])[3]';
-    this.Childtablefield = '(//select[@class="form-control form-select"])[2]';
+    this.fielddropdown = 'select.field';
+    this.fieldViewdropdown = 'select.fieldview';
+    this.Toolbardropdown = 'select.field-toolbar';
+    this.Childtablefield = 'select.agg_field';
     this.createuserlink = 'a[href="/useradmin/new"]';
     this.inputdob = '#inputdob';
     this.inputemail = '#inputemail';
@@ -175,6 +174,7 @@ class PageLocators {
     this.addcolumnbutton = 'button:has-text("Add column")';
     this.newviewlink = 'a[href="/view/NewView_List"]';
     this.view2editlink = 'a[href="/view/View2_Edit"]';
+    this.newviewlinktabulator = 'a[href="/view/Tabulator_view"]';
     this.undoIcon = 'svg.fa-undo';
     this.addpersonlink = 'a:has-text("Add person")';
     this.newviewfromtable = 'a[href="/view/csvView_list"]';
@@ -183,6 +183,7 @@ class PageLocators {
     this.idfieldlocator = '//td[text()="ID"]';
     this.idtypelocator = '//td[text()="Integer"]';
     this.Stringtypelocator = '//td[text()="String"]';
+    this.JSONtypelocator = '//td[text()="JSON"]';
     this.tab1locater = 'div.tabulator-cell[tabulator-field="full_name"]';
     this.tab2locator = 'div.tabulator-cell[tabulator-field="date_of_birth"]';
     this.tab3locator = 'div.tabulator-cell[tabulator-field="address"]';
@@ -380,8 +381,8 @@ class PageLocators {
     this.searchIconLocator = 'input.rfipsearch__input[placeholder="Search Icons"]';
     this.editIconLocator = 'i.far.fa-edit';
     this.showeditLink = 'a.btn.btn-primary:has(i.far.fa-edit)'
-    this.secondrowcolumn = '.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
-    this.secondrowcolumn1 = '.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas';
+    this.secondrowcolumn = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(2) .canvas';
+    this.secondrowcolumn1 = '.builder-columns.row:nth-of-type(2) .split-col:nth-of-type(1) .canvas'
     this.optioninput = 'input[name="options"]';
     this.column5 = '.d-flex.justify-content-between.h-100 >> text=Column 5';
     this.headerlabel = 'input.form-control[value=""]';
@@ -489,7 +490,8 @@ class PageLocators {
     this.NumberInput = 'input.form-control[type="number"][min="1"][max="11"][value="2"]';
     this.NumberInputW = 'input.form-control[type="number"][min="1"][max="11"][value="6"]';
     this.AddressLocator = 'div.d-inline:has-text("132 east Greater Noida new delhi india")';
-    this.firstrowcolumn1 = '.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
+    this.firstrowcolumn = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(1) .canvas';
+    this.firstrowcolumn1 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
     this.NewPersonLink = 'a[href="/view/Edit_People"]:has-text("New person")';
     this.InputFullName = '#inputfull_name';
     this.inputDateOfBirth = '#inputdate_of_birth';
@@ -568,7 +570,11 @@ class PageLocators {
     this.closeIcon = 'i.ms-1.fas.fa-lg.fa-times';
     this.plusIconbadge = 'i.fas.fa-lg.fa-plus';
     this.bootstraptheme = 'h5:has-text("any-bootstrap-theme")';
+    this.json = 'h5:has-text("json")';
+    this.tabulator = 'h5:has-text("tabulator")';
     this.installbootstap = 'form[action="/plugins/install/any-bootstrap-theme"] button:has-text("Install")';
+    this.installjson = 'form[action="/plugins/install/json"] >> button.store-install';
+    this.installtabulator = 'form[action="/plugins/install/tabulator"] button:has-text("Install")';
     this.Installedthemelocator = 'a[href="/plugins?set=installed&amp;q=theme"]';
     this.UploadImageSelector = 'table[accordiontitle="Select image"] tr:nth-child(2) select';
     this.UploadImageSave ='button.btn.btn-sm.btn-primary.builder-save';
