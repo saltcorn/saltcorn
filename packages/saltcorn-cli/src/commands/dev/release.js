@@ -89,7 +89,7 @@ class ReleaseCommand extends Command {
       );
     };
     const compileTsFiles = () => {
-      spawnSync("npm", ["install", "--legacy-peer-deps"], {
+      spawnSync("npm", ["install"], {
         stdio: "inherit",
         cwd: ".",
       });
@@ -131,7 +131,7 @@ class ReleaseCommand extends Command {
     // 1. update version
     // 2. update dependencies for other packages
     // 3. publish
-    spawnSync("npm", ["install", "--legacy-peer-deps"], {
+    spawnSync("npm", ["install"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
@@ -157,6 +157,10 @@ class ReleaseCommand extends Command {
     spawnSync("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
+    });
+    spawnSync("npm", ["install"], {
+      stdio: "inherit",
+      cwd: ".",
     });
     // do not run 'audit fix' on full point releases, only on -beta.x, -rc.x etc
     if (version.includes("-"))
