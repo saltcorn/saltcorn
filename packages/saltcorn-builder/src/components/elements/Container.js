@@ -701,6 +701,18 @@ const ContainerSettings = () => {
             subProp="transform"
             valuePostfix="deg"
           />
+           <SettingsRow
+            field={{ name: "scaleX", label: "Scale X", type: "Float" }}
+            node={node}
+            setProp={setProp}
+            subProp="transform"
+          />
+          <SettingsRow
+            field={{ name: "scaleY", label: "Scale y", type: "Float" }}
+            node={node}
+            setProp={setProp}
+            subProp="transform"
+          />
         </tbody>
       </table>
       <table className="w-100" accordiontitle="Flex properties">
