@@ -689,7 +689,6 @@ const render = ({
             .map(([k, v]) => `${k}(${v})`)
             .join(" ")
         : "";
-      console.log({ rotate, transform });
 
       return wrap(
         segment,
