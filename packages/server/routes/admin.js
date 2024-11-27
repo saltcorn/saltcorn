@@ -12,6 +12,7 @@ const {
   setTenant,
   admin_config_route,
   get_sys_info,
+  tenant_letsencrypt_name,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -1735,17 +1736,10 @@ router.post(
       db.getTenantSchema() === db.connectObj.default_schema
     ) {
       const { subdomain } = req.params;
-      const saneDomain = domain_sanitize(subdomain);
+
       const domain = getBaseDomain();
 
-      let altname;
-      await db.runWithTenant(saneDomain, async () => {
-        altname = getState()
-          .getConfig("base_url", "")
-          .replace("https://", "")
-          .replace("http://", "")
-          .replace("/", "");
-      });
+      let altname = await tenant_letsencrypt_name(subdomain);
 
       if (!altname || domain) {
         req.json({ error: "Set Base URL for both tenant and root first." });
@@ -1767,6 +1761,15 @@ router.post(
           subject: altname,
         });
         // letsencrypt
+        const tenant_letsencrypt_sites = getState().getConfig(
+          "tenant_letsencrypt_sites",
+          []
+        );
+        await getState().setConfig(tenant_letsencrypt_sites, [
+          altname,
+          ...tenant_letsencrypt_sites,
+        ]);
+
         res.json({
           success: true,
           notify: "Certificate added, please restart server",
@@ -1842,6 +1845,15 @@ router.post(
         });
         // letsencrypt
         await getState().setConfig("letsencrypt", true);
+        const tenant_letsencrypt_sites = getState().getConfig(
+          "tenant_letsencrypt_sites",
+          []
+        );
+        await getState().setConfig(tenant_letsencrypt_sites, [
+          ...altnames,
+          ...tenant_letsencrypt_sites,
+        ]);
+
         req.flash(
           "success",
           req.__(
