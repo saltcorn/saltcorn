@@ -702,13 +702,33 @@ const ContainerSettings = () => {
             valuePostfix="deg"
           />
           <SettingsRow
-            field={{ name: "scaleX", label: "Scale X", type: "Float" }}
+            field={{ name: "scaleX", label: "ScaleX", type: "Float" }}
             node={node}
             setProp={setProp}
             subProp="transform"
           />
           <SettingsRow
-            field={{ name: "scaleY", label: "Scale Y", type: "Float" }}
+            field={{ name: "scaleY", label: "ScaleY", type: "Float" }}
+            node={node}
+            setProp={setProp}
+            subProp="transform"
+          />
+          <SettingsRow
+            field={{
+              name: "translateX",
+              label: "TranslateX",
+              type: "DimUnits",
+            }}
+            node={node}
+            setProp={setProp}
+            subProp="transform"
+          />
+          <SettingsRow
+            field={{
+              name: "translateY",
+              label: "TranslateY",
+              type: "DimUnits",
+            }}
             node={node}
             setProp={setProp}
             subProp="transform"
