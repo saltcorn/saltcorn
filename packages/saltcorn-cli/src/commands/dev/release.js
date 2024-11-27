@@ -89,7 +89,7 @@ class ReleaseCommand extends Command {
       );
     };
     const compileTsFiles = () => {
-      spawnSync("npm", ["install"], {
+      spawnSync("npm", ["install", "--legacy-peer-deps"], {
         stdio: "inherit",
         cwd: ".",
       });
@@ -103,7 +103,9 @@ class ReleaseCommand extends Command {
       if (flags.tag) tags.push(flags.tag);
       const firstTag = tags[0];
       console.log(
-        `packages/${dir}$ npm publish --access=public ${firstTag ? `--tag ${firstTag}` : ""}`
+        `packages/${dir}$ npm publish --access=public ${
+          firstTag ? `--tag ${firstTag}` : ""
+        }`
       );
       spawnSync(
         "npm",
@@ -120,7 +122,9 @@ class ReleaseCommand extends Command {
       tags.shift();
       for (const tag of tags) {
         await sleep(3000);
-        console.log(`packages/${dir}$ npm dist-tag add @saltcorn/cli@${version} ${tag}`);
+        console.log(
+          `packages/${dir}$ npm dist-tag add @saltcorn/cli@${version} ${tag}`
+        );
         spawnSync("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
@@ -135,7 +139,7 @@ class ReleaseCommand extends Command {
     // 1. update version
     // 2. update dependencies for other packages
     // 3. publish
-    spawnSync("npm", ["install"], {
+    spawnSync("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
@@ -158,11 +162,15 @@ class ReleaseCommand extends Command {
       `package.json`,
       JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
     );
+    spawnSync("npm", ["install", "--legacy-peer-deps"], {
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
     spawnSync("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
-    spawnSync("npm", ["install"], {
+    spawnSync("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: ".",
     });
