@@ -90,8 +90,6 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   });
   const options = useContext(optionsCtx);
   const doSave = (query) => {
-    console.log("doSave");
-
     if (!query.serialize) return;
 
     const data = craftToSaltcorn(
