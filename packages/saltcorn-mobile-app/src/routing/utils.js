@@ -35,7 +35,7 @@ export const parseQuery = (queryStr) => {
 
 const layout = () => {
   const state = saltcorn.data.state.getState();
-  return state.getLayout({ role_id: state.mobileConfig.role_id || 100 });
+  return state.getLayout({ role_id: state.mobileConfig.user.role_id || 100 });
 };
 
 export const sbAdmin2Layout = () => {
@@ -45,7 +45,7 @@ export const sbAdmin2Layout = () => {
 const getMenu = (req) => {
   const state = saltcorn.data.state.getState();
   const mobileCfg = state.mobileConfig;
-  const role = mobileCfg.role_id || 100;
+  const role = mobileCfg.user.role_id || 100;
   const extraMenu = saltcorn.data.web_mobile_commons.get_extra_menu(
     role,
     req.__
@@ -70,7 +70,7 @@ const getMenu = (req) => {
       : [];
   } else {
     const allowSignup = state.getConfig("allow_signup");
-    const userName = mobileCfg.user_name;
+    const userName = mobileCfg.user.email;
     const authItems = mobileCfg.isPublicUser
       ? [
           {
@@ -149,7 +149,7 @@ export const wrapContents = (contents, title, context, req) => {
         title: title,
         body,
         alerts: prepareAlerts(context, req),
-        role: state.mobileConfig.role_id,
+        role: state.mobileConfig.user.role_id,
         menu: getMenu(req),
         req,
         headers: getHeaders(),
@@ -165,7 +165,7 @@ export const wrapContents = (contents, title, context, req) => {
         body,
         req,
         alerts: prepareAlerts(context, req),
-        role: state.mobileConfig.role_id,
+        role: state.mobileConfig.user.role_id,
       });
   return {
     content: wrappedContent,

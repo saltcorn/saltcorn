@@ -44,24 +44,19 @@ export async function login({ email, password, entryPoint, isSignup }) {
   if (typeof loginResult === "string") {
     // use it as a token
     const decodedJwt = jwtDecode(loginResult);
-    const state = saltcorn.data.state.getState();
-    const config = state.mobileConfig;
-    config.role_id = decodedJwt.user.role_id ? decodedJwt.user.role_id : 100;
-    config.user_name = decodedJwt.user.email;
-    config.user_id = decodedJwt.user.id;
-    config.language = decodedJwt.user.language;
+    const config = saltcorn.data.state.getState().mobileConfig;
     config.user = decodedJwt.user;
     config.isPublicUser = false;
     config.isOfflineMode = false;
     await insertUser(config.user);
     await setJwt(loginResult);
     config.jwt = loginResult;
-    i18next.changeLanguage(config.language);
+    i18next.changeLanguage(config.user.language);
     const alerts = [];
     if (config.allowOfflineMode) {
       const { offlineUser, hasOfflineData } =
         (await getLastOfflineSession()) || {};
-      if (!offlineUser || offlineUser === config.user_name) {
+      if (!offlineUser || offlineUser === config.user.email) {
         await sync();
       } else {
         if (hasOfflineData)
@@ -79,7 +74,7 @@ export async function login({ email, password, entryPoint, isSignup }) {
       type: "success",
       msg: i18next.t("Welcome, %s!", {
         postProcess: "sprintf",
-        sprintf: [config.user_name],
+        sprintf: [config.user.email],
       }),
     });
     addRoute({ route: entryPoint, query: undefined });
@@ -103,20 +98,13 @@ export async function publicLogin(entryPoint) {
       const config = saltcorn.data.state.getState().mobileConfig;
       config.user = {
         role_id: 100,
-        user_name: "public",
+        email: "public",
         language: "en",
       };
-      // TODO remove these, use 'user' everywhere
-      config.role_id = 100;
-      config.user_name = "public";
-      config.language = "en";
-
       config.isPublicUser = true;
       await setJwt(loginResult);
       config.jwt = loginResult;
-
-      i18next.changeLanguage(config.language);
-
+      i18next.changeLanguage(config.user.language);
       addRoute({
         route: entryPoint,
         query: undefined,

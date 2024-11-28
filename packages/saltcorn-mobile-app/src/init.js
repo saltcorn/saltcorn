@@ -1,4 +1,4 @@
-/*global saltcorn, cordova*/
+/*global saltcorn */
 
 import {
   startOfflineMode,
@@ -177,10 +177,10 @@ const showErrorPage = async (error) => {
 // the app comes back from background
 const onResume = async () => {
   if (typeof saltcorn === "undefined") return;
-  const state = saltcorn.data.state.getState();
-  const mobileConfig = state.mobileConfig;
+  const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   if (mobileConfig?.allowOfflineMode) {
-    mobileConfig.networkState = navigator.connection.type;
+    const netStatus = await Network.getStatus();
+    mobileConfig.networkState = netStatus.connectionType;
     if (
       mobileConfig.networkState === "none" &&
       !mobileConfig.isOfflineMode &&
@@ -189,18 +189,10 @@ const onResume = async () => {
       try {
         await startOfflineMode();
         clearHistory();
-        if (mobileConfig.user_id) await gotoEntryView();
+        if (mobileConfig.user?.id) await gotoEntryView();
         else {
           const decodedJwt = jwtDecode(mobileConfig.jwt);
           mobileConfig.user = decodedJwt.user;
-          // TODO remove these, use 'user' everywhere
-          mobileConfig.role_id = decodedJwt.user.role_id
-            ? decodedJwt.user.role_id
-            : 100;
-          mobileConfig.user_id = decodedJwt.user.id;
-          mobileConfig.user_name = decodedJwt.user.email;
-          mobileConfig.language = decodedJwt.user.language;
-
           mobileConfig.isPublicUser = false;
         }
         addRoute({ route: mobileConfig.entry_point, query: undefined });
@@ -329,20 +321,12 @@ export async function init({
       const mobileConfig = state.mobileConfig;
       const decodedJwt = jwtDecode(mobileConfig.jwt);
       mobileConfig.user = decodedJwt.user;
-      // TODO remove these, use 'user' everywhere
-      mobileConfig.role_id = decodedJwt.user.role_id
-        ? decodedJwt.user.role_id
-        : 100;
-      mobileConfig.user_id = decodedJwt.user.id;
-      mobileConfig.user_name = decodedJwt.user.email;
-      mobileConfig.language = decodedJwt.user.language;
-
       mobileConfig.isPublicUser = false;
-      await i18next.changeLanguage(mobileConfig.language);
+      await i18next.changeLanguage(mobileConfig.user.language);
       if (mobileConfig.allowOfflineMode) {
         const { offlineUser } = (await getLastOfflineSession()) || {};
         if (networkDisabled) {
-          if (offlineUser && offlineUser !== mobileConfig.user_name)
+          if (offlineUser && offlineUser !== mobileConfig.user.email)
             throw new Error(
               `The offline mode is not available, '${offlineUser}' has not yet uploaded offline data.`
             );
@@ -357,7 +341,7 @@ export async function init({
               );
             }
         } else if (offlineUser) {
-          if (offlineUser === mobileConfig.user_name) {
+          if (offlineUser === mobileConfig.user.email) {
             await sync();
             alerts.push({
               type: "info",
@@ -399,14 +383,9 @@ export async function init({
       if (page.content) await replaceIframe(page.content, page.isFile);
     } else if (isPublicJwt(jwt)) {
       const config = state.mobileConfig;
-      config.user = { role_id: 100, user_name: "public", language: "en" };
-      // TODO remove these, use 'user' everywhere
-      config.role_id = 100;
-      config.user_name = "public";
-      config.language = "en";
-
+      config.user = { role_id: 100, email: "public", language: "en" };
       config.isPublicUser = true;
-      i18next.changeLanguage(config.language);
+      i18next.changeLanguage(config.user.language);
       addRoute({ route: entryPoint, query: undefined });
       const page = await router.resolve({
         pathname: entryPoint,

@@ -1,4 +1,4 @@
-/*global saltcorn,*/
+/*global saltcorn */
 
 import { MobileRequest } from "../mocks/request";
 import { MobileResponse } from "../mocks/response";
@@ -35,7 +35,7 @@ export const postView = async (context) => {
   const state = saltcorn.data.state.getState();
   const mobileCfg = state.mobileConfig;
   if (
-    mobileCfg.role_id > view.min_role &&
+    mobileCfg.user.role_id > view.min_role &&
     !(await view.authorise_post({ body, req, ...view }))
   ) {
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
@@ -87,8 +87,8 @@ export const postViewRoute = async (context) => {
     throw new Error(req.__("No such view: %s", context.params.viewname));
   const res = new MobileResponse();
   const state = saltcorn.data.state.getState();
-  const { role_id, isOfflineMode } = state.mobileConfig;
-  if (role_id > view.min_role)
+  const { user, isOfflineMode } = state.mobileConfig;
+  if (user.role_id > view.min_role)
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   await view.runRoute(
     context.params.route,
@@ -134,10 +134,10 @@ export const getView = async (context) => {
   if (!view) throw new Error(req.__("No such view: %s", viewname));
   const res = new MobileResponse();
   if (
-    state.mobileConfig.role_id > view.min_role &&
+    state.mobileConfig.user.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))
   ) {
-    const additionalInfos = `: your role: ${state.mobileConfig.role_id}, view min_role: ${view.min_role}`;
+    const additionalInfos = `: your role: ${state.mobileConfig.user.role_id}, view min_role: ${view.min_role}`;
     throw new saltcorn.data.utils.NotAuthorized(
       req.__("Not authorized") + additionalInfos
     );

@@ -1,15 +1,16 @@
-/*global i18next, saltcorn */
+/*global saltcorn */
 import { apiCall } from "../../helpers/api";
 import { setHasOfflineData, hasOfflineRows } from "../../helpers/offline_mode";
+import i18next from "i18next";
 
 // post/delete/:name/:id
 export const deleteRows = async (context) => {
   const { name, id } = context.params;
   const table = await saltcorn.data.models.Table.findOne({ name });
-  const { isOfflineMode, localTableIds, role_id } =
+  const { isOfflineMode, localTableIds, user } =
     saltcorn.data.state.getState().mobileConfig;
   if (isOfflineMode || localTableIds.indexOf(table.id) >= 0) {
-    if (role_id <= table.min_role_write) {
+    if (user.role_id <= table.min_role_write) {
       await table.deleteRows({ id });
       // TODO 'table.is_owner' check?
     } else

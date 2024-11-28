@@ -449,10 +449,10 @@ const setSpinnerText = () => {
 export async function sync() {
   setSpinnerText();
   const state = saltcorn.data.state.getState();
-  const mobileConfig = state.mobileConfig;
+  const { user } = state.mobileConfig;
   const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
     (await getLastOfflineSession()) || {};
-  if (offlineUser && hasOfflineData && offlineUser !== mobileConfig.user_name) {
+  if (offlineUser && hasOfflineData && offlineUser !== user.email) {
     throw new Error(
       `The sync is not available, '${offlineUser}' has not yet uploaded offline data.`
     );
@@ -461,7 +461,7 @@ export async function sync() {
     let cleanSync = await checkCleanSync(
       uploadStarted,
       uploadStartTime,
-      mobileConfig.user_name
+      user.email
     );
     const syncTimestamp = await getSyncTimestamp();
     await setUploadStarted(true, syncTimestamp);
@@ -506,11 +506,11 @@ export async function startOfflineMode() {
   const oldSession = await getLastOfflineSession();
   if (!oldSession) {
     await setOfflineSession({
-      offlineUser: mobileConfig.user_name,
+      offlineUser: mobileConfig.user.email,
     });
   } else if (
     oldSession.offlineUser &&
-    oldSession.offlineUser !== mobileConfig.user_name
+    oldSession.offlineUser !== mobileConfig.user.email
   ) {
     if (oldSession.hasOfflineData)
       throw new Error(
@@ -524,7 +524,7 @@ export async function startOfflineMode() {
     );
   } else {
     await setOfflineSession({
-      offlineUser: mobileConfig.user_name,
+      offlineUser: mobileConfig.user.email,
     });
   }
   mobileConfig.isOfflineMode = true;
@@ -532,8 +532,7 @@ export async function startOfflineMode() {
 
 export async function endOfflineMode(endSession = false) {
   const state = saltcorn.data.state.getState();
-  const mobileConfig = state.mobileConfig;
-  mobileConfig.isOfflineMode = false;
+  state.mobileConfig.isOfflineMode = false;
   const oldSession = await getLastOfflineSession();
   if ((!oldSession?.uploadStarted && !(await hasOfflineRows())) || endSession)
     await state.setConfig("last_offline_session", null);
@@ -581,7 +580,7 @@ export async function clearLocalData(inTransaction) {
 export function networkChangeCallback(status) {
   console.log("Network status changed", status);
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  if (status !== "none") {
+  if (status.connectionType !== "none") {
     const iframeWindow = $("#content-iframe")[0].contentWindow;
     if (iframeWindow) {
       clearAlerts();
@@ -595,7 +594,7 @@ export function networkChangeCallback(status) {
       );
     }
   }
-  mobileConfig.networkState = status;
+  mobileConfig.networkState = status.connectionType;
 }
 
 export async function hasOfflineRows() {

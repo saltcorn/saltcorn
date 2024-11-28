@@ -157,7 +157,8 @@ export async function handleRoute(route, query, files, data) {
           );
         }
       } else if (page.content) {
-        if (isModal) replaceModalContent(page.content);
+        if (isModal && route?.startsWith("post"))
+          replaceModalContent(page.content);
         else if (!page.replaceIframe)
           await replaceIframeInnerContent(page.content);
         else await replaceIframe(page.content, page.isFile);
@@ -288,6 +289,13 @@ export function addScriptToIframeHead(iframeDoc, script) {
 export async function replaceIframeInnerContent(content) {
   const iframe = document.getElementById("content-iframe");
   const iframeDocument = iframe.contentWindow.document;
+  if (iframe.contentWindow.$) {
+    const scmodal = iframe.contentWindow.$("#scmodal");
+    if (scmodal.length > 0) {
+      scmodal.modal("hide");
+      scmodal.remove();
+    }
+  }
   const modal = iframeDocument.getElementById("scmodal");
   if (modal) modal.remove();
   const innerContentDiv = iframeDocument.getElementById("page-inner-content");
@@ -299,11 +307,6 @@ export async function replaceIframeInnerContent(content) {
     } else {
       iframe.contentWindow.eval(script.innerHTML);
     }
-  }
-  const scmodal = iframe.contentWindow.$("#scmodal");
-  if (scmodal.length > 0) {
-    // TODO test
-    scmodal.modal("hide");
   }
   iframe.contentWindow.scrollTo(0, 0);
   iframe.contentWindow.initialize_page();

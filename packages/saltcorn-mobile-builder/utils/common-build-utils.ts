@@ -790,8 +790,8 @@ export async function prepareSplashPage(
         {
           script: `static_assets/${db.connectObj.version_tag}/saltcorn-common.js`,
         },
-        { script: `/static_assets/${db.connectObj.version_tag}/dayjs.min.js` },
-        { script: "js/utils/iframe_view_utils.js" },
+        { script: `static_assets/${db.connectObj.version_tag}/dayjs.min.js` },
+        { script: "js/iframe_view_utils.js" },
         {
           headerTag: `<script>parent.splashConfig = { server_path: '${serverUrl}', tenantAppName: ${tenantAppName}, };</script>`,
         },

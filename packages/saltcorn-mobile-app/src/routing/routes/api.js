@@ -7,10 +7,6 @@ import { setHasOfflineData } from "../../helpers/offline_mode";
 export const updateTableRow = async (context) => {
   const { tableName, id } = context.params;
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  const user = {
-    id: mobileConfig.user_id,
-    role_id: mobileConfig.role_id || 100,
-  };
   const table = saltcorn.data.models.Table.findOne({ name: tableName });
   if (!table) throw new Error(`The table '${tableName}' does not exist.`);
   if (
@@ -27,7 +23,7 @@ export const updateTableRow = async (context) => {
       id
     );
     if (errors.length > 0) throw new Error(errors.join(", "));
-    const ins_res = await table.tryUpdateRow(row, id, user);
+    const ins_res = await table.tryUpdateRow(row, id, mobileConfig.user);
     if (ins_res.error)
       throw new Error(`Update '${table.name}' error: ${ins_res.error}`);
     if (mobileConfig.isOfflineMode) await setHasOfflineData(true);
@@ -47,10 +43,6 @@ export const insertTableRow = async (context) => {
   const { tableName } = context.params;
   const table = saltcorn.data.models.Table.findOne({ name: tableName });
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  const user = {
-    id: mobileConfig.user_id,
-    role_id: mobileConfig.role_id || 100,
-  };
   if (!table) throw new Error(`The table '${tableName}' does not exist.`);
   if (
     mobileConfig.isOfflineMode ||
@@ -65,7 +57,7 @@ export const insertTableRow = async (context) => {
       table.getFields()
     );
     if (errors.length > 0) throw new Error(errors.join(", "));
-    const ins_res = await table.tryInsertRow(row, user);
+    const ins_res = await table.tryInsertRow(row, mobileConfig.user);
     if (ins_res.error) {
       throw new Error(`Insert '${table.name}' error: ${ins_res.error}`);
     }

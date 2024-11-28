@@ -783,7 +783,7 @@ async function callSync() {
 async function deleteOfflineDataClicked() {
   const lastOfflineSession =
     await parent.saltcorn.mobileApp.offlineMode.getLastOfflineSession();
-  const { user_name } = parent.saltcorn.data.state.getState().mobileConfig;
+  const { user } = parent.saltcorn.data.state.getState().mobileConfig;
   if (!lastOfflineSession?.offlineUser) {
     parent.saltcorn.mobileApp.common.showAlerts([
       {
@@ -791,7 +791,7 @@ async function deleteOfflineDataClicked() {
         msg: "You don't have any offline data.",
       },
     ]);
-  } else if (lastOfflineSession.offlineUser !== user_name) {
+  } else if (lastOfflineSession.offlineUser !== user.email) {
     parent.saltcorn.mobileApp.common.showAlerts([
       {
         type: "error",

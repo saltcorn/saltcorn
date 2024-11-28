@@ -33,7 +33,7 @@ export function MobileRequest({
     },
     getLocale: () => {
       const mobileCfg = saltcorn.data.state.getState().mobileConfig;
-      return mobileCfg?.language ? mobileCfg.language : "en";
+      return mobileCfg?.user?.language ? mobileCfg.user.language : "en";
     },
     user: cfg.user,
     flash: (type, msg) => {

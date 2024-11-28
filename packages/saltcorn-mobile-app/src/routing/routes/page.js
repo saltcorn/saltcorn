@@ -7,12 +7,12 @@ import { loadFileAsText } from "../../helpers/common";
 
 // post/page/:pagename/action/:rndid
 export const postPageAction = async (context) => {
-  const state = saltcorn.data.state.getState();
+  const { user } = saltcorn.data.state.getState().mobileConfig;
   const req = new MobileRequest({ xhr: context.xhr });
   const { page_name, rndid } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
   if (!page) throw new Error(req.__("Page %s not found", page_name));
-  if (state.mobileConfig.role_id > page.min_role) {
+  if (user.role_id > page.min_role) {
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
   let col;
@@ -42,8 +42,8 @@ const findPageOrGroup = (pagename) => {
 };
 
 const runPage = async (page, state, context, { req, res }) => {
-  if (state.mobileConfig.role_id > page.min_role) {
-    const additionalInfos = `: your role: ${state.mobileConfig.role_id}, page min_role: ${page.min_role}`;
+  if (state.mobileConfig.user.role_id > page.min_role) {
+    const additionalInfos = `: your role: ${state.mobileConfig.user.role_id}, page min_role: ${page.min_role}`;
     throw new saltcorn.data.utils.NotAuthorized(
       req.__("Not authorized") + additionalInfos
     );
@@ -70,8 +70,8 @@ const getEligiblePage = async (pageGroup, req) => {
 };
 
 const runPageGroup = async (pageGroup, state, context, { req, res }) => {
-  if (state.mobileConfig.role_id > pageGroup.min_role) {
-    const additionalInfos = `: your role: ${state.mobileConfig.role_id}, pagegroup min_role: ${pageGroup.min_role}`;
+  if (state.mobileConfig.user.role_id > pageGroup.min_role) {
+    const additionalInfos = `: your role: ${state.mobileConfig.user.role_id}, pagegroup min_role: ${pageGroup.min_role}`;
     throw new saltcorn.data.utils.NotAuthorized(
       req.__("Not authorized") + additionalInfos
     );

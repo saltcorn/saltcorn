@@ -1,9 +1,10 @@
-/*global saltcorn, cordova*/
+/*global saltcorn */
 
 const historyFile = "update_history";
 const jwtTableName = "jwt_table";
 
 import { readFile, fileExists, writeJSON } from "./file_system";
+import { Directory } from "@capacitor/filesystem";
 
 /**
  * drop tables that are no longer in the 'tables.json' file
@@ -142,7 +143,7 @@ export async function createSyncInfoTables(synchTbls) {
 }
 
 export async function tablesUptodate(createdAt, historyFile) {
-  const { updated_at } = await readFile(historyFile, "DATA");
+  const { updated_at } = await readFile(historyFile, Directory.Data);
   if (!updated_at) {
     console.log("No updated_at in history file");
     return false;
@@ -156,7 +157,7 @@ export async function tablesUptodate(createdAt, historyFile) {
  */
 export async function dbUpdateNeeded(createdAt) {
   return (
-    !(await fileExists(`${cordova.file.dataDirectory}${historyFile}`)) ||
+    !(await fileExists(historyFile, Directory.Data)) ||
     !(await tablesUptodate(createdAt, historyFile))
   );
 }
@@ -165,7 +166,7 @@ export async function updateDb(tablesJSON) {
   await updateScTables(tablesJSON);
   await saltcorn.data.state.getState().refresh_tables();
   await updateUserDefinedTables();
-  await writeJSON(historyFile, "DATA", {
+  await writeJSON(historyFile, Directory.Data, {
     updated_at: new Date().valueOf(),
   });
 }
