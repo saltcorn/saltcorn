@@ -393,8 +393,10 @@ const set_load_actions_join_fieldviews = async ({
       const field = table.getField(join_field);
 
       if (field && field.type === "File") segment.field_type = "File";
-      else if (field?.type.name && field?.type?.fieldviews[fieldview])
+      else if (field?.type.name && field?.type?.fieldviews[fieldview]) {
         segment.field_type = field.type.name;
+        segment.target_field_attributes = field.attributes;
+      }
     },
     async action(segment) {
       if (segment.action_style === "on_page_load") {
@@ -833,7 +835,13 @@ const render = (
       else return fvrun;
     },
     join_field(jf) {
-      const { join_field, field_type, fieldview, configuration } = jf;
+      const {
+        join_field,
+        field_type,
+        fieldview,
+        configuration,
+        target_field_attributes,
+      } = jf;
       const keypath = join_field.split(".");
       let value;
       if (join_field.includes("->")) {
@@ -857,6 +865,7 @@ const render = (
         if (type && getState().types[field_type]) {
           return type.fieldviews[fieldview].run(value, req, {
             row,
+            ...(target_field_attributes || {}),
             ...configuration,
           });
         } else return text(value);

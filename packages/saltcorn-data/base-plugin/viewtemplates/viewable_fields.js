@@ -928,9 +928,10 @@ const get_viewable_fields = (
           targetNm = keypath[keypath.length - 1];
           key = keypath.join("_");
         }
+        const field = table.getField(column.join_field);
+
         if (column.field_type) type = getState().types[column.field_type];
         else {
-          const field = table.getField(column.join_field);
           if (field && field.type === "File") column.field_type = "File";
           else if (field?.type.name && field?.type?.fieldviews[fieldview]) {
             column.field_type = field.type.name;
@@ -938,11 +939,6 @@ const get_viewable_fields = (
           }
         }
         if (fieldview && type?.fieldviews?.[fieldview]?.expandColumns) {
-          const reffield = fields.find((f) => f.name === refNm);
-          const reftable = Table.findOne({
-            name: reffield.reftable_name,
-          });
-          const field = reftable.fields.find((f) => f.name === targetNm);
           return type.fieldviews[fieldview].expandColumns(
             field,
             {
@@ -957,6 +953,7 @@ const get_viewable_fields = (
             ? (row) =>
                 type.fieldviews[fieldview].run(row[key], req, {
                   row,
+                  ...(field?.attributes || {}),
                   ...column,
                   ...(column?.configuration || {}),
                 })
