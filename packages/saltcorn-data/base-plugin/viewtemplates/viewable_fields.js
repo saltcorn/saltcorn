@@ -937,7 +937,7 @@ const get_viewable_fields = (
             column.field_type = field.type.name;
             type = getState().types[column.field_type];
           }
-        }       
+        }
         if (fieldview && type?.fieldviews?.[fieldview]?.expandColumns) {
           return type.fieldviews[fieldview].expandColumns(
             field,
