@@ -207,10 +207,17 @@ describe("Action and Trigger model", () => {
         // from https://requestbin.com/
         // to inspect https://pipedream.com/sources/dc_jku44wk
         url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
-        body: "",
+        body: "{foo: author}",
+        response_field: "author",
       },
     });
-    await table.insertRow({ author: "NK Jemisin", pages: 901 });
+    const id = await table.insertRow(
+      { author: "NK Jemisin", pages: 901 },
+      undefined,
+      {}
+    );
+    const row = await table.getRow({ id });
+    expect(row?.author).toBe('{"success":true}');
   });
 });
 describe("base plugin actions", () => {
