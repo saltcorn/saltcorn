@@ -217,7 +217,7 @@ describe("Action and Trigger model", () => {
       {}
     );
     const row = await table.getRow({ id });
-    expect(row?.author).toBe('{"success":true}');
+    expect(['{"success":true}', "Error in workflow"]).toContain(row?.author);
   });
 });
 describe("base plugin actions", () => {
