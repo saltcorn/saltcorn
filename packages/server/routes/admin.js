@@ -1741,8 +1741,8 @@ router.post(
 
       let altname = await tenant_letsencrypt_name(subdomain);
 
-      if (!altname || domain) {
-        req.json({ error: "Set Base URL for both tenant and root first." });
+      if (!altname || !domain) {
+        res.json({ error: "Set Base URL for both tenant and root first." });
         return;
       }
 
@@ -1759,13 +1759,14 @@ router.post(
 
         await greenlock.sites.add({
           subject: altname,
+          altnames: [altname],
         });
         // letsencrypt
         const tenant_letsencrypt_sites = getState().getConfig(
           "tenant_letsencrypt_sites",
           []
         );
-        await getState().setConfig(tenant_letsencrypt_sites, [
+        await getState().setConfig("tenant_letsencrypt_sites", [
           altname,
           ...tenant_letsencrypt_sites,
         ]);
@@ -1775,12 +1776,10 @@ router.post(
           notify: "Certificate added, please restart server",
         });
       } catch (e) {
-        req.flash("error", e.message);
-        res.redirect("/useradmin/ssl");
+        res.json({ error: e.message });
       }
     } else {
-      req.flash("error", req.__("Not possible for tenant"));
-      res.redirect("/useradmin/ssl");
+      res.json({ error: req.__("Not possible for tenant") });
     }
   })
 );
@@ -1849,7 +1848,7 @@ router.post(
           "tenant_letsencrypt_sites",
           []
         );
-        await getState().setConfig(tenant_letsencrypt_sites, [
+        await getState().setConfig("tenant_letsencrypt_sites", [
           ...altnames,
           ...tenant_letsencrypt_sites,
         ]);
