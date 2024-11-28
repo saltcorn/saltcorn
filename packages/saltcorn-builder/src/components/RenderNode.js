@@ -17,7 +17,7 @@ import {
   faArrowUp,
   faArrowsAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { recursivelyCloneToElems } from "./elements/utils";
+import { recursivelyCloneToElems } from "./elements/Clone";
 /* 
 Contains code copied from craft.js landing page example
 Copyright (c) 2020 Previnash Wong Sze Chuan

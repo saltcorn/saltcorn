@@ -142,6 +142,11 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
         }
       });
   };
+  useEffect(() => {
+    window.addEventListener("beforeunload", () => doSave(query));
+    window.addEventListener("blur", () => doSave(query));
+    window.addEventListener("pagehide", () => doSave(query));
+  }, []);
   const throttledSave = useThrottle(() => {
     doSave(query);
   });

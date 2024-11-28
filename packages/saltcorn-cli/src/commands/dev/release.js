@@ -102,6 +102,11 @@ class ReleaseCommand extends Command {
       const tags = !tags0 ? [] : Array.isArray(tags0) ? tags0 : [tags0];
       if (flags.tag) tags.push(flags.tag);
       const firstTag = tags[0];
+      console.log(
+        `packages/${dir}$ npm publish --access=public ${
+          firstTag ? `--tag ${firstTag}` : ""
+        }`
+      );
       spawnSync(
         "npm",
         [
@@ -117,6 +122,9 @@ class ReleaseCommand extends Command {
       tags.shift();
       for (const tag of tags) {
         await sleep(3000);
+        console.log(
+          `packages/${dir}$ npm dist-tag add @saltcorn/cli@${version} ${tag}`
+        );
         spawnSync("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
@@ -153,17 +161,29 @@ class ReleaseCommand extends Command {
     fs.writeFileSync(
       `package.json`,
       JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
-    );
+    );    
     spawnSync("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
+    spawnSync("npm", ["install", "--legacy-peer-deps"], {
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
+    spawnSync("npm", ["run", "manifest"], {
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
+    spawnSync("npm", ["install", "--legacy-peer-deps"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
     // do not run 'audit fix' on full point releases, only on -beta.x, -rc.x etc
-    if (version.includes("-"))
+    /*if (version.includes("-"))
       spawnSync("npm", ["audit", "fix"], {
         stdio: "inherit",
         cwd: `packages/saltcorn-cli/`,
-      });
+      });*/
     await publish("saltcorn-cli", "next");
     fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile

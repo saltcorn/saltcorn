@@ -434,7 +434,7 @@ const configuration_workflow = (req) =>
                 name: "create_view_location",
                 label: req.__("Location"),
                 sublabel: req.__("Location of link to create new row"),
-                //required: true,
+                required: true,
                 attributes: {
                   options: [
                     "Bottom left",
@@ -446,6 +446,20 @@ const configuration_workflow = (req) =>
                 type: "String",
                 showIf: {
                   create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o) => o.name),
+                },
+              },
+              {
+                name: "create_view_location",
+                label: req.__("Location"),
+                sublabel: req.__("Location of view to create new row"),
+                required: true,
+                attributes: {
+                  options: ["Bottom", "Top"],
+                },
+                type: "String",
+                showIf: {
+                  create_view_display: ["Embedded"],
                   view_to_create: create_view_opts.map((o) => o.name),
                 },
               },

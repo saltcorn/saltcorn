@@ -44,7 +44,12 @@ const {
 const db = require("@saltcorn/data/db");
 
 const { loadAllPlugins, loadAndSaveNewPlugin } = require("../load_plugins");
-const { isAdmin, error_catcher, is_ip_address } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  is_ip_address,
+  tenant_letsencrypt_name,
+} = require("./utils.js");
 const User = require("@saltcorn/data/models/user");
 const File = require("@saltcorn/data/models/file");
 const {
@@ -53,6 +58,7 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
+const path = require("path");
 //const {quote} = require("@saltcorn/db-common");
 // todo add button backup / restore for particular tenant (available in admin tenants screens)
 //const {
@@ -313,7 +319,48 @@ router.post(
         if (hasTemplate) {
           new_url_create += "auth/create_first_user";
         }
+        const letsencrypt = getState().getConfig("letsencrypt", false);
+        if (letsencrypt) {
+          let altname = await tenant_letsencrypt_name(subdomain);
+          const tenant_letsencrypt_sites = getState().getConfig(
+            "tenant_letsencrypt_sites",
+            []
+          );
+          const has_cert = tenant_letsencrypt_sites.includes(altname);
+          if (!has_cert) {
+            const file_store = db.connectObj.file_store;
+            const admin_users = await User.find(
+              { role_id: 1 },
+              { orderBy: "id" }
+            );
+            // greenlock logic
+            const Greenlock = require("greenlock");
+            const greenlock = Greenlock.create({
+              packageRoot: path.resolve(__dirname, ".."),
+              configDir: path.join(file_store, "greenlock.d"),
+              maintainerEmail: admin_users[0].email,
+            });
 
+            await greenlock.sites.add({
+              subject: altname,
+              altnames: [altname],
+            });
+            // letsencrypt
+            const tenant_letsencrypt_sites = getState().getConfig(
+              "tenant_letsencrypt_sites",
+              []
+            );
+            await getState().setConfig("tenant_letsencrypt_sites", [
+              altname,
+              ...tenant_letsencrypt_sites,
+            ]);
+            if (req.user?.role_id === 1) {
+              req.flash("success", req.__("Tenant created. Certificate will be acquired on first visit."));
+              res.redirect("/tenant/list");
+              return;
+            }
+          }
+        }
         res.sendWrap(
           req.__("Create application"),
           div(
@@ -612,8 +659,18 @@ router.get(
       return;
     }
     const { subdomain } = req.params;
+
     // get tenant info
     const info = await get_tenant_info(subdomain);
+    const letsencrypt = getState().getConfig("letsencrypt", false);
+
+    let altname = await tenant_letsencrypt_name(subdomain);
+    const tenant_letsencrypt_sites = getState().getConfig(
+      "tenant_letsencrypt_sites",
+      []
+    );
+    const has_cert = tenant_letsencrypt_sites.includes(altname);
+
     // get list of files
     let files;
     await db.runWithTenant(subdomain, async () => {
@@ -632,6 +689,7 @@ router.get(
             // TBD make more pretty view - in ideal with charts
             contents: [
               table(
+                { class: "table table-sm" },
                 tr(
                   th(req.__("First user E-mail")),
                   td(
@@ -723,6 +781,20 @@ router.get(
                   submitLabel: req.__("Save"),
                   submitButtonClass: "btn-outline-primary",
                   onChange: "remove_outline(this)",
+                  additionalButtons: [
+                    ...(letsencrypt && !has_cert
+                      ? [
+                          {
+                            label: req.__("Acquire LetsEncrypt certificate"),
+                            id: "btnAcqCert",
+                            class: "btn btn-secondary",
+                            onclick: `press_store_button(this);ajax_post('/admin/acq-ssl-tenant/${encodeURIComponent(
+                              subdomain
+                            )}')`,
+                          },
+                        ]
+                      : []),
+                  ],
                   fields: [
                     {
                       name: "base_url",

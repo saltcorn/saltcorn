@@ -1492,5 +1492,6 @@
 	"Sharing not enabled": "Sharing not enabled",
 	"You must be logged in to share": "You must be logged in to share",
 	"Fluid layout": "Fluid layout",
-	"Request fluid layout from theme for a wider display for this page": "Request fluid layout from theme for a wider display for this page"
+	"Request fluid layout from theme for a wider display for this page": "Request fluid layout from theme for a wider display for this page",
+	"Location of view to create new row": "Location of view to create new row"
 }

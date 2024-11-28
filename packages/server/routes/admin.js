@@ -12,6 +12,7 @@ const {
   setTenant,
   admin_config_route,
   get_sys_info,
+  tenant_letsencrypt_name,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -90,7 +91,10 @@ const {
 } = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
-const { get_latest_npm_version } = require("@saltcorn/data/models/config");
+const {
+  get_latest_npm_version,
+  isFixedConfig,
+} = require("@saltcorn/data/models/config");
 const { getMailTransport } = require("@saltcorn/data/models/email");
 const {
   getBaseDomain,
@@ -976,6 +980,40 @@ router.post(
     }
   })
 );
+
+router.post(
+  "/save-config",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const state = getState();
+
+    //TODO check this is a config key
+    const validKeyName = (k) =>
+      k !== "_csrf" && k !== "constructor" && k !== "__proto__";
+
+    for (const [k, v] of Object.entries(req.body)) {
+      if (!isFixedConfig(k) && typeof v !== "undefined" && validKeyName(k)) {
+        //TODO read value from type
+        await state.setConfig(k, v);
+      }
+    }
+
+    // checkboxes that are false are not sent in post body. Check here
+    const { boolcheck } = req.query;
+    const boolchecks =
+      typeof boolcheck === "undefined"
+        ? []
+        : Array.isArray(boolcheck)
+        ? boolcheck
+        : [boolcheck];
+    for (const k of boolchecks) {
+      if (typeof req.body[k] === "undefined" && validKeyName(k))
+        await state.setConfig(k, false);
+    }
+    res.json({ success: "ok" });
+  })
+);
+
 /**
  * Do Auto backup now
  */
@@ -1689,6 +1727,63 @@ const clearAllForm = (req) =>
     ],
   });
 
+router.post(
+  "/acq-ssl-tenant/:subdomain",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    if (
+      db.is_it_multi_tenant() &&
+      db.getTenantSchema() === db.connectObj.default_schema
+    ) {
+      const { subdomain } = req.params;
+
+      const domain = getBaseDomain();
+
+      let altname = await tenant_letsencrypt_name(subdomain);
+
+      if (!altname || !domain) {
+        res.json({ error: "Set Base URL for both tenant and root first." });
+        return;
+      }
+
+      try {
+        const file_store = db.connectObj.file_store;
+        const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+        // greenlock logic
+        const Greenlock = require("greenlock");
+        const greenlock = Greenlock.create({
+          packageRoot: path.resolve(__dirname, ".."),
+          configDir: path.join(file_store, "greenlock.d"),
+          maintainerEmail: admin_users[0].email,
+        });
+
+        await greenlock.sites.add({
+          subject: altname,
+          altnames: [altname],
+        });
+        // letsencrypt
+        const tenant_letsencrypt_sites = getState().getConfig(
+          "tenant_letsencrypt_sites",
+          []
+        );
+        await getState().setConfig("tenant_letsencrypt_sites", [
+          altname,
+          ...tenant_letsencrypt_sites,
+        ]);
+
+        res.json({
+          success: true,
+          notify: "Certificate added, please restart server",
+        });
+      } catch (e) {
+        res.json({ error: e.message });
+      }
+    } else {
+      res.json({ error: req.__("Not possible for tenant") });
+    }
+  })
+);
+
 /**
  * Do Enable letsencrypt
  * @name post/enable-letsencrypt
@@ -1749,6 +1844,15 @@ router.post(
         });
         // letsencrypt
         await getState().setConfig("letsencrypt", true);
+        const tenant_letsencrypt_sites = getState().getConfig(
+          "tenant_letsencrypt_sites",
+          []
+        );
+        await getState().setConfig("tenant_letsencrypt_sites", [
+          ...altnames,
+          ...tenant_letsencrypt_sites,
+        ]);
+
         req.flash(
           "success",
           req.__(
