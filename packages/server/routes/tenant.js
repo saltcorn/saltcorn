@@ -58,6 +58,7 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getConfig } = require("@saltcorn/data/models/config");
+const path = require("path");
 //const {quote} = require("@saltcorn/db-common");
 // todo add button backup / restore for particular tenant (available in admin tenants screens)
 //const {
@@ -354,13 +355,9 @@ router.post(
               ...tenant_letsencrypt_sites,
             ]);
             if (req.user?.role_id === 1) {
-              req.flash(
-                "success",
-                req.__("Tenant created. Restart to enable certificate.") +
-                  " " +
-                  a({ href: "/admin/system" }, req.__("Restart here"))
-              );
+              req.flash("success", req.__("Tenant created. Certificate will be acquired on first visit."));
               res.redirect("/tenant/list");
+              return;
             }
           }
         }
