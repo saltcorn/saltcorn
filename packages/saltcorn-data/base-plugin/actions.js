@@ -281,11 +281,19 @@ module.exports = {
           sublabel: "Trigger will call specified URL",
         },
         {
+          name: "method",
+          label: "Method",
+          type: "String",
+          required: true,
+          attributes: { options: "POST,GET,PUT,DELETE,PATCH" },
+        },
+        {
           name: "body",
           label: "JSON body",
           sublabel: "Leave blank to use row from table",
           type: "String",
-          fieldview: "textarea", // I think that textarea is better
+          fieldview: "textarea",
+          showIf: { method: ["POST", "PUT", "DELETE", "PATCH"] },
         },
         {
           name: "authorization",
@@ -315,7 +323,7 @@ module.exports = {
       row,
       user,
       table,
-      configuration: { url, body, authorization, response_field },
+      configuration: { url, body, authorization, response_field, method },
     }) => {
       let url1 = interpolate(url, row, user);
 
@@ -328,9 +336,9 @@ module.exports = {
         postBody = JSON.stringify(await f(row, user));
       } else if (body) postBody = body;
       else postBody = JSON.stringify(row);
-      
+
       const fetchOpts = {
-        method: "post",
+        method: (method || "post").toLowerCase(),
         body: postBody,
         headers: { "Content-Type": "application/json" },
       };
