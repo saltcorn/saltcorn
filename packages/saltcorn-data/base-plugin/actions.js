@@ -347,14 +347,20 @@ module.exports = {
         fetchOpts.headers.Authorization = interpolate(authorization, row, user);
       const response = await fetch(url1, fetchOpts);
       if (table && row && response_field) {
+        const field = table.getField(response_field);
         const contentType = response.headers.get("content-type");
         const isJSON =
           contentType && contentType.indexOf("application/json") !== -1;
         const parsedResponse = isJSON
           ? await response.json()
           : await response.text();
+        const saveResponse =
+          isJSON &&
+          (field?.type?.name === "String" || field?.type?.sql_name === "text")
+            ? JSON.stringify(parsedResponse)
+            : parsedResponse;
         await table.updateRow(
-          { [response_field]: parsedResponse },
+          { [response_field]: saveResponse },
           row[table.pk_name]
         );
       } else return;
