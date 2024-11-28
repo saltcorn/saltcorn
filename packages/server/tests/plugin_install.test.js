@@ -161,10 +161,10 @@ describe("Stable versioning install", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(dbPlugin).not.toBe(null);
-    expect(dbPlugin.version).toBe("0.0.1");
+    expect(dbPlugin.version).toBe("0.1.0");
   });
 
-  it("installs a fixed version", async () => {
+  it("installs and upgrades a fixed version", async () => {
     const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
     await loadAndSaveNewPlugin(
       new Plugin({
@@ -178,7 +178,7 @@ describe("Stable versioning install", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(dbPlugin).not.toBe(null);
-    expect(dbPlugin.version).toBe("0.0.1");
+    expect(dbPlugin.version).toBe("0.1.0");
   });
 
   it("installs and downgrades a fixed version", async () => {
@@ -188,7 +188,7 @@ describe("Stable versioning install", () => {
         name: "@christianhugoch/empty_sc_test_plugin",
         location: "@christianhugoch/empty_sc_test_plugin",
         source: "npm",
-        version: "0.0.6",
+        version: "0.2.0",
       }),
       true
     );
@@ -196,7 +196,7 @@ describe("Stable versioning install", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(dbPlugin).not.toBe(null);
-    expect(dbPlugin.version).toBe("0.0.1");
+    expect(dbPlugin.version).toBe("0.1.0");
   });
 });
 
@@ -245,7 +245,7 @@ describe("Stable versioning upgrade", () => {
     expect(newPlugin.version).toBe("0.0.3");
   });
 
-  it("upgrades to latest with downgrade", async () => {
+  it("upgrades to latest with downgrade to supported", async () => {
     const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
     await loadAndSaveNewPlugin(
       new Plugin({
@@ -276,7 +276,7 @@ describe("Stable versioning upgrade", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(newPlugin).not.toBe(null);
-    expect(newPlugin.version).toBe("0.0.1");
+    expect(newPlugin.version).toBe("0.1.0");
   });
 
   it("upgrades to fixed version", async () => {
@@ -313,7 +313,7 @@ describe("Stable versioning upgrade", () => {
     expect(newPlugin.version).toBe("0.0.3");
   });
 
-  it("upgrades to fixed version with downgrade", async () => {
+  it("upgrades to fixed version with downgrade to supported", async () => {
     const loadAndSaveNewPlugin = load_plugins.loadAndSaveNewPlugin;
     await loadAndSaveNewPlugin(
       new Plugin({
@@ -336,7 +336,7 @@ describe("Stable versioning upgrade", () => {
         name: "@christianhugoch/empty_sc_test_plugin",
         location: "@christianhugoch/empty_sc_test_plugin",
         source: "npm",
-        version: "0.0.6",
+        version: "0.2.0",
       }),
       true
     );
@@ -344,6 +344,6 @@ describe("Stable versioning upgrade", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(newPlugin).not.toBe(null);
-    expect(newPlugin.version).toBe("0.0.1");
+    expect(newPlugin.version).toBe("0.1.0");
   });
 });

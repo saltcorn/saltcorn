@@ -17,7 +17,7 @@ const doCheck = (pluginVersion, versionInfos, scVersion) => {
     getState().log(4, `invalid saltcorn version: ${scVersion}`);
     return true;
   }
-  return semver.satisfies(scVersion, scEngine);
+  return semver.satisfies(scVersion, scEngine, { includePrerelease: true });
 };
 
 /**
