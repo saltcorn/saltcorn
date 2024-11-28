@@ -264,27 +264,47 @@ module.exports = {
    */
   webhook: {
     description: "Make an outbound HTTP POST request",
-    configFields: [
-      {
-        name: "url",
-        label: "URL",
-        type: "String",
-        sublabel: "Trigger will call specified URL",
-      },
-      {
-        name: "body",
-        label: "JSON body",
-        sublabel: "Leave blank to use row from table",
-        type: "String",
-        fieldview: "textarea", // I think that textarea is better
-      },
-      {
-        name: "authorization",
-        label: "Authorization header",
-        type: "String",
-        sublabel: "For example <code>Bearer xxxx</code>",
-      },
-    ],
+    configFields: async ({ table }) => {
+      let field_opts = [];
+      if (table) {
+        field_opts = table.fields
+          .filter(
+            (f) => f.type && ["String", "HTML", "JSON"].includes(f.type.name)
+          )
+          .map((f) => f.name);
+      }
+      return [
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          sublabel: "Trigger will call specified URL",
+        },
+        {
+          name: "body",
+          label: "JSON body",
+          sublabel: "Leave blank to use row from table",
+          type: "String",
+          fieldview: "textarea", // I think that textarea is better
+        },
+        {
+          name: "authorization",
+          label: "Authorization header",
+          type: "String",
+          sublabel: "For example <code>Bearer xxxx</code>",
+        },
+        ...(field_opts.length
+          ? [
+              {
+                name: "response_field",
+                label: "Response into field",
+                type: "String",
+                attributes: { options: field_opts },
+              },
+            ]
+          : []),
+      ];
+    },
     /**
      * @param {object} opts
      * @param {string} opts.url
@@ -295,11 +315,10 @@ module.exports = {
       row,
       user,
       table,
-      configuration: { url, body, authorization },
+      configuration: { url, body, authorization, response_field },
     }) => {
       let url1 = interpolate(url, row, user);
-      // eval body
-      // authorization
+
       let postBody;
       if (body && table) {
         const f = get_async_expression_function(body, table.fields, {
@@ -316,8 +335,19 @@ module.exports = {
       };
       if (authorization)
         fetchOpts.headers.Authorization = interpolate(authorization, row, user);
-
-      return await fetch(url1, fetchOpts);
+      const response = await fetch(url1, fetchOpts);
+      if (table && row && response_field) {
+        const contentType = response.headers.get("content-type");
+        const isJSON =
+          contentType && contentType.indexOf("application/json") !== -1;
+        const parsedResponse = isJSON
+          ? await response.json()
+          : await response.text;
+        await table.updateRow(
+          { [response_field]: parsedResponse },
+          row[table.pk_name]
+        );
+      } else return;
     },
   },
 
