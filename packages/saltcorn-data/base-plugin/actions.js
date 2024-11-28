@@ -285,8 +285,19 @@ module.exports = {
      * @param {object} opts.body
      * @returns {Promise<object>}
      */
-    run: async ({ row, user, configuration: { url, body } }) => {
+    run: async ({ row, user, table, configuration: { url, body } }) => {
       let url1 = interpolate(url, row, user);
+      // eval body
+      // authorization
+      let postBody;
+      if (body && table) {
+        const f = get_async_expression_function(body, table.fields, {
+          row: row || {},
+          user,
+        });
+        postBody = JSON.stringify(await f(row, user));
+      } else if (body) postBody = body;
+      else postBody = JSON.stringify(row);
 
       return await fetch(url1, {
         method: "post",
