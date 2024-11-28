@@ -282,7 +282,7 @@ module.exports = {
         },
         {
           name: "method",
-          label: "Method",
+          label: "HTTP Method",
           type: "String",
           required: true,
           attributes: { options: "POST,GET,PUT,DELETE,PATCH" },
