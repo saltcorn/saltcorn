@@ -327,21 +327,22 @@ module.exports = {
     }) => {
       let url1 = interpolate(url, row, user);
 
-      let postBody;
-      if (body && table) {
-        const f = get_async_expression_function(body, table.fields, {
-          row: row || {},
-          user,
-        });
-        postBody = JSON.stringify(await f(row, user));
-      } else if (body) postBody = body;
-      else postBody = JSON.stringify(row);
-
       const fetchOpts = {
         method: (method || "post").toLowerCase(),
-        body: postBody,
         headers: { "Content-Type": "application/json" },
       };
+      if (method !== "GET") {
+        let postBody;
+        if (body && table) {
+          const f = get_async_expression_function(body, table.fields, {
+            row: row || {},
+            user,
+          });
+          postBody = JSON.stringify(await f(row, user));
+        } else if (body) postBody = body;
+        else postBody = JSON.stringify(row);
+        fetchOpts.body = postBody;
+      }
       if (authorization)
         fetchOpts.headers.Authorization = interpolate(authorization, row, user);
       const response = await fetch(url1, fetchOpts);
@@ -351,7 +352,7 @@ module.exports = {
           contentType && contentType.indexOf("application/json") !== -1;
         const parsedResponse = isJSON
           ? await response.json()
-          : await response.text;
+          : await response.text();
         await table.updateRow(
           { [response_field]: parsedResponse },
           row[table.pk_name]
