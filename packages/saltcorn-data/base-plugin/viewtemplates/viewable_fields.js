@@ -928,20 +928,16 @@ const get_viewable_fields = (
           targetNm = keypath[keypath.length - 1];
           key = keypath.join("_");
         }
+        const field = table.getField(column.join_field);
+
         if (column.field_type) type = getState().types[column.field_type];
         else {
-          const field = table.getField(column.join_field);
           if (field && field.type === "File") column.field_type = "File";
           else if (field?.type.name && field?.type?.fieldviews[fieldview]) {
             column.field_type = field.type.name;
             type = getState().types[column.field_type];
           }
-        }
-        const reffield = fields.find((f) => f.name === refNm);
-        const reftable = Table.findOne({
-          name: reffield?.reftable_name,
-        });
-        const field = reftable?.fields?.find?.((f) => f.name === targetNm);
+        }       
         if (fieldview && type?.fieldviews?.[fieldview]?.expandColumns) {
           return type.fieldviews[fieldview].expandColumns(
             field,
