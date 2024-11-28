@@ -328,9 +328,10 @@ module.exports = {
         postBody = JSON.stringify(await f(row, user));
       } else if (body) postBody = body;
       else postBody = JSON.stringify(row);
+      
       const fetchOpts = {
         method: "post",
-        body: body || JSON.stringify(row),
+        body: postBody,
         headers: { "Content-Type": "application/json" },
       };
       if (authorization)
