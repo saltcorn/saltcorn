@@ -278,6 +278,12 @@ module.exports = {
         type: "String",
         fieldview: "textarea", // I think that textarea is better
       },
+      {
+        name: "authorization",
+        label: "Authorization header",
+        type: "String",
+        sublabel: "For example <code>Bearer xxxx</code>",
+      },
     ],
     /**
      * @param {object} opts
@@ -285,7 +291,12 @@ module.exports = {
      * @param {object} opts.body
      * @returns {Promise<object>}
      */
-    run: async ({ row, user, table, configuration: { url, body } }) => {
+    run: async ({
+      row,
+      user,
+      table,
+      configuration: { url, body, authorization },
+    }) => {
       let url1 = interpolate(url, row, user);
       // eval body
       // authorization
@@ -298,12 +309,15 @@ module.exports = {
         postBody = JSON.stringify(await f(row, user));
       } else if (body) postBody = body;
       else postBody = JSON.stringify(row);
-
-      return await fetch(url1, {
+      const fetchOpts = {
         method: "post",
         body: body || JSON.stringify(row),
         headers: { "Content-Type": "application/json" },
-      });
+      };
+      if (authorization)
+        fetchOpts.headers.Authorization = interpolate(authorization, row, user);
+
+      return await fetch(url1, fetchOpts);
     },
   },
 
@@ -1529,14 +1543,18 @@ module.exports = {
           label: "Source table",
           sublabel: "External table to sync from",
           input_type: "select",
-          options: tables.filter((t) => t.external || t.provider_name).map((t) => t.name),
+          options: tables
+            .filter((t) => t.external || t.provider_name)
+            .map((t) => t.name),
         },
         {
           name: "table_dest",
           label: "Destination table",
           sublabel: "Table to sync to",
           input_type: "select",
-          options: tables.filter((t) => !(t.external || t.provider_name)).map((t) => t.name),
+          options: tables
+            .filter((t) => !(t.external || t.provider_name))
+            .map((t) => t.name),
         },
         {
           name: "pk_field",
