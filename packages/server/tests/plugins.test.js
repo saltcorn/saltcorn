@@ -365,7 +365,7 @@ describe("Upgrade plugin to supported version", () => {
     expect(upgradedPlugin.version).toBe("0.0.3");
   });
 
-  it("upgrades to the most current fixed version", async () => {
+  it("upgrades to latest as fixed version", async () => {
     const oldPlugin = await setupPluginVersion(
       "@christianhugoch/empty_sc_test_plugin_two",
       "0.0.1"
@@ -389,7 +389,7 @@ describe("Upgrade plugin to supported version", () => {
     expect(upgradedPlugin.version).toBe("0.0.3");
   });
 
-  it("upgrades with a downgrade of the latest version", async () => {
+  it("upgrades with a downgrade of latest", async () => {
     const oldPlugin = await setupPluginVersion(
       "@christianhugoch/empty_sc_test_plugin",
       "0.0.1"
@@ -404,10 +404,10 @@ describe("Upgrade plugin to supported version", () => {
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.0.1");
+    expect(upgradedPlugin.version).toBe("0.1.0");
   });
 
-  it("upgrades with a downgrade of the most current fixed version", async () => {
+  it("upgrades with a downgrade of latest as fixed version", async () => {
     const oldPlugin = await setupPluginVersion(
       "@christianhugoch/empty_sc_test_plugin",
       "0.0.1"
@@ -421,13 +421,13 @@ describe("Upgrade plugin to supported version", () => {
           "@christianhugoch/empty_sc_test_plugin"
         )}`
       )
-      .send("version=0.1.0")
+      .send("version=0.2.0")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
     const upgradedPlugin = await Plugin.findOne({
       name: "@christianhugoch/empty_sc_test_plugin",
     });
-    expect(upgradedPlugin.version).toBe("0.0.1");
+    expect(upgradedPlugin.version).toBe("0.1.0");
   });
 });
 
