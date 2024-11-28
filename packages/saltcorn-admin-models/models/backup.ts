@@ -364,6 +364,8 @@ const restore_files = async (dirpath: string): Promise<any> => {
   const fnm = join(dirpath, "files.csv");
   const file_users: any = {};
   const newLocations: any = {};
+  const state = getState();
+
   if (existsSync(fnm)) {
     const file_rows = await csvtojson().fromFile(fnm);
     for (const file of file_rows) {
@@ -371,21 +373,25 @@ const restore_files = async (dirpath: string): Promise<any> => {
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
     for (const file of file_rows) {
-      const newPath = File.get_new_path(
-        file.id ? file.filename : file.location
-      );
-      //copy file
-      if (!file.isDirectory)
-        await copyFile(join(dirpath, "files", file.location), newPath);
-      file_users[file.location] = file.user_id;
-      //set location
-      if (file.id)
-        newLocations[file.id] = file.id ? file.filename : file.location;
-      file.location = newPath;
-      //insert in db
+      try {
+        const newPath = File.get_new_path(
+          file.id ? file.filename : file.location
+        );
+        //copy file
+        if (!file.isDirectory)
+          await copyFile(join(dirpath, "files", file.location), newPath);
+        file_users[file.location] = file.user_id;
+        //set location
+        if (file.id)
+          newLocations[file.id] = file.id ? file.filename : file.location;
+        file.location = newPath;
+        //insert in db
 
-      await File.create(file);
-      //const id = await db.insert("_sc_files", file_row);
+        await File.create(file);
+        //const id = await db.insert("_sc_files", file_row);}
+      } catch (e: any) {
+        state.log(1, `Error restoring file ${JSON.stringify(file)}: ${e.message}`);
+      }
     }
     if (db.reset_sequence) await db.reset_sequence("_sc_files");
   }
