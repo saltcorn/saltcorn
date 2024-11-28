@@ -57,9 +57,8 @@
   "repository": "github:saltcorn/saltcorn",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
-    "prepack": "oclif manifest && oclif readme",
+    "manifest": "oclif manifest && oclif readme",
     "test": "echo NO TESTS",
-    "version": "oclif readme && git add README.md",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },

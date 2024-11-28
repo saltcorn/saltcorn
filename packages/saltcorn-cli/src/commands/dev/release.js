@@ -170,6 +170,10 @@ class ReleaseCommand extends Command {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
+    spawnSync("npm", ["run", "manifest"], {
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
     spawnSync("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: ".",
