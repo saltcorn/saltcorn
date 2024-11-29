@@ -20,6 +20,7 @@ const {
   urlStringToObject,
   cloneName,
   objectToQueryString,
+  validSqlId,
 } = require("../utils");
 
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
@@ -44,10 +45,13 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
-describe("Clone names", () => {
-  it("should work", async () => {
+describe("string manipulators", () => {
+  it("cloneName", async () => {
     expect(cloneName("Foo", [])).toBe("Foo-copy");
     expect(cloneName("Foo", ["Foo-copy"])).toBe("Foo-copy-1");
+  });
+  it("validSqlId", async () => {
+    expect(validSqlId("Sr. Søejer")).toBe("sr_soejer");
   });
 });
 

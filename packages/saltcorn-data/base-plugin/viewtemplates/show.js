@@ -73,6 +73,7 @@ const {
   dollarizeObject,
   getSessionId,
   interpolate,
+  validSqlId,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -849,8 +850,8 @@ const render = (
         const [ontable, ref] = relation.split(".");
         const key =
           jf.targetNm ||
-          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
-        value = row[key];
+          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;      
+        value = row[validSqlId(key)];
       } else {
         value = row[join_field.split(".").join("_")];
       }

@@ -18,6 +18,7 @@ const {
   getSessionId,
   interpolate,
   objectToQueryString,
+  validSqlId,
 } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
@@ -919,9 +920,10 @@ const get_viewable_fields = (
           const [ontable, ref] = relation.split(".");
           targetNm = target;
           refNm = ref;
-          key =
+          key = validSqlId(
             column.targetNm ||
-            `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
+              `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`
+          );          
         } else {
           const keypath = column.join_field.split(".");
           refNm = keypath[0];

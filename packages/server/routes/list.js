@@ -270,6 +270,7 @@ router.get(
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
+        requestFluidLayout: true,
         headers: [
           //jsgrid - grid editor external component
           {
