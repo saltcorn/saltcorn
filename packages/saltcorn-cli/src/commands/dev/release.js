@@ -103,22 +103,12 @@ class ReleaseCommand extends Command {
       if (flags.tag) tags.push(flags.tag);
       const firstTag = tags[0];
       console.log(
-        `packages/${dir}$ npm publish --access=public ${
-          firstTag ? `--tag ${firstTag}` : ""
-        }`
+        `packages/${dir}$ npm publish ${firstTag ? `--tag ${firstTag}` : ""}`
       );
-      spawnSync(
-        "npm",
-        [
-          "publish",
-          "--access=public",
-          ...(firstTag ? [`--tag ${firstTag}`] : []),
-        ],
-        {
-          stdio: "inherit",
-          cwd: `packages/${dir}/`,
-        }
-      );
+      spawnSync("npm", ["publish", ...(firstTag ? ["--tag", firstTag] : [])], {
+        stdio: "inherit",
+        cwd: `packages/${dir}/`,
+      });
       tags.shift();
       for (const tag of tags) {
         await sleep(3000);
@@ -161,7 +151,7 @@ class ReleaseCommand extends Command {
     fs.writeFileSync(
       `package.json`,
       JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
-    );    
+    );
     spawnSync("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
