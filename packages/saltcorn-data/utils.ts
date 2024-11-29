@@ -18,7 +18,8 @@ const unidecode = require("unidecode");
 const validSqlId = (s: string): string =>
   unidecode(s)
     .replace(/[ -]/g, "_")
-    .replace(/[&\/\\#,+()$~%.'":*?<>{}`]/g, "");
+    .replace(/[&\/\\#,+()$~%.'":*?<>{}`]/g, "")
+    .toLowerCase();
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
