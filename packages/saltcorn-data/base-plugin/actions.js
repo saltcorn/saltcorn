@@ -264,35 +264,106 @@ module.exports = {
    */
   webhook: {
     description: "Make an outbound HTTP POST request",
-    configFields: [
-      {
-        name: "url",
-        label: "URL",
-        type: "String",
-        sublabel: "Trigger will call specified URL",
-      },
-      {
-        name: "body",
-        label: "JSON body",
-        sublabel: "Leave blank to use row from table",
-        type: "String",
-        fieldview: "textarea", // I think that textarea is better
-      },
-    ],
+    configFields: async ({ table }) => {
+      let field_opts = [];
+      if (table) {
+        field_opts = table.fields
+          .filter(
+            (f) => f.type && ["String", "HTML", "JSON"].includes(f.type.name)
+          )
+          .map((f) => f.name);
+      }
+      return [
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          sublabel: "Trigger will call specified URL",
+        },
+        {
+          name: "method",
+          label: "HTTP Method",
+          type: "String",
+          required: true,
+          attributes: { options: "POST,GET,PUT,DELETE,PATCH" },
+        },
+        {
+          name: "body",
+          label: "JSON body",
+          sublabel: "Leave blank to use row from table",
+          type: "String",
+          fieldview: "textarea",
+          showIf: { method: ["POST", "PUT", "DELETE", "PATCH"] },
+        },
+        {
+          name: "authorization",
+          label: "Authorization header",
+          type: "String",
+          sublabel: "For example <code>Bearer xxxx</code>",
+        },
+        ...(field_opts.length
+          ? [
+              {
+                name: "response_field",
+                label: "Response into field",
+                type: "String",
+                attributes: { options: field_opts },
+              },
+            ]
+          : []),
+      ];
+    },
     /**
      * @param {object} opts
      * @param {string} opts.url
      * @param {object} opts.body
      * @returns {Promise<object>}
      */
-    run: async ({ row, user, configuration: { url, body } }) => {
+    run: async ({
+      row,
+      user,
+      table,
+      configuration: { url, body, authorization, response_field, method },
+    }) => {
       let url1 = interpolate(url, row, user);
 
-      return await fetch(url1, {
-        method: "post",
-        body: body || JSON.stringify(row),
+      const fetchOpts = {
+        method: (method || "post").toLowerCase(),
         headers: { "Content-Type": "application/json" },
-      });
+      };
+      if (method !== "GET") {
+        let postBody;
+        if (body && table) {
+          const f = get_async_expression_function(body, table.fields, {
+            row: row || {},
+            user,
+          });
+          postBody = JSON.stringify(await f(row, user));
+        } else if (body) postBody = body;
+        else postBody = JSON.stringify(row);
+        fetchOpts.body = postBody;
+      }
+      if (authorization)
+        fetchOpts.headers.Authorization = interpolate(authorization, row, user);
+      const response = await fetch(url1, fetchOpts);
+      if (table && row && response_field) {
+        const field = table.getField(response_field);
+        const contentType = response.headers.get("content-type");
+        const isJSON =
+          contentType && contentType.indexOf("application/json") !== -1;
+        const parsedResponse = isJSON
+          ? await response.json()
+          : await response.text();
+        const saveResponse =
+          isJSON &&
+          (field?.type?.name === "String" || field?.type?.sql_name === "text")
+            ? JSON.stringify(parsedResponse)
+            : parsedResponse;
+        await table.updateRow(
+          { [response_field]: saveResponse },
+          row[table.pk_name]
+        );
+      } else return;
     },
   },
 
@@ -1518,14 +1589,18 @@ module.exports = {
           label: "Source table",
           sublabel: "External table to sync from",
           input_type: "select",
-          options: tables.filter((t) => t.external || t.provider_name).map((t) => t.name),
+          options: tables
+            .filter((t) => t.external || t.provider_name)
+            .map((t) => t.name),
         },
         {
           name: "table_dest",
           label: "Destination table",
           sublabel: "Table to sync to",
           input_type: "select",
-          options: tables.filter((t) => !(t.external || t.provider_name)).map((t) => t.name),
+          options: tables
+            .filter((t) => !(t.external || t.provider_name))
+            .map((t) => t.name),
         },
         {
           name: "pk_field",
