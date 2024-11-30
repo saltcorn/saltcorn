@@ -6,6 +6,7 @@ const { Command, Flags, Args } = require("@oclif/core");
 const { spawnSync } = require("child_process");
 const path = require("path");
 const { maybe_as_tenant } = require("../common");
+const fs = require("fs");
 
 /**
  * RestoreCommand Class
@@ -71,6 +72,18 @@ class RestoreCommand extends Command {
         break;
       case ".zip":
         this.zip_restore(args.file, flags.tenant);
+        break;
+      case ".json":
+        if (!args.file.includes("domain_files.json")) {
+          console.error("unknown filetype: " + path.extname(args.file));
+          this.exit(1);
+        }
+        const fileConts = fs.readFileSync(args.file);
+        const domain_files = JSON.parse(fileConts);
+        for (const [tenant, fnm] of Object.entries(domain_files)) {
+          console.log("restore", tenant, "from", fnm);
+          await this.zip_restore(fnm, tenant);
+        }
         break;
       default:
         console.error("unknown filetype: " + path.extname(args.file));
