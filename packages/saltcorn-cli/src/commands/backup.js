@@ -11,6 +11,7 @@ const { getConnectObject } = require("@saltcorn/data/db/connect");
 const day = dateFormat(new Date(), "yyyymmdd");
 const connobj = getConnectObject();
 const { init_some_tenants } = require("../common");
+const fs = require("fs");
 
 const pgdb = connobj.database;
 
@@ -54,6 +55,7 @@ class BackupCommand extends Command {
       const { init_multi_tenant } = require("@saltcorn/data/db/state");
       let nten = 0,
         nerr = 0;
+      const domain_files = {};
       await eachTenant(async () => {
         try {
           nten += 1;
@@ -62,11 +64,13 @@ class BackupCommand extends Command {
           console.log("Backup tenant", domain);
           const fnm = await create_backup(flags.output);
           console.log(fnm);
+          domain_files[domain] = fnm;
         } catch (e) {
           nerr += 1;
           console.error(e);
         }
       });
+      fs.writeFileSync("domain_files.json", JSON.stringify(domain_files));
       console.log("done backup all tenants", nerr, "/", nten, "errors");
     } else if (flags.zip) {
       // zip the saltcorn backup
