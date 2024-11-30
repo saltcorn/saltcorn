@@ -52,18 +52,22 @@ class BackupCommand extends Command {
       const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
       const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
       const { init_multi_tenant } = require("@saltcorn/data/db/state");
-
+      let nten = 0,
+        nerr = 0;
       await eachTenant(async () => {
         try {
+          nten += 1;
           const domain = db.getTenantSchema();
           await init_multi_tenant(loadAllPlugins, undefined, [domain]);
           console.log("Backup tenant", domain);
           const fnm = await create_backup(flags.output);
           console.log(fnm);
         } catch (e) {
+          nerr += 1;
           console.error(e);
         }
       });
+      console.log("done backup all tenants", nerr, "/", nten, "errors");
     } else if (flags.zip) {
       // zip the saltcorn backup
       const { create_backup } = require("@saltcorn/admin-models/models/backup");
