@@ -45,6 +45,25 @@ class BackupCommand extends Command {
         const fnm = await create_backup(flags.output);
         console.log(fnm);
       });
+    } else if (flags.all_tenants) {
+      const db = require("@saltcorn/data/db");
+
+      const { create_backup } = require("@saltcorn/admin-models/models/backup");
+      const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+      const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
+      const { init_multi_tenant } = require("@saltcorn/data/db/state");
+
+      await eachTenant(async () => {
+        try {
+          const domain = db.getTenantSchema();
+          await init_multi_tenant(loadAllPlugins, undefined, [domain]);
+          console.log("Backup tenant", domain);
+          const fnm = await create_backup(flags.output);
+          console.log(fnm);
+        } catch (e) {
+          console.error(e);
+        }
+      });
     } else if (flags.zip) {
       // zip the saltcorn backup
       const { create_backup } = require("@saltcorn/admin-models/models/backup");
@@ -114,6 +133,10 @@ BackupCommand.flags = {
   tenant: Flags.string({
     char: "t",
     description: "Backup tenant in saltcorn zip format",
+  }),
+  all_tenants: Flags.boolean({
+    char: "a",
+    description: "Backup all tenants in saltcorn zip format",
   }),
   zip: Flags.boolean({
     char: "z",
