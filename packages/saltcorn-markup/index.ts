@@ -221,7 +221,7 @@ const localeTime = (
       datetime: date.toISOString(),
       "locale-time-options": encodeURIComponent(JSON.stringify(options)),
     },
-    date.toLocaleTimeString("en", options)
+    date.toLocaleTimeString(options.locale || "en", options)
   );
 
 /**
@@ -235,7 +235,7 @@ const localeDateTime = (date: Date, options: any = {}): string =>
       datetime: date.toISOString(),
       "locale-options": encodeURIComponent(JSON.stringify(options)),
     },
-    date.toLocaleString("en", options)
+    date.toLocaleString(options.locale || "en", options)
   );
 
 /**
@@ -249,7 +249,7 @@ const localeDate = (date: Date, options: any = {}): string =>
       datetime: date.toISOString(),
       "locale-date-options": encodeURIComponent(JSON.stringify(options)),
     },
-    date.toLocaleDateString("en", options)
+    date.toLocaleDateString(options.locale || "en", options)
   );
 const badge = (col: string, lbl: string): string =>
   `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
