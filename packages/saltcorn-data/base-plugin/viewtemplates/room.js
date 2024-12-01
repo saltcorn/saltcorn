@@ -507,18 +507,23 @@ const virtual_triggers = (
       when_trigger: "Insert",
       table_id: msgtable.id,
       run: async (row) => {
+        const state = getState();
         if (row[msgsender_field]) return; // TODO how else to avoid double emit
         const v = await View.findOne({ name: msgview });
 
         const html = await v.run(
           { id: row.id },
           {
-            req: { getLocale: () => "en", user: { id: 0 }, __: (s) => s },
+            req: {
+              getLocale: () => state.getConfig("default_locale", "en"),
+              user: { id: 0 },
+              __: (s) => s,
+            },
             res: {},
           }
         );
         const tenant = db.getTenantSchema();
-        getState().emitRoom(tenant, viewname, row[msgkey_to_room], {
+        state.emitRoom(tenant, viewname, row[msgkey_to_room], {
           append: html,
           pls_ack_msg_id: row.id,
         });

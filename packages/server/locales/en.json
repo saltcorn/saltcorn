@@ -1496,5 +1496,6 @@
 	"Location of view to create new row": "Location of view to create new row",
 	"Capacitor builder": "Capacitor builder",
 	"Pulling the capacitor-builder docker image...": "Pulling the capacitor-builder docker image...",
-	"Pull done with code %s": "Pull done with code %s"
+	"Pull done with code %s": "Pull done with code %s",
+	"Default locale": "Default locale"
 }

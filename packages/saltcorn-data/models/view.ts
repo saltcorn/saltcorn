@@ -465,7 +465,7 @@ class View implements AbstractView {
     const state = require("../db/state").getState();
     if (role > this.min_role)
       state.log(
-        1,
+        2,
         `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
       );
     try {
@@ -611,7 +611,7 @@ class View implements AbstractView {
     const state = require("../db/state").getState();
     if (role > this.min_role)
       state.log(
-        1,
+        2,
         `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
       );
     state.log(
@@ -695,7 +695,7 @@ class View implements AbstractView {
     const role = extraArgs.req.user?.role_id || 100;
     if (role > this.min_role)
       state.log(
-        1,
+        2,
         `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
       );
     try {

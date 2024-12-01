@@ -28,7 +28,7 @@ function flatpickerEditor(cell, onRendered, success, cancel, editorParams) {
     enableTime: !dayOnly,
     dateFormat: dayOnly ? "Y-m-d" : "Z",
     time_24hr: true,
-    locale: "en", // global variable with locale 'en', 'fr', ...
+    locale: window._sc_locale || "en",
     defaultDate,
     onClose: function (selectedDates, dateStr, instance) {
       evt = window.event;

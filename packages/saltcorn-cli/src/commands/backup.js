@@ -11,6 +11,7 @@ const { getConnectObject } = require("@saltcorn/data/db/connect");
 const day = dateFormat(new Date(), "yyyymmdd");
 const connobj = getConnectObject();
 const { init_some_tenants } = require("../common");
+const fs = require("fs");
 
 const pgdb = connobj.database;
 
@@ -45,6 +46,32 @@ class BackupCommand extends Command {
         const fnm = await create_backup(flags.output);
         console.log(fnm);
       });
+    } else if (flags.all_tenants) {
+      const db = require("@saltcorn/data/db");
+
+      const { create_backup } = require("@saltcorn/admin-models/models/backup");
+      const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+      const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
+      const { init_multi_tenant } = require("@saltcorn/data/db/state");
+      let nten = 0,
+        nerr = 0;
+      const domain_files = {};
+      await eachTenant(async () => {
+        try {
+          nten += 1;
+          const domain = db.getTenantSchema();
+          await init_multi_tenant(loadAllPlugins, undefined, [domain]);
+          console.log("Backup tenant", domain);
+          const fnm = await create_backup(flags.output);
+          console.log(fnm);
+          domain_files[domain] = fnm;
+        } catch (e) {
+          nerr += 1;
+          console.error(e);
+        }
+      });
+      fs.writeFileSync("domain_files.json", JSON.stringify(domain_files));
+      console.log("done backup all tenants", nerr, "/", nten, "errors");
     } else if (flags.zip) {
       // zip the saltcorn backup
       const { create_backup } = require("@saltcorn/admin-models/models/backup");
@@ -114,6 +141,10 @@ BackupCommand.flags = {
   tenant: Flags.string({
     char: "t",
     description: "Backup tenant in saltcorn zip format",
+  }),
+  all_tenants: Flags.boolean({
+    char: "a",
+    description: "Backup all tenants in saltcorn zip format",
   }),
   zip: Flags.boolean({
     char: "z",

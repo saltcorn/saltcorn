@@ -546,6 +546,12 @@ const configTypes: ConfigTypes = {
     excludeFromSnapshot: true,
     default: null,
   },
+  default_locale: {
+    type: "String",
+    label: "Default locale",
+    sublabel: "Locale identifier short code, e.g. en, zh, fr, ar etc. ",
+    default: "en",
+  },
   /** @type {object} */
   localizer_languages: {
     type: "hidden",

@@ -27,6 +27,7 @@ const {
   mergeActionResults,
   structuredClone,
   mergeIntoWhere,
+  validSqlId,
 } = require("./utils");
 const {
   jsexprToWhere,
@@ -1592,9 +1593,9 @@ const picked_fields_to_query = (columns, fields, layout, req, table) => {
         if (column.join_field.includes("->")) {
           const [relation, target] = column.join_field.split("->");
           const [ontable, ref] = relation.split(".");
-          const targetNm = `${ref}_${ontable
-            .replaceAll(" ", "")
-            .toLowerCase()}_${target}`;
+          const targetNm = validSqlId(
+            `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`
+          );
           column.targetNm = targetNm;
           joinFields[targetNm] = {
             ref,
@@ -1677,18 +1678,20 @@ const picked_fields_to_query = (columns, fields, layout, req, table) => {
 
         //console.log(column);
         const field = column.agg_field.split("@")[0];
-        let targetNm = db.sqlsanitize(
-          (
-            column.stat.replace(" ", "") +
-              "_" +
-              table +
-              "_" +
-              fld +
-              "_" +
-              field +
-              "_" +
-              column.aggwhere || ""
-          ).toLowerCase()
+        let targetNm = validSqlId(
+          db.sqlsanitize(
+            (
+              column.stat.replace(" ", "") +
+                "_" +
+                table +
+                "_" +
+                fld +
+                "_" +
+                field +
+                "_" +
+                column.aggwhere || ""
+            ).toLowerCase()
+          )
         );
         // postgres fields have a max len
         if (targetNm.length > 58) {

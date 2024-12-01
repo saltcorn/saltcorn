@@ -12,6 +12,14 @@ import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
 const _ = require("underscore");
+const unidecode = require("unidecode");
+
+// for database cols
+const validSqlId = (s: string): string =>
+  unidecode(s)
+    .replace(/[ -]/g, "_")
+    .replace(/[&\/\\#,+()$~%.'":*?<>{}`]/g, "")
+    .toLowerCase();
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
@@ -534,4 +542,5 @@ export = {
   safeEnding,
   isRoot,
   flatEqual,
+  validSqlId,
 };

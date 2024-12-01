@@ -424,6 +424,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const ev = await EventLog.findOneWithUser(id);
+    const locale = getState().getConfig("default_locale", "en");
     send_events_page({
       res,
       req,
@@ -435,7 +436,10 @@ router.get(
           table(
             { class: "table eventlog" },
             tbody(
-              tr(th(req.__("When")), td(localeDateTime(ev.occur_at))),
+              tr(
+                th(req.__("When")),
+                td(localeDateTime(ev.occur_at, {}, locale))
+              ),
               tr(th(req.__("Type")), td(ev.event_type)),
               tr(th(req.__("Channel")), td(ev.channel)),
               tr(th(req.__("User")), td(ev.email))

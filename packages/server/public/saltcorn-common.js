@@ -1568,7 +1568,7 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
     });
   }
   if (res.eval_js) await handle(res.eval_js, eval_it);
-  else if (res.goto) {
+  if (res.goto) {
     if (!isWeb) {
       const next = new URL(res.goto, "http://localhost");
       const pathname = next.pathname;
