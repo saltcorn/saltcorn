@@ -155,6 +155,7 @@ admin_config_route({
   field_names: [
     "site_name",
     "timezone",
+    "default_locale",
     "base_url",
     ...(getConfigFile() ? ["multitenancy_enabled"] : []),
     { section_header: "Logo image" },
