@@ -1975,7 +1975,7 @@ const float = {
  */
 const locale = (req) => {
   //console.log(req && req.getLocale ? req.getLocale() : undefined);
-  return req && req.getLocale ? req.getLocale() : undefined;
+  return req?.getLocale?.() || getState().getConfig("default_locale", "en");
 };
 
 /**
@@ -2030,10 +2030,11 @@ const date = {
       description: "Show date and time in the users locale",
       run: (d, req, attrs = {}) => {
         const shower = attrs?.day_only ? localeDate : localeDateTime;
+        const opts = { locale: locale(req) };
         return typeof d === "string" || typeof d === "number"
-          ? shower(new Date(d))
+          ? shower(new Date(d), opts)
           : d && d.toISOString
-          ? shower(d)
+          ? shower(d, opts)
           : "";
       },
     },
@@ -2046,12 +2047,14 @@ const date = {
       isEdit: false,
       description: "Show date in the users locale",
 
-      run: (d, req) =>
-        typeof d === "string" || typeof d === "number"
-          ? localeDate(new Date(d))
+      run: (d, req) => {
+        const opts = { locale: locale(req) };
+        return typeof d === "string" || typeof d === "number"
+          ? localeDate(new Date(d), opts)
           : d && d.toISOString
-          ? localeDate(d)
-          : "",
+          ? localeDate(d, opts)
+          : "";
+      },
     },
     /**
      * @namespace
@@ -2074,6 +2077,7 @@ const date = {
       run: (d, req, options) => {
         if (!d) return "";
         if (req?.noHTML) return moment(d).format(options?.format);
+        const loc = locale(req);
         return time(
           {
             datetime: new Date(d).toISOString(),
@@ -2081,7 +2085,7 @@ const date = {
               JSON.stringify(options?.format)
             ),
           },
-          moment(d).format(options?.format)
+          moment(d).locale(loc).format(options?.format)
         );
       },
     },
