@@ -56,7 +56,11 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) => {
     },
     csrfField(req),
     select(
-      { name: "layout", onchange: "form.submit()" },
+      {
+        name: "layout",
+        onchange: "form.submit()",
+        class: "form-select form-select-sm w-unset d-inline",
+      },
       layouts.map((layout, ix) =>
         option(
           {
@@ -88,7 +92,11 @@ const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
     },
     csrfField(req),
     select(
-      { name: "policy", onchange: "form.submit()" },
+      {
+        name: "policy",
+        onchange: "form.submit()",
+        class: "form-select form-select-sm w-unset d-inline",
+      },
       ["Optional", "Disabled", "Mandatory"].map((p) =>
         option({ selected: twofa_policy_by_role[role.id] === p }, p)
       )

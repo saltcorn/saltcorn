@@ -358,7 +358,7 @@ table.table-inner-grid td {
 }
 
 .w-unset {
-  width: unset;
+  width: unset !important;
 }
 
 .preview-text {
