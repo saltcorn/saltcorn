@@ -26,7 +26,7 @@ const {
   genJwtSecret,
   setupDocker,
   getDockerEnvVars,
-  pullCordovaBuilder,
+  pullCapacitorBuilder,
 } = require("./utils");
 //const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
 
@@ -38,12 +38,12 @@ if (process.argv.includes("--help")) {
   console.log("OPTIONS:");
   console.log(
     "  -y, --yes\tNon-interactive, accept all defaults: \n" +
-      "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit, install docker, pull cordova-builder\n" +
+      "\t\tLocal PostgreSQL, saltcorn user, port 80, create systemd unit, install docker, pull capacitor-builder\n" +
       "  -v, --verbose\tVerbose mode, show debug information\n" +
       "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n" +
       "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n" +
       "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n" +
-      "  -sd --skip-docker\n\t\tSkip the Docker and saltcorn/cordova-builder installation\n"
+      "  -sd --skip-docker\n\t\tSkip the Docker and saltcorn/capacitor-builder installation\n"
   );
   process.exit(0);
 }
@@ -742,13 +742,13 @@ WantedBy=multi-user.target`
   if (dockerMode) {
     try {
       await setupDocker(user, dockerMode, addToDockerGroup, osInfo, dryRun);
-      await pullCordovaBuilder(user, dockerMode, addToDockerGroup, dryRun);
+      await pullCapacitorBuilder(user, dockerMode, addToDockerGroup, dryRun);
       // restart to apply the docker group membership
       await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
       await asyncSudo(["systemctl", "restart", osService], false, dryRun);
     } catch (error) {
       console.log(
-        "The saltcorn server is up and running, but I wasn't able to set up docker with the cordova-builder image"
+        "The saltcorn server is up and running, but I wasn't able to set up docker with the capacitor-builder image"
       );
       console.log(error);
     }

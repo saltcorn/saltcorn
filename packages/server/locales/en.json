@@ -1494,5 +1494,7 @@
 	"Fluid layout": "Fluid layout",
 	"Request fluid layout from theme for a wider display for this page": "Request fluid layout from theme for a wider display for this page",
 	"Location of view to create new row": "Location of view to create new row",
-	"Capacitor builder": "Capacitor builder"
+	"Capacitor builder": "Capacitor builder",
+	"Pulling the capacitor-builder docker image...": "Pulling the capacitor-builder docker image...",
+	"Pull done with code %s": "Pull done with code %s"
 }
