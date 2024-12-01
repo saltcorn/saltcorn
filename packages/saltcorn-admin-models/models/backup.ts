@@ -180,6 +180,8 @@ const create_csv_from_rows = async (
   await writeFile(fnm, s);
 };
 
+const sanitiseTableName = (nm: string): string => nm.replaceAll("/", "");
+
 /**
  * @function
  * @param {Table} table
@@ -190,7 +192,9 @@ const create_table_json = async (
   table: Table,
   dirpath: string
 ): Promise<void> => {
-  await table.dump_to_json(join(dirpath, table.name + ".json"));
+  await table.dump_to_json(
+    join(dirpath, sanitiseTableName(table.name) + ".json")
+  );
 };
 
 /**
@@ -208,7 +212,9 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
     if (!t.external && !t.provider_name) {
       await create_table_json(t, dirpath);
       if (t.versioned && backup_history) {
-        await t.dump_history_to_json(join(dirpath, t.name + "__history.json"));
+        await t.dump_history_to_json(
+          join(dirpath, sanitiseTableName(t.name) + "__history.json")
+        );
       }
     }
   }
@@ -448,8 +454,12 @@ const restore_tables = async (
     const fnm_csv =
       table.name === "users"
         ? join(dirpath, "users.csv")
-        : join(dirpath, "tables", table.name + ".csv");
-    const fnm_json = join(dirpath, "tables", table.name + ".json");
+        : join(dirpath, "tables", sanitiseTableName(table.name) + ".csv");
+    const fnm_json = join(
+      dirpath,
+      "tables",
+      sanitiseTableName(table.name) + ".json"
+    );
     if (existsSync(fnm_json)) {
       const res = await table.import_json_file(
         fnm_json,
@@ -466,7 +476,7 @@ const restore_tables = async (
       const fnm_hist_json = join(
         dirpath,
         "tables",
-        table.name + "__history.json"
+        sanitiseTableName(table.name) + "__history.json"
       );
       if (existsSync(fnm_hist_json)) {
         const fileContents = (await readFile(fnm_hist_json)).toString();
