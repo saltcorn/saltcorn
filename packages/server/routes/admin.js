@@ -557,9 +557,11 @@ router.get(
                             )}`,
                             target: "_blank",
                           },
-                          `${localeDateTime(snap.created, {
-                            locale,
-                          })} (${moment(snap.created).fromNow()})`
+                          `${localeDateTime(
+                            snap.created,
+                            {},
+                            locale
+                          )} (${moment(snap.created).fromNow()})`
                         )
                       )
                     )
@@ -605,7 +607,7 @@ router.get(
           {
             label: req.__("When"),
             key: (r) =>
-              `${localeDateTime(r.created, { locale })} (${moment(
+              `${localeDateTime(r.created, {}, locale)} (${moment(
                 r.created
               ).fromNow()})`,
           },

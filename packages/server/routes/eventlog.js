@@ -438,7 +438,7 @@ router.get(
             tbody(
               tr(
                 th(req.__("When")),
-                td(localeDateTime(ev.occur_at, { locale }))
+                td(localeDateTime(ev.occur_at, {}, locale))
               ),
               tr(th(req.__("Type")), td(ev.event_type)),
               tr(th(req.__("Channel")), td(ev.channel)),

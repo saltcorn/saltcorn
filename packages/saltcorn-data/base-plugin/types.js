@@ -2030,11 +2030,11 @@ const date = {
       description: "Show date and time in the users locale",
       run: (d, req, attrs = {}) => {
         const shower = attrs?.day_only ? localeDate : localeDateTime;
-        const opts = { locale: locale(req) };
+        const locale = locale(req);
         return typeof d === "string" || typeof d === "number"
-          ? shower(new Date(d), opts)
+          ? shower(new Date(d), {}, locale)
           : d && d.toISOString
-          ? shower(d, opts)
+          ? shower(d, {}, locale)
           : "";
       },
     },
@@ -2048,11 +2048,11 @@ const date = {
       description: "Show date in the users locale",
 
       run: (d, req) => {
-        const opts = { locale: locale(req) };
+        const locale = locale(req);
         return typeof d === "string" || typeof d === "number"
-          ? localeDate(new Date(d), opts)
+          ? localeDate(new Date(d), {}, locale)
           : d && d.toISOString
-          ? localeDate(d, opts)
+          ? localeDate(d, {}, locale)
           : "";
       },
     },
