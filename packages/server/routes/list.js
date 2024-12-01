@@ -431,7 +431,7 @@ router.get(
               div({
                 id: "jsGrid",
                 class:
-                  getState().getLightDarkMode() === "dark"
+                  getState().getLightDarkMode(req.user) === "dark"
                     ? "table-dark"
                     : undefined,
               })
