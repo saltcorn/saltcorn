@@ -88,6 +88,7 @@ class RestoreCommand extends Command {
         const { add_tenant } = require("@saltcorn/data/db/state");
 
         let existing_tenants = new Set(await getAllTenants());
+        existing_tenants.add("public");
         for (const [tenant, fnm] of Object.entries(domain_files)) {
           console.log("restore", tenant, "from", fnm);
           if (!existing_tenants.has(tenant)) {
@@ -95,7 +96,7 @@ class RestoreCommand extends Command {
             add_tenant(tenant);
             await switchToTenant(tenrow);
           }
-          await this.zip_restore(fnm, tenant);
+          await this.zip_restore(fnm, tenant === "public" ? undefined : tenant);
         }
         break;
       default:
