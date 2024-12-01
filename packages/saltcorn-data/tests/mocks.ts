@@ -309,7 +309,7 @@ let mockResReqStored: any = {};
 const mockReqRes = {
   req: {
     csrfToken: () => "",
-    getLocale: () => "en",
+    getLocale: () => getState().getConfig("default_locale", "en"),
     __: (s: any) => s,
     user: { id: 1, role_id: 1, attributes: {} },
     isAuthenticated: () => true,

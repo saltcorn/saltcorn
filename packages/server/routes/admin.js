@@ -155,6 +155,7 @@ admin_config_route({
   field_names: [
     "site_name",
     "timezone",
+    "default_locale",
     "base_url",
     ...(getConfigFile() ? ["multitenancy_enabled"] : []),
     { section_header: "Logo image" },
@@ -534,6 +535,7 @@ router.get(
       {},
       { orderBy: "created", orderDesc: true, fields: ["id", "created", "hash"] }
     );
+    const locale = getState().getConfig("default_locale", "en");
     send_admin_page({
       res,
       req,
@@ -555,9 +557,11 @@ router.get(
                             )}`,
                             target: "_blank",
                           },
-                          `${localeDateTime(snap.created)} (${moment(
-                            snap.created
-                          ).fromNow()})`
+                          `${localeDateTime(
+                            snap.created,
+                            {},
+                            locale
+                          )} (${moment(snap.created).fromNow()})`
                         )
                       )
                     )
@@ -595,6 +599,7 @@ router.get(
   error_catcher(async (req, res) => {
     const { type, name } = req.params;
     const snaps = await Snapshot.entity_history(type, name);
+    const locale = getState().getConfig("default_locale", "en");
     res.set("Page-Title", `Restore ${text(name)}`);
     res.send(
       mkTable(
@@ -602,7 +607,9 @@ router.get(
           {
             label: req.__("When"),
             key: (r) =>
-              `${localeDateTime(r.created)} (${moment(r.created).fromNow()})`,
+              `${localeDateTime(r.created, {}, locale)} (${moment(
+                r.created
+              ).fromNow()})`,
           },
 
           {

@@ -214,14 +214,15 @@ const settingsDropdown = (id: string, elems: any): string =>
  */
 const localeTime = (
   date: Date,
-  options: any = { hour: "2-digit", minute: "2-digit" }
+  options: any = { hour: "2-digit", minute: "2-digit" },
+  locale: string = "en"
 ): string =>
   time(
     {
       datetime: date.toISOString(),
       "locale-time-options": encodeURIComponent(JSON.stringify(options)),
     },
-    date.toLocaleTimeString("en", options)
+    date.toLocaleTimeString(locale || "en", options)
   );
 
 /**
@@ -229,13 +230,17 @@ const localeTime = (
  * @param options
  * @returns
  */
-const localeDateTime = (date: Date, options: any = {}): string =>
+const localeDateTime = (
+  date: Date,
+  options: any = {},
+  locale: string = "en"
+): string =>
   time(
     {
       datetime: date.toISOString(),
       "locale-options": encodeURIComponent(JSON.stringify(options)),
     },
-    date.toLocaleString("en", options)
+    date.toLocaleString(locale || "en", options)
   );
 
 /**
@@ -243,13 +248,17 @@ const localeDateTime = (date: Date, options: any = {}): string =>
  * @param options
  * @returns
  */
-const localeDate = (date: Date, options: any = {}): string =>
+const localeDate = (
+  date: Date,
+  options: any = {},
+  locale: string = "en"
+): string =>
   time(
     {
       datetime: date.toISOString(),
       "locale-date-options": encodeURIComponent(JSON.stringify(options)),
     },
-    date.toLocaleDateString("en", options)
+    date.toLocaleDateString(locale || "en", options)
   );
 const badge = (col: string, lbl: string): string =>
   `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;

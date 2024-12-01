@@ -50,7 +50,14 @@ class PageGroup implements AbstractPageGroup {
   async getEligiblePage(data: ScreenInfoParams, user: any, locale?: string) {
     const Page = (await import("./page")).default;
     const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
-    const expressionRow = { ...data, locale: locale || "en" };
+    const expressionRow = {
+      ...data,
+      locale:
+        locale ||
+        (await require("../db/state")
+          .getState()
+          .getConfig("default_locale", "en")),
+    };
     for (const member of sorted) {
       const res = eval_expression(
         member.eligible_formula,
