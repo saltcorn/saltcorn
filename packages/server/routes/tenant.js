@@ -355,7 +355,12 @@ router.post(
               ...tenant_letsencrypt_sites,
             ]);
             if (req.user?.role_id === 1) {
-              req.flash("success", req.__("Tenant created. Certificate will be acquired on first visit."));
+              req.flash(
+                "success",
+                req.__(
+                  "Tenant created. Certificate will be acquired on first visit."
+                )
+              );
               res.redirect("/tenant/list");
               return;
             }
@@ -416,6 +421,7 @@ router.get(
       return;
     }
     const tens = await db.select("_sc_tenants");
+    const locale = getState().getConfig("default_locale", "en");
     send_infoarch_page({
       res,
       req,
@@ -442,7 +448,8 @@ router.get(
               },
               {
                 label: req.__("Created"),
-                key: (r) => (r.created ? localeDateTime(r.created) : ""),
+                key: (r) =>
+                  r.created ? localeDateTime(r.created, { locale }) : "",
               },
               {
                 label: req.__("Information"),
