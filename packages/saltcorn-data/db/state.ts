@@ -49,7 +49,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 import { runInContext, createContext } from "vm";
-import faIcons from "./fa5-icons"
+import faIcons from "./fa5-icons";
 
 /**
  * @param v
@@ -278,6 +278,18 @@ class State {
     const layoutvs = Object.keys(this.layouts);
     const name = layoutvs[layoutvs.length - 1];
     return this.plugins[name];
+  }
+
+  // TODO auto is poorly supported
+  getLightDarkMode(user?: User): "dark" | "light" | "auto" {
+    if (user?._attributes?.layout?.config?.mode)
+      return user?._attributes?.layout?.config?.mode;
+    if (this.plugin_cfgs) {
+      const layout_name = this.getLayoutPlugin(user).plugin_name as string;
+      const plugin_cfg = this.plugin_cfgs[layout_name];
+      if (plugin_cfg?.mode) return plugin_cfg.mode;
+    }
+    return "light";
   }
 
   /**
@@ -708,7 +720,7 @@ class State {
       this.fonts[k] = v as string;
     });
     withCfg("icons", []).forEach((icon: string) => {
-      this.icons.push(icon)
+      this.icons.push(icon);
     });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
       this.table_providers[k] = v;
