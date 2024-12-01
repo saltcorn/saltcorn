@@ -1068,6 +1068,7 @@ function initialize_page() {
           const cm = CodeMirror.fromTextArea(el, {
             lineNumbers: true,
             mode: $(el).attr("mode"),
+            theme: _sc_lightmode === "dark" ? "blackboard" : undefined,
           });
           $(el).addClass("codemirror-enabled");
           cm.on(
