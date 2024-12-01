@@ -1284,10 +1284,14 @@ router.post(
   })
 );
 
-const pullCordovaBuilder = (req, res) => {
-  const child = spawn("docker", ["pull", "saltcorn/cordova-builder"], {
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+const pullCapacitorBuilder = (req, res, version) => {
+  const child = spawn(
+    "docker",
+    ["pull", `saltcorn/capacitor-builder:${version}`],
+    {
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
   return new Promise((resolve, reject) => {
     child.stdout.on("data", (data) => {
       res.write(data);
@@ -1543,9 +1547,9 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
         }
         if (runPull) {
           res.write(
-            req.__("Pulling the cordova-builder docker image...") + "\n"
+            req.__("Pulling the capacitor-builder docker image...") + "\n"
           );
-          const pullCode = await pullCordovaBuilder(req, res);
+          const pullCode = await pullCapacitorBuilder(req, res, version);
           res.write(req.__("Pull done with code %s", pullCode) + "\n");
           if (pullCode === 0) {
             res.write(req.__("Pruning docker...") + "\n");
@@ -1990,9 +1994,9 @@ router.get(
     });
   })
 );
-const buildDialogScript = (cordovaBuilderAvailable, isSbadmin2) =>
+const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   `<script>
-  var cordovaBuilderAvailable = ${cordovaBuilderAvailable};
+  var capacitorBuilderAvailable = ${capacitorBuilderAvailable};
   var isSbadmin2 = ${isSbadmin2};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
@@ -2820,7 +2824,7 @@ router.get(
                             req.__("Capacitor builder") +
                               a(
                                 {
-                                  href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                                  href: "javascript:ajax_modal('/admin/help/Capacitor Builder?')",
                                 },
                                 i({ class: "fas fa-question-circle ps-1" })
                               )
@@ -2848,9 +2852,8 @@ router.get(
                           { class: "col-sm-4" },
                           button(
                             {
-                              id: "pullCordovaBtnId",
                               type: "button",
-                              onClick: `pull_cordova_builder(this);`,
+                              onClick: `pull_capacitor_builder(this);`,
                               class: "btn btn-warning",
                             },
                             req.__("pull")
@@ -2858,7 +2861,7 @@ router.get(
                           span(
                             {
                               role: "button",
-                              onClick: "check_cordova_builder()",
+                              onClick: "check_capacitor_builder()",
                             },
                             span({ class: "ps-3" }, req.__("refresh")),
                             i({ class: "ps-2 fas fa-undo" })
@@ -3394,13 +3397,13 @@ router.post(
 );
 
 router.post(
-  "/mobile-app/pull-cordova-builder",
+  "/mobile-app/pull-capacitor-builder",
   isAdmin,
   error_catcher(async (req, res) => {
     const state = getState();
     const child = spawn(
       `${process.env.DOCKER_BIN ? `${process.env.DOCKER_BIN}/` : ""}docker`,
-      ["pull", "saltcorn/cordova-builder:latest"],
+      ["pull", `saltcorn/capacitor-builder:${state.scVersion}`],
       {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: ".",
@@ -3415,11 +3418,11 @@ router.post(
     child.on("exit", (exitCode, signal) => {
       state.log(
         2,
-        `"pull cordova-builder exit with code: ${exitCode} and signal: ${signal}`
+        `"pull capacitor-builder exit with code: ${exitCode} and signal: ${signal}`
       );
     });
     child.on("error", (msg) => {
-      state.log(1, `pull cordova-builder error: ${msg}`);
+      state.log(1, `pull capacitor-builder error: ${msg}`);
     });
 
     res.json({});
@@ -3427,7 +3430,7 @@ router.post(
 );
 
 router.get(
-  "/mobile-app/check-cordova-builder",
+  "/mobile-app/check-capacitor-builder",
   isAdmin,
   error_catcher(async (req, res) => {
     const installed = await imageAvailable();

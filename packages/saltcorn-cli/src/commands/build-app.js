@@ -61,7 +61,7 @@ class BuildAppCommand extends Command {
   }
 
   async run() {
-    const { flags } = await await this.parse(BuildAppCommand);
+    const { flags } = await this.parse(BuildAppCommand);
     this.validateParameters(flags);
     const mobileAppDir = path.join(
       require.resolve("@saltcorn/mobile-app"),

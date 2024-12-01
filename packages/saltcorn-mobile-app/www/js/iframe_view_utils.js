@@ -769,7 +769,7 @@ async function callSync() {
             msg: "Synchronized your offline data, you are online again.",
           },
         ]);
-        parent.saltcorn.mobileApp.navigation.clearTopAlerts();
+        parent.saltcorn.mobileApp.common.clearTopAlerts();
       }
     }
   } catch (error) {

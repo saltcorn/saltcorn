@@ -12,7 +12,7 @@ export const postToggleField = async (context) => {
   if (isOfflineMode || localTableIds.indexOf(table.id) >= 0) {
     if (user.role_id > table.min_role_write)
       throw new saltcorn.data.utils.NotAuthorized(i18next.t("Not authorized"));
-    await table.toggleBool(+id, field_name); //TODO call with user
+    await table.toggleBool(+id, field_name, user);
     if (isOfflineMode) await setHasOfflineData(true);
   } else {
     await apiCall({

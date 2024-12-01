@@ -293,6 +293,7 @@ export async function init({
     }
     const state = saltcorn.data.state.getState();
     state.mobileConfig = mobileConfig;
+    state.mobileConfig.user = {};
     state.registerPlugin("base", saltcorn.base_plugin);
     state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
     collectPluginHeaders(await loadPlugins(state));

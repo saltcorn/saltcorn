@@ -232,7 +232,7 @@ class SyncUploadData extends Command {
   async run() {
     let returnCode = 0,
       inTransaction = false;
-    const { flags } = await await this.parse(SyncUploadData);
+    const { flags } = await this.parse(SyncUploadData);
     if (db.is_it_multi_tenant() && flags.tenantAppName) {
       await init_multi_tenant(loadAllPlugins, true, [flags.tenantAppName]);
     }

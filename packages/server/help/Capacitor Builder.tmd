@@ -1,4 +1,4 @@
-The Cordova builder is a docker image with all dependencies to build Android apps.
+The Capacitor builder is a docker image with all dependencies to build Android apps.
 It can be pulled from dockerhub while installing Saltcorn, or you can use the pull button.
 
 Please make sure your server has a valid and accessible docker daemon running. 

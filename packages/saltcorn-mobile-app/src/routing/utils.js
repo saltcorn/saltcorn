@@ -149,7 +149,7 @@ export const wrapContents = (contents, title, context, req) => {
         title: title,
         body,
         alerts: prepareAlerts(context, req),
-        role: state.mobileConfig.user.role_id,
+        role: state.mobileConfig.user.role_id || 100,
         menu: getMenu(req),
         req,
         headers: getHeaders(),
@@ -165,7 +165,7 @@ export const wrapContents = (contents, title, context, req) => {
         body,
         req,
         alerts: prepareAlerts(context, req),
-        role: state.mobileConfig.user.role_id,
+        role: state.mobileConfig.user.role_id || 100,
       });
   return {
     content: wrappedContent,
