@@ -3,6 +3,7 @@
  * @module commands/plugins
  */
 const { Command, Flags } = require("@oclif/core");
+const { config } = require("@oclif/core/lib/errors");
 
 /**
  * Plugins list and update command
@@ -30,28 +31,37 @@ class PluginsCommand extends Command {
     ];
 
     for (const domain of tenantList) {
+      if(flags.tenant && flags.tenant !== domain) continue;
       await db.runWithTenant(domain, async () => {
         try {
           const myplugins = await Plugin.find(
             flags.name ? { name: flags.name } : {}
           );
           myplugins.forEach((plugin) => {
-            if (
-              plugin.source === "npm" &&
-              !plugins.map((p) => p.location).includes(plugin.location)
-            ) {
+            //console.log(plugin.name);
+            //if (
+            //  plugin.source === "npm" &&
+            //  !plugins.map((p) => p.location).includes(plugin.location)
+            //) {
               plugins.push(plugin);
               if (flags.verbose)
                 console.log(
-                  "%s\t%s\t%s\t%s",
+                  "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+                  domain,
                   plugin.location,
                   plugin.name,
                   plugin.version,
-                  plugin.source
+                  plugin.source,
+                  flags.config? plugin.configuration : "",
+                  flags.extend? plugin.unsafe: "",
+                  flags.extend?plugin.has_auth: "",
+                  flags.extend?plugin.has_theme: ""
                 );
-              else console.log(plugin.location);
+              else 
+                console.log(plugin.location);
             }
-          });
+          //}
+          );
         } catch (e) {
           console.error("error: ", domain, e);
         }
@@ -136,6 +146,18 @@ PluginsCommand.flags = {
   name: Flags.string({
     char: "n",
     description: "Plugin name",
+  }),
+  tenant: Flags.string({
+    char: "t",
+    description: "tenant",
+  }),
+  config: Flags.boolean({
+    char: "c",
+    description: "show plugin config (use with -v)",
+  }),
+  extend: Flags.boolean({
+    char: "e",
+    description: "show more info about plugin (use with -v)",
   }),
 };
 

@@ -9,6 +9,7 @@ const watch = require("node-watch");
 const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
 const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
+const { getState } = require("@saltcorn/data/db/state");
 
 /**
  * packages that should trigger a server re-start
@@ -129,7 +130,8 @@ const listenForChanges = (projectDirs, pluginDirs) => {
           spawnSync("npm", ["run", "tsc"], {
             stdio: "inherit",
           });
-          process.exit();
+          getState().logInfo(`watch project dirs:  ${file} changed \n re-starting now. Process exit 0`);
+          process.exit(0); 
         }
       )
     );
@@ -144,7 +146,8 @@ const listenForChanges = (projectDirs, pluginDirs) => {
         (event, file) => {
           console.log("'%s' changed \n re-starting now", file);
           closeWatchers();
-          process.exit();
+          getState().logInfo(`watch plugins dir: ${file} changed \n re-starting now. Process exit 0`);
+          process.exit(0); 
         }
       )
     );

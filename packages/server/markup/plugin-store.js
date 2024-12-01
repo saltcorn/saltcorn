@@ -45,6 +45,7 @@ const withCfg = (plugin, key, def) =>
     : plugin.plugin_module[key] || def;
 
 /**
+ * Return Types card for Plugin
  * @param {object} plugin
  * @param {object} req
  * @returns {*}
@@ -58,6 +59,7 @@ const plugin_types_info_card = (plugin, req) => ({
 });
 
 /**
+ * Return Functions card for Plugin
  * @param {object} plugin
  * @param {object} req
  * @returns {*}
@@ -81,6 +83,7 @@ const plugin_functions_info_card = (plugin, req) => ({
 });
 
 /**
+ * Return View Templates card for Plugin
  * @param {object} plugin
  * @param {object} req
  * @returns {*}
@@ -94,6 +97,105 @@ const plugin_viewtemplates_info_card = (plugin, req) => ({
 });
 
 /**
+ * Return Model Patterns card for Plugin
+ * @param {object} plugin
+ * @param {object} req
+ * @returns {*}
+ */
+const plugin_modelpatterns_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("Model patterns"),
+  contents: req.__("This plugin supplies a Model Patterns.")+ 
+    Object.entries(withCfg(plugin, "modelpatterns", {})).map(([nm, v]) =>
+      div(h4(nm)))
+      .join("<hr>"), 
+});
+// + checked on sql plugin 
+// + checked on nextcloud plugin
+const plugin_actions_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("Actions"),
+  contents: req.__("This plugin supplies an Actions.")+
+    Object.entries(withCfg(plugin, "actions", {})).map(([nm, v]) =>
+      div(h4(nm)))
+      .join("<hr>"),
+})
+// + checked on signature-pad
+const plugin_fileviews_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("FileViews"),
+  contents: req.__("This plugin supplies a FileViews.")+
+    Object.entries(withCfg(plugin, "fileviews", {})).map(([nm, v]) =>
+      div(h4(nm)))
+      .join("<hr>"),
+})
+// + checked on signature-pad
+const plugin_fieldviews_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("FieldViews"),
+  contents: req.__("This plugin supplies a FieldViews.")+
+    Object.entries(withCfg(plugin, "fieldviews", {})).map(([nm, v]) =>
+      div(h4(nm)))
+      .join("<hr>"),
+})
+// + checked on system-info
+const plugin_externaltables_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("External Tables"),
+  contents: req.__("This plugin supplies a External Tables.")+
+    Object.entries(withCfg(plugin, "external_tables", {})).map(([nm, v]) =>
+      div(h4(nm)))
+      .join("<hr>"),
+})
+// + checked on sql
+const plugin_tableproviders_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("Table Providers"),
+  contents: req.__("This plugin supplies a Table Providers.")+
+    Object.entries(withCfg(plugin, "table_providers", {})).map(([nm, v]) =>
+      div(h4(nm)))
+      .join("<hr>"),
+})
+
+const plugin_fonts_info_card = (plugin, req) => ({
+  type: "card",
+  title:  req.__("Fonts"),
+  contents: req.__("This plugin supplies a Fonts."),
+})
+// + checked on nextcloud plugin
+const plugin_eventtypes_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("Event Types"),
+  contents: req.__("This plugin supplies a Event Types.")+
+    Object.entries(withCfg(plugin, "eventTypes", {})).map(([nm, v]) =>
+      div(h4(nm)))
+      .join("<hr>"),
+})
+
+const plugin_routes_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("Routes"),
+  contents: req.__("This plugin supplies a Routes."),
+})
+const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const headers2str = (header) =>{
+  if( header.script   ) return `script=${header.script}`;
+  if( header.css      ) return `css=${header.css}`;
+  if( header.headerTag) return "headerTag";  
+  return "";
+  
+}  
+const plugin_headers_info_card = (plugin, req) => ({
+  type: "card",
+  title: req.__("Headers"),
+  contents: req.__("This plugin supplies a Headers.")+ 
+    Object.entries(withCfg(plugin, "headers", {})).map(([nm, val]) =>
+      div(headers2str(val)))
+      .join("<hr>"),
+})
+
+/**
+ * Return plugin repository 
  * @param {object} repo
  * @returns {*}
  */
@@ -107,8 +209,18 @@ const showRepository = (repo) =>
     : repo;
 
 module.exports = {
+  showRepository,
   plugin_types_info_card,
   plugin_functions_info_card,
   plugin_viewtemplates_info_card,
-  showRepository,
+  plugin_actions_info_card,
+  plugin_modelpatterns_info_card,
+  plugin_externaltables_info_card,
+  plugin_tableproviders_info_card,
+  plugin_fileviews_info_card,
+  plugin_fieldviews_info_card,
+  plugin_fonts_info_card,
+  plugin_routes_info_card,
+  plugin_eventtypes_info_card,
+  plugin_headers_info_card,
 };

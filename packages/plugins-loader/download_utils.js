@@ -8,7 +8,12 @@ const { join } = require("path");
 const { createWriteStream, unlink } = require("fs");
 const { get } = require("https");
 const npmFetch = require("npm-registry-fetch");
-
+/**
+ * Download from GitHub
+ * @param {*} plugin 
+ * @param {*} rootFolder 
+ * @param {*} pluginDir 
+ */
 const downloadFromGithub = async (plugin, rootFolder, pluginDir) => {
   const tarballUrl = `https://api.github.com/repos/${plugin.location}/tarball`;
   const fileName = plugin.name.split("/").pop();
@@ -17,6 +22,14 @@ const downloadFromGithub = async (plugin, rootFolder, pluginDir) => {
   await extractTarball(filePath, pluginDir);
 };
 
+/**
+ * Download from NPM
+ * @param {*} plugin 
+ * @param {*} rootFolder 
+ * @param {*} pluginDir 
+ * @param {*} pckJson 
+ * @returns 
+ */
 const downloadFromNpm = async (plugin, rootFolder, pluginDir, pckJson) => {
   const pkgInfo = await npmFetch.json(
     `https://registry.npmjs.org/${plugin.location}`
@@ -36,17 +49,25 @@ const downloadFromNpm = async (plugin, rootFolder, pluginDir, pckJson) => {
     return true;
   }
 };
-
+/**
+ * Downoad Tar Ball
+ * @param {String} rootFolder 
+ * @param {String} url 
+ * @param {String}} name 
+ * @returns 
+ */
 const loadTarball = (rootFolder, url, name) => {
   const options = {
     headers: {
       "User-Agent": "request",
     },
   };
+
   const writeTarball = async (res) => {
     const filePath = join(rootFolder, "plugins_folder", `${name}.tar.gz`);
     const stream = createWriteStream(filePath);
     res.pipe(stream);
+
     return new Promise((resolve, reject) => {
       stream.on("finish", () => {
         stream.close();
@@ -69,19 +90,23 @@ const loadTarball = (rootFolder, url, name) => {
           } else
             reject(
               new Error(
-                `Error downloading tarball: http code ${redirect.statusCode}`
+                `Error 1 downloading tarball: ${url} http code ${redirect.statusCode}`
               )
             );
         });
-      } else if (res.statusCode !== 200)
+      } else if (res.statusCode !== 200){
+        //getState().logError(`Error 2 downloading tarball: ${url} http code ${res.statusCode}`)
+          
         reject(
-          new Error(`Error downloading tarball: http code ${res.statusCode}`)
+          new Error(`Error 2 downloading tarball: ${url} http code ${res.statusCode}`)
         );
+      }
       else {
         const filePath = await writeTarball(res);
         resolve(filePath);
       }
     }).on("error", (err) => {
+      //getState().logError(`Error 3 ownloading tarball: ${url}`,err);
       reject(err);
     });
   });
@@ -119,7 +144,11 @@ const gitPullOrClone = async (plugin, pluginDir) => {
   }
   if (plugin.deploy_private_key && keyfnm) await fs.promises.unlink(keyfnm);
 };
-
+/**
+ * Extract Tarball
+ * @param {*} tarFile 
+ * @param {*} destination 
+ */
 const extractTarball = async (tarFile, destination) => {
   await extract({
     file: tarFile,

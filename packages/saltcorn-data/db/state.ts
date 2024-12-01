@@ -295,20 +295,109 @@ class State {
   }
 
   /**
-   * Logging to console
-   *
+   * Logging 
+   * 1 - FATAL
+   * 2 - ERROR
+   * 3 - WARN
+   * 4 - INFO
+   * 5 - DEBUG
+  
    * @param min_level
    * @param msg
    */
   log(min_level: number, msg: string) {
-    if (min_level <= this.logLevel) {
-      const ten = db.getTenantSchema();
-      const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
-      if (min_level === 1) console.error(s);
-      else console.log(s);
-      if (this.hasJoinedLogSockets) this.emitLog(ten, min_level, msg);
-    }
+    this._log(min_level, msg);
   }
+  /**
+   * Logging FATAL 
+   *
+   * @param msg
+   * @param e
+   */
+  logFatal(msg: string, e?: Error) {
+    this._log(1, msg, e);
+  }
+  /**
+   * Logging ERROR 
+   *
+   * @param msg
+   * @param e
+   */
+  logError(msg: string, e?: Error) {
+    this._log(2, msg, e);
+  }
+  /**
+   * Logging WARN 
+   *
+   * @param msg
+   * @param e
+   */
+  logWarn(msg: string, e?: Error) {
+    this._log(3, msg, e);
+  }
+/**
+   * Logging Info 
+   *
+   * @param msg
+   * @param e
+   */
+  logInfo(msg: string, e?: Error) {
+    this._log(4, msg, e);
+  }
+  /**
+   * Logging DEBUG 
+   *
+   * @param msg
+   * @param e
+   */
+  logDebug(msg: string, e?: Error) {
+    this._log(5, msg, e);
+  }
+/**
+   * Logging to console 
+   * https://betterstack.com/community/guides/logging/log-levels-explained/
+   * 1 - FATAL
+   * 2 - ERROR
+   * 3 - WARN
+   * 4 - INFO
+   * 5 - DEBUG
+   * @param min_level
+   * @param e
+   * @param msg
+   */
+_log(min_level: number, msg: string, e?: Error, ) {
+  if (min_level <= this.logLevel) {
+    const ten = db.getTenantSchema();
+    const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
+    switch(min_level){
+      case 1: // FATAL
+      case 2: // ERROR
+
+        if(e) 
+          console.error(s,e.stack||e);
+        else
+          console.error(s);
+        
+        //console.trace();
+        break;
+      case 3: // WARN
+        console.warn(s);
+        break;
+      case 4: // INFO
+        console.info(s);
+        break;
+      case 5: // DEBUG
+        console.debug(s);
+        break;
+      default:
+        console.log(s);
+    }
+    //if (min_level === 1) console.error(s);
+    //else console.log(s);
+    
+    if (this.hasJoinedLogSockets) this.emitLog(ten, min_level, msg);
+  }
+}
 
   /**
    * Refresh State cache for all Saltcorn main objects
@@ -909,11 +998,19 @@ class State {
   emitRoom(...args: any[]) {
     globalRoomEmitter(...args);
   }
-
+/**
+ * Set the function wich will called for logging
+ * @param f 
+ */
   setLogEmitter(f: Function) {
     globalLogEmitter = f;
   }
-
+/**
+ * 
+ * @param ten - tenant string
+ * @param min_level - log level (1 - FATAL, 2 - ERROR, 3 - WARN, 4 - INFO, 5 - DEBUG)
+ * @param msg 
+ */
   emitLog(ten: string, min_level: number, msg: string) {
     globalLogEmitter(ten, min_level, msg);
   }

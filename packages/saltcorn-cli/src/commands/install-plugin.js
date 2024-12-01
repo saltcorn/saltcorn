@@ -63,6 +63,7 @@ class InstallPluginCommand extends Command {
             name: pkg.name,
             source: "local",
             location: path.resolve(flags.directory),
+            //unsafe: false//unsafe: flags.unsafe? True: undefined
           });
           await load_plugins.loadAndSaveNewPlugin(plugin);
         } catch (e) {
@@ -99,6 +100,11 @@ InstallPluginCommand.flags = {
   unsafe: Flags.boolean({
     char: "u",
     description: "Allow unsafe plugins on tenants",
+  }),
+  verbose: Flags.boolean({
+    char: "v",
+    description: "Verbose output",
+    default: false,
   }),
 };
 

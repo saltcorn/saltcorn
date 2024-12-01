@@ -1271,7 +1271,10 @@ router.post(
   error_catcher(async (req, res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
       if (process.send) getState().processSend("RestartServer");
-      else process.exit(0);
+      else {
+        getState().logInfo("server/routes/Admin got POST /retart. Process exit 0");
+        process.exit(0);
+      }
     } else {
       await restart_tenant(loadAllPlugins);
       getState().processSend({
@@ -1565,6 +1568,8 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
       );
       setTimeout(() => {
         getState().processSend("RestartServer");
+        getState().logInfo("server/routes/Admin Restart server. Process exit 0.");
+            
         process.exit(0);
       }, 100);
     });

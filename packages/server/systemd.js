@@ -22,33 +22,38 @@ const watchDog = (interval, notify, { port }) => {
         const User = require("@saltcorn/data/models/user");
         User.count()
           .then((c) => {
-            getState().log(5, `watchdog user count ${c}`);
+            getState().logDebug(`watchdog user count ${c}, pings per 5 min ${pings_per_5_min}`);
             notify.watchdog();
           })
           .catch((e) => {
-            getState().log(1, e);
+            getState().logFatal(`watchdog cannot get user count, pings per 5 min ${pings_per_5_min}. Process exit 1.`,e);
             process.exit(1);
           });
       } else {
         // check we can serve
-        fetch(`http://127.0.0.1:${port}/auth/login`)
+        const fetch_url=`http://127.0.0.1:${port}/auth/login`;
+        fetch(fetch_url)
           .then((response) => {
-            getState().log(5, `watchdog request status ${response.status}`);
-            if (response.status < 400) notify.watchdog();
-            else process.exit(1);
+            getState().logDebug(`watchdog request status ${response.status}`);
+            if (response.status < 400) 
+              notify.watchdog();
+            else{
+              getState().logInfo(`watchdog stops current process on ${fetch_url} with status ${response.status}. Process exit 1.`);
+              process.exit(1);
+            }
           })
           .catch((e) => {
-            getState().log(1, e);
+            getState().logFatal(`watchdog fails to fetch url: ${fetch_url}. Process exit 1.`,e);
             process.exit(1);
           });
       }
     } else {
-      getState().log(6, `watchdog with no test`);
+      getState().logFatal(`watchdog with no test`);
       notify.watchdog();
       return;
     }
   } catch (e) {
-    getState().log(1, e);
+    getState().logFatal("watchdog fails with error. Process exit 1",e);
     process.exit(1);
   }
 };

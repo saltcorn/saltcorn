@@ -22,12 +22,6 @@ const {
   upgrade_all_tenants_plugins,
 } = require("@saltcorn/admin-models/models/tenant");
 const db = require("@saltcorn/data/db");
-const {
-  plugin_types_info_card,
-  plugin_functions_info_card,
-  plugin_viewtemplates_info_card,
-  showRepository,
-} = require("../markup/plugin-store");
 const load_plugins = require("../load_plugins");
 const {
   h5,
@@ -92,6 +86,7 @@ const pluginForm = (req, plugin) => {
         name: "name",
         input_type: "text",
         sublabel: req.__("Module name"),
+        required: true,
       }),
       new Field({
         label: req.__("Source"),
@@ -110,12 +105,19 @@ const pluginForm = (req, plugin) => {
       new Field({
         label: req.__("Location"),
         name: "location",
-        input_type: "text",
+        input_type:  "text",
         sublabel: req.__(
           "For npm - name of npm package, e.g. @saltcorn/html or saltcorn-gantt, check at npmjs.com, " +
             "for local - absolute path to module folder in file system, e.g. C:\\gitsrc\\any-bootstrap-theme\\, " +
             "for github - name of github project."
         ),
+      }),
+      new Field({
+        label: req.__("Location File"),
+        name: "file",
+        input_type:  "file",
+        accept: ".json,application/json",
+//        accept: "package.json",
       }),
       ...(schema === db.connectObj.default_schema
         ? [
@@ -156,7 +158,7 @@ const local_has_theme = (name) => {
 };
 
 /**
- * Get Pluging store itmes
+ * Get Pluging store itemes
  * @returns {Promise<Object[]>}
  */
 const get_store_items = async () => {
@@ -185,6 +187,7 @@ const get_store_items = async () => {
       source: plugin.source,
       ready_for_mobile:
         plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
+      
     }))
     .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
@@ -285,7 +288,8 @@ const store_item_html = (req) => (item) => ({
       item.git && badge("Git"),
       item.local && badge(req.__("Local")),
       item.installed && badge(req.__("Installed")),
-      item.ready_for_mobile && badge(req.__("Mobile"))
+      item.ready_for_mobile && badge(req.__("Mobile")),
+      item.unsafe && badge(req.__("Unsafe"))
     ),
     div(item.description || ""),
     item.documentation_link
@@ -393,11 +397,13 @@ const storeNavPills = (req) => {
     link("Modules"),
     link("Packs"),
     link("Themes"),
+    link("Auth"),
     link("Installed")
   );
 };
 
 /**
+ * Filter itmes by set=
  * @param {object[]} items
  * @param {object} query
  * @returns {object[]}
@@ -428,6 +434,7 @@ const satisfy_q = (p, q) => {
 };
 
 /**
+ * Filter store items by query set
  * @param {object[]} items
  * @param {object} query
  * @returns {object[]}
@@ -440,6 +447,8 @@ const filter_items_set = (items, query) => {
       return items.filter((item) => item.pack);
     case "themes":
       return items.filter((item) => item.has_theme);
+    case "auth":
+        return items.filter((item) => item.has_auth);
     case "installed":
       return items.filter((item) => item.installed);
     default:
@@ -448,6 +457,7 @@ const filter_items_set = (items, query) => {
 };
 
 /**
+ * Returns downdonw actions for store
  * @param {object} req
  * @returns {div}
  */
@@ -523,6 +533,7 @@ const store_actions_dropdown = (req) => {
 };
 
 /**
+ * Return plugin store html
  * @param {object[]} items
  * @param {object} req
  * @returns {object}
@@ -571,6 +582,8 @@ const flash_relogin = (req, exposedConfigs) => {
 };
 
 /**
+ * Handle GET request for route / of Plugin Store
+ * Return Plugin Store html
  * @name get
  * @function
  * @memberof module:routes/plugins~pluginsRouter
@@ -588,7 +601,9 @@ router.get(
     );
   })
 );
-
+/**
+ * Handles GET /versions_dialog/:name for Plugin store
+ */
 router.get(
   "/versions_dialog/:name",
   isAdmin,
@@ -1208,6 +1223,22 @@ router.get(
     }
   })
 );
+const {
+  showRepository,
+  plugin_types_info_card,
+  plugin_functions_info_card,
+  plugin_viewtemplates_info_card,
+  plugin_actions_info_card,
+  plugin_modelpatterns_info_card,
+  plugin_externaltables_info_card,
+  plugin_tableproviders_info_card,
+  plugin_fileviews_info_card,
+  plugin_fieldviews_info_card,
+  plugin_fonts_info_card,
+  plugin_routes_info_card,
+  plugin_eventtypes_info_card,
+  plugin_headers_info_card,
+} = require("../markup/plugin-store");
 
 /**
  * @name get/info/:name
@@ -1236,17 +1267,21 @@ router.get(
     let latest =
       update_permitted &&
       (await get_latest_npm_version(plugin_db.location, 1000));
-    let engineInfos = await load_plugins.getEngineInfos(plugin_db); // with cache
+    
     let forceFetch = true;
-    if (latest && !engineInfos[latest]) {
-      engineInfos = await load_plugins.getEngineInfos(plugin_db, forceFetch);
-      forceFetch = false;
-    }
-    if (latest && !isVersionSupported(latest, engineInfos)) {
-      latest = supportedVersion(
-        latest,
-        await load_plugins.getEngineInfos(plugin_db, forceFetch)
-      );
+    const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
+    if (plugin_db.source === "npm"){
+      let engineInfos = await load_plugins.getEngineInfos(plugin_db); // with cache
+      if (latest && !engineInfos[latest]) {
+        engineInfos = await load_plugins.getEngineInfos(plugin_db, forceFetch);
+        forceFetch = false;
+       }
+      if (latest && !isVersionSupported(latest, engineInfos)) {
+        latest = supportedVersion(
+          latest,
+          await load_plugins.getEngineInfos(plugin_db, forceFetch)
+        );
+      }
     }
     const can_update = update_permitted && latest && mod.version !== latest;
     const can_select_version = update_permitted && plugin_db.source === "npm";
@@ -1257,6 +1292,8 @@ router.get(
     const infoTable = table(
       tbody(
         tr(th(req.__("Package name")), td(mod.name)),
+        tr(th(req.__("Package type")), td(plugin_db.source)),
+        tr(th(req.__("Package location")), td(plugin_db.location)),
         tr(
           th(req.__("Package version")),
           td(
@@ -1325,18 +1362,61 @@ router.get(
           : null
       )
     );
+    // Show additional cards about plugin
     let cards = [];
+    
     if (mod.plugin_module.layout)
       cards.push({
         type: "card",
         title: req.__("Layout"),
         contents: req.__("This plugin supplies a theme."),
       });
-    if (mod.plugin_module.types) cards.push(plugin_types_info_card(mod, req));
+    
+    if (mod.plugin_module.types) 
+      cards.push(plugin_types_info_card(mod, req));
     if (mod.plugin_module.functions)
       cards.push(plugin_functions_info_card(mod, req));
     if (mod.plugin_module.viewtemplates)
       cards.push(plugin_viewtemplates_info_card(mod, req));
+    
+    if (mod.plugin_module.modelpatterns)
+      cards.push(plugin_modelpatterns_info_card(mod, req));
+    if (mod.plugin_module.fileviews)
+      cards.push(plugin_fileviews_info_card(mod, req));
+    
+    if (mod.plugin_module.actions)
+      cards.push(plugin_actions_info_card(mod, req));
+    
+    if (mod.plugin_module.eventTypes)
+      cards.push(plugin_eventtypes_info_card(mod, req));
+    
+    //if (mod.plugin_module.fonts)
+    //  cards.push(plugin_fonts_info_card(mod, req));
+    
+    if (mod.plugin_module.table_providers)
+      cards.push(plugin_tableproviders_info_card(mod, req));
+    
+    // todo impelement more information about authentication plugins
+    //if (mod.plugin_module.authentication)
+    //  cards.push(plugin_authentication_info_card(mod, req));
+    
+    if (mod.plugin_module.external_tables)
+      cards.push(plugin_externaltables_info_card(mod, req));
+    
+    if (mod.plugin_module.fieldviews)
+      cards.push(plugin_fieldviews_info_card(mod, req));
+    
+    // todo implement showing of verifier_workflow
+    //if (mod.plugin_module.verifier_workflow)
+    //  cards.push(plugin_verifier_workflow_info_card(mod, req));
+    
+    if (isAdmin && mod.plugin_module.headers)
+      cards.push(plugin_headers_info_card(mod, req));
+    // todo mod.plugin_module.routes doens exits (not implemented yet)
+    //if (mod.plugin_module.routes)
+    //  cards.push(plugin_routes_info_card(mod, req));
+    
+
     res.sendWrap(req.__(`New Plugin`), {
       above: [
         {

@@ -33,7 +33,7 @@ const getEngineInfos = async (plugin, forceFetch) => {
   if (cached[plugin.location] && !forceFetch) {
     return cached[plugin.location];
   } else {
-    getState().log(5, `Fetching versions for '${plugin.location}'`);
+    getState().logDebug(`Fetching versions for '${plugin.location}'`);
     const pkgInfo = await npmFetch.json(
       `https://registry.npmjs.org/${plugin.location}`
     );
@@ -94,6 +94,7 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       console.log(
         `Warning: Unable to find a supported version for '${plugin.location}' Continuing with the installed version`
       );
+      getState().logWarn(`Warning: Unable to find a supported version for '${plugin.location}' Continuing with the installed version`);
     }
   }
   // load plugin
@@ -113,11 +114,11 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       res.name
     );
   } catch (error) {
-    getState().log(
-      3,
-      `Error loading plugin ${plugin.name}: ${error.message || error}`
-    );
+    
+    getState().logWarn (`Error loading plugin ${plugin.name}: ${error.message || error}`);
+
     if (force) {
+      getState().logWarn(`Force mode. Try to reinstall plugin ${plugin.name}`);
       // remove the install dir and try again
       await loader.remove();
       await loader.install(force);
@@ -136,10 +137,12 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       await res.plugin_module.onLoad(plugin.configuration);
     } catch (error) {
       console.error(error); // todo i think that situation is not resolved
+      getState().logError(`Cannot do plugin onload or pluin ${plugin.name}`, error);
     }
   }
 
   if (isRoot() && res.plugin_module.authentication)
+    getState().logDebug(`reloadAuthFromRoot for Each Tenant`);
     await eachTenant(reloadAuthFromRoot);
   return res;
 };
@@ -171,6 +174,7 @@ const requirePlugin = async (plugin, force) => {
  * @returns {Promise<void>}
  */
 const loadAllPlugins = async (force) => {
+  getState().logInfo(`LoadAllPlugins. Force mode is ${force}..`);
   await getState().refresh(true);
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
@@ -178,6 +182,7 @@ const loadAllPlugins = async (force) => {
       await loadPlugin(plugin, force);
     } catch (e) {
       console.error(e);
+      getState().logError(`Cannot load plugin ${plugin.name}`,e);
     }
   }
   await getState().refreshUserLayouts();
@@ -206,7 +211,8 @@ const loadAndSaveNewPlugin = async (
   );
   if (!isRoot() && !tenants_unsafe_plugins) {
     if (plugin.source !== "npm") {
-      console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
+      console.warn("\nWARNING1: Skipping unsafe plugin ", plugin.name);
+      getState().logWarn(`WARNING1: Skipping unsafe plugin ${plugin.name}`);
       return;
     }
     //get allowed plugins
@@ -223,7 +229,8 @@ const loadAndSaveNewPlugin = async (
       !safes.includes(plugin.location) &&
       !allowUnsafeOnTenantsWithoutConfigSetting
     ) {
-      console.error("\nWARNING: Skipping unsafe plugin ", plugin.name);
+      console.warn("\nWARNING2: Skipping unsafe plugin ", plugin.name);
+      getState().logWarn(`WARNING2: Skipping unsafe plugin ${plugin.name}`);
       return;
     }
   }
@@ -262,10 +269,7 @@ const loadAndSaveNewPlugin = async (
     );
   } catch (error) {
     if (force) {
-      getState().log(
-        2,
-        `Error registering plugin ${plugin.name}. Removing and trying again.`
-      );
+      getState().logWarn(`Error registering plugin ${plugin.name}. Removing and trying again.`, error);
       await loader.remove();
       await loader.install(force);
       getState().registerPlugin(
@@ -277,10 +281,12 @@ const loadAndSaveNewPlugin = async (
       );
       registeredWithReload = true;
     } else {
-      throw error;
+        getState().logError(`Error registering plugin ${plugin.name}.`, error);  
+        throw error;
     }
   }
   if (loadedWithReload || registeredWithReload) {
+    getState().logWarn(`The plugin ${plugin.name} was corrupted and had to be repaired. We recommend restarting your server.`);
     loadMsgs.push(
       __(
         "The plugin was corrupted and had to be repaired. We recommend restarting your server.",
@@ -293,6 +299,7 @@ const loadAndSaveNewPlugin = async (
       await plugin_module.onLoad(plugin.configuration);
     } catch (error) {
       console.error(error);
+      getState().logError(`Error on plugin onload for plugin ${plugin.name}`, error);
     }
   }
   if (version) plugin.version = version;

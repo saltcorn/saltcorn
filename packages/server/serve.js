@@ -109,6 +109,7 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
       console.error("Connection parameters tried: ");
       console.error(db.connectObj);
     }
+    getState().logFatal(`initMaster fails. Process exit 1`);
     process.exit(1);
   }
   // switch on sql logging
@@ -199,6 +200,7 @@ const onMessageFromWorker =
       require("./systemd")({ port });
       return true;
     } else if (msg === "RestartServer") {
+      getState().logInfo(`Got msg ${msg}. Process exit 0.`);
       process.exit(0);
       return true;
     } else if (msg.tenant || msg.createTenant) {

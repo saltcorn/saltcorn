@@ -68,7 +68,7 @@ const getMigrationsInDB = async () => {
 // todo resolve database specific
 const migrate = async (schema0, verbose) => {
   const schema = schema0 || db.connectObj.default_schema;
-  //console.log("migrating database schema %s", schema);
+  //console.log(`migrating database schema ${schema}`);
 
   //https://stackoverflow.com/questions/5364928/node-js-require-all-files-in-a-folder
   if (db.is_node) {
@@ -89,8 +89,9 @@ const migrate = async (schema0, verbose) => {
       for (const file of files) {
         const name = file.replace(".js", "");
         if (!dbmigrations.has(name)) {
-          if (verbose)
+          if (verbose){
             console.log("Tenant %s running migration %s", schema0, name);
+          }
           const contents = require(path.join(__dirname, "migrations", name));
           await doMigrationStep(name, contents, client);
         }

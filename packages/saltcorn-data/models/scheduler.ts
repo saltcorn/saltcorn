@@ -157,11 +157,15 @@ const checkAvailability = async (port: number): Promise<void> => {
           headers: {},
         });
       } catch {}
+      getState().logError(`Availability check failed, restarting. response.status ${response.status}. Process exit 1.`);
       process.exit(1);
     }
   } catch (e) {
     console.error("Error in availability check", e);
-    if (availabilityPassed) process.exit(1);
+    if (availabilityPassed) {
+      getState().logError("Error in availability check. Process exit 1.", e);
+      process.exit(1);
+    }
   }
 };
 
