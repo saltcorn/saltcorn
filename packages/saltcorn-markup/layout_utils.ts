@@ -570,7 +570,7 @@ const removeLeadingSlash = (s: string) => {
  * @param {object[]} headers
  * @returns {string}
  */
-const headersInHead = (headers: any[]): string =>
+const headersInHead = (headers: any[], isDark?: boolean): string =>
   headers
     .filter((h) => h.css)
     .map(
@@ -580,6 +580,17 @@ const headersInHead = (headers: any[]): string =>
         }" rel="stylesheet">`
     )
     .join("") +
+  (isDark
+    ? headers
+        .filter((h) => h.cssDark)
+        .map(
+          (h) =>
+            `<link href="${
+              isNode ? h.cssDark : removeLeadingSlash(h.cssDark)
+            }" rel="stylesheet">`
+        )
+        .join("")
+    : "") +
   headers
     .filter((h) => h.style)
     .map((h) => `<style>${h.style}</style>`)
