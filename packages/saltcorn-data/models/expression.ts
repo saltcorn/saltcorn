@@ -118,18 +118,32 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
 function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
   const keys = new Set(Object.keys(extraCtx));
   const field_names = new Set(fields.map((f) => f.name));
+  let default_locale: string | undefined;
   const today = (
     offset?:
       | number
       | { startOf: moment.unitOfTime.StartOf }
       | { endOf: moment.unitOfTime.StartOf }
   ) => {
+    const get_locale = (): string => {
+      if (!default_locale) {
+        const { getState } = require("../db/state");
+        default_locale = getState().getConfig("default_locale", "en");
+      }
+      return default_locale as string;
+    };
     let d = new Date();
     if (typeof offset === "number") d.setDate(d.getDate() + offset);
     else if (offset && "startOf" in offset) {
-      d = moment().startOf(offset.startOf).toDate();
+      d = moment()
+        .locale(get_locale())
+        .startOf(offset.startOf)
+        .toDate();
     } else if (offset && "endOf" in offset) {
-      d = moment().endOf(offset.endOf).toDate();
+      d = moment()
+        .locale(get_locale())
+        .endOf(offset.endOf)
+        .toDate();
     }
     return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   };

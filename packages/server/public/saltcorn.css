@@ -608,3 +608,9 @@ button.monospace-copy-btn {
 i[class^="unicode-"], i[class*=" unicode-"] {
   font-style: normal;
 }
+
+.tabulator.table-dark:not(.thead-light) .tabulator-footer, .tabulator.table-dark:not(.thead-light) .tabulator-footer .tabulator-col {
+  background-color: #212529;
+  border-color: #32383e;
+  color: #fff;
+}

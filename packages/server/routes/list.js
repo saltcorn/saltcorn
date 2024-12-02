@@ -268,6 +268,7 @@ router.get(
       clipboard: false,
       cellClick: "__delete_tabulator_row",
     });
+    const isDark = getState().getLightDarkMode(req.user) === "dark";
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -297,6 +298,13 @@ router.get(
           {
             css: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.css`,
           },
+          ...(isDark
+            ? [
+                {
+                  css: `/static_assets/${db.connectObj.version_tag}/flatpickr-dark.css`,
+                },
+              ]
+            : []),
         ],
       },
       {
