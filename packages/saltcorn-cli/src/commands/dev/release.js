@@ -133,6 +133,10 @@ class ReleaseCommand extends Command {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
+    spawnSync("npm", ["run", "tsc"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
     for (const p of Object.values(pkgs)) {
       updatePkgJson(p.dir);
       if (p.publish) {
