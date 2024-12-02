@@ -7,6 +7,19 @@ const fs = require("fs");
 const { spawnSync } = require("child_process");
 const { sleep } = require("../../common");
 
+const runCmd = (cmd, args, options) => {
+  const dirStr =
+    options?.cwd && options.cwd !== "." ? ` [cwd=${options.cwd}]` : "";
+  console.log(`>${dirStr} ${cmd} ${args.join(" ")}`);
+  const res = spawnSync(cmd, args, options);
+  if (res.status !== 0)
+    throw new Error(
+      `Non-zero exit status for command: "${cmd} ${args.join(" ")}" in ${
+        options?.cwd || "."
+      }`
+    );
+};
+
 /**
  * ReleaseCommand Class
  * @extends oclif.Command
@@ -21,7 +34,7 @@ class ReleaseCommand extends Command {
       args: { version },
       flags,
     } = await this.parse(ReleaseCommand);
-    spawnSync("git", ["pull"], {
+    runCmd("git", ["pull"], {
       stdio: "inherit",
       cwd: ".",
     });
@@ -32,7 +45,7 @@ class ReleaseCommand extends Command {
     });
     console.log("\n");
 
-    spawnSync("git", ["show", "--summary"], {
+    runCmd("git", ["show", "--summary"], {
       stdio: "inherit",
       cwd: ".",
     });
@@ -89,11 +102,11 @@ class ReleaseCommand extends Command {
       );
     };
     const compileTsFiles = () => {
-      spawnSync("npm", ["install", "--legacy-peer-deps"], {
+      runCmd("npm", ["install", "--legacy-peer-deps"], {
         stdio: "inherit",
         cwd: ".",
       });
-      spawnSync("npm", ["run", "tsc"], {
+      runCmd("npm", ["run", "tsc"], {
         stdio: "inherit",
         cwd: ".",
       });
@@ -105,7 +118,7 @@ class ReleaseCommand extends Command {
       console.log(
         `packages/${dir}$ npm publish ${firstTag ? `--tag ${firstTag}` : ""}`
       );
-      spawnSync("npm", ["publish", ...(firstTag ? ["--tag", firstTag] : [])], {
+      runCmd("npm", ["publish", ...(firstTag ? ["--tag", firstTag] : [])], {
         stdio: "inherit",
         cwd: `packages/${dir}/`,
       });
@@ -115,7 +128,7 @@ class ReleaseCommand extends Command {
         console.log(
           `packages/${dir}$ npm dist-tag add @saltcorn/cli@${version} ${tag}`
         );
-        spawnSync("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
+        runCmd("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
         });
@@ -125,18 +138,11 @@ class ReleaseCommand extends Command {
     const rootPackageJson = require(`../../../../../package.json`);
 
     compileTsFiles();
-    //for each package:
+    //for each package:1
     // 1. update version
     // 2. update dependencies for other packages
     // 3. publish
-    spawnSync("npm", ["install", "--legacy-peer-deps"], {
-      stdio: "inherit",
-      cwd: `packages/saltcorn-cli/`,
-    });
-    spawnSync("npm", ["run", "tsc"], {
-      stdio: "inherit",
-      cwd: ".",
-    });
+
     for (const p of Object.values(pkgs)) {
       updatePkgJson(p.dir);
       if (p.publish) {
@@ -156,25 +162,31 @@ class ReleaseCommand extends Command {
       `package.json`,
       JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
     );
-    spawnSync("npm", ["update", "--legacy-peer-deps"], {
+
+    runCmd("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
-    spawnSync("npm", ["install", "--legacy-peer-deps"], {
+
+    runCmd("npm", ["update", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
-    spawnSync("npm", ["run", "manifest"], {
+    runCmd("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: `packages/saltcorn-cli/`,
     });
-    spawnSync("npm", ["install", "--legacy-peer-deps"], {
+    runCmd("npm", ["run", "manifest"], {
+      stdio: "inherit",
+      cwd: `packages/saltcorn-cli/`,
+    });
+    runCmd("npm", ["install", "--legacy-peer-deps"], {
       stdio: "inherit",
       cwd: ".",
     });
     // do not run 'audit fix' on full point releases, only on -beta.x, -rc.x etc
     /*if (version.includes("-"))
-      spawnSync("npm", ["audit", "fix"], {
+      runCmd("npm", ["audit", "fix"], {
         stdio: "inherit",
         cwd: `packages/saltcorn-cli/`,
       });*/
@@ -195,21 +207,20 @@ class ReleaseCommand extends Command {
       dockerfileWithMobile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
     );
     //git commit tag and push
-    spawnSync("git", ["commit", "-am", "v" + version], {
+    runCmd("git", ["commit", "-am", "v" + version], {
       stdio: "inherit",
     });
-    spawnSync("git", ["tag", "-a", "v" + version, "-m", "v" + version], {
+    runCmd("git", ["tag", "-a", "v" + version, "-m", "v" + version], {
       stdio: "inherit",
     });
-    spawnSync("git", ["push", "origin", "v" + version], {
+    runCmd("git", ["push", "origin", "v" + version], {
       stdio: "inherit",
     });
-    spawnSync("git", ["push"], {
+    runCmd("git", ["push"], {
       stdio: "inherit",
     });
     console.log("Now run:\n");
-    console.log("  rm -rf packages/saltcorn-cli/node_modules\n");
-    console.log("  rm -rf node_modules\n");
+    console.log("npm install --legacy-peer-deps && npm run tsc\n");
     this.exit(0);
   }
 }
