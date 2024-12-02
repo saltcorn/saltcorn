@@ -100,9 +100,11 @@ async function addScripts(version_tag) {
 
 const prepareHeader = (header) => {
   let result = Object.assign({}, header);
-  if (result.script?.startsWith("/")) {
-    result.script = result.script.substring(1);
-  }
+  if (
+    result.script?.startsWith("/plugins") ||
+    result.script?.startsWith("plugins")
+  )
+    result.script = result.script.replace(/^\/?plugins/, "sc_plugins");
   return result;
 };
 
