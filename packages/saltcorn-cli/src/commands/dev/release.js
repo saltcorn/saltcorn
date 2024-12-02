@@ -103,9 +103,9 @@ class ReleaseCommand extends Command {
       if (flags.tag) tags.push(flags.tag);
       const firstTag = tags[0];
       console.log(
-        `packages/${dir}$ npm publish ${firstTag ? `--tag ${firstTag}` : ""}`
+        `packages/${dir}$ npm publish --access=public ${firstTag ? `--tag ${firstTag}` : ""}`
       );
-      spawnSync("npm", ["publish", ...(firstTag ? ["--tag", firstTag] : [])], {
+      spawnSync("npm", ["publish", "--access=public", ...(firstTag ? ["--tag", firstTag] : [])], {
         stdio: "inherit",
         cwd: `packages/${dir}/`,
       });
@@ -165,6 +165,10 @@ class ReleaseCommand extends Command {
       cwd: `packages/saltcorn-cli/`,
     });
     spawnSync("npm", ["install", "--legacy-peer-deps"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
+    spawnSync("npm", ["run", "tsc"], {
       stdio: "inherit",
       cwd: ".",
     });

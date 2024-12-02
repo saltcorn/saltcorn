@@ -1,12 +1,12 @@
 {
   "name": "@saltcorn/random-tests",
-  "version": "1.1.0-beta.10",
+  "version": "1.1.0-beta.11",
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/admin-models": "1.1.0-beta.10",
-    "@saltcorn/data": "1.1.0-beta.10",
-    "@saltcorn/server": "1.1.0-beta.10"
+    "@saltcorn/admin-models": "1.1.0-beta.11",
+    "@saltcorn/data": "1.1.0-beta.11",
+    "@saltcorn/server": "1.1.0-beta.11"
   },
   "devDependencies": {
     "chaos-guinea-pig": "0.1.6",
