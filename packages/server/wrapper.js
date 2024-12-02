@@ -194,7 +194,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
       }, _sc_globalCsrf = "${req.csrfToken()}", _sc_version_tag = "${version_tag}"${
         locale ? `, _sc_locale = "${locale}"` : ""
       }, _sc_lightmode = ${JSON.stringify(
-        state.getLightDarkMode(req.user)
+        state.getLightDarkMode?.(req.user) || "light"
       )};</script>`,
     },
     { css: `/static_assets/${version_tag}/saltcorn.css` },
