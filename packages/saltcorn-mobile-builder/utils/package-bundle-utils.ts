@@ -50,26 +50,28 @@ async function copyHeaderToApp(
   header: string,
   wwwDir: string
 ) {
-  const pathArr = header.split(sep);
-  // TODO
+  let mobileHeader = header;
+  if (header.startsWith("/plugins") || header.startsWith("plugins"))
+    mobileHeader = header.replace(/^\/?plugins/, "sc_plugins");
+  const pathArr = mobileHeader.split(sep);
   if (pathArr.length > 3) {
-    const pluginSubDir = pathArr.slice(4, pathArr.length - 1).join(sep);
-    const dstPublicDir = join(wwwDir, dirname(header));
+    const pluginSubDir = pathArr.slice(3, pathArr.length - 1).join(sep);
+    const dstPublicDir = join(wwwDir, dirname(mobileHeader));
     if (!existsSync(dstPublicDir)) {
       mkdirSync(dstPublicDir, { recursive: true });
     }
-    const headerFile = basename(header);
+    const headerFile = basename(mobileHeader);
     try {
       copySync(
         join(pluginLocation, "public", pluginSubDir, headerFile),
         join(dstPublicDir, headerFile)
       );
     } catch (e) {
-      console.log(`Error copying header ${header} to ${dstPublicDir}`);
+      console.log(`Error copying header ${mobileHeader} to ${dstPublicDir}`);
       console.log(e);
     }
   } else {
-    console.log(`skipping header '${header}'`);
+    console.log(`skipping header '${mobileHeader}'`);
   }
 }
 
@@ -94,7 +96,7 @@ export async function copyPublicDirs(buildDir: string) {
   const state = getState();
   const wwwDir = join(buildDir, "www");
   const pluginCfgs = state.plugin_cfgs || {};
-  for (const [k, v] of <[string, any]>Object.entries(state.plugins)) {
+  for (const k of Object.keys(state.plugins)) {
     const location = state.plugin_locations[k];
     if (location) {
       const pckJson = require(join(location, "package.json"));
