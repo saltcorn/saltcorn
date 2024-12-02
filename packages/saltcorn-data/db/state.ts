@@ -280,6 +280,18 @@ class State {
     return this.plugins[name];
   }
 
+  // TODO auto is poorly supported
+  getLightDarkMode(user?: User): "dark" | "light" | "auto" {
+    if (user?._attributes?.layout?.config?.mode)
+      return user?._attributes?.layout?.config?.mode;
+    if (this.plugin_cfgs) {
+      const layout_name = this.getLayoutPlugin(user).plugin_name as string;
+      const plugin_cfg = this.plugin_cfgs[layout_name];
+      if (plugin_cfg?.mode) return plugin_cfg.mode;
+    }
+    return "light";
+  }
+
   /**
    * Get Two factor authentication policy
    * Based on role of user

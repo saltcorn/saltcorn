@@ -1080,11 +1080,12 @@ function initialize_page() {
         codes.forEach((el) => {
           //console.log($(el).attr("mode"), el);
           if ($(el).hasClass("codemirror-enabled")) return;
-
-          const cm = CodeMirror.fromTextArea(el, {
+          const cmOpts = {
             lineNumbers: true,
             mode: $(el).attr("mode"),
-          });
+          };
+          if (_sc_lightmode === "dark") cmOpts.theme = "blackboard";
+          const cm = CodeMirror.fromTextArea(el, cmOpts);
           $(el).addClass("codemirror-enabled");
           cm.on(
             "change",

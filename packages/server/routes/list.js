@@ -26,6 +26,7 @@ const {
 const Table = require("@saltcorn/data/models/table");
 const { isAdmin, error_catcher } = require("./utils");
 const moment = require("moment");
+const { getState } = require("@saltcorn/data/db/state");
 
 /**
  * @type {object}
@@ -427,7 +428,13 @@ router.get(
               ),
               div({ id: "jsGridNotify" }),
 
-              div({ id: "jsGrid" })
+              div({
+                id: "jsGrid",
+                class:
+                  getState().getLightDarkMode(req.user) === "dark"
+                    ? "table-dark"
+                    : undefined,
+              })
             ),
           },
         ],
