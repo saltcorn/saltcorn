@@ -156,7 +156,11 @@ const sideBarItem = (currentUrl) => (item) => {
         )
       : item.type === "Search"
       ? form(
-          { action: "/search", class: "menusearch ms-2 me-3", method: "get" },
+          {
+            action: "/search",
+            class: "menusearch ms-2 me-3",
+            method: "get",
+          },
           div(
             { class: "input-group search-bar" },
 
@@ -361,6 +365,8 @@ const formModify = (form) => {
  */
 const safeSlash = () => (isNode() ? "/" : "");
 
+const linkPrefix = () => (isNode() ? "/plugins" : "sc_plugins");
+
 /**
  * @param {*} headers
  * @param {string} title
@@ -376,11 +382,11 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="${safeSlash()}plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/fontawesome-free/css/all.min.css">
-    <link href="${safeSlash()}plugins/pubdeps/sbadmin2/nunito/5.0.3/css/nunito/nunito-fontface.css" rel="stylesheet">
+    <link rel="stylesheet" href="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/fontawesome-free/css/all.min.css">
+    <link href="${linkPrefix()}/pubdeps/sbadmin2/nunito/5.0.3/css/nunito/nunito-fontface.css" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="${safeSlash()}plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/css/sb-admin-2.css">
+    <link rel="stylesheet" href="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/css/sb-admin-2.css">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
@@ -389,9 +395,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <script src="${safeSlash()}static_assets/${
     db.connectObj.version_tag
   }/jquery-3.6.0.min.js"></script>
-            <script src="${safeSlash()}plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-            <script src="${safeSlash()}plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/jquery-easing/jquery.easing.min.js"></script>
-            <script src="${safeSlash()}plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/js/sb-admin-2.min.js"></script>
+            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/jquery-easing/jquery.easing.min.js"></script>
+            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/js/sb-admin-2.min.js"></script>
     ${headersInBody(headers)}
     </body>
   </html>`;

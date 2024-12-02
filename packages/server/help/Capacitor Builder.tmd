@@ -1,0 +1,13 @@
+The Capacitor builder is a docker image with all dependencies to build Android apps.
+It can be pulled from dockerhub while installing Saltcorn, or you can use the pull button.
+
+Please make sure your server has a valid and accessible docker daemon running. 
+
+For this, either set up a standard docker installation 
+or use the [docker rootless mode](https://docs.docker.com/engine/security/rootless/) (recommended).
+
+In a standard docker environment, you need root user privileges. 
+For this, you can add the user running Saltcorn to the docker group, 
+or if you already have the privileges, you are ready to go.
+
+A docker daemon in rootless mode doesn't need any further configuration.

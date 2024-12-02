@@ -95,7 +95,7 @@ const setupDocker = async (
   }
 };
 
-const pullCordovaBuilder = async (
+const pullCapacitorBuilder = async (
   user,
   dockerMode,
   addToDockerGroup,
@@ -110,7 +110,7 @@ const pullCordovaBuilder = async (
         "/bin/bash",
         "--login",
         "-c",
-        "docker pull saltcorn/cordova-builder",
+        "docker pull saltcorn/capacitor-builder",
       ],
       false,
       dryRun
@@ -122,7 +122,7 @@ const pullCordovaBuilder = async (
           "bash",
           "-c",
           `newgrp docker <<EOF  
-  docker pull saltcorn/cordova-builder
+  docker pull saltcorn/capacitor-builder
 EOF`,
         ],
         false,
@@ -131,7 +131,7 @@ EOF`,
     } else {
       await asyncSudoUser(
         user,
-        ["docker", "pull", "saltcorn/cordova-builder"],
+        ["docker", "pull", "saltcorn/capacitor-builder"],
         false,
         dryRun
       );
@@ -249,6 +249,6 @@ module.exports = {
   gen_password,
   genJwtSecret,
   setupDocker,
-  pullCordovaBuilder,
+  pullCapacitorBuilder,
   getDockerEnvVars,
 };

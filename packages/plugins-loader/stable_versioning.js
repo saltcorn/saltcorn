@@ -83,7 +83,7 @@ const isEngineSatisfied = (scEngine, scVersion) => {
     getState().log(4, `invalid saltcorn version: ${scVersion}`);
     return true;
   }
-  return semver.satisfies(safeScVersion, scEngine);
+  return semver.satisfies(safeScVersion, scEngine, { includePrerelease: true });
 };
 
 /**

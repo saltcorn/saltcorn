@@ -727,6 +727,22 @@ function doMobileTransforms() {
     ],
   };
 
+  // change /plugins or plugins to sc_plugins
+  // capacitor reserves the plugins prefix for cordova plugins
+  const normalisePluginsPrefix = (path) => {
+    if (path.startsWith("/plugins/") || path.startsWith("plugins/"))
+      return path.replace(/\/?plugins\//, "sc_plugins/");
+    return path;
+  };
+  $("link").each(function () {
+    const path = $(this).attr("href");
+    if (path) $(this).attr("href", normalisePluginsPrefix(path));
+  });
+  $("script").each(function () {
+    const path = $(this).attr("src");
+    if (path) $(this).attr("src", normalisePluginsPrefix(path));
+  });
+
   $("a").each(function () {
     let path = $(this).attr("href") || "";
     if (path.startsWith("http")) {
@@ -1140,11 +1156,13 @@ function initialize_page() {
       }
     }
   }
+
   setTimeout(() => {
     $("#toasts-area")
       .find(".show[rendered='server-side'][type='success']")
       .removeClass("show");
   }, 5000);
+
   $(".lazy-accoordion").on("show.bs.collapse", function (e) {
     const $e = $(e.target).find("[data-sc-view-source]");
     if ($.trim($e.html()) == "") {

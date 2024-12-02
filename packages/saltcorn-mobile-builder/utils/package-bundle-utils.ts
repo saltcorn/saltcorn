@@ -37,30 +37,41 @@ export async function bundlePackagesAndPlugins(
   return result.status;
 }
 
+export function bundleMobileAppCode(buildDir: string) {
+  const result = spawnSync("npm", ["run", "build"], {
+    cwd: buildDir,
+  });
+  console.log(result.output.toString());
+  return result.status;
+}
+
 async function copyHeaderToApp(
   pluginLocation: string,
   header: string,
   wwwDir: string
 ) {
-  const pathArr = header.split(sep);
-  if (pathArr.length > 4) {
-    const pluginSubDir = pathArr.slice(4, pathArr.length - 1).join(sep);
-    const dstPublicDir = join(wwwDir, dirname(header));
+  let mobileHeader = header;
+  if (header.startsWith("/plugins") || header.startsWith("plugins"))
+    mobileHeader = header.replace(/^\/?plugins/, "sc_plugins");
+  const pathArr = mobileHeader.split(sep);
+  if (pathArr.length > 3) {
+    const pluginSubDir = pathArr.slice(3, pathArr.length - 1).join(sep);
+    const dstPublicDir = join(wwwDir, dirname(mobileHeader));
     if (!existsSync(dstPublicDir)) {
       mkdirSync(dstPublicDir, { recursive: true });
     }
-    const headerFile = basename(header);
+    const headerFile = basename(mobileHeader);
     try {
       copySync(
         join(pluginLocation, "public", pluginSubDir, headerFile),
         join(dstPublicDir, headerFile)
       );
     } catch (e) {
-      console.log(`Error copying header ${header} to ${dstPublicDir}`);
+      console.log(`Error copying header ${mobileHeader} to ${dstPublicDir}`);
       console.log(e);
     }
   } else {
-    console.log(`skipping header '${header}'`);
+    console.log(`skipping header '${mobileHeader}'`);
   }
 }
 
@@ -85,62 +96,28 @@ export async function copyPublicDirs(buildDir: string) {
   const state = getState();
   const wwwDir = join(buildDir, "www");
   const pluginCfgs = state.plugin_cfgs || {};
-  for (const [k, v] of <[string, any]>Object.entries(state.plugins)) {
+  for (const k of Object.keys(state.plugins)) {
     const location = state.plugin_locations[k];
     if (location) {
+      const pckJson = require(join(location, "package.json"));
       for (const { script, css } of state.headers[k] || []) {
         if (script) copyHeaderToApp(location, script, wwwDir);
         if (css) copyHeaderToApp(location, css, wwwDir);
       }
       if (k !== "sbadmin2")
-        copyAllPublicFiles(location, join(wwwDir, "plugins", "public", k));
+        copyAllPublicFiles(
+          location,
+          join(wwwDir, "sc_plugins", "public", `${k}@${pckJson.version}`)
+        );
     }
     if (pluginCfgs[k] && pluginCfgs[k].alt_css_file) {
       const altCssFile = await File.findOne(pluginCfgs[k].alt_css_file);
       if (altCssFile)
         copySync(
           altCssFile.location,
-          join(wwwDir, "plugins", "public", k, pluginCfgs[k].alt_css_file),
+          join(wwwDir, "sc_plugins", "public", k, pluginCfgs[k].alt_css_file),
           { recursive: true }
         );
     }
   }
-}
-
-/**
- *
- * @param buildDir directory where the app will be build
- * @param manager live-plugin-manager to load a npm pacakage (change to dependency??)
- */
-export async function installNpmPackages(buildDir: string, manager: any) {
-  const npmTargetDir = join(buildDir, "www", "npm_packages");
-  if (!existsSync(npmTargetDir)) mkdirSync(npmTargetDir, { recursive: true });
-  const jwtInfo = await manager.install("jwt-decode", "3.1.2");
-  copySync(
-    join(jwtInfo.location, "build/jwt-decode.js"),
-    join(npmTargetDir, "jwt-decode.js")
-  );
-  const routerInfo = await manager.install("universal-router", "9.1.0");
-  copySync(
-    join(routerInfo.location, "universal-router.min.js"),
-    join(npmTargetDir, "universal-router.min.js")
-  );
-  const axiosInfo = await manager.install("axios", "0.27.2");
-  copySync(
-    join(axiosInfo.location, "dist", "axios.min.js"),
-    join(npmTargetDir, "axios.min.js")
-  );
-  const i18nNextInfo = await manager.install("i18next", "21.8.16");
-  copySync(
-    join(i18nNextInfo.location, "i18next.min.js"),
-    join(npmTargetDir, "i18next.min.js")
-  );
-  const postProcInfo = await manager.install(
-    "i18next-sprintf-postprocessor",
-    "0.2.2"
-  );
-  copySync(
-    join(postProcInfo.location, "i18nextSprintfPostProcessor.min.js"),
-    join(npmTargetDir, "i18nextSprintfPostProcessor.min.js")
-  );
 }

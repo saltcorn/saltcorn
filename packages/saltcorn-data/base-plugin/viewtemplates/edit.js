@@ -1793,7 +1793,7 @@ const prepare = async (
         row[field.name] = file.path_to_serve;
       } else {
         const file = req.files[field.name];
-        if (file?.name) {
+        if (file) {
           const serverResp = await File.upload(req.files[field.name]);
           if (serverResp?.location) row[field.name] = serverResp.location;
         }

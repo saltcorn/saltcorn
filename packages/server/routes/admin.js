@@ -1291,10 +1291,14 @@ router.post(
   })
 );
 
-const pullCordovaBuilder = (req, res) => {
-  const child = spawn("docker", ["pull", "saltcorn/cordova-builder"], {
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+const pullCapacitorBuilder = (req, res, version) => {
+  const child = spawn(
+    "docker",
+    ["pull", `saltcorn/capacitor-builder:${version}`],
+    {
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
   return new Promise((resolve, reject) => {
     child.stdout.on("data", (data) => {
       res.write(data);
@@ -1550,9 +1554,9 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
         }
         if (runPull) {
           res.write(
-            req.__("Pulling the cordova-builder docker image...") + "\n"
+            req.__("Pulling the capacitor-builder docker image...") + "\n"
           );
-          const pullCode = await pullCordovaBuilder(req, res);
+          const pullCode = await pullCapacitorBuilder(req, res, version);
           res.write(req.__("Pull done with code %s", pullCode) + "\n");
           if (pullCode === 0) {
             res.write(req.__("Pruning docker...") + "\n");
@@ -1997,9 +2001,9 @@ router.get(
     });
   })
 );
-const buildDialogScript = (cordovaBuilderAvailable, isSbadmin2) =>
+const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   `<script>
-  var cordovaBuilderAvailable = ${cordovaBuilderAvailable};
+  var capacitorBuilderAvailable = ${capacitorBuilderAvailable};
   var isSbadmin2 = ${isSbadmin2};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
@@ -2028,7 +2032,7 @@ const buildDialogScript = (cordovaBuilderAvailable, isSbadmin2) =>
 
 const imageAvailable = async () => {
   try {
-    const image = new Docker().getImage("saltcorn/cordova-builder");
+    const image = new Docker().getImage("saltcorn/capacitor-builder");
     await image.inspect();
     return true;
   } catch (e) {
@@ -2824,10 +2828,10 @@ router.get(
                         div(
                           label(
                             { class: "form-label fw-bold" },
-                            req.__("Cordova builder") +
+                            req.__("Capacitor builder") +
                               a(
                                 {
-                                  href: "javascript:ajax_modal('/admin/help/Cordova Builder?')",
+                                  href: "javascript:ajax_modal('/admin/help/Capacitor Builder?')",
                                 },
                                 i({ class: "fas fa-question-circle ps-1" })
                               )
@@ -2855,9 +2859,8 @@ router.get(
                           { class: "col-sm-4" },
                           button(
                             {
-                              id: "pullCordovaBtnId",
                               type: "button",
-                              onClick: `pull_cordova_builder(this);`,
+                              onClick: `pull_capacitor_builder(this);`,
                               class: "btn btn-warning",
                             },
                             req.__("pull")
@@ -2865,7 +2868,7 @@ router.get(
                           span(
                             {
                               role: "button",
-                              onClick: "check_cordova_builder()",
+                              onClick: "check_capacitor_builder()",
                             },
                             span({ class: "ps-3" }, req.__("refresh")),
                             i({ class: "ps-2 fas fa-undo" })
@@ -3355,36 +3358,37 @@ router.post(
     });
     const childOutputs = [];
     child.stdout.on("data", (data) => {
-      // console.log(data.toString());
-      if (data) childOutputs.push(data.toString());
+      const outMsg = data.toString();
+      getState().log(5, outMsg);
+      if (data) childOutputs.push(outMsg);
     });
     child.stderr.on("data", (data) => {
-      // console.log(data.toString());
-      childOutputs.push(data ? data.toString() : req.__("An error occurred"));
+      const errMsg = data ? data.toString() : req.__("An error occurred");
+      getState().log(5, errMsg);
+      childOutputs.push(errMsg);
     });
     child.on("exit", (exitCode, signal) => {
       const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";
-      fs.writeFile(
-        path.join(buildDir, logFile),
-        childOutputs.join("\n"),
-        async (error) => {
-          if (error) {
-            console.log(`unable to write '${logFile}' to '${buildDir}'`);
-            console.log(error);
-          } else {
-            // no transaction, '/build-mobile-app/finished' filters for valid attributes
-            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
-          }
+      const exitMsg = childOutputs.join("\n");
+      fs.writeFile(path.join(buildDir, logFile), exitMsg, async (error) => {
+        if (error) {
+          console.log(`unable to write '${logFile}' to '${buildDir}'`);
+          console.log(error);
+        } else {
+          // no transaction, '/build-mobile-app/finished' filters for valid attributes
+          await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
         }
-      );
+      });
     });
     child.on("error", (msg) => {
       const message = msg.message ? msg.message : msg.code;
       const stack = msg.stack ? msg.stack : "";
       const logFile = "error_logs.txt";
+      const errMsg = [message, stack].join("\n");
+      getState().log(5, msg);
       fs.writeFile(
         path.join(buildDir, "error_logs.txt"),
-        [message, stack].join("\n"),
+        errMsg,
         async (error) => {
           if (error) {
             console.log(`unable to write logFile to '${buildDir}'`);
@@ -3400,13 +3404,13 @@ router.post(
 );
 
 router.post(
-  "/mobile-app/pull-cordova-builder",
+  "/mobile-app/pull-capacitor-builder",
   isAdmin,
   error_catcher(async (req, res) => {
     const state = getState();
     const child = spawn(
       `${process.env.DOCKER_BIN ? `${process.env.DOCKER_BIN}/` : ""}docker`,
-      ["pull", "saltcorn/cordova-builder:latest"],
+      ["pull", `saltcorn/capacitor-builder:${state.scVersion}`],
       {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: ".",
@@ -3421,11 +3425,11 @@ router.post(
     child.on("exit", (exitCode, signal) => {
       state.log(
         2,
-        `"pull cordova-builder exit with code: ${exitCode} and signal: ${signal}`
+        `"pull capacitor-builder exit with code: ${exitCode} and signal: ${signal}`
       );
     });
     child.on("error", (msg) => {
-      state.log(1, `pull cordova-builder error: ${msg}`);
+      state.log(1, `pull capacitor-builder error: ${msg}`);
     });
 
     res.json({});
@@ -3433,7 +3437,7 @@ router.post(
 );
 
 router.get(
-  "/mobile-app/check-cordova-builder",
+  "/mobile-app/check-capacitor-builder",
   isAdmin,
   error_catcher(async (req, res) => {
     const installed = await imageAvailable();

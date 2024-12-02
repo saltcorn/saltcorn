@@ -18,40 +18,36 @@ RUN android_sdk/cmdline-tools/13.0/bin/sdkmanager "build-tools;34.0.0"
 RUN wget -q https://services.gradle.org/distributions/gradle-8.4-all.zip \
     && unzip gradle-8.4-all.zip -d /opt
 
-RUN npm install -g cordova@12.0.0
-
 # create an empty project, the first init seems to take longer
 WORKDIR /init_project
-RUN cordova create project
-WORKDIR /init_project/project
-# download plugins while building
-# so that we can add them later via file reference
-RUN cordova plugin add cordova-sqlite-ext@6.0.0
-RUN cordova plugin add cordova-plugin-file@8.1.0
-RUN cordova plugin add cordova-plugin-inappbrowser@6.0.0
-RUN cordova plugin add cordova-plugin-network-information@3.0.0
-RUN cordova plugin add cordova-plugin-geolocation@5.0.0
-RUN cordova plugin add cordova-plugin-camera@7.0.0
-RUN cordova platform add android@^13.0.0
+RUN npm init -y
+RUN mkdir www
+RUN touch www/index.html
+RUN npm install @capacitor/cli @capacitor/core @capacitor/android
+RUN npx cap init MyApp com.example.myapp --web-dir www
+RUN npx cap add android
+RUN npx cap sync
+
 ENV ANDROID_SDK_ROOT=/android_sdk
 ENV ANDROID_HOME=/android_sdk
 ENV GRADLE_HOME=/opt/gradle-8.4
 ENV PATH=$PATH:/opt/gradle-8.4/bin
-# stop gradle from downloading itself
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-8.4-all.zip
-RUN cordova build android
 
-# due to a bug in npm that has been addressed since then
-# some files in '/root/.npm' are owned by root
-RUN chown -R 1000:1000 "/root/.npm"
-RUN chmod -R o+rwx "/root/.npm"
+RUN cat <<EOF > /init_project/android/gradle/wrapper/gradle-wrapper.properties
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=file\:/gradle-8.4-all.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
 
-# prepare entry point
+WORKDIR /init_project/android
+RUN ./gradlew assembleDebug
+
 WORKDIR /
 COPY entry.bash ./
 RUN chmod u+x entry.bash
-
-RUN chmod o+rwx ~
-RUN chmod -R o+rwx ~/.config
 
 ENTRYPOINT ["./entry.bash"]

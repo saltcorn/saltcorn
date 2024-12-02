@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 BUILD_TYPE="$1"
 KEYSTORE_FILE="$2"
 KEYSTORE_ALIAS="$3"
@@ -15,38 +17,76 @@ export ANDROID_SDK_ROOT=/android_sdk
 export ANDROID_HOME=/android_sdk
 export GRADLE_HOME=/opt/gradle-8.4
 export PATH=$PATH:/opt/gradle-8.4/bin
-# stop gradle from downloading itself
-export CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=file\:/gradle-8.4-all.zip
 
 cd /saltcorn-mobile-app
-echo "adding android platform"
-cordova platform add android
-echo "writing gradle.properties"
-cat <<EOF > /saltcorn-mobile-app/platforms/android/gradle.properties
-org.gradle.jvmargs=-Xmx2048m
-android.useAndroidX=true
-android.enableJetifier=true
-distributionUrl=file\:/gradle-8.4-all.zip
+npm install @capacitor/cli @capacitor/core @capacitor/android
+npx cap add android
+npx capacitor-assets generate
+npx cap sync
+
+npm install cordova-plugin-file@8.1.2
+npm install cordova-plugin-inappbrowser@6.0.0
+
+# data extraction rules
+cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
 EOF
 
-echo "adding plugins"
-cordova plugin add /init_project/project/plugins/cordova-plugin-inappbrowser
-cordova plugin add /init_project/project/plugins/cordova-plugin-file
-cordova plugin add /init_project/project/plugins/cordova-sqlite-ext
-cordova plugin add /init_project/project/plugins/cordova-plugin-network-information
-cordova plugin add /init_project/project/plugins/cordova-plugin-geolocation
-cordova plugin add /init_project/project/plugins/cordova-plugin-camera
+# network security config
+cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/network_security_config.xml
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">10.0.2.2</domain>
+  </domain-config>
+</network-security-config>
+EOF
 
-echo "calling cordova build"
-cordova build android --verbose
+npm run modify-android-manifest
+npx cap sync
 
+# gradle wrapper
+cat <<EOF > /saltcorn-mobile-app/android/gradle/wrapper/gradle-wrapper.properties
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=file\:/gradle-8.4-all.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
 
+npm run build
+npx cap sync
+
+# copy prepopulated db
+mkdir -p /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases
+cp /saltcorn-mobile-app/www/scdb.sqlite /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases/prepopulated.db
+
+cd ./android
+
+# modify gradle config for keystore
 if [ -n "$KEYSTORE_FILE" ]; then
   echo "building signed app with keystore"
-  cordova build android --"$BUILD_TYPE" --verbose -- --keystore="$KEYSTORE_FILE" --alias="$KEYSTORE_ALIAS" --storePassword="$KEYSTORE_PASSWORD" --password="$KEYSTORE_PASSWORD"
-else
-  echo "building unsigned app"
-  cordova build android --"$BUILD_TYPE" --verbose
+  npm run modify-gradle-cfg -- --keystore-file=$KEYSTORE_FILE --keystore-alias=$KEYSTORE_ALIAS --keystore-password=$KEYSTORE_PASSWORD  
 fi
 
-chmod -R o+rwx /saltcorn-mobile-app
+if [ "$BUILD_TYPE" == "release" ]; then
+  ./gradlew assembleRelease
+else
+  ./gradlew assembleDebug
+fi

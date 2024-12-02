@@ -890,9 +890,9 @@ function build_mobile_app(button) {
 
   if (
     params.useDocker &&
-    !window.cordovaBuilderAvailable &&
+    !window.capacitorBuilderAvailable &&
     !confirm(
-      "Docker is selected but the Cordova builder seems not to be installed. " +
+      "Docker is selected but the Capacitor builder seems not to be installed. " +
         "Do you really want to continue?"
     )
   ) {
@@ -935,11 +935,11 @@ function build_mobile_app(button) {
   });
 }
 
-function pull_cordova_builder() {
-  ajax_post("/admin/mobile-app/pull-cordova-builder", {
+function pull_capacitor_builder() {
+  ajax_post("/admin/mobile-app/pull-capacitor-builder", {
     success: () => {
       notifyAlert(
-        "Pulling the the cordova-builder. " +
+        "Pulling the the capacitor-builder. " +
           "To see the progress, open the logs viewer with the System logging verbosity set to 'All'."
       );
     },
@@ -989,12 +989,12 @@ function check_xcodebuild() {
   });
 }
 
-function check_cordova_builder() {
-  $.ajax("/admin/mobile-app/check-cordova-builder", {
+function check_capacitor_builder() {
+  $.ajax("/admin/mobile-app/check-capacitor-builder", {
     type: "GET",
     success: function (res) {
-      window.cordovaBuilderAvailable = !!res.installed;
-      if (window.cordovaBuilderAvailable) {
+      window.capacitorBuilderAvailable = !!res.installed;
+      if (window.capacitorBuilderAvailable) {
         $("#dockerBuilderStatusId").html(
           `<span>
             installed<i class="ps-2 fas fa-check text-success"></i>
@@ -1088,7 +1088,7 @@ function toggle_tbl_sync() {
 function toggle_android_platform() {
   if ($("#androidCheckboxId")[0].checked === true) {
     $("#dockerCheckboxId").attr("hidden", false);
-    $("#dockerCheckboxId").attr("checked", window.cordovaBuilderAvailable);
+    $("#dockerCheckboxId").attr("checked", window.capacitorBuilderAvailable);
     $("#dockerLabelId").removeClass("d-none");
   } else {
     $("#dockerCheckboxId").attr("hidden", true);

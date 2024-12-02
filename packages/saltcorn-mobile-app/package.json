@@ -5,21 +5,30 @@
   "description": "Apache Cordova application with @saltcorn/markup",
   "main": "index.js",
   "scripts": {
-    "add-platform": "cordova platform add",
-    "add-plugin": "cordova plugin add",
-    "build-app": "cordova build --verbose",
+    "build": "webpack",
+    "add-platform": "npx cap add",
+    "modify-gradle-cfg": "node build_scripts/modify_gradle_cfg.js",
+    "modify-android-manifest": "node build_scripts/modify_android_manifest.js",
     "test": "echo NO TESTS"
   },
   "author": "Christian Hugo",
   "license": "MIT",
-  "cordova": {
-    "platforms": [
-      "android"
-    ]
-  },
   "overrides": {
     "ansi-regex": "4.1.1"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "universal-router": "9.2.0",
+    "axios": "^1.7.7",
+    "jwt-decode": "4.0.0",
+    "i18next": "23.16.4",
+    "i18next-sprintf-postprocessor": "0.2.2"
+  },
+  "devDependencies": {
+    "xml2js": "0.6.0",
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-loader": "^9.2.1",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
+  }
 }

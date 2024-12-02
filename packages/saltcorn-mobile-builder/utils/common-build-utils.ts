@@ -10,6 +10,7 @@ import {
   readFileSync,
   rmSync,
 } from "fs-extra";
+import fs from "fs";
 import { Row } from "@saltcorn/db-common/internal";
 import { spawnSync, execSync } from "child_process";
 import Page from "@saltcorn/data/models/page";
@@ -18,11 +19,13 @@ import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
+import { available_languages } from "@saltcorn/data/models/config";
 
 const resizer = require("resize-with-sharp-or-jimp");
 
 /**
  * copy saltcorn-mobile-app as a template to buildDir
+ * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
  */
@@ -30,23 +33,232 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
   copySync(templateDir, buildDir);
   rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
-  let result = spawnSync("npm", ["install", "--legacy-peer-deps"], {
+  let result = spawnSync("npm", ["install"], {
     cwd: buildDir,
   });
   console.log(result.output.toString());
-  result = spawnSync(
-    "npm",
-    [
-      "install",
-      "cordova@^12.0.0",
-      "cordova-sqlite-ext@^6.0.0",
-      "cordova-android@^13.0.0",
-    ],
-    {
-      cwd: buildDir,
-    }
-  );
+
+  console.log("installing capacitor deps and plugins");
+  const capDepsAndPlugins = [
+    "@capacitor/cli@6.1.2",
+    "@capacitor/core@6.1.2",
+    "@capacitor/assets@3.0.5",
+    "@capacitor/filesystem@6.0.2",
+    "@capacitor/camera@6.1.1",
+    "@capacitor/geolocation@6.0.2",
+    "@capacitor/network@6.0.3",
+    "@capacitor-community/sqlite@6.0.2",
+  ];
+  result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
+    cwd: buildDir,
+    maxBuffer: 1024 * 1024 * 10,
+  });
   console.log(result.output.toString());
+
+  console.log("installing cordova plugins");
+  const cordovaPlugins = [
+    "cordova-plugin-file@8.1.3",
+    "cordova-plugin-inappbrowser@6.0.0",
+  ];
+  result = spawnSync("npm", ["install", ...cordovaPlugins], {
+    cwd: buildDir,
+    maxBuffer: 1024 * 1024 * 10,
+  });
+}
+
+export function writeCapacitorConfig(buildDir: string, config: any) {
+  const cfgFile = join(buildDir, "capacitor.config.ts");
+  const content = `
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig  = {
+  appId: '${config.appId ? config.appId : "com.saltcorn.mobile.app"}',
+  appName: '${config.appName ? config.appName : "SaltcornMobileApp"}',
+  webDir: "www",
+  ios: {
+    scheme: "SaltcornMobileApp",
+  },
+  ${
+    config.unsecureNetwork
+      ? `android: {
+    allowMixedContent: true,
+  },
+  server: {
+    cleartext: true,
+    androidScheme: 'http',
+    
+  },`
+      : ""
+  }
+  plugins: {
+    CapacitorSQLite: {
+      iosDatabaseLocation: 'Library/CapacitorDatabase',
+      iosIsEncryption: true,
+      iosKeychainPrefix: 'angular-sqlite-app-starter',
+      iosBiometric: {
+        biometricAuth: false,
+        biometricTitle : "Biometric login for capacitor sqlite"
+      },
+      androidIsEncryption: true,
+      androidBiometric: {
+        biometricAuth : false,
+        biometricTitle : "Biometric login for capacitor sqlite",
+        biometricSubTitle : "Log in using your biometric"
+      },
+      electronIsEncryption: true,
+      electronWindowsLocation: "C:\\ProgramData\\CapacitorDatabases",
+      electronMacLocation: "/Volumes/Development_Lacie/Development/Databases",
+      electronLinuxLocation: "Databases"
+    }
+  }
+
+};
+
+export default config;`;
+  writeFileSync(cfgFile, content);
+}
+
+export function prepAppIcon(buildDir: string, appIcon: string) {
+  for (const icon of [
+    "icon-only",
+    "icon-foreground",
+    "icon-background",
+    "splash",
+    "splash-dark",
+  ]) {
+    copySync(appIcon, join(buildDir, "assets", `${icon}.png`), {
+      overwrite: true,
+    });
+  }
+}
+
+export async function modifyAndroidManifest(buildDir: string) {
+  try {
+    const androidManifest = join(
+      buildDir,
+      "android",
+      "app",
+      "src",
+      "main",
+      "AndroidManifest.xml"
+    );
+    const content = readFileSync(androidManifest);
+    const parsed = await parseStringPromise(content);
+
+    parsed.manifest["uses-permission"] = [
+      { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
+      { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
+      { $: { "android:name": "android.permission.INTERNET" } },
+    ];
+    parsed.manifest.application[0].$ = {
+      ...parsed.manifest.application[0].$,
+      "android:allowBackup": "false",
+      "android:fullBackupContent": "false",
+      "android:dataExtractionRules": "@xml/data_extraction_rules",
+      "android:networkSecurityConfig": "@xml/network_security_config",
+      "android:usesCleartextTraffic": "true",
+    };
+
+    const xmlBuilder = new Builder();
+    const newCfg = xmlBuilder.buildObject(parsed);
+    writeFileSync(androidManifest, newCfg);
+  } catch (error: any) {
+    console.log(
+      `Unable to modify the AndroidManifest.xml: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+export function writeDataExtractionRules(buildDir: string) {
+  const dataExtractionRules = join(
+    buildDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "res",
+    "xml",
+    "data_extraction_rules.xml"
+  );
+  writeFileSync(
+    dataExtractionRules,
+    `<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+      <exclude domain="root" />
+      <exclude domain="database" />
+      <exclude domain="sharedpref" />
+      <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
+`
+  );
+}
+
+export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
+  if (platforms.includes("android")) {
+    copySync(
+      join(buildDir, "www", "scdb.sqlite"),
+      join(
+        buildDir,
+        "android",
+        "app",
+        "src",
+        "main",
+        "assets",
+        "public",
+        "assets",
+        "databases",
+        "prepopulated.db"
+      )
+    );
+  }
+  if (platforms.includes("ios")) {
+    copySync(
+      join(buildDir, "www", "scdb.sqlite"),
+      join(
+        buildDir,
+        "ios",
+        "App",
+        "App",
+        "public",
+        "assets",
+        "databases",
+        "prepopulated.db"
+      )
+    );
+  }
+}
+
+export function writeNetworkSecurityConfig(buildDir: string) {
+  const networkSecurityConfig = join(
+    buildDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "res",
+    "xml",
+    "network_security_config.xml"
+  );
+  writeFileSync(
+    networkSecurityConfig,
+    `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">10.0.2.2</domain>
+  </domain-config>
+</network-security-config>
+  `
+  );
 }
 
 export async function modifyConfigXml(buildDir: string, config: any) {
@@ -216,6 +428,31 @@ export function prepareExportOptionsPlist(
   }
 }
 
+export async function modifyInfoPlist(buildDir: string) {
+  const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
+  const content = readFileSync(infoPlist, "utf8");
+
+  const newCfgs = `
+  <key>NSCameraUsageDescription</key>
+  <string>This app requires access to the camera to take photos</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>This app requires access to the photo library to select photos</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>This app requires access to the photo library to save photos</string>
+
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>This app requires access to your location to save it in the database</string>
+
+  <key>UIFileSharingEnabled</key>
+  <true/>
+  <key>LSSupportsOpeningDocumentsInPlace</key>
+  <true/>
+  `;
+  // add newCfgs after the first <dict> tag
+  const newContent = content.replace(/<dict>/, `<dict>${newCfgs}`);
+  writeFileSync(infoPlist, newContent, "utf8");
+}
+
 export async function decodeProvisioningProfile(
   buildDir: string,
   provisioningProfile: string
@@ -238,6 +475,29 @@ export async function decodeProvisioningProfile(
     );
     throw error;
   }
+}
+
+export function writePrivacyInfo(buildDir: string) {
+  const infoFile = join(buildDir, "ios", "App", "PrivacyInfo.xcprivacy");
+  const content = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+      <!-- Add this dict entry to the array if the PrivacyInfo file already exists -->
+      <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array>
+          <string>C617.1</string>
+        </array>
+      </dict>
+    </array>
+  </dict>
+</plist>`;
+  writeFileSync(infoFile, content);
 }
 
 /**
@@ -284,7 +544,7 @@ export function copySbadmin2Deps(buildDir: string) {
   const sbadmin2Dst = join(
     buildDir,
     "www",
-    "plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5"
+    "sc_plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5"
   );
   if (!existsSync(sbadmin2Dst)) {
     mkdirSync(sbadmin2Dst, { recursive: true });
@@ -330,8 +590,8 @@ export async function copySiteLogo(buildDir: string) {
         if (file) {
           const base64 = readFileSync(file.location, "base64");
           writeFileSync(
-            join(buildDir, "www", "encoded_site_logo.txt"),
-            `data:${file.mimetype};base64, ${base64}`
+            join(buildDir, "www", "data", "encoded_site_logo.js"),
+            `var _sc_site_logo = "data:${file.mimetype};base64, ${base64}"`
           );
         } else {
           console.log(`The file '${siteLogo}' does not exist`);
@@ -377,7 +637,10 @@ export function writeCfgFile({
     allowOfflineMode,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
-  writeFileSync(join(wwwDir, "config"), JSON.stringify(cfg));
+  writeFileSync(
+    join(buildDir, "www", "data", "config.js"),
+    `var _sc_mobile_config = ${JSON.stringify(cfg)}`
+  );
 }
 
 /**
@@ -390,7 +653,7 @@ export async function buildTablesFile(
   buildDir: string,
   includedPlugins?: string[]
 ) {
-  const wwwDir = join(buildDir, "www");
+  const wwwDir = join(buildDir, "www", "data");
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
       [
@@ -418,17 +681,17 @@ export async function buildTablesFile(
   );
   const createdAt = new Date();
   writeFileSync(
-    join(wwwDir, "tables.json"),
-    JSON.stringify({
+    join(wwwDir, "tables.js"),
+    `var _sc_tables = ${JSON.stringify({
       created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
-    })
+    })}`
   );
   writeFileSync(
-    join(wwwDir, "tables_created_at.json"),
-    JSON.stringify({
+    join(wwwDir, "tables_created_at.js"),
+    `var _sc_tables_created_at = ${JSON.stringify({
       created_at: createdAt.valueOf(),
-    })
+    })}`
   );
 }
 
@@ -438,7 +701,19 @@ export async function buildTablesFile(
  */
 export function copyTranslationFiles(buildDir: string) {
   const localesDir = join(require.resolve("@saltcorn/server"), "..", "locales");
-  copySync(localesDir, join(buildDir, "www", "locales"));
+  const translations = new Array<string>();
+  for (const key of Object.keys(available_languages)) {
+    const buffer = fs.readFileSync(join(localesDir, `${key}.json`));
+    translations.push(
+      `${key}: { translations: ${JSON.stringify(
+        JSON.parse(buffer.toString())
+      )} }`
+    );
+  }
+  fs.writeFileSync(
+    join(buildDir, "www", "data", "translations.js"),
+    `var _sc_translations = { ${translations.join(",")} }`
+  );
 }
 
 /**
@@ -515,8 +790,8 @@ export async function prepareSplashPage(
         {
           script: `static_assets/${db.connectObj.version_tag}/saltcorn-common.js`,
         },
-        { script: `/static_assets/${db.connectObj.version_tag}/dayjs.min.js` },
-        { script: "js/utils/iframe_view_utils.js" },
+        { script: `static_assets/${db.connectObj.version_tag}/dayjs.min.js` },
+        { script: "js/iframe_view_utils.js" },
         {
           headerTag: `<script>parent.splashConfig = { server_path: '${serverUrl}', tenantAppName: ${tenantAppName}, };</script>`,
         },
@@ -532,4 +807,85 @@ export async function prepareSplashPage(
     console.log("Unable to build a splash page");
     console.log(error);
   }
+}
+
+export function writePodfile(buildDir: string) {
+  const podfileContent = `
+  require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+  
+  platform :ios, '13.0'
+  use_frameworks!
+  
+  # workaround to avoid Xcode caching of Pods that requires
+  # Product -> Clean Build Folder after new Cordova plugins installed
+  # Requires CocoaPods 1.6 or newer
+  install! 'cocoapods', :disable_input_output_paths => true
+  
+  def capacitor_pods
+    pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+    pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+    pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
+    pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
+    pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
+    pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
+    pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
+    pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
+    pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
+  end
+  
+  target 'App' do
+    capacitor_pods
+    # Add your Pods here
+  end
+  
+  post_install do |installer|
+    assertDeploymentTarget(installer)
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''
+        config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      end
+    end
+  end`;
+  const podfilePath = join(buildDir, "ios", "App", "Podfile");
+  writeFileSync(podfilePath, podfileContent, "utf8");
+  // run pod install
+  const result = spawnSync("pod", ["install"], {
+    cwd: join(buildDir, "ios", "App"),
+    env: {
+      ...process.env,
+      NODE_ENV: "development",
+    },
+  });
+}
+
+export function modifyGradleConfig(
+  buildDir: string,
+  keyStoreFile: string,
+  keyStoreAlias: string,
+  keyStorePassword: string
+) {
+  const gradleFile = join(buildDir, "android", "app", "build.gradle");
+  const gradleContent = readFileSync(gradleFile, "utf8");
+  const newGradleContent = gradleContent
+    .replace(
+      /release\s*{/,
+      `release { 
+          signingConfig signingConfigs.release`
+    )
+    .replace(
+      /buildTypes\s*{/,
+      `
+    signingConfigs {
+        release {
+            keyAlias '${keyStoreAlias}'
+            keyPassword '${keyStorePassword}'
+            storeFile file('${keyStoreFile}')
+            storePassword '${keyStorePassword}'
+        }
+      }
+  buildTypes {`
+    );
+  writeFileSync(gradleFile, newGradleContent, "utf8");
 }

@@ -1593,7 +1593,7 @@ class Table implements AbstractTable {
       `select max(last_modified) "last_modified", ref
        from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
        group by ref having ref = ${db.isSQLite ? "" : "ANY"} ($1)`,
-      [ids]
+      db.isSQLite ? ids : [ids]
     );
     return dbResult.rows;
   }

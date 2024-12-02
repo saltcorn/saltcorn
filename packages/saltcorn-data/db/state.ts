@@ -1147,6 +1147,7 @@ const features = {
   esm_plugins: true,
   stringify_json_fields: true,
   dynamic_auth_parameters: true,
+  capacitor: true,
 };
 
 export = {

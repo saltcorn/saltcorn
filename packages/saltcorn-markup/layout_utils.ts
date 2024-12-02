@@ -318,7 +318,9 @@ const leftNavBar = (namelogo?: LeftNavBarOpts): string[] => {
     a(
       {
         class: "navbar-brand js-scroll-trigger",
-        href: isNode ? "/" : "javascript:parent.gotoEntryView()",
+        href: isNode
+          ? "/"
+          : "javascript:parent.saltcorn.mobileApp.navigation.gotoEntryView()",
       },
       logo &&
         img({
@@ -561,9 +563,10 @@ const breadcrumbs = (crumbs: any[], right: any, after: any): string =>
     )
   );
 
-const removeLeadingSlash = (s: string) => {
-  if (s.startsWith("/")) return s.slice(1);
-  else return s;
+const normaliseHeaderForMobile = (header: string) => {
+  if (header.startsWith("/plugins"))
+    return header.replace("/plugins", "sc_plugins");
+  else return header;
 };
 
 /**
@@ -576,7 +579,7 @@ const headersInHead = (headers: any[]): string =>
     .map(
       (h) =>
         `<link href="${
-          isNode ? h.css : removeLeadingSlash(h.css)
+          isNode ? h.css : normaliseHeaderForMobile(h.css)
         }" rel="stylesheet">`
     )
     .join("") +
@@ -599,7 +602,7 @@ const headersInBody = (headers: any[]): string =>
     .map(
       (h) =>
         `<script ${h.defer ? "defer " : ""}src="${
-          isNode ? h.script : removeLeadingSlash(h.script)
+          isNode ? h.script : normaliseHeaderForMobile(h.script)
         }" ${
           h.integrity
             ? `integrity="${h.integrity}" crossorigin="anonymous"`
