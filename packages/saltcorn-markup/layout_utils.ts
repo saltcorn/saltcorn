@@ -589,7 +589,7 @@ const headersInHead = (headers: any[], isDark?: boolean): string =>
         .map(
           (h) =>
             `<link href="${
-              isNode ? h.cssDark : removeLeadingSlash(h.cssDark)
+              isNode ? h.cssDark : normaliseHeaderForMobile(h.cssDark)
             }" rel="stylesheet">`
         )
         .join("")
