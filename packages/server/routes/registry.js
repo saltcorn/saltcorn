@@ -81,11 +81,15 @@ router.get(
       {},
       { orderBy: "name", nocase: true }
     );
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+
     const all_configs_obj = await getState().getAllConfigOrDefaults();
-    const all_configs = Object.entries(all_configs_obj).map(([name, v]) => ({
-      ...v,
-      name,
-    }));
+    const all_configs = Object.entries(all_configs_obj)
+      .map(([name, v]) => ({
+        ...v,
+        name,
+      }))
+      .filter((c) => isRoot || !c.root_only);
 
     let tables, views, pages, triggers, configs;
     if (q) {
