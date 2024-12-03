@@ -988,39 +988,6 @@ router.post(
   })
 );
 
-router.post(
-  "/save-config",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const state = getState();
-
-    //TODO check this is a config key
-    const validKeyName = (k) =>
-      k !== "_csrf" && k !== "constructor" && k !== "__proto__";
-
-    for (const [k, v] of Object.entries(req.body)) {
-      if (!isFixedConfig(k) && typeof v !== "undefined" && validKeyName(k)) {
-        //TODO read value from type
-        await state.setConfig(k, v);
-      }
-    }
-
-    // checkboxes that are false are not sent in post body. Check here
-    const { boolcheck } = req.query;
-    const boolchecks =
-      typeof boolcheck === "undefined"
-        ? []
-        : Array.isArray(boolcheck)
-        ? boolcheck
-        : [boolcheck];
-    for (const k of boolchecks) {
-      if (typeof req.body[k] === "undefined" && validKeyName(k))
-        await state.setConfig(k, false);
-    }
-    res.json({ success: "ok" });
-  })
-);
-
 /**
  * Do Auto backup now
  */
