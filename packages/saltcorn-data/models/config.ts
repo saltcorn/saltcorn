@@ -379,7 +379,7 @@ const configTypes: ConfigTypes = {
     label: "Inherit configuration values",
     helpTopic: "Configuration keys",
     blurb:
-      "Comma-separated list of configuration settings tenants inherit from root",
+      "Comma-separated list of configuration settings tenants inherit from root. Ex: <code>site_name, smtp_host, allow_signup</code>",
   },
   /** @type {object} */
   tenant_letsencrypt_sites: {
