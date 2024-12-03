@@ -40,6 +40,7 @@ const {
   install_pack,
 } = require("@saltcorn/admin-models/models/pack");
 const Trigger = require("@saltcorn/data/models/trigger");
+const { getState } = require("@saltcorn/data/db/state");
 /**
  * @type {object}
  * @const
@@ -79,7 +80,13 @@ router.get(
       {},
       { orderBy: "name", nocase: true }
     );
-    let tables, views, pages, triggers;
+    const all_configs_obj = await getState().getAllConfigOrDefaults();
+    const all_configs = Object.entries(all_configs_obj).map(([name, v]) => ({
+      ...v,
+      name,
+    }));
+
+    let tables, views, pages, triggers, configs;
     if (q) {
       const qlower = q.toLowerCase();
       const includesQ = (s) => s.toLowerCase().includes(qlower);
@@ -100,11 +107,13 @@ router.get(
         const pack = await trigger_pack(t);
         return includesQ(JSON.stringify(pack));
       });
+      configs = all_configs.filter((c) => includesQ(JSON.stringify(c)));
     } else {
       tables = all_tables;
       views = all_views;
       pages = all_pages;
       triggers = all_triggers;
+      configs = all_configs;
     }
     const li_link = (etype1, ename1) =>
       li(
@@ -124,7 +133,7 @@ router.get(
         action: `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
           ename
         )}${qlink}`,
-
+        formStyle: "vert",
         values: { regval: JSON.stringify(jsonVal, null, 2) },
         fields: [
           {
@@ -176,6 +185,10 @@ router.get(
         );
         const ppack = await page_pack(all_pages.find((v) => v.name === ename));
         edContents = renderForm(mkForm(ppack), req.csrfToken());
+        break;
+      case "config":
+        const config = all_configs.find((t) => t.name === ename);
+        edContents = renderForm(mkForm(config.value), req.csrfToken());
         break;
       case "trigger":
         const trigger = all_triggers.find((t) => t.name === ename);
@@ -282,6 +295,16 @@ router.get(
                       triggers.map((t) => li_link("trigger", t.name))
                     )
                   )
+                ),
+                li(
+                  details(
+                    { open: q || etype === "CONFIG" }, //
+                    summary("Configuration"),
+                    ul(
+                      { class: "ps-3" },
+                      configs.map((t) => li_link("config", t.name))
+                    )
+                  )
                 )
               )
             ),
@@ -309,7 +332,16 @@ router.post(
     const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
 
     const entVal = JSON.parse(req.body.regval);
-    let pack = { plugins: [], tables: [], views: [], pages: [], triggers: [] };
+    let pack = {
+      plugins: [],
+      tables: [],
+      views: [],
+      pages: [],
+      triggers: [],
+      config: {},
+    };
+
+    console.log({ etype, ename, q, entVal });
 
     switch (etype) {
       case "table":
@@ -323,6 +355,9 @@ router.post(
         break;
       case "trigger":
         pack.triggers = [entVal];
+        break;
+      case "config":
+        pack.config[ename] = entVal;
         break;
     }
     await install_pack(pack);
