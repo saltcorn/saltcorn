@@ -115,11 +115,6 @@ class ReleaseCommand extends Command {
       const tags = !tags0 ? [] : Array.isArray(tags0) ? tags0 : [tags0];
       if (flags.tag) tags.push(flags.tag);
       const firstTag = tags[0];
-      console.log(
-        `packages/${dir}$ npm publish --access=public ${
-          firstTag ? `--tag ${firstTag}` : ""
-        }`
-      );
       runCmd(
         "npm",
         [
@@ -135,9 +130,6 @@ class ReleaseCommand extends Command {
       tags.shift();
       for (const tag of tags) {
         await sleep(3000);
-        console.log(
-          `packages/${dir}$ npm dist-tag add @saltcorn/cli@${version} ${tag}`
-        );
         runCmd("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
           stdio: "inherit",
           cwd: `packages/${dir}/`,

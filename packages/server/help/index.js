@@ -11,6 +11,7 @@ const { pre } = require("@saltcorn/markup/tags");
 const path = require("path");
 const { getState } = require("@saltcorn/data/db/state");
 const { oneOf } = require("@saltcorn/types/generators");
+const { configTypes } = require("@saltcorn/data/models/config");
 const get_md_file = async (topic) => {
   try {
     const fp = File.normalise_in_base(__dirname, `${topic}.tmd`);
@@ -36,6 +37,7 @@ const get_help_markup = async (topic, query, req) => {
       query,
       oneOf,
       moment,
+      configTypes
     };
     const mdTemplate = await get_md_file(topic);
     if (!mdTemplate) return { markup: "Topic not found" };

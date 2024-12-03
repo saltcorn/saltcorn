@@ -328,12 +328,14 @@ const configTypes: ConfigTypes = {
     blurb: `Minimum user role required to create a new tenant<div class="alert alert-danger fst-normal" role="alert" data-show-if="showIfFormulaInputs($('select[name=role_to_create_tenant]'), '+role_to_create_tenant>1')">Giving non-trusted users access to create tenants is a security risk and not recommended.</div>`,
     default: "1",
     required: true,
+    root_only: true,
   },
   /** @type {object} */
   create_tenant_warning: {
     type: "Bool",
     label: "Create tenant warning",
-    default: true,
+    default: true,  
+    root_only: true,
     blurb:
       "Show a warning to users creating a tenant disclaiming warranty of availability or security",
   },
@@ -343,6 +345,7 @@ const configTypes: ConfigTypes = {
     fieldview: "textarea",
     label: "Create tenant warning text",
     default: "",
+    root_only: true,
     blurb: "Provide your own create warning text if need",
   },
   /** @type {object} */
@@ -350,33 +353,48 @@ const configTypes: ConfigTypes = {
     type: "Tenant",
     label: "New tenant template",
     blurb: "Copy site structure for new tenants from this tenant",
+    root_only: true,
   },
   tenant_baseurl: {
     type: "String",
+    root_only: true,
     label: "Tenant Base URL",
     blurb:
       "Base hostname for newly created tenants. If unset, defaults to hostname",
   },
   tenant_create_unauth_redirect: {
     type: "String",
+    root_only: true,
     label: "Redirect unauthorized",
     blurb: "If tenant creation is not authorized, redirect to this URL",
   },
   tenants_install_git: {
     type: "Bool",
+    root_only: true,
     label: "Install git plugins",
   },
   tenants_set_npm_modules: {
     type: "Bool",
+    root_only: true,
     label: "Set available npm modules",
   },
   tenants_unsafe_plugins: {
     type: "Bool",
+    root_only: true,
     label: "Unsafe modules",
+  },
+  tenant_inherit_cfgs: {
+    type: "String",
+    root_only: true,
+    label: "Inherit configuration values",
+    helpTopic: "Configuration keys",
+    blurb:
+      "Comma-separated list of configuration settings tenants inherit from root. Ex: <code>site_name, smtp_host, allow_signup</code>",
   },
   /** @type {object} */
   tenant_letsencrypt_sites: {
     type: "hidden",
+    root_only: true,
     label: "Tenant LetsEncrypt sites",
     default: [],
   },
@@ -590,6 +608,7 @@ const configTypes: ConfigTypes = {
     input_type: "select",
     label: "SameSite",
     restart_required: true,
+    root_only: true,
     sublabel:
       "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication",
     default: "Unset",
@@ -601,6 +620,7 @@ const configTypes: ConfigTypes = {
     default: "Disabled",
     options: ["Disabled", "Enabled"],
     restart_required: true,
+    root_only: true,
   },
   cors_enabled: {
     type: "Bool",
@@ -608,6 +628,7 @@ const configTypes: ConfigTypes = {
     sublabel: "Cross-origin resource sharing",
     default: true,
     restart_required: true,
+    root_only: true,
   },
   public_cache_maxage: {
     type: "Integer",
@@ -783,6 +804,7 @@ const configTypes: ConfigTypes = {
     excludeFromSnapshot: true,
     label: "Auto backup expiration days",
     default: null,
+    root_only: true,
   },
   backup_with_event_log: {
     type: "Bool",
@@ -1090,16 +1112,6 @@ const getConfig = async (key: string, def?: any): Promise<any> => {
 };
 
 /**
- * Returns true if key is defined in fixed_configuration for tenant
- * @param {string} key
- * @returns {boolean}
- */
-const isFixedConfig = (key: string): boolean =>
-  typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
-  (db.connectObj.inherit_configuration.includes(key) &&
-    db.getTenantSchema() !== db.connectObj.default_schema);
-
-/**
  * Get all config variables list
  * @function
  * @returns {Promise<object>}
@@ -1124,26 +1136,6 @@ const getAllConfig = async (): Promise<ConfigTypes | void> => {
     }
   });
   return cfg;
-};
-
-/**
- * Get all config variables list
- * If variable is not defined that default value is used
- * @function
- * @returns {Promise<object>}
- */
-const getAllConfigOrDefaults = async (): Promise<ConfigTypes> => {
-  let cfgs: ConfigTypes = {};
-  const cfgInDB = await getAllConfig();
-  if (cfgInDB)
-    Object.entries(configTypes).forEach(
-      ([key, v]: [key: string, v: SingleConfig]) => {
-        const value =
-          typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
-        if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
-      }
-    );
-  return cfgs;
 };
 
 /**
@@ -1397,12 +1389,10 @@ const configExports = {
   getConfig,
   getAllConfig,
   setConfig,
-  getAllConfigOrDefaults,
   deleteConfig,
   configTypes,
   remove_from_menu,
   available_languages,
-  isFixedConfig,
   get_latest_npm_version,
   get_base_url,
   save_menu_items,

@@ -1,0 +1,5 @@
+These are the available configuration keys:
+
+{{# for (const [key, defn] of Object.entries(configTypes)) { }}
+* `{{key}}`: {{defn.label||""}}
+{{# } }}

@@ -31,7 +31,7 @@ import moment from "moment";
 import db from ".";
 const { migrate } = require("../migrate");
 import config from "../models/config";
-const { getAllConfigOrDefaults, setConfig, deleteConfig, configTypes } = config;
+const { getAllConfig, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
 import utils from "../utils";
 const {
@@ -285,7 +285,7 @@ class State {
     if (user?._attributes?.layout?.config?.mode)
       return user?._attributes?.layout?.config?.mode;
     if (this.plugin_cfgs) {
-      const layout_name = this.getLayoutPlugin(user).plugin_name as string;
+      const layout_name = this.getLayoutPlugin(user)?.plugin_name as string;
       const plugin_cfg = this.plugin_cfgs[layout_name];
       if (plugin_cfg?.mode) return plugin_cfg.mode;
     }
@@ -323,6 +323,43 @@ class State {
   }
 
   /**
+   * Get all config variables list
+   * If variable is not defined that default value is used
+   * @function
+   * @returns {Promise<object>}
+   */
+  async getAllConfigOrDefaults(): Promise<ConfigTypes> {
+    let cfgs: ConfigTypes = {};
+    const cfgInDB = await getAllConfig();
+    if (cfgInDB)
+      Object.entries(configTypes).forEach(
+        ([key, v]: [key: string, v: SingleConfig]) => {
+          const value =
+            typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
+          if (!this.isFixedConfig(key)) cfgs[key] = { value, ...v };
+        }
+      );
+    return cfgs;
+  }
+
+  /**
+   * Returns true if key is defined in fixed_configuration for tenant
+   * @param {string} key
+   * @returns {boolean}
+   */
+  isFixedConfig(key: string): boolean {
+    return (
+      typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
+      (db.getTenantSchema() !== db.connectObj.default_schema &&
+        (db.connectObj.inherit_configuration.includes(key) ||
+          //TODO why do we need || "" - dont understand
+          (singleton.getConfig("tenant_inherit_cfgs", "") || "")
+            .split(",")
+            .map((k: string) => k.trim())
+            .includes(key)))
+    );
+  }
+  /**
    * Refresh State cache for all Saltcorn main objects
    * @param noSignal - Do not signal - refresh to other cluster processes.
    * @param keepUnchanged - Some members don't need rebuilding if they did not change
@@ -344,7 +381,7 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_config(noSignal: boolean) {
-    this.configs = await getAllConfigOrDefaults();
+    this.configs = await this.getAllConfigOrDefaults();
     this.getConfig("custom_events", []).forEach((cev: any) => {
       this.eventTypes[cev.name] = cev;
     });
@@ -1091,10 +1128,7 @@ const init_multi_tenant = async (
       // set base_url
       set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
     } catch (err: any) {
-      console.error(
-        `init_multi_tenant error in domain ${domain}: `,
-        err.message
-      );
+      console.error(`init_multi_tenant error in domain ${domain}: `, err.stack);
     }
   }
 };
