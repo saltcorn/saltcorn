@@ -475,6 +475,9 @@ const config_fields_form = async ({
           : configTypes[name].type,
       input_type: configTypes[name].input_type,
       showIf,
+      help: configTypes[name].helpTopic
+        ? { topic: configTypes[name].helpTopic }
+        : undefined,
       attributes: isView
         ? await viewAttributes(name)
         : isRole

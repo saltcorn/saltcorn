@@ -377,6 +377,7 @@ const configTypes: ConfigTypes = {
   tenant_inherit_cfgs: {
     type: "String",
     label: "Inherit configuration values",
+    helpTopic: "Configuration keys",
     blurb:
       "Comma-separated list of configuration settings tenants inherit from root",
   },
@@ -1121,7 +1122,6 @@ const getAllConfig = async (): Promise<ConfigTypes | void> => {
   });
   return cfg;
 };
-
 
 /**
  * Set config variable value by key
