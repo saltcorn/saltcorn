@@ -350,8 +350,6 @@ router.post(
       config: {},
     };
 
-    console.log({ etype, ename, q, entVal });
-
     switch (etype) {
       case "table":
         pack.tables = [entVal];
