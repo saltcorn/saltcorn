@@ -352,7 +352,10 @@ class State {
       typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
       (db.getTenantSchema() !== db.connectObj.default_schema &&
         (db.connectObj.inherit_configuration.includes(key) ||
-          this.getConfig("tenant_inherit_cfgs", []).includes(key)))
+          this.getConfig("tenant_inherit_cfgs", [])
+            .split(",")
+            .map((k: string) => k.trim())
+            .includes(key)))
     );
   }
   /**
