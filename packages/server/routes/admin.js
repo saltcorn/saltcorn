@@ -91,10 +91,7 @@ const {
 } = require("../markup/admin.js");
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
-const {
-  get_latest_npm_version,
-  isFixedConfig,
-} = require("@saltcorn/data/models/config");
+const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { getMailTransport } = require("@saltcorn/data/models/email");
 const {
   getBaseDomain,

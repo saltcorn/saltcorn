@@ -1096,16 +1096,6 @@ const getConfig = async (key: string, def?: any): Promise<any> => {
 };
 
 /**
- * Returns true if key is defined in fixed_configuration for tenant
- * @param {string} key
- * @returns {boolean}
- */
-const isFixedConfig = (key: string): boolean =>
-  typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
-  (db.connectObj.inherit_configuration.includes(key) &&
-    db.getTenantSchema() !== db.connectObj.default_schema);
-
-/**
  * Get all config variables list
  * @function
  * @returns {Promise<object>}
@@ -1132,25 +1122,6 @@ const getAllConfig = async (): Promise<ConfigTypes | void> => {
   return cfg;
 };
 
-/**
- * Get all config variables list
- * If variable is not defined that default value is used
- * @function
- * @returns {Promise<object>}
- */
-const getAllConfigOrDefaults = async (): Promise<ConfigTypes> => {
-  let cfgs: ConfigTypes = {};
-  const cfgInDB = await getAllConfig();
-  if (cfgInDB)
-    Object.entries(configTypes).forEach(
-      ([key, v]: [key: string, v: SingleConfig]) => {
-        const value =
-          typeof cfgInDB[key] === "undefined" ? v.default : cfgInDB[key];
-        if (!isFixedConfig(key)) cfgs[key] = { value, ...v };
-      }
-    );
-  return cfgs;
-};
 
 /**
  * Set config variable value by key
@@ -1403,12 +1374,10 @@ const configExports = {
   getConfig,
   getAllConfig,
   setConfig,
-  getAllConfigOrDefaults,
   deleteConfig,
   configTypes,
   remove_from_menu,
   available_languages,
-  isFixedConfig,
   get_latest_npm_version,
   get_base_url,
   save_menu_items,

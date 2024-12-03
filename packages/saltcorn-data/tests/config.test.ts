@@ -8,7 +8,6 @@ const {
   getConfig,
   getAllConfig,
   setConfig,
-  getAllConfigOrDefaults,
   get_base_url,
   check_email_mask,
   get_latest_npm_version,
@@ -62,7 +61,7 @@ describe("Config", () => {
     expect(d.cfg1).toBe(9);
   });
   it("should get all value", async () => {
-    const d = await getAllConfigOrDefaults();
+    const d = await getState().getAllConfigOrDefaults();
     expect(d.cfg1).toBe(undefined);
     expect(d.log_sql.value).toBe(false);
   });

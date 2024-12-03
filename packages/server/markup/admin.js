@@ -17,7 +17,7 @@ const {
   li,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
-const { configTypes, isFixedConfig } = require("@saltcorn/data/models/config");
+const { configTypes } = require("@saltcorn/data/models/config");
 const { getState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
@@ -466,7 +466,7 @@ const config_fields_form = async ({
       ...configTypes[name],
       label: label ? req.__(label) : undefined,
       sublabel: sublabel ? req.__(sublabel) : undefined,
-      disabled: isFixedConfig(name),
+      disabled: state.isFixedConfig(name),
       type:
         isView || isRole || isTenant
           ? "String"
@@ -505,7 +505,7 @@ const save_config_from_form = async (form) => {
   const state = getState();
 
   for (const [k, v] of Object.entries(form.values)) {
-    if (!isFixedConfig(k) && typeof v !== "undefined") {
+    if (!state.isFixedConfig(k) && typeof v !== "undefined") {
       await state.setConfig(k, v);
     }
   }
