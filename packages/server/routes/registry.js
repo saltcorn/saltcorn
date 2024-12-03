@@ -7,6 +7,7 @@ const {
   domReady,
   a,
   div,
+  h4,
   i,
   text,
   button,
@@ -188,7 +189,11 @@ router.get(
         break;
       case "config":
         const config = all_configs.find((t) => t.name === ename);
-        edContents = renderForm(mkForm(config.value), req.csrfToken());
+        edContents =
+          h4(config.label) +
+          (config.blurb || "") +
+          (config.sublabel || "") +
+          renderForm(mkForm(config.value), req.csrfToken());
         break;
       case "trigger":
         const trigger = all_triggers.find((t) => t.name === ename);
