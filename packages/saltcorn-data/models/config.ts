@@ -374,6 +374,12 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Unsafe modules",
   },
+  tenant_inherit_cfgs: {
+    type: "String",
+    label: "Inherit configuration values",
+    blurb:
+      "Comma-separated list of configuration settings tenants inherit from root",
+  },
   /** @type {object} */
   tenant_letsencrypt_sites: {
     type: "hidden",

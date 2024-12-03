@@ -493,6 +493,7 @@ const tenant_settings_form = (req) =>
       "tenant_template",
       "tenant_baseurl",
       "tenant_create_unauth_redirect",
+      "tenant_inherit_cfgs",
       { section_header: req.__("Tenant application capabilities") },
       "tenants_install_git",
       "tenants_set_npm_modules",
