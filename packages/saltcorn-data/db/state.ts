@@ -285,7 +285,7 @@ class State {
     if (user?._attributes?.layout?.config?.mode)
       return user?._attributes?.layout?.config?.mode;
     if (this.plugin_cfgs) {
-      const layout_name = this.getLayoutPlugin(user).plugin_name as string;
+      const layout_name = this.getLayoutPlugin(user)?.plugin_name as string;
       const plugin_cfg = this.plugin_cfgs[layout_name];
       if (plugin_cfg?.mode) return plugin_cfg.mode;
     }
