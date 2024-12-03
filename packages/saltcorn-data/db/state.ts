@@ -352,7 +352,8 @@ class State {
       typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
       (db.getTenantSchema() !== db.connectObj.default_schema &&
         (db.connectObj.inherit_configuration.includes(key) ||
-          this.getConfig("tenant_inherit_cfgs", [])
+          //TODO why do we need || "" - dont understand
+          (singleton.getConfig("tenant_inherit_cfgs", "") || "")
             .split(",")
             .map((k: string) => k.trim())
             .includes(key)))
@@ -1127,10 +1128,7 @@ const init_multi_tenant = async (
       // set base_url
       set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
     } catch (err: any) {
-      console.error(
-        `init_multi_tenant error in domain ${domain}: `,
-        err.message
-      );
+      console.error(`init_multi_tenant error in domain ${domain}: `, err.stack);
     }
   }
 };
