@@ -2460,7 +2460,7 @@ const json_list_to_external_table = (get_json_list, fields0) => {
       restricts.length === 0
         ? data_in
         : data_in.filter((x) => restricts.every(sat(x)));
-    if (selopts.orderBy) {
+    if (selopts.orderBy && typeof selopts.orderBy === "string") {
       const cmp = selopts.orderDesc
         ? new Function(
             "a,b",
