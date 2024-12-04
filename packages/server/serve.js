@@ -121,7 +121,11 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
-    await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
+    await init_multi_tenant(
+      async () => await loadAllPlugins(true),
+      disableMigrate,
+      tenants
+    );
   }
   eachTenant(async () => {
     const state = getState();

@@ -125,15 +125,21 @@ class PluginInstaller {
       // but without a valid node modules folder
       module = await this.loadMainFile(pckJSON);
     } catch (e) {
-      getState().log(
-        2,
-        `Error loading plugin ${this.plugin.name}. Removing and trying again.`
-      );
       if (force) {
+        getState().log(
+          2,
+          `Error loading plugin ${this.plugin.name}. Removing and trying again.`
+        );
         await this.remove();
         pckJSON = null;
         await installer();
-      }
+      } else
+        getState().log(
+          2,
+          `Error loading plugin ${this.plugin.name}. Trying again with reload flag. ` +
+            "A server restart may be required."
+        );
+
       module = await this.loadMainFile(pckJSON, true);
       loadedWithReload = true;
     }
