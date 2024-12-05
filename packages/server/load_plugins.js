@@ -97,7 +97,10 @@ const loadPlugin = async (plugin, force, forceFetch) => {
     }
   }
   // load plugin
-  const loader = new PluginInstaller(plugin);
+  const loader = new PluginInstaller(plugin, {
+    scVersion: packagejson.version,
+    envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+  });
   const res = await loader.install(force);
   const configuration =
     typeof plugin.configuration === "string"
@@ -162,7 +165,10 @@ const reloadAuthFromRoot = () => {
  * @returns {Promise<{plugin_module: *}|{plugin_module: any}>}
  */
 const requirePlugin = async (plugin, force) => {
-  const loader = new PluginInstaller(plugin);
+  const loader = new PluginInstaller(plugin, {
+    scVersion: packagejson.version,
+    envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+  });
   return await loader.install(force);
 };
 
@@ -231,7 +237,7 @@ const loadAndSaveNewPlugin = async (
   const loadMsgs = [];
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
-    envVars: { PUPPETEER_SKIP_DOWNLOAD: "1" },
+    envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
   });
   const { version, plugin_module, location, loadedWithReload, msgs } =
     await loader.install(force);
