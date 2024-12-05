@@ -17,30 +17,38 @@ const { traverseSync } = require("./layout");
 class WorkflowStep {
   id?: number;
   name: string;
-  icon: string;
-  layout: any;
+  trigger_id: number;
+  next_step?: string;
+  action_name: string;
+  configuration: any;
 
   /**
    * WorkflowStep constructor
    * @param {object} o
    */
   constructor(o: WorkflowStepCfg | WorkflowStep) {
-    this.id = o.id;
+    this.id = o.id; 
     this.name = o.name;
-    this.icon = o.icon;
-    this.layout =
-      typeof o.layout === "string" ? JSON.parse(o.layout) : o.layout;
+    this.trigger_id = o.trigger_id;
+    this.next_step = o.next_step;
+    this.action_name = o.action_name;
+    this.configuration =
+      typeof o.configuration === "string"
+        ? JSON.parse(o.configuration)
+        : o.configuration;
   }
 
   /**
    * @param {object} lib_in
    */
-  static async create(lib_in: WorkflowStepCfg): Promise<void> {
-    const lib = new WorkflowStep(lib_in);
+  static async create(step_in: WorkflowStepCfg): Promise<void> {
+    const step = new WorkflowStep(step_in);
     await db.insert("_sc_workflow_steps", {
-      name: lib.name,
-      icon: lib.icon,
-      layout: lib.layout,
+      name: step.name,
+      action_name: step.action_name,
+      trigger_id: step.trigger_id,
+      next_step: step.next_step,
+      configuration: step.configuration,
     });
   }
 
@@ -78,58 +86,14 @@ class WorkflowStep {
    * @param {*} what
    * @returns {object}
    */
-  suitableFor(what: string): any {
-    let notPage, notShow, notEdit, notFilter, notList;
-    if (!this.layout) return false;
-    const layout = this.layout.layout ? this.layout.layout : this.layout;
-    traverseSync(layout, {
-      search_bar() {
-        //eg: search - only page and filter
-        notShow = true;
-        notEdit = true;
-        notList = true;
-      },
-      dropdown_filter() {
-        notShow = true;
-        notEdit = true;
-        notPage = true;
-      },
-      toggle_filter() {
-        notShow = true;
-        notEdit = true;
-        notPage = true;
-        notList = true;
-      },
-      field() {
-        notPage = true;
-      },
-      view_link() {
-        notFilter = true;
-      },
-      aggregation() {
-        notEdit = true;
-        notPage = true;
-      },
-      join_field() {
-        notFilter = true;
-        notPage = true;
-      },
-    });
-    return {
-      page: !notPage,
-      show: !notShow,
-      edit: !notEdit,
-      filter: !notFilter,
-      list: !notList,
-    }[what];
-  }
-
   /**
    * @returns {Promise<void>}
    */
   async delete(): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
-    await db.query(`delete FROM ${schema}_sc_workflow_steps WHERE id = $1`, [this.id]);
+    await db.query(`delete FROM ${schema}_sc_workflow_steps WHERE id = $1`, [
+      this.id,
+    ]);
   }
 
   /**
