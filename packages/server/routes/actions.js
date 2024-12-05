@@ -476,7 +476,6 @@ router.post(
 
 const getWorkflowConfig = async (req, id, table, trigger) => {
   const steps = await WorkflowStep.find({ trigger_id: trigger.id });
-  console.log(steps);
 
   return (
     ul(
@@ -505,13 +504,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   const stateActionKeys = Object.entries(stateActions)
     .filter(([k, v]) => !v.disableInList && (table || !v.requireRow))
     .map(([k, v]) => k);
-  const actions = [...stateActionKeys];
-  const triggers = Trigger.find({
-    when_trigger: { or: ["API call", "Never"] },
-  });
-  triggers.forEach((tr) => {
-    actions.push(tr.name);
-  });
+
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
@@ -529,6 +522,11 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       actionConfigFields.push(cfgFld);
     }
   }
+  const actionsNotRequiringRow = Trigger.action_options({
+    notRequireRow: true,
+    workflow: true,
+  });
+
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
     onChange: "saveAndContinue(this)",
@@ -561,26 +559,24 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         type: "String",
         required: true,
         attributes: {
-          options: actions,
+          options: actionsNotRequiringRow,
         },
       },
       ...actionConfigFields,
     ],
   });
-  form.hidden("id");
+  form.hidden("wf_step_id");
   if (step_id) {
     const step = await WorkflowStep.findOne({ id: step_id });
     if (!step) throw new Error("Step not found");
     form.values = {
-      id: step.id,
+      wf_step_id: step.id,
       wf_step_name: step.name,
       wf_action_name: step.action_name,
       wf_next_step: step.next_step,
       ...step.configuration,
     };
   }
-  console.log(form.values);
-
   return form;
 };
 
@@ -1087,7 +1083,7 @@ router.post(
       res.json({ error: form.errorSummary });
       return;
     }
-    const { wf_step_name, wf_action_name, wf_next_step, id, ...rest } =
+    const { wf_step_name, wf_action_name, wf_next_step, wf_step_id, ...rest } =
       form.values;
     const step = {
       name: wf_step_name,
@@ -1096,9 +1092,8 @@ router.post(
       trigger_id,
       configuration: rest,
     };
-    if (id) {
-      const wfStep = new WorkflowStep({ id: id, ...step });
-      console.log("updating", id, step);
+    if (wf_step_id) {
+      const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
 
       await wfStep.update(step);
 
@@ -1106,7 +1101,7 @@ router.post(
     } else {
       //insert
       const id = await WorkflowStep.create(step);
-      res.json({ success: "ok", id });
+      res.json({ success: "ok", set_fields: { wf_step_id: id } });
     }
   })
 );
