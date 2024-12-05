@@ -533,6 +533,15 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
     onChange: "saveAndContinue(this)",
     submitLabel: req.__("Done"),
+    additionalButtons: step_id
+      ? [
+          {
+            label: req.__("Delete"),
+            class: "btn btn-outline-danger",
+            onclick: `ajax_post('/actions/delete-step/${+step_id}')`,
+          },
+        ]
+      : undefined,
     fields: [
       {
         name: "wf_step_name",
@@ -1101,3 +1110,21 @@ router.post(
     }
   })
 );
+
+router.post(
+  "/delete-step/:step_id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { step_id } = req.params;
+    const step = await WorkflowStep.findOne({ id: step_id });
+    await step.delete();
+    res.json({ goto: `/actions/configure/${step.trigger_id}` });
+  })
+);
+
+/* TODO
+
+why are actions not namespaced?
+mermaid diagram
+step actions (forloop, form, output, sleep)
+*/
