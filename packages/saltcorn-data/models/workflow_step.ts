@@ -41,7 +41,7 @@ class WorkflowStep {
    */
   static async create(step_in: WorkflowStepCfg): Promise<void> {
     const step = new WorkflowStep(step_in);
-    await db.insert("_sc_workflow_steps", {
+    return await db.insert("_sc_workflow_steps", {
       name: step.name,
       action_name: step.action_name,
       trigger_id: step.trigger_id,

@@ -17,6 +17,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
+const WorkflowStep = require("@saltcorn/data/models/workflow_step");
 const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 
@@ -47,6 +48,8 @@ const {
   pre,
   text,
   i,
+  ul,
+  li,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -472,10 +475,27 @@ router.post(
 );
 
 const getWorkflowConfig = async (req, id, table, trigger) => {
-  return a(
-    { href: `/actions/stepedit/${trigger.id}`, class: "btn btn-primary" },
-    i({ class: "fas fa-plus me-2" }),
-    "Add step"
+  const steps = await WorkflowStep.find({ trigger_id: trigger.id });
+  console.log(steps);
+
+  return (
+    ul(
+      steps.map((step) =>
+        li(
+          a(
+            {
+              href: `/actions/stepedit/${trigger.id}/${step.id}`,
+            },
+            step.name
+          )
+        )
+      )
+    ) +
+    a(
+      { href: `/actions/stepedit/${trigger.id}`, class: "btn btn-primary" },
+      i({ class: "fas fa-plus me-2" }),
+      "Add step"
+    )
   );
 };
 
@@ -501,7 +521,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       const cfgFld = {
         ...field,
         showIf: {
-          action_name: name,
+          wf_action_name: name,
           ...(field.showIf || {}),
         },
       };
@@ -510,27 +530,24 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     }
   }
   const form = new Form({
-    action: addOnDoneRedirect(
-      `/actions/stepedit/${trigger.id}${step_id ? `/${step_id}` : ""}`,
-      req
-    ),
+    action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
     onChange: "saveAndContinue(this)",
     submitLabel: req.__("Done"),
     fields: [
       {
-        name: "step_name",
+        name: "wf_step_name",
         label: req.__("Step name"),
         type: "String",
         required: true,
       },
       {
-        name: "next_step",
+        name: "wf_next_step",
         label: req.__("Next step"),
         type: "String",
         class: "validate-expression",
       },
       {
-        name: "action_name",
+        name: "wf_action_name",
         label: req.__("Action"),
         type: "String",
         required: true,
@@ -541,6 +558,20 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       ...actionConfigFields,
     ],
   });
+  form.hidden("id")
+  if (step_id) {
+    const step = await WorkflowStep.findOne({ id: step_id });
+    if (!step) throw new Error("Step not found");
+    form.values = {
+      id: step.id,
+      wf_step_name: step.name,
+      wf_action_name: step.action_name,
+      wf_next_step: step.next_step,
+      ...step.configuration,
+    };
+  }
+  console.log(form.values);
+  
   return form;
 };
 
@@ -1033,12 +1064,36 @@ router.get(
 );
 
 router.post(
-  "/stepedit/:trigger_id/:step_id?",
+  "/stepedit/:trigger_id",
   isAdmin,
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(trigger, req);
-    res.json({ success: "ok" });
+    form.validate(req.body);
+    if (form.hasErrors) {
+      res.json({ error: form.errorSummary });
+      return;
+    }
+    const { wf_step_name, wf_action_name, wf_next_step, id, ...rest } = form.values;
+    const step = {
+      name: wf_step_name,
+      action_name: wf_action_name,
+      next_step: wf_next_step,
+      trigger_id,
+      configuration: rest,
+    };
+    if (id) {
+      const wfStep = new WorkflowStep({ id: id, ...step });
+      console.log("updating", id, step);
+
+      await wfStep.update(step);
+
+      res.json({ success: "ok" });
+    } else {
+      //insert
+      const id = await WorkflowStep.create(step);
+      res.json({ success: "ok", id });
+    }
   })
 );
