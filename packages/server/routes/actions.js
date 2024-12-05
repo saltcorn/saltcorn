@@ -471,6 +471,14 @@ router.post(
   })
 );
 
+const getWorkflowConfig = async (req, id, table, trigger) => {
+  return a(
+    { href: `/actions/stepedit/${trigger.id}`, class: "btn btn-primary" },
+    i({ class: "fas fa-plus me-2" }),
+    "Add step"
+  );
+};
+
 const getMultiStepForm = async (req, id, table) => {
   let stateActions = getState().actions;
   const stateActionKeys = Object.entries(stateActions)
@@ -583,7 +591,23 @@ router.get(
         { href: `/actions/testrun/${id}`, class: "ms-2" },
         req.__("Test run") + "&nbsp;&raquo;"
       );
-    if (trigger.action === "Multi-step action") {
+    if (trigger.action === "Workflow") {
+      const wfCfg = await getWorkflowConfig(req, id, table, trigger);
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
+          contents: wfCfg,
+        },
+      });
+    } else if (trigger.action === "Multi-step action") {
       const form = await getMultiStepForm(req, id, table);
       form.values = trigger.configuration;
       send_events_page({
