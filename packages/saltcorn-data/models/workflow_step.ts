@@ -8,8 +8,6 @@ import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowStepCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_step";
 
-const { traverseSync } = require("./layout");
-
 /**
  * WorkflowStep Class
  * @category saltcorn-data
