@@ -558,7 +558,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       ...actionConfigFields,
     ],
   });
-  form.hidden("id")
+  form.hidden("id");
   if (step_id) {
     const step = await WorkflowStep.findOne({ id: step_id });
     if (!step) throw new Error("Step not found");
@@ -571,7 +571,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     };
   }
   console.log(form.values);
-  
+
   return form;
 };
 
@@ -1056,7 +1056,10 @@ router.get(
       contents: {
         type: "card",
         titleAjaxIndicator: true,
-        title: req.__("Configure trigger %s", trigger.name),
+        title: req.__(
+          "Configure trigger %s",
+          a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+        ),
         contents: renderForm(form, req.csrfToken()),
       },
     });
@@ -1075,7 +1078,8 @@ router.post(
       res.json({ error: form.errorSummary });
       return;
     }
-    const { wf_step_name, wf_action_name, wf_next_step, id, ...rest } = form.values;
+    const { wf_step_name, wf_action_name, wf_next_step, id, ...rest } =
+      form.values;
     const step = {
       name: wf_step_name,
       action_name: wf_action_name,
