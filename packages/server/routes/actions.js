@@ -479,6 +479,71 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   );
 };
 
+const getWorkflowStepForm = async (trigger, req, step_id) => {
+  const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
+  let stateActions = getState().actions;
+  const stateActionKeys = Object.entries(stateActions)
+    .filter(([k, v]) => !v.disableInList && (table || !v.requireRow))
+    .map(([k, v]) => k);
+  const actions = [...stateActionKeys];
+  const triggers = Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    actions.push(tr.name);
+  });
+  const actionConfigFields = [];
+  for (const [name, action] of Object.entries(stateActions)) {
+    if (!stateActionKeys.includes(name)) continue;
+    const cfgFields = await getActionConfigFields(action, table);
+
+    for (const field of cfgFields) {
+      const cfgFld = {
+        ...field,
+        showIf: {
+          action_name: name,
+          ...(field.showIf || {}),
+        },
+      };
+      if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+      actionConfigFields.push(cfgFld);
+    }
+  }
+  const form = new Form({
+    action: addOnDoneRedirect(
+      `/actions/stepedit/${trigger.id}${step_id ? `/${step_id}` : ""}`,
+      req
+    ),
+    onChange: "saveAndContinue(this)",
+    submitLabel: req.__("Done"),
+    fields: [
+      {
+        name: "step_name",
+        label: req.__("Step name"),
+        type: "String",
+        required: true,
+      },
+      {
+        name: "next_step",
+        label: req.__("Next step"),
+        type: "String",
+        class: "validate-expression",
+      },
+      {
+        name: "action_name",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: actions,
+        },
+      },
+      ...actionConfigFields,
+    ],
+  });
+  return form;
+};
+
 const getMultiStepForm = async (req, id, table) => {
   let stateActions = getState().actions;
   const stateActionKeys = Object.entries(stateActions)
@@ -935,5 +1000,45 @@ router.post(
       req.__("Trigger %s duplicated as %s", trig.name, newtrig.name)
     );
     res.redirect(`/actions`);
+  })
+);
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ * @function
+ */
+router.get(
+  "/stepedit/:trigger_id/:step_id?",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { trigger_id, step_id } = req.params;
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    const form = await getWorkflowStepForm(trigger, req, step_id);
+    send_events_page({
+      res,
+      req,
+      active_sub: "Triggers",
+      sub2_page: "Configure",
+      page_title: req.__(`%s configuration`, trigger.name),
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title: req.__("Configure trigger %s", trigger.name),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
+  })
+);
+
+router.post(
+  "/stepedit/:trigger_id/:step_id?",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { trigger_id, step_id } = req.params;
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    const form = await getWorkflowStepForm(trigger, req);
+    res.json({ success: "ok" });
   })
 );
