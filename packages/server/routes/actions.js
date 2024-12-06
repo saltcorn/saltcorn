@@ -474,6 +474,46 @@ router.post(
   })
 );
 
+function genWorkflowDiagram(steps) {
+  const stepNames = steps.map((s) => s.name);
+  const nodeLines = steps
+    .map(
+      (s) => `  ${s.name}["\`**${s.name}**
+  ${s.action_name}\`"]:::wfstep${s.id}`
+    )
+    .join("\n");
+  const linkLines = [];
+  let step_ix = 0;
+  for (const step of steps) {
+    if (step.action_name === "ForLoop") {
+      linkLines.push(
+        `  ${step.name} --> ${step.configuration.for_loop_step_name}`
+      );
+    } else if (stepNames.includes(step.next_step)) {
+      linkLines.push(`  ${step.name} --> ${step.next_step}`);
+    } else if (!step.next_step && steps[step_ix + 1])
+      linkLines.push(`  ${step.name} --> ${steps[step_ix + 1].name}`);
+    else if (step.next_step) {
+      for (const otherStep of stepNames)
+        if (step.next_step.includes(otherStep))
+          linkLines.push(`  ${step.name} --> ${otherStep}`);
+    }
+    if (step.action_name === "EndForLoop") {
+      // TODO this is not correct. improve.
+      let forStep;
+      for (let i = step_ix; i >= 0; i -= 1) {
+        if (steps[i].action_name === "ForLoop") {
+          forStep = steps[i];
+          break;
+        }
+      }
+      if (forStep) linkLines.push(`  ${step.name} --> ${forStep.name}`);
+    }
+    step_ix += 1;
+  }
+  return "flowchart TD\n" + nodeLines + "\n" + linkLines.join("\n");
+}
+
 const getWorkflowConfig = async (req, id, table, trigger) => {
   const steps = await WorkflowStep.find({ trigger_id: trigger.id });
 
@@ -489,6 +529,26 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
           )
         )
       )
+    ) +
+    pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
+    script(
+      { defer: "defer" },
+      `function tryAddWFNodes() {
+  const ns = $("g.node");
+  if(!ns.length) setTimeout(tryAddWFNodes, 200)
+  else {
+    $("g.node").on("click", (e)=>{
+       const $e = $(e.target || e).closest("g.node")
+       const cls = $e.attr('class')
+       if(!cls || !cls.includes("wfstep")) return;
+       const id = cls.split(" ").find(c=>c.startsWith("wfstep")).
+          substr(6);
+       location.href = '/actions/stepedit/${trigger.id}/'+id;
+      //console.log($e.attr('class'), id)
+     })
+  }
+}
+window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
     ) +
     a(
       { href: `/actions/stepedit/${trigger.id}`, class: "btn btn-primary" },
@@ -700,6 +760,14 @@ router.get(
         active_sub: "Triggers",
         sub2_page: "Configure",
         page_title: req.__(`%s configuration`, trigger.name),
+        headers: [
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/mermaid.min.js`,
+          },
+          {
+            headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'});</script>`,
+          },
+        ],
         contents: {
           type: "card",
           titleAjaxIndicator: true,
@@ -1110,7 +1178,7 @@ router.post(
       trigger_id,
       configuration: rest,
     };
-    if (wf_step_id && wf_step_id !=="undefined") {
+    if (wf_step_id && wf_step_id !== "undefined") {
       const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
 
       await wfStep.update(step);
@@ -1144,7 +1212,7 @@ router.post(
 
 /* TODO
 
-mermaid diagram
+first step
 why is code not initialising
 step actions (forloop, form, output)
 */
