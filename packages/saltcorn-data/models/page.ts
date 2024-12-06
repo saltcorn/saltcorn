@@ -352,7 +352,9 @@ class Page implements AbstractPage {
         const url =
           segment.action_name === "GoBack"
             ? `javascript:${
-                isWeb(extraArgs.req) ? "history.back()" : "parent.goBack()"
+                isWeb(extraArgs.req)
+                  ? "history.back()"
+                  : "parent.saltcorn.mobileApp.navigation.goBack()"
               }`
             : `javascript:${
                 isWeb(extraArgs.req) ? "ajax_post_json" : "local_post_json"
