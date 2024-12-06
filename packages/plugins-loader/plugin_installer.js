@@ -293,7 +293,13 @@ class PluginInstaller {
           });
         }
         child.on("exit", (exitCode, signal) => {
-          resolve({ success: exitCode === 0 });
+          if (exitCode !== 0) {
+            reject(
+              new Error(
+                `NPM install failed for ${pckJSON.name} with exit code ${exitCode}`
+              )
+            );
+          } else resolve();
         });
         child.on("error", (msg) => {
           reject(msg);
