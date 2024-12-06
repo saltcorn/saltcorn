@@ -491,8 +491,7 @@ function genWorkflowDiagram(steps) {
       );
     } else if (stepNames.includes(step.next_step)) {
       linkLines.push(`  ${step.name} --> ${step.next_step}`);
-    } else if (!step.next_step && steps[step_ix + 1])
-      linkLines.push(`  ${step.name} --> ${steps[step_ix + 1].name}`);
+    } 
     else if (step.next_step) {
       for (const otherStep of stepNames)
         if (step.next_step.includes(otherStep))
@@ -523,7 +522,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   if (initial_step)
     steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
   return (
-    ul(
+    /*ul(
       steps.map((step) =>
         li(
           a(
@@ -534,7 +533,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
           )
         )
       )
-    ) +
+    ) +*/
     pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
     script(
       { defer: "defer" },
