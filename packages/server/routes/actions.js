@@ -515,8 +515,13 @@ function genWorkflowDiagram(steps) {
 }
 
 const getWorkflowConfig = async (req, id, table, trigger) => {
-  const steps = await WorkflowStep.find({ trigger_id: trigger.id });
-
+  let steps = await WorkflowStep.find(
+    { trigger_id: trigger.id },
+    { orderBy: "id" }
+  );
+  const initial_step = steps.find((step) => step.initial_step);
+  if (initial_step)
+    steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
   return (
     ul(
       steps.map((step) =>
