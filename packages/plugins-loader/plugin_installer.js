@@ -111,10 +111,10 @@ class PluginInstaller {
         await this.movePlugin(wasInstalled);
         if (await tarballExists(this.rootFolder, this.plugin))
           await removeTarball(this.rootFolder, this.plugin);
+        pckJSON = await readPackageJson(this.pckJsonPath);
+        const msg = this.checkEngineWarning(pckJSON);
+        if (msg && !msgs.includes(msg)) msgs.push(msg);
       }
-      pckJSON = await readPackageJson(this.pckJsonPath);
-      const msg = this.checkEngineWarning(pckJSON);
-      if (msg && !msgs.includes(msg)) msgs.push(msg);
     };
     await installer();
     let module = null;
@@ -293,7 +293,13 @@ class PluginInstaller {
           });
         }
         child.on("exit", (exitCode, signal) => {
-          resolve({ success: exitCode === 0 });
+          if (exitCode !== 0) {
+            reject(
+              new Error(
+                `NPM install failed for ${pckJSON.name} with exit code ${exitCode}`
+              )
+            );
+          } else resolve();
         });
         child.on("error", (msg) => {
           reject(msg);
