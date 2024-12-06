@@ -423,6 +423,27 @@ function saveAndContinueAsync(e) {
   });
 }
 
+function saveAndContinueIfValid(e, k, event) {
+  //wait for applyShowIf
+  setTimeout(() => {
+    if (
+      event &&
+      event.target &&
+      event.target.classList &&
+      event.target.classList.contains("no-form-change")
+    )
+      return;
+    var form = $(e).closest("form");
+
+    if (form[0].checkValidity?.() === false) {
+      form[0].reportValidity();
+      return;
+    }
+
+    saveAndContinue(e, k, event);
+  });
+}
+
 function saveAndContinue(e, k, event) {
   if (
     event &&
@@ -432,10 +453,6 @@ function saveAndContinue(e, k, event) {
   )
     return;
   var form = $(e).closest("form");
-  if (form[0].checkValidity?.() === false) {
-    form[0].reportValidity();
-    return;
-  }
 
   let focusedEl = null;
   if (!event || !event.srcElement) {

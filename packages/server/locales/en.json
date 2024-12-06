@@ -1499,5 +1499,6 @@
 	"Pull done with code %s": "Pull done with code %s",
 	"Default locale": "Default locale",
 	"Next step": "Next step",
-	"Step name": "Step name"
+	"Step name": "Step name",
+	"Step saved": "Step saved"
 }

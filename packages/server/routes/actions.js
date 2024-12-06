@@ -529,7 +529,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
-    onChange: "saveAndContinue(this)",
+    onChange: "saveAndContinueIfValid(this)",
     submitLabel: req.__("Done"),
     additionalButtons: step_id
       ? [
@@ -1080,7 +1080,25 @@ router.post(
     const form = await getWorkflowStepForm(trigger, req);
     form.validate(req.body);
     if (form.hasErrors) {
-      res.json({ error: form.errorSummary });
+      if (req.xhr) {
+        res.json({ error: form.errorSummary });
+      } else
+        send_events_page({
+          res,
+          req,
+          active_sub: "Triggers",
+          sub2_page: "Configure",
+          page_title: req.__(`%s configuration`, trigger.name),
+          contents: {
+            type: "card",
+            titleAjaxIndicator: true,
+            title: req.__(
+              "Configure trigger %s",
+              a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+            ),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        });
       return;
     }
     const { wf_step_name, wf_action_name, wf_next_step, wf_step_id, ...rest } =
@@ -1092,16 +1110,23 @@ router.post(
       trigger_id,
       configuration: rest,
     };
-    if (wf_step_id) {
+    if (wf_step_id && wf_step_id !=="undefined") {
       const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
 
       await wfStep.update(step);
-
-      res.json({ success: "ok" });
+      if (req.xhr) res.json({ success: "ok" });
+      else {
+        req.flash("success", req.__("Step saved"));
+        res.redirect(`/actions/configure/${step.trigger_id}`);
+      }
     } else {
       //insert
       const id = await WorkflowStep.create(step);
-      res.json({ success: "ok", set_fields: { wf_step_id: id } });
+      if (req.xhr) res.json({ success: "ok", set_fields: { wf_step_id: id } });
+      else {
+        req.flash("success", req.__("Step saved"));
+        res.redirect(`/actions/configure/${step.trigger_id}`);
+      }
     }
   })
 );
@@ -1119,7 +1144,7 @@ router.post(
 
 /* TODO
 
-why are actions not namespaced?
 mermaid diagram
-step actions (forloop, form, output, sleep)
+why is code not initialising
+step actions (forloop, form, output)
 */
