@@ -482,6 +482,7 @@ function saveAndContinue(e, k, event) {
     data: form_data,
     success: function (res) {
       ajax_indicator(false);
+      form.removeAttr("data-unsaved-changes");
       form.parent().find(".full-form-error").text("");
       if (res.id && form.find("input[name=id")) {
         form.append(
@@ -1208,6 +1209,14 @@ function installPWA() {
         console.log(res);
       },
     });
+  }
+}
+
+function check_unsaved_form(event, script_tag) {
+  const form = $(script_tag).parent().find("form");
+  if (form.attr("data-unsaved-changes")) {
+    event.preventDefault();
+    event.returnValue = true;
   }
 }
 

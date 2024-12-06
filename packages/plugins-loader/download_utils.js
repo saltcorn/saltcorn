@@ -69,13 +69,15 @@ const loadTarball = (rootFolder, url, name) => {
           } else
             reject(
               new Error(
-                `Error downloading tarball: http code ${redirect.statusCode}`
+                `Error downloading tarball from ${url}: http code ${redirect.statusCode}`
               )
             );
         });
       } else if (res.statusCode !== 200)
         reject(
-          new Error(`Error downloading tarball: http code ${res.statusCode}`)
+          new Error(
+            `Error downloading tarball from ${url}: http code ${res.statusCode}`
+          )
         );
       else {
         const filePath = await writeTarball(res);
