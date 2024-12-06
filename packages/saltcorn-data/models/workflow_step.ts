@@ -18,6 +18,7 @@ class WorkflowStep {
   trigger_id: number;
   next_step?: string;
   action_name: string;
+  initial_step: boolean;
   configuration: any;
 
   /**
@@ -25,11 +26,12 @@ class WorkflowStep {
    * @param {object} o
    */
   constructor(o: WorkflowStepCfg | WorkflowStep) {
-    this.id = o.id; 
+    this.id = o.id;
     this.name = o.name;
     this.trigger_id = o.trigger_id;
     this.next_step = o.next_step;
     this.action_name = o.action_name;
+    this.initial_step = !!o.initial_step;
     this.configuration =
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
@@ -46,6 +48,7 @@ class WorkflowStep {
       action_name: step.action_name,
       trigger_id: step.trigger_id,
       next_step: step.next_step,
+      initial_step: step.initial_step,
       configuration: step.configuration,
     });
   }
