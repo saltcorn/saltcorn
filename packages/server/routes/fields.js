@@ -362,10 +362,12 @@ const fieldFlow = (req) =>
         name: req.__("Attributes"),
         contextField: "attributes",
         onlyWhen: (context) => {
-          if (context.calculated) return false;
+          const type = getState().types[context.type];
+          if (context.calculated && !type?.setTypeAttributesForCalculatedFields)
+            return false;
+
           if (context.type === "File") return true;
           if (new Field(context).is_fkey) return false;
-          const type = getState().types[context.type];
           if (!type) return false;
           const attrs = Field.getTypeAttributes(
             type.attributes,
