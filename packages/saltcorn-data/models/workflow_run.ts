@@ -7,6 +7,7 @@
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_run";
+import WorkflowStep from "./workflow_step";
 
 /**
  * WorkflowRun Class
@@ -20,7 +21,7 @@ class WorkflowRun {
   started_at: Date;
   started_by?: number;
   error?: string;
-  status: "Running" | "Finished" | "Waiting" | "Error";
+  status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
   current_step: string;
 
   /**
@@ -46,7 +47,7 @@ class WorkflowRun {
    */
   static async create(step_in: WorkflowRunCfg): Promise<void> {
     const step = new WorkflowRun(step_in);
-   
+
     return await db.insert("_sc_workflow_runs", step.toJson);
   }
 
@@ -98,8 +99,50 @@ class WorkflowRun {
    * @param {*} row
    * @returns {Promise<void>}
    */
-  async update(row: Row): Promise<void> {  
+  async update(row: Row): Promise<void> {
     await db.update("_sc_workflow_runs", row, this.id);
+    Object.assign(this, row);
+  }
+
+  async run() {
+    if (this.status === "Error" || this.status === "Finished") return;
+    if (this.status === "Waiting") {
+      //are wait conditions fulfilled?
+      //TODO
+      let fulfilled = true;
+      Object.entries(this.wait_info || {}).forEach(([k, v]) => {
+        switch (k) {
+          case "until_time":
+            if (new Date(v as Date | string) < new Date()) fulfilled = false;
+            break;
+
+          default:
+            break;
+        }
+      });
+      if (!fulfilled) return;
+    }
+    //get steps
+    const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
+    //find current step
+    let step;
+    if (this.current_step)
+      step = steps.find((step) => step.name === this.current_step);
+    else step = steps.find((step) => step.initial_step);
+
+    //run in loop
+    while (step) {
+      if (step.name !== this.current_step)
+        await this.update({ current_step: step.name });
+
+      //find action
+
+      //run action
+
+      //update context
+
+      //find next step
+    }
   }
 }
 
