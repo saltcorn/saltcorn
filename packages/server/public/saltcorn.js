@@ -432,6 +432,11 @@ function saveAndContinue(e, k, event) {
   )
     return;
   var form = $(e).closest("form");
+  if (form[0].checkValidity?.() === false) {
+    form[0].reportValidity();
+    return;
+  }
+
   let focusedEl = null;
   if (!event || !event.srcElement) {
     const el = form.find("select[sc-received-focus]")[0];
