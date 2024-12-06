@@ -613,6 +613,7 @@ class Trigger implements AbstractTrigger {
     builtIns,
     builtInLabel,
     workflow,
+    noMultiStep
   }: {
     notRequireRow?: boolean;
     tableTriggers?: number;
@@ -620,6 +621,7 @@ class Trigger implements AbstractTrigger {
     builtIns?: string[];
     builtInLabel?: string;
     workflow?: boolean;
+    noMultiStep?: boolean;
   }): any[] {
     const triggerActions = Trigger.trigger_actions({
       tableTriggers,
@@ -648,7 +650,7 @@ class Trigger implements AbstractTrigger {
         )
         .map((t) => t.name)
         .sort();
-      if (ns === "Other") options.push("Multi-step action");
+      if (ns === "Other" && !noMultiStep) options.push("Multi-step action");
       if (ns === "Other" && workflow) options.push("Workflow");
       return { optgroup: true, label: ns, options };
     });

@@ -589,7 +589,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   }
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
-    workflow: true,
+    noMultiStep: true
   });
 
   const form = new Form({
