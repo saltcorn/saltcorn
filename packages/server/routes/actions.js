@@ -618,6 +618,11 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         type: "Bool",
       },
       {
+        name: "wf_only_if",
+        label: req.__("Only if..."),
+        type: "String",
+      },
+      {
         name: "wf_next_step",
         label: req.__("Next step"),
         type: "String",
@@ -643,6 +648,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       wf_step_id: step.id,
       wf_step_name: step.name,
       wf_inital_step: step.initial_step,
+      wf_only_if: step.only_if,
       wf_action_name: step.action_name,
       wf_next_step: step.next_step,
       ...step.configuration,
@@ -1185,6 +1191,7 @@ router.post(
       wf_action_name,
       wf_next_step,
       wf_inital_step,
+      wf_only_if,
       wf_step_id,
       ...rest
     } = form.values;
@@ -1192,6 +1199,7 @@ router.post(
       name: wf_step_name,
       action_name: wf_action_name,
       next_step: wf_next_step,
+      only_if: wf_only_if,
       initial_step: wf_inital_step,
       trigger_id,
       configuration: rest,
