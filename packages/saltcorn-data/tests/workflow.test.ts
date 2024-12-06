@@ -308,6 +308,7 @@ describe("Edit view Workflow", () => {
       columns: [{ type: "Field", field_name: "author" }],
       viewname: "edit_mybook",
       auto_save: true,
+      confirm_leave: false,
       split_paste: true,
       page_when_done: null,
       view_when_done: "authorlist",
