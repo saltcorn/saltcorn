@@ -349,6 +349,15 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
+                name: "confirm_leave",
+                label: req.__("Confirm leaving unsaved"),
+                sublabel: req.__(
+                  "Ask the user to confirm if they close a tab with unsaved changes"
+                ),
+                type: "Bool",
+                showIf: { auto_save: false },
+              },
+              {
                 name: "split_paste",
                 label: req.__("Split paste"),
                 sublabel: req.__("Separate paste content into separate inputs"),
@@ -524,7 +533,7 @@ const run = async (
 const runMany = async (
   table_id,
   viewname,
-  { columns, layout, auto_save, split_paste },
+  { columns, layout, auto_save, split_paste, confirm_leave },
   state,
   extra,
   { editManyQuery, getRowQuery, optionsQuery }
@@ -557,6 +566,7 @@ const runMany = async (
       optionsQuery,
       split_paste,
       isRemote,
+      confirm_leave,
     });
     return { html, row };
   });
@@ -913,6 +923,7 @@ const render = async ({
   optionsQuery,
   split_paste,
   mobileReferrer,
+  confirm_leave,
 }) => {
   const form = await getForm(
     table,
@@ -1018,7 +1029,7 @@ const render = async ({
   if (actually_auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
-    }, event)`;
+    }, event);`;
   let reloadAfterCloseInModalScript =
     actually_auto_save && req.xhr
       ? script(
@@ -1034,6 +1045,18 @@ const render = async ({
     });`)
         )
       : "";
+
+  let confirmLeaveScript = "";
+  if (confirm_leave) {
+    //add to onchange
+    if (!form.onChange) form.onChange = "";
+    form.onChange += "this.setAttribute('data-unsaved-changes','true')";
+    //beforeunload script
+    confirmLeaveScript = script(
+      `((curScript)=>{window.addEventListener("beforeunload", (e) => check_unsaved_form(e, curScript));})(document.currentScript)`
+    );
+  }
+
   if (actually_auto_save) {
     for (const field of form.fields) {
       field.in_auto_save = true;
@@ -1052,7 +1075,8 @@ const render = async ({
   });
   return (
     renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
-    reloadAfterCloseInModalScript
+    reloadAfterCloseInModalScript +
+    confirmLeaveScript
   );
 };
 
@@ -1694,7 +1718,7 @@ const prepare = async (
   if (auto_save)
     form.onChange = `saveAndContinue(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
-    }, event)`;
+    }, event);`;
 
   Object.entries(body).forEach(([k, v]) => {
     const form_field = form.fields.find((f) => f.name === k);
@@ -2016,6 +2040,7 @@ module.exports = {
       split_paste,
       destination_type,
       fixed,
+      confirm_leave,
     },
     req,
     res,
@@ -2060,6 +2085,7 @@ module.exports = {
         destination_type,
         isRemote,
         split_paste,
+        confirm_leave,
         mobileReferrer,
       });
     },

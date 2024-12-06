@@ -1497,5 +1497,7 @@
 	"Capacitor builder": "Capacitor builder",
 	"Pulling the capacitor-builder docker image...": "Pulling the capacitor-builder docker image...",
 	"Pull done with code %s": "Pull done with code %s",
-	"Default locale": "Default locale"
+	"Default locale": "Default locale",
+	"Confirm leaving unsaved": "Confirm leaving unsaved",
+	"Ask the user to confirm if they close a tab with unsaved changes": "Ask the user to confirm if they close a tab with unsaved changes"
 }
