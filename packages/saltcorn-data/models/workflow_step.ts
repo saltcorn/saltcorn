@@ -43,6 +43,15 @@ class WorkflowStep {
    */
   static async create(step_in: WorkflowStepCfg): Promise<void> {
     const step = new WorkflowStep(step_in);
+    if (step.initial_step) {
+      await db.updateWhere(
+        "_sc_workflow_steps",
+        { initial_step: false },
+        {
+          trigger_id: step.trigger_id,
+        }
+      );
+    }
     return await db.insert("_sc_workflow_steps", {
       name: step.name,
       action_name: step.action_name,
@@ -102,6 +111,16 @@ class WorkflowStep {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
+    if (row.initial_step) {
+      await db.updateWhere(
+        "_sc_workflow_steps",
+        { initial_step: false },
+        {
+          trigger_id: this.trigger_id,
+          id: { not: this.id },
+        }
+      );
+    }
     await db.update("_sc_workflow_steps", row, this.id);
   }
 }

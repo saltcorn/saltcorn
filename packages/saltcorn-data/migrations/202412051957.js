@@ -4,7 +4,7 @@ const sql_pg = `CREATE TABLE IF NOT EXISTS  _sc_workflow_steps (
     trigger_id integer references _sc_triggers(id),
     next_step text,
     action_name text NOT NULL,
-    initial_step boolean NOT NULL DEFAULT false,
+    initial_step boolean,
     configuration jsonb
 );`;
 
@@ -14,7 +14,7 @@ const sql_sqlite = `CREATE TABLE _sc_workflow_steps (
     trigger_id integer references _sc_triggers(id),
     next_step text,
     action_name text NOT NULL,
-    initial_step boolean NOT NULL DEFAULT false,
+    initial_step boolean,
     configuration json
 );`;
 

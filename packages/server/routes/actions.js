@@ -608,6 +608,11 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         required: true,
       },
       {
+        name: "wf_initial_step",
+        label: req.__("Initial step"),
+        type: "Bool",
+      },
+      {
         name: "wf_next_step",
         label: req.__("Next step"),
         type: "String",
@@ -632,6 +637,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     form.values = {
       wf_step_id: step.id,
       wf_step_name: step.name,
+      wf_inital_step: step.initial_step,
       wf_action_name: step.action_name,
       wf_next_step: step.next_step,
       ...step.configuration,
@@ -1169,12 +1175,19 @@ router.post(
         });
       return;
     }
-    const { wf_step_name, wf_action_name, wf_next_step, wf_step_id, ...rest } =
-      form.values;
+    const {
+      wf_step_name,
+      wf_action_name,
+      wf_next_step,
+      wf_inital_step,
+      wf_step_id,
+      ...rest
+    } = form.values;
     const step = {
       name: wf_step_name,
       action_name: wf_action_name,
       next_step: wf_next_step,
+      initial_step: wf_inital_step,
       trigger_id,
       configuration: rest,
     };
