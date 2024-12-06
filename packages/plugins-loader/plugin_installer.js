@@ -12,7 +12,6 @@ const { getState } = require("@saltcorn/data/db/state");
 const { rm, rename, cp, readFile } = require("fs").promises;
 const envPaths = require("env-paths");
 const semver = require("semver");
-const cluster = require("cluster");
 
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
@@ -112,16 +111,12 @@ class PluginInstaller {
         await this.movePlugin(wasInstalled);
         if (await tarballExists(this.rootFolder, this.plugin))
           await removeTarball(this.rootFolder, this.plugin);
+        pckJSON = await readPackageJson(this.pckJsonPath);
+        const msg = this.checkEngineWarning(pckJSON);
+        if (msg && !msgs.includes(msg)) msgs.push(msg);
       }
-      pckJSON = await readPackageJson(this.pckJsonPath);
-      const msg = this.checkEngineWarning(pckJSON);
-      if (msg && !msgs.includes(msg)) msgs.push(msg);
     };
-    if (cluster.isMaster || force) await installer();
-    else if (!pckJSON)
-      throw new Error(
-        `Unable to load plugin ${this.plugin.name}: package.json not found`
-      );
+    await installer();
     let module = null;
     let loadedWithReload = false;
     try {
