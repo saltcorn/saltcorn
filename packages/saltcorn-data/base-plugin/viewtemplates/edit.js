@@ -349,6 +349,15 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
+                name: "confirm_leave",
+                label: req.__("Confirm leaving unsaved"),
+                sublabel: req.__(
+                  "Ask the user to confirm if they close a tab with unsaved changes"
+                ),
+                type: "Bool",
+                showIf: { auto_save: false },
+              },
+              {
                 name: "split_paste",
                 label: req.__("Split paste"),
                 sublabel: req.__("Separate paste content into separate inputs"),
