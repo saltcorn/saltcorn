@@ -491,8 +491,7 @@ function genWorkflowDiagram(steps) {
       );
     } else if (stepNames.includes(step.next_step)) {
       linkLines.push(`  ${step.name} --> ${step.next_step}`);
-    } 
-    else if (step.next_step) {
+    } else if (step.next_step) {
       for (const otherStep of stepNames)
         if (step.next_step.includes(otherStep))
           linkLines.push(`  ${step.name} --> ${otherStep}`);
@@ -572,7 +571,9 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
-    const cfgFields = await getActionConfigFields(action, table);
+    const cfgFields = await getActionConfigFields(action, table, {
+      mode: "workflow",
+    });
 
     for (const field of cfgFields) {
       const cfgFld = {
@@ -1229,7 +1230,8 @@ router.post(
 
 /* TODO
 
-first step
 why is code not initialising
 step actions (forloop, form, output)
+run model
+mode = workflow both in run
 */
