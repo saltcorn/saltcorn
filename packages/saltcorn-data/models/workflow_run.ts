@@ -25,7 +25,7 @@ class WorkflowRun {
   started_by?: number;
   error?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
-  current_step: string;
+  current_step?: string;
 
   /**
    * WorkflowRun constructor
@@ -35,13 +35,13 @@ class WorkflowRun {
     this.id = o.id;
     this.trigger_id = o.trigger_id;
     this.context =
-      typeof o.context === "string" ? JSON.parse(o.context) : o.context;
+      typeof o.context === "string" ? JSON.parse(o.context) : o.context || {};
     this.wait_info =
       typeof o.wait_info === "string" ? JSON.parse(o.wait_info) : o.wait_info;
     this.started_at = o.started_at || new Date();
     this.started_by = o.started_by;
     this.error = o.error;
-    this.status = o.status;
+    this.status = o.status || "Pending";
     this.current_step = o.current_step;
   }
 
@@ -118,7 +118,8 @@ class WorkflowRun {
           case "until_time":
             if (new Date(v as Date | string) < new Date()) fulfilled = false;
             break;
-
+          case "form":
+            fulfilled = false;
           default:
             break;
         }
@@ -129,11 +130,13 @@ class WorkflowRun {
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
 
     //find current step
-    let step;
+    let step: any;
     if (this.current_step)
       step = steps.find((step) => step.name === this.current_step);
     else step = steps.find((step) => step.initial_step);
 
+    if (step && this.status === "Pending")
+      await this.update({ status: "Pending" });
     //run in loop
     while (step) {
       if (step.name !== this.current_step)
@@ -151,7 +154,7 @@ class WorkflowRun {
       if (!step?.next_step) {
         step = null;
         nextUpdate.status = "Finished";
-      } else if ((nextStep = steps.find((s) => s.name === step!.next_step))) {
+      } else if ((nextStep = steps.find((s) => s.name === step.next_step))) {
         step = nextStep;
         nextUpdate.step_name = step.name;
       }
