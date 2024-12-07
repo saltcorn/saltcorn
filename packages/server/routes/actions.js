@@ -18,6 +18,7 @@ const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const WorkflowStep = require("@saltcorn/data/models/workflow_step");
+const WorkflowRun = require("@saltcorn/data/models/workflow_run");
 const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 
@@ -30,7 +31,7 @@ const db = require("@saltcorn/data/db");
  */
 const router = new Router();
 module.exports = router;
-const { renderForm, link } = require("@saltcorn/markup");
+const { renderForm, link, mkTable } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const {
   div,
@@ -589,7 +590,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   }
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
-    noMultiStep: true
+    noMultiStep: true,
   });
 
   const form = new Form({
@@ -1236,11 +1237,71 @@ router.post(
   })
 );
 
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ * @function
+ */
+router.get(
+  "/runs",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const trNames = {};
+    for (const trig of await Trigger.find({ action: "Workflow" }))
+      trNames[trig.id] = trig.name;
+
+    const runs = await WorkflowRun.find(
+      {},
+      { orderBy: "started_at", orderDesc: true }
+    );
+    const wfTable = mkTable(
+      [
+        { label: "Trigger", key: (run) => trNames[run.trigger_id] },
+        { label: "Started", key: "started_at" },
+        { label: "Status", key: "status" },
+        {
+          label: "",
+          key: (run) => {
+            switch (run.status) {
+              case "Running":
+                return run.current_step;
+              case "Error":
+                return run.error;
+              case "Waiting":
+                return run.current_step;
+              default:
+                return "";
+            }
+          },
+        },
+      ],
+      runs
+    );
+    send_events_page({
+      res,
+      req,
+      active_sub: "Workflow runs",
+      page_title: req.__(`Workflow runs`),
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title: req.__("Workflow runs"),
+        contents: wfTable,
+      },
+    });
+  })
+);
+
 /* TODO
 
-test eval next step and only if
 why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
+
+runs UI
+
+implement modes for basic actions
+forms
 
 */
