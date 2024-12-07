@@ -650,8 +650,6 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     })
   );
 
-  console.log(actionsNotRequiringRow);
-
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
     onChange: "saveAndContinueIfValid(this)",
@@ -707,7 +705,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     form.values = {
       wf_step_id: step.id,
       wf_step_name: step.name,
-      wf_inital_step: step.initial_step,
+      wf_initial_step: step.initial_step,
       wf_only_if: step.only_if,
       wf_action_name: step.action_name,
       wf_next_step: step.next_step,
@@ -1398,7 +1396,7 @@ why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
 
-form in run.
+form user ui
 implement modes for basic actions
 initial_step default on on first step
 

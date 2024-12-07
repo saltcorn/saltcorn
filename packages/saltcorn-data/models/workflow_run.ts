@@ -148,6 +148,12 @@ class WorkflowRun {
         await this.update({ current_step: step.name });
 
       state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
+    
+      if (step.action_name === "UserForm") {
+        await this.update({ status: "Waiting", wait_info: { form: true } });
+        step = null;
+        break
+      }
 
       const result = await step.run(this.context, user);
 
