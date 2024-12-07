@@ -9,8 +9,8 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_run";
 import WorkflowStep from "./workflow_step";
 import User from "./user";
-
-const { getState } = require("../db/state");
+import Expression from "./expression";
+const { eval_expression } = Expression;
 
 /**
  * WorkflowRun Class
@@ -50,8 +50,8 @@ class WorkflowRun {
    */
   static async create(run_in: WorkflowRunCfg): Promise<WorkflowRun> {
     const run = new WorkflowRun(run_in);
-    const id = await db.insert("_sc_workflow_runs", run.toJson)
-    run.id = id
+    const id = await db.insert("_sc_workflow_runs", run.toJson);
+    run.id = id;
     return run;
   }
 
@@ -160,6 +160,19 @@ class WorkflowRun {
         nextUpdate.current_step = step.name;
       } else {
         // eval next_step
+        const next_step_ctx = { ...this.context };
+        steps.forEach((s) => {
+          next_step_ctx[s.name] = s.name;
+        });
+        const next_step_name = eval_expression(
+          step.next_step,
+          next_step_ctx,
+          user,
+          `next_step in step ${step.name}`
+        );
+        nextStep = steps.find((s) => s.name === next_step_name);
+        step = nextStep;
+        nextUpdate.current_step = step.name;
       }
 
       await this.update(nextUpdate);

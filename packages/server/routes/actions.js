@@ -1238,9 +1238,7 @@ router.post(
 
 /* TODO
 
-can run in trigger
-step run only_if
-eval next step
+test eval next step and only if
 why is code not initialising
 step actions (forloop, form, output)
 

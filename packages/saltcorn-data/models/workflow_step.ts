@@ -9,6 +9,8 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowStepCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_step";
 import User from "./user";
 import Trigger from "./trigger";
+import Expression from "./expression";
+const { eval_expression } = Expression;
 
 const { getState } = require("../db/state");
 /**
@@ -123,13 +125,22 @@ class WorkflowStep {
   }
 
   async run(context: any, user: User) {
+    if (this.only_if) {
+      const proceed = eval_expression(
+        this.only_if,
+        context,
+        user,
+        `${this.name} step`
+      );
+      if (!proceed) return;
+    }
     let state_action = getState().actions[this.action_name];
     if (state_action) {
       return await state_action.run({
         configuration: this.configuration,
         user,
         row: context,
-        mode: "workflow"
+        mode: "workflow",
       });
     } else {
       const trigger = await Trigger.findOne({ name: this.action_name });
@@ -138,7 +149,7 @@ class WorkflowStep {
         configuration: trigger.configuration,
         user,
         row: context,
-        mode: "workflow"
+        mode: "workflow",
       });
     }
   }
