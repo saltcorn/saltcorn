@@ -117,7 +117,7 @@ class WorkflowStep {
         { initial_step: false },
         {
           trigger_id: this.trigger_id,
-          id: { not: this.id },
+          not: { id: this.id },
         }
       );
     }

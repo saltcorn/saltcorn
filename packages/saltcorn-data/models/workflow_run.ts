@@ -11,6 +11,7 @@ import WorkflowStep from "./workflow_step";
 import User from "./user";
 import Expression from "./expression";
 const { eval_expression } = Expression;
+const { getState } = require("../db/state");
 
 /**
  * WorkflowRun Class
@@ -128,6 +129,8 @@ class WorkflowRun {
       if (!fulfilled) return;
       else await this.update({ wait_info: {}, status: "Running" });
     }
+    const state = getState();
+
     //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
 
@@ -143,6 +146,8 @@ class WorkflowRun {
     while (step) {
       if (step.name !== this.current_step)
         await this.update({ current_step: step.name });
+
+      state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
 
       const result = await step.run(this.context, user);
 

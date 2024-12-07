@@ -789,9 +789,9 @@ router.get(
             script: `/static_assets/${db.connectObj.version_tag}/mermaid.min.js`,
           },
           {
-            headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${getState().getLightDarkMode(
-              req.user
-            ) ? ",theme: 'dark',":""}});</script>`,
+            headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${
+              getState().getLightDarkMode(req.user) ? ",theme: 'dark'," : ""
+            }});</script>`,
           },
         ],
         contents: {
@@ -1169,7 +1169,7 @@ router.post(
   "/stepedit/:trigger_id",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { trigger_id, step_id } = req.params;
+    const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(trigger, req);
     form.validate(req.body);
@@ -1199,20 +1199,24 @@ router.post(
       wf_step_name,
       wf_action_name,
       wf_next_step,
-      wf_inital_step,
+      wf_initial_step,
       wf_only_if,
       wf_step_id,
-      ...rest
+      ...configuration
     } = form.values;
+    Object.entries(configuration).forEach(([k, v]) => {
+      if (v === null) delete configuration[k];
+    });
     const step = {
       name: wf_step_name,
       action_name: wf_action_name,
       next_step: wf_next_step,
       only_if: wf_only_if,
-      initial_step: wf_inital_step,
+      initial_step: wf_initial_step,
       trigger_id,
-      configuration: rest,
+      configuration,
     };
+
     if (wf_step_id && wf_step_id !== "undefined") {
       const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
 
@@ -1338,7 +1342,7 @@ why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
 
+form in 
 implement modes for basic actions
-forms
 
 */
