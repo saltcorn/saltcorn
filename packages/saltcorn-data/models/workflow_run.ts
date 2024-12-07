@@ -48,10 +48,11 @@ class WorkflowRun {
   /**
    * @param {object} lib_in
    */
-  static async create(step_in: WorkflowRunCfg): Promise<void> {
-    const step = new WorkflowRun(step_in);
-
-    return await db.insert("_sc_workflow_runs", step.toJson);
+  static async create(run_in: WorkflowRunCfg): Promise<WorkflowRun> {
+    const run = new WorkflowRun(run_in);
+    const id = await db.insert("_sc_workflow_runs", run.toJson)
+    run.id = id
+    return run;
   }
 
   /**
@@ -156,7 +157,7 @@ class WorkflowRun {
         nextUpdate.status = "Finished";
       } else if ((nextStep = steps.find((s) => s.name === step.next_step))) {
         step = nextStep;
-        nextUpdate.step_name = step.name;
+        nextUpdate.current_step = step.name;
       }
 
       await this.update(nextUpdate);

@@ -12,6 +12,7 @@ import { GenObj } from "@saltcorn/types/common_types";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import mocks from "./mocks";
+import User from "../models/user";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);
@@ -27,7 +28,7 @@ describe("Workflow run steps", () => {
       when_trigger: "Never",
       name: "mywf",
     });
-    const step1 = await WorkflowStep.create({
+    await WorkflowStep.create({
       trigger_id: trigger.id!,
       name: "first_step",
       next_step: "second_step",
@@ -35,20 +36,25 @@ describe("Workflow run steps", () => {
       initial_step: true,
       configuration: { code: `return {to_context: {x:1}}` },
     });
-    const step2 = await WorkflowStep.create({
-        trigger_id: trigger.id!,
-        name: "second_step",
-        action_name: "run_js_code",
-        initial_step: false,
-        configuration: { code: `return {to_context: {y:x+1}}` },
-      });    
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "second_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {to_context: {y:x+1}}` },
+    });
   });
   it("should run", async () => {
-    const trigger = Trigger.findOne({name:"mywf"})
-    assertIsSet(trigger)
-    const run = await WorkflowRun.create({
-        trigger_id: trigger.id
-    })
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "mywf" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+    });
+    await wfrun.run(user);
+    expect(wfrun.context.x).toBe(1)
+    expect(wfrun.context.y).toBe(2)
 
-  });
+});
 });
