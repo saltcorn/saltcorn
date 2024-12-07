@@ -27,6 +27,7 @@ class WorkflowRun {
   error?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
   current_step?: string;
+  steps?: Array<WorkflowStep>;
 
   /**
    * WorkflowRun constructor
@@ -60,7 +61,7 @@ class WorkflowRun {
    * @type {...*}
    */
   get toJson(): any {
-    const { id, ...rest } = this;
+    const { id, steps, ...rest } = this;
     return rest;
   }
 
@@ -109,6 +110,30 @@ class WorkflowRun {
     Object.assign(this, row);
   }
 
+  get_next_step(step: WorkflowStep, user: User): WorkflowStep | null {
+    let nextStep;
+    if (!step?.next_step) {
+      return null;
+    } else if (
+      (nextStep = this.steps!.find((s) => s.name === step.next_step))
+    ) {
+      return nextStep;
+    } else {
+      // eval next_step
+      const next_step_ctx = { ...this.context };
+      this.steps!.forEach((s) => {
+        next_step_ctx[s.name] = s.name;
+      });
+      const next_step_name = eval_expression(
+        step.next_step,
+        next_step_ctx,
+        user,
+        `next_step in step ${step.name}`
+      );
+      return this.steps!.find((s) => s.name === next_step_name) || null;
+    }
+  }
+
   async run(user: User) {
     if (this.status === "Error" || this.status === "Finished") return;
     if (this.status === "Waiting") {
@@ -133,6 +158,7 @@ class WorkflowRun {
 
     //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
+    this.steps = steps;
 
     //find current step
     let step: any;
@@ -148,11 +174,11 @@ class WorkflowRun {
         await this.update({ current_step: step.name });
 
       state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
-    
+
       if (step.action_name === "UserForm") {
         await this.update({ status: "Waiting", wait_info: { form: true } });
         step = null;
-        break
+        break;
       }
 
       const result = await step.run(this.context, user);
@@ -163,30 +189,14 @@ class WorkflowRun {
         nextUpdate.context = this.context;
       }
       //find next step
-      let nextStep;
-      if (!step?.next_step) {
+      const nextStep = this.get_next_step(step, user);
+      if (!nextStep) {
         step = null;
         nextUpdate.status = "Finished";
-      } else if ((nextStep = steps.find((s) => s.name === step.next_step))) {
-        step = nextStep;
-        nextUpdate.current_step = step.name;
       } else {
-        // eval next_step
-        const next_step_ctx = { ...this.context };
-        steps.forEach((s) => {
-          next_step_ctx[s.name] = s.name;
-        });
-        const next_step_name = eval_expression(
-          step.next_step,
-          next_step_ctx,
-          user,
-          `next_step in step ${step.name}`
-        );
-        nextStep = steps.find((s) => s.name === next_step_name);
         step = nextStep;
         nextUpdate.current_step = step.name;
       }
-
       await this.update(nextUpdate);
     }
   }
