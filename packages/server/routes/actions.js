@@ -629,13 +629,13 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           attributes: {
             options: [
               "Yes/No",
+              "Checkbox",
               "Free text",
-              "Free HTML text",
               "Multiple choice",
-              "Multiple checks",
+              //"Multiple checks",
               "Integer",
               "Float",
-              "File upload",
+              //"File upload",
             ],
           },
         },
@@ -1326,6 +1326,12 @@ router.get(
               case "Error":
                 return run.error;
               case "Waiting":
+                if (run.wait_info?.form)
+                  return a(
+                    { href: `/actions/fill-workflow-form/${run.id}` },
+                    "Fill ",
+                    run.current_step
+                  );
                 return run.current_step;
               default:
                 return "";
@@ -1390,6 +1396,61 @@ router.get(
   })
 );
 
+router.get(
+  "/fill-workflow-form/:id",
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    const trigger = await Trigger.findOne({ id: run.trigger_id });
+    const step = await WorkflowStep.findOne({
+      trigger_id: trigger.id,
+      name: run.current_step,
+    });
+
+    //TODO permissions
+
+    const qTypeToField = (q) => {
+      switch (q.qtype) {
+        case "Yes/No":
+          return {
+            type: "String",
+            attributes: { options: "Yes,No" },
+            fieldview: "radio_group",
+          };
+        case "Checkbox":
+          return { type: "Bool" };
+        case "Free text":
+          return { type: "String" };
+        case "Multiple choice":
+          return {
+            type: "String",
+            attributes: { options: q.options },
+            fieldview: "radio_group",
+          };
+        case "Integer":
+          return { type: "Integer" };
+        case "Float":
+          return { type: "Float" };
+        default:
+          return {};
+      }
+    };
+
+    const form = new Form({
+      action: `/fill-workflow-form/${run.id}`,
+      blurb: step.configuration?.form_header || "",
+      fields: (step.configuration.user_form_questions || []).map((q) => ({
+        label: q.label,
+        name: q.var_name,
+        ...qTypeToField(q),
+      })),
+    });
+    const title = "Fill form";
+    res.sendWrap(title, renderForm(form, req.csrfToken()));
+  })
+);
+
 /* TODO
 
 why is code not initialising
@@ -1397,6 +1458,8 @@ step actions (forloop, form, output)
 show unconnected steps
 
 form user ui
+form which user?
+form notification
 implement modes for basic actions
 initial_step default on on first step
 

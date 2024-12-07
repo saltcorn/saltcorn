@@ -110,6 +110,14 @@ class WorkflowRun {
     Object.assign(this, row);
   }
 
+  async provide_form_input(form_values: any) {
+    //write values
+    Object.assign(this.context, form_values);
+
+    this.wait_info.form = false;
+    await this.update({ wait_info: this.wait_info, context: this.context });
+  }
+
   get_next_step(step: WorkflowStep, user: User): WorkflowStep | null {
     let nextStep;
     if (!step?.next_step) {
@@ -146,7 +154,7 @@ class WorkflowRun {
             if (new Date(v as Date | string) < new Date()) fulfilled = false;
             break;
           case "form":
-            fulfilled = false;
+            if (v) fulfilled = false;
           default:
             break;
         }
