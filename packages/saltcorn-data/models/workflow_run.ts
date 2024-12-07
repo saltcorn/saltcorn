@@ -126,6 +126,7 @@ class WorkflowRun {
         }
       });
       if (!fulfilled) return;
+      else await this.update({ wait_info: {}, status: "Running" });
     }
     //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
@@ -136,8 +137,8 @@ class WorkflowRun {
       step = steps.find((step) => step.name === this.current_step);
     else step = steps.find((step) => step.initial_step);
 
-    if (step && this.status === "Pending")
-      await this.update({ status: "Pending" });
+    if (step && this.status !== "Running")
+      await this.update({ status: "Running" });
     //run in loop
     while (step) {
       if (step.name !== this.current_step)
@@ -146,7 +147,7 @@ class WorkflowRun {
       const result = await step.run(this.context, user);
 
       const nextUpdate: any = {};
-      if (result.to_context) {
+      if (result?.to_context) {
         Object.assign(this.context, result.to_context);
         nextUpdate.context = this.context;
       }

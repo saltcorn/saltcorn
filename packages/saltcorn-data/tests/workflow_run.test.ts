@@ -39,9 +39,33 @@ describe("Workflow run steps", () => {
     await WorkflowStep.create({
       trigger_id: trigger.id!,
       name: "second_step",
+      next_step: "third_step",
       action_name: "run_js_code",
       initial_step: false,
       configuration: { code: `return {to_context: {y:x+1}}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "third_step",
+      next_step: "x>2 ? fifth_step : fourth_step ",
+      only_if: "y>4",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {to_context: {x:3}}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "fourth_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {to_context: {last:1}}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "fifth_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {to_context: {last:2}}` },
     });
   });
   it("should run", async () => {
@@ -55,6 +79,7 @@ describe("Workflow run steps", () => {
     await wfrun.run(user);
     expect(wfrun.context.x).toBe(1);
     expect(wfrun.context.y).toBe(2);
+    expect(wfrun.context.last).toBe(1);
   });
   it("should run through trigger", async () => {
     const user = await User.findOne({ id: 1 });
@@ -64,5 +89,6 @@ describe("Workflow run steps", () => {
     const result = await trigger.runWithoutRow({ user });
     expect(result.x).toBe(1);
     expect(result.y).toBe(2);
+    expect(result.last).toBe(1);
   });
 });
