@@ -128,7 +128,8 @@ class WorkflowStep {
       return await state_action.run({
         configuration: this.configuration,
         user,
-        row: context
+        row: context,
+        mode: "workflow"
       });
     } else {
       const trigger = await Trigger.findOne({ name: this.action_name });
@@ -136,7 +137,8 @@ class WorkflowStep {
       return await state_action.run({
         configuration: trigger.configuration,
         user,
-        row: context
+        row: context,
+        mode: "workflow"
       });
     }
   }
