@@ -215,7 +215,13 @@ class Trigger implements AbstractTrigger {
       for (const trigger of triggers) {
         state.log(4, `Trigger run ${trigger.name} ${trigger.action} `);
         try {
-          if (trigger.action === "Multi-step action") {
+          if (trigger.action === "Workflow") {
+            const wfrun = await require("./workflow_run").create({
+              trigger_id: trigger.id,
+              context: payload,
+            });
+            await wfrun.run(user);            
+          } else if (trigger.action === "Multi-step action") {
             let step_count = 0;
             const MAX_STEPS = 200;
             for (
@@ -348,7 +354,14 @@ class Trigger implements AbstractTrigger {
     const table = this.table_id
       ? require("./table").findOne({ id: this.table_id })
       : undefined;
-    if (this.action === "Multi-step action") {
+    if (this.action === "Workflow") {
+      const wfrun = await require("./workflow_run").create({
+        trigger_id: this.id,
+        context: runargs?.row || undefined,
+      });
+      await wfrun.run(runargs?.user || runargs?.req?.user);
+      return wfrun.context;
+    } else if (this.action === "Multi-step action") {
       let result: any = {};
       let step_count = 0;
       let MAX_STEPS = 200;
@@ -430,7 +443,10 @@ class Trigger implements AbstractTrigger {
   static setRunFunctions(triggers: Array<Trigger>, table: Table, user?: Row) {
     const { getState } = require("../db/state");
     for (const trigger of triggers) {
-      if (trigger.action === "Multi-step action") {
+      if (
+        trigger.action === "Multi-step action" ||
+        trigger.action === "Workflow"
+      ) {
         trigger.run = (row: Row, extraArgs?: any) =>
           trigger.runWithoutRow({
             user,
@@ -613,7 +629,7 @@ class Trigger implements AbstractTrigger {
     builtIns,
     builtInLabel,
     workflow,
-    noMultiStep
+    noMultiStep,
   }: {
     notRequireRow?: boolean;
     tableTriggers?: number;

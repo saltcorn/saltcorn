@@ -158,6 +158,8 @@ class WorkflowRun {
       } else if ((nextStep = steps.find((s) => s.name === step.next_step))) {
         step = nextStep;
         nextUpdate.current_step = step.name;
+      } else {
+        // eval next_step
       }
 
       await this.update(nextUpdate);
