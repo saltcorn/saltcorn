@@ -1322,7 +1322,10 @@ router.get(
         contents: table(
           tbody(
             tr(th("Run ID"), td(run.id)),
-            tr(th("Trigger"), td(trigger.name)),
+            tr(
+              th("Trigger"),
+              td(a({ href: `/actions/configure/${trigger.id}` }, trigger.name))
+            ),
             tr(th("Started"), td(localeDateTime(run.started_at))),
             tr(th("Status"), td(run.status)),
             run.status === "Waiting"
@@ -1342,7 +1345,8 @@ why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
 
-form in 
+form in cfg
+form in run.
 implement modes for basic actions
 
 */
