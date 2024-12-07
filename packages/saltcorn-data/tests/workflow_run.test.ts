@@ -53,8 +53,16 @@ describe("Workflow run steps", () => {
       trigger_id: trigger.id,
     });
     await wfrun.run(user);
-    expect(wfrun.context.x).toBe(1)
-    expect(wfrun.context.y).toBe(2)
-
-});
+    expect(wfrun.context.x).toBe(1);
+    expect(wfrun.context.y).toBe(2);
+  });
+  it("should run through trigger", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "mywf" });
+    assertIsSet(trigger);
+    const result = await trigger.runWithoutRow({ user });
+    expect(result.x).toBe(1);
+    expect(result.y).toBe(2);
+  });
 });
