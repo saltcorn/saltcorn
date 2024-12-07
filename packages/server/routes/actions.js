@@ -597,7 +597,60 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     noMultiStep: true,
+    builtInLabel: "Workflow Actions",
+    builtIns: ["UserForm"],
   });
+
+  actionConfigFields.push({
+    label: "Form header",
+    name: "form_header",
+    type: "String",
+    showIf: { wf_action_name: "UserForm" },
+  });
+  actionConfigFields.push(
+    new FieldRepeat({
+      name: "user_form_questions",
+      showIf: { wf_action_name: "UserForm" },
+      fields: [
+        {
+          label: "Label",
+          name: "label",
+          type: "String",
+        },
+        {
+          label: "Variable name",
+          name: "var_name",
+          type: "String",
+        },
+        {
+          label: "Type",
+          name: "qtype",
+          type: "String",
+          attributes: {
+            options: [
+              "Yes/No",
+              "Free text",
+              "Free HTML text",
+              "Multiple choice",
+              "Multiple checks",
+              "Integer",
+              "Float",
+              "File upload",
+            ],
+          },
+        },
+        {
+          label: "Options",
+          name: "options",
+          type: "String",
+          sublabel: "Comma separated options",
+          showIf: { qtype: ["Multiple choice", "Multiple checks"] },
+        },
+      ],
+    })
+  );
+
+  console.log(actionsNotRequiringRow);
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
@@ -1345,8 +1398,8 @@ why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
 
-form in cfg
 form in run.
 implement modes for basic actions
+initial_step default on on first step
 
 */
