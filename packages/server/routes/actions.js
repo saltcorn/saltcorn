@@ -31,7 +31,12 @@ const db = require("@saltcorn/data/db");
  */
 const router = new Router();
 module.exports = router;
-const { renderForm, link, mkTable, localeDateTime } = require("@saltcorn/markup");
+const {
+  renderForm,
+  link,
+  mkTable,
+  localeDateTime,
+} = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const {
   div,
@@ -784,7 +789,9 @@ router.get(
             script: `/static_assets/${db.connectObj.version_tag}/mermaid.min.js`,
           },
           {
-            headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'});</script>`,
+            headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${getState().getLightDarkMode(
+              req.user
+            ) ? ",theme: 'dark',":""}});</script>`,
           },
         ],
         contents: {
@@ -1317,7 +1324,7 @@ router.get(
             run.status === "Waiting"
               ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
               : null,
-            tr(th("Context"), td(pre(JSON.stringify(run.context, null,2))))
+            tr(th("Context"), td(pre(JSON.stringify(run.context, null, 2))))
           )
         ),
       },
@@ -1330,8 +1337,6 @@ router.get(
 why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
-
-runs UI
 
 implement modes for basic actions
 forms
