@@ -7,7 +7,10 @@
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowStepCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_step";
+import User from "./user";
+import Trigger from "./trigger";
 
+const { getState } = require("../db/state");
 /**
  * WorkflowStep Class
  * @category saltcorn-data
@@ -117,6 +120,25 @@ class WorkflowStep {
       );
     }
     await db.update("_sc_workflow_steps", row, this.id);
+  }
+
+  async run(context: any, user: User) {
+    let state_action = getState().actions[this.action_name];
+    if (state_action) {
+      return await state_action.run({
+        configuration: this.configuration,
+        user,
+        row: context
+      });
+    } else {
+      const trigger = await Trigger.findOne({ name: this.action_name });
+      state_action = getState().actions[trigger.action];
+      return await state_action.run({
+        configuration: trigger.configuration,
+        user,
+        row: context
+      });
+    }
   }
 }
 

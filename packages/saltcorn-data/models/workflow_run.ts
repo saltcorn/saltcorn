@@ -8,6 +8,9 @@ import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_run";
 import WorkflowStep from "./workflow_step";
+import User from "./user";
+
+const { getState } = require("../db/state");
 
 /**
  * WorkflowRun Class
@@ -104,7 +107,7 @@ class WorkflowRun {
     Object.assign(this, row);
   }
 
-  async run() {
+  async run(user: User) {
     if (this.status === "Error" || this.status === "Finished") return;
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
@@ -124,6 +127,7 @@ class WorkflowRun {
     }
     //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
+
     //find current step
     let step;
     if (this.current_step)
@@ -135,13 +139,24 @@ class WorkflowRun {
       if (step.name !== this.current_step)
         await this.update({ current_step: step.name });
 
-      //find action
+      const result = await step.run(this.context, user);
 
-      //run action
-
-      //update context
-
+      const nextUpdate: any = {};
+      if (result.to_context) {
+        Object.assign(this.context, result.to_context);
+        nextUpdate.context = this.context;
+      }
       //find next step
+      let nextStep;
+      if (!step?.next_step) {
+        step = null;
+        nextUpdate.status = "Finished";
+      } else if ((nextStep = steps.find((s) => s.name === step!.next_step))) {
+        step = nextStep;
+        nextUpdate.step_name = step.name;
+      }
+
+      await this.update(nextUpdate);
     }
   }
 }
