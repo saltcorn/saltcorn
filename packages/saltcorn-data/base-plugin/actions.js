@@ -1382,6 +1382,7 @@ module.exports = {
             topic: "JavaScript action code",
           },
           showIf: { run_where: "Server" },
+          attributes: { secondColHoriz: true },
         },
         {
           input_type: "section_header",
@@ -1391,6 +1392,7 @@ module.exports = {
             topic: "JavaScript action code",
           },
           showIf: { run_where: "Client page" },
+          attributes: { secondColHoriz: true },
         },
         {
           name: "run_where",
