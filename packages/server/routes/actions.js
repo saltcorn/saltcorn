@@ -1317,7 +1317,7 @@ router.get(
             run.status === "Waiting"
               ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
               : null,
-            tr(th("Context"), td(JSON.stringify(run.context)))
+            tr(th("Context"), td(pre(JSON.stringify(run.context, null,2))))
           )
         ),
       },
