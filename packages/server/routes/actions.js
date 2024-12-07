@@ -31,7 +31,7 @@ const db = require("@saltcorn/data/db");
  */
 const router = new Router();
 module.exports = router;
-const { renderForm, link, mkTable } = require("@saltcorn/markup");
+const { renderForm, link, mkTable, localeDateTime } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const {
   div,
@@ -47,6 +47,7 @@ const {
   td,
   h6,
   pre,
+  th,
   text,
   i,
   ul,
@@ -1237,12 +1238,6 @@ router.post(
   })
 );
 
-/**
- * @name post/clone/:id
- * @function
- * @memberof module:routes/actions~actionsRouter
- * @function
- */
 router.get(
   "/runs",
   isAdmin,
@@ -1276,7 +1271,8 @@ router.get(
           },
         },
       ],
-      runs
+      runs,
+      { onRowSelect: (row) => `location.href='/actions/run/${row.id}'` }
     );
     send_events_page({
       res,
@@ -1288,6 +1284,42 @@ router.get(
         titleAjaxIndicator: true,
         title: req.__("Workflow runs"),
         contents: wfTable,
+      },
+    });
+  })
+);
+
+router.get(
+  "/run/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    const trigger = await Trigger.findOne({ id: run.trigger_id });
+
+    send_events_page({
+      res,
+      req,
+      active_sub: "Workflow runs",
+      page_title: req.__(`Workflow runs`),
+      sub2_page: trigger.name,
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title: req.__("Workflow run"),
+        contents: table(
+          tbody(
+            tr(th("Run ID"), td(run.id)),
+            tr(th("Trigger"), td(trigger.name)),
+            tr(th("Started"), td(localeDateTime(run.started_at))),
+            tr(th("Status"), td(run.status)),
+            run.status === "Waiting"
+              ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
+              : null,
+            tr(th("Context"), td(JSON.stringify(run.context)))
+          )
+        ),
       },
     });
   })

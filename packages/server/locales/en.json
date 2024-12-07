@@ -1504,5 +1504,6 @@
 	"Initial step": "Initial step",
 	"Confirm leaving unsaved": "Confirm leaving unsaved",
 	"Ask the user to confirm if they close a tab with unsaved changes": "Ask the user to confirm if they close a tab with unsaved changes",
-	"Workflow runs": "Workflow runs"
+	"Workflow runs": "Workflow runs",
+	"Workflow run": "Workflow run"
 }
