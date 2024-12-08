@@ -10,6 +10,9 @@ import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_wo
 import WorkflowStep from "./workflow_step";
 import User from "./user";
 import Expression from "./expression";
+import Notification from "./notification";
+import utils from "../utils";
+const { ensure_final_slash } = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
 
@@ -223,6 +226,14 @@ class WorkflowRun {
         } else user_id = user?.id;
         if (user_id) {
           //TODO send notification
+          const base_url = state.getConfig("base_url", "");
+          await Notification.create({
+            title: "Your input is required",
+            link: `${ensure_final_slash(base_url)}actions/fill-workflow-form/${
+              this.id
+            }`,
+            user_id,
+          });
         }
         await this.update({
           status: "Waiting",

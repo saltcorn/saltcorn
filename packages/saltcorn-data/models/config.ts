@@ -11,7 +11,7 @@ const { getConfigFile, configFilePath } = require("../db/connect");
 import { writeFileSync } from "fs";
 import { tz } from "moment-timezone";
 import utils from "../utils";
-const { isNode, sleep } = utils;
+const { isNode, sleep, ensure_final_slash } = utils;
 const allTimezones = tz.names();
 const defaultTimezone = tz.guess();
 
@@ -1326,14 +1326,6 @@ const get_latest_npm_version = async (
     return guess;
   }
 };
-
-/**
- * Ensure that string is finished with /
- * @param {string} s
- * @returns {string}
- */
-const ensure_final_slash = (s: string): string =>
-  s.endsWith("/") ? s : s + "/";
 
 /**
  * Get base url
