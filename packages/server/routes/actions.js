@@ -605,6 +605,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
     builtIns: ["UserForm", "WaitUntil", "WaitNextTick"],
+    forWorkflow: true
   });
 
   actionConfigFields.push({
@@ -1546,13 +1547,14 @@ router.post(
 
 /* TODO
 
-show unconnected steps
 
 disable in workflows: blocks
 implement modes for basic actions: webhook, send_email (select table), insert row (set id)
 in pack, restore
+
 interactive run
 
+show unconnected steps
 workflow actions: SetContext, ForLoop, EndForLoop
 debug run
 why is code not initialising

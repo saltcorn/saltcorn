@@ -588,10 +588,12 @@ class Trigger implements AbstractTrigger {
     return Object.entries(getState().actions).map(([k, v]: [string, any]) => {
       const hasConfig = !!v.configFields;
       const requireRow = !!v.requireRow;
+      const disableInWorkflow = !!v.disableInWorkflow;
       return {
         name: k,
         hasConfig,
         requireRow,
+        disableInWorkflow,
         namespace: v.namespace,
       };
     });
@@ -633,6 +635,7 @@ class Trigger implements AbstractTrigger {
     builtInLabel,
     workflow,
     noMultiStep,
+    forWorkflow,
   }: {
     notRequireRow?: boolean;
     tableTriggers?: number;
@@ -641,12 +644,15 @@ class Trigger implements AbstractTrigger {
     builtInLabel?: string;
     workflow?: boolean;
     noMultiStep?: boolean;
+    forWorkflow?: boolean;
   }): any[] {
     const triggerActions = Trigger.trigger_actions({
       tableTriggers,
       apiNeverTriggers,
     });
-    const actions = Trigger.abbreviated_actions;
+    const actions = forWorkflow
+      ? Trigger.abbreviated_actions.filter((a) => !a.disableInWorkflow)
+      : Trigger.abbreviated_actions;
     const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
       .filter(Boolean) //Other last
       .sort();

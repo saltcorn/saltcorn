@@ -184,6 +184,7 @@ module.exports = {
   blocks: {
     disableInBuilder: true,
     disableInList: true,
+    disableInWorkflow: true,
     description: "Build action with drag and drop steps similar to Scratch",
     configFields: [
       {
@@ -1170,6 +1171,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Step control flow",
+    disableInWorkflow: true,
     configFields: [
       {
         name: "control_action",
