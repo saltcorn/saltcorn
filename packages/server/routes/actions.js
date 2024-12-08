@@ -1396,6 +1396,46 @@ router.get(
   })
 );
 
+const getWorkflowStepUserForm = async (run, trigger, step, user) => {
+  const qTypeToField = (q) => {
+    switch (q.qtype) {
+      case "Yes/No":
+        return {
+          type: "String",
+          attributes: { options: "Yes,No" },
+          fieldview: "radio_group",
+        };
+      case "Checkbox":
+        return { type: "Bool" };
+      case "Free text":
+        return { type: "String" };
+      case "Multiple choice":
+        return {
+          type: "String",
+          attributes: { options: q.options },
+          fieldview: "radio_group",
+        };
+      case "Integer":
+        return { type: "Integer" };
+      case "Float":
+        return { type: "Float" };
+      default:
+        return {};
+    }
+  };
+
+  const form = new Form({
+    action: `/actions/fill-workflow-form/${run.id}`,
+    blurb: step.configuration?.form_header || "",
+    fields: (step.configuration.user_form_questions || []).map((q) => ({
+      label: q.label,
+      name: q.var_name,
+      ...qTypeToField(q),
+    })),
+  });
+  return form;
+};
+
 router.get(
   "/fill-workflow-form/:id",
   error_catcher(async (req, res) => {
@@ -1409,45 +1449,42 @@ router.get(
     });
 
     //TODO permissions
+    const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
 
-    const qTypeToField = (q) => {
-      switch (q.qtype) {
-        case "Yes/No":
-          return {
-            type: "String",
-            attributes: { options: "Yes,No" },
-            fieldview: "radio_group",
-          };
-        case "Checkbox":
-          return { type: "Bool" };
-        case "Free text":
-          return { type: "String" };
-        case "Multiple choice":
-          return {
-            type: "String",
-            attributes: { options: q.options },
-            fieldview: "radio_group",
-          };
-        case "Integer":
-          return { type: "Integer" };
-        case "Float":
-          return { type: "Float" };
-        default:
-          return {};
-      }
-    };
-
-    const form = new Form({
-      action: `/fill-workflow-form/${run.id}`,
-      blurb: step.configuration?.form_header || "",
-      fields: (step.configuration.user_form_questions || []).map((q) => ({
-        label: q.label,
-        name: q.var_name,
-        ...qTypeToField(q),
-      })),
-    });
     const title = "Fill form";
     res.sendWrap(title, renderForm(form, req.csrfToken()));
+  })
+);
+
+router.post(
+  "/fill-workflow-form/:id",
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    const trigger = await Trigger.findOne({ id: run.trigger_id });
+    const step = await WorkflowStep.findOne({
+      trigger_id: trigger.id,
+      name: run.current_step,
+    });
+
+    //TODO permissions
+    const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      const title = "Fill form";
+      res.sendWrap(title, renderForm(form, req.csrfToken()));
+    } else {
+      await run.provide_form_input(form.values);
+      await run.run(req.user);
+      if (req.xhr) {
+        const retDirs = await run.popReturnDirectives();
+        res.json({ success: "ok", ...retDirs });
+      } else {
+        if (run.context.goto) res.redirect(run.context.goto);
+        else res.redirect("/")
+      }
+    }
   })
 );
 
@@ -1462,5 +1499,6 @@ form which user?
 form notification
 implement modes for basic actions
 initial_step default on on first step
+workflow actions: SetContext
 
 */

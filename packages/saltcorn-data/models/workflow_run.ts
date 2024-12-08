@@ -13,6 +13,17 @@ import Expression from "./expression";
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
 
+const allReturnDirectives = [
+  "popup",
+  "goto",
+  "eval_js",
+  "download",
+  "set_fields",
+  "notify",
+  "notify_success",
+  "error",
+];
+
 /**
  * WorkflowRun Class
  * @category saltcorn-data
@@ -106,6 +117,8 @@ class WorkflowRun {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
+    console.log("updating wf", this.id, row);
+
     await db.update("_sc_workflow_runs", row, this.id);
     Object.assign(this, row);
   }
@@ -144,6 +157,7 @@ class WorkflowRun {
 
   async run(user: User) {
     if (this.status === "Error" || this.status === "Finished") return;
+    const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
       //TODO
@@ -160,12 +174,21 @@ class WorkflowRun {
         }
       });
       if (!fulfilled) return;
-      else await this.update({ wait_info: {}, status: "Running" });
+      else {
+        const step = steps.find((step) => step.name === this.current_step);
+        const nextStep = this.get_next_step(step!, user);
+
+        await this.update({
+          wait_info: {},
+          status: nextStep ? "Running" : "Finished",
+          current_step: nextStep?.name,
+        });
+        if (!nextStep) return;
+      }
     }
     const state = getState();
 
     //get steps
-    const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
     this.steps = steps;
 
     //find current step
@@ -207,6 +230,20 @@ class WorkflowRun {
       }
       await this.update(nextUpdate);
     }
+  }
+
+  async popReturnDirectives() {
+    const retVals: any = Object.create(null);
+    allReturnDirectives.forEach((k) => {
+      if (typeof this.context[k] !== "undefined") {
+        retVals[k] = this.context[k];
+        delete this.context[k];
+      }
+    });
+    if (Object.keys(retVals).length)
+      await this.update({ context: this.context });
+
+    return retVals;
   }
 }
 
