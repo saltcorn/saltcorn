@@ -1515,9 +1515,11 @@ const displayAdditionalButtons = (
     .filter((btn) => !!btn.afterSave === !!afterSave)
     .map(
       (btn) =>
-        `<button type="button" id="${btn.id}" class="${btn.class}"${
-          btn.onclick ? ` onclick="${btn.onclick}"` : ""
-        } ${btn.disabled ? "disabled" : ""}>${btn.label}</button>&nbsp;`
+        `<button type="button" id="${btn.id}" class="${btn.class}${
+          afterSave ? " ms-2" : ""
+        }"${btn.onclick ? ` onclick="${btn.onclick}"` : ""} ${
+          btn.disabled ? "disabled" : ""
+        }>${btn.label}</button>&nbsp;`
     )
     .join("");
 

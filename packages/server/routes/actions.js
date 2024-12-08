@@ -683,6 +683,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
             label: req.__("Delete"),
             class: "btn btn-outline-danger",
             onclick: `ajax_post('/actions/delete-step/${+step_id}')`,
+            afterSave: true,
           },
         ]
       : undefined,
@@ -1392,6 +1393,7 @@ router.get(
 
     const run = await WorkflowRun.findOne({ id });
     const trigger = await Trigger.findOne({ id: run.trigger_id });
+    console.log(run.context);
 
     send_events_page({
       res,
@@ -1552,8 +1554,8 @@ router.post(
 
 /* TODO
 
-
-implement modes for basic actions: webhook, send_email (select table)
+text
+implement modes for basic actions: send_email (select table)
 in pack, restore
 
 interactive run
