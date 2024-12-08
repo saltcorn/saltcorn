@@ -1551,7 +1551,6 @@ show unconnected steps
 disable in workflows: blocks
 implement modes for basic actions: webhook, send_email (select table), insert row (set id)
 in pack, restore
-run in scheduler if waiting
 interactive run
 
 workflow actions: SetContext, ForLoop, EndForLoop

@@ -170,13 +170,17 @@ class WorkflowRun {
     if (!state.waitingWorkflows) return [];
 
     const waiting_runs = await WorkflowRun.find({ status: "Waiting" });
-    const until_runs = waiting_runs.filter((r) => r.wait_info.until_time);
+
+    const until_runs = waiting_runs.filter((r) => !r.wait_info.form);
+
     if (!until_runs.length) {
       state.waitingWorkflows = false;
       return [];
     }
     const now = new Date();
-    return until_runs.filter((r) => new Date(r.wait_info.until_time) < now);
+    return until_runs.filter(
+      (r) => !r.wait_info.until_time || new Date(r.wait_info.until_time) < now
+    );
   }
 
   //call from scheduler
@@ -189,7 +193,10 @@ class WorkflowRun {
 
   async run({ user }: { user?: User }) {
     if (this.status === "Error" || this.status === "Finished") return;
+    //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
+    this.steps = steps;
+    
     const state = getState();
 
     if (this.status === "Waiting") {
@@ -221,8 +228,6 @@ class WorkflowRun {
       }
     }
 
-    //get steps
-    this.steps = steps;
 
     //find current step
     let step: any;
