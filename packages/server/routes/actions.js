@@ -1476,13 +1476,13 @@ router.post(
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
       await run.provide_form_input(form.values);
-      await run.run(req.user);
+      await run.run({ user: req.user });
       if (req.xhr) {
         const retDirs = await run.popReturnDirectives();
         res.json({ success: "ok", ...retDirs });
       } else {
         if (run.context.goto) res.redirect(run.context.goto);
-        else res.redirect("/")
+        else res.redirect("/");
       }
     }
   })
@@ -1494,11 +1494,11 @@ why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
 
-form user ui
 form which user?
 form notification
 implement modes for basic actions
 initial_step default on on first step
 workflow actions: SetContext
+interactive
 
 */

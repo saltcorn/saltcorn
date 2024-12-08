@@ -155,7 +155,7 @@ class WorkflowRun {
     }
   }
 
-  async run(user: User) {
+  async run({ user }: { user: User }) {
     if (this.status === "Error" || this.status === "Finished") return;
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
     if (this.status === "Waiting") {

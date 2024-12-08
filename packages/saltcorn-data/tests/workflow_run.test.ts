@@ -76,7 +76,7 @@ describe("Workflow run steps", () => {
     const wfrun = await WorkflowRun.create({
       trigger_id: trigger.id,
     });
-    await wfrun.run(user);
+    await wfrun.run({user});
     expect(wfrun.context.x).toBe(1);
     expect(wfrun.context.y).toBe(2);
     expect(wfrun.context.last).toBe(1);

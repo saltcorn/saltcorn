@@ -220,7 +220,7 @@ class Trigger implements AbstractTrigger {
               trigger_id: trigger.id,
               context: payload,
             });
-            await wfrun.run(user);            
+            await wfrun.run({user});            
           } else if (trigger.action === "Multi-step action") {
             let step_count = 0;
             const MAX_STEPS = 200;
@@ -359,7 +359,7 @@ class Trigger implements AbstractTrigger {
         trigger_id: this.id,
         context: runargs?.row || undefined,
       });
-      await wfrun.run(runargs?.user || runargs?.req?.user);
+      await wfrun.run({user: runargs?.user || runargs?.req?.user});
       return wfrun.context;
     } else if (this.action === "Multi-step action") {
       let result: any = {};
