@@ -578,34 +578,36 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   let stateActions = getState().actions;
   const stateActionKeys = Object.entries(stateActions)
-    .filter(([k, v]) => !v.disableInList && (table || !v.requireRow))
+    .filter(([k, v]) => !v.disableInWorkflow)
     .map(([k, v]) => k);
 
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
-    const cfgFields = await getActionConfigFields(action, table, {
-      mode: "workflow",
-    });
+    try {
+      const cfgFields = await getActionConfigFields(action, table, {
+        mode: "workflow",
+      });
 
-    for (const field of cfgFields) {
-      const cfgFld = {
-        ...field,
-        showIf: {
-          wf_action_name: name,
-          ...(field.showIf || {}),
-        },
-      };
-      if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
-      actionConfigFields.push(cfgFld);
-    }
+      for (const field of cfgFields) {
+        const cfgFld = {
+          ...field,
+          showIf: {
+            wf_action_name: name,
+            ...(field.showIf || {}),
+          },
+        };
+        if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        actionConfigFields.push(cfgFld);
+      }
+    } catch {}
   }
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
     builtIns: ["UserForm", "WaitUntil", "WaitNextTick"],
-    forWorkflow: true
+    forWorkflow: true,
   });
 
   actionConfigFields.push({
@@ -1548,8 +1550,7 @@ router.post(
 /* TODO
 
 
-disable in workflows: blocks
-implement modes for basic actions: webhook, send_email (select table), insert row (set id)
+implement modes for basic actions: webhook, send_email (select table), insert any row (set id)
 in pack, restore
 
 interactive run

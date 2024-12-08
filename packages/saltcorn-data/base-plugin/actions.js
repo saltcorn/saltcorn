@@ -783,6 +783,7 @@ module.exports = {
         },
       ];
     },
+    disableInWorkflow: true,
     requireRow: true,
     /**
      * @param {object} opts
@@ -1418,7 +1419,26 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Run arbitrary JavaScript code from a String field",
-    configFields: async ({ table }) => {
+    configFields: async ({ table, mode }) => {
+      console.log({ mode });
+
+      if (mode === "workflow")
+        return [
+          {
+            name: "code_field",
+            label: "Code field",
+            sublabel:
+              "String variable in context contains the JavaScript code to run",
+            type: "String",
+            required: true,
+          },
+          {
+            name: "run_where",
+            label: "Run where",
+            input_type: "select",
+            options: ["Server", "Client page"],
+          },
+        ];
       const field_opts = table.fields
         .filter((f) => f.type?.name === "String")
         .map((f) => f.name);
@@ -1463,6 +1483,7 @@ module.exports = {
       table,
       configuration: { code_field, run_where },
       row,
+      mode,
       ...rest
     }) => {
       let code;

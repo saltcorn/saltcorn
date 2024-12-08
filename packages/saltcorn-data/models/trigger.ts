@@ -671,7 +671,7 @@ class Trigger implements AbstractTrigger {
         .filter(
           (a) =>
             (ns === "Other" ? !a.namespace : a.namespace === ns) &&
-            (!notRequireRow || !a.requireRow)
+            (!notRequireRow || !a.requireRow || forWorkflow)
         )
         .map((t) => t.name)
         .sort();
