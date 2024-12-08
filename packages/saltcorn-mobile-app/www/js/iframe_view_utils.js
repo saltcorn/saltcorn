@@ -32,8 +32,11 @@ async function execLink(url, linkSrc) {
       else {
         const { path, query } =
           parent.saltcorn.mobileApp.navigation.splitPathQuery(url);
+        const safePath = path.startsWith("http")
+          ? new URL(path).pathname
+          : path;
         await parent.saltcorn.mobileApp.navigation.handleRoute(
-          `get${path}`,
+          `get${safePath}`,
           query
         );
       }

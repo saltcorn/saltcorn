@@ -100,6 +100,7 @@ export async function copyPublicDirs(buildDir: string) {
     const location = state.plugin_locations[k];
     if (location) {
       const pckJson = require(join(location, "package.json"));
+      const versionedName = `${k}@${pckJson.version}`;
       for (const { script, css } of state.headers[k] || []) {
         if (script) copyHeaderToApp(location, script, wwwDir);
         if (css) copyHeaderToApp(location, css, wwwDir);
@@ -107,17 +108,24 @@ export async function copyPublicDirs(buildDir: string) {
       if (k !== "sbadmin2")
         copyAllPublicFiles(
           location,
-          join(wwwDir, "sc_plugins", "public", `${k}@${pckJson.version}`)
+          join(wwwDir, "sc_plugins", "public", versionedName)
         );
-    }
-    if (pluginCfgs[k] && pluginCfgs[k].alt_css_file) {
-      const altCssFile = await File.findOne(pluginCfgs[k].alt_css_file);
-      if (altCssFile)
-        copySync(
-          altCssFile.location,
-          join(wwwDir, "sc_plugins", "public", k, pluginCfgs[k].alt_css_file),
-          { recursive: true }
-        );
+
+      if (pluginCfgs[k] && pluginCfgs[k].alt_css_file) {
+        const altCssFile = await File.findOne(pluginCfgs[k].alt_css_file);
+        if (altCssFile)
+          copySync(
+            altCssFile.location,
+            join(
+              wwwDir,
+              "sc_plugins",
+              "public",
+              versionedName,
+              pluginCfgs[k].alt_css_file
+            ),
+            { recursive: true }
+          );
+      }
     }
   }
 }

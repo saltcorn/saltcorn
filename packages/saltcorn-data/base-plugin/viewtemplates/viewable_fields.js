@@ -66,7 +66,11 @@ const action_url = (
   if (action_name === "Delete")
     return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack")
-    return { javascript: isNode() ? "history.back()" : "parent.goBack()" };
+    return {
+      javascript: isNode()
+        ? "history.back()"
+        : "parent.saltcorn.mobileApp.navigation.goBack()",
+    };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
     return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
@@ -923,7 +927,7 @@ const get_viewable_fields = (
           key = validSqlId(
             column.targetNm ||
               `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`
-          );          
+          );
         } else {
           const keypath = column.join_field.split(".");
           refNm = keypath[0];
