@@ -603,7 +603,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
-    builtIns: ["UserForm"],
+    builtIns: ["UserForm", "WaitUntil", "WaitNextTick"],
   });
 
   actionConfigFields.push({
@@ -615,6 +615,14 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   actionConfigFields.push({
     label: "User ID expression",
     name: "user_id_expression",
+    type: "String",
+    showIf: { wf_action_name: "UserForm" },
+  });
+  actionConfigFields.push({
+    label: "Resume at",
+    name: "resume_at",
+    sublabel:
+      "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
     type: "String",
     showIf: { wf_action_name: "UserForm" },
   });
@@ -1494,7 +1502,7 @@ router.post(
       }
       return;
     }
-    
+
     const trigger = await Trigger.findOne({ id: run.trigger_id });
     const step = await WorkflowStep.findOne({
       trigger_id: trigger.id,
@@ -1524,12 +1532,15 @@ router.post(
 
 show unconnected steps
 
-implement modes for basic actions
-workflow actions: SetContext, WaitUntil, StopWorkFlow, WaitNextTick, ForLoop, EndForLoop
+disable in workflows: blocks
+implement modes for basic actions: webhook, send_email (select table), insert row (set id)
 in pack, restore
-interactive
-why is code not initialising
+run in scheduler if waiting
+interactive run
 
+workflow actions: SetContext, ForLoop, EndForLoop
+debug run
+why is code not initialising
 drag and drop edges
 
 */

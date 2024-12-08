@@ -12,6 +12,7 @@ import User from "./user";
 import Expression from "./expression";
 import Notification from "./notification";
 import utils from "../utils";
+import moment from "moment";
 const { ensure_final_slash } = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
@@ -240,6 +241,29 @@ class WorkflowRun {
           wait_info: { form: { user_id: user_id } },
         });
         step = null;
+        break;
+      }
+
+      if (step.action_name === "WaitNextTick") {
+        await this.update({
+          status: "Waiting",
+          wait_info: {},
+        });
+
+        break;
+      }
+      if (step.action_name === "WaitUntil") {
+        const resume_at = eval_expression(
+          step.configuration.resume_at,
+          { moment, ...this.context },
+          user,
+          `Resume at expression in step ${step.name}`
+        );
+        await this.update({
+          status: "Waiting",
+          wait_info: { until_time: new Date(resume_at).toISOString() },
+        });
+
         break;
       }
 
