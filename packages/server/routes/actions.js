@@ -561,7 +561,12 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
 window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
     ) +
     a(
-      { href: `/actions/stepedit/${trigger.id}`, class: "btn btn-primary" },
+      {
+        href: `/actions/stepedit/${trigger.id}?name=step${steps.length+1}${
+          initial_step ? "" : "&initial_step=true"
+        }`,
+        class: "btn btn-primary",
+      },
       i({ class: "fas fa-plus me-2" }),
       "Add step"
     )
@@ -1195,8 +1200,12 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
+    const { initial_step, name } = req.query;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(trigger, req, step_id);
+
+    if (initial_step) form.values.wf_initial_step = true;
+    if (name) form.values.wf_step_name = name;
     send_events_page({
       res,
       req,
@@ -1500,5 +1509,6 @@ implement modes for basic actions
 initial_step default on on first step
 workflow actions: SetContext
 interactive
+drag and drop edges
 
 */
