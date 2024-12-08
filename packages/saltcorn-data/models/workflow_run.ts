@@ -206,7 +206,7 @@ class WorkflowRun {
       Object.entries(this.wait_info || {}).forEach(([k, v]) => {
         switch (k) {
           case "until_time":
-            if (new Date(v as Date | string) < new Date()) fulfilled = false;
+            if (new Date(v as Date | string) > new Date()) fulfilled = false;
             break;
           case "form":
             if (v) fulfilled = false;
