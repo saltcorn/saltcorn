@@ -562,7 +562,7 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
     ) +
     a(
       {
-        href: `/actions/stepedit/${trigger.id}?name=step${steps.length+1}${
+        href: `/actions/stepedit/${trigger.id}?name=step${steps.length + 1}${
           initial_step ? "" : "&initial_step=true"
         }`,
         class: "btn btn-primary",
@@ -609,6 +609,12 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   actionConfigFields.push({
     label: "Form header",
     name: "form_header",
+    type: "String",
+    showIf: { wf_action_name: "UserForm" },
+  });
+  actionConfigFields.push({
+    label: "User ID expression",
+    name: "user_id_expression",
     type: "String",
     showIf: { wf_action_name: "UserForm" },
   });
@@ -1451,13 +1457,22 @@ router.get(
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id });
+
+    if (!run.user_allowed_to_fill_form(req.user)) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+
     const trigger = await Trigger.findOne({ id: run.trigger_id });
     const step = await WorkflowStep.findOne({
       trigger_id: trigger.id,
       name: run.current_step,
     });
 
-    //TODO permissions
     const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
 
     const title = "Fill form";
@@ -1471,13 +1486,21 @@ router.post(
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id });
+    if (!run.user_allowed_to_fill_form(req.user)) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+    
     const trigger = await Trigger.findOne({ id: run.trigger_id });
     const step = await WorkflowStep.findOne({
       trigger_id: trigger.id,
       name: run.current_step,
     });
 
-    //TODO permissions
     const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
     form.validate(req.body);
     if (form.hasErrors) {
@@ -1503,11 +1526,9 @@ why is code not initialising
 step actions (forloop, form, output)
 show unconnected steps
 
-form which user?
 form notification
 implement modes for basic actions
-initial_step default on on first step
-workflow actions: SetContext
+workflow actions: SetContext, WaitUntil, StopWorkFlow, WaitNextTick, ForLoop, EndForLoop
 interactive
 drag and drop edges
 

@@ -153,6 +153,13 @@ class WorkflowRun {
     }
   }
 
+  user_allowed_to_fill_form(user: User) {
+    if (this.wait_info.form.user_id) {
+      if (this.wait_info.form.user_id != user?.id) return false;
+    }
+    return true;
+  }
+
   async run({ user }: { user: User }) {
     if (this.status === "Error" || this.status === "Finished") return;
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
@@ -205,7 +212,22 @@ class WorkflowRun {
       state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
 
       if (step.action_name === "UserForm") {
-        await this.update({ status: "Waiting", wait_info: { form: true } });
+        let user_id;
+        if (step.configuration.user_id_expression) {
+          user_id = eval_expression(
+            step.configuration.user_id_expression,
+            this.context,
+            user,
+            `User id expression in step ${step.name}`
+          );
+        } else user_id = user?.id;
+        if (user_id) {
+          //TODO send notification
+        }
+        await this.update({
+          status: "Waiting",
+          wait_info: { form: { user_id: user_id } },
+        });
         step = null;
         break;
       }
