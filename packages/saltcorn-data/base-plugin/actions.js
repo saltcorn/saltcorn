@@ -265,7 +265,7 @@ module.exports = {
    */
   webhook: {
     description: "Make an outbound HTTP POST request",
-    configFields: async ({ table }) => {
+    configFields: async ({ table, mode }) => {
       let field_opts = [];
       if (table) {
         field_opts = table.fields
@@ -312,6 +312,16 @@ module.exports = {
               },
             ]
           : []),
+        ...(mode === "workflow"
+          ? [
+              {
+                name: "response_var",
+                label: "Response variable",
+                sublabel: "Variable in the context to fill with the response",
+                type: "String",
+              },
+            ]
+          : []),
       ];
     },
     /**
@@ -324,7 +334,14 @@ module.exports = {
       row,
       user,
       table,
-      configuration: { url, body, authorization, response_field, method },
+      configuration: {
+        url,
+        body,
+        authorization,
+        response_field,
+        response_var,
+        method,
+      },
     }) => {
       let url1 = interpolate(url, row, user);
 
@@ -347,11 +364,17 @@ module.exports = {
       if (authorization)
         fetchOpts.headers.Authorization = interpolate(authorization, row, user);
       const response = await fetch(url1, fetchOpts);
-      if (table && row && response_field) {
+      const contentType = response.headers.get("content-type");
+      const isJSON =
+        contentType && contentType.indexOf("application/json") !== -1;
+
+      if (response_var) {
+        const parsedResponse = isJSON
+          ? await response.json()
+          : await response.text();
+        return { [response_var]: parsedResponse };
+      } else if (table && row && response_field) {
         const field = table.getField(response_field);
-        const contentType = response.headers.get("content-type");
-        const isJSON =
-          contentType && contentType.indexOf("application/json") !== -1;
         const parsedResponse = isJSON
           ? await response.json()
           : await response.text();
@@ -985,7 +1008,7 @@ module.exports = {
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
       const res = await table_for_insert.tryInsertRow(calcrow, user);
-            
+
       if (res.error) return res;
       else if (configuration.id_variable)
         return { [configuration.id_variable]: res.success };
@@ -1434,7 +1457,6 @@ module.exports = {
      */
     description: "Run arbitrary JavaScript code from a String field",
     configFields: async ({ table, mode }) => {
-
       if (mode === "workflow")
         return [
           {
