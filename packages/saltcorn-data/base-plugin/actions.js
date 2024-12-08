@@ -930,7 +930,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "insert a row into any table, using a formula expression",
-    configFields: async ({ table }) => {
+    configFields: async ({ mode }) => {
       const tables = await Table.find({}, { cached: true });
       return [
         {
@@ -948,6 +948,17 @@ module.exports = {
           type: "String",
           fieldview: "textarea",
         },
+        ...(mode === "workflow"
+          ? [
+              {
+                name: "id_variable",
+                label: "ID variable",
+                sublabel:
+                  "Variable in the context to fill with the created ID value",
+                type: "String",
+              },
+            ]
+          : []),
       ];
     },
     /**
@@ -963,7 +974,7 @@ module.exports = {
       const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
-        table?.fields || [],
+        table?.fields || Object.keys(row).map((k) => ({ name: k })),
         {
           user,
           console,
@@ -974,7 +985,10 @@ module.exports = {
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
       const res = await table_for_insert.tryInsertRow(calcrow, user);
+            
       if (res.error) return res;
+      else if (configuration.id_variable)
+        return { [configuration.id_variable]: res.success };
       else return true;
     },
     namespace: "Database",
@@ -1420,7 +1434,6 @@ module.exports = {
      */
     description: "Run arbitrary JavaScript code from a String field",
     configFields: async ({ table, mode }) => {
-      console.log({ mode });
 
       if (mode === "workflow")
         return [

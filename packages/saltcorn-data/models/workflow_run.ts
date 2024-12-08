@@ -196,7 +196,7 @@ class WorkflowRun {
     //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
     this.steps = steps;
-    
+
     const state = getState();
 
     if (this.status === "Waiting") {
@@ -227,7 +227,6 @@ class WorkflowRun {
         if (!nextStep) return;
       }
     }
-
 
     //find current step
     let step: any;
@@ -301,8 +300,8 @@ class WorkflowRun {
       const result = await step.run(this.context, user);
 
       const nextUpdate: any = {};
-      if (result?.to_context) {
-        Object.assign(this.context, result.to_context);
+      if (typeof result === "object" && result !== null) {
+        Object.assign(this.context, result);
         nextUpdate.context = this.context;
       }
       //find next step

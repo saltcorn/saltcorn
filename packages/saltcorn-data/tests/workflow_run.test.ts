@@ -34,7 +34,7 @@ describe("Workflow run steps", () => {
       next_step: "second_step",
       action_name: "run_js_code",
       initial_step: true,
-      configuration: { code: `return {to_context: {x:1}}` },
+      configuration: { code: `return {x:1}` },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
@@ -42,7 +42,7 @@ describe("Workflow run steps", () => {
       next_step: "third_step",
       action_name: "run_js_code",
       initial_step: false,
-      configuration: { code: `return {to_context: {y:x+1}}` },
+      configuration: { code: `return {y:x+1}` },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
@@ -51,21 +51,21 @@ describe("Workflow run steps", () => {
       only_if: "y>4",
       action_name: "run_js_code",
       initial_step: false,
-      configuration: { code: `return {to_context: {x:3}}` },
+      configuration: { code: `return {x:3}` },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
       name: "fourth_step",
       action_name: "run_js_code",
       initial_step: false,
-      configuration: { code: `return {to_context: {last:1}}` },
+      configuration: { code: `return {last:1}` },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
       name: "fifth_step",
       action_name: "run_js_code",
       initial_step: false,
-      configuration: { code: `return {to_context: {last:2}}` },
+      configuration: { code: `return {last:2}` },
     });
   });
   it("should run", async () => {
@@ -76,7 +76,7 @@ describe("Workflow run steps", () => {
     const wfrun = await WorkflowRun.create({
       trigger_id: trigger.id,
     });
-    await wfrun.run({user});
+    await wfrun.run({ user });
     expect(wfrun.context.x).toBe(1);
     expect(wfrun.context.y).toBe(2);
     expect(wfrun.context.last).toBe(1);

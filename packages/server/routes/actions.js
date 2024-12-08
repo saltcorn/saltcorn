@@ -1550,7 +1550,7 @@ router.post(
 /* TODO
 
 
-implement modes for basic actions: webhook, send_email (select table), insert any row (set id)
+implement modes for basic actions: webhook, send_email (select table)
 in pack, restore
 
 interactive run
