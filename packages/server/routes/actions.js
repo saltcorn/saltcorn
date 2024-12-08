@@ -36,6 +36,7 @@ const {
   link,
   mkTable,
   localeDateTime,
+  post_delete_btn,
 } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const {
@@ -1399,23 +1400,38 @@ router.get(
         type: "card",
         titleAjaxIndicator: true,
         title: req.__("Workflow run"),
-        contents: table(
-          tbody(
-            tr(th("Run ID"), td(run.id)),
-            tr(
-              th("Trigger"),
-              td(a({ href: `/actions/configure/${trigger.id}` }, trigger.name))
-            ),
-            tr(th("Started"), td(localeDateTime(run.started_at))),
-            tr(th("Status"), td(run.status)),
-            run.status === "Waiting"
-              ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
-              : null,
-            tr(th("Context"), td(pre(JSON.stringify(run.context, null, 2))))
-          )
-        ),
+        contents:
+          table(
+            tbody(
+              tr(th("Run ID"), td(run.id)),
+              tr(
+                th("Trigger"),
+                td(
+                  a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+                )
+              ),
+              tr(th("Started"), td(localeDateTime(run.started_at))),
+              tr(th("Status"), td(run.status)),
+              run.status === "Waiting"
+                ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
+                : null,
+              tr(th("Context"), td(pre(JSON.stringify(run.context, null, 2))))
+            )
+          ) + post_delete_btn("/actions/delete-run/" + run.id, req),
       },
     });
+  })
+);
+
+router.post(
+  "/delete-run/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    await run.delete();
+    res.redirect("/actions/runs");
   })
 );
 

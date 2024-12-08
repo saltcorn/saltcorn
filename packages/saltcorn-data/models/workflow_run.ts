@@ -133,7 +133,7 @@ class WorkflowRun {
     await this.update({ wait_info: this.wait_info, context: this.context });
   }
 
-  get_next_step(step: WorkflowStep, user: User): WorkflowStep | null {
+  get_next_step(step: WorkflowStep, user?: User): WorkflowStep | null {
     let nextStep;
     if (!step?.next_step) {
       return null;
@@ -164,9 +164,34 @@ class WorkflowRun {
     return true;
   }
 
-  async run({ user }: { user: User }) {
+  //get worklows that can be resumed by scheduler
+  static async getResumableWorkflows() {
+    const state = getState();
+    if (!state.waitingWorkflows) return [];
+
+    const waiting_runs = await WorkflowRun.find({ status: "Waiting" });
+    const until_runs = waiting_runs.filter((r) => r.wait_info.until_time);
+    if (!until_runs.length) {
+      state.waitingWorkflows = false;
+      return [];
+    }
+    const now = new Date();
+    return until_runs.filter((r) => new Date(r.wait_info.until_time) < now);
+  }
+
+  //call from scheduler
+  static async runResumableWorkflows() {
+    const runs = await this.getResumableWorkflows();
+    for (const run of runs) {
+      await run.run({});
+    }
+  }
+
+  async run({ user }: { user?: User }) {
     if (this.status === "Error" || this.status === "Finished") return;
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
+    const state = getState();
+
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
       //TODO
@@ -195,7 +220,6 @@ class WorkflowRun {
         if (!nextStep) return;
       }
     }
-    const state = getState();
 
     //get steps
     this.steps = steps;
@@ -249,7 +273,7 @@ class WorkflowRun {
           status: "Waiting",
           wait_info: {},
         });
-
+        state.waitingWorkflows = true;
         break;
       }
       if (step.action_name === "WaitUntil") {
@@ -259,6 +283,8 @@ class WorkflowRun {
           user,
           `Resume at expression in step ${step.name}`
         );
+        state.waitingWorkflows = true;
+
         await this.update({
           status: "Waiting",
           wait_info: { until_time: new Date(resume_at).toISOString() },

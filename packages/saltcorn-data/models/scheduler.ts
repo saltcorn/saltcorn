@@ -10,6 +10,7 @@ const { getState } = require("../db/state");
 import fetch from "node-fetch";
 import EventLog from "./eventlog";
 import mocks from "../tests/mocks";
+import WorkflowRun from "./workflow_run";
 const { mockReqRes } = mocks;
 
 /**
@@ -256,6 +257,7 @@ const runScheduler = async ({
         if (snapshots_enabled && isThisTenantHourly) {
           await take_snapshot();
         }
+        await WorkflowRun.runResumableWorkflows()
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
         if (db.getTenantSchema() === db.connectObj.default_schema)

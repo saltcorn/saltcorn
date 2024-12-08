@@ -170,6 +170,7 @@ class State {
   hasJoinedLogSockets: boolean;
   queriesCache?: Record<string, any>;
   scVersion: string;
+  waitingWorkflows?: boolean
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -228,6 +229,7 @@ class State {
       this.scVersion = require("../package.json").version;
     }
     this.codepage_context = {};
+    this.waitingWorkflows = true; //not sure so check
   }
 
   processSend(v: any) {
