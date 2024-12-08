@@ -625,7 +625,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     sublabel:
       "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
     type: "String",
-    showIf: { wf_action_name: "UserForm" },
+    showIf: { wf_action_name: "WaitUntil" },
   });
   actionConfigFields.push(
     new FieldRepeat({
