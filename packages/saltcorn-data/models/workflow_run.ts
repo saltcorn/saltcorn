@@ -117,8 +117,6 @@ class WorkflowRun {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
-    console.log("updating wf", this.id, row);
-
     await db.update("_sc_workflow_runs", row, this.id);
     Object.assign(this, row);
   }
