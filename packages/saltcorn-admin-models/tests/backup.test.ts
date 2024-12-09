@@ -13,6 +13,7 @@ const { setConfig, getConfig } = config;
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
 import Role from "@saltcorn/data/models/role";
+import WorkflowStep from "@saltcorn/data/models/workflow_step";
 
 import {
   assertIsSet,
@@ -83,12 +84,33 @@ describe("Backup and restore", () => {
       action: "run_js_code",
       configuration: { code: "console.log('cuckoo')" },
     });
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "mywf",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: { code: `return {x:1}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "second_step",
+      next_step: "third_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {y:x+1}` },
+    });
+
     await Library.create({
       name: "foo",
       icon: "fa-bar",
       layout: { baz: "bar" },
     });
-
 
     await Table.create("JoeTable", {
       provider_name: "provtab",
@@ -158,11 +180,15 @@ describe("Backup and restore", () => {
     expect(!!trig).toBe(true);
     const htrig = await Trigger.findOne({ name: "hourtrig" });
     expect(!!htrig).toBe(true);
+    const mywf = await Trigger.findOne({ name: "mywf" });
+    expect(!!mywf).toBe(true);
+    const mySteps = await WorkflowStep.find({ trigger_id: mywf.id });
+    expect(mySteps.length).toBe(2);
     const lib = await Library.findOne({ name: "foo" });
     expect(!!lib).toBe(true);
     const tp = Table.findOne({ name: "JoeTable" });
-    expect(tp?.provider_name).toBe("provtab")
-    expect(tp?.provider_cfg?.middle_name).toBe("Robinette")
+    expect(tp?.provider_name).toBe("provtab");
+    expect(tp?.provider_cfg?.middle_name).toBe("Robinette");
 
     expect(staff.checkPassword("ghrarhr54hg")).toBe(true);
   });

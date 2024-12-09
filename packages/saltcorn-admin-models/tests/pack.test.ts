@@ -28,6 +28,7 @@ import { Pack } from "@saltcorn/types/base_types";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import Trigger from "@saltcorn/data/models/trigger";
 import PageGroup from "@saltcorn/data/models/page_group";
+import WorkflowStep from "@saltcorn/data/models/workflow_step";
 import { assertIsSet } from "@saltcorn/data/tests/assertions";
 import View from "@saltcorn/data/models/view";
 import { instanceOfType } from "@saltcorn/types/common_types";
@@ -287,6 +288,35 @@ describe("pack create", () => {
     const trpack = await trigger_pack("NeverActionTrigger");
     //expect(trpack.name ).toBe(true);
     expect(trpack.when_trigger).toBe("Never");
+  });
+
+  it("creates trigger pack", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "mywf",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: { code: `return {x:1}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "second_step",
+      next_step: "third_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {y:x+1}` },
+    });
+
+    const trpack = await trigger_pack("mywf");
+    //expect(trpack.name ).toBe(true);
+    expect(trpack.when_trigger).toBe("Never");
+    expect(trpack.steps?.map((s) => s.name)).toContain("second_step");
   });
 
   // role packs
