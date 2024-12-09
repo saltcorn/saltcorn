@@ -394,6 +394,11 @@ describe("Field update", () => {
         attributes: { summary_field: "author" },
       });
     }
+    const table1 = await Table.findOne("changingtable1");
+    const fc1 = table1!.fields[1]
+    expect(fc1.type).toBe("Key");
+    expect(fc1.reftable_name).toBe("books");
+    expect(fc1.is_fkey).toBe(true);
   });
 });
 

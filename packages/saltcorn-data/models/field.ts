@@ -797,6 +797,25 @@ class Field implements AbstractField {
       );
     } else if (
       new_field.is_fkey &&
+      !this.is_fkey &&
+      this.type &&
+      typeof this.type !== "string" &&
+      new_field.reftype === this?.type.name &&
+      new_field?.reftable_name
+    ) {
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" add constraint "${sqlsanitize(
+          new_field!.table!.name
+        )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
+          new_field.name
+        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"(id)${
+          new_field.on_delete_sql
+        }`
+      );
+    } else if (
+      new_field.is_fkey &&
       this.reftable_name &&
       new_field.reftable_name &&
       (new_field.on_delete_sql !== this.on_delete_sql ||
