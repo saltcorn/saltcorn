@@ -39,6 +39,7 @@ const {
   event_log_pack,
   install_pack,
   can_install_pack,
+  trigger_pack,
 } = pack;
 import config from "@saltcorn/data/models/config";
 const { configTypes } = config;
@@ -88,7 +89,8 @@ const create_pack_json = async (
   );
 
   // triggers
-  const triggers = Trigger.find({}).map((tr: Trigger) => tr.toJson);
+  const triggers = await asyncMap(Trigger.find({}), trigger_pack);
+  
   // roles
   const roles = await Role.find({});
   // library
@@ -396,7 +398,10 @@ const restore_files = async (dirpath: string): Promise<any> => {
         await File.create(file);
         //const id = await db.insert("_sc_files", file_row);}
       } catch (e: any) {
-        state.log(1, `Error restoring file ${JSON.stringify(file)}: ${e.message}`);
+        state.log(
+          1,
+          `Error restoring file ${JSON.stringify(file)}: ${e.message}`
+        );
       }
     }
     if (db.reset_sequence) await db.reset_sequence("_sc_files");

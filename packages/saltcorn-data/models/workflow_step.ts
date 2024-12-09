@@ -106,6 +106,14 @@ class WorkflowStep {
     ]);
   }
 
+  static async deleteForTrigger(trigger_id: number): Promise<void> {
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete FROM ${schema}_sc_workflow_steps WHERE trigger_id = $1`,
+      [trigger_id]
+    );
+  }
+
   /**
    * @param {*} row
    * @returns {Promise<void>}

@@ -9,6 +9,7 @@ import db from "@saltcorn/data/db/index";
 import View from "@saltcorn/data/models/view";
 import Field from "@saltcorn/data/models/field";
 import Trigger from "@saltcorn/data/models/trigger";
+import WorkflowStep from "@saltcorn/data/models/workflow_step";
 const { getState } = require("@saltcorn/data/db/state");
 import fetch from "node-fetch";
 import Page from "@saltcorn/data/models/page";
@@ -192,7 +193,12 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
 const trigger_pack = async (name: string | Trigger): Promise<TriggerPack> => {
   const trig =
     typeof name === "string" ? await Trigger.findOne({ name }) : name;
-  return trig.toJson;
+  const pack = trig.toJson;
+  if (trig.action === "Workflow") {
+    const steps = await WorkflowStep.find({ trigger_id: trig.id });
+    pack.steps = steps.map((step) => step.toJson);
+  }
+  return pack;
 };
 
 /**
@@ -435,8 +441,7 @@ const add_to_menu = async (item: {
   if (existing >= 0) {
     //current_menu[existing] = item;
     //do not change exisiting menu item
-  }
-  else current_menu.push(item);
+  } else current_menu.push(item);
   await save_menu_items(current_menu);
 };
 
@@ -480,13 +485,11 @@ const install_pack = async (
   }
   // create tables (users skipped because created by other ways)
 
-  // tables with a provider go last because they can depend on presence 
+  // tables with a provider go last because they can depend on presence
   // of other tables
   const packTables = pack.tables.sort((left, right) =>
-    left.provider_name
-      ? 1
-      : right.provider_name ? -1
-        : 0)
+    left.provider_name ? 1 : right.provider_name ? -1 : 0
+  );
   for (const tableSpec of packTables) {
     if (tableSpec.name !== "users") {
       let tbl_pk;
@@ -594,14 +597,24 @@ const install_pack = async (
   }
   for (const triggerSpec of pack.triggers || []) {
     triggerSpec.min_role = old_to_new_role(triggerSpec.min_role);
-
+    let id;
     const existing = await Trigger.findOne({ name: triggerSpec.name });
     if (existing) {
-      const { table_name, ...tsNoTableName } = triggerSpec;
+      const { table_name, steps, ...tsNoTableName } = triggerSpec;
       if (table_name)
         tsNoTableName.table_id = Table.findOne({ name: table_name })?.id;
       await Trigger.update(existing.id, tsNoTableName);
-    } else await Trigger.create(triggerSpec);
+      id = existing.id;
+    } else {
+      const newTrigger = await Trigger.create(triggerSpec);
+      id = newTrigger.id;
+    }
+    if (triggerSpec.action === "Workflow" && triggerSpec.steps) {
+      await WorkflowStep.deleteForTrigger(id);
+      for (const step of triggerSpec.steps) {
+        await WorkflowStep.create({ ...step, trigger_id: id });
+      }
+    }
   }
 
   for (const pageFullSpec of pack.pages || []) {

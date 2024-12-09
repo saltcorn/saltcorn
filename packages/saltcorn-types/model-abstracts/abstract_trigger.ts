@@ -1,5 +1,6 @@
 import type { AbstractTable } from "./abstract_table";
 import type { AbstractTag } from "./abstract_tag";
+import type { WorkflowStepCfg } from "./abstract_workflow_step";
 
 export interface AbstractTrigger {
   name?: string;
@@ -33,6 +34,7 @@ export type TriggerCfg = {
   id?: number | null;
   configuration?: any;
   min_role?: number;
+  steps?: Array<WorkflowStepCfg>;
 };
 
 export type TriggerPack = {} & TriggerCfg;

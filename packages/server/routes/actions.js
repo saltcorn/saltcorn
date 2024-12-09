@@ -1554,8 +1554,6 @@ router.post(
 
 /* TODO
 
-implement modes for basic actions: go throught rest to disable/alter
-in pack, restore
 
 interactive run
 
