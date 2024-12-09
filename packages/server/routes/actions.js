@@ -715,7 +715,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         name: "wf_only_if",
         label: req.__("Only if..."),
         sublabel:
-          "Optional JavaScript expression. If given, the chosen action will only be executed if evaluates to true",
+          "Optional JavaScript expression based on the run context. If given, the chosen action will only be executed if evaluates to true",
         type: "String",
       },
       {
