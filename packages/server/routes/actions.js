@@ -574,6 +574,16 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
   );
 };
 
+const jsIdentifierValidator = (s) => {
+  if(!s) return "An identifier is required"
+  if (s.includes(" ")) return "Spaces not allowd";
+  let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
+    .split("")
+    .find((c) => s.includes(c));
+
+  if (badc) return `Character ${badc} not allowed`;
+};
+
 const getWorkflowStepForm = async (trigger, req, step_id) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   let stateActions = getState().actions;
@@ -606,7 +616,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
-    builtIns: ["UserForm", "WaitUntil", "WaitNextTick"],
+    builtIns: ["WaitUntil", "UserForm", "WaitNextTick"],
     forWorkflow: true,
   });
 
@@ -639,16 +649,21 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           label: "Label",
           name: "label",
           type: "String",
+          sublabel:
+            "The text that will shown to the user above the input elements",
         },
         {
           label: "Variable name",
           name: "var_name",
           type: "String",
+          sublabel: "The answer will be set in the context with this variable name",
+          validator: jsIdentifierValidator,
         },
         {
-          label: "Type",
+          label: "Input Type",
           name: "qtype",
           type: "String",
+          required: true,
           attributes: {
             options: [
               "Yes/No",
@@ -666,7 +681,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           label: "Options",
           name: "options",
           type: "String",
-          sublabel: "Comma separated options",
+          sublabel: "Comma separated list of multiple choice options",
           showIf: { qtype: ["Multiple choice", "Multiple checks"] },
         },
       ],
@@ -694,16 +709,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         type: "String",
         required: true,
         sublabel: "An identifier by which this step can be referred to.",
-        validator(s) {
-          if (!s) return true;
-          if (s.includes(" ")) return "Spaces not allowd";
-          let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
-            .split("")
-            .find((c) => s.includes(c));
-          console.log({ badc });
-
-          if (badc) return `Character ${badc} not allowed`;
-        },
+        validator: jsIdentifierValidator,
       },
       {
         name: "wf_initial_step",
@@ -1574,6 +1580,7 @@ WORKFLOWS TODO
 
 interactive run
 help sublabels
+delete is not always working?
 pagination, search in workflow runs
 
 show unconnected steps
