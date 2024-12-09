@@ -270,7 +270,7 @@ describe("base plugin actions", () => {
     const result = await modify_row.run({
       row,
       table: patients,
-      configuration: { row_expr: "{favbook:1}", where: "Database" },
+      configuration: { row_expr: "{favbook:1}", where: "Database" } as any,
       user: { id: 1, role_id: 1 },
     });
     expect(result).toStrictEqual(undefined);

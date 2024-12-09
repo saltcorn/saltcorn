@@ -310,6 +310,7 @@ const send_events_page = (args) => {
       { text: "Custom", href: "/eventlog/custom" },
       { text: "Settings", href: "/eventlog/settings" },
       { text: "Event log", href: "/eventlog" },
+      { text: "Workflow runs", href: "/actions/runs" },
       ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
     ],
     ...args,

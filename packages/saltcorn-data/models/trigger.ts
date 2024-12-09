@@ -215,7 +215,14 @@ class Trigger implements AbstractTrigger {
       for (const trigger of triggers) {
         state.log(4, `Trigger run ${trigger.name} ${trigger.action} `);
         try {
-          if (trigger.action === "Multi-step action") {
+          if (trigger.action === "Workflow") {
+            const wfrun = await require("./workflow_run").create({
+              trigger_id: trigger.id,
+              context: payload,
+              started_by: user?.id || undefined,
+            });
+            await wfrun.run({ user });
+          } else if (trigger.action === "Multi-step action") {
             let step_count = 0;
             const MAX_STEPS = 200;
             for (
@@ -348,7 +355,16 @@ class Trigger implements AbstractTrigger {
     const table = this.table_id
       ? require("./table").findOne({ id: this.table_id })
       : undefined;
-    if (this.action === "Multi-step action") {
+    if (this.action === "Workflow") {
+      const user = runargs?.user || runargs?.req?.user;
+      const wfrun = await require("./workflow_run").create({
+        trigger_id: this.id,
+        context: runargs?.row || undefined,
+        started_by: user?.id,
+      });
+      await wfrun.run({ user });
+      return wfrun.context;
+    } else if (this.action === "Multi-step action") {
       let result: any = {};
       let step_count = 0;
       let MAX_STEPS = 200;
@@ -430,7 +446,10 @@ class Trigger implements AbstractTrigger {
   static setRunFunctions(triggers: Array<Trigger>, table: Table, user?: Row) {
     const { getState } = require("../db/state");
     for (const trigger of triggers) {
-      if (trigger.action === "Multi-step action") {
+      if (
+        trigger.action === "Multi-step action" ||
+        trigger.action === "Workflow"
+      ) {
         trigger.run = (row: Row, extraArgs?: any) =>
           trigger.runWithoutRow({
             user,
@@ -569,10 +588,12 @@ class Trigger implements AbstractTrigger {
     return Object.entries(getState().actions).map(([k, v]: [string, any]) => {
       const hasConfig = !!v.configFields;
       const requireRow = !!v.requireRow;
+      const disableInWorkflow = !!v.disableInWorkflow;
       return {
         name: k,
         hasConfig,
         requireRow,
+        disableInWorkflow,
         namespace: v.namespace,
       };
     });
@@ -612,18 +633,26 @@ class Trigger implements AbstractTrigger {
     apiNeverTriggers,
     builtIns,
     builtInLabel,
+    workflow,
+    noMultiStep,
+    forWorkflow,
   }: {
     notRequireRow?: boolean;
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
     builtIns?: string[];
     builtInLabel?: string;
+    workflow?: boolean;
+    noMultiStep?: boolean;
+    forWorkflow?: boolean;
   }): any[] {
     const triggerActions = Trigger.trigger_actions({
       tableTriggers,
       apiNeverTriggers,
     });
-    const actions = Trigger.abbreviated_actions;
+    const actions = forWorkflow
+      ? Trigger.abbreviated_actions.filter((a) => !a.disableInWorkflow)
+      : Trigger.abbreviated_actions;
     const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
       .filter(Boolean) //Other last
       .sort();
@@ -642,11 +671,12 @@ class Trigger implements AbstractTrigger {
         .filter(
           (a) =>
             (ns === "Other" ? !a.namespace : a.namespace === ns) &&
-            (!notRequireRow || !a.requireRow)
+            (!notRequireRow || !a.requireRow || forWorkflow)
         )
         .map((t) => t.name)
         .sort();
-      if (ns === "Other") options.push("Multi-step action");
+      if (ns === "Other" && !noMultiStep) options.push("Multi-step action");
+      if (ns === "Other" && workflow) options.push("Workflow");
       return { optgroup: true, label: ns, options };
     });
   }

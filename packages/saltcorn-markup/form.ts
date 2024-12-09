@@ -115,7 +115,12 @@ const formRowWrap = (
     },
     hdr.input_type === "section_header"
       ? div(
-          { class: `col-sm-12` },
+          {
+            class:
+              hdr.attributes?.secondColHoriz && isHoriz(fStyle)
+                ? `offset-sm-${labelCols} col-sm-${12 - labelCols}`
+                : `col-sm-12`,
+          },
           h5(text(hdr.label)),
           hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
           //hdr.sublabel && p(i(hdr.sublabel)),
@@ -1510,9 +1515,11 @@ const displayAdditionalButtons = (
     .filter((btn) => !!btn.afterSave === !!afterSave)
     .map(
       (btn) =>
-        `<button type="button" id="${btn.id}" class="${btn.class}"${
-          btn.onclick ? ` onclick="${btn.onclick}"` : ""
-        } ${btn.disabled ? "disabled" : ""}>${btn.label}</button>&nbsp;`
+        `<button type="button" id="${btn.id}" class="${btn.class}${
+          afterSave ? " ms-2" : ""
+        }"${btn.onclick ? ` onclick="${btn.onclick}"` : ""} ${
+          btn.disabled ? "disabled" : ""
+        }>${btn.label}</button>&nbsp;`
     )
     .join("");
 

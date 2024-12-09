@@ -17,6 +17,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
+const WorkflowStep = require("@saltcorn/data/models/workflow_step");
+const WorkflowRun = require("@saltcorn/data/models/workflow_run");
 const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 
@@ -29,7 +31,13 @@ const db = require("@saltcorn/data/db");
  */
 const router = new Router();
 module.exports = router;
-const { renderForm, link } = require("@saltcorn/markup");
+const {
+  renderForm,
+  link,
+  mkTable,
+  localeDateTime,
+  post_delete_btn,
+} = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const {
   div,
@@ -45,8 +53,11 @@ const {
   td,
   h6,
   pre,
+  th,
   text,
   i,
+  ul,
+  li,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -154,11 +165,15 @@ const triggerForm = async (req, trigger) => {
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
 
-  const allActions = Trigger.action_options({ notRequireRow: false });
+  const allActions = Trigger.action_options({
+    notRequireRow: false,
+    workflow: true,
+  });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const action_options = {};
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
+    workflow: true,
   });
 
   Trigger.when_options.forEach((t) => {
@@ -467,6 +482,263 @@ router.post(
   })
 );
 
+function genWorkflowDiagram(steps) {
+  const stepNames = steps.map((s) => s.name);
+  const nodeLines = steps
+    .map(
+      (s) => `  ${s.name}["\`**${s.name}**
+  ${s.action_name}\`"]:::wfstep${s.id}`
+    )
+    .join("\n");
+  const linkLines = [];
+  let step_ix = 0;
+  for (const step of steps) {
+    if (step.action_name === "ForLoop") {
+      linkLines.push(
+        `  ${step.name} --> ${step.configuration.for_loop_step_name}`
+      );
+    } else if (stepNames.includes(step.next_step)) {
+      linkLines.push(`  ${step.name} --> ${step.next_step}`);
+    } else if (step.next_step) {
+      for (const otherStep of stepNames)
+        if (step.next_step.includes(otherStep))
+          linkLines.push(`  ${step.name} --> ${otherStep}`);
+    }
+    if (step.action_name === "EndForLoop") {
+      // TODO this is not correct. improve.
+      let forStep;
+      for (let i = step_ix; i >= 0; i -= 1) {
+        if (steps[i].action_name === "ForLoop") {
+          forStep = steps[i];
+          break;
+        }
+      }
+      if (forStep) linkLines.push(`  ${step.name} --> ${forStep.name}`);
+    }
+    step_ix += 1;
+  }
+  return "flowchart TD\n" + nodeLines + "\n" + linkLines.join("\n");
+}
+
+const getWorkflowConfig = async (req, id, table, trigger) => {
+  let steps = await WorkflowStep.find(
+    { trigger_id: trigger.id },
+    { orderBy: "id" }
+  );
+  const initial_step = steps.find((step) => step.initial_step);
+  if (initial_step)
+    steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
+  return (
+    /*ul(
+      steps.map((step) =>
+        li(
+          a(
+            {
+              href: `/actions/stepedit/${trigger.id}/${step.id}`,
+            },
+            step.name
+          )
+        )
+      )
+    ) +*/
+    pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
+    script(
+      { defer: "defer" },
+      `function tryAddWFNodes() {
+  const ns = $("g.node");
+  if(!ns.length) setTimeout(tryAddWFNodes, 200)
+  else {
+    $("g.node").on("click", (e)=>{
+       const $e = $(e.target || e).closest("g.node")
+       const cls = $e.attr('class')
+       if(!cls || !cls.includes("wfstep")) return;
+       const id = cls.split(" ").find(c=>c.startsWith("wfstep")).
+          substr(6);
+       location.href = '/actions/stepedit/${trigger.id}/'+id;
+      //console.log($e.attr('class'), id)
+     })
+  }
+}
+window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
+    ) +
+    a(
+      {
+        href: `/actions/stepedit/${trigger.id}?name=step${steps.length + 1}${
+          initial_step ? "" : "&initial_step=true"
+        }`,
+        class: "btn btn-primary",
+      },
+      i({ class: "fas fa-plus me-2" }),
+      "Add step"
+    )
+  );
+};
+
+const getWorkflowStepForm = async (trigger, req, step_id) => {
+  const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
+  let stateActions = getState().actions;
+  const stateActionKeys = Object.entries(stateActions)
+    .filter(([k, v]) => !v.disableInWorkflow)
+    .map(([k, v]) => k);
+
+  const actionConfigFields = [];
+  for (const [name, action] of Object.entries(stateActions)) {
+    if (!stateActionKeys.includes(name)) continue;
+    try {
+      const cfgFields = await getActionConfigFields(action, table, {
+        mode: "workflow",
+      });
+
+      for (const field of cfgFields) {
+        const cfgFld = {
+          ...field,
+          showIf: {
+            wf_action_name: name,
+            ...(field.showIf || {}),
+          },
+        };
+        if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        actionConfigFields.push(cfgFld);
+      }
+    } catch {}
+  }
+  const actionsNotRequiringRow = Trigger.action_options({
+    notRequireRow: true,
+    noMultiStep: true,
+    builtInLabel: "Workflow Actions",
+    builtIns: ["UserForm", "WaitUntil", "WaitNextTick"],
+    forWorkflow: true,
+  });
+
+  actionConfigFields.push({
+    label: "Form header",
+    name: "form_header",
+    type: "String",
+    showIf: { wf_action_name: "UserForm" },
+  });
+  actionConfigFields.push({
+    label: "User ID expression",
+    name: "user_id_expression",
+    type: "String",
+    showIf: { wf_action_name: "UserForm" },
+  });
+  actionConfigFields.push({
+    label: "Resume at",
+    name: "resume_at",
+    sublabel:
+      "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
+    type: "String",
+    showIf: { wf_action_name: "WaitUntil" },
+  });
+  actionConfigFields.push(
+    new FieldRepeat({
+      name: "user_form_questions",
+      showIf: { wf_action_name: "UserForm" },
+      fields: [
+        {
+          label: "Label",
+          name: "label",
+          type: "String",
+        },
+        {
+          label: "Variable name",
+          name: "var_name",
+          type: "String",
+        },
+        {
+          label: "Type",
+          name: "qtype",
+          type: "String",
+          attributes: {
+            options: [
+              "Yes/No",
+              "Checkbox",
+              "Free text",
+              "Multiple choice",
+              //"Multiple checks",
+              "Integer",
+              "Float",
+              //"File upload",
+            ],
+          },
+        },
+        {
+          label: "Options",
+          name: "options",
+          type: "String",
+          sublabel: "Comma separated options",
+          showIf: { qtype: ["Multiple choice", "Multiple checks"] },
+        },
+      ],
+    })
+  );
+
+  const form = new Form({
+    action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
+    onChange: "saveAndContinueIfValid(this)",
+    submitLabel: req.__("Done"),
+    additionalButtons: step_id
+      ? [
+          {
+            label: req.__("Delete"),
+            class: "btn btn-outline-danger",
+            onclick: `ajax_post('/actions/delete-step/${+step_id}')`,
+            afterSave: true,
+          },
+        ]
+      : undefined,
+    fields: [
+      {
+        name: "wf_step_name",
+        label: req.__("Step name"),
+        type: "String",
+        required: true,
+      },
+      {
+        name: "wf_initial_step",
+        label: req.__("Initial step"),
+        type: "Bool",
+      },
+      {
+        name: "wf_only_if",
+        label: req.__("Only if..."),
+        type: "String",
+      },
+      {
+        name: "wf_next_step",
+        label: req.__("Next step"),
+        type: "String",
+        class: "validate-expression",
+      },
+      {
+        name: "wf_action_name",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: actionsNotRequiringRow,
+        },
+      },
+      ...actionConfigFields,
+    ],
+  });
+  form.hidden("wf_step_id");
+  if (step_id) {
+    const step = await WorkflowStep.findOne({ id: step_id });
+    if (!step) throw new Error("Step not found");
+    form.values = {
+      wf_step_id: step.id,
+      wf_step_name: step.name,
+      wf_initial_step: step.initial_step,
+      wf_only_if: step.only_if,
+      wf_action_name: step.action_name,
+      wf_next_step: step.next_step,
+      ...step.configuration,
+    };
+  }
+  return form;
+};
+
 const getMultiStepForm = async (req, id, table) => {
   let stateActions = getState().actions;
   const stateActionKeys = Object.entries(stateActions)
@@ -579,7 +851,33 @@ router.get(
         { href: `/actions/testrun/${id}`, class: "ms-2" },
         req.__("Test run") + "&nbsp;&raquo;"
       );
-    if (trigger.action === "Multi-step action") {
+    if (trigger.action === "Workflow") {
+      const wfCfg = await getWorkflowConfig(req, id, table, trigger);
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        headers: [
+          {
+            script: `/static_assets/${db.connectObj.version_tag}/mermaid.min.js`,
+          },
+          {
+            headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${
+              getState().getLightDarkMode(req.user) ? ",theme: 'dark'," : ""
+            }});</script>`,
+          },
+        ],
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__("Configure trigger %s", trigger.name),
+          subtitle,
+          contents: wfCfg,
+        },
+      });
+    } else if (trigger.action === "Multi-step action") {
       const form = await getMultiStepForm(req, id, table);
       form.values = trigger.configuration;
       send_events_page({
@@ -909,3 +1207,361 @@ router.post(
     res.redirect(`/actions`);
   })
 );
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ * @function
+ */
+router.get(
+  "/stepedit/:trigger_id/:step_id?",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { trigger_id, step_id } = req.params;
+    const { initial_step, name } = req.query;
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    const form = await getWorkflowStepForm(trigger, req, step_id);
+
+    if (initial_step) form.values.wf_initial_step = true;
+    if (name) form.values.wf_step_name = name;
+    send_events_page({
+      res,
+      req,
+      active_sub: "Triggers",
+      sub2_page: "Configure",
+      page_title: req.__(`%s configuration`, trigger.name),
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title: req.__(
+          "Configure trigger %s",
+          a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+        ),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
+  })
+);
+
+router.post(
+  "/stepedit/:trigger_id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { trigger_id } = req.params;
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    const form = await getWorkflowStepForm(trigger, req);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      if (req.xhr) {
+        res.json({ error: form.errorSummary });
+      } else
+        send_events_page({
+          res,
+          req,
+          active_sub: "Triggers",
+          sub2_page: "Configure",
+          page_title: req.__(`%s configuration`, trigger.name),
+          contents: {
+            type: "card",
+            titleAjaxIndicator: true,
+            title: req.__(
+              "Configure trigger %s",
+              a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+            ),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        });
+      return;
+    }
+    const {
+      wf_step_name,
+      wf_action_name,
+      wf_next_step,
+      wf_initial_step,
+      wf_only_if,
+      wf_step_id,
+      ...configuration
+    } = form.values;
+    Object.entries(configuration).forEach(([k, v]) => {
+      if (v === null) delete configuration[k];
+    });
+    const step = {
+      name: wf_step_name,
+      action_name: wf_action_name,
+      next_step: wf_next_step,
+      only_if: wf_only_if,
+      initial_step: wf_initial_step,
+      trigger_id,
+      configuration,
+    };
+
+    if (wf_step_id && wf_step_id !== "undefined") {
+      const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
+
+      await wfStep.update(step);
+      if (req.xhr) res.json({ success: "ok" });
+      else {
+        req.flash("success", req.__("Step saved"));
+        res.redirect(`/actions/configure/${step.trigger_id}`);
+      }
+    } else {
+      //insert
+      const id = await WorkflowStep.create(step);
+      if (req.xhr) res.json({ success: "ok", set_fields: { wf_step_id: id } });
+      else {
+        req.flash("success", req.__("Step saved"));
+        res.redirect(`/actions/configure/${step.trigger_id}`);
+      }
+    }
+  })
+);
+
+router.post(
+  "/delete-step/:step_id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { step_id } = req.params;
+    const step = await WorkflowStep.findOne({ id: step_id });
+    await step.delete();
+    res.json({ goto: `/actions/configure/${step.trigger_id}` });
+  })
+);
+
+router.get(
+  "/runs",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const trNames = {};
+    for (const trig of await Trigger.find({ action: "Workflow" }))
+      trNames[trig.id] = trig.name;
+
+    const runs = await WorkflowRun.find(
+      {},
+      { orderBy: "started_at", orderDesc: true }
+    );
+    const wfTable = mkTable(
+      [
+        { label: "Trigger", key: (run) => trNames[run.trigger_id] },
+        { label: "Started", key: "started_at" },
+        { label: "Status", key: "status" },
+        {
+          label: "",
+          key: (run) => {
+            switch (run.status) {
+              case "Running":
+                return run.current_step;
+              case "Error":
+                return run.error;
+              case "Waiting":
+                if (run.wait_info?.form)
+                  return a(
+                    { href: `/actions/fill-workflow-form/${run.id}` },
+                    "Fill ",
+                    run.current_step
+                  );
+                return run.current_step;
+              default:
+                return "";
+            }
+          },
+        },
+      ],
+      runs,
+      { onRowSelect: (row) => `location.href='/actions/run/${row.id}'` }
+    );
+    send_events_page({
+      res,
+      req,
+      active_sub: "Workflow runs",
+      page_title: req.__(`Workflow runs`),
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title: req.__("Workflow runs"),
+        contents: wfTable,
+      },
+    });
+  })
+);
+
+router.get(
+  "/run/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    const trigger = await Trigger.findOne({ id: run.trigger_id });
+    console.log(run.context);
+
+    send_events_page({
+      res,
+      req,
+      active_sub: "Workflow runs",
+      page_title: req.__(`Workflow runs`),
+      sub2_page: trigger.name,
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title: req.__("Workflow run"),
+        contents:
+          table(
+            tbody(
+              tr(th("Run ID"), td(run.id)),
+              tr(
+                th("Trigger"),
+                td(
+                  a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+                )
+              ),
+              tr(th("Started"), td(localeDateTime(run.started_at))),
+              tr(th("Status"), td(run.status)),
+              run.status === "Waiting"
+                ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
+                : null,
+              tr(
+                th("Context"),
+                td(pre(text(JSON.stringify(run.context, null, 2))))
+              )
+            )
+          ) + post_delete_btn("/actions/delete-run/" + run.id, req),
+      },
+    });
+  })
+);
+
+router.post(
+  "/delete-run/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    await run.delete();
+    res.redirect("/actions/runs");
+  })
+);
+
+const getWorkflowStepUserForm = async (run, trigger, step, user) => {
+  const qTypeToField = (q) => {
+    switch (q.qtype) {
+      case "Yes/No":
+        return {
+          type: "String",
+          attributes: { options: "Yes,No" },
+          fieldview: "radio_group",
+        };
+      case "Checkbox":
+        return { type: "Bool" };
+      case "Free text":
+        return { type: "String" };
+      case "Multiple choice":
+        return {
+          type: "String",
+          attributes: { options: q.options },
+          fieldview: "radio_group",
+        };
+      case "Integer":
+        return { type: "Integer" };
+      case "Float":
+        return { type: "Float" };
+      default:
+        return {};
+    }
+  };
+
+  const form = new Form({
+    action: `/actions/fill-workflow-form/${run.id}`,
+    blurb: step.configuration?.form_header || "",
+    fields: (step.configuration.user_form_questions || []).map((q) => ({
+      label: q.label,
+      name: q.var_name,
+      ...qTypeToField(q),
+    })),
+  });
+  return form;
+};
+
+router.get(
+  "/fill-workflow-form/:id",
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+
+    if (!run.user_allowed_to_fill_form(req.user)) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+
+    const trigger = await Trigger.findOne({ id: run.trigger_id });
+    const step = await WorkflowStep.findOne({
+      trigger_id: trigger.id,
+      name: run.current_step,
+    });
+
+    const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
+
+    const title = "Fill form";
+    res.sendWrap(title, renderForm(form, req.csrfToken()));
+  })
+);
+
+router.post(
+  "/fill-workflow-form/:id",
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    if (!run.user_allowed_to_fill_form(req.user)) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+
+    const trigger = await Trigger.findOne({ id: run.trigger_id });
+    const step = await WorkflowStep.findOne({
+      trigger_id: trigger.id,
+      name: run.current_step,
+    });
+
+    const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
+    form.validate(req.body);
+    if (form.hasErrors) {
+      const title = "Fill form";
+      res.sendWrap(title, renderForm(form, req.csrfToken()));
+    } else {
+      await run.provide_form_input(form.values);
+      await run.run({ user: req.user });
+      if (req.xhr) {
+        const retDirs = await run.popReturnDirectives();
+        res.json({ success: "ok", ...retDirs });
+      } else {
+        if (run.context.goto) res.redirect(run.context.goto);
+        else res.redirect("/");
+      }
+    }
+  })
+);
+
+/* 
+
+WORKFLOWS TODO
+
+interactive run
+
+show unconnected steps
+workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile
+debug run
+why is code not initialising
+drag and drop edges
+
+*/

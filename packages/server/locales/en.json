@@ -1498,6 +1498,14 @@
 	"Pulling the capacitor-builder docker image...": "Pulling the capacitor-builder docker image...",
 	"Pull done with code %s": "Pull done with code %s",
 	"Default locale": "Default locale",
+	"Next step": "Next step",
+	"Step name": "Step name",
+	"Step saved": "Step saved",
+	"Initial step": "Initial step",
 	"Confirm leaving unsaved": "Confirm leaving unsaved",
-	"Ask the user to confirm if they close a tab with unsaved changes": "Ask the user to confirm if they close a tab with unsaved changes"
+	"Ask the user to confirm if they close a tab with unsaved changes": "Ask the user to confirm if they close a tab with unsaved changes",
+	"Workflow runs": "Workflow runs",
+	"Workflow run": "Workflow run",
+	"Share to enabled": "Share to enabled",
+	"Enable the share to feature": "Enable the share to feature"
 }

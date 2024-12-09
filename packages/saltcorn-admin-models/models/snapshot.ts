@@ -18,6 +18,7 @@ import { Pack } from "@saltcorn/types/base_types";
 import Page from "@saltcorn/data/models/page";
 import Table from "@saltcorn/data/models/table";
 import Trigger from "@saltcorn/data/models/trigger";
+import WorkflowStep from "@saltcorn/data/models/workflow_step";
 
 type SnapshotCfg = {
   id?: number;
@@ -103,11 +104,17 @@ class Snapshot {
       if (page) await Page.update(page.id!, pageSpec!);
     }
     if ((type || "").toLowerCase() === "trigger") {
-      const { table_name, ...triggerSpec } = this.pack?.triggers.find(
+      const { table_name, steps, ...triggerSpec } = this.pack?.triggers.find(
         (p: any) => p.name === name
       ) as any;
       const trigger = await Trigger.findOne({ name });
       if (trigger) await Trigger.update(trigger.id!, triggerSpec!);
+      if (steps) {
+        await WorkflowStep.deleteForTrigger(trigger.id);
+        for (const step of steps) {
+          await WorkflowStep.create({ ...step, trigger_id: trigger.id });
+        }
+      }
     }
     return;
   }
@@ -124,6 +131,8 @@ class Snapshot {
         case "page":
           return pack.pages.find((p: any) => p.name === name);
         case "trigger":
+          if (!Array.isArray(pack.triggers)) return null;
+
           return pack.triggers.find((p: any) => p.name === name);
       }
     };

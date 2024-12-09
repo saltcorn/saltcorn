@@ -460,6 +460,15 @@ const safeEnding = (file: string, ending: string): string => {
   return file;
 };
 
+/**
+ * Ensure that string is finished with /
+ * @param {string} s
+ * @returns {string}
+ */
+const ensure_final_slash = (s: string): string =>
+  s.endsWith("/") ? s : s + "/";
+
+
 const cloneName = (name: string, allNames: Array<string>): string => {
   const basename = name + "-copy";
   let newname = basename;
@@ -544,4 +553,5 @@ export = {
   isRoot,
   flatEqual,
   validSqlId,
+  ensure_final_slash
 };

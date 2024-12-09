@@ -184,6 +184,7 @@ module.exports = {
   blocks: {
     disableInBuilder: true,
     disableInList: true,
+    disableInWorkflow: true,
     description: "Build action with drag and drop steps similar to Scratch",
     configFields: [
       {
@@ -264,7 +265,7 @@ module.exports = {
    */
   webhook: {
     description: "Make an outbound HTTP POST request",
-    configFields: async ({ table }) => {
+    configFields: async ({ table, mode }) => {
       let field_opts = [];
       if (table) {
         field_opts = table.fields
@@ -311,6 +312,16 @@ module.exports = {
               },
             ]
           : []),
+        ...(mode === "workflow"
+          ? [
+              {
+                name: "response_var",
+                label: "Response variable",
+                sublabel: "Variable in the context to fill with the response",
+                type: "String",
+              },
+            ]
+          : []),
       ];
     },
     /**
@@ -323,7 +334,14 @@ module.exports = {
       row,
       user,
       table,
-      configuration: { url, body, authorization, response_field, method },
+      configuration: {
+        url,
+        body,
+        authorization,
+        response_field,
+        response_var,
+        method,
+      },
     }) => {
       let url1 = interpolate(url, row, user);
 
@@ -346,11 +364,17 @@ module.exports = {
       if (authorization)
         fetchOpts.headers.Authorization = interpolate(authorization, row, user);
       const response = await fetch(url1, fetchOpts);
-      if (table && row && response_field) {
+      const contentType = response.headers.get("content-type");
+      const isJSON =
+        contentType && contentType.indexOf("application/json") !== -1;
+
+      if (response_var) {
+        const parsedResponse = isJSON
+          ? await response.json()
+          : await response.text();
+        return { [response_var]: parsedResponse };
+      } else if (table && row && response_field) {
         const field = table.getField(response_field);
-        const contentType = response.headers.get("content-type");
-        const isJSON =
-          contentType && contentType.indexOf("application/json") !== -1;
         const parsedResponse = isJSON
           ? await response.json()
           : await response.text();
@@ -461,7 +485,54 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Send an email, based on a chosen view for this table",
-    configFields: async ({ table }) => {
+    configFields: async ({ table, mode }) => {
+      if (mode === "workflow") {
+        return [
+          {
+            name: "to_email",
+            label: "To",
+            sublabel:
+              "To addresses, comma separated, <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },
+          {
+            name: "cc_email",
+            label: "cc",
+            sublabel:
+              "cc addresses, comma separated, <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },
+          {
+            name: "subject",
+            label: "Subject",
+            sublabel:
+              "Subject of email, <code>{{ }}</code> interpolations usable",
+            type: "String",
+            required: true,
+          },
+          {
+            name: "body",
+            label: "Body",
+            type: "String",
+            fieldview: "textarea",
+            required: true,
+          },
+          /*    {
+            name: "attachment_paths",
+            label: "Attachments",
+            sublabel:
+              "Comma-separated list of files to attach. <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },*/
+          {
+            name: "confirm_field",
+            label: "Send confirmation variable",
+            type: "String",
+            sublabel:
+              "Bool variable set in context indicate successful sending of email message",
+          },
+        ];
+      }
       if (!table) return [];
       const views = await View.find_table_views_where(
         table,
@@ -631,9 +702,29 @@ module.exports = {
         attachment_path,
         disable_notify,
         confirm_field,
+        body,
       },
       user,
+      mode,
     }) => {
+      const from = getState().getConfig("email_from");
+
+      if (mode === "workflow") {
+        const email = {
+          from,
+          to: interpolate(to_email, row, user),
+          cc: interpolate(cc_email, row, user),
+          subject: interpolate(subject, row, user),
+          html: interpolate(body, row, user),
+
+          //          attachments,
+        };
+        const sendres = await getMailTransport().sendMail(email);
+        getState().log(5, `send_email result: ${JSON.stringify(sendres)}`);
+        if (confirm_field)
+          return { [confirm_field]: sendres.accepted.length > 0 };
+        else return;
+      }
       let to_addr;
       let useRow = row;
       const fvs = [
@@ -701,7 +792,6 @@ module.exports = {
         setBody.html = await viewToEmailHtml(view, { id: row[table.pk_name] });
       }
 
-      const from = getState().getConfig("email_from");
       const attachments = await loadAttachments(
         attachment_path,
         row,
@@ -782,6 +872,7 @@ module.exports = {
         },
       ];
     },
+    disableInWorkflow: true,
     requireRow: true,
     /**
      * @param {object} opts
@@ -828,6 +919,7 @@ module.exports = {
      */
     description: "Duplicate the current row",
     configFields: () => [],
+    disableInWorkflow: true,
     requireRow: true,
     /**
      * @param {object} opts
@@ -928,7 +1020,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "insert a row into any table, using a formula expression",
-    configFields: async ({ table }) => {
+    configFields: async ({ mode }) => {
       const tables = await Table.find({}, { cached: true });
       return [
         {
@@ -946,6 +1038,17 @@ module.exports = {
           type: "String",
           fieldview: "textarea",
         },
+        ...(mode === "workflow"
+          ? [
+              {
+                name: "id_variable",
+                label: "ID variable",
+                sublabel:
+                  "Variable in the context to fill with the created ID value",
+                type: "String",
+              },
+            ]
+          : []),
       ];
     },
     /**
@@ -961,7 +1064,7 @@ module.exports = {
       const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
-        table?.fields || [],
+        table?.fields || Object.keys(row).map((k) => ({ name: k })),
         {
           user,
           console,
@@ -972,7 +1075,10 @@ module.exports = {
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
       const res = await table_for_insert.tryInsertRow(calcrow, user);
+
       if (res.error) return res;
+      else if (configuration.id_variable)
+        return { [configuration.id_variable]: res.success };
       else return true;
     },
     namespace: "Database",
@@ -983,11 +1089,6 @@ module.exports = {
    * @subcategory actions
    */
   modify_row: {
-    /**
-     * @param {object} opts
-     * @param {*} opts.table
-     * @returns {Promise<object[]>}
-     */
     description: "Modify the triggering row",
     configFields: async ({ mode, when_trigger }) => {
       return [
@@ -999,7 +1100,10 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
-        ...(mode === "edit" || mode === "filter" || when_trigger === "Validate"
+        ...(mode === "edit" ||
+        mode === "filter" ||
+        when_trigger === "Validate" ||
+        mode === "workflow"
           ? [
               {
                 name: "where",
@@ -1012,8 +1116,31 @@ module.exports = {
                       ? ["Row"]
                       : mode === "filter"
                       ? ["Filter state"]
+                      : mode === "workflow"
+                      ? ["Database", "Active edit view"]
                       : ["Form", "Database"],
                 },
+              },
+            ]
+          : []),
+        ...(mode === "workflow"
+          ? [
+              {
+                name: "select_table",
+                label: "Table",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: (await Table.find()).map((t) => t.name),
+                  showIf: { where: "Database" },
+                },
+              },
+              {
+                name: "query",
+                label: "Query object",
+                type: "String",
+                required: true,
+                showIf: { where: "Database" },
               },
             ]
           : []),
@@ -1023,18 +1150,42 @@ module.exports = {
     run: async ({
       row,
       table,
-      configuration: { row_expr, where },
+      configuration: { row_expr, where, select_table, query },
       user,
       ...rest
     }) => {
-      const f = get_async_expression_function(row_expr, table.fields, {
-        row: row || {},
-        user,
-      });
+      const f = get_async_expression_function(
+        row_expr,
+        table?.fields || Object.keys(row).map((k) => ({ name: k })),
+        {
+          row: row || {},
+          user,
+        }
+      );
       const calcrow = await f(row, user);
-      if (where === "Form" || where === "Filter state" || where === "Row")
+      if (
+        where === "Form" ||
+        where === "Filter state" ||
+        where === "Row" ||
+        where === "Active edit view"
+      )
         return { set_fields: calcrow };
-
+      if (select_table && query) {
+        //get table
+        const table = Table.findOne(select_table);
+        // evaluate query
+        const q = eval_expression(
+          query,
+          row,
+          user,
+          "Query expression in modify_row step"
+        );
+        const rows = await table.getRows(q);
+        for (const row of rows) {
+          await table.updateRow(calcrow, row[table.pk_name]);
+        }
+        return;
+      }
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;
       else return;
@@ -1053,11 +1204,15 @@ module.exports = {
       const tables = await Table.find({}, { cached: true });
 
       return [
-        {
-          name: "delete_triggering_row",
-          label: "Delete triggering row",
-          type: "Bool",
-        },
+        ...(mode === "workflow"
+          ? []
+          : [
+              {
+                name: "delete_triggering_row",
+                label: "Delete triggering row",
+                type: "Bool",
+              },
+            ]),
         {
           name: "table_name",
           label: "Table",
@@ -1170,6 +1325,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Step control flow",
+    disableInWorkflow: true,
     configFields: [
       {
         name: "control_action",
@@ -1382,6 +1538,7 @@ module.exports = {
             topic: "JavaScript action code",
           },
           showIf: { run_where: "Server" },
+          attributes: { secondColHoriz: true },
         },
         {
           input_type: "section_header",
@@ -1391,6 +1548,7 @@ module.exports = {
             topic: "JavaScript action code",
           },
           showIf: { run_where: "Client page" },
+          attributes: { secondColHoriz: true },
         },
         {
           name: "run_where",
@@ -1414,7 +1572,24 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Run arbitrary JavaScript code from a String field",
-    configFields: async ({ table }) => {
+    configFields: async ({ table, mode }) => {
+      if (mode === "workflow")
+        return [
+          {
+            name: "code_field",
+            label: "Code field",
+            sublabel:
+              "String variable in context contains the JavaScript code to run",
+            type: "String",
+            required: true,
+          },
+          {
+            name: "run_where",
+            label: "Run where",
+            input_type: "select",
+            options: ["Server", "Client page"],
+          },
+        ];
       const field_opts = table.fields
         .filter((f) => f.type?.name === "String")
         .map((f) => f.name);
@@ -1459,6 +1634,7 @@ module.exports = {
       table,
       configuration: { code_field, run_where },
       row,
+      mode,
       ...rest
     }) => {
       let code;
@@ -1508,6 +1684,7 @@ module.exports = {
         ...fldOpts,
       ];
     },
+    disableInWorkflow: true,
     requireRow: true,
     run: async ({ row, table, configuration: { viewname, ...flds }, user }) => {
       const qs = Object.entries(flds)
