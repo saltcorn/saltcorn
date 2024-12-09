@@ -48,7 +48,6 @@ describe("Field", () => {
     });
     assertIsSet(fc_recreate.id);
     expect(fc_recreate.id > 0).toBe(true);
-    
   });
   it("should add and then delete nonrequired field", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -370,6 +369,28 @@ describe("Field update", () => {
     if (!db.isSQLite) {
       await fc.update({
         type: "Key to patients",
+        attributes: { summary_field: "author" },
+      });
+    }
+  });
+  it("changes int to fkey ref", async () => {
+    const table = await Table.create("changingtable1");
+
+    const fc = await Field.create({
+      table,
+      name: "reads",
+      label: "Reading",
+      type: "Integer",
+      required: false,
+    });
+
+    await table.insertRow({ reads: 1 });
+
+    //db.set_sql_logging();
+
+    if (!db.isSQLite) {
+      await fc.update({
+        type: "Key to books",
         attributes: { summary_field: "author" },
       });
     }
