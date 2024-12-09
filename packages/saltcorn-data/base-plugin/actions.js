@@ -485,7 +485,54 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Send an email, based on a chosen view for this table",
-    configFields: async ({ table }) => {
+    configFields: async ({ table, mode }) => {
+      if (mode === "workflow") {
+        return [
+          {
+            name: "to_email",
+            label: "To",
+            sublabel:
+              "To addresses, comma separated, <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },
+          {
+            name: "cc_email",
+            label: "cc",
+            sublabel:
+              "cc addresses, comma separated, <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },
+          {
+            name: "subject",
+            label: "Subject",
+            sublabel:
+              "Subject of email, <code>{{ }}</code> interpolations usable",
+            type: "String",
+            required: true,
+          },
+          {
+            name: "body",
+            label: "Body",
+            type: "String",
+            fieldview: "textarea",
+            required: true,
+          },
+          /*    {
+            name: "attachment_paths",
+            label: "Attachments",
+            sublabel:
+              "Comma-separated list of files to attach. <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },*/
+          {
+            name: "confirm_field",
+            label: "Send confirmation variable",
+            type: "String",
+            sublabel:
+              "Bool variable set in context indicate successful sending of email message",
+          },
+        ];
+      }
       if (!table) return [];
       const views = await View.find_table_views_where(
         table,
@@ -655,9 +702,29 @@ module.exports = {
         attachment_path,
         disable_notify,
         confirm_field,
+        body,
       },
       user,
+      mode,
     }) => {
+      const from = getState().getConfig("email_from");
+
+      if (mode === "workflow") {
+        const email = {
+          from,
+          to: interpolate(to_email, row, user),
+          cc: interpolate(cc_email, row, user),
+          subject: interpolate(subject, row, user),
+          html: interpolate(body, row, user),
+
+          //          attachments,
+        };
+        const sendres = await getMailTransport().sendMail(email);
+        getState().log(5, `send_email result: ${JSON.stringify(sendres)}`);
+        if (confirm_field)
+          return { [confirm_field]: sendres.accepted.length > 0 };
+        else return;
+      }
       let to_addr;
       let useRow = row;
       const fvs = [
@@ -725,7 +792,6 @@ module.exports = {
         setBody.html = await viewToEmailHtml(view, { id: row[table.pk_name] });
       }
 
-      const from = getState().getConfig("email_from");
       const attachments = await loadAttachments(
         attachment_path,
         row,

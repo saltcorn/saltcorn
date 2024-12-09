@@ -1554,14 +1554,13 @@ router.post(
 
 /* TODO
 
-text
-implement modes for basic actions: send_email (select table)
+implement modes for basic actions: go throught rest to disable/alter
 in pack, restore
 
 interactive run
 
 show unconnected steps
-workflow actions: SetContext, ForLoop, EndForLoop
+workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile
 debug run
 why is code not initialising
 drag and drop edges
