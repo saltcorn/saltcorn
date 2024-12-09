@@ -394,12 +394,12 @@ describe("Field update", () => {
         type: "Key to books",
         attributes: { summary_field: "author" },
       });
+      const table1 = await Table.findOne("changingtable1");
+      const fc1 = table1!.fields[1];
+      expect(fc1.type).toBe("Key");
+      expect(fc1.reftable_name).toBe("books");
+      expect(fc1.is_fkey).toBe(true);
     }
-    const table1 = await Table.findOne("changingtable1");
-    const fc1 = table1!.fields[1];
-    expect(fc1.type).toBe("Key");
-    expect(fc1.reftable_name).toBe("books");
-    expect(fc1.is_fkey).toBe(true);
   });
   it("changes fkey ref to int", async () => {
     const table = await Table.findOne("changingtable1");
@@ -420,14 +420,13 @@ describe("Field update", () => {
       await fc.update({
         type: "Integer",
       });
+      await table.insertRow({ reads: 1, buys: 50 });
+      const table1 = await Table.findOne("changingtable1");
+      const fc1 = table1!.fields[1];
+      expect((fc1.type as Type).name).toBe("Integer");
+      //expect(fc1.reftable_name).toBe("books");
+      expect(fc1.is_fkey).toBe(false);
     }
-    await table.insertRow({ reads: 1, buys: 50 });
-    const table1 = await Table.findOne("changingtable1");
-    const fc1 = table1!.fields[1];
-    expect((fc1.type as Type).name).toBe("Integer");
-    //expect(fc1.reftable_name).toBe("books");
-    expect(fc1.is_fkey).toBe(false);
-
   });
 });
 
