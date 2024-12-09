@@ -6,6 +6,7 @@ const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
+import { Type } from "@saltcorn/types/common_types";
 const { sleep, plugin_with_routes } = mocks;
 
 getState().registerPlugin("base", require("../base-plugin"));
@@ -395,10 +396,38 @@ describe("Field update", () => {
       });
     }
     const table1 = await Table.findOne("changingtable1");
-    const fc1 = table1!.fields[1]
+    const fc1 = table1!.fields[1];
     expect(fc1.type).toBe("Key");
     expect(fc1.reftable_name).toBe("books");
     expect(fc1.is_fkey).toBe(true);
+  });
+  it("changes fkey ref to int", async () => {
+    const table = await Table.findOne("changingtable1");
+    assertIsSet(table);
+    const fc = await Field.create({
+      table,
+      name: "buys",
+      label: "Buys",
+      type: "Key to books",
+      required: false,
+    });
+
+    await table.insertRow({ reads: 1, buys: 2 });
+
+    //db.set_sql_logging();
+
+    if (!db.isSQLite) {
+      await fc.update({
+        type: "Integer",
+      });
+    }
+    await table.insertRow({ reads: 1, buys: 50 });
+    const table1 = await Table.findOne("changingtable1");
+    const fc1 = table1!.fields[1];
+    expect((fc1.type as Type).name).toBe("Integer");
+    //expect(fc1.reftable_name).toBe("books");
+    expect(fc1.is_fkey).toBe(false);
+
   });
 });
 

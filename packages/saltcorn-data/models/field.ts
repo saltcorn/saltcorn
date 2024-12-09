@@ -816,6 +816,17 @@ class Field implements AbstractField {
         }`
       );
     } else if (
+      !new_field.is_fkey &&
+      this.is_fkey 
+    ) {
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" drop constraint if exists "${sqlsanitize(
+          new_field!.table!.name
+        )}_${sqlsanitize(new_field.name)}_fkey"`
+      );
+    } else if (
       new_field.is_fkey &&
       this.reftable_name &&
       new_field.reftable_name &&
