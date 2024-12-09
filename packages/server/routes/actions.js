@@ -693,15 +693,29 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         label: req.__("Step name"),
         type: "String",
         required: true,
+        sublabel: "An identifier by which this step can be referred to.",
+        validator(s) {
+          if (!s) return true;
+          if (s.includes(" ")) return "Spaces not allowd";
+          let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
+            .split("")
+            .find((c) => s.includes(c));
+          console.log({ badc });
+
+          if (badc) return `Character ${badc} not allowed`;
+        },
       },
       {
         name: "wf_initial_step",
         label: req.__("Initial step"),
+        sublabel: "Is this the first step in the workflow?",
         type: "Bool",
       },
       {
         name: "wf_only_if",
         label: req.__("Only if..."),
+        sublabel:
+          "Optional JavaScript expression. If given, the chosen action will only be executed if evaluates to true",
         type: "String",
       },
       {
@@ -709,6 +723,8 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         label: req.__("Next step"),
         type: "String",
         class: "validate-expression",
+        sublabel:
+          "Name of next step. Can be a JavaScript expression based on the run context. Blank if final step",
       },
       {
         name: "wf_action_name",
@@ -1557,9 +1573,11 @@ router.post(
 WORKFLOWS TODO
 
 interactive run
+help sublabels
+pagination, search in workflow runs
 
 show unconnected steps
-workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile
+workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile, APIResponse
 debug run
 why is code not initialising
 drag and drop edges
