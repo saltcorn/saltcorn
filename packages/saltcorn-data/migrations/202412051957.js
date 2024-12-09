@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS _sc_workflow_runs (
     current_step text
 );`;
 
-const sql_sqlite = `CREATE TABLE _sc_workflow_steps (
+const sql_sqlite = [
+  `CREATE TABLE _sc_workflow_steps (
     id integer primary key,
     name text NOT NULL,
     only_if text,
@@ -30,9 +31,8 @@ const sql_sqlite = `CREATE TABLE _sc_workflow_steps (
     action_name text NOT NULL,
     initial_step boolean,
     configuration json
-);
-
-CREATE TABLE IF NOT EXISTS _sc_workflow_runs (
+);`,
+  `CREATE TABLE IF NOT EXISTS _sc_workflow_runs (
     id serial primary key,  
     trigger_id integer references _sc_triggers(id) ON DELETE CASCADE,
     context json NOT NULL,
@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS _sc_workflow_runs (
     error text,
     status text,
     current_step text
-);`;
+);`,
+];
 
 module.exports = { sql_pg, sql_sqlite };
