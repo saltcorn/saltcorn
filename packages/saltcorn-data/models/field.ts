@@ -19,6 +19,7 @@ const {
   satisfies,
   apply,
   structuredClone,
+  validSqlId,
 } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
@@ -229,7 +230,7 @@ class Field implements AbstractField {
   // todo from internalization point of view better to separate label, name. sqlname
   // because label can contain characters that cannot be used in PG for sql names
   static labelToName(label: string): string {
-    return sqlsanitize(label.toLowerCase().split(" ").join("_"));
+    return sqlsanitize(validSqlId(label.trim()));
   }
 
   static nameToLabel(label: string): string {
