@@ -919,6 +919,7 @@ module.exports = {
      */
     description: "Duplicate the current row",
     configFields: () => [],
+    disableInWorkflow: true,
     requireRow: true,
     /**
      * @param {object} opts
@@ -1088,11 +1089,6 @@ module.exports = {
    * @subcategory actions
    */
   modify_row: {
-    /**
-     * @param {object} opts
-     * @param {*} opts.table
-     * @returns {Promise<object[]>}
-     */
     description: "Modify the triggering row",
     configFields: async ({ mode, when_trigger }) => {
       return [
@@ -1104,7 +1100,10 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
         },
-        ...(mode === "edit" || mode === "filter" || when_trigger === "Validate"
+        ...(mode === "edit" ||
+        mode === "filter" ||
+        when_trigger === "Validate" ||
+        mode === "workflow"
           ? [
               {
                 name: "where",
@@ -1117,8 +1116,31 @@ module.exports = {
                       ? ["Row"]
                       : mode === "filter"
                       ? ["Filter state"]
+                      : mode === "workflow"
+                      ? ["Database", "Active edit view"]
                       : ["Form", "Database"],
                 },
+              },
+            ]
+          : []),
+        ...(mode === "workflow"
+          ? [
+              {
+                name: "select_table",
+                label: "Table",
+                type: "String",
+                required: true,
+                attributes: {
+                  options: (await Table.find()).map((t) => t.name),
+                  showIf: { where: "Database" },
+                },
+              },
+              {
+                name: "query",
+                label: "Query object",
+                type: "String",
+                required: true,
+                showIf: { where: "Database" },
               },
             ]
           : []),
@@ -1128,18 +1150,42 @@ module.exports = {
     run: async ({
       row,
       table,
-      configuration: { row_expr, where },
+      configuration: { row_expr, where, select_table, query },
       user,
       ...rest
     }) => {
-      const f = get_async_expression_function(row_expr, table.fields, {
-        row: row || {},
-        user,
-      });
+      const f = get_async_expression_function(
+        row_expr,
+        table?.fields || Object.keys(row).map((k) => ({ name: k })),
+        {
+          row: row || {},
+          user,
+        }
+      );
       const calcrow = await f(row, user);
-      if (where === "Form" || where === "Filter state" || where === "Row")
+      if (
+        where === "Form" ||
+        where === "Filter state" ||
+        where === "Row" ||
+        where === "Active edit view"
+      )
         return { set_fields: calcrow };
-
+      if (select_table && query) {
+        //get table
+        const table = Table.findOne(select_table);
+        // evaluate query
+        const q = eval_expression(
+          query,
+          row,
+          user,
+          "Query expression in modify_row step"
+        );
+        const rows = await table.getRows(q);
+        for (const row of rows) {
+          await table.updateRow(calcrow, row[table.pk_name]);
+        }
+        return;
+      }
       const res = await table.tryUpdateRow(calcrow, row[table.pk_name], user);
       if (res.error) return res;
       else return;
@@ -1158,11 +1204,15 @@ module.exports = {
       const tables = await Table.find({}, { cached: true });
 
       return [
-        {
-          name: "delete_triggering_row",
-          label: "Delete triggering row",
-          type: "Bool",
-        },
+        ...(mode === "workflow"
+          ? []
+          : [
+              {
+                name: "delete_triggering_row",
+                label: "Delete triggering row",
+                type: "Bool",
+              },
+            ]),
         {
           name: "table_name",
           label: "Table",
@@ -1634,6 +1684,7 @@ module.exports = {
         ...fldOpts,
       ];
     },
+    disableInWorkflow: true,
     requireRow: true,
     run: async ({ row, table, configuration: { viewname, ...flds }, user }) => {
       const qs = Object.entries(flds)
