@@ -865,8 +865,9 @@ class Field implements AbstractField {
     const f = new Field({ ...this, ...v });
     const state = require("../db/state").getState();
     const rename: boolean = f.name !== this.name;
+    if (rename) this.fill_table();
     if (rename && !this.table?.name) {
-      throw new Error("");
+      throw new Error("No table to rename in");
     }
 
     if (
