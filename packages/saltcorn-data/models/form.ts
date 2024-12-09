@@ -166,7 +166,9 @@ class Form implements AbstractForm {
   get errorSummary(): string {
     let strs = new Array<string>();
     Object.entries(this.errors).forEach(([k, v]) => {
-      strs.push(`${k}: ${v}`);
+      const field = this.fields.find((f) => f.name === k);
+      if (field) strs.push(`${field.label}: ${v}`);
+      else strs.push(`${k}: ${v}`);
     });
     return strs.join("; ");
   }
