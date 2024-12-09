@@ -19,6 +19,7 @@ const {
   satisfies,
   apply,
   structuredClone,
+  validSqlId,
 } = require("../utils");
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
@@ -229,7 +230,7 @@ class Field implements AbstractField {
   // todo from internalization point of view better to separate label, name. sqlname
   // because label can contain characters that cannot be used in PG for sql names
   static labelToName(label: string): string {
-    return sqlsanitize(label.toLowerCase().split(" ").join("_"));
+    return sqlsanitize(validSqlId(label.trim()));
   }
 
   static nameToLabel(label: string): string {
@@ -797,6 +798,36 @@ class Field implements AbstractField {
       );
     } else if (
       new_field.is_fkey &&
+      !this.is_fkey &&
+      this.type &&
+      typeof this.type !== "string" &&
+      new_field.reftype === this?.type.name &&
+      new_field?.reftable_name
+    ) {
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" add constraint "${sqlsanitize(
+          new_field!.table!.name
+        )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
+          new_field.name
+        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"(id)${
+          new_field.on_delete_sql
+        }`
+      );
+    } else if (
+      !new_field.is_fkey &&
+      this.is_fkey 
+    ) {
+      await db.query(
+        `ALTER TABLE ${schema}"${sqlsanitize(
+          this.table.name
+        )}" drop constraint if exists "${sqlsanitize(
+          new_field!.table!.name
+        )}_${sqlsanitize(new_field.name)}_fkey"`
+      );
+    } else if (
+      new_field.is_fkey &&
       this.reftable_name &&
       new_field.reftable_name &&
       (new_field.on_delete_sql !== this.on_delete_sql ||
@@ -846,8 +877,9 @@ class Field implements AbstractField {
     const f = new Field({ ...this, ...v });
     const state = require("../db/state").getState();
     const rename: boolean = f.name !== this.name;
+    if (rename) this.fill_table();
     if (rename && !this.table?.name) {
-      throw new Error("");
+      throw new Error("No table to rename in");
     }
 
     if (

@@ -19,7 +19,8 @@ const validSqlId = (s: string): string =>
   unidecode(s)
     .replace(/[ -]/g, "_")
     .replace(/[&\/\\#,+()$~%.'":*?<>{}`]/g, "")
-    .toLowerCase();
+    .toLowerCase()
+    .trim();
 
 const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};

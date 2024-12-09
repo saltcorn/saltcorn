@@ -301,6 +301,10 @@ const fieldFlow = (req) =>
       if (context.id) {
         const field = await Field.findOne({ id: context.id });
         try {
+          if (fldRow.label && field.label != fldRow.label) {
+            fldRow.name = Field.labelToName(fldRow.label);
+          }
+
           await field.update(fldRow);
         } catch (e) {
           return {
