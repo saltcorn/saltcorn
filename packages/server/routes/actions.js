@@ -575,7 +575,7 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
 };
 
 const jsIdentifierValidator = (s) => {
-  if(!s) return "An identifier is required"
+  if (!s) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
   let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
     .split("")
@@ -656,7 +656,8 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           label: "Variable name",
           name: "var_name",
           type: "String",
-          sublabel: "The answer will be set in the context with this variable name",
+          sublabel:
+            "The answer will be set in the context with this variable name",
           validator: jsIdentifierValidator,
         },
         {
@@ -1437,7 +1438,8 @@ router.get(
                   a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
                 )
               ),
-              tr(th("Started"), td(localeDateTime(run.started_at))),
+              tr(th("Started at"), td(localeDateTime(run.started_at))),
+              tr(th("Started by"), td(run.started_by)),
               tr(th("Status"), td(run.status)),
               run.status === "Waiting"
                 ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
@@ -1574,11 +1576,35 @@ router.post(
   })
 );
 
+router.post(
+  "/resume-workflow/:id",
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    //TODO session if not logged in
+    if (run.started_by !== req.user?.id) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+    await run.run({ user: req.user, interactive: true });
+    if (req.xhr) {
+      const retDirs = await run.popReturnDirectives();
+      res.json({ success: "ok", ...retDirs });
+    } else {
+      if (run.context.goto) res.redirect(run.context.goto);
+      else res.redirect("/");
+    }
+  })
+);
+
 /* 
 
 WORKFLOWS TODO
-
-interactive run
 
 delete is not always working?
 pagination, search in workflow runs
@@ -1589,5 +1615,6 @@ workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFi
 debug run
 why is code not initialising
 drag and drop edges
+interactive workflows for not logged in
 
 */

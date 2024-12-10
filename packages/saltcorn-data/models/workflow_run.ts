@@ -330,6 +330,8 @@ class WorkflowRun {
       await this.update(nextUpdate);
       if (
         interactive &&
+        result &&
+        typeof result === "object" &&
         allReturnDirectives.some((k) => typeof result[k] !== "undefined")
       ) {
         const ret = await this.popReturnDirectives();
