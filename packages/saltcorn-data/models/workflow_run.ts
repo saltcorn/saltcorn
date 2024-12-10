@@ -1,5 +1,5 @@
 /**
- * Workflow step Database Access Layer
+ * Workflow Run Database Access Layer
  * @category saltcorn-data
  * @module models/workflow_run
  * @subcategory models
@@ -191,7 +191,15 @@ class WorkflowRun {
     }
   }
 
-  async run({ user }: { user?: User }) {
+  async run({
+    user,
+    interactive,
+    api_call,
+  }: {
+    user?: User;
+    interactive?: boolean;
+    api_call?: boolean;
+  }) {
     if (this.status === "Error" || this.status === "Finished") return;
     //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
@@ -269,6 +277,12 @@ class WorkflowRun {
           wait_info: { form: { user_id: user_id } },
         });
         step = null;
+        if (
+          interactive &&
+          (!step.configuration.user_id_expression || user_id === user?.id)
+        ) {
+          return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+        }
         break;
       }
 
@@ -314,6 +328,14 @@ class WorkflowRun {
         nextUpdate.current_step = step.name;
       }
       await this.update(nextUpdate);
+      if (
+        interactive &&
+        allReturnDirectives.some((k) => typeof result[k] !== "undefined")
+      ) {
+        const ret = await this.popReturnDirectives();
+        ret.resume_workflow = this.id;
+        return ret;
+      }
     }
   }
 

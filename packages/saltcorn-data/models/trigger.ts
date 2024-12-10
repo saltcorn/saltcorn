@@ -362,8 +362,7 @@ class Trigger implements AbstractTrigger {
         context: runargs?.row || undefined,
         started_by: user?.id,
       });
-      await wfrun.run({ user });
-      return wfrun.context;
+      return await wfrun.run({ user, interactive: runargs?.interactive });
     } else if (this.action === "Multi-step action") {
       let result: any = {};
       let step_count = 0;
