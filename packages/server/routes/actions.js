@@ -1547,7 +1547,7 @@ router.get(
     });
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
-
+    if (req.xhr) form.xhrSubmit = true;
     const title = "Fill form";
     res.sendWrap(title, renderForm(form, req.csrfToken()));
   })
@@ -1631,12 +1631,11 @@ router.post(
 
 WORKFLOWS TODO
 
-test interactive form
 delete is not always working?
 help file to explain steps, and context
 auto-delete runs settings
 
-workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile, APIResponse
+workflow actions: SetContext, ForLoop, EndForLoop, Output, TableQuery, ReadFile, WriteFile, APIResponse
 interactive workflows for not logged in
 debug run or execution trace
 show unconnected steps
