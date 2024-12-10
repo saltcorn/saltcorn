@@ -16,6 +16,12 @@ export function currentLocation() {
   return routingHistory[index].route;
 }
 
+export function currentUrl() {
+  const query = currentQuery();
+  const safeQuery = query ? (query.startsWith("?") ? query : `?${query}`) : "";
+  return `${currentLocation()}${safeQuery}`;
+}
+
 export function currentQuery(skipPosts = false) {
   if (routingHistory.length == 0) return undefined;
   let index = routingHistory.length - 1;

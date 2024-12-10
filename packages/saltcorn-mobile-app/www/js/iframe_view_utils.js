@@ -303,11 +303,14 @@ function invalidate_pagings(currentQuery) {
   return newQuery;
 }
 
-async function set_state_fields(kvs, href) {
+async function set_state_fields(kvs, disablePjax, e) {
   try {
     showLoadSpinner();
+    let newhref = get_current_state_url(e);
     let queryParams = [];
-    let currentQuery = parent.saltcorn.mobileApp.navigation.currentQuery();
+    const { path, query } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
+    let currentQuery = query || {};
     if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
       currentQuery = invalidate_pagings(currentQuery);
     }
@@ -321,13 +324,51 @@ async function set_state_fields(kvs, href) {
     for (const [k, v] of new URLSearchParams(currentQuery).entries()) {
       queryParams.push(`${k}=${v}`);
     }
-    await parent.saltcorn.mobileApp.navigation.handleRoute(
-      href,
-      queryParams.join("&")
-    );
+    const queryStr = queryParams.join("&");
+    if (disablePjax)
+      await parent.saltcorn.mobileApp.navigation.handleRoute(path, queryStr);
+    else await pjax_to(path, queryStr, e);
   } finally {
     removeLoadSpinner();
   }
+}
+
+async function pjax_to(href, query, e) {
+  const safeHref = href.startsWith("get") ? href.substring(3) : href;
+  const path = `${safeHref}?${query}`;
+  let $modal = $("#scmodal");
+  const inModal = $modal.length && $modal.hasClass("show");
+  const localizer = e ? $(e).closest("[data-sc-local-state]") : [];
+  let $dest = localizer.length
+    ? localizer
+    : inModal
+    ? $("#scmodal .modal-body")
+    : $("#page-inner-content");
+  if (!$dest.length)
+    await parent.saltcorn.mobileApp.navigation.handleRoute(safeHref, query);
+  else
+    try {
+      const headers = {
+        pjaxpageload: "true",
+      };
+      if (localizer.length) headers.localizedstate = "true";
+      const result = await parent.saltcorn.mobileApp.api.apiCall({
+        path: path,
+        method: "GET",
+        additionalHeaders: headers,
+      });
+      if (!inModal && !localizer.length) {
+        // not sure for mobile
+        // window.history.pushState({ url: href }, "", href);
+      }
+      if (inModal && !localizer.length)
+        $(".sc-modal-linkout").attr("href", path);
+      $dest.html(result.data);
+      if (localizer.length) localizer.attr("data-sc-local-state", path);
+      initialize_page();
+    } catch (error) {
+      parent.saltcorn.mobileApp.common.errorAlert(error);
+    }
 }
 
 async function set_state_field(key, value) {
@@ -361,24 +402,26 @@ async function unset_state_field(key) {
   }
 }
 
-async function sortby(k, desc, viewIdentifier) {
+async function sortby(k, desc, viewIdentifier, e) {
   await set_state_fields(
     {
       [`_${viewIdentifier}_sortby`]: k,
       [`_${viewIdentifier}_sortdesc`]: desc ? "on" : { unset: true },
     },
-    parent.saltcorn.mobileApp.navigation.currentLocation()
+    false,
+    e
   );
 }
 
-async function gopage(n, pagesize, viewIdentifier, extra) {
+async function gopage(n, pagesize, viewIdentifier, extra, e) {
   await set_state_fields(
     {
       ...extra,
       [`_${viewIdentifier}_page`]: n,
       [`_${viewIdentifier}_pagesize`]: pagesize,
     },
-    parent.saltcorn.mobileApp.navigation.currentLocation()
+    false,
+    e
   );
 }
 

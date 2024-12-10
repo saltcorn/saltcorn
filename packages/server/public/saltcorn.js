@@ -84,17 +84,6 @@ function removeQueryStringParameter(uri1, key) {
   return uri + hash;
 }
 
-function get_current_state_url(e) {
-  const localizer = e ? $(e).closest("[data-sc-local-state]") : [];
-  let $modal = $("#scmodal");
-  if (localizer.length) {
-    const localState = localizer.attr("data-sc-local-state") || "";
-    return localState;
-  } else if ($modal.length === 0 || !$modal.hasClass("show"))
-    return window.location.href;
-  else return $modal.prop("data-modal-state");
-}
-
 function select_id(id, e) {
   pjax_to(updateQueryStringParameter(get_current_state_url(e), "id", id), e);
 }
