@@ -354,6 +354,9 @@ class WorkflowRun {
 
     return retVals;
   }
+  static async count(where?: Where): Promise<number> {
+    return await db.count("_sc_workflow_runs", where);
+  }
 }
 
 export = WorkflowRun;

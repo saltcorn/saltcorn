@@ -1356,13 +1356,17 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const trNames = {};
+    const { _page, trigger } = req.query;
     for (const trig of await Trigger.find({ action: "Workflow" }))
       trNames[trig.id] = trig.name;
+    const q = {};
+    const selOpts = { orderBy: "started_at", orderDesc: true, limit: 20 };
+    if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);
+    if (trigger) q.trigger_id = trigger;
+    const runs = await WorkflowRun.find(q, selOpts);
+    const count = await WorkflowRun.count(q);
+    console.log({ count });
 
-    const runs = await WorkflowRun.find(
-      {},
-      { orderBy: "started_at", orderDesc: true }
-    );
     const wfTable = mkTable(
       [
         { label: "Trigger", key: (run) => trNames[run.trigger_id] },
@@ -1391,7 +1395,14 @@ router.get(
         },
       ],
       runs,
-      { onRowSelect: (row) => `location.href='/actions/run/${row.id}'` }
+      {
+        onRowSelect: (row) => `location.href='/actions/run/${row.id}'`,
+        pagination: {
+          current_page: parseInt(_page) || 1,
+          pages: Math.ceil(count / 20),
+          get_page_link: (n) => `gopage(${n}, 20)`,
+        },
+      }
     );
     send_events_page({
       res,
@@ -1615,6 +1626,6 @@ workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFi
 debug run
 why is code not initialising
 drag and drop edges
-interactive workflows for not logged in
+interactive workflows for not logged
 
 */
