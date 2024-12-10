@@ -276,13 +276,14 @@ class WorkflowRun {
           status: "Waiting",
           wait_info: { form: { user_id: user_id } },
         });
-        step = null;
+
         if (
           interactive &&
           (!step.configuration.user_id_expression || user_id === user?.id)
         ) {
           return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
         }
+        step = null;
         break;
       }
 

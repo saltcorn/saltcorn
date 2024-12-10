@@ -1372,7 +1372,6 @@ router.get(
     if (trigger) q.trigger_id = trigger;
     const runs = await WorkflowRun.find(q, selOpts);
     const count = await WorkflowRun.count(q);
-    console.log({ count });
 
     const wfTable = mkTable(
       [
@@ -1609,8 +1608,16 @@ router.post(
       }
       return;
     }
-    await run.run({ user: req.user, interactive: true });
+    const runResult = await run.run({ user: req.user, interactive: true });
     if (req.xhr) {
+      if (
+        runResult &&
+        typeof runResult === "object" &&
+        Object.keys(runResult).length
+      ) {
+        res.json({ success: "ok", ...runResult });
+        return;
+      }
       const retDirs = await run.popReturnDirectives();
       res.json({ success: "ok", ...retDirs });
     } else {
@@ -1624,15 +1631,16 @@ router.post(
 
 WORKFLOWS TODO
 
+test interactive form
 delete is not always working?
 help file to explain steps, and context
-
-show unconnected steps
-workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile, APIResponse
-debug run or execution trace
 auto-delete runs settings
+
+workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile, APIResponse
+interactive workflows for not logged in
+debug run or execution trace
+show unconnected steps
 why is code not initialising
 drag and drop edges
-interactive workflows for not logged in
 
 */
