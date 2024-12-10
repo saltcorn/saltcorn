@@ -570,6 +570,13 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
       },
       i({ class: "fas fa-plus me-2" }),
       "Add step"
+    ) +
+    a(
+      {
+        href: `/actions/runs/?trigger=${trigger.id}`,
+        class: "d-block",
+      },
+      "Show runs &raquo;"
     )
   );
 };
@@ -1618,14 +1625,14 @@ router.post(
 WORKFLOWS TODO
 
 delete is not always working?
-pagination, search in workflow runs
 help file to explain steps, and context
 
 show unconnected steps
 workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile, APIResponse
-debug run
+debug run or execution trace
+auto-delete runs settings
 why is code not initialising
 drag and drop edges
-interactive workflows for not logged
+interactive workflows for not logged in
 
 */
