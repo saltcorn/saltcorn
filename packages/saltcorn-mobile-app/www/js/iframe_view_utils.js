@@ -1,5 +1,5 @@
 /*eslint-env browser*/
-/*global $, KTDrawer, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success*/
+/*global $, KTDrawer, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page */
 
 function combineFormAndQuery(form, query) {
   let paramsList = [];
