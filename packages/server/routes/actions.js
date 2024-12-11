@@ -640,9 +640,10 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     showIf: { wf_action_name: "UserForm" },
   });
   actionConfigFields.push({
-    label: "User ID expression",
+    label: "User ID",
     name: "user_id_expression",
     type: "String",
+    sublabel: "Optional. If blank assigned to user starting the workflow",
     showIf: { wf_action_name: "UserForm" },
   });
   actionConfigFields.push({
@@ -676,20 +677,21 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   actionConfigFields.push({
     label: "Query",
     name: "query_object",
-    sublabel:"Where object, example <code>{manager: 1}</code>",
+    sublabel: "Where object, example <code>{manager: 1}</code>",
     type: "String",
     required: true,
     class: "validate-expression",
-    showIf: { wf_action_name: "TableQuery" },    
+    default: "{}",
+    showIf: { wf_action_name: "TableQuery" },
   });
   actionConfigFields.push({
     label: "Variable",
     name: "query_variable",
-    sublabel:"Context variable to write to query results to",
+    sublabel: "Context variable to write to query results to",
     type: "String",
     required: true,
     validator: jsIdentifierValidator,
-    showIf: { wf_action_name: "TableQuery" },    
+    showIf: { wf_action_name: "TableQuery" },
   });
   actionConfigFields.push(
     new FieldRepeat({
@@ -1220,6 +1222,9 @@ router.get(
           ? script(domReady(`common_done(${JSON.stringify(runres)})`))
           : ""
       );
+      if (trigger.action === "Workflow") {
+        res.redirect(`/actions/runs/?trigger=${trigger.id}`);
+      }
       res.redirect(`/actions/`);
     } else {
       send_events_page({
