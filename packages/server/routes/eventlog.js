@@ -170,7 +170,7 @@ router.get(
     );
     ["error", "finished", "running", "waiting"].forEach((k) => {
       let cfgk = `delete_${k}_workflows_days`;
-      form.values[cfgk] = getState().getConfig(cfgk, {});
+      form.values[cfgk] = getState().getConfig(cfgk);
     });
 
     send_events_page({

@@ -358,6 +358,20 @@ class WorkflowRun {
   static async count(where?: Where): Promise<number> {
     return await db.count("_sc_workflow_runs", where);
   }
+
+  static async prune() {
+    for (const status of ["Error", "Finished", "Running", "Waiting"]) {
+      let k = `delete_${status.toLowerCase()}_workflows_days`;
+      const days = getState().getConfig(k, false);
+      if (!days) continue;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      await db.deleteWhere("_sc_workflow_runs", {
+        status,
+        started_at: { lt: cutoff },
+      });
+    }
+  }
 }
 
 export = WorkflowRun;
