@@ -536,7 +536,13 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     onChange: "saveAndContinue(this)",
     noSubmitButton: true,
     formStyle: "vert",
-    fields: [{ name: "save_traces", label: "Save step traces for each run", type: "Bool" }],
+    fields: [
+      {
+        name: "save_traces",
+        label: "Save step traces for each run",
+        type: "Bool",
+      },
+    ],
   });
   trigCfgForm.values = trigger.configuration;
   return (
@@ -1241,7 +1247,11 @@ router.get(
           : ""
       );
       if (trigger.action === "Workflow")
-        res.redirect(`/actions/runs/?trigger=${trigger.id}`);
+        res.redirect(
+          runres?.__wf_run_id
+            ? `/actions/run/${runres?.__wf_run_id}`
+            : `/actions/runs/?trigger=${trigger.id}`
+        );
       else res.redirect(`/actions/`);
     } else {
       send_events_page({
@@ -1540,7 +1550,7 @@ router.get(
                     td(localeDateTime(trace.step_started_at))
                   ),
                   tr(th("Elapsed"), td(trace.elapsed, "s")),
-                  tr(th("Started by user"), td(trace.user_id)),
+                  tr(th("Run by user"), td(trace.user_id)),
                   tr(th("Status"), td(trace.status)),
                   trace.status === "Waiting"
                     ? tr(th("Waiting for"), td(JSON.stringify(trace.wait_info)))
@@ -1784,7 +1794,6 @@ help file to explain steps, and context
 workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
 
 interactive workflows for not logged in
-debug run or execution trace
 
 show unconnected steps
 why is code not initialising
