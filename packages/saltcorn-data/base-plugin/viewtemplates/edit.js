@@ -358,6 +358,14 @@ const configuration_workflow = (req) =>
                 showIf: { auto_save: false },
               },
               {
+                name: "auto_create",
+                label: req.__("Allocate new row"),
+                sublabel: req.__(
+                  "If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields."
+                ),
+                type: "Bool",
+              },
+              {
                 name: "split_paste",
                 label: req.__("Split paste"),
                 sublabel: req.__("Separate paste content into separate inputs"),
@@ -513,11 +521,11 @@ const run = async (
   viewname,
   cfg,
   state,
-  { res, req },
+  { res, req, isPreview },
   { editQuery }
 ) => {
   const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
-  return await editQuery(state, mobileReferrer);
+  return await editQuery(state, mobileReferrer, isPreview);
 };
 
 /**
@@ -1051,6 +1059,9 @@ const render = async ({
     //add to onchange
     if (!form.onChange) form.onChange = "";
     form.onChange += "this.setAttribute('data-unsaved-changes','true')";
+    if (!form.onSubmit) form.onSubmit = "";
+    form.onSubmit += "this.removeAttribute('data-unsaved-changes')";
+
     //beforeunload script
     confirmLeaveScript = script(
       `((curScript)=>{window.addEventListener("beforeunload", (e) => check_unsaved_form(e, curScript));})(document.currentScript)`
@@ -2041,11 +2052,12 @@ module.exports = {
       destination_type,
       fixed,
       confirm_leave,
+      auto_create,
     },
     req,
     res,
   }) => ({
-    async editQuery(state, mobileReferrer) {
+    async editQuery(state, mobileReferrer, isPreview) {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
@@ -2069,6 +2081,18 @@ module.exports = {
           forPublic: !req.user,
           forUser: req.user,
         });
+      } else if (auto_create && !isPreview) {
+        row = {};
+        fields.forEach((f) => {
+          if (f.required)
+            if (
+              typeof f.attributes?.default !== "undefined" &&
+              f.attributes?.default !== null
+            )
+              row[f.name] = f.attributes.default;
+            else if (f.type.sql_name === "text") row[f.name] = "";
+        });
+        row.id = await table.insertRow(row, req.user);
       }
       const isRemote = !isWeb(req);
       return await render({

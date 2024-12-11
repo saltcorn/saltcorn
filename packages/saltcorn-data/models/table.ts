@@ -3702,6 +3702,31 @@ ${rejectDetails}`,
       this.fields.filter((f) => !f.calculated)
     );
   }
+  async repairCompositePrimary() {
+    const { rows } = await db.query(`select constraint_name
+from information_schema.table_constraints
+where table_schema = '${db.getTenantSchema() || "public"}'
+      and table_name = '${this.name}'
+      and constraint_type = 'PRIMARY KEY';`);
+    const cname = rows[0]?.constraint_name;
+    const schemaPrefix = db.getTenantSchemaPrefix();
+    await db.query(
+      `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
+    );
+    for (const field of this.fields) {
+      if (field.primary_key) await field.update({ primary_key: false });
+    }
+    const { pk_type, pk_sql_type } = Table.pkSqlType(this.fields);
+
+    await db.query(
+      `alter table ${schemaPrefix}"${this.name}" add column id ${pk_sql_type} primary key;`
+    );
+    await db.query(
+      `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+        values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
+      [this.id]
+    );
+  }
 }
 
 async function dump_table_to_json_file(filePath: string, tableName: string) {

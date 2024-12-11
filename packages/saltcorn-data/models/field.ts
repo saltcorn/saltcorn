@@ -732,7 +732,11 @@ class Field implements AbstractField {
    */
   async remove_unique_constraint(): Promise<void> {
     this.fill_table();
-    await db.drop_unique_constraint(this.table?.name, [this.name]);
+    try {
+      await db.drop_unique_constraint(this.table?.name, [this.name]);
+    } catch (e) {
+      console.error("error removing unique constraint", e);
+    }
   }
 
   /**
@@ -815,10 +819,7 @@ class Field implements AbstractField {
           new_field.on_delete_sql
         }`
       );
-    } else if (
-      !new_field.is_fkey &&
-      this.is_fkey 
-    ) {
+    } else if (!new_field.is_fkey && this.is_fkey) {
       await db.query(
         `ALTER TABLE ${schema}"${sqlsanitize(
           this.table.name
