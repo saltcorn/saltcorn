@@ -1051,6 +1051,9 @@ const render = async ({
     //add to onchange
     if (!form.onChange) form.onChange = "";
     form.onChange += "this.setAttribute('data-unsaved-changes','true')";
+    if (!form.onSubmit) form.onSubmit = "";
+    form.onSubmit += "this.removeAttribute('data-unsaved-changes')";
+
     //beforeunload script
     confirmLeaveScript = script(
       `((curScript)=>{window.addEventListener("beforeunload", (e) => check_unsaved_form(e, curScript));})(document.currentScript)`
