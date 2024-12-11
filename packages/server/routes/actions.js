@@ -623,7 +623,13 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
-    builtIns: ["SetContext", "WaitUntil", "UserForm", "WaitNextTick"],
+    builtIns: [
+      "SetContext",
+      "TableQuery",
+      "WaitUntil",
+      "UserForm",
+      "WaitNextTick",
+    ],
     forWorkflow: true,
   });
 
@@ -654,8 +660,36 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "JavaScript object expression for the variables to set. Example <code>{x: 5, y:y+1}</code> will set x to 5 and increment existing context variable y",
     type: "String",
     fieldview: "textarea",
+    class: "validate-expression",
     default: "{}",
     showIf: { wf_action_name: "SetContext" },
+  });
+
+  actionConfigFields.push({
+    label: "Table",
+    name: "query_table",
+    type: "String",
+    required: true,
+    attributes: { options: (await Table.find()).map((t) => t.name) },
+    showIf: { wf_action_name: "TableQuery" },
+  });
+  actionConfigFields.push({
+    label: "Query",
+    name: "query_object",
+    sublabel:"Where object, example <code>{manager: 1}</code>",
+    type: "String",
+    required: true,
+    class: "validate-expression",
+    showIf: { wf_action_name: "TableQuery" },    
+  });
+  actionConfigFields.push({
+    label: "Variable",
+    name: "query_variable",
+    sublabel:"Context variable to write to query results to",
+    type: "String",
+    required: true,
+    validator: jsIdentifierValidator,
+    showIf: { wf_action_name: "TableQuery" },    
   });
   actionConfigFields.push(
     new FieldRepeat({
@@ -1644,7 +1678,10 @@ WORKFLOWS TODO
 delete is not always working?
 help file to explain steps, and context
 
-workflow actions: ForLoop, EndForLoop, Output, TableQuery, ReadFile, WriteFile, APIResponse
+workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
+test run to direct to run page
+improve run page table
+
 
 steps unique for trigger
 date of status change field, use for pruning

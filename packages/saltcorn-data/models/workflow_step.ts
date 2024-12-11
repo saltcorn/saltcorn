@@ -9,6 +9,7 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowStepCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_step";
 import User from "./user";
 import Trigger from "./trigger";
+import Table from "./table";
 import Expression from "./expression";
 const { eval_expression } = Expression;
 
@@ -143,6 +144,19 @@ class WorkflowStep {
       if (!proceed) return;
     }
 
+    if (this.action_name === "TableQuery") {
+      const table = Table.findOne({ name: this.configuration.query_table });
+      if (!table)
+        throw new Error(`Table ${this.configuration.query_table} not found`);
+      const query = eval_expression(
+        this.configuration.query_object,
+        context,
+        user,
+        `Query expression in ${this.name} step`
+      );
+      const rows = await table.getRows(query);
+      return { [this.configuration.query_variable]: rows };
+    }
     if (this.action_name === "SetContext") {
       return eval_expression(
         this.configuration.ctx_values,
