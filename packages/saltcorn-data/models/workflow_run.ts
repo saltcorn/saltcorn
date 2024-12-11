@@ -340,6 +340,7 @@ class WorkflowRun {
         return ret;
       }
     }
+    return this.context;
   }
 
   async popReturnDirectives() {
