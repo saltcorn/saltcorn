@@ -8,6 +8,7 @@ import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_run";
 import WorkflowStep from "./workflow_step";
+import WorkflowTrace from "./workflow_trace";
 import User from "./user";
 import Expression from "./expression";
 import Notification from "./notification";
@@ -38,11 +39,15 @@ class WorkflowRun {
   context: any;
   wait_info?: any;
   started_at: Date;
+  status_updated_at: Date;
   started_by?: number;
   error?: string;
+  session_id?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
   current_step?: string;
   steps?: Array<WorkflowStep>;
+
+  step_start?: Date;
 
   /**
    * WorkflowRun constructor
@@ -56,7 +61,9 @@ class WorkflowRun {
     this.wait_info =
       typeof o.wait_info === "string" ? JSON.parse(o.wait_info) : o.wait_info;
     this.started_at = o.started_at || new Date();
+    this.status_updated_at = o.status_updated_at || new Date();
     this.started_by = o.started_by;
+    this.session_id = o.session_id;
     this.error = o.error;
     this.status = o.status || "Pending";
     this.current_step = o.current_step;
@@ -76,7 +83,7 @@ class WorkflowRun {
    * @type {...*}
    */
   get toJson(): any {
-    const { id, steps, ...rest } = this;
+    const { id, steps, step_start, ...rest } = this;
     return rest;
   }
 
@@ -121,8 +128,12 @@ class WorkflowRun {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
-    await db.update("_sc_workflow_runs", row, this.id);
-    Object.assign(this, row);
+    const useRow =
+      row.status !== this.status
+        ? { status_updated_at: new Date(), ...row }
+        : row;
+    await db.update("_sc_workflow_runs", useRow, this.id);
+    Object.assign(this, useRow);
   }
 
   async provide_form_input(form_values: any) {
@@ -191,14 +202,32 @@ class WorkflowRun {
     }
   }
 
+  async createTrace(step_name: string, user?: User) {
+    await WorkflowTrace.create({
+      run_id: this.id!,
+      context: this.context,
+      step_name_run: step_name,
+      wait_info: this.wait_info,
+      user_id: user?.id,
+      error: this.error,
+      status: this.status,
+      elapsed: this.step_start
+        ? (new Date().getTime() - this.step_start?.getTime())/1000
+        : 0,
+      step_started_at: this.step_start || new Date(),
+    });
+  }
+
   async run({
     user,
     interactive,
     api_call,
+    trace,
   }: {
     user?: User;
     interactive?: boolean;
     api_call?: boolean;
+    trace?: boolean;
   }) {
     if (this.status === "Error" || this.status === "Finished") return;
     //get steps
@@ -250,7 +279,7 @@ class WorkflowRun {
         await this.update({ current_step: step.name });
 
       state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
-
+      this.step_start = new Date();
       if (step.action_name === "UserForm") {
         let user_id;
         if (step.configuration.user_id_expression) {
@@ -276,6 +305,7 @@ class WorkflowRun {
           status: "Waiting",
           wait_info: { form: { user_id: user_id } },
         });
+        if (trace) this.createTrace(step.name, user);
 
         if (
           interactive &&
@@ -293,6 +323,7 @@ class WorkflowRun {
           wait_info: {},
         });
         state.waitingWorkflows = true;
+        if (trace) this.createTrace(step.name, user);
         break;
       }
       if (step.action_name === "WaitUntil") {
@@ -308,6 +339,7 @@ class WorkflowRun {
           status: "Waiting",
           wait_info: { until_time: new Date(resume_at).toISOString() },
         });
+        if (trace) this.createTrace(step.name, user);
 
         break;
       }
@@ -319,6 +351,8 @@ class WorkflowRun {
         Object.assign(this.context, result);
         nextUpdate.context = this.context;
       }
+      if (trace) this.createTrace(step.name, user);
+
       //find next step
       const nextStep = this.get_next_step(step, user);
       if (!nextStep) {
@@ -369,7 +403,7 @@ class WorkflowRun {
       cutoff.setDate(cutoff.getDate() - days);
       await db.deleteWhere("_sc_workflow_runs", {
         status,
-        started_at: { lt: cutoff },
+        status_updated_at: { lt: cutoff },
       });
     }
   }
