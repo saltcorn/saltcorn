@@ -60,6 +60,7 @@ const {
   ul,
   li,
   h2,
+  h4,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -1499,39 +1500,64 @@ router.get(
 
     const run = await WorkflowRun.findOne({ id });
     const trigger = await Trigger.findOne({ id: run.trigger_id });
-    const traces = await WorkflowTrace.find({ run_id: run.id });
-    const traces_accordion_items = traces.map((trace, ix) =>
-      div(
-        { class: "accordion-item" },
-
-        h2(
-          { class: "accordion-header", id: `trhead${ix}` },
-          button(
-            {
-              class: ["accordion-button", "collapsed"],
-              type: "button",
-
-              "data-bs-toggle": "collapse",
-              "data-bs-target": `#trtab${ix}`,
-              "aria-expanded": "false",
-              "aria-controls": `trtab${ix}`,
-            },
-            "A trace"
-          )
-        ),
+    const traces = await WorkflowTrace.find(
+      { run_id: run.id },
+      { orderBy: "id" }
+    );
+    const traces_accordion_items = div(
+      { class: "accordion" },
+      traces.map((trace, ix) =>
         div(
-          {
-            class: ["accordion-collapse", "collapse"],
-            id: `trtab${ix}`,
-            "aria-labelledby": `trhead${ix}`,
-          },
-          div({ class: ["accordion-body"] }, "trace body")
+          { class: "accordion-item" },
+
+          h2(
+            { class: "accordion-header", id: `trhead${ix}` },
+            button(
+              {
+                class: ["accordion-button", "collapsed"],
+                type: "button",
+
+                "data-bs-toggle": "collapse",
+                "data-bs-target": `#trtab${ix}`,
+                "aria-expanded": "false",
+                "aria-controls": `trtab${ix}`,
+              },
+              `${ix + 1}: ${trace.step_name_run}`
+            )
+          ),
+          div(
+            {
+              class: ["accordion-collapse", "collapse"],
+              id: `trtab${ix}`,
+              "aria-labelledby": `trhead${ix}`,
+            },
+            div(
+              { class: ["accordion-body"] },
+              table(
+                { class: "table table-condensed w-unset" },
+                tbody(
+                  tr(
+                    th("Started at"),
+                    td(localeDateTime(trace.step_started_at))
+                  ),
+                  tr(th("Elapsed"), td(trace.elapsed, "s")),
+                  tr(th("Started by user"), td(trace.user_id)),
+                  tr(th("Status"), td(trace.status)),
+                  trace.status === "Waiting"
+                    ? tr(th("Waiting for"), td(JSON.stringify(trace.wait_info)))
+                    : null,
+                  tr(
+                    th("Context"),
+                    td(pre(text(JSON.stringify(trace.context, null, 2))))
+                  )
+                )
+              )
+            )
+          )
         )
       )
     );
-    const traceHtml = traces.length
-      ? h2("Step traces") + traces_accordion_items
-      : "";
+
     send_events_page({
       res,
       req,
@@ -1539,34 +1565,48 @@ router.get(
       page_title: req.__(`Workflow runs`),
       sub2_page: trigger.name,
       contents: {
-        type: "card",
-        titleAjaxIndicator: true,
-        title: req.__("Workflow run"),
-        contents:
-          table(
-            { class: "table table-condensed w-unset" },
-            tbody(
-              tr(th("Run ID"), td(run.id)),
-              tr(
-                th("Trigger"),
-                td(
-                  a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+        above: [
+          {
+            type: "card",
+            titleAjaxIndicator: true,
+            title: req.__("Workflow run"),
+            contents:
+              table(
+                { class: "table table-condensed w-unset" },
+                tbody(
+                  tr(th("Run ID"), td(run.id)),
+                  tr(
+                    th("Trigger"),
+                    td(
+                      a(
+                        { href: `/actions/configure/${trigger.id}` },
+                        trigger.name
+                      )
+                    )
+                  ),
+                  tr(th("Started at"), td(localeDateTime(run.started_at))),
+                  tr(th("Started by user"), td(run.started_by)),
+                  tr(th("Status"), td(run.status)),
+                  run.status === "Waiting"
+                    ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
+                    : null,
+                  tr(
+                    th("Context"),
+                    td(pre(text(JSON.stringify(run.context, null, 2))))
+                  )
                 )
-              ),
-              tr(th("Started at"), td(localeDateTime(run.started_at))),
-              tr(th("Started by user"), td(run.started_by)),
-              tr(th("Status"), td(run.status)),
-              run.status === "Waiting"
-                ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
-                : null,
-              tr(
-                th("Context"),
-                td(pre(text(JSON.stringify(run.context, null, 2))))
-              )
-            )
-          ) +
-          post_delete_btn("/actions/delete-run/" + run.id, req) +
-          traceHtml,
+              ) + post_delete_btn("/actions/delete-run/" + run.id, req),
+          },
+          ...(traces.length
+            ? [
+                {
+                  type: "card",
+                  title: req.__("Step traces"),
+                  contents: traces_accordion_items,
+                },
+              ]
+            : []),
+        ],
       },
     });
   })

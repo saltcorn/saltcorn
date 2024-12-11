@@ -212,7 +212,7 @@ class WorkflowRun {
       error: this.error,
       status: this.status,
       elapsed: this.step_start
-        ? new Date().getTime() - this.step_start?.getTime()
+        ? (new Date().getTime() - this.step_start?.getTime())/1000
         : 0,
       step_started_at: this.step_start || new Date(),
     });
