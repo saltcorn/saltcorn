@@ -7,6 +7,7 @@ ALTER TABLE _sc_workflow_steps ADD CONSTRAINT workflow_steps_name_uniq UNIQUE (t
 CREATE TABLE IF NOT EXISTS _sc_workflow_trace (
     id serial primary key,  
     run_id integer references _sc_workflow_runs(id) on delete cascade,
+    user_id integer references users(id) on delete cascade,
     step_name_run text NOT NULL,    
     context jsonb NOT NULL,
     status text,    
