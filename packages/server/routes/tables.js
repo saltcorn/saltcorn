@@ -757,6 +757,9 @@ router.get(
     const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
     triggers.sort(comparingCaseInsensitive("name"));
     let fieldCard;
+    const nPrimaryKeys = fields.filter((f) => f.primary_key).length;
+    console.log({ nPrimaryKeys });
+
     if (fields.length === 0) {
       fieldCard = [
         h4(req.__(`No fields defined in %s table`, table.name)),
@@ -818,6 +821,19 @@ router.get(
         { hover: true }
       );
       fieldCard = [
+        nPrimaryKeys > 1 &&
+          div(
+            { class: "alert alert-danger", role: "alert" },
+            i({ class: "fas fa-exclamation-triangle" }),
+            "This table has composite primary keys which is not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
+            post_btn(
+              `/table/repair-composite-primary${table.id}`,
+              "Add autoincrementing primary key",
+              req.csrfToken(),
+              { btnClass: "btn-danger" }
+            )
+          ),
+
         tableHtml,
         inbound_refs.length > 0
           ? req.__("Inbound keys: ") +
@@ -1111,7 +1127,7 @@ router.post(
     const v = req.body;
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
-      v.name = v.name.trim()
+      v.name = v.name.trim();
       const { name, ...rest } = v;
       const alltables = await Table.find({});
       const existing_tables = [
