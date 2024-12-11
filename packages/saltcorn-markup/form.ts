@@ -1626,6 +1626,12 @@ const mkForm = (
     ${
       form.noSubmitButton
         ? ""
+        : form.xhrSubmit
+        ? `<button type="button" class="btn ${
+            form.submitButtonClass || "btn-primary"
+          }" onClick="ajaxSubmitForm(this, true)">${text(
+            form.submitLabel || "Save"
+          )}</button>`
         : `<button type="submit" class="btn ${
             form.submitButtonClass || "btn-primary"
           }">${text(form.submitLabel || "Save")}</button>`

@@ -83,6 +83,31 @@ const logSettingsForm = async (req) => {
     },
     {
       input_type: "section_header",
+      label: req.__("Delete old workflow runs with status after days"),
+    },
+    {
+      name: "delete_finished_workflows_days",
+      label: req.__("Finished"),
+      type: "Integer",
+    },
+    {
+      name: "delete_error_workflows_days",
+      label: req.__("Error"),
+      type: "Integer",
+    },
+    {
+      name: "delete_waiting_workflows_days",
+      label: req.__("Waiting"),
+      type: "Integer",
+    },
+
+    {
+      name: "delete_running_workflows_days",
+      label: req.__("Running"),
+      type: "Integer",
+    },
+    {
+      input_type: "section_header",
       label: req.__("Which events should be logged?"),
     },
   ];
@@ -143,6 +168,10 @@ router.get(
       "next_weekly_event",
       {}
     );
+    ["error", "finished", "running", "waiting"].forEach((k) => {
+      let cfgk = `delete_${k}_workflows_days`;
+      form.values[cfgk] = getState().getConfig(cfgk);
+    });
 
     send_events_page({
       res,
@@ -343,6 +372,13 @@ router.post(
     } else {
       for (const tm of ["hourly", "daily", "weekly"]) {
         const k = `next_${tm}_event`;
+        if (form.values[k]) {
+          await getState().setConfig(k, form.values[k]);
+          delete form.values[k];
+        }
+      }
+      for (const status of ["error", "finished", "running", "waiting"]) {
+        let k = `delete_${status}_workflows_days`;
         if (form.values[k]) {
           await getState().setConfig(k, form.values[k]);
           delete form.values[k];

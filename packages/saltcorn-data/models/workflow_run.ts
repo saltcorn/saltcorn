@@ -1,5 +1,5 @@
 /**
- * Workflow step Database Access Layer
+ * Workflow Run Database Access Layer
  * @category saltcorn-data
  * @module models/workflow_run
  * @subcategory models
@@ -191,7 +191,15 @@ class WorkflowRun {
     }
   }
 
-  async run({ user }: { user?: User }) {
+  async run({
+    user,
+    interactive,
+    api_call,
+  }: {
+    user?: User;
+    interactive?: boolean;
+    api_call?: boolean;
+  }) {
     if (this.status === "Error" || this.status === "Finished") return;
     //get steps
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
@@ -268,6 +276,13 @@ class WorkflowRun {
           status: "Waiting",
           wait_info: { form: { user_id: user_id } },
         });
+
+        if (
+          interactive &&
+          (!step.configuration.user_id_expression || user_id === user?.id)
+        ) {
+          return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+        }
         step = null;
         break;
       }
@@ -314,7 +329,18 @@ class WorkflowRun {
         nextUpdate.current_step = step.name;
       }
       await this.update(nextUpdate);
+      if (
+        interactive &&
+        result &&
+        typeof result === "object" &&
+        allReturnDirectives.some((k) => typeof result[k] !== "undefined")
+      ) {
+        const ret = await this.popReturnDirectives();
+        ret.resume_workflow = this.id;
+        return ret;
+      }
     }
+    return this.context;
   }
 
   async popReturnDirectives() {
@@ -329,6 +355,23 @@ class WorkflowRun {
       await this.update({ context: this.context });
 
     return retVals;
+  }
+  static async count(where?: Where): Promise<number> {
+    return await db.count("_sc_workflow_runs", where);
+  }
+
+  static async prune() {
+    for (const status of ["Error", "Finished", "Running", "Waiting"]) {
+      let k = `delete_${status.toLowerCase()}_workflows_days`;
+      const days = getState().getConfig(k, false);
+      if (!days) continue;
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      await db.deleteWhere("_sc_workflow_runs", {
+        status,
+        started_at: { lt: cutoff },
+      });
+    }
   }
 }
 

@@ -334,7 +334,7 @@ const configTypes: ConfigTypes = {
   create_tenant_warning: {
     type: "Bool",
     label: "Create tenant warning",
-    default: true,  
+    default: true,
     root_only: true,
     blurb:
       "Show a warning to users creating a tenant disclaiming warranty of availability or security",
@@ -1075,6 +1075,22 @@ const configTypes: ConfigTypes = {
     type: "String",
     label: "Saltcorn version for engines cache",
     default: "",
+  },
+  delete_finished_workflows_days: {
+    type: "Integer",
+    label: "Delete finished workflows after days",
+  },
+  delete_error_workflows_days: {
+    type: "Integer",
+    label: "Delete error workflows after days",
+  },
+  delete_waiting_workflows_days: {
+    type: "Integer",
+    label: "Delete error workflows after days",
+  },
+  delete_running_workflows_days: {
+    type: "Integer",
+    label: "Delete error workflows after days",
   },
 };
 // TODO move list of languages from code to configuration

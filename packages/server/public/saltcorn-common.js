@@ -1569,6 +1569,7 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
     });
   }
   if (res.eval_js) await handle(res.eval_js, eval_it);
+  /// TODO got and resume_workflow - use localStorage
   if (res.goto) {
     if (!isWeb) {
       const next = new URL(res.goto, "http://localhost");
@@ -1590,6 +1591,9 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
       )
         location.reload();
     }
+  }
+  if (res.resume_workflow) {
+    ajax_post_json(`/actions/resume-workflow/${res.resume_workflow}`, {});
   }
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto

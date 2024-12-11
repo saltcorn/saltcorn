@@ -570,8 +570,25 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
       },
       i({ class: "fas fa-plus me-2" }),
       "Add step"
+    ) +
+    a(
+      {
+        href: `/actions/runs/?trigger=${trigger.id}`,
+        class: "d-block",
+      },
+      "Show runs &raquo;"
     )
   );
+};
+
+const jsIdentifierValidator = (s) => {
+  if (!s) return "An identifier is required";
+  if (s.includes(" ")) return "Spaces not allowd";
+  let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
+    .split("")
+    .find((c) => s.includes(c));
+
+  if (badc) return `Character ${badc} not allowed`;
 };
 
 const getWorkflowStepForm = async (trigger, req, step_id) => {
@@ -606,7 +623,13 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
-    builtIns: ["UserForm", "WaitUntil", "WaitNextTick"],
+    builtIns: [
+      "SetContext",
+      "TableQuery",
+      "WaitUntil",
+      "UserForm",
+      "WaitNextTick",
+    ],
     forWorkflow: true,
   });
 
@@ -617,9 +640,10 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     showIf: { wf_action_name: "UserForm" },
   });
   actionConfigFields.push({
-    label: "User ID expression",
+    label: "User ID",
     name: "user_id_expression",
     type: "String",
+    sublabel: "Optional. If blank assigned to user starting the workflow",
     showIf: { wf_action_name: "UserForm" },
   });
   actionConfigFields.push({
@@ -630,6 +654,45 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     type: "String",
     showIf: { wf_action_name: "WaitUntil" },
   });
+  actionConfigFields.push({
+    label: "Context values",
+    name: "ctx_values",
+    sublabel:
+      "JavaScript object expression for the variables to set. Example <code>{x: 5, y:y+1}</code> will set x to 5 and increment existing context variable y",
+    type: "String",
+    fieldview: "textarea",
+    class: "validate-expression",
+    default: "{}",
+    showIf: { wf_action_name: "SetContext" },
+  });
+
+  actionConfigFields.push({
+    label: "Table",
+    name: "query_table",
+    type: "String",
+    required: true,
+    attributes: { options: (await Table.find()).map((t) => t.name) },
+    showIf: { wf_action_name: "TableQuery" },
+  });
+  actionConfigFields.push({
+    label: "Query",
+    name: "query_object",
+    sublabel: "Where object, example <code>{manager: 1}</code>",
+    type: "String",
+    required: true,
+    class: "validate-expression",
+    default: "{}",
+    showIf: { wf_action_name: "TableQuery" },
+  });
+  actionConfigFields.push({
+    label: "Variable",
+    name: "query_variable",
+    sublabel: "Context variable to write to query results to",
+    type: "String",
+    required: true,
+    validator: jsIdentifierValidator,
+    showIf: { wf_action_name: "TableQuery" },
+  });
   actionConfigFields.push(
     new FieldRepeat({
       name: "user_form_questions",
@@ -639,16 +702,22 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           label: "Label",
           name: "label",
           type: "String",
+          sublabel:
+            "The text that will shown to the user above the input elements",
         },
         {
           label: "Variable name",
           name: "var_name",
           type: "String",
+          sublabel:
+            "The answer will be set in the context with this variable name",
+          validator: jsIdentifierValidator,
         },
         {
-          label: "Type",
+          label: "Input Type",
           name: "qtype",
           type: "String",
+          required: true,
           attributes: {
             options: [
               "Yes/No",
@@ -666,7 +735,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           label: "Options",
           name: "options",
           type: "String",
-          sublabel: "Comma separated options",
+          sublabel: "Comma separated list of multiple choice options",
           showIf: { qtype: ["Multiple choice", "Multiple checks"] },
         },
       ],
@@ -694,16 +763,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         type: "String",
         required: true,
         sublabel: "An identifier by which this step can be referred to.",
-        validator(s) {
-          if (!s) return true;
-          if (s.includes(" ")) return "Spaces not allowd";
-          let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
-            .split("")
-            .find((c) => s.includes(c));
-          console.log({ badc });
-
-          if (badc) return `Character ${badc} not allowed`;
-        },
+        validator: jsIdentifierValidator,
       },
       {
         name: "wf_initial_step",
@@ -1144,6 +1204,7 @@ router.get(
         table,
         row,
         req,
+        interactive: true,
         ...(row || {}),
         Table,
         user: req.user,
@@ -1162,6 +1223,9 @@ router.get(
           ? script(domReady(`common_done(${JSON.stringify(runres)})`))
           : ""
       );
+      if (trigger.action === "Workflow") {
+        res.redirect(`/actions/runs/?trigger=${trigger.id}`);
+      }
       res.redirect(`/actions/`);
     } else {
       send_events_page({
@@ -1349,17 +1413,20 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const trNames = {};
+    const { _page, trigger } = req.query;
     for (const trig of await Trigger.find({ action: "Workflow" }))
       trNames[trig.id] = trig.name;
+    const q = {};
+    const selOpts = { orderBy: "started_at", orderDesc: true, limit: 20 };
+    if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);
+    if (trigger) q.trigger_id = trigger;
+    const runs = await WorkflowRun.find(q, selOpts);
+    const count = await WorkflowRun.count(q);
 
-    const runs = await WorkflowRun.find(
-      {},
-      { orderBy: "started_at", orderDesc: true }
-    );
     const wfTable = mkTable(
       [
         { label: "Trigger", key: (run) => trNames[run.trigger_id] },
-        { label: "Started", key: "started_at" },
+        { label: "Started", key: (run) => localeDateTime(run.started_at) },
         { label: "Status", key: "status" },
         {
           label: "",
@@ -1384,7 +1451,14 @@ router.get(
         },
       ],
       runs,
-      { onRowSelect: (row) => `location.href='/actions/run/${row.id}'` }
+      {
+        onRowSelect: (row) => `location.href='/actions/run/${row.id}'`,
+        pagination: {
+          current_page: parseInt(_page) || 1,
+          pages: Math.ceil(count / 20),
+          get_page_link: (n) => `gopage(${n}, 20)`,
+        },
+      }
     );
     send_events_page({
       res,
@@ -1423,6 +1497,7 @@ router.get(
         title: req.__("Workflow run"),
         contents:
           table(
+            { class: "table table-condensed w-unset" },
             tbody(
               tr(th("Run ID"), td(run.id)),
               tr(
@@ -1431,7 +1506,8 @@ router.get(
                   a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
                 )
               ),
-              tr(th("Started"), td(localeDateTime(run.started_at))),
+              tr(th("Started at"), td(localeDateTime(run.started_at))),
+              tr(th("Started by"), td(run.started_by)),
               tr(th("Status"), td(run.status)),
               run.status === "Waiting"
                 ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
@@ -1522,7 +1598,7 @@ router.get(
     });
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
-
+    if (req.xhr) form.xhrSubmit = true;
     const title = "Fill form";
     res.sendWrap(title, renderForm(form, req.csrfToken()));
   })
@@ -1568,17 +1644,55 @@ router.post(
   })
 );
 
+router.post(
+  "/resume-workflow/:id",
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const run = await WorkflowRun.findOne({ id });
+    //TODO session if not logged in
+    if (run.started_by !== req.user?.id) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+    const runResult = await run.run({ user: req.user, interactive: true });
+    if (req.xhr) {
+      if (
+        runResult &&
+        typeof runResult === "object" &&
+        Object.keys(runResult).length
+      ) {
+        res.json({ success: "ok", ...runResult });
+        return;
+      }
+      const retDirs = await run.popReturnDirectives();
+      res.json({ success: "ok", ...retDirs });
+    } else {
+      if (run.context.goto) res.redirect(run.context.goto);
+      else res.redirect("/");
+    }
+  })
+);
+
 /* 
 
 WORKFLOWS TODO
 
-interactive run
-help sublabels
-pagination, search in workflow runs
+delete is not always working?
+help file to explain steps, and context
+
+workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
+
+steps unique for trigger
+date of status change field, use for pruning
+interactive workflows for not logged in
+debug run or execution trace
 
 show unconnected steps
-workflow actions: SetContext, ForLoop, EndForLoop, TableQuery, ReadFile, WriteFile, APIResponse
-debug run
 why is code not initialising
 drag and drop edges
 

@@ -2585,8 +2585,12 @@ const run_action_column = async ({ col, req, ...rest }) => {
     } else {
       const trigger = await Trigger.findOne({ name: action_name });
 
-      if (trigger?.action === "Multi-step action") {
-        goRun = () => trigger.runWithoutRow({ req, ...rest });
+      if (
+        trigger?.action === "Multi-step action" ||
+        trigger?.action === "Workflow"
+      ) {
+        goRun = () =>
+          trigger.runWithoutRow({ req, interactive: true, ...rest });
       } else if (trigger) {
         state_action = getState().actions[trigger.action];
         goRun = () =>
