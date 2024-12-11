@@ -91,14 +91,15 @@ const whereFTS = (
       (f: any) =>
         f.type && f.type.sql_name === "text" && (!f.calculated || f.stored)
     )
-    .map(
-      (f: any) =>
-        "coalesce(" +
-        (table
-          ? `"${sqlsanitize(table)}"."${sqlsanitize(f.name)}"`
-          : `"${sqlsanitize(f.name)}"`) +
-        ",'')"
-    );
+    .map((f: any) => {
+      const fname = table
+        ? `"${sqlsanitize(table)}"."${sqlsanitize(f.name)}"`
+        : `"${sqlsanitize(f.name)}"`;
+
+      return `coalesce(${
+        f.type?.searchModifier ? f.type.searchModifier(fname) : fname
+      },'')`;
+    });
   fields
     .filter((f: any) => f.is_fkey && f?.attributes?.include_fts)
     .forEach((f) => {
