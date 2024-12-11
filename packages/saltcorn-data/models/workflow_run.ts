@@ -38,6 +38,7 @@ class WorkflowRun {
   context: any;
   wait_info?: any;
   started_at: Date;
+  status_updated_at: Date;
   started_by?: number;
   error?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
@@ -56,6 +57,7 @@ class WorkflowRun {
     this.wait_info =
       typeof o.wait_info === "string" ? JSON.parse(o.wait_info) : o.wait_info;
     this.started_at = o.started_at || new Date();
+    this.status_updated_at = o.status_updated_at || new Date();
     this.started_by = o.started_by;
     this.error = o.error;
     this.status = o.status || "Pending";
@@ -121,8 +123,12 @@ class WorkflowRun {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
-    await db.update("_sc_workflow_runs", row, this.id);
-    Object.assign(this, row);
+    const useRow =
+      row.status !== this.status
+        ? { status_updated_at: new Date(), ...row }
+        : row;
+    await db.update("_sc_workflow_runs", useRow, this.id);
+    Object.assign(this, useRow);
   }
 
   async provide_form_input(form_values: any) {
@@ -369,7 +375,7 @@ class WorkflowRun {
       cutoff.setDate(cutoff.getDate() - days);
       await db.deleteWhere("_sc_workflow_runs", {
         status,
-        started_at: { lt: cutoff },
+        status_updated_at: { lt: cutoff },
       });
     }
   }

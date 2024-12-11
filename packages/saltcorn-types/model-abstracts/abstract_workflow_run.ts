@@ -4,6 +4,7 @@ export type WorkflowRunCfg = {
   context?: any;
   wait_info?: any;
   started_at?: Date;
+  status_updated_at?: Date;
   started_by?: number;
   error?: string;
   status?: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
