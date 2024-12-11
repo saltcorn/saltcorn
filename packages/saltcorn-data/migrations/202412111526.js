@@ -29,7 +29,7 @@ const sql_sqlite = [
     wait_info json,
     step_started_at timestamp not null,
     elapsed double precision,
-    error text,
+    error text
 );`,
 ];
 
