@@ -1204,6 +1204,7 @@ router.get(
         table,
         row,
         req,
+        interactive: true,
         ...(row || {}),
         Table,
         user: req.user,
@@ -1425,7 +1426,7 @@ router.get(
     const wfTable = mkTable(
       [
         { label: "Trigger", key: (run) => trNames[run.trigger_id] },
-        { label: "Started", key: "started_at" },
+        { label: "Started", key: (run) => localeDateTime(run.started_at) },
         { label: "Status", key: "status" },
         {
           label: "",
@@ -1496,6 +1497,7 @@ router.get(
         title: req.__("Workflow run"),
         contents:
           table(
+            { class: "table table-condensed w-unset" },
             tbody(
               tr(th("Run ID"), td(run.id)),
               tr(
@@ -1684,9 +1686,6 @@ delete is not always working?
 help file to explain steps, and context
 
 workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
-test run to direct to run page
-improve run page table
-
 
 steps unique for trigger
 date of status change field, use for pruning
