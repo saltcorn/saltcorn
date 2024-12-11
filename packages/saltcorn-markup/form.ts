@@ -1328,10 +1328,10 @@ const renderFormLayout = (form: Form): string => {
           !configuration.steps || configuration.steps === 1
             ? isWeb
               ? "history.back()"
-              : "parent.goBack()"
+              : "parent.saltcorn.mobileApp.navigation.goBack()"
             : isWeb
             ? `history.go(${-1 * configuration.steps})`
-            : `parent.goBack(${configuration.steps})`;
+            : `parent.saltcorn.mobileApp.navigation.goBack(${configuration.steps})`;
         if (configuration.save_first) {
           const complete = `()=>${doNav}`;
           return mkBtn(

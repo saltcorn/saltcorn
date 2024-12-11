@@ -1304,7 +1304,11 @@ module.exports = {
         case "Popup modal":
           return { popup: url1 };
         case "Back":
-          return { eval_js: isWeb(req) ? "history.back()" : "parent.goBack()" };
+          return {
+            eval_js: isWeb(req)
+              ? "history.back()"
+              : "parent.saltcorn.mobileApp.navigation.goBack()",
+          };
         case "Close tab":
           return { eval_js: "window.close()" };
         case "Close modal":

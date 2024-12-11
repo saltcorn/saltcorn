@@ -9,6 +9,7 @@ export async function apiCall({
   body,
   responseType,
   timeout,
+  additionalHeaders,
 }) {
   const config =
     typeof saltcorn !== "undefined"
@@ -19,6 +20,7 @@ export async function apiCall({
   const headers = {
     "X-Requested-With": "XMLHttpRequest",
     "X-Saltcorn-Client": "mobile-app",
+    ...(additionalHeaders || {}),
   };
   if (config.tenantAppName) headers["X-Saltcorn-App"] = config.tenantAppName;
   const token = config.jwt;

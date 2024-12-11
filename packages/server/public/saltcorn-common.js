@@ -40,6 +40,19 @@ $(window).resize(() => {
   setScreenInfoCookie();
 });
 
+function get_current_state_url(e) {
+  const localizer = e ? $(e).closest("[data-sc-local-state]") : [];
+  let $modal = $("#scmodal");
+  if (localizer.length) {
+    const localState = localizer.attr("data-sc-local-state") || "";
+    return localState;
+  } else if ($modal.length === 0 || !$modal.hasClass("show"))
+    return getIsNode()
+      ? window.location.href
+      : parent.saltcorn.mobileApp.navigation.currentUrl();
+  else return $modal.prop("data-modal-state");
+}
+
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
   $("body").on(
@@ -704,7 +717,7 @@ function doMobileTransforms() {
     href: [
       {
         web: "javascript:history.back()",
-        mobile: "javascript:parent.goBack()",
+        mobile: "javascript:parent.saltcorn.mobileApp.navigation.goBack()",
       },
       {
         web: "javascript:ajax_modal",
@@ -714,7 +727,7 @@ function doMobileTransforms() {
     onclick: [
       {
         web: "history.back()",
-        mobile: "parent.goBack()",
+        mobile: "parent.saltcorn.mobileApp.navigation.goBack()",
       },
       {
         web: "ajax_modal",
@@ -823,48 +836,46 @@ function doMobileTransforms() {
   });
 
   $("[mobile-img-path]").each(async function () {
-    if (parent.loadEncodedFile) {
-      const fileId = $(this).attr("mobile-img-path");
-      const base64Encoded = await parent.loadEncodedFile(fileId);
-      this.src = base64Encoded;
-    }
+    const fileId = $(this).attr("mobile-img-path");
+    const base64Encoded =
+      await parent.saltcorn.mobileApp.common.loadEncodedFile(fileId);
+    this.src = base64Encoded;
   });
 
   $("[mobile-bg-img-path]").each(async function () {
-    if (parent.loadEncodedFile) {
-      const fileId = $(this).attr("mobile-bg-img-path");
-      if (fileId) {
-        const base64Encoded = await parent.loadEncodedFile(fileId);
-        this.style.backgroundImage = `url("${base64Encoded}")`;
-      }
+    const fileId = $(this).attr("mobile-bg-img-path");
+    if (fileId) {
+      const base64Encoded =
+        await parent.saltcorn.mobileApp.common.loadEncodedFile(fileId);
+      this.style.backgroundImage = `url("${base64Encoded}")`;
     }
   });
 
   $("img:not([mobile-img-path]):not([mobile-bg-img-path])").each(
     async function () {
-      if (parent.loadEncodedFile) {
-        const jThis = $(this);
-        const src = jThis.attr("src");
-        if (src?.includes("/files/serve/")) {
-          const tokens = src.split("/files/serve/");
-          if (tokens.length > 1) {
-            const fileId = tokens[1];
-            const base64Encoded = await parent.loadEncodedFile(fileId);
-            this.src = base64Encoded;
-          }
-        } else if (src?.includes("/files/resize/")) {
-          const tokens = src.split("/files/resize/");
-          if (tokens.length > 1) {
-            const idAndDims = tokens[1].split("/");
-            const width = idAndDims[0];
-            const height = idAndDims.length > 2 ? idAndDims[1] : undefined;
-            const fileId = idAndDims[idAndDims.length - 1];
-            const style = { width: `${width || 50}px` };
-            if (height > 0) style.height = `${height}px`;
-            const base64Encoded = await parent.loadEncodedFile(fileId);
-            this.src = base64Encoded;
-            jThis.css(style);
-          }
+      const jThis = $(this);
+      const src = jThis.attr("src");
+      if (src?.includes("/files/serve/")) {
+        const tokens = src.split("/files/serve/");
+        if (tokens.length > 1) {
+          const fileId = tokens[1];
+          const base64Encoded =
+            await parent.saltcorn.mobileApp.common.loadEncodedFile(fileId);
+          this.src = base64Encoded;
+        }
+      } else if (src?.includes("/files/resize/")) {
+        const tokens = src.split("/files/resize/");
+        if (tokens.length > 1) {
+          const idAndDims = tokens[1].split("/");
+          const width = idAndDims[0];
+          const height = idAndDims.length > 2 ? idAndDims[1] : undefined;
+          const fileId = idAndDims[idAndDims.length - 1];
+          const style = { width: `${width || 50}px` };
+          if (height > 0) style.height = `${height}px`;
+          const base64Encoded =
+            await parent.saltcorn.mobileApp.common.loadEncodedFile(fileId);
+          this.src = base64Encoded;
+          jThis.css(style);
         }
       }
     }
@@ -1576,8 +1587,8 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
       const pathname = next.pathname;
       if (pathname.startsWith("/view/") || pathname.startsWith("/page/")) {
         const route = `get${pathname}${next.search ? "?" + next.search : ""}`;
-        await parent.handleRoute(route);
-      } else parent.cordova.InAppBrowser.open(res.goto, "_system");
+        await parent.saltcorn.mobileApp.navigation.handleRoute(route);
+      } else parent.cordova.InAppBrowser.open(res.goto, "_system"); // TODO
     } else if (res.target === "_blank") window.open(res.goto, "_blank").focus();
     else {
       const prev = new URL(window.location.href);

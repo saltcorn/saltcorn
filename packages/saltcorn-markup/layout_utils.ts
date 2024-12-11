@@ -782,7 +782,7 @@ const renderTabs = (
       headerWrapperClass ? div({ class: headerWrapperClass }, s) : s;
     const buildOnClick = (ix: number) => {
       const addQueryParam = !isNode
-        ? `parent.addQueryParam('_tab', ${ix})`
+        ? `parent.saltcorn.mobileApp.navigation.addQueryParam('_tab', ${ix})`
         : "";
       let result = disable_inactive
         ? `disable_inactive_tab_inputs('${rndid}'); `
