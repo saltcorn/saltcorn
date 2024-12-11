@@ -358,6 +358,15 @@ const configuration_workflow = (req) =>
                 showIf: { auto_save: false },
               },
               {
+                name: "auto_create",
+                label: req.__("Allocate new row"),
+                sublabel: req.__(
+                  "If the view is run as a new row, allocate a new row without waiting for input"
+                ),
+                type: "Bool",
+                showIf: { auto_save: true },
+              },
+              {
                 name: "split_paste",
                 label: req.__("Split paste"),
                 sublabel: req.__("Separate paste content into separate inputs"),
@@ -2044,6 +2053,7 @@ module.exports = {
       destination_type,
       fixed,
       confirm_leave,
+      auto_create,
     },
     req,
     res,
@@ -2072,6 +2082,13 @@ module.exports = {
           forPublic: !req.user,
           forUser: req.user,
         });
+      } else if (auto_create && auto_save) {
+        row = {};
+        fields.forEach((f) => {
+          if (f.required && typeof f.attributes?.default !== "undefined")
+            row[f.name] = f.attributes.default;
+        });
+        row.id = await table.insertRow(row, req.user);
       }
       const isRemote = !isWeb(req);
       return await render({
