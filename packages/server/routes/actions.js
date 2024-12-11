@@ -1633,9 +1633,11 @@ WORKFLOWS TODO
 
 delete is not always working?
 help file to explain steps, and context
-auto-delete runs settings
 
+auto-delete runs settings
 workflow actions: SetContext, ForLoop, EndForLoop, Output, TableQuery, ReadFile, WriteFile, APIResponse
+
+date of status change field, use for pruning
 interactive workflows for not logged in
 debug run or execution trace
 show unconnected steps
