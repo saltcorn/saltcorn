@@ -13,6 +13,7 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import mocks from "./mocks";
 import User from "../models/user";
+import WorkflowTrace from "../models/workflow_trace";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);
@@ -90,5 +91,22 @@ describe("Workflow run steps", () => {
     expect(result.x).toBe(1);
     expect(result.y).toBe(2);
     expect(result.last).toBe(1);
+  });
+  it("should run with traces", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger0 = Trigger.findOne({ name: "mywf" });
+
+    assertIsSet(trigger0);
+    await Trigger.update(trigger0.id, { configuration: { save_traces: true } });
+    const trigger = Trigger.findOne({ name: "mywf" });
+    assertIsSet(trigger);
+
+    const result = await trigger.runWithoutRow({ user });
+    expect(result.x).toBe(1);
+    expect(result.y).toBe(2);
+    expect(result.last).toBe(1);
+    const traces = await WorkflowTrace.find({ run_id: result.__wf_run_id });
+    expect(traces.length).toBe(4);
   });
 });
