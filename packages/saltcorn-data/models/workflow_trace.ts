@@ -20,7 +20,7 @@ class WorkflowTrace {
   wait_info?: any;
   step_started_at: Date;
   elapsed: number;
-  user_id: number;
+  user_id?: number;
   error?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
 

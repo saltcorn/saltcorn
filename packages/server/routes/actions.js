@@ -19,6 +19,7 @@ const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const WorkflowStep = require("@saltcorn/data/models/workflow_step");
 const WorkflowRun = require("@saltcorn/data/models/workflow_run");
+const WorkflowTrace = require("@saltcorn/data/models/workflow_trace");
 const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 
@@ -58,6 +59,7 @@ const {
   i,
   ul,
   li,
+  h2,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -1497,8 +1499,39 @@ router.get(
 
     const run = await WorkflowRun.findOne({ id });
     const trigger = await Trigger.findOne({ id: run.trigger_id });
-    console.log(run.context);
+    const traces = await WorkflowTrace.find({ run_id: run.id });
+    const traces_accordion_items = traces.map((trace, ix) =>
+      div(
+        { class: "accordion-item" },
 
+        h2(
+          { class: "accordion-header", id: `trhead${ix}` },
+          button(
+            {
+              class: ["accordion-button", "collapsed"],
+              type: "button",
+
+              "data-bs-toggle": "collapse",
+              "data-bs-target": `#trtab${ix}`,
+              "aria-expanded": "false",
+              "aria-controls": `trtab${ix}`,
+            },
+            "A trace"
+          )
+        ),
+        div(
+          {
+            class: ["accordion-collapse", "collapse"],
+            id: `trtab${ix}`,
+            "aria-labelledby": `trhead${ix}`,
+          },
+          div({ class: ["accordion-body"] }, "trace body")
+        )
+      )
+    );
+    const traceHtml = traces.length
+      ? h2("Step traces") + traces_accordion_items
+      : "";
     send_events_page({
       res,
       req,
@@ -1521,7 +1554,7 @@ router.get(
                 )
               ),
               tr(th("Started at"), td(localeDateTime(run.started_at))),
-              tr(th("Started by"), td(run.started_by)),
+              tr(th("Started by user"), td(run.started_by)),
               tr(th("Status"), td(run.status)),
               run.status === "Waiting"
                 ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
@@ -1531,7 +1564,9 @@ router.get(
                 td(pre(text(JSON.stringify(run.context, null, 2))))
               )
             )
-          ) + post_delete_btn("/actions/delete-run/" + run.id, req),
+          ) +
+          post_delete_btn("/actions/delete-run/" + run.id, req) +
+          traceHtml,
       },
     });
   })
@@ -1646,7 +1681,10 @@ router.post(
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
       await run.provide_form_input(form.values);
-      await run.run({ user: req.user });
+      await run.run({
+        user: req.user,
+        trace: trigger.configuration?.save_traces,
+      });
       if (req.xhr) {
         const retDirs = await run.popReturnDirectives();
         res.json({ success: "ok", ...retDirs });
@@ -1673,7 +1711,12 @@ router.post(
       }
       return;
     }
-    const runResult = await run.run({ user: req.user, interactive: true });
+    const trigger = await Trigger.findOne({ id: run.trigger_id });
+    const runResult = await run.run({
+      user: req.user,
+      interactive: true,
+      trace: trigger.configuration?.save_traces,
+    });
     if (req.xhr) {
       if (
         runResult &&

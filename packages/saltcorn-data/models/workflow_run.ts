@@ -8,6 +8,7 @@ import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_run";
 import WorkflowStep from "./workflow_step";
+import WorkflowTrace from "./workflow_trace";
 import User from "./user";
 import Expression from "./expression";
 import Notification from "./notification";
@@ -46,6 +47,8 @@ class WorkflowRun {
   current_step?: string;
   steps?: Array<WorkflowStep>;
 
+  step_start?: Date;
+
   /**
    * WorkflowRun constructor
    * @param {object} o
@@ -80,7 +83,7 @@ class WorkflowRun {
    * @type {...*}
    */
   get toJson(): any {
-    const { id, steps, ...rest } = this;
+    const { id, steps, step_start, ...rest } = this;
     return rest;
   }
 
@@ -199,14 +202,32 @@ class WorkflowRun {
     }
   }
 
+  async createTrace(step_name: string, user?: User) {
+    await WorkflowTrace.create({
+      run_id: this.id!,
+      context: this.context,
+      step_name_run: step_name,
+      wait_info: this.wait_info,
+      user_id: user?.id,
+      error: this.error,
+      status: this.status,
+      elapsed: this.step_start
+        ? new Date().getTime() - this.step_start?.getTime()
+        : 0,
+      step_started_at: this.step_start || new Date(),
+    });
+  }
+
   async run({
     user,
     interactive,
     api_call,
+    trace,
   }: {
     user?: User;
     interactive?: boolean;
     api_call?: boolean;
+    trace?: boolean;
   }) {
     if (this.status === "Error" || this.status === "Finished") return;
     //get steps
@@ -258,7 +279,7 @@ class WorkflowRun {
         await this.update({ current_step: step.name });
 
       state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
-
+      this.step_start = new Date();
       if (step.action_name === "UserForm") {
         let user_id;
         if (step.configuration.user_id_expression) {
@@ -284,6 +305,7 @@ class WorkflowRun {
           status: "Waiting",
           wait_info: { form: { user_id: user_id } },
         });
+        if (trace) this.createTrace(step.name, user);
 
         if (
           interactive &&
@@ -301,6 +323,7 @@ class WorkflowRun {
           wait_info: {},
         });
         state.waitingWorkflows = true;
+        if (trace) this.createTrace(step.name, user);
         break;
       }
       if (step.action_name === "WaitUntil") {
@@ -316,6 +339,7 @@ class WorkflowRun {
           status: "Waiting",
           wait_info: { until_time: new Date(resume_at).toISOString() },
         });
+        if (trace) this.createTrace(step.name, user);
 
         break;
       }
@@ -327,6 +351,8 @@ class WorkflowRun {
         Object.assign(this.context, result);
         nextUpdate.context = this.context;
       }
+      if (trace) this.createTrace(step.name, user);
+
       //find next step
       const nextStep = this.get_next_step(step, user);
       if (!nextStep) {
