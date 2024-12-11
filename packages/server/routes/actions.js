@@ -536,7 +536,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     onChange: "saveAndContinue(this)",
     noSubmitButton: true,
     formStyle: "vert",
-    fields: [{ name: "save_traces", label: "Save traces", type: "Bool" }],
+    fields: [{ name: "save_traces", label: "Save step traces for each run", type: "Bool" }],
   });
   trigCfgForm.values = trigger.configuration;
   return (
@@ -1240,10 +1240,9 @@ router.get(
           ? script(domReady(`common_done(${JSON.stringify(runres)})`))
           : ""
       );
-      if (trigger.action === "Workflow") {
+      if (trigger.action === "Workflow")
         res.redirect(`/actions/runs/?trigger=${trigger.id}`);
-      }
-      res.redirect(`/actions/`);
+      else res.redirect(`/actions/`);
     } else {
       send_events_page({
         res,
