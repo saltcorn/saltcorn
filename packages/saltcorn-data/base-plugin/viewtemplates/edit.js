@@ -522,11 +522,11 @@ const run = async (
   viewname,
   cfg,
   state,
-  { res, req },
+  { res, req, isPreview },
   { editQuery }
 ) => {
   const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
-  return await editQuery(state, mobileReferrer);
+  return await editQuery(state, mobileReferrer, isPreview);
 };
 
 /**
@@ -2058,7 +2058,7 @@ module.exports = {
     req,
     res,
   }) => ({
-    async editQuery(state, mobileReferrer) {
+    async editQuery(state, mobileReferrer, isPreview) {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
@@ -2082,7 +2082,7 @@ module.exports = {
           forPublic: !req.user,
           forUser: req.user,
         });
-      } else if (auto_create && auto_save) {
+      } else if (auto_create && auto_save && !isPreview) {
         row = {};
         fields.forEach((f) => {
           if (f.required && typeof f.attributes?.default !== "undefined")
