@@ -361,7 +361,7 @@ const configuration_workflow = (req) =>
                 name: "auto_create",
                 label: req.__("Allocate new row"),
                 sublabel: req.__(
-                  "If the view is run as a new row, allocate a new row without waiting for input"
+                  "If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields."
                 ),
                 type: "Bool",
                 showIf: { auto_save: true },
