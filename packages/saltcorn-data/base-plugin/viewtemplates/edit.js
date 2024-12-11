@@ -364,7 +364,6 @@ const configuration_workflow = (req) =>
                   "If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields."
                 ),
                 type: "Bool",
-                showIf: { auto_save: true },
               },
               {
                 name: "split_paste",
@@ -2082,7 +2081,7 @@ module.exports = {
           forPublic: !req.user,
           forUser: req.user,
         });
-      } else if (auto_create && auto_save && !isPreview) {
+      } else if (auto_create && !isPreview) {
         row = {};
         fields.forEach((f) => {
           if (f.required)
