@@ -257,7 +257,8 @@ const runScheduler = async ({
         if (snapshots_enabled && isThisTenantHourly) {
           await take_snapshot();
         }
-        await WorkflowRun.runResumableWorkflows()
+        await WorkflowRun.runResumableWorkflows();
+        if (isDaily) await WorkflowRun.prune();
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
         if (db.getTenantSchema() === db.connectObj.default_schema)
