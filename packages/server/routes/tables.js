@@ -758,7 +758,6 @@ router.get(
     triggers.sort(comparingCaseInsensitive("name"));
     let fieldCard;
     const nPrimaryKeys = fields.filter((f) => f.primary_key).length;
-    console.log({ nPrimaryKeys });
 
     if (fields.length === 0) {
       fieldCard = [
@@ -827,7 +826,7 @@ router.get(
             i({ class: "fas fa-exclamation-triangle" }),
             "This table has composite primary keys which is not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
             post_btn(
-              `/table/repair-composite-primary${table.id}`,
+              `/table/repair-composite-primary/${table.id}`,
               "Add autoincrementing primary key",
               req.csrfToken(),
               { btnClass: "btn-danger" }
@@ -2088,5 +2087,22 @@ router.post(
     const workflow = get_provider_workflow(table, req);
     const wfres = await workflow.run(req.body, req);
     respondWorkflow(table, workflow, wfres, req, res);
+  })
+);
+
+router.post(
+  "/repair-composite-primary/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const table = Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    await table.repairCompositePrimary();
+    res.redirect(`/table/${table.id}`);
   })
 );

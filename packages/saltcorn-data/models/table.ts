@@ -3702,6 +3702,20 @@ ${rejectDetails}`,
       this.fields.filter((f) => !f.calculated)
     );
   }
+  async repairCompositePrimary() {
+    const { rows } = await db.query(`select constraint_name
+from information_schema.table_constraints
+where table_schema = '${db.getTenantSchema() || "public"}'
+      and table_name = '${this.name}'
+      and constraint_type = 'PRIMARY KEY';`);
+    console.log(rows);
+    const cname = rows[0]?.constraint_name;
+    await db.query(
+      `alter table ${db.getTenantSchemaPrefix()}"${
+        this.name
+      }" drop constraint "${cname}"`
+    );
+  }
 }
 
 async function dump_table_to_json_file(filePath: string, tableName: string) {
