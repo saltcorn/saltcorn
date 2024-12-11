@@ -623,7 +623,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
-    builtIns: ["WaitUntil", "UserForm", "WaitNextTick"],
+    builtIns: ["SetContext", "WaitUntil", "UserForm", "WaitNextTick"],
     forWorkflow: true,
   });
 
@@ -646,6 +646,16 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
     type: "String",
     showIf: { wf_action_name: "WaitUntil" },
+  });
+  actionConfigFields.push({
+    label: "Context values",
+    name: "ctx_values",
+    sublabel:
+      "JavaScript object expression for the variables to set. Example <code>{x: 5, y:y+1}</code> will set x to 5 and increment existing context variable y",
+    type: "String",
+    fieldview: "textarea",
+    default: "{}",
+    showIf: { wf_action_name: "SetContext" },
   });
   actionConfigFields.push(
     new FieldRepeat({
@@ -1634,12 +1644,13 @@ WORKFLOWS TODO
 delete is not always working?
 help file to explain steps, and context
 
-auto-delete runs settings
-workflow actions: SetContext, ForLoop, EndForLoop, Output, TableQuery, ReadFile, WriteFile, APIResponse
+workflow actions: ForLoop, EndForLoop, Output, TableQuery, ReadFile, WriteFile, APIResponse
 
+steps unique for trigger
 date of status change field, use for pruning
 interactive workflows for not logged in
 debug run or execution trace
+
 show unconnected steps
 why is code not initialising
 drag and drop edges

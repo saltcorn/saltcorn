@@ -138,9 +138,18 @@ class WorkflowStep {
         this.only_if,
         context,
         user,
-        `${this.name} step`
+        `Only if expression in ${this.name} step`
       );
       if (!proceed) return;
+    }
+
+    if (this.action_name === "SetContext") {
+      return eval_expression(
+        this.configuration.ctx_values,
+        context,
+        user,
+        `Context values expression in ${this.name} step`
+      );
     }
     let state_action = getState().actions[this.action_name];
     if (state_action) {
