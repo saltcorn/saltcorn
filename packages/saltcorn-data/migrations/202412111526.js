@@ -24,6 +24,7 @@ const sql_sqlite = [
   `CREATE TABLE IF NOT EXISTS _sc_workflow_trace (
     id serial primary key,  
     run_id integer references _sc_workflow_runs(id) on delete cascade,
+    user_id integer references users(id) on delete cascade,
     step_name_run text NOT NULL,    
     context json NOT NULL,
     status text,    
