@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS _sc_workflow_trace (
 
 const sql_sqlite = [
   `alter table _sc_workflow_runs add column status_updated_at timestamp;`,
+  `alter table _sc_workflow_runs add column session_id text;`,
   `create unique index workflow_steps_name_uniq on _sc_workflow_steps(trigger_id, name);`,
   `CREATE TABLE IF NOT EXISTS _sc_workflow_trace (
     id serial primary key,  
