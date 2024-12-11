@@ -528,6 +528,14 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   const initial_step = steps.find((step) => step.initial_step);
   if (initial_step)
     steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
+  const trigCfgForm = new Form({
+    action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+    onChange: "saveAndContinue(this)",
+    noSubmitButton: true,
+    formStyle: "vert",
+    fields: [{ name: "save_traces", label: "Save traces", type: "Bool" }],
+  });
+  trigCfgForm.values = trigger.configuration;
   return (
     /*ul(
       steps.map((step) =>
@@ -577,7 +585,8 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
         class: "d-block",
       },
       "Show runs &raquo;"
-    )
+    ) +
+    renderForm(trigCfgForm, req.csrfToken())
   );
 };
 
@@ -1099,6 +1108,11 @@ router.post(
     let form;
     if (trigger.action === "Multi-step action") {
       form = await getMultiStepForm(req, id, table);
+    } else if (trigger.action === "Workflow") {
+      form = new Form({
+        action: `/actions/configure/${id}`,
+        fields: [{ name: "save_traces", label: "Save traces", type: "Bool" }],
+      });
     } else {
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
