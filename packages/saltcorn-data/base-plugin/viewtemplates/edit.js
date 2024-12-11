@@ -2085,8 +2085,13 @@ module.exports = {
       } else if (auto_create && auto_save && !isPreview) {
         row = {};
         fields.forEach((f) => {
-          if (f.required && typeof f.attributes?.default !== "undefined")
-            row[f.name] = f.attributes.default;
+          if (f.required)
+            if (
+              typeof f.attributes?.default !== "undefined" &&
+              f.attributes?.default !== null
+            )
+              row[f.name] = f.attributes.default;
+            else if (f.type.sql_name === "text") row[f.name] = "";
         });
         row.id = await table.insertRow(row, req.user);
       }
