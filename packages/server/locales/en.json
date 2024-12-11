@@ -1507,5 +1507,7 @@
 	"Workflow runs": "Workflow runs",
 	"Workflow run": "Workflow run",
 	"Share to enabled": "Share to enabled",
-	"Enable the share to feature": "Enable the share to feature"
+	"Enable the share to feature": "Enable the share to feature",
+	"Allocate new row": "Allocate new row",
+	"If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields.": "If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields."
 }
