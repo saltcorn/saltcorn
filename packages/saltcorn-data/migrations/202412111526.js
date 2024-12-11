@@ -1,7 +1,8 @@
 const sql_pg = `
 alter table _sc_workflow_runs add column status_updated_at timestamp;
+alter table _sc_workflow_runs add column session_id text;
 
-ALTER TABLE _sc_workflow_steps ADD CONSTRAINT constraintname UNIQUE (trigger_id, name);
+ALTER TABLE _sc_workflow_steps ADD CONSTRAINT workflow_steps_name_uniq UNIQUE (trigger_id, name);
 
 CREATE TABLE IF NOT EXISTS _sc_workflow_trace (
     id serial primary key,  

@@ -1687,7 +1687,6 @@ help file to explain steps, and context
 
 workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
 
-date of status change field, use for pruning
 interactive workflows for not logged in
 debug run or execution trace
 

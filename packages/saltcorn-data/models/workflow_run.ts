@@ -41,6 +41,7 @@ class WorkflowRun {
   status_updated_at: Date;
   started_by?: number;
   error?: string;
+  session_id?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
   current_step?: string;
   steps?: Array<WorkflowStep>;
@@ -59,6 +60,7 @@ class WorkflowRun {
     this.started_at = o.started_at || new Date();
     this.status_updated_at = o.status_updated_at || new Date();
     this.started_by = o.started_by;
+    this.session_id = o.session_id;
     this.error = o.error;
     this.status = o.status || "Pending";
     this.current_step = o.current_step;
