@@ -344,6 +344,11 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
+    if (req.query.table) {
+      const table = Table.findOne({ name: req.query.table });
+      if (table) form.values.table_id = table.id;
+    }
+
     send_events_page({
       res,
       req,
@@ -1792,6 +1797,7 @@ delete is not always working?
 help file to explain steps, and context
 
 workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
+action explainer 
 
 interactive workflows for not logged in
 
