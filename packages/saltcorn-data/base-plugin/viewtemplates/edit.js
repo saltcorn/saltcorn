@@ -366,6 +366,15 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
+                name: "delete_unchanged_auto_create",
+                label: req.__("Delete unchanged"),
+                sublabel: req.__(
+                  "Delete allocated row if there are no changes."
+                ),
+                type: "Bool",
+                showif: { auto_create: true },
+              },
+              {
                 name: "split_paste",
                 label: req.__("Split paste"),
                 sublabel: req.__("Separate paste content into separate inputs"),
@@ -932,6 +941,8 @@ const render = async ({
   split_paste,
   mobileReferrer,
   confirm_leave,
+  delete_unchanged_auto_create,
+  isPreview
 }) => {
   const form = await getForm(
     table,
@@ -1058,13 +1069,22 @@ const render = async ({
   if (confirm_leave) {
     //add to onchange
     if (!form.onChange) form.onChange = "";
-    form.onChange += "this.setAttribute('data-unsaved-changes','true')";
+    form.onChange += "this.setAttribute('data-unsaved-changes','true');";
     if (!form.onSubmit) form.onSubmit = "";
     form.onSubmit += "this.removeAttribute('data-unsaved-changes')";
 
     //beforeunload script
     confirmLeaveScript = script(
       `((curScript)=>{window.addEventListener("beforeunload", (e) => check_unsaved_form(e, curScript));})(document.currentScript)`
+    );
+  }
+  let deleteUnchangedScript = "";
+  if (delete_unchanged_auto_create && !isPreview) {
+    if (!form.onChange) form.onChange = "";
+
+    form.onChange += "this.setAttribute('data-form-changed','true');";
+    deleteUnchangedScript = script(
+      `((curScript)=>{window.addEventListener("beforeunload", () => check_delete_unsaved("${table.name}", curScript));})(document.currentScript)`
     );
   }
 
@@ -1087,7 +1107,8 @@ const render = async ({
   return (
     renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
     reloadAfterCloseInModalScript +
-    confirmLeaveScript
+    confirmLeaveScript +
+    deleteUnchangedScript
   );
 };
 
@@ -2053,6 +2074,7 @@ module.exports = {
       fixed,
       confirm_leave,
       auto_create,
+      delete_unchanged_auto_create,
     },
     req,
     res,
@@ -2113,6 +2135,8 @@ module.exports = {
         split_paste,
         confirm_leave,
         mobileReferrer,
+        delete_unchanged_auto_create,
+        isPreview
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
