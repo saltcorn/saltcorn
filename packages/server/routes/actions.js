@@ -487,15 +487,19 @@ router.post(
 
 function genWorkflowDiagram(steps) {
   const stepNames = steps.map((s) => s.name);
-  const nodeLines = steps
-    .map(
-      (s) => `  ${s.name}["\`**${s.name}**
+  const nodeLines = steps.map(
+    (s) => `  ${s.name}["\`**${s.name}**
   ${s.action_name}\`"]:::wfstep${s.id}`
-    )
-    .join("\n");
+  );
+
+  nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
+    if(step.initial_step)
+      linkLines.push(
+        `  _Start --> ${step.name}`
+      );
     if (step.action_name === "ForLoop") {
       linkLines.push(
         `  ${step.name} --> ${step.configuration.for_loop_step_name}`
@@ -520,7 +524,9 @@ function genWorkflowDiagram(steps) {
     }
     step_ix += 1;
   }
-  return "flowchart TD\n" + nodeLines + "\n" + linkLines.join("\n");
+  const fc =
+    "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
+  return fc;
 }
 
 const getWorkflowConfig = async (req, id, table, trigger) => {
@@ -968,7 +974,9 @@ router.get(
           },
           {
             headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${
-              getState().getLightDarkMode(req.user)==="dark" ? ",theme: 'dark'," : ""
+              getState().getLightDarkMode(req.user) === "dark"
+                ? ",theme: 'dark',"
+                : ""
             }});</script>`,
           },
         ],
