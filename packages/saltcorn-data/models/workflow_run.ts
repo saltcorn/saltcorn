@@ -377,9 +377,18 @@ class WorkflowRun {
           return ret;
         }
       } catch (e: any) {
-        console.error(e);
+        console.error("Workflow error", e);
 
         await this.update({ status: "Error", error: e.message });
+        const Trigger = (await import("./trigger")).default;
+
+        Trigger.emitEvent("Error", null, user, {
+          workflow_run: this.id,
+          message: e.message,
+          stack: e.stack,
+          step: step?.name,
+          run_page: `/actions/run/${this.id}`,
+        });
         break;
       }
     }
