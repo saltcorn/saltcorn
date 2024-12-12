@@ -1182,6 +1182,7 @@ router.post(
       let notify = "";
       if (!rest.versioned) rest.versioned = false;
       if (!rest.has_sync_info) rest.has_sync_info = false;
+      rest.is_user_group = !!rest.is_user_group;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
