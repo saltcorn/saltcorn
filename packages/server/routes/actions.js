@@ -496,10 +496,7 @@ function genWorkflowDiagram(steps) {
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
-    if(step.initial_step)
-      linkLines.push(
-        `  _Start --> ${step.name}`
-      );
+    if (step.initial_step) linkLines.push(`  _Start --> ${step.name}`);
     if (step.action_name === "ForLoop") {
       linkLines.push(
         `  ${step.name} --> ${step.configuration.for_loop_step_name}`
@@ -1697,7 +1694,8 @@ const getWorkflowStepUserForm = async (run, trigger, step, user) => {
 
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
-    blurb: step.configuration?.form_header || "",
+    blurb: run.wait_info.output || step.configuration?.form_header || "",
+    formStyle: run.wait_info.output ? "vert" : undefined,
     fields: (step.configuration.user_form_questions || []).map((q) => ({
       label: q.label,
       name: q.var_name,
@@ -1731,7 +1729,7 @@ router.get(
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
     if (req.xhr) form.xhrSubmit = true;
-    const title = "Fill form";
+    const title = run.wait_info.output ? "Workflow output" : "Fill form";
     res.sendWrap(title, renderForm(form, req.csrfToken()));
   })
 );

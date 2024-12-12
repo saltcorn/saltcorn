@@ -169,8 +169,8 @@ class WorkflowRun {
   }
 
   user_allowed_to_fill_form(user: User) {
-    if (this.wait_info.form.user_id) {
-      if (this.wait_info.form.user_id != user?.id) return false;
+    if (this.wait_info.user_id) {
+      if (this.wait_info.user_id != user?.id) return false;
     }
     return true;
   }
@@ -305,7 +305,7 @@ class WorkflowRun {
           }
           await this.update({
             status: "Waiting",
-            wait_info: { form: { user_id: user_id } },
+            wait_info: { form: true, user_id: user_id },
           });
           if (trace) this.createTrace(step.name, user);
 
@@ -326,7 +326,7 @@ class WorkflowRun {
           );
           await this.update({
             status: "Waiting",
-            wait_info: { output },
+            wait_info: { output, user_id: user?.id },
           });
           if (trace) this.createTrace(step.name, user);
 
