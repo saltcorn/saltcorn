@@ -487,15 +487,16 @@ router.post(
 
 function genWorkflowDiagram(steps) {
   const stepNames = steps.map((s) => s.name);
-  const nodeLines = steps
-    .map(
-      (s) => `  ${s.name}["\`**${s.name}**
+  const nodeLines = steps.map(
+    (s) => `  ${s.name}["\`**${s.name}**
   ${s.action_name}\`"]:::wfstep${s.id}`
-    )
-    .join("\n");
+  );
+
+  nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
+    if (step.initial_step) linkLines.push(`  _Start --> ${step.name}`);
     if (step.action_name === "ForLoop") {
       linkLines.push(
         `  ${step.name} --> ${step.configuration.for_loop_step_name}`
@@ -520,7 +521,9 @@ function genWorkflowDiagram(steps) {
     }
     step_ix += 1;
   }
-  return "flowchart TD\n" + nodeLines + "\n" + linkLines.join("\n");
+  const fc =
+    "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
+  return fc;
 }
 
 const getWorkflowConfig = async (req, id, table, trigger) => {
@@ -644,6 +647,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     builtIns: [
       "SetContext",
       "TableQuery",
+      "Output",
       "WaitUntil",
       "UserForm",
       "WaitNextTick",
@@ -683,7 +687,15 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     default: "{}",
     showIf: { wf_action_name: "SetContext" },
   });
-
+  actionConfigFields.push({
+    label: "Output text",
+    name: "output_text",
+    sublabel:
+      "Message shown to the user. Can contain HTML tags and use interpolations {{ }} to access the context",
+    type: "String",
+    fieldview: "textarea",
+    showIf: { wf_action_name: "Output" },
+  });
   actionConfigFields.push({
     label: "Table",
     name: "query_table",
@@ -959,7 +971,9 @@ router.get(
           },
           {
             headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${
-              getState().getLightDarkMode(req.user) ? ",theme: 'dark'," : ""
+              getState().getLightDarkMode(req.user) === "dark"
+                ? ",theme: 'dark',"
+                : ""
             }});</script>`,
           },
         ],
@@ -1401,22 +1415,36 @@ router.post(
       trigger_id,
       configuration,
     };
+    try {
+      if (wf_step_id && wf_step_id !== "undefined") {
+        const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
 
-    if (wf_step_id && wf_step_id !== "undefined") {
-      const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
+        await wfStep.update(step);
+        if (req.xhr) res.json({ success: "ok" });
+        else {
+          req.flash("success", req.__("Step saved"));
+          res.redirect(`/actions/configure/${step.trigger_id}`);
+        }
+      } else {
+        //insert
 
-      await wfStep.update(step);
-      if (req.xhr) res.json({ success: "ok" });
-      else {
-        req.flash("success", req.__("Step saved"));
-        res.redirect(`/actions/configure/${step.trigger_id}`);
+        const id = await WorkflowStep.create(step);
+        if (req.xhr)
+          res.json({ success: "ok", set_fields: { wf_step_id: id } });
+        else {
+          req.flash("success", req.__("Step saved"));
+          res.redirect(`/actions/configure/${step.trigger_id}`);
+        }
       }
-    } else {
-      //insert
-      const id = await WorkflowStep.create(step);
-      if (req.xhr) res.json({ success: "ok", set_fields: { wf_step_id: id } });
+    } catch (e) {
+      const emsg =
+        e.message ===
+        'duplicate key value violates unique constraint "workflow_steps_name_uniq"'
+          ? `A step with the name ${wf_step_name} already exists`
+          : e.message;
+      if (req.xhr) res.json({ error: emsg });
       else {
-        req.flash("success", req.__("Step saved"));
+        req.flash("error", emsg);
         res.redirect(`/actions/configure/${step.trigger_id}`);
       }
     }
@@ -1463,10 +1491,10 @@ router.get(
               case "Error":
                 return run.error;
               case "Waiting":
-                if (run.wait_info?.form)
+                if (run.wait_info?.form || run.wait_info.output)
                   return a(
                     { href: `/actions/fill-workflow-form/${run.id}` },
-                    "Fill ",
+                    run.wait_info.output ? "Show " : "Fill ",
                     run.current_step
                   );
                 return run.current_step;
@@ -1599,6 +1627,9 @@ router.get(
                   run.status === "Waiting"
                     ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
                     : null,
+                  run.status === "Error"
+                    ? tr(th("Error message"), td(run.error))
+                    : null,
                   tr(
                     th("Context"),
                     td(pre(text(JSON.stringify(run.context, null, 2))))
@@ -1663,7 +1694,8 @@ const getWorkflowStepUserForm = async (run, trigger, step, user) => {
 
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
-    blurb: step.configuration?.form_header || "",
+    blurb: run.wait_info.output || step.configuration?.form_header || "",
+    formStyle: run.wait_info.output ? "vert" : undefined,
     fields: (step.configuration.user_form_questions || []).map((q) => ({
       label: q.label,
       name: q.var_name,
@@ -1697,7 +1729,7 @@ router.get(
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
     if (req.xhr) form.xhrSubmit = true;
-    const title = "Fill form";
+    const title = run.wait_info.output ? "Workflow output" : "Fill form";
     res.sendWrap(title, renderForm(form, req.csrfToken()));
   })
 );
@@ -1791,9 +1823,13 @@ WORKFLOWS TODO
 delete is not always working?
 help file to explain steps, and context
 
-workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
+workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
 interactive workflows for not logged in
+correctly suggest new step name
+show end node in diagram
+
+Error handlers
 
 show unconnected steps
 why is code not initialising

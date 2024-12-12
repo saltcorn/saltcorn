@@ -14,7 +14,7 @@ import Expression from "./expression";
 import Notification from "./notification";
 import utils from "../utils";
 import moment from "moment";
-const { ensure_final_slash } = utils;
+const { ensure_final_slash, interpolate } = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
 
@@ -169,8 +169,8 @@ class WorkflowRun {
   }
 
   user_allowed_to_fill_form(user: User) {
-    if (this.wait_info.form.user_id) {
-      if (this.wait_info.form.user_id != user?.id) return false;
+    if (this.wait_info.user_id) {
+      if (this.wait_info.user_id != user?.id) return false;
     }
     return true;
   }
@@ -212,7 +212,7 @@ class WorkflowRun {
       error: this.error,
       status: this.status,
       elapsed: this.step_start
-        ? (new Date().getTime() - this.step_start?.getTime())/1000
+        ? (new Date().getTime() - this.step_start?.getTime()) / 1000
         : 0,
       step_started_at: this.step_start || new Date(),
     });
@@ -280,98 +280,133 @@ class WorkflowRun {
 
       state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
       this.step_start = new Date();
-      if (step.action_name === "UserForm") {
-        let user_id;
-        if (step.configuration.user_id_expression) {
-          user_id = eval_expression(
-            step.configuration.user_id_expression,
-            this.context,
-            user,
-            `User id expression in step ${step.name}`
-          );
-        } else user_id = user?.id;
-        if (user_id) {
-          //TODO send notification
-          const base_url = state.getConfig("base_url", "");
-          await Notification.create({
-            title: "Your input is required",
-            link: `${ensure_final_slash(base_url)}actions/fill-workflow-form/${
-              this.id
-            }`,
-            user_id,
+
+      try {
+        if (step.action_name === "UserForm") {
+          let user_id;
+          if (step.configuration.user_id_expression) {
+            user_id = eval_expression(
+              step.configuration.user_id_expression,
+              this.context,
+              user,
+              `User id expression in step ${step.name}`
+            );
+          } else user_id = user?.id;
+          if (user_id) {
+            //TODO send notification
+            const base_url = state.getConfig("base_url", "");
+            await Notification.create({
+              title: "Your input is required",
+              link: `${ensure_final_slash(
+                base_url
+              )}actions/fill-workflow-form/${this.id}`,
+              user_id,
+            });
+          }
+          await this.update({
+            status: "Waiting",
+            wait_info: { form: true, user_id: user_id },
           });
+          if (trace) this.createTrace(step.name, user);
+
+          if (
+            interactive &&
+            (!step.configuration.user_id_expression || user_id === user?.id)
+          ) {
+            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+          }
+          step = null;
+          break;
         }
-        await this.update({
-          status: "Waiting",
-          wait_info: { form: { user_id: user_id } },
-        });
+        if (step.action_name === "Output") {
+          const output = interpolate(
+            step.configuration.output_text,
+            this.context,
+            user
+          );
+          await this.update({
+            status: "Waiting",
+            wait_info: { output, user_id: user?.id },
+          });
+          if (trace) this.createTrace(step.name, user);
+
+          if (interactive) {
+            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+          }
+          step = null;
+          break;
+        }
+        if (step.action_name === "WaitNextTick") {
+          await this.update({
+            status: "Waiting",
+            wait_info: {},
+          });
+          state.waitingWorkflows = true;
+          if (trace) this.createTrace(step.name, user);
+          break;
+        }
+        if (step.action_name === "WaitUntil") {
+          const resume_at = eval_expression(
+            step.configuration.resume_at,
+            { moment, ...this.context },
+            user,
+            `Resume at expression in step ${step.name}`
+          );
+          state.waitingWorkflows = true;
+
+          await this.update({
+            status: "Waiting",
+            wait_info: { until_time: new Date(resume_at).toISOString() },
+          });
+          if (trace) this.createTrace(step.name, user);
+
+          break;
+        }
+
+        const result = await step.run(this.context, user);
+
+        const nextUpdate: any = {};
+        if (typeof result === "object" && result !== null) {
+          Object.assign(this.context, result);
+          nextUpdate.context = this.context;
+        }
         if (trace) this.createTrace(step.name, user);
 
+        //find next step
+        const nextStep = this.get_next_step(step, user);
+
+        if (!nextStep) {
+          step = null;
+          nextUpdate.status = "Finished";
+        } else {
+          step = nextStep;
+          nextUpdate.current_step = step.name;
+        }
+        await this.update(nextUpdate);
         if (
           interactive &&
-          (!step.configuration.user_id_expression || user_id === user?.id)
+          result &&
+          typeof result === "object" &&
+          allReturnDirectives.some((k) => typeof result[k] !== "undefined")
         ) {
-          return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+          const ret = await this.popReturnDirectives();
+          ret.resume_workflow = this.id;
+          return ret;
         }
-        step = null;
-        break;
-      }
+      } catch (e: any) {
+        console.error("Workflow error", e);
 
-      if (step.action_name === "WaitNextTick") {
-        await this.update({
-          status: "Waiting",
-          wait_info: {},
+        await this.update({ status: "Error", error: e.message });
+        const Trigger = (await import("./trigger")).default;
+
+        Trigger.emitEvent("Error", null, user, {
+          workflow_run: this.id,
+          message: e.message,
+          stack: e.stack,
+          step: step?.name,
+          run_page: `/actions/run/${this.id}`,
         });
-        state.waitingWorkflows = true;
-        if (trace) this.createTrace(step.name, user);
         break;
-      }
-      if (step.action_name === "WaitUntil") {
-        const resume_at = eval_expression(
-          step.configuration.resume_at,
-          { moment, ...this.context },
-          user,
-          `Resume at expression in step ${step.name}`
-        );
-        state.waitingWorkflows = true;
-
-        await this.update({
-          status: "Waiting",
-          wait_info: { until_time: new Date(resume_at).toISOString() },
-        });
-        if (trace) this.createTrace(step.name, user);
-
-        break;
-      }
-
-      const result = await step.run(this.context, user);
-
-      const nextUpdate: any = {};
-      if (typeof result === "object" && result !== null) {
-        Object.assign(this.context, result);
-        nextUpdate.context = this.context;
-      }
-      if (trace) this.createTrace(step.name, user);
-
-      //find next step
-      const nextStep = this.get_next_step(step, user);
-      if (!nextStep) {
-        step = null;
-        nextUpdate.status = "Finished";
-      } else {
-        step = nextStep;
-        nextUpdate.current_step = step.name;
-      }
-      await this.update(nextUpdate);
-      if (
-        interactive &&
-        result &&
-        typeof result === "object" &&
-        allReturnDirectives.some((k) => typeof result[k] !== "undefined")
-      ) {
-        const ret = await this.popReturnDirectives();
-        ret.resume_workflow = this.id;
-        return ret;
       }
     }
     return this.context;
