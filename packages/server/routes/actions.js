@@ -644,6 +644,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     builtIns: [
       "SetContext",
       "TableQuery",
+      "Output",
       "WaitUntil",
       "UserForm",
       "WaitNextTick",
@@ -683,7 +684,15 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     default: "{}",
     showIf: { wf_action_name: "SetContext" },
   });
-
+  actionConfigFields.push({
+    label: "Output text",
+    name: "output_text",
+    sublabel:
+      "Message shown to the user. Can contain HTML tags and use interpolations {{ }} to access the context",
+    type: "String",
+    fieldview: "textarea",
+    showIf: { wf_action_name: "Output" },
+  });
   actionConfigFields.push({
     label: "Table",
     name: "query_table",
@@ -1797,7 +1806,6 @@ help file to explain steps, and context
 workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
 
 interactive workflows for not logged in
-error handling
 
 show unconnected steps
 why is code not initialising

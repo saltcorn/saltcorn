@@ -318,7 +318,15 @@ class WorkflowRun {
           step = null;
           break;
         }
-
+        if (step.action_name === "Output") {
+          await this.update({
+            status: "Waiting",
+            wait_info: {output: ""},
+          });
+          state.waitingWorkflows = true;
+          if (trace) this.createTrace(step.name, user);
+          break;
+        }
         if (step.action_name === "WaitNextTick") {
           await this.update({
             status: "Waiting",
