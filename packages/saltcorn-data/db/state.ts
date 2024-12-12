@@ -170,7 +170,7 @@ class State {
   hasJoinedLogSockets: boolean;
   queriesCache?: Record<string, any>;
   scVersion: string;
-  waitingWorkflows?: boolean
+  waitingWorkflows?: boolean;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -286,8 +286,14 @@ class State {
   getLightDarkMode(user?: User): "dark" | "light" | "auto" {
     if (user?._attributes?.layout?.config?.mode)
       return user?._attributes?.layout?.config?.mode;
+    if (user?.attributes?.layout?.config?.mode)
+      return user?.attributes?.layout?.config?.mode;
     if (this.plugin_cfgs) {
       const layout_name = this.getLayoutPlugin(user)?.plugin_name as string;
+      if (user?._attributes?.[layout_name]?.mode)
+        return user?._attributes[layout_name]?.mode;
+      if (user?.attributes?.[layout_name]?.mode)
+        return user?.attributes[layout_name]?.mode;
       const plugin_cfg = this.plugin_cfgs[layout_name];
       if (plugin_cfg?.mode) return plugin_cfg.mode;
     }
