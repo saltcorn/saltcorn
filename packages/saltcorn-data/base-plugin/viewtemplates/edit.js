@@ -2092,6 +2092,8 @@ module.exports = {
               row[f.name] = f.attributes.default;
             else if (f.type.sql_name === "text") row[f.name] = "";
         });
+        const use_fixed = await fill_presets(table, req, fixed);
+        row = { ...row, ...use_fixed };
         row.id = await table.insertRow(row, req.user);
       }
       const isRemote = !isWeb(req);
