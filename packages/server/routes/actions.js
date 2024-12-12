@@ -1599,6 +1599,9 @@ router.get(
                   run.status === "Waiting"
                     ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
                     : null,
+                  run.status === "Error"
+                    ? tr(th("Error message"), td(run.error))
+                    : null,
                   tr(
                     th("Context"),
                     td(pre(text(JSON.stringify(run.context, null, 2))))
@@ -1794,6 +1797,7 @@ help file to explain steps, and context
 workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
 
 interactive workflows for not logged in
+error handling
 
 show unconnected steps
 why is code not initialising
