@@ -1491,10 +1491,10 @@ router.get(
               case "Error":
                 return run.error;
               case "Waiting":
-                if (run.wait_info?.form)
+                if (run.wait_info?.form || run.wait_info.output)
                   return a(
                     { href: `/actions/fill-workflow-form/${run.id}` },
-                    "Fill ",
+                    run.wait_info.output ? "Show " : "Fill ",
                     run.current_step
                   );
                 return run.current_step;
@@ -1823,9 +1823,13 @@ WORKFLOWS TODO
 delete is not always working?
 help file to explain steps, and context
 
-workflow actions: ForLoop, EndForLoop, Output, ReadFile, WriteFile, APIResponse
+workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
 interactive workflows for not logged in
+correctly suggest new step name
+show end node in diagram
+
+Error handlers
 
 show unconnected steps
 why is code not initialising
