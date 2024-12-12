@@ -952,7 +952,8 @@ class Table implements AbstractTable {
     if (
       (!user || user?.role_id === 1) &&
       Object.keys(where).length == 0 &&
-      db.truncate
+      db.truncate &&
+      noTrigger
     ) {
       try {
         await db.truncate(this.name);

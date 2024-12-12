@@ -838,7 +838,7 @@ router.get(
           ? req.__("Inbound keys: ") +
             inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
             "<br>"
-          : "",      
+          : "",
         !table.external &&
           !table.provider_name &&
           a(
@@ -1942,7 +1942,7 @@ router.post(
     const table = Table.findOne({ name });
 
     try {
-      await table.deleteRows({}, req.user);
+      await table.deleteRows({}, req.user, true);
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
       req.flash("error", e.message);
