@@ -1410,22 +1410,36 @@ router.post(
       trigger_id,
       configuration,
     };
+    try {
+      if (wf_step_id && wf_step_id !== "undefined") {
+        const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
 
-    if (wf_step_id && wf_step_id !== "undefined") {
-      const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
+        await wfStep.update(step);
+        if (req.xhr) res.json({ success: "ok" });
+        else {
+          req.flash("success", req.__("Step saved"));
+          res.redirect(`/actions/configure/${step.trigger_id}`);
+        }
+      } else {
+        //insert
 
-      await wfStep.update(step);
-      if (req.xhr) res.json({ success: "ok" });
-      else {
-        req.flash("success", req.__("Step saved"));
-        res.redirect(`/actions/configure/${step.trigger_id}`);
+        const id = await WorkflowStep.create(step);
+        if (req.xhr)
+          res.json({ success: "ok", set_fields: { wf_step_id: id } });
+        else {
+          req.flash("success", req.__("Step saved"));
+          res.redirect(`/actions/configure/${step.trigger_id}`);
+        }
       }
-    } else {
-      //insert
-      const id = await WorkflowStep.create(step);
-      if (req.xhr) res.json({ success: "ok", set_fields: { wf_step_id: id } });
+    } catch (e) {
+      const emsg =
+        e.message ===
+        'duplicate key value violates unique constraint "workflow_steps_name_uniq"'
+          ? `A step with the name ${wf_step_name} already exists`
+          : e.message;
+      if (req.xhr) res.json({ error: emsg });
       else {
-        req.flash("success", req.__("Step saved"));
+        req.flash("error", emsg);
         res.redirect(`/actions/configure/${step.trigger_id}`);
       }
     }
