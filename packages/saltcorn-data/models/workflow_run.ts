@@ -14,7 +14,7 @@ import Expression from "./expression";
 import Notification from "./notification";
 import utils from "../utils";
 import moment from "moment";
-const { ensure_final_slash } = utils;
+const { ensure_final_slash, interpolate } = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
 
@@ -319,12 +319,21 @@ class WorkflowRun {
           break;
         }
         if (step.action_name === "Output") {
+          const output = interpolate(
+            step.configuration.output_text,
+            this.context,
+            user
+          );
           await this.update({
             status: "Waiting",
-            wait_info: {output: ""},
+            wait_info: { output },
           });
-          state.waitingWorkflows = true;
           if (trace) this.createTrace(step.name, user);
+
+          if (interactive) {
+            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+          }
+          step = null;
           break;
         }
         if (step.action_name === "WaitNextTick") {
