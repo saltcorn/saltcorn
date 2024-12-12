@@ -1058,7 +1058,11 @@ function initialize_page() {
       </form>`
       );
   });
-  if (!isNode) doMobileTransforms();
+  if (!isNode) {
+    doMobileTransforms();
+    const anchor = parent.saltcorn.mobileApp.navigation.getAnchor();
+    if (anchor) $(`[href="#${anchor}"][data-bs-toggle="tab"]`).tab("show");
+  }
   function setExplainer(that) {
     var id = $(that).attr("id") + "_explainer";
 
@@ -1201,7 +1205,6 @@ function initialize_page() {
 $(initialize_page);
 
 function cancel_inline_edit(e, opts1) {
-  const isNode = getIsNode();
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
   var form = $(e.target).closest("form");
   form.replaceWith(opts.resetHtml);

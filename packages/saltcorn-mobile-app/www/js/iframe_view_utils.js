@@ -28,7 +28,10 @@ async function execLink(url, linkSrc) {
     try {
       if (document.getElementById("scspinner")) return;
       showLoadSpinner();
-      if (url.startsWith("javascript:")) eval(url.substring(11));
+      if (url.startsWith("#")) {
+        const anchor = url.substring(1);
+        parent.saltcorn.mobileApp.navigation.setAnchor(anchor);
+      } else if (url.startsWith("javascript:")) eval(url.substring(11));
       else {
         const { path, query } =
           parent.saltcorn.mobileApp.navigation.splitPathQuery(url);
@@ -40,6 +43,8 @@ async function execLink(url, linkSrc) {
           query
         );
       }
+    } catch (error) {
+      parent.saltcorn.mobileApp.common.errorAlert(error);
     } finally {
       removeLoadSpinner();
     }

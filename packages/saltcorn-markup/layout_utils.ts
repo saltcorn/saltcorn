@@ -713,7 +713,8 @@ const renderTabs = (
   }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any,
   activeTabTitle?: string,
-  hints?: any
+  hints?: any,
+  isMobile?: boolean
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   if (tabsStyle === "Accordion")
@@ -773,21 +774,18 @@ const renderTabs = (
         : "")
     );
   else {
-    let activeIx =
-      (serverRendered || !isNode) && activeTabTitle ? +activeTabTitle : 0;
+    let activeIx = serverRendered && activeTabTitle ? +activeTabTitle : 0;
     if (activeIx === -1) activeIx = 0;
     const maybeWrapContent = (s: string) =>
       contentWrapperClass ? div({ class: contentWrapperClass }, s) : s;
     const maybeWrapHeader = (s: string) =>
       headerWrapperClass ? div({ class: headerWrapperClass }, s) : s;
     const buildOnClick = (ix: number) => {
-      const addQueryParam = !isNode
-        ? `parent.saltcorn.mobileApp.navigation.addQueryParam('_tab', ${ix})`
-        : "";
+      const execLink = isMobile ? `execLink('#${validID(titles[ix])}');` : "";
       let result = disable_inactive
         ? `disable_inactive_tab_inputs('${rndid}'); `
         : "";
-      result += addQueryParam;
+      result += execLink;
       return result ? result : undefined;
     };
     return (

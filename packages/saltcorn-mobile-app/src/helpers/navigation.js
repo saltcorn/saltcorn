@@ -43,6 +43,23 @@ export function addQueryParam(key, value) {
   }
 }
 
+export function setAnchor(anchor) {
+  if (routingHistory.length === 0)
+    throw new Error("No current route to set anchor");
+  else {
+    const current = routingHistory[routingHistory.length - 1];
+    current.anchor = anchor;
+  }
+}
+
+export function getAnchor() {
+  if (routingHistory.length === 0) return undefined;
+  else {
+    const current = routingHistory[routingHistory.length - 1];
+    return current.anchor;
+  }
+}
+
 export function addRoute(routeEntry) {
   routingHistory.push(routeEntry);
 }

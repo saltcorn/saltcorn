@@ -568,10 +568,11 @@ const render = ({
         renderTabs(
           segment,
           go,
-          segment.serverRendered || !isWeb
+          segment.serverRendered
             ? req?.query?.[segment.tabId || "_tab"]
             : undefined,
-          hints
+          hints,
+          !isWeb
         )
       );
     }
