@@ -942,7 +942,8 @@ const render = async ({
   mobileReferrer,
   confirm_leave,
   delete_unchanged_auto_create,
-  isPreview
+  isPreview,
+  auto_created_row,
 }) => {
   const form = await getForm(
     table,
@@ -1079,7 +1080,7 @@ const render = async ({
     );
   }
   let deleteUnchangedScript = "";
-  if (delete_unchanged_auto_create && !isPreview) {
+  if (auto_created_row && delete_unchanged_auto_create && !isPreview) {
     if (!form.onChange) form.onChange = "";
 
     form.onChange += "this.setAttribute('data-form-changed','true');";
@@ -2084,6 +2085,7 @@ module.exports = {
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
       let row = null;
+      let auto_created_row = false;
       if (Object.keys(uniques).length > 0) {
         // add joinfields from certain locations if they are not fields in columns
         const joinFields = {};
@@ -2117,6 +2119,7 @@ module.exports = {
         const use_fixed = await fill_presets(table, req, fixed);
         row = { ...row, ...use_fixed };
         row.id = await table.insertRow(row, req.user);
+        auto_created_row = true;
       }
       const isRemote = !isWeb(req);
       return await render({
@@ -2136,7 +2139,8 @@ module.exports = {
         confirm_leave,
         mobileReferrer,
         delete_unchanged_auto_create,
-        isPreview
+        isPreview,
+        auto_created_row,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {

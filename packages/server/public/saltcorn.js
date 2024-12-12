@@ -1210,9 +1210,10 @@ function check_unsaved_form(event, script_tag) {
 }
 function check_delete_unsaved(tablename, script_tag) {
   const form = $(script_tag).parent().find("form");
-  if (!form.attr("data-form-changed")) {
+  if (form.length && !form.attr("data-form-changed")) {
     //delete row
     const rec = get_form_record(form);
+    
     $.ajax({
       url: `/api/${tablename}/${rec.id}`,
       type: "DELETE",
