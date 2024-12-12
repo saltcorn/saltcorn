@@ -201,6 +201,15 @@ const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
   return tq.rows;
 };
 
+const truncate = async (tbl) => {
+  const sql = `truncate "${getTenantSchema()}"."${sqlsanitize(tbl)}"`;
+  sql_log(sql, []);
+
+  const tq = await (client || pool).query(sql, []);
+
+  return tq.rows;
+};
+
 /**
  * Insert rows into table
  * @param {string} tbl - table name
@@ -537,6 +546,7 @@ const postgresExports = {
   listTables,
   listScTables,
   listUserDefinedTables,
+  truncate,
 };
 
 module.exports = (getConnectObjectPara) => {
