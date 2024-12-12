@@ -344,6 +344,11 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
+    if (req.query.table) {
+      const table = Table.findOne({ name: req.query.table });
+      if (table) form.values.table_id = table.id;
+    }
+
     send_events_page({
       res,
       req,
@@ -1823,6 +1828,7 @@ WORKFLOWS TODO
 delete is not always working?
 help file to explain steps, and context
 
+action explainer 
 workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
 interactive workflows for not logged in
