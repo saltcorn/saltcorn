@@ -968,7 +968,7 @@ router.get(
           },
           {
             headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${
-              getState().getLightDarkMode(req.user) ? ",theme: 'dark'," : ""
+              getState().getLightDarkMode(req.user)==="dark" ? ",theme: 'dark'," : ""
             }});</script>`,
           },
         ],
