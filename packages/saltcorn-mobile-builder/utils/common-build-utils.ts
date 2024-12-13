@@ -860,23 +860,57 @@ export function writePodfile(buildDir: string) {
   });
 }
 
-export function modifyGradleConfig(
-  buildDir: string,
-  keyStoreFile: string,
-  keyStoreAlias: string,
-  keyStorePassword: string
-) {
+/**
+ * replace the MARKETING_VERSION in project.pbxproj
+ * @param buildDir
+ * @param appVersion new app version
+ */
+export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
+  const projectFile = join(
+    buildDir,
+    "ios",
+    "App",
+    "App.xcodeproj",
+    "project.pbxproj"
+  );
+  const content = readFileSync(projectFile, "utf8");
+  const newContent = content.replace(
+    /MARKETING_VERSION = 1.0;/,
+    `MARKETING_VERSION = ${appVersion};`
+  );
+  writeFileSync(projectFile, newContent, "utf8");
+}
+
+export function generateAndroidVersionCode(appVersion: string) {
+  const parts = appVersion.split(".");
+  return (
+    parseInt(parts[0]) * 10000 + parseInt(parts[1]) * 100 + parseInt(parts[2])
+  );
+}
+
+export function modifyGradleConfig({
+  buildDir,
+  appVersion,
+  keyStoreFile,
+  keyStoreAlias,
+  keyStorePassword,
+}: any) {
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
-  const newGradleContent = gradleContent
-    .replace(
-      /release\s*{/,
-      `release { 
+  const versionCode = generateAndroidVersionCode(appVersion);
+  let newGradleContent = gradleContent
+    .replace(/versionName "1.0"/, `versionName "${appVersion}"`)
+    .replace(/versionCode 1/, `versionCode ${versionCode}`);
+  if (keyStoreFile) {
+    newGradleContent = gradleContent
+      .replace(
+        /release\s*{/,
+        `release { 
           signingConfig signingConfigs.release`
-    )
-    .replace(
-      /buildTypes\s*{/,
-      `
+      )
+      .replace(
+        /buildTypes\s*{/,
+        `
     signingConfigs {
         release {
             keyAlias '${keyStoreAlias}'
@@ -886,6 +920,7 @@ export function modifyGradleConfig(
         }
       }
   buildTypes {`
-    );
+      );
+  }
   writeFileSync(gradleFile, newGradleContent, "utf8");
 }

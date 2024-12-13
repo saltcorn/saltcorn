@@ -200,7 +200,7 @@ BuildAppCommand.flags = {
   appVersion: Flags.string({
     name: "app version",
     string: "appVersion",
-    description: "Version of the mobile app (default 1.0.0)",
+    description: "Version of the mobile app (default 0.0.1)",
   }),
   appIcon: Flags.string({
     name: "app icon",

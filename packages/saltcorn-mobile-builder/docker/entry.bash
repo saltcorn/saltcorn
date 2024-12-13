@@ -3,11 +3,13 @@
 set -e
 
 BUILD_TYPE="$1"
-KEYSTORE_FILE="$2"
-KEYSTORE_ALIAS="$3"
-KEYSTORE_PASSWORD="$4"
+APP_VERSION="$2"
+KEYSTORE_FILE="$3"
+KEYSTORE_ALIAS="$4"
+KEYSTORE_PASSWORD="$5"
 
 echo "BUILD_TYPE: $BUILD_TYPE"
+echo "APP_VERSION: $APP_VERSION"
 echo "KEYSTORE_FILE: $KEYSTORE_FILE"
 echo "KEYSTORE_ALIAS: $KEYSTORE_ALIAS"
 #echo "KEYSTORE_PASSWORD: $KEYSTORE_PASSWORD"
@@ -82,7 +84,10 @@ cd ./android
 # modify gradle config for keystore
 if [ -n "$KEYSTORE_FILE" ]; then
   echo "building signed app with keystore"
-  npm run modify-gradle-cfg -- --keystore-file=$KEYSTORE_FILE --keystore-alias=$KEYSTORE_ALIAS --keystore-password=$KEYSTORE_PASSWORD  
+  npm run modify-gradle-cfg -- --app-version=$APP_VERSION --keystore-file=$KEYSTORE_FILE --keystore-alias=$KEYSTORE_ALIAS --keystore-password=$KEYSTORE_PASSWORD
+else
+  echo "building unsigned app"
+  npm run modify-gradle-cfg -- --app-version=$APP_VERSION
 fi
 
 if [ "$BUILD_TYPE" == "release" ]; then

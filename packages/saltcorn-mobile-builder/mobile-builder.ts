@@ -68,7 +68,7 @@ type MobileBuilderConfig = {
 export class MobileBuilder {
   appName: string;
   appId: string;
-  appVersion?: string;
+  appVersion: string;
   appIcon?: string;
   templateDir: string;
   buildDir: string;
@@ -107,7 +107,7 @@ export class MobileBuilder {
     else if (cfg.appName && cfg.appName !== appNameDefault)
       this.appId = `${removeNonWordChars(cfg.appName)}.mobile.app`;
     else this.appId = appIdDefault;
-    this.appVersion = cfg.appVersion;
+    this.appVersion = cfg.appVersion || "0.0.1";
     this.appIcon = cfg.appIcon;
     this.templateDir = cfg.templateDir;
     this.buildDir = cfg.buildDir;
@@ -202,6 +202,7 @@ export class MobileBuilder {
         );
       const capacitorHelper = new CapacitorHelper({
         ...this,
+        appVersion: this.appVersion,
         appleTeamId: iosParams?.teamId,
         provisioningGUUID: iosParams?.guuid,
       });
