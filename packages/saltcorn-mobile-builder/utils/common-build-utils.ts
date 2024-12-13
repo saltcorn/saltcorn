@@ -874,8 +874,8 @@ export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
     "project.pbxproj"
   );
   const content = readFileSync(projectFile, "utf8");
-  const newContent = content.replace(
-    /MARKETING_VERSION = 1.0;/,
+  const newContent = content.replaceAll(
+    /MARKETING_VERSION = 1.0;/g,
     `MARKETING_VERSION = ${appVersion};`
   );
   writeFileSync(projectFile, newContent, "utf8");
