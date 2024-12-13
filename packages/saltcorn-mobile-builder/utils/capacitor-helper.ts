@@ -183,6 +183,7 @@ export class CapacitorHelper {
   }
 
   private gradleBuild() {
+    console.log("gradlew build");
     const result = spawnSync(
       "./gradlew",
       [this.buildType === "release" ? "bundleRelease" : "assembleDebug"],
@@ -204,6 +205,7 @@ export class CapacitorHelper {
   }
 
   private buildWithDocker() {
+    console.log("building with docker");
     const spawnParams = [
       "run",
       "--network",

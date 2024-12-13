@@ -1992,6 +1992,21 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   function handleMessages() {
     notifyAlert("Building the app, please wait.", true)
   }
+  const versionPattern = /^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$/;
+  ${domReady(`
+  const versionInput = document.getElementById('appVersionInputId');
+  if (versionInput) {
+    versionInput.addEventListener('change', () => {
+      const version = versionInput.value;
+      if ((version !== '0.0.0' && versionPattern.test(version)) || version === "")
+        versionInput.classList.remove('is-invalid');
+      else
+        versionInput.classList.add('is-invalid');
+    });
+  }
+  else
+    console.error('versionInput not found');
+`)}
   </script>`;
 
 const imageAvailable = async () => {
@@ -2379,9 +2394,15 @@ router.get(
                         class: "form-control",
                         name: "appVersion",
                         id: "appVersionInputId",
-                        placeholder: "1.0.0",
+                        placeholder: "0.0.1",
                         value: builderSettings.appVersion || "",
-                      })
+                      }),
+                      div(
+                        { class: "invalid-feedback" },
+                        req.__(
+                          "Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty."
+                        )
+                      )
                     )
                   ),
                   // server url
@@ -3242,6 +3263,16 @@ router.post(
     if (!serverURL.startsWith("http")) {
       return res.json({
         error: req.__("Please enter a valid server URL."),
+      });
+    }
+    if (
+      (appVersion && !/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(appVersion)) ||
+      appVersion === "0.0.0"
+    ) {
+      return res.json({
+        error: req.__(
+          "Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty."
+        ),
       });
     }
     if (iOSPlatform && !provisioningProfile) {

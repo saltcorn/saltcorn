@@ -882,9 +882,13 @@ export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
 }
 
 export function generateAndroidVersionCode(appVersion: string) {
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(appVersion) || appVersion === "0.0.0")
+    throw new Error(`Invalid app version '${appVersion}'`);
   const parts = appVersion.split(".");
   return (
-    parseInt(parts[0]) * 10000 + parseInt(parts[1]) * 100 + parseInt(parts[2])
+    parseInt(parts[0]) * 1000000 +
+    parseInt(parts[1]) * 1000 +
+    parseInt(parts[2])
   );
 }
 

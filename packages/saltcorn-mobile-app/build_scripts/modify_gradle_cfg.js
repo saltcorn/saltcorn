@@ -19,8 +19,7 @@ const gradleContent = readFileSync(gradleFile, "utf8");
 // generate versionCode from appVersion
 const parts = appVersion.split(".");
 const versionCode =
-  parseInt(parts[0]) * 10000 + parseInt(parts[1]) * 100 + parseInt(parts[2]);
-
+  parseInt(parts[0]) * 1000000 + parseInt(parts[1]) * 1000 + parseInt(parts[2]);
 let newGradleContent = gradleContent
   .replace(/versionName "1.0"/, `versionName "${appVersion}"`)
   .replace(/versionCode 1/, `versionCode ${versionCode}`);
