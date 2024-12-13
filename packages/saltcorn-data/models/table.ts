@@ -3549,7 +3549,7 @@ ${rejectDetails}`,
 
     if (notAuthorized) return [];
     const res = await db.query(sql, values);
-    if (res.rows?.length === 0) return res; // check    
+    if (res.rows?.length === 0) return res; // check
     let calcRow = apply_calculated_fields(
       res.rows.map((row: Row) => this.parse_json_fields(row)),
       fields,
