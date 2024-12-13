@@ -56,7 +56,7 @@ const {
 } = require("@saltcorn/data/models/discovery");
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
-const { tablesList, viewsList } = require("./common_lists");
+const { tablesList, viewsList, getTriggerList } = require("./common_lists");
 const {
   InvalidConfiguration,
   removeAllWhiteSpace,
@@ -839,22 +839,6 @@ router.get(
             inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
             "<br>"
           : "",
-        triggers.length
-          ? req.__("Table triggers: ") +
-            triggers
-              .map((t) =>
-                link(
-                  `/actions/configure/${
-                    t.id
-                  }?on_done_redirect=${encodeURIComponent(
-                    `table/${table.name}`
-                  )}`,
-                  t.name
-                )
-              )
-              .join(", ") +
-            "<br>"
-          : "",
         !table.external &&
           !table.provider_name &&
           a(
@@ -866,7 +850,8 @@ router.get(
           ),
       ];
     }
-    var viewCard;
+    let viewCard;
+    let triggerCard = "";
     if (fields.length > 0) {
       const views = await View.find(
         table.id ? { table_id: table.id } : { exttable_name: table.name }
@@ -897,6 +882,25 @@ router.get(
               class: "btn btn-primary",
             },
             req.__("Create view")
+          ),
+      };
+
+      triggerCard = {
+        type: "card",
+        id: "table-triggers",
+        title: req.__("Triggers on table"),
+        contents:
+          (triggers.length
+            ? await getTriggerList(triggers, req)
+            : p("Triggers run actions in response to events on this table")) +
+          a(
+            {
+              href: `/actions/new?table=${encodeURIComponent(
+                table.name
+              )}&on_done_redirect=${encodeURIComponent(`table/${table.name}`)}`,
+              class: "btn btn-primary",
+            },
+            req.__("Create trigger")
           ),
       };
     }
@@ -1093,6 +1097,7 @@ router.get(
             ]
           : []),
         ...(viewCard ? [viewCard] : []),
+        ...(triggerCard ? [triggerCard] : []),
         {
           type: "card",
           title: req.__("Edit table properties"),
@@ -1177,6 +1182,7 @@ router.post(
       let notify = "";
       if (!rest.versioned) rest.versioned = false;
       if (!rest.has_sync_info) rest.has_sync_info = false;
+      rest.is_user_group = !!rest.is_user_group;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
@@ -1937,7 +1943,7 @@ router.post(
     const table = Table.findOne({ name });
 
     try {
-      await table.deleteRows({}, req.user);
+      await table.deleteRows({}, req.user, true);
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
       req.flash("error", e.message);

@@ -948,6 +948,21 @@ class Table implements AbstractTable {
    * @returns
    */
   async deleteRows(where: Where, user?: Row, noTrigger?: boolean) {
+    //Fast truncate if user is admin and where is blank
+    if (
+      (!user || user?.role_id === 1) &&
+      Object.keys(where).length == 0 &&
+      db.truncate &&
+      noTrigger
+    ) {
+      try {
+        await db.truncate(this.name);
+        return;
+      } catch {
+        //foreign keys can cause this to fail
+      }
+    }
+
     // get triggers on delete
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = this.fields;
@@ -3534,8 +3549,7 @@ ${rejectDetails}`,
 
     if (notAuthorized) return [];
     const res = await db.query(sql, values);
-    if (res.length === 0) return res; // check
-
+    if (res.rows?.length === 0) return []; // check
     let calcRow = apply_calculated_fields(
       res.rows.map((row: Row) => this.parse_json_fields(row)),
       fields,

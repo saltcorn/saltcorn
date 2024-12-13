@@ -1182,7 +1182,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
+    const u = await User.findForSession({ id });
     if (u) {
       await u.relogin(req);
       req.flash(
