@@ -48,6 +48,7 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/geolocation@6.0.2",
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
+    "@capacitor/screen-orientation@6.0.3",
   ];
   result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
     cwd: buildDir,
