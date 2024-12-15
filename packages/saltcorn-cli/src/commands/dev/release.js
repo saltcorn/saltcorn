@@ -129,7 +129,7 @@ class ReleaseCommand extends Command {
       );
       tags.shift();
       for (const tag of tags) {
-        await sleep(3000);
+        await sleep(7000);
         runCmd("npm", ["dist-tag", "add", `@saltcorn/cli@${version}`, tag], {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
@@ -152,7 +152,7 @@ class ReleaseCommand extends Command {
         await sleep(3000);
       }
     }
-    await sleep(5000);
+    await sleep(10000);
 
     // for cli:
     // 1. update version
