@@ -152,7 +152,12 @@ class ReleaseCommand extends Command {
         await sleep(3000);
       }
     }
-    await sleep(10000);
+    await sleep(5000);
+
+    runCmd("npm", ["cache", "clean", "--force"], {
+      stdio: "inherit",
+      cwd: `.`,
+    });
 
     // for cli:
     // 1. update version
