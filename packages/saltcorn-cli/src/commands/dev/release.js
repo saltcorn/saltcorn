@@ -158,6 +158,10 @@ class ReleaseCommand extends Command {
       stdio: "inherit",
       cwd: `.`,
     });
+    runCmd("npm", ["cache", "clean", "--force"], {
+      stdio: "inherit",
+      cwd: `.`,
+    });
 
     // for cli:
     // 1. update version
