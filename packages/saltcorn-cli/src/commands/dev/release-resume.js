@@ -1,6 +1,6 @@
 /**
  * @category saltcorn-cli
- * @module commands/release
+ * @module commands/release-resume
  */
 const { Command, Flags, Args } = require("@oclif/core");
 const fs = require("fs");
@@ -21,11 +21,11 @@ const runCmd = (cmd, args, options) => {
 };
 
 /**
- * ReleaseCommand Class
+ * ReleaseResumeCommand Class
  * @extends oclif.Command
  * @category saltcorn-cli
  */
-class ReleaseCommand extends Command {
+class ReleaseResumeCommand extends Command {
   /**
    * @returns {Promise<void>}
    */
@@ -33,7 +33,7 @@ class ReleaseCommand extends Command {
     const {
       args: { version },
       flags,
-    } = await this.parse(ReleaseCommand);
+    } = await this.parse(ReleaseResumeCommand);
     const pkgs = {
       "@saltcorn/db-common": { dir: "db-common", publish: true },
       "@saltcorn/common-code": { dir: "common-code", publish: true },
@@ -191,22 +191,22 @@ class ReleaseCommand extends Command {
 /**
  * @type {string}
  */
-ReleaseCommand.description = `Release a new saltcorn version`;
+ReleaseResumeCommand.description = `Release a new saltcorn version`;
 
 /**
  * @type {object}
  */
-ReleaseCommand.args = {
+ReleaseResumeCommand.args = {
   version: Args.string({
     required: true,
     description: "New version number",
   }),
 };
 
-ReleaseCommand.flags = {
+ReleaseResumeCommand.flags = {
   tag: Flags.string({
     char: "t",
     description: "NPM tag",
   }),
 };
-module.exports = ReleaseCommand;
+module.exports = ReleaseResumeCommand;
