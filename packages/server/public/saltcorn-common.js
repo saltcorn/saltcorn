@@ -745,15 +745,27 @@ function doMobileTransforms() {
   const normalisePluginsPrefix = (path) => {
     if (path.startsWith("/plugins/") || path.startsWith("plugins/"))
       return path.replace(/\/?plugins\//, "sc_plugins/");
-    return path;
+    return null;
   };
   $("link").each(function () {
     const path = $(this).attr("href");
-    if (path) $(this).attr("href", normalisePluginsPrefix(path));
+    if (path) {
+      const newPath = normalisePluginsPrefix(path);
+      if (newPath) {
+        $(this).attr("href", newPath);
+        console.log("transformed link", path, newPath);
+      }
+    }
   });
   $("script").each(function () {
     const path = $(this).attr("src");
-    if (path) $(this).attr("src", normalisePluginsPrefix(path));
+    if (path) {
+      const newPath = normalisePluginsPrefix(path);
+      if (newPath) {
+        $(this).attr("src", newPath);
+        console.log("transformed script", path, newPath);
+      }
+    }
   });
 
   $("a").each(function () {
