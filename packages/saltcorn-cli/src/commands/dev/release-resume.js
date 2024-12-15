@@ -154,8 +154,14 @@ class ReleaseResumeCommand extends Command {
         cwd: `packages/saltcorn-cli/`,
       });*/
     await publish("saltcorn-cli", "next");
-    fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
-    // update Dockerfile
+    fs.writeFileSync(
+      `package.json`,
+      JSON.stringify(
+        { ...rootPackageJson, workspaces: ["./packages/*"] },
+        null,
+        2
+      )
+    ); // update Dockerfile
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
     fs.writeFileSync(
       `Dockerfile.release`,
