@@ -24,6 +24,9 @@
       "packages/saltcorn-sbadmin2"
     ]
   },
+  "workspaces": [
+    "./packages/*"
+  ],
   "nodemonConfig": {
     "verbose": true,
     "ext": "js,json,css",
