@@ -614,3 +614,7 @@ i[class^="unicode-"], i[class*=" unicode-"] {
   border-color: #32383e;
   color: #fff;
 }
+
+.mobile-toast-margin {
+  margin-bottom: 1.0rem
+}

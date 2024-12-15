@@ -183,3 +183,7 @@ export function registerScreenOrientationListener(name, listener) {
     ScreenOrientation.addListener("screenOrientationChange", listener);
   } else console.warn(`Listener with name ${name} already registered.`);
 }
+
+export async function getScreenOrientation() {
+  return await ScreenOrientation.orientation();
+}

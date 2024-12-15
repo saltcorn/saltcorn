@@ -72,11 +72,11 @@ const makeSegments = (
               {
                 id: "toasts-area",
                 class: `toast-container position-fixed ${
-                  isWeb ? "top-0 end-0 p-2" : "bottom-0 start-50 p-0"
+                  isWeb
+                    ? "top-0 end-0 p-2"
+                    : "bottom-0 start-50 p-0 mobile-toast-margin"
                 } `,
-                style: `z-index: 9999; ${
-                  !isWeb ? "margin-bottom: 1.0rem" : ""
-                }`,
+                style: "z-index: 9999;",
                 "aria-live": "polite",
                 "aria-atomic": "true",
               },

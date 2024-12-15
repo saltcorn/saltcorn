@@ -53,7 +53,7 @@ export const postView = async (context) => {
   if (mobileCfg.isOfflineMode) await setHasOfflineData(true);
   const wrapped = res.getWrapHtml();
   if (wrapped) {
-    return wrapContents(
+    return await wrapContents(
       wrapped,
       res.getWrapViewName() || "viewname",
       context,
@@ -100,7 +100,7 @@ export const postViewRoute = async (context) => {
   if (isOfflineMode) await setHasOfflineData(true);
   const wrapped = res.getWrapHtml();
   if (wrapped)
-    return wrapContents(
+    return await wrapContents(
       wrapped,
       res.getWrapViewName() || "viewname",
       context,
@@ -156,7 +156,7 @@ export const getView = async (context) => {
   }
   const wrapped = res.getWrapHtml();
   if (wrapped)
-    return wrapContents(
+    return await wrapContents(
       wrapped,
       res.getWrapViewName() || "viewname",
       context,
@@ -181,6 +181,6 @@ export const getView = async (context) => {
           )
         : contents0;
 
-    return wrapContents(contents, viewname, context, req);
+    return await wrapContents(contents, viewname, context, req);
   }
 };

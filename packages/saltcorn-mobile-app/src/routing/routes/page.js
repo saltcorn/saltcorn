@@ -108,6 +108,6 @@ export const getPage = async (context) => {
     return { content, title: "title", replaceIframe: true, isFile: true };
   } else {
     const title = "title"; // TODO
-    return wrapContents(contents, title, context, req);
+    return await wrapContents(contents, title, context, req);
   }
 };

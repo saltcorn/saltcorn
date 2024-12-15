@@ -1,6 +1,7 @@
 /*global saltcorn */
 
 import { getOfflineMsg } from "../helpers/offline_mode";
+import { getScreenOrientation } from "../helpers/common";
 
 export const getHeaders = () => {
   const state = saltcorn.data.state.getState();
@@ -131,7 +132,8 @@ const prepareAlerts = (context, req) => {
   return [...(context.alerts || []), ...req.flashMessages()];
 };
 
-export const wrapContents = (contents, title, context, req) => {
+export const wrapContents = async (contents, title, context, req) => {
+  const orientation = await getScreenOrientation();
   const state = saltcorn.data.state.getState();
   const body = {
     above: [
@@ -159,6 +161,7 @@ export const wrapContents = (contents, title, context, req) => {
         },
         bodyClass: "",
         currentUrl: "",
+        orientation: orientation?.type,
       })
     : layout().renderBody({
         title: title,
