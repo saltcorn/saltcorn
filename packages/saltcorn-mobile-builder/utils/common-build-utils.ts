@@ -67,7 +67,22 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   });
 }
 
-export function writeCapacitorConfig(buildDir: string, config: any) {
+export interface ScCapacitorConfig {
+  appName: string;
+  appId?: string;
+  appVersion: string;
+  unsecureNetwork: boolean;
+  keystorePath?: string;
+  keystoreAlias?: string;
+  keystorePassword?: string;
+  keystoreAliasPassword?: string;
+  buildType: string;
+}
+
+export function writeCapacitorConfig(
+  buildDir: string,
+  config: ScCapacitorConfig
+) {
   const cfgFile = join(buildDir, "capacitor.config.ts");
   const content = `
 import type { CapacitorConfig } from '@capacitor/cli';
@@ -78,6 +93,20 @@ const config: CapacitorConfig  = {
   webDir: "www",
   ios: {
     scheme: "SaltcornMobileApp",
+  },
+  android: {
+    buildOptions: {
+      ${
+        config.keystorePath && config.buildType === "release"
+          ? `keystorePath: '${config.keystorePath}',
+      keystorePassword: '${config.keystorePassword}',
+      keystoreAlias: '${config.keystoreAlias}',
+      keystoreAliasPassword: '${config.keystoreAliasPassword}',
+      `
+          : ""
+      }
+      releaseType: '${config.buildType === "release" ? "AAB" : "APK"}',
+    }
   },
   ${
     config.unsecureNetwork
@@ -893,39 +922,12 @@ export function generateAndroidVersionCode(appVersion: string) {
   );
 }
 
-export function modifyGradleConfig({
-  buildDir,
-  appVersion,
-  keyStoreFile,
-  keyStoreAlias,
-  keyStorePassword,
-}: any) {
+export function modifyGradleConfig(buildDir: string, appVersion: string) {
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
   const versionCode = generateAndroidVersionCode(appVersion);
   let newGradleContent = gradleContent
     .replace(/versionName "1.0"/, `versionName "${appVersion}"`)
     .replace(/versionCode 1/, `versionCode ${versionCode}`);
-  if (keyStoreFile) {
-    newGradleContent = gradleContent
-      .replace(
-        /release\s*{/,
-        `release { 
-          signingConfig signingConfigs.release`
-      )
-      .replace(
-        /buildTypes\s*{/,
-        `
-    signingConfigs {
-        release {
-            keyAlias '${keyStoreAlias}'
-            keyPassword '${keyStorePassword}'
-            storeFile file('${keyStoreFile}')
-            storePassword '${keyStorePassword}'
-        }
-      }
-  buildTypes {`
-      );
-  }
   writeFileSync(gradleFile, newGradleContent, "utf8");
 }

@@ -26,9 +26,9 @@ export type CapacitorCfg = {
   appVersion: string;
 
   useDocker?: boolean;
-  keyStorePath?: string;
-  keyStoreAlias?: string;
-  keyStorePassword?: string;
+  keyStorePath: string;
+  keyStoreAlias: string;
+  keyStorePassword: string;
 
   appleTeamId?: string;
   provisioningGUUID?: string;
@@ -42,9 +42,9 @@ export class CapacitorHelper {
   appVersion: string;
 
   useDocker?: boolean;
-  keyStoreFile?: string;
-  keyStoreAlias?: string;
-  keyStorePassword?: string;
+  keyStoreFile: string;
+  keyStoreAlias: string;
+  keyStorePassword: string;
 
   appleTeamId?: string;
   provisioningGUUID?: string;
@@ -58,17 +58,12 @@ export class CapacitorHelper {
     this.buildType = cfg.buildType || "debug";
     this.appName = cfg.appName;
     this.appVersion = cfg.appVersion;
-
     this.useDocker = cfg.useDocker;
-    this.keyStoreFile = cfg.keyStorePath
-      ? basename(cfg.keyStorePath)
-      : undefined;
+    this.keyStoreFile = basename(cfg.keyStorePath);
     this.keyStoreAlias = cfg.keyStoreAlias;
     this.keyStorePassword = cfg.keyStorePassword;
-
     this.appleTeamId = cfg.appleTeamId;
     this.provisioningGUUID = cfg.provisioningGUUID;
-
     this.isAndroid = this.platforms.includes("android");
     this.isIOS = this.platforms.includes("ios");
   }
@@ -83,14 +78,8 @@ export class CapacitorHelper {
         await modifyAndroidManifest(this.buildDir);
         writeDataExtractionRules(this.buildDir);
         writeNetworkSecurityConfig(this.buildDir);
-        modifyGradleConfig({
-          buildDir: this.buildDir,
-          appVersion: this.appVersion,
-          keyStoreFile: this.keyStoreFile,
-          keyStoreAlias: this.keyStoreAlias,
-          keyStorePassword: this.keyStorePassword,
-        });
-        this.gradleBuild();
+        modifyGradleConfig(this.buildDir, this.appVersion);
+        this.capBuild();
       }
     } else this.buildWithDocker();
     if (this.isIOS) {
@@ -116,18 +105,20 @@ export class CapacitorHelper {
         await File.set_xattr_of_existing_file(dstFile, copyDir, user);
       }
     };
-    const appDir = join(
-      this.buildDir,
-      "android",
-      "app",
-      "build",
-      "outputs",
-      "apk",
-      this.buildType
-    );
-    const ending = this.buildType === "debug" ? "apk" : "aab";
     if (!existsSync(copyDir)) mkdirSync(copyDir);
-    copyHelper(ending, appDir);
+    // android
+    copyHelper(
+      this.buildType === "debug" ? "apk" : "aab",
+      join(
+        this.buildDir,
+        "android",
+        "app",
+        "build",
+        "outputs",
+        this.buildType === "debug" ? "apk" : "bundle",
+        "release"
+      )
+    );
     // ipa
     copyHelper("ipa", this.buildDir);
   }
@@ -182,13 +173,27 @@ export class CapacitorHelper {
       );
   }
 
-  private gradleBuild() {
-    console.log("gradlew build");
+  private capBuild() {
+    console.log("npx cap build");
     const result = spawnSync(
-      "./gradlew",
-      [this.buildType === "release" ? "bundleRelease" : "assembleDebug"],
+      "npx",
+      [
+        "cap",
+        "build",
+        "android",
+        "--androidreleasetype",
+        this.buildType === "release" ? "AAB" : "APK",
+        "--keystorepath",
+        join(this.buildDir, this.keyStoreFile),
+        "--keystorepass",
+        this.keyStorePassword,
+        "--keystorealias",
+        this.keyStoreAlias,
+        "--keystorealiaspass",
+        this.keyStorePassword,
+      ],
       {
-        cwd: this.buildDir + "/android",
+        cwd: this.buildDir,
         maxBuffer: 1024 * 1024 * 10,
         env: {
           ...process.env,
@@ -199,7 +204,7 @@ export class CapacitorHelper {
     if (result.output) console.log(result.output.toString());
     else if (result.error)
       throw new Error(
-        `Unable to call the gradlew build (code ${result.status})` +
+        `Unable to call the build (code ${result.status})` +
           `\n\n${result.error.toString()}`
       );
   }
@@ -216,11 +221,11 @@ export class CapacitorHelper {
     ];
     spawnParams.push(this.buildType);
     spawnParams.push(this.appVersion);
-    if (this.keyStoreFile)
+    if (this.buildType === "release")
       spawnParams.push(
         this.keyStoreFile,
-        this.keyStoreAlias || "??",
-        this.keyStorePassword || "??"
+        this.keyStoreAlias,
+        this.keyStorePassword
       );
     const result = spawnSync("docker", spawnParams, {
       cwd: ".",
