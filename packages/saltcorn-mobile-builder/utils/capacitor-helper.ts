@@ -15,6 +15,7 @@ import {
   copyPrepopulatedDb,
   modifyInfoPlist,
   writePrivacyInfo,
+  modifyXcodeProjectFile,
 } from "./common-build-utils";
 
 export type CapacitorCfg = {
@@ -22,6 +23,7 @@ export type CapacitorCfg = {
   platforms: string[];
   buildType: "debug" | "release";
   appName: string;
+  appVersion: string;
 
   useDocker?: boolean;
   keyStorePath?: string;
@@ -37,6 +39,7 @@ export class CapacitorHelper {
   platforms: string[];
   buildType: "debug" | "release";
   appName: string;
+  appVersion: string;
 
   useDocker?: boolean;
   keyStoreFile?: string;
@@ -54,6 +57,7 @@ export class CapacitorHelper {
     this.platforms = cfg.platforms;
     this.buildType = cfg.buildType || "debug";
     this.appName = cfg.appName;
+    this.appVersion = cfg.appVersion;
 
     this.useDocker = cfg.useDocker;
     this.keyStoreFile = cfg.keyStorePath
@@ -79,22 +83,23 @@ export class CapacitorHelper {
         await modifyAndroidManifest(this.buildDir);
         writeDataExtractionRules(this.buildDir);
         writeNetworkSecurityConfig(this.buildDir);
-        if (this.keyStoreFile && this.keyStoreAlias && this.keyStorePassword)
-          modifyGradleConfig(
-            this.buildDir,
-            this.keyStoreFile,
-            this.keyStoreAlias,
-            this.keyStorePassword
-          );
+        modifyGradleConfig({
+          buildDir: this.buildDir,
+          appVersion: this.appVersion,
+          keyStoreFile: this.keyStoreFile,
+          keyStoreAlias: this.keyStoreAlias,
+          keyStorePassword: this.keyStorePassword,
+        });
         this.gradleBuild();
       }
-      if (this.isIOS) {
-        writePodfile(this.buildDir);
-        await modifyInfoPlist(this.buildDir);
-        writePrivacyInfo(this.buildDir);
-        this.xCodeBuild();
-      }
     } else this.buildWithDocker();
+    if (this.isIOS) {
+      modifyXcodeProjectFile(this.buildDir, this.appVersion);
+      writePodfile(this.buildDir);
+      await modifyInfoPlist(this.buildDir);
+      writePrivacyInfo(this.buildDir);
+      this.xCodeBuild();
+    }
   }
 
   public tryCopyAppFiles(copyDir: string, user: User, appName?: string) {
@@ -178,6 +183,7 @@ export class CapacitorHelper {
   }
 
   private gradleBuild() {
+    console.log("gradlew build");
     const result = spawnSync(
       "./gradlew",
       [this.buildType === "release" ? "bundleRelease" : "assembleDebug"],
@@ -199,6 +205,7 @@ export class CapacitorHelper {
   }
 
   private buildWithDocker() {
+    console.log("building with docker");
     const spawnParams = [
       "run",
       "--network",
@@ -208,6 +215,7 @@ export class CapacitorHelper {
       "saltcorn/capacitor-builder",
     ];
     spawnParams.push(this.buildType);
+    spawnParams.push(this.appVersion);
     if (this.keyStoreFile)
       spawnParams.push(
         this.keyStoreFile,

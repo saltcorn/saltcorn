@@ -48,6 +48,7 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/geolocation@6.0.2",
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
+    "@capacitor/screen-orientation@6.0.3",
   ];
   result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
     cwd: buildDir,
@@ -860,23 +861,61 @@ export function writePodfile(buildDir: string) {
   });
 }
 
-export function modifyGradleConfig(
-  buildDir: string,
-  keyStoreFile: string,
-  keyStoreAlias: string,
-  keyStorePassword: string
-) {
+/**
+ * replace the MARKETING_VERSION in project.pbxproj
+ * @param buildDir
+ * @param appVersion new app version
+ */
+export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
+  const projectFile = join(
+    buildDir,
+    "ios",
+    "App",
+    "App.xcodeproj",
+    "project.pbxproj"
+  );
+  const content = readFileSync(projectFile, "utf8");
+  const newContent = content.replaceAll(
+    /MARKETING_VERSION = 1.0;/g,
+    `MARKETING_VERSION = ${appVersion};`
+  );
+  writeFileSync(projectFile, newContent, "utf8");
+}
+
+export function generateAndroidVersionCode(appVersion: string) {
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(appVersion) || appVersion === "0.0.0")
+    throw new Error(`Invalid app version '${appVersion}'`);
+  const parts = appVersion.split(".");
+  return (
+    parseInt(parts[0]) * 1000000 +
+    parseInt(parts[1]) * 1000 +
+    parseInt(parts[2])
+  );
+}
+
+export function modifyGradleConfig({
+  buildDir,
+  appVersion,
+  keyStoreFile,
+  keyStoreAlias,
+  keyStorePassword,
+}: any) {
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
-  const newGradleContent = gradleContent
-    .replace(
-      /release\s*{/,
-      `release { 
+  const versionCode = generateAndroidVersionCode(appVersion);
+  let newGradleContent = gradleContent
+    .replace(/versionName "1.0"/, `versionName "${appVersion}"`)
+    .replace(/versionCode 1/, `versionCode ${versionCode}`);
+  if (keyStoreFile) {
+    newGradleContent = gradleContent
+      .replace(
+        /release\s*{/,
+        `release { 
           signingConfig signingConfigs.release`
-    )
-    .replace(
-      /buildTypes\s*{/,
-      `
+      )
+      .replace(
+        /buildTypes\s*{/,
+        `
     signingConfigs {
         release {
             keyAlias '${keyStoreAlias}'
@@ -886,6 +925,7 @@ export function modifyGradleConfig(
         }
       }
   buildTypes {`
-    );
+      );
+  }
   writeFileSync(gradleFile, newGradleContent, "utf8");
 }

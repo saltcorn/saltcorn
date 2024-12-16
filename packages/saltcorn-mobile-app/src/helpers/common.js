@@ -3,6 +3,9 @@
 import { apiCall } from "./api";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { Geolocation } from "@capacitor/geolocation";
+import { ScreenOrientation } from "@capacitor/screen-orientation";
+
+const orientationChangeListeners = new Set();
 
 export function clearAlerts() {
   const iframe = document.getElementById("content-iframe");
@@ -172,4 +175,15 @@ export async function getGeolocation(successCb, errorCb) {
     if (errorCb) errorCb(error);
     return null;
   }
+}
+
+export function registerScreenOrientationListener(name, listener) {
+  if (!orientationChangeListeners.has(name)) {
+    orientationChangeListeners.add(name, listener);
+    ScreenOrientation.addListener("screenOrientationChange", listener);
+  } else console.warn(`Listener with name ${name} already registered.`);
+}
+
+export async function getScreenOrientation() {
+  return await ScreenOrientation.orientation();
 }

@@ -1511,6 +1511,7 @@
 	"Allocate new row": "Allocate new row",
 	"If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields.": "If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields.",
 	"Step traces": "Step traces",
+	"Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty.": "Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty.",
 	"Delete unchanged": "Delete unchanged",
 	"Delete allocated row if there are no changes.": "Delete allocated row if there are no changes.",
 	"Triggers on table": "Triggers on table"
