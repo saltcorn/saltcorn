@@ -1514,5 +1514,9 @@
 	"Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty.": "Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty.",
 	"Delete unchanged": "Delete unchanged",
 	"Delete allocated row if there are no changes.": "Delete allocated row if there are no changes.",
-	"Triggers on table": "Triggers on table"
+	"Triggers on table": "Triggers on table",
+	"Submit": "Submit",
+	"OK": "OK",
+	"Step settings": "Step settings",
+	"Action settings": "Action settings"
 }

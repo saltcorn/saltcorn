@@ -554,18 +554,6 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   });
   trigCfgForm.values = trigger.configuration;
   return (
-    /*ul(
-      steps.map((step) =>
-        li(
-          a(
-            {
-              href: `/actions/stepedit/${trigger.id}/${step.id}`,
-            },
-            step.name
-          )
-        )
-      )
-    ) +*/
     pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
     script(
       { defer: "defer" },
@@ -588,8 +576,8 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
     ) +
     a(
       {
-        href: `/actions/stepedit/${trigger.id}?name=step${steps.length + 1}${
-          initial_step ? "" : "&initial_step=true"
+        href: `/actions/stepedit/${trigger.id}${
+          initial_step ? "" : "?initial_step=true"
         }`,
         class: "btn btn-primary",
       },
@@ -619,6 +607,8 @@ const jsIdentifierValidator = (s) => {
 
 const getWorkflowStepForm = async (trigger, req, step_id) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
+  const actionExplainers = {};
+
   let stateActions = getState().actions;
   const stateActionKeys = Object.entries(stateActions)
     .filter(([k, v]) => !v.disableInWorkflow)
@@ -627,6 +617,9 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
+
+    if (action.description) actionExplainers[name] = action.description;
+
     try {
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "workflow",
@@ -654,14 +647,30 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "TableQuery",
       "Output",
       "WaitUntil",
-      "UserForm",
       "WaitNextTick",
+      "UserForm",
     ],
     forWorkflow: true,
   });
+  const triggers = Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    if (tr.description) actionExplainers[tr.name] = tr.description;
+  });
+  actionExplainers.SetContext = "Set variables in the context";
+  actionExplainers.TableQuery = "Query a table into a variable in the context";
+  actionExplainers.Output =
+    "Display a message to the user. Pause workflow until the message is read.";
+  actionExplainers.WaitUntil = "Pause until a time in the future";
+  actionExplainers.WaitNextTick =
+    "Pause until the next scheduler invocation (at most 5 minutes)";
+  actionExplainers.UserForm =
+    "Ask a user one or more questions, pause until they are answered";
 
   actionConfigFields.push({
     label: "Form header",
+    sublabel: "Text shown to the user at the top of the form",
     name: "form_header",
     type: "String",
     showIf: { wf_action_name: "UserForm" },
@@ -793,6 +802,10 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       : undefined,
     fields: [
       {
+        input_type: "section_header",
+        label: req.__("Step settings"),
+      },
+      {
         name: "wf_step_name",
         label: req.__("Step name"),
         type: "String",
@@ -822,13 +835,22 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           "Name of next step. Can be a JavaScript expression based on the run context. Blank if final step",
       },
       {
+        input_type: "section_header",
+        label: req.__("Action"),
+      },
+      {
         name: "wf_action_name",
         label: req.__("Action"),
         type: "String",
         required: true,
         attributes: {
           options: actionsNotRequiringRow,
+          explainers: actionExplainers,
         },
+      },
+      {
+        input_type: "section_header",
+        label: req.__("Action settings"),
       },
       ...actionConfigFields,
     ],
@@ -1349,7 +1371,13 @@ router.get(
     const form = await getWorkflowStepForm(trigger, req, step_id);
 
     if (initial_step) form.values.wf_initial_step = true;
-    if (name) form.values.wf_step_name = name;
+    if (!step_id) {
+      const steps = await WorkflowStep.find({ trigger_id });
+      const stepNames = new Set(steps.map((s) => s.name));
+      let name_ix = steps.length + 1;
+      while (stepNames.has(`step${name_ix}`)) name_ix += 1;
+      form.values.wf_step_name = `step${name_ix}`;
+    }
     send_events_page({
       res,
       req,
@@ -1699,6 +1727,7 @@ const getWorkflowStepUserForm = async (run, trigger, step, req) => {
 
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
+    submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
     fields: (step.configuration.user_form_questions || []).map((q) => ({
@@ -1767,12 +1796,15 @@ router.post(
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
       await run.provide_form_input(form.values);
-      await run.run({
+      const runres = await run.run({
         user: req.user,
         trace: trigger.configuration?.save_traces,
+        interactive: true,
       });
       if (req.xhr) {
         const retDirs = await run.popReturnDirectives();
+
+        if (runres?.popup) retDirs.popup = runres.popup;
         res.json({ success: "ok", ...retDirs });
       } else {
         if (run.context.goto) res.redirect(run.context.goto);
@@ -1825,16 +1857,12 @@ router.post(
 
 WORKFLOWS TODO
 
-delete is not always working?
 help file to explain steps, and context
 
-Output after form not popping up
-action explainer 
 workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
-correctly suggest new step name - on step cfg load
-
 Error handlers
+other triggers can be steps
 interactive workflows for not logged in
 show end node in diagram
 actions can declare which variables they inject into scope
