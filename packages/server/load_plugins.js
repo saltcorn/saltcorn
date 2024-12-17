@@ -8,7 +8,7 @@
 const db = require("@saltcorn/data/db");
 const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Plugin = require("@saltcorn/data/models/plugin");
-const { isRoot } = require("@saltcorn/data/utils");
+const { isRoot, getFetchProxyOptions } = require("@saltcorn/data/utils");
 const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
 
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
@@ -35,7 +35,8 @@ const getEngineInfos = async (plugin, forceFetch) => {
   } else {
     getState().log(5, `Fetching versions for '${plugin.location}'`);
     const pkgInfo = await npmFetch.json(
-      `https://registry.npmjs.org/${plugin.location}`
+      `https://registry.npmjs.org/${plugin.location}`,
+      getFetchProxyOptions()
     );
     const versions = pkgInfo.versions;
     const newCached = {};
