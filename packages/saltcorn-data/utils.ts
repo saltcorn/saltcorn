@@ -443,16 +443,17 @@ const prepMobileRows = (rows: Row[], fields: Field[]) => {
 };
 
 /**
- * find first file with specific ending
+ * find all files with specific ending
  * @param directory directory to search
  * @param ending wantet ending
  */
-const fileWithEnding = (directory: string, ending: string): string | null => {
-  if (!existsSync(directory)) return null;
+const filesWithEnding = (directory: string, ending: string): string[] => {
+  const result = new Array<string>();
+  if (!existsSync(directory)) return result;
   for (const file of readdirSync(directory)) {
-    if (file.endsWith(ending)) return file;
+    if (file.endsWith(ending)) result.push(file);
   }
-  return null;
+  return result;
 };
 
 const safeEnding = (file: string, ending: string): string => {
@@ -467,7 +468,6 @@ const safeEnding = (file: string, ending: string): string => {
  */
 const ensure_final_slash = (s: string): string =>
   s.endsWith("/") ? s : s + "/";
-
 
 const cloneName = (name: string, allNames: Array<string>): string => {
   const basename = name + "-copy";
@@ -548,10 +548,10 @@ export = {
   ppVal,
   interpolate,
   prepMobileRows,
-  fileWithEnding,
+  filesWithEnding,
   safeEnding,
   isRoot,
   flatEqual,
   validSqlId,
-  ensure_final_slash
+  ensure_final_slash,
 };

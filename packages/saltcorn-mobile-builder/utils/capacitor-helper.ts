@@ -4,7 +4,7 @@ import { existsSync, mkdirSync } from "fs";
 import { copySync } from "fs-extra";
 import type User from "@saltcorn/data/models/user";
 import utils = require("@saltcorn/data/utils");
-const { fileWithEnding, safeEnding } = utils;
+const { safeEnding } = utils;
 import File from "@saltcorn/data/models/file";
 import {
   writePodfile,
@@ -29,6 +29,7 @@ export type CapacitorCfg = {
   keyStorePath: string;
   keyStoreAlias: string;
   keyStorePassword: string;
+  isUnsecureKeyStore: boolean;
 
   appleTeamId?: string;
   provisioningGUUID?: string;
@@ -45,6 +46,7 @@ export class CapacitorHelper {
   keyStoreFile: string;
   keyStoreAlias: string;
   keyStorePassword: string;
+  isUnsecureKeyStore: boolean;
 
   appleTeamId?: string;
   provisioningGUUID?: string;
@@ -62,6 +64,7 @@ export class CapacitorHelper {
     this.keyStoreFile = basename(cfg.keyStorePath);
     this.keyStoreAlias = cfg.keyStoreAlias;
     this.keyStorePassword = cfg.keyStorePassword;
+    this.isUnsecureKeyStore = cfg.isUnsecureKeyStore;
     this.appleTeamId = cfg.appleTeamId;
     this.provisioningGUUID = cfg.provisioningGUUID;
     this.isAndroid = this.platforms.includes("android");
@@ -94,14 +97,19 @@ export class CapacitorHelper {
   public tryCopyAppFiles(copyDir: string, user: User, appName?: string) {
     const copyHelper = async (
       ending: "apk" | "aab" | "ipa",
-      apkBuildDir: string
+      outDir: string
     ) => {
-      const appFile = fileWithEnding(apkBuildDir, `.${ending}`);
-      if (appFile) {
+      const fileName = join(
+        outDir,
+        this.isUnsecureKeyStore
+          ? `app-release.${ending}`
+          : `app-release-signed.${ending}`
+      );
+      if (existsSync(fileName)) {
         const dstFile = appName
           ? safeEnding(appName, `.${ending}`)
           : `app-${this.buildType}.${ending}`;
-        copySync(join(apkBuildDir, appFile), join(copyDir, dstFile));
+        copySync(fileName, join(copyDir, dstFile));
         await File.set_xattr_of_existing_file(dstFile, copyDir, user);
       }
     };
