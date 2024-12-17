@@ -1831,12 +1831,12 @@ help file to explain steps, and context
 action explainer 
 workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
-single col when in modal
-interactive workflows for not logged in
-correctly suggest new step name
-show end node in diagram
+correctly suggest new step name - on step cfg load
 
 Error handlers
+interactive workflows for not logged in
+show end node in diagram
+actions can declare which variables they inject into scope
 
 show unconnected steps
 why is code not initialising
