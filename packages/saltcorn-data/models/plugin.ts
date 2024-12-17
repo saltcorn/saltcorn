@@ -6,7 +6,7 @@
  */
 import db from "../db";
 import View from "./view";
-const { isStale } = require("../utils");
+const { isStale, getFetchProxyOptions } = require("../utils");
 import fetch from "node-fetch";
 import { Where } from "@saltcorn/db-common/internal";
 import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
@@ -210,7 +210,16 @@ class Plugin {
     );
     // console.log(`[store_plugins_available_from_store] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
-    const response = await fetch(plugins_store_endpoint);
+    const fetchOptions = getFetchProxyOptions();
+
+    getState().log(
+      6,
+      `store_plugins_available_from_store fetch options: ${JSON.stringify(
+        fetchOptions
+      )}`
+    );
+
+    const response = await fetch(plugins_store_endpoint, fetchOptions);
     const json = await response.json();
     return json.success.map((p: PluginCfg) => new Plugin(p));
   }
@@ -229,7 +238,8 @@ class Plugin {
     // console.log(`[store_by_name] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
     const response = await fetch(
-      plugins_store_endpoint + "?name=" + encodeURIComponent(name)
+      plugins_store_endpoint + "?name=" + encodeURIComponent(name),
+      getFetchProxyOptions()
     );
     const json = await response.json();
     if (json.success.length == 1)

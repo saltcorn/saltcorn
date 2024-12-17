@@ -24,9 +24,6 @@
       "packages/saltcorn-sbadmin2"
     ]
   },
-  "workspaces": [
-    "./packages/*"
-  ],
   "nodemonConfig": {
     "verbose": true,
     "ext": "js,json,css",
@@ -68,5 +65,8 @@
   },
   "overrides": {
     "immer": "9.0.6"
-  }
+  },
+  "workspaces": [
+    "./packages/*"
+  ]
 }

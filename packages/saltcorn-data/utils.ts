@@ -13,6 +13,14 @@ import type Field from "./models/field"; // only type, shouldn't cause require l
 import { existsSync } from "fs-extra";
 const _ = require("underscore");
 const unidecode = require("unidecode");
+import { HttpsProxyAgent } from "https-proxy-agent";
+
+const getFetchProxyOptions = () => {
+  if (process.env["HTTPS_PROXY"]) {
+    const agent = new HttpsProxyAgent(process.env["HTTPS_PROXY"]);
+    return { agent };
+  } else return {};
+};
 
 // for database cols
 const validSqlId = (s: string): string =>
@@ -554,4 +562,5 @@ export = {
   flatEqual,
   validSqlId,
   ensure_final_slash,
+  getFetchProxyOptions,
 };
