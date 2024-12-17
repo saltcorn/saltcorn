@@ -659,8 +659,8 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "TableQuery",
       "Output",
       "WaitUntil",
-      "UserForm",
       "WaitNextTick",
+      "UserForm",
     ],
     forWorkflow: true,
   });
@@ -670,9 +670,19 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   triggers.forEach((tr) => {
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
+  actionExplainers.SetContext = "Set variables in the context";
+  actionExplainers.TableQuery = "Query a table into a variable in the context";
+  actionExplainers.Output =
+    "Display a message to the user. Pause workflow until the message is read.";
+  actionExplainers.WaitUntil = "Pause until a time in the future";
+  actionExplainers.WaitNextTick =
+    "Pause until the next scheduler invocation (at most 5 minutes)";
+  actionExplainers.UserForm =
+    "Ask a user one or more questions, pause until they are answered";
 
   actionConfigFields.push({
     label: "Form header",
+    sublabel: "Text shown to the user at the top of the form",
     name: "form_header",
     type: "String",
     showIf: { wf_action_name: "UserForm" },
