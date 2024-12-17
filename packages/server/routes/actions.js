@@ -1699,6 +1699,7 @@ const getWorkflowStepUserForm = async (run, trigger, step, req) => {
 
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
+    submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
     fields: (step.configuration.user_form_questions || []).map((q) => ({
@@ -1767,12 +1768,15 @@ router.post(
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
       await run.provide_form_input(form.values);
-      await run.run({
+      const runres = await run.run({
         user: req.user,
         trace: trigger.configuration?.save_traces,
+        interactive: true,
       });
       if (req.xhr) {
         const retDirs = await run.popReturnDirectives();
+
+        if (runres?.popup) retDirs.popup = runres.popup;
         res.json({ success: "ok", ...retDirs });
       } else {
         if (run.context.goto) res.redirect(run.context.goto);
@@ -1828,7 +1832,6 @@ WORKFLOWS TODO
 delete is not always working?
 help file to explain steps, and context
 
-Output after form not popping up
 action explainer 
 workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
