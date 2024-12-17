@@ -102,7 +102,7 @@ export class CapacitorHelper {
       const fileName = join(
         outDir,
         this.isUnsecureKeyStore
-          ? `app-release.${ending}`
+          ? `app-release${ending === "apk" ? "-unsigned" : ""}.${ending}`
           : `app-release-signed.${ending}`
       );
       if (existsSync(fileName)) {
