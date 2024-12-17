@@ -619,6 +619,8 @@ const jsIdentifierValidator = (s) => {
 
 const getWorkflowStepForm = async (trigger, req, step_id) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
+  const actionExplainers = {};
+
   let stateActions = getState().actions;
   const stateActionKeys = Object.entries(stateActions)
     .filter(([k, v]) => !v.disableInWorkflow)
@@ -627,6 +629,9 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
+
+    if (action.description) actionExplainers[name] = action.description;
+
     try {
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "workflow",
@@ -658,6 +663,12 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "WaitNextTick",
     ],
     forWorkflow: true,
+  });
+  const triggers = Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    if (tr.description) actionExplainers[tr.name] = tr.description;
   });
 
   actionConfigFields.push({
@@ -828,6 +839,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
         required: true,
         attributes: {
           options: actionsNotRequiringRow,
+          explainers: actionExplainers,
         },
       },
       ...actionConfigFields,
@@ -1838,6 +1850,7 @@ workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 correctly suggest new step name - on step cfg load
 
 Error handlers
+other triggers
 interactive workflows for not logged in
 show end node in diagram
 actions can declare which variables they inject into scope

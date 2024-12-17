@@ -1066,6 +1066,9 @@ const string = {
                   onChange: attrs.onChange,
                   onBlur: attrs.onChange,
                   autocomplete: "off",
+                  "data-explainers": attrs.explainers
+                    ? encodeURIComponent(JSON.stringify(attrs.explainers))
+                    : undefined,
                   required:
                     attrs.placeholder && (required || attrs.force_required),
                   ...(field.in_auto_save
