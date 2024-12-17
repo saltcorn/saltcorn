@@ -40,7 +40,7 @@ const {
   interpolate,
 } = require("../utils");
 const db = require("../db");
-const { isNode, isWeb, ppVal } = require("../utils");
+const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
 const { available_languages } = require("../models/config");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
@@ -348,6 +348,7 @@ module.exports = {
       const fetchOpts = {
         method: (method || "post").toLowerCase(),
         headers: { "Content-Type": "application/json" },
+        ...getFetchProxyOptions(),
       };
       if (method !== "GET") {
         let postBody;

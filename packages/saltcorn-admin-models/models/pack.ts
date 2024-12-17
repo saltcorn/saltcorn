@@ -42,7 +42,7 @@ import type { ModelInstancePack } from "@saltcorn/types/model-abstracts/abstract
 import type { TagPack } from "@saltcorn/types/model-abstracts/abstract_tag";
 import { isEqual } from "lodash";
 
-const { isStale } = require("@saltcorn/data/utils");
+const { isStale, getFetchProxyOptions } = require("@saltcorn/data/utils");
 
 /**
  * Table Pack
@@ -842,7 +842,8 @@ const fetch_available_packs_from_store = async (): Promise<
 
   const response = await fetch(
     //"http://store.saltcorn.com/api/packs?fields=name,description"
-    packs_store_endpoint + "?fields=name,description"
+    packs_store_endpoint + "?fields=name,description",
+    getFetchProxyOptions()
   );
 
   const json = await response.json();
@@ -866,7 +867,8 @@ const fetch_pack_by_name = async (
 
   const response = await fetch(
     //"http://store.saltcorn.com/api/packs?name=" + encodeURIComponent(name)
-    packs_store_endpoint + "?name=" + encodeURIComponent(name)
+    packs_store_endpoint + "?name=" + encodeURIComponent(name),
+    getFetchProxyOptions()
   );
   const json = await response.json();
   if (json.success.length == 1) return json.success[0];
