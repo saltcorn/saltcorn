@@ -485,6 +485,57 @@ router.post(
 );
 
 /**
+ * Delete Table row by ID using POST
+ * @name delete/:tableName/:id
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.post(
+  "/:tableName/delete/:id",
+  // in case of primary key different from id - id will be string "undefined"
+  error_catcher(async (req, res, next) => {
+    const { tableName, id } = req.params;
+    const table = Table.findOne({ name: tableName });
+    if (!table) {
+      getState().log(3, `API DELETE ${tableName} not found`);
+      res.status(404).json({ error: req.__("Not found") });
+      return;
+    }
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedWrite(req, user, table)) {
+          try {
+            if (id === "undefined") {
+              const pk_name = table.pk_name;
+              //const fields = table.getFields();
+              const row = req.body;
+              //readState(row, fields);
+              await table.deleteRows(
+                { [pk_name]: row[pk_name] },
+                user || req.user || { role_id: 100 }
+              );
+            } else
+              await table.deleteRows(
+                { id },
+                user || req.user || { role_id: 100 }
+              );
+            res.json({ success: true });
+          } catch (e) {
+            getState().log(2, `API DELETE ${table.name} error: ${e.message}`);
+            res.status(400).json({ error: e.message });
+          }
+        } else {
+          getState().log(3, `API DELETE ${table.name} not authorized`);
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
+/**
  * Update Table row directed by ID using POST
  * POST api/<table>/id
  * @name post/:tableName/:id

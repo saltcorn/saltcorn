@@ -1213,14 +1213,16 @@ function check_delete_unsaved(tablename, script_tag) {
   if (form.length && !form.attr("data-form-changed")) {
     //delete row
     const rec = get_form_record(form);
-    
-    $.ajax({
-      url: `/api/${tablename}/${rec.id}`,
-      type: "DELETE",
-      headers: {
-        "CSRF-Token": _sc_globalCsrf,
-      },
-    });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(`/api/${tablename}/delete/${rec.id}`);
+    } else
+      $.ajax({
+        url: `/api/${tablename}/${rec.id}`,
+        type: "DELETE",
+        headers: {
+          "CSRF-Token": _sc_globalCsrf,
+        },
+      });
   }
 }
 
