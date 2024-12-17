@@ -57,7 +57,11 @@ const fs = require("fs");
 const path = require("path");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
 const { flash_restart } = require("../markup/admin.js");
-const { sleep, removeNonWordChars } = require("@saltcorn/data/utils");
+const {
+  sleep,
+  removeNonWordChars,
+  getFetchProxyOptions,
+} = require("@saltcorn/data/utils");
 const { loadAllPlugins } = require("../load_plugins");
 const npmFetch = require("npm-registry-fetch");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
@@ -609,7 +613,8 @@ router.get(
     } else {
       try {
         const pkgInfo = await npmFetch.json(
-          `https://registry.npmjs.org/${plugin.location}`
+          `https://registry.npmjs.org/${plugin.location}`,
+          getFetchProxyOptions()
         );
         if (!pkgInfo?.versions)
           throw new Error(req.__("Unable to fetch versions"));
