@@ -554,18 +554,6 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   });
   trigCfgForm.values = trigger.configuration;
   return (
-    /*ul(
-      steps.map((step) =>
-        li(
-          a(
-            {
-              href: `/actions/stepedit/${trigger.id}/${step.id}`,
-            },
-            step.name
-          )
-        )
-      )
-    ) +*/
     pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
     script(
       { defer: "defer" },
@@ -588,8 +576,8 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
     ) +
     a(
       {
-        href: `/actions/stepedit/${trigger.id}?name=step${steps.length + 1}${
-          initial_step ? "" : "&initial_step=true"
+        href: `/actions/stepedit/${trigger.id}${
+          initial_step ? "" : "?initial_step=true"
         }`,
         class: "btn btn-primary",
       },
@@ -1383,7 +1371,13 @@ router.get(
     const form = await getWorkflowStepForm(trigger, req, step_id);
 
     if (initial_step) form.values.wf_initial_step = true;
-    if (name) form.values.wf_step_name = name;
+    if (!step_id) {
+      const steps = await WorkflowStep.find({ trigger_id });
+      const stepNames = new Set(steps.map((s) => s.name));
+      let name_ix = steps.length + 1;
+      while (stepNames.has(`step${name_ix}`)) name_ix += 1;
+      form.values.wf_step_name = `step${name_ix}`;
+    }
     send_events_page({
       res,
       req,
@@ -1866,13 +1860,10 @@ WORKFLOWS TODO
 delete is not always working?
 help file to explain steps, and context
 
-action explainer 
 workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
-correctly suggest new step name - on step cfg load
-
 Error handlers
-other triggers
+other triggers can be steps
 interactive workflows for not logged in
 show end node in diagram
 actions can declare which variables they inject into scope
