@@ -61,6 +61,7 @@
     "env-paths": "^2.2.0",
     "estraverse": "^5.2.0",
     "fs-extended-attributes": "1.0.1",
+    "https-proxy-agent": "^7.0.6",
     "i18n": "^0.15.1",
     "latest-version": "^5.1.0",
     "live-plugin-manager": "^0.17.1",
