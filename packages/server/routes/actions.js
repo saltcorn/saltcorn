@@ -1669,7 +1669,7 @@ router.post(
   })
 );
 
-const getWorkflowStepUserForm = async (run, trigger, step, user) => {
+const getWorkflowStepUserForm = async (run, trigger, step, req) => {
   const qTypeToField = (q) => {
     switch (q.qtype) {
       case "Yes/No":
@@ -1700,7 +1700,7 @@ const getWorkflowStepUserForm = async (run, trigger, step, user) => {
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
     blurb: run.wait_info.output || step.configuration?.form_header || "",
-    formStyle: run.wait_info.output ? "vert" : undefined,
+    formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
     fields: (step.configuration.user_form_questions || []).map((q) => ({
       label: q.label,
       name: q.var_name,
@@ -1732,7 +1732,7 @@ router.get(
       name: run.current_step,
     });
 
-    const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
+    const form = await getWorkflowStepUserForm(run, trigger, step, req);
     if (req.xhr) form.xhrSubmit = true;
     const title = run.wait_info.output ? "Workflow output" : "Fill form";
     res.sendWrap(title, renderForm(form, req.csrfToken()));
@@ -1760,7 +1760,7 @@ router.post(
       name: run.current_step,
     });
 
-    const form = await getWorkflowStepUserForm(run, trigger, step, req.user);
+    const form = await getWorkflowStepUserForm(run, trigger, step, req);
     form.validate(req.body);
     if (form.hasErrors) {
       const title = "Fill form";
@@ -1831,11 +1831,12 @@ help file to explain steps, and context
 action explainer 
 workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
 
-interactive workflows for not logged in
-correctly suggest new step name
-show end node in diagram
+correctly suggest new step name - on step cfg load
 
 Error handlers
+interactive workflows for not logged in
+show end node in diagram
+actions can declare which variables they inject into scope
 
 show unconnected steps
 why is code not initialising
