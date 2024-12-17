@@ -814,6 +814,10 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       : undefined,
     fields: [
       {
+        input_type: "section_header",
+        label: req.__("Step settings"),
+      },
+      {
         name: "wf_step_name",
         label: req.__("Step name"),
         type: "String",
@@ -843,6 +847,10 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           "Name of next step. Can be a JavaScript expression based on the run context. Blank if final step",
       },
       {
+        input_type: "section_header",
+        label: req.__("Action"),
+      },
+      {
         name: "wf_action_name",
         label: req.__("Action"),
         type: "String",
@@ -851,6 +859,10 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
           options: actionsNotRequiringRow,
           explainers: actionExplainers,
         },
+      },
+      {
+        input_type: "section_header",
+        label: req.__("Action settings"),
       },
       ...actionConfigFields,
     ],
