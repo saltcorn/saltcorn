@@ -8,6 +8,14 @@ const { join } = require("path");
 const { createWriteStream, unlink } = require("fs");
 const { get } = require("https");
 const npmFetch = require("npm-registry-fetch");
+const { HttpsProxyAgent } = require("https-proxy-agent");
+
+const getFetchProxyOptions = () => {
+  if (process.env["HTTPS_PROXY"]) {
+    const agent = new HttpsProxyAgent(process.env["HTTPS_PROXY"]);
+    return { agent };
+  } else return {};
+};
 
 const downloadFromGithub = async (plugin, rootFolder, pluginDir) => {
   const tarballUrl = `https://api.github.com/repos/${plugin.location}/tarball`;
@@ -19,7 +27,8 @@ const downloadFromGithub = async (plugin, rootFolder, pluginDir) => {
 
 const downloadFromNpm = async (plugin, rootFolder, pluginDir, pckJson) => {
   const pkgInfo = await npmFetch.json(
-    `https://registry.npmjs.org/${plugin.location}`
+    `https://registry.npmjs.org/${plugin.location}`,
+    getFetchProxyOptions()
   );
   const keys = Object.keys(pkgInfo.versions);
   const latest = keys[keys.length - 1];
@@ -148,4 +157,5 @@ module.exports = {
   extractTarball,
   tarballExists,
   removeTarball,
+  getFetchProxyOptions,
 };

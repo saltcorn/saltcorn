@@ -1515,5 +1515,9 @@
 	"Delete unchanged": "Delete unchanged",
 	"Delete allocated row if there are no changes.": "Delete allocated row if there are no changes.",
 	"Triggers on table": "Triggers on table",
-	"Please provide the keystore alias and password for the android build.": "Please provide the keystore alias and password for the android build."
+	"Please provide the keystore alias and password for the android build.": "Please provide the keystore alias and password for the android build.",
+	"Submit": "Submit",
+	"OK": "OK",
+	"Step settings": "Step settings",
+	"Action settings": "Action settings"
 }

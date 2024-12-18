@@ -236,6 +236,8 @@ class WorkflowRun {
 
     const state = getState();
 
+    state.log(6, `Running workflow id=${this.id}`);
+
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
       //TODO

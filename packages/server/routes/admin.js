@@ -104,7 +104,10 @@ const PageGroup = require("@saltcorn/data/models/page_group");
 const { getConfigFile } = require("@saltcorn/data/db/connect");
 const os = require("os");
 const Page = require("@saltcorn/data/models/page");
-const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
+const {
+  getSafeSaltcornCmd,
+  getFetchProxyOptions,
+} = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
 const { get_help_markup } = require("../help/index.js");
@@ -1334,7 +1337,8 @@ router.get(
   error_catcher(async (req, res) => {
     try {
       const pkgInfo = await npmFetch.json(
-        "https://registry.npmjs.org/@saltcorn/cli"
+        "https://registry.npmjs.org/@saltcorn/cli",
+        getFetchProxyOptions()
       );
       if (!pkgInfo?.versions)
         throw new Error(req.__("Unable to fetch versions"));
