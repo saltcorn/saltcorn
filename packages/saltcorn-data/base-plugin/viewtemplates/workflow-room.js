@@ -181,7 +181,10 @@ const run = async (
     if (run.started_by != req.user?.id && req.user?.role_id != 1)
       return "Not authorized";
     if (trigger.configuration.save_traces) {
-      const traces = await WorkflowTrace.find({ run_id: run.id });
+      const traces = await WorkflowTrace.find(
+        { run_id: run.id },
+        { orderBy: "step_started_at" }
+      );
       prevItems = await getHtmlFromTraces({ run, req, viewname, traces });
     }
   } else
