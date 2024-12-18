@@ -135,11 +135,17 @@ const run = async (
   { getRowQuery, updateQuery, optionsQuery }
 ) => {
   const trigger = await Trigger.findOne({ name: workflow });
-  const run = await WorkflowRun.create({
-    trigger_id: trigger.id,
-    context: {},
-    started_by: req.user?.id,
-  });
+  let run;
+  if (state.id) {
+    run = await WorkflowRun.findOne({ id: state.id });
+    if (run.started_by != req.user?.id && req.user?.role_id != 1)
+      return "Not authorized";
+  } else
+    run = await WorkflowRun.create({
+      trigger_id: trigger.id,
+      context: {},
+      started_by: req.user?.id,
+    });
   await run.run({
     user: req.user,
     interactive: true,
@@ -222,167 +228,15 @@ module.exports = {
     viewname,
     configuration: { columns, default_state },
     req,
-  }) => ({
-    async getRowQuery(
-      state_id,
-      part_table_name,
-      part_user_field,
-      part_key_to_room
-    ) {
-      const parttable = Table.findOne({ name: part_table_name });
-      return await parttable.getRow({
-        [part_user_field]: req.user ? req.user.id : 0,
-        [part_key_to_room]: +state_id,
-      });
-    },
-    async updateQuery(
-      partRow,
-      part_table_name,
-      max_read_id,
-      part_maxread_field
-    ) {
-      const parttable = Table.findOne({ name: part_table_name });
-      await parttable.updateRow(
-        { [part_maxread_field]: max_read_id },
-        partRow.id
-      );
-    },
-    async submitAjaxQuery(
-      msg_relation,
-      participant_field,
-      body,
-      msgform,
-      msgsender_field,
-      participant_maxread_field
-    ) {
-      const table = Table.findOne({ id: table_id });
-
-      const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-      const role = req && req.user ? req.user.role_id : 100;
-
-      let partRow, parttable;
-      if (participant_field) {
-        const [part_table_name, part_key_to_room, part_user_field] =
-          participant_field.split(".");
-        parttable = Table.findOne({ name: part_table_name });
-        // check we participate
-
-        partRow = await parttable.getRow({
-          [part_user_field]: req.user ? req.user.id : 0,
-          [part_key_to_room]: +body.room_id,
-        });
-
-        if (!partRow)
-          return {
-            json: {
-              error: "Not participating",
-            },
-          };
-      } else {
-        // check we have and write access
-        const canRead = role <= table.min_role_read;
-        if (!canRead)
-          return {
-            json: {
-              error: "Not participating",
-            },
-          };
-      }
-      const formview = await View.findOne({ name: msgform });
-      if (!formview)
-        throw new InvalidConfiguration("Message form view does not exist");
-      const { columns, layout, fixed } = formview.configuration;
-      const msgtable = Table.findOne({ name: msgtable_name });
-
-      const form = await getForm(
-        msgtable,
-        viewname,
-        columns,
-        layout,
-        null,
-        req
-      );
-      form.validate(req.body);
-      if (!form.hasErrors) {
-        const use_fixed = await fill_presets(msgtable, req, fixed);
-        const row = {
-          ...form.values,
-          ...use_fixed,
-          [msgkey_to_room]: body.room_id,
-          [msgsender_field]: req.user.id,
-        };
-        const msgid = await msgtable.tryInsertRow(row, req.user);
-        if (participant_maxread_field && partRow) {
-          const [part_table_name1, part_key_to_room1, part_maxread_field] =
-            participant_maxread_field.split(".");
-          await parttable.updateRow(
-            { [part_maxread_field]: msgid.success },
-            partRow.id
-          );
-        }
-        return {
-          json: { msgid },
-        };
-      } else {
-        return {
-          json: {
-            error: form.errors,
-          },
-        };
-      }
-    },
-    async ackReadQuery(participant_field, participant_maxread_field, body) {
-      const [part_table_name, part_key_to_room, part_user_field] =
-        participant_field.split(".");
-      const [part_table_name1, part_key_to_room1, part_maxread_field] =
-        participant_maxread_field.split(".");
-
-      const parttable = Table.findOne({ name: part_table_name });
-      // check we participate
-
-      const partRow = await parttable.getRow({
-        [part_user_field]: req.user ? req.user.id : 0,
-        [part_key_to_room]: +body.room_id,
-      });
-
-      if (!partRow)
-        return {
-          json: {
-            error: "Not participating",
-          },
-        };
-
-      await parttable.updateRow({ [part_maxread_field]: body.id }, partRow.id);
-      return {
-        json: {
-          success: "ok",
-        },
-      };
-    },
-    async fetchOlderMsgQuery(participant_field, body) {
-      const [part_table_name, part_key_to_room, part_user_field] =
-        participant_field.split(".");
-      const parttable = Table.findOne({ name: part_table_name });
-      // check we participate
-      return await parttable.getRow({
-        [part_user_field]: req.user ? req.user.id : 0,
-        [part_key_to_room]: +body.room_id,
-      });
-    },
-    async optionsQuery(reftable_name, type, attributes, where) {
-      const rows = await db.select(
-        reftable_name,
-        type === "File" ? attributes.select_file_where : where
-      );
-      return rows;
-    },
-  }),
+  }) => ({}),
   connectedObjects: async (configuration) => {
     return extractFromLayout(configuration.layout);
   },
 };
 /*todo:
 
-find_or_create_dm_room -dms only 
+-show a previous run
+-previous runs list
+-styling
 
 */
