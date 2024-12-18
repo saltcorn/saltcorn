@@ -218,6 +218,46 @@ class WorkflowRun {
     });
   }
 
+  async userFormFields(step0?: WorkflowStep) {
+    const step =
+      step0 ||
+      (await WorkflowStep.findOne({
+        trigger_id: this.trigger_id,
+        name: this.current_step,
+      }));
+    const qTypeToField = (q: any) => {
+      switch (q.qtype) {
+        case "Yes/No":
+          return {
+            type: "String",
+            attributes: { options: "Yes,No" },
+            fieldview: "radio_group",
+          };
+        case "Checkbox":
+          return { type: "Bool" };
+        case "Free text":
+          return { type: "String" };
+        case "Multiple choice":
+          return {
+            type: "String",
+            attributes: { options: q.options },
+            fieldview: "radio_group",
+          };
+        case "Integer":
+          return { type: "Integer" };
+        case "Float":
+          return { type: "Float" };
+        default:
+          return {};
+      }
+    };
+    return (step.configuration.user_form_questions || []).map((q: any) => ({
+      label: q.label,
+      name: q.var_name,
+      ...qTypeToField(q),
+    }));
+  }
+
   async run({
     user,
     interactive,
