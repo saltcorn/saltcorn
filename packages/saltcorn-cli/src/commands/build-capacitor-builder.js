@@ -3,13 +3,13 @@ const { join } = require("path");
 const { spawnSync } = require("child_process");
 
 /**
- * This is a oclif command to build the 'saltcorn/cordova-builder' docker image.
- * The image is used in the 'build-app' command to run the cordova commands.
+ * This is a oclif command to build the 'saltcorn/capacitor-builder' docker image.
+ * The image is used in the 'build-app' command to run the capacitor commands.
  * Please make sure docker is callable without sudo (see rootless mode, or add the user to the docker group).
  */
-class BuildCordovaBuilder extends Command {
+class BuildCapacitorBuilder extends Command {
   async run() {
-    const { flags } = await this.parse(BuildCordovaBuilder);
+    const { flags } = await this.parse(BuildCapacitorBuilder);
     const dockerDir = join(
       require.resolve("@saltcorn/mobile-builder"),
       "..",
@@ -22,7 +22,7 @@ class BuildCordovaBuilder extends Command {
       "-f",
       join(dockerDir, "Dockerfile"),
       "-t",
-      "saltcorn/cordova-builder",
+      "saltcorn/capacitor-builder",
       "--progress=plain"
     );
     const result = spawnSync("docker", dArgs, { cwd: ".", stdio: "inherit" });
@@ -30,15 +30,15 @@ class BuildCordovaBuilder extends Command {
   }
 }
 
-BuildCordovaBuilder.description =
-  "Build the 'saltcorn/cordova-builder' docker image";
+BuildCapacitorBuilder.description =
+  "Build the 'saltcorn/capacitor-builder' docker image";
 
-BuildCordovaBuilder.help =
-  "Build the 'saltcorn/cordova-builder' docker image. " +
-  "This image is used in the 'build-app' command to run the cordova commands. " +
+BuildCapacitorBuilder.help =
+  "Build the 'saltcorn/capacitor-builder' docker image. " +
+  "This image is used in the 'build-app' command to run the capacitor commands. " +
   "Please make sure docker is callable without using root (see rootless mode, or add the user to the docker group).";
 
-BuildCordovaBuilder.flags = {
+BuildCapacitorBuilder.flags = {
   buildClean: Flags.boolean({
     name: "build clean",
     string: "clean",
@@ -47,4 +47,4 @@ BuildCordovaBuilder.flags = {
   }),
 };
 
-module.exports = BuildCordovaBuilder;
+module.exports = BuildCapacitorBuilder;
