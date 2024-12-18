@@ -1462,12 +1462,15 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     });
   }
   const hasValues = Object.keys(extraValues).length > 0;
+  const isMobile = !isNode || form.req?.smr;
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
     form.onSubmit || form.xhrSubmit
       ? ` onsubmit="${form.onSubmit || ""}${
-          form.xhrSubmit ? `;ajaxSubmitForm(this, false, event)` : ""
+          form.xhrSubmit && !isMobile
+            ? `;ajaxSubmitForm(this, false, event)`
+            : ""
         }" `
       : ""
   }${
@@ -1593,6 +1596,7 @@ const mkForm = (
   errors: any = {}
 ): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
+  const isMobile = !isNode || form.req?.smr;
   const csrfField =
     csrfToken === false
       ? ""
@@ -1602,7 +1606,9 @@ const mkForm = (
   }action="${buildActionAttribute(form)}"${
     form.onSubmit || form.xhrSubmit
       ? ` onsubmit="${form.onSubmit || ""}${
-          form.xhrSubmit ? `;ajaxSubmitForm(this, false, event)` : ""
+          form.xhrSubmit && !isMobile
+            ? `;ajaxSubmitForm(this, false, event)`
+            : ""
         }"`
       : ""
   } ${
