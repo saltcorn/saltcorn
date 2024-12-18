@@ -1921,6 +1921,7 @@ const whenDone = async (
     });
     return;
   }
+  let use_view_when_done = view_when_done;
   let row;
   if (
     table &&
@@ -1931,7 +1932,6 @@ const whenDone = async (
     const db_row = await table.getRow({ [table.pk_name]: originalID });
     row = { ...db_row, ...row0 };
   } else row = row0;
-  let use_view_when_done = view_when_done;
   if (destination_type === "Back to referer" && body._referer) {
     res_redirect(body._referer);
     return;
