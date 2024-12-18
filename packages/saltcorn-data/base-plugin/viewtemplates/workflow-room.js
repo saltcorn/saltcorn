@@ -67,29 +67,60 @@ const configuration_workflow = (req) =>
     ],
   });
 
-/**
- * @returns {object[]}
- */
 const get_state_fields = () => [];
-const limit = 10;
 
-/**
- * @param {string} table_id
- * @param {string} viewname
- * @param {object} optsOne
- * @param {string} optsOne.participant_field,
- * @param {string} optsOne.msg_relation
- * @param {*} optsOne.msgsender_field
- * @param {string} optsOne.msgview
- * @param {string} optsOne.msgform
- * @param {string} optsOne.participant_maxread_field
- * @param {object} state
- * @param {object} optsTwo
- * @param {object} optsTwo.req
- * @param {object} optsTwo.res
- * @returns {Promise<div>}
- * @throws {InvalidConfiguration}
- */
+const getHtmlFromRun = async ({ run, req, viewname }) => {
+  let items = [];
+  const checkContext = async (key, alertType) => {
+    if (run.context[key]) {
+      items.push(
+        div(
+          { class: `alert alert-${alertType}`, role: "alert" },
+          run.context[key]
+        )
+      );
+      delete run.context[key];
+      await run.update({ context: run.context });
+    }
+  };
+  await checkContext("notify", "info");
+  await checkContext("notify_success", "success");
+  await checkContext("error", "danger");
+
+  // waiting look for form or output
+  if (run.wait_info.output) {
+    items.push(div(run.wait_info.output));
+    items.push(
+      script(
+        domReady(
+          `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${run.id}});`
+        )
+      )
+    );
+  }
+  if (run.wait_info.form) {
+    const step = await WorkflowStep.findOne({
+      trigger_id: run.trigger_id,
+      name: run.current_step,
+    });
+    const fields = await run.userFormFields(step);
+
+    const form = new Form({
+      action: `/view/${viewname}/submit_form`,
+      xhrSubmit: true,
+      submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
+      blurb: run.wait_info.output || step.configuration?.form_header || "",
+      formStyle: "vert",
+      fields,
+    });
+    form.hidden("run_id");
+
+    form.values.run_id = run.id;
+    items.push(renderForm(form, req.csrfToken()));
+  }
+  return items;
+};
+
 const run = async (
   table_id,
   viewname,
@@ -99,66 +130,17 @@ const run = async (
   { getRowQuery, updateQuery, optionsQuery }
 ) => {
   const trigger = await Trigger.findOne({ name: workflow });
-  const wfrun = await WorkflowRun.create({
+  const run = await WorkflowRun.create({
     trigger_id: trigger.id,
     context: {},
     started_by: req.user?.id,
   });
-  await wfrun.run({
+  await run.run({
     user: req.user,
     interactive: true,
     trace: trigger.configuration?.save_traces,
   });
-
-  let items = [];
-  const checkContext = async (key, alertType) => {
-    if (wfrun.context[key]) {
-      items.push(
-        div(
-          { class: `alert alert-${alertType}`, role: "alert" },
-          wfrun.context[key]
-        )
-      );
-      delete wfrun.context[key];
-      await wfrun.update({ context: wfrun.context });
-    }
-  };
-  await checkContext("notify", "info");
-  await checkContext("notify_success", "success");
-  await checkContext("error", "danger");
-
-  // waiting look for form or output
-  if (wfrun.wait_info.output) {
-    items.push(div(wfrun.wait_info.output));
-    items.push(
-      script(
-        domReady(
-          `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${wfrun.id}});`
-        )
-      )
-    );
-  }
-  if (wfrun.wait_info.form) {
-    const step = await WorkflowStep.findOne({
-      trigger_id: wfrun.trigger_id,
-      name: wfrun.current_step,
-    });
-    const fields = await wfrun.userFormFields(step);
-
-    const form = new Form({
-      action: `/view/${viewname}/submit_form`,
-      xhrSubmit: true,
-      submitLabel: wfrun.wait_info.output ? req.__("OK") : req.__("Submit"),
-      blurb: wfrun.wait_info.output || step.configuration?.form_header || "",
-      formStyle: "vert",
-      fields,
-    });
-    form.hidden("run_id");
-
-    form.values.run_id = wfrun.id;
-    items.push(renderForm(form, req.csrfToken()));
-  }
-
+  const items = await getHtmlFromRun({ run, req, viewname });
   //look for error status
 
   return div(items);
@@ -173,7 +155,7 @@ const submit_form = async (
   { submitAjaxQuery }
 ) => {
   console.log("submit form body", body);
-  
+
   return {
     json: {
       success: "ok",
