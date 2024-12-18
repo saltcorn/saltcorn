@@ -38,6 +38,7 @@ const { getState } = require("../../db/state");
 const db = require("../../db");
 const { getForm, fill_presets } = require("./viewable_fields");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
+const WorkflowTrace = require("../../models/workflow_trace");
 
 /**
  *
@@ -69,7 +70,27 @@ const configuration_workflow = (req) =>
 
 const get_state_fields = () => [];
 
-const getHtmlFromRun = async ({ run, req, viewname }) => {
+const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
+  let items = [];
+  for (const trace of traces) {
+    const fakeRun = new WorkflowRun(run);
+    fakeRun.wait_info = trace.wait_info;
+    fakeRun.context = trace.context;
+    fakeRun.current_step = trace.step_name_run;
+    fakeRun.status = trace.status;
+    fakeRun.error = trace.error;
+
+    const myItems = await getHtmlFromRun({
+      req,
+      viewname,
+      run: fakeRun,
+      noInteract: true,
+    });
+    items.push(...myItems);
+  }
+  return items;
+};
+const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   let items = [];
   const checkContext = async (key, alertType) => {
     if (run.context[key]) {
@@ -79,8 +100,10 @@ const getHtmlFromRun = async ({ run, req, viewname }) => {
           run.context[key]
         )
       );
-      delete run.context[key];
-      await run.update({ context: run.context });
+      if (!noInteract) {
+        delete run.context[key];
+        await run.update({ context: run.context });
+      }
     }
   };
   await checkContext("notify", "info");
@@ -90,13 +113,14 @@ const getHtmlFromRun = async ({ run, req, viewname }) => {
   // waiting look for form or output
   if (run.wait_info.output) {
     items.push(div(run.wait_info.output));
-    items.push(
-      script(
-        domReady(
-          `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${run.id}});`
+    if (!noInteract)
+      items.push(
+        script(
+          domReady(
+            `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${run.id}});`
+          )
         )
-      )
-    );
+      );
   }
   if (run.wait_info.form) {
     const step = await WorkflowStep.findOne({
@@ -104,6 +128,15 @@ const getHtmlFromRun = async ({ run, req, viewname }) => {
       name: run.current_step,
     });
     const form = await getWorkflowStepUserForm({ step, run, viewname, req });
+    if (noInteract) {
+      form.noSubmitButton = true;
+      form.fields = form.fields.map((f) => {
+        const nf = new Field(f);
+        nf.disabled = true;
+        form.values[f.name] = run.context[f.name];
+        return nf;
+      });
+    }
     items.push(renderForm(form, req.csrfToken()));
   }
   return items;
@@ -136,10 +169,15 @@ const run = async (
 ) => {
   const trigger = await Trigger.findOne({ name: workflow });
   let run;
+  let prevItems = [];
   if (state.id) {
     run = await WorkflowRun.findOne({ id: state.id });
     if (run.started_by != req.user?.id && req.user?.role_id != 1)
       return "Not authorized";
+    if (trigger.configuration.save_traces) {
+      const traces = await WorkflowTrace.find({ run_id: run.id });
+      prevItems = await getHtmlFromTraces({ run, req, viewname, traces });
+    }
   } else
     run = await WorkflowRun.create({
       trigger_id: trigger.id,
@@ -154,7 +192,7 @@ const run = async (
   const items = await getHtmlFromRun({ run, req, viewname });
   //look for error status
 
-  return div({ id: `wfroom-${run.id}` }, items);
+  return div({ id: `wfroom-${run.id}` }, prevItems, items);
 };
 
 const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
