@@ -253,8 +253,6 @@ npm run tsc
 
 to install everything. If successful, you should now be able to run `saltcorn` in your shell.
 
-NOTE: the installation builds the 'saltcorn/cordova-builder' docker image, and the first build takes several minutes. You can set the environment variable SKIP_DOCKER_IMAGE_INSTALL to 'true' (or disable docker) if you don't want to build it.
-
 ## Packages
 
 - [@saltcorn-cli](https://github.com/saltcorn/saltcorn/tree/master/packages/saltcorn-cli): command-line interface
