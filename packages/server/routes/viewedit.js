@@ -152,6 +152,14 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         ),
       }),
       new Field({
+        label: req.__("Description"),
+        name: "description",
+        type: "String",
+        sublabel: req.__(
+          "Description allows you to give more information about the view."
+        ),
+      }),
+      new Field({
         label: req.__("View pattern"),
         name: "viewtemplate",
         input_type: "select",
@@ -191,14 +199,6 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         input_type: "select",
         required: true,
         options: roles.map((r) => ({ value: r.id, label: r.role })),
-      }),
-      new Field({
-        label: req.__("Description"),
-        name: "description",
-        type: "String",
-        sublabel: req.__(
-          "Description allows you to give more information about the view."
-        ),
       }),
       new Field({
         name: "page_title",
