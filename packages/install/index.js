@@ -26,6 +26,7 @@ const {
   genJwtSecret,
   setupDocker,
   checkDockerAvailable,
+  doAddToDockerGroup,
   getDockerEnvVars,
   pullCapacitorBuilder,
 } = require("./utils");
@@ -744,6 +745,8 @@ WantedBy=multi-user.target`
     try {
       if (!checkDockerAvailable())
         await setupDocker(user, dockerMode, addToDockerGroup, osInfo, dryRun);
+      else if (dockerMode === "standard" && addToDockerGroup)
+        await doAddToDockerGroup(user, dryRun);
       await pullCapacitorBuilder(user, dockerMode, addToDockerGroup, dryRun);
       // restart to apply the docker group membership
       await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);

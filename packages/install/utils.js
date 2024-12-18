@@ -95,6 +95,10 @@ const setupDocker = async (
   }
 };
 
+const doAddToDockerGroup = async (user, dryRun) => {
+  await asyncSudo(["usermod", "-aG", "docker", user], false, dryRun);
+};
+
 const checkDockerAvailable = (dryRun) => {
   if (dryRun) return true;
   try {
@@ -260,6 +264,7 @@ module.exports = {
   genJwtSecret,
   setupDocker,
   checkDockerAvailable,
+  doAddToDockerGroup,
   pullCapacitorBuilder,
   getDockerEnvVars,
 };
