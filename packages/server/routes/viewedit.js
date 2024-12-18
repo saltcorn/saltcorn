@@ -196,7 +196,6 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         label: req.__("Description"),
         name: "description",
         type: "String",
-        tab: "View settings",
         sublabel: req.__(
           "Description allows you to give more information about the view."
         ),
