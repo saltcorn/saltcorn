@@ -98,7 +98,7 @@ const run = async (
   { req, res },
   { getRowQuery, updateQuery, optionsQuery }
 ) => {
-  const trigger = await Workflow.findOne({ name: workflow });
+  const trigger = await Trigger.findOne({ name: workflow });
   const wfrun = await WorkflowRun.create({
     trigger_id: trigger.id,
     context: {},
@@ -128,18 +128,34 @@ const run = async (
   await checkContext("error", "danger");
 
   // waiting look for form or output
+  if (wfrun.wait_info.output) {
+    items.push(div(wfrun.wait_info.output));
+    items.push(
+      script(
+        domReady(
+          `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${wfrun.id}});`
+        )
+      )
+    );
+  }
   if (wfrun.wait_info.form) {
     const step = await WorkflowStep.findOne({
       trigger_id: wfrun.trigger_id,
       name: wfrun.current_step,
     });
+    const fields = await wfrun.userFormFields(step);
+
     const form = new Form({
       action: `/view/${viewname}/submit_form`,
-      submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
-      blurb: run.wait_info.output || step.configuration?.form_header || "",
-      formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
-      fields: await run.userFormFields(step),
+      xhrSubmit: true,
+      submitLabel: wfrun.wait_info.output ? req.__("OK") : req.__("Submit"),
+      blurb: wfrun.wait_info.output || step.configuration?.form_header || "",
+      formStyle: "vert",
+      fields,
     });
+    form.hidden("run_id");
+
+    form.values.run_id = wfrun.id;
     items.push(renderForm(form, req.csrfToken()));
   }
 
@@ -148,165 +164,21 @@ const run = async (
   return div(items);
 };
 
-/**
- * @param {*} table_id
- * @param {*} viewname
- * @param {object} optsOne
- * @param {string} optsOne.participant_field
- * @param {string} optsOne.participant_maxread_field
- * @param {body} body
- * @param {object} optsTwo
- * @param {object} optsTwo.req
- * @param {object} optsTwo.res
- * @returns {Promise<void>}
- */
-const ack_read = async (
+const submit_form = async (
   table_id,
   viewname,
-  { participant_field, participant_maxread_field },
-  body,
-  { req, res },
-  { ackReadQuery }
-) => {
-  if (!participant_maxread_field || !participant_field)
-    return {
-      json: {
-        success: "ok",
-      },
-    };
-
-  return await ackReadQuery(participant_field, participant_maxread_field, body);
-};
-
-/**
- * @param {*} table_id
- * @param {*} viewname
- * @param {object} optsOne.
- * @param {string} optsOne.participant_field
- * @param {string} optsOne.msg_relation
- * @param {*} optsOne.msgsender_field
- * @param {string} optsOne.msgview
- * @param {*} optsOne.msgform
- * @param {*} optsOne.participant_maxread_field
- * @param {object} body
- * @param {object} optsTwo
- * @param {object} optsTwo.req
- * @param {object} optsTwo.res
- * @returns {Promise<object>}
- */
-const fetch_older_msg = async (
-  table_id,
-  viewname,
-  {
-    participant_field,
-    msg_relation,
-    msgsender_field,
-    msgview,
-    msgform,
-    participant_maxread_field,
-  },
-  body,
-  { req, res },
-  { fetchOlderMsgQuery }
-) => {
-  const partRow = await fetchOlderMsgQuery(participant_field, body);
-  if (!partRow)
-    return {
-      json: {
-        error: "Not participating",
-      },
-    };
-
-  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-  const v = await View.findOne({ name: msgview });
-  const vresps = await v.runMany(
-    { [msgkey_to_room]: +body.room_id },
-    {
-      req,
-      res,
-      orderBy: "id",
-      orderDesc: true,
-      limit,
-      where: { id: { lt: +body.lt_msg_id } },
-    }
-  );
-  vresps.reverse();
-  const n_retrieved = vresps.length;
-  const min_read_id = Math.min.apply(
-    Math,
-    vresps.map((r) => r.row.id)
-  );
-  const msglist = vresps.map((r) => r.html).join("");
-  return {
-    json: {
-      success: "ok",
-      prepend: msglist,
-      remove_fetch_older: n_retrieved < limit,
-      new_fetch_older_lt: min_read_id,
-    },
-  };
-};
-
-/**
- * @param {*} table_id
- * @param {string} viewname
- * @param {object} optsOne
- * @param {string} optsOne.participant_field
- * @param {string} optsOne.msg_relation
- * @param {*} optsOne.msgsender_field
- * @param {string} optsOne.msgview
- * @param {string} optsOne.msgform
- * @param {string} optsOne.participant_maxread_field
- * @param {*} body
- * @param {object} optsTwo
- * @param {object} optsTwo.req
- * @param {object} optsTwo.res
- * @returns {Promise<object>}
- */
-const submit_msg_ajax = async (
-  table_id,
-  viewname,
-  {
-    participant_field,
-    msg_relation,
-    msgsender_field,
-    msgview,
-    msgform,
-    participant_maxread_field,
-  },
+  { workflow },
   body,
   { req, res },
   { submitAjaxQuery }
 ) => {
-  const queryResult = await submitAjaxQuery(
-    msg_relation,
-    participant_field,
-    body,
-    msgform,
-    msgsender_field,
-    participant_maxread_field
-  );
-  if (!queryResult.json.error) {
-    const msgid = queryResult.json.msgid;
-    const v = await View.findOne({ name: msgview });
-    const myhtml = await v.run({ id: msgid.success }, { req, res });
-    const newreq = { ...req, user: { ...req.user, id: 0 } };
-    const theirhtml = await v.run({ id: msgid.success }, { req: newreq, res });
-    const tenant = db.getTenantSchema();
-    getState().emitRoom(tenant, viewname, +body.room_id, {
-      append: theirhtml,
-      not_for_user_id: req.user.id,
-      pls_ack_msg_id: msgid.success,
-    });
-    return {
-      json: {
-        success: "ok",
-        append: myhtml,
-      },
-    };
-  } else {
-    return queryResult;
-  }
+  console.log("submit form body", body);
+  
+  return {
+    json: {
+      success: "ok",
+    },
+  };
 };
 
 /**
@@ -333,7 +205,7 @@ module.exports = {
   get_state_fields,
   /** @type {boolean} */
   display_state_form: false,
-  routes: { submit_msg_ajax, ack_read, fetch_older_msg },
+  routes: { submit_form },
   /** @type {boolean} */
   noAutoTest: true,
   /**
