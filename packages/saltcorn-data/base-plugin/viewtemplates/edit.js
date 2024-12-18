@@ -1419,7 +1419,9 @@ const runPost = async (
       body,
       row,
       !originalID ? { id, ...trigger_return } : trigger_return,
-      true
+      true,
+      originalID,
+      table
     );
   }
 };
@@ -1892,9 +1894,11 @@ const whenDone = async (
   req,
   res,
   body,
-  row,
+  row0,
   trigger_return,
-  check_ajax
+  check_ajax,
+  originalID,
+  table
 ) => {
   const res_redirect = (url) => {
     if (check_ajax && req.xhr && !req.smr)
@@ -1917,7 +1921,16 @@ const whenDone = async (
     });
     return;
   }
-
+  let row;
+  if (
+    table &&
+    ((originalID && destination_type === "URL formula") ||
+      (use_view_when_done || "").includes("."))
+  ) {
+    // Refetch row as there can be fields not included in form
+    const db_row = await table.getRow({ [table.pk_name]: originalID });
+    row = { ...db_row, ...row0 };
+  } else row = row0;
   let use_view_when_done = view_when_done;
   if (destination_type === "Back to referer" && body._referer) {
     res_redirect(body._referer);
