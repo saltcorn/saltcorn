@@ -109,9 +109,29 @@ const run = async (
     interactive: true,
     trace: trigger.configuration?.save_traces,
   });
-  const retDirs = await run.popReturnDirectives();
 
-  return "";
+  let items = [];
+  const checkContext = async (key, alertType) => {
+    if (wfrun.context[key]) {
+      items.push(
+        div(
+          { class: `alert alert-${alertType}`, role: "alert" },
+          wfrun.context[key]
+        )
+      );
+      delete wfrun.context[key];
+      await wfrun.update({ context: wfrun.context });
+    }
+  };
+  await checkContext("notify", "info");
+  await checkContext("notify_success", "success");
+  await checkContext("error", "danger");
+
+  // waiting look for form or output
+
+  //look for error status
+
+  return div(items);
 };
 
 /**
