@@ -2108,7 +2108,12 @@ module.exports = {
       } else if (auto_create && !isPreview) {
         row = {};
         fields.forEach((f) => {
-          if (f.required)
+          if (typeof state[f.name] !== "undefined") {
+            if (f.type?.read)
+              row[f.name] = f.type?.read
+                ? f.type.read(state[f.name])
+                : state[f.name];
+          } else if (f.required)
             if (
               typeof f.attributes?.default !== "undefined" &&
               f.attributes?.default !== null
