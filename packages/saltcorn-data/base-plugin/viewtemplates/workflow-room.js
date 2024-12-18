@@ -19,6 +19,7 @@ const {
   button,
   form,
   input,
+  pre,
   i,
   script,
   domReady,
@@ -72,7 +73,7 @@ const get_state_fields = () => [];
 
 const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
   let items = [];
-  for (let ix = 0; ix < traces.length; ix++) {
+  for (let ix = 0; ix < traces.length - 1; ix++) {
     const trace = traces[ix];
     const fakeRun = new WorkflowRun(run);
     fakeRun.wait_info = trace.wait_info;
