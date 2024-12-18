@@ -103,22 +103,27 @@ const getHtmlFromRun = async ({ run, req, viewname }) => {
       trigger_id: run.trigger_id,
       name: run.current_step,
     });
-    const fields = await run.userFormFields(step);
-
-    const form = new Form({
-      action: `/view/${viewname}/submit_form`,
-      xhrSubmit: true,
-      submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
-      blurb: run.wait_info.output || step.configuration?.form_header || "",
-      formStyle: "vert",
-      fields,
-    });
-    form.hidden("run_id");
-
-    form.values.run_id = run.id;
+    const form = await getWorkflowStepUserForm({ step, run, viewname, req });
     items.push(renderForm(form, req.csrfToken()));
   }
   return items;
+};
+
+const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
+  const fields = await run.userFormFields(step);
+
+  const form = new Form({
+    action: `/view/${viewname}/submit_form`,
+    xhrSubmit: true,
+    submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
+    blurb: run.wait_info.output || step.configuration?.form_header || "",
+    formStyle: "vert",
+    fields,
+  });
+  form.hidden("run_id");
+
+  form.values.run_id = run.id;
+  return form;
 };
 
 const run = async (
@@ -143,22 +148,32 @@ const run = async (
   const items = await getHtmlFromRun({ run, req, viewname });
   //look for error status
 
-  return div(items);
+  return div({ id: `wfroom-${run.id}` }, items);
 };
 
-const submit_form = async (
-  table_id,
-  viewname,
-  { workflow },
-  body,
-  { req, res },
-  { submitAjaxQuery }
-) => {
-  console.log("submit form body", body);
+const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
+  const run = await WorkflowRun.findOne({ id: body.run_id });
+  const trigger = await Trigger.findOne({ id: run.trigger_id });
+  const step = await WorkflowStep.findOne({
+    trigger_id: trigger.id,
+    name: run.current_step,
+  });
+  const form = await getWorkflowStepUserForm({ step, run, viewname, req });
 
+  form.validate(req.body);
+  await run.provide_form_input(form.values);
+  await run.run({
+    user: req.user,
+    interactive: true,
+    trace: trigger.configuration?.save_traces,
+  });
+  const items = await getHtmlFromRun({ run, req, viewname });
   return {
     json: {
       success: "ok",
+      eval_js: `$('#wfroom-${run.id}').append(${JSON.stringify(
+        items.join("")
+      )})`,
     },
   };
 };
