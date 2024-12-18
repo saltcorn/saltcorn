@@ -77,8 +77,8 @@ const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
     const fakeRun = new WorkflowRun(run);
     fakeRun.wait_info = trace.wait_info;
     fakeRun.context = trace.context;
-    if (trace.status === "Waiting" && trace.wait_info.form && traces[ix + 1]) {
-      fakeRun.context = traces[ix + 1].context;
+    if (trace.status === "Waiting" && trace.wait_info.form) {
+      fakeRun.context = traces[ix + 1] ? traces[ix + 1].context : run.context;
     }
     fakeRun.current_step = trace.step_name_run;
     fakeRun.status = trace.status;
@@ -152,6 +152,7 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
   const form = new Form({
     action: `/view/${viewname}/submit_form`,
     xhrSubmit: true,
+    onSubmit: `$(this).closest('form').find('button').hide()`,
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: "vert",

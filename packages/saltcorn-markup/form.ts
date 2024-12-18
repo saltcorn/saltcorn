@@ -1380,7 +1380,9 @@ const renderFormLayout = (form: Form): string => {
 
       if (isNode && !form.req?.smr) {
         const submitAttr = form.xhrSubmit
-          ? `onClick="${spinnerStr}ajaxSubmitForm(this)" type="button"`
+          ? `onClick="${spinnerStr}${
+              form.onSubmit ? `${form.onSubmit};` : ""
+            }ajaxSubmitForm(this)" type="button"`
           : 'type="submit"';
         return mkBtn(submitAttr);
       }
@@ -1598,9 +1600,11 @@ const mkForm = (
   const top = `<form data-viewname="${form.viewname}" ${
     form.id ? `id="${form.id}" ` : ""
   }action="${buildActionAttribute(form)}"${
-    form.onSubmit || form.xhrSubmit ? ` onsubmit="${form.onSubmit||""}${
+    form.onSubmit || form.xhrSubmit
+      ? ` onsubmit="${form.onSubmit || ""}${
           form.xhrSubmit ? `;ajaxSubmitForm(this, false, event)` : ""
-        }"` : ""
+        }"`
+      : ""
   } ${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.class || ""}" method="${
@@ -1635,7 +1639,9 @@ const mkForm = (
         : form.xhrSubmit
         ? `<button type="button" class="btn ${
             form.submitButtonClass || "btn-primary"
-          }" onClick="ajaxSubmitForm(this, true)">${text(
+          }" onClick="${
+            form.onSubmit ? `${form.onSubmit};` : ""
+          }ajaxSubmitForm(this, true)">${text(
             form.submitLabel || "Save"
           )}</button>`
         : `<button type="submit" class="btn ${
