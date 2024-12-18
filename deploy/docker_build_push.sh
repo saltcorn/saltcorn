@@ -16,11 +16,11 @@ docker push saltcorn/saltcorn-with-mobile:next
 docker build -t saltcorn/saltcorn-with-mobile:$VERSION -f Dockerfile.mobile.release .
 docker push saltcorn/saltcorn-with-mobile:$VERSION
 
-docker build -t saltcorn/cordova-builder:$VERSION -f packages/saltcorn-mobile-builder/docker/Dockerfile packages/saltcorn-mobile-builder/docker
-docker push saltcorn/cordova-builder:$VERSION
+docker build -t saltcorn/capacitor-builder:$VERSION -f packages/saltcorn-mobile-builder/docker/Dockerfile packages/saltcorn-mobile-builder/docker
+docker push saltcorn/capacitor-builder:$VERSION
 
-docker build -t saltcorn/cordova-builder:next -f packages/saltcorn-mobile-builder/docker/Dockerfile packages/saltcorn-mobile-builder/docker
-docker push saltcorn/cordova-builder:next
+docker build -t saltcorn/capacitor-builder:next -f packages/saltcorn-mobile-builder/docker/Dockerfile packages/saltcorn-mobile-builder/docker
+docker push saltcorn/capacitor-builder:next
 
 docker build -t saltcorn/saltcorn:dev -f Dockerfile.dev .
 docker push saltcorn/saltcorn:dev
