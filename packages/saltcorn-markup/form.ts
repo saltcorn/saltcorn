@@ -1463,7 +1463,11 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
-    form.onSubmit ? ` onsubmit="${form.onSubmit}" ` : ""
+    form.onSubmit || form.xhrSubmit
+      ? ` onsubmit="${form.onSubmit || ""}${
+          form.xhrSubmit ? `;ajaxSubmitForm(this, false, event)` : ""
+        }" `
+      : ""
   }${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   } class="form-namespace ${form.class || ""}" method="${
@@ -1594,7 +1598,9 @@ const mkForm = (
   const top = `<form data-viewname="${form.viewname}" ${
     form.id ? `id="${form.id}" ` : ""
   }action="${buildActionAttribute(form)}"${
-    form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""
+    form.onSubmit || form.xhrSubmit ? ` onsubmit="${form.onSubmit||""}${
+          form.xhrSubmit ? `;ajaxSubmitForm(this, false, event)` : ""
+        }"` : ""
   } ${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.class || ""}" method="${

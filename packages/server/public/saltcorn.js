@@ -588,9 +588,10 @@ function updateViewPreview() {
   }
 }
 
-function ajaxSubmitForm(e, force_no_reload) {
+function ajaxSubmitForm(e, force_no_reload, event) {
   var form = $(e).closest("form");
   var url = form.attr("action");
+  if(event) event.preventDefault();
   $.ajax(url, {
     type: "POST",
     headers: {
