@@ -72,10 +72,14 @@ const get_state_fields = () => [];
 
 const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
   let items = [];
-  for (const trace of traces) {
+  for (let ix = 0; ix < traces.length; ix++) {
+    const trace = traces[ix];
     const fakeRun = new WorkflowRun(run);
     fakeRun.wait_info = trace.wait_info;
     fakeRun.context = trace.context;
+    if (trace.status === "Waiting" && trace.wait_info.form && traces[ix + 1]) {
+      fakeRun.context = traces[ix + 1].context;
+    }
     fakeRun.current_step = trace.step_name_run;
     fakeRun.status = trace.status;
     fakeRun.error = trace.error;
