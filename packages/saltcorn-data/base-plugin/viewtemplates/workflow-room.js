@@ -128,6 +128,20 @@ const run = async (
   await checkContext("error", "danger");
 
   // waiting look for form or output
+  if (wfrun.wait_info.form) {
+    const step = await WorkflowStep.findOne({
+      trigger_id: wfrun.trigger_id,
+      name: wfrun.current_step,
+    });
+    const form = new Form({
+      action: `/view/${viewname}/submit_form`,
+      submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
+      blurb: run.wait_info.output || step.configuration?.form_header || "",
+      formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
+      fields: await run.userFormFields(step),
+    });
+    items.push(renderForm(form, req.csrfToken()));
+  }
 
   //look for error status
 
