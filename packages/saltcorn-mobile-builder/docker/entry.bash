@@ -79,19 +79,29 @@ npx cap sync
 mkdir -p /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases
 cp /saltcorn-mobile-app/www/scdb.sqlite /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases/prepopulated.db
 
-cd ./android
+# set app version and code in build.gradle
+npm run modify-gradle-cfg -- --app-version=$APP_VERSION
 
-# modify gradle config for keystore
-if [ -n "$KEYSTORE_FILE" ]; then
-  echo "building signed app with keystore"
-  npm run modify-gradle-cfg -- --app-version=$APP_VERSION --keystore-file=$KEYSTORE_FILE --keystore-alias=$KEYSTORE_ALIAS --keystore-password=$KEYSTORE_PASSWORD
-else
-  echo "building unsigned app"
-  npm run modify-gradle-cfg -- --app-version=$APP_VERSION
+ANDROID_RELEASE_TYPE="AAB"
+if [ "$BUILD_TYPE" == "debug" ]; then
+  ANDROID_RELEASE_TYPE="APK"
 fi
 
-if [ "$BUILD_TYPE" == "release" ]; then
-  ./gradlew assembleRelease
+# if KEYSTORE_FILE is not empty
+if [ -n "$KEYSTORE_FILE" ]; then
+  echo "building signed app"
+  npx cap build android \
+    --androidreleasetype "$ANDROID_RELEASE_TYPE" \
+    --keystorepath "/saltcorn-mobile-app/$KEYSTORE_FILE" \
+    --keystorepass "$KEYSTORE_PASSWORD" \
+    --keystorealias "$KEYSTORE_ALIAS" \
+    --keystorealiaspass "$KEYSTORE_PASSWORD" 
 else
-  ./gradlew assembleDebug
+  echo "building unsigned app"
+  npx cap build android \
+    --androidreleasetype "$ANDROID_RELEASE_TYPE" \
+    --keystorepath "/saltcorn-mobile-app/unsecure-default-key.jks" \
+    --keystorepass "unsecurepassw" \
+    --keystorealias "unsecure-default-alias" \
+    --keystorealiaspass "unsecurepassw"
 fi

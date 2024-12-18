@@ -28,7 +28,7 @@ class BuildAppCommand extends Command {
       throw new Error("Please specify an entry point for the first view");
     }
     if (!flags.platforms) {
-      throw new Error("Please specify cordova platforms (android or iOS)");
+      throw new Error("Please specify a platform (android or iOS)");
     }
     for (const platform of flags.platforms)
       if (!this.supportedPlatforms.includes(platform))

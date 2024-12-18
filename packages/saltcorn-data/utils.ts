@@ -451,16 +451,17 @@ const prepMobileRows = (rows: Row[], fields: Field[]) => {
 };
 
 /**
- * find first file with specific ending
+ * find all files with specific ending
  * @param directory directory to search
  * @param ending wantet ending
  */
-const fileWithEnding = (directory: string, ending: string): string | null => {
-  if (!existsSync(directory)) return null;
+const filesWithEnding = (directory: string, ending: string): string[] => {
+  const result = new Array<string>();
+  if (!existsSync(directory)) return result;
   for (const file of readdirSync(directory)) {
-    if (file.endsWith(ending)) return file;
+    if (file.endsWith(ending)) result.push(file);
   }
-  return null;
+  return result;
 };
 
 const safeEnding = (file: string, ending: string): string => {
@@ -555,7 +556,7 @@ export = {
   ppVal,
   interpolate,
   prepMobileRows,
-  fileWithEnding,
+  filesWithEnding,
   safeEnding,
   isRoot,
   flatEqual,

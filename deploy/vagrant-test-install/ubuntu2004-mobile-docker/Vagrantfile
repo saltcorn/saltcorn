@@ -44,9 +44,9 @@ Vagrant.configure("2") do |config|
       sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
       # add user saltcorn to docker group 
-      # and build the cordova-builder image
+      # and pull the capacitor-builder image
       sudo usermod -aG docker saltcorn
-      sudo -u saltcorn docker pull saltcorn/cordova-builder
+      sudo -u saltcorn docker pull saltcorn/capacitor-builder
 
       cd /home/saltcorn
       sudo -u saltcorn /home/saltcorn/.local/bin/saltcorn install-pack -n "Address book"

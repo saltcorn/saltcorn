@@ -92,9 +92,10 @@ export class MobileBuilder {
   appleTeamId?: string;
   provisioningProfile?: string;
   tenantAppName?: string;
-  keyStorePath?: string;
-  keyStoreAlias?: string;
-  keyStorePassword?: string;
+  keyStorePath: string;
+  keyStoreAlias: string;
+  keyStorePassword: string;
+  isUnsecureKeyStore: boolean;
   buildType: "debug" | "release";
 
   /**
@@ -131,9 +132,17 @@ export class MobileBuilder {
     this.user = cfg.user;
     this.provisioningProfile = cfg.provisioningProfile;
     this.tenantAppName = cfg.tenantAppName;
-    this.keyStorePath = cfg.keyStorePath;
-    this.keyStoreAlias = cfg.keyStoreAlias;
-    this.keyStorePassword = cfg.keyStorePassword;
+    if (cfg.keyStorePath && cfg.keyStoreAlias && cfg.keyStorePassword) {
+      this.keyStorePath = cfg.keyStorePath;
+      this.keyStoreAlias = cfg.keyStoreAlias;
+      this.keyStorePassword = cfg.keyStorePassword;
+      this.isUnsecureKeyStore = false;
+    } else {
+      this.keyStorePath = join(this.buildDir, "unsecure-default-key.jks");
+      this.keyStoreAlias = "unsecure-default-alias";
+      this.keyStorePassword = "unsecurepassw";
+      this.isUnsecureKeyStore = true;
+    }
     this.buildType = cfg.buildType;
   }
 
@@ -149,6 +158,11 @@ export class MobileBuilder {
         appVersion: this.appVersion,
         unsecureNetwork:
           this.serverURL.startsWith("http://") || !this.serverURL,
+        keystorePath: this.keyStorePath,
+        keystoreAlias: this.keyStoreAlias,
+        keystorePassword: this.keyStorePassword,
+        keystoreAliasPassword: this.keyStorePassword,
+        buildType: this.buildType,
       });
       if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
 
@@ -195,7 +209,7 @@ export class MobileBuilder {
         );
       resultCode = await createSqliteDb(this.buildDir);
       if (resultCode !== 0) return resultCode;
-      if (this.keyStorePath)
+      if (!this.isUnsecureKeyStore)
         copySync(
           this.keyStorePath,
           join(this.buildDir, basename(this.keyStorePath))
