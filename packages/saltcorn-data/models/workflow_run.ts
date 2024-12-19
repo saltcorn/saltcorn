@@ -458,7 +458,7 @@ class WorkflowRun {
   }
 
   async popReturnDirectives() {
-    const retVals: any = Object.create(null);
+    const retVals: any = {}; 
     allReturnDirectives.forEach((k) => {
       if (typeof this.context[k] !== "undefined") {
         retVals[k] = this.context[k];

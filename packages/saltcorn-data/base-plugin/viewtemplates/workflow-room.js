@@ -132,6 +132,9 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   await checkContext("notify_success", "success");
   await checkContext("error", "danger");
 
+  if (run.status === "Error") {
+    items.push(div({ class: `alert alert-danger`, role: "alert" }, run.error));
+  }
   // waiting look for form or output
   if (run.wait_info?.output) {
     items.push(div(run.wait_info.output));
