@@ -63,6 +63,16 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: { options: wfs.map((wf) => wf.name) },
+                sublabel:
+                  req.__("The workflow the user will be interacting with.") +
+                  " " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/actions/configure/\${workflow}\``,
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
               },
               {
                 name: "prev_runs",
