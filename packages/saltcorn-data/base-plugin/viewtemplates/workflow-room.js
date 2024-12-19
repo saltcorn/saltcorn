@@ -231,21 +231,23 @@ const run = async (
     const locale = req.getLocale();
     const runs = await WorkflowRun.find(
       { trigger_id: trigger.id },
-      { limit: 10, orderBy: "status_updated_at", orderDesc: true }
+      { limit: 10, orderBy: "started_at", orderDesc: true }
     );
     return div(
       { class: "row" },
       div(
         { class: "col-2 col-md-3 col-sm-4" },
         req.__("Previous runs"),
-        runs.map((run) =>
-          a(
-            {
-              href: `javascript:void(0)`,
-              onclick: `reload_embedded_view('${viewname}', 'id=${run.id}')`,
-              class: "text-nowrap d-block",
-            },
-            localeDateTime(run.status_updated_at, {}, locale)
+        runs.map((run1) =>
+          div(
+            a(
+              {
+                href: `javascript:void(0)`,
+                onclick: `reload_embedded_view('${viewname}', 'id=${run1.id}')`,
+                class: ["text-nowrap", run1.id == run.id && "fw-bold"],
+              },
+              localeDateTime(run1.started_at, {}, locale)
+            )
           )
         )
       ),
