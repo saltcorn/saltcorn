@@ -153,7 +153,7 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
   const form = new Form({
     action: `/view/${viewname}/submit_form`,
     xhrSubmit: true,
-    onSubmit: `$(this).closest('form').find('button').hide()`,
+    onSubmit: `$(this).closest('form').find('button').hide();setTimeout(()=>$(this).closest('form').find('input,select,textarea').prop('disabled', true),100);`,
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: "vert",
