@@ -228,14 +228,19 @@ const run = async (
         runs.map((run) =>
           a(
             {
-              href: `/view/${viewname}?id=${run.id}`,
+              href: `javascript:void(0)`,
+              onclick: `reload_embedded_view('${viewname}', 'id=${run.id}')`,
               class: "text-nowrap d-block",
             },
             localeDateTime(run.status_updated_at, {}, locale)
           )
         )
       ),
-      div({ class: "col-10 col-md-9 col-sm-8", id: `wfroom-${run.id}` }, prevItems, items)
+      div(
+        { class: "col-10 col-md-9 col-sm-8", id: `wfroom-${run.id}` },
+        prevItems,
+        items
+      )
     );
   }
   return div({ id: `wfroom-${run.id}` }, prevItems, items);
