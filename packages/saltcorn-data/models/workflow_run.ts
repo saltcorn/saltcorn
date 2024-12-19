@@ -104,8 +104,11 @@ class WorkflowRun {
    * @param {*} where
    * @returns {WorkflowRun}
    */
-  static async findOne(where: Where): Promise<WorkflowRun> {
-    const u = await db.selectMaybeOne("_sc_workflow_runs", where);
+  static async findOne(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<WorkflowRun> {
+    const u = await db.selectMaybeOne("_sc_workflow_runs", where, selectopts);
     return u ? new WorkflowRun(u) : u;
   }
 
@@ -216,6 +219,46 @@ class WorkflowRun {
         : 0,
       step_started_at: this.step_start || new Date(),
     });
+  }
+
+  async userFormFields(step0?: WorkflowStep) {
+    const step =
+      step0 ||
+      (await WorkflowStep.findOne({
+        trigger_id: this.trigger_id,
+        name: this.current_step,
+      }));
+    const qTypeToField = (q: any) => {
+      switch (q.qtype) {
+        case "Yes/No":
+          return {
+            type: "String",
+            attributes: { options: "Yes,No" },
+            fieldview: "radio_group",
+          };
+        case "Checkbox":
+          return { type: "Bool" };
+        case "Free text":
+          return { type: "String" };
+        case "Multiple choice":
+          return {
+            type: "String",
+            attributes: { options: q.options },
+            fieldview: "radio_group",
+          };
+        case "Integer":
+          return { type: "Integer" };
+        case "Float":
+          return { type: "Float" };
+        default:
+          return {};
+      }
+    };
+    return (step.configuration.user_form_questions || []).map((q: any) => ({
+      label: q.label,
+      name: q.var_name,
+      ...qTypeToField(q),
+    }));
   }
 
   async run({

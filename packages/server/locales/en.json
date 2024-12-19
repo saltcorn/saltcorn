@@ -1519,5 +1519,7 @@
 	"Submit": "Submit",
 	"OK": "OK",
 	"Step settings": "Step settings",
-	"Action settings": "Action settings"
+	"Action settings": "Action settings",
+	"Workflow": "Workflow",
+	"Previous runs": "Previous runs"
 }
