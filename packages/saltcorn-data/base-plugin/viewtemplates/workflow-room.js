@@ -14,6 +14,7 @@ const WorkflowStep = require("../../models/workflow_step");
 const {
   text,
   div,
+  a,
   h4,
   hr,
   button,
@@ -40,6 +41,7 @@ const db = require("../../db");
 const { getForm, fill_presets } = require("./viewable_fields");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const WorkflowTrace = require("../../models/workflow_trace");
+const { localeDateTime } = require("@saltcorn/markup/index");
 
 /**
  *
@@ -61,6 +63,11 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: { options: wfs.map((wf) => wf.name) },
+              },
+              {
+                name: "prev_runs",
+                label: "Show previous runs",
+                type: "Bool",
               },
             ],
           });
@@ -168,7 +175,7 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
 const run = async (
   table_id,
   viewname,
-  { workflow },
+  { workflow, prev_runs },
   state,
   { req, res, isPreview },
   { getRowQuery, updateQuery, optionsQuery }
@@ -207,7 +214,30 @@ const run = async (
   });
   const items = await getHtmlFromRun({ run, req, viewname });
   //look for error status
-
+  if (prev_runs) {
+    const locale = req.getLocale();
+    const runs = await WorkflowRun.find(
+      { trigger_id: trigger.id },
+      { limit: 10, orderBy: "status_updated_at", orderDesc: true }
+    );
+    return div(
+      { class: "row" },
+      div(
+        { class: "col-2 col-md-3 col-sm-4" },
+        req.__("Previous runs"),
+        runs.map((run) =>
+          a(
+            {
+              href: `/view/${viewname}?id=${run.id}`,
+              class: "text-nowrap d-block",
+            },
+            localeDateTime(run.status_updated_at, {}, locale)
+          )
+        )
+      ),
+      div({ class: "col-10 col-md-9 col-sm-8", id: `wfroom-${run.id}` }, prevItems, items)
+    );
+  }
   return div({ id: `wfroom-${run.id}` }, prevItems, items);
 };
 
