@@ -116,7 +116,7 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   await checkContext("error", "danger");
 
   // waiting look for form or output
-  if (run.wait_info.output) {
+  if (run.wait_info?.output) {
     items.push(div(run.wait_info.output));
     if (!noInteract)
       items.push(
@@ -127,7 +127,7 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
         )
       );
   }
-  if (run.wait_info.form) {
+  if (run.wait_info?.form) {
     const step = await WorkflowStep.findOne({
       trigger_id: run.trigger_id,
       name: run.current_step,
@@ -170,23 +170,30 @@ const run = async (
   viewname,
   { workflow },
   state,
-  { req, res },
+  { req, res, isPreview },
   { getRowQuery, updateQuery, optionsQuery }
 ) => {
   const trigger = await Trigger.findOne({ name: workflow });
   let run;
   let prevItems = [];
-  if (state.id) {
-    run = await WorkflowRun.findOne({ id: state.id });
-    if (run.started_by != req.user?.id && req.user?.role_id != 1)
-      return "Not authorized";
-    if (trigger.configuration.save_traces) {
-      const traces = await WorkflowTrace.find(
-        { run_id: run.id },
-        { orderBy: "step_started_at" }
-      );
-      prevItems = await getHtmlFromTraces({ run, req, viewname, traces });
-    }
+  if (state.id || isPreview) {
+    run = isPreview
+      ? await WorkflowRun.findOne(
+          { trigger_id: trigger.id },
+          { limit: 1, orderBy: "id", orderDesc: true }
+        )
+      : await WorkflowRun.findOne({ id: state.id });
+    if (run) {
+      if (run.started_by != req.user?.id && req.user?.role_id != 1)
+        return "Not authorized";
+      if (trigger.configuration.save_traces) {
+        const traces = await WorkflowTrace.find(
+          { run_id: run.id },
+          { orderBy: "step_started_at" }
+        );
+        prevItems = await getHtmlFromTraces({ run, req, viewname, traces });
+      }
+    } else if (!isPreview) return "Run not found";
   } else
     run = await WorkflowRun.create({
       trigger_id: trigger.id,

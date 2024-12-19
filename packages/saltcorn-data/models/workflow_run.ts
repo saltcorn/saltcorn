@@ -104,8 +104,11 @@ class WorkflowRun {
    * @param {*} where
    * @returns {WorkflowRun}
    */
-  static async findOne(where: Where): Promise<WorkflowRun> {
-    const u = await db.selectMaybeOne("_sc_workflow_runs", where);
+  static async findOne(
+    where: Where,
+    selectopts?: SelectOptions
+  ): Promise<WorkflowRun> {
+    const u = await db.selectMaybeOne("_sc_workflow_runs", where, selectopts);
     return u ? new WorkflowRun(u) : u;
   }
 
