@@ -1608,7 +1608,7 @@ const mkForm = (
     form.onSubmit || form.xhrSubmit
       ? ` onsubmit="${form.onSubmit || ""}${
           form.xhrSubmit && !isMobile
-            ? `;ajaxSubmitForm(this, false, event)`
+            ? `;ajaxSubmitForm(this, true, event)`
             : ""
         }"`
       : ""
