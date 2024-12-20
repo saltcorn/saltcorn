@@ -145,7 +145,7 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
     let out = run.wait_info.output;
     if (run.wait_info.markdown) out = md.render(out);
     items.push(div(out));
-    if (!noInteract) submit_ajax;
+    if (!noInteract) submit_ajax = true;
   }
   if (run.wait_info?.form) {
     const step = await WorkflowStep.findOne({
