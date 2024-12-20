@@ -628,13 +628,24 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       });
 
       for (const field of cfgFields) {
-        const cfgFld = {
-          ...field,
-          showIf: {
-            wf_action_name: name,
-            ...(field.showIf || {}),
-          },
-        };
+        if (field.name === "columns") console.log(field);
+        let cfgFld;
+        if (field.isRepeat)
+          cfgFld = new FieldRepeat({
+            ...field,
+            showIf: {
+              wf_action_name: name,
+              ...(field.showIf || {}),
+            },
+          });
+        else
+          cfgFld = {
+            ...field,
+            showIf: {
+              wf_action_name: name,
+              ...(field.showIf || {}),
+            },
+          };
         if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
         actionConfigFields.push(cfgFld);
       }
