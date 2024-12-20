@@ -31,20 +31,26 @@ const allReturnDirectives = [
 ];
 
 const data_output_to_html = (val: any) => {
-  if (Array.isArray(val)) {
+  if (Array.isArray(val) && typeof val[0] === "object") {
     let keysSet = new Set();
     val.forEach((v) => {
       if (typeof v === "object")
         keysSet = new Set([...keysSet, ...Object.keys(v)]);
     });
-    if (keysSet.size > 0) {
-      const hdrs = [...keysSet].map((k) => ({
-        label: k as string,
-        key: k as string,
-      }));
-      return mkTable(hdrs, val);
-    }
+    const hdrs = [...keysSet].map((k) => ({
+      label: k as string,
+      key: k as string,
+    }));
+    return mkTable(hdrs, val);
   }
+  if (typeof val === "object") {
+    const hdrs = Object.keys(val).map((k) => ({
+      label: k as string,
+      key: k as string,
+    }));
+    return mkTable(hdrs, [val], { transpose: true });
+  }
+  return JSON.stringify(val);
 };
 
 /**
