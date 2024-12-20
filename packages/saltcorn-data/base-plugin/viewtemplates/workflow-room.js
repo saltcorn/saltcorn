@@ -42,6 +42,8 @@ const { getForm, fill_presets } = require("./viewable_fields");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const WorkflowTrace = require("../../models/workflow_trace");
 const { localeDateTime } = require("@saltcorn/markup/index");
+const MarkdownIt = require("markdown-it"),
+  md = new MarkdownIt();
 
 /**
  *
@@ -114,6 +116,7 @@ const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
 };
 const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   let items = [];
+  let submit_ajax = false;
   const checkContext = async (key, alertType) => {
     if (run.context[key]) {
       items.push(
@@ -125,9 +128,11 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
       if (!noInteract) {
         delete run.context[key];
         await run.update({ context: run.context });
+        submit_ajax = true;
       }
     }
   };
+
   await checkContext("notify", "info");
   await checkContext("notify_success", "success");
   await checkContext("error", "danger");
@@ -137,15 +142,10 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   }
   // waiting look for form or output
   if (run.wait_info?.output) {
-    items.push(div(run.wait_info.output));
-    if (!noInteract)
-      items.push(
-        script(
-          domReady(
-            `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${run.id}});`
-          )
-        )
-      );
+    let out = run.wait_info.output;
+    if (run.wait_info.markdown) out = md.render(out);
+    items.push(div(out));
+    if (!noInteract) submit_ajax;
   }
   if (run.wait_info?.form) {
     const step = await WorkflowStep.findOne({
@@ -163,6 +163,14 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
       });
     }
     items.push(renderForm(form, req.csrfToken()));
+  } else if (submit_ajax && !noInteract) {
+    items.push(
+      script(
+        domReady(
+          `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${run.id}});`
+        )
+      )
+    );
   }
   return items;
 };
@@ -222,7 +230,7 @@ const run = async (
     });
   await run.run({
     user: req.user,
-    interactive: true,
+    //interactive: true,
     trace: trigger.configuration?.save_traces,
   });
   const items = await getHtmlFromRun({ run, req, viewname });
