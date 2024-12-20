@@ -139,7 +139,7 @@ test.describe('E2E Test Suite', () => {
         await functions.create_New_Page('Filtered_page');
         await page.waitForTimeout(2000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
-        await customAssert('Select NewView_List in view to show dropdown', async () => {
+        await customAssert('Select NewView_List in view to show dropdown1', async () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2list, { force: true });
         });
@@ -264,7 +264,7 @@ test.describe('E2E Test Suite', () => {
         await functions.create_New_Page('Fixed_state');
         await page.waitForTimeout(2000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
-        await customAssert('Select NewView_List in view to show dropdown', async () => {
+        await customAssert('Select NewView_List in view to show dropdown2', async () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2list, { force: true });
         });

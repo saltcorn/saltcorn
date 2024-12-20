@@ -1698,43 +1698,12 @@ router.post(
 );
 
 const getWorkflowStepUserForm = async (run, trigger, step, req) => {
-  const qTypeToField = (q) => {
-    switch (q.qtype) {
-      case "Yes/No":
-        return {
-          type: "String",
-          attributes: { options: "Yes,No" },
-          fieldview: "radio_group",
-        };
-      case "Checkbox":
-        return { type: "Bool" };
-      case "Free text":
-        return { type: "String" };
-      case "Multiple choice":
-        return {
-          type: "String",
-          attributes: { options: q.options },
-          fieldview: "radio_group",
-        };
-      case "Integer":
-        return { type: "Integer" };
-      case "Float":
-        return { type: "Float" };
-      default:
-        return {};
-    }
-  };
-
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
-    fields: (step.configuration.user_form_questions || []).map((q) => ({
-      label: q.label,
-      name: q.var_name,
-      ...qTypeToField(q),
-    })),
+    fields: await run.userFormFields(step),
   });
   return form;
 };

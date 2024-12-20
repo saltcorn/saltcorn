@@ -141,28 +141,29 @@ const formRowWrap = (
           hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
         ) + mkSubLabelAndHelp(hdr)
       : [
-          div(
-            {
-              class: [
-                hdr.type?.name === "Bool" &&
-                  isHoriz(fStyle) &&
-                  labelCols &&
-                  `col-${labelCols} text-end`,
-                hdr.type?.name !== "Bool" &&
-                  isHoriz(fStyle) &&
-                  labelCols &&
-                  `col-sm-${labelCols} text-md-end`,
-                labelCols === 0 && "d-none",
-              ],
-            },
-            label(
+          hdr.label !== " " &&
+            div(
               {
-                for: `input${text_attr(hdr.form_name)}`,
+                class: [
+                  hdr.type?.name === "Bool" &&
+                    isHoriz(fStyle) &&
+                    labelCols &&
+                    `col-${labelCols} text-end`,
+                  hdr.type?.name !== "Bool" &&
+                    isHoriz(fStyle) &&
+                    labelCols &&
+                    `col-sm-${labelCols} text-md-end`,
+                  labelCols === 0 && "d-none",
+                ],
               },
-              text(hdr.label)
+              label(
+                {
+                  for: `input${text_attr(hdr.form_name)}`,
+                },
+                text(hdr.label)
+              ),
+              hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
             ),
-            hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
-          ),
           div(
             {
               class: [
@@ -1380,7 +1381,9 @@ const renderFormLayout = (form: Form): string => {
 
       if (isNode && !form.req?.smr) {
         const submitAttr = form.xhrSubmit
-          ? `onClick="${spinnerStr}ajaxSubmitForm(this)" type="button"`
+          ? `onClick="${spinnerStr}${
+              form.onSubmit ? `${form.onSubmit};` : ""
+            }ajaxSubmitForm(this)" type="button"`
           : 'type="submit"';
         return mkBtn(submitAttr);
       }
@@ -1460,10 +1463,17 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     });
   }
   const hasValues = Object.keys(extraValues).length > 0;
+  const isMobile = !isNode || form.req?.smr;
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
-    form.onSubmit ? ` onsubmit="${form.onSubmit}" ` : ""
+    form.onSubmit || form.xhrSubmit
+      ? ` onsubmit="${form.onSubmit || ""}${
+          form.xhrSubmit && !isMobile
+            ? `;ajaxSubmitForm(this, false, event)`
+            : ""
+        }" `
+      : ""
   }${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   } class="form-namespace ${form.class || ""}" method="${
@@ -1587,6 +1597,7 @@ const mkForm = (
   errors: any = {}
 ): string => {
   const hasFile = form.fields.some((f: any) => f.multipartFormData);
+  const isMobile = !isNode || form.req?.smr;
   const csrfField =
     csrfToken === false
       ? ""
@@ -1594,7 +1605,13 @@ const mkForm = (
   const top = `<form data-viewname="${form.viewname}" ${
     form.id ? `id="${form.id}" ` : ""
   }action="${buildActionAttribute(form)}"${
-    form.onSubmit ? ` onsubmit="${form.onSubmit}"` : ""
+    form.onSubmit || form.xhrSubmit
+      ? ` onsubmit="${form.onSubmit || ""}${
+          form.xhrSubmit && !isMobile
+            ? `;ajaxSubmitForm(this, true, event)`
+            : ""
+        }"`
+      : ""
   } ${
     form.onChange ? ` onchange="${form.onChange}"` : ""
   }class="form-namespace ${form.class || ""}" method="${
@@ -1629,7 +1646,9 @@ const mkForm = (
         : form.xhrSubmit
         ? `<button type="button" class="btn ${
             form.submitButtonClass || "btn-primary"
-          }" onClick="ajaxSubmitForm(this, true)">${text(
+          }" onClick="${
+            form.onSubmit ? `${form.onSubmit};` : ""
+          }ajaxSubmitForm(this, true)">${text(
             form.submitLabel || "Save"
           )}</button>`
         : `<button type="submit" class="btn ${
