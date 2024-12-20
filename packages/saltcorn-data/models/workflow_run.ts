@@ -371,7 +371,11 @@ class WorkflowRun {
           );
           await this.update({
             status: "Waiting",
-            wait_info: { output, user_id: user?.id },
+            wait_info: {
+              output,
+              user_id: user?.id,
+              markdown: step.configuration.markdown,
+            },
           });
           if (trace) this.createTrace(step.name, user);
 
@@ -458,7 +462,7 @@ class WorkflowRun {
   }
 
   async popReturnDirectives() {
-    const retVals: any = {}; 
+    const retVals: any = {};
     allReturnDirectives.forEach((k) => {
       if (typeof this.context[k] !== "undefined") {
         retVals[k] = this.context[k];
