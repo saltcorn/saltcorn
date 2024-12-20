@@ -181,7 +181,7 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
   const form = new Form({
     action: `/view/${viewname}/submit_form`,
     xhrSubmit: true,
-    onSubmit: `$(this).closest('form').find('button').hide();setTimeout(()=>$(this).closest('form').find('input,select,textarea').prop('disabled', true),100);`,
+    onSubmit: `$(this).closest('form').find('button').hide();$('#wfroom-spin-${run.id}').show();setTimeout(()=>$(this).closest('form').find('input,select,textarea').prop('disabled', true),100);`,
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: "vert",
@@ -263,13 +263,15 @@ const run = async (
         )
       ),
       div(
-        { class: "col-10 col-md-9 col-sm-8", id: `wfroom-${run.id}` },
-        prevItems,
-        items
+        { class: "col-10 col-md-9 col-sm-8" },
+        div({ id: `wfroom-${run.id}` }, prevItems, items),
+        div(
+          { id: `wfroom-spin-${run.id}`, style: { display: "none" } },
+          i({ class: "fas fa-spinner fa-spin" })
+        )
       )
     );
-  }
-  return div({ id: `wfroom-${run.id}` }, prevItems, items);
+  } else return div(div({ id: `wfroom-${run.id}` }, prevItems, items));
 };
 
 const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
@@ -294,7 +296,7 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
       success: "ok",
       eval_js: `$('#wfroom-${run.id}').append(${JSON.stringify(
         items.join("")
-      )})`,
+      )});$('#wfroom-spin-${run.id}').hide()`,
     },
   };
 };
