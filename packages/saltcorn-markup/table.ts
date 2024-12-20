@@ -31,8 +31,8 @@ namespace TableExports {
   export type HeadersParams = {
     label: string;
     key: string | Function;
-    width: string;
-    align: string;
+    width?: string;
+    align?: string;
   };
 
   export type OptsParams = {

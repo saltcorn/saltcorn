@@ -14,6 +14,7 @@ import Expression from "./expression";
 import Notification from "./notification";
 import utils from "../utils";
 import moment from "moment";
+import { mkTable } from "@saltcorn/markup/index";
 const { ensure_final_slash, interpolate } = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
@@ -28,6 +29,23 @@ const allReturnDirectives = [
   "notify_success",
   "error",
 ];
+
+const data_output_to_html = (val: any) => {
+  if (Array.isArray(val)) {
+    let keysSet = new Set();
+    val.forEach((v) => {
+      if (typeof v === "object")
+        keysSet = new Set([...keysSet, ...Object.keys(v)]);
+    });
+    if (keysSet.size > 0) {
+      const hdrs = [...keysSet].map((k) => ({
+        label: k as string,
+        key: k as string,
+      }));
+      return mkTable(hdrs, val);
+    }
+  }
+};
 
 /**
  * WorkflowRun Class
@@ -264,11 +282,13 @@ class WorkflowRun {
   async run({
     user,
     interactive,
+    noNotifications,
     api_call,
     trace,
   }: {
     user?: User;
     interactive?: boolean;
+    noNotifications?: boolean;
     api_call?: boolean;
     trace?: boolean;
   }) {
@@ -337,7 +357,7 @@ class WorkflowRun {
               `User id expression in step ${step.name}`
             );
           } else user_id = user?.id;
-          if (user_id) {
+          if (user_id && !interactive && !noNotifications) {
             //TODO send notification
             const base_url = state.getConfig("base_url", "");
             await Notification.create({
@@ -375,6 +395,28 @@ class WorkflowRun {
               output,
               user_id: user?.id,
               markdown: step.configuration.markdown,
+            },
+          });
+          if (trace) this.createTrace(step.name, user);
+
+          if (interactive) {
+            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+          }
+          step = null;
+          break;
+        }
+        if (step.action_name === "DataOutput") {
+          const output_val = eval_expression(
+            step.configuration.output_expr,
+            this.context,
+            user,
+            `Data output expression in step ${step.name}`
+          );
+          await this.update({
+            status: "Waiting",
+            wait_info: {
+              output: data_output_to_html(output_val),
+              user_id: user?.id,
             },
           });
           if (trace) this.createTrace(step.name, user);

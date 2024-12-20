@@ -659,6 +659,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "SetContext",
       "TableQuery",
       "Output",
+      "DataOutput",
       "WaitUntil",
       "WaitNextTick",
       "UserForm",
@@ -722,6 +723,15 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     type: "String",
     fieldview: "textarea",
     showIf: { wf_action_name: "Output" },
+  });
+  actionConfigFields.push({
+    label: "Output expression",
+    name: "output_expr",
+    sublabel:
+      "JavaScript expression for the value to output. Typically the name of a variable",
+    type: "String",
+    class: "validate-expression",
+    showIf: { wf_action_name: "DataOutput" },
   });
   actionConfigFields.push({
     label: "Markdown",

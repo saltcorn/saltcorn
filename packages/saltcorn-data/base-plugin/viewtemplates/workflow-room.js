@@ -233,7 +233,7 @@ const run = async (
     });
   await run.run({
     user: req.user,
-    //interactive: true,
+    noNotifications: true,
     trace: trigger.configuration?.save_traces,
   });
   const items = await getHtmlFromRun({ run, req, viewname });
@@ -285,7 +285,7 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
   await run.provide_form_input(form.values);
   await run.run({
     user: req.user,
-    interactive: true,
+    noNotifications: true,
     trace: trigger.configuration?.save_traces,
   });
   const items = await getHtmlFromRun({ run, req, viewname });
