@@ -938,7 +938,8 @@ function build_mobile_app(button) {
     data: params,
     success: (data) => {
       if (data.build_dir_name) {
-        handleMessages();
+        notifyAlert("Building the app, please wait.", true);
+        for (const msg of data.msgs || []) notifyAlert(msg);
         const orginalBtnHtml = $("#buildMobileAppBtnId").html();
         press_store_button(button);
         poll_mobile_build_finished(data.build_dir_name, 0, orginalBtnHtml);

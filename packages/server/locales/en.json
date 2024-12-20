@@ -1519,5 +1519,6 @@
 	"Submit": "Submit",
 	"OK": "OK",
 	"Step settings": "Step settings",
-	"Action settings": "Action settings"
+	"Action settings": "Action settings",
+	"Keystore file is not applied for debug builds.": "Keystore file is not applied for debug builds."
 }
