@@ -221,7 +221,10 @@ const run = async (
         );
         prevItems = await getHtmlFromTraces({ run, req, viewname, traces });
       }
-    } else if (!isPreview) return "Run not found";
+    } else {
+      if (!isPreview) return "Run not found";
+      else return "No runs yet";
+    }
   } else
     run = await WorkflowRun.create({
       trigger_id: trigger.id,
