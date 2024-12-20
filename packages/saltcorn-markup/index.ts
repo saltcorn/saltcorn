@@ -217,13 +217,15 @@ const localeTime = (
   options: any = { hour: "2-digit", minute: "2-digit" },
   locale: string = "en"
 ): string =>
-  time(
-    {
-      datetime: date.toISOString(),
-      "locale-time-options": encodeURIComponent(JSON.stringify(options)),
-    },
-    date.toLocaleTimeString(locale || "en", options)
-  );
+  date
+    ? time(
+        {
+          datetime: date.toISOString(),
+          "locale-time-options": encodeURIComponent(JSON.stringify(options)),
+        },
+        date.toLocaleTimeString(locale || "en", options)
+      )
+    : "";
 
 /**
  * @param date
@@ -235,13 +237,15 @@ const localeDateTime = (
   options: any = {},
   locale: string = "en"
 ): string =>
-  time(
-    {
-      datetime: date.toISOString(),
-      "locale-options": encodeURIComponent(JSON.stringify(options)),
-    },
-    date.toLocaleString(locale || "en", options)
-  );
+  date
+    ? time(
+        {
+          datetime: date.toISOString(),
+          "locale-options": encodeURIComponent(JSON.stringify(options)),
+        },
+        date.toLocaleString(locale || "en", options)
+      )
+    : "";
 
 /**
  * @param date
@@ -253,13 +257,15 @@ const localeDate = (
   options: any = {},
   locale: string = "en"
 ): string =>
-  time(
-    {
-      datetime: date.toISOString(),
-      "locale-date-options": encodeURIComponent(JSON.stringify(options)),
-    },
-    date.toLocaleDateString(locale || "en", options)
-  );
+  date
+    ? time(
+        {
+          datetime: date.toISOString(),
+          "locale-date-options": encodeURIComponent(JSON.stringify(options)),
+        },
+        date.toLocaleDateString(locale || "en", options)
+      )
+    : "";
 const badge = (col: string, lbl: string): string =>
   `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
 

@@ -1514,6 +1514,10 @@ router.get(
       [
         { label: "Trigger", key: (run) => trNames[run.trigger_id] },
         { label: "Started", key: (run) => localeDateTime(run.started_at) },
+        {
+          label: "Updated",
+          key: (run) => localeDateTime(run.status_updated_at),
+        },
         { label: "Status", key: "status" },
         {
           label: "",

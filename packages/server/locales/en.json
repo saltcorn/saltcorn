@@ -1521,5 +1521,6 @@
 	"Step settings": "Step settings",
 	"Action settings": "Action settings",
 	"Workflow": "Workflow",
-	"Previous runs": "Previous runs"
+	"Previous runs": "Previous runs",
+	"The workflow the user will be interacting with.": "The workflow the user will be interacting with."
 }
