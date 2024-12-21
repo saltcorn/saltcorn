@@ -521,7 +521,7 @@ function genWorkflowDiagram(steps) {
         }
       if (!found) {
         linkLines.push(
-          `  ${step.name}-- Missing next step in ${step.name} ---_End_${step.name}`
+          `  ${step.name}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.name}</a> ---_End_${step.name}`
         );
         nodeLines.push(
           `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
