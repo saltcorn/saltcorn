@@ -469,6 +469,10 @@ div.unread-notify {
   color: inherit;
 }
 
+i.add-btw-nodes {
+  cursor: pointer;
+}
+
 .link-style {
   cursor: pointer;
   text-decoration: underline;
@@ -605,16 +609,18 @@ button.monospace-copy-btn {
   display: block;
 }
 
-i[class^="unicode-"], i[class*=" unicode-"] {
+i[class^="unicode-"],
+i[class*=" unicode-"] {
   font-style: normal;
 }
 
-.tabulator.table-dark:not(.thead-light) .tabulator-footer, .tabulator.table-dark:not(.thead-light) .tabulator-footer .tabulator-col {
+.tabulator.table-dark:not(.thead-light) .tabulator-footer,
+.tabulator.table-dark:not(.thead-light) .tabulator-footer .tabulator-col {
   background-color: #212529;
   border-color: #32383e;
   color: #fff;
 }
 
 .mobile-toast-margin {
-  margin-bottom: 1.0rem
+  margin-bottom: 1rem;
 }

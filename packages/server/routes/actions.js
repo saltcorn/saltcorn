@@ -509,7 +509,9 @@ function genWorkflowDiagram(steps) {
         `  ${step.name} --> ${step.configuration.for_loop_step_name}`
       );
     } else if (stepNames.includes(step.next_step)) {
-      linkLines.push(`  ${step.name} --> ${step.next_step}`);
+      linkLines.push(
+        `  ${step.name}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.next_step}`
+      );
     } else if (step.next_step) {
       for (const otherStep of stepNames)
         if (step.next_step.includes(otherStep))
@@ -576,6 +578,14 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   const ns = $("g.node");
   if(!ns.length) setTimeout(tryAddWFNodes, 200)
   else {
+    $("i.add-btw-nodes").on("click", (e)=>{
+      const $e = $(e.target || e);
+      const cls = $e.attr('class');
+      const idnext = cls.split(" ").find(c=>c.startsWith("btw-nodes-")).
+          substr(10);
+      const [idprev, nmnext] = idnext.split("-");
+      location.href = '/actions/stepedit/${trigger.id}?after_step='+idprev+'&before_step='+nmnext;
+    })
     $("g.node").on("click", (e)=>{
        const $e = $(e.target || e).closest("g.node")
        const cls = $e.attr('class')
@@ -591,7 +601,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
        } else if(cls.includes("wfadd")) {
          const id = cls.split(" ").find(c=>c.startsWith("wfadd")).
           substr(5);
-       location.href = '/actions/stepedit/${trigger.id}?after_step='+id;
+         location.href = '/actions/stepedit/${trigger.id}?after_step='+id;
        }
       //console.log($e.attr('class'), id)
      })
@@ -1543,8 +1553,7 @@ router.post(
           id: _after_step,
           trigger_id,
         });
-        if (astep)
-          await astep.update({ next_step: step.name });
+        if (astep) await astep.update({ next_step: step.name });
       }
     } catch (e) {
       const emsg =
