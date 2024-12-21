@@ -870,8 +870,8 @@ const getWorkflowStepForm = async (
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
-    onChange: "saveAndContinueIfValid(this)",
-    submitLabel: req.__("Done"),
+    onChange: step_id ? "saveAndContinueIfValid(this)" : undefined,
+    submitLabel: step_id ? req.__("Done") : undefined,
     additionalButtons: step_id
       ? [
           {
