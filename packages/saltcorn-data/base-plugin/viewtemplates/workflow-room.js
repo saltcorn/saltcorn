@@ -42,6 +42,8 @@ const { getForm, fill_presets } = require("./viewable_fields");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const WorkflowTrace = require("../../models/workflow_trace");
 const { localeDateTime } = require("@saltcorn/markup/index");
+const MarkdownIt = require("markdown-it"),
+  md = new MarkdownIt();
 
 /**
  *
@@ -63,6 +65,16 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: { options: wfs.map((wf) => wf.name) },
+                sublabel:
+                  req.__("The workflow the user will be interacting with.") +
+                  " " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/actions/configure/\${workflow}\``,
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
               },
               {
                 name: "prev_runs",
@@ -104,6 +116,7 @@ const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
 };
 const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   let items = [];
+  let submit_ajax = false;
   const checkContext = async (key, alertType) => {
     if (run.context[key]) {
       items.push(
@@ -115,24 +128,24 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
       if (!noInteract) {
         delete run.context[key];
         await run.update({ context: run.context });
+        submit_ajax = true;
       }
     }
   };
+
   await checkContext("notify", "info");
   await checkContext("notify_success", "success");
   await checkContext("error", "danger");
 
+  if (run.status === "Error") {
+    items.push(div({ class: `alert alert-danger`, role: "alert" }, run.error));
+  }
   // waiting look for form or output
   if (run.wait_info?.output) {
-    items.push(div(run.wait_info.output));
-    if (!noInteract)
-      items.push(
-        script(
-          domReady(
-            `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${run.id}});`
-          )
-        )
-      );
+    let out = run.wait_info.output;
+    if (run.wait_info.markdown) out = md.render(out);
+    items.push(div(out));
+    if (!noInteract) submit_ajax = true;
   }
   if (run.wait_info?.form) {
     const step = await WorkflowStep.findOne({
@@ -150,6 +163,14 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
       });
     }
     items.push(renderForm(form, req.csrfToken()));
+  } else if (submit_ajax && !noInteract) {
+    items.push(
+      script(
+        domReady(
+          `ajax_post_json("/view/${viewname}/submit_form", {run_id: ${run.id}});`
+        )
+      )
+    );
   }
   return items;
 };
@@ -160,7 +181,7 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
   const form = new Form({
     action: `/view/${viewname}/submit_form`,
     xhrSubmit: true,
-    onSubmit: `$(this).closest('form').find('button').hide();setTimeout(()=>$(this).closest('form').find('input,select,textarea').prop('disabled', true),100);`,
+    onSubmit: `$(this).closest('form').find('button').hide();$('#wfroom-spin-${run.id}').show();setTimeout(()=>$(this).closest('form').find('input,select,textarea').prop('disabled', true),100);`,
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: "vert",
@@ -200,7 +221,10 @@ const run = async (
         );
         prevItems = await getHtmlFromTraces({ run, req, viewname, traces });
       }
-    } else if (!isPreview) return "Run not found";
+    } else {
+      if (!isPreview) return "Run not found";
+      else return "No runs yet";
+    }
   } else
     run = await WorkflowRun.create({
       trigger_id: trigger.id,
@@ -209,7 +233,7 @@ const run = async (
     });
   await run.run({
     user: req.user,
-    interactive: true,
+    noNotifications: true,
     trace: trigger.configuration?.save_traces,
   });
   const items = await getHtmlFromRun({ run, req, viewname });
@@ -218,27 +242,36 @@ const run = async (
     const locale = req.getLocale();
     const runs = await WorkflowRun.find(
       { trigger_id: trigger.id },
-      { limit: 10, orderBy: "status_updated_at", orderDesc: true }
+      { limit: 10, orderBy: "started_at", orderDesc: true }
     );
     return div(
       { class: "row" },
       div(
         { class: "col-2 col-md-3 col-sm-4" },
         req.__("Previous runs"),
-        runs.map((run) =>
-          a(
-            {
-              href: `/view/${viewname}?id=${run.id}`,
-              class: "text-nowrap d-block",
-            },
-            localeDateTime(run.status_updated_at, {}, locale)
+        runs.map((run1) =>
+          div(
+            a(
+              {
+                href: `javascript:void(0)`,
+                onclick: `reload_embedded_view('${viewname}', 'id=${run1.id}')`,
+                class: ["text-nowrap", run1.id == run.id && "fw-bold"],
+              },
+              localeDateTime(run1.started_at, {}, locale)
+            )
           )
         )
       ),
-      div({ class: "col-10 col-md-9 col-sm-8", id: `wfroom-${run.id}` }, prevItems, items)
+      div(
+        { class: "col-10 col-md-9 col-sm-8" },
+        div({ id: `wfroom-${run.id}` }, prevItems, items),
+        div(
+          { id: `wfroom-spin-${run.id}`, style: { display: "none" } },
+          i({ class: "fas fa-spinner fa-spin" })
+        )
+      )
     );
-  }
-  return div({ id: `wfroom-${run.id}` }, prevItems, items);
+  } else return div(div({ id: `wfroom-${run.id}` }, prevItems, items));
 };
 
 const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
@@ -254,7 +287,7 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
   await run.provide_form_input(form.values);
   await run.run({
     user: req.user,
-    interactive: true,
+    noNotifications: true,
     trace: trigger.configuration?.save_traces,
   });
   const items = await getHtmlFromRun({ run, req, viewname });
@@ -263,7 +296,7 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
       success: "ok",
       eval_js: `$('#wfroom-${run.id}').append(${JSON.stringify(
         items.join("")
-      )})`,
+      )});$('#wfroom-spin-${run.id}')[0].scrollIntoView();$('#wfroom-spin-${run.id}').hide()`,
     },
   };
 };

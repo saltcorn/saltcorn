@@ -22,6 +22,8 @@ const WorkflowRun = require("@saltcorn/data/models/workflow_run");
 const WorkflowTrace = require("@saltcorn/data/models/workflow_trace");
 const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
+const MarkdownIt = require("markdown-it"),
+  md = new MarkdownIt();
 
 /**
  * @type {object}
@@ -626,13 +628,23 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       });
 
       for (const field of cfgFields) {
-        const cfgFld = {
-          ...field,
-          showIf: {
-            wf_action_name: name,
-            ...(field.showIf || {}),
-          },
-        };
+        let cfgFld;
+        if (field.isRepeat)
+          cfgFld = new FieldRepeat({
+            ...field,
+            showIf: {
+              wf_action_name: name,
+              ...(field.showIf || {}),
+            },
+          });
+        else
+          cfgFld = {
+            ...field,
+            showIf: {
+              wf_action_name: name,
+              ...(field.showIf || {}),
+            },
+          };
         if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
         actionConfigFields.push(cfgFld);
       }
@@ -646,6 +658,7 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "SetContext",
       "TableQuery",
       "Output",
+      "DataOutput",
       "WaitUntil",
       "WaitNextTick",
       "UserForm",
@@ -708,6 +721,23 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       "Message shown to the user. Can contain HTML tags and use interpolations {{ }} to access the context",
     type: "String",
     fieldview: "textarea",
+    showIf: { wf_action_name: "Output" },
+  });
+  actionConfigFields.push({
+    label: "Output expression",
+    name: "output_expr",
+    sublabel:
+      "JavaScript expression for the value to output. Typically the name of a variable",
+    type: "String",
+    class: "validate-expression",
+    showIf: { wf_action_name: "DataOutput" },
+  });
+  actionConfigFields.push({
+    label: "Markdown",
+    name: "markdown",
+    sublabel:
+      "The centents are markdown formatted and should be rendered to HTML",
+    type: "Bool",
     showIf: { wf_action_name: "Output" },
   });
   actionConfigFields.push({
@@ -1514,6 +1544,10 @@ router.get(
       [
         { label: "Trigger", key: (run) => trNames[run.trigger_id] },
         { label: "Started", key: (run) => localeDateTime(run.started_at) },
+        {
+          label: "Updated",
+          key: (run) => localeDateTime(run.status_updated_at),
+        },
         { label: "Status", key: "status" },
         {
           label: "",
@@ -1698,10 +1732,12 @@ router.post(
 );
 
 const getWorkflowStepUserForm = async (run, trigger, step, req) => {
+  let blurb = run.wait_info.output || step.configuration?.form_header || "";
+  if (run.wait_info.markdown && run.wait_info.output) blurb = md.render(blurb);
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
-    blurb: run.wait_info.output || step.configuration?.form_header || "",
+    blurb,
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
     fields: await run.userFormFields(step),
   });

@@ -14,6 +14,7 @@ import Expression from "./expression";
 import Notification from "./notification";
 import utils from "../utils";
 import moment from "moment";
+import { mkTable } from "@saltcorn/markup/index";
 const { ensure_final_slash, interpolate } = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
@@ -29,6 +30,29 @@ const allReturnDirectives = [
   "error",
 ];
 
+const data_output_to_html = (val: any) => {
+  if (Array.isArray(val) && typeof val[0] === "object") {
+    let keysSet = new Set();
+    val.forEach((v) => {
+      if (typeof v === "object")
+        keysSet = new Set([...keysSet, ...Object.keys(v)]);
+    });
+    const hdrs = [...keysSet].map((k) => ({
+      label: k as string,
+      key: k as string,
+    }));
+    return mkTable(hdrs, val);
+  }
+  if (typeof val === "object") {
+    const hdrs = Object.keys(val).map((k) => ({
+      label: k as string,
+      key: k as string,
+    }));
+    return mkTable(hdrs, [val], { transpose: true });
+  }
+  return JSON.stringify(val);
+};
+
 /**
  * WorkflowRun Class
  * @category saltcorn-data
@@ -39,7 +63,7 @@ class WorkflowRun {
   context: any;
   wait_info?: any;
   started_at: Date;
-  status_updated_at: Date;
+  status_updated_at?: Date;
   started_by?: number;
   error?: string;
   session_id?: string;
@@ -61,7 +85,7 @@ class WorkflowRun {
     this.wait_info =
       typeof o.wait_info === "string" ? JSON.parse(o.wait_info) : o.wait_info;
     this.started_at = o.started_at || new Date();
-    this.status_updated_at = o.status_updated_at || new Date();
+    this.status_updated_at = o.status_updated_at;
     this.started_by = o.started_by;
     this.session_id = o.session_id;
     this.error = o.error;
@@ -264,11 +288,13 @@ class WorkflowRun {
   async run({
     user,
     interactive,
+    noNotifications,
     api_call,
     trace,
   }: {
     user?: User;
     interactive?: boolean;
+    noNotifications?: boolean;
     api_call?: boolean;
     trace?: boolean;
   }) {
@@ -337,7 +363,7 @@ class WorkflowRun {
               `User id expression in step ${step.name}`
             );
           } else user_id = user?.id;
-          if (user_id) {
+          if (user_id && !interactive && !noNotifications) {
             //TODO send notification
             const base_url = state.getConfig("base_url", "");
             await Notification.create({
@@ -371,7 +397,33 @@ class WorkflowRun {
           );
           await this.update({
             status: "Waiting",
-            wait_info: { output, user_id: user?.id },
+            wait_info: {
+              output,
+              user_id: user?.id,
+              markdown: step.configuration.markdown,
+            },
+          });
+          if (trace) this.createTrace(step.name, user);
+
+          if (interactive) {
+            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+          }
+          step = null;
+          break;
+        }
+        if (step.action_name === "DataOutput") {
+          const output_val = eval_expression(
+            step.configuration.output_expr,
+            this.context,
+            user,
+            `Data output expression in step ${step.name}`
+          );
+          await this.update({
+            status: "Waiting",
+            wait_info: {
+              output: data_output_to_html(output_val),
+              user_id: user?.id,
+            },
           });
           if (trace) this.createTrace(step.name, user);
 
@@ -458,7 +510,7 @@ class WorkflowRun {
   }
 
   async popReturnDirectives() {
-    const retVals: any = Object.create(null);
+    const retVals: any = {};
     allReturnDirectives.forEach((k) => {
       if (typeof this.context[k] !== "undefined") {
         retVals[k] = this.context[k];
