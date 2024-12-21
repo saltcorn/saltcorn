@@ -513,9 +513,19 @@ function genWorkflowDiagram(steps) {
         `  ${step.name}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.next_step}`
       );
     } else if (step.next_step) {
+      let found = false;
       for (const otherStep of stepNames)
-        if (step.next_step.includes(otherStep))
+        if (step.next_step.includes(otherStep)) {
           linkLines.push(`  ${step.name} --> ${otherStep}`);
+          found = true;
+        }
+      if (!found) {
+        linkLines.push(`  ${step.name}-- Missing next step in ${step.name} ---_End_${step.name}`);
+        nodeLines.push(
+          `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+        );
+        
+      }
     } else if (!step.next_step) {
       linkLines.push(`  ${step.name} --> _End_${step.name}`);
       nodeLines.push(
