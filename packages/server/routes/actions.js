@@ -541,7 +541,7 @@ function genWorkflowDiagram(steps) {
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  console.log(fc);
+  //console.log(fc);
 
   return fc;
 }
@@ -580,7 +580,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
        const $e = $(e.target || e).closest("g.node")
        const cls = $e.attr('class')
        if(!cls) return;      
-       console.log(cls)
+       //console.log(cls)
        if(cls.includes("wfstep")) {
        const id = cls.split(" ").find(c=>c.startsWith("wfstep")).
           substr(6);
@@ -630,7 +630,13 @@ const jsIdentifierValidator = (s) => {
   if (badc) return `Character ${badc} not allowed`;
 };
 
-const getWorkflowStepForm = async (trigger, req, step_id) => {
+const getWorkflowStepForm = async (
+  trigger,
+  req,
+  step_id,
+  after_step,
+  before_step
+) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   const actionExplainers = {};
 
@@ -909,6 +915,9 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
     ],
   });
   form.hidden("wf_step_id");
+  form.hidden("_after_step");
+  if (before_step) form.values.wf_next_step = before_step;
+  if (after_step) form.values._after_step = after_step;
   if (step_id) {
     const step = await WorkflowStep.findOne({ id: step_id });
     if (!step) throw new Error("Step not found");
@@ -1419,9 +1428,15 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
-    const { initial_step, name } = req.query;
+    const { initial_step, after_step, before_step } = req.query;
     const trigger = await Trigger.findOne({ id: trigger_id });
-    const form = await getWorkflowStepForm(trigger, req, step_id);
+    const form = await getWorkflowStepForm(
+      trigger,
+      req,
+      step_id,
+      after_step,
+      before_step
+    );
 
     if (initial_step) form.values.wf_initial_step = true;
     if (!step_id) {
@@ -1487,6 +1502,7 @@ router.post(
       wf_initial_step,
       wf_only_if,
       wf_step_id,
+      _after_step,
       ...configuration
     } = form.values;
     Object.entries(configuration).forEach(([k, v]) => {
@@ -1521,6 +1537,14 @@ router.post(
           req.flash("success", req.__("Step saved"));
           res.redirect(`/actions/configure/${step.trigger_id}`);
         }
+      }
+      if (_after_step) {
+        const astep = await WorkflowStep.findOne({
+          id: _after_step,
+          trigger_id,
+        });
+        if (astep)
+          await astep.update({ next_step: step.name });
       }
     } catch (e) {
       const emsg =
