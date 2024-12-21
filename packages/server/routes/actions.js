@@ -528,8 +528,14 @@ function genWorkflowDiagram(steps) {
     }
     step_ix += 1;
   }
+  if (!steps.length || !steps.find((s) => s.initial_step)) {
+    linkLines.push(`  _Start --> _End`);
+    nodeLines.unshift(`  _End:::wfaddstart@{ shape: circle, label: "<small>+Add</small>" }`);
+  }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
+    console.log(fc);
+    
   return fc;
 }
 
@@ -566,10 +572,17 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     $("g.node").on("click", (e)=>{
        const $e = $(e.target || e).closest("g.node")
        const cls = $e.attr('class')
-       if(!cls || !cls.includes("wfstep")) return;
+       if(!cls) return;      
+       console.log(cls)
+       if(cls.includes("wfstep")) {
        const id = cls.split(" ").find(c=>c.startsWith("wfstep")).
           substr(6);
        location.href = '/actions/stepedit/${trigger.id}/'+id;
+       }
+       if(cls.includes("wfaddstart")) {
+         location.href = '/actions/stepedit/${trigger.id}?initial_step=true';
+       } else if(cls.includes("wfadd")) {
+       }
       //console.log($e.attr('class'), id)
      })
   }
