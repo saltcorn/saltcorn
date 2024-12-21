@@ -228,7 +228,7 @@ export function isHtmlFile() {
   return iframe.getAttribute("is-html-file") === "true";
 }
 
-async function reload() {
+export async function reload() {
   const currentRoute = currentLocation();
   if (!currentRoute) await gotoEntryView();
   await handleRoute(currentRoute, currentQuery(true));

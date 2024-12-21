@@ -1993,9 +1993,6 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
     $("#entryPointTypeID").attr("value", type);
   }
   
-  function handleMessages() {
-    notifyAlert("Building the app, please wait.", true)
-  }
   const versionPattern = /^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$/;
   ${domReady(`
   const versionInput = document.getElementById('appVersionInputId');
@@ -3222,6 +3219,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     getState().log(2, `starting mobile build: ${JSON.stringify(req.body)}`);
+    const msgs = [];
     let {
       entryPoint,
       entryPointType,
@@ -3286,7 +3284,18 @@ router.post(
         ),
       });
     }
-    if (keystoreFile && (!keystoreAlias || !keystorePassword)) {
+    if (buildType === "debug" && keystoreFile) {
+      msgs.push({
+        type: "warning",
+        text: req.__("Keystore file is not applied for debug builds."),
+      });
+    }
+
+    if (
+      buildType === "release" &&
+      keystoreFile &&
+      (!keystoreAlias || !keystorePassword)
+    ) {
       return res.json({
         error: req.__(
           "Please provide the keystore alias and password for the android build."
@@ -3350,7 +3359,7 @@ router.post(
       spawnParams.push("--androidKeystorePassword", keystorePassword);
     // end http call, return the out directory name
     // the gui polls for results
-    res.json({ build_dir_name: outDirName });
+    res.json({ build_dir_name: outDirName, msgs });
     const child = spawn(getSafeSaltcornCmd(), spawnParams, {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",

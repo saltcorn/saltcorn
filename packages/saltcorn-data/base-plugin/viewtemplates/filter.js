@@ -53,6 +53,7 @@ const {
   asyncMap,
   getSessionId,
   mergeIntoWhere,
+  isWeb,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -256,7 +257,7 @@ const run = async (
   { columns, layout },
   state,
   extra,
-  { distinctValuesQuery }
+  { distinctValuesQuery, optionsQuery }
 ) => {
   //console.log(columns);
   //console.log(layout);
@@ -360,7 +361,7 @@ const run = async (
         false,
         undefined,
         extra.req.user ? { ...state, user_id: extra.req.user } : state,
-        undefined,
+        isWeb(extra.req) ? undefined : optionsQuery,
         undefined,
         undefined,
         extra.req.user || { role_id: 100 }
@@ -830,6 +831,21 @@ module.exports = {
     res,
     exttable_name,
   }) => ({
+    async optionsQuery(
+      reftable_name,
+      type,
+      attributes,
+      whereWithExisting,
+      user
+    ) {
+      return await Field.select_options_query(
+        reftable_name,
+        type === "File" ? attributes.select_file_where : whereWithExisting,
+        attributes,
+        undefined,
+        user
+      );
+    },
     async actionQuery(state, rndid) {
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === rndid && rndid
