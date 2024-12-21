@@ -549,7 +549,7 @@ function genWorkflowDiagram(steps) {
   if (!steps.length || !steps.find((s) => s.initial_step)) {
     linkLines.push(`  _Start --> _End`);
     nodeLines.push(
-      `  _End:::wfaddstart@{ shape: circle, label: "<small>+Add</small>" }`
+      `  _End:::wfaddstart@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
     );
   }
   const fc =
