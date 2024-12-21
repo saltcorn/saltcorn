@@ -520,11 +520,12 @@ function genWorkflowDiagram(steps) {
           found = true;
         }
       if (!found) {
-        linkLines.push(`  ${step.name}-- Missing next step in ${step.name} ---_End_${step.name}`);
+        linkLines.push(
+          `  ${step.name}-- Missing next step in ${step.name} ---_End_${step.name}`
+        );
         nodeLines.push(
           `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
         );
-        
       }
     } else if (!step.next_step) {
       linkLines.push(`  ${step.name} --> _End_${step.name}`);
@@ -724,6 +725,8 @@ const getWorkflowStepForm = async (
   actionExplainers.TableQuery = "Query a table into a variable in the context";
   actionExplainers.Output =
     "Display a message to the user. Pause workflow until the message is read.";
+  actionExplainers.DataOutput =
+    "Display a value to the user. Arrays of objects will be displayed as tables. Pause workflow until the message is read.";
   actionExplainers.WaitUntil = "Pause until a time in the future";
   actionExplainers.WaitNextTick =
     "Pause until the next scheduler invocation (at most 5 minutes)";
