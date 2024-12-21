@@ -514,6 +514,11 @@ function genWorkflowDiagram(steps) {
       for (const otherStep of stepNames)
         if (step.next_step.includes(otherStep))
           linkLines.push(`  ${step.name} --> ${otherStep}`);
+    } else if (!step.next_step) {
+      linkLines.push(`  ${step.name} --> _End_${step.name}`);
+      nodeLines.push(
+        `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<small>+Add</small>" }`
+      );
     }
     if (step.action_name === "EndForLoop") {
       // TODO this is not correct. improve.
@@ -530,12 +535,14 @@ function genWorkflowDiagram(steps) {
   }
   if (!steps.length || !steps.find((s) => s.initial_step)) {
     linkLines.push(`  _Start --> _End`);
-    nodeLines.unshift(`  _End:::wfaddstart@{ shape: circle, label: "<small>+Add</small>" }`);
+    nodeLines.push(
+      `  _End:::wfaddstart@{ shape: circle, label: "<small>+Add</small>" }`
+    );
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-    console.log(fc);
-    
+  console.log(fc);
+
   return fc;
 }
 
@@ -582,6 +589,9 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
        if(cls.includes("wfaddstart")) {
          location.href = '/actions/stepedit/${trigger.id}?initial_step=true';
        } else if(cls.includes("wfadd")) {
+         const id = cls.split(" ").find(c=>c.startsWith("wfadd")).
+          substr(5);
+       location.href = '/actions/stepedit/${trigger.id}?after_step='+id;
        }
       //console.log($e.attr('class'), id)
      })
