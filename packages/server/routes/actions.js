@@ -625,7 +625,7 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
         href: `/actions/stepedit/${trigger.id}${
           initial_step ? "" : "?initial_step=true"
         }`,
-        class: "btn btn-primary",
+        class: "btn btn-secondary",
       },
       i({ class: "fas fa-plus me-2" }),
       "Add step"
