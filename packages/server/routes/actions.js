@@ -628,7 +628,6 @@ const getWorkflowStepForm = async (trigger, req, step_id) => {
       });
 
       for (const field of cfgFields) {
-        if (field.name === "columns") console.log(field);
         let cfgFld;
         if (field.isRepeat)
           cfgFld = new FieldRepeat({
