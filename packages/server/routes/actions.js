@@ -519,7 +519,7 @@ function genWorkflowDiagram(steps) {
     } else if (!step.next_step) {
       linkLines.push(`  ${step.name} --> _End_${step.name}`);
       nodeLines.push(
-        `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<small>+Add</small>" }`
+        `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
       );
     }
     if (step.action_name === "EndForLoop") {
