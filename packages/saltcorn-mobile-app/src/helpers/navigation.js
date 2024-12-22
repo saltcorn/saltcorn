@@ -336,12 +336,12 @@ export async function replaceIframeInnerContent(content) {
 }
 
 export function splitPathQuery(url) {
-  let path = url;
-  let query = undefined;
-  const queryStart = url.indexOf("?");
-  if (queryStart > 0) {
-    path = url.substring(0, queryStart);
-    query = url.substring(queryStart);
-  }
-  return { path, query };
+  const urlObj =
+    url.startsWith("http://") || url.startsWith("https://")
+      ? new URL(url)
+      : new URL(`http://${url}`);
+  const path = url.split("?")[0];
+  const query = urlObj.search?.substring(1);
+  const hash = urlObj.hash?.substring(1);
+  return { path, query, hash };
 }

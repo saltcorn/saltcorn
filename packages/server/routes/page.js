@@ -68,13 +68,13 @@ const runPage = async (page, req, res, tic) => {
           no_menu: page.attributes?.no_menu,
           requestFluidLayout: page.attributes?.request_fluid_layout,
         } || `${page.name} page`,
-        add_edit_bar({
+        req.smr ? contents : add_edit_bar({
           role,
           title: page.name,
           what: req.__("Page"),
           url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
           contents,
-        })
+        }),
       );
   } else {
     getState().log(2, `Page ${page.name} not authorized`);
