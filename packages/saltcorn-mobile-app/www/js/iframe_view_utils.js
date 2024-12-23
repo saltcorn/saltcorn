@@ -333,6 +333,8 @@ async function set_state_fields(kvs, disablePjax, e) {
     if (disablePjax)
       await parent.saltcorn.mobileApp.navigation.handleRoute(path, queryStr);
     else await pjax_to(path, queryStr, e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -383,6 +385,8 @@ async function set_state_field(key, value, e) {
     const { path, query } =
       parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
     await pjax_to(path, updateQueryStringParameter(query, key, value), e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -395,6 +399,8 @@ async function unset_state_field(key, e) {
     const { path, query } =
       parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
     await pjax_to(path, removeQueryStringParameter(query, key), e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -623,6 +629,8 @@ async function select_id(id, e) {
     const { path, query } =
       parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
     await pjax_to(path, updateQueryStringParameter(query, "id", id), e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -641,6 +649,8 @@ async function check_state_field(that, e) {
       ? updateQueryStringParameter(query, name, value)
       : removeQueryStringParameter(query, name);
     await pjax_to(path, newQuery, e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -662,6 +672,8 @@ async function clear_state(omit_fields_str, e) {
       }
     }
     await pjax_to(path, newQuery, e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
