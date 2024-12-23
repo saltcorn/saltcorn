@@ -139,18 +139,20 @@ router.get(
           : contents0;
       res.sendWrap(
         title,
-        add_edit_bar({
-          role,
-          title: view.name,
-          what: req.__("View"),
-          url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
-          cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}`,
-          contents,
-          req,
-          view,
-          viewtemplate: view.viewtemplate,
-          table: view.table_id || view.exttable_name,
-        })
+        !req.smr
+          ? add_edit_bar({
+              role,
+              title: view.name,
+              what: req.__("View"),
+              url: `/viewedit/edit/${encodeURIComponent(view.name)}`,
+              cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}`,
+              contents,
+              req,
+              view,
+              viewtemplate: view.viewtemplate,
+              table: view.table_id || view.exttable_name,
+            })
+          : contents
       );
     }
   })
