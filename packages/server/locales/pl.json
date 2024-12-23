@@ -1508,5 +1508,20 @@
 	"Workflow runs": "Przepływ pracy jest uruchomiony",
 	"Workflow run": "Uruchomienie przepływu pracy",
 	"Share to enabled": "Udostępnij włączone",
-	"Enable the share to feature": "Włącz udostępnianie funkcji"
+	"Enable the share to feature": "Włącz udostępnianie funkcji",
+  "Allocate new row": "Przydziel nowy wiersz",
+  "If the view is run without existing row, allocate a new row on load. Defaults must be set on all required fields.": "Jeśli widok jest uruchamiany bez istniejącego wiersza, przydziel nowy wiersz podczas ładowania. Domyślne wartości muszą być ustawione na wszystkich wymaganych polach.",
+  "Step traces": "Ślady kroków",
+  "Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty.": "Wprowadź wersję w formacie 'x.y.z' (np. 0.0.1 z liczbami od 0 do 999) lub pozostaw puste.",
+  "Delete unchanged": "Usuń bez zmian",
+  "Delete allocated row if there are no changes.": "Usuń przydzielony wiersz, jeśli nie wprowadzono żadnych zmian.",
+  "Triggers on table": "Wyzwalacze na tabeli",
+  "Please provide the keystore alias and password for the android build.": "Podaj alias i hasło do keystore dla kompilacji Android.",
+  "Submit": "Prześlij",
+  "OK": "OK",
+  "Step settings": "Ustawienia kroku",
+  "Action settings": "Ustawienia akcji",
+  "Workflow": "Przepływ pracy",
+  "Previous runs": "Poprzednie uruchomienia",
+  "The workflow the user will be interacting with.": "Przepływ pracy, z którym użytkownik będzie wchodził w interakcję."
 }
