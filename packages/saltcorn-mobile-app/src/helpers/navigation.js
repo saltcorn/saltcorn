@@ -336,6 +336,7 @@ export async function replaceIframeInnerContent(content) {
 }
 
 export function splitPathQuery(url) {
+  if (url === "/") return { path: "/", query: undefined, hash: undefined };
   const urlObj =
     url.startsWith("http://") || url.startsWith("https://")
       ? new URL(url)
