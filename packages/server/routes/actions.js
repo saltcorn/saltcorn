@@ -1561,7 +1561,7 @@ router.post(
           res.redirect(`/actions/configure/${step.trigger_id}`);
         }
       }
-      if (_after_step) {
+      if (_after_step && _after_step !== "undefined") {
         const astep = await WorkflowStep.findOne({
           id: _after_step,
           trigger_id,
