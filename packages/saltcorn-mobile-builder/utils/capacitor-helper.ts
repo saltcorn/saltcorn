@@ -24,6 +24,7 @@ export type CapacitorCfg = {
   buildType: "debug" | "release";
   appName: string;
   appVersion: string;
+  serverURL: string;
 
   useDocker?: boolean;
   keyStorePath: string;
@@ -41,6 +42,7 @@ export class CapacitorHelper {
   buildType: "debug" | "release";
   appName: string;
   appVersion: string;
+  serverURL: string;
 
   useDocker?: boolean;
   keyStoreFile: string;
@@ -59,6 +61,7 @@ export class CapacitorHelper {
     this.platforms = cfg.platforms;
     this.buildType = cfg.buildType || "debug";
     this.appName = cfg.appName;
+    this.serverURL = cfg.serverURL;
     this.appVersion = cfg.appVersion;
     this.useDocker = cfg.useDocker;
     this.keyStoreFile = basename(cfg.keyStorePath);
@@ -80,7 +83,7 @@ export class CapacitorHelper {
       if (this.isAndroid) {
         await modifyAndroidManifest(this.buildDir);
         writeDataExtractionRules(this.buildDir);
-        writeNetworkSecurityConfig(this.buildDir);
+        writeNetworkSecurityConfig(this.buildDir, this.serverURL);
         modifyGradleConfig(this.buildDir, this.appVersion);
         if (this.buildType === "release") this.capBuild();
         else {
@@ -156,6 +159,7 @@ export class CapacitorHelper {
   }
 
   private addPlatforms() {
+    console.log("add platforms");
     const addFn = (platform: string) => {
       let result = spawnSync("npm", ["install", `@capacitor/${platform}`], {
         cwd: this.buildDir,
@@ -190,6 +194,7 @@ export class CapacitorHelper {
   }
 
   private generateAssets() {
+    console.log("npx capacitor-assets generate");
     const result = spawnSync("npx", ["capacitor-assets", "generate"], {
       cwd: this.buildDir,
       maxBuffer: 1024 * 1024 * 10,
@@ -271,6 +276,7 @@ export class CapacitorHelper {
     ];
     spawnParams.push(this.buildType);
     spawnParams.push(this.appVersion);
+    spawnParams.push(this.serverURL);
     if (this.buildType === "release")
       spawnParams.push(
         this.keyStoreFile,
@@ -325,6 +331,7 @@ export class CapacitorHelper {
   }
 
   private capSync() {
+    console.log("npx cap sync");
     const result = spawnSync("npx", ["cap", "sync"], {
       cwd: this.buildDir,
       maxBuffer: 1024 * 1024 * 10,

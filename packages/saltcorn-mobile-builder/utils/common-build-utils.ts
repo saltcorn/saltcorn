@@ -49,6 +49,7 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
     "@capacitor/screen-orientation@6.0.3",
+    "@christianhugoch/web-share",
   ];
   result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
     cwd: buildDir,
@@ -106,14 +107,12 @@ const config: CapacitorConfig  = {
           : ""
       }
       releaseType: '${config.buildType === "release" ? "AAB" : "APK"}',
-    }
+    },
+    ${config.unsecureNetwork ? "allowMixedContent: true" : ""},
   },
   ${
     config.unsecureNetwork
-      ? `android: {
-    allowMixedContent: true,
-  },
-  server: {
+      ? `server: {
     cleartext: true,
     androidScheme: 'http',
     
@@ -163,6 +162,7 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
 }
 
 export async function modifyAndroidManifest(buildDir: string) {
+  console.log("modifyAndroidManifest");
   try {
     const androidManifest = join(
       buildDir,
@@ -188,6 +188,17 @@ export async function modifyAndroidManifest(buildDir: string) {
       "android:networkSecurityConfig": "@xml/network_security_config",
       "android:usesCleartextTraffic": "true",
     };
+    // add intent-filter for sharing
+    parsed.manifest.application[0].activity[0]["intent-filter"] = [
+      ...parsed.manifest.application[0].activity[0]["intent-filter"],
+      {
+        action: [{ $: { "android:name": "android.intent.action.SEND" } }],
+        category: [
+          { $: { "android:name": "android.intent.category.DEFAULT" } },
+        ],
+        data: [{ $: { "android:mimeType": "*/*" } }],
+      },
+    ];
 
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);
@@ -202,6 +213,7 @@ export async function modifyAndroidManifest(buildDir: string) {
 }
 
 export function writeDataExtractionRules(buildDir: string) {
+  console.log("writeDataExtractionRules");
   const dataExtractionRules = join(
     buildDir,
     "android",
@@ -234,6 +246,7 @@ export function writeDataExtractionRules(buildDir: string) {
 }
 
 export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
+  console.log("copyPrepopulatedDb", buildDir, platforms);
   if (platforms.includes("android")) {
     copySync(
       join(buildDir, "www", "scdb.sqlite"),
@@ -268,7 +281,16 @@ export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
   }
 }
 
-export function writeNetworkSecurityConfig(buildDir: string) {
+export function writeNetworkSecurityConfig(
+  buildDir: string,
+  serverPath: string
+) {
+  console.log("writeNetworkSecurityConfig");
+  let domain = serverPath;
+  if (domain.startsWith("http://")) domain = domain.substring(7);
+  if (domain.startsWith("https://")) domain = domain.substring(8);
+  if (domain.endsWith("/")) domain = domain.substring(0, domain.length - 1);
+  if (domain.includes(":")) domain = domain.substring(0, domain.indexOf(":"));
   const networkSecurityConfig = join(
     buildDir,
     "android",
@@ -284,7 +306,7 @@ export function writeNetworkSecurityConfig(buildDir: string) {
     `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">10.0.2.2</domain>
+    <domain includeSubdomains="true">${domain}</domain>
   </domain-config>
 </network-security-config>
   `
@@ -923,6 +945,7 @@ export function generateAndroidVersionCode(appVersion: string) {
 }
 
 export function modifyGradleConfig(buildDir: string, appVersion: string) {
+  console.log("modifyGradleConfig");
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
   const versionCode = generateAndroidVersionCode(appVersion);

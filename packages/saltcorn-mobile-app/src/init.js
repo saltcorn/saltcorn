@@ -22,12 +22,14 @@ import {
   gotoEntryView,
   addRoute,
 } from "./helpers/navigation.js";
+import { shareReceivedCallback } from "./helpers/common.js";
 
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
 import { jwtDecode } from "jwt-decode";
 
 import { Network } from "@capacitor/network";
+import { WebShare } from "@christianhugoch/web-share";
 
 async function addScript(scriptObj) {
   let waited = 0;
@@ -319,6 +321,8 @@ export async function init({
 
     state.mobileConfig.networkState = await Network.getStatus();
     Network.addListener("networkStatusChange", networkChangeCallback);
+    WebShare.addListener("shareReceived", shareReceivedCallback);
+
     const networkDisabled = state.mobileConfig.networkState === "none";
     const jwt = state.mobileConfig.jwt;
     const alerts = [];

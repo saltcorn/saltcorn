@@ -4,9 +4,10 @@ set -e
 
 BUILD_TYPE="$1"
 APP_VERSION="$2"
-KEYSTORE_FILE="$3"
-KEYSTORE_ALIAS="$4"
-KEYSTORE_PASSWORD="$5"
+SERVER_URL="$3"
+KEYSTORE_FILE="$4"
+KEYSTORE_ALIAS="$5"
+KEYSTORE_PASSWORD="$6"
 
 echo "BUILD_TYPE: $BUILD_TYPE"
 echo "APP_VERSION: $APP_VERSION"
@@ -53,7 +54,7 @@ cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/network_security_c
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">10.0.2.2</domain>
+    <domain includeSubdomains="true">$SERVER_URL</domain>
   </domain-config>
 </network-security-config>
 EOF

@@ -187,3 +187,28 @@ export function registerScreenOrientationListener(name, listener) {
 export async function getScreenOrientation() {
   return await ScreenOrientation.orientation();
 }
+
+export async function shareReceivedCallback(data) {
+  console.log("Received share data: ", data);
+  try {
+    const response = await apiCall({
+      method: "POST",
+      path: "/notifications/share-handler",
+      body: data,
+    });
+    console.log("Share data sent to server.");
+    console.log(response);
+    if (response.data.error) {
+      errorAlert(response.data.error);
+    } else {
+      showAlerts([
+        {
+          type: "success",
+          msg: "Shared: " + (data.title || data.text || data.url || ""),
+        },
+      ]);
+    }
+  } catch (error) {
+    errorAlert(error);
+  }
+}
