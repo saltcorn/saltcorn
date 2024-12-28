@@ -1190,6 +1190,7 @@ const features = {
   stringify_json_fields: true,
   dynamic_auth_parameters: true,
   capacitor: true,
+  workflows: true,
 };
 
 export = {
