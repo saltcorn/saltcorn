@@ -722,19 +722,12 @@ const getWorkflowStepForm = async (
       }
     } catch {}
   }
+  const builtInActionExplainers = WorkflowStep.builtInActionExplainers();
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
-    builtIns: [
-      "SetContext",
-      "TableQuery",
-      "Output",
-      "DataOutput",
-      "WaitUntil",
-      "WaitNextTick",
-      "UserForm",
-    ],
+    builtIns: Object.keys(builtInActionExplainers),
     forWorkflow: true,
   });
   const triggers = Trigger.find({
@@ -743,18 +736,7 @@ const getWorkflowStepForm = async (
   triggers.forEach((tr) => {
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
-  actionExplainers.SetContext = "Set variables in the context";
-  actionExplainers.TableQuery = "Query a table into a variable in the context";
-  actionExplainers.Output =
-    "Display a message to the user. Pause workflow until the message is read.";
-  actionExplainers.DataOutput =
-    "Display a value to the user. Arrays of objects will be displayed as tables. Pause workflow until the message is read.";
-  actionExplainers.WaitUntil = "Pause until a time in the future";
-  actionExplainers.WaitNextTick =
-    "Pause until the next scheduler invocation (at most 5 minutes)";
-  actionExplainers.UserForm =
-    "Ask a user one or more questions, pause until they are answered";
-
+  Object.assign(actionExplainers, builtInActionExplainers);
   actionConfigFields.push({
     label: "Form header",
     sublabel: "Text shown to the user at the top of the form",

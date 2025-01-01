@@ -184,6 +184,26 @@ class WorkflowStep {
       });
     }
   }
+  static builtInActionExplainers() {
+    const actionExplainers: any = {};
+    actionExplainers.SetContext = "Set variables in the context";
+    actionExplainers.TableQuery =
+      "Query a table into a variable in the context";
+    actionExplainers.Output =
+      "Display a message to the user. Pause workflow until the message is read.";
+    actionExplainers.DataOutput =
+      "Display a value to the user. Arrays of objects will be displayed as tables. Pause workflow until the message is read.";
+    actionExplainers.WaitUntil = "Pause until a time in the future";
+    actionExplainers.WaitNextTick =
+      "Pause until the next scheduler invocation (at most 5 minutes)";
+    actionExplainers.UserForm =
+      "Ask a user one or more questions, pause until they are answered";
+    return actionExplainers;
+  }
+
+  static builtInActionConfigFields() {
+    const actionConfigFields = {};
+  }
 }
 
 export = WorkflowStep;
