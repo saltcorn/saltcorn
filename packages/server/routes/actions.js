@@ -1606,6 +1606,27 @@ router.post(
 );
 
 router.post(
+  "/gen-copilot/:trigger_id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { trigger_id } = req.params;
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    await WorkflowStep.deleteForTrigger(trigger.id);
+    const description = req.body.description;
+    await Trigger.update(trigger.id, { description });
+    const steps = await getState().functions.copilot_generate_workflow.run(
+      description,
+      trigger.id
+    );
+    for (const step of steps) {
+      step.trigger_id = trigger.id;
+      await WorkflowStep.create(step);
+    }
+    res.redirect(`/actions/configure/${trigger.id}`);
+  })
+);
+
+router.post(
   "/delete-step/:step_id",
   isAdmin,
   error_catcher(async (req, res) => {
