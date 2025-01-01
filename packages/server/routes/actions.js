@@ -581,7 +581,29 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     ],
   });
   trigCfgForm.values = trigger.configuration;
+  let copilot_form = "";
+
+  if (getState().functions.copilot_generate_workflow) {
+    copilot_form = renderForm(
+      new Form({
+        action: `/actions/gen-copilot/${id}`,
+        values: { description: trigger.description || "" },
+        submitLabel: "Generate with copilot",
+        formStyle: "vert",
+        fields: [
+          {
+            name: "description",
+            label: "Description",
+            type: "String",
+            fieldview: "textarea",
+          },
+        ],
+      }),
+      req.csrfToken()
+    );
+  }
   return (
+    copilot_form +
     pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
     script(
       { defer: "defer" },
