@@ -1457,6 +1457,7 @@ router.post(
       description,
       trigger.id
     );
+    if (steps.length) steps[0].initial_step = true;
     for (const step of steps) {
       step.trigger_id = trigger.id;
       await WorkflowStep.create(step);
