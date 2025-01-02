@@ -11,7 +11,7 @@ const {
   addOnDoneRedirect,
   is_relative_url,
 } = require("./utils.js");
-const { ppVal } = require("@saltcorn/data/utils");
+const { ppVal, jsIdentifierValidator } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
@@ -663,16 +663,6 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
   );
 };
 
-const jsIdentifierValidator = (s) => {
-  if (!s) return "An identifier is required";
-  if (s.includes(" ")) return "Spaces not allowd";
-  let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
-    .split("")
-    .find((c) => s.includes(c));
-
-  if (badc) return `Character ${badc} not allowed`;
-};
-
 const getWorkflowStepForm = async (
   trigger,
   req,
@@ -737,140 +727,7 @@ const getWorkflowStepForm = async (
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
   Object.assign(actionExplainers, builtInActionExplainers);
-  actionConfigFields.push({
-    label: "Form header",
-    sublabel: "Text shown to the user at the top of the form",
-    name: "form_header",
-    type: "String",
-    showIf: { wf_action_name: "UserForm" },
-  });
-  actionConfigFields.push({
-    label: "User ID",
-    name: "user_id_expression",
-    type: "String",
-    sublabel: "Optional. If blank assigned to user starting the workflow",
-    showIf: { wf_action_name: "UserForm" },
-  });
-  actionConfigFields.push({
-    label: "Resume at",
-    name: "resume_at",
-    sublabel:
-      "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
-    type: "String",
-    showIf: { wf_action_name: "WaitUntil" },
-  });
-  actionConfigFields.push({
-    label: "Context values",
-    name: "ctx_values",
-    sublabel:
-      "JavaScript object expression for the variables to set. Example <code>{x: 5, y:y+1}</code> will set x to 5 and increment existing context variable y",
-    type: "String",
-    fieldview: "textarea",
-    class: "validate-expression",
-    default: "{}",
-    showIf: { wf_action_name: "SetContext" },
-  });
-  actionConfigFields.push({
-    label: "Output text",
-    name: "output_text",
-    sublabel:
-      "Message shown to the user. Can contain HTML tags and use interpolations {{ }} to access the context",
-    type: "String",
-    fieldview: "textarea",
-    showIf: { wf_action_name: "Output" },
-  });
-  actionConfigFields.push({
-    label: "Output expression",
-    name: "output_expr",
-    sublabel:
-      "JavaScript expression for the value to output. Typically the name of a variable",
-    type: "String",
-    class: "validate-expression",
-    showIf: { wf_action_name: "DataOutput" },
-  });
-  actionConfigFields.push({
-    label: "Markdown",
-    name: "markdown",
-    sublabel:
-      "The centents are markdown formatted and should be rendered to HTML",
-    type: "Bool",
-    showIf: { wf_action_name: "Output" },
-  });
-  actionConfigFields.push({
-    label: "Table",
-    name: "query_table",
-    type: "String",
-    required: true,
-    attributes: { options: (await Table.find()).map((t) => t.name) },
-    showIf: { wf_action_name: "TableQuery" },
-  });
-  actionConfigFields.push({
-    label: "Query",
-    name: "query_object",
-    sublabel: "Where object, example <code>{manager: 1}</code>",
-    type: "String",
-    required: true,
-    class: "validate-expression",
-    default: "{}",
-    showIf: { wf_action_name: "TableQuery" },
-  });
-  actionConfigFields.push({
-    label: "Variable",
-    name: "query_variable",
-    sublabel: "Context variable to write to query results to",
-    type: "String",
-    required: true,
-    validator: jsIdentifierValidator,
-    showIf: { wf_action_name: "TableQuery" },
-  });
-  actionConfigFields.push(
-    new FieldRepeat({
-      name: "user_form_questions",
-      showIf: { wf_action_name: "UserForm" },
-      fields: [
-        {
-          label: "Label",
-          name: "label",
-          type: "String",
-          sublabel:
-            "The text that will shown to the user above the input elements",
-        },
-        {
-          label: "Variable name",
-          name: "var_name",
-          type: "String",
-          sublabel:
-            "The answer will be set in the context with this variable name",
-          validator: jsIdentifierValidator,
-        },
-        {
-          label: "Input Type",
-          name: "qtype",
-          type: "String",
-          required: true,
-          attributes: {
-            options: [
-              "Yes/No",
-              "Checkbox",
-              "Free text",
-              "Multiple choice",
-              //"Multiple checks",
-              "Integer",
-              "Float",
-              //"File upload",
-            ],
-          },
-        },
-        {
-          label: "Options",
-          name: "options",
-          type: "String",
-          sublabel: "Comma separated list of multiple choice options",
-          showIf: { qtype: ["Multiple choice", "Multiple checks"] },
-        },
-      ],
-    })
-  );
+  actionConfigFields.push(...(await WorkflowStep.builtInActionConfigFields()));
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),

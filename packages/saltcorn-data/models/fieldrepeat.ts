@@ -9,6 +9,7 @@ import Field from "./field";
 import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_field";
 import { instanceOfType, SuccessMessage } from "@saltcorn/types/common_types";
 import type { Layout } from "@saltcorn/types/base_types";
+import type { FieldLike } from "@saltcorn/types/base_types";
 
 /**
  * FieldRepeat Class
@@ -18,7 +19,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   label: string;
   name: string;
   type: string;
-  fields: Array<Field>;
+  fields: Array<FieldLike>;
   layout?: Layout;
   isRepeat = true;
   showIf?: any;
@@ -53,8 +54,8 @@ class FieldRepeat implements AbstractFieldRepeat {
     var r: any = {};
     for (let index = 0; index < nrepeats; index++) {
       for (const f of this.fields) {
-        if (f.required || is.bool.generate()) {
-          r[`${f.name}_${index}`] = await f.generate();
+        if ((f as any).generate && (f.required || is.bool.generate())) {
+          r[`${f.name}_${index}`] = await (f as any).generate();
         }
       }
     }
@@ -110,7 +111,7 @@ namespace FieldRepeat {
   export type FieldRepeatCfg = {
     name: string;
     label?: string;
-    fields: Array<Field>;
+    fields: Array<FieldLike>;
     layout?: Layout;
     showIf?: any;
     metadata?: any;
