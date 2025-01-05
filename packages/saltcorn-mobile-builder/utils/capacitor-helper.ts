@@ -18,6 +18,8 @@ import {
   modifyXcodeProjectFile,
 } from "./common-build-utils";
 
+import type { IosCfg } from "../mobile-builder";
+
 export type CapacitorCfg = {
   buildDir: string;
   platforms: string[];
@@ -32,8 +34,7 @@ export type CapacitorCfg = {
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
 
-  appleTeamId?: string;
-  provisioningGUUID?: string;
+  iosParams?: IosCfg;
 };
 
 export class CapacitorHelper {
@@ -50,11 +51,9 @@ export class CapacitorHelper {
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
 
-  appleTeamId?: string;
-  provisioningGUUID?: string;
-
   isAndroid: boolean;
   isIOS: boolean;
+  iosParams?: IosCfg;
 
   constructor(cfg: CapacitorCfg) {
     this.buildDir = cfg.buildDir;
@@ -68,15 +67,13 @@ export class CapacitorHelper {
     this.keyStoreAlias = cfg.keyStoreAlias;
     this.keyStorePassword = cfg.keyStorePassword;
     this.isUnsecureKeyStore = cfg.isUnsecureKeyStore;
-    this.appleTeamId = cfg.appleTeamId;
-    this.provisioningGUUID = cfg.provisioningGUUID;
+    this.iosParams = cfg.iosParams;
     this.isAndroid = this.platforms.includes("android");
     this.isIOS = this.platforms.includes("ios");
   }
 
   public async buildApp() {
     if (!this.useDocker) {
-      this.addPlatforms();
       this.generateAssets();
       this.capSync();
       copyPrepopulatedDb(this.buildDir, this.platforms);
@@ -94,7 +91,7 @@ export class CapacitorHelper {
       }
     } else this.buildWithDocker();
     if (this.isIOS) {
-      modifyXcodeProjectFile(this.buildDir, this.appVersion);
+      modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
       writePodfile(this.buildDir);
       await modifyInfoPlist(this.buildDir);
       writePrivacyInfo(this.buildDir);
@@ -158,7 +155,7 @@ export class CapacitorHelper {
     }
   }
 
-  private addPlatforms() {
+  public addPlatforms() {
     console.log("add platforms");
     const addFn = (platform: string) => {
       let result = spawnSync("npm", ["install", `@capacitor/${platform}`], {
@@ -301,9 +298,9 @@ export class CapacitorHelper {
       let buffer = execSync(
         `xcodebuild -workspace ios/App/App.xcworkspace ` +
           `-scheme App -destination "generic/platform=iOS" ` +
-          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningGUUID}" ` +
+          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile.guuid}" ` +
           ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
-          ` DEVELOPMENT_TEAM="${this.appleTeamId}" `,
+          ` DEVELOPMENT_TEAM="${this.iosParams?.appleTeamId}" `,
         { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
       );
 
@@ -330,7 +327,7 @@ export class CapacitorHelper {
     }
   }
 
-  private capSync() {
+  public capSync() {
     console.log("npx cap sync");
     const result = spawnSync("npx", ["cap", "sync"], {
       cwd: this.buildDir,

@@ -20,7 +20,7 @@ import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
 import { available_languages } from "@saltcorn/data/models/config";
-
+import type { IosCfg } from "../mobile-builder";
 const resizer = require("resize-with-sharp-or-jimp");
 
 /**
@@ -447,15 +447,21 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
   }
 }
 
-export function prepareExportOptionsPlist(
-  buildDir: string,
-  appId: string,
-  provisioningProfile: string
-) {
+export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
+  console.log("prepareExportOptionsPlist", buildDir, appId, iosParams);
+  const buildShareExtBloock = () => {
+    if (!iosParams.shareExtensionProvisioningProfile) return "";
+    const teamId = iosParams.appleTeamId;
+    const shareExtIdentifier =
+      iosParams.shareExtensionProvisioningProfile.identifier;
+    return `<key>${shareExtIdentifier.replace(`${teamId}.`, "")}</key>
+            <string>${
+              iosParams.shareExtensionProvisioningProfile.guuid
+            }</string>`;
+  };
   try {
-    const exportOptionsPlist = join(buildDir, "ExportOptions.plist");
     writeFileSync(
-      exportOptionsPlist,
+      join(buildDir, "ExportOptions.plist"),
       `<?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE plist PUBLIC "~//Apple/DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
       <plist version="1.0">
@@ -465,7 +471,8 @@ export function prepareExportOptionsPlist(
           <key>provisioningProfiles</key>
           <dict>          
             <key>${appId}</key>
-            <string>${provisioningProfile}</string>
+            <string>${iosParams.mainProvisioningProfile.guuid}</string>
+            ${buildShareExtBloock()}
           </dict>
         </dict>
 
@@ -473,7 +480,7 @@ export function prepareExportOptionsPlist(
     );
   } catch (error: any) {
     console.log(
-      `Unable to set the provisioning profile '${provisioningProfile}': ${
+      `Unable to write the ExportOptionsPlist file: ${
         error.message ? error.message : "Unknown error"
       }`
     );
@@ -518,7 +525,11 @@ export async function decodeProvisioningProfile(
     const dict = parsed.plist.dict[0];
     const guuid = dict.string[dict.string.length - 1];
     const teamId = dict.array[0].string[0];
-    return { guuid, teamId };
+    const specifier = dict.string[1];
+    const identifier = dict.dict[0].string[0];
+    const result = { guuid, teamId, specifier, identifier };
+    console.log(result);
+    return result;
   } catch (error: any) {
     console.log(
       `Unable to decode the provisioning profile '${provisioningProfile}': ${
@@ -881,6 +892,7 @@ export function writePodfile(buildDir: string) {
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
     pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
+    pod 'ChristianhugochWebShare', :path => '../../node_modules/@christianhugoch/web-share'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
   end
@@ -913,11 +925,14 @@ export function writePodfile(buildDir: string) {
 }
 
 /**
- * replace the MARKETING_VERSION in project.pbxproj
  * @param buildDir
  * @param appVersion new app version
  */
-export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
+export function modifyXcodeProjectFile(
+  buildDir: string,
+  appVersion: string,
+  iosCfg: IosCfg
+) {
   const projectFile = join(
     buildDir,
     "ios",
@@ -925,12 +940,43 @@ export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
     "App.xcodeproj",
     "project.pbxproj"
   );
-  const content = readFileSync(projectFile, "utf8");
-  const newContent = content.replaceAll(
-    /MARKETING_VERSION = 1.0;/g,
+  let fileContent = readFileSync(projectFile, "utf8");
+  if (iosCfg.shareExtensionProvisioningProfile) {
+    const shareExtId =
+      iosCfg.shareExtensionProvisioningProfile.identifier.replace(
+        `${iosCfg.appleTeamId}.`,
+        ""
+      );
+    // modify debug/release blocks of the share extension target
+    for (const targetCfgBlock of fileContent.match(
+      new RegExp(`buildSettings = {[^}]*${shareExtId}[^}]*};`, "g")
+    ) || []) {
+      let newCfgBlock = targetCfgBlock
+        .replaceAll(/"CODE_SIGN_IDENTITY.*\n/g, "")
+        .replaceAll(/CODE_SIGN_STYLE.*\n/g, "")
+        .replaceAll(/DEVELOPMENT_TEAM.*\n/g, "")
+        .replaceAll(/"DEVELOPMENT_TEAM.*\n/g, "")
+        .replaceAll(/PROVISIONING_PROFILE_SPECIFIER.*\n/g, "")
+        .replaceAll(/"PROVISIONING_PROFILE_SPECIFIER.*\n/g, "")
+        // set new values
+        .replaceAll(
+          /MARKETING_VERSION = 1.0;/g,
+          `        MARKETING_VERSION = ${appVersion};
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+        CODE_SIGN_STYLE = Manual;
+        DEVELOPMENT_TEAM="";
+        "DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${iosCfg.appleTeamId};
+        PROVISIONING_PROFILE_SPECIFIER = "";
+        "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${iosCfg.shareExtensionProvisioningProfile.specifier}";`
+        );
+      fileContent = fileContent.replace(targetCfgBlock, newCfgBlock);
+    }
+  }
+  fileContent = fileContent.replace(
+    /MARKETING_VERSION = 1.0;/,
     `MARKETING_VERSION = ${appVersion};`
   );
-  writeFileSync(projectFile, newContent, "utf8");
+  writeFileSync(projectFile, fileContent, "utf8");
 }
 
 export function generateAndroidVersionCode(appVersion: string) {

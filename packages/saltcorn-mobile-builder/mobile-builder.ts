@@ -15,7 +15,6 @@ import {
   prepareBuildDir,
   prepareExportOptionsPlist,
   writeCapacitorConfig,
-  decodeProvisioningProfile,
   prepAppIcon,
 } from "./utils/common-build-utils";
 import {
@@ -30,6 +29,18 @@ import { removeNonWordChars } from "@saltcorn/data/utils";
 type EntryPointType = "view" | "page";
 const appIdDefault = "saltcorn.mobile.app";
 const appNameDefault = "SaltcornMobileApp";
+
+export type IosCfg = {
+  appleTeamId: string;
+  mainProvisioningProfile: {
+    guuid: string;
+  };
+  shareExtensionProvisioningProfile?: {
+    guuid: string;
+    specifier: string;
+    identifier: string;
+  };
+};
 
 type MobileBuilderConfig = {
   appName?: string;
@@ -53,8 +64,8 @@ type MobileBuilderConfig = {
   plugins: Plugin[];
   copyTargetDir?: string;
   user?: User;
-  appleTeamId?: string;
-  provisioningProfile?: string;
+  iosParams?: IosCfg;
+  allowShareTo?: boolean;
   tenantAppName?: string;
   keyStorePath?: string;
   keyStoreAlias?: string;
@@ -89,14 +100,15 @@ export class MobileBuilder {
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
   user?: User;
-  appleTeamId?: string;
-  provisioningProfile?: string;
+  allowShareTo: boolean;
   tenantAppName?: string;
   keyStorePath: string;
   keyStoreAlias: string;
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
   buildType: "debug" | "release";
+  iosParams?: IosCfg;
+  capacitorHelper: CapacitorHelper;
 
   /**
    *
@@ -130,7 +142,7 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
-    this.provisioningProfile = cfg.provisioningProfile;
+    this.allowShareTo = cfg.allowShareTo || false;
     this.tenantAppName = cfg.tenantAppName;
     if (cfg.keyStorePath && cfg.keyStoreAlias && cfg.keyStorePassword) {
       this.keyStorePath = cfg.keyStorePath;
@@ -144,12 +156,28 @@ export class MobileBuilder {
       this.isUnsecureKeyStore = true;
     }
     this.buildType = cfg.buildType;
+    this.iosParams = cfg.iosParams;
+    this.capacitorHelper = new CapacitorHelper({
+      ...this,
+      appVersion: this.appVersion,
+    });
   }
 
   /**
    *
    */
-  async build() {
+  async fullBuild() {
+    try {
+      let resultCode = await this.prepareStep();
+      if (resultCode !== 0) return resultCode;
+      else return await this.finishStep();
+    } catch (error: any) {
+      console.error(error);
+      return 1;
+    }
+  }
+
+  async prepareStep() {
     try {
       prepareBuildDir(this.buildDir, this.templateDir);
       writeCapacitorConfig(this.buildDir, {
@@ -164,31 +192,21 @@ export class MobileBuilder {
         keystoreAliasPassword: this.keyStorePassword,
         buildType: this.buildType,
       });
-      if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
+      this.capacitorHelper.addPlatforms();
+      return 0;
+    } catch (e: any) {
+      console.error(e);
+      return 1;
+    }
+  }
 
-      let iosParams = null;
-      if (this.platforms.includes("ios")) {
-        iosParams = await decodeProvisioningProfile(
-          this.buildDir,
-          this.provisioningProfile!
-        );
-        prepareExportOptionsPlist(this.buildDir, this.appId, iosParams.guuid);
-      }
+  async finishStep() {
+    try {
+      if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
       copyServerFiles(this.buildDir);
       copySbadmin2Deps(this.buildDir);
       await copySiteLogo(this.buildDir);
       copyTranslationFiles(this.buildDir);
-      writeCfgFile({
-        buildDir: this.buildDir,
-        entryPoint: this.entryPoint,
-        entryPointType: this.entryPointType,
-        serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
-        localUserTables: this.localUserTables,
-        synchedTables: this.synchedTables,
-        tenantAppName: this.tenantAppName,
-        autoPublicLogin: this.autoPublicLogin,
-        allowOfflineMode: this.allowOfflineMode,
-      });
       let resultCode = await bundlePackagesAndPlugins(
         this.buildDir,
         this.plugins
@@ -214,21 +232,23 @@ export class MobileBuilder {
           this.keyStorePath,
           join(this.buildDir, basename(this.keyStorePath))
         );
-      const capacitorHelper = new CapacitorHelper({
-        ...this,
-        appVersion: this.appVersion,
-        appleTeamId: iosParams?.teamId,
-        provisioningGUUID: iosParams?.guuid,
-      });
-      await capacitorHelper.buildApp();
-      if (resultCode === 0 && this.copyTargetDir) {
-        capacitorHelper.tryCopyAppFiles(
+      if (this.platforms.includes("ios")) {
+        prepareExportOptionsPlist({
+          buildDir: this.buildDir,
+          appId: this.appId,
+          iosParams: this.iosParams,
+        });
+      }
+      await this.capacitorHelper.buildApp();
+      // if (resultCode === 0 && this.copyTargetDir) {
+      if (this.copyTargetDir) {
+        this.capacitorHelper.tryCopyAppFiles(
           this.copyTargetDir,
           this.user!,
           this.appName
         );
       }
-      return 0;
+      return resultCode;
     } catch (e: any) {
       console.error(e);
       return 1;

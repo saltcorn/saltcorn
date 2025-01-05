@@ -2,7 +2,10 @@ const { Command, Flags } = require("@oclif/core");
 const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
-const { init_multi_tenant } = require("@saltcorn/data/db/state");
+const {
+  decodeProvisioningProfile,
+} = require("@saltcorn/mobile-builder/utils/common-build-utils");
+const { init_multi_tenant, getState } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const User = require("@saltcorn/data/models/user");
 
@@ -39,8 +42,13 @@ class BuildAppCommand extends Command {
       );
     }
 
-    if (flags.platforms.includes("ios") && !flags.provisioningProfile) {
-      throw new Error("Please specify a provisioning profile");
+    if (flags.platforms.includes("ios")) {
+      if (!flags.provisioningProfile)
+        throw new Error("Please specify a provisioning profile");
+      if (flags.allowShareTo && !flags.shareExtensionProvisioningProfile)
+        throw new Error(
+          "Please specify a share extension provisioning profile"
+        );
     }
   }
 
@@ -60,6 +68,34 @@ class BuildAppCommand extends Command {
     return Array.from(pluginsMap.values());
   }
 
+  async buildIosParams(flags) {
+    let result = undefined;
+    if (flags.platforms.includes("ios")) {
+      const mainProfileVals = await decodeProvisioningProfile(
+        flags.buildDirectory,
+        flags.provisioningProfile
+      );
+      result = {
+        appleTeamId: mainProfileVals.teamId,
+        mainProvisioningProfile: {
+          guuid: mainProfileVals.guuid,
+        },
+      };
+      if (flags.allowShareTo) {
+        const shareExtProfileVals = await decodeProvisioningProfile(
+          flags.buildDirectory,
+          flags.shareExtensionProvisioningProfile
+        );
+        result.shareExtensionProvisioningProfile = {
+          guuid: shareExtProfileVals.guuid,
+          specifier: shareExtProfileVals.specifier,
+          identifier: shareExtProfileVals.identifier,
+        };
+      }
+    }
+    return result;
+  }
+
   async run() {
     const { flags } = await this.parse(BuildAppCommand);
     this.validateParameters(flags);
@@ -77,6 +113,8 @@ class BuildAppCommand extends Command {
         : undefined;
       if (!user && flags.userEmail)
         throw new Error(`The user '${flags.userEmail}' does not exist'`);
+
+      const iosParams = await this.buildIosParams(flags);
       const builder = new MobileBuilder({
         appName: flags.appName,
         appId: flags.appId,
@@ -96,17 +134,38 @@ class BuildAppCommand extends Command {
         splashPage: flags.splashPage,
         autoPublicLogin: flags.autoPublicLogin,
         allowOfflineMode: flags.allowOfflineMode,
+        allowShareTo: flags.allowShareTo,
         plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
         user,
-        provisioningProfile: flags.provisioningProfile,
+        iosParams: iosParams,
         tenantAppName: flags.tenantAppName,
         buildType: flags.buildType,
         keyStorePath: flags.androidKeystore,
         keyStoreAlias: flags.androidKeyStoreAlias,
         keyStorePassword: flags.androidKeystorePassword,
       });
-      process.exit(await builder.build());
+      let result;
+      switch (flags.mode) {
+        case "full":
+          getState().log(5, "Building completely");
+          result = await builder.fullBuild();
+          break;
+        case "prepare":
+          getState().log(5, "Preparing the ios build directory");
+          result = await builder.prepareStep();
+          break;
+        case "finish":
+          getState().log(
+            5,
+            "Finishing the ios build in the prepared ios folder"
+          );
+          result = await builder.finishStep();
+          break;
+        default:
+          throw new Error(`Unknown mode '${flags.mode}'`);
+      }
+      process.exit(result);
     };
     if (
       flags.tenantAppName &&
@@ -122,6 +181,21 @@ class BuildAppCommand extends Command {
 BuildAppCommand.description = "Build mobile app";
 
 BuildAppCommand.flags = {
+  mode: Flags.string({
+    name: "mode",
+    char: "m",
+    description:
+      "Build the app completely (full), " +
+      "prepare the ios build directory (prepare) or finish the ios build in the prepared ios folder (finish)",
+    options: ["full", "prepare", "finish"],
+    default: "full",
+  }),
+  allowShareTo: Flags.boolean({
+    name: "allow share to",
+    string: "allowShareTo",
+    description: "TODO ",
+    default: false,
+  }),
   tenantAppName: Flags.string({
     name: "tenant",
     string: "tenant",
@@ -234,6 +308,12 @@ BuildAppCommand.flags = {
     name: "provisioning profile",
     string: "provisioningProfile",
     description: "This profile will be used to sign your app",
+  }),
+  shareExtensionProvisioningProfile: Flags.string({
+    name: "share extension provisioning profile",
+    string: "shareExtensionProvisioningProfile",
+    description:
+      "This profile will be used to sign your share extension on iOS",
   }),
   buildType: Flags.string({
     name: "build type",

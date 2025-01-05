@@ -146,6 +146,24 @@ const app_files_table = (files, buildDirName, req) =>
     ],
     files
   );
+const intermediate_build_result = (outDirName, buildDir, req) => {
+  return div(
+    h3("Intermediate build result"),
+    div(
+      button(
+        {
+          id: "finishMobileAppBtnId",
+          type: "button",
+          onClick: `finish_mobile_app(this, '${outDirName}', '${buildDir}');`,
+          class: "btn btn-warning",
+        },
+        i({ class: "fas fa-hammer pe-2" }),
+
+        req.__("Finish the build")
+      )
+    )
+  );
+};
 
 admin_config_route({
   router,
@@ -2538,6 +2556,27 @@ router.get(
                       )
                     )
                   ),
+                  // Allow share to
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-4" },
+                      input({
+                        type: "checkbox",
+                        id: "shareToBoxId",
+                        class: "form-check-input me-2",
+                        name: "allowShareTo",
+                        checked: builderSettings.allowShareTo === "on",
+                      }),
+                      label(
+                        {
+                          for: "shareToBoxId",
+                          class: "form-label",
+                        },
+                        req.__("Allow share to")
+                      )
+                    )
+                  ),
                   // synched/unsynched tables
                   div(
                     {
@@ -3073,6 +3112,47 @@ router.get(
                             ].join("")
                           )
                         )
+                      ),
+                      // Share Extension provisioning profile
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "shareProvisioningProfileInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Share Extension Provisioning Profile"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "shareProvisioningProfile",
+                              id: "shareProvisioningProfileInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...provisioningFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.shareProvisioningProfile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
+                        )
                       )
                     )
                   )
@@ -3097,15 +3177,13 @@ router.get(
   })
 );
 
-const checkFiles = async (outDir, fileNames) => {
+const checkFiles = async (outDirName, fileNames) => {
   const rootFolder = await File.rootFolder();
-  const mobile_app_dir = path.join(rootFolder.location, "mobile_app", outDir);
+  const outDir = path.join(rootFolder.location, "mobile_app", outDirName);
   const unsafeFiles = await Promise.all(
     fs
-      .readdirSync(mobile_app_dir)
-      .map(
-        async (outFile) => await File.from_file_on_disk(outFile, mobile_app_dir)
-      )
+      .readdirSync(outDir)
+      .map(async (outFile) => await File.from_file_on_disk(outFile, outDir))
   );
   const entries = unsafeFiles
     .filter(
@@ -3124,9 +3202,18 @@ router.get(
   "/build-mobile-app/finished",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { build_dir } = req.query;
+    const { out_dir_name, mode } = req.query;
+    const stepDesc =
+      mode === "prepare"
+        ? "_prepare_step"
+        : mode === "finish"
+        ? "_finish_step"
+        : "";
     res.json({
-      finished: await checkFiles(build_dir, ["logs.txt", "error_logs.txt"]),
+      finished: await checkFiles(out_dir_name, [
+        `logs${stepDesc}.txt`,
+        `error_logs${stepDesc}.txt`,
+      ]),
     });
   })
 );
@@ -3161,8 +3248,8 @@ router.get(
   "/build-mobile-app/result",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { build_dir_name } = req.query;
-    if (!validateBuildDirName(build_dir_name)) {
+    const { out_dir_name, build_dir, mode } = req.query;
+    if (!validateBuildDirName(out_dir_name)) {
       return res.sendWrap(req.__(`Admin`), {
         above: [
           {
@@ -3174,11 +3261,7 @@ router.get(
       });
     }
     const rootFolder = await File.rootFolder();
-    const buildDir = path.join(
-      rootFolder.location,
-      "mobile_app",
-      build_dir_name
-    );
+    const buildDir = path.join(rootFolder.location, "mobile_app", out_dir_name);
     if (!validateBuildDir(buildDir, rootFolder.location)) {
       return res.sendWrap(req.__(`Admin`), {
         above: [
@@ -3196,7 +3279,15 @@ router.get(
         .readdirSync(buildDir)
         .map(async (outFile) => await File.from_file_on_disk(outFile, buildDir))
     );
-    const resultMsg = files.find((file) => file.filename === "logs.txt")
+    const stepDesc =
+      mode === "prepare"
+        ? "_prepare_step"
+        : mode === "finish"
+        ? "_finish_step"
+        : "";
+    const resultMsg = files.find(
+      (file) => file.filename === `logs${stepDesc}.txt`
+    )
       ? req.__("The build was successfully")
       : req.__("Unable to build the app");
     res.sendWrap(req.__(`Admin`), {
@@ -3206,11 +3297,98 @@ router.get(
           title: req.__("Build Result"),
           contents: div(resultMsg),
         },
-        files.length > 0 ? app_files_table(files, build_dir_name, req) : "",
+        files.length > 0 ? app_files_table(files, out_dir_name, req) : "",
+        mode === "prepare"
+          ? intermediate_build_result(out_dir_name, build_dir, req)
+          : "",
       ],
     });
   })
 );
+
+router.post(
+  "/build-mobile-app/finish",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { out_dir_name, build_dir } = req.body;
+    const content = await fs.promises.readFile(
+      path.join(build_dir, "spawnParams.json")
+    );
+    const spawnParams = JSON.parse(content);
+    const rootFolder = await File.rootFolder();
+    const outDirFullPath = path.join(
+      rootFolder.location,
+      "mobile_app",
+      out_dir_name
+    );
+    res.json({
+      success: true,
+    });
+    const child = spawn(
+      getSafeSaltcornCmd(),
+      [...spawnParams, "-m", "finish"],
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+        cwd: ".",
+      }
+    );
+    const childOutputs = [];
+    child.stdout.on("data", (data) => {
+      const outMsg = data.toString();
+      getState().log(5, outMsg);
+      if (data) childOutputs.push(outMsg);
+    });
+    child.stderr.on("data", (data) => {
+      const errMsg = data ? data.toString() : req.__("An error occurred");
+      getState().log(5, errMsg);
+      childOutputs.push(errMsg);
+    });
+    child.on("exit", async (exitCode, signal) => {
+      const logFile =
+        exitCode === 0 ? "logs_finish_step.txt" : "error_logs_finish_step.txt";
+      try {
+        const exitMsg = childOutputs.join("\n");
+        await fs.promises.writeFile(
+          path.join(outDirFullPath, logFile),
+          exitMsg
+        );
+        await File.set_xattr_of_existing_file(
+          logFile,
+          outDirFullPath,
+          req.user
+        );
+      } catch (error) {
+        console.log(`unable to write '${logFile}' to '${outDirFullPath}'`);
+        console.log(error);
+      }
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      const stack = msg.stack ? msg.stack : "";
+      const logFile = "error_logs.txt";
+      const errMsg = [message, stack].join("\n");
+      getState().log(5, msg);
+      fs.writeFile(
+        path.join(outDirFullPath, "error_logs.txt"),
+        errMsg,
+        async (error) => {
+          if (error) {
+            console.log(`unable to write logFile to '${outDirFullPath}'`);
+            console.log(error);
+          } else {
+            // no transaction, '/build-mobile-app/finished' filters for valid attributes
+            await File.set_xattr_of_existing_file(
+              logFile,
+              outDirFullPath,
+              req.user
+            );
+          }
+        }
+      );
+    });
+  })
+);
+
 /**
  * Do Build Mobile App
  */
@@ -3220,6 +3398,7 @@ router.post(
   error_catcher(async (req, res) => {
     getState().log(2, `starting mobile build: ${JSON.stringify(req.body)}`);
     const msgs = [];
+    let mode = "full";
     let {
       entryPoint,
       entryPointType,
@@ -3234,9 +3413,11 @@ router.post(
       splashPage,
       autoPublicLogin,
       allowOfflineMode,
+      allowShareTo,
       synchedTables,
       includedPlugins,
       provisioningProfile,
+      shareProvisioningProfile,
       buildType,
       keystoreFile,
       keystoreAlias,
@@ -3277,12 +3458,19 @@ router.post(
         ),
       });
     }
-    if (iOSPlatform && !provisioningProfile) {
-      return res.json({
-        error: req.__(
-          "Please provide a Provisioning Profile for the iOS build."
-        ),
-      });
+    if (iOSPlatform) {
+      if (!provisioningProfile)
+        return res.json({
+          error: req.__(
+            "Please provide a Provisioning Profile for the iOS build."
+          ),
+        });
+      if (allowShareTo && !shareProvisioningProfile)
+        return res.json({
+          error: req.__(
+            "Please provide a Share Extension Provisioning Profile for the iOS build."
+          ),
+        });
     }
     if (buildType === "debug" && keystoreFile) {
       msgs.push({
@@ -3303,8 +3491,9 @@ router.post(
       });
     }
     const outDirName = `build_${new Date().valueOf()}`;
+    const buildDir = `${os.userInfo().homedir}/mobile_app_build`;
     const rootFolder = await File.rootFolder();
-    const buildDir = path.join(rootFolder.location, "mobile_app", outDirName);
+    const outDir = path.join(rootFolder.location, "mobile_app", outDirName);
     await File.new_folder(outDirName, "/mobile_app");
     const spawnParams = [
       "build-app",
@@ -3313,9 +3502,9 @@ router.post(
       "-t",
       entryPointType === "pagegroup" ? "page" : entryPointType,
       "-c",
-      buildDir,
+      outDir,
       "-b",
-      `${os.userInfo().homedir}/mobile_app_build`,
+      buildDir,
       "-u",
       req.user.email, // ensured by isAdmin
     ];
@@ -3328,6 +3517,13 @@ router.post(
         "--provisioningProfile",
         provisioningProfile
       );
+      if (allowShareTo) {
+        mode = "prepare";
+        spawnParams.push(
+          "--shareExtensionProvisioningProfile",
+          shareProvisioningProfile
+        );
+      }
     }
     if (appName) spawnParams.push("--appName", appName);
     if (appId) spawnParams.push("--appId", appId);
@@ -3336,6 +3532,7 @@ router.post(
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
+    if (allowShareTo) spawnParams.push("--allowShareTo");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (synchedTables.length > 0)
       spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
@@ -3357,10 +3554,15 @@ router.post(
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
     if (keystorePassword)
       spawnParams.push("--androidKeystorePassword", keystorePassword);
-    // end http call, return the out directory name
+    // end http call, return the out directory name, the build directory path and the mode
     // the gui polls for results
-    res.json({ build_dir_name: outDirName, msgs });
-    const child = spawn(getSafeSaltcornCmd(), spawnParams, {
+    res.json({
+      out_dir_name: outDirName,
+      build_dir: buildDir,
+      mode: mode,
+      msgs,
+    });
+    const child = spawn(getSafeSaltcornCmd(), [...spawnParams, "-m", mode], {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
     });
@@ -3375,18 +3577,29 @@ router.post(
       getState().log(5, errMsg);
       childOutputs.push(errMsg);
     });
-    child.on("exit", (exitCode, signal) => {
-      const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";
-      const exitMsg = childOutputs.join("\n");
-      fs.writeFile(path.join(buildDir, logFile), exitMsg, async (error) => {
-        if (error) {
-          console.log(`unable to write '${logFile}' to '${buildDir}'`);
+    child.on("exit", async (exitCode, signal) => {
+      if (mode === "prepare" && exitCode === 0) {
+        try {
+          fs.promises.writeFile(
+            path.join(buildDir, "spawnParams.json"),
+            JSON.stringify(spawnParams)
+          );
+        } catch (error) {
+          console.log(`unable to write spawnParams to '${buildDir}'`);
           console.log(error);
-        } else {
-          // no transaction, '/build-mobile-app/finished' filters for valid attributes
-          await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
         }
-      });
+      }
+      const stepDesc = mode === "prepare" ? "_prepare_step" : "";
+      const logFile =
+        exitCode === 0 ? `logs${stepDesc}.txt` : `error_logs${stepDesc}.txt`;
+      try {
+        const exitMsg = childOutputs.join("\n");
+        await fs.promises.writeFile(path.join(outDir, logFile), exitMsg);
+        await File.set_xattr_of_existing_file(logFile, outDir, req.user);
+      } catch (error) {
+        console.log(`unable to write '${logFile}' to '${outDir}'`);
+        console.log(error);
+      }
     });
     child.on("error", (msg) => {
       const message = msg.message ? msg.message : msg.code;
@@ -3395,15 +3608,15 @@ router.post(
       const errMsg = [message, stack].join("\n");
       getState().log(5, msg);
       fs.writeFile(
-        path.join(buildDir, "error_logs.txt"),
+        path.join(outDir, "error_logs.txt"),
         errMsg,
         async (error) => {
           if (error) {
-            console.log(`unable to write logFile to '${buildDir}'`);
+            console.log(`unable to write logFile to '${outDir}'`);
             console.log(error);
           } else {
             // no transaction, '/build-mobile-app/finished' filters for valid attributes
-            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
+            await File.set_xattr_of_existing_file(logFile, outDir, req.user);
           }
         }
       );

@@ -591,7 +591,7 @@ function updateViewPreview() {
 function ajaxSubmitForm(e, force_no_reload, event) {
   var form = $(e).closest("form");
   var url = form.attr("action");
-  if(event) event.preventDefault();
+  if (event) event.preventDefault();
   $.ajax(url, {
     type: "POST",
     headers: {
@@ -859,10 +859,16 @@ function builderMenuChanged(e) {
   });
 }
 
-function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
+function poll_mobile_build_finished(
+  outDirName,
+  buildDir,
+  mode,
+  pollCount,
+  orginalBtnHtml
+) {
   $.ajax("/admin/build-mobile-app/finished", {
     type: "GET",
-    data: { build_dir: outDirName },
+    data: { out_dir_name: outDirName, mode: mode },
     success: function (res) {
       if (!res.finished) {
         if (pollCount >= 100) {
@@ -873,14 +879,45 @@ function poll_mobile_build_finished(outDirName, pollCount, orginalBtnHtml) {
           });
         } else {
           setTimeout(() => {
-            poll_mobile_build_finished(outDirName, ++pollCount, orginalBtnHtml);
+            poll_mobile_build_finished(
+              outDirName,
+              buildDir,
+              mode,
+              ++pollCount,
+              orginalBtnHtml
+            );
           }, 5000);
         }
       } else {
         href_to(
-          `build-mobile-app/result?build_dir_name=${encodeURIComponent(
+          `/admin/build-mobile-app/result?out_dir_name=${encodeURIComponent(
             outDirName
-          )}`
+          )}&build_dir=${encodeURIComponent(buildDir)}&mode=${mode}`
+        );
+      }
+    },
+  });
+}
+
+function finish_mobile_app(button, outDirName, buildDir) {
+  $.ajax("/admin/build-mobile-app/finish", {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: { out_dir_name: outDirName, build_dir: buildDir },
+    success: function (data) {
+      if (data.success) {
+        notifyAlert("Finishing the app, please wait.", true);
+        for (const msg of data.msgs || []) notifyAlert(msg);
+        const orginalBtnHtml = $("#finishMobileAppBtnId").html();
+        press_store_button(button);
+        poll_mobile_build_finished(
+          outDirName,
+          buildDir,
+          "finish",
+          0,
+          orginalBtnHtml
         );
       }
     },
@@ -938,12 +975,18 @@ function build_mobile_app(button) {
   ajax_post("/admin/build-mobile-app", {
     data: params,
     success: (data) => {
-      if (data.build_dir_name) {
+      if (data.out_dir_name && data.build_dir) {
         notifyAlert("Building the app, please wait.", true);
         for (const msg of data.msgs || []) notifyAlert(msg);
         const orginalBtnHtml = $("#buildMobileAppBtnId").html();
         press_store_button(button);
-        poll_mobile_build_finished(data.build_dir_name, 0, orginalBtnHtml);
+        poll_mobile_build_finished(
+          data.out_dir_name,
+          data.build_dir,
+          data.mode,
+          0,
+          orginalBtnHtml
+        );
       }
     },
   });
