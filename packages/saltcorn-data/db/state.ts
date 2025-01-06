@@ -822,7 +822,7 @@ class State {
           }
         });
       } catch (e) {
-        //console.error(e);
+        console.error("code page load error: ", e);
       }
     }
     if (!noSignal && db.is_node)
