@@ -194,6 +194,43 @@ describe("render view with slug", () => {
   });
 });
 
+describe("frozen user object", () => {
+  it("should create view writing to user object", async () => {
+    const table = Table.findOne({ name: "books" });
+    const configuration = {
+      layout: {
+        type: "container",
+        style: {},
+        contents: {
+          type: "blank",
+          contents: "'userid='+user.id",
+          isFormula: {
+            text: true,
+          },
+        },
+        showIfFormula: "user.id=1",
+      },
+      columns: [],
+    };
+    await View.create({
+      table_id: table.id,
+      name: "ShowBookWriteUser",
+      viewtemplate: "Show",
+      configuration,
+      min_role: 100,
+    });
+  });
+  it("should run view setting user", async () => {
+    const loginCookie = await getStaffLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/view/ShowBookWriteUser?id=1")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(">userid=2</div>"));
+  });
+});
+
 describe("action row_variable", () => {
   const createFilterView = async ({
     configuration,
