@@ -588,7 +588,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
       new Form({
         action: `/actions/gen-copilot/${id}`,
         values: { description: trigger.description || "" },
-        submitLabel: "Generate with copilot",
+        submitLabel: "Generate workflow with copilot",
         formStyle: "vert",
         fields: [
           {
