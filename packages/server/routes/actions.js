@@ -493,8 +493,6 @@ router.post(
 );
 
 function genWorkflowDiagram(steps) {
-  console.log(steps);
-  
   const stepNames = steps.map((s) => s.name);
   const nodeLines = steps.map(
     (s) => `  ${s.mmname}["\`**${s.name}**
@@ -518,7 +516,9 @@ function genWorkflowDiagram(steps) {
       let found = false;
       for (const otherStep of stepNames)
         if (step.next_step.includes(otherStep)) {
-          linkLines.push(`  ${step.mmname} --> ${otherStep}`);
+          linkLines.push(
+            `  ${step.mmname} --> ${WorkflowStep.mmescape(otherStep)}`
+          );
           found = true;
         }
       if (!found) {
@@ -556,7 +556,7 @@ function genWorkflowDiagram(steps) {
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  console.log(fc);
+  //console.log(fc);
 
   return fc;
 }

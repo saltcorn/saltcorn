@@ -51,6 +51,10 @@ class WorkflowStep {
         : o.configuration;
   }
 
+  static mmescape(s: string) {
+    return reserved.has(s) ? `_${s}_` : s;
+  }
+
   //mermaid compatible name
   get mmname() {
     return reserved.has(this.name) ? `_${this.name}_` : this.name;
