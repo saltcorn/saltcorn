@@ -263,7 +263,7 @@ class WorkflowStep {
       label: "Markdown",
       name: "markdown",
       sublabel:
-        "The centents are markdown formatted and should be rendered to HTML",
+        "The contents are markdown formatted and should be rendered to HTML",
       type: "Bool",
       showIf: { wf_action_name: "Output" },
     });
