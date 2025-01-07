@@ -107,6 +107,7 @@ const setLanguage = (req, res, state) => {
   } else if (req.cookies?.lang) {
     req.setLocale(req.cookies?.lang);
   }
+  if (req.user) Object.freeze(req.user);
   set_custom_http_headers(res, req, state);
 };
 
