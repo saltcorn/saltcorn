@@ -493,9 +493,11 @@ router.post(
 );
 
 function genWorkflowDiagram(steps) {
+  console.log(steps);
+  
   const stepNames = steps.map((s) => s.name);
   const nodeLines = steps.map(
-    (s) => `  ${s.name}["\`**${s.name}**
+    (s) => `  ${s.mmname}["\`**${s.name}**
   ${s.action_name}\`"]:::wfstep${s.id}`
   );
 
@@ -503,34 +505,34 @@ function genWorkflowDiagram(steps) {
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
-    if (step.initial_step) linkLines.push(`  _Start --> ${step.name}`);
+    if (step.initial_step) linkLines.push(`  _Start --> ${step.mmname}`);
     if (step.action_name === "ForLoop") {
       linkLines.push(
-        `  ${step.name} --> ${step.configuration.for_loop_step_name}`
+        `  ${step.mmname} --> ${step.configuration.for_loop_step_name}`
       );
     } else if (stepNames.includes(step.next_step)) {
       linkLines.push(
-        `  ${step.name}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.next_step}`
+        `  ${step.mmname}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.mmnext}`
       );
     } else if (step.next_step) {
       let found = false;
       for (const otherStep of stepNames)
         if (step.next_step.includes(otherStep)) {
-          linkLines.push(`  ${step.name} --> ${otherStep}`);
+          linkLines.push(`  ${step.mmname} --> ${otherStep}`);
           found = true;
         }
       if (!found) {
         linkLines.push(
-          `  ${step.name}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.name}</a> ---_End_${step.name}`
+          `  ${step.mmname}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.mmname}</a> ---_End_${step.mmname}`
         );
         nodeLines.push(
-          `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+          `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
         );
       }
     } else if (!step.next_step) {
-      linkLines.push(`  ${step.name} --> _End_${step.name}`);
+      linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
       nodeLines.push(
-        `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+        `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
       );
     }
     if (step.action_name === "EndForLoop") {
@@ -542,7 +544,7 @@ function genWorkflowDiagram(steps) {
           break;
         }
       }
-      if (forStep) linkLines.push(`  ${step.name} --> ${forStep.name}`);
+      if (forStep) linkLines.push(`  ${step.mmname} --> ${forStep.mmname}`);
     }
     step_ix += 1;
   }
@@ -554,7 +556,7 @@ function genWorkflowDiagram(steps) {
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  //console.log(fc);
+  console.log(fc);
 
   return fc;
 }

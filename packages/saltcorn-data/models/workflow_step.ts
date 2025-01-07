@@ -12,9 +12,7 @@ import Trigger from "./trigger";
 import Table from "./table";
 import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
-const {
- jsIdentifierValidator
-} = require("../utils");
+const { jsIdentifierValidator } = require("../utils");
 
 const { eval_expression } = Expression;
 
@@ -23,6 +21,8 @@ const { getState } = require("../db/state");
  * WorkflowStep Class
  * @category saltcorn-data
  */
+const reserved = new Set(["end", "subgraph", "direction"]);
+
 class WorkflowStep {
   id?: number;
   name: string;
@@ -49,6 +49,18 @@ class WorkflowStep {
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
         : o.configuration;
+  }
+
+  //mermaid compatible name
+  get mmname() {
+    return reserved.has(this.name) ? `_${this.name}_` : this.name;
+  }
+
+  //mermaid compatible name
+  get mmnext() {
+    return this.next_step && reserved.has(this.next_step)
+      ? `_${this.next_step}_`
+      : this.next_step;
   }
 
   /**
@@ -293,12 +305,12 @@ class WorkflowStep {
       required: true,
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "TableQuery" },
-    }); 
+    });
     actionConfigFields.push(
       new FieldRepeat({
         name: "user_form_questions",
         showIf: { wf_action_name: "UserForm" },
-        fields: [ 
+        fields: [
           {
             label: "Label",
             name: "label",
