@@ -155,11 +155,15 @@ class WorkflowRun {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
-    const useRow =
+    const useRow: any =
       row.status !== this.status
         ? { status_updated_at: new Date(), ...row }
-        : row;
+        : { ...row };
+    if (useRow.current_step)
+      useRow.current_step = JSON.stringify(useRow.current_step);
     await db.update("_sc_workflow_runs", useRow, this.id);
+    if (useRow.current_step)
+      useRow.current_step = JSON.parse(useRow.current_step);
     Object.assign(this, useRow);
   }
 
@@ -314,7 +318,7 @@ class WorkflowRun {
     const state = getState();
     //state.logLevel = 6;
     state.log(6, `Running workflow id=${this.id}`);
-    
+
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
       //TODO
@@ -486,7 +490,9 @@ class WorkflowRun {
           nextUpdate.status = "Finished";
         } else {
           step = nextStep;
-          nextUpdate.current_step = step.name;
+          nextUpdate.current_step = this.current_step;
+          nextUpdate.current_step[Math.max(0, this.current_step.length - 1)] =
+            step.name;
         }
         await this.update(nextUpdate);
         if (
