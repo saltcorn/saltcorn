@@ -472,7 +472,7 @@ class WorkflowRun {
 
           break;
         }
-        let result;
+        let result: any;
         if (step.action_name === "ForLoop") {
           const array = eval_expression(
             step.configuration.array_expression,
@@ -509,9 +509,50 @@ class WorkflowRun {
         //find next step
         const nextStep = this.get_next_step(step, user);
 
-        if (!nextStep) {          
-          step = null;
-          nextUpdate.status = "Finished";
+        if (!nextStep) {
+          if (this.current_step.length > 1) {
+            // end for loop body
+            const forStepName = this.current_step[this.current_step.length - 3];
+            const forStep = steps.find((s) => s.name === forStepName);
+            if (!forStep) throw new Error("step not found: " + forStepName);
+            const array_data1 = eval_expression(
+              forStep.configuration.array_expression,
+              this.context,
+              user,
+              `Array expression in step ${forStep.name}`
+            );
+            const last_index = this.current_step[this.current_step.length - 2];
+            if (last_index < array_data1.length - 1) {
+              //there is another item
+              this.current_step[this.current_step.length - 2] += 1;
+              this.set_current_step(
+                forStep.configuration.loop_body_initial_step
+              );
+              const nextVar =
+                array_data1[this.current_step[this.current_step.length - 2]];
+              await this.update({
+                context: {
+                  ...this.context,
+                  [forStep.configuration.item_variable]: nextVar,
+                },
+                current_step: this.current_step,
+              });
+            } else {
+              //no more items
+              this.current_step.pop();
+              this.current_step.pop();
+              //remove variable from context
+              delete this.context[step.configuration.item_variable];
+              await this.update({
+                context: this.context,
+                current_step: this.current_step,
+              });
+            }
+            step = steps.find((s) => s.name === this.current_step_name);
+          } else {
+            step = null;
+            nextUpdate.status = "Finished";
+          }
         } else {
           step = nextStep;
           nextUpdate.current_step = this.current_step;
