@@ -133,9 +133,9 @@ describe("Workflow run forloop", () => {
       action_name: "ForLoop",
       initial_step: false,
       configuration: {
-        forloop_array_expression: "xs",
-        forloop_item_variable: "x",
-        forloop_body_initial_step: "body0",
+        array_expression: "xs",
+        item_variable: "x",
+        loop_body_initial_step: "body0",
       },
     });
     await WorkflowStep.create({

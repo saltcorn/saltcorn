@@ -229,7 +229,7 @@ class WorkflowStep {
     actionConfigFields.push({
       label: "Loop Array",
       sublabel: "Javascript expression, based on the context, for the array to loop over",
-      name: "forloop_array_expression",
+      name: "array_expression",
       type: "String",
       class: "validate-expression",
       showIf: { wf_action_name: "ForLoop" },
@@ -237,14 +237,14 @@ class WorkflowStep {
     actionConfigFields.push({
       label: "Loop item variable",
       sublabel: "Javascript identifier; the name of the variable the current item from the loop array will be set to in each loop iteration",
-      name: "forloop_item_variable",
+      name: "item_variable",
       type: "String",
       showIf: { wf_action_name: "ForLoop" },
     });
     actionConfigFields.push({
       label: "Loop body step",
       sublabel: "The name of the first step in the loop body. The workflow execution inside the loop will start at this step, and continue from that step's next_step, until a step with blank next_step is encountered, which is the end of the loop body",
-      name: "forloop_body_initial_step",
+      name: "loop_body_initial_step",
       type: "String",
       showIf: { wf_action_name: "ForLoop" },
     });

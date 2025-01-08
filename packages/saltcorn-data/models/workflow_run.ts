@@ -472,8 +472,32 @@ class WorkflowRun {
 
           break;
         }
+        let result;
+        if (step.action_name === "ForLoop") {
+          const array = eval_expression(
+            step.configuration.array_expression,
+            this.context,
+            user,
+            `Array expression in step ${step.name}`
+          );
+          if (array.length) {
+            this.current_step.push(0);
+            this.current_step.push(step.configuration.loop_body_initial_step);
+            await this.update({
+              current_step: this.current_step,
+              context: {
+                ...this.context,
+                [step.configuration.item_variable]: array[0],
+              },
+            });
 
-        const result = await step.run(this.context, user);
+            step = steps.find(
+              (s) => s.name === step.configuration.loop_body_initial_step
+            );
+
+            continue;
+          }
+        } else result = await step.run(this.context, user);
 
         const nextUpdate: any = {};
         if (typeof result === "object" && result !== null) {
@@ -485,7 +509,7 @@ class WorkflowRun {
         //find next step
         const nextStep = this.get_next_step(step, user);
 
-        if (!nextStep) {
+        if (!nextStep) {          
           step = null;
           nextUpdate.status = "Finished";
         } else {
