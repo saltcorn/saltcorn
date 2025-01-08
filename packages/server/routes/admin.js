@@ -19,6 +19,7 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
 const { spawn, exec } = require("child_process");
 const User = require("@saltcorn/data/models/user");
+const Trigger = require("@saltcorn/data/models/trigger");
 const path = require("path");
 const { X509Certificate } = require("crypto");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
@@ -2556,27 +2557,6 @@ router.get(
                       )
                     )
                   ),
-                  // Allow share to
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-4" },
-                      input({
-                        type: "checkbox",
-                        id: "shareToBoxId",
-                        class: "form-check-input me-2",
-                        name: "allowShareTo",
-                        checked: builderSettings.allowShareTo === "on",
-                      }),
-                      label(
-                        {
-                          for: "shareToBoxId",
-                          class: "form-label",
-                        },
-                        req.__("Allow share to")
-                      )
-                    )
-                  ),
                   // synched/unsynched tables
                   div(
                     {
@@ -3413,7 +3393,6 @@ router.post(
       splashPage,
       autoPublicLogin,
       allowOfflineMode,
-      allowShareTo,
       synchedTables,
       includedPlugins,
       provisioningProfile,
@@ -3423,6 +3402,20 @@ router.post(
       keystoreAlias,
       keystorePassword,
     } = req.body;
+    const receiveShareTriggers = Trigger.find({
+      when_trigger: "ReceiveMobileShareData",
+    });
+    let allowShareTo = receiveShareTriggers.length > 0;
+    if (allowShareTo && iOSPlatform && !shareProvisioningProfile) {
+      allowShareTo = false;
+      msgs.push({
+        type: "warning",
+        text: req.__(
+          "A ReceiveMobileShareData trigger exists, but no Share Extension Provisioning Profile is provided. " +
+            "Building without share to support."
+        ),
+      });
+    }
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
     if (!entryPoint) {
@@ -3463,12 +3456,6 @@ router.post(
         return res.json({
           error: req.__(
             "Please provide a Provisioning Profile for the iOS build."
-          ),
-        });
-      if (allowShareTo && !shareProvisioningProfile)
-        return res.json({
-          error: req.__(
-            "Please provide a Share Extension Provisioning Profile for the iOS build."
           ),
         });
     }
@@ -3684,7 +3671,7 @@ router.post(
         .filter(
           (plugin) =>
             ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
-            newCfg.includedPlugins.indexOf(plugin.name) < 0
+            (newCfg.includedPlugins || []).indexOf(plugin.name) < 0
         )
         .map((plugin) => plugin.name);
       newCfg.excludedPlugins = excludedPlugins;

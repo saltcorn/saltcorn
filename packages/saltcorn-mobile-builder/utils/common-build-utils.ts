@@ -49,7 +49,7 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
     "@capacitor/screen-orientation@6.0.3",
-    "@christianhugoch/web-share",
+    "send-intent",
   ];
   result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
     cwd: buildDir,
@@ -108,14 +108,13 @@ const config: CapacitorConfig  = {
       }
       releaseType: '${config.buildType === "release" ? "AAB" : "APK"}',
     },
-    ${config.unsecureNetwork ? "allowMixedContent: true" : ""},
+    ${config.unsecureNetwork ? "allowMixedContent: true," : ""}
   },
   ${
     config.unsecureNetwork
       ? `server: {
     cleartext: true,
     androidScheme: 'http',
-    
   },`
       : ""
   }
@@ -487,7 +486,7 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
   }
 }
 
-export async function modifyInfoPlist(buildDir: string) {
+export function modifyInfoPlist(buildDir: string, allowShareTo: boolean) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
 
@@ -506,10 +505,47 @@ export async function modifyInfoPlist(buildDir: string) {
   <true/>
   <key>LSSupportsOpeningDocumentsInPlace</key>
   <true/>
+  ${
+    allowShareTo
+      ? `<key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Viewer</string>
+      <key>CFBundleURLName</key>
+      <string>com.saltcorn.store</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>scappscheme</string>
+      </array>
+    </dict>
+  </array>`
+      : ""
+  }
   `;
   // add newCfgs after the first <dict> tag
   const newContent = content.replace(/<dict>/, `<dict>${newCfgs}`);
   writeFileSync(infoPlist, newContent, "utf8");
+}
+
+export function copyShareExtFiles(buildDir: string) {
+  const iosAppDir = join(buildDir, "ios", "App");
+  const sefDir = join(buildDir, "share_extension_files");
+  copySync(
+    join(sefDir, "ShareViewController.swift"),
+    join(iosAppDir, "share-ext", "ShareViewController.swift"),
+    { overwrite: true }
+  );
+  copySync(
+    join(sefDir, "Info.plist"),
+    join(iosAppDir, "share-ext", "Info.plist"),
+    { overwrite: true }
+  );
+  copySync(
+    join(sefDir, "AppDelegate.swift"),
+    join(iosAppDir, "App", "AppDelegate.swift"),
+    { overwrite: true }
+  );
 }
 
 export async function decodeProvisioningProfile(
@@ -892,7 +928,7 @@ export function writePodfile(buildDir: string) {
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
     pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
-    pod 'ChristianhugochWebShare', :path => '../../node_modules/@christianhugoch/web-share'
+    pod 'SendIntent', :path => '../../node_modules/send-intent'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
   end

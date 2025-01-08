@@ -14,8 +14,17 @@ import {
   prepareSplashPage,
   prepareBuildDir,
   prepareExportOptionsPlist,
+  copyShareExtFiles,
   writeCapacitorConfig,
   prepAppIcon,
+  modifyInfoPlist,
+  writePodfile,
+  modifyXcodeProjectFile,
+  writePrivacyInfo,
+  modifyAndroidManifest,
+  writeDataExtractionRules,
+  writeNetworkSecurityConfig,
+  modifyGradleConfig,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -166,7 +175,7 @@ export class MobileBuilder {
   /**
    *
    */
-  async fullBuild() {
+  public async fullBuild() {
     try {
       let resultCode = await this.prepareStep();
       if (resultCode !== 0) return resultCode;
@@ -177,7 +186,7 @@ export class MobileBuilder {
     }
   }
 
-  async prepareStep() {
+  public async prepareStep() {
     try {
       prepareBuildDir(this.buildDir, this.templateDir);
       writeCapacitorConfig(this.buildDir, {
@@ -200,13 +209,24 @@ export class MobileBuilder {
     }
   }
 
-  async finishStep() {
+  public async finishStep() {
     try {
       if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
       copyServerFiles(this.buildDir);
       copySbadmin2Deps(this.buildDir);
       await copySiteLogo(this.buildDir);
       copyTranslationFiles(this.buildDir);
+      writeCfgFile({
+        buildDir: this.buildDir,
+        entryPoint: this.entryPoint,
+        entryPointType: this.entryPointType,
+        serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
+        localUserTables: this.localUserTables,
+        synchedTables: this.synchedTables,
+        tenantAppName: this.tenantAppName,
+        autoPublicLogin: this.autoPublicLogin,
+        allowOfflineMode: this.allowOfflineMode,
+      });
       let resultCode = await bundlePackagesAndPlugins(
         this.buildDir,
         this.plugins
@@ -227,21 +247,12 @@ export class MobileBuilder {
         );
       resultCode = await createSqliteDb(this.buildDir);
       if (resultCode !== 0) return resultCode;
-      if (!this.isUnsecureKeyStore)
-        copySync(
-          this.keyStorePath,
-          join(this.buildDir, basename(this.keyStorePath))
-        );
-      if (this.platforms.includes("ios")) {
-        prepareExportOptionsPlist({
-          buildDir: this.buildDir,
-          appId: this.appId,
-          iosParams: this.iosParams,
-        });
-      }
+
+      if (this.platforms.includes("ios")) await this.handleIosPlatform();
+      if (this.platforms.includes("android"))
+        await this.handleAndroidPlatform();
       await this.capacitorHelper.buildApp();
-      // if (resultCode === 0 && this.copyTargetDir) {
-      if (this.copyTargetDir) {
+      if (resultCode === 0 && this.copyTargetDir) {
         this.capacitorHelper.tryCopyAppFiles(
           this.copyTargetDir,
           this.user!,
@@ -253,5 +264,31 @@ export class MobileBuilder {
       console.error(e);
       return 1;
     }
+  }
+
+  private async handleIosPlatform() {
+    prepareExportOptionsPlist({
+      buildDir: this.buildDir,
+      appId: this.appId,
+      iosParams: this.iosParams,
+    });
+    modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    writePodfile(this.buildDir);
+    writePrivacyInfo(this.buildDir);
+    modifyInfoPlist(this.buildDir, this.allowShareTo);
+    if (this.allowShareTo) copyShareExtFiles(this.buildDir);
+  }
+
+  private async handleAndroidPlatform() {
+    if (!this.isUnsecureKeyStore) {
+      copySync(
+        this.keyStorePath,
+        join(this.buildDir, basename(this.keyStorePath))
+      );
+    }
+    await modifyAndroidManifest(this.buildDir);
+    writeDataExtractionRules(this.buildDir);
+    writeNetworkSecurityConfig(this.buildDir, this.serverURL);
+    modifyGradleConfig(this.buildDir, this.appVersion);
   }
 }

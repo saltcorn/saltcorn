@@ -29,7 +29,7 @@ import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
 import { jwtDecode } from "jwt-decode";
 
 import { Network } from "@capacitor/network";
-import { WebShare } from "@christianhugoch/web-share";
+import { SendIntent } from "send-intent";
 
 async function addScript(scriptObj) {
   let waited = 0;
@@ -321,7 +321,10 @@ export async function init({
 
     state.mobileConfig.networkState = await Network.getStatus();
     Network.addListener("networkStatusChange", networkChangeCallback);
-    WebShare.addListener("shareReceived", shareReceivedCallback);
+    window.addEventListener("sendIntentReceived", async () => {
+      const result = await SendIntent.checkSendIntentReceived();
+      console.log("sendIntentReceived", result);
+    });
 
     const networkDisabled = state.mobileConfig.networkState === "none";
     const jwt = state.mobileConfig.jwt;
