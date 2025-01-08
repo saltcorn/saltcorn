@@ -68,7 +68,7 @@ class WorkflowRun {
   error?: string;
   session_id?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
-  current_step?: string;
+  current_step: any[];
   steps?: Array<WorkflowStep>;
 
   step_start?: Date;
@@ -90,7 +90,7 @@ class WorkflowRun {
     this.session_id = o.session_id;
     this.error = o.error;
     this.status = o.status || "Pending";
-    this.current_step = o.current_step;
+    this.current_step = o.current_step || [];
   }
 
   /**
@@ -155,11 +155,15 @@ class WorkflowRun {
    * @returns {Promise<void>}
    */
   async update(row: Row): Promise<void> {
-    const useRow =
+    const useRow: any =
       row.status !== this.status
         ? { status_updated_at: new Date(), ...row }
-        : row;
+        : { ...row };
+    if (useRow.current_step)
+      useRow.current_step = JSON.stringify(useRow.current_step);
     await db.update("_sc_workflow_runs", useRow, this.id);
+    if (useRow.current_step)
+      useRow.current_step = JSON.parse(useRow.current_step);
     Object.assign(this, useRow);
   }
 
@@ -229,6 +233,10 @@ class WorkflowRun {
     }
   }
 
+  get current_step_name() {
+    return this.current_step[this.current_step.length - 1];
+  }
+
   async createTrace(step_name: string, user?: User) {
     await WorkflowTrace.create({
       run_id: this.id!,
@@ -250,7 +258,7 @@ class WorkflowRun {
       step0 ||
       (await WorkflowStep.findOne({
         trigger_id: this.trigger_id,
-        name: this.current_step,
+        name: this.current_step_name,
       }));
     const qTypeToField = (q: any) => {
       switch (q.qtype) {
@@ -285,6 +293,10 @@ class WorkflowRun {
     }));
   }
 
+  set_current_step(stepName: string) {
+    this.current_step[Math.max(0, this.current_step.length - 1)] = stepName;
+  }
+
   async run({
     user,
     interactive,
@@ -304,12 +316,10 @@ class WorkflowRun {
     this.steps = steps;
 
     const state = getState();
-
     state.log(6, `Running workflow id=${this.id}`);
-
+    let waiting_fulfilled = false;
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
-      //TODO
       let fulfilled = true;
       Object.entries(this.wait_info || {}).forEach(([k, v]) => {
         switch (k) {
@@ -323,37 +333,31 @@ class WorkflowRun {
         }
       });
       if (!fulfilled) return;
-      else {
-        const step = steps.find((step) => step.name === this.current_step);
-        const nextStep = this.get_next_step(step!, user);
-
-        await this.update({
-          wait_info: {},
-          status: nextStep ? "Running" : "Finished",
-          current_step: nextStep?.name,
-        });
-        if (!nextStep) return;
-      }
+      else waiting_fulfilled = true;
     }
 
     //find current step
     let step: any;
-    if (this.current_step)
-      step = steps.find((step) => step.name === this.current_step);
+    if (this.current_step?.length)
+      step = steps.find((step) => step.name === this.current_step_name);
     else step = steps.find((step) => step.initial_step);
 
     if (step && this.status !== "Running")
       await this.update({ status: "Running" });
     //run in loop
     while (step) {
-      if (step.name !== this.current_step)
-        await this.update({ current_step: step.name });
-
-      state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
+      if (step.name !== this.current_step) {
+        this.set_current_step(step.name);
+        await this.update({ current_step: this.current_step });
+      }
+      state.log(
+        6,
+        `Workflow run ${this.id} Running step ${step.name} action=${step.action_name} current_step=${this.current_step}`
+      );
       this.step_start = new Date();
 
       try {
-        if (step.action_name === "UserForm") {
+        if (step.action_name === "UserForm" && !waiting_fulfilled) {
           let user_id;
           if (step.configuration.user_id_expression) {
             user_id = eval_expression(
@@ -389,7 +393,7 @@ class WorkflowRun {
           step = null;
           break;
         }
-        if (step.action_name === "Output") {
+        if (step.action_name === "Output" && !waiting_fulfilled) {
           const output = interpolate(
             step.configuration.output_text,
             this.context,
@@ -411,7 +415,7 @@ class WorkflowRun {
           step = null;
           break;
         }
-        if (step.action_name === "DataOutput") {
+        if (step.action_name === "DataOutput" && !waiting_fulfilled) {
           const output_val = eval_expression(
             step.configuration.output_expr,
             this.context,
@@ -433,7 +437,7 @@ class WorkflowRun {
           step = null;
           break;
         }
-        if (step.action_name === "WaitNextTick") {
+        if (step.action_name === "WaitNextTick" && !waiting_fulfilled) {
           await this.update({
             status: "Waiting",
             wait_info: {},
@@ -442,7 +446,7 @@ class WorkflowRun {
           if (trace) this.createTrace(step.name, user);
           break;
         }
-        if (step.action_name === "WaitUntil") {
+        if (step.action_name === "WaitUntil" && !waiting_fulfilled) {
           const resume_at = eval_expression(
             step.configuration.resume_at,
             { moment, ...this.context },
@@ -459,8 +463,34 @@ class WorkflowRun {
 
           break;
         }
+        let result: any;
+        if (step.action_name === "ForLoop") {
+          const array = eval_expression(
+            step.configuration.array_expression,
+            this.context,
+            user,
+            `Array expression in step ${step.name}`
+          );
+          if (array.length) {
+            this.current_step.push(0);
+            this.current_step.push(step.configuration.loop_body_initial_step);
+            await this.update({
+              current_step: this.current_step,
+              context: {
+                ...this.context,
+                [step.configuration.item_variable]: array[0],
+              },
+            });
 
-        const result = await step.run(this.context, user);
+            step = steps.find(
+              (s) => s.name === step.configuration.loop_body_initial_step
+            );
+
+            continue;
+          }
+        } else if (waiting_fulfilled) {
+          waiting_fulfilled = false;
+        } else result = await step.run(this.context, user);
 
         const nextUpdate: any = {};
         if (typeof result === "object" && result !== null) {
@@ -473,11 +503,59 @@ class WorkflowRun {
         const nextStep = this.get_next_step(step, user);
 
         if (!nextStep) {
-          step = null;
-          nextUpdate.status = "Finished";
+          if (this.current_step.length > 1) {
+            // end for loop body
+            const forStepName = this.current_step[this.current_step.length - 3];
+            const forStep = steps.find((s) => s.name === forStepName);
+            if (!forStep) throw new Error("step not found: " + forStepName);
+            const array_data1 = eval_expression(
+              forStep.configuration.array_expression,
+              this.context,
+              user,
+              `Array expression in step ${forStep.name}`
+            );
+            const last_index = this.current_step[this.current_step.length - 2];
+            if (last_index < array_data1.length - 1) {
+              //there is another item
+              this.current_step[this.current_step.length - 2] += 1;
+              this.set_current_step(
+                forStep.configuration.loop_body_initial_step
+              );
+              const nextVar =
+                array_data1[this.current_step[this.current_step.length - 2]];
+
+              nextUpdate.context = {
+                ...this.context,
+                [forStep.configuration.item_variable]: nextVar,
+              };
+              nextUpdate.current_step = this.current_step;
+            } else {
+              //no more items
+              this.current_step.pop();
+              this.current_step.pop();
+              const afterForStep = this.get_next_step(forStep, user);
+
+              if (afterForStep) this.set_current_step(afterForStep.name);
+              else {
+                //TODO what if there is another level of forloops
+                step = null;
+                nextUpdate.status = "Finished";
+              }
+              //remove variable from context
+              delete this.context[forStep.configuration.item_variable];
+              nextUpdate.context = this.context;
+              //nextUpdate.current_step = this.current_step;
+            }
+            step = step && steps.find((s) => s.name === this.current_step_name);
+          } else {
+            step = null;
+            nextUpdate.status = "Finished";
+          }
         } else {
           step = nextStep;
-          nextUpdate.current_step = step.name;
+          nextUpdate.current_step = this.current_step;
+          nextUpdate.current_step[Math.max(0, this.current_step.length - 1)] =
+            step.name;
         }
         await this.update(nextUpdate);
         if (
@@ -504,8 +582,8 @@ class WorkflowRun {
           run_page: `/actions/run/${this.id}`,
         });
         break;
-      }
-    }
+      } // try-catch
+    } //while
     return this.context;
   }
 

@@ -219,11 +219,35 @@ class WorkflowStep {
       "Pause until the next scheduler invocation (at most 5 minutes)";
     actionExplainers.UserForm =
       "Ask a user one or more questions, pause until they are answered";
+    actionExplainers.ForLoop =
+      "Loop over the items in an array, setting a variable to each item in an iteration of a loop body";
     return actionExplainers;
   }
 
   static async builtInActionConfigFields() {
     const actionConfigFields = [];
+    actionConfigFields.push({
+      label: "Loop Array",
+      sublabel: "Javascript expression, based on the context, for the array to loop over",
+      name: "array_expression",
+      type: "String",
+      class: "validate-expression",
+      showIf: { wf_action_name: "ForLoop" },
+    });
+    actionConfigFields.push({
+      label: "Loop item variable",
+      sublabel: "Javascript identifier; the name of the variable the current item from the loop array will be set to in each loop iteration",
+      name: "item_variable",
+      type: "String",
+      showIf: { wf_action_name: "ForLoop" },
+    });
+    actionConfigFields.push({
+      label: "Loop body step",
+      sublabel: "The name of the first step in the loop body. The workflow execution inside the loop will start at this step, and continue from that step's next_step, until a step with blank next_step is encountered, which is the end of the loop body",
+      name: "loop_body_initial_step",
+      type: "String",
+      showIf: { wf_action_name: "ForLoop" },
+    });
     actionConfigFields.push({
       label: "Form header",
       sublabel: "Text shown to the user at the top of the form",

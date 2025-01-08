@@ -9,5 +9,5 @@ export type WorkflowRunCfg = {
   error?: string;
   session_id?: string;
   status?: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
-  current_step?: string;
+  current_step?: any[];
 };

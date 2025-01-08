@@ -144,6 +144,7 @@ const run_code = async ({
     Table,
     table,
     row,
+    context: row,
     user,
     console: consoleInterceptor(getState()),
     Actions,
@@ -264,7 +265,7 @@ module.exports = {
    * @subcategory actions
    */
   webhook: {
-    description: "Make an outbound HTTP POST request",
+    description: "Make an outbound HTTP/HTTPS request",
     configFields: async ({ table, mode }) => {
       let field_opts = [];
       if (table) {
