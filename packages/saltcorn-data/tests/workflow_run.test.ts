@@ -170,8 +170,8 @@ describe("Workflow run forloop", () => {
       trigger_id: trigger.id,
     });
     await wfrun.run({ user });
-    
-    expect(wfrun.context.x).toBe(1);
+
+    expect(wfrun.context.ys).toStrictEqual([4, 5, 6]);
     //expect(wfrun.context.y).toBe(2);
     //expect(wfrun.context.last).toBe(1);
   });
