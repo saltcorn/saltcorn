@@ -68,7 +68,7 @@ class WorkflowRun {
   error?: string;
   session_id?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
-  current_step?: string;
+  current_step?: any[];
   steps?: Array<WorkflowStep>;
 
   step_start?: Date;
