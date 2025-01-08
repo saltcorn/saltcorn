@@ -499,9 +499,6 @@ function genWorkflowDiagram(steps) {
   ${s.action_name}\`"]:::wfstep${s.id}`
   );
 
-  console.log(steps);
-  
-
   nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
   const linkLines = [];
   let step_ix = 0;
@@ -560,7 +557,7 @@ function genWorkflowDiagram(steps) {
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  console.log(fc);
+  //console.log(fc);
 
   return fc;
 }
