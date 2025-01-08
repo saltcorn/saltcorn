@@ -68,7 +68,7 @@ class WorkflowRun {
   error?: string;
   session_id?: string;
   status: "Pending" | "Running" | "Finished" | "Waiting" | "Error";
-  current_step?: any[];
+  current_step: any[];
   steps?: Array<WorkflowStep>;
 
   step_start?: Date;
@@ -90,7 +90,7 @@ class WorkflowRun {
     this.session_id = o.session_id;
     this.error = o.error;
     this.status = o.status || "Pending";
-    this.current_step = o.current_step;
+    this.current_step = o.current_step || [];
   }
 
   /**
@@ -229,6 +229,10 @@ class WorkflowRun {
     }
   }
 
+  get current_step_name() {
+    return this.current_step[this.current_step.length - 1];
+  }
+
   async createTrace(step_name: string, user?: User) {
     await WorkflowTrace.create({
       run_id: this.id!,
@@ -250,7 +254,7 @@ class WorkflowRun {
       step0 ||
       (await WorkflowStep.findOne({
         trigger_id: this.trigger_id,
-        name: this.current_step,
+        name: this.current_step_name,
       }));
     const qTypeToField = (q: any) => {
       switch (q.qtype) {
@@ -285,6 +289,10 @@ class WorkflowRun {
     }));
   }
 
+  set_current_step(stepName: string) {
+    this.current_step[Math.max(0, this.current_step.length - 1)] = stepName;
+  }
+
   async run({
     user,
     interactive,
@@ -304,9 +312,9 @@ class WorkflowRun {
     this.steps = steps;
 
     const state = getState();
-
+    //state.logLevel = 6;
     state.log(6, `Running workflow id=${this.id}`);
-
+    
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
       //TODO
@@ -324,13 +332,13 @@ class WorkflowRun {
       });
       if (!fulfilled) return;
       else {
-        const step = steps.find((step) => step.name === this.current_step);
+        const step = steps.find((step) => step.name === this.current_step_name);
         const nextStep = this.get_next_step(step!, user);
-
+        if (nextStep) this.set_current_step(nextStep.name);
         await this.update({
           wait_info: {},
           status: nextStep ? "Running" : "Finished",
-          current_step: nextStep?.name,
+          current_step: this.current_step,
         });
         if (!nextStep) return;
       }
@@ -338,17 +346,18 @@ class WorkflowRun {
 
     //find current step
     let step: any;
-    if (this.current_step)
-      step = steps.find((step) => step.name === this.current_step);
+    if (this.current_step?.length)
+      step = steps.find((step) => step.name === this.current_step_name);
     else step = steps.find((step) => step.initial_step);
 
     if (step && this.status !== "Running")
       await this.update({ status: "Running" });
     //run in loop
     while (step) {
-      if (step.name !== this.current_step)
-        await this.update({ current_step: step.name });
-
+      if (step.name !== this.current_step) {
+        this.set_current_step(step.name);
+        await this.update({ current_step: this.current_step });
+      }
       state.log(6, `Workflow run ${this.id} Running step ${step.name}`);
       this.step_start = new Date();
 
