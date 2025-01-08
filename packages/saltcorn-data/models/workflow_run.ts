@@ -317,10 +317,9 @@ class WorkflowRun {
 
     const state = getState();
     state.log(6, `Running workflow id=${this.id}`);
-
+    let waiting_fulfilled = false;
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
-      //TODO
       let fulfilled = true;
       Object.entries(this.wait_info || {}).forEach(([k, v]) => {
         switch (k) {
@@ -334,17 +333,7 @@ class WorkflowRun {
         }
       });
       if (!fulfilled) return;
-      else {
-        const step = steps.find((step) => step.name === this.current_step_name);
-        const nextStep = this.get_next_step(step!, user);
-        if (nextStep) this.set_current_step(nextStep.name);
-        await this.update({
-          wait_info: {},
-          status: nextStep ? "Running" : "Finished",
-          current_step: this.current_step,
-        });
-        if (!nextStep) return;
-      }
+      else waiting_fulfilled = true;
     }
 
     //find current step
@@ -368,7 +357,7 @@ class WorkflowRun {
       this.step_start = new Date();
 
       try {
-        if (step.action_name === "UserForm") {
+        if (step.action_name === "UserForm" && !waiting_fulfilled) {
           let user_id;
           if (step.configuration.user_id_expression) {
             user_id = eval_expression(
@@ -404,7 +393,7 @@ class WorkflowRun {
           step = null;
           break;
         }
-        if (step.action_name === "Output") {
+        if (step.action_name === "Output" && !waiting_fulfilled) {
           const output = interpolate(
             step.configuration.output_text,
             this.context,
@@ -426,7 +415,7 @@ class WorkflowRun {
           step = null;
           break;
         }
-        if (step.action_name === "DataOutput") {
+        if (step.action_name === "DataOutput" && !waiting_fulfilled) {
           const output_val = eval_expression(
             step.configuration.output_expr,
             this.context,
@@ -448,7 +437,7 @@ class WorkflowRun {
           step = null;
           break;
         }
-        if (step.action_name === "WaitNextTick") {
+        if (step.action_name === "WaitNextTick" && !waiting_fulfilled) {
           await this.update({
             status: "Waiting",
             wait_info: {},
@@ -457,7 +446,7 @@ class WorkflowRun {
           if (trace) this.createTrace(step.name, user);
           break;
         }
-        if (step.action_name === "WaitUntil") {
+        if (step.action_name === "WaitUntil" && !waiting_fulfilled) {
           const resume_at = eval_expression(
             step.configuration.resume_at,
             { moment, ...this.context },
@@ -499,6 +488,8 @@ class WorkflowRun {
 
             continue;
           }
+        } else if (waiting_fulfilled) {
+          waiting_fulfilled = false;
         } else result = await step.run(this.context, user);
 
         const nextUpdate: any = {};
@@ -543,6 +534,7 @@ class WorkflowRun {
               this.current_step.pop();
               this.current_step.pop();
               const afterForStep = this.get_next_step(forStep, user);
+
               if (afterForStep) this.set_current_step(afterForStep.name);
               else {
                 //TODO what if there is another level of forloops
@@ -550,11 +542,11 @@ class WorkflowRun {
                 nextUpdate.status = "Finished";
               }
               //remove variable from context
-              delete this.context[step.configuration.item_variable];
+              delete this.context[forStep.configuration.item_variable];
               nextUpdate.context = this.context;
-              nextUpdate.current_step = this.current_step;
+              //nextUpdate.current_step = this.current_step;
             }
-            step = steps.find((s) => s.name === this.current_step_name);
+            step = step && steps.find((s) => s.name === this.current_step_name);
           } else {
             step = null;
             nextUpdate.status = "Finished";
@@ -590,8 +582,8 @@ class WorkflowRun {
           run_page: `/actions/run/${this.id}`,
         });
         break;
-      }
-    }
+      } // try-catch
+    } //while
     return this.context;
   }
 
