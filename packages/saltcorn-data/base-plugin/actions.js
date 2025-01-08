@@ -144,6 +144,7 @@ const run_code = async ({
     Table,
     table,
     row,
+    context: row,
     user,
     console: consoleInterceptor(getState()),
     Actions,
