@@ -499,16 +499,15 @@ function genWorkflowDiagram(steps) {
   ${s.action_name}\`"]:::wfstep${s.id}`
   );
 
+  console.log(steps);
+  
+
   nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
     if (step.initial_step) linkLines.push(`  _Start --> ${step.mmname}`);
-    if (step.action_name === "ForLoop") {
-      linkLines.push(
-        `  ${step.mmname} --> ${step.configuration.for_loop_step_name}`
-      );
-    } else if (stepNames.includes(step.next_step)) {
+    if (stepNames.includes(step.next_step)) {
       linkLines.push(
         `  ${step.mmname}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.mmnext}`
       );
@@ -535,6 +534,11 @@ function genWorkflowDiagram(steps) {
         `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
       );
     }
+    if (step.action_name === "ForLoop") {
+      linkLines.push(
+        `  ${step.mmname}-.->${WorkflowStep.mmescape(step.configuration.loop_body_initial_step)}`
+      );
+    } 
     if (step.action_name === "EndForLoop") {
       // TODO this is not correct. improve.
       let forStep;
@@ -556,7 +560,7 @@ function genWorkflowDiagram(steps) {
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  //console.log(fc);
+  console.log(fc);
 
   return fc;
 }
