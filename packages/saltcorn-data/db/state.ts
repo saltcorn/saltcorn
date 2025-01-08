@@ -895,7 +895,7 @@ class State {
           }
         });
       } catch (e) {
-        //console.error(e);
+        console.error("code page load error: ", e);
       }
     }
     if (!noSignal && db.is_node)
@@ -1190,6 +1190,7 @@ const features = {
   stringify_json_fields: true,
   dynamic_auth_parameters: true,
   capacitor: true,
+  workflows: true,
 };
 
 export = {

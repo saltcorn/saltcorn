@@ -11,6 +11,9 @@ import User from "./user";
 import Trigger from "./trigger";
 import Table from "./table";
 import Expression from "./expression";
+import FieldRepeat from "./fieldrepeat";
+const { jsIdentifierValidator } = require("../utils");
+
 const { eval_expression } = Expression;
 
 const { getState } = require("../db/state");
@@ -18,6 +21,8 @@ const { getState } = require("../db/state");
  * WorkflowStep Class
  * @category saltcorn-data
  */
+const reserved = new Set(["end", "subgraph", "direction"]);
+
 class WorkflowStep {
   id?: number;
   name: string;
@@ -44,6 +49,22 @@ class WorkflowStep {
       typeof o.configuration === "string"
         ? JSON.parse(o.configuration)
         : o.configuration;
+  }
+
+  static mmescape(s: string) {
+    return reserved.has(s) ? `_${s}_` : s;
+  }
+
+  //mermaid compatible name
+  get mmname() {
+    return reserved.has(this.name) ? `_${this.name}_` : this.name;
+  }
+
+  //mermaid compatible name
+  get mmnext() {
+    return this.next_step && reserved.has(this.next_step)
+      ? `_${this.next_step}_`
+      : this.next_step;
   }
 
   /**
@@ -183,6 +204,161 @@ class WorkflowStep {
         mode: "workflow",
       });
     }
+  }
+  static builtInActionExplainers() {
+    const actionExplainers: any = {};
+    actionExplainers.SetContext = "Set variables in the context";
+    actionExplainers.TableQuery =
+      "Query a table into a variable in the context";
+    actionExplainers.Output =
+      "Display a message to the user. Pause workflow until the message is read.";
+    actionExplainers.DataOutput =
+      "Display a value to the user. Arrays of objects will be displayed as tables. Pause workflow until the message is read.";
+    actionExplainers.WaitUntil = "Pause until a time in the future";
+    actionExplainers.WaitNextTick =
+      "Pause until the next scheduler invocation (at most 5 minutes)";
+    actionExplainers.UserForm =
+      "Ask a user one or more questions, pause until they are answered";
+    return actionExplainers;
+  }
+
+  static async builtInActionConfigFields() {
+    const actionConfigFields = [];
+    actionConfigFields.push({
+      label: "Form header",
+      sublabel: "Text shown to the user at the top of the form",
+      name: "form_header",
+      type: "String",
+      showIf: { wf_action_name: "UserForm" },
+    });
+    actionConfigFields.push({
+      label: "User ID",
+      name: "user_id_expression",
+      type: "String",
+      sublabel: "Optional. If blank assigned to user starting the workflow",
+      showIf: { wf_action_name: "UserForm" },
+    });
+    actionConfigFields.push({
+      label: "Resume at",
+      name: "resume_at",
+      sublabel:
+        "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
+      type: "String",
+      showIf: { wf_action_name: "WaitUntil" },
+    });
+    actionConfigFields.push({
+      label: "Context values",
+      name: "ctx_values",
+      sublabel:
+        "JavaScript object expression for the variables to set. Example <code>{x: 5, y:y+1}</code> will set x to 5 and increment existing context variable y",
+      type: "String",
+      fieldview: "textarea",
+      class: "validate-expression",
+      default: "{}",
+      showIf: { wf_action_name: "SetContext" },
+    });
+    actionConfigFields.push({
+      label: "Output text",
+      name: "output_text",
+      sublabel:
+        "Message shown to the user. Can contain HTML tags and use interpolations {{ }} to access the context",
+      type: "String",
+      fieldview: "textarea",
+      showIf: { wf_action_name: "Output" },
+    });
+    actionConfigFields.push({
+      label: "Output expression",
+      name: "output_expr",
+      sublabel:
+        "JavaScript expression for the value to output. Typically the name of a variable",
+      type: "String",
+      class: "validate-expression",
+      showIf: { wf_action_name: "DataOutput" },
+    });
+    actionConfigFields.push({
+      label: "Markdown",
+      name: "markdown",
+      sublabel:
+        "The contents are markdown formatted and should be rendered to HTML",
+      type: "Bool",
+      showIf: { wf_action_name: "Output" },
+    });
+    actionConfigFields.push({
+      label: "Table",
+      name: "query_table",
+      type: "String",
+      required: true,
+      attributes: { options: (await Table.find()).map((t) => t.name) },
+      showIf: { wf_action_name: "TableQuery" },
+    });
+    actionConfigFields.push({
+      label: "Query",
+      name: "query_object",
+      sublabel: "Where object, example <code>{manager: 1}</code>",
+      type: "String",
+      required: true,
+      class: "validate-expression",
+      default: "{}",
+      showIf: { wf_action_name: "TableQuery" },
+    });
+    actionConfigFields.push({
+      label: "Variable",
+      name: "query_variable",
+      sublabel: "Context variable to write to query results to",
+      type: "String",
+      required: true,
+      validator: jsIdentifierValidator,
+      showIf: { wf_action_name: "TableQuery" },
+    });
+    actionConfigFields.push(
+      new FieldRepeat({
+        name: "user_form_questions",
+        showIf: { wf_action_name: "UserForm" },
+        fields: [
+          {
+            label: "Label",
+            name: "label",
+            type: "String",
+            sublabel:
+              "The text that will shown to the user above the input elements",
+          },
+          {
+            label: "Variable name",
+            name: "var_name",
+            type: "String",
+            sublabel:
+              "The answer will be set in the context with this variable name",
+            validator: jsIdentifierValidator,
+          },
+          {
+            label: "Input Type",
+            name: "qtype",
+            type: "String",
+            required: true,
+            attributes: {
+              options: [
+                "Yes/No",
+                "Checkbox",
+                "Free text",
+                "Multiple choice",
+                //"Multiple checks",
+                "Integer",
+                "Float",
+                //"File upload",
+              ],
+            },
+          },
+          {
+            label: "Options",
+            name: "options",
+            type: "String",
+            sublabel: "Comma separated list of multiple choice options",
+            showIf: { qtype: ["Multiple choice", "Multiple checks"] },
+          },
+        ],
+      })
+    );
+    return actionConfigFields;
   }
 }
 

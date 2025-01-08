@@ -34,6 +34,10 @@ type FieldLikeBasics = {
   input_type?: InputType;
   type?: string | Type;
   primary_key?: boolean;
+  sublabel?: string;
+  validator?: (arg0: any) => boolean | string | undefined;
+  attributes?: GenObj;
+  showIf?: any;
 };
 type FieldLikeWithInputType = {
   input_type: string;

@@ -11,7 +11,7 @@ const {
   addOnDoneRedirect,
   is_relative_url,
 } = require("./utils.js");
-const { ppVal } = require("@saltcorn/data/utils");
+const { ppVal, jsIdentifierValidator } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
@@ -495,7 +495,7 @@ router.post(
 function genWorkflowDiagram(steps) {
   const stepNames = steps.map((s) => s.name);
   const nodeLines = steps.map(
-    (s) => `  ${s.name}["\`**${s.name}**
+    (s) => `  ${s.mmname}["\`**${s.name}**
   ${s.action_name}\`"]:::wfstep${s.id}`
   );
 
@@ -503,34 +503,36 @@ function genWorkflowDiagram(steps) {
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
-    if (step.initial_step) linkLines.push(`  _Start --> ${step.name}`);
+    if (step.initial_step) linkLines.push(`  _Start --> ${step.mmname}`);
     if (step.action_name === "ForLoop") {
       linkLines.push(
-        `  ${step.name} --> ${step.configuration.for_loop_step_name}`
+        `  ${step.mmname} --> ${step.configuration.for_loop_step_name}`
       );
     } else if (stepNames.includes(step.next_step)) {
       linkLines.push(
-        `  ${step.name}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.next_step}`
+        `  ${step.mmname}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.mmnext}`
       );
     } else if (step.next_step) {
       let found = false;
       for (const otherStep of stepNames)
         if (step.next_step.includes(otherStep)) {
-          linkLines.push(`  ${step.name} --> ${otherStep}`);
+          linkLines.push(
+            `  ${step.mmname} --> ${WorkflowStep.mmescape(otherStep)}`
+          );
           found = true;
         }
       if (!found) {
         linkLines.push(
-          `  ${step.name}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.name}</a> ---_End_${step.name}`
+          `  ${step.mmname}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.mmname}</a> ---_End_${step.mmname}`
         );
         nodeLines.push(
-          `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+          `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
         );
       }
     } else if (!step.next_step) {
-      linkLines.push(`  ${step.name} --> _End_${step.name}`);
+      linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
       nodeLines.push(
-        `  _End_${step.name}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+        `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
       );
     }
     if (step.action_name === "EndForLoop") {
@@ -542,7 +544,7 @@ function genWorkflowDiagram(steps) {
           break;
         }
       }
-      if (forStep) linkLines.push(`  ${step.name} --> ${forStep.name}`);
+      if (forStep) linkLines.push(`  ${step.mmname} --> ${forStep.mmname}`);
     }
     step_ix += 1;
   }
@@ -581,7 +583,29 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     ],
   });
   trigCfgForm.values = trigger.configuration;
+  let copilot_form = "";
+
+  if (getState().functions.copilot_generate_workflow) {
+    copilot_form = renderForm(
+      new Form({
+        action: `/actions/gen-copilot/${id}`,
+        values: { description: trigger.description || "" },
+        submitLabel: "Generate workflow with copilot",
+        formStyle: "vert",
+        fields: [
+          {
+            name: "description",
+            label: "Description",
+            type: "String",
+            fieldview: "textarea",
+          },
+        ],
+      }),
+      req.csrfToken()
+    );
+  }
   return (
+    copilot_form +
     pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
     script(
       { defer: "defer" },
@@ -641,16 +665,6 @@ window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
   );
 };
 
-const jsIdentifierValidator = (s) => {
-  if (!s) return "An identifier is required";
-  if (s.includes(" ")) return "Spaces not allowd";
-  let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
-    .split("")
-    .find((c) => s.includes(c));
-
-  if (badc) return `Character ${badc} not allowed`;
-};
-
 const getWorkflowStepForm = async (
   trigger,
   req,
@@ -700,19 +714,12 @@ const getWorkflowStepForm = async (
       }
     } catch {}
   }
+  const builtInActionExplainers = WorkflowStep.builtInActionExplainers();
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     noMultiStep: true,
     builtInLabel: "Workflow Actions",
-    builtIns: [
-      "SetContext",
-      "TableQuery",
-      "Output",
-      "DataOutput",
-      "WaitUntil",
-      "WaitNextTick",
-      "UserForm",
-    ],
+    builtIns: Object.keys(builtInActionExplainers),
     forWorkflow: true,
   });
   const triggers = Trigger.find({
@@ -721,152 +728,8 @@ const getWorkflowStepForm = async (
   triggers.forEach((tr) => {
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
-  actionExplainers.SetContext = "Set variables in the context";
-  actionExplainers.TableQuery = "Query a table into a variable in the context";
-  actionExplainers.Output =
-    "Display a message to the user. Pause workflow until the message is read.";
-  actionExplainers.DataOutput =
-    "Display a value to the user. Arrays of objects will be displayed as tables. Pause workflow until the message is read.";
-  actionExplainers.WaitUntil = "Pause until a time in the future";
-  actionExplainers.WaitNextTick =
-    "Pause until the next scheduler invocation (at most 5 minutes)";
-  actionExplainers.UserForm =
-    "Ask a user one or more questions, pause until they are answered";
-
-  actionConfigFields.push({
-    label: "Form header",
-    sublabel: "Text shown to the user at the top of the form",
-    name: "form_header",
-    type: "String",
-    showIf: { wf_action_name: "UserForm" },
-  });
-  actionConfigFields.push({
-    label: "User ID",
-    name: "user_id_expression",
-    type: "String",
-    sublabel: "Optional. If blank assigned to user starting the workflow",
-    showIf: { wf_action_name: "UserForm" },
-  });
-  actionConfigFields.push({
-    label: "Resume at",
-    name: "resume_at",
-    sublabel:
-      "JavaScript expression for the time to resume. <code>moment</code> is in scope.",
-    type: "String",
-    showIf: { wf_action_name: "WaitUntil" },
-  });
-  actionConfigFields.push({
-    label: "Context values",
-    name: "ctx_values",
-    sublabel:
-      "JavaScript object expression for the variables to set. Example <code>{x: 5, y:y+1}</code> will set x to 5 and increment existing context variable y",
-    type: "String",
-    fieldview: "textarea",
-    class: "validate-expression",
-    default: "{}",
-    showIf: { wf_action_name: "SetContext" },
-  });
-  actionConfigFields.push({
-    label: "Output text",
-    name: "output_text",
-    sublabel:
-      "Message shown to the user. Can contain HTML tags and use interpolations {{ }} to access the context",
-    type: "String",
-    fieldview: "textarea",
-    showIf: { wf_action_name: "Output" },
-  });
-  actionConfigFields.push({
-    label: "Output expression",
-    name: "output_expr",
-    sublabel:
-      "JavaScript expression for the value to output. Typically the name of a variable",
-    type: "String",
-    class: "validate-expression",
-    showIf: { wf_action_name: "DataOutput" },
-  });
-  actionConfigFields.push({
-    label: "Markdown",
-    name: "markdown",
-    sublabel:
-      "The centents are markdown formatted and should be rendered to HTML",
-    type: "Bool",
-    showIf: { wf_action_name: "Output" },
-  });
-  actionConfigFields.push({
-    label: "Table",
-    name: "query_table",
-    type: "String",
-    required: true,
-    attributes: { options: (await Table.find()).map((t) => t.name) },
-    showIf: { wf_action_name: "TableQuery" },
-  });
-  actionConfigFields.push({
-    label: "Query",
-    name: "query_object",
-    sublabel: "Where object, example <code>{manager: 1}</code>",
-    type: "String",
-    required: true,
-    class: "validate-expression",
-    default: "{}",
-    showIf: { wf_action_name: "TableQuery" },
-  });
-  actionConfigFields.push({
-    label: "Variable",
-    name: "query_variable",
-    sublabel: "Context variable to write to query results to",
-    type: "String",
-    required: true,
-    validator: jsIdentifierValidator,
-    showIf: { wf_action_name: "TableQuery" },
-  });
-  actionConfigFields.push(
-    new FieldRepeat({
-      name: "user_form_questions",
-      showIf: { wf_action_name: "UserForm" },
-      fields: [
-        {
-          label: "Label",
-          name: "label",
-          type: "String",
-          sublabel:
-            "The text that will shown to the user above the input elements",
-        },
-        {
-          label: "Variable name",
-          name: "var_name",
-          type: "String",
-          sublabel:
-            "The answer will be set in the context with this variable name",
-          validator: jsIdentifierValidator,
-        },
-        {
-          label: "Input Type",
-          name: "qtype",
-          type: "String",
-          required: true,
-          attributes: {
-            options: [
-              "Yes/No",
-              "Checkbox",
-              "Free text",
-              "Multiple choice",
-              //"Multiple checks",
-              "Integer",
-              "Float",
-              //"File upload",
-            ],
-          },
-        },
-        {
-          label: "Options",
-          name: "options",
-          type: "String",
-          sublabel: "Comma separated list of multiple choice options",
-          showIf: { qtype: ["Multiple choice", "Multiple checks"] },
-        },
-      ],
-    })
-  );
+  Object.assign(actionExplainers, builtInActionExplainers);
+  actionConfigFields.push(...(await WorkflowStep.builtInActionConfigFields()));
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
@@ -1561,7 +1424,7 @@ router.post(
           res.redirect(`/actions/configure/${step.trigger_id}`);
         }
       }
-      if (_after_step) {
+      if (_after_step && _after_step !== "undefined") {
         const astep = await WorkflowStep.findOne({
           id: _after_step,
           trigger_id,
@@ -1580,6 +1443,28 @@ router.post(
         res.redirect(`/actions/configure/${step.trigger_id}`);
       }
     }
+  })
+);
+
+router.post(
+  "/gen-copilot/:trigger_id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { trigger_id } = req.params;
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    await WorkflowStep.deleteForTrigger(trigger.id);
+    const description = req.body.description;
+    await Trigger.update(trigger.id, { description });
+    const steps = await getState().functions.copilot_generate_workflow.run(
+      description,
+      trigger.id
+    );
+    if (steps.length) steps[0].initial_step = true;
+    for (const step of steps) {
+      step.trigger_id = trigger.id;
+      await WorkflowStep.create(step);
+    }
+    res.redirect(`/actions/configure/${trigger.id}`);
   })
 );
 
