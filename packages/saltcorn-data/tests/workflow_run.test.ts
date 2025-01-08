@@ -110,3 +110,68 @@ describe("Workflow run steps", () => {
     expect(traces.length).toBe(4);
   });
 });
+
+describe("Workflow run forloop", () => {
+  it("should create steps", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "wfForLoop",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{xs: [1,2,3], ys: []}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "second_step",
+      next_step: "third_step",
+      action_name: "ForLoop",
+      initial_step: false,
+      configuration: {
+        forloop_array_expression: "xs",
+        forloop_item_variable: "x",
+        forloop_body_initial_step: "body0",
+      },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "third_step",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { code: `{done:true}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "body0",
+      next_step: "body1",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {ys:[...ys, x+3]}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "body1",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {inloop: x}` },
+    });
+  });
+  it("should run", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "mywf" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+    });
+    await wfrun.run({ user });
+    expect(wfrun.context.x).toBe(1);
+    expect(wfrun.context.y).toBe(2);
+    expect(wfrun.context.last).toBe(1);
+  });
+});
