@@ -65,7 +65,7 @@ function updateQueryStringParameters(uri1, kvs) {
   return uri;
 }
 
-function removeQueryStringParameter(uri1, key) {
+function removeQueryStringParameter(uri1, key, value) {
   let hash = "";
   let uri = uri1;
   if (uri && uri.includes("#")) {
@@ -73,8 +73,12 @@ function removeQueryStringParameter(uri1, key) {
     hash = "#" + uris[1];
     uri = uris[0];
   }
-
-  var re = new RegExp("([?&])" + key + "=.*?(&|$)", "gi");
+  let re;
+  if (value) {
+    re = new RegExp("([?&])" + key + "=" + value + "?(&|$)", "gi");
+  } else {
+    re = new RegExp("([?&])" + key + "=.*?(&|$)", "gi");
+  }
   if (uri.match(re)) {
     uri = uri.replace(re, "$1" + "$2");
   }
@@ -82,6 +86,28 @@ function removeQueryStringParameter(uri1, key) {
     uri = uri.substring(0, uri.length - 1);
   if (uri.match(re)) return removeQueryStringParameter(uri + hash, key);
   return uri + hash;
+}
+
+function addQueryStringParameter(uri1, key, value){
+  let hash = "";
+  let uri = uri1;
+  if (uri && uri.includes("#")) {
+    let uris = uri1.split("#");
+    hash = "#" + uris[1];
+    uri = uris[0];
+  }
+  var re = new RegExp("([?&])" + key + "=" + value + "?(&|$)", "gi");
+  if (uri.match(re)) return uri1;
+
+  var separator = uri.indexOf("?") !== -1 ? "&" : "?";  
+  if (Array.isArray(value))
+    return (
+      uri +
+      separator +
+      value.map((val) => key + "=" + encodeURIComponent(val)).join("&") +
+      hash
+    );
+  else return uri + separator + key + "=" + encodeURIComponent(value) + hash;
 }
 
 function select_id(id, e) {
@@ -96,10 +122,9 @@ function check_state_field(that, e) {
   const checked = that.checked;
   const name = that.name;
   const value = encodeURIComponent(that.value);
-  var separator = get_current_state_url(e).indexOf("?") !== -1 ? "&" : "?";
   let dest;
-  if (checked) dest = get_current_state_url(e) + `${separator}${name}=${value}`;
-  else dest = get_current_state_url(e).replace(`${name}=${value}`, "");
+  if (checked) dest = addQueryStringParameter(get_current_state_url(e), name, value);
+  else dest = removeQueryStringParameter(get_current_state_url(e), name, value);
   pjax_to(dest.replace("&&", "&").replace("?&", "?"), e);
 }
 
