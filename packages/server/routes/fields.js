@@ -12,6 +12,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const { renderForm } = require("@saltcorn/markup");
 const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
+const Trigger = require("@saltcorn/data/models/trigger");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
@@ -306,6 +307,10 @@ const fieldFlow = (req) =>
           }
 
           await field.update(fldRow);
+          Trigger.emitEvent("AppChange", `Field ${fldRow.name}`, req.user, {
+            entity_type: "Field",
+            entity_name: fldRow.name || fldRow.label,
+          });
         } catch (e) {
           return {
             redirect: `/table/${context.table_id}`,
@@ -315,6 +320,10 @@ const fieldFlow = (req) =>
       } else {
         try {
           await Field.create(fldRow);
+          Trigger.emitEvent("AppChange", `Field ${fldRow.name}`, req.user, {
+            entity_type: "Field",
+            entity_name: fldRow.name || fldRow.label,
+          });
         } catch (e) {
           return {
             redirect: `/table/${context.table_id}`,
