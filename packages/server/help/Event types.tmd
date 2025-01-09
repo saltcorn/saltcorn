@@ -55,6 +55,8 @@ user verification is enabled.
 
 **Startup**: run this whenever this saltcorn process initializes. 
 
+**AppChange**: the application build (views, pages, triggers etc.) changed
+
 ## Other events
 
 **Never**: this trigger is never run on its own. However triggers that are marked as never
