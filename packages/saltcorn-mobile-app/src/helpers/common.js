@@ -4,6 +4,7 @@ import { apiCall } from "./api";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { Geolocation } from "@capacitor/geolocation";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
+import { SendIntent } from "send-intent";
 
 const orientationChangeListeners = new Set();
 
@@ -80,13 +81,13 @@ export function clearTopAlerts() {
 }
 
 export function errorAlert(error) {
+  console.error(error);
   showAlerts([
     {
       type: "error",
       msg: error.message ? error.message : "An error occured.",
     },
   ]);
-  console.error(error);
 }
 
 // TODO combine with loadEncodedFile
@@ -188,27 +189,33 @@ export async function getScreenOrientation() {
   return await ScreenOrientation.orientation();
 }
 
-export async function shareReceivedCallback(data) {
-  console.log("Received share data: ", data);
+export async function sendIntentCallback() {
+  console.log("sendIntentCallback");
   try {
-    const response = await apiCall({
-      method: "POST",
-      path: "/notifications/share-handler",
-      body: data,
-    });
-    console.log("Share data sent to server.");
-    console.log(response);
-    if (response.data.error) {
-      errorAlert(response.data.error);
-    } else {
-      showAlerts([
-        {
-          type: "success",
-          msg: "Shared: " + (data.title || data.text || data.url || ""),
-        },
-      ]);
+    const received = await SendIntent.checkSendIntentReceived();
+    console.log("received: ", received);
+    if (received) {
+      const response = await apiCall({
+        method: "POST",
+        path: "/notifications/share-handler",
+        body: received,
+      });
+      console.log("Share data sent to server.");
+      console.log(response);
+      if (response.data.error) {
+        errorAlert(response.data.error);
+      } else {
+        showAlerts([
+          {
+            type: "success",
+            msg:
+              "Shared: " +
+              (received.title || received.text || received.url || ""),
+          },
+        ]);
+      }
     }
   } catch (error) {
-    errorAlert(error);
+    console.log("Error in sendIntentCallback: ", error);
   }
 }

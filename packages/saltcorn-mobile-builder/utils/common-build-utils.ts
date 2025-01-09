@@ -720,6 +720,7 @@ export function writeCfgFile({
   tenantAppName,
   autoPublicLogin,
   allowOfflineMode,
+  allowShareTo,
 }: any) {
   const wwwDir = join(buildDir, "www");
   let cfg: any = {
@@ -734,6 +735,7 @@ export function writeCfgFile({
     synchedTables,
     autoPublicLogin,
     allowOfflineMode,
+    allowShareTo,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
   writeFileSync(
@@ -928,6 +930,7 @@ export function writePodfile(buildDir: string) {
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
     pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
+    pod 'CapacitorScreenOrientation', :path => '../../node_modules/@capacitor/screen-orientation'
     pod 'SendIntent', :path => '../../node_modules/send-intent'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'

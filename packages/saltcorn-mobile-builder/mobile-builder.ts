@@ -226,6 +226,7 @@ export class MobileBuilder {
         tenantAppName: this.tenantAppName,
         autoPublicLogin: this.autoPublicLogin,
         allowOfflineMode: this.allowOfflineMode,
+        allowShareTo: this.allowShareTo,
       });
       let resultCode = await bundlePackagesAndPlugins(
         this.buildDir,
@@ -251,6 +252,7 @@ export class MobileBuilder {
       if (this.platforms.includes("ios")) await this.handleIosPlatform();
       if (this.platforms.includes("android"))
         await this.handleAndroidPlatform();
+      this.capacitorHelper.generateAssets();
       await this.capacitorHelper.buildApp();
       if (resultCode === 0 && this.copyTargetDir) {
         this.capacitorHelper.tryCopyAppFiles(

@@ -22,14 +22,13 @@ import {
   gotoEntryView,
   addRoute,
 } from "./helpers/navigation.js";
-import { shareReceivedCallback } from "./helpers/common.js";
+import { sendIntentCallback } from "./helpers/common.js";
 
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
 import { jwtDecode } from "jwt-decode";
 
 import { Network } from "@capacitor/network";
-import { SendIntent } from "send-intent";
 
 async function addScript(scriptObj) {
   let waited = 0;
@@ -321,10 +320,6 @@ export async function init({
 
     state.mobileConfig.networkState = await Network.getStatus();
     Network.addListener("networkStatusChange", networkChangeCallback);
-    window.addEventListener("sendIntentReceived", async () => {
-      const result = await SendIntent.checkSendIntentReceived();
-      console.log("sendIntentReceived", result);
-    });
 
     const networkDisabled = state.mobileConfig.networkState === "none";
     const jwt = state.mobileConfig.jwt;
@@ -372,6 +367,11 @@ export async function init({
           });
         }
       }
+      if (state.mobileConfig.allowOfflineMode) {
+        await sendIntentCallback();
+        window.addEventListener("sendIntentReceived", sendIntentCallback);
+      }
+
       let page = null;
       if (!lastLocation) {
         addRoute({ route: entryPoint, query: undefined });

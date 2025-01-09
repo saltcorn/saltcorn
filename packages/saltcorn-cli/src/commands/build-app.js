@@ -193,7 +193,7 @@ BuildAppCommand.flags = {
   allowShareTo: Flags.boolean({
     name: "allow share to",
     string: "allowShareTo",
-    description: "TODO ",
+    description: "Allow sharing from other apps to this app",
     default: false,
   }),
   tenantAppName: Flags.string({

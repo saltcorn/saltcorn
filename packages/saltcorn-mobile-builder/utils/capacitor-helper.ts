@@ -1,18 +1,12 @@
 import { spawnSync, execSync } from "child_process";
 import { join, basename } from "path";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync } from "fs";
 import { copySync } from "fs-extra";
 import type User from "@saltcorn/data/models/user";
 import utils = require("@saltcorn/data/utils");
 const { safeEnding } = utils;
 import File from "@saltcorn/data/models/file";
-import {
-  modifyGradleConfig,
-  modifyAndroidManifest,
-  writeDataExtractionRules,
-  writeNetworkSecurityConfig,
-  copyPrepopulatedDb,
-} from "./common-build-utils";
+import { copyPrepopulatedDb } from "./common-build-utils";
 
 import type { IosCfg } from "../mobile-builder";
 
@@ -70,7 +64,6 @@ export class CapacitorHelper {
 
   public async buildApp() {
     if (!this.useDocker) {
-      this.generateAssets();
       this.capSync();
       copyPrepopulatedDb(this.buildDir, this.platforms);
       if (this.isAndroid) {
@@ -176,7 +169,7 @@ export class CapacitorHelper {
     for (const platform of this.platforms) addFn(platform);
   }
 
-  private generateAssets() {
+  public generateAssets() {
     console.log("npx capacitor-assets generate");
     const result = spawnSync("npx", ["capacitor-assets", "generate"], {
       cwd: this.buildDir,

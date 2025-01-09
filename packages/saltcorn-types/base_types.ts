@@ -401,6 +401,7 @@ export type MobileConfig = {
   synchedTables: string[];
   autoPublicLogin: boolean;
   allowOfflineMode?: boolean;
+  allowShareTo?: boolean;
   isOfflineMode?: boolean;
   networkState?:
     | "cellular"
