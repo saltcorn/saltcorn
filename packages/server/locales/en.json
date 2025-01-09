@@ -1520,6 +1520,7 @@
 	"OK": "OK",
 	"Step settings": "Step settings",
 	"Action settings": "Action settings",
+	"Keystore file is not applied for debug builds.": "Keystore file is not applied for debug builds.",
 	"Workflow": "Workflow",
 	"Previous runs": "Previous runs",
 	"The workflow the user will be interacting with.": "The workflow the user will be interacting with."

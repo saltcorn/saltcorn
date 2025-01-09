@@ -20,7 +20,7 @@ import { getState } from "@saltcorn/data/db/state";
 import type { PluginLayout } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
 import { available_languages } from "@saltcorn/data/models/config";
-
+import type { IosCfg } from "../mobile-builder";
 const resizer = require("resize-with-sharp-or-jimp");
 
 /**
@@ -49,6 +49,7 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
     "@capacitor/screen-orientation@6.0.3",
+    "send-intent",
   ];
   result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
     cwd: buildDir,
@@ -106,17 +107,14 @@ const config: CapacitorConfig  = {
           : ""
       }
       releaseType: '${config.buildType === "release" ? "AAB" : "APK"}',
-    }
+    },
+    ${config.unsecureNetwork ? "allowMixedContent: true," : ""}
   },
   ${
     config.unsecureNetwork
-      ? `android: {
-    allowMixedContent: true,
-  },
-  server: {
+      ? `server: {
     cleartext: true,
     androidScheme: 'http',
-    
   },`
       : ""
   }
@@ -163,6 +161,7 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
 }
 
 export async function modifyAndroidManifest(buildDir: string) {
+  console.log("modifyAndroidManifest");
   try {
     const androidManifest = join(
       buildDir,
@@ -188,6 +187,17 @@ export async function modifyAndroidManifest(buildDir: string) {
       "android:networkSecurityConfig": "@xml/network_security_config",
       "android:usesCleartextTraffic": "true",
     };
+    // add intent-filter for sharing
+    parsed.manifest.application[0].activity[0]["intent-filter"] = [
+      ...parsed.manifest.application[0].activity[0]["intent-filter"],
+      {
+        action: [{ $: { "android:name": "android.intent.action.SEND" } }],
+        category: [
+          { $: { "android:name": "android.intent.category.DEFAULT" } },
+        ],
+        data: [{ $: { "android:mimeType": "*/*" } }],
+      },
+    ];
 
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);
@@ -202,6 +212,7 @@ export async function modifyAndroidManifest(buildDir: string) {
 }
 
 export function writeDataExtractionRules(buildDir: string) {
+  console.log("writeDataExtractionRules");
   const dataExtractionRules = join(
     buildDir,
     "android",
@@ -234,6 +245,7 @@ export function writeDataExtractionRules(buildDir: string) {
 }
 
 export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
+  console.log("copyPrepopulatedDb", buildDir, platforms);
   if (platforms.includes("android")) {
     copySync(
       join(buildDir, "www", "scdb.sqlite"),
@@ -268,7 +280,16 @@ export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
   }
 }
 
-export function writeNetworkSecurityConfig(buildDir: string) {
+export function writeNetworkSecurityConfig(
+  buildDir: string,
+  serverPath: string
+) {
+  console.log("writeNetworkSecurityConfig");
+  let domain = serverPath;
+  if (domain.startsWith("http://")) domain = domain.substring(7);
+  if (domain.startsWith("https://")) domain = domain.substring(8);
+  if (domain.endsWith("/")) domain = domain.substring(0, domain.length - 1);
+  if (domain.includes(":")) domain = domain.substring(0, domain.indexOf(":"));
   const networkSecurityConfig = join(
     buildDir,
     "android",
@@ -284,7 +305,7 @@ export function writeNetworkSecurityConfig(buildDir: string) {
     `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">10.0.2.2</domain>
+    <domain includeSubdomains="true">${domain}</domain>
   </domain-config>
 </network-security-config>
   `
@@ -425,15 +446,21 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
   }
 }
 
-export function prepareExportOptionsPlist(
-  buildDir: string,
-  appId: string,
-  provisioningProfile: string
-) {
+export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
+  console.log("prepareExportOptionsPlist", buildDir, appId, iosParams);
+  const buildShareExtBloock = () => {
+    if (!iosParams.shareExtensionProvisioningProfile) return "";
+    const teamId = iosParams.appleTeamId;
+    const shareExtIdentifier =
+      iosParams.shareExtensionProvisioningProfile.identifier;
+    return `<key>${shareExtIdentifier.replace(`${teamId}.`, "")}</key>
+            <string>${
+              iosParams.shareExtensionProvisioningProfile.guuid
+            }</string>`;
+  };
   try {
-    const exportOptionsPlist = join(buildDir, "ExportOptions.plist");
     writeFileSync(
-      exportOptionsPlist,
+      join(buildDir, "ExportOptions.plist"),
       `<?xml version="1.0" encoding="UTF-8"?>
       <!DOCTYPE plist PUBLIC "~//Apple/DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
       <plist version="1.0">
@@ -443,7 +470,8 @@ export function prepareExportOptionsPlist(
           <key>provisioningProfiles</key>
           <dict>          
             <key>${appId}</key>
-            <string>${provisioningProfile}</string>
+            <string>${iosParams.mainProvisioningProfile.guuid}</string>
+            ${buildShareExtBloock()}
           </dict>
         </dict>
 
@@ -451,14 +479,14 @@ export function prepareExportOptionsPlist(
     );
   } catch (error: any) {
     console.log(
-      `Unable to set the provisioning profile '${provisioningProfile}': ${
+      `Unable to write the ExportOptionsPlist file: ${
         error.message ? error.message : "Unknown error"
       }`
     );
   }
 }
 
-export async function modifyInfoPlist(buildDir: string) {
+export function modifyInfoPlist(buildDir: string, allowShareTo: boolean) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
 
@@ -477,10 +505,47 @@ export async function modifyInfoPlist(buildDir: string) {
   <true/>
   <key>LSSupportsOpeningDocumentsInPlace</key>
   <true/>
+  ${
+    allowShareTo
+      ? `<key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Viewer</string>
+      <key>CFBundleURLName</key>
+      <string>com.saltcorn.store</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>scappscheme</string>
+      </array>
+    </dict>
+  </array>`
+      : ""
+  }
   `;
   // add newCfgs after the first <dict> tag
   const newContent = content.replace(/<dict>/, `<dict>${newCfgs}`);
   writeFileSync(infoPlist, newContent, "utf8");
+}
+
+export function copyShareExtFiles(buildDir: string) {
+  const iosAppDir = join(buildDir, "ios", "App");
+  const sefDir = join(buildDir, "share_extension_files");
+  copySync(
+    join(sefDir, "ShareViewController.swift"),
+    join(iosAppDir, "share-ext", "ShareViewController.swift"),
+    { overwrite: true }
+  );
+  copySync(
+    join(sefDir, "Info.plist"),
+    join(iosAppDir, "share-ext", "Info.plist"),
+    { overwrite: true }
+  );
+  copySync(
+    join(sefDir, "AppDelegate.swift"),
+    join(iosAppDir, "App", "AppDelegate.swift"),
+    { overwrite: true }
+  );
 }
 
 export async function decodeProvisioningProfile(
@@ -496,7 +561,11 @@ export async function decodeProvisioningProfile(
     const dict = parsed.plist.dict[0];
     const guuid = dict.string[dict.string.length - 1];
     const teamId = dict.array[0].string[0];
-    return { guuid, teamId };
+    const specifier = dict.string[1];
+    const identifier = dict.dict[0].string[0];
+    const result = { guuid, teamId, specifier, identifier };
+    console.log(result);
+    return result;
   } catch (error: any) {
     console.log(
       `Unable to decode the provisioning profile '${provisioningProfile}': ${
@@ -651,6 +720,7 @@ export function writeCfgFile({
   tenantAppName,
   autoPublicLogin,
   allowOfflineMode,
+  allowShareTo,
 }: any) {
   const wwwDir = join(buildDir, "www");
   let cfg: any = {
@@ -665,6 +735,7 @@ export function writeCfgFile({
     synchedTables,
     autoPublicLogin,
     allowOfflineMode,
+    allowShareTo,
   };
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
   writeFileSync(
@@ -859,6 +930,8 @@ export function writePodfile(buildDir: string) {
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
     pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
+    pod 'CapacitorScreenOrientation', :path => '../../node_modules/@capacitor/screen-orientation'
+    pod 'SendIntent', :path => '../../node_modules/send-intent'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
   end
@@ -891,11 +964,14 @@ export function writePodfile(buildDir: string) {
 }
 
 /**
- * replace the MARKETING_VERSION in project.pbxproj
  * @param buildDir
  * @param appVersion new app version
  */
-export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
+export function modifyXcodeProjectFile(
+  buildDir: string,
+  appVersion: string,
+  iosCfg: IosCfg
+) {
   const projectFile = join(
     buildDir,
     "ios",
@@ -903,12 +979,43 @@ export function modifyXcodeProjectFile(buildDir: string, appVersion: string) {
     "App.xcodeproj",
     "project.pbxproj"
   );
-  const content = readFileSync(projectFile, "utf8");
-  const newContent = content.replaceAll(
-    /MARKETING_VERSION = 1.0;/g,
+  let fileContent = readFileSync(projectFile, "utf8");
+  if (iosCfg.shareExtensionProvisioningProfile) {
+    const shareExtId =
+      iosCfg.shareExtensionProvisioningProfile.identifier.replace(
+        `${iosCfg.appleTeamId}.`,
+        ""
+      );
+    // modify debug/release blocks of the share extension target
+    for (const targetCfgBlock of fileContent.match(
+      new RegExp(`buildSettings = {[^}]*${shareExtId}[^}]*};`, "g")
+    ) || []) {
+      let newCfgBlock = targetCfgBlock
+        .replaceAll(/"CODE_SIGN_IDENTITY.*\n/g, "")
+        .replaceAll(/CODE_SIGN_STYLE.*\n/g, "")
+        .replaceAll(/DEVELOPMENT_TEAM.*\n/g, "")
+        .replaceAll(/"DEVELOPMENT_TEAM.*\n/g, "")
+        .replaceAll(/PROVISIONING_PROFILE_SPECIFIER.*\n/g, "")
+        .replaceAll(/"PROVISIONING_PROFILE_SPECIFIER.*\n/g, "")
+        // set new values
+        .replaceAll(
+          /MARKETING_VERSION = 1.0;/g,
+          `        MARKETING_VERSION = ${appVersion};
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+        CODE_SIGN_STYLE = Manual;
+        DEVELOPMENT_TEAM="";
+        "DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${iosCfg.appleTeamId};
+        PROVISIONING_PROFILE_SPECIFIER = "";
+        "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${iosCfg.shareExtensionProvisioningProfile.specifier}";`
+        );
+      fileContent = fileContent.replace(targetCfgBlock, newCfgBlock);
+    }
+  }
+  fileContent = fileContent.replace(
+    /MARKETING_VERSION = 1.0;/,
     `MARKETING_VERSION = ${appVersion};`
   );
-  writeFileSync(projectFile, newContent, "utf8");
+  writeFileSync(projectFile, fileContent, "utf8");
 }
 
 export function generateAndroidVersionCode(appVersion: string) {
@@ -923,6 +1030,7 @@ export function generateAndroidVersionCode(appVersion: string) {
 }
 
 export function modifyGradleConfig(buildDir: string, appVersion: string) {
+  console.log("modifyGradleConfig");
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
   const versionCode = generateAndroidVersionCode(appVersion);

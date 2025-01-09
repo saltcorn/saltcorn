@@ -199,23 +199,31 @@ router.post(
   error_catcher(async (req, res) => {
     const role = req.user?.role_id || 100;
     if (role === 100) {
-      req.flash("error", req.__("You must be logged in to share"));
-      res.redirect("/auth/login");
+      const msg = req.__("You must be logged in to share");
+      if (!req.smr) {
+        req.flash("error", msg);
+        res.redirect("/auth/login");
+      } else res.json({ error: msg });
     } else if (!getState().getConfig("pwa_share_to_enabled", false)) {
-      req.flash("error", req.__("Sharing not enabled"));
-      res.redirect("/");
+      const msg = req.__("Sharing not enabled");
+      if (!req.smr) {
+        req.flash("error", msg);
+        res.redirect("/");
+      } else res.json({ error: msg });
     } else {
       Trigger.emitEvent("ReceiveMobileShareData", null, req.user, {
         row: req.body,
       });
-      req.flash(
-        "success",
-        req.__(
-          "Shared: %s",
-          req.body.title || req.body.text || req.body.url || ""
-        )
-      );
-      res.status(303).redirect("/");
+      if (!req.smr) {
+        req.flash(
+          "success",
+          req.__(
+            "Shared: %s",
+            req.body.title || req.body.text || req.body.url || ""
+          )
+        );
+        res.status(303).redirect("/");
+      } else res.json({ success: "ok" });
     }
   })
 );

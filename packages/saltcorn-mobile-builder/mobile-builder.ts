@@ -14,9 +14,17 @@ import {
   prepareSplashPage,
   prepareBuildDir,
   prepareExportOptionsPlist,
+  copyShareExtFiles,
   writeCapacitorConfig,
-  decodeProvisioningProfile,
   prepAppIcon,
+  modifyInfoPlist,
+  writePodfile,
+  modifyXcodeProjectFile,
+  writePrivacyInfo,
+  modifyAndroidManifest,
+  writeDataExtractionRules,
+  writeNetworkSecurityConfig,
+  modifyGradleConfig,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -30,6 +38,18 @@ import { removeNonWordChars } from "@saltcorn/data/utils";
 type EntryPointType = "view" | "page";
 const appIdDefault = "saltcorn.mobile.app";
 const appNameDefault = "SaltcornMobileApp";
+
+export type IosCfg = {
+  appleTeamId: string;
+  mainProvisioningProfile: {
+    guuid: string;
+  };
+  shareExtensionProvisioningProfile?: {
+    guuid: string;
+    specifier: string;
+    identifier: string;
+  };
+};
 
 type MobileBuilderConfig = {
   appName?: string;
@@ -53,8 +73,8 @@ type MobileBuilderConfig = {
   plugins: Plugin[];
   copyTargetDir?: string;
   user?: User;
-  appleTeamId?: string;
-  provisioningProfile?: string;
+  iosParams?: IosCfg;
+  allowShareTo?: boolean;
   tenantAppName?: string;
   keyStorePath?: string;
   keyStoreAlias?: string;
@@ -89,14 +109,15 @@ export class MobileBuilder {
   packageRoot = join(__dirname, "../");
   copyTargetDir?: string;
   user?: User;
-  appleTeamId?: string;
-  provisioningProfile?: string;
+  allowShareTo: boolean;
   tenantAppName?: string;
   keyStorePath: string;
   keyStoreAlias: string;
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
   buildType: "debug" | "release";
+  iosParams?: IosCfg;
+  capacitorHelper: CapacitorHelper;
 
   /**
    *
@@ -130,7 +151,7 @@ export class MobileBuilder {
     this.plugins = cfg.plugins;
     this.copyTargetDir = cfg.copyTargetDir;
     this.user = cfg.user;
-    this.provisioningProfile = cfg.provisioningProfile;
+    this.allowShareTo = cfg.allowShareTo || false;
     this.tenantAppName = cfg.tenantAppName;
     if (cfg.keyStorePath && cfg.keyStoreAlias && cfg.keyStorePassword) {
       this.keyStorePath = cfg.keyStorePath;
@@ -144,12 +165,28 @@ export class MobileBuilder {
       this.isUnsecureKeyStore = true;
     }
     this.buildType = cfg.buildType;
+    this.iosParams = cfg.iosParams;
+    this.capacitorHelper = new CapacitorHelper({
+      ...this,
+      appVersion: this.appVersion,
+    });
   }
 
   /**
    *
    */
-  async build() {
+  public async fullBuild() {
+    try {
+      let resultCode = await this.prepareStep();
+      if (resultCode !== 0) return resultCode;
+      else return await this.finishStep();
+    } catch (error: any) {
+      console.error(error);
+      return 1;
+    }
+  }
+
+  public async prepareStep() {
     try {
       prepareBuildDir(this.buildDir, this.templateDir);
       writeCapacitorConfig(this.buildDir, {
@@ -164,16 +201,17 @@ export class MobileBuilder {
         keystoreAliasPassword: this.keyStorePassword,
         buildType: this.buildType,
       });
-      if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
+      this.capacitorHelper.addPlatforms();
+      return 0;
+    } catch (e: any) {
+      console.error(e);
+      return 1;
+    }
+  }
 
-      let iosParams = null;
-      if (this.platforms.includes("ios")) {
-        iosParams = await decodeProvisioningProfile(
-          this.buildDir,
-          this.provisioningProfile!
-        );
-        prepareExportOptionsPlist(this.buildDir, this.appId, iosParams.guuid);
-      }
+  public async finishStep() {
+    try {
+      if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
       copyServerFiles(this.buildDir);
       copySbadmin2Deps(this.buildDir);
       await copySiteLogo(this.buildDir);
@@ -188,6 +226,7 @@ export class MobileBuilder {
         tenantAppName: this.tenantAppName,
         autoPublicLogin: this.autoPublicLogin,
         allowOfflineMode: this.allowOfflineMode,
+        allowShareTo: this.allowShareTo,
       });
       let resultCode = await bundlePackagesAndPlugins(
         this.buildDir,
@@ -209,29 +248,49 @@ export class MobileBuilder {
         );
       resultCode = await createSqliteDb(this.buildDir);
       if (resultCode !== 0) return resultCode;
-      if (!this.isUnsecureKeyStore)
-        copySync(
-          this.keyStorePath,
-          join(this.buildDir, basename(this.keyStorePath))
-        );
-      const capacitorHelper = new CapacitorHelper({
-        ...this,
-        appVersion: this.appVersion,
-        appleTeamId: iosParams?.teamId,
-        provisioningGUUID: iosParams?.guuid,
-      });
-      await capacitorHelper.buildApp();
+
+      if (this.platforms.includes("ios")) await this.handleIosPlatform();
+      if (this.platforms.includes("android"))
+        await this.handleAndroidPlatform();
+      this.capacitorHelper.generateAssets();
+      await this.capacitorHelper.buildApp();
       if (resultCode === 0 && this.copyTargetDir) {
-        capacitorHelper.tryCopyAppFiles(
+        this.capacitorHelper.tryCopyAppFiles(
           this.copyTargetDir,
           this.user!,
           this.appName
         );
       }
-      return 0;
+      return resultCode;
     } catch (e: any) {
       console.error(e);
       return 1;
     }
+  }
+
+  private async handleIosPlatform() {
+    prepareExportOptionsPlist({
+      buildDir: this.buildDir,
+      appId: this.appId,
+      iosParams: this.iosParams,
+    });
+    modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    writePodfile(this.buildDir);
+    writePrivacyInfo(this.buildDir);
+    modifyInfoPlist(this.buildDir, this.allowShareTo);
+    if (this.allowShareTo) copyShareExtFiles(this.buildDir);
+  }
+
+  private async handleAndroidPlatform() {
+    if (!this.isUnsecureKeyStore) {
+      copySync(
+        this.keyStorePath,
+        join(this.buildDir, basename(this.keyStorePath))
+      );
+    }
+    await modifyAndroidManifest(this.buildDir);
+    writeDataExtractionRules(this.buildDir);
+    writeNetworkSecurityConfig(this.buildDir, this.serverURL);
+    modifyGradleConfig(this.buildDir, this.appVersion);
   }
 }

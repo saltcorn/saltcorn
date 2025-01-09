@@ -4,9 +4,10 @@ set -e
 
 BUILD_TYPE="$1"
 APP_VERSION="$2"
-KEYSTORE_FILE="$3"
-KEYSTORE_ALIAS="$4"
-KEYSTORE_PASSWORD="$5"
+SERVER_URL="$3"
+KEYSTORE_FILE="$4"
+KEYSTORE_ALIAS="$5"
+KEYSTORE_PASSWORD="$6"
 
 echo "BUILD_TYPE: $BUILD_TYPE"
 echo "APP_VERSION: $APP_VERSION"
@@ -22,12 +23,7 @@ export PATH=$PATH:/opt/gradle-8.4/bin
 
 cd /saltcorn-mobile-app
 npm install @capacitor/cli @capacitor/core @capacitor/android
-npx cap add android
-npx capacitor-assets generate
 npx cap sync
-
-npm install cordova-plugin-file@8.1.2
-npm install cordova-plugin-inappbrowser@6.0.0
 
 # data extraction rules
 cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
@@ -53,7 +49,7 @@ cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/network_security_c
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">10.0.2.2</domain>
+    <domain includeSubdomains="true">$SERVER_URL</domain>
   </domain-config>
 </network-security-config>
 EOF
@@ -82,26 +78,32 @@ cp /saltcorn-mobile-app/www/scdb.sqlite /saltcorn-mobile-app/android/app/src/mai
 # set app version and code in build.gradle
 npm run modify-gradle-cfg -- --app-version=$APP_VERSION
 
-ANDROID_RELEASE_TYPE="AAB"
-if [ "$BUILD_TYPE" == "debug" ]; then
-  ANDROID_RELEASE_TYPE="APK"
+# .aab files are generated with 'npx cap build'
+if [ "$BUILD_TYPE" == "release" ]; then
+  # if KEYSTORE_FILE is not empty
+  if [ -n "$KEYSTORE_FILE" ]; then
+    echo "building signed app"
+    npx cap build android \
+      --androidreleasetype "AAB" \
+      --keystorepath "/saltcorn-mobile-app/$KEYSTORE_FILE" \
+      --keystorepass "$KEYSTORE_PASSWORD" \
+      --keystorealias "$KEYSTORE_ALIAS" \
+      --keystorealiaspass "$KEYSTORE_PASSWORD" 
+  else
+    echo "building unsigned app"
+    npx cap build android \
+      --androidreleasetype "AAB" \
+      --keystorepath "/saltcorn-mobile-app/unsecure-default-key.jks" \
+      --keystorepass "unsecurepassw" \
+      --keystorealias "unsecure-default-alias" \
+      --keystorealiaspass "unsecurepassw"
+  fi
 fi
 
-# if KEYSTORE_FILE is not empty
-if [ -n "$KEYSTORE_FILE" ]; then
-  echo "building signed app"
-  npx cap build android \
-    --androidreleasetype "$ANDROID_RELEASE_TYPE" \
-    --keystorepath "/saltcorn-mobile-app/$KEYSTORE_FILE" \
-    --keystorepass "$KEYSTORE_PASSWORD" \
-    --keystorealias "$KEYSTORE_ALIAS" \
-    --keystorealiaspass "$KEYSTORE_PASSWORD" 
-else
-  echo "building unsigned app"
-  npx cap build android \
-    --androidreleasetype "$ANDROID_RELEASE_TYPE" \
-    --keystorepath "/saltcorn-mobile-app/unsecure-default-key.jks" \
-    --keystorepass "unsecurepassw" \
-    --keystorealias "unsecure-default-alias" \
-    --keystorealiaspass "unsecurepassw"
+# .apk files are generated with './gradlew assembleDebug'
+# there seems to be a problem with apks generated with 'npx cap build'
+if [ "$BUILD_TYPE" == "debug" ]; then
+  echo "building debug app"
+  cd /saltcorn-mobile-app/android
+  ./gradlew assembleDebug
 fi

@@ -311,10 +311,10 @@ function invalidate_pagings(currentQuery) {
 async function set_state_fields(kvs, disablePjax, e) {
   try {
     showLoadSpinner();
-    let newhref = get_current_state_url(e);
+    const current = get_current_state_url(e);
     let queryParams = [];
     const { path, query } =
-      parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(current);
     let currentQuery = query || {};
     if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
       currentQuery = invalidate_pagings(currentQuery);
@@ -333,6 +333,8 @@ async function set_state_fields(kvs, disablePjax, e) {
     if (disablePjax)
       await parent.saltcorn.mobileApp.navigation.handleRoute(path, queryStr);
     else await pjax_to(path, queryStr, e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -376,32 +378,29 @@ async function pjax_to(href, query, e) {
     }
 }
 
-async function set_state_field(key, value) {
+async function set_state_field(key, value, e) {
   try {
     showLoadSpinner();
-    const query = updateQueryStringParameter(
-      parent.saltcorn.mobileApp.navigation.currentQuery(),
-      key,
-      value
-    );
-    await parent.saltcorn.mobileApp.navigation.handleRoute(
-      parent.saltcorn.mobileApp.navigation.currentLocation(),
-      query
-    );
+    const newhref = get_current_state_url(e);
+    const { path, query } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
+    await pjax_to(path, updateQueryStringParameter(query, key, value), e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
 }
 
-async function unset_state_field(key) {
+async function unset_state_field(key, e) {
   try {
     showLoadSpinner();
-    const href = parent.saltcorn.mobileApp.navigation.currentLocation();
-    const query = removeQueryStringParameter(
-      parent.saltcorn.mobileApp.navigation.currentLocation(),
-      key
-    );
-    await parent.saltcorn.mobileApp.navigation.handleRoute(href, query);
+    const newhref = get_current_state_url(e);
+    const { path, query } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
+    await pjax_to(path, removeQueryStringParameter(query, key), e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
@@ -623,50 +622,58 @@ function openInAppBrowser(url, domId) {
   }
 }
 
-async function select_id(id) {
+async function select_id(id, e) {
   try {
     showLoadSpinner();
-    const newQuery = updateQueryStringParameter(
-      parent.saltcorn.mobileApp.navigation.currentQuery(),
-      "id",
-      id
-    );
-    await parent.handleRoute(
-      parent.saltcorn.mobileApp.navigation.currentLocation(),
-      newQuery
-    );
+    const newhref = get_current_state_url(e);
+    const { path, query } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
+    await pjax_to(path, updateQueryStringParameter(query, "id", id), e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
 }
 
-async function check_state_field(that) {
+async function check_state_field(that, e) {
   try {
     showLoadSpinner();
+    const newhref = get_current_state_url(e);
+    const { path, query } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
+    const checked = that.checked;
     const name = that.name;
-    const newQuery = that.checked
-      ? updateQueryStringParameter(
-          parent.saltcorn.mobileApp.navigation.currentQuery(),
-          name,
-          that.value
-        )
-      : removeQueryStringParameter(name);
-    await parent.saltcorn.mobileApp.navigation.handleRoute(
-      parent.saltcorn.mobileApp.navigation.currentLocation(),
-      newQuery
-    );
+    const value = encodeURIComponent(that.value);
+    const newQuery = checked
+      ? updateQueryStringParameter(query, name, value)
+      : removeQueryStringParameter(query, name);
+    await pjax_to(path, newQuery, e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }
 }
 
-async function clear_state() {
+async function clear_state(omit_fields_str, e) {
   try {
     showLoadSpinner();
-    await parent.saltcorn.mobileApp.navigation.handleRoute(
-      parent.saltcorn.mobileApp.navigation.currentLocation(),
-      undefined
-    );
+    const newhref = get_current_state_url(e);
+    const { path, query, hash } =
+      parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
+    let newQuery = "";
+    if (omit_fields_str) {
+      const omit_fields = omit_fields_str.split(",");
+      const params = new URLSearchParams(query);
+      for (const f of omit_fields) {
+        if (params.get(f))
+          updateQueryStringParameter(newQuery, f, params.get(f));
+      }
+    }
+    await pjax_to(path, newQuery, e);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   } finally {
     removeLoadSpinner();
   }

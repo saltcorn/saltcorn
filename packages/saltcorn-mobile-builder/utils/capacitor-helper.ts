@@ -1,22 +1,14 @@
 import { spawnSync, execSync } from "child_process";
 import { join, basename } from "path";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync } from "fs";
 import { copySync } from "fs-extra";
 import type User from "@saltcorn/data/models/user";
 import utils = require("@saltcorn/data/utils");
 const { safeEnding } = utils;
 import File from "@saltcorn/data/models/file";
-import {
-  writePodfile,
-  modifyGradleConfig,
-  modifyAndroidManifest,
-  writeDataExtractionRules,
-  writeNetworkSecurityConfig,
-  copyPrepopulatedDb,
-  modifyInfoPlist,
-  writePrivacyInfo,
-  modifyXcodeProjectFile,
-} from "./common-build-utils";
+import { copyPrepopulatedDb } from "./common-build-utils";
+
+import type { IosCfg } from "../mobile-builder";
 
 export type CapacitorCfg = {
   buildDir: string;
@@ -24,6 +16,7 @@ export type CapacitorCfg = {
   buildType: "debug" | "release";
   appName: string;
   appVersion: string;
+  serverURL: string;
 
   useDocker?: boolean;
   keyStorePath: string;
@@ -31,8 +24,7 @@ export type CapacitorCfg = {
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
 
-  appleTeamId?: string;
-  provisioningGUUID?: string;
+  iosParams?: IosCfg;
 };
 
 export class CapacitorHelper {
@@ -41,6 +33,7 @@ export class CapacitorHelper {
   buildType: "debug" | "release";
   appName: string;
   appVersion: string;
+  serverURL: string;
 
   useDocker?: boolean;
   keyStoreFile: string;
@@ -48,90 +41,101 @@ export class CapacitorHelper {
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
 
-  appleTeamId?: string;
-  provisioningGUUID?: string;
-
   isAndroid: boolean;
   isIOS: boolean;
+  iosParams?: IosCfg;
 
   constructor(cfg: CapacitorCfg) {
     this.buildDir = cfg.buildDir;
     this.platforms = cfg.platforms;
     this.buildType = cfg.buildType || "debug";
     this.appName = cfg.appName;
+    this.serverURL = cfg.serverURL;
     this.appVersion = cfg.appVersion;
     this.useDocker = cfg.useDocker;
     this.keyStoreFile = basename(cfg.keyStorePath);
     this.keyStoreAlias = cfg.keyStoreAlias;
     this.keyStorePassword = cfg.keyStorePassword;
     this.isUnsecureKeyStore = cfg.isUnsecureKeyStore;
-    this.appleTeamId = cfg.appleTeamId;
-    this.provisioningGUUID = cfg.provisioningGUUID;
+    this.iosParams = cfg.iosParams;
     this.isAndroid = this.platforms.includes("android");
     this.isIOS = this.platforms.includes("ios");
   }
 
   public async buildApp() {
     if (!this.useDocker) {
-      this.addPlatforms();
-      this.generateAssets();
       this.capSync();
       copyPrepopulatedDb(this.buildDir, this.platforms);
       if (this.isAndroid) {
-        await modifyAndroidManifest(this.buildDir);
-        writeDataExtractionRules(this.buildDir);
-        writeNetworkSecurityConfig(this.buildDir);
-        modifyGradleConfig(this.buildDir, this.appVersion);
-        this.capBuild();
+        if (this.buildType === "release") this.capBuild();
+        else {
+          // there seems to be a problem with apks generated from 'npx cap build'
+          // so for debug builds we use gradle directly
+          this.gradleBuild();
+        }
       }
     } else this.buildWithDocker();
-    if (this.isIOS) {
-      modifyXcodeProjectFile(this.buildDir, this.appVersion);
-      writePodfile(this.buildDir);
-      await modifyInfoPlist(this.buildDir);
-      writePrivacyInfo(this.buildDir);
-      this.xCodeBuild();
-    }
+    if (this.isIOS) this.xCodeBuild();
   }
 
   public tryCopyAppFiles(copyDir: string, user: User, appName?: string) {
-    const copyHelper = async (
-      ending: "apk" | "aab" | "ipa",
-      outDir: string
-    ) => {
-      const fileName = join(
-        outDir,
-        this.isUnsecureKeyStore
-          ? `app-release${ending === "apk" ? "-unsigned" : ""}.${ending}`
-          : `app-release-signed.${ending}`
-      );
-      if (existsSync(fileName)) {
-        const dstFile = appName
-          ? safeEnding(appName, `.${ending}`)
-          : `app-${this.buildType}.${ending}`;
-        copySync(fileName, join(copyDir, dstFile));
-        await File.set_xattr_of_existing_file(dstFile, copyDir, user);
+    if (this.isAndroid) {
+      if (this.buildType === "release") {
+        const bundleDir = join(
+          this.buildDir,
+          "android",
+          "app",
+          "build",
+          "outputs",
+          "bundle",
+          "release"
+        );
+        const aabFile = join(
+          bundleDir,
+          !this.isUnsecureKeyStore
+            ? "app-release-signed.aab"
+            : "app-release.aab"
+        );
+        if (existsSync(aabFile)) {
+          const dstFile = appName
+            ? safeEnding(appName, ".aab")
+            : `app-${this.buildType}.aab`;
+          copySync(aabFile, join(copyDir, dstFile));
+          File.set_xattr_of_existing_file(dstFile, copyDir, user);
+        }
+      } else {
+        const apkFile = join(
+          this.buildDir,
+          "android",
+          "app",
+          "build",
+          "outputs",
+          "apk",
+          "debug",
+          "app-debug.apk"
+        );
+        if (existsSync(apkFile)) {
+          const dstFile = appName
+            ? safeEnding(appName, ".apk")
+            : `app-${this.buildType}.apk`;
+          copySync(apkFile, join(copyDir, dstFile));
+          File.set_xattr_of_existing_file(dstFile, copyDir, user);
+        }
       }
-    };
-    if (!existsSync(copyDir)) mkdirSync(copyDir);
-    // android
-    copyHelper(
-      this.buildType === "debug" ? "apk" : "aab",
-      join(
-        this.buildDir,
-        "android",
-        "app",
-        "build",
-        "outputs",
-        this.buildType === "debug" ? "apk" : "bundle",
-        "release"
-      )
-    );
-    // ipa
-    copyHelper("ipa", this.buildDir);
+    } else if (this.isIOS) {
+      const ipaFile = join(this.buildDir, "App.ipa");
+      if (existsSync(ipaFile)) {
+        const dstFile = appName
+          ? safeEnding(appName, ".ipa")
+          : `app-${this.buildType}.ipa`;
+        copySync(ipaFile, join(copyDir, dstFile));
+        File.set_xattr_of_existing_file(dstFile, copyDir, user);
+      }
+    }
   }
 
-  private addPlatforms() {
+  public addPlatforms() {
+    console.log("add platforms");
     const addFn = (platform: string) => {
       let result = spawnSync("npm", ["install", `@capacitor/${platform}`], {
         cwd: this.buildDir,
@@ -165,7 +169,8 @@ export class CapacitorHelper {
     for (const platform of this.platforms) addFn(platform);
   }
 
-  private generateAssets() {
+  public generateAssets() {
+    console.log("npx capacitor-assets generate");
     const result = spawnSync("npx", ["capacitor-assets", "generate"], {
       cwd: this.buildDir,
       maxBuffer: 1024 * 1024 * 10,
@@ -190,7 +195,7 @@ export class CapacitorHelper {
         "build",
         "android",
         "--androidreleasetype",
-        this.buildType === "release" ? "AAB" : "APK",
+        "AAB",
         "--keystorepath",
         join(this.buildDir, this.keyStoreFile),
         "--keystorepass",
@@ -217,6 +222,24 @@ export class CapacitorHelper {
       );
   }
 
+  private gradleBuild() {
+    console.log("gradlew assembleDebug");
+    const result = spawnSync("./gradlew", ["assembleDebug"], {
+      cwd: this.buildDir + "/android",
+      maxBuffer: 1024 * 1024 * 10,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+      },
+    });
+    if (result.output) console.log(result.output.toString());
+    else if (result.error)
+      throw new Error(
+        `Unable to call the gradlew build (code ${result.status})` +
+          `\n\n${result.error.toString()}`
+      );
+  }
+
   private buildWithDocker() {
     console.log("building with docker");
     const spawnParams = [
@@ -229,6 +252,7 @@ export class CapacitorHelper {
     ];
     spawnParams.push(this.buildType);
     spawnParams.push(this.appVersion);
+    spawnParams.push(this.serverURL);
     if (this.buildType === "release")
       spawnParams.push(
         this.keyStoreFile,
@@ -253,9 +277,9 @@ export class CapacitorHelper {
       let buffer = execSync(
         `xcodebuild -workspace ios/App/App.xcworkspace ` +
           `-scheme App -destination "generic/platform=iOS" ` +
-          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.provisioningGUUID}" ` +
+          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile.guuid}" ` +
           ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
-          ` DEVELOPMENT_TEAM="${this.appleTeamId}" `,
+          ` DEVELOPMENT_TEAM="${this.iosParams?.appleTeamId}" `,
         { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
       );
 
@@ -282,7 +306,8 @@ export class CapacitorHelper {
     }
   }
 
-  private capSync() {
+  public capSync() {
+    console.log("npx cap sync");
     const result = spawnSync("npx", ["cap", "sync"], {
       cwd: this.buildDir,
       maxBuffer: 1024 * 1024 * 10,

@@ -22,6 +22,7 @@ import {
   gotoEntryView,
   addRoute,
 } from "./helpers/navigation.js";
+import { sendIntentCallback } from "./helpers/common.js";
 
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
@@ -319,6 +320,7 @@ export async function init({
 
     state.mobileConfig.networkState = await Network.getStatus();
     Network.addListener("networkStatusChange", networkChangeCallback);
+
     const networkDisabled = state.mobileConfig.networkState === "none";
     const jwt = state.mobileConfig.jwt;
     const alerts = [];
@@ -365,6 +367,11 @@ export async function init({
           });
         }
       }
+      if (state.mobileConfig.allowOfflineMode) {
+        await sendIntentCallback();
+        window.addEventListener("sendIntentReceived", sendIntentCallback);
+      }
+
       let page = null;
       if (!lastLocation) {
         addRoute({ route: entryPoint, query: undefined });

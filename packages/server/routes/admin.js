@@ -19,6 +19,7 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const File = require("@saltcorn/data/models/file");
 const { spawn, exec } = require("child_process");
 const User = require("@saltcorn/data/models/user");
+const Trigger = require("@saltcorn/data/models/trigger");
 const path = require("path");
 const { X509Certificate } = require("crypto");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
@@ -146,6 +147,24 @@ const app_files_table = (files, buildDirName, req) =>
     ],
     files
   );
+const intermediate_build_result = (outDirName, buildDir, req) => {
+  return div(
+    h3("Intermediate build result"),
+    div(
+      button(
+        {
+          id: "finishMobileAppBtnId",
+          type: "button",
+          onClick: `finish_mobile_app(this, '${outDirName}', '${buildDir}');`,
+          class: "btn btn-warning",
+        },
+        i({ class: "fas fa-hammer pe-2" }),
+
+        req.__("Finish the build")
+      )
+    )
+  );
+};
 
 admin_config_route({
   router,
@@ -1993,9 +2012,6 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
     $("#entryPointTypeID").attr("value", type);
   }
   
-  function handleMessages() {
-    notifyAlert("Building the app, please wait.", true)
-  }
   const versionPattern = /^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$/;
   ${domReady(`
   const versionInput = document.getElementById('appVersionInputId');
@@ -3077,6 +3093,48 @@ router.get(
                           )
                         )
                       )
+                      // Share Extension provisioning profile
+                      // disabled for now
+                      // div(
+                      //   { class: "row pb-3" },
+                      //   div(
+                      //     { class: "col-sm-8" },
+                      //     label(
+                      //       {
+                      //         for: "shareProvisioningProfileInputId",
+                      //         class: "form-label fw-bold",
+                      //       },
+                      //       req.__("Share Extension Provisioning Profile"),
+                      //       a(
+                      //         {
+                      //           href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+                      //         },
+                      //         i({ class: "fas fa-question-circle ps-1" })
+                      //       )
+                      //     ),
+                      //     select(
+                      //       {
+                      //         class: "form-select",
+                      //         name: "shareProvisioningProfile",
+                      //         id: "shareProvisioningProfileInputId",
+                      //       },
+                      //       [
+                      //         option({ value: "" }, ""),
+                      //         ...provisioningFiles.map((file) =>
+                      //           option(
+                      //             {
+                      //               value: file.location,
+                      //               selected:
+                      //                 builderSettings.shareProvisioningProfile ===
+                      //                 file.location,
+                      //             },
+                      //             file.filename
+                      //           )
+                      //         ),
+                      //       ].join("")
+                      //     )
+                      //   )
+                      // )
                     )
                   )
                 ),
@@ -3100,15 +3158,13 @@ router.get(
   })
 );
 
-const checkFiles = async (outDir, fileNames) => {
+const checkFiles = async (outDirName, fileNames) => {
   const rootFolder = await File.rootFolder();
-  const mobile_app_dir = path.join(rootFolder.location, "mobile_app", outDir);
+  const outDir = path.join(rootFolder.location, "mobile_app", outDirName);
   const unsafeFiles = await Promise.all(
     fs
-      .readdirSync(mobile_app_dir)
-      .map(
-        async (outFile) => await File.from_file_on_disk(outFile, mobile_app_dir)
-      )
+      .readdirSync(outDir)
+      .map(async (outFile) => await File.from_file_on_disk(outFile, outDir))
   );
   const entries = unsafeFiles
     .filter(
@@ -3127,9 +3183,18 @@ router.get(
   "/build-mobile-app/finished",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { build_dir } = req.query;
+    const { out_dir_name, mode } = req.query;
+    const stepDesc =
+      mode === "prepare"
+        ? "_prepare_step"
+        : mode === "finish"
+        ? "_finish_step"
+        : "";
     res.json({
-      finished: await checkFiles(build_dir, ["logs.txt", "error_logs.txt"]),
+      finished: await checkFiles(out_dir_name, [
+        `logs${stepDesc}.txt`,
+        `error_logs${stepDesc}.txt`,
+      ]),
     });
   })
 );
@@ -3164,8 +3229,8 @@ router.get(
   "/build-mobile-app/result",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { build_dir_name } = req.query;
-    if (!validateBuildDirName(build_dir_name)) {
+    const { out_dir_name, build_dir, mode } = req.query;
+    if (!validateBuildDirName(out_dir_name)) {
       return res.sendWrap(req.__(`Admin`), {
         above: [
           {
@@ -3177,11 +3242,7 @@ router.get(
       });
     }
     const rootFolder = await File.rootFolder();
-    const buildDir = path.join(
-      rootFolder.location,
-      "mobile_app",
-      build_dir_name
-    );
+    const buildDir = path.join(rootFolder.location, "mobile_app", out_dir_name);
     if (!validateBuildDir(buildDir, rootFolder.location)) {
       return res.sendWrap(req.__(`Admin`), {
         above: [
@@ -3199,7 +3260,15 @@ router.get(
         .readdirSync(buildDir)
         .map(async (outFile) => await File.from_file_on_disk(outFile, buildDir))
     );
-    const resultMsg = files.find((file) => file.filename === "logs.txt")
+    const stepDesc =
+      mode === "prepare"
+        ? "_prepare_step"
+        : mode === "finish"
+        ? "_finish_step"
+        : "";
+    const resultMsg = files.find(
+      (file) => file.filename === `logs${stepDesc}.txt`
+    )
       ? req.__("The build was successfully")
       : req.__("Unable to build the app");
     res.sendWrap(req.__(`Admin`), {
@@ -3209,11 +3278,98 @@ router.get(
           title: req.__("Build Result"),
           contents: div(resultMsg),
         },
-        files.length > 0 ? app_files_table(files, build_dir_name, req) : "",
+        files.length > 0 ? app_files_table(files, out_dir_name, req) : "",
+        mode === "prepare"
+          ? intermediate_build_result(out_dir_name, build_dir, req)
+          : "",
       ],
     });
   })
 );
+
+router.post(
+  "/build-mobile-app/finish",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { out_dir_name, build_dir } = req.body;
+    const content = await fs.promises.readFile(
+      path.join(build_dir, "spawnParams.json")
+    );
+    const spawnParams = JSON.parse(content);
+    const rootFolder = await File.rootFolder();
+    const outDirFullPath = path.join(
+      rootFolder.location,
+      "mobile_app",
+      out_dir_name
+    );
+    res.json({
+      success: true,
+    });
+    const child = spawn(
+      getSafeSaltcornCmd(),
+      [...spawnParams, "-m", "finish"],
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+        cwd: ".",
+      }
+    );
+    const childOutputs = [];
+    child.stdout.on("data", (data) => {
+      const outMsg = data.toString();
+      getState().log(5, outMsg);
+      if (data) childOutputs.push(outMsg);
+    });
+    child.stderr.on("data", (data) => {
+      const errMsg = data ? data.toString() : req.__("An error occurred");
+      getState().log(5, errMsg);
+      childOutputs.push(errMsg);
+    });
+    child.on("exit", async (exitCode, signal) => {
+      const logFile =
+        exitCode === 0 ? "logs_finish_step.txt" : "error_logs_finish_step.txt";
+      try {
+        const exitMsg = childOutputs.join("\n");
+        await fs.promises.writeFile(
+          path.join(outDirFullPath, logFile),
+          exitMsg
+        );
+        await File.set_xattr_of_existing_file(
+          logFile,
+          outDirFullPath,
+          req.user
+        );
+      } catch (error) {
+        console.log(`unable to write '${logFile}' to '${outDirFullPath}'`);
+        console.log(error);
+      }
+    });
+    child.on("error", (msg) => {
+      const message = msg.message ? msg.message : msg.code;
+      const stack = msg.stack ? msg.stack : "";
+      const logFile = "error_logs.txt";
+      const errMsg = [message, stack].join("\n");
+      getState().log(5, msg);
+      fs.writeFile(
+        path.join(outDirFullPath, "error_logs.txt"),
+        errMsg,
+        async (error) => {
+          if (error) {
+            console.log(`unable to write logFile to '${outDirFullPath}'`);
+            console.log(error);
+          } else {
+            // no transaction, '/build-mobile-app/finished' filters for valid attributes
+            await File.set_xattr_of_existing_file(
+              logFile,
+              outDirFullPath,
+              req.user
+            );
+          }
+        }
+      );
+    });
+  })
+);
+
 /**
  * Do Build Mobile App
  */
@@ -3222,6 +3378,8 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     getState().log(2, `starting mobile build: ${JSON.stringify(req.body)}`);
+    const msgs = [];
+    let mode = "full";
     let {
       entryPoint,
       entryPointType,
@@ -3239,11 +3397,27 @@ router.post(
       synchedTables,
       includedPlugins,
       provisioningProfile,
+      shareProvisioningProfile,
       buildType,
       keystoreFile,
       keystoreAlias,
       keystorePassword,
     } = req.body;
+    // const receiveShareTriggers = Trigger.find({
+    //   when_trigger: "ReceiveMobileShareData",
+    // });
+    // disabeling share to support for now
+    let allowShareTo = false; // receiveShareTriggers.length > 0;
+    if (allowShareTo && iOSPlatform && !shareProvisioningProfile) {
+      allowShareTo = false;
+      msgs.push({
+        type: "warning",
+        text: req.__(
+          "A ReceiveMobileShareData trigger exists, but no Share Extension Provisioning Profile is provided. " +
+            "Building without share to support."
+        ),
+      });
+    }
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
     if (!entryPoint) {
@@ -3279,14 +3453,26 @@ router.post(
         ),
       });
     }
-    if (iOSPlatform && !provisioningProfile) {
-      return res.json({
-        error: req.__(
-          "Please provide a Provisioning Profile for the iOS build."
-        ),
+    if (iOSPlatform) {
+      if (!provisioningProfile)
+        return res.json({
+          error: req.__(
+            "Please provide a Provisioning Profile for the iOS build."
+          ),
+        });
+    }
+    if (buildType === "debug" && keystoreFile) {
+      msgs.push({
+        type: "warning",
+        text: req.__("Keystore file is not applied for debug builds."),
       });
     }
-    if (keystoreFile && (!keystoreAlias || !keystorePassword)) {
+
+    if (
+      buildType === "release" &&
+      keystoreFile &&
+      (!keystoreAlias || !keystorePassword)
+    ) {
       return res.json({
         error: req.__(
           "Please provide the keystore alias and password for the android build."
@@ -3294,8 +3480,9 @@ router.post(
       });
     }
     const outDirName = `build_${new Date().valueOf()}`;
+    const buildDir = `${os.userInfo().homedir}/mobile_app_build`;
     const rootFolder = await File.rootFolder();
-    const buildDir = path.join(rootFolder.location, "mobile_app", outDirName);
+    const outDir = path.join(rootFolder.location, "mobile_app", outDirName);
     await File.new_folder(outDirName, "/mobile_app");
     const spawnParams = [
       "build-app",
@@ -3304,9 +3491,9 @@ router.post(
       "-t",
       entryPointType === "pagegroup" ? "page" : entryPointType,
       "-c",
-      buildDir,
+      outDir,
       "-b",
-      `${os.userInfo().homedir}/mobile_app_build`,
+      buildDir,
       "-u",
       req.user.email, // ensured by isAdmin
     ];
@@ -3319,6 +3506,13 @@ router.post(
         "--provisioningProfile",
         provisioningProfile
       );
+      if (allowShareTo) {
+        mode = "prepare";
+        spawnParams.push(
+          "--shareExtensionProvisioningProfile",
+          shareProvisioningProfile
+        );
+      }
     }
     if (appName) spawnParams.push("--appName", appName);
     if (appId) spawnParams.push("--appId", appId);
@@ -3327,6 +3521,7 @@ router.post(
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
+    if (allowShareTo) spawnParams.push("--allowShareTo");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (synchedTables.length > 0)
       spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
@@ -3348,10 +3543,15 @@ router.post(
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
     if (keystorePassword)
       spawnParams.push("--androidKeystorePassword", keystorePassword);
-    // end http call, return the out directory name
+    // end http call, return the out directory name, the build directory path and the mode
     // the gui polls for results
-    res.json({ build_dir_name: outDirName });
-    const child = spawn(getSafeSaltcornCmd(), spawnParams, {
+    res.json({
+      out_dir_name: outDirName,
+      build_dir: buildDir,
+      mode: mode,
+      msgs,
+    });
+    const child = spawn(getSafeSaltcornCmd(), [...spawnParams, "-m", mode], {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
     });
@@ -3366,18 +3566,29 @@ router.post(
       getState().log(5, errMsg);
       childOutputs.push(errMsg);
     });
-    child.on("exit", (exitCode, signal) => {
-      const logFile = exitCode === 0 ? "logs.txt" : "error_logs.txt";
-      const exitMsg = childOutputs.join("\n");
-      fs.writeFile(path.join(buildDir, logFile), exitMsg, async (error) => {
-        if (error) {
-          console.log(`unable to write '${logFile}' to '${buildDir}'`);
+    child.on("exit", async (exitCode, signal) => {
+      if (mode === "prepare" && exitCode === 0) {
+        try {
+          fs.promises.writeFile(
+            path.join(buildDir, "spawnParams.json"),
+            JSON.stringify(spawnParams)
+          );
+        } catch (error) {
+          console.log(`unable to write spawnParams to '${buildDir}'`);
           console.log(error);
-        } else {
-          // no transaction, '/build-mobile-app/finished' filters for valid attributes
-          await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
         }
-      });
+      }
+      const stepDesc = mode === "prepare" ? "_prepare_step" : "";
+      const logFile =
+        exitCode === 0 ? `logs${stepDesc}.txt` : `error_logs${stepDesc}.txt`;
+      try {
+        const exitMsg = childOutputs.join("\n");
+        await fs.promises.writeFile(path.join(outDir, logFile), exitMsg);
+        await File.set_xattr_of_existing_file(logFile, outDir, req.user);
+      } catch (error) {
+        console.log(`unable to write '${logFile}' to '${outDir}'`);
+        console.log(error);
+      }
     });
     child.on("error", (msg) => {
       const message = msg.message ? msg.message : msg.code;
@@ -3386,15 +3597,15 @@ router.post(
       const errMsg = [message, stack].join("\n");
       getState().log(5, msg);
       fs.writeFile(
-        path.join(buildDir, "error_logs.txt"),
+        path.join(outDir, "error_logs.txt"),
         errMsg,
         async (error) => {
           if (error) {
-            console.log(`unable to write logFile to '${buildDir}'`);
+            console.log(`unable to write logFile to '${outDir}'`);
             console.log(error);
           } else {
             // no transaction, '/build-mobile-app/finished' filters for valid attributes
-            await File.set_xattr_of_existing_file(logFile, buildDir, req.user);
+            await File.set_xattr_of_existing_file(logFile, outDir, req.user);
           }
         }
       );
@@ -3462,7 +3673,7 @@ router.post(
         .filter(
           (plugin) =>
             ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
-            newCfg.includedPlugins.indexOf(plugin.name) < 0
+            (newCfg.includedPlugins || []).indexOf(plugin.name) < 0
         )
         .map((plugin) => plugin.name);
       newCfg.excludedPlugins = excludedPlugins;
