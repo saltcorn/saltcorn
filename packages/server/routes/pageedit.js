@@ -146,7 +146,9 @@ const pagePropertiesForm = async (req, isNew) => {
       {
         name: "request_fluid_layout",
         label: req.__("Fluid layout"),
-        sublabel: req.__("Request fluid layout from theme for a wider display for this page"),
+        sublabel: req.__(
+          "Request fluid layout from theme for a wider display for this page"
+        ),
         type: "Bool",
       },
     ],
@@ -503,12 +505,21 @@ router.post(
           pageRow.layout = {};
         }
         await Page.update(+id, pageRow);
+        Trigger.emitEvent("AppChange", `Page ${dbPage.name}`, req.user, {
+          entity_type: "Page",
+          entity_name: dbPage.name,
+        });
         if (req.xhr) res.json({ success: "ok" });
         else res.redirect(`/pageedit/`);
       } else {
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
         await Page.create(pageRow);
+        Trigger.emitEvent("AppChange", `Page ${pageRow.name}`, req.user, {
+          entity_type: "Page",
+          entity_name: pageRow.name,
+        });
+
         if (!html_file)
           res.redirect(
             addOnDoneRedirect(`/pageedit/edit/${pageRow.name}`, req)
@@ -679,6 +690,10 @@ router.post(
       await Page.update(page.id, {
         layout: decodeURIComponent(req.body.layout),
       });
+      Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
+        entity_type: "Page",
+        entity_name: page.name,
+      });
       req.flash("success", req.__(`Page %s saved`, pagename));
       res.redirect(redirectTarget);
     } else if (req.body.code) {
@@ -687,6 +702,10 @@ router.post(
         const file = await File.findOne(page.html_file);
         if (!file) throw new Error(req.__("File not found"));
         await fsp.writeFile(file.location, req.body.code);
+        Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
+          entity_type: "Page",
+          entity_name: page.name,
+        });
         if (!req.xhr) {
           req.flash("success", req.__(`Page %s saved`, pagename));
           res.redirect(redirectTarget);
@@ -723,6 +742,11 @@ router.post(
 
     if (id && req.body.layout) {
       await Page.update(+id, { layout: req.body.layout });
+      const page = await Page.findOne({ id });
+      Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
+        entity_type: "Page",
+        entity_name: page.name,
+      });
       res.json({
         success: "ok",
       });
@@ -744,6 +768,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const page = await Page.findOne({ id });
+    Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
+      entity_type: "Page",
+      entity_name: page.name,
+    });
     await page.delete();
     req.flash("success", req.__(`Page deleted`));
     res.redirect(`/pageedit`);
@@ -796,6 +824,7 @@ router.post(
       min_role: page.min_role,
       pagename: page.name,
     });
+    Trigger.emitEvent("AppChange", `Menu`, req.user, {});
     req.flash(
       "success",
       req.__(
@@ -820,6 +849,10 @@ router.post(
     const { id } = req.params;
     const page = await Page.findOne({ id });
     const newpage = await page.clone();
+    Trigger.emitEvent("AppChange", `Page ${newpage.name}`, req.user, {
+      entity_type: "Page",
+      entity_name: newpage.name,
+    });
     req.flash(
       "success",
       req.__("Page %s duplicated as %s", page.name, newpage.name)
