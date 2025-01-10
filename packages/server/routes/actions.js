@@ -441,6 +441,10 @@ router.post(
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
+      Trigger.emitEvent("AppChange", `Trigger ${form.values.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: form.values.name,
+      });
       res.redirect(addOnDoneRedirect(`/actions/configure/${id}`, req));
     }
   })
@@ -482,6 +486,10 @@ router.post(
           ...form.values.configuration,
         };
       await Trigger.update(trigger.id, form.values); //{configuration: form.values});
+      Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: trigger.name,
+      });
       if (req.xhr) {
         res.json({ success: "ok" });
         return;
@@ -533,9 +541,11 @@ function genWorkflowDiagram(steps) {
     }
     if (step.action_name === "ForLoop") {
       linkLines.push(
-        `  ${step.mmname}-.->${WorkflowStep.mmescape(step.configuration.loop_body_initial_step)}`
+        `  ${step.mmname}-.->${WorkflowStep.mmescape(
+          step.configuration.loop_body_initial_step
+        )}`
       );
-    } 
+    }
     if (step.action_name === "EndForLoop") {
       // TODO this is not correct. improve.
       let forStep;
@@ -1142,6 +1152,10 @@ router.post(
       await Trigger.update(trigger.id, {
         configuration: { ...trigger.configuration, ...form.values },
       });
+      Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: trigger.name,
+      });
       if (req.xhr) {
         res.json({ success: "ok" });
         return;
@@ -1168,6 +1182,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
+    Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+      entity_type: "Trigger",
+      entity_name: trigger.name,
+    });
     await trigger.delete();
     res.redirect(`/actions/`);
   })
@@ -1296,6 +1314,10 @@ router.post(
     const { id } = req.params;
     const trig = await Trigger.findOne({ id });
     const newtrig = await trig.clone();
+    Trigger.emitEvent("AppChange", `Trigger ${newtrig.name}`, req.user, {
+      entity_type: "Trigger",
+      entity_name: newtrig.name,
+    });
     req.flash(
       "success",
       req.__("Trigger %s duplicated as %s", trig.name, newtrig.name)
@@ -1425,6 +1447,10 @@ router.post(
           res.redirect(`/actions/configure/${step.trigger_id}`);
         }
       }
+      Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: trigger.name,
+      });
       if (_after_step && _after_step !== "undefined") {
         const astep = await WorkflowStep.findOne({
           id: _after_step,
@@ -1465,6 +1491,10 @@ router.post(
       step.trigger_id = trigger.id;
       await WorkflowStep.create(step);
     }
+    Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+      entity_type: "Trigger",
+      entity_name: trigger.name,
+    });
     res.redirect(`/actions/configure/${trigger.id}`);
   })
 );

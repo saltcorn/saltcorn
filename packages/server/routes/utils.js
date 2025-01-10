@@ -23,6 +23,7 @@ const Crash = require("@saltcorn/data/models/crash");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const Page = require("@saltcorn/data/models/page");
+const Trigger = require("@saltcorn/data/models/trigger");
 const si = require("systeminformation");
 const {
   config_fields_form,
@@ -426,6 +427,9 @@ const admin_config_route = ({
         const restart_required = check_if_restart_required(form, req);
 
         await save_config_from_form(form);
+        Trigger.emitEvent("AppChange", `Config`, req.user, {
+          config_keys: Object.keys(form.values),
+        });
         if (!req.xhr) {
           if (restart_required) {
             flash_restart(req);

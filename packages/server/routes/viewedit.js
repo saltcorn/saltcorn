@@ -27,6 +27,7 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Workflow = require("@saltcorn/data/models/workflow");
 const User = require("@saltcorn/data/models/user");
+const Trigger = require("@saltcorn/data/models/trigger");
 const Page = require("@saltcorn/data/models/page");
 const File = require("@saltcorn/data/models/file");
 const Tag = require("@saltcorn/data/models/tag");
@@ -551,6 +552,10 @@ router.post(
           //console.log(v);
           await View.create(v);
         }
+        Trigger.emitEvent("AppChange", `View ${v.name}`, req.user, {
+          entity_type: "View",
+          entity_name: v.name,
+        });
         if (req.xhr) res.json({ success: "ok" });
         else
           res.redirect(
@@ -733,6 +738,10 @@ router.post(
         };
       else newcfg = { ...view.configuration, ...context };
       await View.update({ configuration: newcfg }, view.id);
+      Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
+        entity_type: "View",
+        entity_name: view.name,
+      });
     };
     const wfres = await configFlow.run(req.body, req);
 
@@ -761,6 +770,7 @@ router.post(
       min_role: view.min_role,
       viewname: view.name,
     });
+    Trigger.emitEvent("AppChange", `Menu`, req.user, {});
     req.flash(
       "success",
       req.__(
@@ -790,6 +800,10 @@ router.post(
     const { id } = req.params;
     const view = await View.findOne({ id });
     const newview = await view.clone();
+    Trigger.emitEvent("AppChange", `View ${newview.name}`, req.user, {
+      entity_type: "View",
+      entity_name: newview.name,
+    });
     req.flash(
       "success",
       req.__("View %s duplicated as %s", view.name, newview.name)
@@ -841,6 +855,10 @@ router.post(
       const exview = await View.findOne({ id });
       let newcfg = { ...exview.configuration, ...req.body };
       await View.update({ configuration: newcfg }, +id);
+      Trigger.emitEvent("AppChange", `View ${exview.name}`, req.user, {
+        entity_type: "View",
+        entity_name: exview.name,
+      });
       res.json({ success: "ok" });
     } else {
       res.json({ error: req.__("Unable to save: No view") });
@@ -879,6 +897,10 @@ router.post(
             };
           else newcfg = { ...view.configuration, ...step.renderForm.values };
           await View.update({ configuration: newcfg }, view.id);
+          Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
+            entity_type: "View",
+            entity_name: view.name,
+          });
           res.json({ success: "ok" });
         } else {
           res.json({ error: step.renderForm.errorSummary });
@@ -906,6 +928,10 @@ router.post(
     const role = req.body.role;
     await View.update({ min_role: role }, +id);
     const view = await View.findOne({ id });
+    Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
+      entity_type: "View",
+      entity_name: view.name,
+    });
     const roles = await User.get_roles();
     const roleRow = roles.find((r) => r.id === +role);
     const message =

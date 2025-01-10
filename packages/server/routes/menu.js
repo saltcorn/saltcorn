@@ -571,6 +571,7 @@ router.post(
     const new_menu = req.body;
     const menu_items = jQMEtoMenu(new_menu);
     await save_menu_items(menu_items);
+    Trigger.emitEvent("AppChange", `Menu`, req.user, {});
 
     res.json({ success: true });
   })
