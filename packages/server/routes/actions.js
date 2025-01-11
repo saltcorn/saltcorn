@@ -1849,7 +1849,7 @@ WORKFLOWS TODO
 
 help file to explain steps, and context
 
-workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
+workflow actions: SetErrorHandler, Stop, ReadFile, WriteFile, APIResponse
 
 Error handlers
 other triggers can be steps
