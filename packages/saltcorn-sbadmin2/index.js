@@ -209,7 +209,7 @@ const sidebar = (brand, sections, currentUrl) =>
   ul(
     {
       class:
-        "navbar-nav bg-gradient-primary sidebar sidebar-dark accordion d-print-none",
+        "navbar-nav sidebar sidebar-dark accordion d-print-none",
       id: "accordionSidebar",
     },
     a(
