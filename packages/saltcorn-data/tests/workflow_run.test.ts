@@ -177,7 +177,6 @@ describe("Workflow run forloop", () => {
   });
 });
 
-
 describe("Workflow run error handling", () => {
   it("should create steps", async () => {
     const trigger = await Trigger.create({
@@ -189,9 +188,9 @@ describe("Workflow run error handling", () => {
       trigger_id: trigger.id!,
       name: "first_step",
       next_step: "second_step",
-      action_name: "SetContext",
+      action_name: "SetErrorHandler",
       initial_step: true,
-      configuration: { ctx_values: `{__errorHandler: "ehan"}` },
+      configuration: { error_handling_step: "ehan" },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
@@ -233,10 +232,9 @@ describe("Workflow run error handling", () => {
       trigger_id: trigger.id,
     });
     await wfrun.run({ user });
-   
+
     expect(wfrun.context.afterCrash).toBe(undefined);
     expect(wfrun.context.runEhan).toBe(1);
     expect(wfrun.context.afterEhan).toBe(1);
   });
-
 });
