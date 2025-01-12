@@ -143,7 +143,7 @@ describe("Workflow run forloop", () => {
       name: "third_step",
       action_name: "SetContext",
       initial_step: false,
-      configuration: { code: `{done:true}` },
+      configuration: { ctx_values: `{done:true}` },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
@@ -174,5 +174,67 @@ describe("Workflow run forloop", () => {
     expect(wfrun.context.ys).toStrictEqual([4, 5, 6]);
     //expect(wfrun.context.y).toBe(2);
     //expect(wfrun.context.last).toBe(1);
+  });
+});
+
+describe("Workflow run error handling", () => {
+  it("should create steps", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "mywf1",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "SetErrorHandler",
+      initial_step: true,
+      configuration: { error_handling_step: "ehan" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "second_step",
+      next_step: "third_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `throw new Error("HAHA")` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "third_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {afterCrash:1}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "ehan",
+      action_name: "run_js_code",
+      next_step: "fifth_step",
+      initial_step: false,
+      configuration: { code: `return {runEhan:1}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "fifth_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {afterEhan:1}` },
+    });
+  });
+  it("should run", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "mywf1" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+    });
+    await wfrun.run({ user });
+
+    expect(wfrun.context.afterCrash).toBe(undefined);
+    expect(wfrun.context.runEhan).toBe(1);
+    expect(wfrun.context.afterEhan).toBe(1);
   });
 });

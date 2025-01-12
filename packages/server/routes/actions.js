@@ -740,7 +740,9 @@ const getWorkflowStepForm = async (
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
   Object.assign(actionExplainers, builtInActionExplainers);
-  actionConfigFields.push(...(await WorkflowStep.builtInActionConfigFields()));
+  actionConfigFields.push(
+    ...(await WorkflowStep.builtInActionConfigFields({ trigger }))
+  );
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
@@ -1849,9 +1851,8 @@ WORKFLOWS TODO
 
 help file to explain steps, and context
 
-workflow actions: ForLoop, EndForLoop, ReadFile, WriteFile, APIResponse
+workflow actions: Stop, ReadFile, WriteFile, APIResponse
 
-Error handlers
 other triggers can be steps
 interactive workflows for not logged in
 show end node in diagram

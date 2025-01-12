@@ -186,6 +186,9 @@ class WorkflowStep {
         `Context values expression in ${this.name} step`
       );
     }
+    if (this.action_name === "SetErrorHandler") {
+      return { __errorHandler: this.configuration.error_handling_step };
+    }
     let state_action = getState().actions[this.action_name];
     if (state_action) {
       return await state_action.run({
@@ -221,14 +224,22 @@ class WorkflowStep {
       "Ask a user one or more questions, pause until they are answered";
     actionExplainers.ForLoop =
       "Loop over the items in an array, setting a variable to each item in an iteration of a loop body";
+    actionExplainers.SetErrorHandler = "Set the error handling step";
     return actionExplainers;
   }
 
-  static async builtInActionConfigFields() {
+  static async builtInActionConfigFields(opts: any = {}) {
+    const stepOptions = async () => {
+      if (opts?.trigger && !opts?.copilot) {
+        const steps = await WorkflowStep.find({ trigger_id: opts.trigger.id });
+        return { options: steps.map((s) => s.name) };
+      } else return undefined;
+    };
     const actionConfigFields = [];
     actionConfigFields.push({
       label: "Loop Array",
-      sublabel: "Javascript expression, based on the context, for the array to loop over",
+      sublabel:
+        "Javascript expression, based on the context, for the array to loop over",
       name: "array_expression",
       type: "String",
       class: "validate-expression",
@@ -236,14 +247,16 @@ class WorkflowStep {
     });
     actionConfigFields.push({
       label: "Loop item variable",
-      sublabel: "Javascript identifier; the name of the variable the current item from the loop array will be set to in each loop iteration",
+      sublabel:
+        "Javascript identifier; the name of the variable the current item from the loop array will be set to in each loop iteration",
       name: "item_variable",
       type: "String",
       showIf: { wf_action_name: "ForLoop" },
     });
     actionConfigFields.push({
       label: "Loop body step",
-      sublabel: "The name of the first step in the loop body. The workflow execution inside the loop will start at this step, and continue from that step's next_step, until a step with blank next_step is encountered, which is the end of the loop body",
+      sublabel:
+        "The name of the first step in the loop body. The workflow execution inside the loop will start at this step, and continue from that step's next_step, until a step with blank next_step is encountered, which is the end of the loop body",
       name: "loop_body_initial_step",
       type: "String",
       showIf: { wf_action_name: "ForLoop" },
@@ -326,6 +339,17 @@ class WorkflowStep {
       showIf: { wf_action_name: "TableQuery" },
     });
     actionConfigFields.push({
+      label: "Error handling step",
+      name: "error_handling_step",
+      sublabel:
+        "Name of the step which will be invoked on errors in subsequent steps. When an error occurs, execution jumps to the error handling step and continues fron the error handling step's next_step. The error handling step can be changed in the workflow.",
+      type: "String",
+      required: true,
+      attributes: await stepOptions(),
+      validator: jsIdentifierValidator,
+      showIf: { wf_action_name: "SetErrorHandler" },
+    });
+    actionConfigFields.push({
       label: "Variable",
       name: "query_variable",
       sublabel: "Context variable to write to query results to",
@@ -334,6 +358,7 @@ class WorkflowStep {
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "TableQuery" },
     });
+
     actionConfigFields.push(
       new FieldRepeat({
         name: "user_form_questions",

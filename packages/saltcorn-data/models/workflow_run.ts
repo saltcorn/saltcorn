@@ -569,19 +569,30 @@ class WorkflowRun {
           return ret;
         }
       } catch (e: any) {
-        console.error("Workflow error", e);
+        if (this.context.__errorHandler) {
+          const upd = {
+            context: { ...this.context, __error: e },
+            current_step: this.current_step,
+          };
+          //TODO need to think about error handling in loops
+          upd.current_step[Math.max(0, this.current_step.length - 1)] =
+            this.context.__errorHandler;
+          await this.update(upd);
+          step = steps.find((s) => s.name === this.context.__errorHandler);
+        } else {
+          console.error("Workflow error", e);
+          await this.update({ status: "Error", error: e.message });
+          const Trigger = (await import("./trigger")).default;
 
-        await this.update({ status: "Error", error: e.message });
-        const Trigger = (await import("./trigger")).default;
-
-        Trigger.emitEvent("Error", null, user, {
-          workflow_run: this.id,
-          message: e.message,
-          stack: e.stack,
-          step: step?.name,
-          run_page: `/actions/run/${this.id}`,
-        });
-        break;
+          Trigger.emitEvent("Error", null, user, {
+            workflow_run: this.id,
+            message: e.message,
+            stack: e.stack,
+            step: step?.name,
+            run_page: `/actions/run/${this.id}`,
+          });
+          break;
+        }
       } // try-catch
     } //while
     return this.context;
