@@ -317,21 +317,29 @@ class WorkflowRun {
 
     const state = getState();
     state.log(6, `Running workflow id=${this.id}`);
+    const Trigger = (await import("./trigger")).default;
+
+    const allWorkflows = await Trigger.find({});
+    const allWorkflowNames = new Set(allWorkflows.map((wf) => wf.name));
+
     let waiting_fulfilled = false;
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
       let fulfilled = true;
-      Object.entries(this.wait_info || {}).forEach(([k, v]) => {
+      for (const [k, v] of Object.entries(this.wait_info || {})) {
         switch (k) {
           case "until_time":
             if (new Date(v as Date | string) > new Date()) fulfilled = false;
             break;
           case "form":
             if (v) fulfilled = false;
+          case "workflow_run":
+            const wait_for_run = await WorkflowRun.findOne({ id: v });
+            if (wait_for_run.status !== "Finished") fulfilled = false;
           default:
             break;
         }
-      });
+      }
       if (!fulfilled) return;
       else waiting_fulfilled = true;
     }
@@ -357,6 +365,24 @@ class WorkflowRun {
       this.step_start = new Date();
 
       try {
+        if (allWorkflowNames.has(step.action_name) && !waiting_fulfilled) {
+          const wfTrigger = allWorkflows.find(
+            (wf) => wf.name === step.action_name
+          );
+          const run = await WorkflowRun.create({
+            trigger_id: wfTrigger!.id!,
+            context: this.context,
+            started_by: this.started_by,
+            session_id: this.session_id,
+          });
+          await this.update({
+            status: "Waiting",
+            wait_info: { workflow_run: run.id },
+          });
+          step = null;
+          //TODO run here?
+          break;
+        }
         if (step.action_name === "UserForm" && !waiting_fulfilled) {
           let user_id;
           if (step.configuration.user_id_expression) {
@@ -582,7 +608,6 @@ class WorkflowRun {
         } else {
           console.error("Workflow error", e);
           await this.update({ status: "Error", error: e.message });
-          const Trigger = (await import("./trigger")).default;
 
           Trigger.emitEvent("Error", null, user, {
             workflow_run: this.id,
