@@ -382,8 +382,8 @@ class WorkflowRun {
             status: "Waiting",
             wait_info: { workflow_run: subwfrun.id },
           });
-          //TODO run here?
-          const subrunres = await subwfrun.run({
+
+          const subrunres: any = await subwfrun.run({
             user,
             interactive,
             noNotifications,
@@ -404,8 +404,7 @@ class WorkflowRun {
             });
             waiting_fulfilled = true;
           } else {
-            step = null;
-            break;
+            return subrunres;
           }
         }
         if (step.action_name === "UserForm" && !waiting_fulfilled) {
