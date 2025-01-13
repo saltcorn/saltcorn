@@ -200,6 +200,8 @@ class WorkflowStep {
     } else {
       const trigger = await Trigger.findOne({ name: this.action_name });
       state_action = getState().actions[trigger.action];
+      if (!state_action)
+        throw new Error(`Action or trigger not found: ${this.action_name}`);
       return await state_action.run({
         configuration: trigger.configuration,
         user,

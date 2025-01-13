@@ -238,3 +238,75 @@ describe("Workflow run error handling", () => {
     expect(wfrun.context.afterEhan).toBe(1);
   });
 });
+
+describe("Workflow run subworkflows", () => {
+  it("should create steps", async () => {
+    const main = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "wfmain",
+    });
+    const sub = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "wfsub",
+    });
+    await WorkflowStep.create({
+      trigger_id: main.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{foo: {x:1}, bar: {y:2}}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: main.id!,
+      name: "second_step",
+      next_step: "third_step",
+      action_name: "wfsub",
+      initial_step: false,
+      configuration: { subcontext: "foo" },
+    });
+    await WorkflowStep.create({
+      trigger_id: main.id!,
+      name: "third_step",
+      next_step: "",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: `{done: true}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: sub.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: { code: `return {w:5+x}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: sub.id!,
+      name: "second_step",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {z:9}` },
+    });
+  });
+  it("should run", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "wfmain" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+    });
+    await wfrun.run({ user });
+
+    //console.log(wfrun.context);
+
+    expect(wfrun.context.done).toBe(true);
+    expect(wfrun.context.foo.w).toBe(6);
+    expect(wfrun.context.foo.z).toBe(9);
+    expect(wfrun.context.bar.y).toBe(2);
+    expect(wfrun.context.foo.x).toBe(1);
+  });
+});

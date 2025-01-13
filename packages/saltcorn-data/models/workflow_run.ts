@@ -316,22 +316,31 @@ class WorkflowRun {
     this.steps = steps;
 
     const state = getState();
+    //state.logLevel = 6;
     state.log(6, `Running workflow id=${this.id}`);
+    const Trigger = (await import("./trigger")).default;
+
+    const allWorkflows = await Trigger.find({});
+    const allWorkflowNames = new Set(allWorkflows.map((wf) => wf.name));
+
     let waiting_fulfilled = false;
     if (this.status === "Waiting") {
       //are wait conditions fulfilled?
       let fulfilled = true;
-      Object.entries(this.wait_info || {}).forEach(([k, v]) => {
+      for (const [k, v] of Object.entries(this.wait_info || {})) {
         switch (k) {
           case "until_time":
             if (new Date(v as Date | string) > new Date()) fulfilled = false;
             break;
           case "form":
             if (v) fulfilled = false;
+          case "workflow_run":
+            const wait_for_run = await WorkflowRun.findOne({ id: v });
+            if (wait_for_run.status !== "Finished") fulfilled = false;
           default:
             break;
         }
-      });
+      }
       if (!fulfilled) return;
       else waiting_fulfilled = true;
     }
@@ -357,6 +366,47 @@ class WorkflowRun {
       this.step_start = new Date();
 
       try {
+        if (allWorkflowNames.has(step.action_name) && !waiting_fulfilled) {
+          const wfTrigger = allWorkflows.find(
+            (wf) => wf.name === step.action_name
+          );
+          const subwfrun = await WorkflowRun.create({
+            trigger_id: wfTrigger!.id!,
+            context: step.configuration.subcontext
+              ? structuredClone(this.context[step.configuration.subcontext])
+              : structuredClone(this.context),
+            started_by: this.started_by,
+            session_id: this.session_id,
+          });
+          await this.update({
+            status: "Waiting",
+            wait_info: { workflow_run: subwfrun.id },
+          });
+
+          const subrunres: any = await subwfrun.run({
+            user,
+            interactive,
+            noNotifications,
+            api_call,
+          });
+
+          if (subwfrun.status === "Finished") {
+            if (step.configuration.subcontext)
+              Object.assign(
+                this.context[step.configuration.subcontext],
+                subwfrun.context
+              );
+            else Object.assign(this.context, subwfrun.context);
+            await this.update({
+              context: this.context,
+              status: "Running",
+              wait_info: {},
+            });
+            waiting_fulfilled = true;
+          } else {
+            return subrunres;
+          }
+        }
         if (step.action_name === "UserForm" && !waiting_fulfilled) {
           let user_id;
           if (step.configuration.user_id_expression) {
@@ -582,7 +632,6 @@ class WorkflowRun {
         } else {
           console.error("Workflow error", e);
           await this.update({ status: "Error", error: e.message });
-          const Trigger = (await import("./trigger")).default;
 
           Trigger.emitEvent("Error", null, user, {
             workflow_run: this.id,
