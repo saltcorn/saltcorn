@@ -316,6 +316,7 @@ class WorkflowRun {
     this.steps = steps;
 
     const state = getState();
+    //state.logLevel = 6;
     state.log(6, `Running workflow id=${this.id}`);
     const Trigger = (await import("./trigger")).default;
 
@@ -369,7 +370,7 @@ class WorkflowRun {
           const wfTrigger = allWorkflows.find(
             (wf) => wf.name === step.action_name
           );
-          const run = await WorkflowRun.create({
+          const subwfrun = await WorkflowRun.create({
             trigger_id: wfTrigger!.id!,
             context: this.context,
             started_by: this.started_by,
@@ -377,11 +378,26 @@ class WorkflowRun {
           });
           await this.update({
             status: "Waiting",
-            wait_info: { workflow_run: run.id },
+            wait_info: { workflow_run: subwfrun.id },
           });
-          step = null;
           //TODO run here?
-          break;
+          const subrunres = await subwfrun.run({
+            user,
+            interactive,
+            noNotifications,
+            api_call,
+          });
+
+          if (subwfrun.status === "Finished") {
+            await this.update({
+              status: "Running",
+              wait_info: {},
+            });
+            waiting_fulfilled = true
+          } else {
+            step = null;
+            break;
+          }
         }
         if (step.action_name === "UserForm" && !waiting_fulfilled) {
           let user_id;
