@@ -90,6 +90,25 @@ test("updateQueryStringParameter hash", () => {
     "/foo?name=Bar#Baz"
   );
 });
+test("addQueryStringParameter", () => {
+  expect(addQueryStringParameter("/foo", "age", 43)).toBe(
+    "/foo?age=43"
+  );
+  expect(addQueryStringParameter("/foo?age=43", "age", 44)).toBe(
+    "/foo?age=43&age=44"
+  );
+  expect(addQueryStringParameter("/foo?age=43", "age", 43)).toBe(
+    "/foo?age=43"
+  );
+});
+test("addQueryStringParameter hash", () => {
+  expect(addQueryStringParameter("/foo#baz", "age", 43)).toBe(
+    "/foo?age=43#baz"
+  );
+  expect(addQueryStringParameter("/foo?age=43#baz", "age", 44)).toBe(
+    "/foo?age=43&age=44#baz"
+  );
+});
 test("unique_field_from_rows test", () => {
   $("body").append(`<input id="mkuniq6" value="bar"></div>`);
   unique_field_from_rows(
