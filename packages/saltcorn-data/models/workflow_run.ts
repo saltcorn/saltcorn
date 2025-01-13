@@ -372,7 +372,9 @@ class WorkflowRun {
           );
           const subwfrun = await WorkflowRun.create({
             trigger_id: wfTrigger!.id!,
-            context: this.context,
+            context: step.configuration.subcontext
+              ? structuredClone(this.context[step.configuration.subcontext])
+              : structuredClone(this.context),
             started_by: this.started_by,
             session_id: this.session_id,
           });
@@ -389,11 +391,18 @@ class WorkflowRun {
           });
 
           if (subwfrun.status === "Finished") {
+            if (step.configuration.subcontext)
+              Object.assign(
+                this.context[step.configuration.subcontext],
+                subwfrun.context
+              );
+            else Object.assign(this.context, subwfrun.context);
             await this.update({
+              context: this.context,
               status: "Running",
               wait_info: {},
             });
-            waiting_fulfilled = true
+            waiting_fulfilled = true;
           } else {
             step = null;
             break;

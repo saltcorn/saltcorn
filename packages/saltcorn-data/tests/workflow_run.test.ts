@@ -239,8 +239,6 @@ describe("Workflow run error handling", () => {
   });
 });
 
-
-
 describe("Workflow run subworkflows", () => {
   it("should create steps", async () => {
     const main = await Trigger.create({
@@ -267,7 +265,7 @@ describe("Workflow run subworkflows", () => {
       next_step: "third_step",
       action_name: "wfsub",
       initial_step: false,
-      configuration: {  },
+      configuration: { subcontext: "foo" },
     });
     await WorkflowStep.create({
       trigger_id: main.id!,
@@ -283,7 +281,7 @@ describe("Workflow run subworkflows", () => {
       next_step: "second_step",
       action_name: "run_js_code",
       initial_step: true,
-      configuration: { code: `return {w:5}` },
+      configuration: { code: `return {w:5+x}` },
     });
     await WorkflowStep.create({
       trigger_id: sub.id!,
@@ -303,11 +301,11 @@ describe("Workflow run subworkflows", () => {
     });
     await wfrun.run({ user });
 
-    console.log(wfrun.context);
-    
+    //console.log(wfrun.context);
+
     expect(wfrun.context.done).toBe(true);
-    expect(wfrun.context.w).toBe(5);
-    expect(wfrun.context.z).toBe(9);
+    expect(wfrun.context.foo.w).toBe(6);
+    expect(wfrun.context.foo.z).toBe(9);
     expect(wfrun.context.bar.y).toBe(2);
     expect(wfrun.context.foo.x).toBe(1);
   });
