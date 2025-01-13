@@ -665,6 +665,7 @@ class Trigger implements AbstractTrigger {
       .sort();
     if (builtInLabel) action_namespaces.unshift(builtInLabel);
     if (triggerActions.length) action_namespaces.push("Triggers");
+    if (forWorkflow) action_namespaces.push("Workflows");
 
     action_namespaces.push("Other");
 
@@ -684,6 +685,12 @@ class Trigger implements AbstractTrigger {
         .sort();
       if (ns === "Other" && !noMultiStep) options.push("Multi-step action");
       if (ns === "Other" && workflow) options.push("Workflow");
+      if (ns === "Workflows") {
+        const wfs: string[] = Trigger.find({ action: "Workflow" })
+          .map((wf) => wf.name)
+          .filter(Boolean) as string[];
+        options.push(...wfs);
+      }
       return { optgroup: true, label: ns, options };
     });
   }

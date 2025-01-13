@@ -721,10 +721,19 @@ const getWorkflowStepForm = async (
             },
           };
         if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
-        actionConfigFields.push(cfgFld);
       }
     } catch {}
   }
+  actionConfigFields.push({
+    label: "Subcontext",
+    name: "subcontext",
+    type: "String",
+    sublabel: "Optional. A key on the current workflow's context, the values of which will be the called workflow's context.",
+    showIf: {
+      wf_action_name: Trigger.find({ action: "Workflow" }).map((wf) => wf.name),
+    },
+  });
+
   const builtInActionExplainers = WorkflowStep.builtInActionExplainers();
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
@@ -1851,11 +1860,10 @@ WORKFLOWS TODO
 
 help file to explain steps, and context
 
-workflow actions: Stop, ReadFile, WriteFile, APIResponse
+workflow actions: Stop, RunEditView, ReadFile, WriteFile, APIResponse
 
 other triggers can be steps
 interactive workflows for not logged in
-show end node in diagram
 actions can declare which variables they inject into scope
 
 show unconnected steps
