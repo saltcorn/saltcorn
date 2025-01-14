@@ -334,6 +334,8 @@ class WorkflowRun {
             break;
           case "form":
             if (v) fulfilled = false;
+          case "edit_view":
+            if (v) fulfilled = false;
           case "workflow_run":
             const wait_for_run = await WorkflowRun.findOne({ id: v });
             if (wait_for_run.status !== "Finished") fulfilled = false;
@@ -407,8 +409,15 @@ class WorkflowRun {
             return subrunres;
           }
         }
-        if (step.action_name === "UserForm" && !waiting_fulfilled) {
-          let user_id;
+
+        // set user id and send notification
+        // (shared by UserForm and EditViewForm)
+        let user_id;
+        if (
+          (step.action_name === "UserForm" ||
+            step.action_name === "EditViewForm") &&
+          !waiting_fulfilled
+        ) {
           if (step.configuration.user_id_expression) {
             user_id = eval_expression(
               step.configuration.user_id_expression,
@@ -428,17 +437,28 @@ class WorkflowRun {
               user_id,
             });
           }
-          await this.update({
-            status: "Waiting",
-            wait_info: { form: true, user_id: user_id },
-          });
+
+          if (step.action_name === "UserForm") {
+            await this.update({
+              status: "Waiting",
+              wait_info: { form: true, user_id: user_id },
+            });
+          }
+          if (step.action_name === "EditViewForm") {
+            await this.update({
+              status: "Waiting",
+              wait_info: { edit_view: true, user_id: user_id },
+            });
+          }
           if (trace) this.createTrace(step.name, user);
 
           if (
             interactive &&
             (!step.configuration.user_id_expression || user_id === user?.id)
           ) {
-            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+            return {
+              popup: `/actions/fill-workflow-form/${this.id}?resume=1`,
+            };
           }
           step = null;
           break;
