@@ -335,9 +335,6 @@ class WorkflowRun {
           case "form":
             if (v) fulfilled = false;
             break;
-          case "edit_view":
-            if (v) fulfilled = false;
-            break;
           case "workflow_run":
             const wait_for_run = await WorkflowRun.findOne({ id: v });
             if (wait_for_run.status !== "Finished") fulfilled = false;
@@ -440,18 +437,11 @@ class WorkflowRun {
             });
           }
 
-          if (step.action_name === "UserForm") {
-            await this.update({
-              status: "Waiting",
-              wait_info: { form: true, user_id: user_id },
-            });
-          }
-          if (step.action_name === "EditViewForm") {
-            await this.update({
-              status: "Waiting",
-              wait_info: { edit_view: true, user_id: user_id },
-            });
-          }
+          await this.update({
+            status: "Waiting",
+            wait_info: { form: true, user_id: user_id },
+          });
+
           if (trace) this.createTrace(step.name, user);
 
           if (

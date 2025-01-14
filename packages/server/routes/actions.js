@@ -1733,7 +1733,7 @@ router.post(
 );
 
 const getWorkflowStepUserForm = async (run, trigger, step, req) => {
-  if (run.wait_info.edit_view) {
+  if (step.action_name === "EditViewForm") {
     const view = View.findOne({ name: step.configuration.edit_view });
     const table = Table.findOne({ id: view.table_id });
     const form = await getForm(
