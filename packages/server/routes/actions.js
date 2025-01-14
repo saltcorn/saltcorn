@@ -1744,6 +1744,7 @@ const getWorkflowStepUserForm = async (run, trigger, step, req) => {
       null,
       req
     );
+    form.action = `/actions/fill-workflow-form/${run.id}`;
     return form;
   }
 

@@ -334,8 +334,10 @@ class WorkflowRun {
             break;
           case "form":
             if (v) fulfilled = false;
+            break;
           case "edit_view":
             if (v) fulfilled = false;
+            break;
           case "workflow_run":
             const wait_for_run = await WorkflowRun.findOne({ id: v });
             if (wait_for_run.status !== "Finished") fulfilled = false;
