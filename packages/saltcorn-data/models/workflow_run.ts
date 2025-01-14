@@ -409,14 +409,12 @@ class WorkflowRun {
           }
         }
 
-        // set user id and send notification
-        // (shared by UserForm and EditViewForm)
-        let user_id;
         if (
           (step.action_name === "UserForm" ||
             step.action_name === "EditViewForm") &&
           !waiting_fulfilled
         ) {
+          let user_id;
           if (step.configuration.user_id_expression) {
             user_id = eval_expression(
               step.configuration.user_id_expression,
