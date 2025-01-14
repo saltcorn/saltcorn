@@ -14,6 +14,10 @@ const {
 const { ppVal, jsIdentifierValidator } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
+const View = require("@saltcorn/data/models/view");
+const {
+  getForm,
+} = require("@saltcorn/data/base-plugin/viewtemplates/viewable_fields");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
@@ -728,7 +732,8 @@ const getWorkflowStepForm = async (
     label: "Subcontext",
     name: "subcontext",
     type: "String",
-    sublabel: "Optional. A key on the current workflow's context, the values of which will be the called workflow's context.",
+    sublabel:
+      "Optional. A key on the current workflow's context, the values of which will be the called workflow's context.",
     showIf: {
       wf_action_name: Trigger.find({ action: "Workflow" }).map((wf) => wf.name),
     },
@@ -1728,6 +1733,20 @@ router.post(
 );
 
 const getWorkflowStepUserForm = async (run, trigger, step, req) => {
+  if (run.wait_info.edit_view) {
+    const view = View.findOne({ name: step.configuration.edit_view });
+    const table = Table.findOne({ id: view.table_id });
+    const form = await getForm(
+      table,
+      view.name,
+      view.configuration.columns,
+      view.configuration.layout,
+      null,
+      req
+    );
+    return form;
+  }
+
   let blurb = run.wait_info.output || step.configuration?.form_header || "";
   if (run.wait_info.markdown && run.wait_info.output) blurb = md.render(blurb);
   const form = new Form({
