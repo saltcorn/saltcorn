@@ -88,7 +88,7 @@ function removeQueryStringParameter(uri1, key, value) {
   return uri + hash;
 }
 
-function addQueryStringParameter(uri1, key, value){
+function addQueryStringParameter(uri1, key, value) {
   let hash = "";
   let uri = uri1;
   if (uri && uri.includes("#")) {
@@ -99,7 +99,7 @@ function addQueryStringParameter(uri1, key, value){
   var re = new RegExp("([?&])" + key + "=" + value + "?(&|$)", "gi");
   if (uri.match(re)) return uri1;
 
-  var separator = uri.indexOf("?") !== -1 ? "&" : "?";  
+  var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (Array.isArray(value))
     return (
       uri +
@@ -123,7 +123,8 @@ function check_state_field(that, e) {
   const name = that.name;
   const value = encodeURIComponent(that.value);
   let dest;
-  if (checked) dest = addQueryStringParameter(get_current_state_url(e), name, value);
+  if (checked)
+    dest = addQueryStringParameter(get_current_state_url(e), name, value);
   else dest = removeQueryStringParameter(get_current_state_url(e), name, value);
   pjax_to(dest.replace("&&", "&").replace("?&", "?"), e);
 }
@@ -631,10 +632,10 @@ function ajaxSubmitForm(e, force_no_reload, event) {
         "data-on-close-reload-view"
       );
       $("#scmodal").modal("hide");
-      if (!force_no_reload && on_close_reload_view) {
+      if (on_close_reload_view) {
         const viewE = $(`[data-sc-embed-viewname="${on_close_reload_view}"]`);
         if (viewE.length) reload_embedded_view(on_close_reload_view);
-        else location.reload();
+        else if (!force_no_reload) location.reload();
       } else if (!force_no_reload && !no_reload) location.reload();
       else common_done(res, form.attr("data-viewname"));
     },
