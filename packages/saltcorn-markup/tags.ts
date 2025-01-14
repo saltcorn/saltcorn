@@ -4,7 +4,7 @@
  */
 
 import mkTag = require("./mktag");
-import xss, { whiteList } from "xss";
+import xss, { whiteList, IWhiteList } from "xss";
 import escape from "escape-html";
 import htmlTags from "html-tags";
 import voidHtmlTags from "html-tags/void";
@@ -24,11 +24,29 @@ whiteList.span = ["style"];
 whiteList.div = ["style"];
 whiteList.td = ["style"];
 
+const mergeWhiteList = (customWhiteList: IWhiteList): IWhiteList => {
+  const res = JSON.parse(JSON.stringify(whiteList));
+  for (const [k, v] of Object.entries(customWhiteList)) {
+    if (!v) continue;
+    if (res[k]) res[k].push(...v);
+    else res[k] = v;
+  }
+  return res;
+};
+
 /**
  * @param {string|number} t
  * @returns {string}
  */
-const text = (t: string | number): string => (t === 0 ? "0" : xss(<string>t));
+const text = (t: string | number, customWhiteList?: IWhiteList): string =>
+  t === 0
+    ? "0"
+    : xss(
+        <string>t,
+        customWhiteList
+          ? { whiteList: mergeWhiteList(customWhiteList) }
+          : undefined
+      );
 
 /**
  * @param {string|number} t
