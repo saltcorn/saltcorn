@@ -211,7 +211,7 @@ class WorkflowStep {
       });
     }
   }
-  static builtInActionExplainers() {
+  static builtInActionExplainers(opts: any = {}) {
     const actionExplainers: any = {};
     actionExplainers.SetContext = "Set variables in the context";
     actionExplainers.TableQuery =
@@ -230,6 +230,9 @@ class WorkflowStep {
     actionExplainers.SetErrorHandler = "Set the error handling step";
     actionExplainers.EditViewForm =
       "Ask the user to fill in a form from an Edit view, storing the response in the context";
+    if (opts?.api_call)
+      actionExplainers.APIResponse = "Provide the response to an API call";
+
     return actionExplainers;
   }
 
@@ -285,7 +288,8 @@ class WorkflowStep {
       name: "edit_view",
       type: "String",
       required: true,
-      sublabel: "Edit view should have a Save button. Other actions and edit view settings will be ignored.",
+      sublabel:
+        "Edit view should have a Save button. Other actions and edit view settings will be ignored.",
       attributes: {
         options: (await View.find({ viewtemplate: "Edit" })).map((t) => t.name),
       },
@@ -325,6 +329,16 @@ class WorkflowStep {
       class: "validate-expression",
       default: "{}",
       showIf: { wf_action_name: "SetContext" },
+    });
+    actionConfigFields.push({
+      label: "Response JSON",
+      name: "response_expression",
+      sublabel: "JavaScript expression for the API response. ",
+      type: "String",
+      fieldview: "textarea",
+      class: "validate-expression",
+      default: "{}",
+      showIf: { wf_action_name: "APIResponse" },
     });
     actionConfigFields.push({
       label: "Output text",

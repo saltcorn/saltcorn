@@ -739,7 +739,9 @@ const getWorkflowStepForm = async (
     },
   });
 
-  const builtInActionExplainers = WorkflowStep.builtInActionExplainers();
+  const builtInActionExplainers = WorkflowStep.builtInActionExplainers({
+    api_call: trigger.when_trigger == "API call",
+  });
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     noMultiStep: true,
