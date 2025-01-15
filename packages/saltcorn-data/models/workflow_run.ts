@@ -409,6 +409,19 @@ class WorkflowRun {
             return subrunres;
           }
         }
+        if (step.action_name === "APIResponse") {
+          const resp = eval_expression(
+            step.configuration.response_expression,
+            this.context,
+            user,
+            `API response expression in step ${step.name}`
+          );
+          await this.update({
+            status: "Finished",
+          });
+
+          return resp;
+        }
 
         if (
           (step.action_name === "UserForm" ||
