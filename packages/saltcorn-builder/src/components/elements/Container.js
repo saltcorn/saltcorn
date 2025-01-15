@@ -98,6 +98,7 @@ const Container = ({
   setTextColor,
   textColor,
   customClass,
+  customId,
   customCSS,
   margin,
   padding,
@@ -119,6 +120,7 @@ const Container = ({
     htmlElement,
     {
       ref: (dom) => connect(drag(dom)),
+      id: customId || "",
       className: `${customClass || ""} kontainer canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
@@ -202,6 +204,7 @@ const ContainerSettings = () => {
     showForRole: node.data.props.showForRole,
     textColor: node.data.props.textColor,
     customClass: node.data.props.customClass,
+    customId: node.data.props.customId,
     customCSS: node.data.props.customCSS,
     minScreenWidth: node.data.props.minScreenWidth,
     maxScreenWidth: node.data.props.maxScreenWidth,
@@ -234,6 +237,7 @@ const ContainerSettings = () => {
     isFormula,
     showForRole,
     customClass,
+    customId,
     customCSS,
     minScreenWidth,
     maxScreenWidth,
@@ -997,7 +1001,18 @@ const ContainerSettings = () => {
         </select>
       </div>
 
-      <div accordiontitle="Custom class/CSS">
+      <div accordiontitle="Class, ID and CSS">
+        <div>
+          <label>ID</label>
+        </div>
+        <OrFormula nodekey="customId" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="form-control text-to-display"
+            value={customId}
+            onChange={setAProp("customId")}
+          />
+        </OrFormula>
         <div>
           <label>Custom class</label>
         </div>

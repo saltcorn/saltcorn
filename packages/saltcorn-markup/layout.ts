@@ -593,6 +593,7 @@ const render = ({
         showForRole,
         hide,
         customClass,
+        customId,
         customCSS,
         minScreenWidth,
         maxScreenWidth,
@@ -711,6 +712,7 @@ const render = ({
               hoverColor && `hover-${hoverColor}`,
               fullPageWidth && "full-page-width",
             ],
+            id: customId || undefined,
             onclick: segment.url
               ? isWeb
                 ? segment.url?.startsWith?.("javascript:")
