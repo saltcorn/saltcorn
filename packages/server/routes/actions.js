@@ -515,7 +515,12 @@ function genWorkflowDiagram(steps) {
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
-    if (step.initial_step) linkLines.push(`  _Start --> ${step.mmname}`);
+    if (step.initial_step)
+      linkLines.push(
+        `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
+          step.name
+        }"></i> ---${step.mmname}`
+      );
     if (stepNames.includes(step.next_step)) {
       linkLines.push(
         `  ${step.mmname}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.mmnext}`
@@ -832,7 +837,8 @@ const getWorkflowStepForm = async (
   form.hidden("wf_step_id");
   form.hidden("_after_step");
   if (before_step) form.values.wf_next_step = before_step;
-  if (after_step) form.values._after_step = after_step;
+  if (after_step == "0") form.values.wf_initial_step = true;
+  else if (after_step) form.values._after_step = after_step;
   if (step_id) {
     const step = await WorkflowStep.findOne({ id: step_id });
     if (!step) throw new Error("Step not found");
