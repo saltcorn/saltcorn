@@ -1748,6 +1748,12 @@ const getWorkflowStepUserForm = async (run, trigger, step, req) => {
     );
     await form.fill_fkey_options(false, undefined, req?.user);
     form.action = `/actions/fill-workflow-form/${run.id}`;
+    if (run.context[step.configuration.response_variable])
+      Object.assign(
+        form.values,
+        run.context[step.configuration.response_variable]
+      );
+
     return form;
   }
 

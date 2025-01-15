@@ -189,6 +189,11 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
     );
     form.action = `/view/${viewname}/submit_form`;
     form.onSubmit = `$(this).closest('form').find('button').hide();$('#wfroom-spin-${run.id}').show();setTimeout(()=>$(this).closest('form').find('input,select,textarea').prop('disabled', true),100);`;
+    if (run.context[step.configuration.response_variable])
+      Object.assign(
+        form.values,
+        run.context[step.configuration.response_variable]
+      );
     form.hidden("run_id");
     form.xhrSubmit = true;
     await form.fill_fkey_options(false, undefined, req?.user);
