@@ -1880,8 +1880,9 @@ WORKFLOWS TODO
 
 help file to explain steps, and context
 
-workflow actions: Stop, RunEditView, ReadFile, WriteFile, APIResponse
+workflow actions: Stop, OutputView, ReadFile, WriteFile, APIResponse
 
+EditViewForm: key fields. presets. set existing fields from context. response var can be blank
 other triggers can be steps
 interactive workflows for not logged in
 actions can declare which variables they inject into scope
