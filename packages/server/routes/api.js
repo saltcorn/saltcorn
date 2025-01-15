@@ -398,15 +398,26 @@ router.all(
       async function (err, user, info) {
         if (accessAllowed(req, user, trigger)) {
           try {
-            const action = getState().actions[trigger.action];
+            let resp;
             const row = req.method === "GET" ? req.query : req.body;
-            const resp = await action.run({
-              configuration: trigger.configuration,
-              body: req.body,
-              row,
-              req,
-              user: user || req.user,
-            });
+            if (trigger.action === "Workflow") {
+              resp = await trigger.runWithoutRow({
+                req,
+                interactive: true,
+                row,
+                user: user || req.user,
+              });
+              delete resp.__wf_run_id;
+            } else {
+              const action = getState().actions[trigger.action];
+              resp = await action.run({
+                configuration: trigger.configuration,
+                body: req.body,
+                row,
+                req,
+                user: user || req.user,
+              });
+            }
             if (
               (row._process_result || req.headers?.scprocessresults) &&
               resp?.goto
