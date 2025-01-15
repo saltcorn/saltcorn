@@ -422,6 +422,13 @@ class WorkflowRun {
 
           return resp;
         }
+        if (step.action_name === "Stop") {
+          await this.update({
+            status: "Finished",
+          });
+
+          return {};
+        }
 
         if (
           (step.action_name === "UserForm" ||

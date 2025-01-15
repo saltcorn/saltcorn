@@ -230,6 +230,7 @@ class WorkflowStep {
     actionExplainers.SetErrorHandler = "Set the error handling step";
     actionExplainers.EditViewForm =
       "Ask the user to fill in a form from an Edit view, storing the response in the context";
+    actionExplainers.Stop = "Terminate the workflow run execution immediately";
     if (opts?.api_call)
       actionExplainers.APIResponse = "Provide the response to an API call";
 
