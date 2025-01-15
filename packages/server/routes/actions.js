@@ -508,14 +508,19 @@ function genWorkflowDiagram(steps) {
   const stepNames = steps.map((s) => s.name);
   const nodeLines = steps.map(
     (s) => `  ${s.mmname}["\`**${s.name}**
-  ${s.action_name}\`"]:::wfstep${s.id}`
+  ${s.action_name}\`"]:::wfstep${s.id}${s.only_if ? "@{ shape: hex }" : ""}`
   );
 
   nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
   const linkLines = [];
   let step_ix = 0;
   for (const step of steps) {
-    if (step.initial_step) linkLines.push(`  _Start --> ${step.mmname}`);
+    if (step.initial_step)
+      linkLines.push(
+        `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
+          step.name
+        }"></i> ---${step.mmname}`
+      );
     if (stepNames.includes(step.next_step)) {
       linkLines.push(
         `  ${step.mmname}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.mmnext}`
@@ -739,7 +744,9 @@ const getWorkflowStepForm = async (
     },
   });
 
-  const builtInActionExplainers = WorkflowStep.builtInActionExplainers();
+  const builtInActionExplainers = WorkflowStep.builtInActionExplainers({
+    api_call: trigger.when_trigger == "API call",
+  });
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     noMultiStep: true,
@@ -830,7 +837,8 @@ const getWorkflowStepForm = async (
   form.hidden("wf_step_id");
   form.hidden("_after_step");
   if (before_step) form.values.wf_next_step = before_step;
-  if (after_step) form.values._after_step = after_step;
+  if (after_step == "0") form.values.wf_initial_step = true;
+  else if (after_step) form.values._after_step = after_step;
   if (step_id) {
     const step = await WorkflowStep.findOne({ id: step_id });
     if (!step) throw new Error("Step not found");
@@ -1744,7 +1752,14 @@ const getWorkflowStepUserForm = async (run, trigger, step, req) => {
       null,
       req
     );
+    await form.fill_fkey_options(false, undefined, req?.user);
     form.action = `/actions/fill-workflow-form/${run.id}`;
+    if (run.context[step.configuration.response_variable])
+      Object.assign(
+        form.values,
+        run.context[step.configuration.response_variable]
+      );
+
     return form;
   }
 
@@ -1880,8 +1895,9 @@ WORKFLOWS TODO
 
 help file to explain steps, and context
 
-workflow actions: Stop, RunEditView, ReadFile, WriteFile, APIResponse
+workflow actions: ReadFile, WriteFile, 
 
+EditViewForm: presets. response var can be blank
 other triggers can be steps
 interactive workflows for not logged in
 actions can declare which variables they inject into scope
