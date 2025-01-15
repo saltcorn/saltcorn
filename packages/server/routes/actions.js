@@ -1746,6 +1746,7 @@ const getWorkflowStepUserForm = async (run, trigger, step, req) => {
       null,
       req
     );
+    await form.fill_fkey_options(false, undefined, req?.user);
     form.action = `/actions/fill-workflow-form/${run.id}`;
     return form;
   }
@@ -1884,7 +1885,7 @@ help file to explain steps, and context
 
 workflow actions: ReadFile, WriteFile, 
 
-EditViewForm: key fields. presets. set existing fields from context. response var can be blank
+EditViewForm: presets. set existing fields from context. response var can be blank
 other triggers can be steps
 interactive workflows for not logged in
 actions can declare which variables they inject into scope
