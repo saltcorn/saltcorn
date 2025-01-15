@@ -172,6 +172,7 @@ class WorkflowRun {
     Object.assign(this.context, form_values);
 
     this.wait_info.form = false;
+    this.wait_info.output = false;
     await this.update({ wait_info: this.wait_info, context: this.context });
   }
 
@@ -334,6 +335,7 @@ class WorkflowRun {
             break;
           case "form":
             if (v) fulfilled = false;
+            break;
           case "workflow_run":
             const wait_for_run = await WorkflowRun.findOne({ id: v });
             if (wait_for_run.status !== "Finished") fulfilled = false;
@@ -407,7 +409,12 @@ class WorkflowRun {
             return subrunres;
           }
         }
-        if (step.action_name === "UserForm" && !waiting_fulfilled) {
+
+        if (
+          (step.action_name === "UserForm" ||
+            step.action_name === "EditViewForm") &&
+          !waiting_fulfilled
+        ) {
           let user_id;
           if (step.configuration.user_id_expression) {
             user_id = eval_expression(
@@ -428,17 +435,21 @@ class WorkflowRun {
               user_id,
             });
           }
+
           await this.update({
             status: "Waiting",
             wait_info: { form: true, user_id: user_id },
           });
+
           if (trace) this.createTrace(step.name, user);
 
           if (
             interactive &&
             (!step.configuration.user_id_expression || user_id === user?.id)
           ) {
-            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+            return {
+              popup: `/actions/fill-workflow-form/${this.id}?resume=1`,
+            };
           }
           step = null;
           break;

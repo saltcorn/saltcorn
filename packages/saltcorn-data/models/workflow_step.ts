@@ -9,6 +9,7 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowStepCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_step";
 import User from "./user";
 import Trigger from "./trigger";
+import View from "./view";
 import Table from "./table";
 import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
@@ -227,6 +228,8 @@ class WorkflowStep {
     actionExplainers.ForLoop =
       "Loop over the items in an array, setting a variable to each item in an iteration of a loop body";
     actionExplainers.SetErrorHandler = "Set the error handling step";
+    actionExplainers.EditViewForm =
+      "Ask the user to fill in a form from an Edit view, storing the response in the context";
     return actionExplainers;
   }
 
@@ -277,6 +280,33 @@ class WorkflowStep {
       sublabel: "Optional. If blank assigned to user starting the workflow",
       showIf: { wf_action_name: "UserForm" },
     });
+    actionConfigFields.push({
+      label: "Edit view",
+      name: "edit_view",
+      type: "String",
+      required: true,
+      sublabel: "Edit view should have a Save button. Other actions and edit view settings will be ignored.",
+      attributes: {
+        options: (await View.find({ viewtemplate: "Edit" })).map((t) => t.name),
+      },
+      showIf: { wf_action_name: "EditViewForm" },
+    });
+    actionConfigFields.push({
+      label: "User ID",
+      name: "user_id_expression",
+      type: "String",
+      sublabel: "Optional. If blank assigned to user starting the workflow",
+      showIf: { wf_action_name: "EditViewForm" },
+    });
+    actionConfigFields.push({
+      label: "Response variable",
+      name: "response_variable",
+      sublabel: "Context variable to write the form response to",
+      type: "String",
+      validator: jsIdentifierValidator,
+      showIf: { wf_action_name: "EditViewForm" },
+    });
+
     actionConfigFields.push({
       label: "Resume at",
       name: "resume_at",

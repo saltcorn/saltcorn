@@ -1383,7 +1383,7 @@ const renderFormLayout = (form: Form): string => {
         const submitAttr = form.xhrSubmit
           ? `onClick="${spinnerStr}${
               form.onSubmit ? `${form.onSubmit};` : ""
-            }ajaxSubmitForm(this)" type="button"`
+            }ajaxSubmitForm(this, true)" type="button"`
           : 'type="submit"';
         return mkBtn(submitAttr);
       }
@@ -1470,7 +1470,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     form.onSubmit || form.xhrSubmit
       ? ` onsubmit="${form.onSubmit || ""}${
           form.xhrSubmit && !isMobile
-            ? `;ajaxSubmitForm(this, false, event)`
+            ? `;ajaxSubmitForm(this, true, event)`
             : ""
         }" `
       : ""

@@ -176,6 +176,26 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
 };
 
 const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
+  if (step.action_name === "EditViewForm") {
+    const view = View.findOne({ name: step.configuration.edit_view });
+    const table = Table.findOne({ id: view.table_id });
+    const form = await getForm(
+      table,
+      view.name,
+      view.configuration.columns,
+      view.configuration.layout,
+      null,
+      req
+    );
+    form.action = `/view/${viewname}/submit_form`;
+    form.onSubmit = `$(this).closest('form').find('button').hide();$('#wfroom-spin-${run.id}').show();setTimeout(()=>$(this).closest('form').find('input,select,textarea').prop('disabled', true),100);`;
+    form.hidden("run_id");
+    form.xhrSubmit = true;
+
+    form.values.run_id = run.id;
+    return form;
+  }
+
   const fields = await run.userFormFields(step);
 
   const form = new Form({
@@ -296,7 +316,9 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
       success: "ok",
       eval_js: `$('#wfroom-${run.id}').append(${JSON.stringify(
         items.join("")
-      )});$('#wfroom-spin-${run.id}')[0].scrollIntoView();$('#wfroom-spin-${run.id}').hide()`,
+      )});$('#wfroom-spin-${run.id}')[0].scrollIntoView();$('#wfroom-spin-${
+        run.id
+      }').hide()`,
     },
   };
 };
