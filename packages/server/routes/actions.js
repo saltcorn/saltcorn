@@ -576,7 +576,7 @@ function genWorkflowDiagram(steps) {
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  console.log(fc);
+  //console.log(fc);
 
   return fc;
 }
