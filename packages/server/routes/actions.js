@@ -508,7 +508,7 @@ function genWorkflowDiagram(steps) {
   const stepNames = steps.map((s) => s.name);
   const nodeLines = steps.map(
     (s) => `  ${s.mmname}["\`**${s.name}**
-  ${s.action_name}\`"]:::wfstep${s.id}`
+  ${s.action_name}\`"]:::wfstep${s.id}${s.only_if ? "@{ shape: hex }" : ""}`
   );
 
   nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
@@ -571,7 +571,7 @@ function genWorkflowDiagram(steps) {
   }
   const fc =
     "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  //console.log(fc);
+  console.log(fc);
 
   return fc;
 }
@@ -1891,7 +1891,7 @@ help file to explain steps, and context
 
 workflow actions: ReadFile, WriteFile, 
 
-EditViewForm: presets. set existing fields from context. response var can be blank
+EditViewForm: presets. response var can be blank
 other triggers can be steps
 interactive workflows for not logged in
 actions can declare which variables they inject into scope
