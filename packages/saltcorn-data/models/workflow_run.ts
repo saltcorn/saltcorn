@@ -172,6 +172,7 @@ class WorkflowRun {
     Object.assign(this.context, form_values);
 
     this.wait_info.form = false;
+    this.wait_info.output = false;
     await this.update({ wait_info: this.wait_info, context: this.context });
   }
 
