@@ -295,8 +295,6 @@ const run = async (
 };
 
 const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
-  console.log("body", req.body);
-
   const run = await WorkflowRun.findOne({ id: body.run_id });
   const trigger = await Trigger.findOne({ id: run.trigger_id });
   const step = await WorkflowStep.findOne({
