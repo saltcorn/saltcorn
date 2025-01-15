@@ -1882,7 +1882,7 @@ WORKFLOWS TODO
 
 help file to explain steps, and context
 
-workflow actions: OutputView, ReadFile, WriteFile, 
+workflow actions: ReadFile, WriteFile, 
 
 EditViewForm: key fields. presets. set existing fields from context. response var can be blank
 other triggers can be steps

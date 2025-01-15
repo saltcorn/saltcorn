@@ -366,6 +366,7 @@ class Trigger implements AbstractTrigger {
         user,
         interactive: runargs?.interactive,
         trace: this.configuration?.save_traces,
+        req: runargs?.req,
       });
       if (runResult && typeof runResult === "object")
         runResult.__wf_run_id = wfrun.id;

@@ -15,6 +15,8 @@ import Notification from "./notification";
 import utils from "../utils";
 import moment from "moment";
 import { mkTable } from "@saltcorn/markup/index";
+import mocks from "../tests/mocks";
+const { mockReqRes } = mocks;
 const { ensure_final_slash, interpolate } = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
@@ -304,12 +306,14 @@ class WorkflowRun {
     noNotifications,
     api_call,
     trace,
+    req,
   }: {
     user?: User;
     interactive?: boolean;
     noNotifications?: boolean;
     api_call?: boolean;
     trace?: boolean;
+    req?: any;
   }) {
     if (this.status === "Error" || this.status === "Finished") return;
     //get steps
@@ -507,6 +511,34 @@ class WorkflowRun {
             status: "Waiting",
             wait_info: {
               output: data_output_to_html(output_val),
+              user_id: user?.id,
+            },
+          });
+          if (trace) this.createTrace(step.name, user);
+
+          if (interactive) {
+            return { popup: `/actions/fill-workflow-form/${this.id}?resume=1` };
+          }
+          step = null;
+          break;
+        }
+        if (step.action_name === "OutputView" && !waiting_fulfilled) {
+          const View = (await import("./view")).default;
+          const view = View.findOne({ name: step.configuration.view });
+
+          const state = eval_expression(
+            step.configuration.view_state,
+            this.context,
+            user,
+            `View state expression in step ${step.name}`
+          );
+          if (!view)
+            throw new Error("View not found: " + step.configuration.view);
+          const vout = await view.run(state, req ? { req } : mockReqRes);
+          await this.update({
+            status: "Waiting",
+            wait_info: {
+              output: vout,
               user_id: user?.id,
             },
           });

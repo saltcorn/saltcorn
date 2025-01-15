@@ -220,6 +220,8 @@ class WorkflowStep {
       "Display a message to the user. Pause workflow until the message is read.";
     actionExplainers.DataOutput =
       "Display a value to the user. Arrays of objects will be displayed as tables. Pause workflow until the message is read.";
+    actionExplainers.OutputView =
+      "Display the output of running a Saltcorn view. Pause workflow until the message is read.";
     actionExplainers.WaitUntil = "Pause until a time in the future";
     actionExplainers.WaitNextTick =
       "Pause until the next scheduler invocation (at most 5 minutes)";
@@ -295,6 +297,27 @@ class WorkflowStep {
         options: (await View.find({ viewtemplate: "Edit" })).map((t) => t.name),
       },
       showIf: { wf_action_name: "EditViewForm" },
+    });
+    actionConfigFields.push({
+      label: "View",
+      name: "view",
+      type: "String",
+      required: true,
+      attributes: {
+        options: (await View.find()).map((t) => t.name),
+      },
+      showIf: { wf_action_name: "OutputView" },
+    });
+    actionConfigFields.push({
+      label: "View state",
+      name: "view_state",
+      sublabel:
+        "JavaScript object expression for the view state. Example <code>{id: 2}</code> will run the view with table id = 2",
+      type: "String",
+      fieldview: "textarea",
+      class: "validate-expression",
+      default: "{}",
+      showIf: { wf_action_name: "OutputView" },
     });
     actionConfigFields.push({
       label: "User ID",
