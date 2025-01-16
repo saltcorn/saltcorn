@@ -211,6 +211,9 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           gradEndColor={segment.gradEndColor}
           gradDirection={segment.gradDirection}
           rotate={segment.rotate || 0}
+          animateName={segment.animateName}
+          animateDuration={segment.animateDuration}
+          animateDelay={segment.animateDelay}
           customClass={segment.customClass}
           customId={segment.customId}
           customCSS={segment.customCSS}
@@ -509,6 +512,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
           customId: node.props.customId,
+          animateName: node.props.animateName,
+          animateDelay: node.props.animateDelay,
+          animateDuration: node.props.animateDuration,
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
