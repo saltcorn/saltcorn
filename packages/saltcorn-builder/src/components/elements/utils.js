@@ -21,6 +21,7 @@ import {
   faAngleDoubleLeft,
   faAngleDoubleRight,
   faTerminal,
+  faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
@@ -1666,7 +1667,18 @@ export const ArrayManager = ({
       prop[currentProp] = node[countProp];
     });
   };
-  const deleteElem = () => {};
+  const deleteElem = () => {
+    setProp((prop) => {
+      const rmIx = prop[currentProp];
+      console.log("prop", prop);
+
+      managedArrays.forEach((arrNm) => {
+        prop[arrNm].splice(rmIx, 1);
+      });
+      prop[countProp] = node[countProp] - 1;
+      prop[currentProp] = node[currentProp] - 1;
+    });
+  };
   //console.log("arrayman", { node });
 
   return (
@@ -1704,6 +1716,15 @@ export const ArrayManager = ({
           onClick={() => add()}
         >
           <FontAwesomeIcon icon={faPlus} />
+        </button>
+        <button
+          title="Delete"
+          type="button"
+          style={{ width: "25%" }}
+          className="btn btn-sm"
+          onClick={() => deleteElem()}
+        >
+          <FontAwesomeIcon icon={faTrashAlt} />
         </button>
         <button
           title="Move right"

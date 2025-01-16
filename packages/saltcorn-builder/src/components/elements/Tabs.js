@@ -381,7 +381,7 @@ const TabsSettings = () => {
                   setProp={setProp}
                   countProp={"ntabs"}
                   currentProp={"setting_tab_n"}
-                  managedArrays={["title", "contents"]}
+                  managedArrays={["titles", "contents"]}
                 ></ArrayManager>
               </td>
             </tr>
