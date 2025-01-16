@@ -1660,7 +1660,24 @@ export const ArrayManager = ({
   currentProp,
   managedArrays,
 }) => {
-  const move = (delta) => {};
+  const move = (delta) => {
+    setProp((prop) => {
+      console.log("move prop", prop);
+
+      const curIx = prop[currentProp];
+      if (curIx + delta < 0 || curIx + delta >= prop[countProp]) {
+        console.log("out of bounds");
+        return;
+      }
+
+      managedArrays.forEach((arrNm) => {
+        const tmp = prop[arrNm][curIx];
+        prop[arrNm][curIx] = prop[arrNm][curIx + delta];
+        prop[arrNm][curIx + delta] = tmp;
+      });
+      prop[currentProp] = prop[currentProp] + delta;
+    });
+  };
   const add = () => {
     setProp((prop) => {
       prop[countProp] = node[countProp] + 1;
@@ -1670,7 +1687,6 @@ export const ArrayManager = ({
   const deleteElem = () => {
     setProp((prop) => {
       const rmIx = prop[currentProp];
-      console.log("prop", prop);
 
       managedArrays.forEach((arrNm) => {
         prop[arrNm].splice(rmIx, 1);
