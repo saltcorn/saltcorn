@@ -60,6 +60,7 @@ export const ArrayManager = ({
   const parentId = fullNode.data.parent;
   const siblings = query.node(parentId).childNodes();
   const sibIx = siblings.findIndex((sib) => sib === node.id);
+
   const deleteElem = () => {
     if (manageContents) {
       const rmIx = node[currentProp];
@@ -93,23 +94,39 @@ export const ArrayManager = ({
   };
 
   const move = (delta) => {
-    if (managedArrays.includes("contents")) {
+    const swapElements = (arr, i, j) => {
+      const tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    };
+    if (manageContents) {
       const curIx = node[currentProp];
+      const elem = recursivelyCloneToElems(query)(node.id);
+      const ntree = query.parseReactElement(elem).toNodeTree();
 
-      const linkedNodes = query.node(node.id).linkedNodes();
-      actions.move(linkedNodes[curIx], node.id, curIx + delta);
-    }
-    setProp((prop) => {
-      const curIx = prop[currentProp];
-      if (curIx + delta < 0 || curIx + delta >= prop[countProp]) return;
+      const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
+      swapElements(newConts, curIx, curIx + delta);
+      ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
 
       managedArrays.forEach((arrNm) => {
-        const tmp = prop[arrNm][curIx];
-        prop[arrNm][curIx] = prop[arrNm][curIx + delta];
-        prop[arrNm][curIx + delta] = tmp;
+        const newArr = [...ntree.nodes[ntree.rootNodeId].data.props[arrNm]];
+        swapElements(newArr, curIx, curIx + delta);
+        ntree.nodes[ntree.rootNodeId].data.props[arrNm] = newArr;
       });
-      prop[currentProp] = prop[currentProp] + delta;
-    });
+      ntree.nodes[ntree.rootNodeId].data.props[currentProp] =
+        node[currentProp] + delta;
+      actions.delete(node.id);
+      actions.addNodeTree(ntree, parentId, sibIx);
+    } else
+      setProp((prop) => {
+        const curIx = prop[currentProp];
+        if (curIx + delta < 0 || curIx + delta >= prop[countProp]) return;
+
+        managedArrays.forEach((arrNm) => {
+          swapElements(prop[arrNm], curIx, curIx + delta);
+        });
+        prop[currentProp] = prop[currentProp] + delta;
+      });
   };
   const add = () => {
     setProp((prop) => {
