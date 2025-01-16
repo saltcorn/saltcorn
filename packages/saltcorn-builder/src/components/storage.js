@@ -212,6 +212,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           gradDirection={segment.gradDirection}
           rotate={segment.rotate || 0}
           customClass={segment.customClass}
+          customId={segment.customId}
           customCSS={segment.customCSS}
           overflow={segment.overflow}
           margin={segment.margin || [0, 0, 0, 0]}
@@ -507,6 +508,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
           type: "container",
           customCSS: node.props.customCSS,
           customClass: node.props.customClass,
+          customId: node.props.customId,
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
