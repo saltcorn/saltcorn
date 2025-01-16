@@ -226,6 +226,7 @@ const ContainerSettings = () => {
     animateName: node.data.props.animateName,
     animateDelay: node.data.props.animateDelay,
     animateDuration: node.data.props.animateDuration,
+    animateInitialHide: node.data.props.animateInitialHide,
   }));
   const {
     actions: { setProp },
@@ -878,6 +879,11 @@ const ContainerSettings = () => {
           />
           <SettingsRow
             field={{ name: "animateDelay", label: "Delay (s)", type: "Float" }}
+            node={node}
+            setProp={setProp}
+          />
+           <SettingsRow
+            field={{ name: "animateInitialHide", label: "Initially hidden", type: "Bool" }}
             node={node}
             setProp={setProp}
           />

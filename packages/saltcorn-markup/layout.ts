@@ -617,6 +617,7 @@ const render = ({
         animateName,
         animateDelay,
         animateDuration,
+        animateInitialHide,
       } = segment;
       if (hide) return "";
       if (
@@ -726,6 +727,7 @@ const render = ({
             "data-animate":
               animateName && animateName !== "None" ? animateName : undefined,
             "data-animate-delay": animateDelay || undefined,
+            "data-animate-initial-hide": animateInitialHide || undefined,
             "data-animate-duration": animateDuration || undefined,
             style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",

@@ -2039,6 +2039,9 @@ const observer = new IntersectionObserver(
           entry.target.style.animationFillMode = "both";
         }
 
+        if (entry.target.getAttribute("data-animate-initial-hide") === "")
+          entry.target.removeAttribute("data-animate-initial-hide");
+
         observer.unobserve(entry.target);
       }
     });

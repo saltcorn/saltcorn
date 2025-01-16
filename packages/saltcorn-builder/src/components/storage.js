@@ -214,6 +214,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           animateName={segment.animateName}
           animateDuration={segment.animateDuration}
           animateDelay={segment.animateDelay}
+          animateInitialHide={segment.animateInitialHide}
           customClass={segment.customClass}
           customId={segment.customId}
           customCSS={segment.customCSS}
@@ -515,6 +516,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
           animateName: node.props.animateName,
           animateDelay: node.props.animateDelay,
           animateDuration: node.props.animateDuration,
+          animateInitialHide: node.props.animateInitialHide,
           minHeight: node.props.minHeight,
           height: node.props.height,
           width: node.props.width,
