@@ -15,8 +15,11 @@ import {
   faBold,
   faItalic,
   faFont,
+  faPlus,
   faCommentSlash,
   faUnderline,
+  faAngleDoubleLeft,
+  faAngleDoubleRight,
   faTerminal,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNode, Element } from "@craftjs/core";
@@ -28,6 +31,14 @@ import Select from "react-select";
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
   return <i className={`${icon} ${className || ""}`}></i>;
+};
+
+const ntimes = (n, f) => {
+  var res = [];
+  for (let index = 0; index < n; index++) {
+    res.push(f(index));
+  }
+  return res;
 };
 
 export /**
@@ -1639,6 +1650,73 @@ export const buildBootstrapOptions = (values) => {
       {mappings[option]}
     </option>
   ));
+};
+
+export const ArrayManager = ({
+  node,
+  setProp,
+  countProp,
+  currentProp,
+  managedArrays,
+}) => {
+  const move = (delta) => {};
+  const add = () => {
+    setProp((prop) => {
+      prop[countProp] = node[countProp] + 1;
+      prop[currentProp] = node[countProp];
+    });
+  };
+  const deleteElem = () => {};
+  //console.log("arrayman", { node });
+
+  return (
+    <Fragment>
+      <ConfigField
+        field={{
+          name: currentProp,
+          label: "Number of things",
+          type: "btn_select",
+          options: ntimes(node[countProp], (i) => ({
+            value: i,
+            title: `${i + 1}`,
+            label: `${i + 1}`,
+          })),
+        }}
+        node={node}
+        setProp={setProp}
+        props={node}
+      ></ConfigField>
+      <div className="btn-group w-100" role="group">
+        <button
+          title="Move left"
+          type="button"
+          style={{ width: "25%" }}
+          className="btn btn-sm"
+          onClick={() => move(-1)}
+        >
+          <FontAwesomeIcon icon={faAngleDoubleLeft} />
+        </button>
+        <button
+          title="Add"
+          type="button"
+          style={{ width: "25%" }}
+          className="btn btn-sm"
+          onClick={() => add()}
+        >
+          <FontAwesomeIcon icon={faPlus} />
+        </button>
+        <button
+          title="Move right"
+          type="button"
+          style={{ width: "25%" }}
+          className="btn btn-sm"
+          onClick={() => move(1)}
+        >
+          <FontAwesomeIcon icon={faAngleDoubleRight} />
+        </button>
+      </div>
+    </Fragment>
+  );
 };
 
 export const arrayChunks = (xs, n) => {

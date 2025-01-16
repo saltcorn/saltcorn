@@ -8,7 +8,7 @@ import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
-import { setAPropGen, buildOptions, ConfigField } from "./utils";
+import { setAPropGen, buildOptions, ConfigField, ArrayManager } from "./utils";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -373,40 +373,16 @@ const TabsSettings = () => {
                   </div>
                 </td>
               </tr>
-            ) : null}
-            <tr>
-              <th>
-                <label>Number of sections</label>
-              </th>
-              <td>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={ntabs}
-                  step="1"
-                  min="1"
-                  max="20"
-                  onChange={setAProp("ntabs")}
-                />
-              </td>
-            </tr>
+            ) : null}            
             <tr>
               <td colSpan={2}>
-                <ConfigField
-                  field={{
-                    name: "setting_tab_n",
-                    label: "Tab number",
-                    type: "btn_select",
-                    options: ntimes(ntabs, (i) => ({
-                      value: i,
-                      title: `${i + 1}`,
-                      label: `${i + 1}`,
-                    })),
-                  }}
+                <ArrayManager
                   node={node}
                   setProp={setProp}
-                  props={node}
-                ></ConfigField>
+                  countProp={"ntabs"}
+                  currentProp={"setting_tab_n"}
+                  managedArrays={["title", "contents"]}
+                ></ArrayManager>
               </td>
             </tr>
             <tr>
