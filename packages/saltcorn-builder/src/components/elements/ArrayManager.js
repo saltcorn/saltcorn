@@ -30,6 +30,7 @@ import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
 import { recursivelyCloneToElems } from "./Clone";
 import { ConfigField } from "./utils";
+import { Empty } from "./Empty";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -105,6 +106,8 @@ export const ArrayManager = ({
       const ntree = query.parseReactElement(elem).toNodeTree();
 
       const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
+      console.log("move new contents", newConts);
+
       swapElements(newConts, curIx, curIx + delta);
       ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
 
@@ -129,14 +132,34 @@ export const ArrayManager = ({
       });
   };
   const add = () => {
-    setProp((prop) => {
-      prop[countProp] = node[countProp] + 1;
-      prop[currentProp] = node[countProp];
+    if (manageContents) {
+      const elem = recursivelyCloneToElems(query)(node.id);
+      const ntree = query.parseReactElement(elem).toNodeTree();
+      console.log("ntree", ntree);
+      console.log("node", ntree.nodes[ntree.rootNodeId]);
+      
+      const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
+      newConts.push(<Empty></Empty>);
+      ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
+
       managedArrays.forEach((arrNm) => {
-        if (initialAddProps?.[arrNm])
-          prop[arrNm][node[countProp]] = initialAddProps?.[arrNm];
+        const newArr = [...ntree.nodes[ntree.rootNodeId].data.props[arrNm]];
+        if (initialAddProps?.[arrNm]) newArr.push(initialAddProps?.[arrNm]);
+        ntree.nodes[ntree.rootNodeId].data.props[arrNm] = newArr;
       });
-    });
+      ntree.nodes[ntree.rootNodeId].data.props[currentProp] = node[countProp];
+      ntree.nodes[ntree.rootNodeId].data.props[countProp] = node[countProp] + 1;
+      actions.delete(node.id);
+      actions.addNodeTree(ntree, parentId, sibIx);
+    } else
+      setProp((prop) => {
+        prop[countProp] = node[countProp] + 1;
+        prop[currentProp] = node[countProp];
+        managedArrays.forEach((arrNm) => {
+          if (initialAddProps?.[arrNm])
+            prop[arrNm][node[countProp]] = initialAddProps?.[arrNm];
+        });
+      });
   };
 
   //console.log("arrayman", { node });
