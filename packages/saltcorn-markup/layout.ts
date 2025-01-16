@@ -614,6 +614,9 @@ const render = ({
         transform,
         imgResponsiveWidths,
         htmlElement,
+        animateName,
+        animateDelay,
+        animateDuration,
       } = segment;
       if (hide) return "";
       if (
@@ -720,7 +723,10 @@ const render = ({
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
-
+            "data-animate":
+              animateName && animateName !== "None" ? animateName : undefined,
+            "data-animate-delay": animateDelay || undefined,
+            "data-animate-duration": animateDuration || undefined,
             style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",
               "min-height"

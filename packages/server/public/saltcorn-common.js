@@ -2024,3 +2024,30 @@ function update_time_of_week(nm) {
     $(`#inputh${nm}`).val(s).trigger("change");
   };
 }
+
+const observer = new IntersectionObserver(
+  (entries, observer) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const delay = entry.target.getAttribute("data-animate-delay"); // delay is optional
+        const duration = entry.target.getAttribute("data-animate-duration"); // delay is optional
+        const animationClass = entry.target.getAttribute("data-animate");
+        if (animationClass) {
+          if (delay) entry.target.style.animationDelay = delay + "s";
+          if (duration) entry.target.style.animationDuration = duration + "s";
+          entry.target.style.animationName = animationClass;
+          entry.target.style.animationFillMode = "both";
+        }
+
+        observer.unobserve(entry.target);
+      }
+    });
+  },
+  {
+    threshold: 0.2,
+  }
+);
+
+document.querySelectorAll("[data-animate]").forEach((element) => {
+  observer.observe(element);
+});
