@@ -50,14 +50,48 @@ export const ArrayManager = ({
   countProp,
   currentProp,
   managedArrays,
+  manageContents,
+  initialAddProps,
 }) => {
-  console.log("tab children", node.contents);
-  console.log("tab node", node);
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
-  const qres = query.node(node.id);
-  console.log("linkedNodes", qres.linkedNodes());
+  const fullNode = query.node(node.id).get();
+  const parentId = fullNode.data.parent;
+  const siblings = query.node(parentId).childNodes();
+  const sibIx = siblings.findIndex((sib) => sib === node.id);
+  const deleteElem = () => {
+    if (manageContents) {
+      const rmIx = node[currentProp];
+      const elem = recursivelyCloneToElems(query)(node.id);
+      const ntree = query.parseReactElement(elem).toNodeTree();
+
+      const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
+      newConts.splice(rmIx, 1);
+      ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
+      managedArrays.forEach((arrNm) => {
+        const newArr = [...ntree.nodes[ntree.rootNodeId].data.props[arrNm]];
+        newArr.splice(rmIx, 1);
+        ntree.nodes[ntree.rootNodeId].data.props[arrNm] = newArr;
+      });
+      ntree.nodes[ntree.rootNodeId].data.props[countProp] = node[countProp] - 1;
+      ntree.nodes[ntree.rootNodeId].data.props[currentProp] =
+        node[currentProp] - 1;
+      actions.delete(node.id);
+      actions.addNodeTree(ntree, parentId, sibIx);
+    } else {
+      setProp((prop) => {
+        const rmIx = prop[currentProp];
+
+        managedArrays.forEach((arrNm) => {
+          prop[arrNm].splice(rmIx, 1);
+        });
+        prop[countProp] = node[countProp] - 1;
+        prop[currentProp] = node[currentProp] - 1;
+      });
+    }
+  };
+
   const move = (delta) => {
     if (managedArrays.includes("contents")) {
       const curIx = node[currentProp];
@@ -70,11 +104,9 @@ export const ArrayManager = ({
       if (curIx + delta < 0 || curIx + delta >= prop[countProp]) return;
 
       managedArrays.forEach((arrNm) => {
-        if (arrNm !== "contents") {
-          const tmp = prop[arrNm][curIx];
-          prop[arrNm][curIx] = prop[arrNm][curIx + delta];
-          prop[arrNm][curIx + delta] = tmp;
-        }
+        const tmp = prop[arrNm][curIx];
+        prop[arrNm][curIx] = prop[arrNm][curIx + delta];
+        prop[arrNm][curIx + delta] = tmp;
       });
       prop[currentProp] = prop[currentProp] + delta;
     });
@@ -83,41 +115,13 @@ export const ArrayManager = ({
     setProp((prop) => {
       prop[countProp] = node[countProp] + 1;
       prop[currentProp] = node[countProp];
-    });
-  };
-  const deleteElem = () => {
-    const linkedNodes = query.node(node.id).linkedNodes();
-    console.log(
-      "del node id",
-      linkedNodes[node[currentProp]],
-      "from",
-      linkedNodes
-    );
-    const RmNode = query.node(linkedNodes[node[currentProp]]);
-    console.log("found", RmNode, RmNode.isDeletable(), RmNode.isLinkedNode());
-
-    const elem = recursivelyCloneToElems(query)(node.id)
-    console.log("elem clone", elem);
-    const ntree= query.parseReactElement(elem).toNodeTree()
-    console.log("parsed", query.parseReactElement(elem));
-    
-    console.log("nodetree",ntree);
-    
-    
-
-    return;
-
-    actions.delete(linkedNodes[node[currentProp]]);
-    setProp((prop) => {
-      const rmIx = prop[currentProp];
-
       managedArrays.forEach((arrNm) => {
-        if (arrNm !== "contents") prop[arrNm].splice(rmIx, 1);
+        if (initialAddProps?.[arrNm])
+          prop[arrNm][node[countProp]] = initialAddProps?.[arrNm];
       });
-      prop[countProp] = node[countProp] - 1;
-      prop[currentProp] = node[currentProp] - 1;
     });
   };
+
   //console.log("arrayman", { node });
 
   return (

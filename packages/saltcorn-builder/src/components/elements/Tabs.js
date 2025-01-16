@@ -383,7 +383,9 @@ const TabsSettings = () => {
                   setProp={setProp}
                   countProp={"ntabs"}
                   currentProp={"setting_tab_n"}
-                  managedArrays={["titles", "contents"]}
+                  managedArrays={["titles", "acc_init_opens"]}
+                  manageContents={true}
+                  initialAddProps={{ titles: "New Tab" }}
                 ></ArrayManager>
               </td>
             </tr>
