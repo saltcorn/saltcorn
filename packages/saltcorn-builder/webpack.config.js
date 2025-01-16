@@ -1,5 +1,5 @@
 const path = require("path");
-const webpack = require('webpack')
+const webpack = require("webpack");
 module.exports = {
   module: {
     rules: [
@@ -18,10 +18,13 @@ module.exports = {
     //libraryTarget: 'window',
     //libraryExport: 'default'
   },
+  resolve: {
+    fallback: { "process/browser": require.resolve("process/browser") },
+  },
   plugins: [
     // fix "process is not defined" error:
     new webpack.ProvidePlugin({
-      process: 'process/browser',
+      process: "process/browser",
     }),
-  ]
+  ],
 };
