@@ -1721,6 +1721,8 @@ export const ArrayManager = ({
           style={{ width: "25%" }}
           className="btn btn-sm"
           onClick={() => move(-1)}
+          disabled={node[currentProp]===0}
+
         >
           <FontAwesomeIcon icon={faAngleDoubleLeft} />
         </button>
@@ -1745,6 +1747,7 @@ export const ArrayManager = ({
         <button
           title="Move right"
           type="button"
+          disabled={node[currentProp]===node[countProp]-1}
           style={{ width: "25%" }}
           className="btn btn-sm"
           onClick={() => move(1)}
