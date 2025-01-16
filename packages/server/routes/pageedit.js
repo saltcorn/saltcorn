@@ -258,6 +258,7 @@ const pageBuilderData = async (req, context) => {
     next_button_label: "Done",
     fonts: getState().fonts,
     tables: [],
+    keyframes: getState().keyframes,
   };
 };
 

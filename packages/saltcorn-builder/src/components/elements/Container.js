@@ -223,6 +223,9 @@ const ContainerSettings = () => {
     transform: node.data.props.transform,
     imgResponsiveWidths: node.data.props.imgResponsiveWidths,
     click_action: node.data.props.click_action,
+    animateName: node.data.props.animateName,
+    animateDelay: node.data.props.animateDelay,
+    animateDuration: node.data.props.animateDuration,
   }));
   const {
     actions: { setProp },
@@ -850,6 +853,34 @@ const ContainerSettings = () => {
               />
             </Fragment>
           )}
+        </tbody>
+      </table>
+      <table className="w-100" accordiontitle="Animate">
+        <tbody>
+          <SettingsRow
+            field={{
+              name: "animateName",
+              label: "Animation",
+              type: "select",
+              options: ["None", ...options.keyframes || []],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "animateDuration",
+              label: "Duration (s)",
+              type: "Float",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "animateDelay", label: "Delay (s)", type: "Float" }}
+            node={node}
+            setProp={setProp}
+          />
         </tbody>
       </table>
       <table className="w-100" accordiontitle="Show if...">
