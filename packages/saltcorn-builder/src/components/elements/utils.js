@@ -23,7 +23,7 @@ import {
   faTerminal,
   faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { useNode, Element } from "@craftjs/core";
+import { useNode, Element, useEditor } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
@@ -1651,112 +1651,6 @@ export const buildBootstrapOptions = (values) => {
       {mappings[option]}
     </option>
   ));
-};
-
-export const ArrayManager = ({
-  node,
-  setProp,
-  countProp,
-  currentProp,
-  managedArrays,
-}) => {
-  const move = (delta) => {
-    setProp((prop) => {
-      console.log("move prop", prop);
-
-      const curIx = prop[currentProp];
-      if (curIx + delta < 0 || curIx + delta >= prop[countProp]) {
-        console.log("out of bounds");
-        return;
-      }
-
-      managedArrays.forEach((arrNm) => {
-        const tmp = prop[arrNm][curIx];
-        prop[arrNm][curIx] = prop[arrNm][curIx + delta];
-        prop[arrNm][curIx + delta] = tmp;
-      });
-      prop[currentProp] = prop[currentProp] + delta;
-    });
-  };
-  const add = () => {
-    setProp((prop) => {
-      prop[countProp] = node[countProp] + 1;
-      prop[currentProp] = node[countProp];
-    });
-  };
-  const deleteElem = () => {
-    setProp((prop) => {
-      const rmIx = prop[currentProp];
-
-      managedArrays.forEach((arrNm) => {
-        prop[arrNm].splice(rmIx, 1);
-      });
-      prop[countProp] = node[countProp] - 1;
-      prop[currentProp] = node[currentProp] - 1;
-    });
-  };
-  //console.log("arrayman", { node });
-
-  return (
-    <Fragment>
-      <ConfigField
-        field={{
-          name: currentProp,
-          label: "Number of things",
-          type: "btn_select",
-          options: ntimes(node[countProp], (i) => ({
-            value: i,
-            title: `${i + 1}`,
-            label: `${i + 1}`,
-          })),
-        }}
-        node={node}
-        setProp={setProp}
-        props={node}
-      ></ConfigField>
-      <div className="btn-group w-100" role="group">
-        <button
-          title="Move left"
-          type="button"
-          style={{ width: "25%" }}
-          className="btn btn-sm"
-          onClick={() => move(-1)}
-          disabled={node[currentProp]===0}
-
-        >
-          <FontAwesomeIcon icon={faAngleDoubleLeft} />
-        </button>
-        <button
-          title="Add"
-          type="button"
-          style={{ width: "25%" }}
-          className="btn btn-sm"
-          onClick={() => add()}
-        >
-          <FontAwesomeIcon icon={faPlus} />
-        </button>
-        <button
-          title="Delete"
-          type="button"
-          style={{ width: "25%" }}
-          className="btn btn-sm"
-          onClick={() => deleteElem()}
-        >
-          <FontAwesomeIcon icon={faTrashAlt} />
-        </button>
-        <button
-          title="Move right"
-          type="button"
-          disabled={node[currentProp]===node[countProp]-1}
-          style={{ width: "25%" }}
-          className="btn btn-sm"
-          onClick={() => move(1)}
-        >
-          <FontAwesomeIcon icon={faAngleDoubleRight} />
-        </button>
-      </div>
-    </Fragment>
-  );
 };
 
 export const arrayChunks = (xs, n) => {

@@ -8,7 +8,8 @@ import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
-import { setAPropGen, buildOptions, ConfigField, ArrayManager } from "./utils";
+import { setAPropGen, buildOptions, ConfigField } from "./utils";
+import { ArrayManager } from "./ArrayManager";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -186,6 +187,7 @@ const TabsSettings = () => {
     showif: node.data.props.showif,
     field: node.data.props.field,
     acc_init_opens: node.data.props.acc_init_opens,
+    contents: node.data.props.contents,
   }));
   const {
     actions: { setProp },
@@ -373,7 +375,7 @@ const TabsSettings = () => {
                   </div>
                 </td>
               </tr>
-            ) : null}            
+            ) : null}
             <tr>
               <td colSpan={2}>
                 <ArrayManager
