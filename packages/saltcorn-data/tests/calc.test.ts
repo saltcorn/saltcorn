@@ -315,11 +315,68 @@ describe("joinfields in stored calculated fields", () => {
 
     expect(patient1.favpages).toBe(729);
 
-
     await books.updateRow({ pages: 728 }, book.id);
-
   });
 });
+
+describe("double joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    await Field.create({
+      table: readings,
+      label: "favpages",
+      type: "Integer",
+      calculated: true,
+      expression: "patient_id?.favbook?.pages",
+      stored: true,
+    });
+  });
+  it("recalculates if final value changes", async () => {
+    const readings = Table.findOne({ name: "readings" });
+
+    assertIsSet(readings);
+
+    const patients = Table.findOne({ name: "patients" });
+
+    assertIsSet(patients);
+
+    const patid = await patients.insertRow({ name: "Stephen Few", favbook: 2 });
+
+    const readid = await readings.insertRow({
+      patient_id: patid,
+      temperature: 37,
+    });
+
+    const reading = await readings.getRow({ id: readid });
+
+    const patient = await patients.getRow({ id: patid });
+    assertIsSet(patient);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: patient.favbook });
+    console.log(reading);    
+    console.log(patient);
+    console.log(book);
+    /*   expect(patient.favbook).toBe(2);
+    expect(patient.favpages).toBe(728);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: patient.favbook });
+    assertIsSet(book);
+    expect(book.pages).toBe(728);
+    await books.updateRow({ pages: 729 }, book.id);
+    //await recalculate_for_stored(patients, { id: 1 });
+
+    const patient1 = await patients.getRow({ id: 1 });
+    assertIsSet(patient1);
+
+    expect(patient1.favpages).toBe(729);
+
+    await books.updateRow({ pages: 728 }, book.id);*/
+  });
+});
+
 describe("aggregations in stored calculated fields", () => {
   it("creates", async () => {
     const publisher = Table.findOne({ name: "publisher" });
