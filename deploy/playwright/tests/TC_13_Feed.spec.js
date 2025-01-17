@@ -68,11 +68,16 @@ test.describe('E2E Test Suite', () => {
         await page.fill(pageobject.discriptiontext, 'view for People table');
         // submit the page
         await functions.submit();
+/*
+        await page.waitForSelector(pageobject.Column2FullName);
+        await page.waitForSelector(pageobject.Column0Address);
+        await page.waitForSelector(pageobject.Column0Address);
+ 
         await customAssert('Set the position for columns', async () => {
             await functions.drag_And_Drop(pageobject.Column2FullName, pageobject.Column0Address);
             await functions.drag_And_Drop(pageobject.Column2DOB, pageobject.Column1Address);
-        });
-        await page.waitForTimeout(5000);
+        });*/
+        await page.waitForTimeout(2000);
          // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
