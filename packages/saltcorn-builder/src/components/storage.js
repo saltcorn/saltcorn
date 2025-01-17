@@ -92,7 +92,14 @@ export /**
  * @subcategory components
  * @namespace
  */
-const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
+const layoutToNodes = (
+  layout,
+  query,
+  actions,
+  parent = "ROOT",
+  options,
+  index = 0
+) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   /**
    * @param {object} segment
@@ -363,7 +370,7 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
    * @param {object} parent
    * @returns {void}
    */
-  function go(segment, parent) {
+  function go(segment, parent, ix) {
     if (!segment) return;
     if (segment.above) {
       segment.above.forEach((child) => {
@@ -388,25 +395,25 @@ const layoutToNodes = (layout, query, actions, parent = "ROOT", options) => {
           />
         )
         .toNodeTree();
-      actions.addNodeTree(node, parent);
+      actions.addNodeTree(node, parent, ix);
     } else {
       const tag = toTag(segment);
       if (Array.isArray(tag)) {
         tag.forEach((t) => {
           const node = query.parseReactElement(t).toNodeTree();
           //console.log("other", node);
-          actions.addNodeTree(node, parent);
+          actions.addNodeTree(node, parent, ix);
         });
       } else if (tag) {
         const node = query.parseReactElement(tag).toNodeTree();
         //console.log("other", node);
-        actions.addNodeTree(node, parent);
+        actions.addNodeTree(node, parent, ix);
       }
     }
   }
   //const node1 = query.createNode(toTag(layout));
   //actions.add(node1, );
-  go(layout, parent);
+  go(layout, parent, index);
 };
 
 /**

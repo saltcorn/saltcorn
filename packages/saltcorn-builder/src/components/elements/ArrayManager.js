@@ -60,6 +60,7 @@ export const ArrayManager = ({
     return {};
   });
   const { craftToSaltcorn, layoutToNodes } = React.useContext(storageCtx);
+  const options = React.useContext(optionsCtx);
 
   const fullNode = query.node(node.id).get();
   const parentId = fullNode.data.parent;
@@ -137,24 +138,22 @@ export const ArrayManager = ({
   };
   const add = () => {
     if (manageContents) {
-      const elem = recursivelyCloneToElems(query)(node.id);
-      const ntree = query.parseReactElement(elem).toNodeTree();
-      console.log("ntree", ntree);
-      console.log("node", ntree.nodes[ntree.rootNodeId]);
+      const { layout } = craftToSaltcorn(
+        JSON.parse(query.serialize()),
+        node.id,
+        options
+      );
 
-      const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
-      newConts.push(newConts[node[currentProp]]);
-      ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
-
+      layout.contents.push(null);
       managedArrays.forEach((arrNm) => {
-        const newArr = [...ntree.nodes[ntree.rootNodeId].data.props[arrNm]];
-        if (initialAddProps?.[arrNm]) newArr.push(initialAddProps?.[arrNm]);
-        ntree.nodes[ntree.rootNodeId].data.props[arrNm] = newArr;
+        if (initialAddProps?.[arrNm])
+          layout[arrNm][node[countProp]] = initialAddProps?.[arrNm];        
       });
-      ntree.nodes[ntree.rootNodeId].data.props[currentProp] = node[countProp];
-      ntree.nodes[ntree.rootNodeId].data.props[countProp] = node[countProp] + 1;
+      layout[currentProp] = node[countProp];
+      layout[countProp] = node[countProp] + 1;
+
       actions.delete(node.id);
-      actions.addNodeTree(ntree, parentId, sibIx);
+      layoutToNodes(layout, query, actions, parentId, options, sibIx);
     } else
       setProp((prop) => {
         prop[countProp] = node[countProp] + 1;
