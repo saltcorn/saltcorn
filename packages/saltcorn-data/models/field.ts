@@ -891,16 +891,11 @@ class Field implements AbstractField {
     const calc_joinfields: any = [];
     Object.values(joinFields).forEach((jf: any) => {
       const path = [...jf.rename_object];
-      let iterTable = table;
-      let iterField;
-
-      while (path.length > 1) {
-        iterField = iterTable.getField(path[0]);
-        iterTable = Table.findOne({ name: iterField.reftable_name });
-        path.shift();
+      if (path.length === 2) {
+        const iterField = table.getField(path[0]);
+        const iterTable = Table.findOne({ name: iterField.reftable_name });
+        calc_joinfields.push({ table: iterTable.name, field: iterField.name });
       }
-
-      calc_joinfields.push({ table: iterTable.name, field: iterField.name });
     });
     if (
       JSON.stringify(calc_joinfields) !==
@@ -908,7 +903,7 @@ class Field implements AbstractField {
     ) {
       this.attributes.calc_joinfields = calc_joinfields;
       this.update({ attributes: this.attributes });
-    }    
+    }
   }
 
   /**
