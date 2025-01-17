@@ -870,6 +870,47 @@ class Field implements AbstractField {
     }
   }
 
+  async set_calc_joinfields() {
+    if (
+      !this.calculated ||
+      !this.stored ||
+      this.expression === "__aggregation" ||
+      !this.expression
+    )
+      return;
+    const joinFields = {};
+    const Table = require("./table");
+    const table = Table.findOne({ id: this.table_id });
+    const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    const fields = table.getFields();
+    add_free_variables_to_joinfields(
+      freeVariables(this.expression),
+      joinFields,
+      fields
+    );
+    const calc_joinfields: any = [];
+    Object.values(joinFields).forEach((jf: any) => {
+      const path = [...jf.rename_object];
+      let iterTable = table;
+      let iterField;
+
+      while (path.length > 1) {
+        iterField = iterTable.getField(path[0]);
+        iterTable = Table.findOne({ name: iterField.reftable_name });
+        path.shift();
+      }
+
+      calc_joinfields.push({ table: iterTable.name, field: iterField.name });
+    });
+    if (
+      JSON.stringify(calc_joinfields) !==
+      JSON.stringify(this.attributes?.calc_joinfields)
+    ) {
+      this.attributes.calc_joinfields = calc_joinfields;
+      this.update({ attributes: this.attributes });
+    }    
+  }
+
   /**
    * @param {object} v
    * @returns {Promise<void>}
@@ -953,7 +994,7 @@ class Field implements AbstractField {
         this.type = state.types[v.type];
       }
     }
-
+    await this.set_calc_joinfields();
     await state.refresh_tables();
   }
 
@@ -1147,6 +1188,7 @@ class Field implements AbstractField {
     }
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
+    await f.set_calc_joinfields();
 
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
