@@ -248,11 +248,11 @@ describe("calculated", () => {
     expect(rows[0].z).toBe(18);
   });
 });
-describe("joinfields in stored calculated fields", () => {
+describe("single joinfields in stored calculated fields", () => {
   it("creates", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
-    await Field.create({
+    const f = await Field.create({
       table: patients,
       label: "favpages",
       type: "Integer",
@@ -260,6 +260,9 @@ describe("joinfields in stored calculated fields", () => {
       expression: "favbook?.pages",
       stored: true,
     });
+    expect(f.attributes.calc_joinfields.length).toBe(1);
+    expect(f.attributes.calc_joinfields[0].table).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("favbook");
   });
   it("updates", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -355,7 +358,7 @@ describe("double joinfields in stored calculated fields", () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     const book = await books.getRow({ id: patient.favbook });
-    console.log(reading);    
+    console.log(reading);
     console.log(patient);
     console.log(book);
     /*   expect(patient.favbook).toBe(2);
