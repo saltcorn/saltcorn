@@ -171,6 +171,7 @@ class State {
   queriesCache?: Record<string, any>;
   scVersion: string;
   waitingWorkflows?: boolean;
+  keyframes: Array<string>;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -230,6 +231,18 @@ class State {
     }
     this.codepage_context = {};
     this.waitingWorkflows = true; //not sure so check
+    this.keyframes = [
+      "fadeIn",
+      "fadeInLeft",
+      "fadeInRight",
+      "fadeInUp",
+      "fadeInDown",
+      "rollIn",
+      "zoomIn",
+      "zoomInUp",
+      "bounce",
+      "tada",
+    ];
   }
 
   processSend(v: any) {

@@ -15,11 +15,15 @@ import {
   faBold,
   faItalic,
   faFont,
+  faPlus,
   faCommentSlash,
   faUnderline,
+  faAngleDoubleLeft,
+  faAngleDoubleRight,
   faTerminal,
+  faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { useNode, Element } from "@craftjs/core";
+import { useNode, Element, useEditor } from "@craftjs/core";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
@@ -28,6 +32,14 @@ import Select from "react-select";
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
   return <i className={`${icon} ${className || ""}`}></i>;
+};
+
+const ntimes = (n, f) => {
+  var res = [];
+  for (let index = 0; index < n; index++) {
+    res.push(f(index));
+  }
+  return res;
 };
 
 export /**

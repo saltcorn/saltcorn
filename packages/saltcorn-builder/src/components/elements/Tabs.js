@@ -9,6 +9,7 @@ import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
 import { setAPropGen, buildOptions, ConfigField } from "./utils";
+import { ArrayManager } from "./ArrayManager";
 
 import { Element, useNode } from "@craftjs/core";
 
@@ -186,6 +187,7 @@ const TabsSettings = () => {
     showif: node.data.props.showif,
     field: node.data.props.field,
     acc_init_opens: node.data.props.acc_init_opens,
+    contents: node.data.props.contents,
   }));
   const {
     actions: { setProp },
@@ -375,38 +377,16 @@ const TabsSettings = () => {
               </tr>
             ) : null}
             <tr>
-              <th>
-                <label>Number of sections</label>
-              </th>
-              <td>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={ntabs}
-                  step="1"
-                  min="1"
-                  max="20"
-                  onChange={setAProp("ntabs")}
-                />
-              </td>
-            </tr>
-            <tr>
               <td colSpan={2}>
-                <ConfigField
-                  field={{
-                    name: "setting_tab_n",
-                    label: "Tab number",
-                    type: "btn_select",
-                    options: ntimes(ntabs, (i) => ({
-                      value: i,
-                      title: `${i + 1}`,
-                      label: `${i + 1}`,
-                    })),
-                  }}
+                <ArrayManager
                   node={node}
                   setProp={setProp}
-                  props={node}
-                ></ConfigField>
+                  countProp={"ntabs"}
+                  currentProp={"setting_tab_n"}
+                  managedArrays={["titles", "acc_init_opens"]}
+                  manageContents={true}
+                  initialAddProps={{ titles: "New Tab" }}
+                ></ArrayManager>
               </td>
             </tr>
             <tr>

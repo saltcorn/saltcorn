@@ -593,6 +593,7 @@ const render = ({
         showForRole,
         hide,
         customClass,
+        customId,
         customCSS,
         minScreenWidth,
         maxScreenWidth,
@@ -613,6 +614,10 @@ const render = ({
         transform,
         imgResponsiveWidths,
         htmlElement,
+        animateName,
+        animateDelay,
+        animateDuration,
+        animateInitialHide,
       } = segment;
       if (hide) return "";
       if (
@@ -711,6 +716,7 @@ const render = ({
               hoverColor && `hover-${hoverColor}`,
               fullPageWidth && "full-page-width",
             ],
+            id: customId || undefined,
             onclick: segment.url
               ? isWeb
                 ? segment.url?.startsWith?.("javascript:")
@@ -718,7 +724,11 @@ const render = ({
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
-
+            "data-animate":
+              animateName && animateName !== "None" ? animateName : undefined,
+            "data-animate-delay": animateDelay || undefined,
+            "data-animate-initial-hide": animateInitialHide || undefined,
+            "data-animate-duration": animateDuration || undefined,
             style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
               "minHeight",
               "min-height"

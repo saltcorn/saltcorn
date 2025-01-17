@@ -13,6 +13,13 @@ const load_script = (fnm) => {
   document.body.appendChild(scriptEl);
 };
 
+class IntersectionObserver {
+  constructor() {}
+  observe() {}
+}
+
+window.IntersectionObserver = IntersectionObserver;
+
 load_script("jquery-3.6.0.min.js");
 load_script("saltcorn-common.js");
 load_script("saltcorn.js");
@@ -91,15 +98,11 @@ test("updateQueryStringParameter hash", () => {
   );
 });
 test("addQueryStringParameter", () => {
-  expect(addQueryStringParameter("/foo", "age", 43)).toBe(
-    "/foo?age=43"
-  );
+  expect(addQueryStringParameter("/foo", "age", 43)).toBe("/foo?age=43");
   expect(addQueryStringParameter("/foo?age=43", "age", 44)).toBe(
     "/foo?age=43&age=44"
   );
-  expect(addQueryStringParameter("/foo?age=43", "age", 43)).toBe(
-    "/foo?age=43"
-  );
+  expect(addQueryStringParameter("/foo?age=43", "age", 43)).toBe("/foo?age=43");
 });
 test("addQueryStringParameter hash", () => {
   expect(addQueryStringParameter("/foo#baz", "age", 43)).toBe(

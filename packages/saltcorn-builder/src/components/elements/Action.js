@@ -21,6 +21,7 @@ import {
   ConfigField,
 } from "./utils";
 import { ntimes } from "./Columns";
+import { ArrayManager } from "./ArrayManager";
 
 export /**
  *
@@ -314,46 +315,20 @@ const ActionSettings = () => {
       ) : null}
       {name === "Multi-step action" ? (
         <Fragment>
-          <table className="mb-2">
-            <tbody>
-              <tr>
-                <td className="w-50">
-                  <label>#Steps</label>
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    value={nsteps}
-                    className="form-control d-inline"
-                    step="1"
-                    min="1"
-                    onChange={(e) => {
-                      if (!e.target) return;
-                      const value = e.target.value;
-                      setProp((prop) => {
-                        prop.nsteps = value;
-                      });
-                    }}
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <ConfigField
-            field={{
-              name: "setting_action_n",
-              label: "Column number",
-              type: "btn_select",
-              options: ntimes(nsteps, (i) => ({
-                value: i,
-                title: `${i + 1}`,
-                label: `${i + 1}`,
-              })),
-            }}
+          <label>Steps</label>
+
+          <ArrayManager
             node={node}
             setProp={setProp}
-            props={node}
-          ></ConfigField>
+            countProp={"nsteps"}
+            currentProp={"setting_action_n"}
+            managedArrays={[
+              "step_action_names",
+              "step_only_ifs",
+              "configuration.steps",
+            ]}
+          ></ArrayManager>
+
           <label>Action</label>
           <select
             value={step_action_names?.[use_setting_action_n] || ""}

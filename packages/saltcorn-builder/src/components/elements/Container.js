@@ -98,6 +98,7 @@ const Container = ({
   setTextColor,
   textColor,
   customClass,
+  customId,
   customCSS,
   margin,
   padding,
@@ -119,6 +120,7 @@ const Container = ({
     htmlElement,
     {
       ref: (dom) => connect(drag(dom)),
+      id: customId || "",
       className: `${customClass || ""} kontainer canvas text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
@@ -202,6 +204,7 @@ const ContainerSettings = () => {
     showForRole: node.data.props.showForRole,
     textColor: node.data.props.textColor,
     customClass: node.data.props.customClass,
+    customId: node.data.props.customId,
     customCSS: node.data.props.customCSS,
     minScreenWidth: node.data.props.minScreenWidth,
     maxScreenWidth: node.data.props.maxScreenWidth,
@@ -220,6 +223,10 @@ const ContainerSettings = () => {
     transform: node.data.props.transform,
     imgResponsiveWidths: node.data.props.imgResponsiveWidths,
     click_action: node.data.props.click_action,
+    animateName: node.data.props.animateName,
+    animateDelay: node.data.props.animateDelay,
+    animateDuration: node.data.props.animateDuration,
+    animateInitialHide: node.data.props.animateInitialHide,
   }));
   const {
     actions: { setProp },
@@ -234,6 +241,7 @@ const ContainerSettings = () => {
     isFormula,
     showForRole,
     customClass,
+    customId,
     customCSS,
     minScreenWidth,
     maxScreenWidth,
@@ -848,6 +856,39 @@ const ContainerSettings = () => {
           )}
         </tbody>
       </table>
+      <table className="w-100" accordiontitle="Animate">
+        <tbody>
+          <SettingsRow
+            field={{
+              name: "animateName",
+              label: "Animation",
+              type: "select",
+              options: ["None", ...options.keyframes || []],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "animateDuration",
+              label: "Duration (s)",
+              type: "Float",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{ name: "animateDelay", label: "Delay (s)", type: "Float" }}
+            node={node}
+            setProp={setProp}
+          />
+           <SettingsRow
+            field={{ name: "animateInitialHide", label: "Initially hidden", type: "Bool" }}
+            node={node}
+            setProp={setProp}
+          />
+        </tbody>
+      </table>
       <table className="w-100" accordiontitle="Show if...">
         <tbody>
           {["show", "edit", "filter"].includes(options.mode) && (
@@ -997,7 +1038,18 @@ const ContainerSettings = () => {
         </select>
       </div>
 
-      <div accordiontitle="Custom class/CSS">
+      <div accordiontitle="Class, ID and CSS">
+        <div>
+          <label>ID</label>
+        </div>
+        <OrFormula nodekey="customId" {...{ setProp, isFormula, node }}>
+          <input
+            type="text"
+            className="form-control text-to-display"
+            value={customId}
+            onChange={setAProp("customId")}
+          />
+        </OrFormula>
         <div>
           <label>Custom class</label>
         </div>

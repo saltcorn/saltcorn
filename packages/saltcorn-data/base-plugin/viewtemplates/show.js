@@ -756,6 +756,7 @@ const render = (
     container(segment) {
       evalMaybeExpr(segment, "bgColor");
       evalMaybeExpr(segment, "customClass");
+      evalMaybeExpr(segment, "customId");
       evalMaybeExpr(segment, "url");
 
       if (segment.showIfFormula) {

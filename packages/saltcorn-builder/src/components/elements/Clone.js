@@ -1,8 +1,10 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { ListColumn } from "./ListColumn";
 import { Columns, ntimes } from "./Columns";
-import { rand_ident } from "./utils";
 import { Element } from "@craftjs/core";
+
+const rand_ident = () =>
+  Math.floor(Math.random() * 16777215).toString(16);
 
 export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
   const { data } = query.node(nodeId).get();

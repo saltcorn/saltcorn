@@ -383,7 +383,13 @@ const load_url_dom = async (url) => {
         .join("\n");
     }
   }
+  class FakeIntersectionObserver {
+    constructor() {}
+    observe() {}
+  }
+
   dom.window.XMLHttpRequest = FakeXHR;
+  dom.window.IntersectionObserver = FakeIntersectionObserver;
   await new Promise(function (resolve, reject) {
     dom.window.addEventListener("DOMContentLoaded", (event) => {
       resolve();
