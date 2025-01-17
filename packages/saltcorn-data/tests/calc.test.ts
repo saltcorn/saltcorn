@@ -315,8 +315,9 @@ describe("joinfields in stored calculated fields", () => {
 
     expect(patient1.favpages).toBe(729);
 
-    //expect(hrow?.favpages).toBe(967);
-    //expect(bookrow?.favpages).toBe(967);
+
+    await books.updateRow({ pages: 728 }, book.id);
+
   });
 });
 describe("aggregations in stored calculated fields", () => {
