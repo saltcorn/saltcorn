@@ -289,6 +289,7 @@ const layoutToNodes = (
           titles={segment.titles}
           showif={segment.showif}
           ntabs={segment.ntabs}
+          setting_tab_n={segment.setting_tab_n}
           independent={segment.independent}
           startClosed={segment.startClosed}
           deeplink={segment.deeplink}
@@ -645,6 +646,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         serverRendered: node.props.serverRendered,
         tabId: node.props.tabId,
         ntabs: node.props.ntabs,
+        setting_tab_n: node.props.setting_tab_n,
         ...customProps,
       };
     }
