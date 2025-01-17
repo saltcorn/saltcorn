@@ -308,7 +308,7 @@ describe("joinfields in stored calculated fields", () => {
     assertIsSet(book);
     expect(book.pages).toBe(728);
     await books.updateRow({ pages: 729 }, book.id);
-    await recalculate_for_stored(patients, { id: 1 });
+    //await recalculate_for_stored(patients, { id: 1 });
 
     const patient1 = await patients.getRow({ id: 1 });
     assertIsSet(patient1);

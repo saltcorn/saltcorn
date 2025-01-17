@@ -1997,6 +1997,29 @@ class Table implements AbstractTable {
         await refTable?.updateRow({}, row[refTable.pk_name]);
       }
     }
+
+    // expressions involving joinfields
+    const stored_fields = await Field.find(
+      {
+        calculated: true,
+        stored: true,
+      },
+      { cached: true }
+    );
+    for (const field of stored_fields) {
+      if (!field.attributes.calc_joinfields) continue;
+      const matching = field.attributes.calc_joinfields.find(
+        (jf: any) => jf.table === this.name
+      );
+      if (!matching) continue;
+      const refTable =
+        (field.table as Table) || Table.findOne({ id: field.table_id });
+      const rows = await refTable!.getRows({
+        [matching.field]: v[this.pk_name],
+      });
+      for (const row of rows)
+        await refTable?.updateRow({}, row[refTable.pk_name]);
+    }
   }
 
   /**
