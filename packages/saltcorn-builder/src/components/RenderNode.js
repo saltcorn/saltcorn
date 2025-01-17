@@ -164,8 +164,6 @@ const RenderNode = ({ render }) => {
                       className="me-2"
                       onMouseDown={(e) => {
                         e.stopPropagation();
-                        console.log("deleting id", id);
-                        
                         actions.delete(id);
                         setTimeout(() => actions.selectNode(parent), 0);
                       }}
