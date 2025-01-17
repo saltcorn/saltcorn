@@ -107,24 +107,21 @@ export const ArrayManager = ({
     };
     if (manageContents) {
       const curIx = node[currentProp];
-      const elem = recursivelyCloneToElems(query)(node.id);
-      const ntree = query.parseReactElement(elem).toNodeTree();
 
-      const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
-      console.log("move old contents", [...newConts]);
+      const { layout } = craftToSaltcorn(
+        JSON.parse(query.serialize()),
+        node.id,
+        options
+      );
 
-      swapElements(newConts, curIx, curIx + delta);
-      ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
+      swapElements(layout.contents, curIx, curIx + delta);
 
       managedArrays.forEach((arrNm) => {
-        const newArr = [...ntree.nodes[ntree.rootNodeId].data.props[arrNm]];
-        swapElements(newArr, curIx, curIx + delta);
-        ntree.nodes[ntree.rootNodeId].data.props[arrNm] = newArr;
+        swapElements(layout[arrNm], curIx, curIx + delta);
       });
-      ntree.nodes[ntree.rootNodeId].data.props[currentProp] =
-        node[currentProp] + delta;
+      layout[currentProp] = node[currentProp] + delta;
       actions.delete(node.id);
-      actions.addNodeTree(ntree, parentId, sibIx);
+      layoutToNodes(layout, query, actions, parentId, options, sibIx);
     } else
       setProp((prop) => {
         const curIx = prop[currentProp];
@@ -147,7 +144,7 @@ export const ArrayManager = ({
       layout.contents.push(null);
       managedArrays.forEach((arrNm) => {
         if (initialAddProps?.[arrNm])
-          layout[arrNm][node[countProp]] = initialAddProps?.[arrNm];        
+          layout[arrNm][node[countProp]] = initialAddProps?.[arrNm];
       });
       layout[currentProp] = node[countProp];
       layout[countProp] = node[countProp] + 1;
