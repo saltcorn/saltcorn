@@ -160,7 +160,7 @@ class PageLocators {
     this.containercontentsetting = '//div[contains(text(), "Contents")]';
     this.containerflexsetting = '//div[contains(text(), "Flex properties")]';
     this.containercontentlink = '//div[contains(text(), "Container link")]';
-    this.containercustomclass = '//div[contains(text(), "Custom class/CSS")]';
+    this.containercustomclass = '//div[contains(text(), "Class, ID and CSS")]';
     this.SearchLocator = 'div[title="Search bar"]';  
     this.SearchModule = 'input.form-control.search-bar';
     this.searchicon = 'i.fas.fa-search';
