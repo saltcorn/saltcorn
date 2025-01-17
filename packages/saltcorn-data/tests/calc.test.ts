@@ -294,6 +294,30 @@ describe("joinfields in stored calculated fields", () => {
     expect(hrow?.favpages).toBe(967);
     //expect(bookrow?.favpages).toBe(967);
   });
+  it("recalculates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const patient = await patients.getRow({ id: 1 });
+    assertIsSet(patient);
+
+    expect(patient.favbook).toBe(2);
+    expect(patient.favpages).toBe(728);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: patient.favbook });
+    assertIsSet(book);
+    expect(book.pages).toBe(728);
+    await books.updateRow({ pages: 729 }, book.id);
+    await recalculate_for_stored(patients, { id: 1 });
+
+    const patient1 = await patients.getRow({ id: 1 });
+    assertIsSet(patient1);
+
+    expect(patient1.favpages).toBe(729);
+
+    //expect(hrow?.favpages).toBe(967);
+    //expect(bookrow?.favpages).toBe(967);
+  });
 });
 describe("aggregations in stored calculated fields", () => {
   it("creates", async () => {
