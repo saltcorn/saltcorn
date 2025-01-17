@@ -89,7 +89,12 @@ export const ArrayManager = ({
         const rmIx = prop[currentProp];
 
         managedArrays.forEach((arrNm) => {
-          prop[arrNm].splice(rmIx, 1);
+          if (arrNm.includes(".")) {
+            const vars = arrNm.split(".");
+            let arr = prop;
+            for (const tvar of vars) arr = prop[tvar];
+            if (arr) arr.splice(rmIx, 1);
+          } else if (prop[arrNm]) prop[arrNm].splice(rmIx, 1);
         });
         prop[countProp] = node[countProp] - 1;
         prop[currentProp] = node[currentProp] - 1;
@@ -126,7 +131,13 @@ export const ArrayManager = ({
         if (curIx + delta < 0 || curIx + delta >= prop[countProp]) return;
 
         managedArrays.forEach((arrNm) => {
-          swapElements(prop[arrNm], curIx, curIx + delta);
+          if (arrNm.includes(".")) {
+            const vars = arrNm.split(".");
+            let arr = prop;
+            for (const tvar of vars) arr = prop[tvar];
+            if (arr) swapElements(arr, curIx, curIx + delta);
+          } else if (prop[arrNm])
+            swapElements(prop[arrNm], curIx, curIx + delta);
         });
         prop[currentProp] = prop[currentProp] + delta;
       });
@@ -155,7 +166,13 @@ export const ArrayManager = ({
         prop[currentProp] = node[countProp];
         managedArrays.forEach((arrNm) => {
           if (initialAddProps?.[arrNm])
-            prop[arrNm][node[countProp]] = initialAddProps?.[arrNm];
+            if (arrNm.includes(".")) {
+              const vars = arrNm.split(".");
+              let arr = prop;
+              for (const tvar of vars) arr = prop[tvar];
+              if (arr) arr[node[countProp]] = initialAddProps?.[arrNm];
+            } else if (prop[arrNm])
+              prop[arrNm][node[countProp]] = initialAddProps?.[arrNm];
         });
       });
   };
