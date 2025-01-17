@@ -70,22 +70,20 @@ export const ArrayManager = ({
   const deleteElem = () => {
     if (manageContents) {
       const rmIx = node[currentProp];
-      const elem = recursivelyCloneToElems(query)(node.id);
-      const ntree = query.parseReactElement(elem).toNodeTree();
+      const { layout } = craftToSaltcorn(
+        JSON.parse(query.serialize()),
+        node.id,
+        options
+      );
+      layout.contents.splice(rmIx, 1);
 
-      const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
-      newConts.splice(rmIx, 1);
-      ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
       managedArrays.forEach((arrNm) => {
-        const newArr = [...ntree.nodes[ntree.rootNodeId].data.props[arrNm]];
-        newArr.splice(rmIx, 1);
-        ntree.nodes[ntree.rootNodeId].data.props[arrNm] = newArr;
+        layout[arrNm].splice(rmIx, 1);
       });
-      ntree.nodes[ntree.rootNodeId].data.props[countProp] = node[countProp] - 1;
-      ntree.nodes[ntree.rootNodeId].data.props[currentProp] =
-        node[currentProp] - 1;
+      layout[countProp] = node[countProp] - 1;
+      layout[currentProp] = node[currentProp] - 1;
       actions.delete(node.id);
-      actions.addNodeTree(ntree, parentId, sibIx);
+      layoutToNodes(layout, query, actions, parentId, options, sibIx);
     } else {
       setProp((prop) => {
         const rmIx = prop[currentProp];
