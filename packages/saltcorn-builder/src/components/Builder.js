@@ -32,6 +32,7 @@ import { ToggleFilter } from "./elements/ToggleFilter";
 import optionsCtx from "./context";
 import PreviewCtx from "./preview_context";
 import RelationsCtx from "./relations_context";
+import StorageCtx from "./storage_context";
 import {
   ToolboxShow,
   ToolboxEdit,
@@ -206,7 +207,7 @@ const SettingsPanel = () => {
       sibIx + 1
     );
   };
-  
+
   return (
     <div className="settings-panel card mt-1">
       <div className="card-header px-2 py-1">
@@ -423,134 +424,143 @@ const Builder = ({ options, layout, mode }) => {
                 setRelationsCache,
               }}
             >
-              <div className="row" ref={ref} style={{ marginTop: "-5px" }}>
-                <div
-                  className={`col-sm-auto left-builder-col ${
-                    isLeftEnlarged
-                      ? "builder-left-enlarged"
-                      : "builder-left-shrunk"
-                  }`}
-                >
-                  <div className="componets-and-library-accordion toolbox-card">
-                    <InitNewElement
-                      nodekeys={nodekeys}
-                      setSavingState={setSavingState}
-                      savingState={savingState}
-                    />
-                    <Accordion>
-                      <div className="card mt-1" accordiontitle="Components">
-                        {{
-                          show: <ToolboxShow expanded={isLeftEnlarged} />,
-                          list: <ToolboxList expanded={isLeftEnlarged} />,
-                          edit: <ToolboxEdit expanded={isLeftEnlarged} />,
-                          page: <ToolboxPage expanded={isLeftEnlarged} />,
-                          filter: <ToolboxFilter expanded={isLeftEnlarged} />,
-                        }[mode] || <div>Missing mode</div>}
+              <StorageCtx.Provider
+                value={{
+                  craftToSaltcorn,
+                  layoutToNodes,
+                }}
+              >
+                <div className="row" ref={ref} style={{ marginTop: "-5px" }}>
+                  <div
+                    className={`col-sm-auto left-builder-col ${
+                      isLeftEnlarged
+                        ? "builder-left-enlarged"
+                        : "builder-left-shrunk"
+                    }`}
+                  >
+                    <div className="componets-and-library-accordion toolbox-card">
+                      <InitNewElement
+                        nodekeys={nodekeys}
+                        setSavingState={setSavingState}
+                        savingState={savingState}
+                      />
+                      <Accordion>
+                        <div className="card mt-1" accordiontitle="Components">
+                          {{
+                            show: <ToolboxShow expanded={isLeftEnlarged} />,
+                            list: <ToolboxList expanded={isLeftEnlarged} />,
+                            edit: <ToolboxEdit expanded={isLeftEnlarged} />,
+                            page: <ToolboxPage expanded={isLeftEnlarged} />,
+                            filter: <ToolboxFilter expanded={isLeftEnlarged} />,
+                          }[mode] || <div>Missing mode</div>}
+                        </div>
+                        <div accordiontitle="Library">
+                          <Library expanded={isLeftEnlarged} />
+                        </div>
+                      </Accordion>
+                    </div>
+                    <div
+                      className="card toolbox-card pe-0"
+                      style={isLeftEnlarged ? { width: "13.4rem" } : {}}
+                    >
+                      <div className="card-header p-2 d-flex justify-content-between">
+                        <div>Layers</div>
+                        <FontAwesomeIcon
+                          icon={
+                            isLeftEnlarged
+                              ? faCaretSquareLeft
+                              : faCaretSquareRight
+                          }
+                          className={"float-end fa-lg"}
+                          onClick={() => setIsLeftEnlarged(!isLeftEnlarged)}
+                          title={isLeftEnlarged ? "Shrink" : "Enlarge"}
+                        />
                       </div>
-                      <div accordiontitle="Library">
-                        <Library expanded={isLeftEnlarged} />
-                      </div>
-                    </Accordion>
+                      {showLayers && (
+                        <div className="card-body p-0 builder-layers">
+                          <Layers expandRootOnLoad={true} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div
-                    className="card toolbox-card pe-0"
-                    style={isLeftEnlarged ? { width: "13.4rem" } : {}}
+                    id="builder-main-canvas"
+                    style={{ height: canvasHeight }}
+                    className={`col builder-mode-${options.mode} ${
+                      options.mode !== "list" ? "emptymsg" : ""
+                    }`}
                   >
-                    <div className="card-header p-2 d-flex justify-content-between">
-                      <div>Layers</div>
+                    <div>
+                      <Frame
+                        resolver={{
+                          Text,
+                          Empty,
+                          Columns,
+                          JoinField,
+                          Field,
+                          ViewLink,
+                          Action,
+                          HTMLCode,
+                          LineBreak,
+                          Aggregation,
+                          Card,
+                          Image,
+                          Link,
+                          View,
+                          SearchBar,
+                          Container,
+                          Column,
+                          DropDownFilter,
+                          DropMenu,
+                          Tabs,
+                          Table,
+                          ToggleFilter,
+                          ListColumn,
+                          ListColumns,
+                        }}
+                      >
+                        {options.mode === "list" ? (
+                          <Element canvas is={ListColumns}></Element>
+                        ) : (
+                          <Element canvas is={Column}></Element>
+                        )}
+                      </Frame>
+                      {options.mode === "list" ? <AddColumnButton /> : null}
+                    </div>
+                  </div>
+                  <div className="col-sm-auto builder-sidebar">
+                    <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
+                      <NextButton layout={layout} />
+                      <HistoryPanel />
+                      <FontAwesomeIcon
+                        icon={faSave}
+                        className={savingState.isSaving ? "d-inline" : "d-none"}
+                      />
+                      <FontAwesomeIcon
+                        icon={faExclamationTriangle}
+                        color="#ff0033"
+                        className={savingState.error ? "d-inline" : "d-none"}
+                      />
                       <FontAwesomeIcon
                         icon={
-                          isLeftEnlarged
-                            ? faCaretSquareLeft
-                            : faCaretSquareRight
+                          isEnlarged ? faCaretSquareRight : faCaretSquareLeft
                         }
-                        className={"float-end fa-lg"}
-                        onClick={() => setIsLeftEnlarged(!isLeftEnlarged)}
-                        title={isLeftEnlarged ? "Shrink" : "Enlarge"}
+                        className={"float-end me-2 mt-1 fa-lg"}
+                        onClick={() => setIsEnlarged(!isEnlarged)}
+                        title={isEnlarged ? "Shrink" : "Enlarge"}
                       />
-                    </div>
-                    {showLayers && (
-                      <div className="card-body p-0 builder-layers">
-                        <Layers expandRootOnLoad={true} />
+                      <div
+                        className={` ${
+                          savingState.error ? "d-block" : "d-none"
+                        } my-2 fw-bold`}
+                      >
+                        your work is not being saved
                       </div>
-                    )}
-                  </div>
-                </div>
-                <div
-                  id="builder-main-canvas"
-                  style={{ height: canvasHeight }}
-                  className={`col builder-mode-${options.mode} ${
-                    options.mode !== "list" ? "emptymsg" : ""
-                  }`}
-                >
-                  <div>
-                    <Frame
-                      resolver={{
-                        Text,
-                        Empty,
-                        Columns,
-                        JoinField,
-                        Field,
-                        ViewLink,
-                        Action,
-                        HTMLCode,
-                        LineBreak,
-                        Aggregation,
-                        Card,
-                        Image,
-                        Link,
-                        View,
-                        SearchBar,
-                        Container,
-                        Column,
-                        DropDownFilter,
-                        DropMenu,
-                        Tabs,
-                        Table,
-                        ToggleFilter,
-                        ListColumn,
-                        ListColumns,
-                      }}
-                    >
-                      {options.mode === "list" ? (
-                        <Element canvas is={ListColumns}></Element>
-                      ) : (
-                        <Element canvas is={Column}></Element>
-                      )}
-                    </Frame>
-                    {options.mode === "list" ? <AddColumnButton /> : null}
-                  </div>
-                </div>
-                <div className="col-sm-auto builder-sidebar">
-                  <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
-                    <NextButton layout={layout} />
-                    <HistoryPanel />
-                    <FontAwesomeIcon
-                      icon={faSave}
-                      className={savingState.isSaving ? "d-inline" : "d-none"}
-                    />
-                    <FontAwesomeIcon
-                      icon={faExclamationTriangle}
-                      color="#ff0033"
-                      className={savingState.error ? "d-inline" : "d-none"}
-                    />
-                    <FontAwesomeIcon
-                      icon={isEnlarged ? faCaretSquareRight : faCaretSquareLeft}
-                      className={"float-end me-2 mt-1 fa-lg"}
-                      onClick={() => setIsEnlarged(!isEnlarged)}
-                      title={isEnlarged ? "Shrink" : "Enlarge"}
-                    />
-                    <div
-                      className={` ${
-                        savingState.error ? "d-block" : "d-none"
-                      } my-2 fw-bold`}
-                    >
-                      your work is not being saved
+                      <SettingsPanel />
                     </div>
-                    <SettingsPanel />
                   </div>
                 </div>
-              </div>
+              </StorageCtx.Provider>
             </RelationsCtx.Provider>
           </PreviewCtx.Provider>
         </Provider>

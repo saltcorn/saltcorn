@@ -31,6 +31,8 @@ import Select from "react-select";
 import { recursivelyCloneToElems } from "./Clone";
 import { ConfigField } from "./utils";
 import { Empty } from "./Empty";
+import { Column } from "./Column";
+import storageCtx from "../storage_context";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -57,6 +59,8 @@ export const ArrayManager = ({
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
+  const { craftToSaltcorn, layoutToNodes } = React.useContext(storageCtx);
+
   const fullNode = query.node(node.id).get();
   const parentId = fullNode.data.parent;
   const siblings = query.node(parentId).childNodes();
@@ -106,7 +110,7 @@ export const ArrayManager = ({
       const ntree = query.parseReactElement(elem).toNodeTree();
 
       const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
-      console.log("move new contents", newConts);
+      console.log("move old contents", [...newConts]);
 
       swapElements(newConts, curIx, curIx + delta);
       ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
@@ -137,9 +141,9 @@ export const ArrayManager = ({
       const ntree = query.parseReactElement(elem).toNodeTree();
       console.log("ntree", ntree);
       console.log("node", ntree.nodes[ntree.rootNodeId]);
-      
+
       const newConts = [...ntree.nodes[ntree.rootNodeId].data.props.contents];
-      newConts.push(<Empty></Empty>);
+      newConts.push(newConts[node[currentProp]]);
       ntree.nodes[ntree.rootNodeId].data.props.contents = newConts;
 
       managedArrays.forEach((arrNm) => {
