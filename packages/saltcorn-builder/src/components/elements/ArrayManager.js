@@ -92,7 +92,7 @@ export const ArrayManager = ({
           if (arrNm.includes(".")) {
             const vars = arrNm.split(".");
             let arr = prop;
-            for (const tvar of vars) arr = prop[tvar];
+            for (const tvar of vars) arr = arr[tvar];
             if (arr) arr.splice(rmIx, 1);
           } else if (prop[arrNm]) prop[arrNm].splice(rmIx, 1);
         });
@@ -120,7 +120,12 @@ export const ArrayManager = ({
       swapElements(layout.contents, curIx, curIx + delta);
 
       managedArrays.forEach((arrNm) => {
-        swapElements(layout[arrNm], curIx, curIx + delta);
+        if (arrNm.includes(".")) {
+          let arr = layout;
+          for (const tvar of arrNm.split(".")) arr = arr[tvar];
+          if (arr) swapElements(arr, curIx, curIx + delta);
+        } else if (layout[arrNm])
+          swapElements(layout[arrNm], curIx, curIx + delta);
       });
       layout[currentProp] = node[currentProp] + delta;
       actions.delete(node.id);
@@ -132,9 +137,8 @@ export const ArrayManager = ({
 
         managedArrays.forEach((arrNm) => {
           if (arrNm.includes(".")) {
-            const vars = arrNm.split(".");
             let arr = prop;
-            for (const tvar of vars) arr = prop[tvar];
+            for (const tvar of arrNm.split(".")) arr = arr[tvar];
             if (arr) swapElements(arr, curIx, curIx + delta);
           } else if (prop[arrNm])
             swapElements(prop[arrNm], curIx, curIx + delta);
@@ -167,9 +171,8 @@ export const ArrayManager = ({
         managedArrays.forEach((arrNm) => {
           if (initialAddProps?.[arrNm])
             if (arrNm.includes(".")) {
-              const vars = arrNm.split(".");
               let arr = prop;
-              for (const tvar of vars) arr = prop[tvar];
+              for (const tvar of arrNm.split(".")) arr = arr[tvar];
               if (arr) arr[node[countProp]] = initialAddProps?.[arrNm];
             } else if (prop[arrNm])
               prop[arrNm][node[countProp]] = initialAddProps?.[arrNm];
