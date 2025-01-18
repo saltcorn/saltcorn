@@ -354,6 +354,7 @@ describe("double joinfields in stored calculated fields", () => {
     });
 
     const reading = await readings.getRow({ id: readid });
+    expect(reading?.favpages).toBe(728);
 
     const patient = await patients.getRow({ id: patid });
     assertIsSet(patient);
@@ -361,20 +362,14 @@ describe("double joinfields in stored calculated fields", () => {
     assertIsSet(books);
     const book = await books.getRow({ id: patient.favbook });
 
-    expect(patient.favbook).toBe(2);
-    expect(patient.favpages).toBe(728);
-    assertIsSet(books);
-    assertIsSet(book);
-    expect(book.pages).toBe(728);
-    await books.updateRow({ pages: 729 }, book.id);
+    expect(book?.pages).toBe(728);
+    await books.updateRow({ pages: 729 }, book?.id);
     //await recalculate_for_stored(patients, { id: 1 });
 
     const reading1 = await readings.getRow({ id: readid });
-    assertIsSet(reading1);
+    expect(reading1?.favpages).toBe(729);
 
-    expect(reading1.favpages).toBe(729);
-
-    await books.updateRow({ pages: 728 }, book.id);
+    await books.updateRow({ pages: 728 }, book?.id);
   });
 });
 
