@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.1.1 - Unreleased
+## 1.1.1 - In beta
 
 * Stored calculated fields that contain joinfields in the expression are now automatically 
   updated when the values they reference are changed, i.e. changes occur in the tables they
