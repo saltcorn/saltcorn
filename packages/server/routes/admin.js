@@ -1198,7 +1198,7 @@ router.get(
                           onclick: "ajax_modal('/admin/whatsnew')",
                           href: `javascript:void(0)`,
                         },
-                        "What's new"
+                        "What's new?"
                       )
                     )
                   ),
