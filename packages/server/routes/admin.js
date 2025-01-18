@@ -295,7 +295,7 @@ router.get(
   error_catcher(async (req, res) => {
     const fp = path.join(__dirname, "..", "CHANGELOG.md");
     const fileBuf = await fs.promises.readFile(fp);
-    const mdContents = fileBuf.toString();
+    const mdContents = fileBuf.toString().replace("# Notable changes\n","");
     const markup = md.render(mdContents);
     res.sendWrap(`What's new in Saltcorn`, { above: [markup] });
   })
