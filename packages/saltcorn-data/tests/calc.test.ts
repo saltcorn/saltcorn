@@ -261,7 +261,7 @@ describe("single joinfields in stored calculated fields", () => {
       stored: true,
     });
     expect(f.attributes.calc_joinfields.length).toBe(1);
-    expect(f.attributes.calc_joinfields[0].table).toBe("books");
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
     expect(f.attributes.calc_joinfields[0].field).toBe("favbook");
   });
   it("updates", async () => {
@@ -326,7 +326,7 @@ describe("double joinfields in stored calculated fields", () => {
   it("creates", async () => {
     const readings = Table.findOne({ name: "readings" });
     assertIsSet(readings);
-    await Field.create({
+    const f = await Field.create({
       table: readings,
       label: "favpages",
       type: "Integer",
@@ -334,6 +334,8 @@ describe("double joinfields in stored calculated fields", () => {
       expression: "patient_id?.favbook?.pages",
       stored: true,
     });
+    //console.log(f.attributes.calc_joinfields)
+
   });
   it("recalculates if final value changes", async () => {
     const readings = Table.findOne({ name: "readings" });
@@ -358,25 +360,21 @@ describe("double joinfields in stored calculated fields", () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     const book = await books.getRow({ id: patient.favbook });
-    console.log(reading);
-    console.log(patient);
-    console.log(book);
-    /*   expect(patient.favbook).toBe(2);
+
+    expect(patient.favbook).toBe(2);
     expect(patient.favpages).toBe(728);
-    const books = Table.findOne({ name: "books" });
     assertIsSet(books);
-    const book = await books.getRow({ id: patient.favbook });
     assertIsSet(book);
     expect(book.pages).toBe(728);
     await books.updateRow({ pages: 729 }, book.id);
     //await recalculate_for_stored(patients, { id: 1 });
 
-    const patient1 = await patients.getRow({ id: 1 });
-    assertIsSet(patient1);
+    const reading1 = await readings.getRow({ id: readid });
+    assertIsSet(reading1);
 
-    expect(patient1.favpages).toBe(729);
+    expect(reading1.favpages).toBe(729);
 
-    await books.updateRow({ pages: 728 }, book.id);*/
+    await books.updateRow({ pages: 728 }, book.id);
   });
 });
 
