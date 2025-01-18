@@ -1,4 +1,5 @@
 const js = async () => {
+  //not sure this is needed
   const Table = require("../models/table");
   const tables = await Table.find({});
 
