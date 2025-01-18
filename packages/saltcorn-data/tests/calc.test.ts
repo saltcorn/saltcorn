@@ -335,7 +335,6 @@ describe("double joinfields in stored calculated fields", () => {
       stored: true,
     });
     //console.log(f.attributes.calc_joinfields)
-
   });
   it("recalculates if final value changes", async () => {
     const readings = Table.findOne({ name: "readings" });
@@ -370,6 +369,35 @@ describe("double joinfields in stored calculated fields", () => {
     expect(reading1?.favpages).toBe(729);
 
     await books.updateRow({ pages: 728 }, book?.id);
+  });
+  it("recalculates if intermediate value changes", async () => {
+    const readings = Table.findOne({ name: "readings" });
+
+    assertIsSet(readings);
+
+    const patients = Table.findOne({ name: "patients" });
+
+    assertIsSet(patients);
+
+    const patid = await patients.insertRow({
+      name: "Stephen Many",
+      favbook: 2,
+    });
+
+    const readid = await readings.insertRow({
+      patient_id: patid,
+      temperature: 37,
+    });
+
+    const reading = await readings.getRow({ id: readid });
+    expect(reading?.favpages).toBe(728);
+
+    await patients.updateRow({ favbook: 1 }, patid);
+    await recalculate_for_stored(readings, { id: readid });
+
+    const reading1 = await readings.getRow({ id: readid });
+    expect(reading1?.favpages).toBe(967);
+
   });
 });
 
