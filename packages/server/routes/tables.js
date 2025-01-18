@@ -711,6 +711,7 @@ const attribBadges = (f) => {
           "table",
           "agg_field",
           "agg_relation",
+          "calc_joinfields"
         ].includes(k)
       )
         return;
