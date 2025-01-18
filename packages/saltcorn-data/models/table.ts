@@ -394,7 +394,9 @@ class Table implements AbstractTable {
       if (t.provider_name) {
         const { getState } = require("../db/state");
         const provider = getState().table_providers[t.provider_name];
-        t.fields = await applyAsync(provider.fields, t.provider_cfg);
+        if (provider)
+          t.fields = await applyAsync(provider.fields, t.provider_cfg);
+        else t.fields = [];
       } else
         t.fields = flds
           .filter((f: any) => f.table_id === t.id)
