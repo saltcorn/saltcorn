@@ -296,6 +296,7 @@ class Table implements AbstractTable {
     const { getState } = require("../db/state");
 
     const provider = getState().table_providers[tbl.provider_name];
+    if (!provider) return this;
     const { getRows } = provider.get_table(tbl.provider_cfg, tbl);
 
     const { json_list_to_external_table } = require("../plugin-helper");
