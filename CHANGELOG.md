@@ -1,4 +1,4 @@
-# Change Log
+# Notable changes
 
 ## 1.1.1 - In beta
 
