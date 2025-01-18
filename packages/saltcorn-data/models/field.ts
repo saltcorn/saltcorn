@@ -1201,7 +1201,6 @@ class Field implements AbstractField {
           stored: f.stored,
           description: f.description,
         });
-    await require("../db/state").getState().refresh_tables();
 
     if (isNode() && table.versioned && !(f.calculated && !f.stored)) {
       await db.query(
@@ -1213,6 +1212,7 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
+    await require("../db/state").getState().refresh_tables();
 
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
