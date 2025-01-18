@@ -870,6 +870,8 @@ class Field implements AbstractField {
     }
   }
 
+  // sets calc_joinfields attributes, will be read by
+  // Table.auto_update_calc_aggregations
   async set_calc_joinfields() {
     if (
       !this.calculated ||
@@ -892,9 +894,29 @@ class Field implements AbstractField {
     Object.values(joinFields).forEach((jf: any) => {
       const path = [...jf.rename_object];
       if (path.length === 2) {
-        const iterField = table.getField(path[0]);
-        const iterTable = Table.findOne({ name: iterField.reftable_name });
-        calc_joinfields.push({ table: iterTable.name, field: iterField.name });
+        const myField = table.getField(path[0]);
+        if (!myField) return;
+        const targetTable = Table.findOne({ name: myField.reftable_name });
+        if (!targetTable) return;
+
+        calc_joinfields.push({ targetTable: targetTable.name, field: myField.name });
+
+      } else if (path.length === 3) {
+        const myField = table.getField(path[0]);
+        if (!myField) return;
+        const throughTable = Table.findOne({ name: myField.reftable_name });
+        if (!throughTable) return;
+        const throughField = throughTable.getField(path[1]);
+        if (!throughField) return;
+        const targetTable = Table.findOne({ name: throughField.reftable_name });
+        if (!targetTable) return;
+
+        calc_joinfields.push({
+          targetTable: targetTable.name,
+          field: myField.name,
+          through: [throughField.name],
+          throughTable: [throughTable.name],
+        });
       }
     });
     if (

@@ -1998,7 +1998,8 @@ class Table implements AbstractTable {
       }
     }
 
-    // expressions involving joinfields
+    // expressions involving joinfields. uses attribute set by
+    // Field.set_calc_joinfields
     const stored_fields = await Field.find(
       {
         calculated: true,
@@ -2008,17 +2009,37 @@ class Table implements AbstractTable {
     );
     for (const field of stored_fields) {
       if (!field.attributes.calc_joinfields) continue;
-      const matching = field.attributes.calc_joinfields.find(
-        (jf: any) => jf.table === this.name
+      const matchings = field.attributes.calc_joinfields.filter(
+        (jf: any) => jf.targetTable === this.name
       );
-      if (!matching) continue;
+      if (!matchings.length) continue;
       const refTable =
         (field.table as Table) || Table.findOne({ id: field.table_id });
-      const rows = await refTable!.getRows({
-        [matching.field]: v[this.pk_name],
-      });
-      for (const row of rows)
-        await refTable?.updateRow({}, row[refTable.pk_name]);
+      for (const matching of matchings) {
+        if (matching.through?.length === 1) {
+          // select readings where patient_id.favbook = v.id
+          // select reftable where field.through[0] = v.id
+          const rows = await refTable!.getRows({
+            [matching.field]: {
+              inSelect: {
+                table: matching.throughTable[0],
+                field: "id",
+                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+                where: { [matching.through[0]]: v[this.pk_name] },
+              },
+            },
+          });
+          for (const row of rows)
+            await refTable?.updateRow({}, row[refTable.pk_name]);
+        } else {
+          //no through
+          const rows = await refTable!.getRows({
+            [matching.field]: v[this.pk_name],
+          });
+          for (const row of rows)
+            await refTable?.updateRow({}, row[refTable.pk_name]);
+        }
+      }
     }
   }
 
