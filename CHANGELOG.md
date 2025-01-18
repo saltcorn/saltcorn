@@ -6,7 +6,7 @@
   updated when the values they reference are changed, i.e. changes occur in the tables they
   reference. This is limited to single (expression contains x.y) and double joinfields 
   (expression contains x.y.z). In most cases, you can now remove all recalculate_stored_fields
-  actions. TODO migration
+  actions.
 
 * Builder: 
     - Add ability to set custom `id` on containers. This is useful for scroll targets
