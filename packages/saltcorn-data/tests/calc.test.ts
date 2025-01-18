@@ -393,7 +393,7 @@ describe("double joinfields in stored calculated fields", () => {
     expect(reading?.favpages).toBe(728);
 
     await patients.updateRow({ favbook: 1 }, patid);
-    await recalculate_for_stored(readings, { id: readid });
+    //await recalculate_for_stored(readings, { id: readid });
 
     const reading1 = await readings.getRow({ id: readid });
     expect(reading1?.favpages).toBe(967);

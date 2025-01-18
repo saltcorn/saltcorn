@@ -899,8 +899,10 @@ class Field implements AbstractField {
         const targetTable = Table.findOne({ name: myField.reftable_name });
         if (!targetTable) return;
 
-        calc_joinfields.push({ targetTable: targetTable.name, field: myField.name });
-
+        calc_joinfields.push({
+          targetTable: targetTable.name,
+          field: myField.name,
+        });
       } else if (path.length === 3) {
         const myField = table.getField(path[0]);
         if (!myField) return;
@@ -916,6 +918,10 @@ class Field implements AbstractField {
           field: myField.name,
           through: [throughField.name],
           throughTable: [throughTable.name],
+        });
+        calc_joinfields.push({
+          targetTable: throughTable.name,
+          field: myField.name,
         });
       }
     });
