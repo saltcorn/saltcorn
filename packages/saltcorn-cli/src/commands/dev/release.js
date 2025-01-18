@@ -51,6 +51,10 @@ class ReleaseCommand extends Command {
     });
     console.log("Release begins in five seconds, press Ctrl-C to abort");
     await sleep(5000);
+    runCmd("cp", ["CHANGELOG.md", "packages/server/"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
     const pkgs = {
       "@saltcorn/db-common": { dir: "db-common", publish: true },
       "@saltcorn/common-code": { dir: "common-code", publish: true },
