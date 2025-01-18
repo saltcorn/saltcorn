@@ -115,6 +115,8 @@ const { get_help_markup } = require("../help/index.js");
 const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
 const Tag = require("@saltcorn/data/models/tag");
+const MarkdownIt = require("markdown-it"),
+  md = new MarkdownIt();
 
 const router = new Router();
 module.exports = router;
@@ -284,6 +286,18 @@ router.get(
     const { markup } = await get_help_markup(topic, req.query, req);
 
     res.sendWrap(`Help: ${topic}`, { above: [markup] });
+  })
+);
+
+router.get(
+  "/whatsnew",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const fp = path.join(__dirname, "..", "CHANGELOG.md");
+    const fileBuf = await fs.promises.readFile(fp);
+    const mdContents = fileBuf.toString();
+    const markup = md.render(mdContents);
+    res.sendWrap(`What's new in Saltcorn`, { above: [markup] });
   })
 );
 
@@ -1137,7 +1151,7 @@ router.get(
               table(
                 tbody(
                   tr(
-                    th(req.__("Saltcorn version")),
+                    th({ valign: "top" }, req.__("Saltcorn version")),
                     td(
                       packagejson.version,
                       isRoot && can_update
@@ -1177,7 +1191,15 @@ router.get(
                               ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
                           },
                           req.__("Choose version")
-                        )
+                        ),
+                      "<br>",
+                      a(
+                        {
+                          onclick: "ajax_modal('/admin/whatsnew')",
+                          href: `javascript:void(0)`,
+                        },
+                        "What's new"
+                      )
                     )
                   ),
                   git_commit &&
