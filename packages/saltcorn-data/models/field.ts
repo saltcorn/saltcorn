@@ -870,6 +870,70 @@ class Field implements AbstractField {
     }
   }
 
+  // sets calc_joinfields attributes, will be read by
+  // Table.auto_update_calc_aggregations
+  async set_calc_joinfields() {
+    if (
+      !this.calculated ||
+      !this.stored ||
+      this.expression === "__aggregation" ||
+      !this.expression
+    )
+      return;
+    const joinFields = {};
+    const Table = require("./table");
+    const table = Table.findOne({ id: this.table_id });
+    const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    const fields = table.getFields();
+    add_free_variables_to_joinfields(
+      freeVariables(this.expression),
+      joinFields,
+      fields
+    );
+    const calc_joinfields: any = [];
+    Object.values(joinFields).forEach((jf: any) => {
+      const path = [...jf.rename_object];
+      if (path.length === 2) {
+        const myField = table.getField(path[0]);
+        if (!myField) return;
+        const targetTable = Table.findOne({ name: myField.reftable_name });
+        if (!targetTable) return;
+
+        calc_joinfields.push({
+          targetTable: targetTable.name,
+          field: myField.name,
+        });
+      } else if (path.length === 3) {
+        const myField = table.getField(path[0]);
+        if (!myField) return;
+        const throughTable = Table.findOne({ name: myField.reftable_name });
+        if (!throughTable) return;
+        const throughField = throughTable.getField(path[1]);
+        if (!throughField) return;
+        const targetTable = Table.findOne({ name: throughField.reftable_name });
+        if (!targetTable) return;
+
+        calc_joinfields.push({
+          targetTable: targetTable.name,
+          field: myField.name,
+          through: [throughField.name],
+          throughTable: [throughTable.name],
+        });
+        calc_joinfields.push({
+          targetTable: throughTable.name,
+          field: myField.name,
+        });
+      }
+    });
+    if (
+      JSON.stringify(calc_joinfields) !==
+      JSON.stringify(this.attributes?.calc_joinfields)
+    ) {
+      this.attributes.calc_joinfields = calc_joinfields;
+      this.update({ attributes: this.attributes });
+    }
+  }
+
   /**
    * @param {object} v
    * @returns {Promise<void>}
@@ -953,7 +1017,7 @@ class Field implements AbstractField {
         this.type = state.types[v.type];
       }
     }
-
+    await this.set_calc_joinfields();
     await state.refresh_tables();
   }
 
@@ -1147,6 +1211,7 @@ class Field implements AbstractField {
     }
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
+    await f.set_calc_joinfields();
 
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
