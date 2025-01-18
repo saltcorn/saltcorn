@@ -883,8 +883,13 @@ class Field implements AbstractField {
     const joinFields = {};
     const Table = require("./table");
     const table = Table.findOne({ id: this.table_id });
+    if(!table) return;
     const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    console.log("field", this);
+    console.log("table", table?.name);
+
     const fields = table.getFields();
+
     add_free_variables_to_joinfields(
       freeVariables(this.expression),
       joinFields,
@@ -930,7 +935,7 @@ class Field implements AbstractField {
       JSON.stringify(this.attributes?.calc_joinfields)
     ) {
       this.attributes.calc_joinfields = calc_joinfields;
-      this.update({ attributes: this.attributes });
+      await db.update("_sc_fields", { attributes: this.attributes }, this.id);
     }
   }
 
