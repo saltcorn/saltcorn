@@ -883,6 +883,7 @@ class Field implements AbstractField {
     const joinFields = {};
     const Table = require("./table");
     const table = Table.findOne({ id: this.table_id });
+    if(!table) return;
     const { add_free_variables_to_joinfields } = require("../plugin-helper");
     const fields = table.getFields();
     add_free_variables_to_joinfields(
@@ -930,7 +931,7 @@ class Field implements AbstractField {
       JSON.stringify(this.attributes?.calc_joinfields)
     ) {
       this.attributes.calc_joinfields = calc_joinfields;
-      this.update({ attributes: this.attributes });
+      await db.update("_sc_fields", { attributes: this.attributes }, this.id);
     }
   }
 
@@ -1200,7 +1201,6 @@ class Field implements AbstractField {
           stored: f.stored,
           description: f.description,
         });
-    await require("../db/state").getState().refresh_tables();
 
     if (isNode() && table.versioned && !(f.calculated && !f.stored)) {
       await db.query(
@@ -1212,6 +1212,7 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
+    await require("../db/state").getState().refresh_tables();
 
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
