@@ -549,10 +549,6 @@ module.exports = {
   sc_plugin_api_version: 1,
   plugin_name: "sbadmin2",
   /** @type {object} */
-  serve_dependencies: {    
-    nunito: require.resolve("nunito-fontface/package.json"),
-  },
-  /** @type {object} */
   layout: {
     wrap,
     authWrap,
