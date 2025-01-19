@@ -28,10 +28,12 @@ const {
   toast,
   headersInHead,
   headersInBody,
-  show_icon
+  show_icon,
 } = require("@saltcorn/markup/layout_utils");
 const db = require("@saltcorn/data/db");
 const { isNode } = require("@saltcorn/data/utils");
+
+const verstring = "@" + require("./package.json").version;
 
 /**
  * @param {string} currentUrl
@@ -208,8 +210,7 @@ const sideBarSection = (currentUrl) => (section) =>
 const sidebar = (brand, sections, currentUrl) =>
   ul(
     {
-      class:
-        "navbar-nav sidebar sidebar-dark accordion d-print-none",
+      class: "navbar-nav sidebar sidebar-dark accordion d-print-none",
       id: "accordionSidebar",
     },
     a(
@@ -386,7 +387,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <link href="${linkPrefix()}/pubdeps/sbadmin2/nunito/5.0.3/css/nunito/nunito-fontface.css" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/css/sb-admin-2.css">
+    <link rel="stylesheet" href="/plugins/public/sbadmin2${verstring}/sb-admin-2.min.css">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
@@ -546,6 +547,7 @@ const exportRenderBody = ({ title, body, alerts, role, req }) =>
 module.exports = {
   /** @type {number} */
   sc_plugin_api_version: 1,
+  plugin_name: "sbadmin2",
   /** @type {object} */
   serve_dependencies: {
     "startbootstrap-sb-admin-2-bs5": require.resolve(
