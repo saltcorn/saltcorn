@@ -1,0 +1,32 @@
+$nunito-font-path: '../../../fonts' !default;
+
+@mixin nunito-font($variant, $type, $weight, $style) {
+
+    $font-full-path: '#{$nunito-font-path}/#{$variant}/#{$variant}';
+
+    @font-face {
+        font-family: '#{$variant}';
+        src: url('#{$font-full-path}-#{$type}.eot');
+        src: local('#{$variant} #{$type}'),
+             local('#{$variant}-#{$type}'),
+             url('#{$font-full-path}-#{$type}.eot?#iefix') format('embedded-opentype'),
+             url('#{$font-full-path}-#{$type}.woff2') format('woff2'),
+             url('#{$font-full-path}-#{$type}.woff') format('woff'),
+             url('#{$font-full-path}-#{$type}.ttf') format('truetype'),
+             url('#{$font-full-path}-#{$type}.svg##{$variant}') format('svg');
+        font-weight: $weight;
+        font-style: $style;
+    }
+
+    @font-face {
+        font-family: '#{$variant}-#{$type}';
+        src: url('#{$font-full-path}-#{$type}.eot');
+        src: local('#{$variant} #{$type}'),
+             local('#{$variant}-#{$type}'),
+             url('#{$font-full-path}-#{$type}.eot?#iefix') format('embedded-opentype'),
+             url('#{$font-full-path}-#{$type}.woff2') format('woff2'),
+             url('#{$font-full-path}-#{$type}.woff') format('woff'),
+             url('#{$font-full-path}-#{$type}.ttf') format('truetype'),
+             url('#{$font-full-path}-#{$type}.svg##{$variant}') format('svg');
+    }
+}

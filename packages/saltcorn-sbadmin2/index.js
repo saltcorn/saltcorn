@@ -384,7 +384,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="/plugins/public/sbadmin2${verstring}/fontawesome-free/css/all.min.css">
-    <link href="${linkPrefix()}/pubdeps/sbadmin2/nunito/5.0.3/css/nunito/nunito-fontface.css" rel="stylesheet">
+    <link href="/plugins/public/sbadmin2${verstring}/nunito/css/nunito/nunito-fontface.css" rel="stylesheet">
 
     <!-- Custom styles for this template-->
     <link rel="stylesheet" href="/plugins/public/sbadmin2${verstring}/sb-admin-2.min.css">
