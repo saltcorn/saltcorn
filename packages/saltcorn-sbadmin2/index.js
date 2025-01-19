@@ -383,7 +383,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="/plugins/public/sbadmin2${verstring}/fontawesome-free/css/all.min.css">
     <link href="${linkPrefix()}/pubdeps/sbadmin2/nunito/5.0.3/css/nunito/nunito-fontface.css" rel="stylesheet">
 
     <!-- Custom styles for this template-->
@@ -396,9 +396,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <script src="${safeSlash()}static_assets/${
     db.connectObj.version_tag
   }/jquery-3.6.0.min.js"></script>
-            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/vendor/jquery-easing/jquery.easing.min.js"></script>
-            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5/js/sb-admin-2.min.js"></script>
+            <script src="/plugins/public/sbadmin2${verstring}/bootstrap.bundle.min.js"></script>
+            <script src="/plugins/public/sbadmin2${verstring}/jquery.easing.min.js"></script>
+            <script src="/plugins/public/sbadmin2${verstring}/sb-admin-2.min.js"></script>
     ${headersInBody(headers)}
     </body>
   </html>`;
@@ -549,10 +549,7 @@ module.exports = {
   sc_plugin_api_version: 1,
   plugin_name: "sbadmin2",
   /** @type {object} */
-  serve_dependencies: {
-    "startbootstrap-sb-admin-2-bs5": require.resolve(
-      "startbootstrap-sb-admin-2-bs5/package.json"
-    ),
+  serve_dependencies: {    
     nunito: require.resolve("nunito-fontface/package.json"),
   },
   /** @type {object} */
