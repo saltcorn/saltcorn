@@ -22,16 +22,16 @@ const db = require("@saltcorn/data/db");
  */
 const blocklyImportScripts = ({ locale }) =>
   script({
-    src: "/plugins/pubdeps/base/blockly/8.0.5/blockly_compressed.js",
+    src: `/static_assets/${db.connectObj.version_tag}/blockly/blockly_compressed.js`,
   }) +
   script({
-    src: "/plugins/pubdeps/base/blockly/8.0.5/blocks_compressed.js",
+    src: `/static_assets/${db.connectObj.version_tag}/blockly/blocks_compressed.js`,
   }) +
   script({
-    src: `/plugins/pubdeps/base/blockly/8.0.5/msg/${locale}.js`,
+    src: `/static_assets/${db.connectObj.version_tag}/blockly/msg/${locale}.js`,
   }) +
   script({
-    src: "/plugins/pubdeps/base/blockly/8.0.5/javascript_compressed.js",
+    src: `/static_assets/${db.connectObj.version_tag}/blockly/javascript_compressed.js`,
   }) +
   script({
     src: `/static_assets/${db.connectObj.version_tag}/blockly.js`,
