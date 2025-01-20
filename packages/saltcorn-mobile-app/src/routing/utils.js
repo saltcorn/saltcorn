@@ -152,7 +152,7 @@ export const wrapContents = async (contents, title, context, req) => {
         body,
         alerts: prepareAlerts(context, req),
         role: state.mobileConfig.user.role_id || 100,
-        menu: getMenu(req),
+        menu: context.isSendIntentActivity ? [] : getMenu(req),
         req,
         headers: getHeaders(),
         brand: {

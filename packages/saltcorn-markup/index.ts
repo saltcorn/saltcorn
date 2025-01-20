@@ -289,6 +289,7 @@ export = {
   button,
   input,
   hr,
+  tags,
   alert,
   toast,
 };

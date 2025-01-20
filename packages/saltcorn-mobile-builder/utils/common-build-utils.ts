@@ -1,7 +1,7 @@
 import db from "@saltcorn/data/db/index";
 import utils = require("@saltcorn/data/utils");
 const { getSafeSaltcornCmd } = utils;
-import { join } from "path";
+import { join, parse } from "path";
 import {
   existsSync,
   mkdirSync,
@@ -160,7 +160,11 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
-export async function modifyAndroidManifest(buildDir: string) {
+export async function modifyAndroidManifest(
+  buildDir: string,
+  allowShareTo: boolean,
+  appId: string
+) {
   console.log("modifyAndroidManifest");
   try {
     const androidManifest = join(
@@ -187,17 +191,35 @@ export async function modifyAndroidManifest(buildDir: string) {
       "android:networkSecurityConfig": "@xml/network_security_config",
       "android:usesCleartextTraffic": "true",
     };
-    // add intent-filter for sharing
-    parsed.manifest.application[0].activity[0]["intent-filter"] = [
-      ...parsed.manifest.application[0].activity[0]["intent-filter"],
-      {
-        action: [{ $: { "android:name": "android.intent.action.SEND" } }],
-        category: [
-          { $: { "android:name": "android.intent.category.DEFAULT" } },
-        ],
-        data: [{ $: { "android:mimeType": "*/*" } }],
-      },
-    ];
+
+    if (allowShareTo) {
+      // add the send-intent activity
+      parsed.manifest.application[0].activity = [
+        ...parsed.manifest.application[0].activity,
+        {
+          $: {
+            "android:name": "de.mindlib.sendIntent.SendIntentActivity",
+            "android:label": "@string/app_name",
+            "android:exported": "true",
+            "android:theme": "@style/AppTheme.NoActionBar",
+          },
+          "intent-filter": [
+            {
+              action: [{ $: { "android:name": "android.intent.action.SEND" } }],
+              category: [
+                { $: { "android:name": "android.intent.category.DEFAULT" } },
+              ],
+              data: [
+                { $: { "android:mimeType": "text/plain" } },
+                { $: { "android:mimeType": "image/*" } },
+                { $: { "android:mimeType": "application/*" } },
+                { $: { "android:mimeType": "video/*" } },
+              ],
+            },
+          ],
+        },
+      ];
+    }
 
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);

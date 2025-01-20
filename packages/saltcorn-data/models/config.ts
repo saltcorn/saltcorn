@@ -850,12 +850,6 @@ const configTypes: ConfigTypes = {
     default: "browser",
     options: ["browser", "fullscreen", "standalone", "minimal-ui"],
   },
-  pwa_share_to_enabled: {
-    type: "Bool",
-    label: "Share to enabled",
-    sublabel: "Enable the share to feature",
-    default: false,
-  },
   pwa_set_colors: {
     type: "Bool",
     label: "Set colors",
