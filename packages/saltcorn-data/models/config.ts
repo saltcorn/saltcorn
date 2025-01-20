@@ -997,13 +997,42 @@ const configTypes: ConfigTypes = {
     label: "URL encoded size limit (Kb)",
     blurb: "Maximum URL encoded request size in kilobytes",
   },
+  min_role_edit_tables: {
+    type: "Role",
+    label: "Edit tables",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to edit tables",
+  },
+  min_role_edit_views: {
+    type: "Role",
+    label: "Edit views",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to edit views",
+  },
+  min_role_edit_pages: {
+    type: "Role",
+    label: "Edit pages",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to edit pages",
+  },
+  min_role_edit_triggers: {
+    type: "Role",
+    label: "Edit triggers",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to edit triggers",
+  },
+
   /** @type {object} */
   min_role_search: {
     type: "Role",
     label: "Role for search",
     default: 100, // public is default
     required: true,
-    blurb: "Min role to access search page",
+    blurb: "Minimum role to access search page",
   },
   /** @type {object} */
   search_page_size: {

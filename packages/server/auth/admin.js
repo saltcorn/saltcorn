@@ -414,6 +414,13 @@ const permissions_settings_form = async (req) =>
       "min_role_upload",
       "min_role_apikeygen",
       "min_role_search",
+      {
+        section_header: req.__("Development permissions"),
+      },
+      "min_role_edit_tables",
+      "min_role_edit_views",
+      "min_role_edit_pages",
+      "min_role_edit_triggers",
       //hidden            "exttables_min_role_read",
     ],
     action: "/useradmin/permissions",

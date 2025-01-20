@@ -1528,5 +1528,15 @@
 	"Finished": "Finished",
 	"Error": "Error",
 	"Waiting": "Waiting",
-	"Running": "Running"
+	"Running": "Running",
+	"Minimum role to access search page": "Minimum role to access search page",
+	"Edit tables": "Edit tables",
+	"Minimum role to edit tables": "Minimum role to edit tables",
+	"Edit views": "Edit views",
+	"Minimum role to edit views": "Minimum role to edit views",
+	"Edit pages": "Edit pages",
+	"Minimum role to edit pages": "Minimum role to edit pages",
+	"Edit triggers": "Edit triggers",
+	"Minimum role to edit triggers": "Minimum role to edit triggers",
+	"Development permissions": "Development permissions"
 }
