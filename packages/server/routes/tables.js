@@ -765,6 +765,13 @@ router.get(
       req.user.role_id === 1 ||
       getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
 
+    const user_can_edit_views =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_views", 1) >= req.user.role_id;
+    const user_can_edit_triggers =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_triggers", 1) >= req.user.role_id;
+
     const nrows = await table.countRows({}, { forUser: req.user });
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
@@ -804,7 +811,7 @@ router.get(
                   r.typename +
                     span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
-          ...(table.external
+          ...(table.external || !user_can_edit_tables
             ? []
             : [
                 {
@@ -887,41 +894,46 @@ router.get(
           p(req.__("Views define how table rows are displayed to the user"))
         );
       }
-      viewCard = {
-        type: "card",
-        id: "table-views",
-        title: req.__("Views of this table"),
-        contents:
-          viewCardContents +
-          a(
-            {
-              href: `/viewedit/new?table=${encodeURIComponent(
-                table.name
-              )}&on_done_redirect=${encodeURIComponent(`table/${table.name}`)}`,
-              class: "btn btn-primary",
-            },
-            req.__("Create view")
-          ),
-      };
-
-      triggerCard = {
-        type: "card",
-        id: "table-triggers",
-        title: req.__("Triggers on table"),
-        contents:
-          (triggers.length
-            ? await getTriggerList(triggers, req)
-            : p("Triggers run actions in response to events on this table")) +
-          a(
-            {
-              href: `/actions/new?table=${encodeURIComponent(
-                table.name
-              )}&on_done_redirect=${encodeURIComponent(`table/${table.name}`)}`,
-              class: "btn btn-primary",
-            },
-            req.__("Create trigger")
-          ),
-      };
+      if (user_can_edit_views)
+        viewCard = {
+          type: "card",
+          id: "table-views",
+          title: req.__("Views of this table"),
+          contents:
+            viewCardContents +
+            a(
+              {
+                href: `/viewedit/new?table=${encodeURIComponent(
+                  table.name
+                )}&on_done_redirect=${encodeURIComponent(
+                  `table/${table.name}`
+                )}`,
+                class: "btn btn-primary",
+              },
+              req.__("Create view")
+            ),
+        };
+      if (user_can_edit_triggers)
+        triggerCard = {
+          type: "card",
+          id: "table-triggers",
+          title: req.__("Triggers on table"),
+          contents:
+            (triggers.length
+              ? await getTriggerList(triggers, req)
+              : p("Triggers run actions in response to events on this table")) +
+            a(
+              {
+                href: `/actions/new?table=${encodeURIComponent(
+                  table.name
+                )}&on_done_redirect=${encodeURIComponent(
+                  `table/${table.name}`
+                )}`,
+                class: "btn btn-primary",
+              },
+              req.__("Create trigger")
+            ),
+        };
     }
     const models = await Model.find({ table_id: table.id });
     const modelCard = div(
@@ -1085,6 +1097,9 @@ router.get(
     if (table.ownership_formula && !table.ownership_field_id)
       table.ownership_field_id = "_formula";
     const tblForm = await tableForm(table, req);
+    if (!user_can_edit_tables) {
+      tblForm.fields.forEach((f) => (f.disabled = true));
+    }
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
         {
@@ -1123,7 +1138,7 @@ router.get(
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
-        ...(Model.has_templates
+        ...(Model.has_templates && req.user.role_id === 1
           ? [
               {
                 type: "card",
