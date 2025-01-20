@@ -1540,5 +1540,7 @@
 	"Minimum role to edit triggers": "Minimum role to edit triggers",
 	"Development permissions": "Development permissions",
 	"Inspect tables": "Inspect tables",
-	"Minimum role to inspect (see, without editing) tables": "Minimum role to inspect (see, without editing) tables"
+	"Minimum role to inspect (see, without editing) tables": "Minimum role to inspect (see, without editing) tables",
+	"Home pages": "Home pages",
+	"The home page is the page that is served when the user visits the home location (/). This can be set for each user role.": "The home page is the page that is served when the user visits the home location (/). This can be set for each user role."
 }
