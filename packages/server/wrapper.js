@@ -130,10 +130,10 @@ const get_menu = (req) => {
       });
     if (canEditTriggers && !isAdmin)
       adminItems.push({
-        link: "/events",
-        altlinks: ["/actions", "/eventlog", "/crashlog"],
+        link: "/actions",
+        altlinks: ["/events", "/eventlog", "/crashlog"],
         icon: "fas fa-calendar-check",
-        label: req.__("Events"),
+        label: req.__("Triggers"),
       });
     if (isAdmin)
       adminItems.push({
