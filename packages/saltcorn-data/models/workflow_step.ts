@@ -122,8 +122,17 @@ class WorkflowStep {
   /**
    * @returns {Promise<void>}
    */
-  async delete(): Promise<void> {
+  async delete(connect_prev_next: boolean = false): Promise<void> {
     const schema = db.getTenantSchemaPrefix();
+    if (connect_prev_next) {
+      const allSteps = await WorkflowStep.find({ trigger_id: this.trigger_id });
+      const allStepNames = new Set(allSteps.map((s) => s.name));
+      if (this.next_step && allStepNames.has(this.next_step))
+        await db.query(
+          `update ${schema}_sc_workflow_steps SET next_step = $1 WHERE trigger_id = $2 and next_step = $3`,
+          [this.next_step, this.trigger_id, this.name]
+        );
+    }
     await db.query(`delete FROM ${schema}_sc_workflow_steps WHERE id = $1`, [
       this.id,
     ]);
