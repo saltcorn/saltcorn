@@ -58,10 +58,9 @@ const tablesList = async (
   });
   const tagsById = {};
   tags.forEach((t) => (tagsById[t.id] = t));
-  const user_can_inspect_tables =
+  const user_can_edit_tables =
     req.user.role_id === 1 ||
-    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
-    getState().getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
+    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
   const tagBadges = (table) => {
     const myTags = tag_entries.filter((te) => te.table_id === table.id);
     return myTags
@@ -99,7 +98,7 @@ const tablesList = async (
               ? `${getRole(t.min_role_read)} (read only)`
               : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
         },
-        ...(user_can_inspect_tables
+        ...(user_can_edit_tables
           ? [
               !tagId
                 ? {
@@ -294,9 +293,10 @@ const viewsList = async (
   });
   const tagsById = {};
   tags.forEach((t) => (tagsById[t.id] = t));
-  const user_can_edit_tables =
+  const user_can_inspect_tables =
     req.user.role_id === 1 ||
-    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
+    getState().getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
 
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
@@ -351,7 +351,7 @@ const viewsList = async (
               {
                 label: req.__("Table"),
                 key: (r) =>
-                  user_can_edit_tables
+                  user_can_inspect_tables
                     ? link(`/table/${r.table}`, r.table)
                     : r.table,
                 sortlink: !tagId
@@ -648,6 +648,10 @@ const getTriggerList = async (
   });
   const tagsById = {};
   tags.forEach((t) => (tagsById[t.id] = t));
+  const user_can_inspect_tables =
+    req.user.role_id === 1 ||
+    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
+    getState().getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
 
   const tagBadges = (trigger) => {
     const myTags = tag_entries.filter((te) => te.trigger_id === trigger.id);
@@ -696,7 +700,9 @@ const getTriggerList = async (
         label: req.__("Table or Channel"),
         key: (r) =>
           r.table_name
-            ? a({ href: `/table/${r.table_name}` }, r.table_name)
+            ? user_can_inspect_tables
+              ? a({ href: `/table/${r.table_name}` }, r.table_name)
+              : r.table_name
             : r.channel,
       },
       !tagId
