@@ -7,6 +7,7 @@
 const Router = require("express-promise-router");
 const {
   isAdmin,
+  isAdminOrHasConfigMinRole,
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
@@ -85,7 +86,7 @@ const {
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     let triggers = await Trigger.findAllWithTableName();
     let filterOnTag;
@@ -347,7 +348,7 @@ const triggerForm = async (req, trigger) => {
  */
 router.get(
   "/new",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
     if (req.query.table) {
@@ -388,7 +389,7 @@ router.get(
  */
 router.get(
   "/edit/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
@@ -419,7 +420,7 @@ router.get(
  */
 router.post(
   "/new",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
 
@@ -462,7 +463,7 @@ router.post(
  */
 router.post(
   "/edit/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
@@ -928,7 +929,7 @@ const getMultiStepForm = async (req, id, table) => {
  */
 router.get(
   "/configure/:idorname",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { idorname } = req.params;
     let trigger;
@@ -1130,7 +1131,7 @@ router.get(
  */
 router.post(
   "/configure/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
@@ -1202,7 +1203,7 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
@@ -1211,6 +1212,7 @@ router.post(
       entity_name: trigger.name,
     });
     await trigger.delete();
+    req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
     res.redirect(`/actions/`);
   })
 );
@@ -1222,7 +1224,7 @@ router.post(
  */
 router.get(
   "/testrun/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
@@ -1333,7 +1335,7 @@ router.get(
  */
 router.post(
   "/clone/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trig = await Trigger.findOne({ id });
@@ -1358,7 +1360,7 @@ router.post(
  */
 router.get(
   "/stepedit/:trigger_id/:step_id?",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
     const { initial_step, after_step, before_step } = req.query;
@@ -1400,7 +1402,7 @@ router.get(
 
 router.post(
   "/stepedit/:trigger_id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
@@ -1499,7 +1501,7 @@ router.post(
 
 router.post(
   "/gen-copilot/:trigger_id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
@@ -1525,7 +1527,7 @@ router.post(
 
 router.post(
   "/delete-step/:step_id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { step_id } = req.params;
     const step = await WorkflowStep.findOne({ id: step_id });
@@ -1536,7 +1538,7 @@ router.post(
 
 router.get(
   "/runs",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const trNames = {};
     const { _page, trigger } = req.query;
@@ -1607,7 +1609,7 @@ router.get(
 
 router.get(
   "/run/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
@@ -1730,7 +1732,7 @@ router.get(
 
 router.post(
   "/delete-run/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
 

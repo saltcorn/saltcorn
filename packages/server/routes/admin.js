@@ -13,6 +13,7 @@ const {
   admin_config_route,
   get_sys_info,
   tenant_letsencrypt_name,
+  isAdminOrHasConfigMinRole,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -295,7 +296,7 @@ router.get(
   error_catcher(async (req, res) => {
     const fp = path.join(__dirname, "..", "CHANGELOG.md");
     const fileBuf = await fs.promises.readFile(fp);
-    const mdContents = fileBuf.toString().replace("# Notable changes\n","");
+    const mdContents = fileBuf.toString().replace("# Notable changes\n", "");
     const markup = md.render(mdContents);
     res.sendWrap(`What's new in Saltcorn`, { above: [markup] });
   })
@@ -626,13 +627,36 @@ router.get(
   })
 );
 
+const checkEditPermission = (type, user) => {
+  if (user.role_id === 1) return true;
+  switch (type) {
+    case "view":
+      return getState().getConfig("min_role_edit_views", 1) >= user.role_id;
+    case "page":
+      return getState().getConfig("min_role_edit_pages", 1) >= user.role_id;
+    case "trigger":
+      return getState().getConfig("min_role_edit_triggers", 1) >= user.role_id;
+    default:
+      return false;
+  }
+};
+
 router.get(
   "/snapshot-restore/:type/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_triggers",
+  ]),
   error_catcher(async (req, res) => {
     const { type, name } = req.params;
     const snaps = await Snapshot.entity_history(type, name);
     const locale = getState().getConfig("default_locale", "en");
+    const auth = checkEditPermission(type, req.user);
+    if (!auth) {
+      res.send("Not authorized");
+      return;
+    }
     res.set("Page-Title", `Restore ${text(name)}`);
     res.send(
       mkTable(
@@ -663,17 +687,26 @@ router.get(
 
 router.post(
   "/snapshot-restore/:type/:name/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_triggers",
+  ]),
   error_catcher(async (req, res) => {
     const { type, name, id } = req.params;
-    const snap = await Snapshot.findOne({ id });
-    await snap.restore_entity(type, name);
-    req.flash(
-      "success",
-      `${type} ${name} restored to snapshot saved ${moment(
-        snap.created
-      ).fromNow()}`
-    );
+    const auth = checkEditPermission(type, req.user);
+    if (!auth) {
+      req.flash("error", "Not authorized");
+    } else {
+      const snap = await Snapshot.findOne({ id });
+      await snap.restore_entity(type, name);
+      req.flash(
+        "success",
+        `${type} ${name} restored to snapshot saved ${moment(
+          snap.created
+        ).fromNow()}`
+      );
+    }
     res.redirect(
       type === "trigger"
         ? `/actions`

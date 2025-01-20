@@ -27,7 +27,12 @@ const {
   recalculate_for_stored,
   expressionValidator,
 } = require("@saltcorn/data/models/expression");
-const { isAdmin, error_catcher, setTenant } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  setTenant,
+  isAdminOrHasConfigMinRole,
+} = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
   span,
@@ -230,7 +235,7 @@ const tableForm = async (table, req) => {
  */
 router.get(
   "/new/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const table_provider_names = Object.keys(getState().table_providers);
     res.sendWrap(req.__(`New table`), {
@@ -377,7 +382,7 @@ router.post(
  */
 router.get(
   "/create-from-csv",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Create table from CSV file`), {
       above: [
@@ -430,7 +435,7 @@ router.get(
 router.post(
   "/create-from-csv",
   setTenant,
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     if (req.body.name && req.files && req.files.file) {
       const name = req.body.name;
@@ -573,7 +578,10 @@ const screenshotPanel = () =>
  */
 router.get(
   "/relationship-diagram",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external({}, { orderBy: "name" });
     res.sendWrap(
@@ -711,7 +719,7 @@ const attribBadges = (f) => {
           "table",
           "agg_field",
           "agg_relation",
-          "calc_joinfields"
+          "calc_joinfields",
         ].includes(k)
       )
         return;
@@ -734,7 +742,10 @@ const attribBadges = (f) => {
  */
 router.get(
   "/:idorname",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
@@ -749,6 +760,18 @@ router.get(
       res.redirect(`/table`);
       return;
     }
+
+    const user_can_edit_tables =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+
+    const user_can_edit_views =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_views", 1) >= req.user.role_id;
+    const user_can_edit_triggers =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_triggers", 1) >= req.user.role_id;
+
     const nrows = await table.countRows({}, { forUser: req.user });
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
@@ -764,13 +787,14 @@ router.get(
       fieldCard = [
         h4(req.__(`No fields defined in %s table`, table.name)),
         p(req.__("Fields define the columns in your table.")),
-        a(
-          {
-            href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field",
-          },
-          req.__("Add field to table")
-        ),
+        user_can_edit_tables &&
+          a(
+            {
+              href: `/field/new/${table.id}`,
+              class: "btn btn-primary add-field",
+            },
+            req.__("Add field to table")
+          ),
       ];
     } else {
       const tableHtml = mkTable(
@@ -787,7 +811,7 @@ router.get(
                   r.typename +
                     span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
-          ...(table.external
+          ...(table.external || !user_can_edit_tables
             ? []
             : [
                 {
@@ -804,7 +828,7 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: (t) => code(t.name) },
-          ...(table.external
+          ...(table.external || !user_can_edit_tables
             ? []
             : [
                 {
@@ -842,6 +866,7 @@ router.get(
           : "",
         !table.external &&
           !table.provider_name &&
+          user_can_edit_tables &&
           a(
             {
               href: `/field/new/${table.id}`,
@@ -869,41 +894,46 @@ router.get(
           p(req.__("Views define how table rows are displayed to the user"))
         );
       }
-      viewCard = {
-        type: "card",
-        id: "table-views",
-        title: req.__("Views of this table"),
-        contents:
-          viewCardContents +
-          a(
-            {
-              href: `/viewedit/new?table=${encodeURIComponent(
-                table.name
-              )}&on_done_redirect=${encodeURIComponent(`table/${table.name}`)}`,
-              class: "btn btn-primary",
-            },
-            req.__("Create view")
-          ),
-      };
-
-      triggerCard = {
-        type: "card",
-        id: "table-triggers",
-        title: req.__("Triggers on table"),
-        contents:
-          (triggers.length
-            ? await getTriggerList(triggers, req)
-            : p("Triggers run actions in response to events on this table")) +
-          a(
-            {
-              href: `/actions/new?table=${encodeURIComponent(
-                table.name
-              )}&on_done_redirect=${encodeURIComponent(`table/${table.name}`)}`,
-              class: "btn btn-primary",
-            },
-            req.__("Create trigger")
-          ),
-      };
+      if (user_can_edit_views)
+        viewCard = {
+          type: "card",
+          id: "table-views",
+          title: req.__("Views of this table"),
+          contents:
+            viewCardContents +
+            a(
+              {
+                href: `/viewedit/new?table=${encodeURIComponent(
+                  table.name
+                )}&on_done_redirect=${encodeURIComponent(
+                  `table/${table.name}`
+                )}`,
+                class: "btn btn-primary",
+              },
+              req.__("Create view")
+            ),
+        };
+      if (user_can_edit_triggers)
+        triggerCard = {
+          type: "card",
+          id: "table-triggers",
+          title: req.__("Triggers on table"),
+          contents:
+            (triggers.length
+              ? await getTriggerList(triggers, req)
+              : p("Triggers run actions in response to events on this table")) +
+            a(
+              {
+                href: `/actions/new?table=${encodeURIComponent(
+                  table.name
+                )}&on_done_redirect=${encodeURIComponent(
+                  `table/${table.name}`
+                )}`,
+                class: "btn btn-primary",
+              },
+              req.__("Create trigger")
+            ),
+        };
     }
     const models = await Model.find({ table_id: table.id });
     const modelCard = div(
@@ -1025,6 +1055,7 @@ router.get(
           settingsDropdown(`dataMenuButton`, [
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
+              user_can_edit_tables &&
               table.name !== "users" &&
               a(
                 {
@@ -1039,21 +1070,24 @@ router.get(
                 req.__("Recalculate stored fields"),
               req
             ),
-            post_dropdown_item(
-              `/table/delete-all-rows/${encodeURIComponent(table.name)}`,
-              '<i class="far fa-trash-alt"></i>&nbsp;' +
-                req.__("Delete all rows"),
-              req,
-              true
-            ),
-            table.name !== "users" &&
+            user_can_edit_tables &&
+              post_dropdown_item(
+                `/table/delete-all-rows/${encodeURIComponent(table.name)}`,
+                '<i class="far fa-trash-alt"></i>&nbsp;' +
+                  req.__("Delete all rows"),
+                req,
+                true
+              ),
+            user_can_edit_tables &&
+              table.name !== "users" &&
               post_dropdown_item(
                 `/table/forget-table/${table.id}`,
                 '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
                 req,
                 true
               ),
-            table.name !== "users" &&
+            user_can_edit_tables &&
+              table.name !== "users" &&
               post_dropdown_item(
                 `/table/delete/${table.id}`,
                 '<i class="fas fa-trash"></i>&nbsp;' + req.__("Delete table"),
@@ -1067,6 +1101,9 @@ router.get(
     if (table.ownership_formula && !table.ownership_field_id)
       table.ownership_field_id = "_formula";
     const tblForm = await tableForm(table, req);
+    if (!user_can_edit_tables) {
+      tblForm.fields.forEach((f) => (f.disabled = true));
+    }
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
         {
@@ -1105,7 +1142,7 @@ router.get(
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
-        ...(Model.has_templates
+        ...(Model.has_templates && req.user.role_id === 1
           ? [
               {
                 type: "card",
@@ -1127,7 +1164,7 @@ router.get(
  */
 router.post(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const v = req.body;
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
@@ -1228,7 +1265,7 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = Table.findOne({ id });
@@ -1280,7 +1317,7 @@ router.post(
 );
 router.post(
   "/forget-table/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = Table.findOne({ id });
@@ -1317,7 +1354,10 @@ router.post(
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const tblq = {};
     let filterOnTag;
@@ -1329,6 +1369,11 @@ router.get(
       tblq.id = { in: tagEntries.map((te) => te.table_id).filter(Boolean) };
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
+
+    const user_can_edit_tables =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+
     const rows = await Table.find_with_external(tblq, {
       orderBy: "name",
       nocase: true,
@@ -1337,20 +1382,23 @@ router.get(
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard = await tablesList(rows, req, { filterOnTag });
     const createCard = div(
-      a(
-        { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },
-        i({ class: "fas fa-plus-square me-1" }),
-        req.__("Create table")
-      ),
-      a(
-        {
-          href: `/table/create-from-csv`,
-          class: "btn btn-secondary me-3 mt-1",
-        },
-        i({ class: "fas fa-upload me-1" }),
-        req.__("Create from CSV upload")
-      ),
-      !db.isSQLite &&
+      user_can_edit_tables &&
+        a(
+          { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },
+          i({ class: "fas fa-plus-square me-1" }),
+          req.__("Create table")
+        ),
+      user_can_edit_tables &&
+        a(
+          {
+            href: `/table/create-from-csv`,
+            class: "btn btn-secondary me-3 mt-1",
+          },
+          i({ class: "fas fa-upload me-1" }),
+          req.__("Create from CSV upload")
+        ),
+      req.user.role_id === 1 &&
+        !db.isSQLite &&
         a(
           {
             href: `/table/discover`,
@@ -1396,10 +1444,18 @@ router.get(
  */
 router.get(
   "/download/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
+    if (table.min_role_read < req.user.role_id) {
+      req.flash("error", "Not authorized to read table");
+      res.redirect(`/table/${table.id}`);
+      return;
+    }
     const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
@@ -1440,7 +1496,10 @@ router.get(
  */
 router.get(
   "/constraints/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = Table.findOne({ id });
@@ -1642,7 +1701,7 @@ router.get(
  */
 router.post(
   "/add-constraint/:id/:type",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id, type } = req.params;
     const table = Table.findOne({ id });
@@ -1738,7 +1797,7 @@ router.get(
  */
 router.post(
   "/rename/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = Table.findOne({ id });
@@ -1762,7 +1821,7 @@ router.post(
  */
 router.post(
   "/delete-constraint/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const cons = await TableConstraint.findOne({ id });
@@ -1879,12 +1938,20 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
 router.post(
   "/upload_to_table/:name",
   setTenant, // TODO why is this needed?????
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
     if (!req.files || !req.files.file) {
       req.flash("error", "Missing file");
+      res.redirect(`/table/${table.id}`);
+      return;
+    }
+    if (table.min_role_write < req.user.role_id) {
+      req.flash("error", "Not authorized to write to table");
       res.redirect(`/table/${table.id}`);
       return;
     }
@@ -1898,7 +1965,10 @@ router.post(
 
 router.get(
   "/preview_full_csv_file/:name/:filename",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { name, filename } = req.params;
     const table = Table.findOne({ name });
@@ -1909,7 +1979,10 @@ router.get(
 
 router.post(
   "/finish_upload_to_table/:name/:filename",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { name, filename } = req.params;
     const table = Table.findOne({ name });
@@ -1938,7 +2011,7 @@ router.post(
  */
 router.post(
   "/delete-all-rows/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
@@ -1963,7 +2036,10 @@ router.post(
  */
 router.post(
   "/recalc-stored/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
@@ -2054,7 +2130,10 @@ const get_provider_workflow = (table, req) => {
 
 router.get(
   "/provider-cfg/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const { step } = req.query;
@@ -2080,7 +2159,7 @@ router.get(
 
 router.post(
   "/provider-cfg/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const { step } = req.query;
@@ -2099,7 +2178,7 @@ router.post(
 
 router.post(
   "/repair-composite-primary/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
 

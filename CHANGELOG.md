@@ -2,6 +2,11 @@
 
 ## 1.1.1 - In beta
 
+* You can now permit to non-admin (role ID > 1) users to edit or inspect tables, or 
+  edit views, pages or triggers. In the permissions tab of the Users and security
+  settings, minimum roles can be set for these capabilities. The appropriate
+  menu items will be added to any users with the roles that match these permissions. 
+
 * Stored calculated fields that contain joinfields in the expression are now automatically 
   updated when the values they reference are changed, i.e. changes occur in the tables they
   reference. This is limited to single (expression contains x.y) and double joinfields 
@@ -34,6 +39,7 @@
 
 ### Fixes
 
+* fix workflows on SQLite
 * fix query string build on check_state_field (#2948). Author: St0rml
 
 ### Translations
