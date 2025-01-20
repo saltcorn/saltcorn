@@ -275,6 +275,12 @@ const takeLastLocation = () => {
   return result;
 };
 
+const notEmpty = (shareData) => {
+  for (const value of Object.values(shareData)) {
+    if (typeof value === "string" && value.trim() !== "") return true;
+  }
+};
+
 const postShare = async (shareData) => {
   const page = await router.resolve({
     pathname: "post/notifications/share",
@@ -333,6 +339,11 @@ export async function init({
     if (Capacitor.platform === "android") {
       const shareData = await checkSendIntentReceived();
       if (shareData) return await postShare(shareData);
+    } else if (Capacitor.platform === "ios") {
+      window.addEventListener("sendIntentReceived", async () => {
+        const shareData = await checkSendIntentReceived();
+        if (shareData && notEmpty(shareData)) return await postShare(shareData);
+      });
     }
     Network.addListener("networkStatusChange", networkChangeCallback);
 
@@ -383,6 +394,10 @@ export async function init({
         }
       }
 
+      if (Capacitor.platform === "ios") {
+        const shareData = await checkSendIntentReceived();
+        if (shareData && notEmpty(shareData)) return await postShare(shareData);
+      }
       let page = null;
       if (!lastLocation) {
         addRoute({ route: entryPoint, query: undefined });

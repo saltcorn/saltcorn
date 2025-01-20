@@ -1,4 +1,4 @@
-/*global saltcorn */
+/*global saltcorn, Capacitor */
 
 import { wrapContents } from "../utils";
 import { MobileRequest } from "../mocks/request";
@@ -45,7 +45,11 @@ export const postShare = async (context) => {
       content,
       saltcorn.markup.tags.script(`
       setTimeout(() => {
-        parent.saltcorn.mobileApp.common.finishShareIntent();
+        ${
+          Capacitor.platform === "android"
+            ? "parent.saltcorn.mobileApp.common.finishShareIntent();"
+            : "parent.saltcorn.mobileApp.navigation.gotoEntryView();"
+        } 
       }, 4000);`)
     ),
     "Share",

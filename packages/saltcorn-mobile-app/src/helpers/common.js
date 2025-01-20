@@ -201,34 +201,3 @@ export async function checkSendIntentReceived() {
     return null;
   }
 }
-
-export async function sendIntentCallback() {
-  console.log("sendIntentCallback");
-  try {
-    const received = await SendIntent.checkSendIntentReceived();
-    console.log("received: ", received);
-    if (received) {
-      const response = await apiCall({
-        method: "POST",
-        path: "/notifications/share-handler",
-        body: received,
-      });
-      console.log("Share data sent to server.");
-      console.log(response);
-      if (response.data.error) {
-        errorAlert(response.data.error);
-      } else {
-        showAlerts([
-          {
-            type: "success",
-            msg:
-              "Shared: " +
-              (received.title || received.text || received.url || ""),
-          },
-        ]);
-      }
-    }
-  } catch (error) {
-    console.log("Error in sendIntentCallback: ", error);
-  }
-}
