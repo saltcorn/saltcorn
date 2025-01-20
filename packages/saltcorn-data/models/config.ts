@@ -997,6 +997,13 @@ const configTypes: ConfigTypes = {
     label: "URL encoded size limit (Kb)",
     blurb: "Maximum URL encoded request size in kilobytes",
   },
+  min_role_inspect_tables: {
+    type: "Role",
+    label: "Inspect tables",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to inspect (see, without editing) tables",
+  },
   min_role_edit_tables: {
     type: "Role",
     label: "Edit tables",

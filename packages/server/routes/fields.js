@@ -778,7 +778,10 @@ const fieldFlow = (req) =>
  */
 router.get(
   "/:id",
-  isAdminOrHasConfigMinRole("min_role_edit_tables"),
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const field = await Field.findOne({ id });
@@ -945,7 +948,10 @@ router.post(
  */
 router.post(
   "/test-formula",
-  isAdminOrHasConfigMinRole("min_role_edit_tables"),
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     let { formula, tablename, stored } = req.body;
     if (stored === "false") stored = false;
@@ -1235,7 +1241,11 @@ router.post(
  */
 router.post(
   "/preview/:tableName/:fieldName/:fieldview",
-  isAdminOrHasConfigMinRole("min_role_edit_tables", "min_role_edit_views"),
+  isAdminOrHasConfigMinRole(
+    "min_role_edit_tables",
+    "min_role_edit_views",
+    "min_role_inspect_tables"
+  ),
   error_catcher(async (req, res) => {
     const { tableName, fieldName, fieldview } = req.params;
     const table = Table.findOne({ name: tableName });
@@ -1327,7 +1337,11 @@ router.post(
  */
 router.post(
   "/preview/:tableName/:fieldName/",
-  isAdminOrHasConfigMinRole("min_role_edit_tables", "min_role_edit_views"),
+  isAdminOrHasConfigMinRole(
+    "min_role_edit_tables",
+    "min_role_edit_views",
+    "min_role_inspect_tables"
+  ),
   error_catcher(async (req, res) => {
     res.send("");
   })
@@ -1335,7 +1349,11 @@ router.post(
 
 router.post(
   "/fieldviewcfgform/:tableName",
-  isAdminOrHasConfigMinRole("min_role_edit_tables", "min_role_edit_views"),
+  isAdminOrHasConfigMinRole(
+    "min_role_edit_tables",
+    "min_role_edit_views",
+    "min_role_inspect_tables"
+  ),
   error_catcher(async (req, res) => {
     const { tableName } = req.params;
     let {

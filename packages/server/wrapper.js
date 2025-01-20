@@ -91,19 +91,26 @@ const get_menu = (req) => {
   // Admin role id (todo move to common constants)
 
   const canEditTables = state.getConfig("min_role_edit_tables", 1) >= role;
+  const canInspectTables =
+    state.getConfig("min_role_inspect_tables", 1) >= role;
   const canEditViews = state.getConfig("min_role_edit_views", 1) >= role;
   const canEditPages = state.getConfig("min_role_edit_pages", 1) >= role;
   const canEditTriggers = state.getConfig("min_role_edit_triggers", 1) >= role;
   const isAdmin = role === 1;
   const hasAdmin =
-    isAdmin || canEditTables || canEditPages || canEditViews || canEditTriggers;
+    isAdmin ||
+    canEditTables ||
+    canInspectTables ||
+    canEditPages ||
+    canEditViews ||
+    canEditTriggers;
   /*
    * Admin Menu items
    *
    */
   const adminItems = [];
   if (hasAdmin) {
-    if (isAdmin || canEditTables)
+    if (isAdmin || canInspectTables || canEditTables)
       adminItems.push({
         link: "/table",
         icon: "fas fa-table",

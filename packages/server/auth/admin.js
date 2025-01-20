@@ -417,6 +417,7 @@ const permissions_settings_form = async (req) =>
       {
         section_header: req.__("Development permissions"),
       },
+      "min_role_inspect_tables",
       "min_role_edit_tables",
       "min_role_edit_views",
       "min_role_edit_pages",
