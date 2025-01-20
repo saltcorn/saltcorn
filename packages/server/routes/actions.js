@@ -348,7 +348,7 @@ const triggerForm = async (req, trigger) => {
  */
 router.get(
   "/new",
-  isAdminOrHasConfigMinRole("min_role_edit_triggers"),  
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
     if (req.query.table) {
@@ -1212,6 +1212,7 @@ router.post(
       entity_name: trigger.name,
     });
     await trigger.delete();
+    req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
     res.redirect(`/actions/`);
   })
 );
