@@ -293,6 +293,9 @@ const viewsList = async (
   });
   const tagsById = {};
   tags.forEach((t) => (tagsById[t.id] = t));
+  const user_can_edit_tables =
+    req.user.role_id === 1 ||
+    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
 
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
@@ -346,7 +349,10 @@ const viewsList = async (
           : [
               {
                 label: req.__("Table"),
-                key: (r) => link(`/table/${r.table}`, r.table),
+                key: (r) =>
+                  user_can_edit_tables
+                    ? link(`/table/${r.table}`, r.table)
+                    : r.table,
                 sortlink: !tagId
                   ? `set_state_field('_sortby', 'table', this)`
                   : undefined,
