@@ -1,4 +1,4 @@
-/*global saltcorn */
+/*global saltcorn, Capacitor */
 
 import {
   startOfflineMode,
