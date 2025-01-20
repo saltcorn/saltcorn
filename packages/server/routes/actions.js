@@ -1529,7 +1529,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { step_id } = req.params;
     const step = await WorkflowStep.findOne({ id: step_id });
-    await step.delete();
+    await step.delete(true);
     res.json({ goto: `/actions/configure/${step.trigger_id}` });
   })
 );
