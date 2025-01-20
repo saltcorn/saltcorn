@@ -27,7 +27,12 @@ const {
   recalculate_for_stored,
   expressionValidator,
 } = require("@saltcorn/data/models/expression");
-const { isAdmin, error_catcher, setTenant } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  setTenant,
+  isAdminOrHasConfigMinRole,
+} = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const {
   span,
@@ -230,7 +235,7 @@ const tableForm = async (table, req) => {
  */
 router.get(
   "/new/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const table_provider_names = Object.keys(getState().table_providers);
     res.sendWrap(req.__(`New table`), {
@@ -377,7 +382,7 @@ router.post(
  */
 router.get(
   "/create-from-csv",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     res.sendWrap(req.__(`Create table from CSV file`), {
       above: [
@@ -430,7 +435,7 @@ router.get(
 router.post(
   "/create-from-csv",
   setTenant,
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     if (req.body.name && req.files && req.files.file) {
       const name = req.body.name;
@@ -573,7 +578,7 @@ const screenshotPanel = () =>
  */
 router.get(
   "/relationship-diagram",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external({}, { orderBy: "name" });
     res.sendWrap(
@@ -711,7 +716,7 @@ const attribBadges = (f) => {
           "table",
           "agg_field",
           "agg_relation",
-          "calc_joinfields"
+          "calc_joinfields",
         ].includes(k)
       )
         return;
@@ -734,7 +739,7 @@ const attribBadges = (f) => {
  */
 router.get(
   "/:idorname",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
@@ -1127,7 +1132,7 @@ router.get(
  */
 router.post(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const v = req.body;
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
@@ -1228,7 +1233,7 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = Table.findOne({ id });
@@ -1280,7 +1285,7 @@ router.post(
 );
 router.post(
   "/forget-table/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const t = Table.findOne({ id });
@@ -1317,7 +1322,7 @@ router.post(
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const tblq = {};
     let filterOnTag;
@@ -1396,7 +1401,7 @@ router.get(
  */
 router.get(
   "/download/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
@@ -1440,7 +1445,7 @@ router.get(
  */
 router.get(
   "/constraints/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = Table.findOne({ id });
@@ -1642,7 +1647,7 @@ router.get(
  */
 router.post(
   "/add-constraint/:id/:type",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id, type } = req.params;
     const table = Table.findOne({ id });
@@ -1738,7 +1743,7 @@ router.get(
  */
 router.post(
   "/rename/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const table = Table.findOne({ id });
@@ -1762,7 +1767,7 @@ router.post(
  */
 router.post(
   "/delete-constraint/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const cons = await TableConstraint.findOne({ id });
@@ -1879,7 +1884,7 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
 router.post(
   "/upload_to_table/:name",
   setTenant, // TODO why is this needed?????
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
@@ -1898,7 +1903,7 @@ router.post(
 
 router.get(
   "/preview_full_csv_file/:name/:filename",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { name, filename } = req.params;
     const table = Table.findOne({ name });
@@ -1909,7 +1914,7 @@ router.get(
 
 router.post(
   "/finish_upload_to_table/:name/:filename",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { name, filename } = req.params;
     const table = Table.findOne({ name });
@@ -1938,7 +1943,7 @@ router.post(
  */
 router.post(
   "/delete-all-rows/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
@@ -1963,7 +1968,7 @@ router.post(
  */
 router.post(
   "/recalc-stored/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
@@ -2054,7 +2059,7 @@ const get_provider_workflow = (table, req) => {
 
 router.get(
   "/provider-cfg/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const { step } = req.query;
@@ -2080,7 +2085,7 @@ router.get(
 
 router.post(
   "/provider-cfg/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const { step } = req.query;
@@ -2099,7 +2104,7 @@ router.post(
 
 router.post(
   "/repair-composite-primary/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
