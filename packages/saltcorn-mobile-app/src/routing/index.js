@@ -12,8 +12,8 @@ import {
   getAskDeleteOfflineData,
   getAskUploadNotEnded,
 } from "./routes/sync";
-
 import { postView, postViewRoute, getView } from "./routes/view";
+import { postShare } from "./routes/notifications";
 
 const routes = [
   // api
@@ -79,6 +79,11 @@ const routes = [
   {
     path: "get/sync/ask_delete_offline_data",
     action: getAskDeleteOfflineData,
+  },
+  // notifications
+  {
+    path: "post/notifications/share",
+    action: postShare,
   },
   // view
   {

@@ -512,8 +512,6 @@ describe("API action", () => {
 
 describe("test share handler", () => {
   beforeAll(async () => {
-    await getState().setConfig("pwa_share_to_enabled", true);
-
     const sharedData = await Table.create("shared_data");
     await Field.create({
       table: sharedData,
@@ -560,22 +558,6 @@ describe("test share handler", () => {
           '{"email":"admin@foo.com","id":1,"role_id":1,"language":null,"tenant":"public","attributes":{}}'
     );
     expect(row).toBeDefined();
-  });
-
-  it("pwa_disabled as admin", async () => {
-    const app = await getApp({ disableCsrf: true });
-    const loginCookie = await getAdminLoginCookie();
-    await getState().setConfig("pwa_share_to_enabled", false);
-    await request(app)
-      .post("/notifications/share-handler")
-      .set("Cookie", loginCookie)
-      .send({ title: "pwa_disabled_as_admin" })
-      .expect(toRedirect("/"));
-    await sleep(1000);
-    const sharedData = Table.findOne({ name: "shared_data" });
-    const rows = await sharedData.getRows({});
-    const row = rows.find((r) => r.title === "pwa_disabled_as_admin");
-    expect(row).toBeUndefined();
   });
 
   it("does not share as public", async () => {

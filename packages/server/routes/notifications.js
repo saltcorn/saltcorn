@@ -204,26 +204,31 @@ router.post(
         req.flash("error", msg);
         res.redirect("/auth/login");
       } else res.json({ error: msg });
-    } else if (!getState().getConfig("pwa_share_to_enabled", false)) {
-      const msg = req.__("Sharing not enabled");
-      if (!req.smr) {
-        req.flash("error", msg);
-        res.redirect("/");
-      } else res.json({ error: msg });
     } else {
-      Trigger.emitEvent("ReceiveMobileShareData", null, req.user, {
-        row: req.body,
+      const receiveShareTriggers = Trigger.find({
+        when_trigger: "ReceiveMobileShareData",
       });
-      if (!req.smr) {
-        req.flash(
-          "success",
-          req.__(
-            "Shared: %s",
-            req.body.title || req.body.text || req.body.url || ""
-          )
-        );
-        res.status(303).redirect("/");
-      } else res.json({ success: "ok" });
+      if (receiveShareTriggers.length === 0) {
+        const msg = req.__("Sharing not enabled");
+        if (!req.smr) {
+          req.flash("error", msg);
+          res.redirect("/");
+        } else res.json({ error: msg });
+      } else {
+        Trigger.emitEvent("ReceiveMobileShareData", null, req.user, {
+          row: req.body,
+        });
+        if (!req.smr) {
+          req.flash(
+            "success",
+            req.__(
+              "Shared: %s",
+              req.body.title || req.body.text || req.body.url || ""
+            )
+          );
+          res.status(303).redirect("/");
+        } else res.json({ success: "ok" });
+      }
     }
   })
 );
@@ -240,8 +245,10 @@ router.get(
     };
     const site_logo = state.getConfig("site_logo_id");
     const pwa_icons = state.getConfig("pwa_icons");
-    const pwa_share_to_enabled = state.getConfig("pwa_share_to_enabled", false);
-    if (pwa_share_to_enabled) {
+    const receiveShareTriggers = Trigger.find({
+      when_trigger: "ReceiveMobileShareData",
+    });
+    if (receiveShareTriggers.length > 0) {
       manifest.share_target = {
         action: "/notifications/share-handler",
         method: "POST",

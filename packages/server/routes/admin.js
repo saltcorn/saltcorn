@@ -2392,7 +2392,7 @@ router.get(
                         class: "form-control",
                         name: "appId",
                         id: "appIdInputId",
-                        placeholder: "com.saltcorn.app",
+                        placeholder: "com.saltcorn.mobile.app",
                         value: builderSettings.appId || "",
                       })
                     )
@@ -3403,11 +3403,10 @@ router.post(
       keystoreAlias,
       keystorePassword,
     } = req.body;
-    // const receiveShareTriggers = Trigger.find({
-    //   when_trigger: "ReceiveMobileShareData",
-    // });
-    // disabeling share to support for now
-    let allowShareTo = false; // receiveShareTriggers.length > 0;
+    const receiveShareTriggers = Trigger.find({
+      when_trigger: "ReceiveMobileShareData",
+    });
+    let allowShareTo = receiveShareTriggers.length > 0;
     if (allowShareTo && iOSPlatform && !shareProvisioningProfile) {
       allowShareTo = false;
       msgs.push({
@@ -4169,10 +4168,6 @@ admin_config_route({
     { section_header: "Progressive Web Application" },
     "pwa_enabled",
     { name: "pwa_display", showIf: { pwa_enabled: true } },
-    {
-      name: "pwa_share_to_enabled",
-      showIf: { pwa_enabled: true },
-    },
     { name: "pwa_set_colors", showIf: { pwa_enabled: true } },
     {
       name: "pwa_theme_color",

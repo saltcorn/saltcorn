@@ -189,6 +189,19 @@ export async function getScreenOrientation() {
   return await ScreenOrientation.orientation();
 }
 
+export async function finishShareIntent() {
+  SendIntent.finish();
+}
+
+export async function checkSendIntentReceived() {
+  try {
+    return await SendIntent.checkSendIntentReceived();
+  } catch (error) {
+    console.log("Error in checkSendIntentReceived: ", error);
+    return null;
+  }
+}
+
 export async function sendIntentCallback() {
   console.log("sendIntentCallback");
   try {
