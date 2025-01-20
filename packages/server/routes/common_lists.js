@@ -12,6 +12,7 @@ const {
   badge,
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
+const { getState } = require("@saltcorn/data/db/state");
 const { h4, p, div, a, i, text, span, nbsp } = require("@saltcorn/markup/tags");
 
 /**
@@ -57,7 +58,9 @@ const tablesList = async (
   });
   const tagsById = {};
   tags.forEach((t) => (tagsById[t.id] = t));
-
+  const user_can_edit_tables =
+    req.user.role_id === 1 ||
+    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
   const tagBadges = (table) => {
     const myTags = tag_entries.filter((te) => te.table_id === table.id);
     return myTags
@@ -95,23 +98,25 @@ const tablesList = async (
               ? `${getRole(t.min_role_read)} (read only)`
               : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
         },
-        !tagId
-          ? {
-              label: req.__("Delete"),
-              key: (r) =>
-                r.name === "users" || r.external
-                  ? ""
-                  : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
-            }
-          : {
-              label: req.__("Remove From Tag"),
-              key: (r) =>
-                post_delete_btn(
-                  `/tag-entries/remove/tables/${r.id}/${tagId}`,
-                  req,
-                  `${r.name} from this tag`
-                ),
-            },
+        ...(user_can_edit_tables
+          ? !tagId
+            ? {
+                label: req.__("Delete"),
+                key: (r) =>
+                  r.name === "users" || r.external
+                    ? ""
+                    : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
+              }
+            : {
+                label: req.__("Remove From Tag"),
+                key: (r) =>
+                  post_delete_btn(
+                    `/tag-entries/remove/tables/${r.id}/${tagId}`,
+                    req,
+                    `${r.name} from this tag`
+                  ),
+              }
+          : []),
       ],
       tables,
       {

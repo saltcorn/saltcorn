@@ -760,6 +760,11 @@ router.get(
       res.redirect(`/table`);
       return;
     }
+
+    const user_can_edit_tables =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+
     const nrows = await table.countRows({}, { forUser: req.user });
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
@@ -775,13 +780,14 @@ router.get(
       fieldCard = [
         h4(req.__(`No fields defined in %s table`, table.name)),
         p(req.__("Fields define the columns in your table.")),
-        a(
-          {
-            href: `/field/new/${table.id}`,
-            class: "btn btn-primary add-field",
-          },
-          req.__("Add field to table")
-        ),
+        user_can_edit_tables &&
+          a(
+            {
+              href: `/field/new/${table.id}`,
+              class: "btn btn-primary add-field",
+            },
+            req.__("Add field to table")
+          ),
       ];
     } else {
       const tableHtml = mkTable(
@@ -815,7 +821,7 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: (t) => code(t.name) },
-          ...(table.external
+          ...(table.external || !user_can_edit_tables
             ? []
             : [
                 {
@@ -853,6 +859,7 @@ router.get(
           : "",
         !table.external &&
           !table.provider_name &&
+          user_can_edit_tables &&
           a(
             {
               href: `/field/new/${table.id}`,
@@ -1343,6 +1350,11 @@ router.get(
       tblq.id = { in: tagEntries.map((te) => te.table_id).filter(Boolean) };
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
+
+    const user_can_edit_tables =
+      req.user.role_id === 1 ||
+      getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+
     const rows = await Table.find_with_external(tblq, {
       orderBy: "name",
       nocase: true,
@@ -1351,20 +1363,23 @@ router.get(
     const getRole = (rid) => roles.find((r) => r.id === rid).role;
     const mainCard = await tablesList(rows, req, { filterOnTag });
     const createCard = div(
-      a(
-        { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },
-        i({ class: "fas fa-plus-square me-1" }),
-        req.__("Create table")
-      ),
-      a(
-        {
-          href: `/table/create-from-csv`,
-          class: "btn btn-secondary me-3 mt-1",
-        },
-        i({ class: "fas fa-upload me-1" }),
-        req.__("Create from CSV upload")
-      ),
-      !db.isSQLite &&
+      user_can_edit_tables &&
+        a(
+          { href: `/table/new`, class: "btn btn-primary mt-1 me-3" },
+          i({ class: "fas fa-plus-square me-1" }),
+          req.__("Create table")
+        ),
+      user_can_edit_tables &&
+        a(
+          {
+            href: `/table/create-from-csv`,
+            class: "btn btn-secondary me-3 mt-1",
+          },
+          i({ class: "fas fa-upload me-1" }),
+          req.__("Create from CSV upload")
+        ),
+      req.user.role_id === 1 &&
+        !db.isSQLite &&
         a(
           {
             href: `/table/discover`,
