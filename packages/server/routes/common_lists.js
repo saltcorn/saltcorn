@@ -99,23 +99,25 @@ const tablesList = async (
               : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
         },
         ...(user_can_edit_tables
-          ? !tagId
-            ? {
-                label: req.__("Delete"),
-                key: (r) =>
-                  r.name === "users" || r.external
-                    ? ""
-                    : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
-              }
-            : {
-                label: req.__("Remove From Tag"),
-                key: (r) =>
-                  post_delete_btn(
-                    `/tag-entries/remove/tables/${r.id}/${tagId}`,
-                    req,
-                    `${r.name} from this tag`
-                  ),
-              }
+          ? [
+              !tagId
+                ? {
+                    label: req.__("Delete"),
+                    key: (r) =>
+                      r.name === "users" || r.external
+                        ? ""
+                        : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
+                  }
+                : {
+                    label: req.__("Remove From Tag"),
+                    key: (r) =>
+                      post_delete_btn(
+                        `/tag-entries/remove/tables/${r.id}/${tagId}`,
+                        req,
+                        `${r.name} from this tag`
+                      ),
+                  },
+            ]
           : []),
       ],
       tables,
