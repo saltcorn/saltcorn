@@ -1451,6 +1451,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { name } = req.params;
     const table = Table.findOne({ name });
+    if (table.min_role_read < req.user.role_id) {
+      req.flash("error", "Not permitted to read table");
+      res.redirect(`/table/${table.id}`);
+      return;
+    }
     const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
@@ -1942,6 +1947,11 @@ router.post(
     const table = Table.findOne({ name });
     if (!req.files || !req.files.file) {
       req.flash("error", "Missing file");
+      res.redirect(`/table/${table.id}`);
+      return;
+    }
+    if (table.min_role_write < req.user.role_id) {
+      req.flash("error", "Not permitted to write to table");
       res.redirect(`/table/${table.id}`);
       return;
     }
