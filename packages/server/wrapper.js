@@ -89,52 +89,83 @@ const get_menu = (req) => {
       ];
   // const schema = db.getTenantSchema();
   // Admin role id (todo move to common constants)
+
+  const canEditTables = state.getConfig("min_role_edit_tables", 1) >= role;
+  const canEditViews = state.getConfig("min_role_edit_views", 1) >= role;
+  const canEditPages = state.getConfig("min_role_edit_pages", 1) >= role;
+  const canEditTriggers = state.getConfig("min_role_edit_triggers", 1) >= role;
   const isAdmin = role === 1;
+  const hasAdmin =
+    isAdmin || canEditTables || canEditPages || canEditViews || canEditTriggers;
   /*
    * Admin Menu items
    *
    */
-  const adminItems = [
-    { link: "/table", icon: "fas fa-table", label: req.__("Tables") },
-    { link: "/viewedit", icon: "far fa-eye", label: req.__("Views") },
-    { link: "/pageedit", icon: "far fa-file", label: req.__("Pages") },
-    {
-      label: req.__("Settings"),
-      icon: "fas fa-wrench",
-      subitems: [
-        {
-          link: "/admin",
-          icon: "fas fa-tools",
-          label: req.__("About application"),
-        },
-        { link: "/plugins", icon: "fas fa-cubes", label: req.__("Modules") },
-        {
-          link: "/useradmin",
-          icon: "fas fa-users-cog",
-          altlinks: ["/roleadmin"],
-          label: req.__("Users and security"),
-        },
-        {
-          link: "/site-structure",
-          altlinks: [
-            "/menu",
-            "/search/config",
-            "/library/list",
-            "/tenant/list",
-          ],
-          icon: "fas fa-compass",
-          label: req.__("Site structure"),
-        },
-        { link: "/files", icon: "far fa-images", label: req.__("Files") },
-        {
-          link: "/events",
-          altlinks: ["/actions", "/eventlog", "/crashlog"],
-          icon: "fas fa-calendar-check",
-          label: req.__("Events"),
-        },
-      ],
-    },
-  ];
+  const adminItems = [];
+  if (hasAdmin) {
+    if (isAdmin || canEditTables)
+      adminItems.push({
+        link: "/table",
+        icon: "fas fa-table",
+        label: req.__("Tables"),
+      });
+    if (isAdmin || canEditViews)
+      adminItems.push({
+        link: "/viewedit",
+        icon: "far fa-eye",
+        label: req.__("Views"),
+      });
+    if (isAdmin || canEditPages)
+      adminItems.push({
+        link: "/pageedit",
+        icon: "far fa-file",
+        label: req.__("Pages"),
+      });
+    if (canEditTriggers && !isAdmin)
+      adminItems.push({
+        link: "/events",
+        altlinks: ["/actions", "/eventlog", "/crashlog"],
+        icon: "fas fa-calendar-check",
+        label: req.__("Events"),
+      });
+    if (isAdmin)
+      adminItems.push({
+        label: req.__("Settings"),
+        icon: "fas fa-wrench",
+        subitems: [
+          {
+            link: "/admin",
+            icon: "fas fa-tools",
+            label: req.__("About application"),
+          },
+          { link: "/plugins", icon: "fas fa-cubes", label: req.__("Modules") },
+          {
+            link: "/useradmin",
+            icon: "fas fa-users-cog",
+            altlinks: ["/roleadmin"],
+            label: req.__("Users and security"),
+          },
+          {
+            link: "/site-structure",
+            altlinks: [
+              "/menu",
+              "/search/config",
+              "/library/list",
+              "/tenant/list",
+            ],
+            icon: "fas fa-compass",
+            label: req.__("Site structure"),
+          },
+          { link: "/files", icon: "far fa-images", label: req.__("Files") },
+          {
+            link: "/events",
+            altlinks: ["/actions", "/eventlog", "/crashlog"],
+            icon: "fas fa-calendar-check",
+            label: req.__("Events"),
+          },
+        ],
+      });
+  }
 
   // return menu
   return [
@@ -142,7 +173,7 @@ const get_menu = (req) => {
       section: req.__("Menu"),
       items: extra_menu,
     },
-    isAdmin && {
+    hasAdmin && {
       section: req.__("Admin"),
       items: adminItems,
     },
