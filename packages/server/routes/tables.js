@@ -1452,7 +1452,7 @@ router.get(
     const { name } = req.params;
     const table = Table.findOne({ name });
     if (table.min_role_read < req.user.role_id) {
-      req.flash("error", "Not permitted to read table");
+      req.flash("error", "Not authorized to read table");
       res.redirect(`/table/${table.id}`);
       return;
     }
@@ -1951,7 +1951,7 @@ router.post(
       return;
     }
     if (table.min_role_write < req.user.role_id) {
-      req.flash("error", "Not permitted to write to table");
+      req.flash("error", "Not authorized to write to table");
       res.redirect(`/table/${table.id}`);
       return;
     }
