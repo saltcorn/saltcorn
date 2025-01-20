@@ -3092,49 +3092,48 @@ router.get(
                             ].join("")
                           )
                         )
-                      )
+                      ),
                       // Share Extension provisioning profile
-                      // disabled for now
-                      // div(
-                      //   { class: "row pb-3" },
-                      //   div(
-                      //     { class: "col-sm-8" },
-                      //     label(
-                      //       {
-                      //         for: "shareProvisioningProfileInputId",
-                      //         class: "form-label fw-bold",
-                      //       },
-                      //       req.__("Share Extension Provisioning Profile"),
-                      //       a(
-                      //         {
-                      //           href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-                      //         },
-                      //         i({ class: "fas fa-question-circle ps-1" })
-                      //       )
-                      //     ),
-                      //     select(
-                      //       {
-                      //         class: "form-select",
-                      //         name: "shareProvisioningProfile",
-                      //         id: "shareProvisioningProfileInputId",
-                      //       },
-                      //       [
-                      //         option({ value: "" }, ""),
-                      //         ...provisioningFiles.map((file) =>
-                      //           option(
-                      //             {
-                      //               value: file.location,
-                      //               selected:
-                      //                 builderSettings.shareProvisioningProfile ===
-                      //                 file.location,
-                      //             },
-                      //             file.filename
-                      //           )
-                      //         ),
-                      //       ].join("")
-                      //     )
-                      //   )
-                      // )
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "shareProvisioningProfileInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Share Extension Provisioning Profile"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "shareProvisioningProfile",
+                              id: "shareProvisioningProfileInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...provisioningFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.shareProvisioningProfile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
+                        )
+                      )
                     )
                   )
                 ),
