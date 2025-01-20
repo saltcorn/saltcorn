@@ -1055,6 +1055,7 @@ router.get(
           settingsDropdown(`dataMenuButton`, [
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
+              user_can_edit_tables &&
               table.name !== "users" &&
               a(
                 {
@@ -1069,21 +1070,24 @@ router.get(
                 req.__("Recalculate stored fields"),
               req
             ),
-            post_dropdown_item(
-              `/table/delete-all-rows/${encodeURIComponent(table.name)}`,
-              '<i class="far fa-trash-alt"></i>&nbsp;' +
-                req.__("Delete all rows"),
-              req,
-              true
-            ),
-            table.name !== "users" &&
+            user_can_edit_tables &&
+              post_dropdown_item(
+                `/table/delete-all-rows/${encodeURIComponent(table.name)}`,
+                '<i class="far fa-trash-alt"></i>&nbsp;' +
+                  req.__("Delete all rows"),
+                req,
+                true
+              ),
+            user_can_edit_tables &&
+              table.name !== "users" &&
               post_dropdown_item(
                 `/table/forget-table/${table.id}`,
                 '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
                 req,
                 true
               ),
-            table.name !== "users" &&
+            user_can_edit_tables &&
+              table.name !== "users" &&
               post_dropdown_item(
                 `/table/delete/${table.id}`,
                 '<i class="fas fa-trash"></i>&nbsp;' + req.__("Delete table"),
