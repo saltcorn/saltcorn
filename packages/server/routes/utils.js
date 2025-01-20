@@ -101,7 +101,11 @@ const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
   if (
     req.user &&
     (req.user.role_id === 1 ||
-      getState().getConfig(cfg, 1) >= req.user.role_id) &&
+      (Array.isArray(cfg)
+        ? cfg.some(
+            (one_cfg) => getState().getConfig(one_cfg, 1) >= req.user.role_id
+          )
+        : getState().getConfig(cfg, 1) >= req.user.role_id)) &&
     req.user.tenant === cur_tenant
   ) {
     next();
