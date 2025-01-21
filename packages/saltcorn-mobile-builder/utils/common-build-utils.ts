@@ -665,7 +665,7 @@ export function copySbadmin2Deps(buildDir: string) {
   const sbadmin2Dst = join(
     buildDir,
     "www",
-    "sc_plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.5"
+    "sc_plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5"
   );
   if (!existsSync(sbadmin2Dst)) {
     mkdirSync(sbadmin2Dst, { recursive: true });
