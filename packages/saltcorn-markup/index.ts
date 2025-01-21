@@ -237,7 +237,7 @@ const localeDateTime = (
   options: any = {},
   locale: string = "en"
 ): string =>
-  date
+  date?.toISOString
     ? time(
         {
           datetime: date.toISOString(),
@@ -289,6 +289,7 @@ export = {
   button,
   input,
   hr,
+  tags,
   alert,
   toast,
 };

@@ -16,6 +16,7 @@ const {
   error_catcher,
   scan_for_page_title,
   setTenant,
+  isAdminOrHasConfigMinRole,
 } = require("../routes/utils.js");
 const { add_edit_bar } = require("../markup/admin.js");
 const { InvalidConfiguration, isTest } = require("@saltcorn/data/utils");
@@ -166,7 +167,7 @@ router.get(
  */
 router.post(
   "/:viewname/preview",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 

@@ -13,6 +13,7 @@ const {
   admin_config_route,
   get_sys_info,
   tenant_letsencrypt_name,
+  isAdminOrHasConfigMinRole,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -295,7 +296,7 @@ router.get(
   error_catcher(async (req, res) => {
     const fp = path.join(__dirname, "..", "CHANGELOG.md");
     const fileBuf = await fs.promises.readFile(fp);
-    const mdContents = fileBuf.toString().replace("# Notable changes\n","");
+    const mdContents = fileBuf.toString().replace("# Notable changes\n", "");
     const markup = md.render(mdContents);
     res.sendWrap(`What's new in Saltcorn`, { above: [markup] });
   })
@@ -626,13 +627,36 @@ router.get(
   })
 );
 
+const checkEditPermission = (type, user) => {
+  if (user.role_id === 1) return true;
+  switch (type) {
+    case "view":
+      return getState().getConfig("min_role_edit_views", 1) >= user.role_id;
+    case "page":
+      return getState().getConfig("min_role_edit_pages", 1) >= user.role_id;
+    case "trigger":
+      return getState().getConfig("min_role_edit_triggers", 1) >= user.role_id;
+    default:
+      return false;
+  }
+};
+
 router.get(
   "/snapshot-restore/:type/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_triggers",
+  ]),
   error_catcher(async (req, res) => {
     const { type, name } = req.params;
     const snaps = await Snapshot.entity_history(type, name);
     const locale = getState().getConfig("default_locale", "en");
+    const auth = checkEditPermission(type, req.user);
+    if (!auth) {
+      res.send("Not authorized");
+      return;
+    }
     res.set("Page-Title", `Restore ${text(name)}`);
     res.send(
       mkTable(
@@ -663,17 +687,26 @@ router.get(
 
 router.post(
   "/snapshot-restore/:type/:name/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_triggers",
+  ]),
   error_catcher(async (req, res) => {
     const { type, name, id } = req.params;
-    const snap = await Snapshot.findOne({ id });
-    await snap.restore_entity(type, name);
-    req.flash(
-      "success",
-      `${type} ${name} restored to snapshot saved ${moment(
-        snap.created
-      ).fromNow()}`
-    );
+    const auth = checkEditPermission(type, req.user);
+    if (!auth) {
+      req.flash("error", "Not authorized");
+    } else {
+      const snap = await Snapshot.findOne({ id });
+      await snap.restore_entity(type, name);
+      req.flash(
+        "success",
+        `${type} ${name} restored to snapshot saved ${moment(
+          snap.created
+        ).fromNow()}`
+      );
+    }
     res.redirect(
       type === "trigger"
         ? `/actions`
@@ -2414,7 +2447,7 @@ router.get(
                         class: "form-control",
                         name: "appId",
                         id: "appIdInputId",
-                        placeholder: "com.saltcorn.app",
+                        placeholder: "com.saltcorn.mobile.app",
                         value: builderSettings.appId || "",
                       })
                     )
@@ -3114,49 +3147,48 @@ router.get(
                             ].join("")
                           )
                         )
-                      )
+                      ),
                       // Share Extension provisioning profile
-                      // disabled for now
-                      // div(
-                      //   { class: "row pb-3" },
-                      //   div(
-                      //     { class: "col-sm-8" },
-                      //     label(
-                      //       {
-                      //         for: "shareProvisioningProfileInputId",
-                      //         class: "form-label fw-bold",
-                      //       },
-                      //       req.__("Share Extension Provisioning Profile"),
-                      //       a(
-                      //         {
-                      //           href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-                      //         },
-                      //         i({ class: "fas fa-question-circle ps-1" })
-                      //       )
-                      //     ),
-                      //     select(
-                      //       {
-                      //         class: "form-select",
-                      //         name: "shareProvisioningProfile",
-                      //         id: "shareProvisioningProfileInputId",
-                      //       },
-                      //       [
-                      //         option({ value: "" }, ""),
-                      //         ...provisioningFiles.map((file) =>
-                      //           option(
-                      //             {
-                      //               value: file.location,
-                      //               selected:
-                      //                 builderSettings.shareProvisioningProfile ===
-                      //                 file.location,
-                      //             },
-                      //             file.filename
-                      //           )
-                      //         ),
-                      //       ].join("")
-                      //     )
-                      //   )
-                      // )
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "shareProvisioningProfileInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Share Extension Provisioning Profile"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "shareProvisioningProfile",
+                              id: "shareProvisioningProfileInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...provisioningFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.shareProvisioningProfile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
+                        )
+                      )
                     )
                   )
                 ),
@@ -3425,11 +3457,10 @@ router.post(
       keystoreAlias,
       keystorePassword,
     } = req.body;
-    // const receiveShareTriggers = Trigger.find({
-    //   when_trigger: "ReceiveMobileShareData",
-    // });
-    // disabeling share to support for now
-    let allowShareTo = false; // receiveShareTriggers.length > 0;
+    const receiveShareTriggers = Trigger.find({
+      when_trigger: "ReceiveMobileShareData",
+    });
+    let allowShareTo = receiveShareTriggers.length > 0;
     if (allowShareTo && iOSPlatform && !shareProvisioningProfile) {
       allowShareTo = false;
       msgs.push({
@@ -4191,10 +4222,6 @@ admin_config_route({
     { section_header: "Progressive Web Application" },
     "pwa_enabled",
     { name: "pwa_display", showIf: { pwa_enabled: true } },
-    {
-      name: "pwa_share_to_enabled",
-      showIf: { pwa_enabled: true },
-    },
     { name: "pwa_set_colors", showIf: { pwa_enabled: true } },
     {
       name: "pwa_theme_color",

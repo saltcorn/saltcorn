@@ -1,4 +1,4 @@
-/*global saltcorn */
+/*global saltcorn, Capacitor */
 
 import {
   startOfflineMode,
@@ -22,7 +22,7 @@ import {
   gotoEntryView,
   addRoute,
 } from "./helpers/navigation.js";
-import { sendIntentCallback } from "./helpers/common.js";
+import { checkSendIntentReceived } from "./helpers/common.js";
 
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
@@ -275,6 +275,22 @@ const takeLastLocation = () => {
   return result;
 };
 
+const notEmpty = (shareData) => {
+  for (const value of Object.values(shareData)) {
+    if (typeof value === "string" && value.trim() !== "") return true;
+  }
+};
+
+const postShare = async (shareData) => {
+  const page = await router.resolve({
+    pathname: "post/notifications/share",
+    shareData,
+    fullWrap: true,
+    isSendIntentActivity: true,
+  });
+  return await replaceIframe(page.content);
+};
+
 // device is ready
 export async function init({
   mobileConfig,
@@ -317,8 +333,18 @@ export async function init({
     const entryPoint = mobileConfig.entry_point;
     await initI18Next(translations);
     state.mobileConfig.encodedSiteLogo = siteLogo;
-
-    state.mobileConfig.networkState = await Network.getStatus();
+    state.mobileConfig.networkState = (
+      await Network.getStatus()
+    ).connectionType;
+    if (Capacitor.platform === "android") {
+      const shareData = await checkSendIntentReceived();
+      if (shareData) return await postShare(shareData);
+    } else if (Capacitor.platform === "ios") {
+      window.addEventListener("sendIntentReceived", async () => {
+        const shareData = await checkSendIntentReceived();
+        if (shareData && notEmpty(shareData)) return await postShare(shareData);
+      });
+    }
     Network.addListener("networkStatusChange", networkChangeCallback);
 
     const networkDisabled = state.mobileConfig.networkState === "none";
@@ -367,11 +393,11 @@ export async function init({
           });
         }
       }
-      if (state.mobileConfig.allowOfflineMode) {
-        await sendIntentCallback();
-        window.addEventListener("sendIntentReceived", sendIntentCallback);
-      }
 
+      if (Capacitor.platform === "ios") {
+        const shareData = await checkSendIntentReceived();
+        if (shareData && notEmpty(shareData)) return await postShare(shareData);
+      }
       let page = null;
       if (!lastLocation) {
         addRoute({ route: entryPoint, query: undefined });

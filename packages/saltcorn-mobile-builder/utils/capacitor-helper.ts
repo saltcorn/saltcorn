@@ -137,14 +137,18 @@ export class CapacitorHelper {
   public addPlatforms() {
     console.log("add platforms");
     const addFn = (platform: string) => {
-      let result = spawnSync("npm", ["install", `@capacitor/${platform}`], {
-        cwd: this.buildDir,
-        maxBuffer: 1024 * 1024 * 10,
-        env: {
-          ...process.env,
-          NODE_ENV: "development",
-        },
-      });
+      let result = spawnSync(
+        "npm",
+        ["install", `@capacitor/${platform}@6.1.2`],
+        {
+          cwd: this.buildDir,
+          maxBuffer: 1024 * 1024 * 10,
+          env: {
+            ...process.env,
+            NODE_ENV: "development",
+          },
+        }
+      );
       if (result.output) console.log(result.output.toString());
       else if (result.error)
         throw new Error(

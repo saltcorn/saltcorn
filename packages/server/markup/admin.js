@@ -302,14 +302,19 @@ const send_tags_page = (args) => {
  */
 const send_events_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  const isUserAdmin = args.req?.user.role_id === 1;
   return send_settings_page({
     main_section: "Events",
     main_section_href: "/events",
     sub_sections: [
       { text: "Triggers", href: "/actions" },
-      { text: "Custom", href: "/eventlog/custom" },
-      { text: "Settings", href: "/eventlog/settings" },
-      { text: "Event log", href: "/eventlog" },
+      ...(isUserAdmin
+        ? [
+            { text: "Custom", href: "/eventlog/custom" },
+            { text: "Settings", href: "/eventlog/settings" },
+            { text: "Event log", href: "/eventlog" },
+          ]
+        : []),
       { text: "Workflow runs", href: "/actions/runs" },
       ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
     ],

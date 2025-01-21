@@ -30,6 +30,7 @@ const {
   addOnDoneRedirect,
   is_relative_url,
   setRole,
+  isAdminOrHasConfigMinRole,
 } = require("./utils.js");
 const { asyncMap } = require("@saltcorn/data/utils");
 const {
@@ -278,7 +279,7 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
     noSubmitButton: true,
     onChange: "saveAndContinue(this)",
     blurb: req.__(
-      "The root page is the page that is served when the user visits the home location (/). This can be set for each user role."
+      "The home page is the page that is served when the user visits the home location (/). This can be set for each user role."
     ),
     fields: roles.map(
       (r) =>
@@ -314,7 +315,7 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const pageq = {};
     let filterOnTag;
@@ -357,7 +358,7 @@ router.get(
         },
         {
           type: "card",
-          title: req.__("Root pages"),
+          title: req.__("Home pages"),
           titleAjaxIndicator: true,
           contents: renderForm(
             getRootPageForm(pages, pageGroups, roles, req),
@@ -425,7 +426,7 @@ const wrap = (contents, noCard, req, page) => ({
  */
 router.get(
   "/edit-properties/:pagename",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
     const page = Page.findOne({ name: pagename });
@@ -456,7 +457,7 @@ router.get(
  */
 router.get(
   "/new",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const form = await pagePropertiesForm(req, true);
     res.sendWrap(
@@ -474,7 +475,7 @@ router.get(
  */
 router.post(
   "/edit-properties",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const form = await pagePropertiesForm(req, !req.body.id);
     form.hidden("id");
@@ -652,7 +653,7 @@ const getEditPageWithHtmlFile = async (req, res, page) => {
  */
 router.get(
   "/edit/:pagename",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
     const [page] = await Page.find({ name: pagename });
@@ -674,7 +675,7 @@ router.get(
  */
 router.post(
   "/edit/:pagename",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const { pagename } = req.params;
 
@@ -765,7 +766,7 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const page = await Page.findOne({ id });
@@ -787,7 +788,7 @@ router.post(
  */
 router.post(
   "/set_root_page",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const pages = await Page.find({}, { orderBy: "name" });
     const pageGroups = await PageGroup.find({}, { orderBy: "name" });
@@ -815,7 +816,7 @@ router.post(
  */
 router.post(
   "/add-to-menu/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const page = Page.findOne({ id });
@@ -845,7 +846,7 @@ router.post(
  */
 router.post(
   "/clone/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const page = await Page.findOne({ id });
@@ -870,7 +871,7 @@ router.post(
  */
 router.post(
   "/setrole/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     await setRole(req, res, Page);
   })

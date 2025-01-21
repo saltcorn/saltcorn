@@ -86,7 +86,10 @@ class WorkflowRun {
       typeof o.context === "string" ? JSON.parse(o.context) : o.context || {};
     this.wait_info =
       typeof o.wait_info === "string" ? JSON.parse(o.wait_info) : o.wait_info;
-    this.started_at = o.started_at || new Date();
+    this.started_at =
+      (["string", "number"].includes(typeof o.started_at)
+        ? new Date(o.started_at as any)
+        : o.started_at) || new Date();
     this.status_updated_at = o.status_updated_at;
     this.started_by = o.started_by;
     this.session_id = o.session_id;

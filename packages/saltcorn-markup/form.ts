@@ -1336,7 +1336,7 @@ const renderFormLayout = (form: Form): string => {
         if (configuration.save_first) {
           const complete = `()=>${doNav}`;
           return mkBtn(
-            `onClick="${spinnerStr}${reload}saveAndContinue(this,${
+            `onClick="${spinnerStr}${reload}saveAndContinueDelayed(this,${
               isMobile ? `'${form.action}', ${complete}` : complete
             })" type="button"`
           );
@@ -1348,7 +1348,7 @@ const renderFormLayout = (form: Form): string => {
       if (action_name === "SaveAndContinue") {
         return (
           mkBtn(
-            `onClick="${spinnerStr}saveAndContinue(this,${
+            `onClick="${spinnerStr}saveAndContinueDelayed(this,${
               isMobile ? `'${form.action}'` : undefined
             })" type="button"`
           ) +
@@ -1359,7 +1359,7 @@ const renderFormLayout = (form: Form): string => {
             $(myScript).closest('form').find('input').keydown(function (e) {
             if (e.keyCode == 13) {
                 e.preventDefault();
-                saveAndContinue(myScript,${
+                saveAndContinueDelayed(myScript,${
                   isMobile ? `'${form.action}'` : undefined
                 });
                 return false;

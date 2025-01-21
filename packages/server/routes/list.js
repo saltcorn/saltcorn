@@ -24,7 +24,11 @@ const {
   form,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
-const { isAdmin, error_catcher } = require("./utils");
+const {
+  isAdmin,
+  error_catcher,
+  isAdminOrHasConfigMinRole,
+} = require("./utils");
 const moment = require("moment");
 const { getState } = require("@saltcorn/data/db/state");
 
@@ -49,7 +53,10 @@ module.exports = router;
  */
 router.get(
   "/_versions/:tableName/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { tableName, id } = req.params;
     const table = Table.findOne({ name: tableName });
@@ -97,7 +104,10 @@ router.get(
  */
 router.post(
   "/_restore/:tableName/:id/:_version",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { tableName, id, _version } = req.params;
     const table = Table.findOne({ name: tableName });
@@ -226,7 +236,10 @@ const arrangeIdFirst = (flds) => {
  */
 router.get(
   "/:tname",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+  ]),
   error_catcher(async (req, res) => {
     const { tname } = req.params;
     const table = Table.findOne({ name: tname });

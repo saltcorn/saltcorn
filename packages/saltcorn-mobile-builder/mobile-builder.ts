@@ -288,7 +288,7 @@ export class MobileBuilder {
         join(this.buildDir, basename(this.keyStorePath))
       );
     }
-    await modifyAndroidManifest(this.buildDir);
+    await modifyAndroidManifest(this.buildDir, this.allowShareTo, this.appId);
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
     modifyGradleConfig(this.buildDir, this.appVersion);

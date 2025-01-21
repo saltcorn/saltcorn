@@ -95,6 +95,32 @@ function isAdmin(req, res, next) {
   }
 }
 
+const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
+  const cur_tenant = db.getTenantSchema();
+  //console.log({ cur_tenant, user: req.user });
+  if (
+    req.user &&
+    (req.user.role_id === 1 ||
+      (Array.isArray(cfg)
+        ? cfg.some(
+            (one_cfg) => getState().getConfig(one_cfg, 1) >= req.user.role_id
+          )
+        : getState().getConfig(cfg, 1) >= req.user.role_id)) &&
+    req.user.tenant === cur_tenant
+  ) {
+    next();
+  } else {
+    req.flash("danger", req.__("Must be admin"));
+    res.redirect(
+      req.user && req.user.pending_user
+        ? "/auth/twofa/login/totp"
+        : req.user
+        ? "/"
+        : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
+    );
+  }
+};
+
 /**
  * Sets language for HTTP Request / HTTP Responce
  * @param {object} req
@@ -590,6 +616,7 @@ module.exports = {
   csrfField,
   loggedIn,
   isAdmin,
+  isAdminOrHasConfigMinRole,
   get_base_url,
   error_catcher,
   scan_for_page_title,

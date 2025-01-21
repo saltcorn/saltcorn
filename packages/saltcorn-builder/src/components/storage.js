@@ -98,7 +98,7 @@ const layoutToNodes = (
   actions,
   parent = "ROOT",
   options,
-  index = 0
+  index = false
 ) => {
   //console.log("layoutToNodes", JSON.stringify(layout));
   /**
@@ -371,7 +371,8 @@ const layoutToNodes = (
    * @param {object} parent
    * @returns {void}
    */
-  function go(segment, parent, ix) {
+  function go(segment, parent, ix0) {
+    const ix = typeof ix0 === "number" ? ix0 : undefined;
     if (!segment) return;
     if (segment.above) {
       segment.above.forEach((child) => {

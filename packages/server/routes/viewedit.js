@@ -19,6 +19,7 @@ const {
   addOnDoneRedirect,
   is_relative_url,
   setTenant,
+  isAdminOrHasConfigMinRole,
 } = require("./utils.js");
 const { setTableRefs, viewsList } = require("./common_lists");
 const Form = require("@saltcorn/data/models/form");
@@ -56,7 +57,7 @@ module.exports = router;
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     let orderBy = "name";
     if (req.query._sortby === "viewtemplate") orderBy = "viewtemplate";
@@ -353,7 +354,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
  */
 router.get(
   "/edit/:viewname",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 
@@ -446,7 +447,7 @@ router.get(
  */
 router.get(
   "/new",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external();
     const tableOptions = tables.map((t) => t.name);
@@ -484,7 +485,7 @@ router.get(
  */
 router.post(
   "/save",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const tables = await Table.find_with_external();
     const tableOptions = tables.map((t) => t.name);
@@ -671,7 +672,7 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
  */
 router.get(
   "/config/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     req.socket.on("close", () => {
       File.destroyDirCache();
@@ -719,7 +720,7 @@ router.get(
  */
 router.post(
   "/config/:name",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   setTenant,
   error_catcher(async (req, res) => {
     const { name } = req.params;
@@ -760,7 +761,7 @@ router.post(
  */
 router.post(
   "/add-to-menu/:viewname",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
     const view = await View.findOne({ name: viewname });
@@ -795,7 +796,7 @@ router.post(
  */
 router.post(
   "/clone/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const view = await View.findOne({ id });
@@ -825,7 +826,7 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     await View.delete({ id });
@@ -847,7 +848,7 @@ router.post(
  */
 router.post(
   "/savebuilder/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
@@ -874,7 +875,7 @@ router.post(
  */
 router.post(
   "/saveconfig/:viewname",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
@@ -922,7 +923,7 @@ router.post(
  */
 router.post(
   "/setrole/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const role = req.body.role;
@@ -952,7 +953,7 @@ router.post(
 
 router.post(
   "/test/inserter",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const view = await View.create(req.body);
     res.json({ view });

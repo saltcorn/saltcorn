@@ -459,6 +459,18 @@ function saveAndContinueIfValid(e, k, event) {
   });
 }
 
+function saveAndContinueDelayed(e, k, event, retries = 1) {
+  //wait for applyShowIf
+  setTimeout(() => {
+    if (apply_showif_fetching_urls.size > 0 && retries < 5) {
+      setTimeout(() => {
+        saveAndContinueDelayed(e, k, event, retries + 1);
+      }, 200);
+    } else saveAndContinue(e, k, event);
+  });
+  return false;
+}
+
 function saveAndContinue(e, k, event) {
   if (
     event &&

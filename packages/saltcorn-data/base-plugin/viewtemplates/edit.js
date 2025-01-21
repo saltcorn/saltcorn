@@ -1047,7 +1047,7 @@ const render = async ({
   });
   const actually_auto_save = auto_save && !(!row && hasSave);
   if (actually_auto_save)
-    form.onChange = `saveAndContinue(this, ${
+    form.onChange = `saveAndContinueDelayed(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
     }, event);`;
   let reloadAfterCloseInModalScript =
@@ -1751,7 +1751,7 @@ const prepare = async (
     isRemote
   );
   if (auto_save)
-    form.onChange = `saveAndContinue(this, ${
+    form.onChange = `saveAndContinueDelayed(this, ${
       !isWeb(req) ? `'${form.action}'` : undefined
     }, event);`;
 
