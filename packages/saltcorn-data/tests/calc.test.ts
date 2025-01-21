@@ -320,6 +320,42 @@ describe("single joinfields in stored calculated fields", () => {
 
     await books.updateRow({ pages: 728 }, book.id);
   });
+  it("add reciprocal field for looped updates ", async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await Field.create({
+      table: books,
+      label: "Number of fans",
+      type: "Integer",
+      calculated: true,
+      expression: "__aggregation",
+      attributes: {
+        aggregate: "Count",
+        aggwhere: "",
+        agg_field: "id@Integer",
+        agg_relation: "patients.favbook",
+        table: "patients",
+        ref: "favbook",
+      },
+      stored: true,
+    });
+  });
+  it("change value without triggering infinite loop", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const patient = await patients.getRow({ id: 1 });
+    assertIsSet(patient);
+
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ id: patient.favbook });
+    assertIsSet(book);
+    expect(book.pages).toBe(728);
+    await books.updateRow({ pages: 729 }, book.id);
+    await books.updateRow({ pages: 728 }, book.id);
+    const field = books.getField("number_of_fans");
+    await field?.delete();
+  });
 });
 
 describe("double joinfields in stored calculated fields", () => {
@@ -397,7 +433,6 @@ describe("double joinfields in stored calculated fields", () => {
 
     const reading1 = await readings.getRow({ id: readid });
     expect(reading1?.favpages).toBe(967);
-
   });
 });
 
