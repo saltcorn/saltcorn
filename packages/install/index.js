@@ -482,7 +482,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
       "-g",
       "--legacy-peer-deps",
       "@saltcorn/cli@latest",
-      "--unsafe",
+      "--omit=dev",
     ],
     false,
     dryRun,
