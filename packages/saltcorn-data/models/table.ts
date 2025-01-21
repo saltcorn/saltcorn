@@ -1329,7 +1329,8 @@ class Table implements AbstractTable {
     resultCollector?: object,
     restore_of_version?: any,
     syncTimestamp?: Date,
-    additionalTriggerValues?: Row
+    additionalTriggerValues?: Row,
+    autoRecalcIterations?: number
   ): Promise<string | void> {
     let existing;
     let v = { ...v_in };
@@ -1557,7 +1558,11 @@ class Table implements AbstractTable {
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
 
-    await this.auto_update_calc_aggregations(newRow, !existing);
+    await this.auto_update_calc_aggregations(
+      newRow,
+      !existing,
+      autoRecalcIterations || 1
+    );
 
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
@@ -1971,7 +1976,12 @@ class Table implements AbstractTable {
     return id;
   }
 
-  async auto_update_calc_aggregations(v0: Row, refetch?: boolean) {
+  async auto_update_calc_aggregations(
+    v0: Row,
+    refetch?: boolean,
+    iterations: number = 1
+  ) {
+    if (iterations > 5) return;
     const calc_agg_fields = await Field.find(
       {
         calculated: true,
@@ -1997,7 +2007,17 @@ class Table implements AbstractTable {
         [refTable.pk_name]: val,
       });
       for (const row of rows) {
-        await refTable?.updateRow({}, row[refTable.pk_name]);
+        await refTable?.updateRow(
+          {},
+          row[refTable.pk_name],
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          iterations + 1
+        );
       }
     }
 
@@ -2033,14 +2053,34 @@ class Table implements AbstractTable {
             },
           });
           for (const row of rows)
-            await refTable?.updateRow({}, row[refTable.pk_name]);
+            await refTable?.updateRow(
+              {},
+              row[refTable.pk_name],
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              iterations + 1
+            );
         } else {
           //no through
           const rows = await refTable!.getRows({
             [matching.field]: v[this.pk_name],
           });
           for (const row of rows)
-            await refTable?.updateRow({}, row[refTable.pk_name]);
+            await refTable?.updateRow(
+              {},
+              row[refTable.pk_name],
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              iterations + 1
+            );
         }
       }
     }
