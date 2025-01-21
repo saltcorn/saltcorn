@@ -139,6 +139,9 @@ function valid_js_var_name(s) {
   if (!s) return false;
   return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
 }
+
+const apply_showif_fetching_urls = new Set();
+
 function apply_showif() {
   const isNode = getIsNode();
   $("[data-show-if]").each(function (ix, element) {
@@ -358,6 +361,7 @@ function apply_showif() {
         ...cache,
         [qs]: "fetching",
       });
+      apply_showif_fetching_urls.add(`/api/${dynwhere.table}?${qs}`);
       $.ajax(`/api/${dynwhere.table}?${qs}`)
         .then((resp) => {
           if (resp.success) {
@@ -378,7 +382,10 @@ function apply_showif() {
             });
           }
         })
-        .fail(checkNetworkError);
+        .fail(checkNetworkError)
+        .always(() => {
+          apply_showif_fetching_urls.delete(`/api/${dynwhere.table}?${qs}`);
+        });
     }
   });
   $("[data-filter-table]").each(function (ix, element) {
