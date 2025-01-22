@@ -9,7 +9,7 @@ const {
   removeTarball,
 } = require("./download_utils");
 const { getState } = require("@saltcorn/data/db/state");
-const { rm, rename, cp, readFile } = require("fs").promises;
+const { rm, rename, cp, readFile, readdir } = require("fs").promises;
 const envPaths = require("env-paths");
 const semver = require("semver");
 
