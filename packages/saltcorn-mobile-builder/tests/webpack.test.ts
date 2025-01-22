@@ -25,7 +25,9 @@ describe("webpack build", () => {
     const output = result.output.toString();
     if (result.status !== 0) console.log(output);
     expect(result.status).toBe(0);
-    expect(output.indexOf(" compiled successfully ")).toBeGreaterThan(-1);
+    const index = output.indexOf(" compiled successfully ");
+    if (index < 0) console.log(output);
+    expect(index).toBeGreaterThan(-1);
     for (const expected of [
       bundleDir,
       join(bundleDir, "base_plugin.bundle.js"),
@@ -69,7 +71,9 @@ describe("webpack build", () => {
     const output = result.output.toString();
     if (result.status !== 0) console.log(output);
     expect(result.status).toBe(0);
-    expect(output.indexOf(" compiled successfully ")).toBeGreaterThan(-1);
+    const index = output.indexOf(" compiled successfully ");
+    if (index < 0) console.log(output);
+    expect(index).toBeGreaterThan(-1);
     for (const expected of [
       bundleDir,
       join(bundleDir, "any-bootstrap-theme.bundle.js"),
