@@ -19,6 +19,7 @@ const npmMocks = {
   "env-paths": join(mocksDir, "npm", "env-paths"),
   "fs-extended-attributes": join(mocksDir, "npm", "fs-extended-attributes"),
   tar: join(mocksDir, "npm", "tar"),
+  "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
 };
 
 const saltcornMocks = {
