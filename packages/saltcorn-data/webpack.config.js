@@ -31,6 +31,7 @@ const saltcornMocks = {
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
   "./html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
+  "../migrate": join(mocksDir, "saltcorn", "migrate"),
 };
 
 const dbMocks = {
@@ -101,6 +102,9 @@ module.exports = {
   plugins: [
     new webpack.ProvidePlugin({
       process: "process/browser",
+    }),
+    new webpack.DefinePlugin({
+      "process.env.IGNORE_DYNAMIC_REQUIRE": JSON.stringify("true"),
     }),
   ],
 };

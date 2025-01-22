@@ -1021,7 +1021,9 @@ class State {
               "zlib",
             ].includes(moduleName)
           ) {
-            this.codeNPMmodules[moduleName] = require(moduleName);
+            if (process.env.IGNORE_DYNAMIC_REQUIRE !== "true") {
+              this.codeNPMmodules[moduleName] = require(moduleName);
+            }
           } else {
             const defaultVersion: any = {
               cheerio: "1.0.0-rc.12",
