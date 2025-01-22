@@ -50,7 +50,9 @@ const {
 } = require("@saltcorn/admin-models/models/tenant");
 const { auto_backup_now } = require("@saltcorn/admin-models/models/backup");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
-const { writeFileSync } = require("fs");
+const { writeFileSync, rmdirSync, readFileSync } = require("fs");
+const { pathExistsSync } = require("fs-extra");
+const envPaths = require("env-paths");
 
 const take_snapshot = async () => {
   return await Snapshot.take_if_changed();
@@ -85,6 +87,54 @@ const ensureEnginesCache = async () => {
   if (!cacheScVersion || cacheScVersion !== getState().scVersion) {
     await setConfig("engines_cache", {});
     await setConfig("engines_cache_sc_version", getState().scVersion);
+  }
+};
+
+/**
+ * validate all plugins folders and remove invalid entries
+ * A folder is invalid when it has dependencies but not node_modules directory
+ */
+const ensurePluginsFolder = async () => {
+  const rootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
+  const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
+  const allPluginFolders = new Set();
+  await eachTenant(async () => {
+    const allPlugins = (await Plugin.find()).filter(
+      (p) => !["base", "sbadmin2"].includes(p.name)
+    );
+    for (const plugin of allPlugins) {
+      const tokens =
+        plugin.source === "npm"
+          ? plugin.location.split("/")
+          : plugin.name.split("/");
+      const pluginDir = path.join(
+        rootFolder,
+        plugin.source === "git" ? "git_plugins" : "plugins_folder",
+        ...tokens
+      );
+      allPluginFolders.add(pluginDir);
+    }
+  });
+  for (const folder of allPluginFolders) {
+    try {
+      if (pathExistsSync(folder)) {
+        const packageJson = JSON.parse(
+          readFileSync(path.join(folder, "package.json"))
+        );
+        if (
+          (Object.keys(packageJson.dependencies || {}).some(
+            (d) => !staticDeps.includes(d)
+          ) ||
+            Object.keys(packageJson.devDependencies || {}).some(
+              (d) => !staticDeps.includes(d)
+            )) &&
+          !pathExistsSync(path.join(folder, "node_modules"))
+        )
+          rmdirSync(folder, { recursive: true });
+      }
+    } catch (e) {
+      console.log(`Error checking plugin folder: ${e.message || e}`);
+    }
   }
 };
 
@@ -236,6 +286,7 @@ module.exports =
     if (cluster.isMaster) {
       ensureJwtSecret();
       await ensureEnginesCache();
+      await ensurePluginsFolder();
     }
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");
