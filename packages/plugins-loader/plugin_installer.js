@@ -89,6 +89,7 @@ class PluginInstaller {
   }
 
   async install(force) {
+    getState().log(5, `loading plugin ${this.plugin.name}`);
     await this.ensurePluginsRootFolders();
     if (fixedPlugins.includes(this.plugin.location))
       return { plugin_module: require(this.plugin.location) };
@@ -120,12 +121,26 @@ class PluginInstaller {
     let module = null;
     let loadedWithReload = false;
     try {
-      // try importing it and if it fails, remove and try again
-      // could happen when there is a directory with a valid package.json
-      // but without a valid node modules folder
       module = await this.loadMainFile(pckJSON);
     } catch (e) {
+      if (e.code === "MODULE_NOT_FOUND") {
+        getState().log(5, `corrupt plugin dir: ${this.pluginDir}`);
+        const files = await readdir(this.pluginDir);
+        getState().log(5, `files in plugin dir: ${JSON.stringify(files)}`);
+        if (files.includes("node_modules")) {
+          const nodeModuleFiles = await readdir(
+            join(this.pluginDir, "node_modules")
+          );
+          getState().log(
+            5,
+            `node_modules files: ${JSON.stringify(nodeModuleFiles)}`
+          );
+        } else getState().log(5, `no node_modules in plugin dir`);
+      }
       if (force) {
+        // remove and try again
+        // could happen when there is a directory with a package.json
+        // but without a valid node modules folder
         getState().log(
           2,
           `Error loading plugin ${this.plugin.name}. Removing and trying again.`
@@ -133,12 +148,13 @@ class PluginInstaller {
         await this.remove();
         pckJSON = null;
         await installer();
-      } else
+      } else {
         getState().log(
           2,
           `Error loading plugin ${this.plugin.name}. Trying again with reload flag. ` +
             "A server restart may be required."
         );
+      }
 
       module = await this.loadMainFile(pckJSON, true);
       loadedWithReload = true;
@@ -167,6 +183,7 @@ class PluginInstaller {
           (force && !(await this.versionIsInstalled(pckJSON))) ||
           !folderExists
         ) {
+          getState().log(6, "downloading from npm");
           wasLoaded = await downloadFromNpm(
             this.plugin,
             this.rootFolder,
@@ -177,12 +194,14 @@ class PluginInstaller {
         break;
       case "github":
         if (force || !folderExists) {
+          getState().log(6, "downloading from github");
           await downloadFromGithub(this.plugin, this.rootFolder, this.tempDir);
           wasLoaded = true;
         }
         break;
       case "local":
         if (force || !folderExists) {
+          getState().log(6, "copying from local");
           await copy(this.plugin.location, this.tempDir);
           // if tempdir has a node_modules folder, remove it
           if (await pathExists(join(this.tempDir, "node_modules")))
@@ -192,6 +211,7 @@ class PluginInstaller {
         break;
       case "git":
         if (force || !folderExists) {
+          getState().log(6, "downloading from git");
           await gitPullOrClone(this.plugin, this.tempDir);
           this.pckJsonPath = join(this.pluginDir, "package.json");
           wasLoaded = true;
