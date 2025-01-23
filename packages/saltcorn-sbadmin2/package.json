@@ -10,9 +10,7 @@
   },
   "dependencies": {
     "@saltcorn/data": "1.1.1-beta.6",
-    "@saltcorn/markup": "1.1.1-beta.6",
-    "startbootstrap-sb-admin-2-bs5": "4.1.5",
-    "nunito-fontface": "0.7.3"
+    "@saltcorn/markup": "1.1.1-beta.6"
   },
   "author": "Tom Nielsen",
   "license": "MIT",

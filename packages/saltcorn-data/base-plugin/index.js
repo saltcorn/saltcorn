@@ -64,7 +64,4 @@ module.exports = {
   /** @type {base-plugin/fieldviews} */
   fieldviews,
   /** @type {object} */
-  serve_dependencies: {
-    blockly: require.resolve("blockly/package.json"),
-  },
 };

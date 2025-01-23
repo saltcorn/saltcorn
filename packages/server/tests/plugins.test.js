@@ -92,7 +92,7 @@ describe("Plugin Endpoints", () => {
       .expect(toInclude("testfilecontents"));
     await request(app)
       .get(
-        "/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.4/css/sb-admin-2.min.css"
+        "/plugins/public/sbadmin2@9.9.9/sb-admin-2.min.css"
       )
       .expect(toInclude("Start Bootstrap"));
 
@@ -102,7 +102,7 @@ describe("Plugin Endpoints", () => {
       .expect(toRedirect("/plugins"));
     await request(app)
       .get(
-        "/plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5-beta.4/css/sb-admin-2.min.css"
+        "/plugins/public/sbadmin2@9.9.9/sb-admin-2.min.css"
       )
       .expect(toInclude("Start Bootstrap"));
   });

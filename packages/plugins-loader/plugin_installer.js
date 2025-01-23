@@ -12,6 +12,7 @@ const { getState } = require("@saltcorn/data/db/state");
 const { rm, rename, cp, readFile, readdir } = require("fs").promises;
 const envPaths = require("env-paths");
 const semver = require("semver");
+const path = require("path");
 
 const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
@@ -92,7 +93,10 @@ class PluginInstaller {
     getState().log(5, `loading plugin ${this.plugin.name}`);
     await this.ensurePluginsRootFolders();
     if (fixedPlugins.includes(this.plugin.location))
-      return { plugin_module: require(this.plugin.location) };
+      return {
+        location: path.join(require.resolve(this.plugin.location), ".."),
+        plugin_module: require(this.plugin.location),
+      };
     const msgs = [];
     let pckJSON = await readPackageJson(this.pckJsonPath);
     const installer = async () => {
