@@ -105,11 +105,10 @@ export async function copyPublicDirs(buildDir: string) {
         if (script) copyHeaderToApp(location, script, wwwDir);
         if (css) copyHeaderToApp(location, css, wwwDir);
       }
-      if (k !== "sbadmin2")
-        copyAllPublicFiles(
-          location,
-          join(wwwDir, "sc_plugins", "public", versionedName)
-        );
+      copyAllPublicFiles(
+        location,
+        join(wwwDir, "sc_plugins", "public", versionedName)
+      );
 
       if (pluginCfgs[k] && pluginCfgs[k].alt_css_file) {
         const altCssFile = await File.findOne(pluginCfgs[k].alt_css_file);

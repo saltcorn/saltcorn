@@ -381,13 +381,13 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="/plugins/public/sbadmin2${verstring}/fontawesome-free/css/all.min.css">
-    <link href="/plugins/public/sbadmin2${verstring}/nunito/css/nunito/nunito-fontface.css" rel="stylesheet">
+    <link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/fontawesome-free/css/all.min.css">
+    <link href="${linkPrefix()}/public/sbadmin2${verstring}/nunito/css/nunito/nunito-fontface.css" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="/plugins/public/sbadmin2${verstring}/sb-admin-2.min.css">
+    <link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.css">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
@@ -396,9 +396,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <script src="${safeSlash()}static_assets/${
     db.connectObj.version_tag
   }/jquery-3.6.0.min.js"></script>
-            <script src="/plugins/public/sbadmin2${verstring}/bootstrap.bundle.min.js"></script>
-            <script src="/plugins/public/sbadmin2${verstring}/jquery.easing.min.js"></script>
-            <script src="/plugins/public/sbadmin2${verstring}/sb-admin-2.min.js"></script>
+            <script src="${linkPrefix()}/public/sbadmin2${verstring}/bootstrap.bundle.min.js"></script>
+            <script src="${linkPrefix()}/public/sbadmin2${verstring}/jquery.easing.min.js"></script>
+            <script src="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.js"></script>
     ${headersInBody(headers)}
     </body>
   </html>`;

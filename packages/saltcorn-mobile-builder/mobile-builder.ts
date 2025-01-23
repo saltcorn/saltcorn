@@ -5,7 +5,6 @@ import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
 import {
   buildTablesFile,
-  copySbadmin2Deps,
   copySiteLogo,
   copyServerFiles,
   copyTranslationFiles,
@@ -213,7 +212,6 @@ export class MobileBuilder {
     try {
       if (this.appIcon) prepAppIcon(this.buildDir, this.appIcon);
       copyServerFiles(this.buildDir);
-      copySbadmin2Deps(this.buildDir);
       await copySiteLogo(this.buildDir);
       copyTranslationFiles(this.buildDir);
       writeCfgFile({
