@@ -731,6 +731,7 @@ const getWorkflowStepForm = async (
             },
           };
         if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        actionConfigFields.push(cfgFld)
       }
     } catch {}
   }
