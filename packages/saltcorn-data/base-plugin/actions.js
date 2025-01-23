@@ -159,6 +159,7 @@ const run_code = async ({
     View,
     EventLog,
     Buffer,
+    Trigger,
     Notification,
     setTimeout,
     interpolate,
