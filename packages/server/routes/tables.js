@@ -920,7 +920,9 @@ router.get(
           title: req.__("Triggers on table"),
           contents:
             (triggers.length
-              ? await getTriggerList(triggers, req)
+              ? await getTriggerList(triggers, req, {
+                  on_done_redirect: encodeURIComponent(`table/${table.name}`),
+                })
               : p("Triggers run actions in response to events on this table")) +
             a(
               {

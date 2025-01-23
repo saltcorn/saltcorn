@@ -1213,7 +1213,12 @@ router.post(
     });
     await trigger.delete();
     req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
-    res.redirect(`/actions/`);
+    let redirectTarget =
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : "/actions/";
+    res.redirect(redirectTarget);
   })
 );
 
