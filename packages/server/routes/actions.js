@@ -524,7 +524,7 @@ function genWorkflowDiagram(steps) {
       );
     if (stepNames.includes(step.next_step)) {
       linkLines.push(
-        `  ${step.mmname}-- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> ---${step.mmnext}`
+        `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmnext}`
       );
     } else if (step.next_step) {
       let found = false;
