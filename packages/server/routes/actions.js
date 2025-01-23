@@ -1565,7 +1565,7 @@ router.get(
           key: (run) => {
             switch (run.status) {
               case "Running":
-                return run.current_step;
+                return run.current_step_name;
               case "Error":
                 return run.error;
               case "Waiting":
@@ -1573,9 +1573,9 @@ router.get(
                   return a(
                     { href: `/actions/fill-workflow-form/${run.id}` },
                     run.wait_info.output ? "Show " : "Fill ",
-                    run.current_step
+                    run.current_step_name
                   );
-                return run.current_step;
+                return run.current_step_name;
               default:
                 return "";
             }
@@ -1796,7 +1796,7 @@ router.get(
     const trigger = await Trigger.findOne({ id: run.trigger_id });
     const step = await WorkflowStep.findOne({
       trigger_id: trigger.id,
-      name: run.current_step,
+      name: run.current_step_name,
     });
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req);
@@ -1824,7 +1824,7 @@ router.post(
     const trigger = await Trigger.findOne({ id: run.trigger_id });
     const step = await WorkflowStep.findOne({
       trigger_id: trigger.id,
-      name: run.current_step,
+      name: run.current_step_name,
     });
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req);
