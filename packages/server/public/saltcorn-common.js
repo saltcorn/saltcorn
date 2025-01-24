@@ -987,9 +987,11 @@ function initialize_page() {
           `<form method="post" action="/field/save-click-edit" onsubmit="inline_ajax_submit_with_fielddata(event, '${opts}')"        
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="hidden" name="_fielddata" value="${fielddata}">
+      <div class="input-group">
       ${resp}
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
       <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      </div>
       </form>`
         );
       });
