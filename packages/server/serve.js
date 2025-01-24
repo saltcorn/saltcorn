@@ -99,20 +99,24 @@ const ensurePluginsFolder = async () => {
   const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
   const allPluginFolders = new Set();
   await eachTenant(async () => {
-    const allPlugins = (await Plugin.find()).filter(
-      (p) => !["base", "sbadmin2"].includes(p.name)
-    );
-    for (const plugin of allPlugins) {
-      const tokens =
-        plugin.source === "npm"
-          ? plugin.location.split("/")
-          : plugin.name.split("/");
-      const pluginDir = path.join(
-        rootFolder,
-        plugin.source === "git" ? "git_plugins" : "plugins_folder",
-        ...tokens
+    try {
+      const allPlugins = (await Plugin.find()).filter(
+        (p) => !["base", "sbadmin2"].includes(p.name)
       );
-      allPluginFolders.add(pluginDir);
+      for (const plugin of allPlugins) {
+        const tokens =
+          plugin.source === "npm"
+            ? plugin.location.split("/")
+            : plugin.name.split("/");
+        const pluginDir = path.join(
+          rootFolder,
+          plugin.source === "git" ? "git_plugins" : "plugins_folder",
+          ...tokens
+        );
+        allPluginFolders.add(pluginDir);
+      }
+    } catch {
+      //ignore
     }
   });
   for (const folder of allPluginFolders) {
