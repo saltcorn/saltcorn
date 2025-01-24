@@ -36,7 +36,7 @@ jobs:
           PGUSER: postgres
           PGDATABASE: saltcorn_test
           PGPASSWORD: postgres
-      - run: npm install --legacy-peer-deps
+      - run: npm install --legacy-peer-deps --omit=dev
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
           SKIP_DOCKER_IMAGE_INSTALL: "true"
