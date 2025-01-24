@@ -307,17 +307,19 @@ router.get(
       sortDesc,
       approximate,
       dereference,
-      ...req_query
+      tabulator_pagination_format,
+      ...req_query0
     } = req.query;
-    if (limit && offset && versioncount === "on") {
-      getState().log(
-        3,
-        `API get ${tableName} Cannot use versioncount and limit with offset simultaneously`
-      );
-      return res.status(400).send({
-        error: "Cannot use versioncount and limit with offset simultaneously",
-      });
+
+    let req_query = req_query0;
+    let tabulator_size, tabulator_page;
+    if (tabulator_pagination_format) {
+      const { page, size, ...rq } = req_query0;
+      req_query = rq;
+      tabulator_page = page;
+      tabulator_size = size;
     }
+
     if (typeof limit !== "undefined")
       if (isNaN(limit) || !validateNumberMin(limit, 1)) {
         getState().log(3, `API get ${tableName} Invalid limit parameter`);
@@ -344,6 +346,7 @@ router.get(
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
+    const orderByField = sortBy && table.getField(sortBy);
 
     await passport.authenticate(
       ["api-bearer", "jwt"],
@@ -353,9 +356,16 @@ router.get(
           let rows;
           if (versioncount === "on") {
             const joinOpts = {
-              orderBy: "id",
               forUser: req.user || user || { role_id: 100 },
               forPublic: !(req.user || user),
+              limit: tabulator_pagination_format
+                ? +tabulator_size
+                : limit && +limit,
+              offset: tabulator_pagination_format
+                ? +tabulator_size * (+tabulator_page - 1)
+                : offset && +offset,
+              orderDesc: sortDesc && sortDesc !== "false",
+              orderBy: orderByField?.name || "id",
               aggregations: {
                 _versions: {
                   table: table.name + "__history",
@@ -390,7 +400,6 @@ router.get(
                   target: field?.attributes?.summary_field,
                 };
             });
-            const orderByField = sortBy && table.getField(sortBy);
             rows = await table.getJoinedRows({
               where: qstate,
               joinFields,
@@ -402,7 +411,12 @@ router.get(
               forUser: req.user || user,
             });
           }
-          res.json({ success: rows.map(limitFields(fields)) });
+          if (tabulator_pagination_format) {
+            res.json({
+              last_page: Math.ceil((await table.countRows()) / +tabulator_size),
+              data: rows.map(limitFields(fields)),
+            });
+          } else res.json({ success: rows.map(limitFields(fields)) });
         } else {
           getState().log(3, `API get ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });

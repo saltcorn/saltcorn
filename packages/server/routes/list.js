@@ -402,25 +402,25 @@ router.get(
                 })
               })   
               window.tabulator_table = new Tabulator("#jsGrid", {
-                  ajaxURL:"/api/${encodeURIComponent(table.name)}${
-                  table.versioned ? "?versioncount=on" : ""
+                  ajaxURL:"/api/${encodeURIComponent(
+                    table.name
+                  )}?tabulator_pagination_format=true${
+                  table.versioned ? "&versioncount=on" : ""
                 }",                   
                   layout:"fitColumns", 
                   columns,
                   height:"100%",
                   pagination:true,
-                  paginationSize:20,
+                  paginationMode:"remote",
+                  paginationSize:10,
                   clipboard:true,
                   persistence:true, 
                   persistenceID:"table_tab_${table.name}",
                   movableColumns: true,
+                  ajaxContentType:"json",
                   initialSort:[
                     {column:"id", dir:"asc"},
-                  ],
-                  ajaxResponse:function(url, params, response){                    
-            
-                    return response.success; //return the tableData property of a response json object
-                  },
+                  ],                 
               });
               window.tabulator_table.on("cellEdited", function(cell){
                 const row = cell.getRow().getData()
