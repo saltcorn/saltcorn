@@ -418,6 +418,7 @@ router.get(
                   persistenceID:"table_tab_${table.name}",
                   movableColumns: true,
                   ajaxContentType:"json",
+                  sortMode:"remote",
                   initialSort:[
                     {column:"id", dir:"asc"},
                   ],                 

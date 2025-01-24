@@ -312,13 +312,16 @@ router.get(
     } = req.query;
 
     let req_query = req_query0;
-    let tabulator_size, tabulator_page;
+    let tabulator_size, tabulator_page, tabulator_sort, tabulator_dir;
     if (tabulator_pagination_format) {
-      const { page, size, ...rq } = req_query0;
+      const { page, size, sort, ...rq } = req_query0;
       req_query = rq;
       tabulator_page = page;
       tabulator_size = size;
+      tabulator_sort = sort?.[0]?.field;
+      tabulator_dir = sort?.[0]?.dir;
     }
+    console.log(req_query0);
 
     if (typeof limit !== "undefined")
       if (isNaN(limit) || !validateNumberMin(limit, 1)) {
@@ -346,7 +349,8 @@ router.get(
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
-    const orderByField = sortBy && table.getField(sortBy);
+    const orderByField =
+      (sortBy || tabulator_sort) && table.getField(sortBy || tabulator_sort);
 
     await passport.authenticate(
       ["api-bearer", "jwt"],
@@ -364,7 +368,8 @@ router.get(
               offset: tabulator_pagination_format
                 ? +tabulator_size * (+tabulator_page - 1)
                 : offset && +offset,
-              orderDesc: sortDesc && sortDesc !== "false",
+              orderDesc:
+                (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
               orderBy: orderByField?.name || "id",
               aggregations: {
                 _versions: {
