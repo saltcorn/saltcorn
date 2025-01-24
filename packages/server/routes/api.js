@@ -321,8 +321,6 @@ router.get(
       tabulator_sort = sort?.[0]?.field;
       tabulator_dir = sort?.[0]?.dir;
     }
-    console.log(req_query0);
-
     if (typeof limit !== "undefined")
       if (isNaN(limit) || !validateNumberMin(limit, 1)) {
         getState().log(3, `API get ${tableName} Invalid limit parameter`);
