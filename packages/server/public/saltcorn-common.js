@@ -965,6 +965,31 @@ function initialize_page() {
     var current =
       $(this).attr("data-inline-edit-current") ||
       $(this).children("span.current").html();
+
+    let fielddata = $(this).attr("data-inline-edit-fielddata");
+    if (fielddata) {
+      //fetch edit
+      $.ajax(`/field/edit-get-fieldview`, {
+        type: "POST",
+        headers: {
+          "CSRF-Token": _sc_globalCsrf,
+        },
+        contentType: "application/json",
+        data: decodeURIComponent(fielddata),
+      }).then((resp) => {
+        $(this).replaceWith(
+          `<form method="post" action="${url}" ${
+            ajax ? `onsubmit="inline_ajax_submit(event)"` : ""
+          }>
+      <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
+      ${resp}
+      <button type="submit" class="btn btn-sm btn-primary">OK</button>
+      <button onclick="cancel_inline_edit(event)" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      </form>`
+        );
+      });
+      return;
+    }
     var key = $(this).attr("data-inline-edit-field") || "value";
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     var type = $(this).attr("data-inline-edit-type");

@@ -817,19 +817,19 @@ const render = (
       )
         return div(
           {
-            "data-inline-edit-field": field_name,
+            "data-inline-edit-fielddata": encodeURIComponent(
+              JSON.stringify({
+                field_name,
+                table_name: table.name,
+                pk: row[table.pk_name],
+                fieldview,
+                configuration,
+              })
+            ),
             "data-inline-edit-ajax": "true",
             "data-inline-edit-dest-url": `/api/${table.name}/${
               row[table.pk_name]
-            }`,
-            "data-inline-edit-type": field?.type?.name,
-            ...(field?.type?.name === "Float" &&
-            field.attributes?.decimal_places
-              ? {
-                  "data-inline-edit-decimal-places":
-                    field.attributes.decimal_places,
-                }
-              : {}),
+            }`,            
             class: !isWeb(req) ? "mobile-data-inline-edit" : "",
           },
           fvrun
@@ -851,7 +851,7 @@ const render = (
         const [ontable, ref] = relation.split(".");
         const key =
           jf.targetNm ||
-          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;      
+          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
         value = row[validSqlId(key)];
       } else {
         value = row[join_field.split(".").join("_")];

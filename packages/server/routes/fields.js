@@ -1422,3 +1422,33 @@ router.post(
     res.send(mkFormContentNoLayout(form));
   })
 );
+
+router.post(
+  "/edit-get-fieldview",
+  error_catcher(async (req, res) => {
+    const { field_name, table_name, pk, fieldview, configuration } = req.body;
+    const table = Table.findOne({ name: table_name });
+    const row = await table.getRow({ [table.pk_name]: pk });
+    const field = table.getField(field_name);
+    if (field.is_fkey) {
+      res.send("");
+    } else {
+      //TODO: json subfield is special
+      const fieldviews = field.type.fieldviews;
+      const [fvNm, fv] = Object.entries(fieldviews).find(([k, v]) => v.isEdit);
+      res.send(
+        fv.run(
+          field_name,
+          row[field_name],
+          {
+            ...field.attributes,
+            ...configuration,
+          },
+          "",
+          false,
+          field
+        )
+      );      
+    }
+  })
+);
