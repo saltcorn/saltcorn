@@ -1445,6 +1445,8 @@ router.post(
         req.user
       );
       fv = getState().keyFieldviews.select;
+    } else if (fieldview === "subfield" && field.type?.name === "JSON") {
+      fv = field.type.fieldviews.edit_subfield;
     } else {
       //TODO: json subfield is special
       const fieldviews = field.type.fieldviews;
@@ -1472,15 +1474,19 @@ router.post(
     const fielddata = JSON.parse(decodeURIComponent(req.body._fielddata));
     const { field_name, table_name, pk, fieldview, configuration } = fielddata;
     const table = Table.findOne({ name: table_name });
-    await table.updateRow({ [field_name]: req.body[field_name] }, pk, req.user);
-    let fv;
     const field = table.getField(field_name);
+    const val = field.type?.read
+      ? field.type?.read(req.body[field_name])
+      : req.body[field_name];
+    await table.updateRow({ [field_name]: val }, pk, req.user);
+    let fv;
     if (field.is_fkey) {
       fv = { run: (v) => `${v}` };
     } else {
       const fieldviews = field.type.fieldviews;
 
-      let fv = fieldviews[fieldview];
+      fv = fieldviews[fieldview];
+
       if (!fv) {
         const fv1 = Object.values(fieldviews).find(
           (v) => !v.isEdit && !v.isFilter
@@ -1488,6 +1494,7 @@ router.post(
         fv = fv1;
       }
     }
+
     res.send(
       div(
         {
@@ -1496,7 +1503,7 @@ router.post(
           "data-inline-edit-dest-url": `/api/${table.name}/${pk}`,
           class: !isWeb(req) ? "mobile-data-inline-edit" : "",
         },
-        fv.run(req.body[field_name], req, {
+        fv.run(val, req, {
           ...field.attributes,
           ...configuration,
         })
@@ -1507,7 +1514,6 @@ router.post(
 
 /*todo
 
-json subfield
 joinfields
 
 */
