@@ -279,14 +279,55 @@ router.get(
  * @function
  * @memberof module:routes/api~apiRouter
  */
-// todo add paging
+
+function validateNumberMin(value, min) {
+  if (typeof value !== "number") {
+    // return false; //throw new TypeError('Value is not a number');
+    value = strictParseInt(value);
+  }
+
+  if (!Number.isSafeInteger(value)) {
+    return false; //throw new RangeError('Value is outside the valid range for an integer');
+  }
+  if (value < min) return false;
+  return true;
+}
+
 router.get(
   "/:tableName/",
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     let { tableName } = req.params;
-    const { fields, versioncount, approximate, dereference, ...req_query } =
-      req.query;
+    const {
+      fields,
+      versioncount,
+      limit,
+      offset,
+      sortBy,
+      sortDesc,
+      approximate,
+      dereference,
+      ...req_query
+    } = req.query;
+    if (limit && offset && versioncount === "on") {
+      getState().log(
+        3,
+        `API get ${tableName} Cannot use versioncount and limit with offset simultaneously`
+      );
+      return res.status(400).send({
+        error: "Cannot use versioncount and limit with offset simultaneously",
+      });
+    }
+    if (typeof limit !== "undefined")
+      if (isNaN(limit) || !validateNumberMin(limit, 1)) {
+        getState().log(3, `API get ${tableName} Invalid limit parameter`);
+        return res.status(400).send({ error: "Invalid limit parameter" });
+      }
+    if (typeof offset !== "undefined")
+      if (isNaN(offset) || !validateNumberMin(offset, 1)) {
+        getState().log(3, `API get ${tableName} Invalid offset parameter`);
+        return res.status(400).send({ error: "Invalid offset parameter" });
+      }
     const table = Table.findOne(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
@@ -349,9 +390,14 @@ router.get(
                   target: field?.attributes?.summary_field,
                 };
             });
+            const orderByField = sortBy && table.getField(sortBy);
             rows = await table.getJoinedRows({
               where: qstate,
               joinFields,
+              limit: limit,
+              offset: offset,
+              orderDesc: sortDesc && sortDesc !== "false",
+              orderBy: orderByField?.name || undefined,
               forPublic: !(req.user || user),
               forUser: req.user || user,
             });
