@@ -2,6 +2,9 @@
 
 ## 1.1.1 - In beta
 
+* Data in the admin's data edit grid is now loaded by page. This makes it
+  possible to work with much larger datasets.
+
 * You can now permit to non-admin (role ID > 1) users to edit or inspect tables, or 
   edit views, pages or triggers. In the permissions tab of the Users and security
   settings, minimum roles can be set for these capabilities. The appropriate
@@ -48,6 +51,7 @@
 
 ### Fixes
 
+* Increase plugin install reliability
 * fix workflows on SQLite
 * fix query string build on check_state_field (#2948). Author: St0rml
 * multiple fixes for the Capacitor port
