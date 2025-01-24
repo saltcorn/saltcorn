@@ -1472,16 +1472,25 @@ router.post(
   "/save-click-edit",
   error_catcher(async (req, res) => {
     const fielddata = JSON.parse(decodeURIComponent(req.body._fielddata));
-    const { field_name, table_name, pk, fieldview, configuration } = fielddata;
+    const { field_name, table_name, pk, fieldview, configuration, join_field } =
+      fielddata;
     const table = Table.findOne({ name: table_name });
     const field = table.getField(field_name);
-    const val = field.type?.read
+    let val = field.type?.read
       ? field.type?.read(req.body[field_name])
       : req.body[field_name];
     await table.updateRow({ [field_name]: val }, pk, req.user);
     let fv;
     if (field.is_fkey) {
-      fv = { run: (v) => `${v}` };
+      if (join_field) {
+        const refTable = Table.findOne({ name: field.reftable_name });
+        const refRow = await refTable.getRow({ [refTable.pk_name]: val });
+        val = refRow[join_field];
+        const targetField = refTable.getField(join_field);
+        const fieldviews = targetField.type.fieldviews;
+
+        fv = fieldviews[fieldview];
+      } else fv = { run: (v) => `${v}` };
     } else {
       const fieldviews = field.type.fieldviews;
 
@@ -1515,5 +1524,6 @@ router.post(
 /*todo
 
 joinfields
+check list
 
 */
