@@ -394,8 +394,8 @@ router.get(
             rows = await table.getJoinedRows({
               where: qstate,
               joinFields,
-              limit: limit,
-              offset: offset,
+              limit: limit && +limit,
+              offset: offset && +offset,
               orderDesc: sortDesc && sortDesc !== "false",
               orderBy: orderByField?.name || undefined,
               forPublic: !(req.user || user),
