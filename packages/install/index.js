@@ -45,6 +45,7 @@ if (process.argv.includes("--help")) {
       "  -e, --expert\tExpert mode, more abilities for configuration (Not compatible with -y)\n" +
       "  -d, --dryrun\tDry Run mode, displays the operations that would be performed using the specified command without actually running them\n" +
       "  -s  --skip-chromium\n\t\tSkip the Chromium installation\n" +
+      "  -n  --next\n\t\tInstall the next (development) version of Saltcorn\n" +
       "  -sd --skip-docker\n\t\tSkip the Docker and saltcorn/capacitor-builder installation\n"
   );
   process.exit(0);
@@ -54,6 +55,8 @@ const verbose =
   process.argv.includes("-v") || process.argv.includes("--verbose");
 const expert = process.argv.includes("-e") || process.argv.includes("--expert");
 const dryRun = process.argv.includes("-d") || process.argv.includes("--dryrun");
+const nextNpmTag =
+  process.argv.includes("-n") || process.argv.includes("--next");
 const skipChromium =
   process.argv.includes("-s") || process.argv.includes("--skip-chromium");
 const skipDocker =
@@ -481,7 +484,7 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
       "install",
       "-g",
       "--legacy-peer-deps",
-      "@saltcorn/cli@latest",
+      `@saltcorn/cli@${nextNpmTag ? "next" : "latest"}`,
       "--omit=dev",
     ],
     false,
