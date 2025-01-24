@@ -1433,26 +1433,36 @@ router.post(
       { forUser: req.user, forPublic: !req.user }
     );
     const field = table.getField(field_name);
+    let fv;
     if (field.is_fkey) {
-      res.send("");
+      await field.fill_fkey_options(
+        false,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        row[field_name],
+        req.user
+      );
+      fv = getState().keyFieldviews.select;
     } else {
       //TODO: json subfield is special
       const fieldviews = field.type.fieldviews;
-      const fv = Object.values(fieldviews).find((v) => v.isEdit);
-      res.send(
-        fv.run(
-          field_name,
-          row[field_name],
-          {
-            ...field.attributes,
-            ...configuration,
-          },
-          "",
-          false,
-          field
-        )
-      );
+      fv = Object.values(fieldviews).find((v) => v.isEdit);
     }
+    res.send(
+      fv.run(
+        field_name,
+        row[field_name],
+        {
+          ...field.attributes,
+          ...configuration,
+        },
+        "",
+        false,
+        field
+      )
+    );
   })
 );
 
@@ -1463,15 +1473,20 @@ router.post(
     const { field_name, table_name, pk, fieldview, configuration } = fielddata;
     const table = Table.findOne({ name: table_name });
     await table.updateRow({ [field_name]: req.body[field_name] }, pk, req.user);
+    let fv;
     const field = table.getField(field_name);
-    const fieldviews = field.type.fieldviews;
+    if (field.is_fkey) {
+      fv = { run: (v) => `${v}` };
+    } else {
+      const fieldviews = field.type.fieldviews;
 
-    let fv = fieldviews[fieldview];
-    if (!fv) {
-      const fv1 = Object.values(fieldviews).find(
-        (v) => !v.isEdit && !v.isFilter
-      );
-      fv = fv1;
+      let fv = fieldviews[fieldview];
+      if (!fv) {
+        const fv1 = Object.values(fieldviews).find(
+          (v) => !v.isEdit && !v.isFilter
+        );
+        fv = fv1;
+      }
     }
     res.send(
       div(
@@ -1492,7 +1507,6 @@ router.post(
 
 /*todo
 
-fkey fields
 json subfield
 joinfields
 
