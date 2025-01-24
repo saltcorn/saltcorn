@@ -1574,7 +1574,7 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
     }
     const child = spawn(
       "npm",
-      ["install", "-g", `@saltcorn/cli@${version}`, "--unsafe"],
+      ["install", "-g", `@saltcorn/cli@${version}`, "--omit=dev"],
       {
         stdio: ["ignore", "pipe", "pipe"],
       }

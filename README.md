@@ -21,7 +21,7 @@ This service is free but there are no guarantees about the security or availabil
 
 #### Desktop
 
-To try out Saltcorn on your desktop, make sure you have node.js 16+ (18+ preferred) and npm installed. Then run these commands on the command line:
+To try out Saltcorn on your desktop, make sure you have node.js 18+ and npm installed. Then run these commands on the command line:
 
 ```
 npm config set prefix ~/.local
@@ -94,7 +94,7 @@ wget -qO - https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
 
-You can also use Node 18 or 20.
+You can also use Node 20 or 22.
 
 ### Install Saltcorn
 
