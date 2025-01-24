@@ -1183,32 +1183,19 @@ const get_viewable_fields = (
               if (role <= table.min_role_write || table.is_owner(req.user, row))
                 return div(
                   {
-                    "data-inline-edit-field": doSetKey
-                      ? `${column.field_name}.${column_key}`
-                      : column.field_name,
+                    "data-inline-edit-fielddata": encodeURIComponent(
+                      JSON.stringify({
+                        field_name: f.name,
+                        table_name: table.name,
+                        pk: row[table.pk_name],
+                        fieldview: column.fieldview,
+                        configuration: column?.configuration,
+                      })
+                    ),
                     "data-inline-edit-ajax": "true",
-                    "data-inline-edit-key": doSetKey
-                      ? `${column.field_name}.${column_key}`
-                      : undefined,
-                    "data-inline-edit-schema": schema
-                      ? encodeURIComponent(JSON.stringify(schema))
-                      : undefined,
-                    "data-inline-edit-current": doSetKey
-                      ? row[f.name]?.[column_key]
-                      : f.type?.name == "Bool"
-                      ? "" + row[f.name]
-                      : undefined,
                     "data-inline-edit-dest-url": `/api/${table.name}/${
                       row[table.pk_name]
                     }`,
-                    ...(f?.type?.name === "Float" &&
-                    f.attributes?.decimal_places
-                      ? {
-                          "data-inline-edit-decimal-places":
-                            f.attributes.decimal_places,
-                        }
-                      : {}),
-                    "data-inline-edit-type": f?.type?.name,
                   },
                   span({ class: "current" }, oldkey(row)),
                   i({ class: "editicon fas fa-edit ms-1" })
