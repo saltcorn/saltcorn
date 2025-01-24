@@ -1428,14 +1428,17 @@ router.post(
   error_catcher(async (req, res) => {
     const { field_name, table_name, pk, fieldview, configuration } = req.body;
     const table = Table.findOne({ name: table_name });
-    const row = await table.getRow({ [table.pk_name]: pk });
+    const row = await table.getRow(
+      { [table.pk_name]: pk },
+      { forUser: req.user, forPublic: !req.user }
+    );
     const field = table.getField(field_name);
     if (field.is_fkey) {
       res.send("");
     } else {
       //TODO: json subfield is special
       const fieldviews = field.type.fieldviews;
-      const [fvNm, fv] = Object.entries(fieldviews).find(([k, v]) => v.isEdit);
+      const fv = Object.values(fieldviews).find((v) => v.isEdit);
       res.send(
         fv.run(
           field_name,
@@ -1448,7 +1451,33 @@ router.post(
           false,
           field
         )
-      );      
+      );
     }
+  })
+);
+
+router.post(
+  "/save-click-edit",
+  error_catcher(async (req, res) => {
+    const fielddata = JSON.parse(decodeURIComponent(req.body._fielddata));
+    const { field_name, table_name, pk, fieldview, configuration } = fielddata;
+    const table = Table.findOne({ name: table_name });
+    await table.updateRow({ [field_name]: req.body[field_name] }, pk, req.user);
+    const field = table.getField(field_name);
+    const fieldviews = field.type.fieldviews;
+
+    let fv = fieldviews[fieldview];
+    if (!fv) {
+      const fv1 = Object.values(fieldviews).find(
+        (v) => !v.isEdit && !v.isFilter
+      );
+      fv = fv1;
+    }
+    res.send(
+      fv.run(req.body[field_name], req, {
+        ...field.attributes,
+        ...configuration,
+      })
+    );
   })
 );
