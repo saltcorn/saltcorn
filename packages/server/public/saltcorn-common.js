@@ -965,6 +965,38 @@ function initialize_page() {
     var current =
       $(this).attr("data-inline-edit-current") ||
       $(this).children("span.current").html();
+    const resetHtml = this.outerHTML;
+
+    let fielddata = $(this).attr("data-inline-edit-fielddata");
+    if (fielddata) {
+      //fetch edit
+      $.ajax(`/field/edit-get-fieldview`, {
+        type: "POST",
+        headers: {
+          "CSRF-Token": _sc_globalCsrf,
+        },
+        contentType: "application/json",
+        data: decodeURIComponent(fielddata),
+      }).then((resp) => {
+        const opts = encodeURIComponent(
+          JSON.stringify({
+            resetHtml,
+          })
+        );
+        $(this).replaceWith(
+          `<form method="post" action="/field/save-click-edit" onsubmit="inline_ajax_submit_with_fielddata(event, '${opts}')"        
+      <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
+      <input type="hidden" name="_fielddata" value="${fielddata}">
+      <div class="input-group">
+      ${resp}
+      <button type="submit" class="btn btn-sm btn-primary">OK</button>
+      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      </div>
+      </form>`
+        );
+      });
+      return;
+    }
     var key = $(this).attr("data-inline-edit-field") || "value";
     var ajax = !!$(this).attr("data-inline-edit-ajax");
     var type = $(this).attr("data-inline-edit-type");
@@ -984,7 +1016,6 @@ function initialize_page() {
       current = current === "true";
     }
     var is_key = type?.startsWith("Key:");
-    const resetHtml = this.outerHTML;
     const opts = encodeURIComponent(
       JSON.stringify({
         url,
@@ -1265,6 +1296,39 @@ function inline_submit_success(e, form, opts) {
   </div>`);
     initialize_page();
   } else location.reload();
+}
+
+function inline_ajax_submit_with_fielddata(e, opts1) {
+  var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
+  e.preventDefault();
+
+  var form = $(e.target).closest("form");
+  var form_data = form.serialize();
+  var url = form.attr("action");
+  if (opts.type === "Bool" && !form_data.includes(`${opts.key}=on`)) {
+    form_data += `&${opts.key}=off`;
+  }
+  $.ajax(url, {
+    type: "POST",
+    headers: {
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    data: form_data,
+    success: function (res) {
+      var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
+      var form = $(e.target).closest("form");
+      form.replaceWith(
+        res
+      );
+      initialize_page();
+    },
+    error: function (e) {
+      if (!checkNetworkError(e))
+        ajax_done(
+          e.responseJSON || { error: "Unknown error: " + e.responseText }
+        );
+    },
+  });
 }
 
 function inline_ajax_submit(e, opts1) {

@@ -37,8 +37,8 @@ const {
 } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
-const { applyAsync } = require("@saltcorn/data/utils");
-const { text } = require("@saltcorn/markup/tags");
+const { applyAsync, isWeb } = require("@saltcorn/data/utils");
+const { text, div } = require("@saltcorn/markup/tags");
 const { mkFormContentNoLayout } = require("@saltcorn/markup/form");
 
 /**
@@ -1420,5 +1420,103 @@ router.post(
     if (_columndef && _columndef !== "undefined")
       form.values = JSON.parse(_columndef);
     res.send(mkFormContentNoLayout(form));
+  })
+);
+
+router.post(
+  "/edit-get-fieldview",
+  error_catcher(async (req, res) => {
+    const { field_name, table_name, pk, fieldview, configuration } = req.body;
+    const table = Table.findOne({ name: table_name });
+    const row = await table.getRow(
+      { [table.pk_name]: pk },
+      { forUser: req.user, forPublic: !req.user }
+    );
+    const field = table.getField(field_name);
+    let fv;
+    if (field.is_fkey) {
+      await field.fill_fkey_options(
+        false,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        row[field_name],
+        req.user
+      );
+      fv = getState().keyFieldviews.select;
+    } else if (fieldview === "subfield" && field.type?.name === "JSON") {
+      fv = field.type.fieldviews.edit_subfield;
+    } else {
+      //TODO: json subfield is special
+      const fieldviews = field.type.fieldviews;
+      fv = Object.values(fieldviews).find((v) => v.isEdit);
+    }
+    res.send(
+      fv.run(
+        field_name,
+        row[field_name],
+        {
+          ...field.attributes,
+          ...configuration,
+        },
+        "",
+        false,
+        field
+      )
+    );
+  })
+);
+
+router.post(
+  "/save-click-edit",
+  error_catcher(async (req, res) => {
+    const fielddata = JSON.parse(decodeURIComponent(req.body._fielddata));
+    const { field_name, table_name, pk, fieldview, configuration, join_field } =
+      fielddata;
+    const table = Table.findOne({ name: table_name });
+    const field = table.getField(field_name);
+    let val = field.type?.read
+      ? field.type?.read(req.body[field_name])
+      : req.body[field_name];
+    await table.updateRow({ [field_name]: val }, pk, req.user);
+    let fv;
+    if (field.is_fkey) {
+      if (join_field) {
+        const refTable = Table.findOne({ name: field.reftable_name });
+        const refRow = await refTable.getRow({ [refTable.pk_name]: val });
+        val = refRow[join_field];
+        const targetField = refTable.getField(join_field);
+        const fieldviews = targetField.type.fieldviews;
+
+        fv = fieldviews[fieldview];
+      } else fv = { run: (v) => `${v}` };
+    } else {
+      const fieldviews = field.type.fieldviews;
+
+      fv = fieldviews[fieldview];
+
+      if (!fv) {
+        const fv1 = Object.values(fieldviews).find(
+          (v) => !v.isEdit && !v.isFilter
+        );
+        fv = fv1;
+      }
+    }
+
+    res.send(
+      div(
+        {
+          "data-inline-edit-fielddata": req.body._fielddata,
+          "data-inline-edit-ajax": "true",
+          "data-inline-edit-dest-url": `/api/${table.name}/${pk}`,
+          class: !isWeb(req) ? "mobile-data-inline-edit" : "",
+        },
+        fv.run(val, req, {
+          ...field.attributes,
+          ...configuration,
+        })
+      )
+    );
   })
 );

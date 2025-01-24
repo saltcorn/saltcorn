@@ -2,6 +2,10 @@
 
 ## 1.1.1 - In beta
 
+* Click to edit (Show and List view patterns) is now implemented by rendering
+  the first available edit fieldview. This should be more robust and work with 
+  more data types.
+
 * Data in the admin's data edit grid is now loaded by page. This makes it
   possible to work with much larger datasets.
 
