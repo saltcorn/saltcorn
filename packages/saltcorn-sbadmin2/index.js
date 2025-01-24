@@ -28,10 +28,12 @@ const {
   toast,
   headersInHead,
   headersInBody,
-  show_icon
+  show_icon,
 } = require("@saltcorn/markup/layout_utils");
 const db = require("@saltcorn/data/db");
 const { isNode } = require("@saltcorn/data/utils");
+
+const verstring = "@" + require("./package.json").version;
 
 /**
  * @param {string} currentUrl
@@ -208,8 +210,7 @@ const sideBarSection = (currentUrl) => (section) =>
 const sidebar = (brand, sections, currentUrl) =>
   ul(
     {
-      class:
-        "navbar-nav sidebar sidebar-dark accordion d-print-none",
+      class: "navbar-nav sidebar sidebar-dark accordion d-print-none",
       id: "accordionSidebar",
     },
     a(
@@ -380,13 +381,13 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5/vendor/fontawesome-free/css/all.min.css">
-    <link href="${linkPrefix()}/pubdeps/sbadmin2/nunito/5.0.3/css/nunito/nunito-fontface.css" rel="stylesheet">
+    <link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/fontawesome-free/css/all.min.css">
+    <link href="${linkPrefix()}/public/sbadmin2${verstring}/nunito/css/nunito/nunito-fontface.css" rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5/css/sb-admin-2.css">
+    <link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.css">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
@@ -395,9 +396,9 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
     <script src="${safeSlash()}static_assets/${
     db.connectObj.version_tag
   }/jquery-3.6.0.min.js"></script>
-            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5/vendor/jquery-easing/jquery.easing.min.js"></script>
-            <script src="${linkPrefix()}/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5/js/sb-admin-2.min.js"></script>
+            <script src="${linkPrefix()}/public/sbadmin2${verstring}/bootstrap.bundle.min.js"></script>
+            <script src="${linkPrefix()}/public/sbadmin2${verstring}/jquery.easing.min.js"></script>
+            <script src="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.js"></script>
     ${headersInBody(headers)}
     </body>
   </html>`;
@@ -546,13 +547,7 @@ const exportRenderBody = ({ title, body, alerts, role, req }) =>
 module.exports = {
   /** @type {number} */
   sc_plugin_api_version: 1,
-  /** @type {object} */
-  serve_dependencies: {
-    "startbootstrap-sb-admin-2-bs5": require.resolve(
-      "startbootstrap-sb-admin-2-bs5/package.json"
-    ),
-    nunito: require.resolve("nunito-fontface/package.json"),
-  },
+  plugin_name: "sbadmin2",
   /** @type {object} */
   layout: {
     wrap,

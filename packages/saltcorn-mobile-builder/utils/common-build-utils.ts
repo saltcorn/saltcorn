@@ -658,42 +658,6 @@ export function copyServerFiles(buildDir: string) {
 }
 
 /**
- * copy files from 'startbootstrap-sb-admin-2-bs5' into the www directory
- * @param buildDir directory where the app will be build
- */
-export function copySbadmin2Deps(buildDir: string) {
-  const sbadmin2Dst = join(
-    buildDir,
-    "www",
-    "sc_plugins/pubdeps/sbadmin2/startbootstrap-sb-admin-2-bs5/4.1.5"
-  );
-  if (!existsSync(sbadmin2Dst)) {
-    mkdirSync(sbadmin2Dst, { recursive: true });
-  }
-  const devPath = join(
-    __dirname,
-    "../../../..",
-    "node_modules/startbootstrap-sb-admin-2-bs5"
-  );
-  const prodPath = join(
-    require.resolve("@saltcorn/cli"),
-    "../..",
-    "node_modules/startbootstrap-sb-admin-2-bs5"
-  );
-  const srcPrefix = existsSync(devPath) ? devPath : prodPath;
-  const srcFiles = [
-    "vendor/fontawesome-free",
-    "vendor/bootstrap/js/bootstrap.bundle.min.js",
-    "vendor/jquery-easing/jquery.easing.min.js",
-    "css/sb-admin-2.css",
-    "js/sb-admin-2.min.js",
-  ];
-  for (const srcFile of srcFiles) {
-    copySync(join(srcPrefix, srcFile), join(sbadmin2Dst, srcFile));
-  }
-}
-
-/**
  * Copy the 'site_logo_id' file into the www folder
  * @param buildDir
  * @returns

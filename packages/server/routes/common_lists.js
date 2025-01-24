@@ -602,7 +602,7 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
-const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
+const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>  
   settingsDropdown(`dropdownMenuButton${trigger.id}`, [
     a(
       {
@@ -638,11 +638,13 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
 const getTriggerList = async (
   triggers,
   req,
-  { tagId, domId, showList, filterOnTag } = {}
+  { tagId, domId, showList, filterOnTag, on_done_redirect } = {}
 ) => {
   const base_url = get_base_url(req);
   const tags = await Tag.find();
-
+  const on_done_redirect_str = on_done_redirect
+  ? `?on_done_redirect=${on_done_redirect}`
+  : "";
   const tag_entries = await TagEntry.find({
     not: { trigger_id: null },
   });
@@ -708,7 +710,7 @@ const getTriggerList = async (
       !tagId
         ? {
             label: "",
-            key: (r) => trigger_dropdown(r, req),
+            key: (r) => trigger_dropdown(r, req, on_done_redirect_str),
           }
         : {
             label: req.__("Remove From Tag"),

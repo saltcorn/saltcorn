@@ -100,7 +100,7 @@ const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
     if (trace.status === "Waiting" && trace.wait_info.form) {
       fakeRun.context = traces[ix + 1] ? traces[ix + 1].context : run.context;
     }
-    fakeRun.current_step = trace.step_name_run;
+    fakeRun.current_step = [trace.step_name_run];
     fakeRun.status = trace.status;
     fakeRun.error = trace.error;
 
@@ -150,7 +150,7 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   if (run.wait_info?.form) {
     const step = await WorkflowStep.findOne({
       trigger_id: run.trigger_id,
-      name: run.current_step,
+      name: run.current_step_name,
     });
     const form = await getWorkflowStepUserForm({ step, run, viewname, req });
     if (noInteract) {
@@ -304,7 +304,7 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
   const trigger = await Trigger.findOne({ id: run.trigger_id });
   const step = await WorkflowStep.findOne({
     trigger_id: trigger.id,
-    name: run.current_step,
+    name: run.current_step_name,
   });
   const form = await getWorkflowStepUserForm({ step, run, viewname, req });
 

@@ -43,6 +43,7 @@
       "**/dist/**",
       "*.test.js",
       "packages/filemanager/public/build/bundle.js",
+      "packages/saltcorn-sbadmin2/public/**",
       "packages/saltcorn-builder/**",
       "docs/**",
       "deploy/"

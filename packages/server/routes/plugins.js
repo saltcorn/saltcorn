@@ -1183,38 +1183,6 @@ router.get(
 );
 
 /**
- * @name get/pubdeps/:plugin/:dependency/:version/*
- * @function
- * @memberof module:routes/plugins~pluginsRouter
- * @function
- */
-router.get(
-  "/pubdeps/:plugin/:dependency/:version/*",
-  error_catcher(async (req, res) => {
-    const { plugin, dependency } = req.params;
-    const filepath = req.params[0];
-
-    const pluginObj = getState().plugins[plugin];
-    if (
-      pluginObj &&
-      pluginObj.serve_dependencies &&
-      pluginObj.serve_dependencies[dependency]
-    ) {
-      const deppath = path.dirname(pluginObj.serve_dependencies[dependency]);
-      const safeFile = path
-        .normalize(filepath)
-        .replace(/^(\.\.(\/|\\|$))+/, "");
-      const abspath = path.join(deppath, safeFile);
-      if (fs.existsSync(abspath)) res.sendFile(abspath, { maxAge: "100d" });
-      //100d
-      else res.status(404).send(req.__("Not found"));
-    } else {
-      res.status(404).send(req.__("Not found"));
-    }
-  })
-);
-
-/**
  * @name get/info/:name
  * @function
  * @memberof module:routes/plugins~pluginsRouter
