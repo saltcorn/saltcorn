@@ -37,8 +37,8 @@ const {
 } = require("@saltcorn/data/plugin-helper");
 const { wizardCardTitle } = require("../markup/forms.js");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
-const { applyAsync } = require("@saltcorn/data/utils");
-const { text } = require("@saltcorn/markup/tags");
+const { applyAsync, isWeb } = require("@saltcorn/data/utils");
+const { text, div } = require("@saltcorn/markup/tags");
 const { mkFormContentNoLayout } = require("@saltcorn/markup/form");
 
 /**
@@ -1474,10 +1474,18 @@ router.post(
       fv = fv1;
     }
     res.send(
-      fv.run(req.body[field_name], req, {
-        ...field.attributes,
-        ...configuration,
-      })
+      div(
+        {
+          "data-inline-edit-fielddata": req.body._fielddata,
+          "data-inline-edit-ajax": "true",
+          "data-inline-edit-dest-url": `/api/${table.name}/${pk}`,
+          class: !isWeb(req) ? "mobile-data-inline-edit" : "",
+        },
+        fv.run(req.body[field_name], req, {
+          ...field.attributes,
+          ...configuration,
+        })
+      )
     );
   })
 );

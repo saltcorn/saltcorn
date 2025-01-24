@@ -1315,7 +1315,9 @@ function inline_ajax_submit_with_fielddata(e, opts1) {
     success: function (res) {
       var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
       var form = $(e.target).closest("form");
-      form.replaceWith(res);
+      form.replaceWith(
+        res
+      );
       initialize_page();
     },
     error: function (e) {
