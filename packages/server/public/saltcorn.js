@@ -35,7 +35,7 @@ function updateQueryStringParameter(uri1, key, value) {
   }
 
   var re = new RegExp(
-    "([?&])" + key.replace(/\(/g, "\\(").replace(/\)/g, "\\)") + "=.*?(&|$)",
+    "([?&])" + escapeRegExp(key) + "=.*?(&|$)",
     "i"
   );
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
@@ -79,18 +79,11 @@ function removeQueryStringParameter(uri1, key, value) {
   let re;
   if (value) {
     re = new RegExp(
-      "([?&])" +
-        key.replace(/\(/g, "\\(").replace(/\)/g, "\\)") +
-        "=" +
-        value +
-        "?(&|$)",
+      "([?&])" + escapeRegExp(key) + "=" + value + "?(&|$)",
       "gi"
     );
   } else {
-    re = new RegExp(
-      "([?&])" + key.replace(/\(/g, "\\(").replace(/\)/g, "\\)") + "=.*?(&|$)",
-      "gi"
-    );
+    re = new RegExp("([?&])" + escapeRegExp(key) + "=.*?(&|$)", "gi");
   }
   if (uri.match(re)) {
     uri = uri.replace(re, "$1" + "$2");
@@ -99,6 +92,10 @@ function removeQueryStringParameter(uri1, key, value) {
     uri = uri.substring(0, uri.length - 1);
   if (uri.match(re)) return removeQueryStringParameter(uri + hash, key);
   return uri + hash;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function addQueryStringParameter(uri1, key, value) {
@@ -110,11 +107,7 @@ function addQueryStringParameter(uri1, key, value) {
     uri = uris[0];
   }
   var re = new RegExp(
-    "([?&])" +
-      key.replace(/\(/g, "\\(").replace(/\)/g, "\\)") +
-      "=" +
-      value +
-      "?(&|$)",
+    "([?&])" + escapeRegExp(key) + "=" + value + "?(&|$)",
     "gi"
   );
   if (uri.match(re)) return uri1;
