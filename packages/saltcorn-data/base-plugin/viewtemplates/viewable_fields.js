@@ -919,6 +919,7 @@ const get_viewable_fields = (
         let fvrun;
         const fieldview = column.join_fieldview || column.fieldview;
         let refNm, targetNm, through, key, type;
+        const keypath = column.join_field.split(".");
         if (column.join_field.includes("->")) {
           const [relation, target] = column.join_field.split("->");
           const [ontable, ref] = relation.split(".");
@@ -929,7 +930,6 @@ const get_viewable_fields = (
               `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`
           );
         } else {
-          const keypath = column.join_field.split(".");
           refNm = keypath[0];
           targetNm = keypath[keypath.length - 1];
           key = keypath.join("_");
@@ -997,21 +997,20 @@ const get_viewable_fields = (
           const newkey = (row) =>
             div(
               {
-                "data-inline-edit-field": refNm,
+                "data-inline-edit-fielddata": encodeURIComponent(
+                  JSON.stringify({
+                    field_name: keypath[0],
+                    table_name: table.name,
+                    pk: row[table.pk_name],
+                    fieldview,
+                    configuration: column?.configuration,
+                    join_field: keypath[keypath.length - 1],
+                  })
+                ),
                 "data-inline-edit-ajax": "true",
-                "data-inline-edit-current": row[refNm],
-                "data-inline-edit-current-label": row[key],
                 "data-inline-edit-dest-url": `/api/${table.name}/${
                   row[table.pk_name]
                 }`,
-                ...(reffield?.type?.name === "Float" &&
-                reffield.attributes?.decimal_places
-                  ? {
-                      "data-inline-edit-decimal-places":
-                        reffield.attributes.decimal_places,
-                    }
-                  : {}),
-                "data-inline-edit-type": `Key:${reffield.reftable_name}.${targetNm}`,
               },
               span({ class: "current" }, oldkey(row)),
               i({ class: "editicon fas fa-edit ms-1" })

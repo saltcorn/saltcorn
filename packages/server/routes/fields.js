@@ -1520,9 +1520,3 @@ router.post(
     );
   })
 );
-
-/*todo
-
-check list
-
-*/
