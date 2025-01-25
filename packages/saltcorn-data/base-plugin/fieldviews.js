@@ -786,7 +786,6 @@ const select_by_view = {
     formFieldNames,
     user
   ) {
-    console.log({ where0 });
     const view = View.findOne({ name: field.attributes.view });
     const { req, res } = mockReqRes;
     field.options = await view.runMany(where0 || {}, {
@@ -798,8 +797,22 @@ const select_by_view = {
   run: (nm, v, attrs, cls, reqd, field) => {
     return div(
       { class: "select-by-view-container" },
+      input({
+        type: "hidden",
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+        value: v,
+      }),
       field.options.map(({ row, html }) =>
-        div({ class: "select-by-view-option" }, html)
+        div(
+          {
+            class: ["select-by-view-option", v == row.id && "selected"],
+            onclick: "select_by_view_click(this, event)",
+            "data-id": row.id,
+          },
+          html
+        )
       )
     );
   },

@@ -1317,9 +1317,7 @@ function inline_ajax_submit_with_fielddata(e, opts1) {
     success: function (res) {
       var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
       var form = $(e.target).closest("form");
-      form.replaceWith(
-        res
-      );
+      form.replaceWith(res);
       initialize_page();
     },
     error: function (e) {
@@ -2094,6 +2092,20 @@ function update_time_of_week(nm) {
     } else s = day;
     $(`#inputh${nm}`).val(s).trigger("change");
   };
+}
+
+function select_by_view_click(element, event) {
+  console.log({ element, event });
+
+  $(element)
+    .closest(".select-by-view-container")
+    .find(".select-by-view-option")
+    .removeClass("selected");
+  $(element).addClass("selected");
+  $(element)
+    .closest(".select-by-view-container")
+    .find("input[type=hidden]")
+    .val($(element).attr("data-id"));
 }
 
 const observer = new IntersectionObserver(
