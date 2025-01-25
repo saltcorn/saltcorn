@@ -1301,6 +1301,19 @@ router.post(
     // - disabled inputs do not dispactch click events
     const firefox = true;
     const fv = fieldviews[fieldview];
+    field.fieldview === fieldview;
+    field.fieldviewObj = fv;
+    field.attributes = { ...configuration, ...field.attributes };
+    if (field.type === "Key")
+      await field.fill_fkey_options(
+        false,
+        {},
+        {},
+        undefined,
+        undefined,
+        undefined,
+        req.user
+      );
     if (!fv && field.type === "Key" && fieldview === "select")
       res.send(
         `<input ${
