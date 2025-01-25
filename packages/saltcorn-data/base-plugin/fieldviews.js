@@ -804,11 +804,13 @@ const select_by_view = {
         id: `input${text_attr(nm)}`,
         value: v,
       }),
-      field.options.map(({ row, html }) =>
+      (field.options||[]).map(({ row, html }) =>
         div(
           {
             class: ["select-by-view-option", v == row.id && "selected"],
-            onclick: "select_by_view_click(this, event)",
+            onclick: `select_by_view_click(this, event, ${JSON.stringify(
+              !!reqd
+            )})`,
             "data-id": row.id,
           },
           html

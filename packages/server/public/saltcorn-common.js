@@ -2094,18 +2094,24 @@ function update_time_of_week(nm) {
   };
 }
 
-function select_by_view_click(element, event) {
-  console.log({ element, event });
-
+function select_by_view_click(element, event, required) {
+  const isAlreadySelected = $(element).hasClass("selected");
   $(element)
     .closest(".select-by-view-container")
     .find(".select-by-view-option")
     .removeClass("selected");
-  $(element).addClass("selected");
-  $(element)
-    .closest(".select-by-view-container")
-    .find("input[type=hidden]")
-    .val($(element).attr("data-id"));
+  if (!required && isAlreadySelected) {
+    $(element)
+      .closest(".select-by-view-container")
+      .find("input[type=hidden]")
+      .val("");
+  } else {
+    $(element).addClass("selected");
+    $(element)
+      .closest(".select-by-view-container")
+      .find("input[type=hidden]")
+      .val($(element).attr("data-id"));
+  }
 }
 
 const observer = new IntersectionObserver(

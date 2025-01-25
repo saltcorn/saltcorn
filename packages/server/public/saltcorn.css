@@ -774,6 +774,11 @@ i[class*=" unicode-"] {
   opacity: 0;
 }
 
+div.select-by-view-container {
+  display: flex;
+  justify-content: space-between;
+}
+
 div.select-by-view-option {
   border: 1px solid gray;
 }
@@ -781,5 +786,5 @@ div.select-by-view-option:hover {
   border: 1px solid blue;
 }
 div.select-by-view-option.selected {
-  border: 1px solid blue;
+  border: 2px solid blue;
 }
