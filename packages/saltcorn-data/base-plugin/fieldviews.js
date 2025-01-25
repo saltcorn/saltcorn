@@ -802,6 +802,7 @@ const select_by_view = {
         "data-fieldname": field.form_name,
         name: text_attr(nm),
         id: `input${text_attr(nm)}`,
+        onChange: attrs.onChange,
         value: v,
       }),
       (field.options || []).map(({ row, html }) =>

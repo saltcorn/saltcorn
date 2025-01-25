@@ -2104,13 +2104,15 @@ function select_by_view_click(element, event, required) {
     $(element)
       .closest(".select-by-view-container")
       .find("input[type=hidden]")
-      .val("");
+      .val("")
+      .trigger("change");
   } else {
     $(element).addClass("selected");
     $(element)
       .closest(".select-by-view-container")
       .find("input[type=hidden]")
-      .val($(element).attr("data-id"));
+      .val($(element).attr("data-id"))
+      .trigger("change");
   }
 }
 
