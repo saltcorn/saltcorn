@@ -2,6 +2,9 @@
 
 ## 1.1.1 - In beta
 
+* select_by_view fieldview for Key fields: the user selects the value of a 
+  Key field based on an clicking in a row of rendered views (typically a Show view) of the joined table. Works for both Edit and Filter views.
+
 * Click to edit (Show and List view patterns) is now implemented by rendering
   the first available edit fieldview. This should be more robust and work with 
   more data types.

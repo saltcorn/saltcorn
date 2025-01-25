@@ -17,10 +17,12 @@ const {
   script,
   input,
   domReady,
+  div,
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
 const { isNode, nubBy } = require("../utils");
+const { mockReqRes } = require("../tests/mocks");
 
 /**
  * select namespace
@@ -722,6 +724,110 @@ const search_join_field = {
   },
 };
 
+const select_by_view = {
+  /** @type {string} */
+  type: "Key",
+  /** @type {boolean} */
+  isEdit: true,
+  description:
+    "Select relation by a dropdown. Labels can be customised and the options restricted",
+  blockDisplay: true,
+
+  /**
+   * @type {object[]}
+   */
+  configFields: async (field) => {
+    const refTable = Table.findOne({ name: field.reftable_name });
+    const views = await View.find_possible_links_to_table(refTable);
+
+    return [
+      {
+        name: "view",
+        label: "View",
+        type: "String",
+        required: true,
+        attributes: { options: views.map((v) => v.name) },
+      },
+      {
+        name: "where",
+        label: "Where",
+        type: "String",
+        help: {
+          topic: "Where formula",
+        },
+        sublabel: "Limit selectable options",
+      },
+      {
+        name: "justify",
+        label: "Justify",
+        sublabel: "Controls the vertical placement of items in the container",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["start", "end", "center", "between", "around", "evenly"],
+        },
+      },
+      {
+        name: "in_card",
+        label: "In card",
+        type: "Bool",
+      },
+    ];
+  },
+
+  async fill_options(
+    field,
+    force_allow_none,
+    where0,
+    extraCtx,
+    optionsQuery,
+    formFieldNames,
+    user
+  ) {
+    const view = View.findOne({ name: field.attributes.view });
+    const { req, res } = mockReqRes;
+    field.options = await view.runMany(where0 || {}, {
+      req: { ...req, user },
+      res,
+    });
+  },
+
+  run: (nm, v, attrs, cls, reqd, field) => {
+    return div(
+      {
+        class: [
+          "select-by-view-container",
+          attrs?.justify && `justify-${attrs.justify}`,
+        ],
+      },
+      input({
+        type: "hidden",
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+        onChange: attrs.onChange,
+        value: v,
+      }),
+      (field.options || []).map(({ row, html }) =>
+        div(
+          {
+            class: [
+              "select-by-view-option",
+              v == row.id && "selected",
+              attrs.in_card ? "card" : "no-card",
+            ],
+            onclick: `select_by_view_click(this, event, ${JSON.stringify(
+              !!reqd
+            )})`,
+            "data-id": row.id,
+          },
+          attrs.in_card ? div({ class: "card-body" }, html) : html
+        )
+      )
+    );
+  },
+};
+
 module.exports = {
   select,
   select_from_table,
@@ -729,4 +835,5 @@ module.exports = {
   radio_select,
   two_level_select,
   search_join_field,
+  select_by_view,
 };
