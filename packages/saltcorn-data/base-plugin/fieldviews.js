@@ -760,12 +760,17 @@ const select_by_view = {
       {
         name: "justify",
         label: "Justify",
-        sublabel: "Controls the placement of items in the container",
+        sublabel: "Controls the vertical placement of items in the container",
         type: "String",
         required: true,
         attributes: {
           options: ["start", "end", "center", "between", "around", "evenly"],
         },
+      },
+      {
+        name: "in_card",
+        label: "In card",
+        type: "Bool",
       },
     ];
   },
@@ -806,13 +811,17 @@ const select_by_view = {
       (field.options || []).map(({ row, html }) =>
         div(
           {
-            class: ["select-by-view-option", v == row.id && "selected"],
+            class: [
+              "select-by-view-option",
+              v == row.id && "selected",
+              attrs.in_card ? "card" : "no-card",
+            ],
             onclick: `select_by_view_click(this, event, ${JSON.stringify(
               !!reqd
             )})`,
             "data-id": row.id,
           },
-          html
+          attrs.in_card ? div({ class: "card-body" }, html) : html
         )
       )
     );
