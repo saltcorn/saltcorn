@@ -796,12 +796,12 @@ div.select-by-view-container.justify-evenly {
   justify-content: space-evenly;
 }
 
-div.select-by-view-option {
-  border: 1px solid gray;
+div.select-by-view-option.no-card {
+  border: 1px solid var(--bs-secondary, var(--tblr-secondary, blue));
 }
 div.select-by-view-option:hover {
-  border: 1px solid blue;
+  border: 1px solid var(--bs-primary, var(--tblr-primary, blue));
 }
 div.select-by-view-option.selected {
-  border: 2px solid blue;
+  border: 2px solid var(--bs-primary, var(--tblr-primary, blue));
 }
