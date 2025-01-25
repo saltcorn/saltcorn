@@ -804,7 +804,7 @@ const select_by_view = {
         id: `input${text_attr(nm)}`,
         value: v,
       }),
-      (field.options||[]).map(({ row, html }) =>
+      (field.options || []).map(({ row, html }) =>
         div(
           {
             class: ["select-by-view-option", v == row.id && "selected"],

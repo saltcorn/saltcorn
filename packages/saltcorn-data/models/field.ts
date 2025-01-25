@@ -883,7 +883,7 @@ class Field implements AbstractField {
     const joinFields = {};
     const Table = require("./table");
     const table = Table.findOne({ id: this.table_id });
-    if(!table) return;
+    if (!table) return;
     const { add_free_variables_to_joinfields } = require("../plugin-helper");
     const fields = table.getFields();
     add_free_variables_to_joinfields(
