@@ -776,7 +776,24 @@ i[class*=" unicode-"] {
 
 div.select-by-view-container {
   display: flex;
+}
+div.select-by-view-container.justify-start {
+  justify-content: flex-start;
+}
+div.select-by-view-container.justify-end {
+  justify-content: flex-end;
+}
+div.select-by-view-container.justify-center {
+  justify-content: center;
+}
+div.select-by-view-container.justify-between {
   justify-content: space-between;
+}
+div.select-by-view-container.justify-around {
+  justify-content: space-around;
+}
+div.select-by-view-container.justify-evenly {
+  justify-content: space-evenly;
 }
 
 div.select-by-view-option {

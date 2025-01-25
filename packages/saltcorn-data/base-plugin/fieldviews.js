@@ -758,21 +758,14 @@ const select_by_view = {
         sublabel: "Limit selectable options",
       },
       {
-        name: "force_required",
-        label: "Force required",
-        sublabel:
-          "User must select a value, even if the table field is not required",
-        type: "Bool",
-      },
-      {
-        name: "disable",
-        label: "Disable",
-        type: "Bool",
-      },
-      {
-        name: "readonly",
-        label: "Read-only",
-        type: "Bool",
+        name: "justify",
+        label: "Justify",
+        sublabel: "Controls the placement of items in the container",
+        type: "String",
+        required: true,
+        attributes: {
+          options: ["start", "end", "center", "between", "around", "evenly"],
+        },
       },
     ];
   },
@@ -796,7 +789,12 @@ const select_by_view = {
 
   run: (nm, v, attrs, cls, reqd, field) => {
     return div(
-      { class: "select-by-view-container" },
+      {
+        class: [
+          "select-by-view-container",
+          attrs?.justify && `justify-${attrs.justify}`,
+        ],
+      },
       input({
         type: "hidden",
         "data-fieldname": field.form_name,
