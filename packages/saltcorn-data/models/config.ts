@@ -1026,6 +1026,13 @@ const configTypes: ConfigTypes = {
     required: true,
     blurb: "Minimum role to edit triggers",
   },
+  min_role_edit_menu: {
+    type: "Role",
+    label: "Edit menu",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to edit menu",
+  },
 
   /** @type {object} */
   min_role_search: {
