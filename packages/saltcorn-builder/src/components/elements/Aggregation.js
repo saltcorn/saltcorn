@@ -107,6 +107,7 @@ const AggregationSettings = () => {
           agg_outcome_type: outcomeType,
           agg_fieldview,
           agg_field: targetField?.name,
+          mode: options?.mode
         }),
       }
     )

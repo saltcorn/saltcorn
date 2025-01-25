@@ -406,6 +406,7 @@ const JoinFieldSettings = () => {
         join_field: name,
         join_fieldview: fieldview,
         type: "JoinField",
+        mode: options?.mode,
       }),
     })
       .then(function (response) {
