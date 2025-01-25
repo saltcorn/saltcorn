@@ -66,11 +66,11 @@ const stringToJSON = (v: string | any): any => {
     throw new Error(`stringToJSON(${JSON.stringify(v)}): ${e.message}`);
   }
 };
-const apply = (f: Function | any, x: any) =>
-  typeof f === "function" ? f(x) : f;
+const apply = (f: Function | any, ...x: any[]) =>
+  typeof f === "function" ? f(...x) : f;
 
-const applyAsync = async (f: Function | any, x: any) => {
-  if (typeof f === "function") return await f(x);
+const applyAsync = async (f: Function | any, ...x: any[]) => {
+  if (typeof f === "function") return await f(...x);
   else return f;
 };
 
@@ -512,7 +512,7 @@ const flatEqual = (a: any, b: any) => {
   return true;
 };
 
-const jsIdentifierValidator = (s:string) => {
+const jsIdentifierValidator = (s: string) => {
   if (!s) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
   let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
@@ -521,7 +521,6 @@ const jsIdentifierValidator = (s:string) => {
 
   if (badc) return `Character ${badc} not allowed`;
 };
-
 
 export = {
   cloneName,
@@ -574,5 +573,5 @@ export = {
   validSqlId,
   ensure_final_slash,
   getFetchProxyOptions,
-  jsIdentifierValidator
+  jsIdentifierValidator,
 };
