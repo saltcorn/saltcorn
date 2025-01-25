@@ -17,10 +17,12 @@ const {
   script,
   input,
   domReady,
+  div,
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
 const { isNode, nubBy } = require("../utils");
+const { mockReqRes } = require("../tests/mocks");
 
 /**
  * select namespace
@@ -722,6 +724,87 @@ const search_join_field = {
   },
 };
 
+const select_by_view = {
+  /** @type {string} */
+  type: "Key",
+  /** @type {boolean} */
+  isEdit: true,
+  description:
+    "Select relation by a dropdown. Labels can be customised and the options restricted",
+  blockDisplay: true,
+
+  /**
+   * @type {object[]}
+   */
+  configFields: async (field) => {
+    const refTable = Table.findOne({ name: field.reftable_name });
+    const views = await View.find_possible_links_to_table(refTable);
+
+    return [
+      {
+        name: "view",
+        label: "View",
+        type: "String",
+        required: true,
+        attributes: { options: views.map((v) => v.name) },
+      },
+      {
+        name: "where",
+        label: "Where",
+        type: "String",
+        help: {
+          topic: "Where formula",
+        },
+        sublabel: "Limit selectable options",
+      },
+      {
+        name: "force_required",
+        label: "Force required",
+        sublabel:
+          "User must select a value, even if the table field is not required",
+        type: "Bool",
+      },
+      {
+        name: "disable",
+        label: "Disable",
+        type: "Bool",
+      },
+      {
+        name: "readonly",
+        label: "Read-only",
+        type: "Bool",
+      },
+    ];
+  },
+
+  async fill_options(
+    field,
+    force_allow_none,
+    where0,
+    extraCtx,
+    optionsQuery,
+    formFieldNames,
+    user
+  ) {
+    console.log({ where0 });
+    const view = View.findOne({ name: field.attributes.view });
+    const { req, res } = mockReqRes;
+    field.options = await view.runMany(where0 || {}, {
+      req: { ...req, user },
+      res,
+    });
+  },
+
+  run: (nm, v, attrs, cls, reqd, field) => {
+    return div(
+      { class: "select-by-view-container" },
+      field.options.map(({ row, html }) =>
+        div({ class: "select-by-view-option" }, html)
+      )
+    );
+  },
+};
+
 module.exports = {
   select,
   select_from_table,
@@ -729,4 +812,5 @@ module.exports = {
   radio_select,
   two_level_select,
   search_join_field,
+  select_by_view,
 };

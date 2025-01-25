@@ -773,3 +773,13 @@ i[class*=" unicode-"] {
 [data-animate-initial-hide] {
   opacity: 0;
 }
+
+div.select-by-view-option {
+  border: 1px solid gray;
+}
+div.select-by-view-option:hover {
+  border: 1px solid blue;
+}
+div.select-by-view-option.selected {
+  border: 1px solid blue;
+}
