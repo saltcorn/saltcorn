@@ -73,9 +73,11 @@ const tablesList = async (
     getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
   const tagBadges = (table) => {
     const myTags = tag_entries.filter((te) => te.table_id === table.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "tables"))
-      .join(nbsp);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "tables")).join(nbsp) +
+      mkAddBtn(tags, "tables", table.id, req, myTagIds)
+    );
   };
 
   return (
@@ -549,9 +551,11 @@ const getPageList = async (
 
   const tagBadges = (page) => {
     const myTags = tag_entries.filter((te) => te.page_id === page.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "pages"))
-      .join(nbsp);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "pages")).join(nbsp) +
+      mkAddBtn(tags, "pages", page.id, req, myTagIds)
+    );
   };
   return mkTable(
     [
@@ -702,9 +706,11 @@ const getTriggerList = async (
 
   const tagBadges = (trigger) => {
     const myTags = tag_entries.filter((te) => te.trigger_id === trigger.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "triggers"))
-      .join(nbsp);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "triggers")).join(nbsp) +
+      mkAddBtn(tags, "triggers", trigger.id, req, myTagIds)
+    );
   };
   return mkTable(
     [

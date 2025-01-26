@@ -176,12 +176,21 @@ router.post(
   error_catcher(async (req, res) => {
     const { tagname, entitytype, entityid } = req.params;
     const tag = await Tag.findOne({ name: tagname });
-   
+
     const fieldName = idField(entitytype);
     await tag.addEntry({ [fieldName]: +entityid });
     switch (entitytype) {
-      case "views":        
+      case "views":
         res.redirect(`/viewedit`);
+        break;
+      case "pages":
+        res.redirect(`/pageedit`);
+        break;
+      case "tables":
+        res.redirect(`/table`);
+        break;
+      case "triggers":
+        res.redirect(`/actions`);
         break;
 
       default:
