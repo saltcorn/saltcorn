@@ -567,7 +567,11 @@ router.get(
   error_catcher(async (req, res) => {
     const snaps = await Snapshot.find(
       {},
-      { orderBy: "created", orderDesc: true, fields: ["id", "created", "hash"] }
+      {
+        orderBy: "created",
+        orderDesc: true,
+        fields: ["id", "created", "hash", "name"],
+      }
     );
     const locale = getState().getConfig("default_locale", "en");
     send_admin_page({
@@ -595,7 +599,9 @@ router.get(
                             snap.created,
                             {},
                             locale
-                          )} (${moment(snap.created).fromNow()})`
+                          )} (${moment(snap.created).fromNow()})${
+                            snap.name ? ` [${snap.name}]` : ""
+                          }`
                         )
                       )
                     )
@@ -664,11 +670,14 @@ router.get(
           {
             label: req.__("When"),
             key: (r) =>
-              `${localeDateTime(r.created, {}, locale)} (${moment(
+              `${moment(
                 r.created
-              ).fromNow()})`,
+              ).fromNow()}<br><small>${localeDateTime(r.created, {}, locale)}</small>`,
           },
-
+          {
+            label: req.__("Name"),
+            key: (r) => r.name || "",
+          },
           {
             label: req.__("Restore"),
             key: (r) =>
@@ -963,7 +972,8 @@ const snapshotForm = (req) =>
         label: req.__("Snapshot now"),
         id: "btnSnapNow",
         class: "btn btn-outline-secondary",
-        onclick: "ajax_post('/admin/snapshot-now')",
+        onclick:
+          "ajax_post('/admin/snapshot-now/'+prompt('Name of snapshot (optional)'))",
       },
     ],
     fields: [
@@ -1075,11 +1085,18 @@ router.post(
  * Do Snapshot now
  */
 router.post(
-  "/snapshot-now",
+  "/snapshot-now/:snapshotname?",
   isAdmin,
   error_catcher(async (req, res) => {
+    const { snapshotname } = req.params;
+    if (snapshotname == "null") {
+      //user clicked cancel on prompt
+      res.json({ success: true });
+      return;
+    }
+
     try {
-      const taken = await Snapshot.take_if_changed();
+      const taken = await Snapshot.take_if_changed(snapshotname);
       if (taken) req.flash("success", req.__("Snapshot successful"));
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));
