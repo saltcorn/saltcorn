@@ -670,11 +670,14 @@ router.get(
           {
             label: req.__("When"),
             key: (r) =>
-              `${localeDateTime(r.created, {}, locale)} (${moment(
+              `${moment(
                 r.created
-              ).fromNow()})`,
+              ).fromNow()}<br><small>${localeDateTime(r.created, {}, locale)}</small>`,
           },
-
+          {
+            label: req.__("Name"),
+            key: (r) => r.name || "",
+          },
           {
             label: req.__("Restore"),
             key: (r) =>
