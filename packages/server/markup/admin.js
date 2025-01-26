@@ -224,24 +224,29 @@ const send_infoarch_page = (args) => {
   const tenant_list =
     db.is_it_multi_tenant() &&
     db.getTenantSchema() === db.connectObj.default_schema;
+  const isUserAdmin = args.req?.user.role_id === 1;
   return send_settings_page({
     main_section: "Site structure",
     main_section_href: "/site-structure",
     sub_sections: [
       { text: "Menu", href: "/menu" },
-      { text: "Search", href: "/search/config" },
-      { text: "Library", href: "/library/list" },
-      { text: "Languages", href: "/site-structure/localizer" },
-      ...(tenant_list
+      ...(isUserAdmin
         ? [
-            { text: "Tenants", href: "/tenant/list" },
-            { text: "Multitenancy", href: "/tenant/settings" },
+            { text: "Search", href: "/search/config" },
+            { text: "Library", href: "/library/list" },
+            { text: "Languages", href: "/site-structure/localizer" },
+            ...(tenant_list
+              ? [
+                  { text: "Tenants", href: "/tenant/list" },
+                  { text: "Multitenancy", href: "/tenant/settings" },
+                ]
+              : []),
+            { text: "Pagegroups", href: "/page_group/settings" },
+            { text: "Tags", href: "/tag" },
+            { text: "Diagram", href: "/diagram" },
+            { text: "Registry editor", href: "/registry-editor" },
           ]
         : []),
-      { text: "Pagegroups", href: "/page_group/settings" },
-      { text: "Tags", href: "/tag" },
-      { text: "Diagram", href: "/diagram" },
-      { text: "Registry editor", href: "/registry-editor" },
     ],
     ...args,
   });

@@ -148,7 +148,7 @@ const get_menu = (req) => {
             "/tenant/list",
           ],
           icon: "fas fa-compass",
-          label: req.__("Site structure"),
+          label: req.__("Menu"),
         },
       ];
       if (canEditTriggers)
