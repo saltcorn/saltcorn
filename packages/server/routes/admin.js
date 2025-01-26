@@ -567,7 +567,11 @@ router.get(
   error_catcher(async (req, res) => {
     const snaps = await Snapshot.find(
       {},
-      { orderBy: "created", orderDesc: true, fields: ["id", "created", "hash"] }
+      {
+        orderBy: "created",
+        orderDesc: true,
+        fields: ["id", "created", "hash", "name"],
+      }
     );
     const locale = getState().getConfig("default_locale", "en");
     send_admin_page({
@@ -595,7 +599,9 @@ router.get(
                             snap.created,
                             {},
                             locale
-                          )} (${moment(snap.created).fromNow()})`
+                          )} (${moment(snap.created).fromNow()})${
+                            snap.name ? ` [${snap.name}]` : ""
+                          }`
                         )
                       )
                     )
@@ -1080,6 +1086,12 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { snapshotname } = req.params;
+    if (snapshotname == "null") {
+      //user clicked cancel on prompt
+      res.json({ success: true });
+      return;
+    }
+
     try {
       const taken = await Snapshot.take_if_changed(snapshotname);
       if (taken) req.flash("success", req.__("Snapshot successful"));
