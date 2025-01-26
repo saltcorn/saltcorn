@@ -288,7 +288,7 @@ const tagsDropdown = (tags, altHeader) =>
     )
   );
 
-const mkAddBtn = (tags, entityType, id, req) =>
+const mkAddBtn = (tags, entityType, id, req, myTagIds) =>
   div(
     { class: "dropdown d-inline ms-1" },
     span(
@@ -306,15 +306,17 @@ const mkAddBtn = (tags, entityType, id, req) =>
         class: "dropdown-menu dropdown-menu-end",
       },
 
-      tags.map((t) =>
-        post_dropdown_item(
-          `/tag-entries/add-tag-entity/${encodeURIComponent(
-            t.name
-          )}/views/${id}`,
-          t.name,
-          req
+      tags
+        .filter((t) => !myTagIds.has(t.id))
+        .map((t) =>
+          post_dropdown_item(
+            `/tag-entries/add-tag-entity/${encodeURIComponent(
+              t.name
+            )}/${entityType}/${id}`,
+            t.name,
+            req
+          )
         )
-      )
     )
   );
 
@@ -340,7 +342,8 @@ const viewsList = async (
 
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
-    const addBtn = mkAddBtn(tags, "views", view.id, req);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    const addBtn = mkAddBtn(tags, "views", view.id, req, myTagIds);
     return (
       myTags.map((te) => tagBadge(tagsById[te.tag_id], "views")).join(nbsp) +
       addBtn
