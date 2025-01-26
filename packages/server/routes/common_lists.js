@@ -13,7 +13,17 @@ const {
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
-const { h4, p, div, a, i, text, span, nbsp } = require("@saltcorn/markup/tags");
+const {
+  h4,
+  p,
+  div,
+  a,
+  i,
+  text,
+  span,
+  nbsp,
+  button,
+} = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
@@ -278,6 +288,36 @@ const tagsDropdown = (tags, altHeader) =>
     )
   );
 
+const mkAddBtn = (tags, entityType, id, req) =>
+  div(
+    { class: "dropdown d-inline ms-1" },
+    span(
+      {
+        class: "badge bg-secondary add-tag",
+        "data-bs-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+        "data-boundary": "viewport",
+      },
+      i({ class: "fas fa-plus fa-sm" })
+    ),
+    div(
+      {
+        class: "dropdown-menu dropdown-menu-end",
+      },
+
+      tags.map((t) =>
+        post_dropdown_item(
+          `/tag-entries/add-tag-entity/${encodeURIComponent(
+            t.name
+          )}/views/${id}`,
+          t.name,
+          req
+        )
+      )
+    )
+  );
+
 const viewsList = async (
   views,
   req,
@@ -300,9 +340,11 @@ const viewsList = async (
 
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "views"))
-      .join(nbsp);
+    const addBtn = mkAddBtn(tags, "views", view.id, req);
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "views")).join(nbsp) +
+      addBtn
+    );
   };
 
   return (
@@ -602,7 +644,7 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
-const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>  
+const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
   settingsDropdown(`dropdownMenuButton${trigger.id}`, [
     a(
       {
@@ -643,8 +685,8 @@ const getTriggerList = async (
   const base_url = get_base_url(req);
   const tags = await Tag.find();
   const on_done_redirect_str = on_done_redirect
-  ? `?on_done_redirect=${on_done_redirect}`
-  : "";
+    ? `?on_done_redirect=${on_done_redirect}`
+    : "";
   const tag_entries = await TagEntry.find({
     not: { trigger_id: null },
   });

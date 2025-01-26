@@ -170,6 +170,26 @@ router.post(
   })
 );
 
+router.post(
+  "/add-tag-entity/:tagname/:entitytype/:entityid",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { tagname, entitytype, entityid } = req.params;
+    const tag = await Tag.findOne({ name: tagname });
+   
+    const fieldName = idField(entitytype);
+    await tag.addEntry({ [fieldName]: +entityid });
+    switch (entitytype) {
+      case "views":        
+        res.redirect(`/viewedit`);
+        break;
+
+      default:
+        break;
+    }
+  })
+);
+
 // add one object to multiple tags
 router.post(
   "/add/multiple_tags/:entry_type/:object_id",

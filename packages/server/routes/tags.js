@@ -1,6 +1,7 @@
 const { a, text, i, div } = require("@saltcorn/markup/tags");
 
 const Tag = require("@saltcorn/data/models/tag");
+const TagEntry = require("@saltcorn/data/models/tag_entry");
 const Router = require("express-promise-router");
 const Form = require("@saltcorn/data/models/form");
 const User = require("@saltcorn/data/models/user");

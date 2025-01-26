@@ -805,3 +805,10 @@ div.select-by-view-option:hover {
 div.select-by-view-option.selected {
   border: 2px solid var(--bs-primary, var(--tblr-primary, blue));
 }
+tr span.add-tag {
+  opacity: 0;
+}
+
+tr:hover span.add-tag {
+  opacity: 1;
+}
