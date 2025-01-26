@@ -963,7 +963,8 @@ const snapshotForm = (req) =>
         label: req.__("Snapshot now"),
         id: "btnSnapNow",
         class: "btn btn-outline-secondary",
-        onclick: "ajax_post('/admin/snapshot-now')",
+        onclick:
+          "ajax_post('/admin/snapshot-now/'+prompt('Name of snapshot (optional)'))",
       },
     ],
     fields: [
@@ -1075,11 +1076,12 @@ router.post(
  * Do Snapshot now
  */
 router.post(
-  "/snapshot-now",
+  "/snapshot-now/:snapshotname?",
   isAdmin,
   error_catcher(async (req, res) => {
+    const { snapshotname } = req.params;
     try {
-      const taken = await Snapshot.take_if_changed();
+      const taken = await Snapshot.take_if_changed(snapshotname);
       if (taken) req.flash("success", req.__("Snapshot successful"));
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));
