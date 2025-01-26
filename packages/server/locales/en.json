@@ -1543,5 +1543,7 @@
 	"Minimum role to inspect (see, without editing) tables": "Minimum role to inspect (see, without editing) tables",
 	"Home pages": "Home pages",
 	"The home page is the page that is served when the user visits the home location (/). This can be set for each user role.": "The home page is the page that is served when the user visits the home location (/). This can be set for each user role.",
-	"Trigger %s deleted": "Trigger %s deleted"
+	"Trigger %s deleted": "Trigger %s deleted",
+	"Edit menu": "Edit menu",
+	"Minimum role to edit menu": "Minimum role to edit menu"
 }

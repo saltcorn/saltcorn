@@ -140,9 +140,9 @@ const get_menu = (req) => {
     if (canEditMenu && !isAdmin) {
       const subitems = [
         {
-          link: "/site-structure",
+          link: "/menu",
           altlinks: [
-            "/menu",
+            "/site-structure",
             "/search/config",
             "/library/list",
             "/tenant/list",

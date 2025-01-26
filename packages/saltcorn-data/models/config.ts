@@ -1033,7 +1033,6 @@ const configTypes: ConfigTypes = {
     required: true,
     blurb: "Minimum role to edit menu",
   },
-
   /** @type {object} */
   min_role_search: {
     type: "Role",
