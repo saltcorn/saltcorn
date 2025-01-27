@@ -196,19 +196,23 @@ class File {
       const cache = File.getDirCache();
       if (cache) return cache;
     }
-    const allDirs: File[] = [await File.rootFolder()];
-    const iterFolder = async (folder?: string) => {
-      const files = await File.find(folder ? { folder } : {});
+    const tenant = db.getTenantSchema();
+    const root = path.join(db.connectObj.file_store, tenant);
+    const allPaths: string[] = [];
+    const iterFolder = async (folder: string) => {
+      allPaths.push(folder);
+      const files = await fsp.readdir(folder, { withFileTypes: true });
       for (const f of files) {
-        if (f.isDirectory) {
-          allDirs.push(f);
-          await iterFolder(f.path_to_serve as string);
-        }
+        if (f.isDirectory()) await iterFolder(path.join(folder, f.name));
       }
     };
-    await iterFolder();
+    await iterFolder(root);
 
-    return allDirs;
+    return await asyncMap(allPaths, async (p: string) => {
+      const relnm = p.replace(root, "")    
+      const fs = await File.find({ filename: relnm || "/"});
+      return fs[0];
+    });
   }
 
   static async buildDirCache() {
