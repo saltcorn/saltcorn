@@ -95,7 +95,10 @@ class WorkflowRun {
     this.session_id = o.session_id;
     this.error = o.error;
     this.status = o.status || "Pending";
-    this.current_step = o.current_step || [];
+    this.current_step =
+      typeof o.current_step === "string"
+        ? JSON.parse(o.current_step)
+        : o.current_step || [];
   }
 
   /**
