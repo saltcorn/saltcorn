@@ -71,6 +71,7 @@
     "node-fetch": "2.6.9",
     "pluralize": "^8.0.0",
     "process": "0.11.10",
+    "punnycode": "^2.3.1 ",
     "tmp-promise": "^3.0.2",
     "uuid": "^10.0.0",
     "vm-browserify": "^1.1.2",
