@@ -1629,6 +1629,8 @@ const constraintForm = (req, table, fields, type) => {
         ],
       });
     case "Index":
+      const fieldopts = fields.map((f) => ({ label: f.label, name: f.name }));
+      fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,
         blurb: req.__(
@@ -1641,7 +1643,7 @@ const constraintForm = (req, table, fields, type) => {
             label: "Field",
             required: true,
             attributes: {
-              options: fields.map((f) => ({ label: f.label, name: f.name })),
+              options: fieldopts,
             },
           },
         ],
