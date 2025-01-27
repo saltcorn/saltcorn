@@ -1632,7 +1632,8 @@ const constraintForm = (req, table, fields, type) => {
       });
     case "Index":
       const fieldopts = fields.map((f) => ({ label: f.label, name: f.name }));
-      fieldopts.push({ label: "Full-text search", name: "_fts" });
+      if (!db.isSQLite)
+        fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,
         blurb: req.__(

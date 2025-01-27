@@ -1974,12 +1974,14 @@ describe("Table constraints", () => {
       age: 11,
       favbook: 1,
     });
-    const con = await TableConstraint.create({
-      table_id: table.id,
-      type: "Index",
-      configuration: { field: "_fts" },
-    });
-    await con.delete();
+    if (!db.isSQLite) {
+      const con = await TableConstraint.create({
+        table_id: table.id,
+        type: "Index",
+        configuration: { field: "_fts" },
+      });
+      await con.delete();
+    }
   });
 });
 describe("Table with UUID pks", () => {
