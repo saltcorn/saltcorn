@@ -34,7 +34,7 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
-describe("File", () => {
+describe("File class", () => {
   it("should create", async () => {
     await rick_file();
     const cs = await File.find();
@@ -258,5 +258,13 @@ describe("File", () => {
     expect(existsSync("/var/lib/..%2F..%2F/tmp/myfile")).toBe(false);
     expect(existsSync("/var/lib/..\u2215..\u2215/tmp/myfile")).toBe(false);
     expect(existsSync("/var/lib/../../tmp/myfile")).toBe(true);
+  });
+  it("should return all directories", async () => {
+    const dirs = await File.allDirectories();
+    expect(dirs.length).toBeGreaterThan(3);
+    expect(dirs.length).toBeLessThan(20);
+    const paths = dirs.map((d) => d.path_to_serve);
+    expect(paths).toContain("subfolder");
+    expect(paths).toContain("");
   });
 });
