@@ -273,6 +273,6 @@ describe("File class", () => {
     expect(paths).toContain("");
     expect(paths.filter((p) => p === "").length).toBe(1);
     const filenames = dirs.map((d) => d.filename);
-    expect(filenames).toContain("_sc_test_subfolder_one");
+    expect(filenames).toContain("subfolder");
   });
 });
