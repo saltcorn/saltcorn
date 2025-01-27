@@ -81,6 +81,8 @@ describe("Workflow run steps", () => {
     expect(wfrun.context.x).toBe(1);
     expect(wfrun.context.y).toBe(2);
     expect(wfrun.context.last).toBe(1);
+    expect(wfrun.current_step[0]).toBe("fourth_step")
+    expect(wfrun.current_step_name).toBe("fourth_step")
   });
   it("should run through trigger", async () => {
     const user = await User.findOne({ id: 1 });
