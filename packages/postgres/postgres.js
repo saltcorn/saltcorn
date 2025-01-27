@@ -409,6 +409,23 @@ const add_index = async (table_name, field_name) => {
 };
 
 /**
+ * Add Full-text search index
+ * @param {string} table_name - table name
+ * @param {string} field_name - list of columns (members of constraint)
+ * @returns {Promise<void>} no result
+ */
+const add_fts_index = async (table_name, field_expression) => {
+  // TBD check that there are no problems with lenght of constraint name
+  const sql = `create index "${sqlsanitize(
+    table_name
+  )}_fts_index" on "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}" USING GIN (to_tsvector('english', ${field_expression}));`;
+  sql_log(sql);
+  await pool.query(sql);
+};
+
+/**
  * Add index
  * @param {string} table_name - table name
  * @param {string} field_name - list of columns (members of constraint)
@@ -536,6 +553,7 @@ const postgresExports = {
   add_unique_constraint,
   drop_unique_constraint,
   add_index,
+  add_fts_index,
   drop_index,
   reset_sequence,
   getVersion,
