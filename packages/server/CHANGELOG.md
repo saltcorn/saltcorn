@@ -2,6 +2,16 @@
 
 ## 1.1.1 - In beta
 
+* select_by_view fieldview for Key fields: the user selects the value of a 
+  Key field based on an clicking in a row of rendered views (typically a Show view) of the joined table. Works for both Edit and Filter views.
+
+* Click to edit (Show and List view patterns) is now implemented by rendering
+  the first available edit fieldview. This should be more robust and work with 
+  more data types.
+
+* Data in the admin's data edit grid is now loaded by page. This makes it
+  possible to work with much larger datasets.
+
 * You can now permit to non-admin (role ID > 1) users to edit or inspect tables, or 
   edit views, pages or triggers. In the permissions tab of the Users and security
   settings, minimum roles can be set for these capabilities. The appropriate
@@ -35,12 +45,23 @@
   is changed.
 
 * Mobile builder:
-    - PJAX view loading.
+    - PJAX view loading: Use pjax for all functions like on the web version.
+    - Share content to your app on mobile and PWA. 
+      - Ensure at least one ReceiveMobileShareData trigger exists when the app is built or the PWA is installed.
+      - Shared content is accessible via the row variable.
+      - Android: No additional configuration is needed.
+      - PWA: Ensure a trusted HTTPS connection is used.
+      - iOS:
+        - A second provisioning profile is required, with the bundle ID of the main app followed by share-ext (e.g., com.saltcorn.share-ext).
+        - The iOS project needs a Share Extension target. To set this up, open Xcode and add a Share Extension target from a template (more documentation is is about to come).
+        - The build will stop when the Xcode integration is required, and a "Finish the Build" shows up.
 
 ### Fixes
 
+* Increase plugin install reliability
 * fix workflows on SQLite
 * fix query string build on check_state_field (#2948). Author: St0rml
+* multiple fixes for the Capacitor port
 
 ### Translations
 
@@ -70,6 +91,11 @@
 * Registry editor: Edit configuration values
 
 * Webhook action has more options: method, set reponse value, headers.
+
+* Mobile builder:
+    - Ported from Cordova to Capacitor: Cordova's core functionalities and plugins are well-maintained, but for some time now, the trend for mobile application development goes new directions. Capacitor aims to be a drop-in replacement with a more modern approach and an active Community. Existing Cordova plugins do still work, and plugins from the Capacitor ecosystem are available as well. This should make the mobile app development more future-proof.
+    - Screen orientation change handling: A Saltcorn plugin can register a listener for screen orientation changes (Landscape / Portrait modes). For an example, take a look at the [metronic-theme](https://github.com/saltcorn/metronic-theme/blob/35b69ba7b4e94e2bcfe2f1c61508bc579c1d914f/index.js#L844). It registers a listener to adjust the mobile bottom navigation bar when the phone rotates.
+    - PJAX view loading: Changed the full reload to pjax for sortby and gopage (paging). The remainig set_state calls are still full reloads.
 
 ### Security
 
