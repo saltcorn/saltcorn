@@ -316,8 +316,7 @@ const renderBody = (title, body, role, req) =>
     blockDispatch,
     role,
     req,
-    layout:
-      typeof body === "string" ? { type: "card", title, contents: body } : body,
+    layout: body,
   });
 
 /**
