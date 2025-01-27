@@ -407,7 +407,7 @@ describe("visible_entries test", () => {
       .set("Cookie", staffCookie);
     expect(resp.statusCode).toBe(200);
     expect(
-      resp.body.directories.find((file) => file.filename === "subsubfolder")
+      resp.body.directories.find((file) => file.filename === "_sc_test_subfolder_one/subsubfolder")
     ).toBeDefined();
   });
 
