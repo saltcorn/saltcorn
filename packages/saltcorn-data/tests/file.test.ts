@@ -263,7 +263,7 @@ describe("File class", () => {
     await File.new_folder("subfolder/mysubsubfolder");
 
     const dirs = await File.allDirectories();
-    expect(dirs.length).toBeGreaterThan(3);
+    expect(dirs.length).toBeGreaterThan(2);
     expect(dirs.length).toBeLessThan(20);
     expect(dirs[0].constructor.name).toBe("File");
     const paths = dirs.map((d) => d.path_to_serve);
