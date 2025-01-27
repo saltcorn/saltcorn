@@ -14,6 +14,7 @@ const {
   get_sys_info,
   tenant_letsencrypt_name,
   isAdminOrHasConfigMinRole,
+  checkEditPermission,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -633,20 +634,6 @@ router.get(
   })
 );
 
-const checkEditPermission = (type, user) => {
-  if (user.role_id === 1) return true;
-  switch (type) {
-    case "view":
-      return getState().getConfig("min_role_edit_views", 1) >= user.role_id;
-    case "page":
-      return getState().getConfig("min_role_edit_pages", 1) >= user.role_id;
-    case "trigger":
-      return getState().getConfig("min_role_edit_triggers", 1) >= user.role_id;
-    default:
-      return false;
-  }
-};
-
 router.get(
   "/snapshot-restore/:type/:name",
   isAdminOrHasConfigMinRole([
@@ -658,7 +645,7 @@ router.get(
     const { type, name } = req.params;
     const snaps = await Snapshot.entity_history(type, name);
     const locale = getState().getConfig("default_locale", "en");
-    const auth = checkEditPermission(type, req.user);
+    const auth = checkEditPermission(type + "s", req.user);
     if (!auth) {
       res.send("Not authorized");
       return;
@@ -703,7 +690,7 @@ router.post(
   ]),
   error_catcher(async (req, res) => {
     const { type, name, id } = req.params;
-    const auth = checkEditPermission(type, req.user);
+    const auth = checkEditPermission(type + "s", req.user);
     if (!auth) {
       req.flash("error", "Not authorized");
     } else {

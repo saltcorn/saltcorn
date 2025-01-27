@@ -13,7 +13,17 @@ const {
 } = require("@saltcorn/markup");
 const { get_base_url } = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
-const { h4, p, div, a, i, text, span, nbsp } = require("@saltcorn/markup/tags");
+const {
+  h4,
+  p,
+  div,
+  a,
+  i,
+  text,
+  span,
+  nbsp,
+  button,
+} = require("@saltcorn/markup/tags");
 
 /**
  * @param {string} col
@@ -63,9 +73,11 @@ const tablesList = async (
     getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
   const tagBadges = (table) => {
     const myTags = tag_entries.filter((te) => te.table_id === table.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "tables"))
-      .join(nbsp);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "tables")).join(nbsp) +
+      mkAddBtn(tags, "tables", table.id, req, myTagIds)
+    );
   };
 
   return (
@@ -278,6 +290,38 @@ const tagsDropdown = (tags, altHeader) =>
     )
   );
 
+const mkAddBtn = (tags, entityType, id, req, myTagIds) =>
+  div(
+    { class: "dropdown d-inline ms-1" },
+    span(
+      {
+        class: "badge bg-secondary add-tag",
+        "data-bs-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+        "data-boundary": "viewport",
+      },
+      i({ class: "fas fa-plus fa-sm" })
+    ),
+    div(
+      {
+        class: "dropdown-menu dropdown-menu-end",
+      },
+
+      tags
+        .filter((t) => !myTagIds.has(t.id))
+        .map((t) =>
+          post_dropdown_item(
+            `/tag-entries/add-tag-entity/${encodeURIComponent(
+              t.name
+            )}/${entityType}/${id}`,
+            t.name,
+            req
+          )
+        )
+    )
+  );
+
 const viewsList = async (
   views,
   req,
@@ -300,9 +344,12 @@ const viewsList = async (
 
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "views"))
-      .join(nbsp);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    const addBtn = mkAddBtn(tags, "views", view.id, req, myTagIds);
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "views")).join(nbsp) +
+      addBtn
+    );
   };
 
   return (
@@ -504,9 +551,11 @@ const getPageList = async (
 
   const tagBadges = (page) => {
     const myTags = tag_entries.filter((te) => te.page_id === page.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "pages"))
-      .join(nbsp);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "pages")).join(nbsp) +
+      mkAddBtn(tags, "pages", page.id, req, myTagIds)
+    );
   };
   return mkTable(
     [
@@ -602,7 +651,7 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
-const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>  
+const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
   settingsDropdown(`dropdownMenuButton${trigger.id}`, [
     a(
       {
@@ -643,8 +692,8 @@ const getTriggerList = async (
   const base_url = get_base_url(req);
   const tags = await Tag.find();
   const on_done_redirect_str = on_done_redirect
-  ? `?on_done_redirect=${on_done_redirect}`
-  : "";
+    ? `?on_done_redirect=${on_done_redirect}`
+    : "";
   const tag_entries = await TagEntry.find({
     not: { trigger_id: null },
   });
@@ -657,9 +706,11 @@ const getTriggerList = async (
 
   const tagBadges = (trigger) => {
     const myTags = tag_entries.filter((te) => te.trigger_id === trigger.id);
-    return myTags
-      .map((te) => tagBadge(tagsById[te.tag_id], "triggers"))
-      .join(nbsp);
+    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    return (
+      myTags.map((te) => tagBadge(tagsById[te.tag_id], "triggers")).join(nbsp) +
+      mkAddBtn(tags, "triggers", trigger.id, req, myTagIds)
+    );
   };
   return mkTable(
     [
