@@ -209,8 +209,9 @@ class File {
     await iterFolder(root);
 
     return await asyncMap(allPaths, async (p: string) => {
-      const relnm = p.replace(root, "")    
-      const fs = await File.find({ filename: relnm || "/"});
+      let relnm = p.replace(root, "");
+      if (relnm[0] === "/") relnm = relnm.slice(1);
+      const fs = await File.find({ filename: relnm || "/" });
       return fs[0];
     });
   }
