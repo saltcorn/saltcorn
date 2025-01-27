@@ -1533,6 +1533,8 @@ router.get(
                   key: (r) =>
                     r.type === "Unique"
                       ? r.configuration.fields.join(", ")
+                      : r.type === "Index" && r.configuration?.field === "_fts"
+                      ? "Full text search"
                       : r.type === "Index"
                       ? r.configuration.field
                       : r.type === "Formula"

@@ -1935,11 +1935,12 @@ describe("Table constraints", () => {
     assertIsSet(table);
     assertIsSet(table.id);
 
-    await TableConstraint.create({
+    const con = await TableConstraint.create({
       table_id: table.id,
       type: "Index",
       configuration: { field: "author" },
     });
+    await con.delete();
   });
   it("should create full text search index", async () => {
     const table = await Table.create("TableWithFTS");
@@ -1973,11 +1974,12 @@ describe("Table constraints", () => {
       age: 11,
       favbook: 1,
     });
-    await TableConstraint.create({
+    const con = await TableConstraint.create({
       table_id: table.id,
       type: "Index",
       configuration: { field: "_fts" },
     });
+    await con.delete();
   });
 });
 describe("Table with UUID pks", () => {

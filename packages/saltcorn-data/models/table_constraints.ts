@@ -138,6 +138,8 @@ class TableConstraint {
     const table = Table.findOne({ id: this.table_id });
     if (this.type === "Unique" && this.configuration.fields) {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
+    } else if (this.type === "Index" && this.configuration?.field === "_fts") {
+      await db.drop_fts_index(table.name);
     } else if (this.type === "Index") {
       await db.drop_index(table.name, this.configuration.field);
     } else if (this.type === "Formula" && !db.isSQLite) {

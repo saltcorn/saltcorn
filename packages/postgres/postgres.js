@@ -424,6 +424,14 @@ const add_fts_index = async (table_name, field_expression) => {
   sql_log(sql);
   await pool.query(sql);
 };
+const drop_fts_index = async (table_name) => {
+  // TBD check that there are no problems with lenght of constraint name
+  const sql = `drop index "${getTenantSchema()}"."${sqlsanitize(
+    table_name
+  )}_fts_index";`;
+  sql_log(sql);
+  await pool.query(sql);
+};
 
 /**
  * Add index
@@ -547,6 +555,7 @@ const postgresExports = {
   changeConnection,
   set_sql_logging,
   get_sql_logging,
+  drop_fts_index,
   getClient,
   mkWhere,
   drop_reset_schema,
