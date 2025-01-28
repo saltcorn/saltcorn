@@ -399,10 +399,10 @@ router.get(
       req.__("Search syntax help"),
       div(
         p(
-          `Individual words matched independently. Example <code>the cat</code>`
+          `Individual words matched independently. Example <code>large cat</code>`
         ),
         p(
-          `Double quotes to match phrase as a single unit. Example <code>"the cat"</code> matches "the cat sat..." but not "the large cat".`
+          `Double quotes to match phrase as a single unit. Example <code>"large cat"</code> matches "the large cat sat..." but not "the large brown cat".`
         ),
         p(
           `"or" to match either of two phrases. Example <code>cat or mouse</code>`
