@@ -324,7 +324,7 @@ describe("Workflow run actions", () => {
       name: "InsertBook",
       when_trigger: "Never",
       configuration: {
-        code: `await table.insertRow({author: "Mary Contrary", pages: 124})`,
+        code: `await table.insertRow({author: "Mary Contrary", pages: 124, publisher: row.publisher})`,
       },
     });
     const main = await Trigger.create({
@@ -346,7 +346,7 @@ describe("Workflow run actions", () => {
       next_step: "third_step",
       action_name: "InsertBook",
       initial_step: false,
-      configuration: {},
+      configuration: { row_expr: "{publisher: 2}" },
     });
     await WorkflowStep.create({
       trigger_id: main.id!,
@@ -375,5 +375,6 @@ describe("Workflow run actions", () => {
     expect(wfrun.context.books.length).toBe(1);
     expect(wfrun.context.books[0].pages).toBe(124);
     expect(wfrun.context.books[0].author).toBe("Mary Contrary");
+    expect(wfrun.context.books[0].publisher).toBe(2);
   });
 });
