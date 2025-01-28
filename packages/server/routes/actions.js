@@ -731,7 +731,7 @@ const getWorkflowStepForm = async (
             },
           };
         if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
-        actionConfigFields.push(cfgFld)
+        actionConfigFields.push(cfgFld);
       }
     } catch {}
   }
@@ -752,6 +752,7 @@ const getWorkflowStepForm = async (
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     noMultiStep: true,
+    apiNeverTriggers: true,
     builtInLabel: "Workflow Actions",
     builtIns: Object.keys(builtInActionExplainers),
     forWorkflow: true,
