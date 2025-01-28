@@ -305,6 +305,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
         type: "card",
         contents: div(
           renderForm(form, false),
+          syntax_help_link(req),
           typeof table !== "undefined" &&
             tablesConfigured > 1 &&
             div(
@@ -337,6 +338,19 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       ...searchResult,
     ],
   });
+};
+
+const syntax_help_link = (req) => {
+  const use_websearch = getState().getConfig("search_use_websearch", false);
+  if (use_websearch)
+    return a(
+      {
+        href: "javascript:void(0);",
+        onclick: "ajax_modal('/search/syntax-help')",
+      },
+      req.__("Search syntax")
+    );
+  else return "";
 };
 
 /**
@@ -372,8 +386,31 @@ router.get(
       const form = searchForm();
       res.sendWrap(req.__("Search all tables"), {
         type: "card",
-        contents: renderForm(form, false),
+        contents: renderForm(form, false) + syntax_help_link(req),
       });
     }
+  })
+);
+
+router.get(
+  "/syntax-help",
+  error_catcher(async (req, res) => {
+    res.sendWrap(
+      req.__("Search syntax help"),
+      div(
+        p(
+          `Individual words matched independently. Example <code>the cat</code>`
+        ),
+        p(
+          `Double quotes to match phrase as a single unit. Example <code>"the cat"</code> matches "the cat sat..." but not "the large cat".`
+        ),
+        p(
+          `"or" to match either of two phrases. Example <code>cat or mouse</code>`
+        ),
+        p(
+          `"-" to exclude a word or phrase. Example <code>cat -mouse</code> does not match "cat and mouse"`
+        )
+      )
+    );
   })
 );
