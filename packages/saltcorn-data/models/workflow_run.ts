@@ -382,41 +382,43 @@ class WorkflowRun {
           const wfTrigger = allWorkflows.find(
             (wf) => wf.name === step.action_name
           );
-          const subwfrun = await WorkflowRun.create({
-            trigger_id: wfTrigger!.id!,
-            context: step.configuration.subcontext
-              ? structuredClone(this.context[step.configuration.subcontext])
-              : structuredClone(this.context),
-            started_by: this.started_by,
-            session_id: this.session_id,
-          });
-          await this.update({
-            status: "Waiting",
-            wait_info: { workflow_run: subwfrun.id },
-          });
-
-          const subrunres: any = await subwfrun.run({
-            user,
-            interactive,
-            noNotifications,
-            api_call,
-          });
-
-          if (subwfrun.status === "Finished") {
-            if (step.configuration.subcontext)
-              Object.assign(
-                this.context[step.configuration.subcontext],
-                subwfrun.context
-              );
-            else Object.assign(this.context, subwfrun.context);
-            await this.update({
-              context: this.context,
-              status: "Running",
-              wait_info: {},
+          if (wfTrigger?.action === "Workflow") {
+            const subwfrun = await WorkflowRun.create({
+              trigger_id: wfTrigger!.id!,
+              context: step.configuration.subcontext
+                ? structuredClone(this.context[step.configuration.subcontext])
+                : structuredClone(this.context),
+              started_by: this.started_by,
+              session_id: this.session_id,
             });
-            waiting_fulfilled = true;
-          } else {
-            return subrunres;
+            await this.update({
+              status: "Waiting",
+              wait_info: { workflow_run: subwfrun.id },
+            });
+
+            const subrunres: any = await subwfrun.run({
+              user,
+              interactive,
+              noNotifications,
+              api_call,
+            });
+
+            if (subwfrun.status === "Finished") {
+              if (step.configuration.subcontext)
+                Object.assign(
+                  this.context[step.configuration.subcontext],
+                  subwfrun.context
+                );
+              else Object.assign(this.context, subwfrun.context);
+              await this.update({
+                context: this.context,
+                status: "Running",
+                wait_info: {},
+              });
+              waiting_fulfilled = true;
+            } else {
+              return subrunres;
+            }
           }
         }
         if (step.action_name === "APIResponse") {

@@ -212,12 +212,24 @@ class WorkflowStep {
       state_action = getState().actions[trigger.action];
       if (!state_action)
         throw new Error(`Action or trigger not found: ${this.action_name}`);
-      return await state_action.run({
+      const runargs: any = {
         configuration: trigger.configuration,
-        user,
-        row: context,
+        user,   
         mode: "workflow",
-      });
+      };
+      if (this.configuration.row_expr) {
+        runargs.row = eval_expression(
+          this.configuration.row_expr,
+          context,
+          user,
+          `Row expression in ${this.name} step`
+        );
+      } else {
+        runargs.row = context;
+      }
+      if (trigger.table_id)
+        runargs.table = Table.findOne({ id: trigger.table_id });
+      return await state_action.run(runargs);
     }
   }
   static builtInActionExplainers(opts: any = {}) {
