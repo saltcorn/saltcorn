@@ -327,9 +327,10 @@ router.get(
       }
 
       const form = searchForm();
-      form.noSubmitButton = false;
-      form.submitLabel = req.__("Search");
-      res.sendWrap(req.__("Search all tables"), renderForm(form, false));
+      res.sendWrap(req.__("Search all tables"), {
+        type: "card",
+        contents: renderForm(form, false),
+      });
     }
   })
 );
