@@ -42,6 +42,7 @@
     - ForLoop step type for loops over arrays.
     - Varius UX improvements for editing workflows
     - Integrate copilot, if installed, in workflow editing
+    - Call non-workflow trigger actions.
 
 * sbadmin2 theme - Color update: dark side bar, darker primary blue
 
