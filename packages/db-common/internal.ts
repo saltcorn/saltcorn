@@ -122,6 +122,7 @@ const whereFTS = (
     searchTerm: string;
     schema?: string;
     language?: string;
+    use_websearch?: boolean;
   },
   phs: PlaceHolderStack
 ): string => {
@@ -134,7 +135,7 @@ const whereFTS = (
     return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
     return `to_tsvector('${v.language || "english"}', ${flds}) @@ ${
-      prefixMatch ? "" : `plain`
+      v.use_websearch ? "websearch_" : prefixMatch ? "" : `plain`
     }to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
 };
 

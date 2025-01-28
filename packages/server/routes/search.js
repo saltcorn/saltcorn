@@ -8,6 +8,8 @@ const Router = require("express-promise-router");
 const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
+const db = require("@saltcorn/data/db");
+
 const { isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
@@ -137,6 +139,7 @@ router.post(
     const result = form.validate(req.body);
 
     if (result.success) {
+      const dbversion = await db.getVersion(true);
       const search_table_description =
         !!result.success.search_table_description;
       await getState().setConfig(
@@ -147,6 +150,7 @@ router.post(
         "search_results_decoration",
         result.success.search_results_decoration || "Cards"
       );
+      await getState().setConfig("search_use_websearch", +dbversion > 11.0);
       delete result.success.search_table_description;
       delete result.success.search_results_decoration;
       await getState().setConfig("globalSearch", result.success);

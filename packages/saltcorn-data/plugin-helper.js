@@ -1968,11 +1968,14 @@ const stateFieldsToWhere = ({
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
-      const language = getState().pg_ts_config;
+      const scState = getState();
+      const language = scState.pg_ts_config;
+      const use_websearch = scState.getConfig("search_use_websearch", false);
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
         language,
+        use_websearch,
         table: prefix
           ? prefix.replaceAll(".", "")
           : table

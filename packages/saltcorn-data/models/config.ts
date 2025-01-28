@@ -1059,6 +1059,11 @@ const configTypes: ConfigTypes = {
     input_type: "select",
     options: ["Cards", "Tabs"],
   },
+  search_use_websearch: {
+    label: "Use websearch for full text search",
+    type: "Bool",
+    default: false,
+  },
   backup_file_prefix: {
     type: "String",
     label: "Backup file prefix",
