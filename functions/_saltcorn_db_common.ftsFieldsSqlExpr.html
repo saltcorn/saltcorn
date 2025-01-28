@@ -1,4 +1,4 @@
-<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>mkWhere | saltcorn-monorepo</title><meta name="description" content="Documentation for saltcorn-monorepo"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><link rel="stylesheet" href="../assets/custom.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>ftsFieldsSqlExpr | saltcorn-monorepo</title><meta name="description" content="Documentation for saltcorn-monorepo"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><link rel="stylesheet" href="../assets/custom.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="tsd-search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
 <div class="tsd-toolbar-contents container">
 <div class="table-cell" id="tsd-search" data-base="..">
 <div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.7824 13.833L12.6666 10.7177C12.5259 10.5771 12.3353 10.499 12.1353 10.499H11.6259C12.4884 9.39596 13.001 8.00859 13.001 6.49937C13.001 2.90909 10.0914 0 6.50048 0C2.90959 0 0 2.90909 0 6.49937C0 10.0896 2.90959 12.9987 6.50048 12.9987C8.00996 12.9987 9.39756 12.4863 10.5008 11.6239V12.1332C10.5008 12.3332 10.5789 12.5238 10.7195 12.6644L13.8354 15.7797C14.1292 16.0734 14.6042 16.0734 14.8948 15.7797L15.7793 14.8954C16.0731 14.6017 16.0731 14.1267 15.7824 13.833ZM6.50048 10.499C4.29094 10.499 2.50018 8.71165 2.50018 6.49937C2.50018 4.29021 4.28781 2.49976 6.50048 2.49976C8.71001 2.49976 10.5008 4.28708 10.5008 6.49937C10.5008 8.70852 8.71314 10.499 6.50048 10.499Z" fill="var(--color-text)"></path></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
@@ -14,28 +14,24 @@
 <ul class="tsd-breadcrumb">
 <li><a href="../index.html">saltcorn-monorepo</a></li>
 <li><a href="../modules/_saltcorn_db_common.html">@saltcorn/db-common</a></li>
-<li><a href="_saltcorn_db_common.mkWhere.html">mkWhere</a></li></ul>
-<h1>Function mkWhere</h1></div>
+<li><a href="_saltcorn_db_common.ftsFieldsSqlExpr.html">ftsFieldsSqlExpr</a></li></ul>
+<h1>Function ftsFieldsSqlExpr</h1></div>
 <section class="tsd-panel">
 <ul class="tsd-signatures">
-<li class="tsd-signature tsd-anchor-link" id="mkWhere"><span class="tsd-kind-call-signature">mk<wbr/>Where</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">whereObj</span>, <span class="tsd-kind-parameter">is_sqlite</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">initCount</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">WhereAndVals</span><a href="#mkWhere" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="ftsFieldsSqlExpr"><span class="tsd-kind-call-signature">fts<wbr/>Fields<wbr/>Sql<wbr/>Expr</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">fields</span>, <span class="tsd-kind-parameter">table</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">schema</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><a href="#ftsFieldsSqlExpr" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">whereObj</span>: <a href="../types/_saltcorn_db_common.Where.html" class="tsd-signature-type tsd-kind-type-alias">Where</a></h5>
-<div class="tsd-comment tsd-typography"></div></li>
+<h5><span class="tsd-kind-parameter">fields</span>: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5></li>
 <li>
-<h5><span class="tsd-kind-parameter">is_sqlite</span>: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></h5>
-<div class="tsd-comment tsd-typography"></div></li>
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-parameter">table</span>: <span class="tsd-signature-type">string</span></h5></li>
 <li>
-<h5><span class="tsd-kind-parameter">initCount</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></h5>
-<div class="tsd-comment tsd-typography"></div></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">WhereAndVals</span></h4>
-<div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-parameter">schema</span>: <span class="tsd-signature-type">string</span></h5></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/6d94eb0/packages/db-common/internal.ts#L526">db-common/internal.ts:526</a></li></ul></aside></li></ul></section></div>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/6d94eb0/packages/db-common/internal.ts#L76">db-common/internal.ts:76</a></li></ul></aside></li></ul></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -86,10 +82,10 @@
 <li><a href="_saltcorn_db_common.doListUserDefinedTables.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>do<wbr/>List<wbr/>User<wbr/>Defined<wbr/>Tables</span></a></li>
 <li><a href="_saltcorn_db_common.do_add_index.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>do_<wbr/>add_<wbr/>index</span></a></li>
 <li><a href="_saltcorn_db_common.do_drop_index.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>do_<wbr/>drop_<wbr/>index</span></a></li>
-<li><a href="_saltcorn_db_common.ftsFieldsSqlExpr.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>fts<wbr/>Fields<wbr/>Sql<wbr/>Expr</span></a></li>
+<li><a href="_saltcorn_db_common.ftsFieldsSqlExpr.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>fts<wbr/>Fields<wbr/>Sql<wbr/>Expr</span></a></li>
 <li><a href="_saltcorn_db_common.mkSelectOptions.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>mk<wbr/>Select<wbr/>Options</span></a></li>
 <li><a href="_saltcorn_db_common.mkVal.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>mk<wbr/>Val</span></a></li>
-<li><a href="_saltcorn_db_common.mkWhere.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>mk<wbr/>Where</span></a></li>
+<li><a href="_saltcorn_db_common.mkWhere.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>mk<wbr/>Where</span></a></li>
 <li><a href="_saltcorn_db_common.orderByIsObject.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>order<wbr/>By<wbr/>Is<wbr/>Object</span></a></li>
 <li><a href="_saltcorn_db_common.orderByIsOperator.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>order<wbr/>By<wbr/>Is<wbr/>Operator</span></a></li>
 <li><a href="_saltcorn_db_common.prefixFieldsInWhere.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-64"></use></svg><span>prefix<wbr/>Fields<wbr/>In<wbr/>Where</span></a></li>
