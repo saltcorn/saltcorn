@@ -324,7 +324,7 @@ describe("Workflow run actions", () => {
       name: "InsertBook",
       when_trigger: "Never",
       configuration: {
-        code: `await Table.findOne("books").insertRow({author: "Mary Contrary", pages: 123})`,
+        code: `await Table.findOne("books").insertRow({author: "Mary Contrary", pages: 124})`,
       },
     });
     const main = await Trigger.create({
@@ -356,7 +356,7 @@ describe("Workflow run actions", () => {
       initial_step: false,
       configuration: {
         query_table: "books",
-        query_object: "{pages: 123}",
+        query_object: "{pages: 124}",
         query_variable: "books",
       },
     });
@@ -371,9 +371,9 @@ describe("Workflow run actions", () => {
     });
     await wfrun.run({ user });
 
-    //console.log(wfrun.context);
-
     expect(wfrun.context.foo.x).toBe(1);
-    expect(wfrun.context.books.pages).toBe(123);
+    expect(wfrun.context.books.length).toBe(1);
+    expect(wfrun.context.books[0].pages).toBe(124);
+    expect(wfrun.context.books[0].author).toBe("Mary Contrary");
   });
 });
