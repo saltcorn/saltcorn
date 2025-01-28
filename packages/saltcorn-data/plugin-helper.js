@@ -1968,9 +1968,11 @@ const stateFieldsToWhere = ({
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
+      const language = getState().pg_ts_config;
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
+        language,
         table: prefix
           ? prefix.replaceAll(".", "")
           : table

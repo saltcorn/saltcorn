@@ -116,7 +116,13 @@ export const ftsFieldsSqlExpr = (
  * @returns {string}
  */
 const whereFTS = (
-  v: { fields: any[]; table?: string; searchTerm: string; schema?: string },
+  v: {
+    fields: any[];
+    table?: string;
+    searchTerm: string;
+    schema?: string;
+    language?: string;
+  },
   phs: PlaceHolderStack
 ): string => {
   const { fields, table, schema } = v;
@@ -127,9 +133,9 @@ const whereFTS = (
   if (phs.is_sqlite)
     return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
-    return `to_tsvector('english', ${flds}) @@ ${
+    return `to_tsvector('${v.language || "english"}', ${flds}) @@ ${
       prefixMatch ? "" : `plain`
-    }to_tsquery('english', ${phs.push(searchTerm)})`;
+    }to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
 };
 
 export type Value = string | number | boolean | Date | Value[];
