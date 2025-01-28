@@ -745,6 +745,21 @@ const getWorkflowStepForm = async (
       wf_action_name: Trigger.find({ action: "Workflow" }).map((wf) => wf.name),
     },
   });
+  const nonWfTriggerNames = Trigger.find({})
+    .filter((tr) => tr.action !== "Workflow")
+    .map((wf) => wf.name);
+
+  actionConfigFields.push({
+    label: "Row expression",
+    name: "row_expr",
+    type: "String",
+    class: "validate-expression",
+    sublabel:
+      "Expression for the object to set the <code>row</code> value to inside the action. If blank, set to whole context",
+    showIf: {
+      wf_action_name: nonWfTriggerNames,
+    },
+  });
 
   const builtInActionExplainers = WorkflowStep.builtInActionExplainers({
     api_call: trigger.when_trigger == "API call",
