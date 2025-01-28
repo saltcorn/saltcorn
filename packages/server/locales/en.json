@@ -1546,5 +1546,6 @@
 	"Trigger %s deleted": "Trigger %s deleted",
 	"Edit menu": "Edit menu",
 	"Minimum role to edit menu": "Minimum role to edit menu",
+	"Full-text search index is not available as the table contains Key fields (%s) with the \"Include in full-text search\" option enabled. Disable this before creating a Full-text search index": "Full-text search index is not available as the table contains Key fields (%s) with the \"Include in full-text search\" option enabled. Disable this before creating a Full-text search index",
 	"Share Extension Provisioning Profile": "Share Extension Provisioning Profile"
 }

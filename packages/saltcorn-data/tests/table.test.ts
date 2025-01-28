@@ -1866,7 +1866,7 @@ describe("Table joint unique constraint", () => {
     expect(!!res1.error).toBe(false);
   });
 });
-describe("Table formula constraint", () => {
+describe("Table constraints", () => {
   it("should create table", async () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
@@ -1929,6 +1929,60 @@ describe("Table formula constraint", () => {
     const uprow = await table1.getRow({ id });
 
     expect(uprow!.parent).toBe(null);
+  });
+  it("should create index", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    assertIsSet(table.id);
+
+    const con = await TableConstraint.create({
+      table_id: table.id,
+      type: "Index",
+      configuration: { field: "author" },
+    });
+    await con.delete();
+  });
+  it("should create full text search index", async () => {
+    const table = await Table.create("TableWithFTS");
+    await Field.create({
+      table,
+      name: "name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "bio",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "age",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      name: "favbook",
+      label: "Favbook",
+      type: "Key to books",
+      attributes: { summary_field: "author" },
+    });
+    await table.insertRow({
+      name: "Tom",
+      bio: "Writes saltcorns",
+      age: 11,
+      favbook: 1,
+    });
+    if (!db.isSQLite) {
+      db.set_sql_logging(true);
+      const con = await TableConstraint.create({
+        table_id: table.id,
+        type: "Index",
+        configuration: { field: "_fts" },
+      });
+      await con.delete();
+    }
   });
 });
 describe("Table with UUID pks", () => {
