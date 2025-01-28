@@ -324,7 +324,7 @@ describe("Workflow run actions", () => {
       name: "InsertBook",
       when_trigger: "Never",
       configuration: {
-        code: `await Table.findOne("books").insertRow({author: "Mary Contrary", pages: 124})`,
+        code: `await table.insertRow({author: "Mary Contrary", pages: 124})`,
       },
     });
     const main = await Trigger.create({
