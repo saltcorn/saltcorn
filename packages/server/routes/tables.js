@@ -1533,6 +1533,8 @@ router.get(
                   key: (r) =>
                     r.type === "Unique"
                       ? r.configuration.fields.join(", ")
+                      : r.type === "Index" && r.configuration?.field === "_fts"
+                      ? "Full text search"
                       : r.type === "Index"
                       ? r.configuration.field
                       : r.type === "Formula"
@@ -1629,11 +1631,23 @@ const constraintForm = (req, table, fields, type) => {
         ],
       });
     case "Index":
+      const fieldopts = fields.map((f) => ({ label: f.label, name: f.name }));
+      const hasIncludeFts = fields.filter((f) => f.attributes?.include_fts);
+      if (!db.isSQLite && !hasIncludeFts.length)
+        fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,
-        blurb: req.__(
-          "Choose the field to be indexed. This make searching the table faster."
-        ),
+        blurb:
+          req.__(
+            "Choose the field to be indexed. This make searching the table faster."
+          ) +
+          " " +
+          (hasIncludeFts.length
+            ? req.__(
+                `Full-text search index is not available as the table contains Key fields (%s) with the "Include in full-text search" option enabled. Disable this before creating a Full-text search index`,
+                hasIncludeFts.map((f) => f.name).join(",")
+              )
+            : ""),
         fields: [
           {
             type: "String",
@@ -1641,7 +1655,7 @@ const constraintForm = (req, table, fields, type) => {
             label: "Field",
             required: true,
             attributes: {
-              options: fields.map((f) => ({ label: f.label, name: f.name })),
+              options: fieldopts,
             },
           },
         ],

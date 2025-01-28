@@ -2,6 +2,10 @@
 
 ## 1.1.1 - In beta
 
+* An index for full-text search can now be created. When creating an index in
+  the constraints setting for a table, you can select "Full-text search" in
+  the field selector. This will dramatically speed up search on large tables.
+
 * select_by_view fieldview for Key fields: the user selects the value of a 
   Key field based on an clicking in a row of rendered views (typically a Show view) of the joined table. Works for both Edit and Filter views.
 

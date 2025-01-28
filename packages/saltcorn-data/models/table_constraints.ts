@@ -4,7 +4,11 @@
  * @module models/table_constraints
  * @subcategory models
  */
-import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
+import {
+  type Where,
+  type SelectOptions,
+  ftsFieldsSqlExpr,
+} from "@saltcorn/db-common/internal";
 import db from "../db";
 import type Field from "./field";
 const { stringToJSON } = require("../utils");
@@ -79,6 +83,13 @@ class TableConstraint {
     const table = Table.findOne({ id: con.table_id });
     if (con.type === "Unique" && con.configuration.fields) {
       await db.add_unique_constraint(table.name, con.configuration.fields);
+    } else if (con.type === "Index" && con.configuration.field === "_fts") {
+      const text_fields = ftsFieldsSqlExpr(
+        table.fields,
+        table.name,
+        db.getTenantSchema()
+      );
+      await db.add_fts_index(table.name, text_fields);
     } else if (con.type === "Index") {
       await db.add_index(table.name, con.configuration.field);
     }
@@ -127,6 +138,8 @@ class TableConstraint {
     const table = Table.findOne({ id: this.table_id });
     if (this.type === "Unique" && this.configuration.fields) {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
+    } else if (this.type === "Index" && this.configuration?.field === "_fts") {
+      await db.drop_fts_index(table.name);
     } else if (this.type === "Index") {
       await db.drop_index(table.name, this.configuration.field);
     } else if (this.type === "Formula" && !db.isSQLite) {

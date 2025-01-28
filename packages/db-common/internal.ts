@@ -73,19 +73,11 @@ const sqlitePlaceHolderStack = (): PlaceHolderStack => {
   };
 };
 
-/**
- * Where FTS (Search)
- * @param {object} v
- * @param {string} i
- * @param {boolean} is_sqlite
- * @returns {string}
- */
-const whereFTS = (
-  v: { fields: any[]; table?: string; searchTerm: string; schema?: string },
-  phs: PlaceHolderStack
-): string => {
-  const { fields, table, schema } = v;
-
+export const ftsFieldsSqlExpr = (
+  fields: any[],
+  table?: string,
+  schema?: string
+) => {
   let fldsArray = fields
     .filter(
       (f: any) =>
@@ -112,10 +104,26 @@ const whereFTS = (
       );
     });
   let flds = fldsArray.join(" || ' ' || ");
+  if (flds === "") flds = "''";
+  return flds;
+};
+
+/**
+ * Where FTS (Search)
+ * @param {object} v
+ * @param {string} i
+ * @param {boolean} is_sqlite
+ * @returns {string}
+ */
+const whereFTS = (
+  v: { fields: any[]; table?: string; searchTerm: string; schema?: string },
+  phs: PlaceHolderStack
+): string => {
+  const { fields, table, schema } = v;
+
   const prefixMatch = !v.searchTerm?.includes(" ");
   const searchTerm = prefixMatch ? `${v.searchTerm}:*` : v.searchTerm;
-
-  if (flds === "") flds = "''";
+  let flds = ftsFieldsSqlExpr(fields, table, schema);
   if (phs.is_sqlite)
     return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
