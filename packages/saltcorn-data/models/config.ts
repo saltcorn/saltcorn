@@ -1057,7 +1057,7 @@ const configTypes: ConfigTypes = {
     label: "Search results decoration",
     blurb: "Show results from each table in this type of element",
     input_type: "select",
-    options: ["Card", "Tabs"],
+    options: ["Cards", "Tabs"],
   },
   backup_file_prefix: {
     type: "String",
