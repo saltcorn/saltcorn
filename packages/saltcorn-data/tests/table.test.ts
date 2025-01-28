@@ -1966,7 +1966,7 @@ describe("Table constraints", () => {
       name: "favbook",
       label: "Favbook",
       type: "Key to books",
-      attributes: { summary_field: "author", include_fts: true },
+      attributes: { summary_field: "author" },
     });
     await table.insertRow({
       name: "Tom",
@@ -1975,7 +1975,7 @@ describe("Table constraints", () => {
       favbook: 1,
     });
     if (!db.isSQLite) {
-      db.set_sql_logging(true)
+      db.set_sql_logging(true);
       const con = await TableConstraint.create({
         table_id: table.id,
         type: "Index",
