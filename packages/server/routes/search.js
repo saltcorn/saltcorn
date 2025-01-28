@@ -150,7 +150,7 @@ router.post(
         "search_results_decoration",
         result.success.search_results_decoration || "Cards"
       );
-      await getState().setConfig("search_use_websearch", +dbversion > 11.0);
+      await getState().setConfig("search_use_websearch", +dbversion >= 11.0);
       delete result.success.search_table_description;
       delete result.success.search_results_decoration;
       await getState().setConfig("globalSearch", result.success);
