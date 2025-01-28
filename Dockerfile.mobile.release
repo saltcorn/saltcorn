@@ -23,32 +23,31 @@ WORKDIR /init_project
 RUN npm init -y
 RUN mkdir www
 RUN touch www/index.html
-RUN npm install @capacitor/cli @capacitor/core @capacitor/android
+RUN npm install @capacitor/cli@6.2.0 @capacitor/core@6.2.0 @capacitor/android@6.2.0
 RUN npx cap init MyApp com.example.myapp --web-dir www
 RUN npx cap add android
 RUN npx cap sync
 
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV ANDROID_SDK_ROOT=/android_sdk
 ENV ANDROID_HOME=/android_sdk
 ENV GRADLE_HOME=/opt/gradle-8.4
 ENV PATH=$PATH:/opt/gradle-8.4/bin
 
-RUN cat <<EOF > /init_project/android/gradle/wrapper/gradle-wrapper.properties
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=file\:/gradle-8.4-all.zip
-networkTimeout=10000
-validateDistributionUrl=true
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-EOF
+RUN echo "distributionBase=GRADLE_USER_HOME\n\
+distributionPath=wrapper/dists\n\
+distributionUrl=file:/gradle-8.4-all.zip\n\
+networkTimeout=10000\n\
+validateDistributionUrl=true\n\
+zipStoreBase=GRADLE_USER_HOME\n\
+zipStorePath=wrapper/dists" > /init_project/android/gradle/wrapper/gradle-wrapper.properties
 
 WORKDIR /init_project/android
 RUN ./gradlew assembleDebug
 
 # taken from Dockerfile.release
-ENV NODE_ENV "production"
-ENV SALTCORN_DISABLE_UPGRADE "true"
+ENV NODE_ENV="production"
+ENV SALTCORN_DISABLE_UPGRADE="true"
 
 RUN npm install -g @saltcorn/cli@1.1.1-rc.1 --unsafe
 

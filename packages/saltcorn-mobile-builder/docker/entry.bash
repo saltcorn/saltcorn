@@ -22,7 +22,7 @@ export GRADLE_HOME=/opt/gradle-8.4
 export PATH=$PATH:/opt/gradle-8.4/bin
 
 cd /saltcorn-mobile-app
-npm install @capacitor/cli @capacitor/core @capacitor/android
+npm install @capacitor/cli@6.2.0 @capacitor/core@6.2.0 @capacitor/android@6.2.0
 npx cap sync
 
 # data extraction rules
