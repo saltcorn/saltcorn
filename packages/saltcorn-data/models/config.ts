@@ -1053,6 +1053,12 @@ const configTypes: ConfigTypes = {
     label: "Use table description instead of name as header",
     default: 20,
   },
+  search_results_decoration: {
+    label: "Search results decoration",
+    blurb: "Show results from each table in this type of element",
+    input_type: "select",
+    options: ["Card", "Tabs"],
+  },
   backup_file_prefix: {
     type: "String",
     label: "Backup file prefix",

@@ -58,6 +58,13 @@ const searchConfigForm = (tables, views, req) => {
     sublabel: req.__("Use table description instead of name as header"),
     type: "Bool",
   });
+  fields.push({
+    name: "search_results_decoration",
+    label: req.__("Show results in"),
+    sublabel: req.__("Show results from each table in this type of element"),
+    input_type: "select",
+    options: ["Card", "Tabs"],
+  });
   const blurb1 = req.__(
     `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`
   );
@@ -94,6 +101,10 @@ router.get(
     form.values.search_table_description = getState().getConfig(
       "search_table_description",
       false
+    );
+    form.values.search_results_decoration = getState().getConfig(
+      "search_results_decoration",
+      "Card"
     );
     send_infoarch_page({
       res,
@@ -132,7 +143,12 @@ router.post(
         "search_table_description",
         search_table_description
       );
+      await getState().setConfig(
+        "search_results_decoration",
+        result.success.search_results_decoration || "Card"
+      );
       delete result.success.search_table_description;
+      delete result.success.search_results_decoration;
       await getState().setConfig("globalSearch", result.success);
       if (!req.xhr) res.redirect("/search/config");
       else res.json({ success: "ok" });
