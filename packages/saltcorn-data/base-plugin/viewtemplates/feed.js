@@ -18,6 +18,8 @@ const {
   button,
   code,
   h2,
+  ul,
+  li,
 } = require("@saltcorn/markup/tags");
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
@@ -311,7 +313,7 @@ const configuration_workflow = (req) =>
                 name: "view_decoration",
                 label: req.__("View decoration"),
                 type: "String",
-                attributes: { options: ["None", "Card", "Accordion"] },
+                attributes: { options: ["None", "Card", "Accordion", "Tabs"] },
                 required: true,
               },
               /*{
@@ -332,7 +334,7 @@ const configuration_workflow = (req) =>
                 label: req.__("Title formula"),
                 class: "validate-expression",
                 type: "String",
-                showIf: { view_decoration: ["Card", "Accordion"] },
+                showIf: { view_decoration: ["Card", "Accordion", "Tabs"] },
               },
               {
                 name: "initial_open_accordions",
@@ -710,6 +712,19 @@ const run = async (
             : undefined,
           div({ class: "card-body" }, wrapScEmbed(r))
         )
+      : view_decoration === "Tabs"
+      ? div(
+          {
+            class: ["tab-pane fade", ix == 0 && "show active"],
+            id: `feedtab${viewname.replaceAll(" ", "_")}_${ix}`,
+            role: "tabpanel",
+            "aria-labelledby": `feedtab${viewname.replaceAll(
+              " ",
+              "_"
+            )}_${ix}-tab`,
+          },
+          wrapScEmbed(r)
+        )
       : view_decoration === "Accordion"
       ? div(
           { class: "accordion-item" },
@@ -823,10 +838,44 @@ const run = async (
       ])
     );
   }
+  const tabHeader = ({ row }, ix) => {
+    const title =
+      (title_formula
+        ? eval_expression(
+            title_formula,
+            row,
+            extraArgs.req.user,
+            `Tab title formula`
+          )
+        : "") || "Missing title";
+    return li(
+      { class: "nav-item" },
+      a(
+        {
+          class: ["nav-link", ix == 0 && "active"],
+          "data-bs-toggle": "tab",
+          href: `#feedtab${viewname.replaceAll(" ", "_")}_${ix}`,
+          id: `feedtab${viewname.replaceAll(" ", "_")}_${ix}-tab`,
+          role: "tab",
+          "aria-controls": "home",
+          "aria-selected": "true",
+        },
+        text(title)
+      )
+    );
+  };
   return div(
     correct_order([
       is_in_card && masonry_columns
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
+        : view_decoration === "Tabs"
+        ? div(
+            ul(
+              { class: "nav nav-tabs", role: "tablist" },
+              sresp.map(tabHeader)
+            ),
+            div({ class: "tab-content" }, sresp.map(showRowInner))
+          )
         : view_decoration === "Accordion"
         ? div(
             {
