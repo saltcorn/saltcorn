@@ -82,7 +82,7 @@ class TableConstraint {
     const Table = require("./table");
     const table = Table.findOne({ id: con.table_id });
     if (con.type === "Unique" && con.configuration.fields) {
-      await db.add_unique_constrint(table.name, con.configuration.fields);
+      await db.add_unique_constraint(table.name, con.configuration.fields);
     } else if (con.type === "Index" && con.configuration.field === "_fts") {
       const text_fields = ftsFieldsSqlExpr(
         table.fields,
