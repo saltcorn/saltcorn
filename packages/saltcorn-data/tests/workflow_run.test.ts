@@ -346,7 +346,7 @@ describe("Workflow run actions", () => {
       next_step: "third_step",
       action_name: "InsertBook",
       initial_step: false,
-      configuration: { row_expr: "{publisher: 2}" },
+      configuration: { row_expr: "{publisher: thepub}" },
     });
     await WorkflowStep.create({
       trigger_id: main.id!,
@@ -368,6 +368,7 @@ describe("Workflow run actions", () => {
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
       trigger_id: trigger.id,
+      context: { thepub: 2 },
     });
     await wfrun.run({ user });
 
