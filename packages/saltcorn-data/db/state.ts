@@ -988,6 +988,24 @@ class State {
     globalLogEmitter(ten, min_level, msg);
   }
 
+  get pg_ts_config(): string {
+    const lang_dict: any = {
+      en: "english",
+      de: "german",
+      da: "danish",
+      fr: "french",
+      es: "spanish",
+      ar: "arabic",
+      it: "italian",
+      nl: "dutch",
+      no: "norwegian",
+      pt: "portuguese",
+      ru: "russian",
+      sv: "swedish",
+      //no pl, si, uk, zh in postgres
+    };
+    return lang_dict[this.getConfig("default_locale", "en")] || "simple";
+  }
   async refresh_npmpkgs(noSignal?: boolean) {
     if (this.npm_refresh_in_progess) return;
     this.npm_refresh_in_progess = true;

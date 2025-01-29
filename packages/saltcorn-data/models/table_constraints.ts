@@ -89,7 +89,8 @@ class TableConstraint {
         table.name,
         db.getTenantSchema()
       );
-      await db.add_fts_index(table.name, text_fields);
+      const language = require("../db/state").getState().pg_ts_config;
+      await db.add_fts_index(table.name, text_fields, language);
     } else if (con.type === "Index") {
       await db.add_index(table.name, con.configuration.field);
     }

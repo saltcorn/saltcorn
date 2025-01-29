@@ -414,13 +414,15 @@ const add_index = async (table_name, field_name) => {
  * @param {string} field_name - list of columns (members of constraint)
  * @returns {Promise<void>} no result
  */
-const add_fts_index = async (table_name, field_expression) => {
+const add_fts_index = async (table_name, field_expression, language) => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `create index "${sqlsanitize(
     table_name
   )}_fts_index" on "${getTenantSchema()}"."${sqlsanitize(
     table_name
-  )}" USING GIN (to_tsvector('english', ${field_expression}));`;
+  )}" USING GIN (to_tsvector('${
+    language || "english"
+  }', ${field_expression}));`;
   sql_log(sql);
   await pool.query(sql);
 };

@@ -1975,7 +1975,6 @@ describe("Table constraints", () => {
       favbook: 1,
     });
     if (!db.isSQLite) {
-      db.set_sql_logging(true);
       const con = await TableConstraint.create({
         table_id: table.id,
         type: "Index",
