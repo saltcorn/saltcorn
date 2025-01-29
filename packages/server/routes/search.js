@@ -274,7 +274,6 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   // Prepare search form
   const form = searchForm();
   form.validate({ q });
-  console.log({ search_results_decoration });
 
   const mkResultDisplay = () => {
     switch (search_results_decoration) {
