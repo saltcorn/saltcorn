@@ -350,6 +350,13 @@ router.get(
     const orderByField =
       (sortBy || tabulator_sort) && table.getField(sortBy || tabulator_sort);
 
+    const use_limit = tabulator_pagination_format
+      ? +tabulator_size
+      : limit && +limit;
+    const use_offset = tabulator_pagination_format
+      ? +tabulator_size * (+tabulator_page - 1)
+      : offset && +offset;
+
     await passport.authenticate(
       ["api-bearer", "jwt"],
       { session: false },
@@ -360,12 +367,8 @@ router.get(
             const joinOpts = {
               forUser: req.user || user || { role_id: 100 },
               forPublic: !(req.user || user),
-              limit: tabulator_pagination_format
-                ? +tabulator_size
-                : limit && +limit,
-              offset: tabulator_pagination_format
-                ? +tabulator_size * (+tabulator_page - 1)
-                : offset && +offset,
+              limit: use_limit,
+              offset: use_offset,
               orderDesc:
                 (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
               orderBy: orderByField?.name || "id",
@@ -406,9 +409,10 @@ router.get(
             rows = await table.getJoinedRows({
               where: qstate,
               joinFields,
-              limit: limit && +limit,
-              offset: offset && +offset,
-              orderDesc: sortDesc && sortDesc !== "false",
+              limit: use_limit,
+              offset: use_offset,
+              orderDesc:
+                (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
               orderBy: orderByField?.name || undefined,
               forPublic: !(req.user || user),
               forUser: req.user || user,
