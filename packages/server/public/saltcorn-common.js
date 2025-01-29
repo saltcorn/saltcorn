@@ -2116,6 +2116,17 @@ function select_by_view_click(element, event, required) {
   }
 }
 
+function restrict_options(selector, restriction) {
+  $(selector)
+    .find("option")
+    .each(function () {
+      const $o = $(this);
+      const val = $o.val();
+      if (Array.isArray(restriction))
+        if (val && !restriction.find((rid) => rid == val)) $o.remove();
+    });
+}
+
 const observer = new IntersectionObserver(
   (entries, observer) => {
     entries.forEach((entry) => {
