@@ -906,7 +906,7 @@ const transformForm = async ({
   });
   translateLayout(form.layout, req.getLocale());
 
-  if (req.xhr) form.xhrSubmit = true;
+  if (req.headers?.saltcornmodalrequest) form.xhrSubmit = true;
   setDateLocales(form, req.getLocale());
 };
 
