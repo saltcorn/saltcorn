@@ -346,7 +346,7 @@ describe("Workflow run actions", () => {
       next_step: "third_step",
       action_name: "InsertBook",
       initial_step: false,
-      configuration: { row_expr: "{publisher: 2}" },
+      configuration: { row_expr: "{publisher: thepub}" },
     });
     await WorkflowStep.create({
       trigger_id: main.id!,
@@ -368,6 +368,27 @@ describe("Workflow run actions", () => {
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
       trigger_id: trigger.id,
+      context: { thepub: 2 },
+    });
+    await wfrun.run({ user });
+
+    expect(wfrun.context.foo.x).toBe(1);
+    expect(wfrun.context.books.length).toBe(1);
+    expect(wfrun.context.books[0].pages).toBe(124);
+    expect(wfrun.context.books[0].author).toBe("Mary Contrary");
+    expect(wfrun.context.books[0].publisher).toBe(2);
+  });
+  it("should dereference key row fields", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    await table.deleteRows({ pages: 124 });
+    const trigger = Trigger.findOne({ name: "wfrunaction" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+      context: { thepub: "No starch" },
     });
     await wfrun.run({ user });
 
