@@ -1700,7 +1700,7 @@ router.get(
       req,
       active_sub: "Workflow runs",
       page_title: req.__(`Workflow runs`),
-      sub2_page: trigger.name,
+      sub2_page: trigger?.name,
       contents: {
         above: [
           {
@@ -1712,15 +1712,16 @@ router.get(
                 { class: "table table-condensed w-unset" },
                 tbody(
                   tr(th("Run ID"), td(run.id)),
-                  tr(
-                    th("Trigger"),
-                    td(
-                      a(
-                        { href: `/actions/configure/${trigger.id}` },
-                        trigger.name
+                  trigger &&
+                    tr(
+                      th("Trigger"),
+                      td(
+                        a(
+                          { href: `/actions/configure/${trigger.id}` },
+                          trigger.name
+                        )
                       )
-                    )
-                  ),
+                    ),
                   tr(th("Started at"), td(localeDateTime(run.started_at))),
                   tr(th("Started by user"), td(run.started_by)),
                   tr(th("Status"), td(run.status)),
