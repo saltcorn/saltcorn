@@ -412,6 +412,27 @@ describe("bool arrays in stored calculated JSON fields", () => {
     expect(typeof pat1.normalised_readings[0]).toBe("boolean");
     expect(pat1.normalised_readings[0]).toBe(false);
   });
+  it("updates on insert", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const pat0 = await patients.getRow({ id: 1 });
+
+    assertIsSet(pat0);
+    expect(Array.isArray(pat0.normalised_readings)).toBe(true);
+    expect(pat0.normalised_readings.length).toBe(2);
+    await readings.insertRow({
+      normalised: true,
+      patient_id: 1,
+      temperature: 39,
+    });
+    const pat1 = await patients.getRow({ id: 1 });
+    assertIsSet(pat1);
+    expect(Array.isArray(pat1.normalised_readings)).toBe(true);
+    expect(typeof pat1.normalised_readings[0]).toBe("boolean");
+    expect(pat1.normalised_readings.length).toBe(3);
+  });
 });
 
 describe("double joinfields in stored calculated fields", () => {
