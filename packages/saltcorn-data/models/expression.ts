@@ -730,9 +730,9 @@ const apply_calculated_fields_stored = async (
       const oldf = transform;
       transform = async (row) => {
         row[field.name] =
-          (field.type as any)?.name === "JSON"
+          /* (field.type as any)?.name === "JSON"
             ? JSON.stringify(reFetchedRow._agg_val)
-            : reFetchedRow._agg_val;
+            :*/ reFetchedRow._agg_val;
 
         return await oldf(row);
       };
