@@ -358,6 +358,44 @@ describe("single joinfields in stored calculated fields", () => {
   });
 });
 
+describe("bool arrays in stored calculated JSON fields", () => {
+  it("creates", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    await Field.create({
+      name: "normalised_readings",
+      label: "normalised_readings",
+      calculated: true,
+      stored: true,
+      expression: "__aggregation",
+      type: "JSON",
+      attributes: {
+        ref: "patient_id",
+        table: "readings",
+        aggwhere: "",
+        agg_field: "normalised@Bool",
+        aggregate: "Array_Agg",
+        agg_order_by: "",
+        agg_relation: "readings.patient_id",
+        unique_error_msg: null,
+      },
+      required: false,
+
+      table: patients,
+    });
+    await recalculate_for_stored(patients);
+  });
+  it("has array content", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const pat = await patients.getRow({ id: 1 });
+    assertIsSet(pat);
+    expect(Array.isArray(pat.normalised_readings)).toBe(true);
+    expect(typeof pat.normalised_readings[0]).toBe("boolean");
+  });
+});
+
 describe("double joinfields in stored calculated fields", () => {
   it("creates", async () => {
     const readings = Table.findOne({ name: "readings" });
