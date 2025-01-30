@@ -392,7 +392,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
     const pat = await patients.getRow({ id: 1 });
     assertIsSet(pat);
     expect(Array.isArray(pat.normalised_readings)).toBe(true);
-    if (!db.isSQLite) expect(pat.normalised_readings[0]).toBe("boolean");
+    if (!db.isSQLite) expect(typeof pat.normalised_readings[0]).toBe("boolean");
   });
   it("updates on changes", async () => {
     const patients = Table.findOne({ name: "patients" });
