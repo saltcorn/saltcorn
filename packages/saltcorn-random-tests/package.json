@@ -9,9 +9,9 @@
     "@saltcorn/server": "1.1.1-beta.8"
   },
   "devDependencies": {
-    "chaos-guinea-pig": "0.1.6",
+    "chaos-guinea-pig": "github:christianhugoch/chaos-guinea-pig#lib-upgrades",
     "jest": "^29.7.0",
-    "supertest": "^6.3.3"
+    "supertest": "7.0.0"
   },
   "scripts": {
     "test": "jest --runInBand",

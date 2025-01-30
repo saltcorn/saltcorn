@@ -424,7 +424,7 @@ router.post(
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
 
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,
@@ -471,7 +471,7 @@ router.post(
 
     const form = await triggerForm(req, trigger);
 
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,
@@ -731,7 +731,7 @@ const getWorkflowStepForm = async (
             },
           };
         if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
-        actionConfigFields.push(cfgFld)
+        actionConfigFields.push(cfgFld);
       }
     } catch {}
   }
@@ -1158,7 +1158,7 @@ router.post(
         fields: cfgFields,
       });
     }
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       if (req.xhr) {
         res.status(400).json({ error: form.errorSummary });
@@ -1365,7 +1365,7 @@ router.post(
  * @function
  */
 router.get(
-  "/stepedit/:trigger_id/:step_id?",
+  "/stepedit/:trigger_id/{:step_id}",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
@@ -1413,7 +1413,7 @@ router.post(
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(trigger, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       if (req.xhr) {
         res.json({ error: form.errorSummary });
@@ -1512,7 +1512,7 @@ router.post(
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     await WorkflowStep.deleteForTrigger(trigger.id);
-    const description = req.body.description;
+    const description = (req.body || {}).description;
     await Trigger.update(trigger.id, { description });
     const steps = await getState().functions.copilot_generate_workflow.run(
       description,
@@ -1834,7 +1834,7 @@ router.post(
     });
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       const title = "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));

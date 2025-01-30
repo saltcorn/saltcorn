@@ -123,7 +123,7 @@ router.post(
     const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
-    const result = form.validate(req.body);
+    const result = form.validate(req.body || {});
 
     if (result.success) {
       const search_table_description =

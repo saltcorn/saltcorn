@@ -464,7 +464,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await auth_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -522,7 +522,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await http_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -593,7 +593,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await permissions_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -793,7 +793,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await ssl_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -997,15 +997,15 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     let form, sub2;
-    if (req.body.id) {
-      const user = await User.findOne({ id: req.body.id });
+    if ((req.body || {}).id) {
+      const user = await User.findOne({ id: (req.body || {}).id });
       form = await userForm(req, user);
       sub2 = user.email;
     } else {
       form = await userForm(req);
       sub2 = "New";
     }
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,

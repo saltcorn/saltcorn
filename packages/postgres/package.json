@@ -13,8 +13,8 @@
   "main": "index.js",
   "dependencies": {
     "@saltcorn/db-common": "1.1.1-beta.8",
-    "pg": "^8.2.1",
-    "pg-copy-streams": "^5.1.1",
+    "pg": "^8.13.1",
+    "pg-copy-streams": "^6.0.6",
     "replacestream": "4.0.3"
   },
   "repository": "github:saltcorn/saltcorn",

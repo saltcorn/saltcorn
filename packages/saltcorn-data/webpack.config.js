@@ -19,6 +19,7 @@ const npmMocks = {
   "env-paths": join(mocksDir, "npm", "env-paths"),
   "fs-extended-attributes": join(mocksDir, "npm", "fs-extended-attributes"),
   tar: join(mocksDir, "npm", "tar"),
+  "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
 };
 
 const saltcornMocks = {
@@ -101,5 +102,8 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: "process/browser",
     }),
+    // new webpack.NormalModuleReplacementPlugin(/^node:(.*)$/, (resource) => {
+    //   resource.request = resource.request.replace(/^node:/, "");
+    // }),
   ],
 };

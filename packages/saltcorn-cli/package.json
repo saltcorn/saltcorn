@@ -9,8 +9,8 @@
   },
   "bugs": "https://github.com/saltcorn/saltcorn/issues",
   "dependencies": {
-    "@oclif/core": "^2.16.0",
-    "@oclif/plugin-plugins": "^3.9.4",
+    "@oclif/core": "^4.2.4",
+    "@oclif/plugin-plugins": "^5.4.26",
     "@saltcorn/admin-models": "1.1.1-beta.8",
     "@saltcorn/common-code": "1.1.1-beta.8",
     "@saltcorn/data": "1.1.1-beta.8",
@@ -19,21 +19,21 @@
     "@saltcorn/plugins-loader": "1.1.1-beta.8",
     "@saltcorn/server": "1.1.1-beta.8",
     "contractis": "^0.1.0",
-    "dateformat": "^3.0.3",
-    "inquirer": "^7.3.3",
+    "dateformat": "^4.6.3",
+    "inquirer": "^12.3.3",
     "js-yaml": "^4.1.0",
     "node-fetch": "2.6.9",
-    "node-watch": "^0.7.3",
+    "node-watch": "^0.7.4",
     "source-map-support": "^0.5.21",
     "sudo": "^1.0.3",
-    "systeminformation": "^5.21.7",
+    "systeminformation": "^5.25.11",
     "tcp-port-used": "^1.0.2",
     "wrk": "^1.2.1"
   },
   "devDependencies": {
-    "oclif": "3.17.2",
-    "globby": "^10.0.2",
-    "ts-node": "^9.1.1"
+    "oclif": "4.17.17",
+    "globby": "^11.1.0",
+    "ts-node": "^10.9.2"
   },
   "engines": {
     "node": ">=18.0.0"

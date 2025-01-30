@@ -2348,7 +2348,7 @@ module.exports = {
         onchange_field,
         click_action,
         ...body
-      } = req.body;
+      } = req.body || {};
 
       const table = Table.findOne({ id: table_id });
       let row = body.id

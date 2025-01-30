@@ -170,7 +170,7 @@ router.post(
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
     const form = notificationSettingsForm();
-    form.validate(req.body);
+    form.validate(req.body || {});
     const _attributes = { ...user._attributes, ...form.values };
     await user.update({ _attributes });
     res.json({ success: "ok" });
@@ -216,14 +216,17 @@ router.post(
         } else res.json({ error: msg });
       } else {
         Trigger.emitEvent("ReceiveMobileShareData", null, req.user, {
-          row: req.body,
+          row: req.body || {},
         });
         if (!req.smr) {
           req.flash(
             "success",
             req.__(
               "Shared: %s",
-              req.body.title || req.body.text || req.body.url || ""
+              (req.body || {}).title ||
+                (req.body || {}).text ||
+                (req.body || {}).url ||
+                ""
             )
           );
           res.status(303).redirect("/");
@@ -234,7 +237,7 @@ router.post(
 );
 
 router.get(
-  "/manifest.json:opt_cache_bust?",
+  "/manifest.json{:opt_cache_bust}",
   error_catcher(async (req, res) => {
     const { pretty } = req.query;
     const state = getState();

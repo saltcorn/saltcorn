@@ -189,7 +189,7 @@ const show_calculated_fieldview = async (
   const role = req.user && req.user.id ? req.user.role_id : 100;
 
   const fields = table.getFields();
-  let row = { ...req.body };
+  let row = { ...(req.body || {}) };
   if (row && Object.keys(row).length > 0) readState(row, fields);
 
   //need to get join fields from ownership into row

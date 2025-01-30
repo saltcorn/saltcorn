@@ -302,16 +302,20 @@ export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
   }
 }
 
+export function extractDomain(url: string) {
+  let domain = url;
+  if (domain.startsWith("http://")) domain = domain.substring(7);
+  if (domain.startsWith("https://")) domain = domain.substring(8);
+  if (domain.endsWith("/")) domain = domain.substring(0, domain.length - 1);
+  if (domain.includes(":")) domain = domain.substring(0, domain.indexOf(":"));
+  return domain;
+}
+
 export function writeNetworkSecurityConfig(
   buildDir: string,
   serverPath: string
 ) {
   console.log("writeNetworkSecurityConfig");
-  let domain = serverPath;
-  if (domain.startsWith("http://")) domain = domain.substring(7);
-  if (domain.startsWith("https://")) domain = domain.substring(8);
-  if (domain.endsWith("/")) domain = domain.substring(0, domain.length - 1);
-  if (domain.includes(":")) domain = domain.substring(0, domain.indexOf(":"));
   const networkSecurityConfig = join(
     buildDir,
     "android",
@@ -327,7 +331,7 @@ export function writeNetworkSecurityConfig(
     `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">${domain}</domain>
+    <domain includeSubdomains="true">${extractDomain(serverPath)}</domain>
   </domain-config>
 </network-security-config>
   `

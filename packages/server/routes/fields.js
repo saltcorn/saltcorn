@@ -902,7 +902,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const wf = fieldFlow(req);
-    const wfres = await wf.run(req.body, req);
+    const wfres = await wf.run(req.body || {}, req);
     if (wfres.renderForm) {
       const table = Table.findOne({ id: wfres.context.table_id });
       res.sendWrap(req.__(`Field attributes`), {
@@ -953,7 +953,7 @@ router.post(
     "min_role_inspect_tables",
   ]),
   error_catcher(async (req, res) => {
-    let { formula, tablename, stored } = req.body;
+    let { formula, tablename, stored } = req.body || {};
     if (stored === "false") stored = false;
 
     const table = Table.findOne({ name: tablename });
@@ -1017,7 +1017,7 @@ router.post(
     );
 
     const fields = table.getFields();
-    let row = { ...req.body };
+    let row = { ...(req.body || {}) };
     if (row && Object.keys(row).length > 0) readState(row, fields);
 
     //need to get join fields from ownership into row
@@ -1280,7 +1280,7 @@ router.post(
       value = row && row[fieldName];
     }
 
-    const configuration = req.body.configuration;
+    const configuration = (req.body || {}).configuration;
     if (!field) {
       res.send("");
       return;
@@ -1366,7 +1366,7 @@ router.post(
       agg_fieldview,
       agg_field,
       _columndef,
-    } = req.body;
+    } = req.body || {};
     const table = Table.findOne({ name: tableName });
     if (agg_outcome_type && agg_fieldview) {
       const type = getState().types[agg_outcome_type];

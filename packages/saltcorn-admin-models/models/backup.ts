@@ -25,7 +25,7 @@ import {
 import { existsSync, readdirSync, statSync, createReadStream } from "fs";
 import { join, basename } from "path";
 import dateFormat from "dateformat";
-import stringify from "csv-stringify/lib/sync";
+import { stringify } from "csv-stringify/sync";
 import csvtojson from "csvtojson";
 import pack from "./pack";
 const {
@@ -90,7 +90,7 @@ const create_pack_json = async (
 
   // triggers
   const triggers = await asyncMap(Trigger.find({}), trigger_pack);
-  
+
   // roles
   const roles = await Role.find({});
   // library
@@ -356,7 +356,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
 const extract = async (fnm: string, dir: string): Promise<void> => {
   return new Promise(function (resolve, reject) {
     const zip = new Zip(fnm);
-    zip.extractAllToAsync(dir, true, function (err) {
+    zip.extractAllToAsync(dir, true, false, function (err: any) {
       if (err) reject(new Error("Error opening zip file: " + err));
       else resolve();
     });

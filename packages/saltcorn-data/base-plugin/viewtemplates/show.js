@@ -851,7 +851,7 @@ const render = (
         const [ontable, ref] = relation.split(".");
         const key =
           jf.targetNm ||
-          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;      
+          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
         value = row[validSqlId(key)];
       } else {
         value = row[join_field.split(".").join("_")];
@@ -1191,7 +1191,7 @@ module.exports = {
       return rows;
     },
     async actionQuery() {
-      const body = req.body;
+      const body = req.body || {};
 
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid

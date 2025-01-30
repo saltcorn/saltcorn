@@ -11,7 +11,8 @@ import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
-const _ = require("underscore");
+import _ from "underscore";
+// const _ = require("underscore");
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 
@@ -512,7 +513,7 @@ const flatEqual = (a: any, b: any) => {
   return true;
 };
 
-const jsIdentifierValidator = (s:string) => {
+const jsIdentifierValidator = (s: string) => {
   if (!s) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
   let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
@@ -521,7 +522,6 @@ const jsIdentifierValidator = (s:string) => {
 
   if (badc) return `Character ${badc} not allowed`;
 };
-
 
 export = {
   cloneName,
@@ -574,5 +574,5 @@ export = {
   validSqlId,
   ensure_final_slash,
   getFetchProxyOptions,
-  jsIdentifierValidator
+  jsIdentifierValidator,
 };

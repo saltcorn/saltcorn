@@ -5,7 +5,6 @@
  * @subcategory models
  */
 import db from "../db";
-import latestVersion from "latest-version";
 const { getConfigFile, configFilePath } = require("../db/connect");
 
 import { writeFileSync } from "fs";
@@ -1340,7 +1339,8 @@ const get_latest_npm_version = async (
   timeout_ms?: number
 ): Promise<string> => {
   const { getState } = require("../db/state");
-  const { isStale } = require("../utils");
+  const { isStale } = (await import("../utils")).default;
+  const latestVersion = require("latest-version");
   const stored = getState().getConfig("latest_npm_version", {});
 
   if (stored[pkg] && !isStale(stored[pkg].time, 6)) {

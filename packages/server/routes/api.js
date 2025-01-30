@@ -30,6 +30,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const File = require("@saltcorn/data/models/file");
 //const load_plugins = require("../load_plugins");
 const passport = require("passport");
+const path = require("path");
 
 const {
   readState,
@@ -164,7 +165,7 @@ router.post(
         ) {
           const queries = view.queries(false, req);
           if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
-            const { args } = req.body;
+            const { args } = req.body || {};
             const resp = await queries[queryName](...args, true);
             res.json({ success: resp, alerts: getFlashes(req) });
           } else {
@@ -192,7 +193,7 @@ router.post(
 );
 
 router.get(
-  "/serve-files/*",
+  "/serve-files/*serve_path",
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
@@ -201,7 +202,7 @@ router.get(
       async function (err, user, info) {
         const role = req?.user?.role_id || user?.role_id || 100;
         const user_id = req?.user?.id || user?.id;
-        const serve_path = req.params[0];
+        const serve_path = path.join(...req.params.serve_path);
         const file = await File.findOne(serve_path);
         if (
           file &&
@@ -214,7 +215,7 @@ router.get(
           res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
           if (file.s3_store)
             res.status(404).json({ error: req.__("Not found") });
-          else res.sendFile(file.location);
+          else res.sendFile(file.location, { dotfiles: "allow" });
         } else {
           res.status(404).json({ error: req.__("Not found") });
         }
@@ -399,7 +400,7 @@ router.all(
         if (accessAllowed(req, user, trigger)) {
           try {
             let resp;
-            const row = req.method === "GET" ? req.query : req.body;
+            const row = req.method === "GET" ? req.query : req.body || {};
             if (trigger.action === "Workflow") {
               resp = await trigger.runWithoutRow({
                 req,
@@ -412,7 +413,7 @@ router.all(
               const action = getState().actions[trigger.action];
               resp = await action.run({
                 configuration: trigger.configuration,
-                body: req.body,
+                body: req.body || {},
                 row,
                 req,
                 user: user || req.user,
@@ -466,7 +467,7 @@ router.post(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
-          const { _versions, ...row } = req.body;
+          const { _versions, ...row } = req.body || {};
           const fields = table.getFields();
           readState(row, fields, req);
           const errors = await prepare_insert_row(row, fields);
@@ -521,7 +522,7 @@ router.post(
             if (id === "undefined") {
               const pk_name = table.pk_name;
               //const fields = table.getFields();
-              const row = req.body;
+              const row = req.body || {};
               //readState(row, fields);
               await table.deleteRows(
                 { [pk_name]: row[pk_name] },
@@ -568,7 +569,7 @@ router.post(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
-          const { _versions, ...row } = req.body;
+          const { _versions, ...row } = req.body || {};
           const fields = table.getFields();
           readState(row, fields, req);
           const errors = await prepare_update_row(table, row, id);
@@ -625,7 +626,7 @@ router.delete(
             if (id === "undefined") {
               const pk_name = table.pk_name;
               //const fields = table.getFields();
-              const row = req.body;
+              const row = req.body || {};
               //readState(row, fields);
               await table.deleteRows(
                 { [pk_name]: row[pk_name] },
