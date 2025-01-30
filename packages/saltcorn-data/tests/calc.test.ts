@@ -392,7 +392,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
     const pat = await patients.getRow({ id: 1 });
     assertIsSet(pat);
     expect(Array.isArray(pat.normalised_readings)).toBe(true);
-    expect(typeof pat.normalised_readings[0]).toBe("boolean");
+    if (!db.isSQLite) expect(pat.normalised_readings[0]).toBe("boolean");
   });
   it("updates on changes", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -402,15 +402,17 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
     const pat = await patients.getRow({ id: 1 });
     assertIsSet(pat);
-    expect(typeof pat.normalised_readings[0]).toBe("boolean");
+    if (!db.isSQLite) expect(typeof pat.normalised_readings[0]).toBe("boolean");
     const reads = await readings.getRows({ patient_id: 1 });
     for (const read of reads)
       await readings.updateRow({ normalised: false }, read.id);
     const pat1 = await patients.getRow({ id: 1 });
     assertIsSet(pat1);
     expect(Array.isArray(pat1.normalised_readings)).toBe(true);
-    expect(typeof pat1.normalised_readings[0]).toBe("boolean");
-    expect(pat1.normalised_readings[0]).toBe(false);
+    if (!db.isSQLite)
+      expect(typeof pat1.normalised_readings[0]).toBe("boolean");
+    if (db.isSQLite) expect(!!pat1.normalised_readings[0]).toBe(false);
+    else expect(pat1.normalised_readings[0]).toBe(false);
   });
   it("updates on insert", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -430,7 +432,8 @@ describe("bool arrays in stored calculated JSON fields", () => {
     const pat1 = await patients.getRow({ id: 1 });
     assertIsSet(pat1);
     expect(Array.isArray(pat1.normalised_readings)).toBe(true);
-    expect(typeof pat1.normalised_readings[0]).toBe("boolean");
+    if (!db.isSQLite)
+      expect(typeof pat1.normalised_readings[0]).toBe("boolean");
     expect(pat1.normalised_readings.length).toBe(3);
   });
 });

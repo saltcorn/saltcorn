@@ -1512,7 +1512,8 @@ class Table implements AbstractTable {
           if (
             typeof f.type !== "string" &&
             f.type?.name === "JSON" &&
-            stringified
+            stringified &&
+            !db.isSQLite
           ) {
             v[f.name] = JSON.stringify(calced[f.name]);
           } else v[f.name] = calced[f.name];
