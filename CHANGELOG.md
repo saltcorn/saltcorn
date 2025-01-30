@@ -2,6 +2,25 @@
 
 ## 1.1.1 - In beta
 
+* Full-text search improvements: 
+    - An index for full-text search can now be created. When creating an index in
+      the constraints setting for a table, you can select "Full-text search" in
+      the field selector. This will dramatically speed up search on large tables.
+    - Use websearch_to_tsquery if available. This is a more natural and modern syntax.
+    - Link to syntax examples in /search
+    - Use default locale's language for search localisation.
+    - Option to show results in tabs in search configuration.
+
+* select_by_view fieldview for Key fields: the user selects the value of a 
+  Key field based on an clicking in a row of rendered views (typically a Show view) of the joined table. Works for both Edit and Filter views.
+
+* Click to edit (Show and List view patterns) is now implemented by rendering
+  the first available edit fieldview. This should be more robust and work with 
+  more data types.
+
+* Data in the admin's data edit grid is now loaded by page. This makes it
+  possible to work with much larger datasets.
+
 * You can now permit to non-admin (role ID > 1) users to edit or inspect tables, or 
   edit views, pages or triggers. In the permissions tab of the Users and security
   settings, minimum roles can be set for these capabilities. The appropriate
@@ -28,6 +47,7 @@
     - ForLoop step type for loops over arrays.
     - Varius UX improvements for editing workflows
     - Integrate copilot, if installed, in workflow editing
+    - Call non-workflow trigger actions.
 
 * sbadmin2 theme - Color update: dark side bar, darker primary blue
 
@@ -48,6 +68,7 @@
 
 ### Fixes
 
+* Increase plugin install reliability
 * fix workflows on SQLite
 * fix query string build on check_state_field (#2948). Author: St0rml
 * multiple fixes for the Capacitor port

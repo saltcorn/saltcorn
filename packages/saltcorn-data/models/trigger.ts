@@ -612,25 +612,32 @@ class Trigger implements AbstractTrigger {
   static trigger_actions({
     tableTriggers,
     apiNeverTriggers,
+    noWorkflows,
   }: {
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
+    noWorkflows?: boolean;
   }): string[] {
     let triggerActions: Array<string> = [];
     if (tableTriggers) {
       const trs = Trigger.find({
         table_id: tableTriggers,
       });
-      triggerActions = trs.map((tr) => tr.name as string);
+      triggerActions = trs
+        .filter((t) => !noWorkflows || t.action !== "Workflow")
+        .map((tr) => tr.name as string);
     }
     if (apiNeverTriggers) {
       const trs = Trigger.find({
         when_trigger: { or: ["API call", "Never"] },
         table_id: null,
       });
+
       triggerActions = [
         ...triggerActions,
-        ...trs.map((tr) => tr.name as string),
+        ...trs
+          .filter((t) => !noWorkflows || t.action !== "Workflow")
+          .map((tr) => tr.name as string),
       ];
     }
 
@@ -659,6 +666,7 @@ class Trigger implements AbstractTrigger {
     const triggerActions = Trigger.trigger_actions({
       tableTriggers,
       apiNeverTriggers,
+      noWorkflows: !!forWorkflow,
     });
     const actions = forWorkflow
       ? Trigger.abbreviated_actions.filter((a) => !a.disableInWorkflow)
@@ -667,8 +675,17 @@ class Trigger implements AbstractTrigger {
       .filter(Boolean) //Other last
       .sort();
     if (builtInLabel) action_namespaces.unshift(builtInLabel);
+
     if (triggerActions.length) action_namespaces.push("Triggers");
-    if (forWorkflow) action_namespaces.push("Workflows");
+    let wfs: string[] = [];
+
+    if (forWorkflow) {
+      wfs = Trigger.find({ action: "Workflow" })
+        .map((wf) => wf.name)
+        .filter(Boolean) as string[];
+      wfs.sort(comparingCaseInsensitiveValue);
+      if (wfs.length) action_namespaces.push("Workflows");
+    }
 
     action_namespaces.push("Other");
 
@@ -689,9 +706,6 @@ class Trigger implements AbstractTrigger {
       if (ns === "Other" && !noMultiStep) options.push("Multi-step action");
       if (ns === "Other" && workflow) options.push("Workflow");
       if (ns === "Workflows") {
-        const wfs: string[] = Trigger.find({ action: "Workflow" })
-          .map((wf) => wf.name)
-          .filter(Boolean) as string[];
         options.push(...wfs);
       }
       return { optgroup: true, label: ns, options };

@@ -8,6 +8,8 @@ const Router = require("express-promise-router");
 const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 
 const { getState } = require("@saltcorn/data/db/state");
+const db = require("@saltcorn/data/db");
+
 const { isAdmin, error_catcher } = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
@@ -58,6 +60,13 @@ const searchConfigForm = (tables, views, req) => {
     sublabel: req.__("Use table description instead of name as header"),
     type: "Bool",
   });
+  fields.push({
+    name: "search_results_decoration",
+    label: req.__("Show results in"),
+    sublabel: req.__("Show results from each table in this type of element"),
+    input_type: "select",
+    options: ["Cards", "Tabs"],
+  });
   const blurb1 = req.__(
     `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`
   );
@@ -95,6 +104,10 @@ router.get(
       "search_table_description",
       false
     );
+    form.values.search_results_decoration = getState().getConfig(
+      "search_results_decoration",
+      "Cards"
+    );
     send_infoarch_page({
       res,
       req,
@@ -126,13 +139,20 @@ router.post(
     const result = form.validate(req.body || {});
 
     if (result.success) {
+      const dbversion = await db.getVersion(true);
       const search_table_description =
         !!result.success.search_table_description;
       await getState().setConfig(
         "search_table_description",
         search_table_description
       );
+      await getState().setConfig(
+        "search_results_decoration",
+        result.success.search_results_decoration || "Cards"
+      );
+      await getState().setConfig("search_use_websearch", +dbversion >= 11.0);
       delete result.success.search_table_description;
+      delete result.success.search_results_decoration;
       await getState().setConfig("globalSearch", result.success);
       if (!req.xhr) res.redirect("/search/config");
       else res.json({ success: "ok" });
@@ -196,9 +216,12 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     "search_table_description",
     false
   );
+  const search_results_decoration = getState().getConfig(
+    "search_results_decoration",
+    "Cards"
+  );
   const current_page = parseInt(_page) || 1;
   const offset = (current_page - 1) * page_size;
-  let resp = [];
   let tablesWithResults = [];
   let tablesConfigured = 0;
   for (const [tableName, viewName] of Object.entries(cfg)) {
@@ -206,7 +229,9 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       !viewName ||
       viewName === "" ||
       viewName === "search_table_description" ||
-      tableName === "search_table_description"
+      tableName === "search_table_description" ||
+      viewName === "search_results_decoration" ||
+      tableName === "search_results_decoration"
     )
       continue;
     tablesConfigured += 1;
@@ -238,10 +263,9 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     }
 
     if (vresps.length > 0) {
-      tablesWithResults.push({ tableName, label: sectionHeader });
-      resp.push({
-        type: "card",
-        title: span({ id: tableName }, sectionHeader),
+      tablesWithResults.push({
+        tableName,
+        label: sectionHeader,
         contents: vresps.map((vr) => vr.html).join("<hr>") + paginate,
       });
     }
@@ -251,17 +275,36 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   const form = searchForm();
   form.validate({ q });
 
+  const mkResultDisplay = () => {
+    switch (search_results_decoration) {
+      case "Tabs":
+        const tabContents = {};
+        tablesWithResults.forEach((tblRes) => {
+          tabContents[tblRes.label] = tblRes.contents;
+        });
+        return [{ type: "card", tabContents }];
+
+      default:
+        return tablesWithResults.map((tblRes) => ({
+          type: "card",
+          title: span({ id: tblRes.tableName }, tblRes.label),
+          contents: tblRes.contents,
+        }));
+    }
+  };
+
   // Prepare search result visualization
   const searchResult =
-    resp.length === 0
+    tablesWithResults.length === 0
       ? [{ type: "card", contents: req.__("Not found") }]
-      : resp;
+      : mkResultDisplay();
   res.sendWrap(req.__("Search all tables"), {
     above: [
       {
         type: "card",
         contents: div(
           renderForm(form, false),
+          syntax_help_link(req),
           typeof table !== "undefined" &&
             tablesConfigured > 1 &&
             div(
@@ -296,6 +339,19 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   });
 };
 
+const syntax_help_link = (req) => {
+  const use_websearch = getState().getConfig("search_use_websearch", false);
+  if (use_websearch)
+    return a(
+      {
+        href: "javascript:void(0);",
+        onclick: "ajax_modal('/search/syntax-help')",
+      },
+      req.__("Search syntax")
+    );
+  else return "";
+};
+
 /**
  * Execute search or only show search form
  * @name get
@@ -327,9 +383,33 @@ router.get(
       }
 
       const form = searchForm();
-      form.noSubmitButton = false;
-      form.submitLabel = req.__("Search");
-      res.sendWrap(req.__("Search all tables"), renderForm(form, false));
+      res.sendWrap(req.__("Search all tables"), {
+        type: "card",
+        contents: renderForm(form, false) + syntax_help_link(req),
+      });
     }
+  })
+);
+
+router.get(
+  "/syntax-help",
+  error_catcher(async (req, res) => {
+    res.sendWrap(
+      req.__("Search syntax help"),
+      div(
+        p(
+          `Individual words matched independently. Example <code>large cat</code>`
+        ),
+        p(
+          `Double quotes to match phrase as a single unit. Example <code>"large cat"</code> matches "the large cat sat..." but not "the large brown cat".`
+        ),
+        p(
+          `"or" to match either of two phrases. Example <code>cat or mouse</code>`
+        ),
+        p(
+          `"-" to exclude a word or phrase. Example <code>cat -mouse</code> does not match "cat and mouse"`
+        )
+      )
+    );
   })
 );

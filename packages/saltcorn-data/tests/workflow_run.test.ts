@@ -13,6 +13,7 @@ const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import mocks from "./mocks";
 import User from "../models/user";
+import Table from "../models/table";
 import WorkflowTrace from "../models/workflow_trace";
 const { mockReqRes } = mocks;
 
@@ -81,6 +82,8 @@ describe("Workflow run steps", () => {
     expect(wfrun.context.x).toBe(1);
     expect(wfrun.context.y).toBe(2);
     expect(wfrun.context.last).toBe(1);
+    expect(wfrun.current_step[0]).toBe("fourth_step");
+    expect(wfrun.current_step_name).toBe("fourth_step");
   });
   it("should run through trigger", async () => {
     const user = await User.findOne({ id: 1 });
@@ -308,5 +311,91 @@ describe("Workflow run subworkflows", () => {
     expect(wfrun.context.foo.z).toBe(9);
     expect(wfrun.context.bar.y).toBe(2);
     expect(wfrun.context.foo.x).toBe(1);
+  });
+});
+describe("Workflow run actions", () => {
+  it("should create steps", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: table.id,
+      name: "InsertBook",
+      when_trigger: "Never",
+      configuration: {
+        code: `await table.insertRow({author: "Mary Contrary", pages: 124, publisher: row.publisher})`,
+      },
+    });
+    const main = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "wfrunaction",
+    });
+    await WorkflowStep.create({
+      trigger_id: main.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{foo: {x:1}}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: main.id!,
+      name: "second_step",
+      next_step: "third_step",
+      action_name: "InsertBook",
+      initial_step: false,
+      configuration: { row_expr: "{publisher: thepub}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: main.id!,
+      name: "third_step",
+      next_step: "",
+      action_name: "TableQuery",
+      initial_step: false,
+      configuration: {
+        query_table: "books",
+        query_object: "{pages: 124}",
+        query_variable: "books",
+      },
+    });
+  });
+  it("should run", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "wfrunaction" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+      context: { thepub: 2 },
+    });
+    await wfrun.run({ user });
+
+    expect(wfrun.context.foo.x).toBe(1);
+    expect(wfrun.context.books.length).toBe(1);
+    expect(wfrun.context.books[0].pages).toBe(124);
+    expect(wfrun.context.books[0].author).toBe("Mary Contrary");
+    expect(wfrun.context.books[0].publisher).toBe(2);
+  });
+  it("should dereference key row fields", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    await table.deleteRows({ pages: 124 });
+    const trigger = Trigger.findOne({ name: "wfrunaction" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+      context: { thepub: "No starch" },
+    });
+    await wfrun.run({ user });
+
+    expect(wfrun.context.foo.x).toBe(1);
+    expect(wfrun.context.books.length).toBe(1);
+    expect(wfrun.context.books[0].pages).toBe(124);
+    expect(wfrun.context.books[0].author).toBe("Mary Contrary");
+    expect(wfrun.context.books[0].publisher).toBe(2);
   });
 });

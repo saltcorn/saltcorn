@@ -611,6 +611,20 @@ const getRandomPage = (pageGroup, req) => {
   return Page.findOne({ id: sessionMember.page_id });
 };
 
+const checkEditPermission = (type, user) => {
+  if (user.role_id === 1) return true;
+  switch (type) {
+    case "views":
+      return getState().getConfig("min_role_edit_views", 1) >= user.role_id;
+    case "pages":
+      return getState().getConfig("min_role_edit_pages", 1) >= user.role_id;
+    case "triggers":
+      return getState().getConfig("min_role_edit_triggers", 1) >= user.role_id;
+    default:
+      return false;
+  }
+};
+
 module.exports = {
   sqlsanitize,
   csrfField,
@@ -634,4 +648,5 @@ module.exports = {
   getEligiblePage,
   getRandomPage,
   tenant_letsencrypt_name,
+  checkEditPermission,
 };

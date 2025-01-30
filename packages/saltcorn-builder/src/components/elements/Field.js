@@ -126,7 +126,12 @@ const FieldSettings = () => {
         "CSRF-Token": options.csrfToken,
         "X-Requested-With": "XMLHttpRequest",
       },
-      body: JSON.stringify({ field_name: name, fieldview, type: "Field" }),
+      body: JSON.stringify({
+        field_name: name,
+        fieldview,
+        type: "Field",
+        mode: options?.mode,
+      }),
     })
       .then(function (response) {
         if (response.status < 399) return response.json();

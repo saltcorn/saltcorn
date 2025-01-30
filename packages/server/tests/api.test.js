@@ -107,6 +107,19 @@ describe("API read", () => {
         )
       );
   });
+  it("should get books limit", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/books/?limit=1&offset=1&sortBy=pages")
+      .expect(
+        succeedJsonWith(
+          (rows) =>
+            rows.length == 1 &&
+            rows[0].author === "Herman Melville" &&
+            rows[0].pages === 967
+        )
+      );
+  });
   it("should handle fkey args ", async () => {
     const loginCookie = await getAdminLoginCookie();
     const app = await getApp({ disableCsrf: true });

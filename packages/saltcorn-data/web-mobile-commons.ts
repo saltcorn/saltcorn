@@ -38,7 +38,9 @@ const get_extra_menu = (
   const is_node = isNode();
   const transform = (items: any) =>
     items
-      .filter((item: any) => role <= +item.min_role)
+      .filter(
+        (item: any) => role <= +item.min_role && role >= +(item.max_role || 1)
+      )
       .filter((item: any) =>
         is_node
           ? true

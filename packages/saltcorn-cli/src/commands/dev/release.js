@@ -215,7 +215,7 @@ class ReleaseCommand extends Command {
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
     fs.writeFileSync(
       `Dockerfile.release`,
-      dockerfile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
+      dockerfile.replace(/cli@.* --omit=dev/, `cli@${version} --omit=dev`)
     );
     const dockerfileWithMobile = fs.readFileSync(
       `Dockerfile.mobile.release`,
@@ -223,7 +223,7 @@ class ReleaseCommand extends Command {
     );
     fs.writeFileSync(
       `Dockerfile.mobile.release`,
-      dockerfileWithMobile.replace(/cli@.* --unsafe/, `cli@${version} --unsafe`)
+      dockerfileWithMobile.replace(/cli@.* --omit=dev/, `cli@${version} --omit=dev`)
     );
     //git commit tag and push
     runCmd("git", ["commit", "-am", "v" + version], {

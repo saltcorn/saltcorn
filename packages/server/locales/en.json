@@ -1543,5 +1543,14 @@
 	"Minimum role to inspect (see, without editing) tables": "Minimum role to inspect (see, without editing) tables",
 	"Home pages": "Home pages",
 	"The home page is the page that is served when the user visits the home location (/). This can be set for each user role.": "The home page is the page that is served when the user visits the home location (/). This can be set for each user role.",
-	"Trigger %s deleted": "Trigger %s deleted"
+	"Trigger %s deleted": "Trigger %s deleted",
+	"Edit menu": "Edit menu",
+	"Minimum role to edit menu": "Minimum role to edit menu",
+	"Full-text search index is not available as the table contains Key fields (%s) with the \"Include in full-text search\" option enabled. Disable this before creating a Full-text search index": "Full-text search index is not available as the table contains Key fields (%s) with the \"Include in full-text search\" option enabled. Disable this before creating a Full-text search index",
+	"Share Extension Provisioning Profile": "Share Extension Provisioning Profile",
+	"Show results in": "Show results in",
+	"Show results from each table in this type of element": "Show results from each table in this type of element",
+	"Search syntax help": "Search syntax help",
+	"Search syntax": "Search syntax",
+	"Maximum role": "Maximum role"
 }

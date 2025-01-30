@@ -67,11 +67,11 @@ const stringToJSON = (v: string | any): any => {
     throw new Error(`stringToJSON(${JSON.stringify(v)}): ${e.message}`);
   }
 };
-const apply = (f: Function | any, x: any) =>
-  typeof f === "function" ? f(x) : f;
+const apply = (f: Function | any, ...x: any[]) =>
+  typeof f === "function" ? f(...x) : f;
 
-const applyAsync = async (f: Function | any, x: any) => {
-  if (typeof f === "function") return await f(x);
+const applyAsync = async (f: Function | any, ...x: any[]) => {
+  if (typeof f === "function") return await f(...x);
   else return f;
 };
 

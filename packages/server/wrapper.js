@@ -96,6 +96,7 @@ const get_menu = (req) => {
   const canEditViews = state.getConfig("min_role_edit_views", 1) >= role;
   const canEditPages = state.getConfig("min_role_edit_pages", 1) >= role;
   const canEditTriggers = state.getConfig("min_role_edit_triggers", 1) >= role;
+  const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
   const isAdmin = role === 1;
   const hasAdmin =
     isAdmin ||
@@ -103,6 +104,7 @@ const get_menu = (req) => {
     canInspectTables ||
     canEditPages ||
     canEditViews ||
+    canEditMenu ||
     canEditTriggers;
   /*
    * Admin Menu items
@@ -128,13 +130,41 @@ const get_menu = (req) => {
         icon: "far fa-file",
         label: req.__("Pages"),
       });
-    if (canEditTriggers && !isAdmin)
+    if (canEditTriggers && !canEditMenu && !isAdmin)
       adminItems.push({
         link: "/actions",
         altlinks: ["/events", "/eventlog", "/crashlog"],
         icon: "fas fa-calendar-check",
         label: req.__("Triggers"),
       });
+    if (canEditMenu && !isAdmin) {
+      const subitems = [
+        {
+          link: "/menu",
+          altlinks: [
+            "/site-structure",
+            "/search/config",
+            "/library/list",
+            "/tenant/list",
+          ],
+          icon: "fas fa-compass",
+          label: req.__("Menu"),
+        },
+      ];
+      if (canEditTriggers)
+        subitems.push({
+          link: "/actions",
+          altlinks: ["/events", "/eventlog", "/crashlog"],
+          icon: "fas fa-calendar-check",
+          label: req.__("Triggers"),
+        });
+      adminItems.push({
+        label: req.__("Settings"),
+        icon: "fas fa-wrench",
+        subitems,
+      });
+    }
+
     if (isAdmin)
       adminItems.push({
         label: req.__("Settings"),

@@ -280,14 +280,58 @@ router.get(
  * @function
  * @memberof module:routes/api~apiRouter
  */
-// todo add paging
+
+function validateNumberMin(value, min) {
+  if (typeof value !== "number") {
+    // return false; //throw new TypeError('Value is not a number');
+    value = strictParseInt(value);
+  }
+
+  if (!Number.isSafeInteger(value)) {
+    return false; //throw new RangeError('Value is outside the valid range for an integer');
+  }
+  if (value < min) return false;
+  return true;
+}
+
 router.get(
   "/:tableName/",
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     let { tableName } = req.params;
-    const { fields, versioncount, approximate, dereference, ...req_query } =
-      req.query;
+    const {
+      fields,
+      versioncount,
+      limit,
+      offset,
+      sortBy,
+      sortDesc,
+      approximate,
+      dereference,
+      tabulator_pagination_format,
+      ...req_query0
+    } = req.query;
+
+    let req_query = req_query0;
+    let tabulator_size, tabulator_page, tabulator_sort, tabulator_dir;
+    if (tabulator_pagination_format) {
+      const { page, size, sort, ...rq } = req_query0;
+      req_query = rq;
+      tabulator_page = page;
+      tabulator_size = size;
+      tabulator_sort = sort?.[0]?.field;
+      tabulator_dir = sort?.[0]?.dir;
+    }
+    if (typeof limit !== "undefined")
+      if (isNaN(limit) || !validateNumberMin(limit, 1)) {
+        getState().log(3, `API get ${tableName} Invalid limit parameter`);
+        return res.status(400).send({ error: "Invalid limit parameter" });
+      }
+    if (typeof offset !== "undefined")
+      if (isNaN(offset) || !validateNumberMin(offset, 1)) {
+        getState().log(3, `API get ${tableName} Invalid offset parameter`);
+        return res.status(400).send({ error: "Invalid offset parameter" });
+      }
     const table = Table.findOne(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
@@ -304,6 +348,15 @@ router.get(
       res.status(404).json({ error: req.__("Not found") });
       return;
     }
+    const orderByField =
+      (sortBy || tabulator_sort) && table.getField(sortBy || tabulator_sort);
+
+    const use_limit = tabulator_pagination_format
+      ? +tabulator_size
+      : limit && +limit;
+    const use_offset = tabulator_pagination_format
+      ? +tabulator_size * (+tabulator_page - 1)
+      : offset && +offset;
 
     await passport.authenticate(
       ["api-bearer", "jwt"],
@@ -313,9 +366,13 @@ router.get(
           let rows;
           if (versioncount === "on") {
             const joinOpts = {
-              orderBy: "id",
               forUser: req.user || user || { role_id: 100 },
               forPublic: !(req.user || user),
+              limit: use_limit,
+              offset: use_offset,
+              orderDesc:
+                (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
+              orderBy: orderByField?.name || "id",
               aggregations: {
                 _versions: {
                   table: table.name + "__history",
@@ -353,11 +410,21 @@ router.get(
             rows = await table.getJoinedRows({
               where: qstate,
               joinFields,
+              limit: use_limit,
+              offset: use_offset,
+              orderDesc:
+                (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
+              orderBy: orderByField?.name || undefined,
               forPublic: !(req.user || user),
               forUser: req.user || user,
             });
           }
-          res.json({ success: rows.map(limitFields(fields)) });
+          if (tabulator_pagination_format) {
+            res.json({
+              last_page: Math.ceil((await table.countRows()) / +tabulator_size),
+              data: rows.map(limitFields(fields)),
+            });
+          } else res.json({ success: rows.map(limitFields(fields)) });
         } else {
           getState().log(3, `API get ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });

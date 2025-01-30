@@ -68,6 +68,7 @@ module.exports = {
       tls: false,
       dns: false,
       net: false,
+      punycode: require.resolve("punycode/"),
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),
       path: require.resolve("path-browserify"),

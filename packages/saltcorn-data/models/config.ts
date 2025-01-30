@@ -1025,7 +1025,13 @@ const configTypes: ConfigTypes = {
     required: true,
     blurb: "Minimum role to edit triggers",
   },
-
+  min_role_edit_menu: {
+    type: "Role",
+    label: "Edit menu",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to edit menu",
+  },
   /** @type {object} */
   min_role_search: {
     type: "Role",
@@ -1045,6 +1051,17 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Use table description instead of name as header",
     default: 20,
+  },
+  search_results_decoration: {
+    label: "Search results decoration",
+    blurb: "Show results from each table in this type of element",
+    input_type: "select",
+    options: ["Cards", "Tabs"],
+  },
+  search_use_websearch: {
+    label: "Use websearch for full text search",
+    type: "Bool",
+    default: false,
   },
   backup_file_prefix: {
     type: "String",

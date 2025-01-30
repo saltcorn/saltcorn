@@ -34,7 +34,7 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
-describe("File", () => {
+describe("File class", () => {
   it("should create", async () => {
     await rick_file();
     const cs = await File.find();
@@ -258,5 +258,21 @@ describe("File", () => {
     expect(existsSync("/var/lib/..%2F..%2F/tmp/myfile")).toBe(false);
     expect(existsSync("/var/lib/..\u2215..\u2215/tmp/myfile")).toBe(false);
     expect(existsSync("/var/lib/../../tmp/myfile")).toBe(true);
+  });
+  it("should return all directories", async () => {
+    await File.new_folder("subfolder/mysubsubfolder");
+
+    const dirs = await File.allDirectories();
+    expect(dirs.length).toBeGreaterThan(2);
+    expect(dirs.length).toBeLessThan(20);
+    expect(dirs[0].constructor.name).toBe("File");
+    const paths = dirs.map((d) => d.path_to_serve);
+
+    expect(paths).toContain("subfolder");
+    expect(paths).toContain("subfolder/mysubsubfolder");
+    expect(paths).toContain("");
+    expect(paths.filter((p) => p === "").length).toBe(1);
+    const filenames = dirs.map((d) => d.filename);
+    expect(filenames).toContain("subfolder");
   });
 });

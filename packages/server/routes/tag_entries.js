@@ -12,7 +12,13 @@ const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const Router = require("express-promise-router");
 
-const { isAdmin, error_catcher, csrfField } = require("./utils");
+const {
+  isAdmin,
+  error_catcher,
+  csrfField,
+  isAdminOrHasConfigMinRole,
+  checkEditPermission,
+} = require("./utils");
 
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -167,6 +173,42 @@ router.post(
       await tag.addEntry({ [fieldName]: id });
     }
     res.redirect(`/tag/${tag_id}?show_list=${entry_type}`);
+  })
+);
+
+router.post(
+  "/add-tag-entity/:tagname/:entitytype/:entityid",
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_triggers",
+  ]),
+  error_catcher(async (req, res) => {
+    const { tagname, entitytype, entityid } = req.params;
+    const tag = await Tag.findOne({ name: tagname });
+
+    const fieldName = idField(entitytype);
+    const auth = checkEditPermission(entitytype, req.user);
+    if (!auth) req.flash("error", "Not authorized");
+    else await tag.addEntry({ [fieldName]: +entityid });
+    switch (entitytype) {
+      case "views":
+        res.redirect(`/viewedit`);
+        break;
+      case "pages":
+        res.redirect(`/pageedit`);
+        break;
+      case "tables":
+        res.redirect(`/table`);
+        break;
+      case "triggers":
+        res.redirect(`/actions`);
+        break;
+
+      default:
+        break;
+    }
   })
 );
 

@@ -135,15 +135,9 @@ function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
     let d = new Date();
     if (typeof offset === "number") d.setDate(d.getDate() + offset);
     else if (offset && "startOf" in offset) {
-      d = moment()
-        .locale(get_locale())
-        .startOf(offset.startOf)
-        .toDate();
+      d = moment().locale(get_locale()).startOf(offset.startOf).toDate();
     } else if (offset && "endOf" in offset) {
-      d = moment()
-        .locale(get_locale())
-        .endOf(offset.endOf)
-        .toDate();
+      d = moment().locale(get_locale()).endOf(offset.endOf).toDate();
     }
     return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   };
@@ -735,7 +729,10 @@ const apply_calculated_fields_stored = async (
       //transform
       const oldf = transform;
       transform = async (row) => {
-        row[field.name] = reFetchedRow._agg_val;
+        row[field.name] =
+          /* (field.type as any)?.name === "JSON"
+            ? JSON.stringify(reFetchedRow._agg_val)
+            :*/ reFetchedRow._agg_val;
 
         return await oldf(row);
       };

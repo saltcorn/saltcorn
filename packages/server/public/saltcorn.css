@@ -773,3 +773,42 @@ i[class*=" unicode-"] {
 [data-animate-initial-hide] {
   opacity: 0;
 }
+
+div.select-by-view-container {
+  display: flex;
+}
+div.select-by-view-container.justify-start {
+  justify-content: flex-start;
+}
+div.select-by-view-container.justify-end {
+  justify-content: flex-end;
+}
+div.select-by-view-container.justify-center {
+  justify-content: center;
+}
+div.select-by-view-container.justify-between {
+  justify-content: space-between;
+}
+div.select-by-view-container.justify-around {
+  justify-content: space-around;
+}
+div.select-by-view-container.justify-evenly {
+  justify-content: space-evenly;
+}
+
+div.select-by-view-option.no-card {
+  border: 1px solid var(--bs-secondary, var(--tblr-secondary, blue));
+}
+div.select-by-view-option:hover {
+  border: 1px solid var(--bs-primary, var(--tblr-primary, blue));
+}
+div.select-by-view-option.selected {
+  border: 2px solid var(--bs-primary, var(--tblr-primary, blue));
+}
+tr span.add-tag {
+  opacity: 0;
+}
+
+tr:hover span.add-tag {
+  opacity: 1;
+}

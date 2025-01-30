@@ -54,6 +54,26 @@ test("updateQueryStringParameter", () => {
       "AK"
     )
   ).toBe("/foo?publisher.publisher->name=AK");
+  expect(
+    updateQueryStringParameter(
+      "/foo?factor.Factors->focus_area.Focus%20area->short_name=Leadership",
+      "factor.Factors->focus_area.Focus%20area->short_name",
+      "Marketing"
+    )
+  ).toBe("/foo?factor.Factors->focus_area.Focus%20area->short_name=Marketing");
+  expect(
+    updateQueryStringParameter(
+      "/foo?factor.Factors%20(Solaris)->focus_area.Focus%20area%20(Solaris)->short_name=Leadership",
+      "factor.Factors%20(Solaris)->focus_area.Focus%20area%20(Solaris)->short_name",
+      "Marketing"
+    )
+  ).toBe(
+    "/foo?factor.Factors%20(Solaris)->focus_area.Focus%20area%20(Solaris)->short_name=Marketing"
+  );
+  expect(removeQueryStringParameter("/foo?name=Bar&factor.Factors%20(Solaris)->focus_area.Focus%20area%20(Solaris)->short_name=Leadership", "factor.Factors%20(Solaris)->focus_area.Focus%20area%20(Solaris)->short_name")).toBe(
+    "/foo?name=Bar"
+  );
+
   expect(updateQueryStringParameter("/foo", "_or_field", ["baz", "bar"])).toBe(
     "/foo?_or_field=baz&_or_field=bar"
   );

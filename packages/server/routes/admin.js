@@ -14,6 +14,7 @@ const {
   get_sys_info,
   tenant_letsencrypt_name,
   isAdminOrHasConfigMinRole,
+  checkEditPermission,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -567,7 +568,11 @@ router.get(
   error_catcher(async (req, res) => {
     const snaps = await Snapshot.find(
       {},
-      { orderBy: "created", orderDesc: true, fields: ["id", "created", "hash"] }
+      {
+        orderBy: "created",
+        orderDesc: true,
+        fields: ["id", "created", "hash", "name"],
+      }
     );
     const locale = getState().getConfig("default_locale", "en");
     send_admin_page({
@@ -595,7 +600,9 @@ router.get(
                             snap.created,
                             {},
                             locale
-                          )} (${moment(snap.created).fromNow()})`
+                          )} (${moment(snap.created).fromNow()})${
+                            snap.name ? ` [${snap.name}]` : ""
+                          }`
                         )
                       )
                     )
@@ -627,20 +634,6 @@ router.get(
   })
 );
 
-const checkEditPermission = (type, user) => {
-  if (user.role_id === 1) return true;
-  switch (type) {
-    case "view":
-      return getState().getConfig("min_role_edit_views", 1) >= user.role_id;
-    case "page":
-      return getState().getConfig("min_role_edit_pages", 1) >= user.role_id;
-    case "trigger":
-      return getState().getConfig("min_role_edit_triggers", 1) >= user.role_id;
-    default:
-      return false;
-  }
-};
-
 router.get(
   "/snapshot-restore/:type/:name",
   isAdminOrHasConfigMinRole([
@@ -652,7 +645,7 @@ router.get(
     const { type, name } = req.params;
     const snaps = await Snapshot.entity_history(type, name);
     const locale = getState().getConfig("default_locale", "en");
-    const auth = checkEditPermission(type, req.user);
+    const auth = checkEditPermission(type + "s", req.user);
     if (!auth) {
       res.send("Not authorized");
       return;
@@ -664,11 +657,14 @@ router.get(
           {
             label: req.__("When"),
             key: (r) =>
-              `${localeDateTime(r.created, {}, locale)} (${moment(
+              `${moment(
                 r.created
-              ).fromNow()})`,
+              ).fromNow()}<br><small>${localeDateTime(r.created, {}, locale)}</small>`,
           },
-
+          {
+            label: req.__("Name"),
+            key: (r) => r.name || "",
+          },
           {
             label: req.__("Restore"),
             key: (r) =>
@@ -694,7 +690,7 @@ router.post(
   ]),
   error_catcher(async (req, res) => {
     const { type, name, id } = req.params;
-    const auth = checkEditPermission(type, req.user);
+    const auth = checkEditPermission(type + "s", req.user);
     if (!auth) {
       req.flash("error", "Not authorized");
     } else {
@@ -965,7 +961,8 @@ const snapshotForm = (req) =>
         label: req.__("Snapshot now"),
         id: "btnSnapNow",
         class: "btn btn-outline-secondary",
-        onclick: "ajax_post('/admin/snapshot-now')",
+        onclick:
+          "ajax_post('/admin/snapshot-now/'+prompt('Name of snapshot (optional)'))",
       },
     ],
     fields: [
@@ -1077,11 +1074,18 @@ router.post(
  * Do Snapshot now
  */
 router.post(
-  "/snapshot-now",
+  "/snapshot-now/:snapshotname?",
   isAdmin,
   error_catcher(async (req, res) => {
+    const { snapshotname } = req.params;
+    if (snapshotname == "null") {
+      //user clicked cancel on prompt
+      res.json({ success: true });
+      return;
+    }
+
     try {
-      const taken = await Snapshot.take_if_changed();
+      const taken = await Snapshot.take_if_changed(snapshotname);
       if (taken) req.flash("success", req.__("Snapshot successful"));
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));

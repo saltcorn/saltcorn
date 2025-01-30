@@ -9,7 +9,11 @@ const Router = require("express-promise-router");
 
 //const Field = require("@saltcorn/data/models/field");
 const Form = require("@saltcorn/data/models/form");
-const { isAdmin, error_catcher } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  isAdminOrHasConfigMinRole,
+} = require("./utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 //const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
@@ -308,6 +312,13 @@ const menuForm = async (req) => {
         options: roles.map((r) => ({ label: r.role, value: r.id })),
       },
       {
+        name: "max_role",
+        label: req.__("Maximum role"),
+        class: "item-menu",
+        input_type: "select",
+        options: roles.map((r) => ({ label: r.role, value: r.id })),
+      },
+      {
         name: "disable_on_mobile",
         label: req.__("Disable on mobile"),
         type: "Bool",
@@ -490,7 +501,7 @@ const menuTojQME = (menu_items) =>
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_menu"),
   error_catcher(async (req, res) => {
     const form = await menuForm(req);
     const state = getState();
@@ -566,7 +577,7 @@ const jQMEtoMenu = (menu_items) =>
  */
 router.post(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_menu"),
   error_catcher(async (req, res) => {
     const new_menu = req.body || {};
     const menu_items = jQMEtoMenu(new_menu);

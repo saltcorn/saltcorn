@@ -44,7 +44,7 @@ class Test:
             })
         assert self.sess.redirect_url == '/'
         self.sess.follow_redirect()
-        assert '>Welcome' in self.sess.content
+        assert 'Welcome to Saltcorn!' in self.sess.content
 
     def test_cannot_become_admin_signup_custom(self):
         self.sess.reset()
@@ -75,7 +75,7 @@ class Test:
             })
         assert self.sess.redirect_url == '/'
         self.sess.follow_redirect()
-        assert '>Welcome' in self.sess.content
+        assert 'Welcome to Saltcorn!' in self.sess.content
         self.cannot_access_admin()
 
     def test_cannot_become_admin_signup_custom1(self):
@@ -105,7 +105,7 @@ class Test:
             })
         assert self.sess.redirect_url == '/'
         self.sess.follow_redirect()
-        assert '>Welcome' in self.sess.content
+        assert 'Welcome to Saltcorn!' in self.sess.content
         self.cannot_access_admin()
 
     def test_password_repeat(self):

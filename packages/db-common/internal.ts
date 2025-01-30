@@ -73,19 +73,11 @@ const sqlitePlaceHolderStack = (): PlaceHolderStack => {
   };
 };
 
-/**
- * Where FTS (Search)
- * @param {object} v
- * @param {string} i
- * @param {boolean} is_sqlite
- * @returns {string}
- */
-const whereFTS = (
-  v: { fields: any[]; table?: string; searchTerm: string; schema?: string },
-  phs: PlaceHolderStack
-): string => {
-  const { fields, table, schema } = v;
-
+export const ftsFieldsSqlExpr = (
+  fields: any[],
+  table?: string,
+  schema?: string
+) => {
   let fldsArray = fields
     .filter(
       (f: any) =>
@@ -112,16 +104,39 @@ const whereFTS = (
       );
     });
   let flds = fldsArray.join(" || ' ' || ");
+  if (flds === "") flds = "''";
+  return flds;
+};
+
+/**
+ * Where FTS (Search)
+ * @param {object} v
+ * @param {string} i
+ * @param {boolean} is_sqlite
+ * @returns {string}
+ */
+const whereFTS = (
+  v: {
+    fields: any[];
+    table?: string;
+    searchTerm: string;
+    schema?: string;
+    language?: string;
+    use_websearch?: boolean;
+  },
+  phs: PlaceHolderStack
+): string => {
+  const { fields, table, schema } = v;
+
   const prefixMatch = !v.searchTerm?.includes(" ");
   const searchTerm = prefixMatch ? `${v.searchTerm}:*` : v.searchTerm;
-
-  if (flds === "") flds = "''";
+  let flds = ftsFieldsSqlExpr(fields, table, schema);
   if (phs.is_sqlite)
     return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
-    return `to_tsvector('english', ${flds}) @@ ${
-      prefixMatch ? "" : `plain`
-    }to_tsquery('english', ${phs.push(searchTerm)})`;
+    return `to_tsvector('${v.language || "english"}', ${flds}) @@ ${
+      v.use_websearch ? "websearch_" : prefixMatch ? "" : `plain`
+    }to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
 };
 
 export type Value = string | number | boolean | Date | Value[];

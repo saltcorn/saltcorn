@@ -817,19 +817,19 @@ const render = (
       )
         return div(
           {
-            "data-inline-edit-field": field_name,
+            "data-inline-edit-fielddata": encodeURIComponent(
+              JSON.stringify({
+                field_name,
+                table_name: table.name,
+                pk: row[table.pk_name],
+                fieldview,
+                configuration,
+              })
+            ),
             "data-inline-edit-ajax": "true",
             "data-inline-edit-dest-url": `/api/${table.name}/${
               row[table.pk_name]
             }`,
-            "data-inline-edit-type": field?.type?.name,
-            ...(field?.type?.name === "Float" &&
-            field.attributes?.decimal_places
-              ? {
-                  "data-inline-edit-decimal-places":
-                    field.attributes.decimal_places,
-                }
-              : {}),
             class: !isWeb(req) ? "mobile-data-inline-edit" : "",
           },
           fvrun
@@ -843,6 +843,7 @@ const render = (
         fieldview,
         configuration,
         target_field_attributes,
+        click_to_edit,
       } = jf;
       const keypath = join_field.split(".");
       let value;
@@ -861,17 +862,42 @@ const render = (
           ? getState().fileviews[fieldview].run(value, "", configuration || {})
           : "";
       }
-
+      let fvRes;
       if (field_type && fieldview) {
         const type = getState().types[field_type];
         if (type && getState().types[field_type]) {
-          return type.fieldviews[fieldview].run(value, req, {
+          fvRes = type.fieldviews[fieldview].run(value, req, {
             row,
             ...(target_field_attributes || {}),
             ...configuration,
           });
-        } else return text(value);
-      } else return text(value);
+        } else fvRes = text(value);
+      } else fvRes = text(value);
+      if (
+        click_to_edit &&
+        (role <= table.min_role_write || table.is_owner(req.user, row))
+      )
+        return div(
+          {
+            "data-inline-edit-fielddata": encodeURIComponent(
+              JSON.stringify({
+                field_name: keypath[0],
+                table_name: table.name,
+                pk: row[table.pk_name],
+                fieldview,
+                configuration,
+                join_field: keypath[keypath.length - 1],
+              })
+            ),
+            "data-inline-edit-ajax": "true",
+            "data-inline-edit-dest-url": `/api/${table.name}/${
+              row[table.pk_name]
+            }`,
+            class: !isWeb(req) ? "mobile-data-inline-edit" : "",
+          },
+          fvRes
+        );
+      else return fvRes;
     },
     aggregation(column) {
       const { agg_relation, stat, aggwhere, agg_field } = column;

@@ -25,6 +25,7 @@ type SnapshotCfg = {
   created: Date;
   pack?: Pack;
   hash: string;
+  name?: string;
 };
 
 class Snapshot {
@@ -32,6 +33,7 @@ class Snapshot {
   created: Date;
   pack?: Pack;
   hash: string;
+  name?: string;
 
   /**
    * Library constructor
@@ -42,6 +44,7 @@ class Snapshot {
     this.created = o.created;
     this.pack = o.pack;
     this.hash = o.hash;
+    this.name = o.name;
   }
 
   static async find(
@@ -66,7 +69,7 @@ class Snapshot {
     else return sns[0];
   }
 
-  static async take_if_changed(): Promise<boolean> {
+  static async take_if_changed(name?: string): Promise<boolean> {
     const latest = await Snapshot.latest();
 
     const current_pack = await backup.create_pack_json(false, true);
@@ -78,11 +81,12 @@ class Snapshot {
       .digest("hex")
       .slice(0, 40);
 
-    if (!latest || latest.hash !== hash) {
+    if (!latest || latest.hash !== hash || name) {
       await db.insert("_sc_snapshots", {
         created: new Date(),
         pack: current_pack,
         hash,
+        name
       });
       return true;
     } else {

@@ -1,12 +1,12 @@
 {
   "name": "@saltcorn/random-tests",
-  "version": "1.1.1-beta.8",
+  "version": "1.1.1-rc.4",
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/admin-models": "1.1.1-beta.8",
-    "@saltcorn/data": "1.1.1-beta.8",
-    "@saltcorn/server": "1.1.1-beta.8"
+    "@saltcorn/admin-models": "1.1.1-rc.4",
+    "@saltcorn/data": "1.1.1-rc.4",
+    "@saltcorn/server": "1.1.1-rc.4"
   },
   "devDependencies": {
     "chaos-guinea-pig": "github:christianhugoch/chaos-guinea-pig#lib-upgrades",
