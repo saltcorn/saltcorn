@@ -412,7 +412,7 @@ router.get(
                   height:"100%",
                   pagination:true,
                   paginationMode:"remote",
-                  paginationSize:10,
+                  paginationSize:20,
                   clipboard:true,
                   persistence:true, 
                   persistenceID:"table_tab_${table.name}",

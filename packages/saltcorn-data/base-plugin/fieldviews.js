@@ -806,7 +806,7 @@ const select_by_view = {
         name: text_attr(nm),
         id: `input${text_attr(nm)}`,
         onChange: attrs.onChange,
-        value: v,
+        value: v || "",
       }),
       (field.options || []).map(({ row, html }) =>
         div(
