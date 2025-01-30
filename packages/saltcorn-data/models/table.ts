@@ -1508,7 +1508,15 @@ class Table implements AbstractTable {
       );
 
       for (const f of fields)
-        if (f.calculated && f.stored) v[f.name] = calced[f.name];
+        if (f.calculated && f.stored) {
+          if (
+            typeof f.type !== "string" &&
+            f.type?.name === "JSON" &&
+            stringified
+          ) {
+            v[f.name] = JSON.stringify(calced[f.name]);
+          } else v[f.name] = calced[f.name];
+        }
     }
 
     if (this.versioned) {
