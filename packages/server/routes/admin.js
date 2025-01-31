@@ -757,7 +757,9 @@ router.get(
       return;
     }
     const auto_backup_directory = getState().getConfig("auto_backup_directory");
-    res.download(path.join(auto_backup_directory, filename), filename);
+    res.download(path.join(auto_backup_directory, filename), filename, {
+      dotfiles: "allow",
+    });
   })
 );
 
@@ -982,7 +984,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await snapshotForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
 
     await save_config_from_form(form);
 
@@ -1000,7 +1002,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await backupFilePrefixForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_admin_page({
         res,
@@ -1029,7 +1031,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await autoBackupForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_admin_page({
         res,
@@ -1072,7 +1074,7 @@ router.post(
  * Do Snapshot now
  */
 router.post(
-  "/snapshot-now/:snapshotname?",
+  "/snapshot-now/{:snapshotname}",
   isAdmin,
   error_catcher(async (req, res) => {
     const { snapshotname } = req.params;
@@ -1629,7 +1631,7 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
 };
 
 router.post("/install", isAdmin, async (req, res) => {
-  const { version, deep_clean } = req.body;
+  const { version, deep_clean } = req.body || {};
   await doInstall(req, res, version, deep_clean === "on", false);
 });
 
@@ -3349,7 +3351,7 @@ router.post(
   "/build-mobile-app/finish",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { out_dir_name, build_dir } = req.body;
+    const { out_dir_name, build_dir } = req.body || {};
     const content = await fs.promises.readFile(
       path.join(build_dir, "spawnParams.json")
     );
@@ -3435,7 +3437,10 @@ router.post(
   "/build-mobile-app",
   isAdmin,
   error_catcher(async (req, res) => {
-    getState().log(2, `starting mobile build: ${JSON.stringify(req.body)}`);
+    getState().log(
+      2,
+      `starting mobile build: ${JSON.stringify(req.body || {})}`
+    );
     const msgs = [];
     let mode = "full";
     let {
@@ -3460,7 +3465,7 @@ router.post(
       keystoreFile,
       keystoreAlias,
       keystorePassword,
-    } = req.body;
+    } = req.body || {};
     const receiveShareTriggers = Trigger.find({
       when_trigger: "ReceiveMobileShareData",
     });
@@ -3725,7 +3730,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     try {
-      const newCfg = { ...req.body };
+      const newCfg = { ...(req.body || {}) };
       const excludedPlugins = (await Plugin.find())
         .filter(
           (plugin) =>
@@ -3753,7 +3758,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = clearAllForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     //order: page_groups, pages, views, user fields, tableconstraints, fields, table triggers, table history, tables, plugins, config+crashes+nontable triggers, users
     if (form.values.page_groups) {
       await PageGroup.delete({});
@@ -4147,7 +4152,7 @@ router.post(
     const { name } = req.params;
     const code_pages = getState().getConfigCopy("function_code_pages", {});
 
-    const code = req.body.code;
+    const code = (req.body || {}).code;
     await getState().setConfig("function_code_pages", {
       ...code_pages,
       [name]: code,

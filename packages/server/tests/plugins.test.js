@@ -91,9 +91,7 @@ describe("Plugin Endpoints", () => {
       .get("/plugins/public/any-bootstrap-theme/test.txt")
       .expect(toInclude("testfilecontents"));
     await request(app)
-      .get(
-        "/plugins/public/sbadmin2@9.9.9/sb-admin-2.min.css"
-      )
+      .get("/plugins/public/sbadmin2@9.9.9/sb-admin-2.min.css")
       .expect(toInclude("Start Bootstrap"));
 
     await request(app)
@@ -101,9 +99,7 @@ describe("Plugin Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/plugins"));
     await request(app)
-      .get(
-        "/plugins/public/sbadmin2@9.9.9/sb-admin-2.min.css"
-      )
+      .get("/plugins/public/sbadmin2@9.9.9/sb-admin-2.min.css")
       .expect(toInclude("Start Bootstrap"));
   });
   it("should install named without config", async () => {

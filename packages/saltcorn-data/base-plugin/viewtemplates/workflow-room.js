@@ -308,7 +308,7 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
   });
   const form = await getWorkflowStepUserForm({ step, run, viewname, req });
 
-  form.validate(req.body);
+  form.validate(req.body || {});
   await run.provide_form_input(form.values);
   await run.run({
     user: req.user,

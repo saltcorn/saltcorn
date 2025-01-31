@@ -340,7 +340,7 @@ router.post(
     const { etype, ename, q } = req.query;
     const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
 
-    const entVal = JSON.parse(req.body.regval);
+    const entVal = JSON.parse((req.body || {}).regval);
     let pack = {
       plugins: [],
       tables: [],

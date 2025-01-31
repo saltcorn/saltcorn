@@ -48,8 +48,12 @@ router.post(
     const validKeyName = (k) =>
       k !== "_csrf" && k !== "constructor" && k !== "__proto__";
 
-    for (const [k, v] of Object.entries(req.body)) {
-      if (!state.isFixedConfig(k) && typeof v !== "undefined" && validKeyName(k)) {
+    for (const [k, v] of Object.entries(req.body || {})) {
+      if (
+        !state.isFixedConfig(k) &&
+        typeof v !== "undefined" &&
+        validKeyName(k)
+      ) {
         //TODO read value from type
         await state.setConfig(k, v);
       }
@@ -64,7 +68,7 @@ router.post(
         ? boolcheck
         : [boolcheck];
     for (const k of boolchecks) {
-      if (typeof req.body[k] === "undefined" && validKeyName(k))
+      if (typeof (req.body || {})[k] === "undefined" && validKeyName(k))
         await state.setConfig(k, false);
     }
     res.json({ success: "ok" });

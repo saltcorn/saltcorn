@@ -39,7 +39,7 @@ module.exports = router;
  * @function
  */
 router.get(
-  ["/:viewname", "/:viewname/*"],
+  ["/:viewname", "/:viewname/*slug"],
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
     const query = { ...req.query };
@@ -60,7 +60,7 @@ router.get(
     }
     const tic = new Date();
 
-    view.rewrite_query_from_slug(query, req.params);
+    view.rewrite_query_from_slug(query, req.params.slug);
     if (
       role > view.min_role &&
       !(await view.authorise_get({ query, req, ...view }))
@@ -231,7 +231,7 @@ router.post(
 
       res.redirect("/");
     } else {
-      await view.runRoute(route, req.body, res, { res, req });
+      await view.runRoute(route, req.body || {}, res, { res, req });
     }
   })
 );
@@ -243,7 +243,7 @@ router.post(
  * @function
  */
 router.post(
-  ["/:viewname", "/:viewname/*"],
+  ["/:viewname", "/:viewname/*slug"],
   setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
@@ -263,11 +263,11 @@ router.post(
       res.redirect("/");
       return;
     }
-    view.rewrite_query_from_slug(query, req.params);
+    view.rewrite_query_from_slug(query, req.params.slug);
 
     if (
       role > view.min_role &&
-      !(await view.authorise_post({ body: req.body, req, ...view }))
+      !(await view.authorise_post({ body: req.body || {}, req, ...view }))
     ) {
       req.flash("danger", req.__("Not authorized"));
       state.log(2, `View ${viewname} POST not authorized`);
@@ -280,7 +280,7 @@ router.post(
         } does not supply a POST handler`
       );
     } else {
-      await view.runPost(query, req.body, { res, req });
+      await view.runPost(query, req.body || {}, { res, req });
     }
   })
 );

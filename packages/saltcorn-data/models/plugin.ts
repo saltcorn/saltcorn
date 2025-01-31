@@ -220,7 +220,7 @@ class Plugin {
     );
 
     const response = await fetch(plugins_store_endpoint, fetchOptions);
-    const json = await response.json();
+    const json: any = await response.json();
     return json.success.map((p: PluginCfg) => new Plugin(p));
   }
 
@@ -241,7 +241,7 @@ class Plugin {
       plugins_store_endpoint + "?name=" + encodeURIComponent(name),
       getFetchProxyOptions()
     );
-    const json = await response.json();
+    const json: any = await response.json();
     if (json.success.length == 1)
       return new Plugin({ version: "latest", ...json.success[0] });
     else return null;

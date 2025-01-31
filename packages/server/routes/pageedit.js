@@ -477,9 +477,9 @@ router.post(
   "/edit-properties",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
-    const form = await pagePropertiesForm(req, !req.body.id);
+    const form = await pagePropertiesForm(req, !(req.body || {}).id);
     form.hidden("id");
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(
         req.__(`Page attributes`),
@@ -688,9 +688,9 @@ router.post(
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(redirectTarget);
-    } else if (req.body.layout) {
+    } else if ((req.body || {}).layout) {
       await Page.update(page.id, {
-        layout: decodeURIComponent(req.body.layout),
+        layout: decodeURIComponent((req.body || {}).layout),
       });
       Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
         entity_type: "Page",
@@ -698,12 +698,12 @@ router.post(
       });
       req.flash("success", req.__(`Page %s saved`, pagename));
       res.redirect(redirectTarget);
-    } else if (req.body.code) {
+    } else if ((req.body || {}).code) {
       try {
         if (!page.html_file) throw new Error(req.__("File not found"));
         const file = await File.findOne(page.html_file);
         if (!file) throw new Error(req.__("File not found"));
-        await fsp.writeFile(file.location, req.body.code);
+        await fsp.writeFile(file.location, (req.body || {}).code);
         Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
           entity_type: "Page",
           entity_name: page.name,
@@ -722,7 +722,7 @@ router.post(
         else res.json({ error: error.message });
       }
     } else {
-      getState().log(2, `POST /edit/${pagename}: '${req.body}'`);
+      getState().log(2, `POST /edit/${pagename}: '${req.body || {}}'`);
       req.flash("error", req.__(`Error processing page`));
       res.redirect(redirectTarget);
     }
@@ -742,8 +742,8 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
-    if (id && req.body.layout) {
-      await Page.update(+id, { layout: req.body.layout });
+    if (id && (req.body || {}).layout) {
+      await Page.update(+id, { layout: (req.body || {}).layout });
       const page = await Page.findOne({ id });
       Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
         entity_type: "Page",
@@ -794,7 +794,7 @@ router.post(
     const pageGroups = await PageGroup.find({}, { orderBy: "name" });
     const roles = await User.get_roles();
     const form = getRootPageForm(pages, pageGroups, roles, req);
-    const valres = form.validate(req.body);
+    const valres = form.validate(req.body || {});
     if (valres.success) {
       const home_page_by_role =
         getState().getConfigCopy("home_page_by_role", {}) || {};

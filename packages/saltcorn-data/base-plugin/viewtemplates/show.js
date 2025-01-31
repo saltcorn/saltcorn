@@ -1217,7 +1217,7 @@ module.exports = {
       return rows;
     },
     async actionQuery() {
-      const body = req.body;
+      const body = req.body || {};
 
       const col = columns.find(
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid

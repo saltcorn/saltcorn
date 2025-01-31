@@ -298,7 +298,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await customEventForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,
@@ -329,7 +329,7 @@ router.post(
  * @function
  */
 router.post(
-  "/custom/delete/:name?",
+  "/custom/delete/{:name}",
   isAdmin,
   error_catcher(async (req, res) => {
     let { name } = req.params;
@@ -356,7 +356,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await logSettingsForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,

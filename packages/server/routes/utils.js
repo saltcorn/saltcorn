@@ -446,7 +446,7 @@ const admin_config_route = ({
     isAdmin,
     error_catcher(async (req, res) => {
       const form = await getTheForm(req);
-      form.validate(req.body);
+      form.validate(req.body || {});
       if (form.hasErrors) {
         response(form, req, res);
       } else {
@@ -493,7 +493,7 @@ const sendHtmlFile = async (req, res, file) => {
       path.dirname(fullPath)
     );
     if (scFile && role <= scFile.min_role_read) {
-      res.sendFile(fullPath);
+      res.sendFile(fullPath, { dotfiles: "allow" });
     } else {
       return res
         .status(404)
@@ -517,7 +517,7 @@ const sendHtmlFile = async (req, res, file) => {
  */
 const setRole = async (req, res, model) => {
   const { id } = req.params;
-  const role = req.body.role;
+  const role = (req.body || {}).role;
   await model.update(+id, { min_role: role });
   const page = model.findOne({ id });
   const roles = await User.get_roles();

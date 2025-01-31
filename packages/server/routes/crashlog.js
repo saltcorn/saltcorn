@@ -104,8 +104,8 @@ router.post(
   "/",
   error_catcher(async (req, res) => {
     const err = {
-      stack: req.body.stack,
-      message: `[JS] ${req.body.message}`,
+      stack: (req.body || {}).stack,
+      message: `[JS] ${(req.body || {}).message}`,
     };
     await Crash.create(err, req);
     res.json({});

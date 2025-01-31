@@ -159,7 +159,7 @@ module.exports = {
         .send();
     } else {
       // Use legacy file download
-      res.download(file.location, file.filename);
+      res.download(file.location, file.filename, { dotfiles: "allow" });
     }
   },
 

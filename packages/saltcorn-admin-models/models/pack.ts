@@ -846,7 +846,7 @@ const fetch_available_packs_from_store = async (): Promise<
     getFetchProxyOptions()
   );
 
-  const json = await response.json();
+  const json: any = await response.json();
   return json.success;
 };
 
@@ -870,7 +870,7 @@ const fetch_pack_by_name = async (
     packs_store_endpoint + "?name=" + encodeURIComponent(name),
     getFetchProxyOptions()
   );
-  const json = await response.json();
+  const json: any = await response.json();
   if (json.success.length == 1) return json.success[0];
   else return null;
 };

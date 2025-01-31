@@ -139,9 +139,14 @@ const getApp = async (opts = {}) => {
         connectSrc: ["'self'", "data:"],
         scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
         "script-src-attr": ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "'unsafe-inline'"],
+        styleSrc: [
+          "'self'",
+          "https://fonts.googleapis.com",
+          "https://fonts.gstatic.com",
+          "'unsafe-inline'",
+        ],
         imgSrc: ["'self'", "data:"],
-        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com",],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
         "form-action": ["'self'", "javascript:"],
       },
     },
@@ -155,7 +160,7 @@ const getApp = async (opts = {}) => {
     helmetOptions.contentSecurityPolicy = false;
 
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
-  app.use(helmet(helmetOptions));
+  // app.use(helmet(helmetOptions));
 
   // TODO ch find a better solution
   if (getState().getConfig("cors_enabled", true)) app.use(cors());
@@ -260,7 +265,7 @@ const getApp = async (opts = {}) => {
     new CustomStrategy((req, done) => {
       loginAttempt();
       async function loginAttempt() {
-        const { remember, _csrf, dest, ...userobj } = req.body;
+        const { remember, _csrf, dest, ...userobj } = req.body || {};
         if (!is.objVals(is.str).check(userobj))
           return done(
             null,
@@ -455,7 +460,7 @@ Sitemap: ${base}sitemap.xml
   // file store ensure
   await File.ensure_file_store();
   // 404 handling
-  app.get("*", function (req, res) {
+  app.get("*any", function (req, res) {
     res.status(404).sendWrap(req.__("Not found"), h1(req.__("Page not found")));
   });
 

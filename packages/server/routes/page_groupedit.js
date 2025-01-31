@@ -392,9 +392,9 @@ router.post(
   "/edit-properties",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await groupPropsForm(req, !req.body.id);
+    const form = await groupPropsForm(req, !(req.body || {}).id);
     form.hidden("id");
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       if (!req.xhr) {
         // from new
@@ -457,7 +457,7 @@ router.post(
       res.redirect(`/page_groupedit/${page_groupname}`);
     }
     const form = await addMemberForm(group, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(
         req.__(`%s add-member`, group.name),
@@ -554,7 +554,7 @@ router.post(
     const group = PageGroup.findOne({ id: member.page_group_id });
     const form = await editMemberForm(member, req);
     form.hidden("id");
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(
         req.__(`%s edit-member`, member.name || member.id),
@@ -678,7 +678,7 @@ router.post(
       req.flash(
         "success",
         req.__(
-          "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
+          'Page %s added to menu. Adjust access permissions in <a href="/menu">Settings &raquo; Menu</a>',
           group.name
         )
       );

@@ -118,7 +118,7 @@ router.post(
   "/load_changes",
   error_catcher(async (req, res) => {
     const result = {};
-    const { syncInfos, loadUntil } = req.body;
+    const { syncInfos, loadUntil } = req.body || {};
     if (!loadUntil) {
       getState().log(2, `POST /load_changes: loadUntil is missing`);
       return res.status(400).json({ error: "loadUntil is missing" });
@@ -202,7 +202,7 @@ const getDelRows = async (tblName, syncFrom, syncUntil, client) => {
 router.post(
   "/deletes",
   error_catcher(async (req, res) => {
-    const { syncInfos, syncTimestamp } = req.body;
+    const { syncInfos, syncTimestamp } = req.body || {};
     const client = await db.getClient();
     try {
       await client.query(`BEGIN`);
@@ -238,7 +238,7 @@ router.post(
 router.post(
   "/offline_changes",
   error_catcher(async (req, res) => {
-    const { changes, syncTimestamp } = req.body;
+    const { changes, syncTimestamp } = req.body || {};
     const rootFolder = await File.rootFolder();
     try {
       const syncDirName = `${syncTimestamp}_${req.user?.email || "public"}`;
@@ -334,7 +334,7 @@ router.get(
 router.post(
   "/clean_sync_dir",
   error_catcher(async (req, res) => {
-    const { dir_name } = req.body;
+    const { dir_name } = req.body || {};
     try {
       const rootFolder = await File.rootFolder();
       const syncDir = File.normalise_in_base(

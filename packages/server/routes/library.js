@@ -31,7 +31,7 @@ router.post(
   "/savefrombuilder",
   isAdmin,
   error_catcher(async (req, res) => {
-    await Library.create(req.body);
+    await Library.create(req.body || {});
     res.json({ success: "ok" });
   })
 );

@@ -579,7 +579,7 @@ router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_menu"),
   error_catcher(async (req, res) => {
-    const new_menu = req.body;
+    const new_menu = req.body || {};
     const menu_items = jQMEtoMenu(new_menu);
     await save_menu_items(menu_items);
     Trigger.emitEvent("AppChange", `Menu`, req.user, {});

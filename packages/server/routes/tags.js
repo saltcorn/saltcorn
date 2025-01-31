@@ -315,7 +315,7 @@ router.post(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { name } = req.body;
+    const { name } = req.body || {};
     const tag = await Tag.create({ name });
     req.flash("success", req.__(`Tag %s created`, name));
     res.redirect(`/tag/${tag.id}?show_list=tables`);
