@@ -749,6 +749,8 @@ const string = {
         label: "Options",
         type: "String",
         required: false,
+        copilot_description:
+          'Use this to restrict your field to a list of options (separated by commas). For instance, enter "Red, Green, Blue" here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.',
         sublabel:
           'Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class="fst-normal">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.',
         attributes: { autofocus: true },
@@ -1937,10 +1939,10 @@ const float = {
   },
   /** @type {object[]} */
   attributes: [
-    { name: "min", type: "Float", required: false },
-    { name: "max", type: "Float", required: false },
-    { name: "units", type: "String", required: false },
-    { name: "decimal_places", type: "Integer", required: false },
+    { name: "min", label: "Maximum", type: "Float", required: false },
+    { name: "max", label: "Maximum", type: "Float", required: false },
+    { name: "units", label: "Units",  type: "String", required: false },
+    { name: "decimal_places", label: "Decimal places", type: "Integer", required: false },
   ],
   /**
    * @param {object} v
