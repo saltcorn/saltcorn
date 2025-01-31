@@ -482,7 +482,7 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
         type: "button",
         onClick: `$(this).next().val(Math.max(${
           isdef(attrs.min) ? attrs.min : "-Infinity"
-        },+$(this).next().val()-1)).trigger('change');${attrs.onChange || ""}`,
+        },+$(this).next().val()-$(attrs.stepsize))).trigger('change');${attrs.onChange || ""}`,
       },
       i({ class: "fas fa-minus" })
     ),
@@ -506,7 +506,7 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
         type: "button",
         onClick: `$(this).prev().val(Math.min(${
           isdef(attrs.max) ? attrs.max : "Infinity"
-        },+$(this).prev().val()+1)).trigger('change');${attrs.onChange || ""}`,
+        },+$(this).prev().val()+$(attrs.stepsize))).trigger('change');${attrs.onChange || ""}`,
       },
       i({ class: "fas fa-plus" })
     )
@@ -1583,6 +1583,7 @@ const int = {
       description: "Number input, optionally with stepper.",
       configFields: [
         { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
+        { name: "stepsize", label: "Step size", type: "Integer" },
         {
           name: "readonly",
           label: "Read-only",
@@ -1612,7 +1613,7 @@ const int = {
               name,
               onChange: attrs.onChange,
               id,
-              step: "1",
+              step: attrs.stepsize,
               required: !!required,
               ...(isdef(attrs.max) && { max: attrs.max }),
               ...(isdef(attrs.min) && { min: attrs.min }),
