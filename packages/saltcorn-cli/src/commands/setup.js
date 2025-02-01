@@ -13,7 +13,7 @@ const {
 const { is } = require("contractis");
 const path = require("path");
 const fs = require("fs");
-const inquirer = require("inquirer");
+const inquirer = require("inquirer").default;
 const tcpPortUsed = require("tcp-port-used");
 const { spawnSync } = require("child_process");
 const sudo = require("sudo");
