@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/set-cfg
  */
-const { Command, Flags, Args, ux } = require("@oclif/core");
+const { Command, Flags, Args } = require("@oclif/core");
 const {
   maybe_as_tenant,
   init_some_tenants,

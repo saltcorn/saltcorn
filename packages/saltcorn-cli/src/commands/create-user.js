@@ -2,8 +2,30 @@
  * @category saltcorn-cli
  * @module commands/create-user
  */
-const { Command, Flags, ux } = require("@oclif/core");
+const { Command, Flags } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
+const inquirer = require("inquirer").default;
+
+const promptEmailPassword = async () => {
+  const answersEmail = await inquirer.prompt([
+    {
+      name: "email",
+      message: "Email address",
+      type: "input",
+    },
+  ]);
+  const email = answersEmail.email;
+  const answersPassword = await inquirer.prompt([
+    {
+      name: "password",
+      message: "Password",
+      type: "password",
+      mask: "*",
+    },
+  ]);
+  const password = answersPassword.password;
+  return { email, password };
+};
 
 // todo update logic based on modify-user command
 /**
@@ -38,9 +60,7 @@ class CreateUserCommand extends Command {
         }
         role_id = role.id;
       }
-      const email = flags.email || (await ux.prompt("Email address"));
-      const password =
-        flags.password || (await ux.prompt("Password", { type: "hide" }));
+      const { email, password } = await promptEmailPassword();
       const u = await User.create({ email, password, role_id });
       if (u instanceof User)
         console.log(

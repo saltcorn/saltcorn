@@ -3,7 +3,7 @@
  * @category saltcorn-cli
  * @module commands/setup
  */
-const { Command, Flags, ux } = require("@oclif/core");
+const { Command, Flags } = require("@oclif/core");
 const {
   getConnectObject,
   configFilePath,
@@ -168,14 +168,27 @@ const asyncSudoPostgres = (args) => {
  * @returns {Promise<string>}
  */
 const get_password = async (for_who) => {
-  var password = await ux.prompt(`Set ${for_who} to [auto-generate]`, {
-    type: "hide",
-    required: false,
-  });
+  const answers = await inquirer.prompt([
+    {
+      name: "password",
+      message: `Set ${for_who} to [auto-generate]`,
+      type: "password",
+      mask: "*",
+      default: "",
+    },
+  ]);
+
+  const password = answers.password;
   if (!password) {
     password = gen_password();
     console.log(`Setting ${for_who} to:`, password);
-    await ux.anykey();
+    await inquirer.prompt([
+      {
+        name: "continue",
+        message: "Press any key to continue...",
+        type: "input",
+      },
+    ]);
   }
   return password;
 };
@@ -242,28 +255,49 @@ const install_db = async () => {
  */
 const prompt_connection = async () => {
   console.log("Enter database connection parameters");
-  const host = await ux.prompt("Database host [localhost]", {
-    required: false,
-  });
-  const port = await ux.prompt("Database port [5432]", { required: false });
-  const database = await ux.prompt("Database name [saltcorn]", {
-    required: false,
-  });
-  const user = await ux.prompt("Database user [saltcorn]", {
-    required: false,
-  });
-  const password = await ux.prompt("Database password", {
-    type: "hide",
-    required: true,
-  });
+
+  const answers = await inquirer.prompt([
+    {
+      type: "input",
+      name: "host",
+      message: "Database host",
+      default: "localhost",
+    },
+    {
+      type: "input",
+      name: "port",
+      message: "Database port",
+      default: "5432",
+    },
+    {
+      type: "input",
+      name: "database",
+      message: "Database name",
+      default: "saltcorn",
+    },
+    {
+      type: "input",
+      name: "user",
+      message: "Database user",
+      default: "saltcorn",
+    },
+    {
+      type: "password",
+      name: "password",
+      message: "Database password",
+      mask: "*",
+      validate: (input) => (input ? true : "Password is required"),
+    },
+  ]);
+
   const session_secret = await get_password("session secret");
   const jwt_secret = genJwtSecret();
   return {
-    host: host || "localhost",
-    port: port || 5432,
-    database: database || "saltcorn",
-    user: user || "saltcorn",
-    password: password,
+    host: answers.host || "localhost",
+    port: answers.port || 5432,
+    database: answers.database || "saltcorn",
+    user: answers.user || "saltcorn",
+    password: answers.password,
     session_secret,
     jwt_secret,
     multi_tenant: false,
@@ -352,9 +386,25 @@ const setup_users = async () => {
   const hasUsers = await User.nonEmpty();
   if (!hasUsers) {
     console.log("No users found. Please create an admin user");
-    const email = await ux.prompt("Email address");
-    const password = await ux.prompt("Password", { type: "hide" });
-    await User.create({ email, password, role_id: 1 });
+    const credentials = await inquirer.prompt([
+      {
+        type: "input",
+        name: "email",
+        message: "Email address",
+      },
+      {
+        type: "password",
+        name: "password",
+        message: "Password",
+        mask: "*",
+      },
+    ]);
+
+    await User.create({
+      email: credentials.email,
+      password: credentials.password,
+      role_id: 1,
+    });
   } else {
     console.log("Users already present");
   }
