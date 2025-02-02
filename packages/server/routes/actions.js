@@ -505,83 +505,6 @@ router.post(
   })
 );
 
-function genWorkflowDiagram(steps) {
-  const stepNames = steps.map((s) => s.name);
-  const nodeLines = steps.map(
-    (s) => `  ${s.mmname}["\`**${s.name}**
-  ${s.action_name}\`"]:::wfstep${s.id}${s.only_if ? "@{ shape: hex }" : ""}`
-  );
-
-  nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
-  const linkLines = [];
-  let step_ix = 0;
-  for (const step of steps) {
-    if (step.initial_step)
-      linkLines.push(
-        `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
-          step.name
-        }"></i> ---${step.mmname}`
-      );
-    if (stepNames.includes(step.next_step)) {
-      linkLines.push(
-        `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmnext}`
-      );
-    } else if (step.next_step) {
-      let found = false;
-      for (const otherStep of stepNames)
-        if (step.next_step.includes(otherStep)) {
-          linkLines.push(
-            `  ${step.mmname} --> ${WorkflowStep.mmescape(otherStep)}`
-          );
-          found = true;
-        }
-      if (!found) {
-        linkLines.push(
-          `  ${step.mmname}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.mmname}</a> ---_End_${step.mmname}`
-        );
-        nodeLines.push(
-          `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-        );
-      }
-    } else if (!step.next_step) {
-      linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
-      nodeLines.push(
-        `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-      );
-    }
-    if (step.action_name === "ForLoop") {
-      linkLines.push(
-        `  ${step.mmname}-.->${WorkflowStep.mmescape(
-          step.configuration.loop_body_initial_step
-        )}`
-      );
-    }
-    if (step.action_name === "EndForLoop") {
-      // TODO this is not correct. improve.
-      let forStep;
-      for (let i = step_ix; i >= 0; i -= 1) {
-        if (steps[i].action_name === "ForLoop") {
-          forStep = steps[i];
-          break;
-        }
-      }
-      if (forStep) linkLines.push(`  ${step.mmname} --> ${forStep.mmname}`);
-    }
-    step_ix += 1;
-  }
-  if (!steps.length || !steps.find((s) => s.initial_step)) {
-    linkLines.push(`  _Start --> _End`);
-    nodeLines.push(
-      `  _End:::wfaddstart@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-    );
-  }
-  const fc =
-    "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  //console.log(fc);
-
-  return fc;
-}
-
 const getWorkflowConfig = async (req, id, table, trigger) => {
   let steps = await WorkflowStep.find(
     { trigger_id: trigger.id },
@@ -627,7 +550,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   }
   return (
     copilot_form +
-    pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
+    pre({ class: "mermaid" }, WorkflowStep.generate_diagram(steps)) +
     script(
       { defer: "defer" },
       `function tryAddWFNodes() {
