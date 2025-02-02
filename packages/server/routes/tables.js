@@ -645,8 +645,8 @@ router.get(
               div(
                 {
                   id: "erd-wrapper",
-                  style: "height: calc(100vh - 250px);",
-                  class: "overflow-scroll position-relative",
+                  style:
+                    "height: calc(100vh - 250px); overflow: hidden !important;",
                 },
                 screenshotPanel(),
                 pre(
