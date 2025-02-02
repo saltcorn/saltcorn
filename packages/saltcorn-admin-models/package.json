@@ -32,7 +32,7 @@
     "@saltcorn/db-common": "1.1.1-rc.4",
     "@saltcorn/data": "1.1.1-rc.4",
     "adm-zip": "0.5.16",
-    "chaos-guinea-pig": "github:christianhugoch/chaos-guinea-pig#lib-upgrades",
+    "chaos-guinea-pig": "0.1.7",
     "csv-stringify": "^6.5.2",
     "csvtojson": "^2.0.10",
     "dateformat": "^4.6.3",

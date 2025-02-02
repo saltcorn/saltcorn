@@ -12,7 +12,6 @@ import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
 import _ from "underscore";
-// const _ = require("underscore");
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 
