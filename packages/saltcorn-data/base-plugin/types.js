@@ -1939,7 +1939,7 @@ const float = {
   },
   /** @type {object[]} */
   attributes: [
-    { name: "min", label: "Maximum", type: "Float", required: false },
+    { name: "min", label: "Minimum", type: "Float", required: false },
     { name: "max", label: "Maximum", type: "Float", required: false },
     { name: "units", label: "Units",  type: "String", required: false },
     { name: "decimal_places", label: "Decimal places", type: "Integer", required: false },
