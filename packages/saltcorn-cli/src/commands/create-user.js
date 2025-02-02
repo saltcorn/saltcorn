@@ -6,24 +6,30 @@ const { Command, Flags } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
 const inquirer = require("inquirer").default;
 
-const promptEmailPassword = async () => {
-  const answersEmail = await inquirer.prompt([
-    {
-      name: "email",
-      message: "Email address",
-      type: "input",
-    },
-  ]);
-  const email = answersEmail.email;
-  const answersPassword = await inquirer.prompt([
-    {
-      name: "password",
-      message: "Password",
-      type: "password",
-      mask: "*",
-    },
-  ]);
-  const password = answersPassword.password;
+const promptEmailPassword = async (flags) => {
+  let email = flags.email;
+  let password = flags.password;
+  if (!email) {
+    const answersEmail = await inquirer.prompt([
+      {
+        name: "email",
+        message: "Email address",
+        type: "input",
+      },
+    ]);
+    email = answersEmail.email;
+  }
+  if (!password) {
+    const answersPassword = await inquirer.prompt([
+      {
+        name: "password",
+        message: "Password",
+        type: "password",
+        mask: "*",
+      },
+    ]);
+    password = answersPassword.password;
+  }
   return { email, password };
 };
 
@@ -60,7 +66,7 @@ class CreateUserCommand extends Command {
         }
         role_id = role.id;
       }
-      const { email, password } = await promptEmailPassword();
+      const { email, password } = await promptEmailPassword(flags);
       const u = await User.create({ email, password, role_id });
       if (u instanceof User)
         console.log(

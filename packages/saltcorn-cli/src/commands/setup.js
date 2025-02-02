@@ -178,7 +178,7 @@ const get_password = async (for_who) => {
     },
   ]);
 
-  const password = answers.password;
+  let password = answers.password;
   if (!password) {
     password = gen_password();
     console.log(`Setting ${for_who} to:`, password);
