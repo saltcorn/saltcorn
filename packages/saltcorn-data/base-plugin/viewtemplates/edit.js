@@ -2099,7 +2099,11 @@ module.exports = {
       const { uniques } = splitUniques(fields, state);
       let row = null;
       let auto_created_row = false;
-      if (Object.keys(uniques).length > 0) {
+      const unique_constraints = table.constraints.filter(
+        (tc) => tc.type === "Unique"
+      );
+
+      const getRow = async (where) => {
         // add joinfields from certain locations if they are not fields in columns
         const joinFields = {};
         const picked = picked_fields_to_query([], fields, layout, req, table);
@@ -2112,13 +2116,31 @@ module.exports = {
         Object.entries(picked.joinFields).forEach(([nm, jfv]) => {
           if (!colFields.has(jfv.ref)) joinFields[nm] = jfv;
         });
-        row = await table.getJoinedRow({
-          where: uniques,
+        return await table.getJoinedRow({
+          where,
           joinFields,
           forPublic: !req.user,
           forUser: req.user,
         });
-      } else if (auto_create && !isPreview) {
+      };
+      if (Object.keys(uniques).length > 0) {
+        row = await getRow(uniques);
+      } else if (unique_constraints.length) {
+        for (const tc of unique_constraints) {
+          const fields = tc.configuration.fields;
+          if (
+            fields &&
+            (fields || []).every((fname) => typeof state[fname] !== "undefined")
+          ) {
+            const where = {};
+            fields.forEach((fnm) => (where[fnm] = state[fnm]));
+            row = await getRow(where);
+            break;
+          }
+        }
+      }
+
+      if (!row && auto_create && !isPreview) {
         row = {};
         fields.forEach((f) => {
           if (typeof state[f.name] !== "undefined") {
