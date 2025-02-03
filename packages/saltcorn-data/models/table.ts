@@ -3848,7 +3848,7 @@ where table_schema = '${db.getTenantSchema() || "public"}'
     let expressions: string[] = [];
     for (const ftsfield of include_fts_fields)
       expressions.push(
-        `${ftsfield.name}?.${ftsfield?.attributes?.summary_field || "id"}`
+        `${ftsfield.name}?.${ftsfield?.attributes?.summary_field || "id"}||""`
       );
     const existing_ctx_field = this.getField("search_context");
     if (
@@ -3858,7 +3858,7 @@ where table_schema = '${db.getTenantSchema() || "public"}'
     ) {
       await existing_ctx_field.update({
         expression:
-          existing_ctx_field.expression + " + " + expressions.join(" + "),
+          existing_ctx_field.expression + ' + " " + ' + expressions.join(' + " " + '),
       });
     } else {
       const field = await Field.create({
@@ -3867,7 +3867,7 @@ where table_schema = '${db.getTenantSchema() || "public"}'
         name: "search_context",
         type: "String",
         calculated: true,
-        expression: expressions.join(" + "),
+        expression: expressions.join(' + " " + '),
         stored: true,
       });
       this.fields.push(field);
