@@ -3849,20 +3849,32 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       expressions.push(
         `${ftsfield.name}?.${ftsfield?.attributes?.summary_field || "id"}`
       );
-    const field = await Field.create({
-      table: this,
-      label: "Search context",
-      name: "search_context",
-      type: "String",
-      calculated: true,
-      expression: expressions.join(" + "),
-      stored: true,
-    });
-    this.fields.push(field);
+    const existing_ctx_field = this.getField("search_context");
+    if (
+      existing_ctx_field &&
+      existing_ctx_field.stored &&
+      existing_ctx_field.expression
+    ) {
+      await existing_ctx_field.update({
+        expression:
+          existing_ctx_field.expression + " + " + expressions.join(" + "),
+      });
+    } else {
+      const field = await Field.create({
+        table: this,
+        label: "Search context",
+        name: "search_context",
+        type: "String",
+        calculated: true,
+        expression: expressions.join(" + "),
+        stored: true,
+      });
+      this.fields.push(field);
+    }
     for (const ftsfield of this.fields)
       if (ftsfield.attributes?.include_fts) {
         ftsfield.attributes.include_fts = false;
-        await field.update({
+        await ftsfield.update({
           attributes: ftsfield.attributes,
         });
       }

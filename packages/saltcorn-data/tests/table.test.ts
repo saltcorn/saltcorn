@@ -1987,6 +1987,23 @@ describe("Table constraints", () => {
           .map((f) => f.name).length
       ).toBe(1);
       await con.delete();
+      await Field.create({
+        table,
+        name: "favpatient",
+        label: "Fave Patient",
+        type: "Key to patients",
+        attributes: { summary_field: "name", include_fts: true },
+      });
+      const con1 = await TableConstraint.create({
+        table_id: table.id,
+        type: "Index",
+        configuration: { field: "_fts" },
+      });
+      const table2 = Table.findOne("TableWithFTS");
+      expect(table2?.getField("search_context")?.expression).toBe(
+        "favbook?.author + favpatient?.name"
+      );
+      await con1.delete();
     }
   });
 });
