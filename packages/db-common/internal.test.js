@@ -238,7 +238,7 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: ["foo bar"],
-      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ plainto_tsquery('english', $1)`,
+      where: `where to_tsvector('english', coalesce("description",'') || ' ' || coalesce("name",'')) @@ plainto_tsquery('english', $1)`,
     });
     expect(
       mkWhere({
@@ -246,7 +246,7 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: ["foo:*"],
-      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ to_tsquery('english', $1)`,
+      where: `where to_tsvector('english', coalesce("description",'') || ' ' || coalesce("name",'')) @@ to_tsquery('english', $1)`,
     });
     expect(
       mkWhere(
@@ -260,7 +260,7 @@ describe("mkWhere", () => {
       )
     ).toStrictEqual({
       values: ["foo"],
-      where: `where coalesce("name",'') || ' ' || coalesce("description",'') LIKE '%' || ? || '%'`,
+      where: `where coalesce("description",'') || ' ' || coalesce("name",'') LIKE '%' || ? || '%'`,
     });
   });
   it("should query subselect", () => {
