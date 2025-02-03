@@ -14,6 +14,7 @@ import type Field from "./field";
 const { stringToJSON } = require("../utils");
 import type Table from "./table";
 import _expr from "./expression";
+import { FieldLike } from "@saltcorn/types/base_types";
 const { add_free_variables_to_joinfields, freeVariables, jsexprToSQL } = _expr;
 /**
  * TableConstraint class
@@ -84,6 +85,10 @@ class TableConstraint {
     if (con.type === "Unique" && con.configuration.fields) {
       await db.add_unique_constraint(table.name, con.configuration.fields);
     } else if (con.type === "Index" && con.configuration.field === "_fts") {
+      const hasIncludeFts = table.fields.filter(
+        (f: FieldLike) => f.attributes?.include_fts
+      );
+      if (hasIncludeFts) await table.move_include_fts_to_search_context();
       const text_fields = ftsFieldsSqlExpr(
         table.fields,
         table.name,

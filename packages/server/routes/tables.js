@@ -1634,21 +1634,14 @@ const constraintForm = (req, table, fields, type) => {
     case "Index":
       const fieldopts = fields.map((f) => ({ label: f.label, name: f.name }));
       const hasIncludeFts = fields.filter((f) => f.attributes?.include_fts);
-      if (!db.isSQLite && !hasIncludeFts.length)
+      if (!db.isSQLite)
         fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,
-        blurb:
-          req.__(
-            "Choose the field to be indexed. This make searching the table faster."
-          ) +
-          " " +
-          (hasIncludeFts.length
-            ? req.__(
-                `Full-text search index is not available as the table contains Key fields (%s) with the "Include in full-text search" option enabled. Disable this before creating a Full-text search index`,
-                hasIncludeFts.map((f) => f.name).join(",")
-              )
-            : ""),
+        blurb: req.__(
+          "Choose the field to be indexed. This make searching the table faster."
+        ),
+
         fields: [
           {
             type: "String",
@@ -1657,6 +1650,11 @@ const constraintForm = (req, table, fields, type) => {
             required: true,
             attributes: {
               options: fieldopts,
+              explainers: hasIncludeFts
+                ? {
+                    _fts: "Full text search index is not compatible with Key fields with the 'Include in Full text search' option. A new field will be created for your search context",
+                  }
+                : {},
             },
           },
         ],

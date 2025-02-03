@@ -80,6 +80,7 @@ const { text } = tags;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import type {
+  FieldLike,
   JoinFieldOption,
   RelationOption,
 } from "@saltcorn/types/base_types";
@@ -2016,7 +2017,7 @@ class Table implements AbstractTable {
         [refTable.pk_name]: val,
       });
       for (const row of rows) {
-        await refTable?.updateRow(
+        await refTable?.updateRow?.(
           {},
           row[refTable.pk_name],
           undefined,
@@ -2062,7 +2063,7 @@ class Table implements AbstractTable {
             },
           });
           for (const row of rows)
-            await refTable?.updateRow(
+            await refTable?.updateRow?.(
               {},
               row[refTable.pk_name],
               undefined,
@@ -2078,8 +2079,8 @@ class Table implements AbstractTable {
           const rows = await refTable!.getRows({
             [matching.field]: v[this.pk_name],
           });
-          for (const row of rows)
-            await refTable?.updateRow(
+          for (const row of rows) {
+            await refTable?.updateRow?.(
               {},
               row[refTable.pk_name],
               undefined,
@@ -2090,6 +2091,7 @@ class Table implements AbstractTable {
               undefined,
               iterations + 1
             );
+          }
         }
       }
     }
@@ -3836,6 +3838,47 @@ where table_schema = '${db.getTenantSchema() || "public"}'
         values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
       [this.id]
     );
+  }
+
+  async move_include_fts_to_search_context() {
+    const include_fts_fields = this.fields.filter(
+      (f: Field) => f.attributes?.include_fts
+    );
+    if (!include_fts_fields.length) return;
+    let expressions: string[] = [];
+    for (const ftsfield of include_fts_fields)
+      expressions.push(
+        `${ftsfield.name}?.${ftsfield?.attributes?.summary_field || "id"}`
+      );
+    const existing_ctx_field = this.getField("search_context");
+    if (
+      existing_ctx_field &&
+      existing_ctx_field.stored &&
+      existing_ctx_field.expression
+    ) {
+      await existing_ctx_field.update({
+        expression:
+          existing_ctx_field.expression + " + " + expressions.join(" + "),
+      });
+    } else {
+      const field = await Field.create({
+        table: this,
+        label: "Search context",
+        name: "search_context",
+        type: "String",
+        calculated: true,
+        expression: expressions.join(" + "),
+        stored: true,
+      });
+      this.fields.push(field);
+    }
+    for (const ftsfield of this.fields)
+      if (ftsfield.attributes?.include_fts) {
+        ftsfield.attributes.include_fts = false;
+        await ftsfield.update({
+          attributes: ftsfield.attributes,
+        });
+      }
   }
 }
 
