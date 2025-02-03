@@ -160,7 +160,7 @@ const getApp = async (opts = {}) => {
     helmetOptions.contentSecurityPolicy = false;
 
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
-  // app.use(helmet(helmetOptions));
+  app.use(helmet(helmetOptions));
 
   // TODO ch find a better solution
   if (getState().getConfig("cors_enabled", true)) app.use(cors());
