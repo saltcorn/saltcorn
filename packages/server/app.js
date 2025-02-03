@@ -32,7 +32,7 @@ const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
 const path = require("path");
 const helmet = require("helmet");
 const wrapper = require("./wrapper");
-const csrf = require("csurf");
+const csrf = require("@dr.pogodin/csurf");
 const { I18n } = require("i18n");
 const { h1 } = require("@saltcorn/markup/tags");
 const is = require("contractis/is");
@@ -160,7 +160,7 @@ const getApp = async (opts = {}) => {
     helmetOptions.contentSecurityPolicy = false;
 
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
-  // app.use(helmet(helmetOptions));
+  app.use(helmet(helmetOptions));
 
   // TODO ch find a better solution
   if (getState().getConfig("cors_enabled", true)) app.use(cors());
