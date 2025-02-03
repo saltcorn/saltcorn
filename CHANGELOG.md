@@ -1,6 +1,6 @@
 # Notable changes
 
-## 1.1.2 - In Beta
+## 1.1.2 - In beta
 
 * Upgrade a large number of dependencies (express, typescript, oclif, pg, webpack, typescript). Node.js 18+ is require for this release. 
 
