@@ -712,6 +712,7 @@ const attribBadges = (f) => {
       if (
         [
           "summary_field",
+          "importance",
           "on_delete_cascade",
           "on_delete",
           "unique_error_msg",
