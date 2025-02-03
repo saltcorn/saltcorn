@@ -7,6 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.735.0",
+    "@dr.pogodin/csurf": "^1.14.1",
     "@saltcorn/base-plugin": "1.1.1",
     "@saltcorn/builder": "1.1.1",
     "@saltcorn/data": "1.1.1",
@@ -25,7 +26,6 @@
     "cookie-parser": "^1.4.7",
     "cookie-session": "^2.1.0",
     "cors": "2.8.5",
-    "csurf": "^1.11.0",
     "csv-stringify": "^6.5.2",
     "dockerode": "~4.0.4",
     "express": "^5.0.1",
