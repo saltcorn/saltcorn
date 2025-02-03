@@ -1074,7 +1074,7 @@ router.post(
  * Do Snapshot now
  */
 router.post(
-  "/snapshot-now/{:snapshotname}",
+  "/snapshot-now{/:snapshotname}",
   isAdmin,
   error_catcher(async (req, res) => {
     const { snapshotname } = req.params;
