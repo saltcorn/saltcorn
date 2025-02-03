@@ -103,6 +103,7 @@ export const ftsFieldsSqlExpr = (
         }"${f.name}"),'')`
       );
     });
+  fldsArray.sort();
   let flds = fldsArray.join(" || ' ' || ");
   if (flds === "") flds = "''";
   return flds;
