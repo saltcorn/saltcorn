@@ -3858,10 +3858,12 @@ where table_schema = '${db.getTenantSchema() || "public"}'
     ) {
       await existing_ctx_field.update({
         expression:
-          existing_ctx_field.expression + ' + " " + ' + expressions.join(' + " " + '),
+          existing_ctx_field.expression +
+          ' + " " + ' +
+          expressions.join(' + " " + '),
       });
     } else {
-      const field = await Field.create({
+      await Field.create({
         table: this,
         label: "Search context",
         name: "search_context",
@@ -3870,7 +3872,6 @@ where table_schema = '${db.getTenantSchema() || "public"}'
         expression: expressions.join(' + " " + '),
         stored: true,
       });
-      this.fields.push(field);
     }
     for (const ftsfield of this.fields)
       if (ftsfield.attributes?.include_fts) {
