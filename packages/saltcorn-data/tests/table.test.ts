@@ -2001,7 +2001,7 @@ describe("Table constraints", () => {
       });
       const table2 = Table.findOne("TableWithFTS");
       expect(table2?.getField("search_context")?.expression).toBe(
-        "favbook?.author + favpatient?.name"
+        `favbook?.author||"" + " " + favpatient?.name||""`
       );
       await con1.delete();
     }
