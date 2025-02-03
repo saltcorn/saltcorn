@@ -51,7 +51,7 @@ const {
   pre,
   button,
 } = require("@saltcorn/markup/tags");
-const stringify = require("csv-stringify");
+const { stringify } = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const fs = require("fs").promises;
 const {
@@ -359,7 +359,7 @@ router.post(
   error_catcher(async (req, res) => {
     const tbls = await discoverable_tables();
     const form = discoverForm(tbls, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     const tableNames = tbls
       .filter((t) => form.values[t.table_name])
       .map((t) => t.table_name);
@@ -437,8 +437,8 @@ router.post(
   setTenant,
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
-    if (req.body.name && req.files && req.files.file) {
-      const name = req.body.name;
+    if ((req.body || {}).name && req.files && req.files.file) {
+      const name = (req.body || {}).name;
       const alltables = await Table.find({});
       const existing_tables = [
         "users",
@@ -645,8 +645,8 @@ router.get(
               div(
                 {
                   id: "erd-wrapper",
-                  style: "height: calc(100vh - 250px);",
-                  class: "overflow-scroll position-relative",
+                  style:
+                    "height: calc(100vh - 250px); overflow: hidden !important;",
                 },
                 screenshotPanel(),
                 pre(
@@ -1169,7 +1169,7 @@ router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
-    const v = req.body;
+    const v = req.body || {};
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
       v.name = v.name.trim();
@@ -1729,7 +1729,7 @@ router.post(
     }
     const fields = table.getFields();
     const form = constraintForm(req, table, fields, type);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
       let configuration = {};
@@ -1820,7 +1820,7 @@ router.post(
     const table = Table.findOne({ id });
     const form = renameForm(table.id, req);
 
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
       await table.rename(form.values.name);
@@ -2188,7 +2188,7 @@ router.post(
       return;
     }
     const workflow = get_provider_workflow(table, req);
-    const wfres = await workflow.run(req.body, req);
+    const wfres = await workflow.run(req.body || {}, req);
     respondWorkflow(table, workflow, wfres, req, res);
   })
 );

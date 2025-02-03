@@ -492,7 +492,7 @@ router.post(
     const roles = await User.get_roles();
     const pages = await Page.find();
     const form = await viewForm(req, tableOptions, roles, pages);
-    const result = form.validate(req.body);
+    const result = form.validate(req.body || {});
     const sendForm = (form) => {
       res.sendWrap(req.__(`Edit view`), {
         above: [
@@ -521,7 +521,7 @@ router.post(
       } else {
         const existing_view = await View.findOne({ name: result.success.name });
         if (existing_view)
-          if (+req.body.id !== existing_view.id) {
+          if (+(req.body || {}).id !== existing_view.id) {
             // may be need !== but doesnt work
             form.errors.name = req.__("A view with this name already exists");
             form.hasErrors = true;
@@ -544,8 +544,8 @@ router.post(
         }
         //const table = Table.findOne({ name: v.table_name });
         delete v.table_name;
-        if (req.body.id) {
-          await View.update(v, +req.body.id);
+        if ((req.body || {}).id) {
+          await View.update(v, +(req.body || {}).id);
         } else {
           const vt = getState().viewtemplates[v.viewtemplate];
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
@@ -744,7 +744,7 @@ router.post(
         entity_name: view.name,
       });
     };
-    const wfres = await configFlow.run(req.body, req);
+    const wfres = await configFlow.run(req.body || {}, req);
 
     let table;
     if (view.table_id) table = Table.findOne({ id: view.table_id });
@@ -852,9 +852,9 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
-    if (id && req.body) {
+    if (id && (req.body || {})) {
       const exview = await View.findOne({ id });
-      let newcfg = { ...exview.configuration, ...req.body };
+      let newcfg = { ...exview.configuration, ...(req.body || {}) };
       await View.update({ configuration: newcfg }, +id);
       Trigger.emitEvent("AppChange", `View ${exview.name}`, req.user, {
         entity_type: "View",
@@ -880,11 +880,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
 
-    if (viewname && req.body) {
+    if (viewname && (req.body || {})) {
       const view = await View.findOne({ name: viewname });
       req.staticFieldViewConfig = true;
       const configFlow = await view.get_config_flow(req);
-      const step = await configFlow.singleStepForm(req.body, req);
+      const step = await configFlow.singleStepForm(req.body || {}, req);
       if (step?.renderForm) {
         if (!step.renderForm.hasErrors) {
           let newcfg;
@@ -926,7 +926,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const role = req.body.role;
+    const role = (req.body || {}).role;
     await View.update({ min_role: role }, +id);
     const view = await View.findOne({ id });
     Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
@@ -955,7 +955,7 @@ router.post(
   "/test/inserter",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
-    const view = await View.create(req.body);
+    const view = await View.create(req.body || {});
     res.json({ view });
   })
 );

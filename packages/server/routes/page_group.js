@@ -234,7 +234,7 @@ router.post(
       if (cfg[v]) return req.__("Device already exists");
     };
     const form = deviceForm(req, validator);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_infoarch_page({
         res,
@@ -316,7 +316,7 @@ router.post(
     const form = deviceForm(req, validator, device);
     const deviceCfg = cfg[device];
     form.values = { device, ...deviceCfg };
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_infoarch_page({
         res,
@@ -351,7 +351,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = pageGroupSettingsForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_infoarch_page({
         res,

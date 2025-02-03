@@ -6,7 +6,7 @@ import type User from "@saltcorn/data/models/user";
 import utils = require("@saltcorn/data/utils");
 const { safeEnding } = utils;
 import File from "@saltcorn/data/models/file";
-import { copyPrepopulatedDb } from "./common-build-utils";
+import { copyPrepopulatedDb, extractDomain } from "./common-build-utils";
 
 import type { IosCfg } from "../mobile-builder";
 
@@ -256,7 +256,7 @@ export class CapacitorHelper {
     ];
     spawnParams.push(this.buildType);
     spawnParams.push(this.appVersion);
-    spawnParams.push(this.serverURL);
+    spawnParams.push(extractDomain(this.serverURL));
     if (this.buildType === "release")
       spawnParams.push(
         this.keyStoreFile,

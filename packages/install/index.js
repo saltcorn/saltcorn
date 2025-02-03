@@ -13,7 +13,7 @@
 //const { cli } = require("cli-ux");
 const path = require("path");
 const fs = require("fs");
-const inquirer = require("inquirer");
+const inquirer = require("inquirer").default;
 const tcpPortUsed = require("tcp-port-used");
 const envPaths = require("env-paths");
 const si = require("systeminformation");

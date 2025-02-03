@@ -2,7 +2,7 @@
  * @category saltcorn-cli
  * @module commands/run-js
  */
-const { Command, Flags, ux } = require("@oclif/core");
+const { Command, Flags } = require("@oclif/core");
 const {
   maybe_as_tenant,
   init_some_tenants,

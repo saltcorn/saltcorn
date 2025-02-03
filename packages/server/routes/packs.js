@@ -223,7 +223,7 @@ router.post(
       model_instances: [],
       event_logs: [],
     };
-    for (const k of Object.keys(req.body)) {
+    for (const k of Object.keys(req.body || {})) {
       const [type, name, ...rest] = k.split(".");
       switch (type) {
         case "table":
@@ -392,11 +392,11 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;
-    const source = req.body.source || "from_text";
+    const source = (req.body || {}).source || "from_text";
     try {
       switch (source) {
         case "from_text":
-          pack = JSON.parse(req.body.pack);
+          pack = JSON.parse((req.body || {}).pack);
           break;
         case "from_file":
           if (req.files?.pack_file?.tempFilePath)
@@ -424,7 +424,7 @@ router.post(
     }
     if (error) {
       const form = install_pack_form(req);
-      form.values = { pack: req.body.pack };
+      form.values = { pack: (req.body || {}).pack };
       req.flash("error", error);
       res.sendWrap(req.__(`Install Pack`), {
         above: [
