@@ -947,6 +947,7 @@ const displayEdit = (
     }
   }
   if (!fieldview) {
+    if (hdr.typename === "FieldRepeat") return;
     if (!hdr.type)
       throw new Error(`Unknown type ${hdr.typename} in field ${name}`);
     else throw new Error(`Cannot find fieldview for field ${name}`);

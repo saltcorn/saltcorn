@@ -1304,7 +1304,7 @@ router.post(
  * @function
  */
 router.get(
-  "/stepedit/:trigger_id/{:step_id}",
+  "/stepedit/:trigger_id{/:step_id}",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
