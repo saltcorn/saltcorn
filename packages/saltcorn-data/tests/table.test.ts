@@ -1980,6 +1980,12 @@ describe("Table constraints", () => {
         type: "Index",
         configuration: { field: "_fts" },
       });
+      const table1 = Table.findOne("TableWithFTS");
+      expect(
+        table1?.fields
+          .filter((f) => f.name === "search_context")
+          .map((f) => f.name).length
+      ).toBe(1);
       await con.delete();
     }
   });
