@@ -2017,7 +2017,7 @@ class Table implements AbstractTable {
         [refTable.pk_name]: val,
       });
       for (const row of rows) {
-        await refTable?.updateRow(
+        await refTable?.updateRow?.(
           {},
           row[refTable.pk_name],
           undefined,
@@ -2063,7 +2063,7 @@ class Table implements AbstractTable {
             },
           });
           for (const row of rows)
-            await refTable?.updateRow(
+            await refTable?.updateRow?.(
               {},
               row[refTable.pk_name],
               undefined,
@@ -2079,8 +2079,8 @@ class Table implements AbstractTable {
           const rows = await refTable!.getRows({
             [matching.field]: v[this.pk_name],
           });
-          for (const row of rows)
-            await refTable?.updateRow(
+          for (const row of rows) {
+            await refTable?.updateRow?.(
               {},
               row[refTable.pk_name],
               undefined,
@@ -2091,6 +2091,7 @@ class Table implements AbstractTable {
               undefined,
               iterations + 1
             );
+          }
         }
       }
     }
