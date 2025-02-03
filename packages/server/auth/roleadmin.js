@@ -227,7 +227,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await roleForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -265,7 +265,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const layout_by_role = getState().getConfigCopy("layout_by_role");
-    layout_by_role[+id] = req.body.layout;
+    layout_by_role[+id] = (req.body || {}).layout;
     await getState().setConfig("layout_by_role", layout_by_role);
     req.flash("success", req.__(`Saved layout for role`));
 
@@ -286,7 +286,7 @@ router.post(
     const twofa_policy_by_role = getState().getConfigCopy(
       "twofa_policy_by_role"
     );
-    twofa_policy_by_role[+id] = req.body.policy;
+    twofa_policy_by_role[+id] = (req.body || {}).policy;
     await getState().setConfig("twofa_policy_by_role", twofa_policy_by_role);
     req.flash("success", req.__(`Saved 2FA policy for role`));
 

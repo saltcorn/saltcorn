@@ -4,8 +4,9 @@
  */
 
 // todo support for  users without emails (using user.id)
-const { Command, Flags, Args, ux } = require("@oclif/core");
+const { Command, Flags, Args } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../common");
+const inquirer = require("inquirer").default;
 
 /**
  * ModifyUserCommand Class
@@ -46,10 +47,17 @@ class ModifyUserCommand extends Command {
       // email
       let email;
       if (flags.email) email = flags.email;
-      else if (flags.imode)
-        email = await ux.prompt("New Email address", {
-          default: args.user_email,
-        });
+      else if (flags.imode) {
+        const emailPrompt = await inquirer.prompt([
+          {
+            type: "input",
+            name: "email",
+            message: "New Email address",
+            default: args.user_email,
+          },
+        ]);
+        email = emailPrompt.email;
+      }
       if (email === args.user_email) email = undefined; // little trick - we won't update email if it already same
       if (email)
         if (!User.valid_email(email)) {
@@ -61,8 +69,17 @@ class ModifyUserCommand extends Command {
       // todo check for repeated passwords
       let password;
       if (flags.password) password = flags.password;
-      else if (flags.imode)
-        password = await ux.prompt("New Password", { type: "hide" });
+      else if (flags.imode) {
+        const passwordPrompt = await inquirer.prompt([
+          {
+            type: "password",
+            name: "password",
+            message: "New Password",
+            mask: "*",
+          },
+        ]);
+        password = passwordPrompt.password;
+      }
       if (password)
         if (User.unacceptable_password_reason(password)) {
           console.error(

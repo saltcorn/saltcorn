@@ -2,8 +2,8 @@
  * @category saltcorn-cli
  * @module commands/rm-tenant
  */
-const { Command, Flags, ux } = require("@oclif/core");
-
+const { Command, Flags } = require("@oclif/core");
+const inquirer = require("inquirer").default;
 /**
  * RmTenantCommand Class
  * @extends oclif.Command
@@ -19,10 +19,15 @@ class RmTenantCommand extends Command {
     const { deleteTenant } = require("@saltcorn/admin-models/models/tenant");
 
     if (!flags.force) {
-      const ans = await ux.confirm(
-        `This will delete tenant ${flags.tenant}. Attention! All tenant data will be lost!\nContinue (y/n)?`
-      );
-      if (!ans) {
+      const answer = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "proceed",
+          message: `This will delete tenant ${flags.tenant}. Attention! All tenant data will be lost!\nContinue (y/n)?`,
+          default: false,
+        },
+      ]);
+      if (!answer.proceed) {
         console.log(`Success: Command execution canceled`);
         this.exit(1);
       }

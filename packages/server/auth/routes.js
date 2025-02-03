@@ -432,9 +432,9 @@ router.post(
   "/reset",
   error_catcher(async (req, res) => {
     const result = await User.resetPasswordWithToken({
-      email: req.body.email,
-      reset_password_token: req.body.token,
-      password: req.body.password,
+      email: (req.body || {}).email,
+      reset_password_token: (req.body || {}).token,
+      password: (req.body || {}).password,
     });
     if (result.success) {
       req.flash(
@@ -457,7 +457,7 @@ router.post(
   "/forgot",
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot")) {
-      const { email } = req.body;
+      const { email } = req.body || {};
       const u = await User.findOne({ email });
       const respond = () => {
         req.flash("success", req.__("Email with password reset link sent"));
@@ -614,7 +614,7 @@ router.post(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
-      form.validate(req.body);
+      form.validate(req.body || {});
 
       if (form.hasErrors) {
         form.action = "/auth/create_first_user";
@@ -784,7 +784,7 @@ router.post(
     const form = await getNewUserForm(new_user_form, req, !req.user.email);
     form.action = "/auth/signup_final_ext";
 
-    await form.asyncValidate(req.body);
+    await form.asyncValidate(req.body || {});
     if (form.hasErrors) {
       res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       return;
@@ -846,7 +846,7 @@ router.post(
           });
         }
       }
-      await form.asyncValidate(req.body);
+      await form.asyncValidate(req.body || {});
       if (form.hasErrors) {
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else if (form.values.email && !check_email_mask(form.values.email)) {
@@ -961,7 +961,7 @@ router.post(
           req,
           false
         );
-        await signup_form.asyncValidate(req.body);
+        await signup_form.asyncValidate(req.body || {});
         if (signup_form.hasErrors) {
           signup_form.action = "/auth/signup";
           res.sendAuthWrap(
@@ -1010,7 +1010,7 @@ router.post(
     }
 
     const form = await default_signup_form(req);
-    await form.asyncValidate(req.body);
+    await form.asyncValidate(req.body || {});
 
     if (form.hasErrors) {
       form.action = "/auth/signup";
@@ -1049,9 +1049,9 @@ router.post(
  */
 function handler(req, res) {
   console.log(
-    `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
-      "User-Agent"
-    )}`
+    `Failed login attempt for: ${(req.body || {}).email} from ${
+      req.ip
+    } UA ${req.get("User-Agent")}`
   );
   req.flash(
     "error",
@@ -1084,7 +1084,7 @@ const userLimiter = rateLimit({
   // TBD create config parameter
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 3, // limit each IP to 100 requests per windowMs
-  keyGenerator: (req) => userIdKey(req.body),
+  keyGenerator: (req) => userIdKey(req.body || {}),
   handler,
 });
 
@@ -1111,14 +1111,14 @@ router.post(
   }),
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
-    userLimiter.resetKey(userIdKey(req.body));
+    userLimiter.resetKey(userIdKey(req.body || {}));
     if (req.user.pending_user) {
       res.redirect("/auth/twofa/login/totp");
       return;
     }
     let maxAge = null;
     if (req.session.cookie)
-      if (req.body.remember) {
+      if ((req.body || {}).remember) {
         const setDur = +getState().getConfig("cookie_duration_remember", 720);
         if (setDur) {
           maxAge = setDur * 60 * 60 * 1000;
@@ -1147,10 +1147,10 @@ router.post(
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
     } else if (
-      req.body.dest &&
-      is_relative_url(decodeURIComponent(req.body.dest))
+      (req.body || {}).dest &&
+      is_relative_url(decodeURIComponent((req.body || {}).dest))
     ) {
-      res.redirect(decodeURIComponent(req.body.dest));
+      res.redirect(decodeURIComponent((req.body || {}).dest));
     } else res.redirect("/");
   })
 );
@@ -1566,9 +1566,9 @@ router.post(
   loggedIn,
   error_catcher(async (req, res) => {
     const u = await User.findForSession({ id: req.user.id });
-    const newlang = available_languages[req.body.locale];
+    const newlang = available_languages[(req.body || {}).locale];
     if (newlang && u) {
-      await u.set_language(req.body.locale);
+      await u.set_language((req.body || {}).locale);
       req.login(u.session_object, function (err) {
         if (!err) {
           req.flash("success", req.__("Language changed to %s", newlang));
@@ -1656,7 +1656,7 @@ router.post(
   "/set-email",
   error_catcher(async (req, res) => {
     const form = setEmailForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors || !req.user || !req.user.id) {
       res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
       return;
@@ -1706,7 +1706,7 @@ router.post(
       );
       return;
     }
-    if (req.body.new_password && user.password) {
+    if ((req.body || {}).new_password && user.password) {
       const pwform = changPwForm(req);
 
       pwform.fields[0].validator = (oldpw) => {
@@ -1715,7 +1715,7 @@ router.post(
         else return req.__("Password does not match");
       };
 
-      pwform.validate(req.body);
+      pwform.validate(req.body || {});
 
       if (pwform.hasErrors) {
         res.sendWrap(
@@ -1738,7 +1738,7 @@ router.post(
             json() {},
             redirect() {},
           };
-          await view.runPost({ id: user.id }, req.body, {
+          await view.runPost({ id: user.id }, req.body || {}, {
             req,
             res: fakeRes,
             redirect: "/auth/settings",
@@ -1773,7 +1773,7 @@ router.all(
       return;
     }
     verifier.action = "/auth/verification-flow";
-    const wfres = await verifier.run(req.body || {}, req);
+    const wfres = await verifier.run(req.body || {} || {}, req);
     if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
     if (wfres.renderForm) {
       res.sendWrap(
@@ -1860,7 +1860,7 @@ router.post(
     }
 
     const form = totpForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       req.flash("danger", req.__("Error processing form"));
       console.log("Error processing form");
@@ -1918,7 +1918,7 @@ router.post(
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
     const form = totpForm(req, "/auth/twofa/disable/totp");
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       req.flash("danger", req.__("Error processing form"));
       res.redirect("/auth/twofa/disable/totp");

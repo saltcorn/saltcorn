@@ -358,9 +358,19 @@ describe("visible_entries test", () => {
       .send(`role=${role}`)
       .expect(toRedirect("/files?dir=_sc_test_subfolder_one"));
   };
+  const setDirRole = async (role, entry) => {
+    const app = await getApp({ disableCsrf: true });
+    const adminCookie = await getAdminLoginCookie();
+    await request(app)
+      .post(`/files/setrole/${entry}`)
+      .set("Cookie", adminCookie)
+      .send(`role=${role}`)
+      .expect(toRedirect("/files?dir=."));
+  };
 
   it("shows allowed files", async () => {
     await setRole(100, path.join("_sc_test_subfolder_one", "foo_image.png"));
+    await setDirRole(100, "_sc_test_subfolder_one");
 
     const app = await getApp({ disableCsrf: true });
     const staffCookie = await getStaffLoginCookie();

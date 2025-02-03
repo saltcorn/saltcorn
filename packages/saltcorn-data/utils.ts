@@ -11,7 +11,7 @@ import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
-const _ = require("underscore");
+import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 

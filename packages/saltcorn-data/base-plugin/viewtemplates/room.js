@@ -663,7 +663,7 @@ module.exports = {
         null,
         req
       );
-      form.validate(req.body);
+      form.validate(req.body || {});
       if (!form.hasErrors) {
         const use_fixed = await fill_presets(msgtable, req, fixed);
         const row = {

@@ -2,8 +2,9 @@
  * @category saltcorn-cli
  * @module commands/reset-schema
  */
-const { Command, Flags, ux } = require("@oclif/core");
+const { Command, Flags } = require("@oclif/core");
 const { maybe_as_tenant } = require("../common");
+const inquirer = require("inquirer").default;
 
 /**
  * ResetCommand Class
@@ -23,12 +24,18 @@ class ResetCommand extends Command {
       if (flags.force) {
         await reset(false, schema);
       } else {
-        const ans = await ux.confirm(
-          `This will wipe all data from database "${
-            db.isSQLite ? "SQLite" : db.connectObj.database + "." + schema
-          }".\nContinue (y/n)?`
-        );
-        if (ans) await reset(false, schema);
+        const confirmation = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "continue",
+            message: `This will wipe all data from database "${
+              db.isSQLite ? "SQLite" : db.connectObj.database + "." + schema
+            }".\nContinue?`,
+            default: false,
+          },
+        ]);
+
+        if (confirmation.continue) await reset(false, schema);
       }
     });
     console.log("Successfully ran the 'reset-schema' command");

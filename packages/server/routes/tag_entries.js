@@ -161,7 +161,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { entry_type, tag_id } = req.params;
-    const { ids } = req.body;
+    const { ids } = req.body || {};
     if (!ids) {
       req.flash("error", req.__("Please select at least one item"));
       return res.redirect(`/tag-entries/add/${entry_type}/${tag_id}`);
@@ -218,7 +218,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     let { entry_type, object_id } = req.params;
-    let { tag_ids } = req.body;
+    let { tag_ids } = req.body || {};
     object_id = parseInt(object_id);
     tag_ids = tag_ids.map((id) => parseInt(id));
     const tags = (await Tag.find()).filter((tag) => tag_ids.includes(tag.id));
