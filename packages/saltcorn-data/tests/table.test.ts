@@ -1966,7 +1966,7 @@ describe("Table constraints", () => {
       name: "favbook",
       label: "Favbook",
       type: "Key to books",
-      attributes: { summary_field: "author" },
+      attributes: { summary_field: "author", include_fts: true },
     });
     await table.insertRow({
       name: "Tom",

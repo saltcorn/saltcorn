@@ -3852,16 +3852,20 @@ where table_schema = '${db.getTenantSchema() || "public"}'
     const field = await Field.create({
       table: this,
       label: "Search context",
+      name: "search_context",
       type: "String",
       calculated: true,
       expression: expressions.join(" + "),
       stored: true,
     });
     this.fields.push(field);
-    for (const ftsfield of include_fts_fields)
-      await field.update({
-        attributes: { ...ftsfield.attributes, include_fts: false },
-      });
+    for (const ftsfield of this.fields)
+      if (ftsfield.attributes?.include_fts) {
+        ftsfield.attributes.include_fts = false;
+        await field.update({
+          attributes: ftsfield.attributes,
+        });
+      }
   }
 }
 
