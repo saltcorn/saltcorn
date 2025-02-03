@@ -20,7 +20,7 @@ $ npm install -g @saltcorn/cli
 $ saltcorn COMMAND
 running command...
 $ saltcorn (--version)
-@saltcorn/cli/1.1.1 linux-x64 node-v18.20.6
+@saltcorn/cli/1.1.2-beta.0 linux-x64 node-v18.20.6
 $ saltcorn --help [COMMAND]
 USAGE
   $ saltcorn COMMAND
@@ -94,7 +94,7 @@ DESCRIPTION
   Add Saltcorn schema to existing database
 ```
 
-_See code: [src/commands/add-schema.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/add-schema.js)_
+_See code: [src/commands/add-schema.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/add-schema.js)_
 
 ## `saltcorn backup`
 
@@ -115,7 +115,7 @@ DESCRIPTION
   Backup the PostgreSQL database to a file with pg_dump or saltcorn backup zip
 ```
 
-_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/backup.js)_
+_See code: [src/commands/backup.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/backup.js)_
 
 ## `saltcorn build-app`
 
@@ -123,56 +123,57 @@ Build mobile app
 
 ```
 USAGE
-  $ saltcorn build-app [-m full|prepare|finish] [--allowShareTo] [--tenantAppName <value>] [-p <value>] [-e
-    <value>] [-t <value>] [-l <value>] [--synchedTables <value>] [--includedPlugins <value>] [-d] [-b <value>] [-c
-    <value>] [-u <value>] [--appName <value>] [--appId <value>] [--appVersion <value>] [--appIcon <value>] [-s <value>]
-    [--splashPage <value>] [--autoPublicLogin] [--allowOfflineMode] [--provisioningProfile <value>]
+  $ saltcorn build-app [-m full|prepare|finish] [--allowShareTo] [--tenantAppName <value>] [-p <value>...] [-e
+    <value>] [-t <value>] [-l <value>...] [--synchedTables <value>...] [--includedPlugins <value>...] [-d] [-b <value>]
+    [-c <value>] [-u <value>] [--appName <value>] [--appId <value>] [--appVersion <value>] [--appIcon <value>] [-s
+    <value>] [--splashPage <value>] [--autoPublicLogin] [--allowOfflineMode] [--provisioningProfile <value>]
     [--shareExtensionProvisioningProfile <value>] [--buildType <value>] [--androidKeystore <value>]
     [--androidKeyStoreAlias <value>] [--androidKeystorePassword <value>]
 
 FLAGS
-  -b, --buildDirectory=<value>                 A directory where the app should be build
-  -c, --copyAppDirectory=<value>               If set, the app file will be copied here, please set 'user email', too
-  -d, --useDocker                              Use a docker container to build the app.
-  -e, --entryPoint=<value>                     This is the first view or page (see -t) after the login.
-  -l, --localUserTables=<value>...             user defined tables that should be replicated into the app
-  -m, --mode=<option>                          [default: full] Build the app completely (full), prepare the ios build
-                                               directory (prepare) or finish the ios build in the prepared ios folder
-                                               (finish)
-                                               <options: full|prepare|finish>
-  -p, --platforms=<value>...                   Platforms to build for, space separated list
-  -s, --serverURL=<value>                      URL to a saltcorn server
-  -t, --entryPointType=<value>                 Type of the entry point ('view' or 'page'). The default is 'view'.
-  -u, --userEmail=<value>                      Email of the user building the app
-  --allowOfflineMode                           Switch to offline mode when there is no internet, sync the data when a
-                                               connection is available again.
-  --allowShareTo                               Allow sharing from other apps to this app
-  --androidKeyStoreAlias=<value>               A unique name to identify the key within the keystore file.
-  --androidKeystore=<value>                    A self-signed certificate that includes the private key used to sign your
-                                               app.
-  --androidKeystorePassword=<value>            he password to access the keystore file.
-  --appIcon=<value>                            A png that will be used as launcher icon. The default is a png of a
-                                               saltcorn symbol.
-  --appId=<value>                              Id of the mobile app (default com.saltcorn.mobileapp)
-  --appName=<value>                            Name of the mobile app (default SaltcornMobileApp)
-  --appVersion=<value>                         Version of the mobile app (default 0.0.1)
-  --autoPublicLogin                            Show public entry points before the login as a public user.
-  --buildType=<value>                          debug or release build
-  --includedPlugins=<value>...                 Names of plugins that should be bundled into the app.If empty, no modules
-                                               are used.
-  --provisioningProfile=<value>                This profile will be used to sign your app
-  --shareExtensionProvisioningProfile=<value>  This profile will be used to sign your share extension on iOS
-  --splashPage=<value>                         Name of a page that should be shown while the app is loading.
-  --synchedTables=<value>...                   Table names for which the offline should be synchronized with the
-                                               saltcorn server
-  --tenantAppName=<value>                      Optional name of a tenant application, if set, the app will be build for
-                                               this tenant
+  -b, --buildDirectory=<value>                     A directory where the app should be build
+  -c, --copyAppDirectory=<value>                   If set, the app file will be copied here, please set 'user email',
+                                                   too
+  -d, --useDocker                                  Use a docker container to build the app.
+  -e, --entryPoint=<value>                         This is the first view or page (see -t) after the login.
+  -l, --localUserTables=<value>...                 user defined tables that should be replicated into the app
+  -m, --mode=<option>                              [default: full] Build the app completely (full), prepare the ios
+                                                   build directory (prepare) or finish the ios build in the prepared ios
+                                                   folder (finish)
+                                                   <options: full|prepare|finish>
+  -p, --platforms=<value>...                       Platforms to build for, space separated list
+  -s, --serverURL=<value>                          URL to a saltcorn server
+  -t, --entryPointType=<value>                     Type of the entry point ('view' or 'page'). The default is 'view'.
+  -u, --userEmail=<value>                          Email of the user building the app
+      --allowOfflineMode                           Switch to offline mode when there is no internet, sync the data when
+                                                   a connection is available again.
+      --allowShareTo                               Allow sharing from other apps to this app
+      --androidKeyStoreAlias=<value>               A unique name to identify the key within the keystore file.
+      --androidKeystore=<value>                    A self-signed certificate that includes the private key used to sign
+                                                   your app.
+      --androidKeystorePassword=<value>            he password to access the keystore file.
+      --appIcon=<value>                            A png that will be used as launcher icon. The default is a png of a
+                                                   saltcorn symbol.
+      --appId=<value>                              Id of the mobile app (default com.saltcorn.mobileapp)
+      --appName=<value>                            Name of the mobile app (default SaltcornMobileApp)
+      --appVersion=<value>                         Version of the mobile app (default 0.0.1)
+      --autoPublicLogin                            Show public entry points before the login as a public user.
+      --buildType=<value>                          debug or release build
+      --includedPlugins=<value>...                 Names of plugins that should be bundled into the app.If empty, no
+                                                   modules are used.
+      --provisioningProfile=<value>                This profile will be used to sign your app
+      --shareExtensionProvisioningProfile=<value>  This profile will be used to sign your share extension on iOS
+      --splashPage=<value>                         Name of a page that should be shown while the app is loading.
+      --synchedTables=<value>...                   Table names for which the offline should be synchronized with the
+                                                   saltcorn server
+      --tenantAppName=<value>                      Optional name of a tenant application, if set, the app will be build
+                                                   for this tenant
 
 DESCRIPTION
   Build mobile app
 ```
 
-_See code: [src/commands/build-app.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/build-app.js)_
+_See code: [src/commands/build-app.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/build-app.js)_
 
 ## `saltcorn build-capacitor-builder`
 
@@ -190,7 +191,7 @@ DESCRIPTION
   Build the 'saltcorn/capacitor-builder' docker image or pull it from docker hub.
 ```
 
-_See code: [src/commands/build-capacitor-builder.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/build-capacitor-builder.js)_
+_See code: [src/commands/build-capacitor-builder.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/build-capacitor-builder.js)_
 
 ## `saltcorn configuration-check`
 
@@ -207,7 +208,7 @@ DESCRIPTION
   Check configuration
 ```
 
-_See code: [src/commands/configuration-check.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/configuration-check.js)_
+_See code: [src/commands/configuration-check.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/configuration-check.js)_
 
 ## `saltcorn configuration-check-backups FILES`
 
@@ -215,10 +216,10 @@ Check configuration
 
 ```
 USAGE
-  $ saltcorn configuration-check-backups FILES [-d]
+  $ saltcorn configuration-check-backups FILES... [-d]
 
 ARGUMENTS
-  FILES  backup file to check. can be repeated, e.g. with *
+  FILES...  backup file to check. can be repeated, e.g. with *
 
 FLAGS
   -d, --destructive  destructive
@@ -227,7 +228,7 @@ DESCRIPTION
   Check configuration
 ```
 
-_See code: [src/commands/configuration-check-backups.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/configuration-check-backups.js)_
+_See code: [src/commands/configuration-check-backups.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/configuration-check-backups.js)_
 
 ## `saltcorn create-tenant TENANT`
 
@@ -243,13 +244,13 @@ ARGUMENTS
 FLAGS
   -d, --description=<value>  Description of tenant
   -e, --email=<value>        Email of owner of tenant
-  --url=<value>              Url of tenant
+      --url=<value>          Url of tenant
 
 DESCRIPTION
   Create a tenant
 ```
 
-_See code: [src/commands/create-tenant.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/create-tenant.js)_
+_See code: [src/commands/create-tenant.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/create-tenant.js)_
 
 ## `saltcorn create-user`
 
@@ -270,7 +271,7 @@ DESCRIPTION
   Create a new user
 ```
 
-_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/create-user.js)_
+_See code: [src/commands/create-user.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/create-user.js)_
 
 ## `saltcorn delete-tenants`
 
@@ -284,7 +285,7 @@ DESCRIPTION
   Delete inactive tenants
 ```
 
-_See code: [src/commands/delete-tenants.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/delete-tenants.js)_
+_See code: [src/commands/delete-tenants.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/delete-tenants.js)_
 
 ## `saltcorn delete-user USER_EMAIL`
 
@@ -307,7 +308,7 @@ DESCRIPTION
   Command deletes the user specified by USER_EMAIL.
 ```
 
-_See code: [src/commands/delete-user.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/delete-user.js)_
+_See code: [src/commands/delete-user.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/delete-user.js)_
 
 ## `saltcorn dev:localize-plugin PLUGIN [PATH]`
 
@@ -329,7 +330,7 @@ DESCRIPTION
   Convert plugin to local plugin
 ```
 
-_See code: [src/commands/dev/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/dev/localize-plugin.js)_
+_See code: [src/commands/dev/localize-plugin.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/dev/localize-plugin.js)_
 
 ## `saltcorn make-migration`
 
@@ -337,7 +338,7 @@ Create a new blank Database structure migration file.
 
 ```
 USAGE
-  $ saltcorn make-migration
+  $ saltcorn dev:make-migration make-migration
 
 DESCRIPTION
   Create a new blank Database structure migration file.
@@ -346,7 +347,7 @@ DESCRIPTION
   unless you are a developer.
 ```
 
-_See code: [src/commands/dev/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/dev/make-migration.js)_
+_See code: [src/commands/dev/make-migration.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/dev/make-migration.js)_
 
 ## `saltcorn saltcorn dev:plugin-test -d [PATH_TO_LOCAL_PLUGIN]/statistics -f test-backup.zip`
 
@@ -354,20 +355,20 @@ Install a plugin, spawn 'npm run test' in the install directory and check the re
 
 ```
 USAGE
-  $ saltcorn saltcorn dev:plugin-test -d [PATH_TO_LOCAL_PLUGIN]/statistics -f test-backup.zip
+  $ saltcorn dev:plugin-test saltcorn dev:plugin-test -d [PATH_TO_LOCAL_PLUGIN]/statistics -f test-backup.zip
 
 FLAGS
   -d, --directory=<value>   Directory of local plugin
   -f, --backupFile=<value>  Optional name of a backup file in the tests folder. If you ommit this, then the test has to
                             create its own data.
   -n, --name=<value>        Plugin name in store of a released plugin
-  --database=<value>        Run on specified database. Default is 'saltcorn_test''
+      --database=<value>    Run on specified database. Default is 'saltcorn_test''
 
 DESCRIPTION
   Install a plugin, spawn 'npm run test' in the install directory and check the return code.
 ```
 
-_See code: [src/commands/dev/plugin-test.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/dev/plugin-test.js)_
+_See code: [src/commands/dev/plugin-test.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/dev/plugin-test.js)_
 
 ## `saltcorn dev:post-release [TASK]`
 
@@ -384,7 +385,7 @@ DESCRIPTION
   Post-release tasks: docker and vagrant builds
 ```
 
-_See code: [src/commands/dev/post-release.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/dev/post-release.js)_
+_See code: [src/commands/dev/post-release.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/dev/post-release.js)_
 
 ## `saltcorn dev:release VERSION`
 
@@ -404,7 +405,7 @@ DESCRIPTION
   Release a new saltcorn version
 ```
 
-_See code: [src/commands/dev/release.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/dev/release.js)_
+_See code: [src/commands/dev/release.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/dev/release.js)_
 
 ## `saltcorn dev:release-resume VERSION`
 
@@ -424,7 +425,7 @@ DESCRIPTION
   Release a new saltcorn version
 ```
 
-_See code: [src/commands/dev/release-resume.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/dev/release-resume.js)_
+_See code: [src/commands/dev/release-resume.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/dev/release-resume.js)_
 
 ## `saltcorn dev:test-plugin PATH`
 
@@ -443,7 +444,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/dev/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/dev/test-plugin.js)_
+_See code: [src/commands/dev/test-plugin.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/dev/test-plugin.js)_
 
 ## `saltcorn fixtures`
 
@@ -463,7 +464,7 @@ DESCRIPTION
   This manual step it is never required for users and rarely required for developers
 ```
 
-_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/fixtures.js)_
+_See code: [src/commands/fixtures.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/fixtures.js)_
 
 ## `saltcorn get-cfg [KEY]`
 
@@ -484,7 +485,7 @@ DESCRIPTION
   Get a configuration value. The value is printed to stdout as a JSON value
 ```
 
-_See code: [src/commands/get-cfg.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/get-cfg.js)_
+_See code: [src/commands/get-cfg.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/get-cfg.js)_
 
 ## `saltcorn info`
 
@@ -507,7 +508,7 @@ ALIASES
   $ saltcorn paths
 ```
 
-_See code: [src/commands/info.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/info.js)_
+_See code: [src/commands/info.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/info.js)_
 
 ## `saltcorn inspect TYPE [NAME]`
 
@@ -528,7 +529,7 @@ DESCRIPTION
   Inspect an entity's JSON representation, or list entities
 ```
 
-_See code: [src/commands/inspect.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/inspect.js)_
+_See code: [src/commands/inspect.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/inspect.js)_
 
 ## `saltcorn install-pack`
 
@@ -547,7 +548,7 @@ DESCRIPTION
   Install a pack or restore a snapshot
 ```
 
-_See code: [src/commands/install-pack.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/install-pack.js)_
+_See code: [src/commands/install-pack.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/install-pack.js)_
 
 ## `saltcorn install-plugin`
 
@@ -567,7 +568,7 @@ DESCRIPTION
   Install a plugin
 ```
 
-_See code: [src/commands/install-plugin.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/install-plugin.js)_
+_See code: [src/commands/install-plugin.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/install-plugin.js)_
 
 ## `saltcorn list-tenants`
 
@@ -586,7 +587,7 @@ DESCRIPTION
   List tenants in CSV format
 ```
 
-_See code: [src/commands/list-tenants.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/list-tenants.js)_
+_See code: [src/commands/list-tenants.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/list-tenants.js)_
 
 ## `saltcorn list-triggers`
 
@@ -605,7 +606,7 @@ DESCRIPTION
   List triggers
 ```
 
-_See code: [src/commands/list-triggers.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/list-triggers.js)_
+_See code: [src/commands/list-triggers.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/list-triggers.js)_
 
 ## `saltcorn list-users`
 
@@ -623,7 +624,7 @@ DESCRIPTION
   List users
 ```
 
-_See code: [src/commands/list-users.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/list-users.js)_
+_See code: [src/commands/list-users.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/list-users.js)_
 
 ## `saltcorn saltcorn migrate`
 
@@ -631,7 +632,7 @@ Run Database structure migrations
 
 ```
 USAGE
-  $ saltcorn saltcorn migrate
+  $ saltcorn migrate saltcorn migrate
 
 DESCRIPTION
   Run Database structure migrations
@@ -646,7 +647,7 @@ DESCRIPTION
   servers and need to control when the migrations are run.
 ```
 
-_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/migrate.js)_
+_See code: [src/commands/migrate.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/migrate.js)_
 
 ## `saltcorn modify-user USER_EMAIL`
 
@@ -677,7 +678,7 @@ DESCRIPTION
   NOTE that -a and -r role (--role=role) can give conflict.
 ```
 
-_See code: [src/commands/modify-user.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/modify-user.js)_
+_See code: [src/commands/modify-user.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/modify-user.js)_
 
 ## `saltcorn paths`
 
@@ -729,7 +730,7 @@ EXAMPLES
   plugins -u -f - force plugin update
 ```
 
-_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/plugins.js)_
+_See code: [src/commands/plugins.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/plugins.js)_
 
 ## `saltcorn reset-schema`
 
@@ -749,7 +750,7 @@ DESCRIPTION
   This will delete all existing information
 ```
 
-_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/reset-schema.js)_
+_See code: [src/commands/reset-schema.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/reset-schema.js)_
 
 ## `saltcorn restore FILE`
 
@@ -769,7 +770,7 @@ DESCRIPTION
   Restore a previously backed up database (zip or sqlc format)
 ```
 
-_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/restore.js)_
+_See code: [src/commands/restore.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/restore.js)_
 
 ## `saltcorn rm-tenant`
 
@@ -789,7 +790,7 @@ DESCRIPTION
   It recommended to make backup of tenant before perform this command.
 ```
 
-_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/rm-tenant.js)_
+_See code: [src/commands/rm-tenant.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/rm-tenant.js)_
 
 ## `saltcorn run-benchmark [BASEURL]`
 
@@ -811,7 +812,7 @@ DESCRIPTION
   Run benchmark
 ```
 
-_See code: [src/commands/run-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/run-benchmark.js)_
+_See code: [src/commands/run-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/run-benchmark.js)_
 
 ## `saltcorn run-js`
 
@@ -830,7 +831,7 @@ DESCRIPTION
   Run javascript code
 ```
 
-_See code: [src/commands/run-js.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/run-js.js)_
+_See code: [src/commands/run-js.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/run-js.js)_
 
 ## `saltcorn run-sql`
 
@@ -849,7 +850,7 @@ DESCRIPTION
   Run sql expression
 ```
 
-_See code: [src/commands/run-sql.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/run-sql.js)_
+_See code: [src/commands/run-sql.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/run-sql.js)_
 
 ## `saltcorn run-tests [PACKAGE]`
 
@@ -868,15 +869,15 @@ FLAGS
   -l, --listTests           List tests
   -t, --testFilter=<value>  Filter tests by suite or test name
   -v, --verbose             Verbose
-  --database=<value>        Run on specified database. Default is saltcorn_test
-  --watch                   Watch files for changes and rerun tests related to changed files.
-  --watchAll                Watch files for changes and rerun all tests.
+      --database=<value>    Run on specified database. Default is saltcorn_test
+      --watch               Watch files for changes and rerun tests related to changed files.
+      --watchAll            Watch files for changes and rerun all tests.
 
 DESCRIPTION
   Run test suites
 ```
 
-_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/run-tests.js)_
+_See code: [src/commands/run-tests.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/run-tests.js)_
 
 ## `saltcorn run-trigger TRIGGER`
 
@@ -896,7 +897,7 @@ DESCRIPTION
   Run a trigger
 ```
 
-_See code: [src/commands/run-trigger.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/run-trigger.js)_
+_See code: [src/commands/run-trigger.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/run-trigger.js)_
 
 ## `saltcorn scheduler`
 
@@ -913,7 +914,7 @@ DESCRIPTION
   Run the Saltcorn scheduler
 ```
 
-_See code: [src/commands/scheduler.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/scheduler.js)_
+_See code: [src/commands/scheduler.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/scheduler.js)_
 
 ## `saltcorn serve`
 
@@ -924,20 +925,20 @@ USAGE
   $ saltcorn serve [-p <value>] [-v] [-r] [-d] [-a] [-n] [-s] [--subdomain_offset <value>]
 
 FLAGS
-  -a, --addschema             Add schema if missing
-  -d, --dev                   Run in dev mode and re-start on file changes
-  -n, --nomigrate             No migrations
-  -p, --port=<value>          [default: 3000] port
-  -r, --watchReaper           Watch reaper
-  -s, --noscheduler           No scheduler
-  -v, --verbose               Verbose
-  --subdomain_offset=<value>  Number of parts to remove to access subdomain in 'multi_tenant' mode
+  -a, --addschema                 Add schema if missing
+  -d, --dev                       Run in dev mode and re-start on file changes
+  -n, --nomigrate                 No migrations
+  -p, --port=<value>              [default: 3000] port
+  -r, --watchReaper               Watch reaper
+  -s, --noscheduler               No scheduler
+  -v, --verbose                   Verbose
+      --subdomain_offset=<value>  Number of parts to remove to access subdomain in 'multi_tenant' mode
 
 DESCRIPTION
   Start the Saltcorn server
 ```
 
-_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/serve.js)_
+_See code: [src/commands/serve.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/serve.js)_
 
 ## `saltcorn set-cfg [KEY] [VALUE]`
 
@@ -962,7 +963,7 @@ DESCRIPTION
   stored as a string.
 ```
 
-_See code: [src/commands/set-cfg.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/set-cfg.js)_
+_See code: [src/commands/set-cfg.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/set-cfg.js)_
 
 ## `saltcorn set-daily-time [MINS]`
 
@@ -982,7 +983,7 @@ DESCRIPTION
   Set the time the default daily event will run, offset in minutes from the current time. Restart required.
 ```
 
-_See code: [src/commands/set-daily-time.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/set-daily-time.js)_
+_See code: [src/commands/set-daily-time.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/set-daily-time.js)_
 
 ## `saltcorn setup`
 
@@ -1002,7 +1003,7 @@ DESCRIPTION
   configuration file
 ```
 
-_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/setup.js)_
+_See code: [src/commands/setup.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/setup.js)_
 
 ## `saltcorn setup-benchmark`
 
@@ -1020,7 +1021,7 @@ DESCRIPTION
   Setup an instance for benchmarking
 ```
 
-_See code: [src/commands/setup-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/setup-benchmark.js)_
+_See code: [src/commands/setup-benchmark.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/setup-benchmark.js)_
 
 ## `saltcorn sync-upload-data`
 
@@ -1041,7 +1042,7 @@ DESCRIPTION
   Runs a sync for data supplied by the mobile app
 ```
 
-_See code: [src/commands/sync-upload-data.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/sync-upload-data.js)_
+_See code: [src/commands/sync-upload-data.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/sync-upload-data.js)_
 
 ## `saltcorn take-snapshot`
 
@@ -1059,7 +1060,7 @@ DESCRIPTION
   Print a current snapshout to stdout
 ```
 
-_See code: [src/commands/take-snapshot.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/take-snapshot.js)_
+_See code: [src/commands/take-snapshot.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/take-snapshot.js)_
 
 ## `saltcorn transform-field EXPRESSION FIELD TABLE [TENANT]`
 
@@ -1079,5 +1080,5 @@ DESCRIPTION
   transform an existing field by applying a calculated expression
 ```
 
-_See code: [src/commands/transform-field.js](https://github.com/saltcorn/saltcorn/blob/v1.1.1/packages/saltcorn-cli/src/commands/transform-field.js)_
+_See code: [src/commands/transform-field.js](https://github.com/saltcorn/saltcorn/blob/v1.1.2-beta.0/packages/saltcorn-cli/src/commands/transform-field.js)_
 <!-- commandsstop -->

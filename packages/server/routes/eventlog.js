@@ -329,7 +329,7 @@ router.post(
  * @function
  */
 router.post(
-  "/custom/delete/{:name}",
+  "/custom/delete{/:name}",
   isAdmin,
   error_catcher(async (req, res) => {
     let { name } = req.params;

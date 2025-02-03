@@ -1120,7 +1120,11 @@ function initialize_page() {
       decodeURIComponent($(that).attr("data-explainers"))
     );
     var currentVal = explainers[$(that).val()];
-    $("#" + id).html(`<strong>${$(that).val()}</strong>: ${currentVal}`);
+    $("#" + id).html(
+      `<strong>${
+        $(that).find("option:selected").text() || $(that).val()
+      }</strong>: ${currentVal}`
+    );
     if (currentVal) $("#" + id).show();
     else $("#" + id).hide();
   }

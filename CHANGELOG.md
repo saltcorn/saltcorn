@@ -1,6 +1,10 @@
 # Notable changes
 
-## 1.1.1 - In beta
+## 1.1.2 - In beta
+
+* Upgrade a large number of dependencies (express, typescript, oclif, pg, webpack, typescript). Node.js 18+ is require for this release. 
+
+## 1.1.1 - Released 2 February 2025
 
 * Full-text search improvements: 
     - An index for full-text search can now be created. When creating an index in
