@@ -657,9 +657,11 @@ router.get(
           {
             label: req.__("When"),
             key: (r) =>
-              `${moment(
-                r.created
-              ).fromNow()}<br><small>${localeDateTime(r.created, {}, locale)}</small>`,
+              `${moment(r.created).fromNow()}<br><small>${localeDateTime(
+                r.created,
+                {},
+                locale
+              )}</small>`,
           },
           {
             label: req.__("Name"),
@@ -1193,10 +1195,10 @@ router.get(
                     th({ valign: "top" }, req.__("Saltcorn version")),
                     td(
                       packagejson.version,
-                      isRoot && can_update
+                      isRoot 
                         ? post_btn(
                             "/admin/upgrade",
-                            req.__("Upgrade"),
+                            req.__("Upgrade") + " (latest)",
                             req.csrfToken(),
                             {
                               btnClass: "btn-primary btn-sm",
