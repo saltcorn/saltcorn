@@ -294,7 +294,7 @@ test.describe('E2E Test Suite', () => {
         // Click to open people list
         await page.click(pageobject.PeopleList);
         // click on show link
-        await page.click(pageobject.secondshowfieldlink);
+        await page.click(pageobject.showfieldlink);
         // Click on show team link
         await page.click(pageobject.showTeamLink);
         // close the popup
@@ -331,7 +331,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.IDDivLocator);
         await page.click(pageobject.deletebutton);
         await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.target);
-        await customAssert('Select TaskList on view to link dropdown', async () => {
+        await customAssert('Select show_team on view to link dropdown', async () => {
             await page.click(pageobject.viewtolinkdropdown);
             await page.click(pageobject.view2tasklist);
         });
@@ -352,7 +352,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.showfieldlink);
         await page.click(pageobject.listOfAssignedTasks);
         await customAssert('Assigned task for person should be visible', async () => {
-            await expect(page.getByText('Take out trash')).toBeVisible();
+            await expect(page.getByText('Buy Milk')).toBeVisible();
         });
     });
 });
