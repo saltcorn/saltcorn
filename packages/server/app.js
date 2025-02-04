@@ -131,6 +131,7 @@ const getApp = async (opts = {}) => {
     "cross_domain_iframe",
     false
   );
+  app.set("query parser", "extended");
 
   const helmetOptions = {
     contentSecurityPolicy: {
