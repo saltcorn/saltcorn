@@ -383,7 +383,7 @@
       </div>
 
       <div class="filelist">
-        <table class="table table-sm">
+        <table class="table table-sm table-hover">
           <thead>
             <tr>
               <th />

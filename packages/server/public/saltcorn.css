@@ -812,3 +812,11 @@ tr span.add-tag {
 tr:hover span.add-tag {
   opacity: 1;
 }
+
+#saltcorn-file-manager .filelist tr {
+  cursor: pointer;
+}
+
+#saltcorn-file-manager .filelist tr.selected td {
+  background-color: var(--bs-secondary-bg-subtle, var(--tblr-secondary-bg-subtle, gray));;
+}
