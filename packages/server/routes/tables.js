@@ -1582,7 +1582,7 @@ const constraintForm = (req, table, fields, type) => {
     case "Formula":
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,
-
+        onSubmit: "press_store_button(this)",
         fields: [
           {
             name: "formula",
@@ -1617,6 +1617,7 @@ const constraintForm = (req, table, fields, type) => {
         blurb: req.__(
           "Tick the boxes for the fields that should be jointly unique"
         ),
+        onSubmit: "press_store_button(this)",
         fields: [
           ...fields.map((f) => ({
             name: f.name,
@@ -1641,7 +1642,7 @@ const constraintForm = (req, table, fields, type) => {
         blurb: req.__(
           "Choose the field to be indexed. This make searching the table faster."
         ),
-
+        onSubmit: "press_store_button(this)",
         fields: [
           {
             type: "String",

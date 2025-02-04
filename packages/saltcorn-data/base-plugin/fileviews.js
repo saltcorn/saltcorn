@@ -312,7 +312,7 @@ module.exports = {
         return span(
           a(
             {
-              class: "btn btn-primary",
+              class: "btn btn-secondary",
               href: `javascript:ajax_modal('/files/picker?folder=${encodeURIComponent(
                 folder
               )}&input_id=${encodeURIComponent(inputId)}${
