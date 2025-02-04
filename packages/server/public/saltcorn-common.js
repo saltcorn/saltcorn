@@ -112,6 +112,17 @@ function rep_del(e) {
 }
 
 function reindex(element, oldix, newix) {
+  $(element)
+    .find("input,textarea")
+    .each(function () {
+      $(this).attr("value", $(this).val());
+    });
+  $(element)
+    .find("select")
+    .each(function () {
+      $(this).find(":selected").attr("selected", "selected");
+    });
+
   $(element).html(
     $(element)
       .html()
