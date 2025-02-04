@@ -290,7 +290,7 @@ const tagsDropdown = (tags, altHeader) =>
     )
   );
 
-const mkAddBtn = (tags, entityType, id, req, myTagIds) =>
+const mkAddBtn = (tags, entityType, id, req, myTagIds, on_done_redirect_str) =>
   div(
     { class: "dropdown d-inline ms-1" },
     span(
@@ -314,7 +314,7 @@ const mkAddBtn = (tags, entityType, id, req, myTagIds) =>
           post_dropdown_item(
             `/tag-entries/add-tag-entity/${encodeURIComponent(
               t.name
-            )}/${entityType}/${id}`,
+            )}/${entityType}/${id}${on_done_redirect_str||""}`,
             t.name,
             req
           )
@@ -345,7 +345,7 @@ const viewsList = async (
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
     const myTagIds = new Set(myTags.map((t) => t.tag_id));
-    const addBtn = mkAddBtn(tags, "views", view.id, req, myTagIds);
+    const addBtn = mkAddBtn(tags, "views", view.id, req, myTagIds, on_done_redirect_str);
     return (
       myTags.map((te) => tagBadge(tagsById[te.tag_id], "views")).join(nbsp) +
       addBtn
@@ -709,7 +709,7 @@ const getTriggerList = async (
     const myTagIds = new Set(myTags.map((t) => t.tag_id));
     return (
       myTags.map((te) => tagBadge(tagsById[te.tag_id], "triggers")).join(nbsp) +
-      mkAddBtn(tags, "triggers", trigger.id, req, myTagIds)
+      mkAddBtn(tags, "triggers", trigger.id, req, myTagIds, on_done_redirect_str)
     );
   };
   return mkTable(
