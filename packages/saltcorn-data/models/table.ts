@@ -1264,13 +1264,13 @@ class Table implements AbstractTable {
       const res = await db.query(
         `select distinct "${db.sqlsanitize(fieldnm)}" from ${
           this.sql_name
-        } ${where}`,
+        } ${where} order by "${db.sqlsanitize(fieldnm)}"`,
         values
       );
       return res.rows.map((r: Row) => r[fieldnm]);
     } else {
       const res = await db.query(
-        `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name}`
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name} order by "${db.sqlsanitize(fieldnm)}"`
       );
       return res.rows.map((r: Row) => r[fieldnm]);
     }

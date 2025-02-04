@@ -18,6 +18,7 @@ const {
   csrfField,
   isAdminOrHasConfigMinRole,
   checkEditPermission,
+  is_relative_url,
 } = require("./utils");
 
 const Table = require("@saltcorn/data/models/table");
@@ -192,18 +193,23 @@ router.post(
     const auth = checkEditPermission(entitytype, req.user);
     if (!auth) req.flash("error", "Not authorized");
     else await tag.addEntry({ [fieldName]: +entityid });
+    let redirectTarget =
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : null;
     switch (entitytype) {
       case "views":
-        res.redirect(`/viewedit`);
+        res.redirect(redirectTarget || `/viewedit`);
         break;
       case "pages":
-        res.redirect(`/pageedit`);
+        res.redirect(redirectTarget || `/pageedit`);
         break;
       case "tables":
-        res.redirect(`/table`);
+        res.redirect(redirectTarget || `/table`);
         break;
       case "triggers":
-        res.redirect(`/actions`);
+        res.redirect(redirectTarget || `/actions`);
         break;
 
       default:

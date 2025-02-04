@@ -152,7 +152,6 @@ class PageLocators {
     this.deleteviewbutton = '(//a[text()="Delete"])[1]';
     this.editfieldlink = '(//a[text()="Edit"])[1]';
     this.showfieldlink = '(//a[text()="Show"])[1]';
-    this.secondshowfieldlink = '(//a[text()="Show"])[2]';
     this.listshowlink = '(//a[text()="ListShow"])[1]';
     this.ActionLabel = 'input[type="text"].form-control';
     this.ActionHoverTitle = 'input.form-control:not([type])';
@@ -562,7 +561,7 @@ class PageLocators {
     this.installbadges = 'form[action="/plugins/install/badges"] button:has-text("Install")';
     this.inputrelation = '#inputrelation';
     this.view2taskbadge = 'text=PersonTaskBadges [Badges] People';
-    this.badgeLocator = 'span.badge.bg-secondary:has-text("Take out trash")';
+    this.badgeLocator = 'span.badge.bg-secondary:has-text("Buy Milk")';
     this.taskHelper = 'a:has-text("Task_Helper")';
     this.HelperCell = 'div.tabulator-cell[tabulator-field="helper"]';
     this.TaskCell = 'div.tabulator-cell[tabulator-field="task"]';

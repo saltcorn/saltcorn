@@ -558,6 +558,7 @@ const plugin_store_html = (items, req) => {
       },
       {
         besides: items.map(store_item_html(req)),
+        gy:3,
         widths: items.map(() => 4),
       },
     ],
