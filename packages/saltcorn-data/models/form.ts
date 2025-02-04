@@ -200,6 +200,8 @@ class Form implements AbstractForm {
     this.hasErrors = false;
     this.errors = {};
     this.fields.forEach((f) => {
+      // bail out if fieldview is not edit
+      if ((f as any)?.fieldviewObj && !(f as any).fieldviewObj.isEdit) return;
       if (f instanceof Field && f?.input_type === "section_header") return;
       if (hasFieldMembers(f)) {
         if (f.disabled || f.calculated) return;
@@ -213,6 +215,7 @@ class Form implements AbstractForm {
           if (fv && !fv.isEdit) return;
         }
       }
+
       const valres = f.validate(v);
       if (instanceOfErrorMsg(valres)) {
         this.errors[f.name] = valres.error;
