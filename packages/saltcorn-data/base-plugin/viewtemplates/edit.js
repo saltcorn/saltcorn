@@ -39,6 +39,7 @@ const {
   InvalidConfiguration,
   isNode,
   isWeb,
+  isTest,
   mergeIntoWhere,
   dollarizeObject,
   getSessionId,
@@ -1089,6 +1090,15 @@ const render = async ({
     );
   }
 
+  const formId = isTest()
+    ? "test-form-id"
+    : `form${Math.floor(Math.random() * 16777215).toString(16)}`;
+  const identicalFieldsScript = script(
+    domReady(
+      `document.getElementById('${formId}').addEventListener("change", handle_identical_fields, true);`
+    )
+  );
+
   if (actually_auto_save) {
     for (const field of form.fields) {
       field.in_auto_save = true;
@@ -1105,12 +1115,39 @@ const render = async ({
     viewname,
     optionsQuery,
   });
+  form.id = formId;
   return (
     renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
     reloadAfterCloseInModalScript +
     confirmLeaveScript +
-    deleteUnchangedScript
+    deleteUnchangedScript +
+    identicalFieldsScript
   );
+};
+
+const identicalFieldNames = (columns) => {
+  const fieldNames = new Set();
+  const result = new Set();
+  for (const field of columns) {
+    if (field.type === "Field") {
+      if (fieldNames.has(field.field_name)) result.add(field.field_name);
+      else fieldNames.add(field.field_name);
+    }
+  }
+  return result;
+};
+
+const prepSafeBody = (body, columns) => {
+  const safeBody = { ...body }; // avoid mutation (shallow copy should be enough)
+  const identicalFields = identicalFieldNames(columns);
+  for (const field of identicalFields) {
+    if (body && body[field] && Array.isArray(body[field])) {
+      // should all be the same (see saltcorn.js handle_identical_fields())
+      // or at least the submit still works (e.g. different plugin fieldviews)
+      safeBody[field] = body[field][0];
+    }
+  }
+  return safeBody;
 };
 
 /**
@@ -1159,6 +1196,7 @@ const runPost = async (
   },
   remote
 ) => {
+  const safeBody = prepSafeBody(body, columns);
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
   const prepResult = await prepare(
@@ -1172,7 +1210,7 @@ const runPost = async (
       auto_save,
     },
     { req, res },
-    body,
+    safeBody,
     {
       getRowQuery,
       saveFileQuery,
@@ -1186,7 +1224,7 @@ const runPost = async (
   const pagetitle = { title: viewname, no_menu: view?.attributes?.no_menu };
   if (prepResult) {
     let { form, row, pk, id } = prepResult;
-    const cancel = body._cancel;
+    const cancel = safeBody._cancel;
     const originalID = id;
     let trigger_return;
     let ins_upd_error;
@@ -1416,7 +1454,7 @@ const runPost = async (
       },
       req,
       res,
-      body,
+      safeBody,
       row,
       !originalID ? { id, ...trigger_return } : trigger_return,
       true,

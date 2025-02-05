@@ -392,7 +392,8 @@ const dollarizeObject = (state: object) =>
 /**
  * @returns true if the NODE_ENV is 'test'
  */
-const isTest = () => process.env.NODE_ENV === "test";
+const isTest = () =>
+  process.env.NODE_ENV === "test" || process.env.REMOTE_QUERIES === "true";
 
 /**
  * Compare objects (for Array.sort) by property name or function
