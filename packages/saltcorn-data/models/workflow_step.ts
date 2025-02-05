@@ -15,7 +15,7 @@ import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
 const { jsIdentifierValidator } = require("../utils");
 
-const { eval_expression } = Expression;
+const { eval_expression, get_async_expression_function } = Expression;
 
 const { getState } = require("../db/state");
 /**
@@ -189,12 +189,14 @@ class WorkflowStep {
       return { [this.configuration.query_variable]: rows };
     }
     if (this.action_name === "SetContext") {
-      return eval_expression(
+      const f = get_async_expression_function(
         this.configuration.ctx_values,
-        context,
-        user,
-        `Context values expression in ${this.name} step`
+        Object.keys(context).map((k) => ({ name: k })) as any[],
+        {
+          user,
+        }
       );
+      return await f(context, user);
     }
     if (this.action_name === "SetErrorHandler") {
       return { __errorHandler: this.configuration.error_handling_step };
@@ -209,6 +211,9 @@ class WorkflowStep {
       });
     } else {
       const trigger = await Trigger.findOne({ name: this.action_name });
+      if (!trigger)
+        throw new Error(`Action or trigger not found: ${this.action_name}`);
+
       state_action = getState().actions[trigger.action];
       if (!state_action)
         throw new Error(`Action or trigger not found: ${this.action_name}`);

@@ -1461,10 +1461,21 @@ module.exports = {
     },
     async getRowQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow(
-        { id },
-        { forUser: req.user, forPublic: !req.user }
-      );
+      if (table.ownership_formula) {
+        const freeVars = freeVariables(table.ownership_formula);
+        const joinFields = {};
+        add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
+        return await table.getJoinedRow({
+          where: { id },
+          joinFields,
+          forUser: req.user || { role_id: 100 },
+          forPublic: !req.user,
+        });
+      } else
+        return await table.getRow(
+          { id },
+          { forUser: req.user, forPublic: !req.user }
+        );
     },
   }),
   configCheck: async (view) => {
