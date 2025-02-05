@@ -51,7 +51,7 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
-const { exec } = require("child_process");
+const { exec, execSync, spawn } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
 
@@ -347,6 +347,17 @@ const create_backup = async (fnm?: string): Promise<string> => {
   return zipFileName;
 };
 
+// https://stackoverflow.com/a/74743490/19839414
+function executableIsAvailable(name: string) {
+  const shell = (cmd: string) => execSync(cmd, { encoding: "utf8" });
+  try {
+    shell(`which ${name}`);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 /**
  * @function
  * @param {string} fnm
@@ -354,13 +365,23 @@ const create_backup = async (fnm?: string): Promise<string> => {
  * @returns {Promise<void>}
  */
 const extract = async (fnm: string, dir: string): Promise<void> => {
-  return new Promise(function (resolve, reject) {
-    const zip = new Zip(fnm);
-    zip.extractAllToAsync(dir, true, false, function (err: any) {
-      if (err) reject(new Error("Error opening zip file: " + err));
-      else resolve();
+  const backup_with_system_zip = executableIsAvailable("unzip");
+  if (backup_with_system_zip) {
+    return await new Promise((resolve, reject) => {
+      var subprocess = spawn("unzip", [File.normalise(fnm), "-d", dir]);
+      subprocess.on("close", function (exitCode: any) {
+        if (exitCode != 0) reject(new Error("unzip failed"));
+        else resolve(undefined);
+      });
     });
-  });
+  } else
+    return new Promise(function (resolve, reject) {
+      const zip = new Zip(fnm);
+      zip.extractAllToAsync(dir, true, false, function (err: any) {
+        if (err) reject(new Error("Error opening zip file: " + err));
+        else resolve();
+      });
+    });
 };
 
 /**
