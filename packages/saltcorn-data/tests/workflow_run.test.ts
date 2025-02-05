@@ -42,9 +42,9 @@ describe("Workflow run steps", () => {
       trigger_id: trigger.id!,
       name: "second_step",
       next_step: "third_step",
-      action_name: "run_js_code",
+      action_name: "SetContext",
       initial_step: false,
-      configuration: { code: `return {y:x+1}` },
+      configuration: { ctx_values: `{y:await x+1}` },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
