@@ -159,8 +159,8 @@ export const ArrayManager = ({
         if (initialAddProps?.[arrNm])
           layout[arrNm][node[countProp]] = initialAddProps?.[arrNm];
       });
-      layout[currentProp] = node[countProp];
-      layout[countProp] = node[countProp] + 1;
+      layout[currentProp] = +node[countProp];
+      layout[countProp] = +node[countProp] + 1;
 
       actions.delete(node.id);
       layoutToNodes(layout, query, actions, parentId, options, sibIx);
