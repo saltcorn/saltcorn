@@ -1223,10 +1223,22 @@ module.exports = {
         (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
       );
       const table = Table.findOne({ id: table_id });
-      const row = await table.getRow(
-        { [table.pk_name]: body[table.pk_name] },
-        { forUser: req.user, forPublic: !req.user }
-      );
+      let row;
+      if (table.ownership_formula) {
+        const freeVars = freeVariables(table.ownership_formula);
+        const joinFields = {};
+        add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
+        row = await table.getJoinedRow({
+          where: { [table.pk_name]: body[table.pk_name] },
+          joinFields,
+          forUser: req.user || { role_id: 100 },
+          forPublic: !req.user,
+        });
+      } else
+        row = await table.getRow(
+          { [table.pk_name]: body[table.pk_name] },
+          { forUser: req.user, forPublic: !req.user }
+        );
       try {
         if (body.click_action) {
           let container;
