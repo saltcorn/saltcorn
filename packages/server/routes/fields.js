@@ -1378,6 +1378,7 @@ router.post(
       agg_outcome_type,
       agg_fieldview,
       agg_field,
+      mode,
       _columndef,
     } = req.body || {};
     const table = Table.findOne({ name: tableName });
@@ -1389,7 +1390,9 @@ router.post(
         return;
       }
       const field = table.getField(agg_field);
-      const cfgfields = await applyAsync(fv.configFields, field || { table });
+      const cfgfields = await applyAsync(fv.configFields, field || { table }, {
+        mode,
+      });
       res.json(cfgfields);
       return;
     }
@@ -1412,7 +1415,12 @@ router.post(
       res.send(req.query?.accept == "json" ? "[]" : "");
       return;
     }
-    const fieldViewConfigForms = await calcfldViewConfig([field], false, 0);
+    const fieldViewConfigForms = await calcfldViewConfig(
+      [field],
+      false,
+      0,
+      mode
+    );
     const formFields = fieldViewConfigForms[field.name][fv_name];
     if (!formFields) {
       res.send(req.query?.accept == "json" ? "[]" : "");
