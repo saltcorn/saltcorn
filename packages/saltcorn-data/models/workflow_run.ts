@@ -702,7 +702,7 @@ class WorkflowRun {
           step = steps.find((s) => s.name === this.context.__errorHandler);
         } else {
           console.error("Workflow error", e);
-          await this.update({ status: "Error", error: e.message });
+          await this.update({ status: "Error", error: e?.message || e });
 
           Trigger.emitEvent("Error", null, user, {
             workflow_run: this.id,
