@@ -36,7 +36,6 @@
     "csv-stringify": "^6.5.2",
     "csvtojson": "^2.0.10",
     "dateformat": "^4.6.3",
-    "hasbin": "1.2.3",
     "node-fetch": "2.6.9",
     "tmp-promise": "^3.0.3",
     "lodash": "^4.17.21",

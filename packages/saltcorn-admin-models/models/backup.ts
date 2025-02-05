@@ -51,8 +51,7 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
-const { exec } = require("child_process");
-const hasbin = require("hasbin");
+const { exec, execSync } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
 
@@ -348,6 +347,17 @@ const create_backup = async (fnm?: string): Promise<string> => {
   return zipFileName;
 };
 
+// https://stackoverflow.com/a/74743490/19839414
+function executableIsAvailable(name: string) {
+  const shell = (cmd: string) => execSync(cmd, { encoding: "utf8" });
+  try {
+    shell(`which ${name}`);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 /**
  * @function
  * @param {string} fnm
@@ -355,7 +365,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
  * @returns {Promise<void>}
  */
 const extract = async (fnm: string, dir: string): Promise<void> => {
-  const backup_with_system_zip = hasbin.sync("unzip");
+  const backup_with_system_zip = executableIsAvailable("unzip");
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
       const cmd = `unzip "${fnm}" -d "${dir}"`;
