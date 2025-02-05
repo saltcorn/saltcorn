@@ -51,7 +51,7 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
-const { exec, execSync } = require("child_process");
+const { exec, execSync, spawn } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
 
@@ -368,9 +368,9 @@ const extract = async (fnm: string, dir: string): Promise<void> => {
   const backup_with_system_zip = executableIsAvailable("unzip");
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
-      const cmd = `unzip "${fnm}" -d "${dir}"`;
-      exec(cmd, (error: any) => {
-        if (error) reject(error);
+      var subprocess = spawn("unzip", [File.normalise(fnm), "-d", dir]);
+      subprocess.on("close", function (exitCode: any) {
+        if (exitCode != 0) reject(new Error("unzip failed"));
         else resolve(undefined);
       });
     });
