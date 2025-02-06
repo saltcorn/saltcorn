@@ -730,6 +730,7 @@ const getWorkflowStepForm = async (
         label: req.__("Step name"),
         type: "String",
         required: true,
+        class: "validate-identifier",
         sublabel: "An identifier by which this step can be referred to.",
         validator: jsIdentifierValidator,
       },
@@ -742,6 +743,7 @@ const getWorkflowStepForm = async (
       {
         name: "wf_only_if",
         label: req.__("Only if..."),
+        class: "validate-expression",
         sublabel:
           "Optional JavaScript expression based on the run context. If given, the chosen action will only be executed if evaluates to true",
         type: "String",
