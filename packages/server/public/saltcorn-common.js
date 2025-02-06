@@ -1573,7 +1573,11 @@ function restore_old_button(btnId) {
   btn.removeData("old-text");
 }
 
-async function common_done(res, viewnameOrElem, isWeb = true) {
+async function common_done(res, viewnameOrElem0, isWeb = true) {
+  const viewnameOrElem =
+    viewnameOrElem0 === "undefined"
+      ? last_route_viewname
+      : viewnameOrElem0 || last_route_viewname;
   const viewname =
     typeof viewnameOrElem === "string"
       ? viewnameOrElem

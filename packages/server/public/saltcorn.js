@@ -267,6 +267,8 @@ function reset_spinners() {
   });
 }
 
+let last_route_viewname;
+
 function view_post(viewnameOrElem, route, data, onDone, sendState) {
   const viewname =
     typeof viewnameOrElem === "string"
@@ -274,6 +276,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
           .attr("data-sc-embed-viewname");
+  last_route_viewname = viewname;
   const query = sendState
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
