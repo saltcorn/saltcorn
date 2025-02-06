@@ -565,7 +565,7 @@ class WorkflowRun {
           });
           if (step.configuration.immediately_bg) {
             const runNow = async () => {
-              await this.run({
+              return await this.run({
                 user,
                 interactive: false,
                 noNotifications,
