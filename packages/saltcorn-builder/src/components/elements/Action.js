@@ -315,7 +315,7 @@ const ActionSettings = () => {
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
       ) : null}
-      {options.mode === "edit" ? (
+      {options.mode === "edit" && name !== "Save" ? (
         <div className="form-check">
           <input
             className="form-check-input"
