@@ -74,7 +74,7 @@ const ViewLink = ({
   const displabel = label || (names.length > 1 ? names[1] : names[0]);
   return (
     <span
-      className={`${textStyle} ${inModal ? "btn btn-secondary btn-sm" : ""} ${
+      className={`${textStyle} ${
         selected ? "selected-node" : "is-builder-link"
       } ${link_style} ${link_size || ""} ${block ? "d-block" : ""}`}
       ref={(dom) => connect(drag(dom))}
