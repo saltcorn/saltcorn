@@ -1320,25 +1320,30 @@ function check_delete_unsaved(tablename, script_tag) {
 }
 
 function handle_identical_fields(event) {
-  const form = event.currentTarget;
-  const name = event.target.name;
-  const newValue = event.target.value;
-  const tagName = event.target.tagName;
-  const isRadio = event.target.type === "radio";
-  if (tagName === "SELECT" || isRadio) {
-    form.querySelectorAll(`select[name="${name}"]`).forEach((select) => {
-      select.value = newValue;
-      $(select).trigger("change");
-    });
-    form
-      .querySelectorAll(`input[type="radio"][name="${name}"]`)
-      .forEach((input) => {
-        input.checked = input.value === newValue;
+  let form = null;
+  if (event.currentTarget.tagName === "FORM") form = event.currentTarget;
+  else form = $(event.currentTarget).closest("form")[0];
+  if (!form) {
+    console.warn("No form found");
+  } else {
+    const name = event.target.name;
+    const newValue = event.target.value;
+    const tagName = event.target.tagName;
+    const isRadio = event.target.type === "radio";
+    if (tagName === "SELECT" || isRadio) {
+      form.querySelectorAll(`select[name="${name}"]`).forEach((select) => {
+        $(select).val(newValue); //.trigger("change");
       });
-  } else if (tagName === "INPUT") {
-    form.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
-      input.value = newValue;
-    });
+      form
+        .querySelectorAll(`input[type="radio"][name="${name}"]`)
+        .forEach((input) => {
+          input.checked = input.value === newValue;
+        });
+    } else if (tagName === "INPUT") {
+      form.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+        input.value = newValue;
+      });
+    }
   }
 }
 
