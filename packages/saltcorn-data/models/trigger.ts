@@ -584,7 +584,16 @@ class Trigger implements AbstractTrigger {
       name: newname,
     };
     delete createObj.id;
-    return await Trigger.create(createObj);
+    const trig = await Trigger.create(createObj);
+    if (trig.action === "Workflow") {
+      const WorkflowStep = require("@saltcorn/data/models/workflow_step");
+      const steps = await WorkflowStep.find({ trigger_id: this.id });
+      for (const step of steps) {
+        const { id, trigger_id, ...stepNoId } = step;
+        await WorkflowStep.create({ ...stepNoId, trigger_id: trig.id });
+      }
+    }
+    return trig;
   }
 
   async getTags(): Promise<Array<AbstractTag>> {
