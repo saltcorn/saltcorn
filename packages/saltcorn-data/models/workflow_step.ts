@@ -380,6 +380,7 @@ class WorkflowStep {
       sublabel:
         "Javascript identifier; the name of the variable the current item from the loop array will be set to in each loop iteration",
       name: "item_variable",
+      class: "validate-identifier",
       type: "String",
       showIf: { wf_action_name: "ForLoop" },
     });
@@ -449,6 +450,7 @@ class WorkflowStep {
       label: "Response variable",
       name: "response_variable",
       sublabel: "Context variable to write the form response to",
+      class: "validate-identifier",
       type: "String",
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "EditViewForm" },
@@ -534,6 +536,7 @@ class WorkflowStep {
         "Name of the step which will be invoked on errors in subsequent steps. When an error occurs, execution jumps to the error handling step and continues fron the error handling step's next_step. The error handling step can be changed in the workflow.",
       type: "String",
       required: true,
+      class: "validate-identifier",
       attributes: await stepOptions(),
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "SetErrorHandler" },
@@ -541,6 +544,7 @@ class WorkflowStep {
     actionConfigFields.push({
       label: "Variable",
       name: "query_variable",
+      class: "validate-identifier",
       sublabel: "Context variable to write to query results to",
       type: "String",
       required: true,
@@ -563,6 +567,7 @@ class WorkflowStep {
           {
             label: "Variable name",
             name: "var_name",
+            class: "validate-identifier",
             type: "String",
             sublabel:
               "The answer will be set in the context with this variable name",
