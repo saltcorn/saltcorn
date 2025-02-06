@@ -1483,7 +1483,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     hasValues
       ? ` data-row-values="${encodeURIComponent(JSON.stringify(extraValues))}"`
       : ""
-  } ${form.id ? `id="${form.id}"` : ""}>`;
+  }${form.id ? ` id="${form.id}"` : ""}>`;
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
