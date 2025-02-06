@@ -113,6 +113,7 @@ const ActionSettings = () => {
     step_action_names: node.data.props.step_action_names,
     setting_action_n: node.data.props.setting_action_n,
     spinner: node.data.props.spinner,
+    is_submit_action: node.data.props.is_submit_action,
   }));
   const {
     actions: { setProp },
@@ -132,6 +133,7 @@ const ActionSettings = () => {
     step_only_ifs,
     step_action_names,
     spinner,
+    is_submit_action,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
@@ -312,6 +314,18 @@ const ActionSettings = () => {
       </div>
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
+      ) : null}
+      {options.mode === "edit" && name !== "Save" ? (
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            name="block"
+            type="checkbox"
+            checked={is_submit_action}
+            onChange={setAProp("is_submit_action", { checked: true })}
+          />
+          <label className="form-check-label">This is the submit action</label>
+        </div>
       ) : null}
       {name === "Multi-step action" ? (
         <Fragment>

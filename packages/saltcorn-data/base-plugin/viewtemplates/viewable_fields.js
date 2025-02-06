@@ -1427,6 +1427,15 @@ const getForm = async (
     const loginForm = getState().getConfig("login_form", "");
     if (loginForm && viewname === loginForm) isMobileLogin = true;
   }
+  let submitActionJS = undefined;
+  const submitActionCol = columns.find((c) => c.is_submit_action);
+
+  if (submitActionCol) {
+    submitActionJS = `event.preventDefault();view_post(this, 'run_action', {rndid:'${submitActionCol.rndid}', ...get_form_record(this) })`;
+    if (layout.above) layout.above.push(`<input type="submit" hidden />`);
+    //TODO what if there is no above, e.g. all in card or container
+  }
+
   const form = new Form({
     action: action,
     onSubmit:
@@ -1436,7 +1445,7 @@ const getForm = async (
               ? `formSubmit(this, '/view/', '${viewname}')`
               : "loginFormSubmit(this)"
           }`
-        : undefined,
+        : submitActionJS,
     viewname: viewname,
     fields: tfields,
     layout,

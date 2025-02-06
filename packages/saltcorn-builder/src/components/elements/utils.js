@@ -879,16 +879,15 @@ const ConfigField = ({
     });
     onChange && onChange(field.name, v, setProp);
   };
-  let value = or_if_undef(
-    configuration
-      ? configuration[field.name]
-      : isStyle
-      ? props.style[field.name]
-      : subProp
-      ? props[subProp]?.[field.name]
-      : props[field.name],
-    field.default
-  );
+  let stored_value = configuration
+    ? configuration[field.name]
+    : isStyle
+    ? props.style[field.name]
+    : subProp
+    ? props[subProp]?.[field.name]
+    : props[field.name];
+
+  let value = or_if_undef(stored_value, field.default);
   if (valuePostfix)
     value = `${value}`.replaceAll(valuePostfix || "__nosuchstring", "");
   if (field.input_type === "fromtype") field.input_type = null;
@@ -912,8 +911,14 @@ const ConfigField = ({
     typeof field?.attributes?.options === "string"
       ? field.attributes?.options.split(",").map((s) => s.trim())
       : field?.attributes?.options || field.options;
-
-  if (hasSelect && typeof value === "undefined") {
+  if (
+    typeof field.default !== "undefined" &&
+    typeof stored_value === "undefined"
+  ) {
+    useEffect(() => {
+      myOnChange(field.default);
+    }, []);
+  } else if (hasSelect && typeof value === "undefined") {
     //pick first value to mimic html form behaviour
     const options = getOptions();
     let o;

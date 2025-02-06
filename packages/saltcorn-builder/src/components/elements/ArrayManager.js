@@ -204,7 +204,7 @@ export const ArrayManager = ({
           title="Move left"
           type="button"
           style={{ width: "25%" }}
-          className="btn btn-sm"
+          className="btn btn-outline-secondary btn-sm"
           onClick={() => move(-1)}
           disabled={node[currentProp] === 0}
         >
@@ -214,7 +214,7 @@ export const ArrayManager = ({
           title="Add"
           type="button"
           style={{ width: "25%" }}
-          className="btn btn-sm"
+          className="btn btn-outline-secondary btn-sm"
           onClick={() => add()}
         >
           <FontAwesomeIcon icon={faPlus} />
@@ -223,7 +223,7 @@ export const ArrayManager = ({
           title="Delete"
           type="button"
           style={{ width: "25%" }}
-          className="btn btn-sm"
+          className="btn btn-outline-secondary btn-sm"
           onClick={() => deleteElem()}
         >
           <FontAwesomeIcon icon={faTrashAlt} />
@@ -233,7 +233,7 @@ export const ArrayManager = ({
           type="button"
           disabled={node[currentProp] === node[countProp] - 1}
           style={{ width: "25%" }}
-          className="btn btn-sm"
+          className="btn btn-outline-secondary btn-sm"
           onClick={() => move(1)}
         >
           <FontAwesomeIcon icon={faAngleDoubleRight} />
