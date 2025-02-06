@@ -920,6 +920,24 @@ function initialize_page() {
     if (e.keyCode === 13) e.target.blur();
   });
 
+  const validate_identifier_elem = (target) => {
+    const next = target.next();
+    if (next.hasClass("expr-error")) next.remove();
+    const val = target.val();
+    if (!val) return;
+    try {
+      Function(val, "return 1");
+    } catch (error) {
+      target.after(`<small class="text-danger font-monospace d-block expr-error">
+      ${error.message}
+    </small>`);
+    }
+  };
+  $(".validate-identifier").bind("input", function (e) {
+    const target = $(e.target);
+    validate_identifier_elem(target);
+  });
+
   const validate_expression_elem = (target) => {
     const next = target.next();
     if (next.hasClass("expr-error")) next.remove();
@@ -935,7 +953,7 @@ function initialize_page() {
       Function("return " + val);
     } catch (error) {
       target.after(`<small class="text-danger font-monospace d-block expr-error">
-      ${error.message}
+      Invalid identifier
     </small>`);
     }
   };
@@ -943,6 +961,7 @@ function initialize_page() {
     const target = $(e.target);
     validate_expression_elem(target);
   });
+
   $(".validate-expression-conditional").each(function () {
     const theInput = $(this);
     theInput

@@ -33,6 +33,7 @@ type FieldLikeBasics = {
   fieldview?: string;
   input_type?: InputType;
   type?: string | Type;
+  class?: string;
   primary_key?: boolean;
   sublabel?: string;
   validator?: (arg0: any) => boolean | string | undefined;
