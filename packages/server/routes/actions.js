@@ -1718,6 +1718,7 @@ const getWorkflowStepUserForm = async (run, trigger, step, req) => {
   const form = new Form({
     action: `/actions/fill-workflow-form/${run.id}`,
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
+    onSubmit: "press_store_button(this)",
     blurb,
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
     fields: await run.userFormFields(step),
@@ -1790,8 +1791,8 @@ router.post(
       if (req.xhr) {
         const retDirs = await run.popReturnDirectives();
 
-        if (runres?.popup) retDirs.popup = runres.popup;
-        res.json({ success: "ok", ...retDirs });
+        //if (runres?.popup) retDirs.popup = runres.popup;
+        res.json({ success: "ok", ...runres, ...retDirs });
       } else {
         if (run.context.goto) res.redirect(run.context.goto);
         else res.redirect("/");

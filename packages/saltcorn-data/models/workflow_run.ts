@@ -563,6 +563,23 @@ class WorkflowRun {
             status: "Waiting",
             wait_info: {},
           });
+          if (step.configuration.immediately_bg) {
+            const runNow = async () => {
+              return await this.run({
+                user,
+                interactive: false,
+                noNotifications,
+                api_call: false,
+                trace,
+                req,
+              });
+            };
+            if (trace) this.createTrace(step.name, user);
+            setTimeout(() => {
+              runNow().catch((e) => console.error("Workflow bg error", e));
+            }, (step.configuration.wait_delay || 0) * 1000);
+            break;
+          }
           state.waitingWorkflows = true;
           if (trace) this.createTrace(step.name, user);
           break;

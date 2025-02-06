@@ -343,7 +343,7 @@ class WorkflowStep {
       "Display the output of running a Saltcorn view. Pause workflow until the message is read.";
     actionExplainers.WaitUntil = "Pause until a time in the future";
     actionExplainers.WaitNextTick =
-      "Pause until the next scheduler invocation (at most 5 minutes)";
+      "Decouple workflow from invocation. Pause until the next scheduler invocation (at most 5 minutes), or run in background immediately.";
     actionExplainers.UserForm =
       "Ask a user one or more questions, pause until they are answered";
     actionExplainers.ForLoop =
@@ -510,6 +510,20 @@ class WorkflowStep {
         "The contents are markdown formatted and should be rendered to HTML",
       type: "Bool",
       showIf: { wf_action_name: "Output" },
+    });
+    actionConfigFields.push({
+      label: "Run immedately",
+      name: "immediately_bg",
+      sublabel:
+        "Run workflow immediately in background, instead of waiting for next scheduler run.",
+      type: "Bool",
+      showIf: { wf_action_name: "WaitNextTick" },
+    });
+    actionConfigFields.push({
+      label: "Delay (s)",
+      name: "wait_delay",
+      type: "Float",
+      showIf: { wf_action_name: "WaitNextTick", immediately_bg: true },
     });
     actionConfigFields.push({
       label: "Table",
