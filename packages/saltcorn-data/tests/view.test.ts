@@ -135,7 +135,7 @@ describe("Misc view tests", () => {
     const link_views = await View.find({
       table_id: table.id,
     });
-    expect(link_views.length).toBe(10);
+    expect(link_views.length).toBe(11);
   });
   it("should find where", async () => {
     const link_views = await View.find_all_views_where(
