@@ -1134,3 +1134,41 @@ describe("legacy relations with relation path", () => {
       .expect(toInclude("Delete"));
   });
 });
+
+describe("identical fields", () => {
+  it("runs a post with an author array ", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/view/authoredit_identicals")
+      .set("Cookie", loginCookie)
+      .send("author=Charles&author=Charles")
+      .expect(toRedirect("/view/authorlist"));
+    const table = Table.findOne({ name: "books" });
+    const rows = await table.getRows();
+    expect(rows).toContainEqual({
+      id: 3,
+      author: "Charles",
+      pages: 678,
+      publisher: null,
+    });
+  });
+
+  it("runs a post with only one author", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/view/authoredit_identicals")
+      .set("Cookie", loginCookie)
+      .send("author=Fjodor")
+      .expect(toRedirect("/view/authorlist"));
+    const table = Table.findOne({ name: "books" });
+    const rows = await table.getRows();
+    expect(rows).toContainEqual({
+      id: 4,
+      author: "Fjodor",
+      pages: 678,
+      publisher: null,
+    });
+  });
+});

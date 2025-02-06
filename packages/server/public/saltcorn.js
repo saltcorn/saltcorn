@@ -34,10 +34,7 @@ function updateQueryStringParameter(uri1, key, value) {
     uri = uris[0];
   }
 
-  var re = new RegExp(
-    "([?&])" + escapeRegExp(key) + "=.*?(&|$)",
-    "i"
-  );
+  var re = new RegExp("([?&])" + escapeRegExp(key) + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (uri.match(re)) {
     if (Array.isArray(value)) {
@@ -1322,6 +1319,34 @@ function check_delete_unsaved(tablename, script_tag) {
           "CSRF-Token": _sc_globalCsrf,
         },
       });
+  }
+}
+
+function handle_identical_fields(event) {
+  let form = null;
+  if (event.currentTarget.tagName === "FORM") form = event.currentTarget;
+  else form = $(event.currentTarget).closest("form")[0];
+  if (!form) {
+    console.warn("No form found");
+  } else {
+    const name = event.target.name;
+    const newValue = event.target.value;
+    const tagName = event.target.tagName;
+    const isRadio = event.target.type === "radio";
+    if (tagName === "SELECT" || isRadio) {
+      form.querySelectorAll(`select[name="${name}"]`).forEach((select) => {
+        $(select).val(newValue); //.trigger("change");
+      });
+      form
+        .querySelectorAll(`input[type="radio"][name="${name}"]`)
+        .forEach((input) => {
+          input.checked = input.value === newValue;
+        });
+    } else if (tagName === "INPUT") {
+      form.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+        input.value = newValue;
+      });
+    }
   }
 }
 
