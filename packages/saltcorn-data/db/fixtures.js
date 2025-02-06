@@ -155,6 +155,30 @@ module.exports =
       min_role: 100,
     });
 
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_identicals",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [
+          { type: "Field", field_name: "author" },
+          { type: "Field", field_name: "author" },
+        ],
+
+        layout: {
+          above: [
+            { type: "field", fieldview: "edit", field_name: "author" },
+            { type: "field", fieldview: "edit", field_name: "author" },
+          ],
+        },
+        fixed: {
+          pages: 678,
+        },
+        view_when_done: "authorlist",
+      },
+      min_role: 100,
+    });
+
     const authoreditCfg = {
       columns: [
         {
