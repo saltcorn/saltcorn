@@ -1789,8 +1789,8 @@ router.post(
       if (req.xhr) {
         const retDirs = await run.popReturnDirectives();
 
-        if (runres?.popup) retDirs.popup = runres.popup;
-        res.json({ success: "ok", ...retDirs });
+        //if (runres?.popup) retDirs.popup = runres.popup;
+        res.json({ success: "ok", ...runres, ...retDirs });
       } else {
         if (run.context.goto) res.redirect(run.context.goto);
         else res.redirect("/");
