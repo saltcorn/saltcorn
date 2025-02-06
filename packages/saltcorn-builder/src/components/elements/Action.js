@@ -324,7 +324,7 @@ const ActionSettings = () => {
             checked={is_submit_action}
             onChange={setAProp("is_submit_action", { checked: true })}
           />
-          <label className="form-check-label">This is submit action</label>
+          <label className="form-check-label">This is the submit action</label>
         </div>
       ) : null}
       {name === "Multi-step action" ? (
