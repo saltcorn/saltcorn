@@ -929,10 +929,13 @@ function initialize_page() {
       Function(val, "return 1");
     } catch (error) {
       target.after(`<small class="text-danger font-monospace d-block expr-error">
-      ${error.message}
+      Invalid identifier
     </small>`);
     }
   };
+  $(".validate-identifier").attr("spellcheck", false);
+  $(".validate-expression").attr("spellcheck", false);
+
   $(".validate-identifier").bind("input", function (e) {
     const target = $(e.target);
     validate_identifier_elem(target);
@@ -950,10 +953,11 @@ function initialize_page() {
     }
     if (!val) return;
     try {
-      Function("return " + val);
+      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      AsyncFunction("return " + val);
     } catch (error) {
       target.after(`<small class="text-danger font-monospace d-block expr-error">
-      Invalid identifier
+      ${error.message}
     </small>`);
     }
   };
