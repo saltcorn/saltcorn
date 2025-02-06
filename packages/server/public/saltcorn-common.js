@@ -953,7 +953,9 @@ function initialize_page() {
     }
     if (!val) return;
     try {
-      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const AsyncFunction = Object.getPrototypeOf(
+        async function () {}
+      ).constructor;
       AsyncFunction("return " + val);
     } catch (error) {
       target.after(`<small class="text-danger font-monospace d-block expr-error">
