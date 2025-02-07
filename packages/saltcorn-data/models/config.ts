@@ -1357,7 +1357,7 @@ const get_latest_npm_version = async (
 ): Promise<string> => {
   const { getState } = require("../db/state");
   const { isStale } = (await import("../utils")).default;
-  const latestVersion = require("latest-version");
+  const fetch = require("node-fetch");
   const stored = getState().getConfig("latest_npm_version", {});
 
   if (stored[pkg] && !isStale(stored[pkg].time, 6)) {
@@ -1367,7 +1367,15 @@ const get_latest_npm_version = async (
   const guess = stored[pkg]?.version || ""; //default return
   try {
     const fetch_it = async () => {
-      const latest = await latestVersion(pkg);
+      const response = await fetch(`https://registry.npmjs.org/${pkg}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (!data?.versions || data.versions.length === 0)
+        throw new Error("No versions found");
+      const keys = Object.keys(data.versions);
+      const latest = keys[keys.length - 1];
       const stored1 = getState().getConfigCopy("latest_npm_version", {});
       await getState().setConfig("latest_npm_version", {
         ...stored1,
