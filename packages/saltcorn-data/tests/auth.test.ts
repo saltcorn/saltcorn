@@ -630,6 +630,11 @@ describe("User group no spaces", () => {
     expect(uobj.UserWorksOnProject_by_user).toEqual([
       { id: 1, project: 1, user: 3 },
     ]);
+    const owned_rows = await projs.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows.length).toBe(1)
 
     const myproj = await projs.getRow({ id: projid });
     assertIsSet(myproj);

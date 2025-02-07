@@ -3459,6 +3459,8 @@ ${rejectDetails}`,
         }
       }
     }
+
+    //TODO user groups
     if (wh.eq) return {};
     return wh;
   }
@@ -3496,7 +3498,12 @@ ${rejectDetails}`,
     } else if (role && role > this.min_role_read && this.ownership_formula) {
       if (!opts.where) opts.where = {};
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
-      mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
+      try {
+        mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
+      } catch (e) {
+        //ignore, ownership formula is too difficult to merge with where
+        // TODO user groups
+      }
     }
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
