@@ -3445,7 +3445,22 @@ ${rejectDetails}`,
 
   ownership_formula_where(user: Row) {
     if (!this.ownership_formula) return {};
-    else return jsexprToWhere(this.ownership_formula, { user }, this.fields);
+    const wh = jsexprToWhere(this.ownership_formula, { user }, this.fields);
+    if (wh.eq && Array.isArray(wh.eq)) {
+      let arr = wh.eq as any[];
+      for (let index = 0; index < arr.length; index++) {
+        const element = arr[index];
+        if (typeof element === "symbol") {
+          const field = this.getField((element as any).description!);
+          if (field) {
+            wh[field!.name] = arr[arr.length - index - 1];
+            delete wh.eq;
+          }
+        }
+      }
+    }
+    if (wh.eq) return {};
+    return wh;
   }
 
   /**
@@ -3481,6 +3496,8 @@ ${rejectDetails}`,
     } else if (role && role > this.min_role_read && this.ownership_formula) {
       if (!opts.where) opts.where = {};
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
+      console.log(this.ownership_formula);
+      console.log(this.ownership_formula_where(forUser));
 
       mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
     }
