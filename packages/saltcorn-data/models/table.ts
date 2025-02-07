@@ -903,6 +903,18 @@ class Table implements AbstractTable {
       mergeIntoWhere(where, {
         [owner_field.name]: user.id,
       });
+    } else if (
+      user &&
+      role < 100 &&
+      role > min_role &&
+      this.ownership_formula
+    ) {
+      try {
+        mergeIntoWhere(where, this.ownership_formula_where(user));
+      } catch (e) {
+        //ignore, ownership formula is too difficult to merge with where
+        // TODO user groups
+      }
     }
   }
 
