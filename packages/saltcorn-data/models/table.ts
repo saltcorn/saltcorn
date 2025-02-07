@@ -1270,7 +1270,9 @@ class Table implements AbstractTable {
       return res.rows.map((r: Row) => r[fieldnm]);
     } else {
       const res = await db.query(
-        `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name} order by "${db.sqlsanitize(fieldnm)}"`
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${
+          this.sql_name
+        } order by "${db.sqlsanitize(fieldnm)}"`
       );
       return res.rows.map((r: Row) => r[fieldnm]);
     }
