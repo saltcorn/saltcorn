@@ -50,6 +50,7 @@ const {
   freeVariables,
   add_free_variables_to_joinfields,
   removeComments,
+  jsexprToWhere,
 } = expression;
 
 import type TableConstraint from "./table_constraints";
@@ -902,6 +903,18 @@ class Table implements AbstractTable {
       mergeIntoWhere(where, {
         [owner_field.name]: user.id,
       });
+    } else if (
+      user &&
+      role < 100 &&
+      role > min_role &&
+      this.ownership_formula
+    ) {
+      try {
+        mergeIntoWhere(where, this.ownership_formula_where(user));
+      } catch (e) {
+        //ignore, ownership formula is too difficult to merge with where
+        // TODO user groups
+      }
     }
   }
 
@@ -1270,7 +1283,9 @@ class Table implements AbstractTable {
       return res.rows.map((r: Row) => r[fieldnm]);
     } else {
       const res = await db.query(
-        `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name} order by "${db.sqlsanitize(fieldnm)}"`
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${
+          this.sql_name
+        } order by "${db.sqlsanitize(fieldnm)}"`
       );
       return res.rows.map((r: Row) => r[fieldnm]);
     }
@@ -3440,6 +3455,28 @@ ${rejectDetails}`,
     return res.rows[0];
   }
 
+  ownership_formula_where(user: Row) {
+    if (!this.ownership_formula) return {};
+    const wh = jsexprToWhere(this.ownership_formula, { user }, this.fields);
+    if (wh.eq && Array.isArray(wh.eq)) {
+      let arr = wh.eq as any[];
+      for (let index = 0; index < arr.length; index++) {
+        const element = arr[index];
+        if (typeof element === "symbol") {
+          const field = this.getField((element as any).description!);
+          if (field) {
+            wh[field!.name] = arr[arr.length - index - 1];
+            delete wh.eq;
+          }
+        }
+      }
+    }
+
+    //TODO user groups
+    if (wh.eq) return {};
+    return wh;
+  }
+
   /**
    *
    * @param opts
@@ -3470,6 +3507,15 @@ ${rejectDetails}`,
       mergeIntoWhere(opts.where, {
         [owner_field.name]: (forUser as AbstractUser).id,
       });
+    } else if (role && role > this.min_role_read && this.ownership_formula) {
+      if (!opts.where) opts.where = {};
+      if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
+      try {
+        mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
+      } catch (e) {
+        //ignore, ownership formula is too difficult to merge with where
+        // TODO user groups
+      }
     }
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
