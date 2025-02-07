@@ -333,12 +333,16 @@ describe("Table with row ownership formula", () => {
     await persons.deleteRows({ lastname: "Tim" }, owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
 
-    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({ owner: 1 });
-    expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({ owner: 3 });
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      owner: 1,
+    });
+    expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({
+      owner: 3,
+    });
     await persons.delete();
   });
 });
-describe("Table with row ownership joined formula", () => {
+describe("Table with row ownership joined formula nocalc", () => {
   it("should create and delete table", async () => {
     const department = await Table.create("_Department");
     await Field.create({
@@ -382,6 +386,17 @@ describe("Table with row ownership joined formula", () => {
     await persons.update({
       ownership_formula: "department?.manager===user.id",
     });
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      department: {
+        inSelect: {
+          field: "id",
+          table: "_Department",
+          tenant: "public",
+          where: { manager: 1 },
+        },
+      },
+    });
+
     await department.insertRow({ name: "Accounting", manager: 1 });
     await department.insertRow({ name: "HR", manager: 2 });
 
