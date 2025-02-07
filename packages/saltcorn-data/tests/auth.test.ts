@@ -341,6 +341,65 @@ describe("Table with row ownership formula", () => {
     });
     await persons.delete();
   });
+  it("should create and delete table with reversed formula", async () => {
+    const persons = await Table.create("TableOwnedFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+
+    const own_opts = await Table.findOne({
+      name: "TableOwnedFml",
+    })?.ownership_options();
+    expect(own_opts?.length).toBe(1);
+    expect(own_opts?.[0].label).toBe("owner");
+    expect(own_opts?.[0].value).toBe(`${owner.id}`);
+    await persons.update({ ownership_formula: "owner===user.id" });
+
+    await persons.insertRow({ lastname: "Joe", age: 12 });
+    await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
+    await test_person_table(persons);
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      { role_id: 100 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.deleteRows({ lastname: "Tim" }, non_owner_user);
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.deleteRows({ lastname: "Tim" }, owner_user);
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      owner: 1,
+    });
+    expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({
+      owner: 3,
+    });
+
+    await persons.delete();
+  });
 });
 describe("Table with row ownership joined formula nocalc", () => {
   it("should create and delete table", async () => {
