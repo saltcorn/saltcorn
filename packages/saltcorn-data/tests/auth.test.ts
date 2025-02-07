@@ -333,6 +333,8 @@ describe("Table with row ownership formula", () => {
     await persons.deleteRows({ lastname: "Tim" }, owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
 
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({ owner: 1 });
+    expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({ owner: 3 });
     await persons.delete();
   });
 });

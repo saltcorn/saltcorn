@@ -50,6 +50,7 @@ const {
   freeVariables,
   add_free_variables_to_joinfields,
   removeComments,
+  jsexprToWhere,
 } = expression;
 
 import type TableConstraint from "./table_constraints";
@@ -3442,6 +3443,11 @@ ${rejectDetails}`,
     return res.rows[0];
   }
 
+  ownership_formula_where(user: Row) {
+    if (!this.ownership_formula) return {};
+    else return jsexprToWhere(this.ownership_formula, { user }, this.fields);
+  }
+
   /**
    *
    * @param opts
@@ -3472,6 +3478,11 @@ ${rejectDetails}`,
       mergeIntoWhere(opts.where, {
         [owner_field.name]: (forUser as AbstractUser).id,
       });
+    } else if (role && role > this.min_role_read && this.ownership_formula) {
+      if (!opts.where) opts.where = {};
+      if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
+
+      mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
     }
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
