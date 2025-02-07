@@ -45,6 +45,7 @@ type ExtendedNode = {
   property?: ExtendedNode;
   value?: ExtendedNode;
   key?: ExtendedNode;
+  expression?: ExtendedNode;
   properties?: any;
 } & Node;
 
@@ -313,6 +314,9 @@ function jsexprToWhere(
         NewExpression({ callee }: any) {
           if (callee.name === "Date") return new Date();
           throw new Error("Unknown new expression");
+        },
+        ChainExpression() {
+          return compile(node.expression!);
         },
         MemberExpression() {
           const cleft = compile(node.object!);
