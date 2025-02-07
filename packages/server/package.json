@@ -77,11 +77,12 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "jest --runInBand",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js ./tests --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "jest": {
+    "transform": {},
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "/node_modules/",
