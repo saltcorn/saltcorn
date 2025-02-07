@@ -182,7 +182,8 @@ const subSelectWhere =
       };
     }
   ): string => {
-    const tenantPrefix = v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
+    const tenantPrefix =
+      !phs.is_sqlite && v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
     if (v.inSelect.through && v.inSelect.valField) {
       const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
       const wheres = whereObj ? Object.entries(whereObj) : [];
