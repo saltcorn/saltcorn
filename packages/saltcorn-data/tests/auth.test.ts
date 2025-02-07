@@ -481,6 +481,85 @@ describe("Table with row ownership joined formula nocalc", () => {
     await persons.delete();
     await department.delete();
   });
+  it("should create and delete table reversed formula", async () => {
+    const department = await Table.create("_Department");
+    await Field.create({
+      table: department,
+      name: "name",
+      type: "String",
+    });
+    const manager = await Field.create({
+      table: department,
+      name: "manager",
+      type: "Key to users",
+    });
+    await department.update({ ownership_field_id: manager.id });
+
+    const persons = await Table.create("TableOwnedJnFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    const deptkey = await Field.create({
+      table: persons,
+      name: "department",
+      type: "Key to _Department",
+    });
+
+    const own_opts = await Table.findOne({
+      name: "TableOwnedJnFml",
+    })?.ownership_options();
+    expect(own_opts?.length).toBe(1);
+    //expect(own_opts).toBe(1);
+    expect(own_opts?.[0].label).toBe("Inherit department");
+    expect(own_opts?.[0].value).toBe(
+      "Fml:department?.manager===user.id /* Inherit department */"
+    );
+    await persons.update({
+      ownership_formula: "user.id===department?.manager",
+    });
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      department: {
+        inSelect: {
+          field: "id",
+          table: "_Department",
+          tenant: "public",
+          where: { manager: 1 },
+        },
+      },
+    });
+
+    await department.insertRow({ name: "Accounting", manager: 1 });
+    await department.insertRow({ name: "HR", manager: 2 });
+
+    await persons.insertRow({ lastname: "Joe", age: 12, department: 2 });
+    await persons.insertRow({ lastname: "Sam", age: 13, department: 1 });
+    await test_person_table(persons);
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      { role_id: 100 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.delete();
+    await department.delete();
+  });
 });
 describe("Table with row ownership joined formula and stored calc", () => {
   it("should create and delete table", async () => {
@@ -634,7 +713,7 @@ describe("User group no spaces", () => {
       where: {},
       forUser: uobj,
     });
-    expect(owned_rows.length).toBe(1)
+    expect(owned_rows.length).toBe(1);
 
     const myproj = await projs.getRow({ id: projid });
     assertIsSet(myproj);
@@ -678,6 +757,11 @@ describe("User group no spaces", () => {
     await tasks.update({
       ownership_formula: task_opts?.[0].value.replace("Fml:", ""),
     });
+    const owned_rows1 = await tasks.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows1.length).toBe(0);
 
     const subtasks = await Table.create("subtasks");
 
@@ -697,6 +781,14 @@ describe("User group no spaces", () => {
           "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(task?.project) /* Inherit task */",
       },
     ]);
+    await subtasks.update({
+      ownership_formula: subtask_opts?.[0].value.replace("Fml:", ""),
+    });
+    const owned_rows2 = await subtasks.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows2.length).toBe(0);
 
     await subtasks.delete();
     await tasks.delete();
@@ -758,6 +850,11 @@ describe("User group with spaces in name", () => {
     const myproj = await projs.getRow({ id: projid });
     assertIsSet(myproj);
     expect(projs.is_owner(uobj, myproj)).toBe(true);
+    const owned_rows = await projs.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows.length).toBe(1);
 
     const projid1 = await projects.insertRow({ name: "Take out trash" });
     const staff = await User.findOne({ role_id: 40 });
