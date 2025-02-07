@@ -3496,9 +3496,6 @@ ${rejectDetails}`,
     } else if (role && role > this.min_role_read && this.ownership_formula) {
       if (!opts.where) opts.where = {};
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
-      console.log(this.ownership_formula);
-      console.log(this.ownership_formula_where(forUser));
-
       mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
     }
 
