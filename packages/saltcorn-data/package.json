@@ -1,11 +1,11 @@
 {
   "name": "@saltcorn/data",
-  "version": "1.1.2-beta.7",
+  "version": "1.1.2-beta.8",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest tests --runInBand",
-    "remote-queries-test": "REMOTE_QUERIES=true jest tests/exact_views.test.ts",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js ./tests --runInBand",
+    "remote-queries-test": "REMOTE_QUERIES=true node --experimental-vm-modules ../../node_modules/jest/bin/jest.js tests/exact_views.test.ts",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\"",
     "build": "webpack --mode development"
@@ -37,19 +37,19 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "1.1.2-beta.7",
-    "@saltcorn/sqlite": "1.1.2-beta.7"
+    "@saltcorn/postgres": "1.1.2-beta.8",
+    "@saltcorn/sqlite": "1.1.2-beta.8"
   },
   "dependencies": {
-    "@saltcorn/types": "1.1.2-beta.7",
-    "@saltcorn/markup": "1.1.2-beta.7",
-    "@saltcorn/common-code": "1.1.2-beta.7",
-    "@saltcorn/db-common": "1.1.2-beta.7",
-    "@saltcorn/sqlite-mobile": "1.1.2-beta.7",
+    "@saltcorn/types": "1.1.2-beta.8",
+    "@saltcorn/markup": "1.1.2-beta.8",
+    "@saltcorn/common-code": "1.1.2-beta.8",
+    "@saltcorn/db-common": "1.1.2-beta.8",
+    "@saltcorn/sqlite-mobile": "1.1.2-beta.8",
     "acorn": "^8.14.0",
     "assert": "^2.1.0",
     "astring": "^1.9.0",
-    "axios": "^0.27.2",
+    "axios": "^0.29.0",
     "bcryptjs": "^2.4.3",
     "constants-browserify": "^1.0.0",
     "contractis": "^0.1.0",
@@ -62,7 +62,6 @@
     "fs-extended-attributes": "1.0.1",
     "https-proxy-agent": "^7.0.6",
     "i18n": "^0.15.1",
-    "latest-version": "^5.1.0",
     "live-plugin-manager": "^1.0.0",
     "markdown-it": "^14.1.0",
     "mime-types": "^2.1.35",
@@ -88,7 +87,7 @@
     "https-browserify": "1.0.0",
     "browserify-zlib": "0.2.0",
     "nodemailer": "^6.10.0",
-    "mjml": "4.14.0",
+    "mjml": "5.0.0-alpha.6",
     "underscore": "^1.13.1",
     "unidecode": "1.1.0"
   },
@@ -102,7 +101,7 @@
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.0",
     "@types/mime-types": "2.1.1",
-    "@types/mjml": "4.7.0",
+    "@types/mjml": "4.7.4",
     "@types/node": "^18.11.9",
     "@types/node-fetch": "2.5.12",
     "@types/nodemailer": "^6.4.4",
@@ -119,6 +118,7 @@
     "webpack-cli": "6.0.1"
   },
   "jest": {
+    "transform": {},
     "preset": "ts-jest",
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [

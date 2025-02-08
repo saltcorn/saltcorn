@@ -1,12 +1,12 @@
 {
   "name": "@saltcorn/random-tests",
-  "version": "1.1.2-beta.7",
+  "version": "1.1.2-beta.8",
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/admin-models": "1.1.2-beta.7",
-    "@saltcorn/data": "1.1.2-beta.7",
-    "@saltcorn/server": "1.1.2-beta.7"
+    "@saltcorn/admin-models": "1.1.2-beta.8",
+    "@saltcorn/data": "1.1.2-beta.8",
+    "@saltcorn/server": "1.1.2-beta.8"
   },
   "devDependencies": {
     "chaos-guinea-pig": "0.2.0",
@@ -14,12 +14,13 @@
     "supertest": "7.0.0"
   },
   "scripts": {
-    "test": "jest --runInBand",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {
+    "transform": {},
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "/node_modules/",

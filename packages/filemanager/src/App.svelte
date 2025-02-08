@@ -331,6 +331,7 @@
     on:drop={handleDrop}
     ondragover="return false"
     class="row"
+    role="region"
   >
     <div class="col-8">
       <div>

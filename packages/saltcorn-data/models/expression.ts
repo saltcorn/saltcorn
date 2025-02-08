@@ -45,6 +45,7 @@ type ExtendedNode = {
   property?: ExtendedNode;
   value?: ExtendedNode;
   key?: ExtendedNode;
+  expression?: ExtendedNode;
   properties?: any;
 } & Node;
 
@@ -109,7 +110,7 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     // @ts-ignore
     return compile(ast);
   } catch (e: any) {
-    console.error(e);
+    //console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );
@@ -314,6 +315,9 @@ function jsexprToWhere(
           if (callee.name === "Date") return new Date();
           throw new Error("Unknown new expression");
         },
+        ChainExpression() {
+          return compile(node.expression!);
+        },
         MemberExpression() {
           const cleft = compile(node.object!);
           const cleftName =
@@ -375,7 +379,7 @@ function jsexprToWhere(
     // @ts-ignore
     return compile(ast);
   } catch (e: any) {
-    console.error(e);
+    //console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );
