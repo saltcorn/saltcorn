@@ -1270,7 +1270,9 @@ class Table implements AbstractTable {
       return res.rows.map((r: Row) => r[fieldnm]);
     } else {
       const res = await db.query(
-        `select distinct "${db.sqlsanitize(fieldnm)}" from ${this.sql_name} order by "${db.sqlsanitize(fieldnm)}"`
+        `select distinct "${db.sqlsanitize(fieldnm)}" from ${
+          this.sql_name
+        } order by "${db.sqlsanitize(fieldnm)}"`
       );
       return res.rows.map((r: Row) => r[fieldnm]);
     }
@@ -3015,6 +3017,14 @@ ${rejectDetails}`,
             } catch (e) {}
         });
     return v1;
+  }
+
+  async import_json_history_file(filePath: string) {
+    const fileContents = (await readFile(filePath)).toString();
+    const rows = JSON.parse(fileContents);
+    for (const row of rows) {
+      //await this.insert_history_row(row);
+    }
   }
 
   /**

@@ -511,13 +511,8 @@ const restore_tables = async (
         "tables",
         sanitiseTableName(table.name) + "__history.json"
       );
-      if (existsSync(fnm_hist_json)) {
-        const fileContents = (await readFile(fnm_hist_json)).toString();
-        const rows = JSON.parse(fileContents);
-        for (const row of rows) {
-          await table.insert_history_row(row);
-        }
-      }
+      if (existsSync(fnm_hist_json))
+        await table.import_json_history_file(fnm_hist_json);
     }
   }
   for (const table of tables) {
