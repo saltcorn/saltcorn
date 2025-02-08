@@ -716,6 +716,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         action_icon: node.props.action_icon,
         action_title: node.props.action_title,
         action_bgcol: node.props.action_bgcol,
+        spinner: node.props.spinner,
         action_bordercol: node.props.action_bordercol,
         action_textcol: node.props.action_textcol,
         nsteps: node.props.nsteps,
