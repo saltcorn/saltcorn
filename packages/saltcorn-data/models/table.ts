@@ -86,6 +86,7 @@ import type {
 } from "@saltcorn/types/base_types";
 import { get_formula_examples } from "./internal/table_helper";
 import { getAggAndField, process_aggregations } from "./internal/query";
+import async_json_stream from "./internal/async_json_stream";
 
 /**
  * Transponce Objects
@@ -3020,11 +3021,9 @@ ${rejectDetails}`,
   }
 
   async import_json_history_file(filePath: string) {
-    const fileContents = (await readFile(filePath)).toString();
-    const rows = JSON.parse(fileContents);
-    for (const row of rows) {
+    return await async_json_stream(filePath, async (row) => {
       await this.insert_history_row(row);
-    }
+    });
   }
 
   /**
