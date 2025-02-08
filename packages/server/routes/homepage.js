@@ -262,7 +262,7 @@ const actionsTab = async (req, triggers) => {
       ? p(req.__("No triggers"))
       : mkTable(
           [
-            { label: req.__("Name"), key: "name" },
+            { label: req.__("Name"), key: tr=>a({href: `actions/configure/${tr.id}`},tr.name) },
             { label: req.__("Action"), key: "action" },
             {
               label: req.__("Table or Channel"),
