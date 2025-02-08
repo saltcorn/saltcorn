@@ -4,7 +4,7 @@
   "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest tests --runInBand",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js ./tests --runInBand",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },
@@ -60,6 +60,7 @@
     "typescript": "^5.7.3"
   },
   "jest": {
+    "transform": {},
     "preset": "ts-jest",
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [

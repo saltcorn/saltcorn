@@ -14,12 +14,13 @@
     "supertest": "7.0.0"
   },
   "scripts": {
-    "test": "jest --runInBand",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "repository": "github:saltcorn/saltcorn",
   "jest": {
+    "transform": {},
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
       "/node_modules/",
