@@ -1587,10 +1587,10 @@ function press_store_button(clicked, keepOld, disable) {
     $(btn).data("old-text", oldText);
   }
   const width = $(btn).width();
-  $(btn)
-    .html('<i class="fas fa-spinner fa-spin"></i>')
-    .width(width)
-    .prop("disabled", true);
+  $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+  setTimeout(() => {
+    $(btn).prop("disabled", true);
+  }, 50);
 }
 
 function restore_old_button(btnId) {
