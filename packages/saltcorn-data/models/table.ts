@@ -3023,7 +3023,7 @@ ${rejectDetails}`,
     const fileContents = (await readFile(filePath)).toString();
     const rows = JSON.parse(fileContents);
     for (const row of rows) {
-      //await this.insert_history_row(row);
+      await this.insert_history_row(row);
     }
   }
 
