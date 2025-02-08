@@ -8,7 +8,7 @@ const fs = require("fs");
 
 type AsyncConsumer<T> = (subString: T) => Promise<void>;
 
-export async function async_json_stream<T>(
+export default async function async_json_stream<T>(
   filename: string,
   asyncF: AsyncConsumer<T>
 ): Promise<void> {
