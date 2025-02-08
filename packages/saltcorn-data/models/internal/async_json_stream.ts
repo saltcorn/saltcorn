@@ -5,6 +5,7 @@ const { Writable } = require("stream");
 const { chain } = require("stream-chain");
 const { parser } = require("stream-json");
 const fs = require("fs");
+const { streamArray } = require("stream-json/streamers/StreamArray");
 
 type AsyncConsumer<T> = (subString: T) => Promise<void>;
 
@@ -17,16 +18,21 @@ export default async function async_json_stream<T>(
       super({ ...options, objectMode: true });
     }
 
-    write(chunk: any, encoding: any, callback: any) {
+    _write(chunk: any, encoding: any, callback: any) {
       // this is the stuff you need:
-      asyncF(chunk)
+      asyncF(chunk.value)
         .then(() => callback(null))
         .catch((error) => callback(error));
     }
   }
   const writerToDB = new WriteToDB({});
 
-  const pipeline = chain([fs.createReadStream(filename), parser(), writerToDB]);
+  const pipeline = chain([
+    fs.createReadStream(filename),
+    parser(),
+    streamArray(),
+    writerToDB,
+  ]);
   return await new Promise((resolve, reject) => {
     pipeline.on("end", () => {
       resolve();
