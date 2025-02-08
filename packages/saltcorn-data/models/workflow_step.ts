@@ -132,6 +132,12 @@ class WorkflowStep {
           `update ${schema}_sc_workflow_steps SET next_step = $1 WHERE trigger_id = $2 and next_step = $3`,
           [this.next_step, this.trigger_id, this.name]
         );
+      else if (!this.next_step) {
+        await db.query(
+          `update ${schema}_sc_workflow_steps SET next_step = null WHERE trigger_id = $1 and next_step = $2`,
+          [this.trigger_id, this.name]
+        );
+      }
     }
     await db.query(`delete FROM ${schema}_sc_workflow_steps WHERE id = $1`, [
       this.id,
