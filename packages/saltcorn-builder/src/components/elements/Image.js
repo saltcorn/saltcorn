@@ -18,7 +18,7 @@ import {
   OrFormula,
   setAPropGen,
   buildOptions,
-  SettingsRow
+  SettingsRow,
 } from "./utils";
 
 export /**
@@ -39,21 +39,19 @@ const Image = ({ fileid, block, srctype, url, alt, style }) => {
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const theurl = srctype === "File" ? `/files/serve/${fileid}` : url;
-  return (
-    <span {...blockProps(block)} ref={(dom) => connect(drag(dom))}>
-      {fileid === 0 ? (
-        "No images Available"
-      ) : (
-        <img
-          className={`${style && style.width ? "" : "w-100"} image-widget ${
-            selected ? "selected-node" : ""
-          }`}
-          style={reactifyStyles(style || {})}
-          src={theurl}
-          alt={alt}
-        ></img>
-      )}
-    </span>
+  return fileid === 0 ? (
+    <span>No images Available</span>
+  ) : (
+    <img
+      {...blockProps(block)}
+      ref={(dom) => connect(drag(dom))}
+      className={`${style && style.width ? "" : "w-100"} image-widget ${
+        selected ? "selected-node" : ""
+      }`}
+      style={reactifyStyles(style || {})}
+      src={theurl}
+      alt={alt}
+    ></img>
   );
 };
 
