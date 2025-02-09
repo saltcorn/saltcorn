@@ -993,6 +993,8 @@ const ConfigField = ({
         className={`field-${field?.name} form-control`}
         value={value || ""}
         step={0.01}
+        max={or_if_undef(field.attributes.max, undefined)}
+        min={or_if_undef(field.attributes.min, undefined)}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),

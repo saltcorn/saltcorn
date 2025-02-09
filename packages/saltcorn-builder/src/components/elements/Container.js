@@ -342,6 +342,17 @@ const ContainerSettings = () => {
           />
           <SettingsRow
             field={{
+              name: "opacity",
+              label: "Opacity",
+              type: "Float",
+              attributes: { min: 0, max: 1 },
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
+          <SettingsRow
+            field={{
               name: "position",
               label: "Position",
               type: "select",
@@ -863,7 +874,7 @@ const ContainerSettings = () => {
               name: "animateName",
               label: "Animation",
               type: "select",
-              options: ["None", ...options.keyframes || []],
+              options: ["None", ...(options.keyframes || [])],
             }}
             node={node}
             setProp={setProp}
@@ -882,8 +893,12 @@ const ContainerSettings = () => {
             node={node}
             setProp={setProp}
           />
-           <SettingsRow
-            field={{ name: "animateInitialHide", label: "Initially hidden", type: "Bool" }}
+          <SettingsRow
+            field={{
+              name: "animateInitialHide",
+              label: "Initially hidden",
+              type: "Bool",
+            }}
             node={node}
             setProp={setProp}
           />
