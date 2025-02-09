@@ -23,6 +23,12 @@ const npmMocks = {
 };
 
 const saltcornMocks = {
+  "./internal/async_json_stream": join(
+    mocksDir,
+    "models",
+    "internal",
+    "async_json_stream"
+  ),
   "./pack": join(mocksDir, "models", "pack"),
   "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),

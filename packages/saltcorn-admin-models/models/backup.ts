@@ -366,9 +366,16 @@ function executableIsAvailable(name: string) {
  */
 const extract = async (fnm: string, dir: string): Promise<void> => {
   const backup_with_system_zip = executableIsAvailable("unzip");
+  const state = getState();
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
       var subprocess = spawn("unzip", [File.normalise(fnm), "-d", dir]);
+      subprocess.stdout.on("data", (data: any) => {
+        state.log(6, data.toString());
+      });
+      subprocess.stderr.on("data", (data: any) => {
+        state.log(1, data.toString());
+      });
       subprocess.on("close", function (exitCode: any) {
         if (exitCode != 0) reject(new Error("unzip failed"));
         else resolve(undefined);
@@ -504,13 +511,8 @@ const restore_tables = async (
         "tables",
         sanitiseTableName(table.name) + "__history.json"
       );
-      if (existsSync(fnm_hist_json)) {
-        const fileContents = (await readFile(fnm_hist_json)).toString();
-        const rows = JSON.parse(fileContents);
-        for (const row of rows) {
-          await table.insert_history_row(row);
-        }
-      }
+      if (existsSync(fnm_hist_json))
+        await table.import_json_history_file(fnm_hist_json);
     }
   }
   for (const table of tables) {
@@ -553,8 +555,11 @@ const restore = async (
   state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
+
   //unzip
+  state.log(6, `Unzipping ${fnm} to ${tmpDir}`);
   await extract(fnm, tmpDir.path);
+  state.log(6, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
@@ -573,6 +578,7 @@ const restore = async (
   }
   let err;
   //install pack
+  state.log(6, `Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );
@@ -585,13 +591,18 @@ const restore = async (
     `;
   }
   //config
+  state.log(6, `Restoring config`);
   await restore_config(basePath);
+
+  state.log(6, `Restoring pack`);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
+  state.log(6, `Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
+  state.log(6, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 
