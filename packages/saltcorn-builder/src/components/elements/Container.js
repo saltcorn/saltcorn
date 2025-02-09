@@ -36,6 +36,7 @@ import {
   AlignBottom,
   SlashCircle,
   Image,
+  Images,
   Rainbow,
   Palette,
   EyeFill,
@@ -194,6 +195,7 @@ const ContainerSettings = () => {
     bgColor: node.data.props.bgColor,
     isFormula: node.data.props.isFormula,
     bgFileId: node.data.props.bgFileId,
+    bgField: node.data.props.bgField,
     imageSize: node.data.props.imageSize,
     htmlElement: node.data.props.htmlElement,
     vAlign: node.data.props.vAlign,
@@ -260,6 +262,7 @@ const ContainerSettings = () => {
     click_action,
     style,
     transform,
+    bgField,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -473,6 +476,9 @@ const ContainerSettings = () => {
               options: [
                 { value: "None", label: <SlashCircle /> },
                 { value: "Image", label: <Image /> },
+                ...(options.mode === "show"
+                  ? [{ value: "Image Field", label: <Images /> }]
+                  : []),
                 { value: "Color", label: <Palette /> },
                 { value: "Gradient", label: <Rainbow /> },
               ],
@@ -543,30 +549,59 @@ const ContainerSettings = () => {
             </Fragment>
           )}
           {bgType === "Image" && (
-            <Fragment>
-              <tr>
-                <td>
-                  <label>File</label>
-                </td>
-                <td>
-                  <select
-                    value={bgFileId}
-                    className="form-control-sm w-100 form-select"
-                    onChange={setAProp("bgFileId")}
-                  >
-                    {options.images.map((f, ix) => (
-                      <option key={ix} value={f.id}>
-                        {f.filename}
+            <tr>
+              <td>
+                <label>File</label>
+              </td>
+              <td>
+                <select
+                  value={bgFileId}
+                  className="form-control-sm w-100 form-select"
+                  onChange={setAProp("bgFileId")}
+                >
+                  {options.images.map((f, ix) => (
+                    <option key={ix} value={f.id}>
+                      {f.filename}
+                    </option>
+                  ))}
+                  {(uploadedFiles || []).map((uf, ix) => (
+                    <option key={ix} value={uf.id}>
+                      {uf.filename}
+                    </option>
+                  ))}{" "}
+                </select>
+              </td>
+            </tr>
+          )}
+          {bgType === "Image Field" && (
+            <tr>
+              <td>
+                <label>File field</label>
+              </td>
+              <td>
+                <select
+                  value={bgField}
+                  className="form-control-sm w-100 form-select"
+                  onChange={setAProp("bgField")}
+                >
+                  {options.fields
+                    .filter(
+                      (f) =>
+                        f.type === "String" ||
+                        (f.type && f.type.name === "String") ||
+                        (f.type && f.type === "File")
+                    )
+                    .map((f, ix) => (
+                      <option key={ix} value={f.name}>
+                        {f.label}
                       </option>
                     ))}
-                    {(uploadedFiles || []).map((uf, ix) => (
-                      <option key={ix} value={uf.id}>
-                        {uf.filename}
-                      </option>
-                    ))}{" "}
-                  </select>
-                </td>
-              </tr>
+                </select>
+              </td>
+            </tr>
+          )}
+          {(bgType === "Image" || bgType === "Image Field") && (
+            <Fragment>
               <tr>
                 <td>
                   <label>Size</label>
@@ -1101,6 +1136,7 @@ Container.craft = {
     vAlign: "top",
     hAlign: "left",
     bgFileId: 0,
+    bgField: "",
     rotate: 0,
     isFormula: {},
     bgType: "None",

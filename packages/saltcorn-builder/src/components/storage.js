@@ -255,6 +255,7 @@ const layoutToNodes = (
               : segment.fullPageWidth
           }
           bgFileId={segment.bgFileId}
+          bgField={segment.bgField}
           imageSize={segment.imageSize || "contain"}
           imgResponsiveWidths={segment.imgResponsiveWidths}
           bgType={segment.bgType || "None"}
@@ -544,6 +545,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
           display: node.props.display,
           fullPageWidth: node.props.fullPageWidth || false,
           bgFileId: node.props.bgFileId,
+          bgField: node.props.bgField,
           bgType: node.props.bgType,
           imageSize: node.props.imageSize,
           imgResponsiveWidths: node.props.imgResponsiveWidths,
