@@ -18,6 +18,7 @@ import {
   OrFormula,
   setAPropGen,
   buildOptions,
+  SettingsRow
 } from "./utils";
 
 export /**
@@ -274,6 +275,17 @@ const ImageSettings = () => {
               </td>
             </tr>
           )}
+          <SettingsRow
+            field={{
+              name: "object-fit",
+              label: "Object fit",
+              type: "select",
+              options: ["none", "fill", "contain", "cover", "scale-down"],
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
+          />
           {srctype !== "Upload" && (
             <tr>
               <td colSpan="2">
