@@ -267,7 +267,7 @@ function jsexprToWhere(
               : typeof cleft === "function"
                 ? cleft(cright)
                 : typeof cleft === "string" ||
-                    typeof cleft === "number" ||
+                    (typeof cleft === "number" && typeof cright === "number") ||
                     cleft === null
                   ? { eq: [cleft, cright] }
                   : typeof cright === "symbol" && typeof cleft !== "symbol"
