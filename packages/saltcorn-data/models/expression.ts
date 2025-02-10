@@ -273,7 +273,7 @@ function jsexprToWhere(
                   : typeof cright === "symbol" && typeof cleft !== "symbol"
                     ? { [crightName]: cleft }
                     : { [cleftName]: cright };
-          console.log({ cleft, cleftName, cright, cmp, tycleft: typeof cleft });
+          //console.log({ cleft, cleftName, cright, cmp, tycleft: typeof cleft });
 
           const operators: StringToFunction = {
             "=="() {
