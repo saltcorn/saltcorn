@@ -914,6 +914,9 @@ describe("jsexprToWhere", () => {
     expect(
       jsexprToWhere("user.clearance==5", { user: { clearance: 5 } })
     ).toEqual({});
+    expect(
+      jsexprToWhere("user.clearance==5", { user: { clearance: 6 } })
+    ).toEqual({ _false: true });
   });
   it("translates date limits", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);

@@ -301,6 +301,7 @@ function jsexprToWhere(
           };
           if (typeof cleft === "number" && typeof cleft === "number") {
             if (cleft === cright) return {};
+            else return { _false: true };
           }
           return operators[node.operator](node);
         },
