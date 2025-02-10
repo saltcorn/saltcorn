@@ -373,7 +373,7 @@ const configuration_workflow = (req) =>
                   "Delete allocated row if there are no changes."
                 ),
                 type: "Bool",
-                showif: { auto_create: true },
+                showIf: { auto_create: true },
               },
               {
                 name: "split_paste",

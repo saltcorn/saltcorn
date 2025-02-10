@@ -85,8 +85,7 @@ const Action = ({
 };
 
 export /**
- * @category saltcorn-builder
- * @subcategory components
+ * @category saltcorn-builder * @subcategory components
  * @namespace
  * @returns {div}
  */
@@ -108,6 +107,7 @@ const ActionSettings = () => {
     action_bgcol: node.data.props.action_bgcol,
     action_bordercol: node.data.props.action_bordercol,
     action_textcol: node.data.props.action_textcol,
+    action_class: node.data.props.action_class,
     nsteps: node.data.props.nsteps,
     step_only_ifs: node.data.props.step_only_ifs,
     step_action_names: node.data.props.step_action_names,
@@ -134,6 +134,7 @@ const ActionSettings = () => {
     step_action_names,
     spinner,
     is_submit_action,
+    
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];

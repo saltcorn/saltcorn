@@ -2,7 +2,18 @@
 
 ## 1.1.2 - In beta
 
-* Upgrade a large number of dependencies (express, typescript, oclif, pg, webpack, typescript). Node.js 18+ is require for this release. 
+* Builder:
+    - Container background image by file field in Show views
+    - Container opacity setting
+    - Set custom class on links and actions
+    - Fix error toast when saving on Firefox
+    - Set action to be submit action - action run on enter keypress.
+
+* Restore large backups: stream JSON files to database, use system unzip
+
+* Handle multiple fields with same name in Edit.
+
+* Upgrade a large number of dependencies (express, typescript, oclif, pg, webpack, typescript, axios, mjml, svelte). Node.js 18+ is require for this release. 
 
 ## 1.1.1 - Released 2 February 2025
 

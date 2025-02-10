@@ -758,6 +758,10 @@ const render = (
       evalMaybeExpr(segment, "customClass");
       evalMaybeExpr(segment, "customId");
       evalMaybeExpr(segment, "url");
+      if (segment.bgType === "Image Field") {
+        segment.bgType = "Image";
+        segment.bgFileId = row[segment.bgField];
+      }
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);

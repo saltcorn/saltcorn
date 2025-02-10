@@ -192,7 +192,7 @@ const progress_bar = (type) => ({
       name: "show_label",
       type: "Bool",
       label: "Show value",
-      showif: { radial: true },
+      showIf: { radial: true },
     },
   ],
   isEdit: false,

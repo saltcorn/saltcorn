@@ -127,11 +127,26 @@ class WorkflowStep {
     if (connect_prev_next) {
       const allSteps = await WorkflowStep.find({ trigger_id: this.trigger_id });
       const allStepNames = new Set(allSteps.map((s) => s.name));
+      if (
+        this.initial_step &&
+        this.next_step &&
+        allStepNames.has(this.next_step)
+      )
+        await db.query(
+          `update ${schema}_sc_workflow_steps SET initial_step = true WHERE trigger_id = $1 and name = $2`,
+          [this.trigger_id, this.next_step]
+        );
       if (this.next_step && allStepNames.has(this.next_step))
         await db.query(
           `update ${schema}_sc_workflow_steps SET next_step = $1 WHERE trigger_id = $2 and next_step = $3`,
           [this.next_step, this.trigger_id, this.name]
         );
+      else if (!this.next_step) {
+        await db.query(
+          `update ${schema}_sc_workflow_steps SET next_step = null WHERE trigger_id = $1 and next_step = $2`,
+          [this.trigger_id, this.name]
+        );
+      }
     }
     await db.query(`delete FROM ${schema}_sc_workflow_steps WHERE id = $1`, [
       this.id,
