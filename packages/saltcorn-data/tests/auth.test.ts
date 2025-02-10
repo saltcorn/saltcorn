@@ -920,3 +920,23 @@ describe("User group with spaces in name", () => {
     await projects.delete();
   });
 });
+
+describe("ownership_formula_where", () => {
+  it("should create table", async () => {
+    const tasks = await Table.create("tasks1");
+    await Field.create({
+      table: tasks,
+      name: "name",
+      type: "String",
+    });
+  });
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({ ownership_formula: 'user.clearance==="ALL"' });
+    const where = tasks.ownership_formula_where({
+      user: { id: 1, role_id: 80, clearance: "ALL" },
+    });
+    expect(where).toBe(1);
+  });
+});
