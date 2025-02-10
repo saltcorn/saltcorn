@@ -413,8 +413,16 @@ describe("mkWhere", () => {
   });
   it("equate strings", () => {
     expect(mkWhere({ eq: ["ALL", "ALL"] })).toStrictEqual({
-      values: ["ALL","ALL"],
+      values: ["ALL", "ALL"],
       where: "where $1::text=$2::text",
+    });
+  });
+  it("equate strings in or", () => {
+    expect(
+      mkWhere({ or: [{ eq: ["ALL", Symbol("name")] }, { eq: ["ALL", "ALL"] }] })
+    ).toStrictEqual({
+      values: ["ALL", "ALL","ALL"],
+      where: 'where ($1::text="name" or $2::text=$3::text)',
     });
   });
 });

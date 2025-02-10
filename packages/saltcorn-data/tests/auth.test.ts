@@ -939,7 +939,7 @@ describe("ownership_formula_where", () => {
       role_id: 80,
       clearance: "ALL",
     });
-    expect(where).toStrictEqual({eq: ["ALL","ALL"]});
+    expect(where).toStrictEqual({ eq: ["ALL", "ALL"] });
   });
   it("should do constant eq user", async () => {
     const tasks = Table.findOne("tasks1");
@@ -950,6 +950,27 @@ describe("ownership_formula_where", () => {
       role_id: 80,
       clearance: "NONE",
     });
-    expect(where).toStrictEqual({eq: ["NONE","ALL"]});
+    expect(where).toStrictEqual({ eq: ["NONE", "ALL"] });
+  });
+
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({
+      ownership_formula:
+        'user.department === name || user.department === "ALL"',
+    });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      department: "ALL",
+    });
+    expect(JSON.stringify(where)).toBe(
+      JSON.stringify({
+        or: [{ eq: ["ALL", Symbol("name")] }, { eq: ["ALL", "ALL"] }],
+      })
+    );
   });
 });
+
+//user.department === bankid.access || user.department === "ALL
