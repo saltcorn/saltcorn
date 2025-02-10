@@ -299,6 +299,9 @@ function jsexprToWhere(
               return { [cleftName]: { lt: cright, equal: true } };
             },
           };
+          if (typeof cleft === "number" && typeof cleft === "number") {
+            if (cleft === cright) return {};
+          }
           return operators[node.operator](node);
         },
         ObjectExpression() {
