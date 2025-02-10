@@ -305,8 +305,8 @@ const quote = (s: string): string =>
   s.includes(".")
     ? s.split(".").map(quote).join(".")
     : s.includes('"')
-    ? s
-    : `"${s}"`;
+      ? s
+      : `"${s}"`;
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -370,92 +370,97 @@ const whereClause =
     k === "_fts"
       ? whereFTS(v, phs)
       : typeof (v || {}).not !== "undefined" && v.not.in
-      ? `not (${quote(sqlsanitizeAllowDots(k))} = ${
-          phs.is_sqlite ? "" : "ANY"
-        } (${phs.push(v.not.in)}))`
-      : typeof (v || {}).in !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))} = ${
-          phs.is_sqlite ? "" : "ANY"
-        } (${phs.push(v.in)})`
-      : k === "or" && Array.isArray(v)
-      ? whereOr(phs)(v)
-      : k === "and" && Array.isArray(v)
-      ? whereAnd(phs)(v)
-      : typeof (v || {}).slugify !== "undefined"
-      ? slugifyQuery(k, v.slugify, phs)
-      : k === "not" && typeof v === "object"
-      ? `not (${Object.entries(v)
-          .map((kv) => whereClause(phs)(kv))
-          .join(" and ")})`
-      : k === "eq" && Array.isArray(v)
-      ? // @ts-ignore
-        equals(v, phs)
-      : v && v.or && Array.isArray(v.or)
-      ? wrapParens(
-          v.or.map((vi: any) => whereClause(phs)([k, vi])).join(" or ")
-        )
-      : Array.isArray(v)
-      ? v.map((vi) => whereClause(phs)([k, vi])).join(" and ")
-      : typeof (v || {}).ilike !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))} ${
-          phs.is_sqlite ? "LIKE" : "ILIKE"
-        } '%' || ${phs.push(v.ilike)} || '%'`
-      : v instanceof RegExp
-      ? `${quote(sqlsanitizeAllowDots(k))} ${
-          phs.is_sqlite ? "REGEXP" : "~"
-        } ${phs.push(v.source)}`
-      : typeof (v || {}).gt !== "undefined" &&
-        typeof (v || {}).lt !== "undefined"
-      ? `${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}>${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.gt)
-        )} and ${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}<${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.lt)
-        )}`
-      : typeof (v || {}).gt !== "undefined"
-      ? `${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}>${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.gt)
-        )}`
-      : typeof (v || {}).lt !== "undefined"
-      ? `${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}<${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.lt)
-        )}`
-      : typeof (v || {}).inSelect !== "undefined"
-      ? subSelectWhere(phs)(k, v)
-      : typeof (v || {}).inSelectWithLevels !== "undefined"
-      ? inSelectWithLevels(phs)(k, v)
-      : typeof (v || {}).json !== "undefined"
-      ? jsonWhere(k, v.json, phs)
-      : v === null
-      ? `${quote(sqlsanitizeAllowDots(k))} is null`
-      : k === "not"
-      ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
-      : `${quote(sqlsanitizeAllowDots(k))}=${
-          typeof v === "symbol" ? v.description : phs.push(v)
-        }`;
+        ? `not (${quote(sqlsanitizeAllowDots(k))} = ${
+            phs.is_sqlite ? "" : "ANY"
+          } (${phs.push(v.not.in)}))`
+        : typeof (v || {}).in !== "undefined"
+          ? `${quote(sqlsanitizeAllowDots(k))} = ${
+              phs.is_sqlite ? "" : "ANY"
+            } (${phs.push(v.in)})`
+          : k === "or" && Array.isArray(v)
+            ? whereOr(phs)(v)
+            : k === "and" && Array.isArray(v)
+              ? whereAnd(phs)(v)
+              : typeof (v || {}).slugify !== "undefined"
+                ? slugifyQuery(k, v.slugify, phs)
+                : k === "not" && typeof v === "object"
+                  ? `not (${Object.entries(v)
+                      .map((kv) => whereClause(phs)(kv))
+                      .join(" and ")})`
+                  : k === "eq" && Array.isArray(v)
+                    ? // @ts-ignore
+                      equals(v, phs)
+                    : v && v.or && Array.isArray(v.or)
+                      ? wrapParens(
+                          v.or
+                            .map((vi: any) => whereClause(phs)([k, vi]))
+                            .join(" or ")
+                        )
+                      : Array.isArray(v)
+                        ? v.map((vi) => whereClause(phs)([k, vi])).join(" and ")
+                        : typeof (v || {}).ilike !== "undefined"
+                          ? `${quote(sqlsanitizeAllowDots(k))} ${
+                              phs.is_sqlite ? "LIKE" : "ILIKE"
+                            } '%' || ${phs.push(v.ilike)} || '%'`
+                          : v instanceof RegExp
+                            ? `${quote(sqlsanitizeAllowDots(k))} ${
+                                phs.is_sqlite ? "REGEXP" : "~"
+                              } ${phs.push(v.source)}`
+                            : typeof (v || {}).gt !== "undefined" &&
+                                typeof (v || {}).lt !== "undefined"
+                              ? `${castDate(
+                                  v.day_only,
+                                  phs.is_sqlite,
+                                  quote(sqlsanitizeAllowDots(k))
+                                )}>${v.equal ? "=" : ""}${castDate(
+                                  v.day_only,
+                                  phs.is_sqlite,
+                                  phs.push(v.gt)
+                                )} and ${castDate(
+                                  v.day_only,
+                                  phs.is_sqlite,
+                                  quote(sqlsanitizeAllowDots(k))
+                                )}<${v.equal ? "=" : ""}${castDate(
+                                  v.day_only,
+                                  phs.is_sqlite,
+                                  phs.push(v.lt)
+                                )}`
+                              : typeof (v || {}).gt !== "undefined"
+                                ? `${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    quote(sqlsanitizeAllowDots(k))
+                                  )}>${v.equal ? "=" : ""}${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    phs.push(v.gt)
+                                  )}`
+                                : typeof (v || {}).lt !== "undefined"
+                                  ? `${castDate(
+                                      v.day_only,
+                                      phs.is_sqlite,
+                                      quote(sqlsanitizeAllowDots(k))
+                                    )}<${v.equal ? "=" : ""}${castDate(
+                                      v.day_only,
+                                      phs.is_sqlite,
+                                      phs.push(v.lt)
+                                    )}`
+                                  : typeof (v || {}).inSelect !== "undefined"
+                                    ? subSelectWhere(phs)(k, v)
+                                    : typeof (v || {}).inSelectWithLevels !==
+                                        "undefined"
+                                      ? inSelectWithLevels(phs)(k, v)
+                                      : typeof (v || {}).json !== "undefined"
+                                        ? jsonWhere(k, v.json, phs)
+                                        : v === null
+                                          ? `${quote(sqlsanitizeAllowDots(k))} is null`
+                                          : k === "not"
+                                            ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
+                                            : `${quote(sqlsanitizeAllowDots(k))}=${
+                                                typeof v === "symbol"
+                                                  ? v.description
+                                                  : phs.push(v)
+                                              }`;
 
 function isdef(x: any) {
   return typeof x !== "undefined";
@@ -501,17 +506,17 @@ function jsonWhere(
               phs.is_sqlite ? "LIKE" : "ILIKE"
             } '%' || ${phs.push(vj.ilike as Value)} || '%'`
           : isdef(vj.gte) || isdef(vj.lte)
-          ? andArray(
-              [
-                isdef(vj.gte)
-                  ? `${lhs(k, kj, false)} >= ${phs.push(vj.gte as Value)}`
-                  : "",
-                isdef(vj.lte)
-                  ? `${lhs(k, kj, false)} <= ${phs.push(vj.lte as Value)}`
-                  : "",
-              ].filter((s) => s)
-            )
-          : `${lhs(k, kj, true)}=${phs.push(vj as Value)}`
+            ? andArray(
+                [
+                  isdef(vj.gte)
+                    ? `${lhs(k, kj, false)} >= ${phs.push(vj.gte as Value)}`
+                    : "",
+                  isdef(vj.lte)
+                    ? `${lhs(k, kj, false)} <= ${phs.push(vj.lte as Value)}`
+                    : "",
+                ].filter((s) => s)
+              )
+            : `${lhs(k, kj, true)}=${phs.push(vj as Value)}`
       )
     );
   }
@@ -558,8 +563,8 @@ const toInt = (x: number | string): number | null =>
   typeof x === "number"
     ? Math.round(x)
     : typeof x === "string"
-    ? parseInt(x)
-    : null;
+      ? parseInt(x)
+      : null;
 
 export type CoordOpts = {
   latField: number | string;
@@ -723,23 +728,25 @@ export const mkSelectOptions = (
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
       : selopts.orderBy &&
-        typeof selopts.orderBy === "object" &&
-        "distance" in selopts.orderBy
-      ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
-      : selopts.orderBy && typeof selopts.orderBy === "string" && selopts.nocase
-      ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
-          selopts.orderDesc ? " DESC" : ""
-        }`
-      : selopts.orderBy && typeof selopts.orderBy === "string"
-      ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
-          selopts.orderDesc ? " DESC" : ""
-        }`
-      : selopts.orderBy &&
-        typeof selopts.orderBy === "object" &&
-        "operator" in selopts.orderBy &&
-        typeof selopts.orderBy.operator === "object"
-      ? `order by ${getOperatorOrder(selopts.orderBy as any, values, isSQLite)}`
-      : "";
+          typeof selopts.orderBy === "object" &&
+          "distance" in selopts.orderBy
+        ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
+        : selopts.orderBy &&
+            typeof selopts.orderBy === "string" &&
+            selopts.nocase
+          ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
+              selopts.orderDesc ? " DESC" : ""
+            }`
+          : selopts.orderBy && typeof selopts.orderBy === "string"
+            ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
+                selopts.orderDesc ? " DESC" : ""
+              }`
+            : selopts.orderBy &&
+                typeof selopts.orderBy === "object" &&
+                "operator" in selopts.orderBy &&
+                typeof selopts.orderBy.operator === "object"
+              ? `order by ${getOperatorOrder(selopts.orderBy as any, values, isSQLite)}`
+              : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
   return [orderby, limit, offset].filter((s) => s).join(" ");
