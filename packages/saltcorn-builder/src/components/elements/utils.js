@@ -1545,18 +1545,32 @@ const ButtonOrLinkSettingsRows = ({
         ]
       : []),
     values[keyPrefix + "style"] !== "on_page_load" ? (
-      <tr key="btntitle">
-        <td>
-          <label>Hover title</label>
-        </td>
-        <td>
-          <input
-            className="form-control"
-            value={values[keyPrefix + "title"]}
-            onChange={setAProp(keyPrefix + "title")}
-          />
-        </td>
-      </tr>
+      <Fragment>
+        <tr key="btntitle">
+          <td>
+            <label>Hover title</label>
+          </td>
+          <td>
+            <input
+              className="form-control"
+              value={values[keyPrefix + "title"]}
+              onChange={setAProp(keyPrefix + "title")}
+            />
+          </td>
+        </tr>
+        <tr key="btnclass">
+          <td>
+            <label>Class</label>
+          </td>
+          <td>
+            <input
+              className="form-control"
+              value={values[keyPrefix + "class"]}
+              onChange={setAProp(keyPrefix + "class")}
+            />
+          </td>
+        </tr>
+      </Fragment>
     ) : null,
   ];
 };
