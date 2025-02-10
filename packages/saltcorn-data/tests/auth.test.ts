@@ -939,6 +939,17 @@ describe("ownership_formula_where", () => {
       role_id: 80,
       clearance: "ALL",
     });
-    expect(where).toStrictEqual({});
+    expect(where).toStrictEqual({eq: ["ALL","ALL"]});
+  });
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({ ownership_formula: 'user?.clearance==="ALL"' });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      clearance: "NONE",
+    });
+    expect(where).toStrictEqual({eq: ["NONE","ALL"]});
   });
 });
