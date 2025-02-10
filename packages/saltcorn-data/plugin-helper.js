@@ -72,7 +72,8 @@ const link_view = (
   extraState,
   link_target_blank,
   label_attr, // for sorting
-  link_title
+  link_title,
+  link_class
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -102,7 +103,7 @@ const link_view = (
           }`,
           style,
           title: link_title,
-          class: [textStyle, link_style, link_size, extraClass],
+          class: [textStyle, link_style, link_size, extraClass, link_class],
         },
         show_icon_and_label(link_icon, label)
       );
@@ -116,6 +117,7 @@ const link_view = (
             link_size,
             !link_style && "btn btn-link",
             extraClass,
+            link_class,
           ],
           title: link_title,
           type: "button",
@@ -131,7 +133,7 @@ const link_view = (
       {
         ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
         href: url,
-        class: [textStyle, link_style, link_size, extraClass],
+        class: [textStyle, link_style, link_size, extraClass, link_class],
         style,
         title: link_title,
         target: link_target_blank ? "_blank" : undefined,

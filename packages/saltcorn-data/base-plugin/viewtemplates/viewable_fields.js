@@ -113,6 +113,7 @@ const action_link = (
     action_icon,
     action_bgcol,
     action_title,
+    action_class,
     action_bordercol,
     action_textcol,
     spinner,
@@ -132,10 +133,12 @@ const action_link = (
       {
         href: "javascript:void(0)",
         onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}`,
-        class:
+        class: [
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+          action_class,
+        ],
         style,
         title: action_title,
       },
@@ -358,6 +361,7 @@ const view_linker = (
     extra_state_fml,
     link_target_blank,
     link_title,
+    link_class,
   },
   fields,
   __ = (s) => s,
@@ -434,7 +438,8 @@ const view_linker = (
             get_extra_state(r),
             link_target_blank,
             label_attr,
-            link_title
+            link_title,
+            link_class
           );
         }
       },
@@ -471,7 +476,8 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class
             );
           },
         };
@@ -496,7 +502,8 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class
             );
           },
         };
@@ -525,7 +532,8 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class
             );
           },
         };
@@ -561,7 +569,8 @@ const view_linker = (
                 get_extra_state(r),
                 link_target_blank,
                 label_attr,
-                link_title
+                link_title,
+                link_class
               );
             } else return "";
           },
