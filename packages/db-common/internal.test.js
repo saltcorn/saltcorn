@@ -405,6 +405,12 @@ describe("mkWhere", () => {
       where: 'where (("bar"=$1 or "bar"=$2) and ("foo"=$3 or "foo" is null))',
     });
   });
+  it("should false", () => {
+    expect(mkWhere({ _false: true })).toStrictEqual({
+      values: [],
+      where: "where FALSE",
+    });
+  });
 });
 
 describe("sqlsanitize", () => {

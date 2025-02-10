@@ -387,45 +387,31 @@ const whereClause =
                   ? `not (${Object.entries(v)
                       .map((kv) => whereClause(phs)(kv))
                       .join(" and ")})`
-                  : k === "eq" && Array.isArray(v)
-                    ? // @ts-ignore
-                      equals(v, phs)
-                    : v && v.or && Array.isArray(v.or)
-                      ? wrapParens(
-                          v.or
-                            .map((vi: any) => whereClause(phs)([k, vi]))
-                            .join(" or ")
-                        )
-                      : Array.isArray(v)
-                        ? v.map((vi) => whereClause(phs)([k, vi])).join(" and ")
-                        : typeof (v || {}).ilike !== "undefined"
-                          ? `${quote(sqlsanitizeAllowDots(k))} ${
-                              phs.is_sqlite ? "LIKE" : "ILIKE"
-                            } '%' || ${phs.push(v.ilike)} || '%'`
-                          : v instanceof RegExp
+                  : k === "_false" && v
+                    ? "FALSE"
+                    : k === "eq" && Array.isArray(v)
+                      ? // @ts-ignore
+                        equals(v, phs)
+                      : v && v.or && Array.isArray(v.or)
+                        ? wrapParens(
+                            v.or
+                              .map((vi: any) => whereClause(phs)([k, vi]))
+                              .join(" or ")
+                          )
+                        : Array.isArray(v)
+                          ? v
+                              .map((vi) => whereClause(phs)([k, vi]))
+                              .join(" and ")
+                          : typeof (v || {}).ilike !== "undefined"
                             ? `${quote(sqlsanitizeAllowDots(k))} ${
-                                phs.is_sqlite ? "REGEXP" : "~"
-                              } ${phs.push(v.source)}`
-                            : typeof (v || {}).gt !== "undefined" &&
-                                typeof (v || {}).lt !== "undefined"
-                              ? `${castDate(
-                                  v.day_only,
-                                  phs.is_sqlite,
-                                  quote(sqlsanitizeAllowDots(k))
-                                )}>${v.equal ? "=" : ""}${castDate(
-                                  v.day_only,
-                                  phs.is_sqlite,
-                                  phs.push(v.gt)
-                                )} and ${castDate(
-                                  v.day_only,
-                                  phs.is_sqlite,
-                                  quote(sqlsanitizeAllowDots(k))
-                                )}<${v.equal ? "=" : ""}${castDate(
-                                  v.day_only,
-                                  phs.is_sqlite,
-                                  phs.push(v.lt)
-                                )}`
-                              : typeof (v || {}).gt !== "undefined"
+                                phs.is_sqlite ? "LIKE" : "ILIKE"
+                              } '%' || ${phs.push(v.ilike)} || '%'`
+                            : v instanceof RegExp
+                              ? `${quote(sqlsanitizeAllowDots(k))} ${
+                                  phs.is_sqlite ? "REGEXP" : "~"
+                                } ${phs.push(v.source)}`
+                              : typeof (v || {}).gt !== "undefined" &&
+                                  typeof (v || {}).lt !== "undefined"
                                 ? `${castDate(
                                     v.day_only,
                                     phs.is_sqlite,
@@ -434,33 +420,51 @@ const whereClause =
                                     v.day_only,
                                     phs.is_sqlite,
                                     phs.push(v.gt)
+                                  )} and ${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    quote(sqlsanitizeAllowDots(k))
+                                  )}<${v.equal ? "=" : ""}${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    phs.push(v.lt)
                                   )}`
-                                : typeof (v || {}).lt !== "undefined"
+                                : typeof (v || {}).gt !== "undefined"
                                   ? `${castDate(
                                       v.day_only,
                                       phs.is_sqlite,
                                       quote(sqlsanitizeAllowDots(k))
-                                    )}<${v.equal ? "=" : ""}${castDate(
+                                    )}>${v.equal ? "=" : ""}${castDate(
                                       v.day_only,
                                       phs.is_sqlite,
-                                      phs.push(v.lt)
+                                      phs.push(v.gt)
                                     )}`
-                                  : typeof (v || {}).inSelect !== "undefined"
-                                    ? subSelectWhere(phs)(k, v)
-                                    : typeof (v || {}).inSelectWithLevels !==
-                                        "undefined"
-                                      ? inSelectWithLevels(phs)(k, v)
-                                      : typeof (v || {}).json !== "undefined"
-                                        ? jsonWhere(k, v.json, phs)
-                                        : v === null
-                                          ? `${quote(sqlsanitizeAllowDots(k))} is null`
-                                          : k === "not"
-                                            ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
-                                            : `${quote(sqlsanitizeAllowDots(k))}=${
-                                                typeof v === "symbol"
-                                                  ? v.description
-                                                  : phs.push(v)
-                                              }`;
+                                  : typeof (v || {}).lt !== "undefined"
+                                    ? `${castDate(
+                                        v.day_only,
+                                        phs.is_sqlite,
+                                        quote(sqlsanitizeAllowDots(k))
+                                      )}<${v.equal ? "=" : ""}${castDate(
+                                        v.day_only,
+                                        phs.is_sqlite,
+                                        phs.push(v.lt)
+                                      )}`
+                                    : typeof (v || {}).inSelect !== "undefined"
+                                      ? subSelectWhere(phs)(k, v)
+                                      : typeof (v || {}).inSelectWithLevels !==
+                                          "undefined"
+                                        ? inSelectWithLevels(phs)(k, v)
+                                        : typeof (v || {}).json !== "undefined"
+                                          ? jsonWhere(k, v.json, phs)
+                                          : v === null
+                                            ? `${quote(sqlsanitizeAllowDots(k))} is null`
+                                            : k === "not"
+                                              ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
+                                              : `${quote(sqlsanitizeAllowDots(k))}=${
+                                                  typeof v === "symbol"
+                                                    ? v.description
+                                                    : phs.push(v)
+                                                }`;
 
 function isdef(x: any) {
   return typeof x !== "undefined";
