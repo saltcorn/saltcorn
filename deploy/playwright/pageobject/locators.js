@@ -154,7 +154,7 @@ class PageLocators {
     this.showfieldlink = '(//a[text()="Show"])[1]';
     this.listshowlink = '(//a[text()="ListShow"])[1]';
     this.ActionLabel = 'input[type="text"].form-control';
-    this.ActionHoverTitle = 'input.form-control:not([type])';
+    this.ActionHoverTitle = 'input.linkoractiontitle';
     this.containsdraglocator= 'div[title="Container"]';
     this.containerdisplaysetting = '//div[contains(text(), "Display")]';
     this.containercontentsetting = '//div[contains(text(), "Contents")]';

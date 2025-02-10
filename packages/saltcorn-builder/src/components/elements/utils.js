@@ -1552,7 +1552,7 @@ const ButtonOrLinkSettingsRows = ({
           </td>
           <td>
             <input
-              className="form-control"
+              className="form-control linkoractiontitle"
               value={values[keyPrefix + "title"]}
               onChange={setAProp(keyPrefix + "title")}
             />
@@ -1564,7 +1564,7 @@ const ButtonOrLinkSettingsRows = ({
           </td>
           <td>
             <input
-              className="form-control"
+              className="form-control linkoractionclass"
               value={values[keyPrefix + "class"]}
               onChange={setAProp(keyPrefix + "class")}
             />
