@@ -350,8 +350,8 @@ class Table implements AbstractTable {
       where?.id
         ? (v: TableCfg) => v.id === +where.id
         : where?.name
-        ? (v: TableCfg) => v.name === where.name
-        : satisfies(where)
+          ? (v: TableCfg) => v.name === where.name
+          : satisfies(where)
     );
     if (tbl?.provider_name) {
       return new Table(structuredClone(tbl)).to_provided_table();
@@ -670,8 +670,8 @@ class Table implements AbstractTable {
         (typeof pk_field === "string"
           ? pk_field
           : typeof pk_field?.type === "string"
-          ? pk_field?.type
-          : pk_field?.type?.name) || "Integer";
+            ? pk_field?.type
+            : pk_field?.type?.name) || "Integer";
     }
     if (pk_type !== "Integer") {
       const { getState } = require("../db/state");
@@ -1692,8 +1692,8 @@ class Table implements AbstractTable {
           this.name
         )}_sync_info" set modified_local = true 
          where ref = ${id} and last_modified = ${
-          oldLastModified ? oldLastModified.valueOf() : "null"
-        }`
+           oldLastModified ? oldLastModified.valueOf() : "null"
+         }`
       );
     }
   }
@@ -1976,8 +1976,9 @@ class Table implements AbstractTable {
         await db.query(
           `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
            values(${id}, date_trunc('milliseconds', to_timestamp(${
-            (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0
-          })))`
+             (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
+             1000.0
+           })))`
         );
       } else {
         await db.query(
@@ -2415,10 +2416,10 @@ class Table implements AbstractTable {
           select h1.${sqlsanitize(this.pk_name)}, h1._version
           FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
           JOIN ${schemaPrefix}"${sqlsanitize(
-      this.name
-    )}__history" h2 ON h1.${sqlsanitize(this.pk_name)} = h2.${sqlsanitize(
-      this.pk_name
-    )}
+            this.name
+          )}__history" h2 ON h1.${sqlsanitize(this.pk_name)} = h2.${sqlsanitize(
+            this.pk_name
+          )}
           AND h1._version < h2._version
           AND h1._time < h2._time
           AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
@@ -3186,16 +3187,16 @@ ${rejectDetails}`,
    */
   async get_relation_options(): Promise<RelationOption[]> {
     return await Promise.all(
-      (
-        await this.get_relation_data()
-      ).map(async ({ relationTable, relationField }: RelationData) => {
-        const path = `${relationTable.name}.${relationField.name}`;
-        const relFields = await relationTable.getFields();
-        const names = relFields
-          .filter((f: Field) => f.type !== "Key")
-          .map((f: Field) => f.name);
-        return { relationPath: path, relationFields: names };
-      })
+      (await this.get_relation_data()).map(
+        async ({ relationTable, relationField }: RelationData) => {
+          const path = `${relationTable.name}.${relationField.name}`;
+          const relFields = await relationTable.getFields();
+          const names = relFields
+            .filter((f: Field) => f.type !== "Key")
+            .map((f: Field) => f.name);
+          return { relationPath: path, relationFields: names };
+        }
+      )
     );
   }
 
@@ -3395,8 +3396,8 @@ ${rejectDetails}`,
     const groupBy = Array.isArray(options?.groupBy)
       ? options?.groupBy
       : options?.groupBy
-      ? [options?.groupBy]
-      : null;
+        ? [options?.groupBy]
+        : null;
     const schema = db.getTenantSchemaPrefix();
     const { where, values } = mkWhere(where0, db.isSQLite);
 
@@ -3480,9 +3481,10 @@ ${rejectDetails}`,
         }
       }
     }
-
+    const isConstant = (x: any) =>
+      ["string", "number", "boolean"].includes(typeof x);
     //TODO user groups
-    if (wh.eq) return {};
+    if (wh.eq && !wh.eq.every(isConstant)) return {};
     return wh;
   }
 
@@ -3625,10 +3627,10 @@ ${rejectDetails}`,
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
-          ? opts.orderBy
-          : opts.orderBy.toLowerCase?.() === "random()"
-          ? opts.orderBy
-          : "a." + opts.orderBy),
+            ? opts.orderBy
+            : opts.orderBy.toLowerCase?.() === "random()"
+              ? opts.orderBy
+              : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     });

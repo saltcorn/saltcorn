@@ -910,6 +910,20 @@ describe("jsexprToWhere", () => {
       ],
     });
   });
+  it("jsexprToWhere equate constant", () => {
+    expect(
+      jsexprToWhere("user.clearance==5", { user: { clearance: 5 } })
+    ).toEqual({ eq: [5, 5] });
+    expect(
+      jsexprToWhere('user.clearance=="ALL"', { user: { clearance: "ALL" } })
+    ).toEqual({ eq: ["ALL", "ALL"] });
+    expect(
+      jsexprToWhere("user.clearance==5", { user: { clearance: 6 } })
+    ).toEqual({ eq: [6, 5] });
+    expect(
+      jsexprToWhere('user.clearance=="ALL"', { user: { clearance: "NONE" } })
+    ).toEqual({ eq: ["NONE", "ALL"] });
+  });
   it("translates date limits", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);
   });
