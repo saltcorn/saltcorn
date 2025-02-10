@@ -265,13 +265,15 @@ function jsexprToWhere(
             typeof cright === "function"
               ? cright(cleft)
               : typeof cleft === "function"
-              ? cleft(cright)
-              : typeof cleft === "string" || cleft === null
-              ? { eq: [cleft, cright] }
-              : typeof cright === "symbol" && typeof cleft !== "symbol"
-              ? { [crightName]: cleft }
-              : { [cleftName]: cright };
-          //console.log({ cleft, cleftName, cright, cmp });
+                ? cleft(cright)
+                : typeof cleft === "string" ||
+                    typeof cleft === "number" ||
+                    cleft === null
+                  ? { eq: [cleft, cright] }
+                  : typeof cright === "symbol" && typeof cleft !== "symbol"
+                    ? { [crightName]: cleft }
+                    : { [cleftName]: cright };
+          console.log({ cleft, cleftName, cright, cmp, tycleft: typeof cleft });
 
           const operators: StringToFunction = {
             "=="() {
@@ -299,10 +301,6 @@ function jsexprToWhere(
               return { [cleftName]: { lt: cright, equal: true } };
             },
           };
-          if (typeof cleft === "number" && typeof cleft === "number") {
-            if (cleft === cright) return {};
-            else return { _false: true };
-          }
           return operators[node.operator](node);
         },
         ObjectExpression() {

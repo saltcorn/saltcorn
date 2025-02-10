@@ -411,6 +411,12 @@ describe("mkWhere", () => {
       where: "where FALSE",
     });
   });
+  it("equate strings", () => {
+    expect(mkWhere({ eq: ["ALL", "ALL"] })).toStrictEqual({
+      values: ["ALL","ALL"],
+      where: "where $1::text=$2::text",
+    });
+  });
 });
 
 describe("sqlsanitize", () => {
