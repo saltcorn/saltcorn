@@ -773,6 +773,8 @@ export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
       whereObj.and = Array.isArray(inputWhere[k])
         ? inputWhere[k].map((w: Where) => prefixFieldsInWhere(w, tablePrefix))
         : prefixFieldsInWhere(inputWhere[k], tablePrefix);
+    } else if (k === "eq") {
+      whereObj[k]= inputWhere[k] // TODO check for fieldnames
     } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
   });
   return whereObj;
