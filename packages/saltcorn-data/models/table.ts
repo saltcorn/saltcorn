@@ -87,6 +87,7 @@ import type {
 } from "@saltcorn/types/base_types";
 import { get_formula_examples } from "./internal/table_helper";
 import { getAggAndField, process_aggregations } from "./internal/query";
+import async_json_stream from "./internal/async_json_stream";
 
 /**
  * Transponce Objects
@@ -3032,6 +3033,12 @@ ${rejectDetails}`,
     return v1;
   }
 
+  async import_json_history_file(filePath: string) {
+    return await async_json_stream(filePath, async (row) => {
+      await this.insert_history_row(row);
+    });
+  }
+
   /**
    * Import JSON table description
    * @param filePath
@@ -3042,11 +3049,6 @@ ${rejectDetails}`,
     filePath: string,
     skip_first_data_row?: boolean
   ): Promise<any> {
-    const contents = (await readFile(filePath)).toString();
-
-    // todo argument type buffer is not assignable for type String...
-    const file_rows = contents === "\\N\n" ? [] : JSON.parse(contents);
-
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -3054,11 +3056,13 @@ ${rejectDetails}`,
       (f) => typeof f.type !== "string" && f?.type?.name === "JSON"
     );
     let i = 1;
+    let importError: string | undefined;
     const client = db.isSQLite ? db : await db.getClient();
     await client.query("BEGIN");
-    for (const rec of file_rows) {
+    const consume = async (rec: Row) => {
       i += 1;
-      if (skip_first_data_row && i === 2) continue;
+      if (skip_first_data_row && i === 2) return;
+      if (importError) return;
       fields
         .filter((f) => f.calculated && !f.stored)
         .forEach((f) => {
@@ -3080,16 +3084,21 @@ ${rejectDetails}`,
         await client.query("ROLLBACK");
 
         if (!db.isSQLite) await client.release(true);
-        return { error: `${e.message} in row ${i}` };
+        importError = `${e.message} in row ${i}`;
       }
-    }
+    };
+    await async_json_stream(filePath, async (row: Row) => {
+      await consume(row);
+    });
+    if (importError) return { error: importError };
+
     await client.query("COMMIT");
     if (!db.isSQLite) await client.release(true);
 
     await this.resetSequence();
 
     return {
-      success: `Imported ${file_rows.length} rows into table ${this.name}`,
+      success: `Imported ${i - 1} rows into table ${this.name}`,
     };
   }
 
