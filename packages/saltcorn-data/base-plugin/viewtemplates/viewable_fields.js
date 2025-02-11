@@ -63,8 +63,9 @@ const action_url = (
   confirm,
   colIndex
 ) => {
+  const pk_name = table.pk_name
   if (action_name === "Delete")
-    return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
+    return `/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack")
     return {
       javascript: isNode()
@@ -73,12 +74,12 @@ const action_url = (
     };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+    return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
   }
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
     javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
-      r ? `, id:'${r?.id}'` : ""
+      r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
     }${columnIndex(colIndex)}});`,
   };
 };
