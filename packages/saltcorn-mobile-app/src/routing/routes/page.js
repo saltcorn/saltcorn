@@ -4,6 +4,7 @@ import { MobileRequest } from "../mocks/request";
 import { MobileResponse } from "../mocks/response";
 import { parseQuery, wrapContents } from "../utils";
 import { loadFileAsText } from "../../helpers/common";
+import { apiCall } from "../../helpers/api";
 
 // post/page/:pagename/action/:rndid
 export const postPageAction = async (context) => {
@@ -21,12 +22,20 @@ export const postPageAction = async (context) => {
       if (segment.rndid === rndid) col = segment;
     },
   });
-  const result = await saltcorn.data.plugin_helper.run_action_column({
-    col,
-    referrer: "",
-    req,
+
+  // TODO run this remotely or locally in offline mode
+  // const result = await saltcorn.data.plugin_helper.run_action_column({
+  //   col,
+  //   referrer: "",
+  //   req,
+  // });
+
+  const response = await apiCall({
+    method: "POST",
+    path: `/page/${page_name}/action/${rndid}`,
   });
-  return result || {};
+
+  return response.data || {};
 };
 
 const findPageOrGroup = (pagename) => {

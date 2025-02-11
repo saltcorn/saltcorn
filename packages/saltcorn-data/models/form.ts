@@ -60,6 +60,7 @@ class Form implements AbstractForm {
   req: any;
   tabs?: string;
   __?: any;
+  isWorkflow?: boolean;
 
   /**
    * Constructor
