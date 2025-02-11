@@ -25,6 +25,8 @@ let log_sql_enabled = false;
 
 const quote = (s) => `"${s}"`;
 
+const ppPK = (pk) => (pk ? quote(pk) : "id");
+
 /**
  * Control Logging sql statements to console
  * @param {boolean} [val = true] - if true then log sql statements to console
@@ -244,11 +246,11 @@ const insert = async (tbl, obj, opts = Object.create(null)) => {
       ? `insert into "${schema}"."${sqlsanitize(
           tbl
         )}"(${fnameList}) values(${valPosList.join()}) ${conflict}returning ${
-          opts.noid ? "*" : quote(opts.pk_name) || "id"
+          opts.noid ? "*" : ppPK(opts.pk_name)
         }`
       : `insert into "${schema}"."${sqlsanitize(
           tbl
-        )}" DEFAULT VALUES returning ${opts.noid ? "*" : quote(opts.pk_name) || "id"}`;
+        )}" DEFAULT VALUES returning ${opts.noid ? "*" : ppPK(opts.pk_name)}`;
   sql_log(sql, valList);
   const { rows } = await (client || opts.client || pool).query(sql, valList);
   if (opts.noid) return;
@@ -276,7 +278,7 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where ${quote(opts.pk_name) || "id"}=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
   sql_log(q, valList);
   await (client || opts.client || pool).query(q, valList);
 };
