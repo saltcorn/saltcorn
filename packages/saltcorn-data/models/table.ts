@@ -3586,6 +3586,7 @@ ${rejectDetails}`,
               `Reference field field ${through} not found in table ${throughTable.name}`
             );
           const finalTable = throughRefField.reftable_name;
+          const finalTableObj = Table.findOne({name: finalTable})
           jtNm1 = `${sqlsanitize(
             last_reffield.reftable_name as string
           )}_jt_${sqlsanitize(throughPath.join("_"))}_jt_${sqlsanitize(ref)}`;
@@ -3598,7 +3599,7 @@ ${rejectDetails}`,
             joinTables.push(jtNm1);
             joinq += `\n left join ${schema}"${sqlsanitize(
               finalTable
-            )}" "${jtNm1}" on "${jtNm1}".id=${lastJtNm}."${sqlsanitize(through1)}"`;
+            )}" "${jtNm1}" on "${jtNm1}"."${finalTableObj!.pk_name}"="${lastJtNm}"."${sqlsanitize(through1)}"`;
           }
 
           last_reffield = throughRefField;
