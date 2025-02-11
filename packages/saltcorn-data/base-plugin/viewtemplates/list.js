@@ -821,8 +821,8 @@ const initial_config = async ({ table_id, exttable_name }) => {
       const fieldview = f.type?.fieldviews?.show
         ? "show"
         : f.type?.fieldviews?.as_text
-        ? "as_text"
-        : undefined;
+          ? "as_text"
+          : undefined;
       const col = {
         type: "field",
         fieldview,
@@ -1255,7 +1255,7 @@ const run_action = async (
           (body.column_index ? body.column_index === index : true)))
   );
   const table = Table.findOne({ id: table_id });
-  const row = await getRowQuery(body.id);
+  const row = await getRowQuery(body[table.pk_name]);
   const state_action = getState().actions[col.action_name];
   col.configuration = col.configuration || {};
   if (state_action) {
@@ -1466,14 +1466,14 @@ module.exports = {
         const joinFields = {};
         add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
         return await table.getJoinedRow({
-          where: { id },
+          where: { [table.pk_name]: id },
           joinFields,
           forUser: req.user || { role_id: 100 },
           forPublic: !req.user,
         });
       } else
         return await table.getRow(
-          { id },
+          { [table.pk_name]: id },
           { forUser: req.user, forPublic: !req.user }
         );
     },
