@@ -292,8 +292,8 @@ const pathToQuery = (relation, srcTable, subTable, row) => {
   switch (relation.type) {
     case RelationType.CHILD_LIST:
       return path.length === 1
-        ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
-        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`;
+        ? `?${path[0].inboundKey}=${row[srcTable.pk_name]}` // works for OneToOneShow as well
+        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row[srcTable.pk_name]}`;
     case RelationType.PARENT_SHOW:
       const fkey = path[0].fkey;
       const reffield = srcTable.fields.find((f) => f.name === fkey);
@@ -396,6 +396,8 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
+  console.log({relation});
+  
   if (relation) {
     const topview = View.findOne({ name: srcViewName });
     const srcTable = Table.findOne({ id: topview.table_id });
