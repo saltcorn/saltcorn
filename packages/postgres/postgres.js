@@ -276,7 +276,7 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${quote(opts.pk_name) || "id"}=$${kvs.length + 1}`;
   sql_log(q, valList);
   await (client || opts.client || pool).query(q, valList);
 };
