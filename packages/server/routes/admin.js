@@ -3786,6 +3786,9 @@ router.post(
     }
     if (form.values.triggers) {
       await db.deleteWhere("_sc_tag_entries", { not: { trigger_id: null } });
+      await db.deleteWhere("_sc_workflow_trace");
+      await db.deleteWhere("_sc_workflow_runs");
+      await db.deleteWhere("_sc_workflow_steps");
       await db.deleteWhere("_sc_triggers");
       await getState().refresh_triggers();
     }
