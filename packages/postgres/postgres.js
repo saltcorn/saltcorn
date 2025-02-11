@@ -23,6 +23,8 @@ let client = null;
 
 let log_sql_enabled = false;
 
+const quote = (s) => `"${s}"`;
+
 /**
  * Control Logging sql statements to console
  * @param {boolean} [val = true] - if true then log sql statements to console
@@ -242,11 +244,11 @@ const insert = async (tbl, obj, opts = Object.create(null)) => {
       ? `insert into "${schema}"."${sqlsanitize(
           tbl
         )}"(${fnameList}) values(${valPosList.join()}) ${conflict}returning ${
-          opts.noid ? "*" : opts.pk_name || "id"
+          opts.noid ? "*" : quote(opts.pk_name) || "id"
         }`
       : `insert into "${schema}"."${sqlsanitize(
           tbl
-        )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
+        )}" DEFAULT VALUES returning ${opts.noid ? "*" : quote(opts.pk_name) || "id"}`;
   sql_log(sql, valList);
   const { rows } = await (client || opts.client || pool).query(sql, valList);
   if (opts.noid) return;
@@ -460,7 +462,6 @@ const drop_index = async (table_name, field_name) => {
  * @returns {Promise<void>} no results
  */
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
-  const quote = (s) => `"${s}"`;
   const sql = `COPY "${getTenantSchema()}"."${sqlsanitize(
     tableName
   )}" (${fieldNames.map(quote).join(",")}) FROM STDIN CSV HEADER`;
