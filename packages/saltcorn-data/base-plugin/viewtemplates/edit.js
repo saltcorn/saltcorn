@@ -660,8 +660,8 @@ const transformForm = async ({
         }
       }
       if (segment.action_name === "Delete") {
-        if (form.values && form.values.id) {
-          segment.action_url = `/delete/${table.name}/${form.values.id}`;
+        if (form.values && form.values[table.pk_name]) {
+          segment.action_url = `/delete/${table.name}/${form.values[table.pk_name]}`;
         } else {
           segment.type = "blank";
           segment.contents = "";
@@ -2411,9 +2411,10 @@ module.exports = {
       } = req.body || {};
 
       const table = Table.findOne({ id: table_id });
-      let row = body.id
+      const pk_name = table.pk_name;
+      let row = body[pk_name]
         ? await table.getRow(
-            { id: body.id },
+            { [pk_name]: body[pk_name] },
             {
               forPublic: !req.user,
               forUser: req.user,

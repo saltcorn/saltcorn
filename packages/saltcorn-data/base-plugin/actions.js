@@ -1118,10 +1118,10 @@ module.exports = {
                     when_trigger === "Validate"
                       ? ["Row"]
                       : mode === "filter"
-                      ? ["Filter state"]
-                      : mode === "workflow"
-                      ? ["Database", "Active edit view"]
-                      : ["Form", "Database"],
+                        ? ["Filter state"]
+                        : mode === "workflow"
+                          ? ["Database", "Active edit view"]
+                          : ["Form", "Database"],
                 },
               },
             ]
@@ -1652,7 +1652,7 @@ module.exports = {
         else {
           const keyfield = table.getField(ref);
           const refTable = Table.findOne({ name: keyfield.reftable_name });
-          const refRow = await refTable.getRow({ id: row[ref] });
+          const refRow = await refTable.getRow({ [table.pk_name]: row[ref] });
           code = refRow[target];
         }
       } else code = row[code_field];
@@ -2026,17 +2026,17 @@ module.exports = {
         typeof user_spec === "number"
           ? { id: user_spec }
           : typeof user_spec === "object"
-          ? user_spec
-          : User.valid_email(user_spec)
-          ? { email: user_spec }
-          : user_spec === "*"
-          ? {}
-          : eval_expression(
-              user_spec,
-              row || {},
-              user,
-              "Notify user user where"
-            );
+            ? user_spec
+            : User.valid_email(user_spec)
+              ? { email: user_spec }
+              : user_spec === "*"
+                ? {}
+                : eval_expression(
+                    user_spec,
+                    row || {},
+                    user,
+                    "Notify user user where"
+                  );
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({
