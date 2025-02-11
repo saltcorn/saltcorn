@@ -3556,11 +3556,11 @@ ${rejectDetails}`,
         if (ontable)
           joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
-          )}" ${jtNm} on ${jtNm}."${sqlsanitize(ref)}"=a."${reffield.refname}"`;
+          )}" "${jtNm}" on "${jtNm}"."${sqlsanitize(ref)}"=a."${reffield.refname}"`;
         else
           joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
-          )}" ${jtNm} on ${jtNm}."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
+          )}" "${jtNm}" on "${jtNm}"."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
       }
       if (through) {
         const throughs = Array.isArray(through) ? through : [through];
@@ -3598,16 +3598,16 @@ ${rejectDetails}`,
             joinTables.push(jtNm1);
             joinq += `\n left join ${schema}"${sqlsanitize(
               finalTable
-            )}" ${jtNm1} on ${jtNm1}.id=${lastJtNm}."${sqlsanitize(through1)}"`;
+            )}" "${jtNm1}" on "${jtNm1}".id=${lastJtNm}."${sqlsanitize(through1)}"`;
           }
 
           last_reffield = throughRefField;
           lastJtNm = jtNm1;
         }
         // todo warning variable might not have been initialized
-        fldNms.push(`${jtNm1}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+        fldNms.push(`"${jtNm1}"."${sqlsanitize(target)}" as "${sqlsanitize(fldnm)}"`);
       } else {
-        fldNms.push(`${jtNm}.${sqlsanitize(target)} as ${sqlsanitize(fldnm)}`);
+        fldNms.push(`"${jtNm}"."${sqlsanitize(target)}" as "${sqlsanitize(fldnm)}"`);
       }
     }
     if (opts.starFields) fldNms.push("a.*");
