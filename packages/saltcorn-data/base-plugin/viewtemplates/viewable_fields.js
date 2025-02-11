@@ -396,7 +396,6 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
-  console.log({relation});
   
   if (relation) {
     const topview = View.findOne({ name: srcViewName });
