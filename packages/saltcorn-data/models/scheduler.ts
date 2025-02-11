@@ -208,7 +208,7 @@ const runScheduler = async ({
     const isWeekly = await intervalIsNow("Weekly");
     getState().log(
       4,
-      `Schduler tick ${JSON.stringify({ isHourly, isDaily, isWeekly })}`
+      `Scheduler tick ${JSON.stringify({ isHourly, isDaily, isWeekly, now: new Date().toISOString() })}`
     );
 
     await eachTenant(async () => {

@@ -331,8 +331,7 @@ function jsexprToWhere(
           const field = fields.find((f) => f.name === cleftName);
 
           if (!field) {
-            console.log({ cleftName, cleft, cright, crightName });
-
+            //console.log({ cleftName, cleft, cright, crightName });
             throw new Error(`Field not found: ${cleftName}`);
           }
           return (val: any) => ({
