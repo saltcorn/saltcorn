@@ -50,6 +50,7 @@ const {
   code,
   pre,
   button,
+  text_attr,
 } = require("@saltcorn/markup/tags");
 const { stringify } = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -696,7 +697,14 @@ const typeBadges = (f, req) => {
   if (f.primary_key) s += badge("warning", req.__("Primary key"));
   if (f.required) s += badge("primary", req.__("Required"));
   if (f.is_unique) s += badge("success", req.__("Unique"));
-  if (f.calculated) s += badge("info", req.__("Calculated"));
+  if (f.calculated)
+    s += badge(
+      "info",
+      req.__("Calculated"),
+      f.expression && f.expression !== "__aggregation"
+        ? text_attr(f.expression)
+        : undefined
+    );
   if (f.stored) s += badge("warning", req.__("Stored"));
   return s;
 };
@@ -978,8 +986,8 @@ router.get(
               table.name === "users"
                 ? `/useradmin/`
                 : fields.length === 1
-                ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
-                : `/list/${encodeURIComponent(table.name)}`,
+                  ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
+                  : `/list/${encodeURIComponent(table.name)}`,
           },
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
@@ -1535,12 +1543,12 @@ router.get(
                     r.type === "Unique"
                       ? r.configuration.fields.join(", ")
                       : r.type === "Index" && r.configuration?.field === "_fts"
-                      ? "Full text search"
-                      : r.type === "Index"
-                      ? r.configuration.field
-                      : r.type === "Formula"
-                      ? r.configuration.formula
-                      : "",
+                        ? "Full text search"
+                        : r.type === "Index"
+                          ? r.configuration.field
+                          : r.type === "Formula"
+                            ? r.configuration.formula
+                            : "",
                 },
                 {
                   label: req.__("Delete"),

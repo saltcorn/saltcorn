@@ -1349,6 +1349,8 @@ class Table implements AbstractTable {
     additionalTriggerValues?: Row,
     autoRecalcIterations?: number
   ): Promise<string | void> {
+    if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
+      return;
     let existing;
     let v = { ...v_in };
     const fields = this.fields;
@@ -1587,7 +1589,7 @@ class Table implements AbstractTable {
     await this.auto_update_calc_aggregations(
       newRow,
       !existing,
-      autoRecalcIterations || 1
+      (autoRecalcIterations || 0) + 1
     );
 
     if (!noTrigger) {
@@ -3586,7 +3588,7 @@ ${rejectDetails}`,
               `Reference field field ${through} not found in table ${throughTable.name}`
             );
           const finalTable = throughRefField.reftable_name;
-          const finalTableObj = Table.findOne({name: finalTable})
+          const finalTableObj = Table.findOne({ name: finalTable });
           jtNm1 = `${sqlsanitize(
             last_reffield.reftable_name as string
           )}_jt_${sqlsanitize(throughPath.join("_"))}_jt_${sqlsanitize(ref)}`;
@@ -3606,9 +3608,13 @@ ${rejectDetails}`,
           lastJtNm = jtNm1;
         }
         // todo warning variable might not have been initialized
-        fldNms.push(`"${jtNm1}"."${sqlsanitize(target)}" as "${sqlsanitize(fldnm)}"`);
+        fldNms.push(
+          `"${jtNm1}"."${sqlsanitize(target)}" as "${sqlsanitize(fldnm)}"`
+        );
       } else {
-        fldNms.push(`"${jtNm}"."${sqlsanitize(target)}" as "${sqlsanitize(fldnm)}"`);
+        fldNms.push(
+          `"${jtNm}"."${sqlsanitize(target)}" as "${sqlsanitize(fldnm)}"`
+        );
       }
     }
     if (opts.starFields) fldNms.push("a.*");
