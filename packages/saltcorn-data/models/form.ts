@@ -218,7 +218,10 @@ class Form implements AbstractForm {
       const showIfFailed = ([k, criteria]: any[]) => {
         if (v[k] && typeof criteria === "string" && v[k] !== criteria)
           return true;
-        //todo arrays, bools
+        if (v[k] && Array.isArray(criteria) && !criteria.includes(v[k]))
+          return true;
+        if (v[k] && criteria === true && !v[k]) return true;
+        if (v[k] && criteria === false && v[k]) return true;
       };
       if (f.showIf && Object.entries(f.showIf).some(showIfFailed)) return;
 
