@@ -2149,7 +2149,7 @@ const stateFieldsToWhere = ({
           inSelect: {
             table: db.sqlsanitize(jtNm),
             tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-            field: "id",
+            field: jTable.pk_name,
             where,
           },
         },
