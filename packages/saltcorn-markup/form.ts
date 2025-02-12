@@ -1383,11 +1383,12 @@ const renderFormLayout = (form: Form): string => {
       if (action_link) return action_link;
 
       if ((isNode && !form.req?.smr) || form.isWorkflow) {
-        const submitAttr = form.xhrSubmit
-          ? `onClick="${spinnerStr}${
-              form.onSubmit ? `${form.onSubmit};` : ""
-            }ajaxSubmitForm(this, true)" type="button"`
-          : 'type="submit"';
+        const submitAttr =
+          form.xhrSubmit || form.isWorkflow
+            ? `onClick="${spinnerStr}${
+                form.onSubmit ? `${form.onSubmit};` : ""
+              }ajaxSubmitForm(this, true)" type="button"`
+            : 'type="submit"';
         return mkBtn(submitAttr);
       }
       return mkBtn('type="submit"');
@@ -1611,7 +1612,7 @@ const mkForm = (
   }action="${buildActionAttribute(form)}"${
     form.onSubmit || form.xhrSubmit
       ? ` onsubmit="${form.onSubmit || ""}${
-          form.xhrSubmit && !isMobile
+          (form.xhrSubmit && !isMobile) || form.isWorkflow
             ? `;ajaxSubmitForm(this, true, event)`
             : ""
         }"`
@@ -1647,7 +1648,7 @@ const mkForm = (
     ${
       form.noSubmitButton
         ? ""
-        : form.xhrSubmit
+        : form.xhrSubmit || form.isWorkflow
         ? `<button type="button" class="btn ${
             form.submitButtonClass || "btn-primary"
           }" onClick="${

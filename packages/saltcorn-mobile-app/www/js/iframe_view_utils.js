@@ -1,5 +1,5 @@
 /*eslint-env browser*/
-/*global $, KTDrawer, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page */
+/*global $, KTDrawer, reload_embedded_view, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page */
 
 function combineFormAndQuery(form, query) {
   let paramsList = [];
@@ -126,14 +126,31 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
 
 async function ajaxSubmitForm(e, force_no_reload, event) {
   const form = $(e).closest("form");
-  const path = form.attr("action");
+  const action = form.attr("action");
   if (event) event.preventDefault();
   try {
-    const response = await parent.saltcorn.mobileApp.api.apiCall({
-      path: path,
-      method: "POST",
-      body: new FormData(form[0]),
-    });
+    const { isOfflineMode } =
+      parent.saltcorn.data.state.getState().mobileConfig;
+    let responseData = null;
+    if (isOfflineMode) {
+      const { path, query } =
+        parent.saltcorn.mobileApp.navigation.splitPathQuery(action);
+      const formData = new FormData(form[0]);
+      const data = {};
+      for (const [k, v] of formData.entries()) data[k] = v;
+      responseData = await parent.saltcorn.mobileApp.navigation.router.resolve({
+        pathname: `post${path}`,
+        query: query,
+        body: data,
+      });
+    } else {
+      const response = await parent.saltcorn.mobileApp.api.apiCall({
+        path: action,
+        method: "POST",
+        body: new FormData(form[0]),
+      });
+      responseData = response.data;
+    }
     var no_reload = $("#scmodal").hasClass("no-submit-reload");
     const on_close_reload_view = $("#scmodal").attr(
       "data-on-close-reload-view"
@@ -146,7 +163,7 @@ async function ajaxSubmitForm(e, force_no_reload, event) {
         await parent.saltcorn.mobileApp.navigation.reload();
     } else if (!force_no_reload && !no_reload)
       await parent.saltcorn.mobileApp.navigation.reload();
-    else common_done(response.data, form.attr("data-viewname"));
+    else common_done(responseData, form.attr("data-viewname"));
   } catch (error) {
     // var title = request.getResponseHeader("Page-Title");
     // if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));

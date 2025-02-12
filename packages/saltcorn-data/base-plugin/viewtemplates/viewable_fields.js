@@ -1327,7 +1327,8 @@ const getForm = async (
   layout0,
   id,
   req,
-  isRemote
+  isRemote,
+  isWorkflow
 ) => {
   const fields = table.getFields();
   const state = getState();
@@ -1439,7 +1440,7 @@ const getForm = async (
   const form = new Form({
     action: action,
     onSubmit:
-      isRemote || isOfflineMode()
+      (isRemote || isOfflineMode()) && !isWorkflow
         ? `javascript:${
             !isMobileLogin
               ? `formSubmit(this, '/view/', '${viewname}')`

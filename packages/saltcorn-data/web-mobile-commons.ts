@@ -8,6 +8,8 @@ import { instanceOfType } from "@saltcorn/types/common_types";
 import utils from "./utils";
 import expression from "./models/expression";
 import type User from "./models/user";
+import View from "./models/view";
+import Form from "./models/form";
 const { isNode, applyAsync } = utils;
 const { text } = require("@saltcorn/markup/tags");
 const { getState } = require("./db/state");
@@ -16,6 +18,10 @@ const {
   add_free_variables_to_joinfields,
   calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
+import viewableFields from "./base-plugin/viewtemplates/viewable_fields";
+const { getForm } = viewableFields;
+const MarkdownIt = require("markdown-it"),
+  md = new MarkdownIt();
 
 const disabledMobileMenus = ["Action", "Search"];
 
@@ -373,9 +379,56 @@ const show_calculated_fieldview = async (
   }
 };
 
+const getWorkflowStepUserForm = async (
+  run: any,
+  trigger: any,
+  step: any,
+  req: any
+) => {
+  if (step.action_name === "EditViewForm") {
+    const view = View.findOne({ name: step.configuration.edit_view });
+    const table = Table.findOne({ id: view!.table_id });
+    // @ts-ignore
+    const form = await getForm(
+      table!,
+      view!.name,
+      view!.configuration.columns,
+      view!.configuration.layout,
+      // @ts-ignore
+      null,
+      req,
+      false,
+      true
+    );
+    await form.fill_fkey_options(false, undefined, req?.user);
+    form.action = `/actions/fill-workflow-form/${run.id}`;
+    form.isWorkflow = true;
+    if (run.context[step.configuration.response_variable])
+      Object.assign(
+        form.values,
+        run.context[step.configuration.response_variable]
+      );
+
+    return form;
+  }
+
+  let blurb = run.wait_info.output || step.configuration?.form_header || "";
+  if (run.wait_info.markdown && run.wait_info.output) blurb = md.render(blurb);
+  const form = new Form({
+    action: `/actions/fill-workflow-form/${run.id}`,
+    submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
+    onSubmit: "press_store_button(this)",
+    blurb,
+    formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
+    fields: await run.userFormFields(step),
+  });
+  return form;
+};
+
 export = {
   get_extra_menu,
   prepare_update_row,
   prepare_insert_row,
   show_calculated_fieldview,
+  getWorkflowStepUserForm,
 };
