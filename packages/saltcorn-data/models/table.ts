@@ -873,7 +873,7 @@ class Table implements AbstractTable {
       instanceOfType(pk.type) &&
       pk.type.name === "Integer"
     )
-      await db.reset_sequence(this.name);
+      await db.reset_sequence(this.name, this.pk_name);
   }
 
   /**

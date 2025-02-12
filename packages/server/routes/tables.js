@@ -1467,7 +1467,10 @@ router.get(
       res.redirect(`/table/${table.id}`);
       return;
     }
-    const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
+    const rows = await table.getRows(
+      {},
+      { orderBy: table.pk_name, forUser: req.user }
+    );
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
@@ -2019,6 +2022,7 @@ router.post(
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {
+      console.error("CSV upload error", e);
       req.flash("error", e.message);
     }
     await fs.unlink(f.location);

@@ -350,10 +350,10 @@ const getClient = async () => await pool.connect();
  * @param {string} tblname - table name
  * @returns {Promise<void>} no result
  */
-const reset_sequence = async (tblname) => {
+const reset_sequence = async (tblname, pkname = "id") => {
   const sql = `SELECT setval(pg_get_serial_sequence('"${getTenantSchema()}"."${sqlsanitize(
     tblname
-  )}"', 'id'), coalesce(max(id),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
+  )}"', '${pkname}'), coalesce(max("${pkname}"),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
     tblname
   )}";`;
   await (client || pool).query(sql);

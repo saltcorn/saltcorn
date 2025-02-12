@@ -308,8 +308,8 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2, mode) => {
       f.type === "Key"
         ? getState().keyFieldviews
         : f.type === "File"
-        ? getState().fileviews
-        : (f.type && f.type.fieldviews) || {};
+          ? getState().fileviews
+          : (f.type && f.type.fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews)) {
       if (fv.configFields)
         fieldViewConfigForms[f.name][nm] = await applyAsync(
@@ -887,9 +887,8 @@ const field_picker_fields = async ({
   const { link_view_opts, view_name_opts, view_relation_opts } =
     await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
-  const { child_field_list, child_relations } = await table.get_child_relations(
-    true
-  );
+  const { child_field_list, child_relations } =
+    await table.get_child_relations(true);
   const join_field_options = await table.get_join_field_options(true, true);
   const join_field_view_options = {
     ...field_view_options,
@@ -1986,8 +1985,8 @@ const stateFieldsToWhere = ({
         table: prefix
           ? prefix.replaceAll(".", "")
           : table
-          ? table.name
-          : undefined,
+            ? table.name
+            : undefined,
         schema: db.isSQLite ? undefined : db.getTenantSchema(),
       };
       return;
@@ -2150,7 +2149,7 @@ const stateFieldsToWhere = ({
           inSelect: {
             table: db.sqlsanitize(jtNm),
             tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-            field: "id",
+            field: jTable.pk_name,
             where,
           },
         },
@@ -2165,8 +2164,10 @@ const stateFieldsToWhere = ({
           isString =
             labelField.type?.name === "String" &&
             !labelField.attributes?.exact_search_only;
-        qstate.id = [
-          ...(qstate.id ? [qstate.id] : []),
+
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
           {
             // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
@@ -2182,8 +2183,9 @@ const stateFieldsToWhere = ({
         ];
       } else if (kpath.length === 4) {
         const [jtNm, jFieldNm, tblName, lblField] = kpath;
-        qstate.id = [
-          ...(qstate.id ? [qstate.id] : []),
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
           {
             // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
             inSelect: {
@@ -2290,12 +2292,12 @@ const initial_config_all_fields =
               ([nm, fv]) => fv.isEdit === isEdit
             )[0]
           : f.type === "File" && !isEdit
-          ? Object.keys(getState().fileviews)[0]
-          : f.type === "File" && isEdit
-          ? "upload"
-          : f.type === "Key"
-          ? "select"
-          : undefined;
+            ? Object.keys(getState().fileviews)[0]
+            : f.type === "File" && isEdit
+              ? "upload"
+              : f.type === "Key"
+                ? "select"
+                : undefined;
         cfg.columns.push({
           field_name: f.name,
           type: "Field",
@@ -2673,8 +2675,8 @@ const displayType = (stateFields) =>
   stateFields.every((sf) => !sf.required)
     ? ViewDisplayType.NO_ROW_LIMIT
     : stateFields.some((sf) => sf.name === "id")
-    ? ViewDisplayType.ROW_REQUIRED
-    : ViewDisplayType.INVALID;
+      ? ViewDisplayType.ROW_REQUIRED
+      : ViewDisplayType.INVALID;
 
 const build_schema_data = async () => {
   const allViews = await View.find({}, { cached: true });
