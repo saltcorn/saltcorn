@@ -1467,7 +1467,10 @@ router.get(
       res.redirect(`/table/${table.id}`);
       return;
     }
-    const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
+    const rows = await table.getRows(
+      {},
+      { orderBy: table.pk_name, forUser: req.user }
+    );
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
