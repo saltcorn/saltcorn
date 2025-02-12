@@ -2163,12 +2163,12 @@ module.exports = {
         );
       } else filepath = row[file_field];
       if (!filepath) return;
-      const file = await File.from_file_on_disk(filepath);
+      const file = await File.findOne(filepath);
       return {
         download: {
           filename: file.filename,
           mimetype: file.mimetype,
-          blob: await file.get_contents,
+          blob: await file.get_contents("base64"),
         },
       };
     },
