@@ -2164,8 +2164,10 @@ const stateFieldsToWhere = ({
           isString =
             labelField.type?.name === "String" &&
             !labelField.attributes?.exact_search_only;
-        qstate.id = [
-          ...(qstate.id ? [qstate.id] : []),
+
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
           {
             // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
@@ -2181,8 +2183,9 @@ const stateFieldsToWhere = ({
         ];
       } else if (kpath.length === 4) {
         const [jtNm, jFieldNm, tblName, lblField] = kpath;
-        qstate.id = [
-          ...(qstate.id ? [qstate.id] : []),
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
           {
             // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
             inSelect: {
