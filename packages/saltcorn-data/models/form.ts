@@ -215,6 +215,15 @@ class Form implements AbstractForm {
           if (fv && !fv.isEdit) return;
         }
       }
+      const showIfFailed = ([k, criteria]: any[]) => {
+        if (v[k] && typeof criteria === "string" && v[k] !== criteria)
+          return true;
+        if (v[k] && Array.isArray(criteria) && !criteria.includes(v[k]))
+          return true;
+        if (v[k] && criteria === true && !v[k]) return true;
+        if (v[k] && criteria === false && v[k]) return true;
+      };
+      if (f.showIf && Object.entries(f.showIf).some(showIfFailed)) return;
 
       const valres = f.validate(v);
       if (instanceOfErrorMsg(valres)) {
