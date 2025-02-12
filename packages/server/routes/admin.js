@@ -1195,7 +1195,7 @@ router.get(
                     th({ valign: "top" }, req.__("Saltcorn version")),
                     td(
                       packagejson.version,
-                      isRoot
+                      isRoot && can_update
                         ? post_btn(
                             "/admin/upgrade",
                             req.__("Upgrade") + " (latest)",
@@ -1220,7 +1220,8 @@ router.get(
                               }
                             )
                           : "",
-                      !git_commit &&
+                      isRoot &&
+                        !git_commit &&
                         a(
                           {
                             id: rndid,
