@@ -2022,6 +2022,7 @@ router.post(
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {
+      console.error("CSV upload error", e);
       req.flash("error", e.message);
     }
     await fs.unlink(f.location);
