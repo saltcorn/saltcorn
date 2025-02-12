@@ -2116,6 +2116,64 @@ module.exports = {
     namespace: "Database",
   },
 
+  download_file_to_browser: {
+    description: "Download a file to the user's browser",
+    configFields: async ({ table, mode }) => {
+      if (mode === "workflow") {
+        return [
+          {
+            name: "filepath_expr",
+            label: "File path",
+            class: "validate-expression",
+            sublabel:
+              "JavaScript expression, based on the context, for the file path within the file store. If giving a literal filename, enclose in quotes: \"myfile.zip\"",
+            type: "String",
+          },
+        ];
+      }
+      let field_opts = [];
+      if (table) {
+        field_opts = table.fields
+          .filter((f) => f.type === "File")
+          .map((f) => f.name);
+      }
+      return [
+        {
+          name: "file_field",
+          label: "File field",
+          type: "String",
+          required: true,
+          attributes: { options: field_opts },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      configuration: { filepath_expr, file_field },
+      user,
+      mode,
+    }) => {
+      let filepath;
+      if (mode === "workflow") {
+        filepath = eval_expression(
+          filepath_expr,
+          row,
+          user,
+          "download filepath formula"
+        );
+      } else filepath = row[file_field];
+      if (!filepath) return;
+      const file = await File.from_file_on_disk(filepath);
+      return {
+        download: {
+          filename: file.filename,
+          mimetype: file.mimetype,
+          blob: await file.get_contents,
+        },
+      };
+    },
+  },
+
   install_progressive_web_app: {
     description: "Install a Progressive Web Application",
     configFields: () => [],
