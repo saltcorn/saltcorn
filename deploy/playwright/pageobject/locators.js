@@ -154,7 +154,7 @@ class PageLocators {
     this.showfieldlink = '(//a[text()="Show"])[1]';
     this.listshowlink = '(//a[text()="ListShow"])[1]';
     this.ActionLabel = 'input[type="text"].form-control';
-    this.ActionHoverTitle = 'input.linkoractiontitle';
+    this.ActionHoverTitle = 'input.form-control:not([type])';
     this.containsdraglocator= 'div[title="Container"]';
     this.containerdisplaysetting = '//div[contains(text(), "Display")]';
     this.containercontentsetting = '//div[contains(text(), "Contents")]';
@@ -649,6 +649,17 @@ class PageLocators {
     this.dragElement1 = 'div.d-inline-flex.wrap-builder-elem >> div.inner > i.fas.fa-address-card';
     this.testPage4 = 'li.breadcrumb-item.fw-bold[aria-current="page"] a';
     this.pageNameSave3 = 'table.table >> tbody >> tr >> td:nth-child(3) >> a';
+    this.actionButton = 'button.btn.btn-primary.selected-node';
+    this.ClickToEditCheckBox = 'input[type="checkbox"][name="inline"]'
+    this.editedUserName = 'table tbody td div input'
+    this.submitEditedName = 'button[type="submit"].btn.btn-sm.btn-primary'
+    this.viewSetting = "role=button[name='View settings']";
+    this.inputdefaultrenderpage = '#inputdefault_render_page';
+    this.mycardDrag = 'div.toolbar-row > div.d-inline-flex.wrap-builder-elem[draggable="true"]';
+    this.mypage = "input[data-fieldname='page_title']";
+    this.viewName = 'table.table >> tbody >> tr >> td:nth-child(1) >> a';
+    this.createview = 'h5:has-text("Create view")';
+
 
   }
 }

@@ -30,7 +30,6 @@ test.describe('E2E Test Suite', () => {
         await functions.navigate_To_Base_URL(baseURL, derivedURL);
         await functions.login('myproject19july@mailinator.com', 'myproject19july');
         await functions.submit(); // Ensure submit is required
-        await functions.clear_Data();
     });
 
     test.afterAll(async () => {
@@ -102,13 +101,13 @@ test.describe('E2E Test Suite', () => {
 
     test('Create Second page', async () => {
         await functions.create_New_Page('testpage2');
-        await page.waitForTimeout(5000);
+        // await page.waitForTimeout(5000);
         // await page.waitForSelector(pageobject.textSource);
         await page.locator(pageobject.Library).click();
         await functions.drag_And_Drop(pageobject.dragElement, pageobject.target);
         await page.waitForTimeout(5000);
         await page.click(pageobject.testPage2);
-        await page.waitForTimeout(5000);
+        // await page.waitForTimeout(5000);
         await customAssert('Page URL should be /testpage2', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'page/testpage2');
         });
@@ -137,7 +136,7 @@ test.describe('E2E Test Suite', () => {
             await expect(Linktext).toHaveValue('youtube link');
         });
         const column = page.locator('h2', { hasText: 'Column' });
-        await column.click(); 
+        await column.click();
 
     });
 
@@ -165,9 +164,9 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Assert +Add button is visible', async () => {
             await expect(page.locator(pageobject.addButtonAfterSelect)).toBeVisible();
         });
-        await page.click(pageobject.addButtonAfterSelect);  
+        await page.click(pageobject.addButtonAfterSelect);
         await page.click(pageobject.PageSave);
- 
+
         await customAssert(' testPage3 name field should be visible', async () => {
             const names = await page.locator(pageobject.pageNameSave3).allInnerTexts();
         });
@@ -182,7 +181,197 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Page URL should be /testpage2', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'page/testpage4');
         });
-        await page.waitForTimeout(5000);
+    });
+
+
+    test('Create new view', async () => {
+        await functions.views();
+        // assert the view edit url
+        await customAssert('page url should be /viewedit  ', async () => {
+            expect(page.url()).toBe(baseURL + derivedURL + 'viewedit');
+        });
+        // assert the visibility of create new view
+        await customAssert('Create new view button should be visible and working', async () => {
+            await page.waitForSelector(pageobject.createnewview);
+            await expect(page.locator(pageobject.createnewview)).toBeVisible();
+            // Assert the lable for create view button
+            await expect(page.locator(pageobject.createnewview)).toHaveText('Create view');
+            // click on create new view
+            await page.click(pageobject.createnewview);
+        });
+        
+        // input view name and discription
+        await page.fill(pageobject.InputName, 'TestView');
+        await page.fill(pageobject.discriptiontext, 'create view and use the library for page');
+
+
+        // validate the view pattern in table dropdown
+        await customAssert('View Pattern should be list', async () => {
+            // select list pattern
+            const ListPattern = await page.$("#inputviewtemplate");
+            await ListPattern?.selectOption("List");
+        });
+
+        // assert the view url
+        await customAssert('page url should be /viewedit/new  ', async () => {
+            expect(page.url()).toBe(baseURL + derivedURL + 'viewedit/new');
+        });
+
+        await customAssert('View Settings should be visible', async () => {
+            await page.click(pageobject.viewSetting);
+            await expect(page.locator(pageobject.viewSetting)).toBeVisible();
+
+        });
+        await page.locator(pageobject.mypage).fill("My Page");
+        // Locator for the dropdown
+        const dropdown = page.locator(pageobject.inputdefaultrenderpage);
+        // Select "TestPage" from the dropdown
+        await dropdown.selectOption('TestPage');
+        // submit the page  
+        await functions.submit();
 
     });
+
+    test('verify page by view', async () => {
+        // click on add column button on page
+        await page.waitForSelector(pageobject.addcolumnbutton);
+        await page.click(pageobject.addcolumnbutton);
+        await page.locator(pageobject.Library).click();
+        // drag and drop the library locator
+        await customAssert('Drag and drop Library button on view', async () => {
+            // Define locators
+            const firstElement = page.locator(pageobject.mycardDrag).nth(0);
+            const target = page.locator(pageobject.newcolumn); // Replace with actual target locator   
+            // Drag and drop action
+            await firstElement.dragTo(target, { force: true });
+        });
+
+        await page.waitForSelector(pageobject.nextoption);
+        await page.click(pageobject.nextoption);
+
+        await customAssert('Save button on view', async () => {
+            await functions.submit();
+            await functions.submit();
+        });
+
+        await customAssert(' TestView name  should be visible', async () => {
+            const names = await page.locator(pageobject.viewName).allInnerTexts();
+            await page.click(pageobject.viewName);
+            // await page.waitForTimeout(2000);
+        });
+    });
+
+    test('Click table button and verify URL', async () => {
+        // click table button
+        await functions.click_table();
+        await customAssert('Page url should be /table ', async () => {
+            expect(page.url()).toBe(baseURL + derivedURL + 'table');
+        });
+        await customAssert('Create table button should be visible and working', async () => {
+            await page.waitForSelector(pageobject.createtablebutton);
+            await expect(page.locator(pageobject.createtablebutton)).toBeVisible();
+            // Assert label of Create table button
+            await expect(page.locator(pageobject.createtablebutton)).toHaveText('Create table');
+            // Click the "Create table" button
+            await page.click(pageobject.createtablebutton);
+        });
+        // Enter Table name
+        await functions.fill_Text(pageobject.InputName, 'My_Table');
+        await customAssert('Create button should be visible and working', async () => {
+            await page.waitForSelector(pageobject.submitButton);
+            await expect(page.locator(pageobject.submitButton)).toBeVisible();
+            // Assert label of create button
+            await expect(page.locator(pageobject.submitButton)).toHaveText('Create');
+            // click on Create button
+            await page.click(pageobject.submitButton);
+        });
+        // check visibility of id field already exist
+        await customAssert('Id field for table should be already exist ', async () => {
+            await page.waitForSelector(pageobject.idfieldlocator);
+            await expect(page.locator(pageobject.idfieldlocator)).toBeVisible();
+            // Assert the lable of ID field
+            await expect(page.locator(pageobject.idfieldlocator)).toHaveText('ID');
+        });
+        // check id field is iteger type
+        await customAssert('Id field should be integer type ', async () => {
+            await page.waitForSelector(pageobject.idtypelocator);
+            await expect(page.locator(pageobject.idtypelocator)).toBeVisible();
+            // Assert the label of variable type of id
+            await expect(page.locator(pageobject.idtypelocator)).toHaveText('Integer');
+        });
+        // create view is visible
+        await customAssert('Create view by table name ', async () => {
+            const createViewButton = page.locator('a.btn.btn-primary:has-text("Create view")');
+            await createViewButton.click();
+        });
+    });
+
+    test('Create view using table ', async () => {
+        // assert the view edit url
+        await customAssert('view using table url', async () => {
+            const currentURL = page.url(); // Get the current URL
+            // Parse the URL to extract its components
+            const url = new URL(currentURL);
+            // Assert the pathname and query parameters dynamically
+            expect(url.pathname).toBe('/viewedit/new'); // Validate the pathname
+            expect(url.searchParams.get('table')).toBeDefined(); // Validate 'table' exists
+            expect(url.searchParams.get('on_done_redirect')).toBeDefined(); // Validate 'on_done_redirect' exists
+            // Optionally, check specific values if needed
+            expect(url.searchParams.get('table')).toBe('My_Table'); // Replace 'My_Table' with your expected dynamic value
+        });
+
+        // assert the visibility of create new view
+        await customAssert('Create new view button should be visible and working', async () => {
+            await expect(page.locator(pageobject.createview)).toBeVisible();
+            // Assert the lable for create view buttons
+            await expect(page.locator(pageobject.createview)).toHaveText('Create view');
+        });
+        await customAssert('view using table url', async () => {
+            const currentURL = page.url(); // Get the current URL
+            // Parse the URL to extract its components
+            const url = new URL(currentURL);
+            // Assert the pathname and query parameters dynamically  
+            expect(url.pathname).toBe('/viewedit/new'); // Validate the pathname
+            expect(url.searchParams.get('table')).toBeDefined(); // Validate 'table' exists
+            expect(url.searchParams.get('on_done_redirect')).toBeDefined(); // Validate 'on_done_redirect' exists
+            // Optionally, check specific values if needed
+            expect(url.searchParams.get('table')).toBe('My_Table'); // Replace 'My_Table' with your expected dynamic value
+        });
+        // input view name and discription
+        await page.fill(pageobject.InputName, 'Table_View');
+        await page.fill(pageobject.discriptiontext, 'create view and use the library for page');
+
+
+        // validate the view pattern in table dropdown
+        await customAssert('View Pattern should be list', async () => {
+            // select list pattern
+            const ListPattern = await page.$("#inputviewtemplate");
+            await ListPattern?.selectOption("List");
+        });
+
+        await customAssert('View Settings should be visible', async () => {
+            await page.click(pageobject.viewSetting);
+            await expect(page.locator(pageobject.viewSetting)).toBeVisible();
+
+        });
+
+        await page.locator(pageobject.mypage).fill("My_Page");
+        // Locator for the dropdown
+        const dropdown = page.locator(pageobject.inputdefaultrenderpage);
+        // Select "TestPage" from the dropdown
+        await dropdown.selectOption('TestPage');
+        // submit the page  
+        await functions.submit();
+        await functions.views();
+        // Click on the "Table_View" link within the located row
+        await customAssert('Table_View should be visible', async () => {
+            const tableViewLink = page.locator('a', { hasText: 'Table_View' });
+            // await expect(page.locator(page.tableViewLink)).toBeVisible();
+            await tableViewLink.click();
+            // await page.waitForTimeout(2000);
+            await functions.clear_Data();
+        });
+
+    });
+
 });
