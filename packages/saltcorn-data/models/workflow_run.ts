@@ -434,7 +434,7 @@ class WorkflowRun {
 
           return resp;
         }
-        if (step.action_name === "Stop") {
+        if (step.action_name === "Stop" ||step.action_name === "TerminateWorkflow" ) {
           await this.update({
             status: "Finished",
           });
