@@ -1,5 +1,5 @@
 {
-  "entryPointStrategy": "Packages",
+  "entryPointStrategy": "legacy-packages",
   "excludePrivate": true,
   "customCss": "./deploy/typedoc/custom.css",
   "entryPoints": [
