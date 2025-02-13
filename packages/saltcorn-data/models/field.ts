@@ -903,6 +903,7 @@ class Field implements AbstractField {
         calc_joinfields.push({
           targetTable: targetTable.name,
           field: myField.name,
+          targetField: path[1]
         });
       } else if (path.length === 3) {
         const myField = table.getField(path[0]);
@@ -919,10 +920,12 @@ class Field implements AbstractField {
           field: myField.name,
           through: [throughField.name],
           throughTable: [throughTable.name],
+          targetField: path[2]
         });
         calc_joinfields.push({
           targetTable: throughTable.name,
           field: myField.name,
+          targetField: path[1]
         });
       }
     });

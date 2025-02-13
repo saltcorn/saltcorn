@@ -1353,6 +1353,11 @@ class Table implements AbstractTable {
       return;
     let existing;
     let v = { ...v_in };
+    //these may have changed
+    let changedFieldNames = new Set([
+      ...Object.keys(v_in),
+      ...this.fields.filter((f) => f.calculated).map((f) => f.name),
+    ]);
     const fields = this.fields;
     const pk_name = this.pk_name;
     const role = user?.role_id;
@@ -1589,7 +1594,8 @@ class Table implements AbstractTable {
     await this.auto_update_calc_aggregations(
       newRow,
       !existing,
-      (autoRecalcIterations || 0) + 1
+      (autoRecalcIterations || 0) + 1,
+      changedFieldNames
     );
 
     if (!noTrigger) {
@@ -2008,7 +2014,8 @@ class Table implements AbstractTable {
   async auto_update_calc_aggregations(
     v0: Row,
     refetch?: boolean,
-    iterations: number = 1
+    iterations: number = 1,
+    changedFields?: Set<String>
   ) {
     if (iterations > 5) return;
     const calc_agg_fields = await Field.find(
@@ -2068,6 +2075,13 @@ class Table implements AbstractTable {
       const refTable =
         (field.table as Table) || Table.findOne({ id: field.table_id });
       for (const matching of matchings) {
+        //console.log({ matching, changedFields });
+        if (
+          changedFields &&
+          matching.targetField &&
+          !changedFields.has(matching.targetField)
+        )
+          continue;
         if (matching.through?.length === 1) {
           // select readings where patient_id.favbook = v.id
           // select reftable where field.through[0] = v.id
