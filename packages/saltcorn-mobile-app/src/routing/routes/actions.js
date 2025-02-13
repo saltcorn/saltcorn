@@ -1,12 +1,16 @@
+/*global saltcorn */
+
 import { MobileRequest } from "../mocks/request";
 import { apiCall } from "../../helpers/api";
 
 export const postResumeWorkflow = async (context) => {
   const { id } = context.params;
-  const { user, isOfflineMode } = saltcorn.data.state.getState().mobileConfig;
+  const { isOfflineMode } = saltcorn.data.state.getState().mobileConfig;
   if (isOfflineMode) {
     const req = new MobileRequest(context);
     const run = await saltcorn.data.models.WorkflowRun.findOne({ id });
+    if (run.started_by !== req.user?.id)
+      throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
     const trigger = await saltcorn.data.models.Trigger.findOne({
       id: run.trigger_id,
     });
@@ -38,6 +42,8 @@ export const getFillWorkflowForm = async (context) => {
   if (isOfflineMode) {
     const req = new MobileRequest();
     const run = await saltcorn.data.models.WorkflowRun.findOne({ id });
+    if (!run.user_allowed_to_fill_form(req.user))
+      throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
     const trigger = await saltcorn.data.models.Trigger.findOne({
       id: run.trigger_id,
     });
@@ -64,10 +70,12 @@ export const getFillWorkflowForm = async (context) => {
 
 export const postFillWorkflowForm = async (context) => {
   const { id } = context.params;
-  const { user, isOfflineMode } = saltcorn.data.state.getState().mobileConfig;
+  const { isOfflineMode } = saltcorn.data.state.getState().mobileConfig;
   if (isOfflineMode) {
     const req = new MobileRequest(context);
     const run = await saltcorn.data.models.WorkflowRun.findOne({ id });
+    if (!run.user_allowed_to_fill_form(req.user))
+      throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
     const trigger = await saltcorn.data.models.Trigger.findOne({
       id: run.trigger_id,
     });
