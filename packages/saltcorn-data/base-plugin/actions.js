@@ -1118,10 +1118,10 @@ module.exports = {
                     when_trigger === "Validate"
                       ? ["Row"]
                       : mode === "filter"
-                      ? ["Filter state"]
-                      : mode === "workflow"
-                      ? ["Database", "Active edit view"]
-                      : ["Form", "Database"],
+                        ? ["Filter state"]
+                        : mode === "workflow"
+                          ? ["Database", "Active edit view"]
+                          : ["Form", "Database"],
                 },
               },
             ]
@@ -1652,7 +1652,7 @@ module.exports = {
         else {
           const keyfield = table.getField(ref);
           const refTable = Table.findOne({ name: keyfield.reftable_name });
-          const refRow = await refTable.getRow({ id: row[ref] });
+          const refRow = await refTable.getRow({ [table.pk_name]: row[ref] });
           code = refRow[target];
         }
       } else code = row[code_field];
@@ -2026,17 +2026,17 @@ module.exports = {
         typeof user_spec === "number"
           ? { id: user_spec }
           : typeof user_spec === "object"
-          ? user_spec
-          : User.valid_email(user_spec)
-          ? { email: user_spec }
-          : user_spec === "*"
-          ? {}
-          : eval_expression(
-              user_spec,
-              row || {},
-              user,
-              "Notify user user where"
-            );
+            ? user_spec
+            : User.valid_email(user_spec)
+              ? { email: user_spec }
+              : user_spec === "*"
+                ? {}
+                : eval_expression(
+                    user_spec,
+                    row || {},
+                    user,
+                    "Notify user user where"
+                  );
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({
@@ -2114,6 +2114,64 @@ module.exports = {
       }
     },
     namespace: "Database",
+  },
+
+  download_file_to_browser: {
+    description: "Download a file to the user's browser",
+    configFields: async ({ table, mode }) => {
+      if (mode === "workflow") {
+        return [
+          {
+            name: "filepath_expr",
+            label: "File path",
+            class: "validate-expression",
+            sublabel:
+              "JavaScript expression, based on the context, for the file path within the file store. If giving a literal filename, enclose in quotes: \"myfile.zip\"",
+            type: "String",
+          },
+        ];
+      }
+      let field_opts = [];
+      if (table) {
+        field_opts = table.fields
+          .filter((f) => f.type === "File")
+          .map((f) => f.name);
+      }
+      return [
+        {
+          name: "file_field",
+          label: "File field",
+          type: "String",
+          required: true,
+          attributes: { options: field_opts },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      configuration: { filepath_expr, file_field },
+      user,
+      mode,
+    }) => {
+      let filepath;
+      if (mode === "workflow") {
+        filepath = eval_expression(
+          filepath_expr,
+          row,
+          user,
+          "download filepath formula"
+        );
+      } else filepath = row[file_field];
+      if (!filepath) return;
+      const file = await File.findOne(filepath);
+      return {
+        download: {
+          filename: file.filename,
+          mimetype: file.mimetype,
+          blob: await file.get_contents("base64"),
+        },
+      };
+    },
   },
 
   install_progressive_web_app: {

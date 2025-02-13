@@ -63,8 +63,9 @@ const action_url = (
   confirm,
   colIndex
 ) => {
+  const pk_name = table.pk_name
   if (action_name === "Delete")
-    return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
+    return `/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack")
     return {
       javascript: isNode()
@@ -73,12 +74,12 @@ const action_url = (
     };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+    return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
   }
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
     javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
-      r ? `, id:'${r?.id}'` : ""
+      r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
     }${columnIndex(colIndex)}});`,
   };
 };
@@ -113,6 +114,7 @@ const action_link = (
     action_icon,
     action_bgcol,
     action_title,
+    action_class,
     action_bordercol,
     action_textcol,
     spinner,
@@ -132,10 +134,12 @@ const action_link = (
       {
         href: "javascript:void(0)",
         onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}`,
-        class:
+        class: [
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+          action_class,
+        ],
         style,
         title: action_title,
       },
@@ -288,8 +292,8 @@ const pathToQuery = (relation, srcTable, subTable, row) => {
   switch (relation.type) {
     case RelationType.CHILD_LIST:
       return path.length === 1
-        ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
-        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`;
+        ? `?${path[0].inboundKey}=${row[srcTable.pk_name]}` // works for OneToOneShow as well
+        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row[srcTable.pk_name]}`;
     case RelationType.PARENT_SHOW:
       const fkey = path[0].fkey;
       const reffield = srcTable.fields.find((f) => f.name === fkey);
@@ -358,6 +362,7 @@ const view_linker = (
     extra_state_fml,
     link_target_blank,
     link_title,
+    link_class,
   },
   fields,
   __ = (s) => s,
@@ -391,6 +396,7 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
+  
   if (relation) {
     const topview = View.findOne({ name: srcViewName });
     const srcTable = Table.findOne({ id: topview.table_id });
@@ -434,7 +440,8 @@ const view_linker = (
             get_extra_state(r),
             link_target_blank,
             label_attr,
-            link_title
+            link_title,
+            link_class
           );
         }
       },
@@ -471,7 +478,8 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class
             );
           },
         };
@@ -496,7 +504,8 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class
             );
           },
         };
@@ -525,7 +534,8 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class
             );
           },
         };
@@ -561,7 +571,8 @@ const view_linker = (
                 get_extra_state(r),
                 link_target_blank,
                 label_attr,
-                link_title
+                link_title,
+                link_class
               );
             } else return "";
           },

@@ -709,8 +709,8 @@ router.post(
       type === "trigger"
         ? `/actions`
         : /^[a-z]+$/g.test(type)
-        ? `/${type}edit`
-        : "/"
+          ? `/${type}edit`
+          : "/"
     );
   })
 );
@@ -1195,7 +1195,7 @@ router.get(
                     th({ valign: "top" }, req.__("Saltcorn version")),
                     td(
                       packagejson.version,
-                      isRoot 
+                      isRoot && can_update
                         ? post_btn(
                             "/admin/upgrade",
                             req.__("Upgrade") + " (latest)",
@@ -1206,21 +1206,22 @@ router.get(
                             }
                           )
                         : isRoot && is_latest
-                        ? span(
-                            { class: "badge bg-primary ms-2" },
-                            req.__("Latest")
-                          ) +
-                          post_btn(
-                            "/admin/check-for-upgrade",
-                            req.__("Check updates"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm px-1 py-0",
-                              formClass: "d-inline",
-                            }
-                          )
-                        : "",
-                      !git_commit &&
+                          ? span(
+                              { class: "badge bg-primary ms-2" },
+                              req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : "",
+                      isRoot &&
+                        !git_commit &&
                         a(
                           {
                             id: rndid,
@@ -1563,21 +1564,30 @@ const cleanNodeModules = async () => {
 };
 
 const doInstall = async (req, res, version, deepClean, runPull) => {
+  const state = getState();
+  let res_write = (s) => {
+    try {
+      res.write(s);
+      state.log(5, s);
+    } catch (e) {
+      console.error("Install write error: ", e?.message || e);
+    }
+  };
   if (db.getTenantSchema() !== db.connectObj.default_schema) {
     req.flash("error", req.__("Not possible for tenant"));
     res.redirect("/admin");
   } else {
-    res.write(
+    res_write(
       version === "latest"
         ? req.__("Starting upgrade, please wait...\n")
         : req.__("Installing %s, please wait...\n", version)
     );
     if (deepClean) {
-      res.write(req.__("Cleaning node_modules...\n"));
+      res_write(req.__("Cleaning node_modules...\n"));
       try {
         await cleanNodeModules();
       } catch (e) {
-        res.write(req.__("Error cleaning node_modules: %s\n", e.message));
+        res_write(req.__("Error cleaning node_modules: %s\n", e.message));
       }
     }
     const child = spawn(
@@ -1588,33 +1598,37 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
       }
     );
     child.stdout.on("data", (data) => {
-      res.write(data);
+      res_write(data);
     });
     child.stderr?.on("data", (data) => {
-      res.write(data);
+      res_write(data);
     });
     child.on("exit", async function (code, signal) {
       if (code === 0) {
         if (deepClean) {
-          res.write(req.__("Installing sd-notify") + "\n");
+          res_write(req.__("Installing sd-notify") + "\n");
           const sdNotifyCode = await tryInstallSdNotify(req, res);
-          res.write(
+          res_write(
             req.__("sd-notify install done with code %s", sdNotifyCode) + "\n"
           );
         }
         if (runPull) {
-          res.write(
+          res_write(
             req.__("Pulling the capacitor-builder docker image...") + "\n"
           );
           const pullCode = await pullCapacitorBuilder(req, res, version);
-          res.write(req.__("Pull done with code %s", pullCode) + "\n");
+          res_write(req.__("Pull done with code %s", pullCode) + "\n");
           if (pullCode === 0) {
-            res.write(req.__("Pruning docker...") + "\n");
+            res_write(req.__("Pruning docker...") + "\n");
             const pruneCode = await pruneDocker(req, res);
-            res.write(req.__("Prune done with code %s", pruneCode) + "\n");
+            res_write(req.__("Prune done with code %s", pruneCode) + "\n");
           }
         }
       }
+      setTimeout(() => {
+        getState().processSend("RestartServer");
+        process.exit(0);
+      }, 200);
       res.end(
         version === "latest"
           ? req.__(
@@ -1624,10 +1638,6 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
               `Install done with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
             )
       );
-      setTimeout(() => {
-        getState().processSend("RestartServer");
-        process.exit(0);
-      }, 100);
     });
   }
 };
@@ -1974,9 +1984,8 @@ router.get(
     const filename = `${moment(start).format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
     const go = async () => {
-      const { passes, errors, pass, warnings } = await runConfigurationCheck(
-        req
-      );
+      const { passes, errors, pass, warnings } =
+        await runConfigurationCheck(req);
       const end = new Date();
       const secs = Math.round((end.getTime() - start.getTime()) / 1000);
 
@@ -3250,8 +3259,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-        ? "_finish_step"
-        : "";
+          ? "_finish_step"
+          : "";
     res.json({
       finished: await checkFiles(out_dir_name, [
         `logs${stepDesc}.txt`,
@@ -3326,8 +3335,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-        ? "_finish_step"
-        : "";
+          ? "_finish_step"
+          : "";
     const resultMsg = files.find(
       (file) => file.filename === `logs${stepDesc}.txt`
     )
@@ -3786,6 +3795,9 @@ router.post(
     }
     if (form.values.triggers) {
       await db.deleteWhere("_sc_tag_entries", { not: { trigger_id: null } });
+      await db.deleteWhere("_sc_workflow_trace");
+      await db.deleteWhere("_sc_workflow_runs");
+      await db.deleteWhere("_sc_workflow_steps");
       await db.deleteWhere("_sc_triggers");
       await getState().refresh_triggers();
     }

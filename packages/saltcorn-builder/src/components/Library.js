@@ -110,6 +110,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
 
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
+      keepalive: true,
       headers: {
         "Content-Type": "application/json",
         "CSRF-Token": options.csrfToken,

@@ -282,6 +282,7 @@ router.get(
       cellClick: "__delete_tabulator_row",
     });
     const isDark = getState().getLightDarkMode(req.user) === "dark";
+    const pkNm = table.pk_name
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -428,7 +429,7 @@ router.get(
                 ajax_indicator(true);
                 $.ajax({
                   type: "POST",
-                  url: "/api/${table.name}/" + (row.id||""),
+                  url: "/api/${table.name}/" + (row.${pkNm}||""),
                   data: row,
                   headers: {
                     "CSRF-Token": _sc_globalCsrf,
@@ -438,8 +439,8 @@ router.get(
                   ajax_indicator(false);
                   //if (item._versions) item._versions = +item._versions + 1;
                   //data.resolve(fixKeys(item));
-                  if(resp.success &&(typeof resp.success ==="number" || typeof resp.success ==="string") && !row.id) {
-                    window.tabulator_table.updateRow(cell.getRow(), {id: resp.success});
+                  if(resp.success &&(typeof resp.success ==="number" || typeof resp.success ==="string") && !row.${pkNm}) {
+                    window.tabulator_table.updateRow(cell.getRow(), {${pkNm}: resp.success});
                   }
 
                 }).fail(function (resp) {

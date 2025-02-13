@@ -405,7 +405,11 @@ const render = ({
                         segment.link_src || "URL"
                       }')`,
                 }),
-            class: [segment.link_style || "", segment.link_size || ""],
+            class: [
+              segment.link_style || "",
+              segment.link_size || "",
+              segment.link_class || "",
+            ],
             target: isWeb && segment.target_blank ? "_blank" : false,
             title: segment.link_title,
             rel: segment.nofollow ? "nofollow" : false,

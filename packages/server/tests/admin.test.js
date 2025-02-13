@@ -647,6 +647,9 @@ describe("clear all page", () => {
       .send("users=on")
       .send("config=on")
       .send("plugins=on")
+      .send("triggers=on")
+      .send("library=on")
+      .send("eventlog=on")
       .expect(toRedirect("/auth/create_first_user"));
   });
   it("restores backup after clear all", async () => {

@@ -152,14 +152,9 @@ describe("Edit view Workflow", () => {
         auto_save: true,
         auto_create: false,
         delete_unchanged_auto_create: false,
-        confirm_leave: false,
         split_paste: true,
         destination_type: "View",
         view_when_done: "authorlist",
-        page_when_done: null,
-        dest_url_formula: null,
-        formula_destinations: [],
-        page_group_when_done: null,
       });
     };
     const wfres = await configFlow.run(
@@ -199,14 +194,9 @@ describe("Edit view Workflow", () => {
       auto_save: true,
       auto_create: false,
       delete_unchanged_auto_create: false,
-      confirm_leave: false,
       split_paste: true,
-      page_when_done: null,
       view_when_done: "authorlist",
-      dest_url_formula: null,
       destination_type: "View",
-      formula_destinations: [],
-      page_group_when_done: null,
     });
   });
 
@@ -313,15 +303,10 @@ describe("Edit view Workflow", () => {
       viewname: "edit_mybook",
       auto_save: true,
       auto_create: false,
-      confirm_leave: false,
       delete_unchanged_auto_create: false,
       split_paste: true,
-      page_when_done: null,
       view_when_done: "authorlist",
-      dest_url_formula: null,
       destination_type: "View",
-      formula_destinations: [],
-      page_group_when_done: null,
     });
   });
 });

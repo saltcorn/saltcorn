@@ -1579,7 +1579,7 @@ function emptyAlerts() {
   $("#toasts-area").html("");
 }
 
-function press_store_button(clicked, keepOld) {
+function press_store_button(clicked, keepOld, disable) {
   let btn = clicked;
   if ($(clicked).is("form")) btn = $(clicked).find("button[type=submit]");
   if (keepOld) {
@@ -1588,13 +1588,16 @@ function press_store_button(clicked, keepOld) {
   }
   const width = $(btn).width();
   $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+  setTimeout(() => {
+    $(btn).prop("disabled", true);
+  }, 50);
 }
 
 function restore_old_button(btnId) {
-  const btn = $(`#${btnId}`);
+  const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
   btn.html(oldText);
-  btn.css({ width: "" });
+  btn.css({ width: "" }).prop("disabled", false);
   btn.removeData("old-text");
 }
 

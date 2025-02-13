@@ -23,6 +23,10 @@ let client = null;
 
 let log_sql_enabled = false;
 
+const quote = (s) => `"${s}"`;
+
+const ppPK = (pk) => (pk ? quote(pk) : "id");
+
 /**
  * Control Logging sql statements to console
  * @param {boolean} [val = true] - if true then log sql statements to console
@@ -242,11 +246,11 @@ const insert = async (tbl, obj, opts = Object.create(null)) => {
       ? `insert into "${schema}"."${sqlsanitize(
           tbl
         )}"(${fnameList}) values(${valPosList.join()}) ${conflict}returning ${
-          opts.noid ? "*" : opts.pk_name || "id"
+          opts.noid ? "*" : ppPK(opts.pk_name)
         }`
       : `insert into "${schema}"."${sqlsanitize(
           tbl
-        )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
+        )}" DEFAULT VALUES returning ${opts.noid ? "*" : ppPK(opts.pk_name)}`;
   sql_log(sql, valList);
   const { rows } = await (client || opts.client || pool).query(sql, valList);
   if (opts.noid) return;
@@ -274,7 +278,7 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
   sql_log(q, valList);
   await (client || opts.client || pool).query(q, valList);
 };
@@ -346,10 +350,10 @@ const getClient = async () => await pool.connect();
  * @param {string} tblname - table name
  * @returns {Promise<void>} no result
  */
-const reset_sequence = async (tblname) => {
+const reset_sequence = async (tblname, pkname = "id") => {
   const sql = `SELECT setval(pg_get_serial_sequence('"${getTenantSchema()}"."${sqlsanitize(
     tblname
-  )}"', 'id'), coalesce(max(id),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
+  )}"', '${pkname}'), coalesce(max("${pkname}"),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
     tblname
   )}";`;
   await (client || pool).query(sql);
@@ -460,7 +464,6 @@ const drop_index = async (table_name, field_name) => {
  * @returns {Promise<void>} no results
  */
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
-  const quote = (s) => `"${s}"`;
   const sql = `COPY "${getTenantSchema()}"."${sqlsanitize(
     tableName
   )}" (${fieldNames.map(quote).join(",")}) FROM STDIN CSV HEADER`;

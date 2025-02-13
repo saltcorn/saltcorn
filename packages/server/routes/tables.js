@@ -50,6 +50,7 @@ const {
   code,
   pre,
   button,
+  text_attr,
 } = require("@saltcorn/markup/tags");
 const { stringify } = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -696,7 +697,14 @@ const typeBadges = (f, req) => {
   if (f.primary_key) s += badge("warning", req.__("Primary key"));
   if (f.required) s += badge("primary", req.__("Required"));
   if (f.is_unique) s += badge("success", req.__("Unique"));
-  if (f.calculated) s += badge("info", req.__("Calculated"));
+  if (f.calculated)
+    s += badge(
+      "info",
+      req.__("Calculated"),
+      f.expression && f.expression !== "__aggregation"
+        ? text_attr(f.expression)
+        : undefined
+    );
   if (f.stored) s += badge("warning", req.__("Stored"));
   return s;
 };
@@ -978,8 +986,8 @@ router.get(
               table.name === "users"
                 ? `/useradmin/`
                 : fields.length === 1
-                ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
-                : `/list/${encodeURIComponent(table.name)}`,
+                  ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
+                  : `/list/${encodeURIComponent(table.name)}`,
           },
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
@@ -1459,7 +1467,10 @@ router.get(
       res.redirect(`/table/${table.id}`);
       return;
     }
-    const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
+    const rows = await table.getRows(
+      {},
+      { orderBy: table.pk_name, forUser: req.user }
+    );
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
@@ -1535,12 +1546,12 @@ router.get(
                     r.type === "Unique"
                       ? r.configuration.fields.join(", ")
                       : r.type === "Index" && r.configuration?.field === "_fts"
-                      ? "Full text search"
-                      : r.type === "Index"
-                      ? r.configuration.field
-                      : r.type === "Formula"
-                      ? r.configuration.formula
-                      : "",
+                        ? "Full text search"
+                        : r.type === "Index"
+                          ? r.configuration.field
+                          : r.type === "Formula"
+                            ? r.configuration.formula
+                            : "",
                 },
                 {
                   label: req.__("Delete"),
@@ -2011,6 +2022,7 @@ router.post(
       if (parse_res.error) req.flash("error", parse_res.error);
       else req.flash("success", parse_res.success);
     } catch (e) {
+      console.error("CSV upload error", e);
       req.flash("error", e.message);
     }
     await fs.unlink(f.location);

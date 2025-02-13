@@ -993,6 +993,8 @@ const ConfigField = ({
         className={`field-${field?.name} form-control`}
         value={value || ""}
         step={0.01}
+        max={or_if_undef(field?.attributes?.max, undefined)}
+        min={or_if_undef(field?.attributes?.min, undefined)}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
@@ -1543,18 +1545,32 @@ const ButtonOrLinkSettingsRows = ({
         ]
       : []),
     values[keyPrefix + "style"] !== "on_page_load" ? (
-      <tr key="btntitle">
-        <td>
-          <label>Hover title</label>
-        </td>
-        <td>
-          <input
-            className="form-control"
-            value={values[keyPrefix + "title"]}
-            onChange={setAProp(keyPrefix + "title")}
-          />
-        </td>
-      </tr>
+      <Fragment>
+        <tr key="btntitle">
+          <td>
+            <label>Hover title</label>
+          </td>
+          <td>
+            <input
+              className="form-control linkoractiontitle"
+              value={values[keyPrefix + "title"]}
+              onChange={setAProp(keyPrefix + "title")}
+            />
+          </td>
+        </tr>
+        <tr key="btnclass">
+          <td>
+            <label>Class</label>
+          </td>
+          <td>
+            <input
+              className="form-control linkoractionclass"
+              value={values[keyPrefix + "class"]}
+              onChange={setAProp(keyPrefix + "class")}
+            />
+          </td>
+        </tr>
+      </Fragment>
     ) : null,
   ];
 };

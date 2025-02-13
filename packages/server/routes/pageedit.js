@@ -289,7 +289,7 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
           input_type: "select",
           options: [
             "",
-            ...pages.map((p) => p.name),
+            ...pages.filter((p) => p.min_role >= r.id).map((p) => p.name),
             ...pageGroups.map((g) => ({
               label: `${g.name} (group)`,
               value: g.name,

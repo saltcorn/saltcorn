@@ -920,3 +920,57 @@ describe("User group with spaces in name", () => {
     await projects.delete();
   });
 });
+
+describe("ownership_formula_where", () => {
+  it("should create table", async () => {
+    const tasks = await Table.create("tasks1");
+    await Field.create({
+      table: tasks,
+      name: "name",
+      type: "String",
+    });
+  });
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({ ownership_formula: 'user?.clearance==="ALL"' });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      clearance: "ALL",
+    });
+    expect(where).toStrictEqual({ eq: ["ALL", "ALL"] });
+  });
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({ ownership_formula: 'user?.clearance==="ALL"' });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      clearance: "NONE",
+    });
+    expect(where).toStrictEqual({ eq: ["NONE", "ALL"] });
+  });
+
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({
+      ownership_formula:
+        'user.department === name || user.department === "ALL"',
+    });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      department: "ALL",
+    });
+    expect(JSON.stringify(where)).toBe(
+      JSON.stringify({
+        or: [{ eq: ["ALL", Symbol("name")] }, { eq: ["ALL", "ALL"] }],
+      })
+    );
+  });
+});
+
+//user.department === bankid.access || user.department === "ALL

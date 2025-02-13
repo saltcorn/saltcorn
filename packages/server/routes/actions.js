@@ -653,7 +653,7 @@ const getWorkflowStepForm = async (
               ...(field.showIf || {}),
             },
           };
-        if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        //if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
         actionConfigFields.push(cfgFld);
       }
     } catch {}
@@ -1854,7 +1854,6 @@ interactive workflows for not logged in
 actions can declare which variables they inject into scope
 
 show unconnected steps
-why is code not initialising
 drag and drop edges
 
 */
