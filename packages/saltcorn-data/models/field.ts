@@ -815,7 +815,7 @@ class Field implements AbstractField {
           new_field!.table!.name
         )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
           new_field.name
-        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"(id)${
+        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname||"id"}")${
           new_field.on_delete_sql
         }`
       );
