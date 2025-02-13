@@ -815,7 +815,7 @@ class Field implements AbstractField {
           new_field!.table!.name
         )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
           new_field.name
-        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"(id)${
+        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname||"id"}")${
           new_field.on_delete_sql
         }`
       );
@@ -903,6 +903,7 @@ class Field implements AbstractField {
         calc_joinfields.push({
           targetTable: targetTable.name,
           field: myField.name,
+          targetField: path[1]
         });
       } else if (path.length === 3) {
         const myField = table.getField(path[0]);
@@ -919,10 +920,12 @@ class Field implements AbstractField {
           field: myField.name,
           through: [throughField.name],
           throughTable: [throughTable.name],
+          targetField: path[2]
         });
         calc_joinfields.push({
           targetTable: throughTable.name,
           field: myField.name,
+          targetField: path[1]
         });
       }
     });
