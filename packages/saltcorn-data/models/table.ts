@@ -2035,6 +2035,8 @@ class Table implements AbstractTable {
     }
 
     for (const calc_field of calc_agg_fields) {
+      const agg_field_name = calc_field.attributes.agg_field.split("@")[0];
+      if (changedFields && !changedFields.has(agg_field_name)) continue;
       const refTable = Table.findOne({ id: calc_field.table_id });
       if (!refTable || !v[calc_field.attributes.ref]) continue;
       const val0 = v[calc_field.attributes.ref];
