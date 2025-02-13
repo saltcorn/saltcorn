@@ -98,9 +98,12 @@ const run_code = async ({
       row,
       field_names: table ? table.fields.map((f) => f.name) : undefined,
     };
-  if (!isNode() && run_where === "Server") {
-    // stop on the app and run the action server side
-    return { server_eval: true };
+  if (!isNode()) {
+    const { isOfflineMode } = getState().mobileConfig;
+    if (!isOfflineMode && run_where === "Server") {
+      // stop on the app and run the action server side
+      return { server_eval: true };
+    }
   }
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
@@ -158,7 +161,7 @@ const run_code = async ({
     User,
     View,
     EventLog,
-    Buffer,
+    Buffer: isNode() ? Buffer : require("buffer"),
     Trigger,
     Notification,
     setTimeout,
