@@ -717,8 +717,12 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
+      if (k === "summary_field") s += badge("secondary", "Summary", v);
+      if (k === "include_fts")
+        s += badge("secondary", "FTS", "Include in full-text search");
       if (
         [
+          "include_fts",
           "summary_field",
           "importance",
           "on_delete_cascade",
