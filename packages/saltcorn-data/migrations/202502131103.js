@@ -1,6 +1,4 @@
 const js = async () => {
-  //not sure this is needed
-
   const { getState } = require("../db/state");
 
   const state = getState();
