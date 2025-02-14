@@ -467,8 +467,6 @@ class View implements AbstractView {
     if (role > this.min_role) return "";
     try {
       const viewState = removeEmptyStringsKeepNull(query);
-      console.log({ viewState, query });
-
       state.log(
         5,
         `Running view ${this.name} with state ${JSON.stringify(viewState)}`
