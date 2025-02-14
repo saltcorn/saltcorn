@@ -2370,7 +2370,8 @@ const readState = (state, fields, req) => {
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
-      if (
+      if (current === "null") state[f.name] = null;
+      else if (
         Array.isArray(current) &&
         current.length &&
         typeof current[0] === "object"
