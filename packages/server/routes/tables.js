@@ -868,7 +868,7 @@ router.get(
           div(
             { class: "alert alert-danger", role: "alert" },
             i({ class: "fas fa-exclamation-triangle" }),
-            "This table has composite primary keys, or a non-incrementing integer primary key, which are not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
+            "This table has composite or non-defaulted primary keys, which are not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
             post_btn(
               `/table/repair-composite-primary/${table.id}`,
               "Add autoincrementing primary key",

@@ -10,6 +10,7 @@ import db from "../db";
 import utils from "../utils";
 const {
   removeEmptyStrings,
+  removeEmptyStringsKeepNull,
   stringToJSON,
   InvalidConfiguration,
   satisfies,
@@ -465,7 +466,7 @@ class View implements AbstractView {
     const state = require("../db/state").getState();
     if (role > this.min_role) return "";
     try {
-      const viewState = removeEmptyStrings(query);
+      const viewState = removeEmptyStringsKeepNull(query);
       state.log(
         5,
         `Running view ${this.name} with state ${JSON.stringify(viewState)}`
