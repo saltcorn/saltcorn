@@ -216,9 +216,14 @@ class Form implements AbstractForm {
         }
       }
       const showIfFailed = ([k, criteria]: any[]) => {
-        if (v[k] && typeof criteria === "string" && v[k] !== criteria)
+        if (v[k] && typeof criteria === "string" && v[k] != criteria)
           return true;
-        if (v[k] && Array.isArray(criteria) && !criteria.includes(v[k]))
+        if (
+          v[k] &&
+          Array.isArray(criteria) &&
+          !criteria.some((target) => target == v[k])
+        )
+          //includes with == instead of ===
           return true;
         if (v[k] && criteria === true && !v[k]) return true;
         if (v[k] && criteria === false && v[k]) return true;
