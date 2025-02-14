@@ -67,6 +67,7 @@ const {
   InvalidConfiguration,
   removeAllWhiteSpace,
   comparingCaseInsensitive,
+  validSqlId,
 } = require("@saltcorn/data/utils");
 const { EOL } = require("os");
 
@@ -484,7 +485,10 @@ const buildTableMarkup = (table) => {
   const members = fields
     // .filter((f) => !f.reftable_name)
     .map((f) =>
-      indentString(`${removeAllWhiteSpace(f.type_name)} ${f.name}`, 6)
+      indentString(
+        `${removeAllWhiteSpace(f.type_name)} ${validSqlId(f.name)}`,
+        6
+      )
     )
     .join(EOL);
   const keys = table
