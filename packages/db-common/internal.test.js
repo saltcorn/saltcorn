@@ -421,7 +421,7 @@ describe("mkWhere", () => {
     expect(
       mkWhere({ or: [{ eq: ["ALL", Symbol("name")] }, { eq: ["ALL", "ALL"] }] })
     ).toStrictEqual({
-      values: ["ALL", "ALL","ALL"],
+      values: ["ALL", "ALL", "ALL"],
       where: 'where ($1::text="name" or $2::text=$3::text)',
     });
   });
@@ -439,6 +439,9 @@ describe("sqlsanitize", () => {
   });
   it("should remove chars from invalid name", () => {
     expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
+    expect(sqlsanitize("ffoo--oo;-uu")).toBe("ffoooouu");
+    expect(sqlsanitize('ffoo-"oo--uu')).toBe("ffoooouu");
+    expect(sqlsanitize('ffoo-"oo-"uu')).toBe("ffoooouu");
   });
   it("should remove chars from invalid symbol", () => {
     expect(sqlsanitize(Symbol("ffoo--oo--uu"))).toBe("ffoooouu");
