@@ -1082,12 +1082,11 @@ const render = async ({
   }
   let deleteUnchangedScript = "";
   if (auto_created_row && delete_unchanged_auto_create && !isPreview) {
-    if (!form.onChange) form.onChange = "";
-    if (!form.onSubmit) form.onSubmit = "";
-
     if (hasSave) {
+      if (!form.onSubmit) form.onSubmit = "";
       form.onSubmit += "this.setAttribute('data-form-changed','true');";
     } else {
+      if (!form.onChange) form.onChange = "";
       form.onChange += "this.setAttribute('data-form-changed','true');";
     }
     deleteUnchangedScript = script(
