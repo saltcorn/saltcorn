@@ -1753,7 +1753,7 @@ class Table implements AbstractTable {
   get pk_name(): string {
     const pkField = this.fields?.find((f: Field) => f.primary_key)?.name;
     if (!pkField) {
-      throw new Error("A primary key field is mandatory");
+      throw new Error(`A primary key field is mandatory (Table ${this.name})`);
     }
     return pkField;
   }
@@ -1761,10 +1761,10 @@ class Table implements AbstractTable {
   get pk_type(): Type {
     const pkField = this.fields?.find((f: Field) => f.primary_key);
     if (!pkField) {
-      throw new Error("A primary key field is mandatory");
+      throw new Error(`A primary key field is mandatory (Table ${this.name})`);
     }
     if (!instanceOfType(pkField.type)) {
-      throw new Error("A primary key field must have a type");
+      throw new Error(`A primary key field must have a type (Table ${this.name})`);
     }
     return pkField.type;
   }
