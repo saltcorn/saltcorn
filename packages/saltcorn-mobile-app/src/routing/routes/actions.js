@@ -38,7 +38,7 @@ export const postResumeWorkflow = async (context) => {
 
 export const getFillWorkflowForm = async (context) => {
   const { id } = context.params;
-  const { user, isOfflineMode } = saltcorn.data.state.getState().mobileConfig;
+  const { isOfflineMode } = saltcorn.data.state.getState().mobileConfig;
   if (isOfflineMode) {
     const req = new MobileRequest();
     const run = await saltcorn.data.models.WorkflowRun.findOne({ id });
@@ -57,7 +57,6 @@ export const getFillWorkflowForm = async (context) => {
       step,
       req
     );
-    form.isWorkflow = true;
     return saltcorn.markup.renderForm(form, false);
   } else {
     const response = await apiCall({
@@ -89,10 +88,9 @@ export const postFillWorkflowForm = async (context) => {
       step,
       req
     );
-    form.isWorkflow = true;
     form.validate(req.body);
     if (form.hasErrors) {
-      console.log("form has errors");
+      return { error: req.__("Errors in form") }; // TODO not sure
     } else {
       await run.provide_form_input(form.values);
       const runres = await run.run({

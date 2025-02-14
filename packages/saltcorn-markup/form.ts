@@ -1472,7 +1472,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
-    form.onSubmit || form.xhrSubmit
+    form.onSubmit || form.xhrSubmit || mobileWorkflow
       ? ` onsubmit="${form.onSubmit || ""}${
           (form.xhrSubmit && !isMobile) || mobileWorkflow
             ? `;ajaxSubmitForm(this, true, event)`

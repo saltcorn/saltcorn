@@ -1316,8 +1316,9 @@ const splitUniques = (fields, state, fuzzyStrings) => {
  * @param {string} viewname
  * @param {object[]} [columns]
  * @param {object} layout0
- * @param {boolean} id
+ * @param {boolean|null} id
  * @param {object} req
+ * @param {boolean} isRemote
  * @returns {Promise<Form>}
  */
 const getForm = async (
@@ -1327,8 +1328,7 @@ const getForm = async (
   layout0,
   id,
   req,
-  isRemote,
-  isWorkflow
+  isRemote
 ) => {
   const fields = table.getFields();
   const state = getState();
@@ -1440,7 +1440,7 @@ const getForm = async (
   const form = new Form({
     action: action,
     onSubmit:
-      (isRemote || isOfflineMode()) && !isWorkflow
+      isRemote || isOfflineMode()
         ? `javascript:${
             !isMobileLogin
               ? `formSubmit(this, '/view/', '${viewname}')`

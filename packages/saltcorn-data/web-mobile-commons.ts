@@ -4,13 +4,16 @@
 
 import Table from "./models/table";
 import type Field from "./models/field";
+import type WorkflowRun from "./models/workflow_run";
+import type Trigger from "./models/trigger";
+import type WorkflowStep from "./models/workflow_step";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import utils from "./utils";
 import expression from "./models/expression";
 import type User from "./models/user";
 import View from "./models/view";
 import Form from "./models/form";
-const { isNode, applyAsync } = utils;
+const { isNode, isWeb, applyAsync } = utils;
 const { text } = require("@saltcorn/markup/tags");
 const { getState } = require("./db/state");
 const {
@@ -379,30 +382,36 @@ const show_calculated_fieldview = async (
   }
 };
 
+/**
+ * prepare a form for a workflow step
+ * @param run
+ * @param trigger
+ * @param step
+ * @param req
+ * @returns
+ */
 const getWorkflowStepUserForm = async (
-  run: any,
-  trigger: any,
-  step: any,
+  run: WorkflowRun,
+  trigger: Trigger,
+  step: WorkflowStep,
   req: any
 ) => {
   if (step.action_name === "EditViewForm") {
     const view = View.findOne({ name: step.configuration.edit_view });
     const table = Table.findOne({ id: view!.table_id });
-    // @ts-ignore
     const form = await getForm(
       table!,
       view!.name,
       view!.configuration.columns,
       view!.configuration.layout,
-      // @ts-ignore
       null,
       req,
-      false,
-      true
+      false
     );
+    form.isWorkflow = true;
+    if (!isWeb(req)) form.onSubmit = "";
     await form.fill_fkey_options(false, undefined, req?.user);
     form.action = `/actions/fill-workflow-form/${run.id}`;
-    form.isWorkflow = true;
     if (run.context[step.configuration.response_variable])
       Object.assign(
         form.values,
@@ -421,6 +430,7 @@ const getWorkflowStepUserForm = async (
     blurb,
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
     fields: await run.userFormFields(step),
+    isWorkflow: true,
   });
   return form;
 };
