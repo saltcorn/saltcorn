@@ -122,7 +122,7 @@ const discover_tables = async (
 
     // try to find column name for primary key of table
     const pkq = await db.query(
-      `SELECT c.column_name
+      `SELECT c.column_name, c.column_default
       FROM information_schema.table_constraints tc 
       JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
       JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
@@ -131,11 +131,20 @@ const discover_tables = async (
       [schema, tnm]
     );
     // set primary_key and unique attributes for column
-    pkq.rows.forEach(({ column_name }: { column_name: string }) => {
-      const field = fields.find((f: FieldCfg) => f.name === column_name);
-      field.primary_key = true;
-      field.is_unique = true;
-    });
+    pkq.rows.forEach(
+      ({
+        column_name,
+        column_default,
+      }: {
+        column_name: string;
+        column_default: string;
+      }) => {
+        const field = fields.find((f: FieldCfg) => f.name === column_name);
+        field.primary_key = true;
+        field.is_unique = true;
+        if (!column_default) field.attributes = { NonSerial: true };
+      }
+    );
     // try to find foreign keys
     const fkq = await db.query(
       `SELECT
