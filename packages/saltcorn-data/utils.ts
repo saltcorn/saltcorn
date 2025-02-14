@@ -37,6 +37,13 @@ const removeEmptyStrings = (obj: GenObj) => {
   });
   return o;
 };
+const removeEmptyStringsKeepNull = (obj: GenObj) => {
+  var o: GenObj = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v !== "") o[k] = v;
+  });
+  return o;
+};
 const removeDefaultColor = (obj: GenObj) => {
   var o: GenObj = {};
   Object.entries(obj).forEach(([k, v]) => {
@@ -528,6 +535,7 @@ export = {
   dollarizeObject,
   objectToQueryString,
   removeEmptyStrings,
+  removeEmptyStringsKeepNull,
   removeDefaultColor,
   prefixFieldsInWhere,
   isEmpty,
