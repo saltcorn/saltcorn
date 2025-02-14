@@ -1764,7 +1764,9 @@ class Table implements AbstractTable {
       throw new Error(`A primary key field is mandatory (Table ${this.name})`);
     }
     if (!instanceOfType(pkField.type)) {
-      throw new Error(`A primary key field must have a type (Table ${this.name})`);
+      throw new Error(
+        `A primary key field must have a type (Table ${this.name})`
+      );
     }
     return pkField.type;
   }
@@ -3895,29 +3897,51 @@ ${rejectDetails}`,
     );
   }
   async repairCompositePrimary() {
-    const { rows } = await db.query(`select constraint_name
+    const primaryKeys = this.fields.filter((f) => f.primary_key);
+    const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    if (primaryKeys.length > 1) {
+      const { rows } = await db.query(`select constraint_name
 from information_schema.table_constraints
 where table_schema = '${db.getTenantSchema() || "public"}'
       and table_name = '${this.name}'
       and constraint_type = 'PRIMARY KEY';`);
-    const cname = rows[0]?.constraint_name;
-    const schemaPrefix = db.getTenantSchemaPrefix();
-    await db.query(
-      `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
-    );
-    for (const field of this.fields) {
-      if (field.primary_key) await field.update({ primary_key: false });
-    }
-    const { pk_type, pk_sql_type } = Table.pkSqlType(this.fields);
+      const cname = rows[0]?.constraint_name;
+      await db.query(
+        `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
+      );
+      for (const field of this.fields) {
+        if (field.primary_key) await field.update({ primary_key: false });
+      }
+      const { pk_type, pk_sql_type } = Table.pkSqlType(this.fields);
 
-    await db.query(
-      `alter table ${schemaPrefix}"${this.name}" add column id ${pk_sql_type} primary key;`
-    );
-    await db.query(
-      `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+      await db.query(
+        `alter table ${schemaPrefix}"${this.name}" add column id ${pk_sql_type} primary key;`
+      );
+      await db.query(
+        `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
         values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
-      [this.id]
-    );
+        [this.id]
+      );
+    }
+    if (nonSerialPKS) {
+      //https://stackoverflow.com/questions/23578427/changing-primary-key-int-type-to-serial
+      await db.query(`CREATE SEQUENCE ${schemaPrefix}"${this.name}_id_seq";`);
+      await db.query(
+        `ALTER SEQUENCE ${schemaPrefix}"${this.name}_id_seq" OWNED BY ${schemaPrefix}"${this.name}"."${this.pk_name}"`
+      );
+      await db.query(
+        `SELECT setval('${schemaPrefix}"${this.name}_id_seq"', MAX(a."${this.pk_name}")) from ${schemaPrefix}"${this.name}" a`
+      );
+      await db.query(
+        `ALTER TABLE ${schemaPrefix}"${this.name}" ALTER COLUMN "${this.pk_name}" SET DEFAULT nextval('${schemaPrefix}"${this.name}_id_seq"')`
+      );
+      const pk = this.getField(this.pk_name)!;
+      const attrs = { ...pk.attributes };
+      delete attrs.NonSerial;
+      await pk.update({ attributes: attrs });
+    }
   }
 
   async move_include_fts_to_search_context() {
