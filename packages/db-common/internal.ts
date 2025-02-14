@@ -15,7 +15,9 @@ export const sqlsanitize = (nm: string | symbol): string => {
   if (typeof nm === "symbol") {
     return nm.description ? sqlsanitize(nm.description) : "";
   }
-  const s = nm.replace(/[^A-Za-z_0-9]*/g, "");
+  // https://stackoverflow.com/a/70273329/19839414
+  // \p{Letter}/u
+  const s = nm.replace(/[^\p{Letter}_0-9]*/gu, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
 };
@@ -774,7 +776,7 @@ export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
         ? inputWhere[k].map((w: Where) => prefixFieldsInWhere(w, tablePrefix))
         : prefixFieldsInWhere(inputWhere[k], tablePrefix);
     } else if (k === "eq") {
-      whereObj[k]= inputWhere[k] // TODO check for fieldnames
+      whereObj[k] = inputWhere[k]; // TODO check for fieldnames
     } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
   });
   return whereObj;
