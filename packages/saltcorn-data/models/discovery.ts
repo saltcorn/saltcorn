@@ -75,7 +75,7 @@ const findType = (sql_name: string): any => {
     varchar: "String",
     date: "Date",
     timestamp: "Date",
-    // todo discovery "time without time zone": "Date"?
+    "timestamp without time zone": "Date",
     // todo discovery "time interval" : "Date"?
   }[sql_name.toLowerCase()];
   if (fixed) return fixed;
