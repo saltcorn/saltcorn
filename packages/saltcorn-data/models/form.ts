@@ -60,6 +60,7 @@ class Form implements AbstractForm {
   req: any;
   tabs?: string;
   __?: any;
+  isWorkflow?: boolean;
 
   /**
    * Constructor
@@ -94,6 +95,7 @@ class Form implements AbstractForm {
     this.onSubmit = o.onSubmit;
     this.tabs = o.tabs;
     this.isOwner = !!o.isOwner;
+    this.isWorkflow = !!o.isWorkflow;
     this.req = o.req;
     this.__ = o.__ || (o.req && o.req.__);
     if (o.validate) this.validate(o.validate);
@@ -304,6 +306,7 @@ namespace Form {
     req?: any;
     tabs?: any;
     validate?: any;
+    isWorkflow?: boolean;
     __?: any;
   };
 

@@ -14,6 +14,11 @@ import {
 } from "./routes/sync";
 import { postView, postViewRoute, getView } from "./routes/view";
 import { postShare } from "./routes/notifications";
+import {
+  postResumeWorkflow,
+  getFillWorkflowForm,
+  postFillWorkflowForm,
+} from "./routes/actions";
 
 const routes = [
   // api
@@ -97,6 +102,19 @@ const routes = [
   {
     path: "get/view/:viewname",
     action: getView,
+  },
+  // actions
+  {
+    path: "post/actions/resume-workflow/:id",
+    action: postResumeWorkflow,
+  },
+  {
+    path: "get/actions/fill-workflow-form/:id",
+    action: getFillWorkflowForm,
+  },
+  {
+    path: "post/actions/fill-workflow-form/:id",
+    action: postFillWorkflowForm,
   },
 ];
 

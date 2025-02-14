@@ -17,6 +17,9 @@ import Trigger from "./trigger";
 import User from "./user";
 import View from "./view";
 import Workflow from "./workflow";
+import WorkflowRun from "./workflow_run";
+import WorkflowStep from "./workflow_step";
+import WorkflowTrace from "./workflow_trace";
 
 export {
   Crash,
@@ -36,6 +39,9 @@ export {
   User,
   View,
   Workflow,
+  WorkflowRun,
+  WorkflowStep,
+  WorkflowTrace,
 };
 
 import configImport from "./config";

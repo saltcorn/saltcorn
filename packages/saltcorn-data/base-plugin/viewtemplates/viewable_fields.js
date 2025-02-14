@@ -1327,8 +1327,9 @@ const splitUniques = (fields, state, fuzzyStrings) => {
  * @param {string} viewname
  * @param {object[]} [columns]
  * @param {object} layout0
- * @param {boolean} id
+ * @param {boolean|null} id
  * @param {object} req
+ * @param {boolean} isRemote
  * @returns {Promise<Form>}
  */
 const getForm = async (

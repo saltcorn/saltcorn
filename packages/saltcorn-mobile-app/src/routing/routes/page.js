@@ -4,10 +4,11 @@ import { MobileRequest } from "../mocks/request";
 import { MobileResponse } from "../mocks/response";
 import { parseQuery, wrapContents } from "../utils";
 import { loadFileAsText } from "../../helpers/common";
+import { apiCall } from "../../helpers/api";
 
 // post/page/:pagename/action/:rndid
 export const postPageAction = async (context) => {
-  const { user } = saltcorn.data.state.getState().mobileConfig;
+  const { user, isOfflineMode } = saltcorn.data.state.getState().mobileConfig;
   const req = new MobileRequest({ xhr: context.xhr });
   const { page_name, rndid } = context.params;
   const page = await saltcorn.data.models.Page.findOne({ name: page_name });
@@ -21,12 +22,21 @@ export const postPageAction = async (context) => {
       if (segment.rndid === rndid) col = segment;
     },
   });
-  const result = await saltcorn.data.plugin_helper.run_action_column({
-    col,
-    referrer: "",
-    req,
-  });
-  return result || {};
+
+  if (isOfflineMode) {
+    const result = await saltcorn.data.plugin_helper.run_action_column({
+      col,
+      referrer: "",
+      req,
+    });
+    return result || {};
+  } else {
+    const response = await apiCall({
+      method: "POST",
+      path: `/page/${page_name}/action/${rndid}`,
+    });
+    return response.data || {};
+  }
 };
 
 const findPageOrGroup = (pagename) => {
