@@ -3901,7 +3901,10 @@ ${rejectDetails}`,
     const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    if (primaryKeys.length > 1) {
+    if (
+      primaryKeys.length > 1 ||
+      (nonSerialPKS && (primaryKeys[0] as any)?.type?.name === "String")
+    ) {
       const { rows } = await db.query(`select constraint_name
 from information_schema.table_constraints
 where table_schema = '${db.getTenantSchema() || "public"}'
