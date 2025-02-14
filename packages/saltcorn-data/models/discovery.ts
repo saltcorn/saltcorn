@@ -110,8 +110,6 @@ const discover_tables = async (
       "select * from information_schema.columns where table_schema=$1 and table_name=$2",
       [schema, tnm]
     );
-    console.log("fields", rows);
-
     // TBD add logic about column length, scale, etc
     const fields = rows
       .map((c: Row) => ({
@@ -124,7 +122,7 @@ const discover_tables = async (
 
     // try to find column name for primary key of table
     const pkq = await db.query(
-      `SELECT c.column_name, c.column_default, c.data_type
+      `SELECT c.column_name, c.column_default
       FROM information_schema.table_constraints tc 
       JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
       JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
@@ -137,17 +135,14 @@ const discover_tables = async (
       ({
         column_name,
         column_default,
-        data_type,
       }: {
         column_name: string;
         column_default: string;
-        data_type: string;
       }) => {
         const field = fields.find((f: FieldCfg) => f.name === column_name);
         field.primary_key = true;
         field.is_unique = true;
-        if (data_type === "integer" && !column_default)
-          field.attributes = { NonSerial: true };
+        if (!column_default) field.attributes = { NonSerial: true };
       }
     );
     // try to find foreign keys
