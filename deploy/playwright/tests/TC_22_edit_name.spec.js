@@ -106,13 +106,17 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.newviewlink);
 
     await customAssert('Click on the email to edit', async () => {
-      const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
+      const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
+
+     // const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
       await emailEditLocator.click();
 
     });
 
     await customAssert('Click on the email to edit and check edit icon visibility', async () => {
-      const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
+      const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
+
+     // const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
       await emailEditLocator.hover(); // Hover over the email to make the edit icon appear
       const editIconLocator = emailEditLocator.locator('.editicon');
 
