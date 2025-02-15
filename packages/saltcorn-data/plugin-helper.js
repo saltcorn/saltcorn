@@ -2744,7 +2744,8 @@ const pathToState = (relation, getRowVal) => {
               getRowVal(pkName),
           };
     case RelationType.PARENT_SHOW:
-      return { id: getRowVal(path[0].fkey) };
+      const targetTable = Table.findOne({ name: relation.targetTblName });
+      return { [targetTable?.pk_name || "id"]: getRowVal(path[0].fkey) };
     case RelationType.OWN:
       return { [pkName]: getRowVal(pkName) };
     case RelationType.INDEPENDENT:
