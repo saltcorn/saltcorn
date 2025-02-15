@@ -46,12 +46,6 @@ Modules are not sandboxed. A module can run any code and cause a full system tak
 
 ## Known issues
 
-The role required to run a view is only checked if the view is run directly (i.e. URL /view/{view name}). If a view is embedded in another view or in a page then we do not currently (version 1.0) check if the user has a right to run this view. This will change in the next version of Saltcorn.
-
-Table read access may not be checked when a dropdown is populated with options, e.g. when a Key field is set with a select in Edit or Filter fieldviews. This will change in the next version of Saltcorn.
-
-In the future we will introduce more options around cookies and HTTP headers.
-
 ## Disclosing new vulnerabilities
 
 If you have discovered a security vulnerability in this project, please report it

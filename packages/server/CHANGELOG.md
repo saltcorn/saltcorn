@@ -15,6 +15,14 @@
 
 * Upgrade a large number of dependencies (express, typescript, oclif, pg, webpack, typescript, axios, mjml, svelte). Node.js 18+ is require for this release. 
 
+### Security
+
+* View roles are now strictly enforced, including when views are embedded.
+
+### Fixes
+
+* Much work on primary keys not called "id"
+
 ## 1.1.1 - Released 2 February 2025
 
 * Full-text search improvements: 

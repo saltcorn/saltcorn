@@ -67,6 +67,7 @@ const {
   InvalidConfiguration,
   removeAllWhiteSpace,
   comparingCaseInsensitive,
+  validSqlId,
 } = require("@saltcorn/data/utils");
 const { EOL } = require("os");
 
@@ -484,7 +485,10 @@ const buildTableMarkup = (table) => {
   const members = fields
     // .filter((f) => !f.reftable_name)
     .map((f) =>
-      indentString(`${removeAllWhiteSpace(f.type_name)} ${f.name}`, 6)
+      indentString(
+        `${removeAllWhiteSpace(f.type_name)} ${validSqlId(f.name)}`,
+        6
+      )
     )
     .join(EOL);
   const keys = table
@@ -717,8 +721,12 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
+      if (k === "summary_field") s += badge("secondary", "Summary", v);
+      if (k === "include_fts" && v)
+        s += badge("secondary", "FTS", "Include in full-text search");
       if (
         [
+          "include_fts",
           "summary_field",
           "importance",
           "on_delete_cascade",
@@ -790,7 +798,9 @@ router.get(
     const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
     triggers.sort(comparingCaseInsensitive("name"));
     let fieldCard;
-    const nPrimaryKeys = fields.filter((f) => f.primary_key).length;
+    const primaryKeys = fields.filter((f) => f.primary_key);
+    const nPrimaryKeys = primaryKeys.length;
+    const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
 
     if (fields.length === 0) {
       fieldCard = [
@@ -854,11 +864,11 @@ router.get(
         { hover: true }
       );
       fieldCard = [
-        nPrimaryKeys > 1 &&
+        (nPrimaryKeys > 1 || nonSerialPKS) &&
           div(
             { class: "alert alert-danger", role: "alert" },
             i({ class: "fas fa-exclamation-triangle" }),
-            "This table has composite primary keys which is not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
+            "This table has composite or non-defaulted primary keys, which are not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
             post_btn(
               `/table/repair-composite-primary/${table.id}`,
               "Add autoincrementing primary key",

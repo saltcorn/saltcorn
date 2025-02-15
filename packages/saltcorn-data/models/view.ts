@@ -10,6 +10,7 @@ import db from "../db";
 import utils from "../utils";
 const {
   removeEmptyStrings,
+  removeEmptyStringsKeepNull,
   stringToJSON,
   InvalidConfiguration,
   satisfies,
@@ -114,8 +115,8 @@ class View implements AbstractView {
       where.id
         ? (v: View) => v.id === +where.id
         : where.name
-        ? (v: View) => v.name === where.name
-        : satisfies(where)
+          ? (v: View) => v.name === where.name
+          : satisfies(where)
     );
     return v
       ? new View({ ...v, configuration: structuredClone(v.configuration) })
@@ -212,10 +213,10 @@ class View implements AbstractView {
             table_id: table.id,
           }
         : typeWithDefinedMember<Table>(table, "name")
-        ? { exttable_name: table.name }
-        : typeof table === "string"
-        ? { exttable_name: table }
-        : { table_id: table },
+          ? { exttable_name: table.name }
+          : typeof table === "string"
+            ? { exttable_name: table }
+            : { table_id: table },
       { orderBy: "name", nocase: true, cached: true }
     );
 
@@ -245,10 +246,10 @@ class View implements AbstractView {
         this.table
           ? ` on ${this.table.name}`
           : this.table_name
-          ? ` on ${this.table_name}`
-          : this.exttable_name
-          ? ` on ${this.exttable_name}`
-          : ""
+            ? ` on ${this.table_name}`
+            : this.exttable_name
+              ? ` on ${this.exttable_name}`
+              : ""
       }]`,
     };
   }
@@ -463,13 +464,9 @@ class View implements AbstractView {
     const table_id = this.exttable_name || this.table_id;
     const role = extraArgs.req?.user?.role_id || 100;
     const state = require("../db/state").getState();
-    if (role > this.min_role)
-      state.log(
-        2,
-        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
-      );
+    if (role > this.min_role) return "";
     try {
-      const viewState = removeEmptyStrings(query);
+      const viewState = removeEmptyStringsKeepNull(query);
       state.log(
         5,
         `Running view ${this.name} with state ${JSON.stringify(viewState)}`
@@ -609,11 +606,7 @@ class View implements AbstractView {
     else if (!this.viewtemplateObj) return [];
     const role = extraArgs.req?.user?.role_id || 100;
     const state = require("../db/state").getState();
-    if (role > this.min_role)
-      state.log(
-        2,
-        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
-      );
+    if (role > this.min_role) return [];
     state.log(
       5,
       `runMany view ${this.name} with state ${JSON.stringify(query)}`
@@ -693,11 +686,7 @@ class View implements AbstractView {
       remote = false;
     }
     const role = extraArgs.req.user?.role_id || 100;
-    if (role > this.min_role)
-      state.log(
-        2,
-        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
-      );
+    if (role > this.min_role) return "";
     try {
       if (isWeb(extraArgs.req)) this.check_viewtemplate();
       else if (!this.viewtemplateObj) return;

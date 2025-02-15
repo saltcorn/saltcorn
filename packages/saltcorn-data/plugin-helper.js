@@ -1918,7 +1918,7 @@ const queryToString = (query) => {
   return JSON.stringify(relObj);
 };
 
-const handleRelationPath = (queryObj, qstate) => {
+const handleRelationPath = (queryObj, qstate, table) => {
   if (queryObj.path.length > 0) {
     const levels = [];
     let lastTableName = queryObj.sourcetable;
@@ -1939,11 +1939,15 @@ const handleRelationPath = (queryObj, qstate) => {
         );
         levels.push({ table: refField.reftable_name, fkey: level.fkey });
         lastTableName = refField.reftable_name;
+        const finalTable = Table.findOne({ name: lastTableName });
         if (!where)
-          where = { id: queryObj.srcId !== "NULL" ? queryObj.srcId : null };
+          where = {
+            [finalTable?.pk_name || "id"]:
+              queryObj.srcId !== "NULL" ? queryObj.srcId : null,
+          };
       }
     }
-    addOrCreateList(qstate, "id", {
+    addOrCreateList(qstate, table?.pk_name || "id", {
       inSelectWithLevels: {
         joinLevels: levels,
         schema: db.getTenantSchema(),
@@ -1999,11 +2003,15 @@ const stateFieldsToWhere = ({
 
     const field = fields.find((fld) => fld.name === k);
     if (k === "_relation_path_" || k === "_inbound_relation_path_")
-      handleRelationPath(typeof v === "string" ? stringToQuery(v) : v, qstate);
+      handleRelationPath(
+        typeof v === "string" ? stringToQuery(v) : v,
+        qstate,
+        table
+      );
     else if (k.startsWith(".")) {
       const queryObj = parseRelationPath(k);
       queryObj.srcId = v;
-      handleRelationPath(queryObj, qstate);
+      handleRelationPath(queryObj, qstate, table);
     } else if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
@@ -2370,7 +2378,8 @@ const readState = (state, fields, req) => {
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
-      if (
+      if (current === "null") state[f.name] = null;
+      else if (
         Array.isArray(current) &&
         current.length &&
         typeof current[0] === "object"
@@ -2735,7 +2744,8 @@ const pathToState = (relation, getRowVal) => {
               getRowVal(pkName),
           };
     case RelationType.PARENT_SHOW:
-      return { id: getRowVal(path[0].fkey) };
+      const targetTable = Table.findOne({ name: relation.targetTblName });
+      return { [targetTable?.pk_name || "id"]: getRowVal(path[0].fkey) };
     case RelationType.OWN:
       return { [pkName]: getRowVal(pkName) };
     case RelationType.INDEPENDENT:

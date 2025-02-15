@@ -1353,6 +1353,11 @@ class Table implements AbstractTable {
       return;
     let existing;
     let v = { ...v_in };
+    //these may have changed
+    let changedFieldNames = new Set([
+      ...Object.keys(v_in),
+      ...this.fields.filter((f) => f.calculated).map((f) => f.name),
+    ]);
     const fields = this.fields;
     const pk_name = this.pk_name;
     const role = user?.role_id;
@@ -1589,7 +1594,8 @@ class Table implements AbstractTable {
     await this.auto_update_calc_aggregations(
       newRow,
       !existing,
-      (autoRecalcIterations || 0) + 1
+      (autoRecalcIterations || 0) + 1,
+      changedFieldNames
     );
 
     if (!noTrigger) {
@@ -1747,7 +1753,7 @@ class Table implements AbstractTable {
   get pk_name(): string {
     const pkField = this.fields?.find((f: Field) => f.primary_key)?.name;
     if (!pkField) {
-      throw new Error("A primary key field is mandatory");
+      throw new Error(`A primary key field is mandatory (Table ${this.name})`);
     }
     return pkField;
   }
@@ -1755,10 +1761,12 @@ class Table implements AbstractTable {
   get pk_type(): Type {
     const pkField = this.fields?.find((f: Field) => f.primary_key);
     if (!pkField) {
-      throw new Error("A primary key field is mandatory");
+      throw new Error(`A primary key field is mandatory (Table ${this.name})`);
     }
     if (!instanceOfType(pkField.type)) {
-      throw new Error("A primary key field must have a type");
+      throw new Error(
+        `A primary key field must have a type (Table ${this.name})`
+      );
     }
     return pkField.type;
   }
@@ -2008,7 +2016,8 @@ class Table implements AbstractTable {
   async auto_update_calc_aggregations(
     v0: Row,
     refetch?: boolean,
-    iterations: number = 1
+    iterations: number = 1,
+    changedFields?: Set<String>
   ) {
     if (iterations > 5) return;
     const calc_agg_fields = await Field.find(
@@ -2028,6 +2037,8 @@ class Table implements AbstractTable {
     }
 
     for (const calc_field of calc_agg_fields) {
+      const agg_field_name = calc_field.attributes.agg_field.split("@")[0];
+      if (changedFields && !changedFields.has(agg_field_name)) continue;
       const refTable = Table.findOne({ id: calc_field.table_id });
       if (!refTable || !v[calc_field.attributes.ref]) continue;
       const val0 = v[calc_field.attributes.ref];
@@ -2068,6 +2079,13 @@ class Table implements AbstractTable {
       const refTable =
         (field.table as Table) || Table.findOne({ id: field.table_id });
       for (const matching of matchings) {
+        //console.log({ matching, changedFields });
+        if (
+          changedFields &&
+          matching.targetField &&
+          !changedFields.has(matching.targetField)
+        )
+          continue;
         if (matching.through?.length === 1) {
           // select readings where patient_id.favbook = v.id
           // select reftable where field.through[0] = v.id
@@ -3879,29 +3897,53 @@ ${rejectDetails}`,
     );
   }
   async repairCompositePrimary() {
-    const { rows } = await db.query(`select constraint_name
+    const primaryKeys = this.fields.filter((f) => f.primary_key);
+    const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    if (
+      primaryKeys.length > 1 ||
+      (nonSerialPKS && (primaryKeys[0] as any)?.type?.name === "String")
+    ) {
+      const { rows } = await db.query(`select constraint_name
 from information_schema.table_constraints
 where table_schema = '${db.getTenantSchema() || "public"}'
       and table_name = '${this.name}'
       and constraint_type = 'PRIMARY KEY';`);
-    const cname = rows[0]?.constraint_name;
-    const schemaPrefix = db.getTenantSchemaPrefix();
-    await db.query(
-      `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
-    );
-    for (const field of this.fields) {
-      if (field.primary_key) await field.update({ primary_key: false });
-    }
-    const { pk_type, pk_sql_type } = Table.pkSqlType(this.fields);
+      const cname = rows[0]?.constraint_name;
+      await db.query(
+        `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
+      );
+      for (const field of this.fields) {
+        if (field.primary_key) await field.update({ primary_key: false });
+      }
+      const { pk_type, pk_sql_type } = Table.pkSqlType(this.fields);
 
-    await db.query(
-      `alter table ${schemaPrefix}"${this.name}" add column id ${pk_sql_type} primary key;`
-    );
-    await db.query(
-      `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+      await db.query(
+        `alter table ${schemaPrefix}"${this.name}" add column id ${pk_sql_type} primary key;`
+      );
+      await db.query(
+        `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
         values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
-      [this.id]
-    );
+        [this.id]
+      );
+    } else if (nonSerialPKS) {
+      //https://stackoverflow.com/questions/23578427/changing-primary-key-int-type-to-serial
+      await db.query(`CREATE SEQUENCE ${schemaPrefix}"${this.name}_id_seq";`);
+      await db.query(
+        `ALTER SEQUENCE ${schemaPrefix}"${this.name}_id_seq" OWNED BY ${schemaPrefix}"${this.name}"."${this.pk_name}"`
+      );
+      await db.query(
+        `SELECT setval('${schemaPrefix}"${this.name}_id_seq"', MAX(a."${this.pk_name}")) from ${schemaPrefix}"${this.name}" a`
+      );
+      await db.query(
+        `ALTER TABLE ${schemaPrefix}"${this.name}" ALTER COLUMN "${this.pk_name}" SET DEFAULT nextval('${schemaPrefix}"${this.name}_id_seq"')`
+      );
+      const pk = this.getField(this.pk_name)!;
+      const attrs = { ...pk.attributes };
+      delete attrs.NonSerial;
+      await pk.update({ attributes: attrs });
+    }
   }
 
   async move_include_fts_to_search_context() {

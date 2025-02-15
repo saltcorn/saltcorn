@@ -1082,9 +1082,13 @@ const render = async ({
   }
   let deleteUnchangedScript = "";
   if (auto_created_row && delete_unchanged_auto_create && !isPreview) {
-    if (!form.onChange) form.onChange = "";
-
-    form.onChange += "this.setAttribute('data-form-changed','true');";
+    if (hasSave) {
+      if (!form.onSubmit) form.onSubmit = "";
+      form.onSubmit += "this.setAttribute('data-form-changed','true');";
+    } else {
+      if (!form.onChange) form.onChange = "";
+      form.onChange += "this.setAttribute('data-form-changed','true');";
+    }
     deleteUnchangedScript = script(
       `((curScript)=>{window.addEventListener("beforeunload", () => check_delete_unsaved("${table.name}", curScript));})(document.currentScript)`
     );

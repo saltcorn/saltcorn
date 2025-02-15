@@ -472,6 +472,18 @@ describe("actions", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
   });
+  it("post Never trigger with table", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/actions/new")
+      .set("Cookie", loginCookie)
+      .send("action=run_js_code")
+      .send("table_id=2")
+      .send("name=NeverTableTrigger")
+      .send("when_trigger=Never")
+      .expect(302);
+  });
 });
 describe("localizer", () => {
   itShouldRedirectUnauthToLogin("/site-structure/localizer");

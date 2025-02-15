@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "1.1.2-beta.11",
+  "version": "1.1.2-beta.15",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -37,15 +37,15 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "1.1.2-beta.11",
-    "@saltcorn/sqlite": "1.1.2-beta.11"
+    "@saltcorn/postgres": "1.1.2-beta.15",
+    "@saltcorn/sqlite": "1.1.2-beta.15"
   },
   "dependencies": {
-    "@saltcorn/types": "1.1.2-beta.11",
-    "@saltcorn/markup": "1.1.2-beta.11",
-    "@saltcorn/common-code": "1.1.2-beta.11",
-    "@saltcorn/db-common": "1.1.2-beta.11",
-    "@saltcorn/sqlite-mobile": "1.1.2-beta.11",
+    "@saltcorn/types": "1.1.2-beta.15",
+    "@saltcorn/markup": "1.1.2-beta.15",
+    "@saltcorn/common-code": "1.1.2-beta.15",
+    "@saltcorn/db-common": "1.1.2-beta.15",
+    "@saltcorn/sqlite-mobile": "1.1.2-beta.15",
     "acorn": "^8.14.0",
     "assert": "^2.1.0",
     "astring": "^1.9.0",
@@ -113,7 +113,7 @@
     "jest": "^29.7.0",
     "jsonwebtoken": "^9.0.2",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.7.3",
+    "typescript": "5.1.6",
     "webpack": "5.97.1",
     "webpack-cli": "6.0.1"
   },
