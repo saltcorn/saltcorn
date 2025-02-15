@@ -83,7 +83,10 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.locator(`text=updated7477@mailinator.com`).nth(0).click();
+    await page.waitForTimeout(5000); // Wait for 5 seconds
+
+    await page.locator('div.d-inline:has-text("@mailinator.com")').click();
+   //await page.locator(`text=myproject19july@mailinator.com`).click();
     await customAssert('Click on the checkbox to edit', async () => {
       const checkboxLocator = page.locator(pageobject.ClickToEditCheckBox);
       await expect(checkboxLocator).toBeVisible();  // Assert checkbox is visible
@@ -103,13 +106,13 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.newviewlink);
 
     await customAssert('Click on the email to edit', async () => {
-      const emailEditLocator = page.locator('table tbody td div:has-text("updated7477@mailinator.com")');
+      const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
       await emailEditLocator.click();
 
     });
 
     await customAssert('Click on the email to edit and check edit icon visibility', async () => {
-      const emailEditLocator = page.locator('table tbody td div:has-text("updated7477@mailinator.com")');
+      const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
       await emailEditLocator.hover(); // Hover over the email to make the edit icon appear
       const editIconLocator = emailEditLocator.locator('.editicon');
 
@@ -163,7 +166,7 @@ test.describe('E2E Test Suite', () => {
 
       // Clear the input field
       await usernameFieldLocator.fill(''); // This ensures the field is empty
-      await usernameFieldLocator.fill('updated7477@mailinator.com'); // Fill with new email
+      await usernameFieldLocator.fill('myproject19july@mailinator.com'); // Fill with new email
     });
 
     await customAssert('Click on submit button to save the reset email', async () => {

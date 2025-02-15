@@ -154,7 +154,7 @@ class PageLocators {
     this.showfieldlink = '(//a[text()="Show"])[1]';
     this.listshowlink = '(//a[text()="ListShow"])[1]';
     this.ActionLabel = 'input[type="text"].form-control';
-    this.ActionHoverTitle = 'input.form-control:not([type])';
+    this.ActionHoverTitle = 'input.linkoractiontitle';
     this.containsdraglocator= 'div[title="Container"]';
     this.containerdisplaysetting = '//div[contains(text(), "Display")]';
     this.containercontentsetting = '//div[contains(text(), "Contents")]';
@@ -659,6 +659,15 @@ class PageLocators {
     this.mypage = "input[data-fieldname='page_title']";
     this.viewName = 'table.table >> tbody >> tr >> td:nth-child(1) >> a';
     this.createview = 'h5:has-text("Create view")';
+    this.addstep = 'a.btn.btn-secondary';
+    this.ctxvalues='#inputctx_values';
+    this.newstep= '.nodeLabel .fa-plus';
+    this.actionname='label[for="inputwf_action_name"]';
+    this.selectactionname='select#inputwf_action_name';
+    this.userformlabel='input[data-fieldname="label"]';
+    this.userformvarname='input[data-fieldname="var_name"]';
+    this.userformqtype='select[data-fieldname="qtype"]';
+
 
 
   }
