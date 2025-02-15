@@ -58,8 +58,8 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
     });
 
-       // Create List view from People table
-       test('Create List view from People table', async () => {
+    // Create List view from People table
+    test('Create List view from People table', async () => {
         await functions.views();
         // click on create new view
         await page.click(pageobject.createnewview);
