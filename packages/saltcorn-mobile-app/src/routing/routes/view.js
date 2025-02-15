@@ -5,6 +5,8 @@ import { MobileResponse } from "../mocks/response";
 import { parseQuery, wrapContents } from "../utils";
 import { setHasOfflineData } from "../../helpers/offline_mode";
 import { routingHistory } from "../../helpers/navigation";
+import { apiCall } from "../../helpers/api";
+
 /**
  *
  * @param {*} context
@@ -90,13 +92,25 @@ export const postViewRoute = async (context) => {
   const { user, isOfflineMode } = state.mobileConfig;
   if (user.role_id > view.min_role)
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
-  await view.runRoute(
-    context.params.route,
-    context.data,
-    res,
-    { req, res },
-    view.isRemoteTable()
-  );
+
+  if (!isOfflineMode && view.viewtemplateObj?.name === "WorkflowRoom") {
+    const response = await apiCall({
+      method: "POST",
+      path: `/view/${encodeURIComponent(view.name)}/${encodeURIComponent(
+        context.params.route
+      )}`,
+      body: context.data,
+    });
+    if (response.data.success === "ok") return response.data;
+    else throw new Error(`Unable to run route ${context.params.route}`);
+  } else
+    await view.runRoute(
+      context.params.route,
+      context.data,
+      res,
+      { req, res },
+      view.isRemoteTable()
+    );
   if (isOfflineMode) await setHasOfflineData(true);
   const wrapped = res.getWrapHtml();
   if (wrapped)

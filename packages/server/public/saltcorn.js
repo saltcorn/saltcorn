@@ -693,7 +693,7 @@ function ajax_post(url, args) {
     },
     ...(args || {}),
   })
-    .done(ajax_done)
+    .done((res) => ajax_done(res))
     .fail((e, ...more) => {
       if (!checkNetworkError(e))
         return ajax_done(

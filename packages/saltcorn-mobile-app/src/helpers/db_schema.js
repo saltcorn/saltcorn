@@ -51,7 +51,11 @@ export async function safeRows(table, rows) {
 export async function updateScTables(tablesJSON, skipScPlugins = true) {
   await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
   for (const { table, rows } of tablesJSON.sc_tables) {
-    if (skipScPlugins && table === "_sc_plugins") continue;
+    if (
+      (skipScPlugins && table === "_sc_plugins") ||
+      table === "_sc_workflow_runs"
+    )
+      continue;
     if (table === "_sc_tables") await dropDeletedTables(rows);
     await saltcorn.data.db.deleteWhere(table);
     await saltcorn.data.db.insertRows(table, await safeRows(table, rows));

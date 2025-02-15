@@ -321,7 +321,7 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
       success: "ok",
       eval_js: `$('#wfroom-${run.id}').append(${JSON.stringify(
         items.join("")
-      )});$('#wfroom-spin-${run.id}')[0].scrollIntoView();$('#wfroom-spin-${
+      )});$('#wfroom-spin-${run.id}')[0]?.scrollIntoView();$('#wfroom-spin-${
         run.id
       }').hide()`,
     },

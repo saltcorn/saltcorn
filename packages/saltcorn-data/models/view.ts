@@ -47,6 +47,8 @@ import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 import { remove_from_menu } from "./config";
 
+declare const saltcorn: any;
+
 /**
  * View Class
  * @category saltcorn-data
@@ -447,6 +449,17 @@ class View implements AbstractView {
   }
 
   /**
+   * @returns {string}
+   */
+  async runServerSide(query: any): Promise<string> {
+    const response = await saltcorn.mobileApp.api.apiCall({
+      method: "GET",
+      path: `/view/${this.name}/run`,
+    });
+    return response.data;
+  }
+
+  /**
    * Run (Execute) View
    * @param {any} query
    * @param  {RunExtra} extraArgs
@@ -571,6 +584,10 @@ class View implements AbstractView {
     const view = this;
     if (isWeb(req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return "";
+    if (!isNode() && this.viewtemplateObj?.name === "WorkflowRoom") {
+      const { isOfflineMode } = require("../db/state").getState().mobileConfig;
+      if (!isOfflineMode) return await this.runServerSide(query);
+    }
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
