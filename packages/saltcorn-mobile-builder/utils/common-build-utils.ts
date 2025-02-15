@@ -753,6 +753,8 @@ export async function buildTablesFile(
         "_sc_session",
         "_sc_event_log",
         "_sc_snapshots",
+        "_sc_workflow_runs",
+        "_sc_workflow_trace"
       ].indexOf(table.name) === -1
   );
   const tablesWithData = await Promise.all(
