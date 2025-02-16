@@ -744,6 +744,59 @@ export async function buildTablesFile(
   buildDir: string,
   includedPlugins?: string[]
 ) {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+  await state.refresh_config(true);
+
+  // remove cfgs with excludeFromMobile or input_type=password
+  const filterPluginFunc = async (plugin: any) => {
+    let module = state.plugins[plugin.name];
+    if (!module) module = state.plugins[state.plugin_module_names[plugin.name]];
+    if (module?.configuration_workflow) {
+      try {
+        const flow = await module.configuration_workflow();
+        for (const step of flow?.steps || []) {
+          if (step.form) {
+            const form = await step.form({});
+            for (const field of form?.fields || []) {
+              if (
+                field.exclude_from_mobile ||
+                field.input_type === "password"
+              ) {
+                delete plugin.configuration[field.name];
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.log(`Error in configuration_workflow of plugin ${plugin.name}`);
+        console.log(error);
+      }
+      return plugin;
+    }
+  };
+
+  const filterFunc = async (table: string, rows: any) => {
+    switch (table) {
+      case "_sc_plugins":
+        const included = rows.filter((plugin: any) =>
+          includedPlugins ? includedPlugins.includes(plugin.name) : true
+        );
+        return await Promise.all(included.map(filterPluginFunc));
+      case "_sc_config":
+        const allCfgs = state.configs;
+        // remove cfgs with excludeFromMobile or input_type=password
+        return rows.filter((row: any) => {
+          const cfg = allCfgs[row.key];
+          return (
+            cfg && !(cfg.excludeFromMobile || cfg.input_type === "password")
+          );
+        });
+      default:
+        return rows;
+    }
+  };
+
   const wwwDir = join(buildDir, "www", "data");
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
@@ -754,7 +807,7 @@ export async function buildTablesFile(
         "_sc_event_log",
         "_sc_snapshots",
         "_sc_workflow_runs",
-        "_sc_workflow_trace"
+        "_sc_workflow_trace",
       ].indexOf(table.name) === -1
   );
   const tablesWithData = await Promise.all(
@@ -762,13 +815,7 @@ export async function buildTablesFile(
       const dbData = await db.select(row.name);
       return {
         table: row.name,
-        rows:
-          row.name !== "_sc_plugins"
-            ? dbData
-            : dbData.filter(
-                (plugin: any) =>
-                  !includedPlugins || includedPlugins.includes(plugin.name)
-              ),
+        rows: await filterFunc(row.name, dbData),
       };
     })
   );
