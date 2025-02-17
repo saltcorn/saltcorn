@@ -198,6 +198,7 @@ const run = async (
     lresp = await lview.run(state1, {
       ...extraArgs,
       onRowSelect: (v) => `select_id('${v.id}', this)`,
+      removeIdFromstate: true,
     });
   }
 
