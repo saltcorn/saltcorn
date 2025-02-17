@@ -86,7 +86,6 @@ test.describe('E2E Test Suite', () => {
     await page.waitForTimeout(5000); // Wait for 5 seconds
 
     await page.locator('div.d-inline:has-text("@mailinator.com")').click();
-   //await page.locator(`text=myproject19july@mailinator.com`).click();
     await customAssert('Click on the checkbox to edit', async () => {
       const checkboxLocator = page.locator(pageobject.ClickToEditCheckBox);
       await expect(checkboxLocator).toBeVisible();  // Assert checkbox is visible
@@ -107,7 +106,6 @@ test.describe('E2E Test Suite', () => {
 
     await customAssert('Click on the email to edit', async () => {
       const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
-
      // const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
       await emailEditLocator.click();
 
@@ -117,9 +115,11 @@ test.describe('E2E Test Suite', () => {
       const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
 
      // const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
+     
+
      console.log("Focusing on the email edit field...");
      await emailEditLocator.focus();
-     console.log("Focus applied successfully!"); // Hover over the email to make the edit icon appear
+     console.log("Focus applied successfully!"); 
       const editIconLocator = emailEditLocator.locator('.editicon');
 
 
