@@ -54,6 +54,8 @@ test.describe('E2E Test Suite', () => {
         });
     });
 
+
+
     test('Text placeholder', async () => {
         await page.waitForSelector(pageobject.textSource);
         await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
