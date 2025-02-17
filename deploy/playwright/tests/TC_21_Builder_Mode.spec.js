@@ -53,7 +53,8 @@ test.describe('E2E Test Suite', () => {
             await expect(urlField).toHaveValue('');
         });
     });
-    
+
+
 
     test('Text placeholder', async () => {
         await page.waitForSelector(pageobject.textSource);
