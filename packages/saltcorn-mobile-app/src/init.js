@@ -23,6 +23,7 @@ import {
   addRoute,
 } from "./helpers/navigation.js";
 import { checkSendIntentReceived } from "./helpers/common.js";
+import { readJSONCordova } from "./helpers/file_system.js";
 
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
@@ -156,10 +157,22 @@ const initJwt = async () => {
   }
 };
 
-const initI18Next = async (allLanguages) => {
+const initI18Next = async () => {
+  const resources = {};
+  for (const key of Object.keys(
+    saltcorn.data.models.config.available_languages
+  )) {
+    const localeFile = await readJSONCordova(
+      `${key}.json`,
+      `${cordova.file.applicationDirectory}public/data/locales`
+    );
+    resources[key] = {
+      translation: localeFile,
+    };
+  }
   await i18next.use(i18nextSprintfPostProcessor).init({
     lng: "en",
-    allLanguages,
+    resources,
   });
 };
 
@@ -291,26 +304,35 @@ const postShare = async (shareData) => {
   return await replaceIframe(page.content);
 };
 
+const readSchemaIfNeeded = async () => {
+  let tablesJSON = null;
+  const { created_at } = await readJSONCordova(
+    "tables_created_at.json",
+    `${cordova.file.applicationDirectory}${"public"}/data`
+  );
+  const updateNeeded = await dbUpdateNeeded(created_at);
+  if (updateNeeded) {
+    tablesJSON = await readJSONCordova(
+      "tables.json",
+      `${cordova.file.applicationDirectory}${"public"}/data`
+    );
+  }
+  return { updateNeeded, tablesJSON };
+};
+
 // device is ready
-export async function init({
-  mobileConfig,
-  tablesSchema,
-  schemaCreatedAt,
-  translations,
-  siteLogo,
-}) {
+export async function init({ mobileConfig, siteLogo }) {
   try {
     const lastLocation = takeLastLocation();
     document.addEventListener("resume", onResume, false);
-    const { created_at } = schemaCreatedAt;
     await addScripts(mobileConfig.version_tag);
     saltcorn.data.db.connectObj.version_tag = mobileConfig.version_tag;
 
     await saltcorn.data.db.init();
-    const updateNeeded = await dbUpdateNeeded(created_at);
+    const { updateNeeded, tablesJSON } = await readSchemaIfNeeded();
     if (updateNeeded) {
       // update '_sc_plugins' first because of loadPlugins()
-      await updateScPlugins(tablesSchema);
+      await updateScPlugins(tablesJSON);
     }
     const state = saltcorn.data.state.getState();
     state.mobileConfig = mobileConfig;
@@ -318,7 +340,9 @@ export async function init({
     state.registerPlugin("base", saltcorn.base_plugin);
     state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
     collectPluginHeaders(await loadPlugins(state));
-    if (updateNeeded) await updateDb(tablesSchema);
+    if (updateNeeded) {
+      await updateDb(tablesJSON);
+    }
     await createSyncInfoTables(mobileConfig.synchedTables);
     await initJwt();
     await state.refresh_tables();
@@ -331,7 +355,7 @@ export async function init({
     );
     await state.setConfig("base_url", mobileConfig.server_path);
     const entryPoint = mobileConfig.entry_point;
-    await initI18Next(translations);
+    await initI18Next();
     state.mobileConfig.encodedSiteLogo = siteLogo;
     state.mobileConfig.networkState = (
       await Network.getStatus()

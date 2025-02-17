@@ -821,17 +821,17 @@ export async function buildTablesFile(
   );
   const createdAt = new Date();
   writeFileSync(
-    join(wwwDir, "tables.js"),
-    `var _sc_tables = ${JSON.stringify({
+    join(wwwDir, "tables.json"),
+    JSON.stringify({
       created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
-    })}`
+    })
   );
   writeFileSync(
-    join(wwwDir, "tables_created_at.js"),
-    `var _sc_tables_created_at = ${JSON.stringify({
+    join(wwwDir, "tables_created_at.json"),
+    JSON.stringify({
       created_at: createdAt.valueOf(),
-    })}`
+    })
   );
 }
 
@@ -841,19 +841,7 @@ export async function buildTablesFile(
  */
 export function copyTranslationFiles(buildDir: string) {
   const localesDir = join(require.resolve("@saltcorn/server"), "..", "locales");
-  const translations = new Array<string>();
-  for (const key of Object.keys(available_languages)) {
-    const buffer = fs.readFileSync(join(localesDir, `${key}.json`));
-    translations.push(
-      `${key}: { translations: ${JSON.stringify(
-        JSON.parse(buffer.toString())
-      )} }`
-    );
-  }
-  fs.writeFileSync(
-    join(buildDir, "www", "data", "translations.js"),
-    `var _sc_translations = { ${translations.join(",")} }`
-  );
+  copySync(localesDir, join(buildDir, "www", "data", "locales"));
 }
 
 /**
