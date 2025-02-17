@@ -23,7 +23,7 @@ import {
   addRoute,
 } from "./helpers/navigation.js";
 import { checkSendIntentReceived } from "./helpers/common.js";
-import { readJSONCordova } from "./helpers/file_system.js";
+import { readJSONCordova, readTextCordova } from "./helpers/file_system.js";
 
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
@@ -320,8 +320,25 @@ const readSchemaIfNeeded = async () => {
   return { updateNeeded, tablesJSON };
 };
 
+const readSiteLogo = async (state) => {
+  try {
+    const base64 = await readTextCordova(
+      "encoded_site_logo.txt",
+      `${cordova.file.applicationDirectory}public/data`
+    );
+    return base64;
+  } catch (error) {
+    console.log(
+      `Unable to read the site logo file: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+    return "";
+  }
+};
+
 // device is ready
-export async function init({ mobileConfig, siteLogo }) {
+export async function init(mobileConfig) {
   try {
     const lastLocation = takeLastLocation();
     document.addEventListener("resume", onResume, false);
@@ -356,7 +373,7 @@ export async function init({ mobileConfig, siteLogo }) {
     await state.setConfig("base_url", mobileConfig.server_path);
     const entryPoint = mobileConfig.entry_point;
     await initI18Next();
-    state.mobileConfig.encodedSiteLogo = siteLogo;
+    state.mobileConfig.encodedSiteLogo = await readSiteLogo();
     state.mobileConfig.networkState = (
       await Network.getStatus()
     ).connectionType;

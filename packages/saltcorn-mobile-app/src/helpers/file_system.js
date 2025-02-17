@@ -61,7 +61,7 @@ export async function readJSONCordova(fileName, dirName) {
   return JSON.parse(text);
 }
 
-async function readTextCordova(fileName, dirName) {
+export async function readTextCordova(fileName, dirName) {
   const dirEntry = await getDirEntryCordova(dirName);
   return new Promise((resolve, reject) => {
     dirEntry.getFile(

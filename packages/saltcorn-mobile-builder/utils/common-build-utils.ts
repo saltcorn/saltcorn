@@ -679,8 +679,8 @@ export async function copySiteLogo(buildDir: string) {
         if (file) {
           const base64 = readFileSync(file.location, "base64");
           writeFileSync(
-            join(buildDir, "www", "data", "encoded_site_logo.js"),
-            `var _sc_site_logo = "data:${file.mimetype};base64, ${base64}"`
+            join(buildDir, "www", "data", "encoded_site_logo.txt"),
+            `data:${file.mimetype};base64, ${base64}`
           );
         } else {
           console.log(`The file '${siteLogo}' does not exist`);
