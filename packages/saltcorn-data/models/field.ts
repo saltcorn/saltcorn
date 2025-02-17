@@ -94,6 +94,7 @@ class Field implements AbstractField {
   table_id?: number;
   table?: AbstractTable | null;
   in_auto_save?: boolean;
+  exclude_from_mobile?: boolean;
 
   // to use 'this[k] = v'
   [key: string]: any;
@@ -169,6 +170,7 @@ class Field implements AbstractField {
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
     this.in_auto_save = o.in_auto_save;
+    this.exclude_from_mobile = o.exclude_from_mobile;
   }
 
   /**

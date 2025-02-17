@@ -349,7 +349,7 @@ export type Plugin = {
   layout: MaybeCfgFun<PluginLayout> | PluginLayout;
   types: MaybeCfgFun<Array<PluginType>>;
   viewtemplates: MaybeCfgFun<Array<ViewTemplate>>;
-  configuration_workflow?: ([]) => AbstractWorkflow;
+  configuration_workflow?: () => AbstractWorkflow;
   fieldviews?: {
     type: string;
     isEdit: boolean;

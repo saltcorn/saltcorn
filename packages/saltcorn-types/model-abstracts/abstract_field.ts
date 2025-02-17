@@ -53,6 +53,7 @@ export type FieldCfg = {
   tab?: string;
   table?: AbstractTable | null;
   in_auto_save?: boolean;
+  exclude_from_mobile?: boolean;
 };
 
 export interface AbstractFieldRepeat {

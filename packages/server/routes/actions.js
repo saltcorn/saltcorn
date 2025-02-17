@@ -15,10 +15,6 @@ const {
 const { ppVal, jsIdentifierValidator } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
-const View = require("@saltcorn/data/models/view");
-const {
-  getForm,
-} = require("@saltcorn/data/base-plugin/viewtemplates/viewable_fields");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
@@ -29,6 +25,9 @@ const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
+const {
+  getWorkflowStepUserForm,
+} = require("@saltcorn/data/web-mobile-commons");
 
 /**
  * @type {object}
@@ -1689,42 +1688,6 @@ router.post(
     res.redirect("/actions/runs");
   })
 );
-
-const getWorkflowStepUserForm = async (run, trigger, step, req) => {
-  if (step.action_name === "EditViewForm") {
-    const view = View.findOne({ name: step.configuration.edit_view });
-    const table = Table.findOne({ id: view.table_id });
-    const form = await getForm(
-      table,
-      view.name,
-      view.configuration.columns,
-      view.configuration.layout,
-      null,
-      req
-    );
-    await form.fill_fkey_options(false, undefined, req?.user);
-    form.action = `/actions/fill-workflow-form/${run.id}`;
-    if (run.context[step.configuration.response_variable])
-      Object.assign(
-        form.values,
-        run.context[step.configuration.response_variable]
-      );
-
-    return form;
-  }
-
-  let blurb = run.wait_info.output || step.configuration?.form_header || "";
-  if (run.wait_info.markdown && run.wait_info.output) blurb = md.render(blurb);
-  const form = new Form({
-    action: `/actions/fill-workflow-form/${run.id}`,
-    submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
-    onSubmit: "press_store_button(this)",
-    blurb,
-    formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
-    fields: await run.userFormFields(step),
-  });
-  return form;
-};
 
 router.get(
   "/fill-workflow-form/:id",

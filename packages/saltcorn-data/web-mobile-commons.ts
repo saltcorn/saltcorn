@@ -4,11 +4,16 @@
 
 import Table from "./models/table";
 import type Field from "./models/field";
+import type WorkflowRun from "./models/workflow_run";
+import type Trigger from "./models/trigger";
+import type WorkflowStep from "./models/workflow_step";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import utils from "./utils";
 import expression from "./models/expression";
 import type User from "./models/user";
-const { isNode, applyAsync } = utils;
+import View from "./models/view";
+import Form from "./models/form";
+const { isNode, isWeb, applyAsync } = utils;
 const { text } = require("@saltcorn/markup/tags");
 const { getState } = require("./db/state");
 const {
@@ -16,6 +21,10 @@ const {
   add_free_variables_to_joinfields,
   calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
+import viewableFields from "./base-plugin/viewtemplates/viewable_fields";
+const { getForm } = viewableFields;
+const MarkdownIt = require("markdown-it"),
+  md = new MarkdownIt();
 
 const disabledMobileMenus = ["Action", "Search"];
 
@@ -373,9 +382,63 @@ const show_calculated_fieldview = async (
   }
 };
 
+/**
+ * prepare a form for a workflow step
+ * @param run
+ * @param trigger
+ * @param step
+ * @param req
+ * @returns
+ */
+const getWorkflowStepUserForm = async (
+  run: WorkflowRun,
+  trigger: Trigger,
+  step: WorkflowStep,
+  req: any
+) => {
+  if (step.action_name === "EditViewForm") {
+    const view = View.findOne({ name: step.configuration.edit_view });
+    const table = Table.findOne({ id: view!.table_id });
+    const form = await getForm(
+      table!,
+      view!.name,
+      view!.configuration.columns,
+      view!.configuration.layout,
+      null,
+      req,
+      false
+    );
+    form.isWorkflow = true;
+    if (!isWeb(req)) form.onSubmit = "";
+    await form.fill_fkey_options(false, undefined, req?.user);
+    form.action = `/actions/fill-workflow-form/${run.id}`;
+    if (run.context[step.configuration.response_variable])
+      Object.assign(
+        form.values,
+        run.context[step.configuration.response_variable]
+      );
+
+    return form;
+  }
+
+  let blurb = run.wait_info.output || step.configuration?.form_header || "";
+  if (run.wait_info.markdown && run.wait_info.output) blurb = md.render(blurb);
+  const form = new Form({
+    action: `/actions/fill-workflow-form/${run.id}`,
+    submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
+    onSubmit: "press_store_button(this)",
+    blurb,
+    formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
+    fields: await run.userFormFields(step),
+    isWorkflow: true,
+  });
+  return form;
+};
+
 export = {
   get_extra_menu,
   prepare_update_row,
   prepare_insert_row,
   show_calculated_fieldview,
+  getWorkflowStepUserForm,
 };

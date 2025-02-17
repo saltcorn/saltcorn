@@ -49,7 +49,9 @@ const rmInitialDot = (s: string): string =>
   s && s[0] === "." ? s.replace(".", "") : s;
 
 const buildActionAttribute = (form: Form): string =>
-  isNode && !form.req?.smr ? form.action! : "javascript:void(0)";
+  (isNode && !form.req?.smr) || form.isWorkflow
+    ? form.action!
+    : "javascript:void(0)";
 
 /**
  * @param sIf
@@ -1380,12 +1382,13 @@ const renderFormLayout = (form: Form): string => {
         );
       if (action_link) return action_link;
 
-      if (isNode && !form.req?.smr) {
-        const submitAttr = form.xhrSubmit
-          ? `onClick="${spinnerStr}${
-              form.onSubmit ? `${form.onSubmit};` : ""
-            }ajaxSubmitForm(this, true)" type="button"`
-          : 'type="submit"';
+      if ((isNode && !form.req?.smr) || form.isWorkflow) {
+        const submitAttr =
+          form.xhrSubmit || form.isWorkflow
+            ? `onClick="${spinnerStr}${
+                form.onSubmit ? `${form.onSubmit};` : ""
+              }ajaxSubmitForm(this, true)" type="button"`
+            : 'type="submit"';
         return mkBtn(submitAttr);
       }
       return mkBtn('type="submit"');
@@ -1465,12 +1468,13 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   }
   const hasValues = Object.keys(extraValues).length > 0;
   const isMobile = !isNode || form.req?.smr;
+  const mobileWorkflow = isMobile && form.isWorkflow;
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
-    form.onSubmit || form.xhrSubmit
+    form.onSubmit || form.xhrSubmit || mobileWorkflow
       ? ` onsubmit="${form.onSubmit || ""}${
-          form.xhrSubmit && !isMobile
+          (form.xhrSubmit && !isMobile) || mobileWorkflow
             ? `;ajaxSubmitForm(this, true, event)`
             : ""
         }" `
@@ -1608,7 +1612,7 @@ const mkForm = (
   }action="${buildActionAttribute(form)}"${
     form.onSubmit || form.xhrSubmit
       ? ` onsubmit="${form.onSubmit || ""}${
-          form.xhrSubmit && !isMobile
+          (form.xhrSubmit && !isMobile) || form.isWorkflow
             ? `;ajaxSubmitForm(this, true, event)`
             : ""
         }"`
@@ -1644,7 +1648,7 @@ const mkForm = (
     ${
       form.noSubmitButton
         ? ""
-        : form.xhrSubmit
+        : form.xhrSubmit || form.isWorkflow
         ? `<button type="button" class="btn ${
             form.submitButtonClass || "btn-primary"
           }" onClick="${
