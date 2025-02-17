@@ -24,7 +24,7 @@
 instead: <a href="https://www.npmjs.com/package/@saltcorn/cli">@saltcorn/cli</a></p>
 </section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/8774e8d/packages/saltcorn-data/index.ts#L1">saltcorn-data/index.ts:1</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/5a94fd9/packages/saltcorn-data/index.ts#L1">saltcorn-data/index.ts:1</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
@@ -271,19 +271,45 @@ From my point of view it just add tenant to list of otherdomaintenant</p>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div></li></ul></li></ul></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/8774e8d/packages/saltcorn-data/db/state.ts#L1229">saltcorn-data/db/state.ts:1229</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/5a94fd9/packages/saltcorn-data/db/state.ts#L1229">saltcorn-data/db/state.ts:1229</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member"><a id="web_mobile_commons" class="tsd-anchor"></a>
 <h3 class="tsd-anchor-link"><span>web_<wbr/>mobile_<wbr/>commons</span><a href="#web_mobile_commons" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">web_<wbr/>mobile_<wbr/>commons</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">get_extra_menu</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">role</span>, <span class="tsd-kind-parameter">__</span>, <span class="tsd-kind-parameter">user</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">locale</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">prepare_insert_row</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">fields</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">prepare_update_row</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">table</span>, <span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">id</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">show_calculated_fieldview</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">req</span>, <span class="tsd-kind-parameter">res</span>, <span class="tsd-kind-parameter">param2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
+<div class="tsd-signature"><span class="tsd-kind-property">web_<wbr/>mobile_<wbr/>commons</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">getWorkflowStepUserForm</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">run</span>, <span class="tsd-kind-parameter">trigger</span>, <span class="tsd-kind-parameter">step</span>, <span class="tsd-kind-parameter">req</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../classes/_saltcorn_data.models.Form-1.html" class="tsd-signature-type tsd-kind-class">Form</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">get_extra_menu</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">role</span>, <span class="tsd-kind-parameter">__</span>, <span class="tsd-kind-parameter">user</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">locale</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">prepare_insert_row</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">fields</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">prepare_update_row</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">table</span>, <span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">id</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">show_calculated_fieldview</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">req</span>, <span class="tsd-kind-parameter">res</span>, <span class="tsd-kind-parameter">param2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
 <div class="tsd-type-declaration">
 <h4>Type declaration</h4>
 <ul class="tsd-parameters">
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">get<wbr/>Workflow<wbr/>Step<wbr/>User<wbr/>Form</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">run</span>, <span class="tsd-kind-parameter">trigger</span>, <span class="tsd-kind-parameter">step</span>, <span class="tsd-kind-parameter">req</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../classes/_saltcorn_data.models.Form-1.html" class="tsd-signature-type tsd-kind-class">Form</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span></h5>
+<ul class="tsd-parameters">
+<li class="tsd-parameter-signature">
+<ul class="tsd-signatures">
+<li class="tsd-signature" id="web_mobile_commons.__type-24.getWorkflowStepUserForm.__type-25.__type-26"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">run</span>, <span class="tsd-kind-parameter">trigger</span>, <span class="tsd-kind-parameter">step</span>, <span class="tsd-kind-parameter">req</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../classes/_saltcorn_data.models.Form-1.html" class="tsd-signature-type tsd-kind-class">Form</a><span class="tsd-signature-symbol">&gt;</span></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>prepare a form for a workflow step</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5><span class="tsd-kind-parameter">run</span>: <a href="../classes/_saltcorn_data.models.WorkflowRun.html" class="tsd-signature-type tsd-kind-class">WorkflowRun</a></h5>
+<div class="tsd-comment tsd-typography"></div></li>
+<li>
+<h5><span class="tsd-kind-parameter">trigger</span>: <a href="../classes/_saltcorn_data.models.Trigger.html" class="tsd-signature-type tsd-kind-class">Trigger</a></h5>
+<div class="tsd-comment tsd-typography"></div></li>
+<li>
+<h5><span class="tsd-kind-parameter">step</span>: <a href="../classes/_saltcorn_data.models.WorkflowStep.html" class="tsd-signature-type tsd-kind-class">WorkflowStep</a></h5>
+<div class="tsd-comment tsd-typography"></div></li>
+<li>
+<h5><span class="tsd-kind-parameter">req</span>: <span class="tsd-signature-type">any</span></h5>
+<div class="tsd-comment tsd-typography"></div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../classes/_saltcorn_data.models.Form-1.html" class="tsd-signature-type tsd-kind-class">Form</a><span class="tsd-signature-symbol">&gt;</span></h4>
+<div class="tsd-comment tsd-typography"></div></li></ul></li></ul></li>
 <li class="tsd-parameter">
 <h5><span class="tsd-kind-property">get_<wbr/>extra_<wbr/>menu</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">role</span>, <span class="tsd-kind-parameter">__</span>, <span class="tsd-kind-parameter">user</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">locale</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span></h5>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
 <ul class="tsd-signatures">
-<li class="tsd-signature" id="web_mobile_commons.__type-24.get_extra_menu.__type-25.__type-26"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">role</span>, <span class="tsd-kind-parameter">__</span>, <span class="tsd-kind-parameter">user</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">locale</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+<li class="tsd-signature" id="web_mobile_commons.__type-24.get_extra_menu.__type-27.__type-28"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">role</span>, <span class="tsd-kind-parameter">__</span>, <span class="tsd-kind-parameter">user</span><span class="tsd-signature-symbol">?</span>, <span class="tsd-kind-parameter">locale</span><span class="tsd-signature-symbol">?</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>Get extra menu</p>
 </div>
@@ -321,7 +347,7 @@ From my point of view it just add tenant to list of otherdomaintenant</p>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
 <ul class="tsd-signatures">
-<li class="tsd-signature" id="web_mobile_commons.__type-24.prepare_insert_row.__type-27.__type-28"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">fields</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
+<li class="tsd-signature" id="web_mobile_commons.__type-24.prepare_insert_row.__type-29.__type-30"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">fields</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>take a row from a form, and prepare it for a db insert
 needed for tabulator</p>
@@ -342,7 +368,7 @@ needed for tabulator</p>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
 <ul class="tsd-signatures">
-<li class="tsd-signature" id="web_mobile_commons.__type-24.prepare_update_row.__type-29.__type-30"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">table</span>, <span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">id</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></li>
+<li class="tsd-signature" id="web_mobile_commons.__type-24.prepare_update_row.__type-31.__type-32"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">table</span>, <span class="tsd-kind-parameter">row</span>, <span class="tsd-kind-parameter">id</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>take a row from a form, and prepare it for a db update
 needed for tabulator</p>
@@ -368,7 +394,7 @@ needed for tabulator</p>
 <ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
 <ul class="tsd-signatures">
-<li class="tsd-signature" id="web_mobile_commons.__type-24.show_calculated_fieldview.__type-31.__type-32"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">req</span>, <span class="tsd-kind-parameter">res</span>, <span class="tsd-kind-parameter">param2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
+<li class="tsd-signature" id="web_mobile_commons.__type-24.show_calculated_fieldview.__type-33.__type-34"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">req</span>, <span class="tsd-kind-parameter">res</span>, <span class="tsd-kind-parameter">param2</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
 <li class="tsd-description">
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -399,7 +425,7 @@ needed for tabulator</p>
 
 <div class="tsd-comment tsd-typography"></div></li></ul></li></ul></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/8774e8d/packages/saltcorn-data/web-mobile-commons.ts#L376">saltcorn-data/web-mobile-commons.ts:376</a></li></ul></aside></section></section></div>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/5a94fd9/packages/saltcorn-data/web-mobile-commons.ts#L438">saltcorn-data/web-mobile-commons.ts:438</a></li></ul></aside></section></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
