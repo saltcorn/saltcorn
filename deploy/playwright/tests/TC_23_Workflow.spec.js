@@ -160,26 +160,26 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Action dropdown should have value blocks', async () => {
             // Wait for the dropdown to be visible
             await page.waitForSelector('label[for="inputwf_action_name"]');
-        
+
             // Click the "Action" label to focus the dropdown
             await page.click('label[for="inputwf_action_name"]');
-        
+
             // Click the dropdown to open it
             await page.click('select#inputwf_action_name');
-        
+
             // Scroll to the bottom of the dropdown (ensures "Output" is visible)
             await page.evaluate(() => {
                 const dropdown = document.querySelector('select#inputwf_action_name');
                 dropdown.scrollTop = dropdown.scrollHeight;
             });
-        
+
             // Select "Output" option from the dropdown
             await page.selectOption('select#inputwf_action_name', { value: 'UserForm' });
-        
+
             // Optional: Wait to confirm selection
             await page.waitForTimeout(1000);
         });
-        
+
         // Fill 'Label' field with 'what is your name'
         await page.fill('input[data-fieldname="label"]', 'what is your name');
 
@@ -203,7 +203,7 @@ test.describe('E2E Test Suite', () => {
         // const plusIcon = page.locator('i.fas.fa-plus.with-link');
         // await plusIcon.click();
 
-         await functions.submit();
+        await functions.submit();
 
         await customAssert('Add next step 4', async () => {
             await page.waitForLoadState('networkidle');
@@ -211,30 +211,30 @@ test.describe('E2E Test Suite', () => {
             await addButton.waitFor({ state: 'visible' });
             await addButton.click();
         });
-        
+
         await customAssert('Action dropdown should have value blocks', async () => {
             // Wait for the dropdown to be visible
             await page.waitForSelector('label[for="inputwf_action_name"]');
-        
+
             // Click the "Action" label to focus the dropdown
             await page.click('label[for="inputwf_action_name"]');
-        
+
             // Click the dropdown to open it
             await page.click('select#inputwf_action_name');
-        
+
             // Scroll to the bottom of the dropdown (ensures "Output" is visible)
             await page.evaluate(() => {
                 const dropdown = document.querySelector('select#inputwf_action_name');
                 dropdown.scrollTop = dropdown.scrollHeight;
             });
-        
+
             // Select "Output" option from the dropdown
             await page.selectOption('select#inputwf_action_name', { value: 'Output' });
-        
+
             // Optional: Wait to confirm selection
             await page.waitForTimeout(1000);
         });
-        
+
         await customAssert("fill Outbox value", async () => {
             await page.locator("#inputoutput_text").fill("###Greetings!\n\nHello {{ name }}");
         });
@@ -266,12 +266,50 @@ test.describe('E2E Test Suite', () => {
         });
 
         await page.click('.btn.btn-primary');
+
+    });
+
+    test('Verify workflow through view', async () => {
+        await functions.views();
+        // click on create new view
+        await page.click(pageobject.createnewview);
+
+        // input view name and discription
+        await page.fill(pageobject.InputName, 'WorkFlowRoom');
+        await page.fill(pageobject.discriptiontext, 'Verify workflow through view');
+
+        // validate the view pattern in table dropdown
+        await customAssert('Select work flow Pattern', async () => {
+            // select list pattern
+            const WorkflowPattern = await page.$("#inputviewtemplate");
+            await WorkflowPattern?.selectOption("WorkflowRoom");
+        });
+
+        await functions.submit();
+        await page.waitForTimeout(2000);
+
+        await customAssert('check previous run checkbox is clickable', async () => { 
+            const prevRunCheckbox = page.locator("#inputprev_runs");
+            await prevRunCheckbox.click();
+        });
         
+        await functions.submit();
+        await page.waitForTimeout(2000);
+
+        await page.locator("table.table-sm td").nth(0).click();
+        await page.waitForTimeout(5000);
 
 
-        
-        
-    
+        await customAssert('Page URL should be /actions', async () => {
+            expect(page.url()).toBe(`${baseURL}${derivedURL}view/WorkFlowRoom`);
+        });
+        await functions.fill_Text(pageobject.InputName, 'James smith');
+        await page.waitForTimeout(2000);
+
+        // await functions.submit();
+        await page.waitForLoadState('networkidle');
+        await page.click('.btn.btn-primary')
+
     });
 
 });

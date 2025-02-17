@@ -117,8 +117,11 @@ test.describe('E2E Test Suite', () => {
       const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
 
      // const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
-      await emailEditLocator.hover(); // Hover over the email to make the edit icon appear
+     console.log("Focusing on the email edit field...");
+     await emailEditLocator.focus();
+     console.log("Focus applied successfully!"); // Hover over the email to make the edit icon appear
       const editIconLocator = emailEditLocator.locator('.editicon');
+
 
       // Assertion to check if edit icon is visible
       await expect(editIconLocator).toBeVisible();
