@@ -649,7 +649,37 @@ class PageLocators {
     this.dragElement1 = 'div.d-inline-flex.wrap-builder-elem >> div.inner > i.fas.fa-address-card';
     this.testPage4 = 'li.breadcrumb-item.fw-bold[aria-current="page"] a';
     this.pageNameSave3 = 'table.table >> tbody >> tr >> td:nth-child(3) >> a';
+    this.actionButton = 'button.btn.btn-primary.selected-node';
+    this.ClickToEditCheckBox = 'input[type="checkbox"][name="inline"]'
+    this.editedUserName = 'table tbody td div input'
+    this.submitEditedName = 'button[type="submit"].btn.btn-sm.btn-primary'
+    this.viewSetting = "role=button[name='View settings']";
+    this.inputdefaultrenderpage = '#inputdefault_render_page';
+    this.mycardDrag = 'div.toolbar-row > div.d-inline-flex.wrap-builder-elem[draggable="true"]';
+    this.mypage = "input[data-fieldname='page_title']";
+    this.viewName = 'table.table >> tbody >> tr >> td:nth-child(1) >> a';
+    this.createview = 'h5:has-text("Create view")';
+    this.addstep = 'a.btn.btn-secondary';
+    this.ctxvalues='#inputctx_values';
+    this.newstep= '.nodeLabel .fa-plus';
+    this.actionname='label[for="inputwf_action_name"]';
+    this.selectactionname='select#inputwf_action_name';
+    this.userformlabel='input[data-fieldname="label"]';
+    this.userformvarname='input[data-fieldname="var_name"]';
+    this.userformqtype='select[data-fieldname="qtype"]';
+    this.ViewActionLabel ='label[for="inputaction"]';
+    this.ViewSelectinput= 'select#inputaction';
+    this.NodesBetweenClass='.edgeLabel .label .edgeLabel .add-btw-nodes';
 
+    this.InputOutput = '#inputoutput_text';
+    this.inputmarkdown = '#inputmarkdown';
+    this.hrefTestrun = 'a[href^="/actions/testrun/"]';
+    this.inputnameLable = 'label[for="inputname"]';
+    this.buttonPrimary = 'button.btn.btn-primary';
+    this.btnButtonPrimary = '.btn.btn-primary';
+    this.modalHeader = '.modal-header .modal-title';
+    this.inputPrevRuns = '#inputprev_runs';
+    this.tableSMTD = 'table.table-sm td';
   }
 }
 
