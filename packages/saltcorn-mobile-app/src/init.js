@@ -1,4 +1,4 @@
-/*global saltcorn, Capacitor */
+/*global saltcorn, Capacitor, cordova */
 
 import {
   startOfflineMode,
