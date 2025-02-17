@@ -904,7 +904,10 @@ const run = async (
   await set_join_fieldviews({ table, columns, fields });
 
   readState(stateWithId, fields, extraOpts.req);
-  const { id, ...state } = stateWithId || {};
+  const id = stateWithId.id;
+  let state = { ...stateWithId };
+  if (extraOpts?.removeIdFromstate) delete state.id;
+  
   const statehash = hashState(state, viewname);
 
   const { rows, rowCount } = await listQuery(state, statehash);
