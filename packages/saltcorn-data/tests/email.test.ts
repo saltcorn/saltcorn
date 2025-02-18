@@ -192,7 +192,7 @@ describe("MJML Mail Transformations", () => {
                   type: "view_link",
                   view: "Own:authorshow",
                   minRole: 100,
-                  in_modal: true,
+                  in_modal: false,
                   view_label: "foo it",
                 },
                 isFormula: {},
@@ -229,6 +229,7 @@ describe("MJML Mail Transformations", () => {
         },
       ],
     });
+    getState().setConfig("base_url", "https://example.com")
     const html = await email.viewToEmailHtml(v, { id: 1 });
     //writeFileSync("emailout2", html);
     expect(trimLines(html)).toBe(
@@ -245,7 +246,7 @@ describe("MJML Mail Transformations", () => {
     <style type="text/css">
       .mj-outlook-group-fix { width:100% !important; }
     </style>
-    <![endif]--><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"></head><body style="word-spacing:normal"> <div lang="und" dir="auto"> <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]--> <div style="margin:0 auto;max-width:600px"> <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%"> <tbody> <tr> <td style="direction:ltr;font-size:0;padding:0;text-align:center"> <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><![endif]--> <div style="font-size:16px;text-align:left!important"><table width="100%"><tr><td width="50%"><div class="card mt-4 shadow"><div class="card-body"><a href="javascript:ajax_modal('/view/authorshow?id=1', {'reload_view': 'emailview1'})">foo it</a></div></div></td><td width="50%"><div style="background-color:#a9a7a7;border:1px solid #000;min-height:100px"><a href="https://countto.com/967">Herman Melville</a></div></td></tr></table></div> <!--[if mso | IE]></tr></table><![endif]--> </td> </tr> </tbody> </table> </div> <!--[if mso | IE]></td></tr></table><![endif]--> </div> </body></html>`)
+    <![endif]--><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"></head><body style="word-spacing:normal"> <div lang="und" dir="auto"> <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]--> <div style="margin:0 auto;max-width:600px"> <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%"> <tbody> <tr> <td style="direction:ltr;font-size:0;padding:0;text-align:center"> <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><![endif]--> <div style="font-size:16px;text-align:left!important"><table width="100%"><tr><td width="50%"><div class="card mt-4 shadow"><div class="card-body"><a href="https://example.com/view/authorshow?id=1">foo it</a></div></div></td><td width="50%"><div style="background-color:#a9a7a7;border:1px solid #000;min-height:100px"><a href="https://countto.com/967">Herman Melville</a></div></td></tr></table></div> <!--[if mso | IE]></tr></table><![endif]--> </td> </tr> </tbody> </table> </div> <!--[if mso | IE]></td></tr></table><![endif]--> </div> </body></html>`)
     );
   });
 });
