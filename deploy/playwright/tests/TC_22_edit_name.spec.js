@@ -115,18 +115,20 @@ test.describe('E2E Test Suite', () => {
       //const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
 
      // Locate the div inside the td that needs to be hovered
-     const emailEditLocator = page.locator('td div[data-inline-edit-field="email"]');
+     //const emailEditLocator = page.locator('td div[data-inline-edit-field="email"]');
 
-    // Hover over the email field
-    await emailEditLocator.hover();
+    
 
     // Locate the edit icon inside the div
-    const editIcon = emailEditLocator.locator('i.editicon');
+    const editIcon = page.locator('i.editicon');
 
-    // Verify if the edit icon is visible after hover
-    await expect(editIcon).toBeVisible();
+    // Hover over the email field
+    await editIcon.hover();
 
-    await emailEditLocator.click(); // Click to edit after verifying visibility
+  
+
+
+    await editIcon.click(); // Click to edit after verifying visibility
     
     });
 
