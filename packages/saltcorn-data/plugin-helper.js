@@ -136,6 +136,7 @@ const link_view = (
         href: url,
         title: link_title,
         btnStyle: link_style,
+        style,
       },
       label
     );

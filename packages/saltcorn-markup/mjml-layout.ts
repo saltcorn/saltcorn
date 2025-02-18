@@ -257,7 +257,10 @@ const render = ({
           segment,
           isTop,
           ix,
-          mjml.emailButton({ href: segment.url }, segment.text)
+          mjml.emailButton(
+            { href: segment.url, btnStyle: segment.link_style, style },
+            segment.text
+          )
         );
       }
 
