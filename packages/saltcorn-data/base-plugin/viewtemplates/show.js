@@ -700,6 +700,17 @@ const render = (
     link(segment) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "text");
+      if (
+        req.generate_email &&
+        req.get_base_url &&
+        segment.url.startsWith("/")
+      ) {
+        const targetPrefix = req.get_base_url();
+        const safePrefix = (targetPrefix || "").endsWith("/")
+          ? targetPrefix.substring(0, targetPrefix.length - 1)
+          : targetPrefix || "";
+        segment.url = safePrefix + segment.url;
+      }
     },
     view_link(segment) {
       evalMaybeExpr(segment, "view_label", "label");
@@ -943,8 +954,8 @@ const render = (
           stat === "Percent true" || stat === "Percent false"
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
-            ? "Integer"
-            : aggField.type?.name;
+              ? "Integer"
+              : aggField.type?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[column.agg_fieldview]) {
           const readval = type.read(val);
