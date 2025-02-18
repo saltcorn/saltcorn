@@ -37,10 +37,11 @@ const emailButton = (
   label: string
 ) => {
   const rawType = (btnStyle || "").replace("btn ", "");
-  //console.log({ href, btnStyle, rawType, label, style });
-  //TODO btn-outline-* types
-  let bgColor = `#6c757d`;
+  let bgColor = (btnStyle || "").includes("outline")
+    ? "transparent"
+    : `#6c757d`;
   let color = `#ffffff`;
+  let borderColor = null;
   switch (rawType) {
     case "btn-primary":
       bgColor = `#0d6efd`;
@@ -60,13 +61,27 @@ const emailButton = (
     case "btn-info":
       bgColor = `#0dcaf0`;
       break;
-    case "btn-custom-color":
+    case "btn-outline-primary":
+      color = borderColor = `#0d6efd`;
       break;
-
-    default:
+    case "btn-outline-secondary":
+      color = borderColor = `#6c757d`;
+      break;
+    case "btn-outline-success":
+      color = borderColor = `#198754`;
+      break;
+    case "btn-outline-danger":
+      color = borderColor = `#dc3545`;
+      break;
+    case "btn-outline-warning":
+      color = borderColor = `#ffc107`;
+      break;
+    case "btn-outline-info":
+      color = borderColor = `#0dcaf0`;
       break;
   }
-  return `<a rel="noopener" target="_blank" ${title ? `title="${title}" ` : ""}href="${href}" style="${style && style.includes("color") ? `${style};border-width:1px; border-style: solid;` : `background-color: ${bgColor}; color: ${color};`} font-size: 18px; font-family: Helvetica, Arial, sans-serif; font-weight: bold; text-decoration: none; padding: 14px 20px; border-radius: 5px; display: inline-block; mso-padding-alt: 0;">
+//  console.log({ href, btnStyle, rawType, label, style, borderColor, color });
+  return `<a rel="noopener" target="_blank" ${title ? `title="${title}" ` : ""}href="${href}" style="${style && style.includes("color") ? `${style};border-width:1px; border-style: solid;` : `background-color: ${bgColor}; color: ${color};`} ${borderColor ? `border-color: ${borderColor};border-width:1px; border-style: solid;` : ""} font-size: 18px; font-family: Helvetica, Arial, sans-serif; font-weight: bold; text-decoration: none; padding: 14px 20px; border-radius: 5px; display: inline-block; mso-padding-alt: 0;">
     <!--[if mso]>
     <i style="letter-spacing: 25px; mso-font-width: -100%; mso-text-raise: 30pt;">&nbsp;</i>
     <![endif]-->
