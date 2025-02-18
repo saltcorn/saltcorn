@@ -841,7 +841,7 @@ const autoBackupForm = (req) => {
         label: req.__("Backup now"),
         id: "btnBackupNow",
         class: "btn btn-outline-secondary",
-        onclick: "ajax_post('/admin/auto-backup-now')",
+        onclick: "ajax_post('/admin/auto-backup-now');press_store_button(this);",
       },
     ],
     fields: [
