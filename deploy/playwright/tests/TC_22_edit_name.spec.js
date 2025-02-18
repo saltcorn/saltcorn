@@ -112,20 +112,22 @@ test.describe('E2E Test Suite', () => {
     });
 
     await customAssert('Click on the email to edit and check edit icon visibility', async () => {
-      const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
+      //const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
 
-     // const emailEditLocator = page.locator('table tbody td div:has-text("myproject19july@mailinator.com")');
-     
+     // Locate the div inside the td that needs to be hovered
+     const emailEditLocator = page.locator('td div[data-inline-edit-field="email"]');
 
-     console.log("Focusing on the email edit field...");
-     await emailEditLocator.focus();
-     console.log("Focus applied successfully!"); 
-      const editIconLocator = emailEditLocator.locator('.editicon');
+    // Hover over the email field
+    await emailEditLocator.hover();
 
+    // Locate the edit icon inside the div
+    const editIcon = emailEditLocator.locator('i.editicon');
 
-      // Assertion to check if edit icon is visible
-      await expect(editIconLocator).toBeVisible();
-      await emailEditLocator.click(); // Click to edit after verifying visibility
+    // Verify if the edit icon is visible after hover
+    await expect(editIcon).toBeVisible();
+
+    await emailEditLocator.click(); // Click to edit after verifying visibility
+    
     });
 
     await customAssert('Click on the edit icon and verify OK and Cancel button visibility', async () => {
