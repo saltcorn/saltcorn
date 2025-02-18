@@ -1,4 +1,4 @@
-const baseURL = 'https://e2etest.saltcorn.co';
+const baseURL = "http://localhost:3014";
 //const baseURL = 'https://sumittestfeb07.saltcorn.com'
 const derivedURL = '/';
 const addemployee = '/view/Edit_Employee';
