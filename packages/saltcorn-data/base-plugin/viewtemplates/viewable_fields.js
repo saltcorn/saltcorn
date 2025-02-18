@@ -63,7 +63,7 @@ const action_url = (
   confirm,
   colIndex
 ) => {
-  const pk_name = table.pk_name
+  const pk_name = table.pk_name;
   if (action_name === "Delete")
     return `/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack")
@@ -374,6 +374,9 @@ const view_linker = (
   srcViewName,
   label_attr //for sorting
 ) => {
+  const safePrefix = (targetPrefix || "").endsWith("/")
+    ? targetPrefix.substring(0, targetPrefix.length - 1)
+    : targetPrefix || "";
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
     if (!view_label_formula) return view_label;
@@ -396,7 +399,7 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
-  
+
   if (relation) {
     const topview = View.findOne({ name: srcViewName });
     const srcTable = Table.findOne({ id: topview.table_id });
@@ -424,7 +427,7 @@ const view_linker = (
             );
           } else label = get_label(view, r);
 
-          const target = `/view/${encodeURIComponent(view)}${query}`;
+          const target = `${safePrefix}/view/${encodeURIComponent(view)}${query}`;
           return link_view(
             isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             label,
@@ -457,9 +460,6 @@ const view_linker = (
         return {
           label: vnm,
           key: (r) => {
-            const safePrefix = targetPrefix.endsWith("/")
-              ? targetPrefix.substring(0, targetPrefix.length - 1)
-              : targetPrefix;
             const target = `${safePrefix}/view/${encodeURIComponent(
               vnm
             )}${get_query(r)}`;
@@ -488,7 +488,7 @@ const view_linker = (
         return {
           label: ivnm,
           key: (r) => {
-            const target = `/view/${encodeURIComponent(ivnm)}`;
+            const target = `${safePrefix}/view/${encodeURIComponent(ivnm)}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(ivnm, r),
@@ -516,7 +516,7 @@ const view_linker = (
         return {
           label: viewnm,
           key: (r) => {
-            const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
+            const target = `${safePrefix}/view/${encodeURIComponent(viewnm)}?${varPath}=${
               r.id
             }`;
             return link_view(
@@ -548,7 +548,7 @@ const view_linker = (
             const reffield = fields.find((f) => f.name === pfld);
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             if (r[pfld]) {
-              const target = `/view/${encodeURIComponent(pviewnm)}?${
+              const target = `${safePrefix}/view/${encodeURIComponent(pviewnm)}?${
                 reffield.refname
               }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
               return link_view(
@@ -1077,8 +1077,8 @@ const get_viewable_fields = (
             column.stat === "Percent true" || column.stat === "Percent false"
               ? "Float"
               : column.stat === "Count" || column.stat === "CountUnique"
-              ? "Integer"
-              : aggField?.type?.name;
+                ? "Integer"
+                : aggField?.type?.name;
           const type = getState().types[outcomeType];
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>
@@ -1159,19 +1159,19 @@ const get_viewable_fields = (
                       { row, ...column, ...(column?.configuration || {}) }
                     )
                 : column.fieldview &&
-                  f.type.fieldviews &&
-                  f.type.fieldviews[column.fieldview]
-                ? (row) =>
-                    f.type.fieldviews[column.fieldview].run(
-                      row[f_with_val.name],
-                      req,
-                      { row, ...f.attributes, ...column.configuration }
-                    )
-                : isShow
-                ? f.type.showAs
-                  ? (row) => f.type.showAs(row[f_with_val.name])
-                  : (row) => text(row[f_with_val.name])
-                : f.listKey,
+                    f.type.fieldviews &&
+                    f.type.fieldviews[column.fieldview]
+                  ? (row) =>
+                      f.type.fieldviews[column.fieldview].run(
+                        row[f_with_val.name],
+                        req,
+                        { row, ...f.attributes, ...column.configuration }
+                      )
+                  : isShow
+                    ? f.type.showAs
+                      ? (row) => f.type.showAs(row[f_with_val.name])
+                      : (row) => text(row[f_with_val.name])
+                    : f.listKey,
             sortlink:
               !f.calculated || f.stored
                 ? sortlinkForName(f.name, req, viewname, statehash)
@@ -1267,8 +1267,8 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
     typeof _sortdesc == "undefined"
       ? _sortby === fname
       : _sortdesc
-      ? "false"
-      : "true";
+        ? "false"
+        : "true";
   return `sortby('${text(fname)}', ${desc}, '${statehash}', this)`;
 };
 
@@ -1290,8 +1290,8 @@ const headerLabelForName = (label, fname, req, __, statehash) => {
     _sortby !== fname
       ? ""
       : _sortdesc
-      ? i({ class: "fas fa-caret-down" })
-      : i({ class: "fas fa-caret-up" });
+        ? i({ class: "fas fa-caret-down" })
+        : i({ class: "fas fa-caret-up" });
   return label + arrow;
 };
 
