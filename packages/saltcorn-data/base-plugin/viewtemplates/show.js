@@ -701,7 +701,7 @@ const render = (
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "text");
       if (
-        req.generate_email &&
+        req?.generate_email &&
         req.get_base_url &&
         segment.url.startsWith("/")
       ) {
