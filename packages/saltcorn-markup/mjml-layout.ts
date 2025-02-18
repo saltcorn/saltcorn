@@ -149,8 +149,8 @@ const applyTextStyle = (segment: any, inner: string): string => {
   return isBlock(segment)
     ? div({ style: _style }, inner)
     : segment.textStyle || hasStyle
-    ? span({ style: _style }, inner)
-    : inner;
+      ? span({ style: _style }, inner)
+      : inner;
 };
 
 // declaration merging
@@ -252,6 +252,15 @@ const render = ({
               segment.link_textcol || "#000000"
             }`
           : null;
+      if ((segment.link_style || "").includes("btn")) {
+        return wrap(
+          segment,
+          isTop,
+          ix,
+          mjml.emailButton({ href: segment.url }, segment.text)
+        );
+      }
+
       return wrap(
         segment,
         isTop,
