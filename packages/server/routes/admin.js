@@ -387,6 +387,7 @@ router.get(
                     req.csrfToken(),
                     {
                       btnClass: "btn-outline-primary",
+                      spinner: true,
                     }
                   )
                 ),
