@@ -246,7 +246,6 @@ class PageFunctions {
 
   async clear_All() {
     await this.page.click(this.locators.clearAllButton);
-    await this.page.waitForTimeout(2500); // Wait for navigation to complete
     await this.page.click('#inputusers');
     await this.page.waitForSelector(this.locators.submitButton);
     await this.page.click(this.locators.submitButton);
@@ -273,7 +272,12 @@ class PageFunctions {
   await this.page.waitForSelector(this.locators.view_Click);
   await this.page.click(this.locators.view_Click); 
   }
-    
+  
+  async view_page(){
+    await this.page.waitForSelector(this.locators.pageclick,{timeout:30000});
+    await this.page.click(this.locators.pageclick);
+  }
+
   async SALTCORN() {
     await this.page.waitForSelector(this.locators.SaltCornButton);
     await this.page.click(this.locators.SaltCornButton);
@@ -529,6 +533,37 @@ class PageFunctions {
     });
   }
 
+  async installModules() {
+    // Step 1: Navigate to Settings and Module
+    await this.navigate_To_Settings();
+    await this.navigate_To_module();
+  
+    // Step 2: Install JSON Module
+    await this.fill_Text(this.locators.SearchModule, 'json');
+    await customAssert('JSON module should be visible', async () => {
+      await expect(this.page.locator(this.locators.json)).toBeVisible();
+    });
+    await this.page.click(this.locators.installjson);
+    await customAssert('Success message for JSON should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  
+    // Step 3: Install Tabulator Module
+    await this.fill_Text(this.locators.SearchModule, 'tabulator');
+    await customAssert('Tabulator module should be visible', async () => {
+      await expect(this.page.locator(this.locators.tabulator)).toBeVisible();
+    });
+    await this.page.click('button#button-search-submit'); // Ensure clicking to search
+    await this.page.click(this.locators.installtabulator);
+    await customAssert('Success message for Tabulator should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  }
+  
+  
+
   async navigateSettingsTabs(page, pageobject) {
     // Click on settings dropdown
     const settingsDropdown = page.locator(pageobject.settingsDropdown);
@@ -539,17 +574,16 @@ class PageFunctions {
     await aboutApplicationLink2.click();
   
     // Click on the "Mobile App" link
-    const mobileAppLink = page.locator(pageobject.mobileAppLink);
-    await mobileAppLink.click();
-   
+    const systemtablink = page.locator(pageobject.systemtablink);
+    await systemtablink.click();
   }
    async navi_Setting_Dropdown_Clear(page, pageobject)   {
-    
      await this.page.click('#inputusers');
      await this.page.waitForSelector(this.locators.submitButton);
      await this.page.click(this.locators.submitButton);
 
    }
+
 
   async assertMobileAppTabElements(page, pageobject) {
     // Assert the view link is visible
@@ -642,7 +676,55 @@ await this.page.on('dialog', async dialog => {
         }
     }, locator);
 }
+async createBlog(){
+  await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    await this.navigate_To_All_modules();
+     // Step 2: Install Blog Module
+     await this.fill_Text(this.locators.SearchModule, 'Blog');
+     await customAssert('BLOG module should be visible', async () => {
+       await expect(this.page.locator(this.locators.Blog)).toBeVisible();
+     });
+     await this.page.click(this.locators.installBlog);
+     await customAssert('Success message for Blog should be visible', async () => {
+       await this.page.waitForSelector(this.locators.successmessage);
+       await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+     });
+}
+async  Address_book(){
+  await this.navigate_To_Settings();
+  // Navigate to Module
+  await this.navigate_To_module();
+ await this.navigate_To_All_modules();
+ 
+   // Step 2: Install Address book Module
+   await this.fill_Text(this.locators.SearchModule, 'Address book');
+   await customAssert('Address Book module should be visible', async () => {
+     await expect(this.page.locator(this.locators.Addressbook)).toBeVisible();
+   });
+   await this.page.click(this.locators.installAddressbook);
+   await customAssert('Success message for Address Book should be visible', async () => {
+     await this.page.waitForSelector(this.locators.successmessage);
+     await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+   });
+}
 
+async  Saltcorn_Store(){
+  await this.navigate_To_Settings();
+  // Navigate to Module
+  await this.navigate_To_module();
+ // Step 2: Install Address book Module
+ await this.fill_Text(this.locators.SearchModule, 'Saltcorn store');
+ await customAssert('Saltcorn store module should be visible', async () => {
+   await expect(this.page.locator(this.locators.SaltcornStore)).toBeVisible();
+ });
+ await this.page.click(this.locators.installSaltcornStore);
+ await customAssert('Success message for Saltcorn store should be visible', async () => {
+   await this.page.waitForSelector(this.locators.successmessage);
+   await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+ });
+}
 }
 
 module.exports = PageFunctions;
