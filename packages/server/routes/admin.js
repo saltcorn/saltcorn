@@ -236,6 +236,7 @@ admin_config_route({
               id: "testemail",
               href: "/admin/send-test-email",
               class: "btn btn-primary",
+              onclick: "spin_action_link(this)",
             },
             req.__("Send test email")
           ),
@@ -262,12 +263,14 @@ router.get(
       html: req.__("Hello from Saltcorn"),
     };
     try {
-      await getMailTransport().sendMail(email);
+      const sendres = await getMailTransport().sendMail(email);
+      getState().log(6, sendres);
       req.flash(
         "success",
         req.__("Email sent to %s with no errors", req.user.email)
       );
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
 
@@ -384,6 +387,7 @@ router.get(
                     req.csrfToken(),
                     {
                       btnClass: "btn-outline-primary",
+                      spinner: true,
                     }
                   )
                 ),
@@ -837,7 +841,7 @@ const autoBackupForm = (req) => {
         label: req.__("Backup now"),
         id: "btnBackupNow",
         class: "btn btn-outline-secondary",
-        onclick: "ajax_post('/admin/auto-backup-now')",
+        onclick: "ajax_post('/admin/auto-backup-now');press_store_button(this);",
       },
     ],
     fields: [

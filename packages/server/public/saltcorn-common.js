@@ -318,11 +318,11 @@ function apply_showif() {
         a.label === dynwhere.neutral_label
           ? -1
           : b.label === dynwhere.neutral_label
-          ? 1
-          : (a.label?.toLowerCase?.() || a.label) >
-            (b.label?.toLowerCase?.() || b.label)
-          ? 1
-          : -1
+            ? 1
+            : (a.label?.toLowerCase?.() || a.label) >
+                (b.label?.toLowerCase?.() || b.label)
+              ? 1
+              : -1
       );
       if (!dynwhere.required)
         toAppend.unshift({ label: dynwhere.neutral_label || "", value: "" });
@@ -1120,8 +1120,8 @@ function initialize_page() {
           type === "Integer" || type === "Float"
             ? "number"
             : type === "Bool"
-            ? "checkbox"
-            : "text"
+              ? "checkbox"
+              : "text"
         }" ${
           type === "Float"
             ? `step="${
@@ -1490,10 +1490,10 @@ function buildToast(txt, type, spin) {
     realtype === "success"
       ? "fa-check-circle"
       : realtype === "danger"
-      ? "fa-times-circle"
-      : realtype === "warning"
-      ? "fa-exclamation-triangle"
-      : "";
+        ? "fa-times-circle"
+        : realtype === "warning"
+          ? "fa-exclamation-triangle"
+          : "";
   const isNode = getIsNode();
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   return {
@@ -1587,7 +1587,11 @@ function press_store_button(clicked, keepOld, disable) {
     $(btn).data("old-text", oldText);
   }
   const width = $(btn).width();
-  $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+  const height = $(btn).height();
+  $(btn)
+    .html('<i class="fas fa-spinner fa-spin"></i>')
+    .width(width)
+    .height(height);
   setTimeout(() => {
     $(btn).prop("disabled", true);
   }, 50);
@@ -1597,7 +1601,7 @@ function restore_old_button(btnId) {
   const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
   btn.html(oldText);
-  btn.css({ width: "" }).prop("disabled", false);
+  btn.css({ width: "", height: "" }).prop("disabled", false);
   btn.removeData("old-text");
 }
 

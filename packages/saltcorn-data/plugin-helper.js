@@ -12,6 +12,7 @@ const Tag = require("./models/tag");
 const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
+const mjml = require("@saltcorn/markup/mjml-tags");
 const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 const {
   Relation,
@@ -73,7 +74,8 @@ const link_view = (
   link_target_blank,
   label_attr, // for sorting
   link_title,
-  link_class
+  link_class,
+  req
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -128,6 +130,16 @@ const link_view = (
         },
         show_icon_and_label(link_icon, label)
       );
+  } else if (req?.generate_email && (link_style || "").includes("btn")) {
+    return mjml.emailButton(
+      {
+        href: url,
+        title: link_title,
+        btnStyle: link_style,
+        style,
+      },
+      label
+    );
   } else
     return a(
       {
