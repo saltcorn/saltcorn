@@ -115,12 +115,12 @@ test.describe('E2E Test Suite', () => {
       //const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
 
      // Locate the div inside the td that needs to be hovered
-     //const emailEditLocator = page.locator('td div[data-inline-edit-field="email"]');
+     const emailEditLocator = page.locator('div.d-inline:has-text("email")');
 
-    
+     
 
     // Locate the edit icon inside the div
-    const editIcon = page.locator('i.editicon');
+    const editIcon = emailEditLocator.locator('i.editicon');
 
     // Hover over the email field
     await editIcon.hover();
