@@ -236,6 +236,7 @@ admin_config_route({
               id: "testemail",
               href: "/admin/send-test-email",
               class: "btn btn-primary",
+              onclick: "spin_action_link(this)",
             },
             req.__("Send test email")
           ),
