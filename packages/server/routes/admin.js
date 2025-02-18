@@ -262,12 +262,14 @@ router.get(
       html: req.__("Hello from Saltcorn"),
     };
     try {
-      await getMailTransport().sendMail(email);
+      const sendres = await getMailTransport().sendMail(email);
+      getState().log(6, sendres);
       req.flash(
         "success",
         req.__("Email sent to %s with no errors", req.user.email)
       );
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
 
