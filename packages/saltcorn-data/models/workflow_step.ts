@@ -501,6 +501,17 @@ class WorkflowStep {
       showIf: { wf_action_name: "APIResponse" },
     });
     actionConfigFields.push({
+      label: "Return value",
+      name: "return_value",
+      sublabel: "JavaScript expression for the return value",
+      type: "String",
+      fieldview: "textarea",
+      class: "validate-expression",
+      default: "{}",
+      showIf: { wf_action_name: "TerminateWorkflow" },
+    });
+
+    actionConfigFields.push({
       label: "Output text",
       name: "output_text",
       sublabel:

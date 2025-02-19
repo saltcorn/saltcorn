@@ -89,7 +89,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
     return {};
   });
   const options = useContext(optionsCtx);
-  const doSave = (query) => {
+  const doSave = (query, keepalive) => {
     if (!query.serialize) return;
 
     const data = craftToSaltcorn(
@@ -110,7 +110,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
 
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
-      keepalive: true,
+      keepalive,//this is conditional bec body size is limited to 64KB
       headers: {
         "Content-Type": "application/json",
         "CSRF-Token": options.csrfToken,
@@ -144,7 +144,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
       });
   };
   useEffect(() => {
-    window.addEventListener("beforeunload", () => doSave(query));
+    window.addEventListener("beforeunload", () => doSave(query, true));
     window.addEventListener("blur", () => doSave(query));
     window.addEventListener("pagehide", () => doSave(query));
   }, []);

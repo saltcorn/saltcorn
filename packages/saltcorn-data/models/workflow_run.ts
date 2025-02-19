@@ -434,12 +434,23 @@ class WorkflowRun {
 
           return resp;
         }
-        if (step.action_name === "Stop" ||step.action_name === "TerminateWorkflow" ) {
+        if (
+          step.action_name === "Stop" ||
+          step.action_name === "TerminateWorkflow"
+        ) {
+          const resp = step.configuration.return_value
+            ? eval_expression(
+                step.configuration.return_value,
+                this.context,
+                user,
+                `Return value expression in step ${step.name}`
+              )
+            : {};
           await this.update({
             status: "Finished",
           });
 
-          return {};
+          return resp;
         }
 
         if (
@@ -575,9 +586,12 @@ class WorkflowRun {
               });
             };
             if (trace) this.createTrace(step.name, user);
-            setTimeout(() => {
-              runNow().catch((e) => console.error("Workflow bg error", e));
-            }, (step.configuration.wait_delay || 0) * 1000);
+            setTimeout(
+              () => {
+                runNow().catch((e) => console.error("Workflow bg error", e));
+              },
+              (step.configuration.wait_delay || 0) * 1000
+            );
             break;
           }
           state.waitingWorkflows = true;
