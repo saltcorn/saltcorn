@@ -800,7 +800,9 @@ router.get(
     let fieldCard;
     const primaryKeys = fields.filter((f) => f.primary_key);
     const nPrimaryKeys = primaryKeys.length;
-    const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
+    const nonSerialPKS = primaryKeys.some(
+      (f) => f.attributes?.NonSerial && f.type?.name === "Integer"
+    );
 
     if (fields.length === 0) {
       fieldCard = [
