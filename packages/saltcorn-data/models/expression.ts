@@ -786,14 +786,15 @@ const recalculate_for_stored = async (
   let maxid = null;
   let limit = 20;
   const { getState } = require("../db/state");
+  const pk_name = table.pk_name
   const go = async (rows: any) => {
     for (const row of rows) {
       try {
         getState().log(
           6,
-          `recalculate_for_stored on table ${table.name} row ${row.id}`
+          `recalculate_for_stored on table ${table.name} row ${row[pk_name]}`
         );
-        await table.updateRow({}, row.id, undefined, true);
+        await table.updateRow({}, row[pk_name], undefined, true);
       } catch (e: any) {
         console.error(e);
       }
@@ -804,12 +805,15 @@ const recalculate_for_stored = async (
     await go(rows);
   } else {
     do {
-      rows = await table.getRows(maxid !== null ? { id: { gt: maxid } } : {}, {
-        orderBy: "id",
-        limit: limit,
-      });
+      rows = await table.getRows(
+        maxid !== null ? { [pk_name]: { gt: maxid } } : {},
+        {
+          orderBy: pk_name,
+          limit: limit,
+        }
+      );
       await go(rows);
-      if (rows.length > 0) maxid = rows[rows.length - 1].id;
+      if (rows.length > 0) maxid = rows[rows.length - 1][pk_name];
     } while (rows.length === limit);
   }
 };
