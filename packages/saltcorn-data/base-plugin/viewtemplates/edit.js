@@ -111,7 +111,9 @@ const configuration_workflow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields().filter((f) => !f.primary_key);
+          const fields = table
+            .getFields()
+            .filter((f) => !f.primary_key || f.attributes?.NonSerial);
           for (const field of fields) {
             if (field.type === "Key") {
               field.reftable = Table.findOne({
