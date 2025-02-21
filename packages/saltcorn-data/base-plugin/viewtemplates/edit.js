@@ -111,7 +111,9 @@ const configuration_workflow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields().filter((f) => !f.primary_key);
+          const fields = table
+            .getFields()
+            .filter((f) => !f.primary_key || f.attributes?.NonSerial);
           for (const field of fields) {
             if (field.type === "Key") {
               field.reftable = Table.findOne({
@@ -1249,11 +1251,24 @@ const runPost = async (
           ins_upd_error = ins_res.error;
         }
       } else {
-        const upd_res = await tryUpdateQuery(row, id);
-        if (upd_res.error) {
-          ins_upd_error = upd_res.error;
+        if (table.getField(table.pk_name).attributes.NonSerial) {
+          const upd_res = await tryInsertOrUpdateImpl(
+            row,
+            id,
+            table,
+            req.user || { role_id: 100 }
+          );
+          if (upd_res.error) {
+            ins_upd_error = upd_res.error;
+          }
+          trigger_return = upd_res.trigger_return;
+        } else {
+          const upd_res = await tryUpdateQuery(row, id);
+          if (upd_res.error) {
+            ins_upd_error = upd_res.error;
+          }
+          trigger_return = upd_res.trigger_return;
         }
-        trigger_return = upd_res.trigger_return;
       }
       if (ins_upd_error) {
         getState().log(
@@ -2082,6 +2097,26 @@ const tryUpdateImpl = async (row, id, table, user) => {
   );
   upd_res.trigger_return = result;
   return upd_res;
+};
+
+const tryInsertOrUpdateImpl = async (row, id, table, user) => {
+  const result = {};
+  const exists = await table.getRow({ [table.pk_name]: id });
+  if (exists) {
+    const upd_res = await table.tryUpdateRow(
+      row,
+      id,
+      user || { role_id: 100 },
+      result
+    );
+    upd_res.trigger_return = result;
+    return upd_res;
+  } else {
+    const result = {};
+    const ins_res = await table.tryInsertRow(row, user, result);
+    ins_res.trigger_return = result;
+    return ins_res;
+  }
 };
 
 module.exports = {
