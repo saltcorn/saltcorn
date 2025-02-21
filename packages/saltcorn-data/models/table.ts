@@ -3900,8 +3900,16 @@ ${rejectDetails}`,
     const primaryKeys = this.fields.filter((f) => f.primary_key);
     const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
     const schemaPrefix = db.getTenantSchemaPrefix();
-
-    if (primaryKeys.length > 1) {
+    if (primaryKeys.length == 0) {
+      await db.query(
+        `alter table ${schemaPrefix}"${this.name}" add column id serial primary key;`
+      );
+      await db.query(
+        `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
+        values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
+        [this.id]
+      );
+    } else if (primaryKeys.length > 1) {
       const { rows } = await db.query(`select constraint_name
 from information_schema.table_constraints
 where table_schema = '${db.getTenantSchema() || "public"}'
