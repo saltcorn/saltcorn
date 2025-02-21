@@ -3944,6 +3944,7 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       delete attrs.NonSerial;
       await pk.update({ attributes: attrs });
     }
+    await require("../db/state").getState().refresh_tables();
   }
 
   async move_include_fts_to_search_context() {
