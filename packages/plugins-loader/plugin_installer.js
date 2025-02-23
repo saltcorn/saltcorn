@@ -46,11 +46,12 @@ const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
   );
 };
 
+const defaultRootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
+
 class PluginInstaller {
   constructor(plugin, opts = Object.create(null)) {
     this.plugin = plugin;
-    this.rootFolder =
-      opts.rootFolder || envPaths("saltcorn", { suffix: "plugins" }).data;
+    this.rootFolder = opts.rootFolder || defaultRootFolder;
     this.tempRootFolder =
       opts.tempRootFolder || envPaths("saltcorn", { suffix: "tmp" }).temp;
     const tokens =
@@ -68,6 +69,11 @@ class PluginInstaller {
     this.tempPckJsonPath = join(this.tempDir, "package.json");
     this.scVersion = opts.scVersion;
     this.envVars = opts.envVars || {};
+  }
+
+  static async cleanPluginsDirectory(opts = Object.create(null)) {
+    const rootFolder = opts.rootFolder || defaultRootFolder;
+    await rm(rootFolder, { recursive: true, force: true });
   }
 
   /**

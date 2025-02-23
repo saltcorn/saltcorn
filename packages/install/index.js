@@ -668,7 +668,7 @@ After=network.target
 
 [Service]
 Type=${hasSDnotify ? `notify` : `simple`}
-${hasSDnotify ? "WatchdogSec=5" : ""}
+${hasSDnotify ? "WatchdogSec=30" : ""}
 User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}

@@ -495,6 +495,17 @@ const store_actions_dropdown = (req) => {
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed modules")
         ),
+      db.getTenantSchema() === db.connectObj.default_schema &&
+        a(
+          {
+            class: "dropdown-item",
+            href: `/plugins/reinstall-all`,
+            onClick: `notifyAlert('${req.__("Upgrading modules...")}', true)`,
+          },
+          '<i class="fas fa-pump-medical"></i>&nbsp;' +
+            req.__("Clean modules and restart")
+        ),
+
       (db.getTenantSchema() === db.connectObj.default_schema ||
         tenants_install_git) &&
         a(
@@ -558,7 +569,7 @@ const plugin_store_html = (items, req) => {
       },
       {
         besides: items.map(store_item_html(req)),
-        gy:3,
+        gy: 3,
         widths: items.map(() => 4),
       },
     ],
@@ -1392,6 +1403,30 @@ router.get(
         restart_tenant: true,
         tenant: db.getTenantSchema(),
       });
+    }
+    res.redirect(`/plugins`);
+  })
+);
+
+/**
+ * @name get/upgrade
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
+router.get(
+  "/reinstall-all",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    //TODO make this post
+    const schema = db.getTenantSchema();
+    if (schema === db.connectObj.default_schema) {
+      await PluginInstaller.cleanPluginsDirectory();
+      req.flash("success", req.__(`Modules cleaned, server restarting...`));
+      setTimeout(() => {
+        if (process.send) getState().processSend("RestartServer");
+        else process.exit(0);
+      }, 1000);
     }
     res.redirect(`/plugins`);
   })
