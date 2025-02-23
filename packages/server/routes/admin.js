@@ -117,6 +117,7 @@ const { get_help_markup } = require("../help/index.js");
 const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
 const Tag = require("@saltcorn/data/models/tag");
+const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
@@ -841,7 +842,8 @@ const autoBackupForm = (req) => {
         label: req.__("Backup now"),
         id: "btnBackupNow",
         class: "btn btn-outline-secondary",
-        onclick: "ajax_post('/admin/auto-backup-now');press_store_button(this);",
+        onclick:
+          "ajax_post('/admin/auto-backup-now');press_store_button(this);",
       },
     ],
     fields: [
@@ -1565,6 +1567,7 @@ const cleanNodeModules = async () => {
     throw new Error(
       `'${topSaltcornDir}' is not a Saltcorn installation directory`
     );
+  await PluginInstaller.cleanPluginsDirectory();
 };
 
 const doInstall = async (req, res, version, deepClean, runPull) => {
