@@ -1554,5 +1554,7 @@
 	"Search syntax": "Search syntax",
 	"Maximum role": "Maximum role",
 	"Module dependencies": "Module dependencies",
-	"Prompt": "Prompt"
+	"Prompt": "Prompt",
+	"Clean modules and restart": "Clean modules and restart",
+	"Modules cleaned, server restarting...": "Modules cleaned, server restarting..."
 }
