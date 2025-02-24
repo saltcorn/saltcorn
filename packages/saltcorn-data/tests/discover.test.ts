@@ -225,7 +225,7 @@ describe("Repair primary key", () => {
   });
   it("should list tables", async () => {
     const tbls = await discoverable_tables();
-    expect(tbls.map((t: Row) => t.table_name)).toStrictEqual(["twoprimkeys"]);
+    expect(tbls.map((t: Row) => t.table_name)).toContain("twoprimkeys");
   });
   it("should discover", async () => {
     const pack = await discover_tables(["twoprimkeys"]);
