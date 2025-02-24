@@ -360,8 +360,8 @@ export type PluginFunction = {
 export type FieldView = {
   isEdit?: boolean;
   isFilter?: boolean;
-  readFromFormRecord?: Function; 
-  read?: Function; 
+  readFromFormRecord?: Function;
+  read?: Function;
   configFields?: ({
     table,
     mode,
@@ -382,7 +382,7 @@ export type FieldView = {
 
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
-type Req = {
+export type Req = {
   query: GenObj;
   flash: (flash_type: "warning" | "success", message: string) => void;
   user?: AbstractUser;
@@ -392,14 +392,14 @@ type Req = {
   xhr: boolean;
   __: (s: string) => string;
 };
-type Res = {
+export type Res = {
   redirect: (url: string) => void;
   send: (contents: string) => void;
   json: (value: unknown) => void;
   status: (http_code: number) => void;
 };
 
-type ModelPattern = {
+export type ModelPattern = {
   configuration_workflow: (req: Req) => AbstractWorkflow;
   prediction_outputs: ({
     configuration,
@@ -439,11 +439,16 @@ type ModelPattern = {
   }) => Promise<Array<GenObj>>;
 };
 
-type AuthenticationMethod = {
+export type AuthenticationMethod = {
   icon?: string;
   label: string;
   parameters?: GenObj;
   strategy: any;
+};
+export type TableProvider = {
+  configuration_workflow: (req: Req) => AbstractWorkflow;
+  fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
+  get_table: (cfg: GenObj) => Promise<AbstractTable>;
 };
 
 type PluginFacilities = {
@@ -462,6 +467,7 @@ type PluginFacilities = {
   }>;
   modelpatterns?: Record<string, ModelPattern>;
   authentication?: Record<string, AuthenticationMethod>;
+  table_providers?: Record<string, TableProvider>;
 };
 
 type PluginWithConfig = {

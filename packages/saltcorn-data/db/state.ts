@@ -22,6 +22,7 @@ import {
   PluginRoute,
   Header,
   PluginFunction,
+  TableProvider,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -144,7 +145,7 @@ class State {
   actions: Record<string, any>;
   auth_methods: Record<string, any>;
   plugins: Record<string, Plugin>;
-  table_providers: Record<string, any>;
+  table_providers: Record<string, TableProvider>;
   plugin_cfgs: Record<string, any>;
   plugin_locations: any;
   plugin_module_names: any;
@@ -783,7 +784,7 @@ class State {
       this.icons.push(icon);
     });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
-      this.table_providers[k] = v;
+      this.table_providers[k] = v as TableProvider;
     });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v;
