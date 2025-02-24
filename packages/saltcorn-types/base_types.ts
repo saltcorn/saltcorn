@@ -236,16 +236,15 @@ export type Action = {
 
 export type ViewTemplate = {
   name: string;
+  description?: string;
   tableless?: boolean;
   singleton?: boolean;
   get_state_fields?: (
-    arg0: number | string,
-    arg1: string,
-    arg2: any
+    table_id: number | string | undefined,
+    viewname: string,
+    configuration: any
   ) => Promise<Array<FieldLike>>;
-  configuration_workflow?: (arg0: {
-    __: (arg0: string) => string;
-  }) => AbstractWorkflow;
+  configuration_workflow?: (req: Req) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
   initial_config?: (arg0: { table_id: number }) => Promise<any>;
   configCheck?: (
@@ -486,7 +485,7 @@ export type TableProvider = {
 
 type PluginFacilities = {
   headers?: Array<Header>;
-  functions?: PluginFunction | ((arg1: any) => any);
+  functions?: PluginFunction | Function;
   layout?: PluginLayout;
   types?: Array<PluginType>;
   viewtemplates?: Array<ViewTemplate>;
