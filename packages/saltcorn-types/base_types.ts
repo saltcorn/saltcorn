@@ -360,6 +360,8 @@ export type PluginFunction = {
 export type FieldView = {
   isEdit?: boolean;
   isFilter?: boolean;
+  readFromFormRecord?: Function; 
+  read?: Function; 
   configFields?: ({
     table,
     mode,
