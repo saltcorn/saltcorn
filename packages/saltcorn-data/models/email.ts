@@ -31,14 +31,17 @@ const getMailTransport = (): Transporter => {
     "smtp_allow_self_signed",
     false
   );
+  const username = getState().getConfig("smtp_username");
   const transportOptions: any = {
     host: getState().getConfig("smtp_host"),
     port,
     secure,
-    auth: {
-      user: getState().getConfig("smtp_username"),
-      pass: getState().getConfig("smtp_password"),
-    },
+    auth: username
+      ? {
+          user: username,
+          pass: getState().getConfig("smtp_password"),
+        }
+      : undefined,
   };
   if (smtp_allow_self_signed)
     transportOptions.tls = { rejectUnauthorized: false };
