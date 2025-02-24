@@ -1,5 +1,5 @@
-import { AbstractField, FieldCfg } from "./abstract_field";
-import { TriggerCfg } from "./abstract_trigger";
+import type { AbstractField, FieldCfg } from "./abstract_field";
+import type { TriggerCfg } from "./abstract_trigger";
 import type { AbstractTag } from "./abstract_tag";
 
 export interface AbstractTable {

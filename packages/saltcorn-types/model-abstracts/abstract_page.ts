@@ -1,4 +1,4 @@
-import { GenObj } from "../common_types";
+import type { GenObj } from "../common_types";
 import type { Layout } from "../base_types";
 import type { ConnectedObjects } from "../base_types";
 import type { AbstractTag } from "./abstract_tag";

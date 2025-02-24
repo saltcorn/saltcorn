@@ -1,5 +1,5 @@
-import type { FieldView, FieldLike } from "base_types";
-import type { AbstractTable } from "model-abstracts/abstract_table";
+import type { FieldView, FieldLike } from "./base_types";
+import type { AbstractTable } from "./model-abstracts/abstract_table";
 
 /**
  * Those are the common types

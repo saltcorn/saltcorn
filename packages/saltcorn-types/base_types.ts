@@ -25,7 +25,7 @@ import type { TagPack } from "./model-abstracts/abstract_tag";
 import type { ModelPack } from "./model-abstracts/abstract_model";
 import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance";
 import type { EventLogPack } from "./model-abstracts/abstract_event_log";
-import { AbstractUser } from "model-abstracts/abstract_user";
+import type { AbstractUser } from "./model-abstracts/abstract_user";
 
 type FieldLikeBasics = {
   name: string;
