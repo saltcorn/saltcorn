@@ -146,7 +146,7 @@ class State {
   page_groups: Array<PageGroup>;
   fields: Array<Field>;
   configs: ConfigTypes;
-  fileviews: Record<string, any>;
+  fileviews: Record<string, FieldView>;
   actions: Record<string, Action>;
   auth_methods: Record<string, AuthenticationMethod>;
   plugins: Record<string, Plugin>;
@@ -774,7 +774,7 @@ class State {
       }
     );
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
-      this.fileviews[k] = v;
+      this.fileviews[k] = v as FieldView;
     });
     Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
       this.actions[k] = v as Action;

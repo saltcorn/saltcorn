@@ -357,11 +357,50 @@ export type PluginFunction = {
   isAsync?: boolean;
 };
 
-export type FieldView = {
+type FieldViewShow = {
+  isEdit?: false;
+  isFilter?: false;
+  run: (value: any, req: Req, attrs: GenObj) => string;
+};
+type FieldViewEdit = {
+  isEdit: true;
+  isFilter?: false;
+  run: (
+    name: string,
+    value: any,
+    attrs: GenObj,
+    cls?: string,
+    required?: boolean,
+    field?: FieldLike
+  ) => string;
+};
+
+type FieldViewFilter = {
   isEdit?: boolean;
-  isFilter?: boolean;
+  isFilter: true;
+  run: (
+    name: string,
+    value: any,
+    attrs: GenObj,
+    cls: string,
+    required: boolean,
+    field: FieldLike,
+    state: GenObj
+  ) => string;
+};
+
+export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
+  fill_options?: (
+    field: FieldLike,
+    force_allow_none: boolean,
+    where: Where,
+    extraCtx: GenObj,
+    optionsQuery?: any,
+    formFieldNames?: string[],
+    user?: AbstractUser
+  ) => Promise<void>;
   configFields?: ({
     table,
     mode,
@@ -369,16 +408,7 @@ export type FieldView = {
     table: AbstractTable;
     mode: ActionMode;
   }) => Promise<Array<FieldLike>> | Array<FieldLike>;
-  run:
-    | ((arg0: any) => string)
-    | (([arg0, arg1, arg2, arg3, arg4]: [
-        arg0: string,
-        arg1: any,
-        arg2: any,
-        arg3: string,
-        arg4: boolean,
-      ]) => string);
-};
+} & (FieldViewShow | FieldViewEdit | FieldViewFilter);
 
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
