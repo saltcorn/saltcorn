@@ -9,6 +9,7 @@ import db from "../db";
 import tags from "@saltcorn/markup/tags";
 import { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import exprMod from "../models/expression";
+import { ReqRes } from "@saltcorn/types/common_types";
 const { eval_expression } = exprMod;
 const { getState } = require("../db/state");
 const { input } = tags;
@@ -317,6 +318,8 @@ const mockReqRes = {
     flash: (...fs: any) => {
       mockResReqStored.flash = fs;
     },
+    body: "",
+    get: (s: string) => "",
   },
   res: {
     redirect(url: string) {

@@ -420,13 +420,18 @@ export type Req = {
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;
+  isAuthenticated: () => boolean;
   headers: GenObj;
   xhr: boolean;
   __: (s: string) => string;
+  get: (s: string) => string;
+  body: any;
+  [k: string]: any;
 };
 export type Res = {
   redirect: (url: string) => void;
   send: (contents: string) => void;
+  sendWrap: (...contents: any[]) => void;
   json: (value: unknown) => void;
   status: (http_code: number) => void;
 };

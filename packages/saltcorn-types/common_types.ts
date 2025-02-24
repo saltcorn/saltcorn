@@ -19,7 +19,7 @@ export type SuccessMessage = {
 };
 
 export type ReqRes = {
-  req?: Req;
+  req: Req;
   res?: Res;
 };
 
