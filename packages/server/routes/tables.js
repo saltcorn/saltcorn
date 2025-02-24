@@ -867,6 +867,8 @@ router.get(
       );
       fieldCard = [
         (nPrimaryKeys !== 1 || nonSerialPKS) &&
+          !table.external &&
+          !table.provider_name &&
           div(
             { class: "alert alert-danger", role: "alert" },
             i({ class: "fas fa-exclamation-triangle" }),
