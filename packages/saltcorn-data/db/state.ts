@@ -20,6 +20,13 @@ import {
   ViewTemplate,
   MobileConfig,
   PluginRoute,
+  Header,
+  PluginFunction,
+  TableProvider,
+  ModelPattern,
+  FieldView,
+  Action,
+  AuthenticationMethod,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -50,6 +57,7 @@ import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 import { runInContext, createContext } from "vm";
 import faIcons from "./fa5-icons";
+import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 
 /**
  * @param v
@@ -130,36 +138,36 @@ class State {
   triggers: Array<Trigger>;
   virtual_triggers: Array<Trigger>;
   viewtemplates: Record<string, ViewTemplate>;
-  modelpatterns: Record<string, any>;
+  modelpatterns: Record<string, ModelPattern>;
   tables: Array<Table>;
   types: Record<string, Type>;
-  stashed_fieldviews: Record<string, any>;
+  stashed_fieldviews: Record<string, Record<string, FieldView>>;
   pages: Array<Page>;
   page_groups: Array<PageGroup>;
   fields: Array<Field>;
   configs: ConfigTypes;
-  fileviews: Record<string, any>;
-  actions: Record<string, any>;
-  auth_methods: Record<string, any>;
+  fileviews: Record<string, FieldView>;
+  actions: Record<string, Action>;
+  auth_methods: Record<string, AuthenticationMethod>;
   plugins: Record<string, Plugin>;
-  table_providers: Record<string, any>;
+  table_providers: Record<string, TableProvider>;
   plugin_cfgs: Record<string, any>;
   plugin_locations: any;
   plugin_module_names: any;
   plugin_routes: Record<string, Array<PluginRoute>>;
   routesChangedCb?: Function;
-  eventTypes: any;
+  eventTypes: Record<string, { hasChannel: boolean; name?: string }>;
   fonts: Record<string, string>;
   icons: Array<string>;
   layouts: Record<string, PluginLayout>;
   userLayouts: Record<string, PluginLayout>;
-  headers: any;
-  function_context: any;
-  codepage_context: any;
+  headers: Record<string, Array<Header>>;
+  function_context: Record<string, Function>;
+  codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
-  functions: any;
-  keyFieldviews: any;
-  external_tables: any;
+  functions: Record<string, Function | PluginFunction>;
+  keyFieldviews: Record<string, unknown>;
+  external_tables: Record<string, AbstractTable>;
   verifier: any;
   i18n: I18n.I18n;
   mobileConfig?: MobileConfig;
@@ -766,13 +774,13 @@ class State {
       }
     );
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
-      this.fileviews[k] = v;
+      this.fileviews[k] = v as FieldView;
     });
     Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
-      this.actions[k] = v;
+      this.actions[k] = v as Action;
     });
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
-      this.eventTypes[k] = v;
+      this.eventTypes[k] = v as { hasChannel: boolean };
     });
     Object.entries(withCfg("fonts", {})).forEach(([k, v]) => {
       this.fonts[k] = v as string;
@@ -781,10 +789,10 @@ class State {
       this.icons.push(icon);
     });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
-      this.table_providers[k] = v;
+      this.table_providers[k] = v as TableProvider;
     });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
-      this.auth_methods[k] = v;
+      this.auth_methods[k] = v as AuthenticationMethod;
     });
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {

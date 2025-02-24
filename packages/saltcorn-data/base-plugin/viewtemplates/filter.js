@@ -812,8 +812,6 @@ module.exports = {
   configuration_workflow,
   run,
   initial_config,
-  /** @type {boolean} */
-  display_state_form: false,
   /**
    * @param {object} opts
    * @param {*} opts.layout

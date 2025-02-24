@@ -350,8 +350,6 @@ module.exports = {
   run,
   tableless: true,
   get_state_fields,
-  /** @type {boolean} */
-  display_state_form: false,
   routes: { submit_form },
   /** @type {boolean} */
   noAutoTest: true,

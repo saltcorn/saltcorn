@@ -1,5 +1,5 @@
-import { GenObj, Type } from "../common_types";
-import { AbstractTable } from "./abstract_table";
+import type { GenObj, Type } from "../common_types";
+import type { AbstractTable } from "./abstract_table";
 
 export interface AbstractField {
   label: string;

@@ -502,8 +502,16 @@ const install_pack = async (
       );
       if (existing) {
         tbl_pk = await existing.getField(existing.pk_name);
-        const { id, ownership_field_id, ownership_field_name, ...updrow } =
-          tableSpec;
+        const {
+          id,
+          ownership_field_id,
+          ownership_field_name,
+          triggers,
+          constraints,
+          fields,
+          ...updrow
+        } = tableSpec;
+
         await existing.update(updrow);
       } else {
         tableSpec.min_role_read = old_to_new_role(tableSpec.min_role_read);

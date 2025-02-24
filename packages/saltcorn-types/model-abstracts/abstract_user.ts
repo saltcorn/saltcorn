@@ -1,7 +1,8 @@
 export interface AbstractUser {
-  email: string;
+  email?: string;
   role_id: number;
-  id: any;
+  id?: number;
+  [k: string]: any;
 }
 
 export interface ForUserRequest {

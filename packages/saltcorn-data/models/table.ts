@@ -16,6 +16,7 @@ import type {
   Where,
   SelectOptions,
   Row,
+  PrimaryKeyValue,
   JoinFields,
   JoinOptions,
   AggregationOptions,
@@ -96,7 +97,7 @@ import async_json_stream from "./internal/async_json_stream";
  * @param objs
  * @returns {object}
  */
-const transposeObjects = (objs: any[]): any => {
+const transposeObjects = (objs: Row[]): Row => {
   const keys = new Set<string>();
   for (const o of objs) {
     Object.keys(o).forEach((k) => keys.add(k));
@@ -222,7 +223,7 @@ class Table implements AbstractTable {
   min_role_write: number;
 
   /** The ID of the ownership field*/
-  ownership_field_id?: string;
+  ownership_field_id?: number | null;
 
   /** A formula to denote ownership. This is a JavaScript expression which
    * must evaluate to true if the user is the owner*/
@@ -253,7 +254,7 @@ class Table implements AbstractTable {
   provider_name?: string;
 
   /** Configuration for the table provider for this table */
-  provider_cfg?: any;
+  provider_cfg?: Row;
   /**
    * Table constructor
    * @param {object} o
@@ -458,11 +459,11 @@ class Table implements AbstractTable {
    * tbd why this function in this file - needs to models
    * @param opts
    */
-  async get_models(opts?: any) {
+  async get_models(where?: Where | string) {
     const Model = require("./model");
-    if (typeof opts === "string")
-      return await Model.find({ name: opts, table_id: this.id });
-    else return await Model.find({ ...(opts || {}), table_id: this.id });
+    if (typeof where === "string")
+      return await Model.find({ name: where, table_id: this.id });
+    else return await Model.find({ ...(where || {}), table_id: this.id });
   }
 
   /**
@@ -470,19 +471,17 @@ class Table implements AbstractTable {
    * @param fields - fields list
    * @returns {null|*} null or owner column name
    */
-  owner_fieldname_from_fields(
-    fields?: Field[] | null
-  ): string | null | undefined {
+  owner_fieldname_from_fields(fields?: Field[] | null): string | null {
     if (!this.ownership_field_id || !fields) return null;
     const field = fields.find((f: Field) => f.id === this.ownership_field_id);
-    return field?.name;
+    return field?.name || null;
   }
 
   /**
    * Get owner column name
    * @returns {Promise<string|null|*>}
    */
-  owner_fieldname(): string | null | undefined {
+  owner_fieldname(): string | null {
     if (this.name === "users") return "id";
     if (!this.ownership_field_id) return null;
     return this.owner_fieldname_from_fields(this.fields);
@@ -492,9 +491,9 @@ class Table implements AbstractTable {
    * Check if user is owner of row
    * @param user - user
    * @param row - table row
-   * @returns {Promise<string|null|*|boolean>}
+   * @returns {boolean}
    */
-  is_owner(user: any, row: Row): boolean {
+  is_owner(user: AbstractUser | undefined, row: Row): boolean {
     if (!user) return false;
 
     if (this.ownership_formula && this.fields) {
@@ -505,7 +504,7 @@ class Table implements AbstractTable {
 
     // users are owners of their own row in users table
     if (this.name === "users" && !field_name)
-      return user.id && `${row?.id}` === `${user.id}`;
+      return !!user.id && `${row?.id}` === `${user.id}`;
 
     return (
       typeof field_name === "string" &&
@@ -648,7 +647,7 @@ class Table implements AbstractTable {
   /**
    * get sanitized name of table
    */
-  get santized_name() {
+  get santized_name(): string {
     return sqlsanitize(this.name);
   }
 
@@ -886,7 +885,7 @@ class Table implements AbstractTable {
   private updateWhereWithOwnership(
     where: Where,
     fields: Field[],
-    user?: Row,
+    user?: AbstractUser,
     forRead?: boolean
   ): { notAuthorized?: boolean } | undefined {
     const role = user?.role_id;
@@ -897,7 +896,13 @@ class Table implements AbstractTable {
       ((!this.ownership_field_id && !this.ownership_formula) || role === 100)
     )
       return { notAuthorized: true };
-    if (user && role < 100 && role > min_role && this.ownership_field_id) {
+    if (
+      user &&
+      role &&
+      role < 100 &&
+      role > min_role &&
+      this.ownership_field_id
+    ) {
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
@@ -906,6 +911,7 @@ class Table implements AbstractTable {
       });
     } else if (
       user &&
+      role &&
       role < 100 &&
       role > min_role &&
       this.ownership_formula
@@ -965,7 +971,7 @@ class Table implements AbstractTable {
    * @param user - optional user, if null then no authorization will be checked
    * @returns
    */
-  async deleteRows(where: Where, user?: Row, noTrigger?: boolean) {
+  async deleteRows(where: Where, user?: AbstractUser, noTrigger?: boolean) {
     //Fast truncate if user is admin and where is blank
     if (
       (!user || user?.role_id === 1) &&
@@ -1083,7 +1089,7 @@ class Table implements AbstractTable {
    * @param row
    * @returns {*}
    */
-  private readFromDB(row: Row): any {
+  private readFromDB(row: Row): Row {
     if (this.fields) {
       for (const f of this.fields) {
         if (f.type && instanceOfType(f.type) && f.type.readFromDB)
@@ -1272,7 +1278,7 @@ class Table implements AbstractTable {
    * @param fieldnm
    * @returns {Promise<Object[]>}
    */
-  async distinctValues(fieldnm: string, whereObj?: object): Promise<any[]> {
+  async distinctValues(fieldnm: string, whereObj?: Where): Promise<any[]> {
     if (whereObj) {
       const { where, values } = mkWhere(whereObj, db.isSQLite);
       const res = await db.query(
@@ -1339,16 +1345,36 @@ class Table implements AbstractTable {
    * @returns
    */
   async updateRow(
-    v_in: any,
-    id: any,
-    user?: Row,
-    noTrigger?: boolean,
+    v_in: Row,
+    id: PrimaryKeyValue,
+    user?: AbstractUser,
+    noTrigger?:
+      | boolean
+      | {
+          noTrigger?: boolean;
+          resultCollector?: object;
+          restore_of_version?: any;
+          syncTimestamp?: Date;
+          additionalTriggerValues?: Row;
+          autoRecalcIterations?: number;
+        },
     resultCollector?: object,
     restore_of_version?: any,
     syncTimestamp?: Date,
     additionalTriggerValues?: Row,
     autoRecalcIterations?: number
   ): Promise<string | void> {
+    // migrating to options arg
+    if (typeof noTrigger === "object") {
+      const extraOptions = noTrigger;
+      noTrigger = extraOptions.noTrigger;
+      resultCollector = extraOptions.resultCollector;
+      restore_of_version = extraOptions.restore_of_version;
+      syncTimestamp = extraOptions.syncTimestamp;
+      additionalTriggerValues = extraOptions.additionalTriggerValues;
+      autoRecalcIterations = extraOptions.autoRecalcIterations;
+    }
+
     if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
       return;
     let existing;
@@ -1526,7 +1552,7 @@ class Table implements AbstractTable {
       }
 
       let calced = await apply_calculated_fields_stored(
-        need_to_update ? updated : { ...existing, ...v_in },
+        need_to_update ? updated || {} : { ...existing, ...v_in },
         this.fields,
         this
       );
@@ -1611,7 +1637,7 @@ class Table implements AbstractTable {
     }
   }
 
-  async insert_history_row(v0: any, retry = 0) {
+  async insert_history_row(v0: Row, retry = 0) {
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
     // solution: retry 3 times, if fails run with on conflict do nothing
@@ -1639,12 +1665,12 @@ class Table implements AbstractTable {
     }
   }
 
-  async latestSyncInfo(id: any) {
+  async latestSyncInfo(id: PrimaryKeyValue) {
     const rows = await this.latestSyncInfos([id]);
     return rows?.length === 1 ? rows[0] : null;
   }
 
-  async latestSyncInfos(ids: any[]) {
+  async latestSyncInfos(ids: PrimaryKeyValue[]) {
     const schema = db.getTenantSchemaPrefix();
     const dbResult = await db.query(
       `select max(last_modified) "last_modified", ref
@@ -1655,7 +1681,7 @@ class Table implements AbstractTable {
     return dbResult.rows;
   }
 
-  private async insertSyncInfo(id: any, syncTimestamp?: Date) {
+  private async insertSyncInfo(id: PrimaryKeyValue, syncTimestamp?: Date) {
     const schema = db.getTenantSchemaPrefix();
     if (isNode()) {
       await db.query(
@@ -1678,7 +1704,7 @@ class Table implements AbstractTable {
   }
 
   private async updateSyncInfo(
-    id: any,
+    id: PrimaryKeyValue,
     oldLastModified: Date,
     syncTimestamp?: Date
   ) {
@@ -1715,9 +1741,9 @@ class Table implements AbstractTable {
    * @returns {Promise<{error}|{success: boolean}>}
    */
   async tryUpdateRow(
-    v: any,
-    id: any,
-    user?: Row,
+    v: Row,
+    id: PrimaryKeyValue,
+    user?: AbstractUser,
     resultCollector?: object
   ): Promise<ResultMessage> {
     try {
@@ -1741,7 +1767,11 @@ class Table implements AbstractTable {
    * @param field_name
    * @returns {Promise<void>}
    */
-  async toggleBool(id: any, field_name: string, user?: Row): Promise<void> {
+  async toggleBool(
+    id: PrimaryKeyValue,
+    field_name: string,
+    user?: AbstractUser
+  ): Promise<void> {
     const row = await this.getRow({ [this.pk_name]: id });
     if (row) await this.updateRow({ [field_name]: !row[field_name] }, id, user);
   }
@@ -1799,7 +1829,10 @@ class Table implements AbstractTable {
    * @param row
    * @param user
    */
-  private check_field_write_role(row: Row, user: Row): string | undefined {
+  private check_field_write_role(
+    row: Row,
+    user: AbstractUser
+  ): string | undefined {
     for (const field of this.fields) {
       if (
         typeof row[field.name] !== "undefined" &&
@@ -1834,7 +1867,7 @@ class Table implements AbstractTable {
    */
   async insertRow(
     v_in0: Row,
-    user?: Row,
+    user?: AbstractUser,
     resultCollector?: object,
     noTrigger?: boolean,
     syncTimestamp?: Date
@@ -2143,7 +2176,7 @@ class Table implements AbstractTable {
    */
   async tryInsertRow(
     v: Row,
-    user?: Row,
+    user?: AbstractUser,
     resultCollector?: object
   ): Promise<{ error: string } | { success: any }> {
     try {
@@ -2347,9 +2380,9 @@ class Table implements AbstractTable {
    * @param user
    */
   async restore_row_version(
-    id: any,
+    id: PrimaryKeyValue,
     version: number,
-    user?: Row
+    user?: AbstractUser
   ): Promise<void> {
     const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
       id,
@@ -2369,7 +2402,10 @@ class Table implements AbstractTable {
    * @param id
    * @param user
    */
-  async undo_row_changes(id: any, user?: Row): Promise<void> {
+  async undo_row_changes(
+    id: PrimaryKeyValue,
+    user?: AbstractUser
+  ): Promise<void> {
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
@@ -2398,7 +2434,10 @@ class Table implements AbstractTable {
    * @param id
    * @param user
    */
-  async redo_row_changes(id: any, user?: Row): Promise<void> {
+  async redo_row_changes(
+    id: PrimaryKeyValue,
+    user?: AbstractUser
+  ): Promise<void> {
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { id },
@@ -2506,8 +2545,8 @@ class Table implements AbstractTable {
    * @param new_table_rec
    * @returns {Promise<void>}
    */
-  async update(new_table_rec: any): Promise<void> {
-    if (new_table_rec.ownership_field_id === "")
+  async update(new_table_rec: Partial<Table>): Promise<void> {
+    if (new_table_rec.ownership_field_id === ("" as any))
       delete new_table_rec.ownership_field_id;
     const existing = Table.findOne({ id: this.id });
     if (!existing) {
@@ -2540,10 +2579,10 @@ class Table implements AbstractTable {
    * @param id
    * @returns {Promise<*>}
    */
-  async get_history(id?: number): Promise<Row[]> {
+  async get_history(id?: PrimaryKeyValue): Promise<Row[]> {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
-      id ? { id } : {},
+      id ? { [this.pk_name]: id } : {},
       { orderBy: "_version" }
     );
   }
@@ -3055,7 +3094,7 @@ ${rejectDetails}`,
   }
 
   async import_json_history_file(filePath: string) {
-    return await async_json_stream(filePath, async (row) => {
+    return await async_json_stream(filePath, async (row: Row) => {
       await this.insert_history_row(row);
     });
   }
@@ -3069,7 +3108,7 @@ ${rejectDetails}`,
   async import_json_file(
     filePath: string,
     skip_first_data_row?: boolean
-  ): Promise<any> {
+  ): Promise<ResultMessage> {
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -3407,10 +3446,10 @@ ${rejectDetails}`,
       };
     },
     options?: {
-      where?: any;
+      where?: Where;
       groupBy?: string[] | string;
     }
-  ): Promise<any> {
+  ): Promise<Row> {
     let fldNms: string[] = [];
     const where0 = options?.where || {};
     const groupBy = Array.isArray(options?.groupBy)
@@ -3485,7 +3524,7 @@ ${rejectDetails}`,
     return res.rows[0];
   }
 
-  ownership_formula_where(user: Row) {
+  ownership_formula_where(user: AbstractUser) {
     if (!this.ownership_formula) return {};
     const wh = jsexprToWhere(this.ownership_formula, { user }, this.fields);
     if (wh.eq && Array.isArray(wh.eq)) {

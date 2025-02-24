@@ -17,10 +17,11 @@ import Page from "@saltcorn/data/models/page";
 import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
-import type { PluginLayout } from "@saltcorn/types/base_types";
+import type { PluginLayout, RunExtra } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
 import { available_languages } from "@saltcorn/data/models/config";
 import type { IosCfg } from "../mobile-builder";
+import { ReqRes } from "@saltcorn/types/common_types";
 const resizer = require("resize-with-sharp-or-jimp");
 
 /**
@@ -894,18 +895,16 @@ export async function prepareSplashPage(
     if (!state) throw new Error("Unable to get the state object");
     // @ts-ignore
     global.window = {};
-    const contents = await page.run(
-      {},
-      {
-        req: {
-          user,
-          getLocale: () => {
-            return "en";
-          },
-          isSplashPage: true,
+    const runExtra = {
+      req: {
+        user,
+        getLocale: () => {
+          return "en";
         },
-      }
-    );
+        isSplashPage: true,
+      },
+    };
+    const contents = await page.run({}, runExtra as any);
     const sbadmin2 = state.plugins["sbadmin2"];
     const html = (<PluginLayout>sbadmin2.layout).wrap({
       title: page.title,

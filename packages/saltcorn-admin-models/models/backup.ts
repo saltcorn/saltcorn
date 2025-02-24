@@ -498,7 +498,7 @@ const restore_tables = async (
         fnm_json,
         table.name === "users" && !restore_first_user
       );
-      if (res.error) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
     } else if (existsSync(fnm_csv)) {
       const res = await table.import_csv_file(fnm_csv, {
         skip_first_data_row: table.name === "users" && !restore_first_user,

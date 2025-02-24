@@ -47,7 +47,7 @@ const test_person_table = async (persons: Table) => {
   });
 
   assertIsSet(row1);
-  expect(persons.is_owner({ id: 1 }, row1)).toBe(true);
+  expect(persons.is_owner({ id: 1, role_id: 100 }, row1)).toBe(true);
   const owned_row = await persons.getJoinedRow({
     where: { id: row1.id },
 
@@ -733,6 +733,7 @@ describe("User group no spaces", () => {
 
     // admin is not "owner" but can still read/write due to min_role etc.
     const adminobj = await User.findForSession({ role_id: 1 });
+    assertIsSet(adminobj)
     expect(projs.is_owner(adminobj, myproj)).toBe(false);
     expect(projs.is_owner(adminobj, myproj1)).toBe(false);
 
@@ -870,6 +871,7 @@ describe("User group with spaces in name", () => {
 
     // admin is not "owner" but can still read/write due to min_role etc.
     const adminobj = await User.findForSession({ role_id: 1 });
+    assertIsSet(adminobj)
     expect(projs.is_owner(adminobj, myproj)).toBe(false);
     expect(projs.is_owner(adminobj, myproj1)).toBe(false);
 

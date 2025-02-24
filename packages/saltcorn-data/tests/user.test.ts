@@ -264,6 +264,7 @@ describe("User join fields and aggregations in ownership", () => {
       email: "foo7@bar.com",
       password: "YEgg4t6FGew",
     });
+    assertIsSet(u);
     expect((u as User).cares_for?.id).toBe(patientRows[0].id);
     expect(patients.is_owner(u, patientRows[0])).toBe(true);
     expect(patients.is_owner(u, patientRows[1])).toBe(false);
@@ -294,6 +295,7 @@ describe("User join fields and aggregations in ownership", () => {
       email: "foo8@bar.com",
       password: "YEgklFGew",
     });
+    assertIsSet(u);
     expect(books.is_owner(u, bookRows[0])).toBe(true);
     expect(books.is_owner(u, bookRows[1])).toBe(false);
   });
