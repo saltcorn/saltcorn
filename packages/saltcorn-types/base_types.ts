@@ -434,6 +434,7 @@ export type Res = {
   sendWrap: (...contents: any[]) => void;
   json: (value: unknown) => void;
   status: (http_code: number) => void;
+  [k: string]: any;
 };
 
 export type ModelPattern = {

@@ -250,10 +250,11 @@ describe("View with routes", () => {
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
     var html, json;
     const spy = {
+      ...mockReqRes.res,
       send(h: any) {
         html = h;
       },
-      json(h: GenObj) {
+      json(h: unknown) {
         json = h;
       },
     };
