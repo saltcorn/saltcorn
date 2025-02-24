@@ -135,11 +135,11 @@ class Model {
     hyperparameters: any,
     state: {}
   ): Promise<ModelInstance | string> {
-    const trainf = this.templateObj.train;
+    const trainf = this.templateObj!.train;
     const table = Table.findOne({ id: this.table_id });
     const result = trainf
       ? await trainf({
-          table,
+          table: table!,
           configuration: this.configuration,
           hyperparameters,
           state,
@@ -195,8 +195,9 @@ class Model {
       if (!row) return instance.parameters;
 
       const template = this.templateObj;
-      const results = await template.predict({
+      const results = await template!.predict({
         ...instance,
+        id: instance.id!,
         model: this,
         rows: [row],
       });

@@ -2133,8 +2133,6 @@ module.exports = {
   authorizeDataStream,
   get_state_fields,
   initial_config,
-  /** @type {boolean} */
-  display_state_form: false,
   authorise_post,
   /**
    * @param {object} opts

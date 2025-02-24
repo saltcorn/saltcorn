@@ -1091,8 +1091,6 @@ module.exports = {
   runMany,
   renderRows,
   initial_config,
-  /** @type {boolean} */
-  display_state_form: false,
   routes: { run_action },
   /**
    * @param {object} opts

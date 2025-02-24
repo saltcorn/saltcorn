@@ -25,6 +25,7 @@ import type { TagPack } from "./model-abstracts/abstract_tag";
 import type { ModelPack } from "./model-abstracts/abstract_model";
 import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance";
 import type { EventLogPack } from "./model-abstracts/abstract_event_log";
+import type { AbstractUser } from "./model-abstracts/abstract_user";
 
 type FieldLikeBasics = {
   name: string;
@@ -167,20 +168,7 @@ type Attribute = {
 export type PluginType = {
   name: string;
   sqlName: string;
-  fieldviews: {
-    isEdit: boolean;
-    run: (
-      arg0: any
-    ) =>
-      | string
-      | (([arg0, arg1, arg2, arg3, arg4]: [
-          arg0: string,
-          arg1: any,
-          arg2: any,
-          arg3: string,
-          arg4: boolean
-        ]) => string);
-  };
+  fieldviews: Record<string, FieldView>;
   attributes?: (arg0: any) => Array<Attribute> | Array<Attribute>;
   readFromFormRecord?: ([arg0, arg1]: [arg0: any, arg1: string]) => any;
   readFromDB?: (arg0: any) => any;
@@ -216,18 +204,47 @@ export type ConnectedObjects = {
   // trigger are loaded on demand
 };
 
+type ActionMode = "edit" | "show" | "filter" | "list" | "workflow" | "page";
+
+export type Action = {
+  namespace?: string;
+  description?: string;
+  run: ({
+    row,
+    user,
+    configuration,
+    mode,
+    table,
+  }: {
+    table?: AbstractTable;
+    row?: Row;
+    configuration?: Row;
+    user?: AbstractUser;
+    mode?: ActionMode;
+  }) => Promise<any>;
+  configFields?: ({
+    table,
+    mode,
+  }: {
+    table: AbstractTable;
+    mode: ActionMode;
+  }) => Promise<Array<FieldLike>> | Array<FieldLike>;
+  disableInBuilder?: boolean;
+  disableInList?: boolean;
+  disableInWorkflow?: boolean;
+};
+
 export type ViewTemplate = {
   name: string;
+  description?: string;
   tableless?: boolean;
   singleton?: boolean;
   get_state_fields?: (
-    arg0: number | string,
-    arg1: string,
-    arg2: any
-  ) => Promise<Array<FieldLike>>;
-  configuration_workflow?: (arg0: {
-    __: (arg0: string) => string;
-  }) => AbstractWorkflow;
+    table_id: number | string | undefined,
+    viewname: string,
+    configuration: any
+  ) => Promise<Array<FieldLike>> | Array<FieldLike>;
+  configuration_workflow?: (req: Req) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
   initial_config?: (arg0: { table_id: number }) => Promise<any>;
   configCheck?: (
@@ -313,7 +330,7 @@ export type ViewTemplate = {
 
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
-  routes?: Record<string, Action>;
+  routes?: Record<string, RouteAction>;
   virtual_triggers?: (
     table_id: number | undefined,
     name: string,
@@ -323,7 +340,7 @@ export type ViewTemplate = {
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
 };
 
-export type Action = (
+export type RouteAction = (
   table_id: number | undefined | null,
   viewname: string,
   optsOne: any,
@@ -339,33 +356,173 @@ export type PluginFunction = {
   isAsync?: boolean;
 };
 
-type MaybeCfgFun<Type> = (a: Type) => (arg0: any) => Type | Type | undefined;
+type FieldViewShow = {
+  isEdit?: false;
+  isFilter?: false;
+  run: (value: any, req: Req, attrs: GenObj) => string;
+};
+type FieldViewEdit = {
+  isEdit: true;
+  isFilter?: false;
+  run: (
+    name: string,
+    value: any,
+    attrs: GenObj,
+    cls?: string,
+    required?: boolean,
+    field?: FieldLike
+  ) => string;
+};
+
+type FieldViewFilter = {
+  isEdit?: boolean;
+  isFilter: true;
+  run: (
+    name: string,
+    value: any,
+    attrs: GenObj,
+    cls: string,
+    required: boolean,
+    field: FieldLike,
+    state: GenObj
+  ) => string;
+};
+
+export type FieldView = {
+  readFromFormRecord?: Function;
+  read?: Function;
+  blockDisplay?: boolean;
+  handlesTextStyle?: boolean;
+  description?: string;
+  fill_options?: (
+    field: FieldLike,
+    force_allow_none: boolean,
+    where: Where,
+    extraCtx: GenObj,
+    optionsQuery?: any,
+    formFieldNames?: string[],
+    user?: AbstractUser
+  ) => Promise<void>;
+  configFields?: ({
+    table,
+    mode,
+  }: {
+    table: AbstractTable;
+    mode: ActionMode;
+  }) => Promise<Array<FieldLike>> | Array<FieldLike>;
+} & (FieldViewShow | FieldViewEdit | FieldViewFilter);
+
+type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
+
+export type Req = {
+  query: GenObj;
+  flash: (flash_type: "warning" | "success", message: string) => void;
+  user?: AbstractUser;
+  csrfToken: () => string;
+  getLocale: () => string;
+  isAuthenticated: () => boolean;
+  headers: GenObj;
+  xhr: boolean;
+  __: (s: string) => string;
+  get: (s: string) => string;
+  body: any;
+  [k: string]: any;
+};
+export type Res = {
+  redirect: (url: string) => void;
+  send: (contents: string) => void;
+  sendWrap: (...contents: any[]) => void;
+  json: (value: unknown) => void;
+  status: (http_code: number) => void;
+  [k: string]: any;
+};
+
+export type ModelPattern = {
+  configuration_workflow: (req: Req) => AbstractWorkflow;
+  prediction_outputs: ({
+    configuration,
+  }: {
+    configuration: GenObj;
+  }) => Array<FieldLike>;
+  hyperparameter_fields: ({
+    configuration,
+    table,
+  }: {
+    configuration: GenObj;
+    table: AbstractTable;
+  }) => Array<FieldLike>;
+  train: ({
+    table,
+    configuration,
+    hyperparameters,
+    state,
+  }: {
+    table: AbstractTable;
+    configuration: GenObj;
+    hyperparameters: GenObj;
+    state: GenObj;
+  }) => Promise<any>;
+  predict: ({
+    id,
+    model,
+    hyperparameters,
+    fit_object,
+    rows,
+  }: {
+    id: number;
+    model: { configuration: GenObj };
+    hyperparameters: GenObj;
+    fit_object: any;
+    rows: Array<Row>;
+  }) => Promise<Array<GenObj>>;
+};
+
+export type AuthenticationMethod = {
+  icon?: string;
+  label: string;
+  parameters?: GenObj;
+  strategy: any;
+};
+export type TableProvider = {
+  configuration_workflow: (req: Req) => AbstractWorkflow;
+  fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
+  get_table: (cfg: GenObj) => Promise<AbstractTable>;
+};
+
+type PluginFacilities = {
+  headers?: Array<Header>;
+  functions?: PluginFunction | Function;
+  layout?: PluginLayout;
+  types?: Array<PluginType>;
+  viewtemplates?: Array<ViewTemplate>;
+  actions?: Record<string, Action>;
+  eventTypes?: Record<string, { hasChannel: boolean }>;
+  fieldviews?: Record<string, FieldView & { type: string }>;
+  routes?: Array<{
+    url: string;
+    method: "get" | "post";
+    callback: (req: Req, res: Res) => Promise<void>;
+  }>;
+  modelpatterns?: Record<string, ModelPattern>;
+  authentication?: Record<string, AuthenticationMethod>;
+  table_providers?: Record<string, TableProvider>;
+};
+
+type PluginWithConfig = {
+  configuration_workflow: (req?: Req) => AbstractWorkflow;
+} & CfgFun<PluginFacilities>;
+
+type PluginWithoutConfig = {
+  configuration_workflow?: undefined;
+} & PluginFacilities;
 
 export type Plugin = {
   sc_plugin_api_version: number;
   plugin_name?: string;
-  headers: MaybeCfgFun<Array<Header>>;
-  functions: MaybeCfgFun<PluginFunction | ((arg1: any) => any)>;
-  layout: MaybeCfgFun<PluginLayout> | PluginLayout;
-  types: MaybeCfgFun<Array<PluginType>>;
-  viewtemplates: MaybeCfgFun<Array<ViewTemplate>>;
-  configuration_workflow?: () => AbstractWorkflow;
-  fieldviews?: {
-    type: string;
-    isEdit: boolean;
-    run:
-      | ((arg0: any) => string)
-      | (([arg0, arg1, arg2, arg3, arg4]: [
-          arg0: string,
-          arg1: any,
-          arg2: any,
-          arg3: string,
-          arg4: boolean
-        ]) => string);
-  };
   dependencies: string[];
+  onLoad: (cfg: any) => Promise<void>;
   [key: string]: any;
-};
+} & (PluginWithConfig | PluginWithoutConfig);
 
 export type CodePagePack = {
   name: string;

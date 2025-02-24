@@ -528,10 +528,10 @@ class Field implements AbstractField {
     return this.attributes?.on_delete === "Cascade"
       ? " on delete cascade"
       : this.attributes?.on_delete === "Set null"
-      ? " on delete set null"
-      : this.attributes?.on_delete_cascade //legacy
-      ? " on delete cascade"
-      : "";
+        ? " on delete set null"
+        : this.attributes?.on_delete_cascade //legacy
+          ? " on delete cascade"
+          : "";
   }
   /**
    * @type {string}
@@ -569,8 +569,8 @@ class Field implements AbstractField {
         this.type
           ? JSON.stringify(this.type, null, 2)
           : this.typename
-          ? this.typename
-          : "unknown type"
+            ? this.typename
+            : "unknown type"
       } for field ${this.name} in table ${this.table_id}`
     );
   }
@@ -657,7 +657,9 @@ class Field implements AbstractField {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
     let typeObj = this.type as Type;
-    let fvObj = this.fieldview && typeObj?.fieldviews?.[this.fieldview];
+    let fvObj = this.fieldview
+      ? typeObj?.fieldviews?.[this.fieldview]
+      : undefined;
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
@@ -670,8 +672,11 @@ class Field implements AbstractField {
           !type || (!typeObj.read && !typeObj.readFromFormRecord)
             ? whole_rec[this.form_name]
             : typeObj.readFromFormRecord
-            ? typeObj.readFromFormRecord(whole_rec, this.form_name)
-            : (typeObj as any).read(whole_rec[this.form_name], this.attributes);
+              ? typeObj.readFromFormRecord(whole_rec, this.form_name)
+              : (typeObj as any).read(
+                  whole_rec[this.form_name],
+                  this.attributes
+                );
       }
     }
     if (typeof readval === "undefined" || readval === null)
@@ -817,7 +822,7 @@ class Field implements AbstractField {
           new_field!.table!.name
         )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
           new_field.name
-        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname||"id"}")${
+        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname || "id"}")${
           new_field.on_delete_sql
         }`
       );
@@ -905,7 +910,7 @@ class Field implements AbstractField {
         calc_joinfields.push({
           targetTable: targetTable.name,
           field: myField.name,
-          targetField: path[1]
+          targetField: path[1],
         });
       } else if (path.length === 3) {
         const myField = table.getField(path[0]);
@@ -922,12 +927,12 @@ class Field implements AbstractField {
           field: myField.name,
           through: [throughField.name],
           throughTable: [throughTable.name],
-          targetField: path[2]
+          targetField: path[2],
         });
         calc_joinfields.push({
           targetTable: throughTable.name,
           field: myField.name,
-          targetField: path[1]
+          targetField: path[1],
         });
       }
     });
@@ -1172,14 +1177,14 @@ class Field implements AbstractField {
       } else {
         const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
-          f.sql_bare_type
-        }) RETURNS void AS $$
+        f.sql_bare_type
+      }) RETURNS void AS $$
       BEGIN
       EXECUTE format('alter table ${schema}"${sqlsanitize(
-          table.name
-        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-          f.required ? "not null" : ""
-        } default %L', thedef);
+        table.name
+      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+        f.required ? "not null" : ""
+      } default %L', thedef);
       END;
       $$ LANGUAGE plpgsql;`;
         await db.query(q);

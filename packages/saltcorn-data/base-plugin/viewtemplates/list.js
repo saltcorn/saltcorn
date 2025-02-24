@@ -1304,11 +1304,6 @@ module.exports = {
    * @param {object} opts
    * @returns {boolean}
    */
-  display_state_form: (opts) => false,
-  /**
-   * @param {object} opts
-   * @returns {boolean}
-   */
   default_state_form: ({ default_state }) => {
     if (!default_state) return default_state;
     const {

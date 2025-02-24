@@ -1,5 +1,5 @@
-import { AbstractField, FieldCfg } from "./abstract_field";
-import { TriggerCfg } from "./abstract_trigger";
+import type { AbstractField, FieldCfg } from "./abstract_field";
+import type { TriggerCfg } from "./abstract_trigger";
 import type { AbstractTag } from "./abstract_tag";
 
 export interface AbstractTable {
@@ -21,7 +21,7 @@ export type TableCfg = {
   id?: number;
   min_role_read: number;
   min_role_write: number;
-  ownership_field_id?: string;
+  ownership_field_id?: number;
   ownership_formula?: string;
   versioned?: boolean;
   has_sync_info?: boolean;

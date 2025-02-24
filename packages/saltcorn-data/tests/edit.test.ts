@@ -555,7 +555,7 @@ describe("Edit view field onchange", () => {
       "run_action",
       body,
       mockReqRes.res,
-      { req: { body } },
+      { req: { ...mockReqRes.req, body }, res: mockReqRes.res },
       false
     );
     expect(mockReqRes.getStored().json).toStrictEqual({
@@ -815,7 +815,7 @@ describe("Edit view components", () => {
       "run_action",
       body,
       mockReqRes.res,
-      { req: { body } },
+      { req: { ...mockReqRes.req, body }, res: mockReqRes.res },
       false
     );
     expect(mockReqRes.getStored().json).toStrictEqual({
@@ -912,6 +912,7 @@ describe("Edit view components", () => {
       mockReqRes.res,
       {
         req: {
+          ...mockReqRes.req,
           body,
           user: {
             email: "admin@foo.com",
@@ -920,6 +921,7 @@ describe("Edit view components", () => {
             language: "en",
           },
         },
+        res: mockReqRes.res,
       },
       false
     );
@@ -986,6 +988,7 @@ describe("Edit view components", () => {
       mockReqRes.res,
       {
         req: {
+          ...mockReqRes.req,
           body,
           user: {
             email: "admin@foo.com",
@@ -994,6 +997,7 @@ describe("Edit view components", () => {
             language: "en",
           },
         },
+        res: mockReqRes.res,
       },
       false
     );

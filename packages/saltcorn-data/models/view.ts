@@ -33,6 +33,7 @@ import type {
   Tablely,
   RunExtra,
   ConnectedObjects,
+  Res,
 } from "@saltcorn/types/base_types";
 import type Table from "./table";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
@@ -743,7 +744,7 @@ class View implements AbstractView {
   async runRoute(
     route: string,
     body: any,
-    res: NonNullable<any>,
+    res: Res,
     extraArgs: RunExtra,
     remote: boolean = false
   ): Promise<any> {

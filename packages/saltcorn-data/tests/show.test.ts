@@ -278,7 +278,7 @@ describe("Misc Show views", () => {
       "run_action",
       body,
       mockReqRes.res,
-      { req: { body } },
+      { req: { ...mockReqRes.req, body }, res: mockReqRes.res },
       false
     );
     expect(mockReqRes.getStored().json).toStrictEqual({

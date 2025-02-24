@@ -1,9 +1,9 @@
 import type { GenObj } from "../common_types";
-import type { Header } from "../base_types";
+import { AbstractForm } from "./abstract_form";
 
 export type RunResult = {
   renderForm?: any;
-  context: any;
+  context: GenObj;
   stepName: string;
   currentStep: number;
   maxSteps: number;
@@ -13,6 +13,26 @@ export type RunResult = {
   previewURL?: string;
   savingErrors?: any;
 };
+
+type BuilderConfig = {
+  mode: "edit" | "show" | "filter" | "list" | "page";
+  icons: string[];
+  keyframes: string[];
+  fonts: Record<string, string>;
+  allowMultiStepAction?: boolean;
+};
+
+type ConfigWorkflowFormStep = {
+  form: (context: GenObj) => Promise<AbstractForm>;
+};
+type ConfigWorkflowBuilderStep = {
+  builder: (context: GenObj) => Promise<BuilderConfig>;
+};
+export type ConfigWorkflowStep = {
+  name: string;
+  contextField?: string;
+  onlyWhen?: (context: GenObj) => Promise<boolean>;
+} & (ConfigWorkflowFormStep | ConfigWorkflowBuilderStep);
 
 export interface AbstractWorkflow {
   onDone: (arg0: any) => any;

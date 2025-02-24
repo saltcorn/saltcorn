@@ -373,7 +373,7 @@ describe("Filter view components", () => {
       "run_action",
       body,
       mockReqRes.res,
-      { req: { body } },
+      { req: { ...mockReqRes.req, body }, res: mockReqRes.res },
       false
     );
     //we don't have referrer set in tests se can't test state
@@ -432,7 +432,7 @@ describe("Filter view components", () => {
       "run_action",
       body,
       mockReqRes.res,
-      { req: { body } },
+      { req: { ...mockReqRes.req, body }, res: mockReqRes.res },
       false
     );
 

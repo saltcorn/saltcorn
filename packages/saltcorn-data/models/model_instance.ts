@@ -6,6 +6,7 @@
  */
 import db from "../db";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import { GenObj } from "@saltcorn/types/common_types";
 import type { ModelInstanceCfg } from "@saltcorn/types/model-abstracts/abstract_model_instance";
 
 /**
@@ -16,8 +17,8 @@ class ModelInstance {
   id?: number;
   name: string;
   model_id: number;
-  state: any;
-  hyperparameters: any;
+  state: GenObj;
+  hyperparameters: GenObj;
   trained_on: Date;
   report: string;
   metric_values: any;
@@ -122,16 +123,17 @@ class ModelInstance {
    * @param {*} row
    * @returns {Promise<void>}
    */
-  async update(row: Row): Promise<void> {
+  async update(row: Partial<ModelInstance>): Promise<void> {
     await db.update("_sc_model_instances", row, this.id);
   }
 
-  async predict(rows: Row): Promise<any> {
+  async predict(rows: Row[]): Promise<any> {
     const Model = (await import("./model")).default;
     const model = await Model.findOne({ id: this.model_id });
     const template = model.templateObj;
-    return await template.predict({
+    return await template!.predict({
       ...this,
+      id: this.id!,
       model,
       rows,
     });
