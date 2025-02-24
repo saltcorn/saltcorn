@@ -223,7 +223,7 @@ class Table implements AbstractTable {
   min_role_write: number;
 
   /** The ID of the ownership field*/
-  ownership_field_id?: string;
+  ownership_field_id?: string | null;
 
   /** A formula to denote ownership. This is a JavaScript expression which
    * must evaluate to true if the user is the owner*/
@@ -1089,7 +1089,7 @@ class Table implements AbstractTable {
    * @param row
    * @returns {*}
    */
-  private readFromDB(row: Row): any {
+  private readFromDB(row: Row): Row {
     if (this.fields) {
       for (const f of this.fields) {
         if (f.type && instanceOfType(f.type) && f.type.readFromDB)
@@ -1278,7 +1278,7 @@ class Table implements AbstractTable {
    * @param fieldnm
    * @returns {Promise<Object[]>}
    */
-  async distinctValues(fieldnm: string, whereObj?: object): Promise<any[]> {
+  async distinctValues(fieldnm: string, whereObj?: Where): Promise<any[]> {
     if (whereObj) {
       const { where, values } = mkWhere(whereObj, db.isSQLite);
       const res = await db.query(
@@ -1346,7 +1346,7 @@ class Table implements AbstractTable {
    */
   async updateRow(
     v_in: Row,
-    id: any,
+    id: PrimaryKeyValue,
     user?: AbstractUser,
     noTrigger?:
       | boolean
@@ -1637,7 +1637,7 @@ class Table implements AbstractTable {
     }
   }
 
-  async insert_history_row(v0: any, retry = 0) {
+  async insert_history_row(v0: Row, retry = 0) {
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
     // solution: retry 3 times, if fails run with on conflict do nothing
@@ -1665,12 +1665,12 @@ class Table implements AbstractTable {
     }
   }
 
-  async latestSyncInfo(id: any) {
+  async latestSyncInfo(id: PrimaryKeyValue) {
     const rows = await this.latestSyncInfos([id]);
     return rows?.length === 1 ? rows[0] : null;
   }
 
-  async latestSyncInfos(ids: any[]) {
+  async latestSyncInfos(ids: PrimaryKeyValue[]) {
     const schema = db.getTenantSchemaPrefix();
     const dbResult = await db.query(
       `select max(last_modified) "last_modified", ref
@@ -1681,7 +1681,7 @@ class Table implements AbstractTable {
     return dbResult.rows;
   }
 
-  private async insertSyncInfo(id: any, syncTimestamp?: Date) {
+  private async insertSyncInfo(id: PrimaryKeyValue, syncTimestamp?: Date) {
     const schema = db.getTenantSchemaPrefix();
     if (isNode()) {
       await db.query(
@@ -1704,7 +1704,7 @@ class Table implements AbstractTable {
   }
 
   private async updateSyncInfo(
-    id: any,
+    id: PrimaryKeyValue,
     oldLastModified: Date,
     syncTimestamp?: Date
   ) {
@@ -1768,7 +1768,7 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async toggleBool(
-    id: any,
+    id: PrimaryKeyValue,
     field_name: string,
     user?: AbstractUser
   ): Promise<void> {
@@ -2545,7 +2545,7 @@ class Table implements AbstractTable {
    * @param new_table_rec
    * @returns {Promise<void>}
    */
-  async update(new_table_rec: any): Promise<void> {
+  async update(new_table_rec: Partial<Table>): Promise<void> {
     if (new_table_rec.ownership_field_id === "")
       delete new_table_rec.ownership_field_id;
     const existing = Table.findOne({ id: this.id });
@@ -3094,7 +3094,7 @@ ${rejectDetails}`,
   }
 
   async import_json_history_file(filePath: string) {
-    return await async_json_stream(filePath, async (row) => {
+    return await async_json_stream(filePath, async (row: Row) => {
       await this.insert_history_row(row);
     });
   }
@@ -3108,7 +3108,7 @@ ${rejectDetails}`,
   async import_json_file(
     filePath: string,
     skip_first_data_row?: boolean
-  ): Promise<any> {
+  ): Promise<ResultMessage> {
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -3446,10 +3446,10 @@ ${rejectDetails}`,
       };
     },
     options?: {
-      where?: any;
+      where?: Where;
       groupBy?: string[] | string;
     }
-  ): Promise<any> {
+  ): Promise<Row> {
     let fldNms: string[] = [];
     const where0 = options?.where || {};
     const groupBy = Array.isArray(options?.groupBy)
