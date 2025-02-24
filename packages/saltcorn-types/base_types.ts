@@ -465,7 +465,7 @@ type PluginFacilities = {
 };
 
 type PluginWithConfig = {
-  configuration_workflow: (req: Req) => AbstractWorkflow;
+  configuration_workflow: (req?: Req) => AbstractWorkflow;
 } & CfgFun<PluginFacilities>;
 
 type PluginWithoutConfig = {
