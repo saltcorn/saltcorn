@@ -23,6 +23,10 @@ import {
   Header,
   PluginFunction,
   TableProvider,
+  ModelPattern,
+  FieldView,
+  Action,
+  AuthenticationMethod,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -53,6 +57,7 @@ import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 import { runInContext, createContext } from "vm";
 import faIcons from "./fa5-icons";
+import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 
 /**
  * @param v
@@ -133,17 +138,17 @@ class State {
   triggers: Array<Trigger>;
   virtual_triggers: Array<Trigger>;
   viewtemplates: Record<string, ViewTemplate>;
-  modelpatterns: Record<string, any>;
+  modelpatterns: Record<string, ModelPattern>;
   tables: Array<Table>;
   types: Record<string, Type>;
-  stashed_fieldviews: Record<string, any>;
+  stashed_fieldviews: Record<string, Record<string, FieldView>>;
   pages: Array<Page>;
   page_groups: Array<PageGroup>;
   fields: Array<Field>;
   configs: ConfigTypes;
   fileviews: Record<string, any>;
-  actions: Record<string, any>;
-  auth_methods: Record<string, any>;
+  actions: Record<string, Action>;
+  auth_methods: Record<string, AuthenticationMethod>;
   plugins: Record<string, Plugin>;
   table_providers: Record<string, TableProvider>;
   plugin_cfgs: Record<string, any>;
@@ -162,7 +167,7 @@ class State {
   plugins_cfg_context: any;
   functions: Record<string, Function | PluginFunction>;
   keyFieldviews: Record<string, unknown>;
-  external_tables: any;
+  external_tables: Record<string, AbstractTable>;
   verifier: any;
   i18n: I18n.I18n;
   mobileConfig?: MobileConfig;
@@ -772,7 +777,7 @@ class State {
       this.fileviews[k] = v;
     });
     Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
-      this.actions[k] = v;
+      this.actions[k] = v as Action;
     });
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
       this.eventTypes[k] = v as { hasChannel: boolean };
@@ -787,7 +792,7 @@ class State {
       this.table_providers[k] = v as TableProvider;
     });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
-      this.auth_methods[k] = v;
+      this.auth_methods[k] = v as AuthenticationMethod;
     });
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
