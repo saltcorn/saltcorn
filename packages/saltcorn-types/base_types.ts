@@ -25,6 +25,7 @@ import type { TagPack } from "./model-abstracts/abstract_tag";
 import type { ModelPack } from "./model-abstracts/abstract_model";
 import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance";
 import type { EventLogPack } from "./model-abstracts/abstract_event_log";
+import { AbstractUser } from "model-abstracts/abstract_user";
 
 type FieldLikeBasics = {
   name: string;
@@ -216,6 +217,36 @@ export type ConnectedObjects = {
   // trigger are loaded on demand
 };
 
+type ActionMode = "edit" | "show" | "filter" | "list" | "workflow";
+
+export type Action = {
+  namespace?: string;
+  description?: string;
+  run: ({
+    row,
+    user,
+    configuration,
+    mode,
+    table,
+  }: {
+    table?: AbstractTable;
+    row?: Row;
+    configuration?: Row;
+    user?: AbstractUser;
+    mode?: ActionMode;
+  }) => Promise<any>;
+  configFields?: ({
+    table,
+    mode,
+  }: {
+    table: AbstractTable;
+    mode: ActionMode;
+  }) => Promise<Array<FieldLike>>;
+  disableInBuilder?: boolean;
+  disableInList?: boolean;
+  disableInWorkflow?: boolean;
+};
+
 export type ViewTemplate = {
   name: string;
   tableless?: boolean;
@@ -313,7 +344,7 @@ export type ViewTemplate = {
 
   getStringsForI18n?: (configuration?: any) => string[];
   default_state_form?: (arg0: { default_state: any }) => any;
-  routes?: Record<string, Action>;
+  routes?: Record<string, RouteAction>;
   virtual_triggers?: (
     table_id: number | undefined,
     name: string,
@@ -323,7 +354,7 @@ export type ViewTemplate = {
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
 };
 
-export type Action = (
+export type RouteAction = (
   table_id: number | undefined | null,
   viewname: string,
   optsOne: any,
@@ -349,6 +380,7 @@ export type Plugin = {
   layout: MaybeCfgFun<PluginLayout> | PluginLayout;
   types: MaybeCfgFun<Array<PluginType>>;
   viewtemplates: MaybeCfgFun<Array<ViewTemplate>>;
+  actions: MaybeCfgFun<Record<string, Action>>;
   eventTypes: MaybeCfgFun<Record<string, { hasChannel: boolean }>>;
   configuration_workflow?: () => AbstractWorkflow;
   fieldviews?: {
