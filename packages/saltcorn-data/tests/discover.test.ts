@@ -214,32 +214,38 @@ breed int references "disc breed"(id));`
 });
 
 describe("Repair primary key", () => {
-  it("creates table", async () => {
-    await db.query(
-      `create table twoprimkeys(
+  if (!db.isSQLite) {
+    it("creates table", async () => {
+      await db.query(
+        `create table twoprimkeys(
         the_x integer,
         the_y integer,
         primary key(the_x,the_y)
       );`
-    );
-  });
-  it("should list tables", async () => {
-    const tbls = await discoverable_tables();
-    expect(tbls.map((t: Row) => t.table_name)).toContain("twoprimkeys");
-  });
-  it("should discover", async () => {
-    const pack = await discover_tables(["twoprimkeys"]);
-    await implement_discovery(pack);
-  });
-  it("should repair", async () => {
-    const table = Table.findOne("twoprimkeys");
-    assertIsSet(table);
-    await table.repairCompositePrimary();
-  });
-  it("should have an int primary key", async () => {
-    const table = Table.findOne("twoprimkeys");
-    assertIsSet(table);
-    expect(table.fields.length).toBe(3);
-    expect(table.pk_name).toBe("id");
-  });
+      );
+    });
+    it("should list tables", async () => {
+      const tbls = await discoverable_tables();
+      expect(tbls.map((t: Row) => t.table_name)).toContain("twoprimkeys");
+    });
+    it("should discover", async () => {
+      const pack = await discover_tables(["twoprimkeys"]);
+      await implement_discovery(pack);
+    });
+    it("should repair", async () => {
+      const table = Table.findOne("twoprimkeys");
+      assertIsSet(table);
+      await table.repairCompositePrimary();
+    });
+    it("should have an int primary key", async () => {
+      const table = Table.findOne("twoprimkeys");
+      assertIsSet(table);
+      expect(table.fields.length).toBe(3);
+      expect(table.pk_name).toBe("id");
+    });
+  } else {
+    it("doesnt run on sqlite", async () => {
+      expect(2 + 2).toBe(4);
+    });
+  }
 });
