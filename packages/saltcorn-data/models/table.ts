@@ -16,6 +16,7 @@ import type {
   Where,
   SelectOptions,
   Row,
+  PrimaryKeyValue,
   JoinFields,
   JoinOptions,
   AggregationOptions,
@@ -2560,10 +2561,10 @@ class Table implements AbstractTable {
    * @param id
    * @returns {Promise<*>}
    */
-  async get_history(id?: number): Promise<Row[]> {
+  async get_history(id?: PrimaryKeyValue): Promise<Row[]> {
     return await db.select(
       `${sqlsanitize(this.name)}__history`,
-      id ? { id } : {},
+      id ? { [this.pk_name]: id } : {},
       { orderBy: "_version" }
     );
   }

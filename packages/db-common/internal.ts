@@ -759,6 +759,7 @@ export const mkSelectOptions = (
 };
 
 export type Row = { [key: string]: any };
+export type PrimaryKeyValue = number | string;
 
 export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
   if (!inputWhere) return {};
