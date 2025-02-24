@@ -168,20 +168,7 @@ type Attribute = {
 export type PluginType = {
   name: string;
   sqlName: string;
-  fieldviews: {
-    isEdit: boolean;
-    run: (
-      arg0: any
-    ) =>
-      | string
-      | (([arg0, arg1, arg2, arg3, arg4]: [
-          arg0: string,
-          arg1: any,
-          arg2: any,
-          arg3: string,
-          arg4: boolean,
-        ]) => string);
-  };
+  fieldviews: Record<string, FieldView>;
   attributes?: (arg0: any) => Array<Attribute> | Array<Attribute>;
   readFromFormRecord?: ([arg0, arg1]: [arg0: any, arg1: string]) => any;
   readFromDB?: (arg0: any) => any;
@@ -241,7 +228,7 @@ export type Action = {
   }: {
     table: AbstractTable;
     mode: ActionMode;
-  }) => Promise<Array<FieldLike>>;
+  }) => Promise<Array<FieldLike>> | Array<FieldLike>;
   disableInBuilder?: boolean;
   disableInList?: boolean;
   disableInWorkflow?: boolean;
@@ -370,6 +357,27 @@ export type PluginFunction = {
   isAsync?: boolean;
 };
 
+export type FieldView = {
+  isEdit?: boolean;
+  isFilter?: boolean;
+  configFields?: ({
+    table,
+    mode,
+  }: {
+    table: AbstractTable;
+    mode: ActionMode;
+  }) => Promise<Array<FieldLike>> | Array<FieldLike>;
+  run:
+    | ((arg0: any) => string)
+    | (([arg0, arg1, arg2, arg3, arg4]: [
+        arg0: string,
+        arg1: any,
+        arg2: any,
+        arg3: string,
+        arg4: boolean,
+      ]) => string);
+};
+
 type MaybeCfgFun<Type> = (a: Type) => (arg0: any) => Type | Type | undefined;
 
 export type Plugin = {
@@ -383,19 +391,7 @@ export type Plugin = {
   actions: MaybeCfgFun<Record<string, Action>>;
   eventTypes: MaybeCfgFun<Record<string, { hasChannel: boolean }>>;
   configuration_workflow?: () => AbstractWorkflow;
-  fieldviews?: {
-    type: string;
-    isEdit: boolean;
-    run:
-      | ((arg0: any) => string)
-      | (([arg0, arg1, arg2, arg3, arg4]: [
-          arg0: string,
-          arg1: any,
-          arg2: any,
-          arg3: string,
-          arg4: boolean,
-        ]) => string);
-  };
+  fieldviews?: Record<string, FieldView & { type: string }>;
   dependencies: string[];
   [key: string]: any;
 };
