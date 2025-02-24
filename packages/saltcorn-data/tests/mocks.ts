@@ -275,7 +275,6 @@ const plugin_with_routes = () => ({
   viewtemplates: [
     {
       name: "ViewWithRoutes",
-      display_state_form: false,
       get_state_fields() {
         return [];
       },
@@ -293,7 +292,6 @@ const plugin_with_routes = () => ({
     },
     {
       name: "TablelessView",
-      display_state_form: false,
       tableless: true,
       get_state_fields() {
         return [];

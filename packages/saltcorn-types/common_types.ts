@@ -1,4 +1,4 @@
-import type { FieldView, FieldLike } from "./base_types";
+import type { FieldView, FieldLike, Req,Res } from "./base_types";
 import type { AbstractTable } from "./model-abstracts/abstract_table";
 
 /**
@@ -19,8 +19,8 @@ export type SuccessMessage = {
 };
 
 export type ReqRes = {
-  req?: any;
-  res?: any;
+  req?: Req;
+  res?: Res;
 };
 
 export type ResultMessage = ErrorMessage | SuccessMessage;

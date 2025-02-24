@@ -204,7 +204,7 @@ export type ConnectedObjects = {
   // trigger are loaded on demand
 };
 
-type ActionMode = "edit" | "show" | "filter" | "list" | "workflow";
+type ActionMode = "edit" | "show" | "filter" | "list" | "workflow" | "page";
 
 export type Action = {
   namespace?: string;
@@ -243,7 +243,7 @@ export type ViewTemplate = {
     table_id: number | string | undefined,
     viewname: string,
     configuration: any
-  ) => Promise<Array<FieldLike>>;
+  ) => Promise<Array<FieldLike>> | Array<FieldLike>;
   configuration_workflow?: (req: Req) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
   initial_config?: (arg0: { table_id: number }) => Promise<any>;

@@ -911,7 +911,6 @@ module.exports = {
   run,
   get_state_fields,
   /** @type {boolean} */
-  display_state_form: false,
   /**
    * @param {object} opts
    * @param {*} opts.create_view_label
