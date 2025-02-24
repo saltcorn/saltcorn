@@ -1330,7 +1330,8 @@ const runPost = async (
             if (
               typeof childRow[k] === "undefined" &&
               !k.startsWith("_block_") &&
-              childFields.has(k)
+              childFields.has(k) &&
+              (v || v === 0) //no nulls or empty string, but allow 0
             )
               childRow[k] = v;
           }
