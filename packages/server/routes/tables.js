@@ -867,6 +867,8 @@ router.get(
       );
       fieldCard = [
         (nPrimaryKeys !== 1 || nonSerialPKS) &&
+          !table.external &&
+          !table.provider_name &&
           div(
             { class: "alert alert-danger", role: "alert" },
             i({ class: "fas fa-exclamation-triangle" }),
@@ -1117,6 +1119,15 @@ router.get(
                 req,
                 true
               ),
+            req.user.role_id === 1 &&
+              table.name !== "users" &&
+              post_dropdown_item(
+                `/table/delete-with-trig-views/${table.id}`,
+                '<i class="fas fa-trash"></i>&nbsp;' +
+                  req.__("Delete table+views+triggers"),
+                req,
+                true
+              ),
           ])
         )
     );
@@ -1274,6 +1285,50 @@ router.post(
         else if (!hasError) req.flash("success", req.__("Table saved"));
         res.redirect(`/table/${id}`);
       } else res.json({ success: "ok", notify });
+    }
+  })
+);
+
+//delete-with-trig-views
+/**
+ * Delete Table Route Handler definition
+ * /delete:/id, where id is table id in _sc_tables
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
+ */
+router.post(
+  "/delete-with-trig-views/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const t = Table.findOne({ id });
+    if (!t) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    if (t.name === "users") {
+      req.flash("error", req.__(`Cannot delete users table`));
+      res.redirect(`/table`);
+      return;
+    }
+    const views = await View.find(
+      t.id ? { table_id: t.id } : { exttable_name: t.name }
+    );
+    for (const view of views) await view.delete();
+    if (t.id) {
+      const triggers = await Trigger.find({ table_id: t.id });
+      for (const trig of triggers) await trig.delete();
+    }
+    try {
+      await t.delete();
+      req.flash("success", req.__(`Table %s deleted`, t.name));
+      res.redirect(`/table`);
+    } catch (err) {
+      req.flash("error", err.message);
+      res.redirect(`/table`);
     }
   })
 );
