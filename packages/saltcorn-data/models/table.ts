@@ -97,7 +97,7 @@ import async_json_stream from "./internal/async_json_stream";
  * @param objs
  * @returns {object}
  */
-const transposeObjects = (objs: any[]): any => {
+const transposeObjects = (objs: Row[]): Row => {
   const keys = new Set<string>();
   for (const o of objs) {
     Object.keys(o).forEach((k) => keys.add(k));
@@ -254,7 +254,7 @@ class Table implements AbstractTable {
   provider_name?: string;
 
   /** Configuration for the table provider for this table */
-  provider_cfg?: any;
+  provider_cfg?: Row;
   /**
    * Table constructor
    * @param {object} o
@@ -459,11 +459,11 @@ class Table implements AbstractTable {
    * tbd why this function in this file - needs to models
    * @param opts
    */
-  async get_models(opts?: any) {
+  async get_models(where?: Where | string) {
     const Model = require("./model");
-    if (typeof opts === "string")
-      return await Model.find({ name: opts, table_id: this.id });
-    else return await Model.find({ ...(opts || {}), table_id: this.id });
+    if (typeof where === "string")
+      return await Model.find({ name: where, table_id: this.id });
+    else return await Model.find({ ...(where || {}), table_id: this.id });
   }
 
   /**
@@ -471,19 +471,17 @@ class Table implements AbstractTable {
    * @param fields - fields list
    * @returns {null|*} null or owner column name
    */
-  owner_fieldname_from_fields(
-    fields?: Field[] | null
-  ): string | null | undefined {
+  owner_fieldname_from_fields(fields?: Field[] | null): string | null {
     if (!this.ownership_field_id || !fields) return null;
     const field = fields.find((f: Field) => f.id === this.ownership_field_id);
-    return field?.name;
+    return field?.name || null;
   }
 
   /**
    * Get owner column name
    * @returns {Promise<string|null|*>}
    */
-  owner_fieldname(): string | null | undefined {
+  owner_fieldname(): string | null {
     if (this.name === "users") return "id";
     if (!this.ownership_field_id) return null;
     return this.owner_fieldname_from_fields(this.fields);
@@ -493,7 +491,7 @@ class Table implements AbstractTable {
    * Check if user is owner of row
    * @param user - user
    * @param row - table row
-   * @returns {Promise<string|null|*|boolean>}
+   * @returns {boolean}
    */
   is_owner(user: AbstractUser | undefined, row: Row): boolean {
     if (!user) return false;
@@ -506,7 +504,7 @@ class Table implements AbstractTable {
 
     // users are owners of their own row in users table
     if (this.name === "users" && !field_name)
-      return user.id && `${row?.id}` === `${user.id}`;
+      return !!user.id && `${row?.id}` === `${user.id}`;
 
     return (
       typeof field_name === "string" &&
@@ -649,7 +647,7 @@ class Table implements AbstractTable {
   /**
    * get sanitized name of table
    */
-  get santized_name() {
+  get santized_name(): string {
     return sqlsanitize(this.name);
   }
 
@@ -1203,7 +1201,7 @@ class Table implements AbstractTable {
       role &&
       this.updateWhereWithOwnership(
         where,
-        fields, 
+        fields,
         forUser || { role_id: 100 },
         true
       )?.notAuthorized
