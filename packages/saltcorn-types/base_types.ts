@@ -380,6 +380,70 @@ export type FieldView = {
 
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
+type Req = {
+  query: GenObj;
+  flash: (flash_type: "warning" | "success", message: string) => void;
+  user?: AbstractUser;
+  csrfToken: () => string;
+  getLocale: () => string;
+  headers: GenObj;
+  xhr: boolean;
+  __: (s: string) => string;
+};
+type Res = {
+  redirect: (url: string) => void;
+  send: (contents: string) => void;
+  json: (value: unknown) => void;
+  status: (http_code: number) => void;
+};
+
+type ModelPattern = {
+  configuration_workflow: (req: Req) => AbstractWorkflow;
+  prediction_outputs: ({
+    configuration,
+  }: {
+    configuration: GenObj;
+  }) => Array<FieldLike>;
+  hyperparameter_fields: ({
+    configuration,
+    table,
+  }: {
+    configuration: GenObj;
+    table: AbstractTable;
+  }) => Array<FieldLike>;
+  train: ({
+    table,
+    configuration,
+    hyperparameters,
+    state,
+  }: {
+    table: AbstractTable;
+    configuration: GenObj;
+    hyperparameters: GenObj;
+    state: GenObj;
+  }) => Promise<any>;
+  predict: ({
+    id,
+    model,
+    hyperparameters,
+    fit_object,
+    rows,
+  }: {
+    id: number;
+    model: { configuration: GenObj };
+    hyperparameters: GenObj;
+    fit_object: any;
+    rows: Array<Row>;
+  }) => Promise<Array<GenObj>>;
+};
+
+type AuthenticationMethod = {
+  icon?: string;
+  label: string;
+  parameters?: GenObj;
+  strategy: any;
+};
+
 type PluginFacilities = {
   headers?: Array<Header>;
   functions?: PluginFunction | ((arg1: any) => any);
@@ -389,10 +453,17 @@ type PluginFacilities = {
   actions?: Record<string, Action>;
   eventTypes?: Record<string, { hasChannel: boolean }>;
   fieldviews?: Record<string, FieldView & { type: string }>;
+  routes?: Array<{
+    url: string;
+    method: "get" | "post";
+    callback: (req: Req, res: Res) => Promise<void>;
+  }>;
+  modelpatterns?: Record<string, ModelPattern>;
+  authentication?: Record<string, AuthenticationMethod>;
 };
 
 type PluginWithConfig = {
-  configuration_workflow: () => AbstractWorkflow;
+  configuration_workflow: (req: Req) => AbstractWorkflow;
 } & CfgFun<PluginFacilities>;
 
 type PluginWithoutConfig = {
@@ -403,7 +474,7 @@ export type Plugin = {
   sc_plugin_api_version: number;
   plugin_name?: string;
   dependencies: string[];
-  onLoad: (cfg: any)=> Promise<void>
+  onLoad: (cfg: any) => Promise<void>;
   [key: string]: any;
 } & (PluginWithConfig | PluginWithoutConfig);
 
