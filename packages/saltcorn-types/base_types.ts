@@ -378,23 +378,34 @@ export type FieldView = {
       ]) => string);
 };
 
-type MaybeCfgFun<Type> = (a: Type) => (arg0: any) => Type | Type | undefined;
+type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
+
+type PluginFacilities = {
+  headers?: Array<Header>;
+  functions?: PluginFunction | ((arg1: any) => any);
+  layout?: PluginLayout;
+  types?: Array<PluginType>;
+  viewtemplates?: Array<ViewTemplate>;
+  actions?: Record<string, Action>;
+  eventTypes?: Record<string, { hasChannel: boolean }>;
+  fieldviews?: Record<string, FieldView & { type: string }>;
+};
+
+type PluginWithConfig = {
+  configuration_workflow: () => AbstractWorkflow;
+} & CfgFun<PluginFacilities>;
+
+type PluginWithoutConfig = {
+  configuration_workflow?: undefined;
+} & PluginFacilities;
 
 export type Plugin = {
   sc_plugin_api_version: number;
   plugin_name?: string;
-  headers: MaybeCfgFun<Array<Header>>;
-  functions: MaybeCfgFun<PluginFunction | ((arg1: any) => any)>;
-  layout: MaybeCfgFun<PluginLayout> | PluginLayout;
-  types: MaybeCfgFun<Array<PluginType>>;
-  viewtemplates: MaybeCfgFun<Array<ViewTemplate>>;
-  actions: MaybeCfgFun<Record<string, Action>>;
-  eventTypes: MaybeCfgFun<Record<string, { hasChannel: boolean }>>;
-  configuration_workflow?: () => AbstractWorkflow;
-  fieldviews?: Record<string, FieldView & { type: string }>;
   dependencies: string[];
+  onLoad: (cfg: any)=> Promise<void>
   [key: string]: any;
-};
+} & (PluginWithConfig | PluginWithoutConfig);
 
 export type CodePagePack = {
   name: string;
