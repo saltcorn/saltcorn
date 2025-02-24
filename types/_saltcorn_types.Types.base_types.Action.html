@@ -18,32 +18,100 @@
 <li><a href="../modules/_saltcorn_types.Types.base_types.html">base_types</a></li>
 <li><a href="_saltcorn_types.Types.base_types.Action.html">Action</a></li></ul>
 <h1>Type alias Action</h1></div>
-<div class="tsd-signature"><span class="tsd-kind-type-alias">Action</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">table_id</span>, <span class="tsd-kind-parameter">viewname</span>, <span class="tsd-kind-parameter">optsOne</span>, <span class="tsd-kind-parameter">body</span>, <span class="tsd-kind-parameter">optsTwo</span>, <span class="tsd-kind-parameter">queries</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span></div>
+<div class="tsd-signature"><span class="tsd-kind-type-alias">Action</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">configFields</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">{
+    table,
+    mode,
+  }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">description</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">disableInBuilder</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">disableInList</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">disableInWorkflow</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">namespace</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">run</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">{
+    row,
+    user,
+    configuration,
+    mode,
+    table,
+  }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></div>
 <div class="tsd-type-declaration">
 <h4>Type declaration</h4>
 <ul class="tsd-parameters">
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">config<wbr/>Fields</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">{
+    table,
+    mode,
+  }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span></h5>
+<ul class="tsd-parameters">
 <li class="tsd-parameter-signature">
 <ul class="tsd-signatures">
-<li class="tsd-signature" id="__type.__type-1"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">table_id</span>, <span class="tsd-kind-parameter">viewname</span>, <span class="tsd-kind-parameter">optsOne</span>, <span class="tsd-kind-parameter">body</span>, <span class="tsd-kind-parameter">optsTwo</span>, <span class="tsd-kind-parameter">queries</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
+<li class="tsd-signature" id="__type.configFields.__type-1.__type-2"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">{
+    table,
+    mode,
+  }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span></li>
 <li class="tsd-description">
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">table_id</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></h5></li>
+<h5><span class="tsd-kind-parameter">{
+    table,
+    mode,
+  }</span>: <span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">mode</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">ActionMode</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">table</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_saltcorn_types.ModelAbstracts.abstract_table.AbstractTable.html" class="tsd-signature-type tsd-kind-interface">AbstractTable</a><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></h5>
+<ul class="tsd-parameters">
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">mode</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">ActionMode</span></h5></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">table</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_saltcorn_types.ModelAbstracts.abstract_table.AbstractTable.html" class="tsd-signature-type tsd-kind-interface">AbstractTable</a></h5></li></ul></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><a href="_saltcorn_types.Types.base_types.FieldLike.html" class="tsd-signature-type tsd-kind-type-alias">FieldLike</a><span class="tsd-signature-symbol">[]</span></h4></li></ul></li></ul></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">description</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">disable<wbr/>In<wbr/>Builder</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">disable<wbr/>In<wbr/>List</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">disable<wbr/>In<wbr/>Workflow</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">namespace</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span></h5></li>
+<li class="tsd-parameter">
+<h5><span class="tsd-kind-property">run</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">{
+    row,
+    user,
+    configuration,
+    mode,
+    table,
+  }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span></h5>
+<ul class="tsd-parameters">
+<li class="tsd-parameter-signature">
+<ul class="tsd-signatures">
+<li class="tsd-signature" id="__type.run.__type-3.__type-4"><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">{
+    row,
+    user,
+    configuration,
+    mode,
+    table,
+  }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></li>
+<li class="tsd-description">
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
 <li>
-<h5><span class="tsd-kind-parameter">viewname</span>: <span class="tsd-signature-type">string</span></h5></li>
-<li>
-<h5><span class="tsd-kind-parameter">optsOne</span>: <span class="tsd-signature-type">any</span></h5></li>
-<li>
-<h5><span class="tsd-kind-parameter">body</span>: <span class="tsd-signature-type">any</span></h5></li>
-<li>
-<h5><span class="tsd-kind-parameter">optsTwo</span>: <a href="_saltcorn_types.Types.common_types.ReqRes.html" class="tsd-signature-type tsd-kind-type-alias">ReqRes</a></h5></li>
-<li>
-<h5><span class="tsd-kind-parameter">queries</span>: <span class="tsd-signature-type">any</span></h5></li></ul></div>
-<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4></li></ul></li></ul></div><aside class="tsd-sources">
+<h5><span class="tsd-kind-parameter">{
+    row,
+    user,
+    configuration,
+    mode,
+    table,
+  }</span>: <span class="tsd-signature-symbol">{ </span><br/><span>    </span><span class="tsd-kind-property">configuration</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">Row</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">mode</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">ActionMode</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">row</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">Row</span><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">table</span><span class="tsd-signature-symbol">?: </span><a href="../interfaces/_saltcorn_types.ModelAbstracts.abstract_table.AbstractTable.html" class="tsd-signature-type tsd-kind-interface">AbstractTable</a><span class="tsd-signature-symbol">; </span><br/><span>    </span><span class="tsd-kind-property">user</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">AbstractUser</span><span class="tsd-signature-symbol">; </span><br/><span class="tsd-signature-symbol">}</span></h5>
+<ul class="tsd-parameters">
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">configuration</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">Row</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">mode</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">ActionMode</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">row</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">Row</span></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">table</span><span class="tsd-signature-symbol">?: </span><a href="../interfaces/_saltcorn_types.ModelAbstracts.abstract_table.AbstractTable.html" class="tsd-signature-type tsd-kind-interface">AbstractTable</a></h5></li>
+<li class="tsd-parameter">
+<h5><code class="tsd-tag ts-flagOptional">Optional</code> <span class="tsd-kind-property">user</span><span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type ">AbstractUser</span></h5></li></ul></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type ">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4></li></ul></li></ul></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/6b8de16/packages/saltcorn-types/base_types.ts#L326">saltcorn-types/base_types.ts:326</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/c5428c5/packages/saltcorn-types/base_types.ts#L209">saltcorn-types/base_types.ts:209</a></li></ul></aside></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -83,14 +151,17 @@
 <div class="tsd-accordion-details">
 <ul class="tsd-nested-navigation">
 <li><a href="_saltcorn_types.Types.base_types.Action.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><g id="icon-4194304"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-type-alias)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6"></rect><path d="M11.31 16V8.224H8.91V7.24H14.79V8.224H12.39V16H11.31Z" fill="var(--color-text)"></path></g></svg><span>Action</span></a></li>
+<li><a href="_saltcorn_types.Types.base_types.AuthenticationMethod.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Authentication<wbr/>Method</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.CodePagePack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Code<wbr/>Page<wbr/>Pack</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.Column.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Column</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.ConnectedObjects.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Connected<wbr/>Objects</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.FieldLike.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Field<wbr/>Like</span></a></li>
+<li><a href="_saltcorn_types.Types.base_types.FieldView.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Field<wbr/>View</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.Header.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Header</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.JoinFieldOption.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Join<wbr/>Field<wbr/>Option</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.Layout.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Layout</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.MobileConfig.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Mobile<wbr/>Config</span></a></li>
+<li><a href="_saltcorn_types.Types.base_types.ModelPattern.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Model<wbr/>Pattern</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.Pack.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Pack</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.Plugin.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Plugin</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.PluginFunction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Plugin<wbr/>Function</span></a></li>
@@ -101,7 +172,11 @@
 <li><a href="_saltcorn_types.Types.base_types.PluginWrap.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Plugin<wbr/>Wrap</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.PluginWrapArg.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Plugin<wbr/>Wrap<wbr/>Arg</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.RelationOption.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Relation<wbr/>Option</span></a></li>
+<li><a href="_saltcorn_types.Types.base_types.Req.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Req</span></a></li>
+<li><a href="_saltcorn_types.Types.base_types.Res.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Res</span></a></li>
+<li><a href="_saltcorn_types.Types.base_types.RouteAction.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Route<wbr/>Action</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.RunExtra.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Run<wbr/>Extra</span></a></li>
+<li><a href="_saltcorn_types.Types.base_types.TableProvider.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Table<wbr/>Provider</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.TableQuery.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Table<wbr/>Query</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.Tablely.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>Tablely</span></a></li>
 <li><a href="_saltcorn_types.Types.base_types.ViewTemplate.html"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="#icon-4194304"></use></svg><span>View<wbr/>Template</span></a></li>
