@@ -178,7 +178,7 @@ export type PluginType = {
           arg1: any,
           arg2: any,
           arg3: string,
-          arg4: boolean
+          arg4: boolean,
         ]) => string);
   };
   attributes?: (arg0: any) => Array<Attribute> | Array<Attribute>;
@@ -349,6 +349,7 @@ export type Plugin = {
   layout: MaybeCfgFun<PluginLayout> | PluginLayout;
   types: MaybeCfgFun<Array<PluginType>>;
   viewtemplates: MaybeCfgFun<Array<ViewTemplate>>;
+  eventTypes: MaybeCfgFun<Record<string, { hasChannel: boolean }>>;
   configuration_workflow?: () => AbstractWorkflow;
   fieldviews?: {
     type: string;
@@ -360,7 +361,7 @@ export type Plugin = {
           arg1: any,
           arg2: any,
           arg3: string,
-          arg4: boolean
+          arg4: boolean,
         ]) => string);
   };
   dependencies: string[];

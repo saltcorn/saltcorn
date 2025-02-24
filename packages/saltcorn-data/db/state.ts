@@ -20,6 +20,8 @@ import {
   ViewTemplate,
   MobileConfig,
   PluginRoute,
+  Header,
+  PluginFunction,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -148,17 +150,17 @@ class State {
   plugin_module_names: any;
   plugin_routes: Record<string, Array<PluginRoute>>;
   routesChangedCb?: Function;
-  eventTypes: any;
+  eventTypes: Record<string, { hasChannel: boolean; name?: string }>;
   fonts: Record<string, string>;
   icons: Array<string>;
   layouts: Record<string, PluginLayout>;
   userLayouts: Record<string, PluginLayout>;
-  headers: any;
-  function_context: any;
-  codepage_context: any;
+  headers: Record<string, Array<Header>>;
+  function_context: Record<string, Function>;
+  codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
-  functions: any;
-  keyFieldviews: any;
+  functions: Record<string, Function | PluginFunction>;
+  keyFieldviews: Record<string, unknown>;
   external_tables: any;
   verifier: any;
   i18n: I18n.I18n;
@@ -772,7 +774,7 @@ class State {
       this.actions[k] = v;
     });
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
-      this.eventTypes[k] = v;
+      this.eventTypes[k] = v as { hasChannel: boolean };
     });
     Object.entries(withCfg("fonts", {})).forEach(([k, v]) => {
       this.fonts[k] = v as string;
