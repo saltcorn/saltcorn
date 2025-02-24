@@ -392,6 +392,9 @@ type FieldViewFilter = {
 export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
+  blockDisplay?: boolean;
+  handlesTextStyle?: boolean;
+  description?: string;
   fill_options?: (
     field: FieldLike,
     force_allow_none: boolean,
