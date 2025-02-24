@@ -1339,16 +1339,36 @@ class Table implements AbstractTable {
    * @returns
    */
   async updateRow(
-    v_in: any,
+    v_in: Row,
     id: any,
     user?: Row,
-    noTrigger?: boolean,
+    noTrigger?:
+      | boolean
+      | {
+          noTrigger?: boolean;
+          resultCollector?: object;
+          restore_of_version?: any;
+          syncTimestamp?: Date;
+          additionalTriggerValues?: Row;
+          autoRecalcIterations?: number;
+        },
     resultCollector?: object,
     restore_of_version?: any,
     syncTimestamp?: Date,
     additionalTriggerValues?: Row,
     autoRecalcIterations?: number
   ): Promise<string | void> {
+    // migrating to options arg
+    if (typeof noTrigger === "object") {
+      const extraOptions = noTrigger;
+      noTrigger = extraOptions.noTrigger;
+      resultCollector = extraOptions.resultCollector;
+      restore_of_version = extraOptions.restore_of_version;
+      syncTimestamp = extraOptions.syncTimestamp;
+      additionalTriggerValues = extraOptions.additionalTriggerValues;
+      autoRecalcIterations = extraOptions.autoRecalcIterations;
+    }
+
     if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
       return;
     let existing;
@@ -1526,7 +1546,7 @@ class Table implements AbstractTable {
       }
 
       let calced = await apply_calculated_fields_stored(
-        need_to_update ? updated : { ...existing, ...v_in },
+        need_to_update ? updated || {} : { ...existing, ...v_in },
         this.fields,
         this
       );
