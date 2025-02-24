@@ -662,7 +662,7 @@ export type SelectOptions = {
   versioned?: boolean; //TODO rm this and below
   min_role_read?: number;
   min_role_write?: number;
-  ownership_field_id?: string;
+  ownership_field_id?: number;
   ownership_formula?: string;
   provider_name?: string;
   provider_cfg?: any;

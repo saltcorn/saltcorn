@@ -223,7 +223,7 @@ class Table implements AbstractTable {
   min_role_write: number;
 
   /** The ID of the ownership field*/
-  ownership_field_id?: string | null;
+  ownership_field_id?: number | null;
 
   /** A formula to denote ownership. This is a JavaScript expression which
    * must evaluate to true if the user is the owner*/
@@ -2546,7 +2546,7 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async update(new_table_rec: Partial<Table>): Promise<void> {
-    if (new_table_rec.ownership_field_id === "")
+    if (new_table_rec.ownership_field_id === ("" as any))
       delete new_table_rec.ownership_field_id;
     const existing = Table.findOne({ id: this.id });
     if (!existing) {
