@@ -67,7 +67,7 @@ class User {
   email: string;
   password: string;
   language?: string;
-  _attributes?: any;
+  _attributes: GenObj;
   api_token?: string | null;
   verification_token?: string;
   verified_on?: Date;

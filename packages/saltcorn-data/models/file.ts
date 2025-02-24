@@ -237,7 +237,7 @@ class File {
     }
   }
 
-  static nameToMimeType(filepath: string) {
+  static nameToMimeType(filepath: string): string | false {
     const filename = path.basename(filepath);
     if (filename && filename.endsWith(".py")) return "text/x-python";
     return lookup(filename);
@@ -349,7 +349,7 @@ class File {
   static async new_folder(
     name: string,
     inFolder: string = ""
-  ): Promise<undefined> {
+  ): Promise<void> {
     const tenant = db.getTenantSchema();
 
     const safeDir = path.normalize(name).replace(/^(\.\.(\/|\\|$))+/, "");
@@ -381,7 +381,7 @@ class File {
   /**
    * Get current folder
    */
-  get current_folder() {
+  get current_folder():string {
     return path.dirname(this.path_to_serve);
   }
   /**
