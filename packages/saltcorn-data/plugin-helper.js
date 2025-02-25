@@ -1937,7 +1937,12 @@ const handleRelationPath = (queryObj, qstate, table) => {
     let where = null;
     for (const level of queryObj.path) {
       if (level.inboundKey) {
-        levels.push({ ...level });
+        const tbl = Table.findOne(level.table);
+        levels.push({
+          ...level,
+          pk_name: tbl?.pk_name,
+          ref_name: tbl?.getField?.(level.inboundKey)?.refname,
+        });
         lastTableName = level.table;
         if (!where)
           where = {
@@ -1949,7 +1954,11 @@ const handleRelationPath = (queryObj, qstate, table) => {
         const refField = lastTable.fields.find(
           (field) => field.name === level.fkey
         );
-        levels.push({ table: refField.reftable_name, fkey: level.fkey });
+        levels.push({
+          table: refField.reftable_name,
+          fkey: level.fkey,
+          pk_name: refField?.refname,
+        });
         lastTableName = refField.reftable_name;
         const finalTable = Table.findOne({ name: lastTableName });
         if (!where)
@@ -1959,6 +1968,7 @@ const handleRelationPath = (queryObj, qstate, table) => {
           };
       }
     }
+
     addOrCreateList(qstate, table?.pk_name || "id", {
       inSelectWithLevels: {
         joinLevels: levels,
