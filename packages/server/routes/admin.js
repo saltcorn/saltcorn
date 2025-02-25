@@ -296,6 +296,22 @@ router.get(
 );
 
 router.get(
+  "/jsdoc/*filepath",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const fullPath = File.normalise_in_base(
+      path.join(__dirname, "..", "docs"),
+      ...req.params.filepath
+    );
+    if (fs.existsSync(fullPath)) res.sendFile(fullPath);
+    else {
+      res.status(404);
+      res.sendWrap(`File not found`, { above: ["Help file not found"] });
+    }
+  })
+);
+
+router.get(
   "/whatsnew",
   isAdmin,
   error_catcher(async (req, res) => {
