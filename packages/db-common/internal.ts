@@ -98,9 +98,9 @@ export const ftsFieldsSqlExpr = (
     .filter((f: any) => f.is_fkey && f?.attributes?.include_fts)
     .forEach((f) => {
       fldsArray.push(
-        `coalesce((select ${f.attributes.summary_field} from ${
+        `coalesce((select "${f.attributes.summary_field}" from ${
           schema ? `"${schema}".` : ""
-        }"${f.reftable_name}" rt where rt.id=${
+        }"${f.reftable_name}" rt where rt."${f.refname}"=${
           table ? `"${sqlsanitize(table)}".` : ""
         }"${f.name}"),'')`
       );
