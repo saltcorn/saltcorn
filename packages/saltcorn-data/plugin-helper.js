@@ -2746,7 +2746,7 @@ const build_schema_data = async () => {
  */
 const pathToState = (relation, getRowVal) => {
   const sourceTbl = Table.findOne({ name: relation.sourceTblName });
-  const pkName = sourceTbl.pk_name;
+  const pkName = sourceTbl?.pk_name || "id";
   const path = relation.path;
   switch (relation.type) {
     case RelationType.CHILD_LIST:
