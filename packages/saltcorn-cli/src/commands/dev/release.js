@@ -16,7 +16,7 @@ const runCmd = (cmd, args, options) => {
     throw new Error(
       `Non-zero exit status for command: "${cmd} ${args.join(" ")}" in ${
         options?.cwd || "."
-      }`
+      }`,
     );
 };
 
@@ -52,6 +52,14 @@ class ReleaseCommand extends Command {
     console.log("Release begins in five seconds, press Ctrl-C to abort");
     await sleep(5000);
     runCmd("cp", ["CHANGELOG.md", "packages/server/"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
+    runCmd("npm", ["run", "docs"], {
+      stdio: "inherit",
+      cwd: ".",
+    });
+    runCmd("cp", ["-r", "docs", "packages/server/"], {
       stdio: "inherit",
       cwd: ".",
     });
@@ -102,7 +110,7 @@ class ReleaseCommand extends Command {
       updateDependencies(json, "@saltcorn/cli", version);
       fs.writeFileSync(
         `packages/${dir}/package.json`,
-        JSON.stringify(json, null, 2)
+        JSON.stringify(json, null, 2),
       );
     };
     const compileTsFiles = () => {
@@ -129,7 +137,7 @@ class ReleaseCommand extends Command {
         {
           stdio: "inherit",
           cwd: `packages/${dir}/`,
-        }
+        },
       );
       tags.shift();
       for (const tag of tags) {
@@ -175,7 +183,7 @@ class ReleaseCommand extends Command {
     updatePkgJson("saltcorn-cli");
     fs.writeFileSync(
       `package.json`,
-      JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2)
+      JSON.stringify({ ...rootPackageJson, workspaces: undefined }, null, 2),
     );
 
     runCmd("npm", ["install", "--legacy-peer-deps"], {
@@ -215,15 +223,18 @@ class ReleaseCommand extends Command {
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
     fs.writeFileSync(
       `Dockerfile.release`,
-      dockerfile.replace(/cli@.* --omit=dev/, `cli@${version} --omit=dev`)
+      dockerfile.replace(/cli@.* --omit=dev/, `cli@${version} --omit=dev`),
     );
     const dockerfileWithMobile = fs.readFileSync(
       `Dockerfile.mobile.release`,
-      "utf8"
+      "utf8",
     );
     fs.writeFileSync(
       `Dockerfile.mobile.release`,
-      dockerfileWithMobile.replace(/cli@.* --omit=dev/, `cli@${version} --omit=dev`)
+      dockerfileWithMobile.replace(
+        /cli@.* --omit=dev/,
+        `cli@${version} --omit=dev`,
+      ),
     );
     //git commit tag and push
     runCmd("git", ["commit", "-am", "v" + version], {

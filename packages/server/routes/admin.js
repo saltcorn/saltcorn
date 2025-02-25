@@ -296,6 +296,22 @@ router.get(
 );
 
 router.get(
+  "/jsdoc/*filepath",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const fullPath = File.normalise_in_base(
+      path.join(__dirname, "..", "docs"),
+      ...req.params.filepath
+    );
+    if (fs.existsSync(fullPath)) res.sendFile(fullPath);
+    else {
+      res.status(404);
+      res.sendWrap(`File not found`, { above: ["Help file not found"] });
+    }
+  })
+);
+
+router.get(
   "/whatsnew",
   isAdmin,
   error_catcher(async (req, res) => {
@@ -4071,7 +4087,7 @@ router.get(
             "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions. Declare a constant <code>k</code> as <code>globalThis.k = ...</code> In scope: " +
             a(
               {
-                href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html",
+                href: "/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html",
                 target: "_blank",
               },
               "Table"
