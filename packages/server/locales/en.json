@@ -1558,5 +1558,6 @@
 	"Clean modules and restart": "Clean modules and restart",
 	"Modules cleaned, server restarting...": "Modules cleaned, server restarting...",
 	"Delete table+views+triggers": "Delete table+views+triggers",
-	"No file uploaded": "No file uploaded"
+	"No file uploaded": "No file uploaded",
+	"To obtain a certificate, the administrator's email address will be shared with Let's Encrypt.": "To obtain a certificate, the administrator's email address will be shared with Let's Encrypt."
 }

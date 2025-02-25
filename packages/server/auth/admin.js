@@ -677,7 +677,11 @@ router.get(
               p(
                 req.__(
                   `Saltcorn can automatically obtain an SSL certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a> for single domains`
-                )
+                ) +
+                  ". " +
+                  req.__(
+                    `To obtain a certificate, the administrator's email address will be shared with Let's Encrypt.`
+                  )
               ),
               h5(
                 req.__("Currently: "),
