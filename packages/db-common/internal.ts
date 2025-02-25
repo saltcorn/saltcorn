@@ -246,8 +246,6 @@ const inSelectWithLevels =
         ? `${quote(sqlsanitize(v.inSelectWithLevels.schema))}.`
         : "";
 
-    console.log("inSelectWithLevels", v.inSelectWithLevels);
-
     for (let i = 0; i < joinLevels.length; i++) {
       const { table, fkey, inboundKey, pk_name, ref_name } = joinLevels[i];
       const pk = pk_name || "id";
@@ -303,8 +301,6 @@ const inSelectWithLevels =
     const sqlPart = `${quote(sqlsanitizeAllowDots(k))} in (select ${quote(
       sqlsanitizeAllowDots(inColumn!)
     )} ${selectParts.join(" ")} ${where})`;
-    console.log({ sqlPart });
-
     return sqlPart;
   };
 
