@@ -402,6 +402,7 @@ router.get(
                     col[k] = window[v.substring(2)];
                 })
               })   
+              window.tabulator_table_primary_key = "${table.pk_name}";
               window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${encodeURIComponent(
                     table.name

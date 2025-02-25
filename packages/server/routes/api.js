@@ -78,8 +78,8 @@ function accessAllowedRead(req, user, table, allow_ownership) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 100;
+        ? user.role_id
+        : 100;
 
   return (
     role <= table.min_role_read ||
@@ -101,8 +101,8 @@ function accessAllowedWrite(req, user, table) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 100;
+        ? user.role_id
+        : 100;
 
   return (
     role <= table.min_role_write ||
@@ -122,8 +122,8 @@ function accessAllowed(req, user, trigger) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 100;
+        ? user.role_id
+        : 100;
 
   return role <= trigger.min_role;
 }
@@ -397,8 +397,8 @@ router.get(
             const derefs = Array.isArray(dereference)
               ? dereference
               : !dereference
-              ? []
-              : [dereference];
+                ? []
+                : [dereference];
             derefs.forEach((f) => {
               const field = table.getField(f);
               if (field?.attributes?.summary_field)
@@ -701,7 +701,7 @@ router.delete(
               );
             } else
               await table.deleteRows(
-                { id },
+                { [table.pk_name]: id },
                 user || req.user || { role_id: 100 }
               );
             res.json({ success: true });
