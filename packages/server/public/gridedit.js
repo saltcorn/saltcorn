@@ -164,13 +164,15 @@ function delete_tabulator_row(e, cell) {
     def?.formatterParams?.tableName || window.tabulator_table_name;
 
   const row = cell.getRow().getData();
-  if (!row.id) {
+
+  const pk_name = window.tabulator_table_primary_key || "id";
+  if (!row[pk_name]) {
     cell.getRow().delete();
     return;
   }
   $.ajax({
     type: "DELETE",
-    url: `/api/${tableName}/${row.id}`,
+    url: `/api/${tableName}/${row[pk_name]}`,
     data: row, // to process primary keys different from id
     headers: {
       "CSRF-Token": _sc_globalCsrf,
