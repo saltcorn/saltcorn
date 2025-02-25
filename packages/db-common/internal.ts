@@ -180,6 +180,7 @@ const subSelectWhere =
         table: string;
         tenant?: string;
         through?: string;
+        through_pk?: string;
         valField?: string;
       };
     }
@@ -197,7 +198,7 @@ const subSelectWhere =
         v.inSelect.valField
       }" from ${tenantPrefix}"${v.inSelect.table}" ss1 join ${tenantPrefix}"${
         v.inSelect.through
-      }" ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
+      }" ss2 on ss2."${v.inSelect.through_pk || "id"}" = ss1."${v.inSelect.field}" ${where})`;
     } else {
       const whereObj = v.inSelect.where;
       const wheres = whereObj ? Object.entries(whereObj) : [];

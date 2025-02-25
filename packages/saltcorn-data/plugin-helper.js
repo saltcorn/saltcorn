@@ -2132,6 +2132,7 @@ const stateFieldsToWhere = ({
       const [jFieldNm, throughPart, finalPart] = k.split(".");
       const [thoughTblNm, throughField] = throughPart.split("->");
       const [jtNm, lblField] = finalPart.split("->");
+      const jtTbl = Table.findOne(jtNm);
       let where = { [db.sqlsanitize(lblField)]: v };
       qstate[jFieldNm] = [
         ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
@@ -2141,7 +2142,7 @@ const stateFieldsToWhere = ({
             table: db.sqlsanitize(thoughTblNm),
             tenant: db.isSQLite ? undefined : db.getTenantSchema(),
             field: db.sqlsanitize(throughField),
-            valField: "id",
+            valField: jtTbl?.pk_name || "id",
             through: db.sqlsanitize(jtNm),
             where,
           },
@@ -2212,8 +2213,9 @@ const stateFieldsToWhere = ({
               table: db.sqlsanitize(jtNm),
               tenant: db.isSQLite ? undefined : db.getTenantSchema(),
               field: db.sqlsanitize(jFieldNm),
-              valField: "id",
+              valField: Table.findOne(jtNm)?.pk_name || "id",
               through: db.sqlsanitize(tblName),
+              through_pk: Table.findOne(tblName)?.pk_name || "id",
               where: { [db.sqlsanitize(lblField)]: v },
             },
           },
