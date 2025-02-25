@@ -226,7 +226,13 @@ const inSelectWithLevels =
       inSelectWithLevels: {
         where: Where;
         schema?: string;
-        joinLevels: { table: string; fkey?: string; inboundKey?: string }[];
+        joinLevels: {
+          table: string;
+          fkey?: string;
+          inboundKey?: string;
+          pk_name?: string;
+          ref_name?: string;
+        }[];
       };
     }
   ): string => {
@@ -241,7 +247,9 @@ const inSelectWithLevels =
         : "";
 
     for (let i = 0; i < joinLevels.length; i++) {
-      const { table, fkey, inboundKey } = joinLevels[i];
+      const { table, fkey, inboundKey, pk_name, ref_name } = joinLevels[i];
+      const pk = pk_name || "id";
+      const refname = ref_name || "id";
       const alias = quote(sqlsanitize(`${table}SubJ${i}`));
       if (i === 0) {
         selectParts.push(
@@ -250,7 +258,7 @@ const inSelectWithLevels =
           )}`
         );
         whereObj = prefixFieldsInWhere(v.inSelectWithLevels.where, alias);
-        if (joinLevels.length === 1) inColumn = quote(`${alias}.id`);
+        if (joinLevels.length === 1) inColumn = quote(`${alias}."${pk}"`);
       } else if (i < joinLevels.length - 1) {
         if (fkey) {
           selectParts.push(
@@ -258,13 +266,13 @@ const inSelectWithLevels =
               sqlsanitize(`${table}`)
             )} ${alias} on ${quote(
               `${lastAlias}.${sqlsanitize(fkey)}`
-            )} = ${alias}.id`
+            )} = ${alias}."${pk}"`
           );
         } else {
           selectParts.push(
             `join ${schema}${quote(
               sqlsanitize(`${table}`)
-            )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
+            )} ${alias} on ${quote(`${lastAlias}."${refname}"`)} = ${quote(
               `${alias}.${sqlsanitize(inboundKey!)}`
             )}`
           );
@@ -276,11 +284,11 @@ const inSelectWithLevels =
           selectParts.push(
             `join ${schema}${quote(
               sqlsanitize(`${table}`)
-            )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
+            )} ${alias} on ${quote(`${lastAlias}."${refname}"`)} = ${quote(
               `${alias}.${sqlsanitize(`${inboundKey}`)}`
             )}`
           );
-          inColumn = quote(`${alias}.id`);
+          inColumn = quote(`${alias}."${pk}"`);
         }
       }
       lastAlias = alias;
@@ -290,9 +298,10 @@ const inSelectWithLevels =
       whereObj && wheres.length > 0
         ? "where " + wheres.map(whereClause(phs)).join(" and ")
         : "";
-    return `${quote(sqlsanitizeAllowDots(k))} in (select ${quote(
+    const sqlPart = `${quote(sqlsanitizeAllowDots(k))} in (select ${quote(
       sqlsanitizeAllowDots(inColumn!)
     )} ${selectParts.join(" ")} ${where})`;
+    return sqlPart;
   };
 
 /**

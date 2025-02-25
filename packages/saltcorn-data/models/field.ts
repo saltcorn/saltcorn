@@ -1012,7 +1012,7 @@ class Field implements AbstractField {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           this.table!.name // ensured above
-        )}" rename column "${sqlsanitize(this.name)}" TO ${f.name};`
+        )}" rename column "${sqlsanitize(this.name)}" TO "${f.name}";`
       );
     }
     await db.update("_sc_fields", v, this.id);

@@ -2451,13 +2451,13 @@ module.exports = {
       const table = Table.findOne({ id: table_id });
       const pk_name = table.pk_name;
       let row = body[pk_name]
-        ? await table.getRow(
+        ? (await table.getRow(
             { [pk_name]: body[pk_name] },
             {
               forPublic: !req.user,
               forUser: req.user,
             }
-          )
+          )) || {}
         : {};
 
       table.fields.forEach((f) => {
