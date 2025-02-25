@@ -307,7 +307,7 @@ describe("mkWhere", () => {
     ).toStrictEqual({
       values: [7],
       where:
-        'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2.id = ss1."bar" where "ss2"."baz"=$1)',
+        'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2."id" = ss1."bar" where "ss2"."baz"=$1)',
     });
     expect(
       mkWhere({
