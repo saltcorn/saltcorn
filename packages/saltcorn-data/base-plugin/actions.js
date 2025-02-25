@@ -1495,21 +1495,21 @@ module.exports = {
         "Actions",
         a(
           {
-            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html",
             target: "_blank",
           },
           "Table"
         ),
         a(
           {
-            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.File-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models.File-1.html",
             target: "_blank",
           },
           "File"
         ),
         a(
           {
-            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.User-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models.User-1.html",
             target: "_blank",
           },
           "User"
