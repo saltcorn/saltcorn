@@ -421,7 +421,7 @@ router.get(
                   ajaxContentType:"json",
                   sortMode:"remote",
                   initialSort:[
-                    {column:"id", dir:"asc"},
+                    {column:"${table.pk_name}", dir:"asc"},
                   ],                 
               });
               window.tabulator_table.on("cellEdited", function(cell){
