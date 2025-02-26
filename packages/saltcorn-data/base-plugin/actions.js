@@ -1104,6 +1104,7 @@ module.exports = {
           sublabel:
             "Expression for JavaScript object. For example, <code>{points: 34}</code>",
           input_type: "code",
+          type: "String",
           attributes: { mode: "application/javascript" },
         },
         ...(mode === "edit" ||
@@ -1528,6 +1529,7 @@ module.exports = {
           input_type: "code",
           attributes: { mode: "application/javascript" },
           class: "validate-statements",
+          type: "String",
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
