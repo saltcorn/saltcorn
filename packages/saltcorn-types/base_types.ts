@@ -489,6 +489,16 @@ export type TableProvider = {
   get_table: (cfg: GenObj) => Promise<AbstractTable>;
 };
 
+export type CopilotSkill = {
+  title: string;
+  function_name: string;
+  description: string;
+  json_schema: () => Promise<GenObj>;
+  system_prompt: () => Promise<string>;
+  render_html: (config: GenObj) => Promise<string>;
+  execute: (config: GenObj) => Promise<{ postExec?: string } | void>;
+};
+
 type PluginFacilities = {
   headers?: Array<Header>;
   functions?: PluginFunction | Function;
@@ -506,6 +516,7 @@ type PluginFacilities = {
   modelpatterns?: Record<string, ModelPattern>;
   authentication?: Record<string, AuthenticationMethod>;
   table_providers?: Record<string, TableProvider>;
+  copilot_skills?: Record<string, CopilotSkill>;
 };
 
 type PluginWithConfig = {

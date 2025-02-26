@@ -27,6 +27,7 @@ import {
   FieldView,
   Action,
   AuthenticationMethod,
+  CopilotSkill,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -180,6 +181,7 @@ class State {
   scVersion: string;
   waitingWorkflows?: boolean;
   keyframes: Array<string>;
+  copilot_skills: Record<string, CopilotSkill>;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -210,6 +212,7 @@ class State {
     this.plugin_module_names = {};
     this.plugin_routes = {};
     this.table_providers = {};
+    this.copilot_skills = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.icons = get_standard_icons();
@@ -794,6 +797,9 @@ class State {
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v as AuthenticationMethod;
     });
+    Object.entries(withCfg("copilot_skills", {})).forEach(([k, v]) => {
+      this.copilot_skills[k] = v as CopilotSkill;
+    });
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
         if (!v.name) v.name = k;
@@ -938,6 +944,7 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
+    this.copilot_skills = {};
     this.layouts = { emergency: emergency_layout };
     this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
