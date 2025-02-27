@@ -538,6 +538,7 @@ const default_language_field = new Field({
   label: "Language",
   name: "default_language",
   input_type: "select",
+  attributes: { onChange: "cfu_translate(this)" },
   options: Object.entries(available_languages).map(([locale, language]) => ({
     value: locale,
     label: language,
@@ -564,9 +565,30 @@ router.get(
       );
       const restore = restore_backup(
         req.csrfToken(),
-        [i({ class: "fas fa-upload me-2 mt-2" }), req.__("Restore a backup")],
+        [
+          i({ class: "fas fa-upload me-2 mt-2" }),
+          span(req.__("Restore a backup")),
+        ],
         `/auth/create_from_restore`
       );
+      const translations = {};
+      Object.keys(available_languages).map((locale) => {
+        translations[locale] = {
+          submitLabel: req.__({ phrase: "Create user", locale }),
+          header: req.__({ phrase: "Create first user", locale }),
+          blurb: req.__({
+            phrase:
+              "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.",
+            locale,
+          }),
+          restore: req.__({ phrase: "Restore a backup", locale }),
+          language: req.__({ phrase: "Language", locale }),
+          email: req.__({ phrase: "E-mail", locale }),
+          password: req.__({ phrase: "Password", locale }),
+
+        };
+      });
+
       res.sendAuthWrap(
         req.__(`Create first user`),
         form,
@@ -576,7 +598,8 @@ router.get(
             domReady(
               `$('form.create-first-user button[type=submit]').click(function(){press_store_button(this)})`
             )
-          )
+          ) +
+          script(`window.cfu_translations = ${JSON.stringify(translations)}`)
       );
     } else {
       req.flash("danger", req.__("Users already present"));
