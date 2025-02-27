@@ -1141,6 +1141,7 @@ const available_languages = {
   es: "Español",
   no: "Norsk",
   sv: "Svenska",
+  hi: "हिन्दी",
   ru: "Русский",
   nl: "Nederlands",
   pt: "Português",
