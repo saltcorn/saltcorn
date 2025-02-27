@@ -534,6 +534,16 @@ router.get(
   })
 );
 
+const default_language_field = new Field({
+  label: "Language",
+  name: "default_language",
+  input_type: "select",
+  options: Object.entries(available_languages).map(([locale, language]) => ({
+    value: locale,
+    label: language,
+  })),
+});
+
 /**
  * @name get/create_first_user
  * @function
@@ -545,6 +555,7 @@ router.get(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
+      form.fields.unshift(default_language_field);
       form.action = "/auth/create_first_user";
       form.submitLabel = req.__("Create user");
       form.class = "create-first-user";
@@ -614,6 +625,7 @@ router.post(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
+      form.fields.unshift(default_language_field);
       form.validate(req.body || {});
 
       if (form.hasErrors) {
@@ -624,8 +636,14 @@ router.post(
         );
         res.sendAuthWrap(req.__(`Create first user`), form, {});
       } else {
-        const { email, password } = form.values;
-        const u = await User.create({ email, password, role_id: 1 });
+        const { email, password, default_language } = form.values;
+        const u = await User.create({
+          email,
+          password,
+          role_id: 1,
+          language: default_language,
+        });
+        await getState().setConfig("default_locale", default_language);
         req.login(u.session_object, function (err) {
           if (!err) {
             Trigger.emitEvent("Login", null, u);
