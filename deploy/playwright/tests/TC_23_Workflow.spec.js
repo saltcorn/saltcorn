@@ -5,6 +5,18 @@ const PageObject = require('../pageobject/locators.js');
 const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
 const fs = require('fs');
+
+ // Utility function to generate a random name
+ const generateRandomName = () => {
+    const firstNames = ["James", "John", "Robert", "Michael", "William"];
+    const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones"];
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    return `${firstName} ${lastName}`;
+};
+
+
+
 test.describe('E2E Test Suite', () => {
     let functions;
     let pageobject;
@@ -20,10 +32,8 @@ test.describe('E2E Test Suite', () => {
         });
 
         page = await context.newPage();
-
-        // Maximize the screen
+       // Maximize the screen
         await page.setViewportSize({ width: 1350, height: 720 });
-
         functions = new PageFunctions(page);
         pageobject = new PageObject(page);
 
@@ -51,6 +61,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Events label should be visible', async () => {
             await expect(page.locator(pageobject.Events)).toHaveText('Events');
         });
+
         await customAssert('Page URL should be /actions', async () => {
             expect(page.url()).toBe(`${baseURL}${derivedURL}actions`);
         });
@@ -64,6 +75,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Triggers tab label should be visible', async () => {
             await expect(page.locator(pageobject.trigerslocator)).toHaveText('Triggers');
         });
+
         await customAssert('Page URL should be /actions', async () => {
             expect(page.url()).toBe(`${baseURL}${derivedURL}actions`);
         });
@@ -72,18 +84,22 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Triggers tab title should be visible', async () => {
             await expect(page.locator(pageobject.TriggerTitle)).toHaveText('Triggers');
         });
+
         await customAssert('Actions Available cell should be visible', async () => {
             await expect(page.locator(pageobject.actionsAvailable)).toHaveText('Actions available');
         });
+
         await customAssert('Event Types cell should be visible', async () => {
             await expect(page.locator(pageobject.eventTypesCell)).toHaveText('Event types');
         });
+
         await customAssert('Create Trigger Button should be visible and clickable', async () => {
             await expect(page.locator(pageobject.CreateTriggerBtn)).toHaveText('Create trigger');
             await page.click(pageobject.CreateTriggerBtn);
         });
-        await customAssert('Page URL should be /actions/new', async () => {
-            expect(page.url()).toBe(`${baseURL}${derivedURL}actions/new`);
+
+         await customAssert('Page URL should be /actions/new', async () => {
+         expect(page.url()).toBe(`${baseURL}${derivedURL}actions/new`);
         });
 
         // Assert new trigger form elements
@@ -125,10 +141,12 @@ test.describe('E2E Test Suite', () => {
             // Wait for a second to see the selection (optional)
             await page.waitForTimeout(1000);
         });
+
         await customAssert('Description textbox should be empty', async () => {
             await expect(page.locator(pageobject.discriptiontext)).toHaveValue('');
             await functions.fill_Text(pageobject.discriptiontext, 'Test');
         });
+        
         await customAssert('Save button should be visible and clickable', async () => {
             await expect(page.locator(pageobject.saveactionbutton)).toHaveText('Save');
             await page.click(pageobject.saveactionbutton);
@@ -250,7 +268,9 @@ test.describe('E2E Test Suite', () => {
 
         await page.waitForLoadState('networkidle');
         await page.click('label[for="inputname"]');
-        await page.fill('#inputname', 'John Doe');
+
+        const randomName = generateRandomName();
+        await page.fill('#inputname', randomName);
 
 
         const submitButton = page.locator('button.btn.btn-primary');
@@ -303,12 +323,21 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Page URL should be /actions', async () => {
             expect(page.url()).toBe(`${baseURL}${derivedURL}view/WorkFlowRoom`);
         });
-        await functions.fill_Text(pageobject.InputName, 'James smith');
+
+        const randomName = generateRandomName(); // Generate the random name
+        await functions.fill_Text(pageobject.InputName, randomName);
         await page.waitForTimeout(2000);
+        await page.getByRole('button', { name: 'Submit' }).click();
 
         // await functions.submit();
         await page.waitForLoadState('networkidle');
-        await page.click('.btn.btn-primary')
+        //await page.click('.btn.btn-primary')
+        await expect(page.getByText("###Greetings!")).toBeVisible();
+        const name = "James smith";  // Set the variable dynamically
+        await expect(page.getByText(`###Greetings!\nHello ${randomName}`, { exact: true })).toBeVisible();
+
+
+
 
     });
 
