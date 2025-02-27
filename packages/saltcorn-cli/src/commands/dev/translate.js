@@ -46,18 +46,18 @@ class TranslateCommand extends Command {
         }
         process.stdout.write(`Translating ${key} to: `);
         const answer = await getState().functions.llm_generate.run(
-          `Translate this into ${languageNames.of(args.locale)}: ${key}`,
+          key,
           { systemPrompt: systemPrompt(args.locale), temperature: 0 },
         );
         console.log(answer);
         locale[key] = answer;
         count += 1;
+        fs.writeFileSync(
+          path.join(dir, args.locale + ".json"),
+          JSON.stringify(locale, null, 2),
+        );
         //if (count > 10) break;
       }
-      fs.writeFileSync(
-        path.join(dir, args.locale + ".json"),
-        JSON.stringify(locale, null, 2),
-      );
     });
     this.exit(0);
   }
@@ -79,7 +79,8 @@ the user is the user account in the system, with each user having a role that de
 multi-tenant the term tenant refers an instance of the application for a particular purpose. 
 2FA is two factor authentication, building refers to building software applications. A view is a 
 representation of the database content on the screen for the user, and actions are user-defined ways of 
-manipulating data or files. The system is modular, and an extension is known as a Module`;
+manipulating data or files. The system is modular, and an extension is known as a Module. Use technical language. 
+Translate anything the user enters to ${languageNames.of(locale)}.`;
 
 TranslateCommand.args = {
   locale: Args.string({
