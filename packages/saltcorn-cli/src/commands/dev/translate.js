@@ -38,22 +38,26 @@ class TranslateCommand extends Command {
         fs.readFileSync(path.join(dir, args.locale + ".json")),
       );
 
+      let count = 0;
       for (const key of Object.keys(english)) {
-        console.log("considering", key);
-        
         if (skipKeys.includes(key) || (locale[key] && locale[key] !== key)) {
-          console.log("Skipping", locale[key]);
+          //console.log("Skipping", locale[key]);
           continue;
         }
-        console.log("Translating", key);
-
+        process.stdout.write(`Translating ${key} to: `);
         const answer = await getState().functions.llm_generate.run(
           `Translate this into ${languageNames.of(args.locale)}: ${key}`,
-          {systemPrompt: systemPrompt(args.locale)},
+          { systemPrompt: systemPrompt(args.locale), temperature: 0 },
         );
-        console.log("Translating", key, answer);
-        break;
+        console.log(answer);
+        locale[key] = answer;
+        count += 1;
+        //if (count > 10) break;
       }
+      fs.writeFileSync(
+        path.join(dir, args.locale + ".json"),
+        JSON.stringify(locale, null, 2),
+      );
     });
     this.exit(0);
   }
