@@ -186,8 +186,8 @@ function pjax_to(href, e) {
   let $dest = localizer.length
     ? localizer
     : inModal
-    ? $("#scmodal .modal-body")
-    : $("#page-inner-content");
+      ? $("#scmodal .modal-body")
+      : $("#page-inner-content");
   if (!$dest.length) window.location.href = href;
   else {
     loadPage = false;
@@ -1319,6 +1319,23 @@ function check_delete_unsaved(tablename, script_tag) {
           "CSRF-Token": _sc_globalCsrf,
         },
       });
+  }
+}
+
+function cfu_translate(that) {
+  const locale = that.value;
+  const translations = window.cfu_translations[locale];
+  if (translations) {
+    $("button[type=submit]").text(translations.submitLabel);
+    $("h1").text(translations.header);
+    $('form[action="/auth/create_first_user"]')
+      .parent()
+      .find("p")
+      .text(translations.blurb);
+    $("label[for=upload_to_restore] span").text(translations.restore);
+    $("label[for=inputdefault_language]").text(translations.language);
+    $("label[for=inputemail]").text(translations.email);
+    $("label[for=inputpassword]").text(translations.password);
   }
 }
 
