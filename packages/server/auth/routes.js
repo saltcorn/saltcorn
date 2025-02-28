@@ -534,6 +534,17 @@ router.get(
   })
 );
 
+const default_language_field = new Field({
+  label: "Language",
+  name: "default_language",
+  input_type: "select",
+  attributes: { onChange: "cfu_translate(this)" },
+  options: Object.entries(available_languages).map(([locale, language]) => ({
+    value: locale,
+    label: language,
+  })),
+});
+
 /**
  * @name get/create_first_user
  * @function
@@ -545,6 +556,7 @@ router.get(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
+      form.fields.unshift(default_language_field);
       form.action = "/auth/create_first_user";
       form.submitLabel = req.__("Create user");
       form.class = "create-first-user";
@@ -553,9 +565,30 @@ router.get(
       );
       const restore = restore_backup(
         req.csrfToken(),
-        [i({ class: "fas fa-upload me-2 mt-2" }), req.__("Restore a backup")],
+        [
+          i({ class: "fas fa-upload me-2 mt-2" }),
+          span(req.__("Restore a backup")),
+        ],
         `/auth/create_from_restore`
       );
+      const translations = {};
+      Object.keys(available_languages).map((locale) => {
+        translations[locale] = {
+          submitLabel: req.__({ phrase: "Create user", locale }),
+          header: req.__({ phrase: "Create first user", locale }),
+          blurb: req.__({
+            phrase:
+              "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.",
+            locale,
+          }),
+          restore: req.__({ phrase: "Restore a backup", locale }),
+          language: req.__({ phrase: "Language", locale }),
+          email: req.__({ phrase: "E-mail", locale }),
+          password: req.__({ phrase: "Password", locale }),
+
+        };
+      });
+
       res.sendAuthWrap(
         req.__(`Create first user`),
         form,
@@ -565,7 +598,8 @@ router.get(
             domReady(
               `$('form.create-first-user button[type=submit]').click(function(){press_store_button(this)})`
             )
-          )
+          ) +
+          script(`window.cfu_translations = ${JSON.stringify(translations)}`)
       );
     } else {
       req.flash("danger", req.__("Users already present"));
@@ -614,6 +648,7 @@ router.post(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
+      form.fields.unshift(default_language_field);
       form.validate(req.body || {});
 
       if (form.hasErrors) {
@@ -624,8 +659,14 @@ router.post(
         );
         res.sendAuthWrap(req.__(`Create first user`), form, {});
       } else {
-        const { email, password } = form.values;
-        const u = await User.create({ email, password, role_id: 1 });
+        const { email, password, default_language } = form.values;
+        const u = await User.create({
+          email,
+          password,
+          role_id: 1,
+          language: default_language,
+        });
+        await getState().setConfig("default_locale", default_language);
         req.login(u.session_object, function (err) {
           if (!err) {
             Trigger.emitEvent("Login", null, u);

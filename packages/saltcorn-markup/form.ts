@@ -66,18 +66,18 @@ const mkShowIf = (sIf: any): string =>
               target
             )}]').prop('checked')===${JSON.stringify(value)}`
           : Array.isArray(value)
-          ? `[${value
-              .map((v) => `'${v}'`)
-              .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
-              target
-            )}]:not(:disabled)').val())`
-          : target.includes("|_")
-          ? `splitTargetMatch(e.data("data-closest-form-ns").find('[data-fieldname=${
-              rmInitialDot(target).split("|_")[0]
-            }]:not(:disabled)').val(),'${value}', '${target}')`
-          : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
-              target
-            )}]:not(:disabled)').val()==='${value}'`
+            ? `[${value
+                .map((v) => `'${v}'`)
+                .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
+                target
+              )}]:not(:disabled)').val())`
+            : target.includes("|_")
+              ? `splitTargetMatch(e.data("data-closest-form-ns").find('[data-fieldname=${
+                  rmInitialDot(target).split("|_")[0]
+                }]:not(:disabled)').val(),'${value}', '${target}')`
+              : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
+                  target
+                )}]:not(:disabled)').val()==='${value}'`
       )
       .join(" && ")
   );
@@ -129,35 +129,11 @@ const formRowWrap = (
           mkSubLabelAndHelp(hdr)
         )
       : hdr.input_type === "dynamic_fields"
-      ? inner
-      : hdr.type?.name === "Bool" && fStyle === "vert"
-      ? div(
-          { class: "form-check" },
-          inner,
-          label(
-            {
-              for: `input${text_attr(hdr.form_name)}`,
-            },
-            text(hdr.label)
-          ),
-          hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
-        ) + mkSubLabelAndHelp(hdr)
-      : [
-          hdr.label !== " " &&
-            div(
-              {
-                class: [
-                  hdr.type?.name === "Bool" &&
-                    isHoriz(fStyle) &&
-                    labelCols &&
-                    `col-${labelCols} text-end`,
-                  hdr.type?.name !== "Bool" &&
-                    isHoriz(fStyle) &&
-                    labelCols &&
-                    `col-sm-${labelCols} text-md-end`,
-                  labelCols === 0 && "d-none",
-                ],
-              },
+        ? inner
+        : hdr.type?.name === "Bool" && fStyle === "vert"
+          ? div(
+              { class: "form-check" },
+              inner,
               label(
                 {
                   for: `input${text_attr(hdr.form_name)}`,
@@ -165,23 +141,47 @@ const formRowWrap = (
                 text(hdr.label)
               ),
               hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
-            ),
-          div(
-            {
-              class: [
-                hdr.type?.name === "Bool" &&
-                  isHoriz(fStyle) &&
-                  `col-${12 - labelCols}`,
-                hdr.type?.name !== "Bool" &&
-                  isHoriz(fStyle) &&
-                  `col-sm-${12 - labelCols}`,
-              ],
-            },
-            inner,
-            text(error),
-            mkSubLabelAndHelp(hdr)
-          ),
-        ]
+            ) + mkSubLabelAndHelp(hdr)
+          : [
+              hdr.label !== " " &&
+                div(
+                  {
+                    class: [
+                      hdr.type?.name === "Bool" &&
+                        isHoriz(fStyle) &&
+                        labelCols &&
+                        `col-${labelCols} text-end`,
+                      hdr.type?.name !== "Bool" &&
+                        isHoriz(fStyle) &&
+                        labelCols &&
+                        `col-sm-${labelCols} text-md-end`,
+                      labelCols === 0 && "d-none",
+                    ],
+                  },
+                  label(
+                    {
+                      for: `input${text_attr(hdr.form_name)}`,
+                    },
+                    text(hdr.label)
+                  ),
+                  hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+                ),
+              div(
+                {
+                  class: [
+                    hdr.type?.name === "Bool" &&
+                      isHoriz(fStyle) &&
+                      `col-${12 - labelCols}`,
+                    hdr.type?.name !== "Bool" &&
+                      isHoriz(fStyle) &&
+                      `col-sm-${12 - labelCols}`,
+                  ],
+                },
+                inner,
+                text(error),
+                mkSubLabelAndHelp(hdr)
+              ),
+            ]
   );
 
 /**
@@ -485,8 +485,8 @@ const innerField =
           hdr.parent_field && v && isdef(v[hdr.parent_field]?.[hdr.name])
             ? v[hdr.parent_field]?.[hdr.name]
             : v && isdef(v[hdr.form_name])
-            ? v[hdr.form_name]
-            : hdr.default,
+              ? v[hdr.form_name]
+              : hdr.default,
           validClass,
           v
         );
@@ -502,7 +502,7 @@ const innerField =
           hdr.class || ""
         }"${maybe_disabled} data-fieldname="${text_attr(
           hdr.form_name
-        )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
+        )}" name="${text_attr(name)}"${hdr.attributes.onChange ? ` onchange="${hdr.attributes.onChange}"` : ""} id="input${text_attr(name)}"${
           hdr.attributes && hdr.attributes.explainers
             ? ` data-explainers="${encodeURIComponent(
                 JSON.stringify(hdr.attributes.explainers)
@@ -572,12 +572,12 @@ const innerField =
              <option ${tow_d === "Sunday" ? "selected" : ""}>Sunday</option>
              </select>
              <input class="form-control ${validClass} ${
-            hdr.class || ""
-          }"${maybe_disabled} id="input${text_attr(
-            name
-          )}__time" type="text" placeholder="Select time of day.." ${
-            tow_h && tow_m ? `value="${tow_h}:${tow_m}" ` : 'value="12:00" '
-          }readonly="readonly"></div>` +
+               hdr.class || ""
+             }"${maybe_disabled} id="input${text_attr(
+               name
+             )}__time" type="text" placeholder="Select time of day.." ${
+               tow_h && tow_m ? `value="${tow_h}:${tow_m}" ` : 'value="12:00" '
+             }readonly="readonly"></div>` +
           script(
             domReady(`$('#input${text_attr(name)}__time').flatpickr({
             noCalendar: true,
@@ -693,8 +693,8 @@ const mkFormRow =
     hdr.isRepeat && hdr.fancyMenuEditor
       ? mkFormRowForRepeatFancy(v, errors, formStyle, labelCols, hdr)
       : hdr.isRepeat
-      ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
-      : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
+        ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
+        : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
 /**
  * @param v
@@ -1302,8 +1302,8 @@ const renderFormLayout = (form: Form): string => {
                 dest
                   ? `window.location.href='${dest}';`
                   : form.req?.xhr
-                  ? `location.reload();`
-                  : `history.back();`
+                    ? `location.reload();`
+                    : `history.back();`
               }}})" type="button"`
             );
           } else {
@@ -1334,8 +1334,8 @@ const renderFormLayout = (form: Form): string => {
               ? "history.back()"
               : "parent.saltcorn.mobileApp.navigation.goBack()"
             : isWeb
-            ? `history.go(${-1 * configuration.steps})`
-            : `parent.saltcorn.mobileApp.navigation.goBack(${configuration.steps})`;
+              ? `history.go(${-1 * configuration.steps})`
+              : `parent.saltcorn.mobileApp.navigation.goBack(${configuration.steps})`;
         if (configuration.save_first) {
           const complete = `()=>${doNav}`;
           return mkBtn(
@@ -1649,21 +1649,21 @@ const mkForm = (
       form.noSubmitButton
         ? ""
         : form.xhrSubmit || form.isWorkflow
-        ? `<button type="button" class="btn ${
-            form.submitButtonClass || "btn-primary"
-          }" onClick="${
-            form.onSubmit ? `${form.onSubmit};` : ""
-          }ajaxSubmitForm(this, true)">${text(
-            form.submitLabel || "Save"
-          )}</button>`
-        : `<button type="submit" class="btn ${
-            form.submitButtonClass || "btn-primary"
-          }">${text(form.submitLabel || "Save")}</button>`
+          ? `<button type="button" class="btn ${
+              form.submitButtonClass || "btn-primary"
+            }" onClick="${
+              form.onSubmit ? `${form.onSubmit};` : ""
+            }ajaxSubmitForm(this, true)">${text(
+              form.submitLabel || "Save"
+            )}</button>`
+          : `<button type="submit" class="btn ${
+              form.submitButtonClass || "btn-primary"
+            }">${text(form.submitLabel || "Save")}</button>`
     }${
-    form.additionalButtons
-      ? displayAdditionalButtons(form.additionalButtons, true)
-      : ""
-  }
+      form.additionalButtons
+        ? displayAdditionalButtons(form.additionalButtons, true)
+        : ""
+    }
   </div>
 </div>`;
   return (

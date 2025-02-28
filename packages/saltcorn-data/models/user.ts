@@ -56,8 +56,8 @@ const convertDateParam = (
     typeof date === "number"
     ? new Date(date)
     : date instanceof Date
-    ? date
-    : null;
+      ? date
+      : null;
 };
 /**
  * User
@@ -182,9 +182,9 @@ class User {
    * @returns {Promise<{error: string}|User>}
    */
   static async create(uo: GenObj): Promise<User | ErrorMessage> {
-    const { email, password, passwordRepeat, role_id, ...rest } = uo;
+    const { email, password, passwordRepeat, role_id, language, ...rest } = uo;
     const hasPw = typeof password !== "undefined";
-    const u = new User({ email, password, role_id });
+    const u = new User({ email, password, role_id, language });
     if (hasPw && User.unacceptable_password_reason(u.password))
       return {
         error:
@@ -650,8 +650,8 @@ class User {
     const dateVal = !date
       ? date
       : db.isSQLite
-      ? date.valueOf()
-      : date.toISOString();
+        ? date.valueOf()
+        : date.toISOString();
     await this.update({ last_mobile_login: dateVal });
   }
 }
