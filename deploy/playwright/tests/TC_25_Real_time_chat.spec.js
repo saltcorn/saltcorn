@@ -283,15 +283,6 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         await page.waitForTimeout(2000);
 
-        await functions.drag_And_Drop(pageobject.fieldsource, pageobject.fourthrowcolumn);
-        await customAssert('field dropdown should be visible', async () => {
-            await page.waitForSelector(pageobject.fielddropdown);
-            await expect(page.locator(pageobject.fielddropdown)).toBeVisible();
-            await page.click(pageobject.fielddropdown);
-            // Select 'Date of birth' from the dropdown
-            await page.selectOption('select.form-control.form-select', 'Sender');
-          });
-
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
@@ -389,9 +380,9 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(2000);
 
         // Select Message.room for message relation
-        await page.locator('#inputmsg_relation').selectText('Message.room');
+        await page.locator('#inputmsg_relation').selectOption({ label:'Messages.room' });
         // Select user for sender field
-        await page.locator('#inputmsgsender_field').selectText('user');
+        await page.locator('#inputmsgsender_field').selectOption({ label:'sender' });
         // Select Message_show for message view
         await page.click('#inputmsgview', { force: true });
         await page.locator('#inputmsgview').selectOption({ label: 'Message_Show' }, { force: true });
@@ -404,10 +395,17 @@ test.describe('E2E Test Suite', () => {
         await functions.views();
         // Configure the edit message view
         await page.click(pageobject.configureAddmsg);
+        await functions.drag_And_Drop(pageobject.fieldsource, pageobject.fourthrowcolumn);
+        await customAssert('field dropdown should be visible', async () => {
+            await page.waitForSelector(pageobject.fielddropdown);
+            await expect(page.locator(pageobject.fielddropdown)).toBeVisible();
+            await page.click(pageobject.fielddropdown);
+            // Select 'Date of birth' from the dropdown
+            await page.selectOption('select.form-control.form-select', 'Sender');
+          });
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
-        //await page.click(pageobject.nextoption);
         
         // Select room view for destination after message add
         await page.selectOption(pageobject.destinationview, { label: 'Room.room' });
