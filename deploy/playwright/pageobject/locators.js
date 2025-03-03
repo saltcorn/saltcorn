@@ -14,9 +14,7 @@ class PageLocators {
     this.addFieldButtonLocator = 'a.add-field:has-text("Add field")';
     this.columnsElement = 'div[title="Split into columns"]';
     this.firstColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(1)';
-    //'(//div[contains(@class, "row")]/div[contains(@class, "split-col") and contains(@class, "col-sm-6")])[1]'
     this.secondColumn = 'div.row > div.split-col.col-sm-6.text-undefined.align-items-undefined:nth-of-type(2)';
-    //'(//div[contains(@class, "row")]/div[contains(@class, "split-col") and contains(@class, "col-sm-6")])[2]'
     this.target = 'div.canvas.root-canvas';
     this.DatelocatorByName = 'input[name="date_of_birth"]';
     this.DatepickReadonly = 'input[readonly="readonly"]';
@@ -680,6 +678,27 @@ class PageLocators {
     this.modalHeader = '.modal-header .modal-title';
     this.inputPrevRuns = '#inputprev_runs';
     this.tableSMTD = 'table.table-sm td';
+
+    this.msg_relation = 'msg_relation';
+    this.file_link = 'text="[Link file]"';
+    this.FileEditlink = 'a[href="/view/Add_File"]';
+    this.file1img = 'img[src="/files/resize/50/0/file1.png"]';
+    this.inputdisc = '#inputdiscription';
+    this.configureAddFile = 'a[href="/viewedit/config/Add_File"]';
+    this.thirdrowcolumn = '.builder-columns.row:nth-of-type(3) .split-col:nth-of-type(2) .canvas';
+    this.show_if_button = 'text="Show if..."';
+    this.formulatxtbox = '#saltcorn-builder > div.row > div.col-sm-auto.builder-sidebar > div > div.settings-panel.card.mt-1 > div.card-body.p-2 > table > tbody > tr:nth-child(2) > td > input';
+    this.maxInputLocator = 'input[type="number"]#inputmax';
+    this.containerfield = 'div.kontainer.canvas.text-left.false.selected-node';
+    this.Ageclclink = 'a[href="/view/Age_clc"]';
+    this.inputage = '#inputage';
+    this.roomcell = '.tabulator .tabulator-cell[tabulator-field="room_name"]';
+    this.containText = 'div.col-10.text-start > div:has-text("You are Eligible for voting")'
+    this.configureAddmsg = 'a[href="/viewedit/config/Message_Add"]';
+    this.Msglist = 'a[href="/view/Message_List"]';
+    this.AddMsg = 'a[href="/view/Message_Add"]';
+    this.inputcontent = '#inputcontent';
+    this.fourthrowcolumn = '.builder-columns.row:nth-of-type(4) .split-col:nth-of-type(2) .canvas';
   }
 }
 
