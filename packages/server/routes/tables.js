@@ -2121,7 +2121,7 @@ router.post(
     const f = await File.findOne(filename);
 
     try {
-      const { import_method, import_async } = req.body;
+      const { import_method, import_async } = req.body || {};
 
       const promise = table
         .import_csv_file(f.location, {
