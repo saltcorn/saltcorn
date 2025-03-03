@@ -1562,5 +1562,7 @@
 	"To obtain a certificate, the administrator's email address will be shared with Let's Encrypt.": "To obtain a certificate, the administrator's email address will be shared with Let's Encrypt.",
 	"Local state": "Local state",
 	"Isolate state of each repeated view": "Isolate state of each repeated view",
-	"Processing CSV file": "Processing CSV file"
+	"Processing CSV file": "Processing CSV file",
+	"Edit files": "Edit files",
+	"Minimum role to edit files": "Minimum role to edit files"
 }

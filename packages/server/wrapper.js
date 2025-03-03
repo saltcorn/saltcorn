@@ -97,6 +97,7 @@ const get_menu = (req) => {
   const canEditPages = state.getConfig("min_role_edit_pages", 1) >= role;
   const canEditTriggers = state.getConfig("min_role_edit_triggers", 1) >= role;
   const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
+  const canEditFiles = state.getConfig("min_role_edit_files", 1) >= role;
   const isAdmin = role === 1;
   const hasAdmin =
     isAdmin ||
@@ -157,6 +158,12 @@ const get_menu = (req) => {
           altlinks: ["/events", "/eventlog", "/crashlog"],
           icon: "fas fa-calendar-check",
           label: req.__("Triggers"),
+        });
+      if (canEditFiles)
+        subitems.push({
+          link: "/files",
+          icon: "far fa-images",
+          label: req.__("Files"),
         });
       adminItems.push({
         label: req.__("Settings"),

@@ -281,13 +281,18 @@ const send_users_page = (args) => {
  * @returns {void}
  */
 const send_files_page = (args) => {
+  const isUserAdmin = args.req?.user.role_id === 1;
   return send_settings_page({
     main_section: "Files",
     main_section_href: "/files",
     sub_sections: [
       { text: "Files", href: "/files" },
-      { text: "Storage", href: "/files/storage" },
-      { text: "Settings", href: "/files/settings" },
+      ...(isUserAdmin
+        ? [
+            { text: "Storage", href: "/files/storage" },
+            { text: "Settings", href: "/files/settings" },
+          ]
+        : []),
     ],
     ...args,
   });
@@ -482,8 +487,8 @@ const config_fields_form = async ({
         isView || isRole || isTenant
           ? "String"
           : configTypes[name].input_type
-          ? undefined
-          : configTypes[name].type,
+            ? undefined
+            : configTypes[name].type,
       input_type: configTypes[name].input_type,
       showIf,
       help: configTypes[name].helpTopic
@@ -492,10 +497,10 @@ const config_fields_form = async ({
       attributes: isView
         ? await viewAttributes(name)
         : isRole
-        ? roleAttribs
-        : isTenant
-        ? await getTenants()
-        : configTypes[name].attributes,
+          ? roleAttribs
+          : isTenant
+            ? await getTenants()
+            : configTypes[name].attributes,
     });
   }
   const form = new Form({

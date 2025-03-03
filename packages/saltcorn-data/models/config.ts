@@ -1020,6 +1020,14 @@ const configTypes: ConfigTypes = {
     blurb: "Minimum role to edit menu",
     excludeFromMobile: true,
   },
+  min_role_edit_files: {
+    type: "Role",
+    label: "Edit files",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to edit files",
+    excludeFromMobile: true,
+  },
   min_role_search: {
     type: "Role",
     label: "Role for search",
