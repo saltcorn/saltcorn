@@ -2762,6 +2762,7 @@ class Table implements AbstractTable {
       recalc_stored?: boolean;
       skip_first_data_row?: boolean;
       no_table_write?: boolean;
+      method?: "Auto" | "copy" | "row-by-row";
     }
   ): Promise<ResultMessage> {
     if (typeof options === "boolean") {
@@ -2858,7 +2859,12 @@ class Table implements AbstractTable {
 
     try {
       // for files more 1MB
-      if (db.copyFrom && fileSizeInMegabytes > 1) {
+      if (
+        options?.method === "copy" ||
+        (options?.method !== "row-by-row" &&
+          db.copyFrom &&
+          fileSizeInMegabytes > 1)
+      ) {
         let theError;
 
         const copyres = await db

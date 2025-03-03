@@ -14,6 +14,7 @@ const User = require("@saltcorn/data/models/user");
 const Model = require("@saltcorn/data/models/model");
 const Trigger = require("@saltcorn/data/models/trigger");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
+const Notification = require("@saltcorn/data/models/notification");
 const {
   mkTable,
   renderForm,
@@ -51,6 +52,9 @@ const {
   pre,
   button,
   text_attr,
+  br,
+  select,
+  option,
 } = require("@saltcorn/markup/tags");
 const { stringify } = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -1967,18 +1971,52 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
               "Cancel",
               req.csrfToken(),
               {
-                btnClass: "btn-danger",
+                btnClass: "btn-danger mb-2",
                 formClass: "d-inline me-2",
                 icon: "fa fa-times",
               }
             ),
-            post_btn(
-              `/table/finish_upload_to_table/${table.name}/${path.basename(
-                newPath
-              )}`,
-              "Proceed",
-              req.csrfToken(),
-              { icon: "fa fa-check", formClass: "d-inline" }
+            form(
+              {
+                action: `/table/finish_upload_to_table/${table.name}/${path.basename(
+                  newPath
+                )}`,
+                method: "post",
+                class: "d-inline",
+              },
+              input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+              button(
+                { type: "submit", class: "btn btn-primary mb-2" },
+                i({ class: "fa fa-check" }),
+                "Proceed"
+              ),
+              br(),
+              i({ class: "muted" }, "Method"),
+              select(
+                {
+                  name: "import_method",
+                  class: "form-select from-control mb-2",
+                },
+                option("Auto"),
+                option({ value: "copy" }, "COPY (fast but strict)"),
+                option(
+                  { value: "row-by-row" },
+                  "Row-by-row (Slower but more accepting)"
+                )
+              ),
+              div(
+                { class: "form-check" },
+                input({
+                  class: "form-check-input",
+                  type: "checkbox",
+                  id: "import_async",
+                  name: "import_async",
+                }),
+                label(
+                  { class: "form-check-label", for: "import_async" },
+                  "Asynchronous"
+                )
+              )
             )
           ),
         },
@@ -2083,16 +2121,43 @@ router.post(
     const f = await File.findOne(filename);
 
     try {
-      const parse_res = await table.import_csv_file(f.location, {
-        recalc_stored: true,
-      });
-      if (parse_res.error) req.flash("error", parse_res.error);
-      else req.flash("success", parse_res.success);
+      const { import_method, import_async } = req.body || {};
+
+      const promise = table
+        .import_csv_file(f.location, {
+          recalc_stored: true,
+          method: import_method || "Auto",
+        })
+        .finally(() => {
+          fs.unlink(f.location);
+        });
+      if (import_async) {
+        promise
+          .then((parse_res) => {
+            Notification.create({
+              title: "CSV import complete",
+              body: parse_res.error || parse_res.success,
+              user_id: req.user.id,
+            });
+          })
+          .catch((e) => {
+            console.error("CSV upload error", e);
+            Notification.create({
+              title: "Error importing CSV file",
+              body: e.message,
+              user_id: req.user.id,
+            });
+          });
+        req.flash("success", req.__("Processing CSV file"));
+      } else {
+        const parse_res = await promise;
+        if (parse_res.error) req.flash("error", parse_res.error);
+        else req.flash("success", parse_res.success);
+      }
     } catch (e) {
       console.error("CSV upload error", e);
       req.flash("error", e.message);
     }
-    await fs.unlink(f.location);
     res.redirect(`/table/${table.id}`);
   })
 );
