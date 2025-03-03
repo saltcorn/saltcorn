@@ -2,6 +2,15 @@
 
 ## 1.1.2 - In beta
 
+* Actions:
+    - New action: download_file_to_browser
+    - Workflows on mobile apps
+
+* Email: 
+    - Improve button appearance
+    - All links are absolute
+    - Option to use unauthenticated SMTP
+
 * Builder:
     - Container background image by file field in Show views
     - Container opacity setting
