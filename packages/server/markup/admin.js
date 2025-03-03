@@ -285,15 +285,18 @@ const send_files_page = (args) => {
   return send_settings_page({
     main_section: "Files",
     main_section_href: "/files",
-    sub_sections: [
-      { text: "Files", href: "/files" },
-      ...(isUserAdmin
-        ? [
-            { text: "Storage", href: "/files/storage" },
-            { text: "Settings", href: "/files/settings" },
-          ]
-        : []),
-    ],
+    no_nav_pills: !isUserAdmin,
+    sub_sections: isUserAdmin
+      ? [
+          { text: "Files", href: "/files" },
+          ...(isUserAdmin
+            ? [
+                { text: "Storage", href: "/files/storage" },
+                { text: "Settings", href: "/files/settings" },
+              ]
+            : []),
+        ]
+      : null,
     ...args,
   });
 };
