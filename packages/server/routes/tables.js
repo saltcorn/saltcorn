@@ -2126,6 +2126,7 @@ router.post(
       const promise = table
         .import_csv_file(f.location, {
           recalc_stored: true,
+          method: import_method || "Auto",
         })
         .finally(() => {
           fs.unlink(f.location);
