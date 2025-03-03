@@ -467,6 +467,15 @@ router.post(
         req.flash("error", parse_res.error);
         res.redirect(`/table/create-from-csv`);
       } else {
+        Trigger.emitEvent(
+          "AppChange",
+          `Table ${parse_res.table.name}`,
+          req.user,
+          {
+            entity_type: "Table",
+            entity_name: parse_res.table.name,
+          }
+        );
         req.flash(
           "success",
           req.__(`Created table %s.`, parse_res.table.name) + parse_res.success
@@ -1226,6 +1235,10 @@ router.post(
       } else {
         delete rest.provider_name;
         const table = await Table.create(name, rest);
+        Trigger.emitEvent("AppChange", `Table ${name}`, req.user, {
+          entity_type: "Table",
+          entity_name: name,
+        });
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }
@@ -1390,6 +1403,10 @@ router.post(
     try {
       await t.delete();
       req.flash("success", req.__(`Table %s deleted`, t.name));
+      Trigger.emitEvent("AppChange", `Table ${t.name} deleted`, req.user, {
+        entity_type: "Table",
+        entity_name: t.name,
+      });
       res.redirect(`/table`);
     } catch (err) {
       req.flash("error", err.message);
@@ -1825,6 +1842,15 @@ router.post(
         type,
         configuration,
       });
+      Trigger.emitEvent(
+        "AppChange",
+        `Constraint ${type} on table ${table?.name}`,
+        req.user,
+        {
+          entity_type: "TableConstraint",
+          entity_name: table.name,
+        }
+      );
     }
     res.redirect(`/table/constraints/${table.id}`);
   })
@@ -2330,6 +2356,15 @@ router.post(
       res.redirect(`/table`);
       return;
     }
+    Trigger.emitEvent(
+      "AppChange",
+      `Table ${table.name} configuration`,
+      req.user,
+      {
+        entity_type: "Table",
+        entity_name: table.name,
+      }
+    );
     const workflow = get_provider_workflow(table, req);
     const wfres = await workflow.run(req.body || {}, req);
     respondWorkflow(table, workflow, wfres, req, res);
