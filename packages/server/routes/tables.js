@@ -14,6 +14,7 @@ const User = require("@saltcorn/data/models/user");
 const Model = require("@saltcorn/data/models/model");
 const Trigger = require("@saltcorn/data/models/trigger");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
+const Notification = require("@saltcorn/data/models/notification");
 const {
   mkTable,
   renderForm,
@@ -2120,11 +2121,34 @@ router.post(
     const f = await File.findOne(filename);
 
     try {
-      const parse_res = await table.import_csv_file(f.location, {
+      const { import_method, import_async } = req.body;
+
+      const promise = table.import_csv_file(f.location, {
         recalc_stored: true,
       });
-      if (parse_res.error) req.flash("error", parse_res.error);
-      else req.flash("success", parse_res.success);
+      if (import_async) {
+        promise
+          .then((parse_res) => {
+            Notification.create({
+              title: "CSV import complete",
+              body: parse_res.error || parse_res.success,
+              user_id: req.user.id,
+            });
+          })
+          .catch((e) => {
+            console.error("CSV upload error", e);
+            Notification.create({
+              title: "Error importing CSV file",
+              body: e.message,
+              user_id: req.user.id,
+            });
+          });
+        req.flash("success", req.__("Processing CSV file"));
+      } else {
+        const parse_res = await promise;
+        if (parse_res.error) req.flash("error", parse_res.error);
+        else req.flash("success", parse_res.success);
+      }
     } catch (e) {
       console.error("CSV upload error", e);
       req.flash("error", e.message);

@@ -1561,5 +1561,6 @@
 	"No file uploaded": "No file uploaded",
 	"To obtain a certificate, the administrator's email address will be shared with Let's Encrypt.": "To obtain a certificate, the administrator's email address will be shared with Let's Encrypt.",
 	"Local state": "Local state",
-	"Isolate state of each repeated view": "Isolate state of each repeated view"
+	"Isolate state of each repeated view": "Isolate state of each repeated view",
+	"Processing CSV file": "Processing CSV file"
 }
