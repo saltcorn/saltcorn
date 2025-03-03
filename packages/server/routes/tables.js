@@ -51,6 +51,9 @@ const {
   pre,
   button,
   text_attr,
+  br,
+  select,
+  option,
 } = require("@saltcorn/markup/tags");
 const { stringify } = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
@@ -1967,18 +1970,52 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
               "Cancel",
               req.csrfToken(),
               {
-                btnClass: "btn-danger",
+                btnClass: "btn-danger mb-2",
                 formClass: "d-inline me-2",
                 icon: "fa fa-times",
               }
             ),
-            post_btn(
-              `/table/finish_upload_to_table/${table.name}/${path.basename(
-                newPath
-              )}`,
-              "Proceed",
-              req.csrfToken(),
-              { icon: "fa fa-check", formClass: "d-inline" }
+            form(
+              {
+                action: `/table/finish_upload_to_table/${table.name}/${path.basename(
+                  newPath
+                )}`,
+                method: "post",
+                class: "d-inline",
+              },
+              input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+              button(
+                { type: "submit", class: "btn btn-primary mb-2" },
+                i({ class: "fa fa-check" }),
+                "Proceed"
+              ),
+              br(),
+              i({ class: "muted" }, "Method"),
+              select(
+                {
+                  name: "import_method",
+                  class: "form-select from-control mb-2",
+                },
+                option("Auto"),
+                option({ value: "copy" }, "COPY (fast but strict)"),
+                option(
+                  { value: "row-by-row" },
+                  "Row-by-row (Slower but more accepting)"
+                )
+              ),
+              div(
+                { class: "form-check" },
+                input({
+                  class: "form-check-input",
+                  type: "checkbox",
+                  id: "import_async",
+                  name: "import_async",
+                }),
+                label(
+                  { class: "form-check-label", for: "import_async" },
+                  "Asynchronous"
+                )
+              )
             )
           ),
         },
