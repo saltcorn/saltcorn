@@ -224,15 +224,20 @@ const send_infoarch_page = (args) => {
   const tenant_list =
     db.is_it_multi_tenant() &&
     db.getTenantSchema() === db.connectObj.default_schema;
-  const isUserAdmin = args.req?.user.role_id === 1;
+  const role = args.req?.user.role_id || 100;
+  const isUserAdmin = role === 1;
+  const state = getState();
+  const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
+  const canEditSearch = state.getConfig("min_role_edit_search", 1) >= role;
+
   return send_settings_page({
     main_section: "Site structure",
     main_section_href: "/site-structure",
     sub_sections: [
-      { text: "Menu", href: "/menu" },
+      ...(canEditMenu ? [{ text: "Menu", href: "/menu" }] : []),
+      ...(canEditSearch ? [{ text: "Search", href: "/search/config" }] : []),
       ...(isUserAdmin
         ? [
-            { text: "Search", href: "/search/config" },
             { text: "Library", href: "/library/list" },
             { text: "Languages", href: "/site-structure/localizer" },
             ...(tenant_list

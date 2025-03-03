@@ -1564,5 +1564,7 @@
 	"Isolate state of each repeated view": "Isolate state of each repeated view",
 	"Processing CSV file": "Processing CSV file",
 	"Edit files": "Edit files",
-	"Minimum role to edit files": "Minimum role to edit files"
+	"Minimum role to edit files": "Minimum role to edit files",
+	"Edit search": "Edit search",
+	"Minimum role to edit search": "Minimum role to edit search"
 }
