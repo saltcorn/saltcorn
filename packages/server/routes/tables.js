@@ -2123,9 +2123,13 @@ router.post(
     try {
       const { import_method, import_async } = req.body;
 
-      const promise = table.import_csv_file(f.location, {
-        recalc_stored: true,
-      });
+      const promise = table
+        .import_csv_file(f.location, {
+          recalc_stored: true,
+        })
+        .finally(() => {
+          fs.unlink(f.location);
+        });
       if (import_async) {
         promise
           .then((parse_res) => {
@@ -2153,7 +2157,6 @@ router.post(
       console.error("CSV upload error", e);
       req.flash("error", e.message);
     }
-    await fs.unlink(f.location);
     res.redirect(`/table/${table.id}`);
   })
 );
