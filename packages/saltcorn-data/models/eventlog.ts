@@ -68,16 +68,18 @@ class EventLog {
    * @param {number} id
    * @returns {Promise<EventLog>}
    */
-  static async findOneWithUser(id: number): Promise<EventLog> {
+  static async findOneWithUser(id: number): Promise<EventLog | null> {
     const schema = db.getTenantSchemaPrefix();
     const { rows } = await db.query(
       `select el.*, u.email from ${schema}_sc_event_log el left join ${schema}users u on el.user_id = u.id where el.id = $1`,
       [id]
     );
-    const u = rows[0];
-    const el = new EventLog(u);
-    el.email = u.email;
-    return el;
+    if (rows.length) {
+      const u = rows[0];
+      const el = new EventLog(u);
+      el.email = u.email;
+      return el;
+    } else return null;
   }
 
   /**

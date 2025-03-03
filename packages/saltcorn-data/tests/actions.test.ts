@@ -412,7 +412,7 @@ describe("Events", () => {
     const ev = await EventLog.findOne({ event_type: "FooHappened" });
     assertIsSet(ev.id);
     const evlog_w_user = await EventLog.findOneWithUser(ev.id!);
-    expect(evlog_w_user.event_type).toBe("FooHappened");
+    expect(evlog_w_user?.event_type).toBe("FooHappened");
   });
   it("should emit custom event with channel", async () => {
     const evs = await EventLog.find({ event_type: "BarWasHere" });
