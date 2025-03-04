@@ -229,6 +229,8 @@ const send_infoarch_page = (args) => {
   const state = getState();
   const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
   const canEditSearch = state.getConfig("min_role_edit_search", 1) >= role;
+  const canCreateSnapshot =
+    state.getConfig("min_role_create_snapshots", 1) >= role && role > 1;
 
   return send_settings_page({
     main_section: "Site structure",
@@ -236,6 +238,9 @@ const send_infoarch_page = (args) => {
     sub_sections: [
       ...(canEditMenu ? [{ text: "Menu", href: "/menu" }] : []),
       ...(canEditSearch ? [{ text: "Search", href: "/search/config" }] : []),
+      ...(canCreateSnapshot
+        ? [{ text: "Snapshots", href: "/site-structure/create-snapshot" }]
+        : []),
       ...(isUserAdmin
         ? [
             { text: "Library", href: "/library/list" },

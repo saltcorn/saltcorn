@@ -1036,6 +1036,14 @@ const configTypes: ConfigTypes = {
     blurb: "Minimum role to edit search",
     excludeFromMobile: true,
   },
+  min_role_create_snapshots: {
+    type: "Role",
+    label: "Create snapshot",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to create snapshot",
+    excludeFromMobile: true,
+  },
   min_role_search: {
     type: "Role",
     label: "Role for search",
