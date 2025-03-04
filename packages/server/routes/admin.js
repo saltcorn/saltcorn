@@ -303,7 +303,7 @@ router.get(
       path.join(__dirname, "..", "docs"),
       ...req.params.filepath
     );
-    if (fs.existsSync(fullPath)) res.sendFile(fullPath);
+    if (fs.existsSync(fullPath)) res.sendFile(fullPath, { dotfiles: "allow" });
     else {
       res.status(404);
       res.sendWrap(`File not found`, { above: ["Help file not found"] });
