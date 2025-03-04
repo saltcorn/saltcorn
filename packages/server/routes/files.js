@@ -19,6 +19,7 @@ const {
   error_catcher,
   setTenant,
   is_relative_url,
+  isAdminOrHasConfigMinRole,
 } = require("./utils.js");
 const {
   h1,
@@ -156,7 +157,7 @@ router.get(
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     // todo limit select from file by 10 or 20
     const { dir, search } = req.query;
@@ -245,8 +246,7 @@ router.get(
 
 router.post(
   "/download-zip",
-  isAdmin,
-
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
@@ -377,7 +377,7 @@ router.get(
  */
 router.post(
   "/setrole/*serve_path",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const serve_path = path.join(...req.params.serve_path);
     const file = await File.findOne(serve_path);
@@ -397,7 +397,7 @@ router.post(
 
 router.post(
   "/move/*serve_path",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const serve_path = path.join(...req.params.serve_path);
     const file = await File.findOne(serve_path);
@@ -424,7 +424,7 @@ router.post(
  */
 router.post(
   "/setname/*serve_path",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const serve_path = path.join(...req.params.serve_path);
     const filename = (req.body || {}).value;
@@ -444,7 +444,7 @@ router.post(
  */
 router.post(
   "/unzip/*serve_path",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const serve_path = path.join(...req.params.serve_path);
     const filename = (req.body || {}).value;
@@ -458,7 +458,7 @@ router.post(
 
 router.post(
   "/new-folder",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const { name, folder } = req.body || {};
     await File.new_folder(name, folder);
@@ -535,7 +535,7 @@ router.post(
  */
 router.post(
   "/delete/*serve_path",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const serve_path = path.join(...req.params.serve_path);
     const { redirect } = req.query;

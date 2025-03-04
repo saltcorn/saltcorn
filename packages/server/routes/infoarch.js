@@ -5,7 +5,12 @@
  */
 
 const Router = require("express-promise-router");
-const { isAdmin, setTenant, error_catcher } = require("./utils.js");
+const {
+  isAdmin,
+  setTenant,
+  error_catcher,
+  isAdminOrHasConfigMinRole,
+} = require("./utils.js");
 const {
   send_infoarch_page,
   send_admin_page,
@@ -13,9 +18,10 @@ const {
   save_config_from_form,
 } = require("../markup/admin.js");
 const { getState } = require("@saltcorn/data/db/state");
-const { div, a, i, text } = require("@saltcorn/markup/tags");
+const { div, a, i, text, button } = require("@saltcorn/markup/tags");
 const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
+const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 
 /**
  * @type {object}
@@ -38,6 +44,55 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     res.redirect(`/menu`);
+  })
+);
+
+router.get(
+  "/create-snapshot",
+  isAdminOrHasConfigMinRole("min_role_create_snapshots"),
+  error_catcher(async (req, res) => {
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Snapshots",
+      contents: {
+        type: "card",
+        contents: div(
+          button(
+            {
+              class: "btn btn-outline-secondary",
+              type: "button",
+              onclick:
+                "ajax_post('/site-structure/create-snapshot/'+prompt('Name of snapshot (optional)'))",
+            },
+            req.__("Snapshot now")
+          )
+        ),
+      },
+    });
+  })
+);
+
+router.post(
+  "/create-snapshot/:snapshotname",
+  isAdminOrHasConfigMinRole("min_role_create_snapshots"),
+  error_catcher(async (req, res) => {
+    const { snapshotname } = req.params;
+    if (snapshotname == "null") {
+      //user clicked cancel on prompt
+      res.json({ success: true });
+      return;
+    }
+
+    try {
+      const taken = await Snapshot.take_if_changed(snapshotname);
+      if (taken) req.flash("success", req.__("Snapshot successful"));
+      else
+        req.flash("success", req.__("No changes detected, snapshot skipped"));
+    } catch (e) {
+      req.flash("error", e.message);
+    }
+    res.json({ reload_page: true });
   })
 );
 

@@ -303,6 +303,7 @@ const fieldFlow = (req) =>
         fldRow.is_unique = false;
         fldRow.required = false;
       }
+      const table = Table.findOne({ id: table_id });
       if (context.id) {
         const field = await Field.findOne({ id: context.id });
         try {
@@ -311,10 +312,15 @@ const fieldFlow = (req) =>
           }
 
           await field.update(fldRow);
-          Trigger.emitEvent("AppChange", `Field ${fldRow.name}`, req.user, {
-            entity_type: "Field",
-            entity_name: fldRow.name || fldRow.label,
-          });
+          Trigger.emitEvent(
+            "AppChange",
+            `Field ${fldRow.name} on table ${table?.name}`,
+            req.user,
+            {
+              entity_type: "Field",
+              entity_name: fldRow.name || fldRow.label,
+            }
+          );
         } catch (e) {
           return {
             redirect: `/table/${context.table_id}`,
@@ -324,10 +330,15 @@ const fieldFlow = (req) =>
       } else {
         try {
           await Field.create(fldRow);
-          Trigger.emitEvent("AppChange", `Field ${fldRow.name}`, req.user, {
-            entity_type: "Field",
-            entity_name: fldRow.name || fldRow.label,
-          });
+          Trigger.emitEvent(
+            "AppChange",
+            `Field ${fldRow.name} on table ${table?.name}`,
+            req.user,
+            {
+              entity_type: "Field",
+              entity_name: fldRow.name || fldRow.label,
+            }
+          );
         } catch (e) {
           return {
             redirect: `/table/${context.table_id}`,
@@ -669,8 +680,8 @@ const fieldFlow = (req) =>
               a.type?.name === "String" && b.type?.name !== "String"
                 ? -1
                 : a.type?.name !== "String" && b.type?.name === "String"
-                ? 1
-                : 0
+                  ? 1
+                  : 0
             )
             .map((f) => ({
               value: f.name,
@@ -1165,8 +1176,8 @@ router.post(
               typeof value === "string"
                 ? value
                 : value?.toString
-                ? value.toString()
-                : `${value}`
+                  ? value.toString()
+                  : `${value}`
             );
           return;
         }
@@ -1289,8 +1300,8 @@ router.post(
       field.type === "Key"
         ? state.keyFieldviews
         : field.type === "File"
-        ? state.fileviews
-        : field.type.fieldviews;
+          ? state.fileviews
+          : field.type.fieldviews;
     if (!field.type || !fieldviews) {
       res.send("");
       return;
