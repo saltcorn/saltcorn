@@ -31,6 +31,7 @@ const show = require("./viewtemplates/show");
 const feed = require("./viewtemplates/feed");
 const room = require("./viewtemplates/room");
 const wfroom = require("./viewtemplates/workflow-room");
+const reactview = require("./viewtemplates/react-view");
 const edit = require("./viewtemplates/edit");
 const filter = require("./viewtemplates/filter");
 const fileviews = require("./fileviews");
@@ -48,6 +49,7 @@ const viewtemplates = [
   filter,
   room,
   wfroom,
+  reactview,
 ];
 
 module.exports = {

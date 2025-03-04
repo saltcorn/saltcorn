@@ -119,7 +119,11 @@ class File {
         }
 
         for (const name of fileNms) {
-          if (name[0] === "." || name.startsWith("_resized_")) continue;
+          if (
+            (name[0] === "." && !where?.hiddenFiles) ||
+            name.startsWith("_resized_")
+          )
+            continue;
           const f = await File.from_file_on_disk(name, folder);
           if (recursive && f.isDirectory) await searcher(f.location, recursive);
           if (where?.search && name.indexOf(where.search) < 0) continue;
@@ -346,10 +350,7 @@ class File {
    * @param name
    * @param inFolder
    */
-  static async new_folder(
-    name: string,
-    inFolder: string = ""
-  ): Promise<void> {
+  static async new_folder(name: string, inFolder: string = ""): Promise<void> {
     const tenant = db.getTenantSchema();
 
     const safeDir = path.normalize(name).replace(/^(\.\.(\/|\\|$))+/, "");
@@ -381,7 +382,7 @@ class File {
   /**
    * Get current folder
    */
-  get current_folder():string {
+  get current_folder(): string {
     return path.dirname(this.path_to_serve);
   }
   /**
