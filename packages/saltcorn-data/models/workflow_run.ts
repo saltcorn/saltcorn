@@ -282,9 +282,13 @@ class WorkflowRun {
         case "Free text":
           return { type: "String" };
         case "Multiple choice":
+          let options = q.options;
+          if (typeof options === "string" && options.includes("{{")) {
+            options = interpolate(q.options, this.context);
+          }
           return {
             type: "String",
-            attributes: { options: q.options },
+            attributes: { options },
             fieldview: "radio_group",
           };
         case "Integer":
