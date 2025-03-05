@@ -314,8 +314,8 @@ const select_from_table = {
             "Select label formula"
           )
       : srcField.attributes.summary_field
-      ? (r) => r.summary_field
-      : (r) => r[fieldNm];
+        ? (r) => r.summary_field
+        : (r) => r[fieldNm];
 
     const isDynamic = (formFieldNames || []).some((nm) =>
       (field.attributes.where || "").includes("$" + nm)
@@ -736,9 +736,10 @@ const select_by_view = {
   /**
    * @type {object[]}
    */
-  configFields: async (field) => {
+  configFields: async (field, modeetc) => {
     const refTable = Table.findOne({ name: field.reftable_name });
     const views = await View.find_possible_links_to_table(refTable);
+    const mode = modeetc?.mode;
 
     return [
       {
@@ -772,6 +773,15 @@ const select_by_view = {
         label: "In card",
         type: "Bool",
       },
+      ...(mode === "filter"
+        ? [
+            {
+              name: "multiple",
+              label: "Allow multiple",
+              type: "Bool",
+            },
+          ]
+        : []),
     ];
   },
 
@@ -818,7 +828,7 @@ const select_by_view = {
             ],
             onclick: `select_by_view_click(this, event, ${JSON.stringify(
               !!reqd
-            )})`,
+            )}, ${JSON.stringify(!!attrs?.multiple)})`,
             "data-id": row.id,
           },
           attrs.in_card ? div({ class: "card-body" }, html) : html
