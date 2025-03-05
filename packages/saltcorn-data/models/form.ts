@@ -14,11 +14,11 @@ import {
   instanceOfSuccessMsg,
   Type,
 } from "@saltcorn/types/common_types";
-import type { FieldLike } from "@saltcorn/types/base_types";
+import type { GenObj } from "@saltcorn/types/common_types";
 import Field from "./field";
 import User from "./user";
 import FieldRepeat from "./fieldrepeat";
-import type { Layout, Header } from "@saltcorn/types/base_types";
+import type { FieldLike, Layout, Header } from "@saltcorn/types/base_types";
 
 const { is } = require("contractis");
 
@@ -51,7 +51,7 @@ class Form implements AbstractForm {
   // only for workflow and userConfig Forms
   additionalHeaders?: Array<Header>;
   onChange?: string;
-  validator?: (arg0: any) => any;
+  validator?: (arg0: GenObj) => any;
   hasErrors: boolean;
   xhrSubmit: boolean;
   splitPaste: boolean;
