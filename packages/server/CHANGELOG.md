@@ -1,6 +1,17 @@
 # Notable changes
 
-## 1.1.2 - In beta
+## 1.1.3 - In beta
+
+* Workflows: 
+    - UserForm new question type: Multiple checks
+    - Options for Multiple checks and Multiple choice can use interpolations (`{{ }}`)
+      so options can be dynamically generated from the context
+
+### Fixes
+
+* Fix serving JSDoc (Table, File, User links in run_js_code)
+
+## 1.1.2 - Released 4 March 2025
 
 * Actions:
     - New action: download_file_to_browser

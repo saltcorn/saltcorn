@@ -2,6 +2,11 @@
 
 ## 1.1.3 - In beta
 
+* Workflows: 
+    - UserForm new question type: Multiple checks
+    - Options for Multiple checks and Multiple choice can use interpolations (`{{ }}`)
+      so options can be dynamically generated from the context
+
 ### Fixes
 
 * Fix serving JSDoc (Table, File, User links in run_js_code)
