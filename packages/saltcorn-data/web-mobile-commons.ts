@@ -429,7 +429,7 @@ const getWorkflowStepUserForm = async (
     onSubmit: "press_store_button(this)",
     blurb,
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
-    fields: await run.userFormFields(step),
+    ...await run.userFormFields(step),
     isWorkflow: true,
   });
   return form;

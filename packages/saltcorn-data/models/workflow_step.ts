@@ -624,7 +624,7 @@ class WorkflowStep {
                 "Checkbox",
                 "Free text",
                 "Multiple choice",
-                //"Multiple checks",
+                "Multiple checks",
                 "Integer",
                 "Float",
                 //"File upload",
