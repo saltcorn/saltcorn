@@ -316,6 +316,11 @@ class WorkflowRun {
         if (typeof options === "string")
           options = options.split(",").map((o) => o.trim());
         multiCheckOptions[q.var_name] = options;
+        formFields.push({
+          input_type: "section_header",
+          label: " ",
+          sublabel: `<span class="fst-normal">${q.label}</span>`,
+        } as FieldLike);
         options.forEach((o: string, ix: number) => {
           formFields.push({
             label: o,
