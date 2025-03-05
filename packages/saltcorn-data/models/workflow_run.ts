@@ -16,6 +16,7 @@ import utils from "../utils";
 import moment from "moment";
 import { mkTable } from "@saltcorn/markup/index";
 import mocks from "../tests/mocks";
+import { FieldLike } from "@saltcorn/types/base_types";
 const { mockReqRes } = mocks;
 const { ensure_final_slash, interpolate } = utils;
 const { eval_expression } = Expression;
@@ -262,7 +263,9 @@ class WorkflowRun {
     });
   }
 
-  async userFormFields(step0?: WorkflowStep) {
+  async userFormFields(
+    step0?: WorkflowStep
+  ): Promise<{ fields: FieldLike[]; validator?: (r: Row) => any }> {
     const step =
       step0 ||
       (await WorkflowStep.findOne({
@@ -299,11 +302,53 @@ class WorkflowRun {
           return {};
       }
     };
-    return (step.configuration.user_form_questions || []).map((q: any) => ({
-      label: q.label,
-      name: q.var_name,
-      ...qTypeToField(q),
-    }));
+
+    const formFields: FieldLike[] = [];
+    let hasMultiChecks = false;
+    const multiCheckOptions: any = {};
+    (step.configuration.user_form_questions || []).forEach((q: any) => {
+      if (q.qtype === "Multiple checks") {
+        hasMultiChecks = true;
+        let options = q.options;
+        if (typeof options === "string" && options.includes("{{")) {
+          options = interpolate(q.options, this.context);
+        }
+        if (typeof options === "string")
+          options = options.split(",").map((o) => o.trim());
+        multiCheckOptions[q.var_name] = options;
+        options.forEach((o: string, ix: number) => {
+          formFields.push({
+            label: o,
+            name: `${q.var_name}_${ix}`,
+            type: "Bool",
+          } as FieldLike);
+        });
+      } else
+        formFields.push({
+          label: q.label,
+          name: q.var_name,
+          ...qTypeToField(q),
+        } as FieldLike);
+    });
+
+    const formElems: { fields: FieldLike[]; validator?: (r: Row) => any } = {
+      fields: formFields,
+    };
+    if (hasMultiChecks)
+      formElems.validator = (row: Row) => {
+        (step.configuration.user_form_questions || []).forEach((q: any) => {
+          if (q.qtype === "Multiple checks") {
+            row[q.var_name] = [];
+            multiCheckOptions[q.var_name].forEach((o: string, ix: number) => {
+              if (row[`${q.var_name}_${ix}`]) {
+                row[q.var_name].push(o);
+              }
+              delete row[`${q.var_name}_${ix}`];
+            });
+          }
+        });
+      };
+    return formElems;
   }
 
   set_current_step(stepName: string) {
