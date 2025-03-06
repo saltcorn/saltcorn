@@ -44,6 +44,7 @@ const ExtractJwt = require("passport-jwt").ExtractJwt;
 const cors = require("cors");
 const api = require("./routes/api");
 const scapi = require("./routes/scapi");
+const fs = require("fs");
 
 const locales = Object.keys(available_languages);
 // jwt config
@@ -198,6 +199,17 @@ const getApp = async (opts = {}) => {
     for (const locale of locales) {
       staticCatalog[locale] = require(`./locales/${locale}.json`);
     }
+
+    for (const [nm, loc] of Object.entries(getState().plugin_locations))
+      if (fs.existsSync(path.join(loc, "locales")))
+        for (const locale of locales)
+          if (fs.existsSync(path.join(loc, "locales", `${locale}.json`))) {
+            const xlations = JSON.parse(
+              fs.readFileSync(path.join(loc, "locales", `${locale}.json`))
+            );          
+            Object.assign(staticCatalog[locale], xlations);
+          }
+
     i18n = new I18n({
       locales,
       staticCatalog,
