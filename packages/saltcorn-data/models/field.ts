@@ -349,6 +349,7 @@ class Field implements AbstractField {
       formFieldNames!.forEach((nm) => {
         fakeEnv[nm] = "$" + nm;
       });
+      if (user) fakeEnv.$user_id = user.id;
 
       this.attributes.dynamic_where = {
         table: this.reftable_name,
