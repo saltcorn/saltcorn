@@ -810,27 +810,41 @@ const select_by_view = {
           attrs?.justify && `justify-${attrs.justify}`,
         ],
       },
-      input({
-        type: "hidden",
-        "data-fieldname": field.form_name,
-        name: text_attr(nm),
-        id: `input${text_attr(nm)}`,
-        onChange: attrs.onChange,
-        value: v || "",
-      }),
+      !attrs?.multiple &&
+        input({
+          type: "hidden",
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: `input${text_attr(nm)}`,
+          onChange: attrs.onChange,
+          value: v || "",
+        }),
       (field.options || []).map(({ row, html }) =>
         div(
           {
             class: [
               "select-by-view-option",
-              v == row.id && "selected",
+              (Array.isArray(v) ? v.includes(row.id) : row.id == v) &&
+                "selected",
               attrs.in_card ? "card" : "no-card",
             ],
-            onclick: `select_by_view_click(this, event, ${JSON.stringify(
-              !!reqd
-            )}, ${JSON.stringify(!!attrs?.multiple)})`,
+            onclick: attrs?.multiple
+              ? `$('input.selbyviewmulti-${row.id}').prop('checked', !$('input.selbyviewmulti-${row.id}').prop('checked')).trigger('change')`
+              : `select_by_view_click(this, event, ${JSON.stringify(
+                  !!reqd
+                )}, ${JSON.stringify(!!attrs?.multiple)})`,
+
             "data-id": row.id,
           },
+          attrs?.multiple &&
+            input({
+              class: `d-none selbyviewmulti-${row.id}`,
+              type: "checkbox",
+              name: text_attr(nm),
+              onChange: `check_state_field(this, event)`,
+              value: row.id,
+              checked: Array.isArray(v) ? v.includes(row.id) : row.id == v,
+            }),
           attrs.in_card ? div({ class: "card-body" }, html) : html
         )
       )
