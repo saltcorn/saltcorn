@@ -23,8 +23,7 @@ class TranslateCommand extends Command {
     const { args, flags } = await this.parse(TranslateCommand);
     await init_some_tenants();
     await maybe_as_tenant(null, async () => {
-      console.log(getState().functions);
-      const dir = path.join(
+      let dir = path.join(
         __dirname,
         "..",
         "..",
@@ -33,10 +32,17 @@ class TranslateCommand extends Command {
         "server",
         "locales",
       );
+      if (flags.plugin) {
+        const location = getState().plugin_locations[flags.plugin];
+        if (!location) throw new Error("Plugin not found");
+        dir = path.join(location, "locales");
+      }
       const english = JSON.parse(fs.readFileSync(path.join(dir, "en.json")));
-      const locale = JSON.parse(
-        fs.readFileSync(path.join(dir, args.locale + ".json")),
-      );
+      const filePath = path.join(dir, args.locale + ".json");
+
+      const locale = fs.existsSync(filePath)
+        ? JSON.parse(fs.readFileSync(filePath))
+        : {};
 
       let count = 0;
       for (const key of Object.keys(english)) {
@@ -45,10 +51,10 @@ class TranslateCommand extends Command {
           continue;
         }
         process.stdout.write(`Translating ${key} to: `);
-        const answer = await getState().functions.llm_generate.run(
-          key,
-          { systemPrompt: systemPrompt(args.locale), temperature: 0 },
-        );
+        const answer = await getState().functions.llm_generate.run(key, {
+          systemPrompt: systemPrompt(args.locale),
+          temperature: 0,
+        });
         console.log(answer);
         locale[key] = answer;
         count += 1;
@@ -57,6 +63,18 @@ class TranslateCommand extends Command {
           JSON.stringify(locale, null, 2),
         );
         //if (count > 10) break;
+      }
+      if (flags.plugin) {
+        //console.log(getState().plugins[flags.plugin]);
+        const plugin = await Plugin.findOne({
+          name: { or: [flags.plugin, `@saltcorn/${flags.plugin}`] },
+        });
+        if (plugin?.source === "local") {
+          fs.writeFileSync(
+            path.join(plugin.location, "locales", args.locale + ".json"),
+            JSON.stringify(locale, null, 2),
+          );
+        }
       }
     });
     this.exit(0);
@@ -98,9 +116,9 @@ TranslateCommand.description = `Produce translation files with LLM`;
  * @type {object}
  */
 TranslateCommand.flags = {
-  module: Flags.string({
-    char: "m",
-    description: "Module to translate (in development)",
+  plugin: Flags.string({
+    char: "p",
+    description: "Plugin to translate",
   }),
 };
 
