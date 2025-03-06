@@ -2145,7 +2145,7 @@ function update_time_of_week(nm) {
   };
 }
 
-function select_by_view_click(element, event, required) {
+function select_by_view_click(element, event, required, multiple) {
   const isAlreadySelected = $(element).hasClass("selected");
   $(element)
     .closest(".select-by-view-container")
