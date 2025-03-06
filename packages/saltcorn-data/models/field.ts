@@ -349,6 +349,7 @@ class Field implements AbstractField {
       formFieldNames!.forEach((nm) => {
         fakeEnv[nm] = "$" + nm;
       });
+      if (user) fakeEnv.$user_id = user.id;
 
       this.attributes.dynamic_where = {
         table: this.reftable_name,
@@ -405,9 +406,14 @@ class Field implements AbstractField {
       if (!this.attributes) this.attributes = {};
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
+
+      const Table = require("./table");
+      const refTable = Table.findOne(this.reftable_name);
+      const pk_name = refTable.pk_name;
+
       const whereWithExisting =
         existingValue && where
-          ? { or: [{ id: existingValue }, where] } //TODO pk_name
+          ? { or: [{ [pk_name]: existingValue }, where] } //TODO pk_name
           : where;
 
       const rows = !optionsQuery

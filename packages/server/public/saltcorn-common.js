@@ -520,6 +520,7 @@ function apply_showif() {
     var el = $(this);
     var date = new Date(el.attr("datetime"));
     const options = parse(el.attr("locale-date-options"));
+    options.timeZone = "UTC";
     el.text(date.toLocaleDateString(locale, options));
   });
   $("time[locale-date-format]").each(function () {
