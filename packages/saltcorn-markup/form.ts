@@ -1019,17 +1019,18 @@ const mkFormRowForField =
         labelCols
       );
   };
-const helpLink = ({ topic, context, dynContext }: any) => {
+const helpLink = ({ topic, context, dynContext, plugin }: any) => {
   let qs = "";
   Object.keys(context || {}).forEach((k) => {
     qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
   });
+  const basepath = plugin ? `/admin/help-plugin/${plugin}` : "/admin/help";
   return a(
     {
-      href: `javascript:ajax_modal('/admin/help/${topic}?${qs}')`,
+      href: `javascript:ajax_modal('${basepath}/${topic}?${qs}')`,
       "data-dyn-href":
         !!dynContext &&
-        `\`javascript:ajax_modal('/admin/help/${topic}?${qs}&${dynContext
+        `\`javascript:ajax_modal('${basepath}/${topic}?${qs}&${dynContext
           .map((k: string) => `${k}=\${${k}}`)
           .join("&")}')\``,
     },

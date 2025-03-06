@@ -65,7 +65,7 @@ const {
 /**
  * @returns {Workflow}
  */
-const configuration_workflow = () =>
+const configuration_workflow = (req) =>
   new Workflow({
     steps: [
       {
@@ -146,7 +146,7 @@ const configuration_workflow = () =>
               actionConfigForms[name] = await getActionConfigFields(
                 action,
                 table,
-                { mode: "filter" }
+                { mode: "filter", req }
               );
             }
           }

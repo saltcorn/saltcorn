@@ -44,14 +44,9 @@ const ExtractJwt = require("passport-jwt").ExtractJwt;
 const cors = require("cors");
 const api = require("./routes/api");
 const scapi = require("./routes/scapi");
+const fs = require("fs");
 
 const locales = Object.keys(available_languages);
-// i18n configuration
-const i18n = new I18n({
-  locales,
-  directory: path.join(__dirname, "locales"),
-  mustacheConfig: { disable: true },
-});
 // jwt config
 const jwt_secret = db.connectObj.jwt_secret;
 const jwt_extractor = ExtractJwt.fromExtractors([
@@ -186,6 +181,43 @@ const getApp = async (opts = {}) => {
 
   // cookies
   app.use(require("cookie-parser")());
+
+  // i18n configuration
+
+  let i18n;
+
+  if (getState().getConfig("development_mode")) {
+    // i18n configuration
+    i18n = new I18n({
+      locales,
+      directory: path.join(__dirname, "locales"),
+      mustacheConfig: { disable: true },
+      defaultLocale: getState().getConfig("default_locale"),
+    });
+  } else {
+    const staticCatalog = {};
+    for (const locale of locales) {
+      staticCatalog[locale] = require(`./locales/${locale}.json`);
+    }
+
+    for (const [nm, loc] of Object.entries(getState().plugin_locations))
+      if (fs.existsSync(path.join(loc, "locales")))
+        for (const locale of locales)
+          if (fs.existsSync(path.join(loc, "locales", `${locale}.json`))) {
+            const xlations = JSON.parse(
+              fs.readFileSync(path.join(loc, "locales", `${locale}.json`))
+            );          
+            Object.assign(staticCatalog[locale], xlations);
+          }
+
+    i18n = new I18n({
+      locales,
+      staticCatalog,
+      mustacheConfig: { disable: true },
+      defaultLocale: getState().getConfig("default_locale"),
+    });
+  }
+
   // i18n support
   app.use(i18n.init);
   // init multitenant mode

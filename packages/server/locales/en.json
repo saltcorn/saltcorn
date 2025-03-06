@@ -1568,5 +1568,12 @@
 	"Edit search": "Edit search",
 	"Minimum role to edit search": "Minimum role to edit search",
 	"Create snapshot": "Create snapshot",
-	"Minimum role to create snapshot": "Minimum role to create snapshot"
+	"Minimum role to create snapshot": "Minimum role to create snapshot",
+	"Min length": "Min length",
+	"Max length": "Max length",
+	"Regular expression": "Regular expression",
+	"Exact search only": "Exact search only",
+	"Translation of": "Translation of",
+	"Minimum": "Minimum",
+	"Maximum": "Maximum"
 }

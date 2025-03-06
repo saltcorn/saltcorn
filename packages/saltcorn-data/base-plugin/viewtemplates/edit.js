@@ -175,7 +175,7 @@ const configuration_workflow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(
                 action,
                 table,
-                { mode: "edit" }
+                { mode: "edit", req }
               );
             }
           }

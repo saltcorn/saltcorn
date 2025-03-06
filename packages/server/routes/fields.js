@@ -230,7 +230,7 @@ const translateAttributes = (attrs, req) =>
  * @returns {object}
  */
 const translateAttribute = (attr, req) => {
-  let res = { ...attr };
+  let res = { ...attr, label: req.__(attr.label) };
   if (res.sublabel) res.sublabel = req.__(res.sublabel);
   if (res.isRepeat) res = new FieldRepeat(res);
   return res;
@@ -1430,7 +1430,8 @@ router.post(
       [field],
       false,
       0,
-      mode
+      mode,
+      req
     );
     const formFields = fieldViewConfigForms[field.name][fv_name];
     if (!formFields) {

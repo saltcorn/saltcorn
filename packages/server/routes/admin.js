@@ -296,6 +296,32 @@ router.get(
 );
 
 router.get(
+  "/help-plugin/:plugin/:topic",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { plugin, topic } = req.params;
+    const location = getState().plugin_locations[plugin];
+    if (location) {
+      const safeFile = path
+        .normalize(topic + ".tmd")
+        .replace(/^(\.\.(\/|\\|$))+/, "");
+      const fullpath = path.join(location, "help", safeFile);
+      if (fs.existsSync(fullpath)) {
+        const { markup } = await get_help_markup(fullpath, req.query, req, true);
+
+        res.sendWrap(`Help: ${topic}`, { above: [markup] });
+      } else {
+        getState().log(6, `Plugin serve help: file not found ${fullpath}`);
+        res.status(404).send(req.__("Not found"));
+      }
+    } else {
+      getState().log(6, `Plugin serve heko: plogin not found ${plugin}`);
+      res.status(404).send(req.__("Not found"));
+    }
+  })
+);
+
+router.get(
   "/jsdoc/*filepath",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
