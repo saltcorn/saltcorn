@@ -183,7 +183,7 @@ const configuration_workflow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(
                 action,
                 table,
-                { mode: "list" }
+                { mode: "list", req }
               );
             }
           }
@@ -907,7 +907,7 @@ const run = async (
   const id = stateWithId.id;
   let state = { ...stateWithId };
   if (extraOpts?.removeIdFromstate) delete state.id;
-  
+
   const statehash = hashState(state, viewname);
 
   const { rows, rowCount } = await listQuery(state, statehash);
@@ -1264,6 +1264,7 @@ const run_action = async (
   if (state_action) {
     const cfgFields = await getActionConfigFields(state_action, table, {
       mode: "list",
+      req,
     });
     cfgFields.forEach(({ name }) => {
       if (typeof col.configuration[name] === "undefined")

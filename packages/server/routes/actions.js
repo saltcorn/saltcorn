@@ -632,6 +632,7 @@ const getWorkflowStepForm = async (
     try {
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "workflow",
+        req,
       });
 
       for (const field of cfgFields) {
@@ -812,7 +813,7 @@ const getMultiStepForm = async (req, id, table) => {
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
-    const cfgFields = await getActionConfigFields(action, table);
+    const cfgFields = await getActionConfigFields(action, table, { req });
 
     for (const field of cfgFields) {
       const cfgFld = {
@@ -1034,6 +1035,7 @@ router.get(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        req,
       });
       // create form
       const form = new Form({
@@ -1092,6 +1094,7 @@ router.post(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        req,
       });
       form = new Form({
         action: `/actions/configure/${id}`,

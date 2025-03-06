@@ -784,7 +784,11 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
  */
 const getActionConfigFields = async (action, table, extra = {}) =>
   typeof action.configFields === "function"
-    ? await action.configFields({ table, ...extra })
+    ? await action.configFields({
+        table,
+        ...extra,
+        ...(extra?.req ? { __: extra.req.__ } : {}),
+      })
     : action.configFields || [];
 
 /**
@@ -842,7 +846,7 @@ const field_picker_fields = async ({
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
-    const cfgFields = await getActionConfigFields(action, table);
+    const cfgFields = await getActionConfigFields(action, table, { req });
 
     for (const field of cfgFields) {
       const cfgFld = {

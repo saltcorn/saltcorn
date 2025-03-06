@@ -189,6 +189,7 @@ const pageBuilderData = async (req, context) => {
     if (action && action.configFields) {
       actionConfigForms[name] = await getActionConfigFields(action, null, {
         mode: "page",
+        req,
       });
     }
   }
