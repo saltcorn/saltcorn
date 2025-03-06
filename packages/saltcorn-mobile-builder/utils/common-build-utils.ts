@@ -50,12 +50,16 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
     "@capacitor/screen-orientation@6.0.3",
-    "send-intent",
+    "send-intent@6.0.3",
   ];
-  result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
-    cwd: buildDir,
-    maxBuffer: 1024 * 1024 * 10,
-  });
+  result = spawnSync(
+    "npm",
+    ["install", "--legacy-peer-deps", ...capDepsAndPlugins],
+    {
+      cwd: buildDir,
+      maxBuffer: 1024 * 1024 * 10,
+    }
+  );
   console.log(result.output.toString());
 
   console.log("installing cordova plugins");
@@ -63,10 +67,14 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "cordova-plugin-file@8.1.3",
     "cordova-plugin-inappbrowser@6.0.0",
   ];
-  result = spawnSync("npm", ["install", ...cordovaPlugins], {
-    cwd: buildDir,
-    maxBuffer: 1024 * 1024 * 10,
-  });
+  result = spawnSync(
+    "npm",
+    ["install", "--legacy-peer-deps", ...cordovaPlugins],
+    {
+      cwd: buildDir,
+      maxBuffer: 1024 * 1024 * 10,
+    }
+  );
 }
 
 export interface ScCapacitorConfig {
