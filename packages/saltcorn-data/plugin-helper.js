@@ -311,7 +311,7 @@ const calcrelViewOptions = async (table, viewtemplate) => {
  * @param nrecurse
  * @returns {Promise<object>}
  */
-const calcfldViewConfig = async (fields, isEdit, nrecurse = 2, mode) => {
+const calcfldViewConfig = async (fields, isEdit, nrecurse = 2, mode, req) => {
   const fieldViewConfigForms = {};
   for (const f of fields) {
     f.fill_table();
@@ -327,7 +327,7 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2, mode) => {
         fieldViewConfigForms[f.name][nm] = await applyAsync(
           fv.configFields,
           f,
-          { mode }
+          { mode, req, ...(req?.__ ? { __: req.__ } : {}) }
         );
     }
     if (f.type === "Key") {
@@ -338,7 +338,8 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2, mode) => {
             reftable.fields,
             isEdit,
             nrecurse - 1,
-            mode
+            mode,
+            req
           );
           Object.entries(joinedCfg).forEach(([nm, o]) => {
             fieldViewConfigForms[`${f.name}.${nm}`] = o;

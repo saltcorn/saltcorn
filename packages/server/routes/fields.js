@@ -1430,7 +1430,8 @@ router.post(
       [field],
       false,
       0,
-      mode
+      mode,
+      req
     );
     const formFields = fieldViewConfigForms[field.name][fv_name];
     if (!formFields) {
