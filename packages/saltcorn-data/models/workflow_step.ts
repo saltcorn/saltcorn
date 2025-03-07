@@ -127,6 +127,12 @@ class WorkflowStep {
     if (connect_prev_next) {
       const allSteps = await WorkflowStep.find({ trigger_id: this.trigger_id });
       const allStepNames = new Set(allSteps.map((s) => s.name));
+      const forStepInitialBodySteps = new Set(
+        allSteps
+          .filter((s) => s.action_name === "ForLoop")
+          .map((s) => s.configuration.loop_body_initial_step)
+      );
+
       if (
         this.initial_step &&
         this.next_step &&
@@ -136,6 +142,25 @@ class WorkflowStep {
           `update ${schema}_sc_workflow_steps SET initial_step = true WHERE trigger_id = $1 and name = $2`,
           [this.trigger_id, this.next_step]
         );
+      if (forStepInitialBodySteps.has(this.name)) {
+        const forSteps = allSteps.filter(
+          (s) =>
+            s.action_name === "ForLoop" &&
+            s.configuration.loop_body_initial_step == this.name
+        );
+        for (const forStep of forSteps) {
+          await forStep.update({
+            configuration: {
+              ...forStep.configuration,
+              loop_body_initial_step:
+                this.next_step && allStepNames.has(this.next_step)
+                  ? this.next_step
+                  : "",
+            },
+          });
+        }
+      }
+
       if (this.next_step && allStepNames.has(this.next_step))
         await db.query(
           `update ${schema}_sc_workflow_steps SET next_step = $1 WHERE trigger_id = $2 and next_step = $3`,
@@ -268,6 +293,27 @@ class WorkflowStep {
     }
   }
 
+  static getDiagramLoopLinkBacks(steps: WorkflowStep[]) {
+    const loopLinks: Record<string, string> = {};
+    const for_steps = steps.filter((s) => s.action_name === "ForLoop");
+    for (const for_step of for_steps) {
+      const visited: Set<string> = new Set([]);
+      let step = steps.find(
+        (s) => s.name === for_step.configuration.loop_body_initial_step
+      );
+      let lastName;
+      while (step) {
+        lastName = step.name;
+        visited.add(step.name);
+        step = steps.find(
+          (s) => s.name === step?.next_step && !visited.has(s.name)
+        );
+      }
+      if (lastName) loopLinks[lastName] = for_step.name;
+    }
+    return loopLinks;
+  }
+
   static generate_diagram(steps: WorkflowStep[], options = {}) {
     const stepNames: string[] = steps.map((s) => s.name);
     const nodeLines = steps.map(
@@ -278,6 +324,8 @@ class WorkflowStep {
     nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
     const linkLines = [];
     let step_ix = 0;
+    const loopLinks = WorkflowStep.getDiagramLoopLinkBacks(steps);
+    
     for (const step of steps) {
       if (step.initial_step)
         linkLines.push(
@@ -307,29 +355,32 @@ class WorkflowStep {
           );
         }
       } else if (!step.next_step) {
-        linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
-        nodeLines.push(
-          `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-        );
+        if (loopLinks[step.name]) {
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-"></i> --- ${WorkflowStep.mmescape(
+              loopLinks[step.name]
+            )}`
+          );
+        } else {
+          linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
+          nodeLines.push(
+            `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+          );
+        }
       }
       if (step.action_name === "ForLoop") {
-        linkLines.push(
-          `  ${step.mmname}-.->${WorkflowStep.mmescape(
-            step.configuration.loop_body_initial_step
-          )}`
-        );
+        if (stepNames.includes(step.configuration.loop_body_initial_step))
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-${step.configuration.loop_body_initial_step}"></i> --- ${WorkflowStep.mmescape(
+              step.configuration.loop_body_initial_step
+            )}`
+          );
+        else
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-"></i> --- ${step.mmname}`
+          );
       }
-      if (step.action_name === "EndForLoop") {
-        // TODO this is not correct. improve.
-        let forStep;
-        for (let i = step_ix; i >= 0; i -= 1) {
-          if (steps[i].action_name === "ForLoop") {
-            forStep = steps[i];
-            break;
-          }
-        }
-        if (forStep) linkLines.push(`  ${step.mmname} --> ${forStep.mmname}`);
-      }
+
       step_ix += 1;
     }
     if (!steps.length || !steps.find((s) => s.initial_step)) {
@@ -366,7 +417,8 @@ class WorkflowStep {
     actionExplainers.SetErrorHandler = "Set the error handling step";
     actionExplainers.EditViewForm =
       "Ask the user to fill in a form from an Edit view, storing the response in the context";
-    actionExplainers.TerminateWorkflow = "Terminate the entire workflow run execution immediately";
+    actionExplainers.TerminateWorkflow =
+      "Terminate the entire workflow run execution immediately";
     if (opts?.api_call)
       actionExplainers.APIResponse = "Provide the response to an API call";
 
