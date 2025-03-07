@@ -315,7 +315,7 @@ class WorkflowStep {
       if (step.action_name === "ForLoop") {
         if (stepNames.includes(step.configuration.loop_body_initial_step))
           linkLines.push(
-            `  ${step.mmname}-.->${WorkflowStep.mmescape(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-${step.configuration.loop_body_initial_step}"></i> --- ${WorkflowStep.mmescape(
               step.configuration.loop_body_initial_step
             )}`
           );
