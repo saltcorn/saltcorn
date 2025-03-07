@@ -313,23 +313,18 @@ class WorkflowStep {
         );
       }
       if (step.action_name === "ForLoop") {
-        linkLines.push(
-          `  ${step.mmname}-.->${WorkflowStep.mmescape(
-            step.configuration.loop_body_initial_step
-          )}`
-        );
+        if (stepNames.includes(step.configuration.loop_body_initial_step))
+          linkLines.push(
+            `  ${step.mmname}-.->${WorkflowStep.mmescape(
+              step.configuration.loop_body_initial_step
+            )}`
+          );
+          else 
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmname}`
+          );
       }
-      if (step.action_name === "EndForLoop") {
-        // TODO this is not correct. improve.
-        let forStep;
-        for (let i = step_ix; i >= 0; i -= 1) {
-          if (steps[i].action_name === "ForLoop") {
-            forStep = steps[i];
-            break;
-          }
-        }
-        if (forStep) linkLines.push(`  ${step.mmname} --> ${forStep.mmname}`);
-      }
+
       step_ix += 1;
     }
     if (!steps.length || !steps.find((s) => s.initial_step)) {
@@ -340,7 +335,7 @@ class WorkflowStep {
     }
     const fc =
       "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-    //console.log(fc);
+    console.log(fc);
 
     return fc;
   }
@@ -366,7 +361,8 @@ class WorkflowStep {
     actionExplainers.SetErrorHandler = "Set the error handling step";
     actionExplainers.EditViewForm =
       "Ask the user to fill in a form from an Edit view, storing the response in the context";
-    actionExplainers.TerminateWorkflow = "Terminate the entire workflow run execution immediately";
+    actionExplainers.TerminateWorkflow =
+      "Terminate the entire workflow run execution immediately";
     if (opts?.api_call)
       actionExplainers.APIResponse = "Provide the response to an API call";
 
