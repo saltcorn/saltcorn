@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS _sc_workflow_runs (
     context jsonb NOT NULL,
     wait_info jsonb,
     started_at timestamp not null,
-    started_by int references users(id),
+    started_by int references users(id) on delete set null,
     error text,
     status text,
     current_step text
@@ -38,7 +38,7 @@ const sql_sqlite = [
     context json NOT NULL,
     wait_info json,
     started_at timestamp not null,
-    started_by int references users(id),
+    started_by int references users(id) on delete set null,
     error text,
     status text,
     current_step text
