@@ -2152,7 +2152,10 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
 
 const imageAvailable = async () => {
   try {
-    const image = new Docker().getImage("saltcorn/capacitor-builder");
+    const state = getState();
+    const image = new Docker().getImage(
+      `saltcorn/capacitor-builder:${state.scVersion}`
+    );
     await image.inspect();
     return true;
   } catch (e) {
