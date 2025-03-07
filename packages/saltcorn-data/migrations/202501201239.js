@@ -7,7 +7,7 @@ const sql_sqlite = [
       context json NOT NULL,
       wait_info json,
       started_at timestamp not null,
-      started_by int references users(id),
+      started_by int references users(id) on delete set null,
       error text,
       status text,
       current_step json,

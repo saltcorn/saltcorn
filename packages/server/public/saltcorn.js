@@ -76,7 +76,7 @@ function removeQueryStringParameter(uri1, key, value) {
   let re;
   if (value) {
     re = new RegExp(
-      "([?&])" + escapeRegExp(key) + "=" + value + "?(&|$)",
+      "([?&])" + escapeRegExp(key) + "=" + encodeURIComponent(value) + "?(&|$)",
       "gi"
     );
   } else {
@@ -131,11 +131,13 @@ function set_state_field(key, value, e) {
 function check_state_field(that, e) {
   const checked = that.checked;
   const name = that.name;
-  const value = encodeURIComponent(that.value);
+  const value = that.value;
   let dest;
   if (checked)
     dest = addQueryStringParameter(get_current_state_url(e), name, value);
   else dest = removeQueryStringParameter(get_current_state_url(e), name, value);
+  console.log({ dest, name, value, tvalue: that.value });
+
   pjax_to(dest.replace("&&", "&").replace("?&", "?"), e);
 }
 
