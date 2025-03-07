@@ -325,6 +325,8 @@ class WorkflowStep {
     const linkLines = [];
     let step_ix = 0;
     const loopLinks = WorkflowStep.getDiagramLoopLinkBacks(steps);
+    console.log({loopLinks});
+    
     for (const step of steps) {
       if (step.initial_step)
         linkLines.push(
@@ -376,7 +378,7 @@ class WorkflowStep {
           );
         else
           linkLines.push(
-            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmname}`
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-"></i> --- ${step.mmname}`
           );
       }
 
@@ -390,7 +392,7 @@ class WorkflowStep {
     }
     const fc =
       "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-    console.log(fc);
+    //console.log(fc);
 
     return fc;
   }
