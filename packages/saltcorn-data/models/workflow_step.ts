@@ -293,6 +293,27 @@ class WorkflowStep {
     }
   }
 
+  static getDiagramLoopLinkBacks(steps: WorkflowStep[]) {
+    const loopLinks: Record<string, string> = {};
+    const for_steps = steps.filter((s) => s.action_name === "ForLoop");
+    for (const for_step of for_steps) {
+      const visited: Set<string> = new Set([]);
+      let step = steps.find(
+        (s) => s.name === for_step.configuration.loop_body_initial_step
+      );
+      let lastName;
+      while (step) {
+        lastName = step.name;
+        visited.add(step.name);
+        step = steps.find(
+          (s) => s.name === step?.next_step && !visited.has(s.name)
+        );
+      }
+      if (lastName) loopLinks[lastName] = for_step.name;
+    }
+    return loopLinks;
+  }
+
   static generate_diagram(steps: WorkflowStep[], options = {}) {
     const stepNames: string[] = steps.map((s) => s.name);
     const nodeLines = steps.map(
@@ -303,6 +324,7 @@ class WorkflowStep {
     nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
     const linkLines = [];
     let step_ix = 0;
+    const loopLinks = WorkflowStep.getDiagramLoopLinkBacks(steps);
     for (const step of steps) {
       if (step.initial_step)
         linkLines.push(
@@ -332,10 +354,18 @@ class WorkflowStep {
           );
         }
       } else if (!step.next_step) {
-        linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
-        nodeLines.push(
-          `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-        );
+        if (loopLinks[step.name]) {
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-"></i> --- ${WorkflowStep.mmescape(
+              loopLinks[step.name]
+            )}`
+          );
+        } else {
+          linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
+          nodeLines.push(
+            `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+          );
+        }
       }
       if (step.action_name === "ForLoop") {
         if (stepNames.includes(step.configuration.loop_body_initial_step))
