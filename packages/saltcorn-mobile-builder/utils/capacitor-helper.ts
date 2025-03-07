@@ -7,6 +7,7 @@ import utils = require("@saltcorn/data/utils");
 const { safeEnding } = utils;
 import File from "@saltcorn/data/models/file";
 import { copyPrepopulatedDb, extractDomain } from "./common-build-utils";
+const { getState } = require("@saltcorn/data/db/state");
 
 import type { IosCfg } from "../mobile-builder";
 
@@ -246,13 +247,14 @@ export class CapacitorHelper {
 
   private buildWithDocker() {
     console.log("building with docker");
+    const state = getState();
     const spawnParams = [
       "run",
       "--network",
       "host",
       "-v",
       `${this.buildDir}:/saltcorn-mobile-app`,
-      "saltcorn/capacitor-builder",
+      `saltcorn/capacitor-builder:${state.scVersion}`,
     ];
     spawnParams.push(this.buildType);
     spawnParams.push(this.appVersion);
