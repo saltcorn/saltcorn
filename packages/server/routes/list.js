@@ -429,10 +429,14 @@ router.get(
               });
               window.tabulator_table.on("cellEdited", function(cell){
                 const row = cell.getRow().getData()
+                const fieldName = cell.getColumn().getField()
+                let ident = (row.${pkNm}||"");
+                if(fieldName === "${pkNm}")
+                  ident = "";
                 ajax_indicator(true);
                 $.ajax({
                   type: "POST",
-                  url: "/api/${table.name}/" + (row.${pkNm}||""),
+                  url: "/api/${table.name}/" + ident,
                   data: row,
                   headers: {
                     "CSRF-Token": _sc_globalCsrf,
