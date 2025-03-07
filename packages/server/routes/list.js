@@ -190,7 +190,7 @@ const typeToGridType = (t, field) => {
   if (field.calculated) {
     jsgField.editor = false;
   }
-  if (field.primary_key) {
+  if (field.primary_key && !field?.attributes?.NonSerial) {
     jsgField.editor = false;
   }
   return jsgField;
@@ -221,8 +221,8 @@ jsGrid.fields.versions = VersionsField;
 // end of versionsField
 
 const arrangeIdFirst = (flds) => {
-  const noId = flds.filter((f) => f.name !== "id");
-  const id = flds.find((f) => f.name === "id");
+  const noId = flds.filter((f) => !f.primary_key);
+  const id = flds.find((f) => f.primary_key);
   if (id) return [id, ...noId];
   else return flds;
 };
@@ -282,7 +282,7 @@ router.get(
       cellClick: "__delete_tabulator_row",
     });
     const isDark = getState().getLightDarkMode(req.user) === "dark";
-    const pkNm = table.pk_name
+    const pkNm = table.pk_name;
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -407,8 +407,8 @@ router.get(
                   ajaxURL:"/api/${encodeURIComponent(
                     table.name
                   )}?tabulator_pagination_format=true${
-                  table.versioned ? "&versioncount=on" : ""
-                }",                   
+                    table.versioned ? "&versioncount=on" : ""
+                  }",                   
                   layout:"fitColumns", 
                   columns,
                   height:"100%",
@@ -427,10 +427,14 @@ router.get(
               });
               window.tabulator_table.on("cellEdited", function(cell){
                 const row = cell.getRow().getData()
+                const fieldName = cell.getColumn().getField()
+                let ident = (row.${pkNm}||"");
+                if(fieldName === "${pkNm}")
+                  ident = "";
                 ajax_indicator(true);
                 $.ajax({
                   type: "POST",
-                  url: "/api/${table.name}/" + (row.${pkNm}||""),
+                  url: "/api/${table.name}/" + ident,
                   data: row,
                   headers: {
                     "CSRF-Token": _sc_globalCsrf,

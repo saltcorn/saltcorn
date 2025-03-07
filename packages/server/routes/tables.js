@@ -813,9 +813,6 @@ router.get(
     let fieldCard;
     const primaryKeys = fields.filter((f) => f.primary_key);
     const nPrimaryKeys = primaryKeys.length;
-    const nonSerialPKS = primaryKeys.some(
-      (f) => f.attributes?.NonSerial && f.type?.name === "Integer"
-    );
 
     if (fields.length === 0) {
       fieldCard = [
@@ -879,7 +876,7 @@ router.get(
         { hover: true }
       );
       fieldCard = [
-        (nPrimaryKeys !== 1 || nonSerialPKS) &&
+        nPrimaryKeys !== 1 &&
           !table.external &&
           !table.provider_name &&
           div(
