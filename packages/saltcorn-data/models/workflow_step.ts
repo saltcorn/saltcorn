@@ -325,7 +325,6 @@ class WorkflowStep {
     const linkLines = [];
     let step_ix = 0;
     const loopLinks = WorkflowStep.getDiagramLoopLinkBacks(steps);
-    console.log({loopLinks});
     
     for (const step of steps) {
       if (step.initial_step)
