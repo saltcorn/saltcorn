@@ -221,8 +221,8 @@ jsGrid.fields.versions = VersionsField;
 // end of versionsField
 
 const arrangeIdFirst = (flds) => {
-  const noId = flds.filter((f) => f.name !== "id");
-  const id = flds.find((f) => f.name === "id");
+  const noId = flds.filter((f) => !f.primary_key);
+  const id = flds.find((f) => f.primary_key);
   if (id) return [id, ...noId];
   else return flds;
 };
