@@ -190,7 +190,7 @@ const typeToGridType = (t, field) => {
   if (field.calculated) {
     jsgField.editor = false;
   }
-  if (field.primary_key) {
+  if (field.primary_key && !field?.attributes?.NonSerial) {
     jsgField.editor = false;
   }
   return jsgField;
@@ -265,6 +265,8 @@ router.get(
     const jsfields = arrangeIdFirst(fields).map((f) =>
       typeToGridType(f.type, f)
     );
+    console.log(jsfields);
+
     if (table.versioned) {
       jsfields.push({
         field: "_versions",
@@ -282,7 +284,7 @@ router.get(
       cellClick: "__delete_tabulator_row",
     });
     const isDark = getState().getLightDarkMode(req.user) === "dark";
-    const pkNm = table.pk_name
+    const pkNm = table.pk_name;
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -407,8 +409,8 @@ router.get(
                   ajaxURL:"/api/${encodeURIComponent(
                     table.name
                   )}?tabulator_pagination_format=true${
-                  table.versioned ? "&versioncount=on" : ""
-                }",                   
+                    table.versioned ? "&versioncount=on" : ""
+                  }",                   
                   layout:"fitColumns", 
                   columns,
                   height:"100%",
