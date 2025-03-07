@@ -319,9 +319,9 @@ class WorkflowStep {
               step.configuration.loop_body_initial_step
             )}`
           );
-          else 
+        else
           linkLines.push(
-            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmname}`
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmname}`
           );
       }
 

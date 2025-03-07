@@ -562,7 +562,10 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
       const idnext = cls.split(" ").find(c=>c.startsWith("btw-nodes-")).
           substr(10);
       const [idprev, nmnext] = idnext.split("-");
-      location.href = '/actions/stepedit/${trigger.id}?after_step='+idprev+'&before_step='+nmnext;
+      if(cls.includes("init-for-body"))
+        location.href = '/actions/stepedit/${trigger.id}?after_step_for='+idprev+'&before_step='+nmnext;
+      else
+        location.href = '/actions/stepedit/${trigger.id}?after_step='+idprev+'&before_step='+nmnext;
     })
     $("g.node").on("click", (e)=>{
        const $e = $(e.target || e).closest("g.node")
@@ -613,7 +616,8 @@ const getWorkflowStepForm = async (
   req,
   step_id,
   after_step,
-  before_step
+  before_step,
+  after_step_for
 ) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   const actionExplainers = {};
@@ -779,9 +783,11 @@ const getWorkflowStepForm = async (
   });
   form.hidden("wf_step_id");
   form.hidden("_after_step");
+  form.hidden("_after_step_for");
   if (before_step) form.values.wf_next_step = before_step;
   if (after_step == "0") form.values.wf_initial_step = true;
   else if (after_step) form.values._after_step = after_step;
+  else if (after_step_for) form.values._after_step_for = after_step_for;
   if (step_id) {
     const step = await WorkflowStep.findOne({ id: step_id });
     if (!step) throw new Error("Step not found");
@@ -1312,14 +1318,15 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
-    const { initial_step, after_step, before_step } = req.query;
+    const { initial_step, after_step, before_step, after_step_for } = req.query;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(
       trigger,
       req,
       step_id,
       after_step,
-      before_step
+      before_step,
+      after_step_for
     );
 
     if (initial_step) form.values.wf_initial_step = true;
@@ -1387,6 +1394,7 @@ router.post(
       wf_only_if,
       wf_step_id,
       _after_step,
+      _after_step_for,
       ...configuration
     } = form.values;
     Object.entries(configuration).forEach(([k, v]) => {
@@ -1433,7 +1441,21 @@ router.post(
         });
         if (astep) await astep.update({ next_step: step.name });
       }
+      if (_after_step_for && _after_step_for !== "undefined") {
+        const astep = await WorkflowStep.findOne({
+          id: _after_step_for,
+          trigger_id,
+        });
+        if (astep)
+          await astep.update({
+            configuration: {
+              ...step.configuration,
+              loop_body_initial_step: step.name,
+            },
+          });
+      }
     } catch (e) {
+      console.error(e);
       const emsg =
         e.message ===
         'duplicate key value violates unique constraint "workflow_steps_name_uniq"'
