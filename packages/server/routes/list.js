@@ -265,8 +265,6 @@ router.get(
     const jsfields = arrangeIdFirst(fields).map((f) =>
       typeToGridType(f.type, f)
     );
-    console.log(jsfields);
-
     if (table.versioned) {
       jsfields.push({
         field: "_versions",
