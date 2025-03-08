@@ -384,7 +384,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
       table: patients,
     });
-    await recalculate_for_stored(patients);
+    //await recalculate_for_stored(patients);
   });
   it("has array content", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -575,7 +575,7 @@ describe("aggregations in stored calculated fields", () => {
       pages: 210,
       publisher: hid,
     });
-    await recalculate_for_stored(publisher, { id: hid });
+    //await recalculate_for_stored(publisher, { id: hid });
     const hrow2 = await publisher.getRow({ id: hid });
     expect(hrow2?.number_of_books).toBe(2);
     const trigger = await Trigger.create({
