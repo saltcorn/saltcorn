@@ -127,11 +127,14 @@ const sat1 = (obj: any, [k, v]: [k: string, v: any]): boolean =>
     ? v.or.some((v1: any) => sat1(obj, [k, v1]))
     : v && v.in
       ? v.in.includes(obj[k])
-      : v && v.json
-        ? Object.entries(v.json).every((kv: [k: string, v: any]) =>
-            sat1(obj[k], kv)
-          )
-        : obj[k] === v;
+      : v && v.ilike
+        ? typeof obj[k] === "string" &&
+          obj[k].toLowerCase().includes(v.ilike.toLowerCase())
+        : v && v.json
+          ? Object.entries(v.json).every((kv: [k: string, v: any]) =>
+              sat1(obj[k], kv)
+            )
+          : obj[k] === v;
 
 const satisfies = (where: Where) => (obj: any) =>
   Object.entries(where || {}).every((kv) => sat1(obj, kv));
