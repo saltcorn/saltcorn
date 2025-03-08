@@ -384,7 +384,8 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
       table: patients,
     });
-    //await recalculate_for_stored(patients);
+    // TODO not sure why this is needed on SQLite
+    if (db.isSQLite) await recalculate_for_stored(patients);
   });
   it("has array content", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -658,7 +659,7 @@ describe("join-aggregations in stored calculated fields", () => {
         unique_error_msg: null,
       },
     });
-    await recalculate_for_stored(books); 
+    await recalculate_for_stored(books);
   });
 
   it("check", async () => {
@@ -726,9 +727,9 @@ describe("join-aggregations in stored calculated fields again", () => {
     await sumtable.insertRow({ bankid: 1 });
     await sumtable.insertRow({ bankid: 3 });
     await xacttable.insertRow({ tbankid: 2, amount: 10 });
-    //await recalculate_for_stored(sumtable); 
+    //await recalculate_for_stored(sumtable);
     const sumrow = await sumtable.getRow({ id: 1 });
-        
+
     expect(sumrow?.sumamount).toBe(10);
   });
 });
