@@ -384,7 +384,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
       table: patients,
     });
-    // TODO not sure why this is needed on SQLite
+    // TODO not sure why this is needed on SQLite?
     if (db.isSQLite) await recalculate_for_stored(patients);
   });
   it("has array content", async () => {
