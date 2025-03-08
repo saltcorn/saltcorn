@@ -665,12 +665,66 @@ describe("join-aggregations in stored calculated fields", () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     const bookrow = await books.getRow({ id: 2 });
-    
+
     expect(bookrow?.books_same_pub).toBe(1);
     await books.insertRow({ author: "Boring bloke", pages: 54, publisher: 1 });
     const bookrow1 = await books.getRow({ id: 2 });
 
     expect(bookrow1?.books_same_pub).toBe(2);
+  });
+});
+describe("join-aggregations in stored calculated fields again", () => {
+  it("creates", async () => {
+    const sumtable = await Table.create("DateSummary");
+    const banktable = await Table.create("Bank");
+    const xacttable = await Table.create("Transaction");
+    await Field.create({
+      table: banktable,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    await Field.create({
+      table: sumtable,
+      name: "bankid",
+      label: "BankID",
+      type: "Key to Bank",
+    });
+    await Field.create({
+      table: xacttable,
+      name: "tbankid",
+      label: "TBankID",
+      type: "Key to Bank",
+    });
+    await Field.create({
+      table: xacttable,
+      name: "amount",
+      label: "Amount",
+      type: "Integer",
+    });
+    await Field.create({
+      table: sumtable,
+      name: "sumamount",
+      label: "SumAmount",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "__aggregation",
+      attributes: {
+        ref: "tbankid",
+        table: "bankid->Transaction",
+        aggwhere: "", //"transactiondate == summarydate",
+        agg_field: "amount@Integer",
+        aggregate: "Sum",
+        agg_relation: "bankid->Transaction.tbankid",
+      },
+    });
+    await banktable.insertRow({ name: "Starling" });
+    await banktable.insertRow({ name: "HSBC" });
+    await sumtable.insertRow({ bankid: 1 });
+    await xacttable.insertRow({ tbankid: 1, amount: 10 });
+    const sumrows = await sumtable.getRow({ id: 1 });
+    expect(sumrows?.amount).toBe(10);
   });
 });
 
