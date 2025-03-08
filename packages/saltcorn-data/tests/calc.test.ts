@@ -658,7 +658,7 @@ describe("join-aggregations in stored calculated fields", () => {
         unique_error_msg: null,
       },
     });
-    await recalculate_for_stored(books);
+    await recalculate_for_stored(books); 
   });
 
   it("check", async () => {
@@ -719,12 +719,15 @@ describe("join-aggregations in stored calculated fields again", () => {
         agg_relation: "bankid->Transaction.tbankid",
       },
     });
+    await banktable.insertRow({ name: "Lloyds" });
     await banktable.insertRow({ name: "Starling" });
     await banktable.insertRow({ name: "HSBC" });
-    await sumtable.insertRow({ bankid: 1 });
-    await xacttable.insertRow({ tbankid: 1, amount: 10 });
-    const sumrows = await sumtable.getRow({ id: 1 });
-    expect(sumrows?.amount).toBe(10);
+    await sumtable.insertRow({ bankid: 2 });
+    await xacttable.insertRow({ tbankid: 2, amount: 10 });
+    await recalculate_for_stored(sumtable); 
+    const sumrow = await sumtable.getRow({ id: 1 });
+        
+    expect(sumrow?.sumamount).toBe(10);
   });
 });
 
