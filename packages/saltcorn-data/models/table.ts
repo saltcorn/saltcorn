@@ -2062,8 +2062,18 @@ class Table implements AbstractTable {
       },
       { cached: true }
     );
+    const calc_join_agg_fields = await Field.find(
+      {
+        calculated: true,
+        stored: true,
+        expression: "__aggregation",
+        attributes: { json: { table: { ilike: `->${this.name}` } } },
+      },
+      { cached: true }
+    );
+
     let v = v0;
-    if (refetch && calc_agg_fields.length) {
+    if (refetch && (calc_agg_fields.length || calc_join_agg_fields.length)) {
       v = (await this.getJoinedRow({
         where: { [this.pk_name]: v0.id },
       })) as Row;
@@ -2080,6 +2090,36 @@ class Table implements AbstractTable {
         [refTable.pk_name]: val,
       });
       for (const row of rows) {
+        await refTable?.updateRow?.(
+          {},
+          row[refTable.pk_name],
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          iterations + 1
+        );
+      }
+    }
+    for (const calc_field of calc_join_agg_fields) {
+      const [joinField, thisName] = calc_field.attributes.table.split("->");
+      const agg_field_name = calc_field.attributes.agg_field.split("@")[0];
+
+      if (changedFields && !changedFields.has(agg_field_name)) continue;
+
+      const refTable = Table.findOne({ id: calc_field.table_id });
+
+      if (!refTable || !v[calc_field.attributes.ref]) continue;
+
+      const val0 = v[calc_field.attributes.ref];
+      const val = typeof val0 === "object" ? val0[this.pk_name] : val0;
+
+      const rows = await refTable?.getRows({
+        [joinField]: val,
+      });
+      for (const row of rows || []) {
         await refTable?.updateRow?.(
           {},
           row[refTable.pk_name],
