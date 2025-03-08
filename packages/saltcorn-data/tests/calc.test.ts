@@ -665,8 +665,12 @@ describe("join-aggregations in stored calculated fields", () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     const bookrow = await books.getRow({ id: 2 });
-
+    
     expect(bookrow?.books_same_pub).toBe(1);
+    await books.insertRow({ author: "Boring bloke", pages: 54, publisher: 1 });
+    const bookrow1 = await books.getRow({ id: 2 });
+
+    expect(bookrow1?.books_same_pub).toBe(2);
   });
 });
 
