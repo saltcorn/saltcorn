@@ -723,8 +723,10 @@ describe("join-aggregations in stored calculated fields again", () => {
     await banktable.insertRow({ name: "Starling" });
     await banktable.insertRow({ name: "HSBC" });
     await sumtable.insertRow({ bankid: 2 });
+    await sumtable.insertRow({ bankid: 1 });
+    await sumtable.insertRow({ bankid: 3 });
     await xacttable.insertRow({ tbankid: 2, amount: 10 });
-    await recalculate_for_stored(sumtable); 
+    //await recalculate_for_stored(sumtable); 
     const sumrow = await sumtable.getRow({ id: 1 });
         
     expect(sumrow?.sumamount).toBe(10);
