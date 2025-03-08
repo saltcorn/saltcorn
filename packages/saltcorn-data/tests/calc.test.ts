@@ -384,7 +384,8 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
       table: patients,
     });
-    await recalculate_for_stored(patients);
+    // TODO not sure why this is needed on SQLite?
+    if (db.isSQLite) await recalculate_for_stored(patients);
   });
   it("has array content", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -575,7 +576,7 @@ describe("aggregations in stored calculated fields", () => {
       pages: 210,
       publisher: hid,
     });
-    await recalculate_for_stored(publisher, { id: hid });
+    //await recalculate_for_stored(publisher, { id: hid });
     const hrow2 = await publisher.getRow({ id: hid });
     expect(hrow2?.number_of_books).toBe(2);
     const trigger = await Trigger.create({
@@ -667,6 +668,69 @@ describe("join-aggregations in stored calculated fields", () => {
     const bookrow = await books.getRow({ id: 2 });
 
     expect(bookrow?.books_same_pub).toBe(1);
+    await books.insertRow({ author: "Boring bloke", pages: 54, publisher: 1 });
+    const bookrow1 = await books.getRow({ id: 2 });
+
+    expect(bookrow1?.books_same_pub).toBe(2);
+  });
+});
+describe("join-aggregations in stored calculated fields again", () => {
+  it("creates", async () => {
+    const sumtable = await Table.create("DateSummary");
+    const banktable = await Table.create("Bank");
+    const xacttable = await Table.create("Transaction");
+    await Field.create({
+      table: banktable,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    await Field.create({
+      table: sumtable,
+      name: "bankid",
+      label: "BankID",
+      type: "Key to Bank",
+    });
+    await Field.create({
+      table: xacttable,
+      name: "tbankid",
+      label: "TBankID",
+      type: "Key to Bank",
+    });
+    await Field.create({
+      table: xacttable,
+      name: "amount",
+      label: "Amount",
+      type: "Integer",
+    });
+    await Field.create({
+      table: sumtable,
+      name: "sumamount",
+      label: "SumAmount",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "__aggregation",
+      attributes: {
+        ref: "tbankid",
+        table: "bankid->Transaction",
+        aggwhere: "", //"transactiondate == summarydate",
+        agg_field: "amount@Integer",
+        aggregate: "Sum",
+        agg_relation: "bankid->Transaction.tbankid",
+      },
+    });
+    await banktable.insertRow({ name: "Lloyds" });
+    await banktable.insertRow({ name: "Starling" });
+    await banktable.insertRow({ name: "HSBC" });
+    await sumtable.insertRow({ bankid: 2 });
+    await sumtable.insertRow({ bankid: 1 });
+    await sumtable.insertRow({ bankid: 3 });
+    await xacttable.insertRow({ tbankid: 2, amount: 10 });
+    //await recalculate_for_stored(sumtable);
+    const sumrow = await sumtable.getRow({ id: 1 });
+
+    expect(sumrow?.sumamount).toBe(10);
   });
 });
 

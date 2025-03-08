@@ -126,12 +126,15 @@ const sat1 = (obj: any, [k, v]: [k: string, v: any]): boolean =>
   v && v.or
     ? v.or.some((v1: any) => sat1(obj, [k, v1]))
     : v && v.in
-    ? v.in.includes(obj[k])
-    : v && v.json
-    ? Object.entries(v.json).every((kv: [k: string, v: any]) =>
-        sat1(obj[k], kv)
-      )
-    : obj[k] === v;
+      ? v.in.includes(obj[k])
+      : v && v.ilike
+        ? typeof obj[k] === "string" &&
+          obj[k].toLowerCase().includes(v.ilike.toLowerCase())
+        : v && v.json
+          ? Object.entries(v.json).every((kv: [k: string, v: any]) =>
+              sat1(obj[k], kv)
+            )
+          : obj[k] === v;
 
 const satisfies = (where: Where) => (obj: any) =>
   Object.entries(where || {}).every((kv) => sat1(obj, kv));
@@ -353,15 +356,15 @@ const getSafeSaltcornCmd = () => {
   return process.env.PATH!.indexOf("saltcorn-cli/bin") > 0
     ? "saltcorn"
     : process.env.JEST_WORKER_ID === undefined
-    ? join(dirname(require!.main!.filename), "saltcorn")
-    : join(
-        dirname(require!.main!.filename),
-        "..",
-        "..",
-        "saltcorn-cli",
-        "bin",
-        "saltcorn"
-      );
+      ? join(dirname(require!.main!.filename), "saltcorn")
+      : join(
+          dirname(require!.main!.filename),
+          "..",
+          "..",
+          "saltcorn-cli",
+          "bin",
+          "saltcorn"
+        );
 };
 
 /**
@@ -373,8 +376,8 @@ const getSafeBaseUrl = () => {
   return !path
     ? ""
     : path.endsWith("/")
-    ? path.substring(0, path.length - 1)
-    : path;
+      ? path.substring(0, path.length - 1)
+      : path;
 };
 
 /**
@@ -427,8 +430,8 @@ const ppVal = (x: any) =>
   typeof x === "string"
     ? x
     : typeof x === "function"
-    ? x.toString()
-    : JSON.stringify(x, null, 2);
+      ? x.toString()
+      : JSON.stringify(x, null, 2);
 
 const interpolate = (s: string, row: any, user?: any) => {
   if (s && typeof s === "string") {
