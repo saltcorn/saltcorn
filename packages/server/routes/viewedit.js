@@ -132,7 +132,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
   const isEdit =
     values && values.id && !getState().getConfig("development_mode", false);
   const hasTable = Object.entries(getState().viewtemplates)
-    .filter(([k, v]) => !v.tableless)
+    .filter(([k, v]) => !v.tableless && !v.table_optional)
+    .map(([k, v]) => k);
+  const tableOptional = Object.entries(getState().viewtemplates)
+    .filter(([k, v]) => v.table_optional)
     .map(([k, v]) => k);
   const slugOptions = await Table.allSlugOptions();
   const viewpatternOptions = Object.values(getState().viewtemplates)
@@ -185,6 +188,19 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
             ? undefined
             : { nosuchvar: true }
           : { viewtemplate: hasTable },
+      }),
+      new Field({
+        label: req.__("Table"),
+        name: "table_name",
+        input_type: "select",
+        sublabel: req.__("Display data from this table"),
+        options: [{ value: "", label: "Table not set" }, ...tableOptions],
+        disabled: isEdit,
+        showIf: isEdit
+          ? tableOptional.includes(values.viewtemplate)
+            ? undefined
+            : { nosuchvar: true }
+          : { viewtemplate: tableOptional },
       }),
       new Field({
         name: "min_role",
