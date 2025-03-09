@@ -238,6 +238,7 @@ export type ViewTemplate = {
   name: string;
   description?: string;
   tableless?: boolean;
+  table_optional?: boolean;
   singleton?: boolean;
   get_state_fields?: (
     table_id: number | string | undefined,

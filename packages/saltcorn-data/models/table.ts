@@ -338,6 +338,8 @@ class Table implements AbstractTable {
     // todo add string & number as possible types for where
     if (typeof where === "string") return Table.findOne({ name: where });
     if (typeof where === "number") return Table.findOne({ id: where });
+    if (typeof where === "undefined") return null;
+    if (where === null) return null;
 
     const { getState } = require("../db/state");
 
