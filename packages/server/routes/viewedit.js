@@ -189,19 +189,23 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
             : { nosuchvar: true }
           : { viewtemplate: hasTable },
       }),
-      new Field({
-        label: req.__("Table"),
-        name: "table_name",
-        input_type: "select",
-        sublabel: req.__("Display data from this table"),
-        options: [{ value: "", label: "Table not set" }, ...tableOptions],
-        disabled: isEdit,
-        showIf: isEdit
-          ? tableOptional.includes(values.viewtemplate)
-            ? undefined
-            : { nosuchvar: true }
-          : { viewtemplate: tableOptional },
-      }),
+      ...(tableOptional.length
+        ? [
+            new Field({
+              label: req.__("Table"),
+              name: "table_name",
+              input_type: "select",
+              sublabel: req.__("Display data from this table"),
+              options: [{ value: "", label: "Table not set" }, ...tableOptions],
+              disabled: isEdit,
+              showIf: isEdit
+                ? tableOptional.includes(values.viewtemplate)
+                  ? undefined
+                  : { nosuchvar: true }
+                : { viewtemplate: tableOptional },
+            }),
+          ]
+        : []),
       new Field({
         name: "min_role",
         label: req.__("Minimum role"),
