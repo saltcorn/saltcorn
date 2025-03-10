@@ -509,6 +509,13 @@ module.exports = {
             type: "String",
           },
           {
+            name: "bcc_email",
+            label: "bcc",
+            sublabel:
+              "bcc addresses, comma separated, <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },
+          {
             name: "subject",
             label: "Subject",
             sublabel:
@@ -637,6 +644,13 @@ module.exports = {
           type: "String",
         },
         {
+          name: "bcc_email",
+          label: "bcc address",
+          sublabel:
+            "bcc addresses, comma separated, <code>{{ }}</code> interpolations usable",
+          type: "String",
+        },
+        {
           name: "subject",
           label: "Subject",
           sublabel: "Subject of email",
@@ -704,6 +718,7 @@ module.exports = {
         to_email_field,
         to_email_fixed,
         cc_email,
+        bcc_email,
         only_if,
         attachment_path,
         disable_notify,
@@ -720,6 +735,7 @@ module.exports = {
           from,
           to: interpolate(to_email, row, user),
           cc: interpolate(cc_email, row, user),
+          bcc: interpolate(bcc_email, row, user),
           subject: interpolate(subject, row, user),
           html: interpolate(body, row, user),
 
@@ -736,6 +752,7 @@ module.exports = {
       const fvs = [
         ...freeVariablesInInterpolation(to_email_fixed),
         ...freeVariablesInInterpolation(cc_email),
+        ...freeVariablesInInterpolation(bcc_email),
         ...(subject_formula ? freeVariables(subject) : []),
         ...freeVariables(only_if),
       ];
@@ -812,10 +829,12 @@ module.exports = {
         `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
       const cc = cc_email ? interpolate(cc_email, useRow, user) : undefined;
+      const bcc = bcc_email ? interpolate(bcc_email, useRow, user) : undefined;
       const email = {
         from,
         to: to_addr,
         cc,
+        bcc,
         subject: the_subject,
         ...setBody,
         attachments,
@@ -2129,7 +2148,7 @@ module.exports = {
             label: "File path",
             class: "validate-expression",
             sublabel:
-              "JavaScript expression, based on the context, for the file path within the file store. If giving a literal filename, enclose in quotes: \"myfile.zip\"",
+              'JavaScript expression, based on the context, for the file path within the file store. If giving a literal filename, enclose in quotes: "myfile.zip"',
             type: "String",
           },
         ];
