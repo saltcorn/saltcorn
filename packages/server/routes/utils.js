@@ -89,8 +89,8 @@ function isAdmin(req, res, next) {
       req.user && req.user.pending_user
         ? "/auth/twofa/login/totp"
         : req.user
-        ? "/"
-        : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
+          ? "/"
+          : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
     );
   }
 }
@@ -115,8 +115,8 @@ const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
       req.user && req.user.pending_user
         ? "/auth/twofa/login/totp"
         : req.user
-        ? "/"
-        : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
+          ? "/"
+          : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
     );
   }
 };
@@ -342,6 +342,10 @@ const getSessionStore = (pruneInterval) => {
       sameSite: "strict",
     });
   } else*/
+  if (!db.connectObj.session_secret)
+    console.warn(
+      "WARNING: Session secret not set, degrading functionality. Set session_secret in the config file"
+    );
   let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
   if (sameSite === "unset") sameSite = undefined;
   if (db.isSQLite) {
@@ -431,8 +435,8 @@ const admin_config_route = ({
           action: super_path + path,
         })
       : typeof get_form === "function"
-      ? await get_form(req)
-      : get_form;
+        ? await get_form(req)
+        : get_form;
 
   router.get(
     path,
