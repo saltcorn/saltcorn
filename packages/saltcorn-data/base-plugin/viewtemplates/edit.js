@@ -533,11 +533,11 @@ const run = async (
   viewname,
   cfg,
   state,
-  { res, req, isPreview },
+  { res, req, isPreview, hiddenLoginDest },
   { editQuery }
 ) => {
   const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
-  return await editQuery(state, mobileReferrer, isPreview);
+  return await editQuery(state, mobileReferrer, isPreview, hiddenLoginDest);
 };
 
 /**
@@ -947,6 +947,7 @@ const render = async ({
   delete_unchanged_auto_create,
   isPreview,
   auto_created_row,
+  hiddenLoginDest,
 }) => {
   const form = await getForm(
     table,
@@ -1004,6 +1005,12 @@ const render = async ({
       ? mobileReferrer
       : req.headers?.referer;
   }
+  if (hiddenLoginDest && req.query.dest) {
+    form.hidden("dest");
+    if (!req.query.dest.includes(":/") && !req.query.dest.includes("//"))
+      form.values.dest = req.query.dest;
+  }
+
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
@@ -2169,7 +2176,7 @@ module.exports = {
     req,
     res,
   }) => ({
-    async editQuery(state, mobileReferrer, isPreview) {
+    async editQuery(state, mobileReferrer, isPreview, hiddenLoginDest) {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
@@ -2257,6 +2264,7 @@ module.exports = {
         delete_unchanged_auto_create,
         isPreview,
         auto_created_row,
+        hiddenLoginDest,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
