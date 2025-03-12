@@ -311,7 +311,7 @@ router.get(
           req,
           res,
           false,
-          true
+          { hiddenLoginDest: true }
         );
         if (!resp) {
           res.sendAuthWrap(
@@ -585,7 +585,6 @@ router.get(
           language: req.__({ phrase: "Language", locale }),
           email: req.__({ phrase: "E-mail", locale }),
           password: req.__({ phrase: "Password", locale }),
-
         };
       });
 

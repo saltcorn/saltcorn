@@ -577,7 +577,8 @@ class View implements AbstractView {
     query: any,
     req: any,
     res: any,
-    remote: boolean = false
+    remote: boolean = false,
+    extra: any = {}
   ): Promise<string | { goto?: string }> {
     const view = this;
     if (isWeb(req)) this.check_viewtemplate();
@@ -591,11 +592,11 @@ class View implements AbstractView {
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
         // return contents
-        return await db_page.run(query, { res, req });
+        return await db_page.run(query, { res, req, ...extra });
       }
     }
     const state = view.combine_state_and_default_state(query);
-    const resp = await view.run(state, { res, req }, remote);
+    const resp = await view.run(state, { res, req, ...extra }, remote);
     //console.log(req.headers);
 
     const isModal = req.headers?.saltcornmodalrequest;
