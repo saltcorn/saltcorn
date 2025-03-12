@@ -247,9 +247,18 @@ export class CapacitorHelper {
 
   private buildWithDocker() {
     console.log("building with docker");
+    const userParams = [];
+    if (process.getuid && process.getgid)
+      userParams.push("--user", `${process.getuid()}:${process.getgid()}`);
+    else
+      console.log(
+        "Warning: process.getuid and process.getgid not available, using default user"
+      );
+
     const state = getState();
     const spawnParams = [
       "run",
+      ...userParams,
       "--network",
       "host",
       "-v",
