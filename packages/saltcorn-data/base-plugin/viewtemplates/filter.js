@@ -84,8 +84,22 @@ const configuration_workflow = (req) =>
               if (kpath.length === 2) {
                 const [jFieldNm, lblField] = kpath;
                 const jfld = fields.find((f) => f.name === jFieldNm);
-                if (jfld)
+                if (jfld) {
+                  console.log(
+                    `${jFieldNm}.${jfld.reftable_name}->${lblField}`,
+                    { pfield, jfld }
+                  );
+
+                  fields.push(
+                    new Field({
+                      ...jfld,
+                      label: `${jFieldNm}.${jfld.reftable_name}->${lblField}`,
+                      name: `${jFieldNm}.${jfld.reftable_name}->${lblField}`,
+                    })
+                  );
+
                   return `${jFieldNm}.${jfld.reftable_name}->${lblField}`;
+                }
               }
               if (kpath.length === 3) {
                 const [jFieldNm, throughField, lblField] = kpath;
@@ -321,8 +335,8 @@ const run = async (
           stat === "Percent true" || stat === "Percent false"
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
-            ? "Integer"
-            : fld.type?.name;
+              ? "Integer"
+              : fld.type?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[agg_fieldview]) {
           const readval = type.read(val);
@@ -577,13 +591,13 @@ const run = async (
           !value && !label && ix === 0 && neutral_label
             ? neutral_label
             : label_formula
-            ? eval_expression(
-                label_formula,
-                { [field_name]: value },
-                extra.req.user || { role_id: 100 },
-                "Dropdown label formula"
-              )
-            : label
+              ? eval_expression(
+                  label_formula,
+                  { [field_name]: value },
+                  extra.req.user || { role_id: 100 },
+                  "Dropdown label formula"
+                )
+              : label
         )
       );
       return select(
