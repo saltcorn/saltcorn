@@ -78,10 +78,14 @@ const runPage = async (page, req, res, tic) => {
       );
   } else {
     getState().log(2, `Page ${page.name} not authorized`);
+    if (!req.user) {
+      res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
+      return;
+    }
     res
       .status(404)
       .sendWrap(
-        req.__("Internal Error"),
+        req.__("Page not found"),
         req.__("Page %s not found", page.name)
       );
   }
@@ -123,6 +127,10 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
     }
   } else {
     getState().log(2, `Pagegroup ${pageGroup.name} not authorized`);
+    if (!req.user) {
+      res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
+      return;
+    }
     res
       .status(404)
       .sendWrap(
