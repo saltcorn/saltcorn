@@ -924,7 +924,7 @@ function poll_mobile_build_finished(
     data: { out_dir_name: outDirName, mode: mode },
     success: function (res) {
       if (!res.finished) {
-        if (pollCount >= 100) {
+        if (pollCount >= 150) {
           removeSpinner("buildMobileAppBtnId", orginalBtnHtml);
           notifyAlert({
             type: "danger",
