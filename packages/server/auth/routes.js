@@ -1223,6 +1223,7 @@ router.get(
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {
+        if (req.query?.dest) res.cookie("login_dest", req.query.dest);
         const passportParams =
           typeof auth.parameters === "function"
             ? auth.parameters(req)
@@ -1265,6 +1266,7 @@ router.post(
         typeof auth.parameters === "function"
           ? auth.parameters(req)
           : auth.parameters;
+      if (req.query?.dest) res.cookie("login_dest", req.query.dest);
       passport.authenticate(method, passportParams)(
         req,
         res,
@@ -1295,6 +1297,12 @@ const loginCallback = (req, res) => () => {
   } else {
     Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
+    if (req.cookies["login_dest"]) {
+      res.clearCookie("login_dest");
+      res.redirect(req.cookies["login_dest"]);
+      return;
+    }
+
     res.redirect("/");
   }
 };
