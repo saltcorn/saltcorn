@@ -47,6 +47,6 @@ RUN ./gradlew assembleDebug
 
 WORKDIR /
 COPY entry.bash ./
-RUN chmod u+x entry.bash
+RUN chmod +x entry.bash
 
 ENTRYPOINT ["./entry.bash"]
