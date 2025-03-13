@@ -197,7 +197,7 @@ const resetForm = (body, req) => {
  * @param {boolean} noMethods
  * @returns {object}
  */
-const getAuthLinks = (current, noMethods) => {
+const getAuthLinks = (current, noMethods, req) => {
   const links = { methods: [] };
   const state = getState();
   if (current !== "login") links.login = "/auth/login";
@@ -205,11 +205,14 @@ const getAuthLinks = (current, noMethods) => {
     links.signup = "/auth/signup";
   if (current !== "forgot" && state.getConfig("allow_forgot"))
     links.forgot = "/auth/forgot";
+  const dest = req?.query?.dest
+    ? `?dest=${encodeURIComponent(req.query.dest)}`
+    : "";
   if (!noMethods)
     Object.entries(getState().auth_methods).forEach(([name, auth]) => {
       const url = auth.postUsernamePassword
-        ? `javascript:$('form.login').attr('action','/auth/login-with/${name}').submit();`
-        : `/auth/login-with/${name}`;
+        ? `javascript:$('form.login').attr('action','/auth/login-with/${name}${dest}').submit();`
+        : `/auth/login-with/${name}${dest}`;
       links.methods.push({
         icon: auth.icon,
         label: auth.label,
@@ -303,7 +306,7 @@ router.get(
         res.sendAuthWrap(
           req.__(`Login`),
           loginForm(req),
-          getAuthLinks("login")
+          getAuthLinks("login", false, req)
         );
       else {
         const resp = await login_form.run_possibly_on_page(
@@ -317,7 +320,7 @@ router.get(
           res.sendAuthWrap(
             req.__(`Login`),
             loginForm(req),
-            getAuthLinks("login")
+            getAuthLinks("login", false, req)
           );
         } else if (login_form.default_render_page) {
           const page = Page.findOne({ name: login_form.default_render_page });
@@ -328,7 +331,11 @@ router.get(
         } else res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
       }
     } else
-      res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
+      res.sendAuthWrap(
+        req.__(`Login`),
+        loginForm(req),
+        getAuthLinks("login", false, req)
+      );
   })
 );
 
