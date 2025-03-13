@@ -59,6 +59,7 @@ const {
   get_viewable_fields,
   parse_view_select,
   get_viewable_fields_from_layout,
+  action_url,
 } = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const {
@@ -563,6 +564,19 @@ const configuration_workflow = (req) =>
           const table = Table.findOne(
             context.table_id || context.exttable_name
           );
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+          });
+
+          if (
+            context.default_state?._row_click_url_formula &&
+            !context.default_state?._row_click_type
+          ) {
+            //legacy
+            context.default_state._row_click_type = "Link";
+          }
+
           const table_fields = table
             .getFields()
             .filter((f) => !f.calculated || f.stored);
@@ -643,6 +657,24 @@ const configuration_workflow = (req) =>
             type: "Bool",
           });
           formfields.push({
+            name: "_row_click_type",
+            label: req.__("Row click event"),
+            sublabel: req.__("What happens when a row is clicked"),
+            type: "String",
+            required: true,
+            attributes: { options: "Nothing,Link,Link new tab,Popup,Action" },
+          });
+          formfields.push({
+            name: "_row_click_action",
+            label: req.__("Row click action"),
+            sublabel: req.__("Run this action when row is clicked"),
+            type: "String",
+            required: true,
+            attributes: { options: triggerActions },
+            showIf: { _row_click_type: "Action" },
+          });
+
+          formfields.push({
             name: "_row_click_url_formula",
             label: req.__("Row click URL"),
             sublabel:
@@ -651,6 +683,7 @@ const configuration_workflow = (req) =>
               req.__("Example: <code>`/view/TheOtherView?id=${id}`</code>"),
             type: "String",
             class: "validate-expression",
+            showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
           });
           formfields.push({
             name: "transpose",
@@ -1067,13 +1100,36 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
-  if (default_state?._row_click_url_formula) {
+  if (
+    default_state?._row_click_url_formula &&
+    default_state?._row_click_type !== "Nothing" &&
+    default_state?._row_click_type !== "Action"
+  ) {
     let fUrl = get_expression_function(
       default_state._row_click_url_formula,
       fields
     );
-    page_opts.onRowSelect = (row) =>
-      `location.href='${fUrl(row, extraOpts.req.user)}'`;
+    if (default_state?._row_click_type === "Link new tab")
+      page_opts.onRowSelect = (row) =>
+        `window.open('${fUrl(row, extraOpts.req.user)}', '_blank').focus();`;
+    else if (default_state?._row_click_type === "Popup")
+      page_opts.onRowSelect = (row) =>
+        `ajax_modal('${fUrl(row, extraOpts.req.user)}')`;
+    else
+      page_opts.onRowSelect = (row) =>
+        `location.href='${fUrl(row, extraOpts.req.user)}'`;
+  } else if (default_state?._row_click_type === "Action") {
+    page_opts.onRowSelect = (row) => {
+      const actionUrl = action_url(
+        viewname,
+        table,
+        default_state?._row_click_action,
+        row,
+        default_state?._row_click_action,
+        "action_name"
+      );
+      if (actionUrl.javascript) return actionUrl.javascript;
+    };
   }
   page_opts.class = "";
 
@@ -1244,7 +1300,7 @@ const remove_null_cols = (tfields, rows) =>
 const run_action = async (
   table_id,
   viewname,
-  { columns, layout },
+  { columns, layout, default_state },
   body,
   { req, res },
   { getRowQuery }
@@ -1259,6 +1315,18 @@ const run_action = async (
   );
   const table = Table.findOne({ id: table_id });
   const row = await getRowQuery(body[table.pk_name]);
+  if (!col && body.action_name === default_state?._row_click_action) {
+    const trigger = Trigger.findOne({ name: body.action_name });
+    const result = await trigger.runWithoutRow({
+      row,
+      table,
+      Table,
+      referrer: req?.get?.("Referrer"),
+      user: req.user,
+      req,
+    });
+    return { json: { success: "ok", ...(result || {}) } };
+  }
   const state_action = getState().actions[col.action_name];
   col.configuration = col.configuration || {};
   if (state_action) {
@@ -1319,6 +1387,8 @@ module.exports = {
       _group_by,
       _hide_pagination,
       _row_click_url_formula,
+      _row_click_url_type,
+      _row_click_url_action,
       transpose,
       transpose_width,
       transpose_width_units,

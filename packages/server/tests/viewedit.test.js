@@ -207,6 +207,7 @@ describe("viewedit new List", () => {
       .post("/viewedit/config/mybooklist")
       .send("contextEnc=" + ctx)
       .send("stepName=Options")
+      .send("_row_click_type=Nothing")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
@@ -330,6 +331,7 @@ describe("viewedit new List with one field", () => {
       .post("/viewedit/config/mybooklist1")
       .send("contextEnc=" + ctx)
       .send("stepName=Options")
+      .send("_row_click_type=Nothing")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
