@@ -1116,7 +1116,7 @@ module.exports = {
         where: { [tbl.pk_name]: state[tbl.pk_name] },
         joinFields,
       });
-      return interpolate(title, row, "Edit view title string");
+      return interpolate(title, row, null, "Show view title string");
     } else return title;
   },
   /*authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
