@@ -17,7 +17,7 @@
 ### Fixes
 
 * Fix serving JSDoc (Table, File, User links in run_js_code)
-* Destination redirect on login now works on custom login forms
+* Destination redirect on login now works on custom login forms and with external identity providers
 
 ## 1.1.2 - Released 4 March 2025
 
