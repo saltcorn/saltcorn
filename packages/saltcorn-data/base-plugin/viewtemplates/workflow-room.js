@@ -208,7 +208,7 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
     submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
     blurb: run.wait_info.output || step.configuration?.form_header || "",
     formStyle: "vert",
-    ...(await run.userFormFields(step)),
+    ...(await run.userFormFields(step, req?.user)),
   });
   form.hidden("run_id");
 

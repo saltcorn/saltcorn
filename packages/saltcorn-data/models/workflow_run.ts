@@ -264,7 +264,8 @@ class WorkflowRun {
   }
 
   async userFormFields(
-    step0?: WorkflowStep
+    step0?: WorkflowStep,
+    user?: User
   ): Promise<{ fields: FieldLike[]; validator?: (r: Row) => any }> {
     const step =
       step0 ||
@@ -287,7 +288,12 @@ class WorkflowRun {
         case "Multiple choice":
           let options = q.options;
           if (typeof options === "string" && options.includes("{{")) {
-            options = interpolate(q.options, this.context);
+            options = interpolate(
+              q.options,
+              this.context,
+              user,
+              "Multiple choice options"
+            );
           }
           const noptions = Array.isArray(options)
             ? options.length
