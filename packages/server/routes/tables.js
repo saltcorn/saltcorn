@@ -929,7 +929,19 @@ router.get(
           p(req.__("Views define how table rows are displayed to the user"))
         );
       }
-      if (user_can_edit_views)
+      if (user_can_edit_views) {
+        let create_basic_link = "";
+        if (views.length === 0) {
+          create_basic_link = post_btn(
+            `/table/create-basic-views/${table.id}`,
+            "Create basic views",
+            req.csrfToken(),
+            {
+              btnClass: "btn-outline-secondary",
+              formClass: "d-inline me-2",
+            }
+          );
+        }
         viewCard = {
           type: "card",
           id: "table-views",
@@ -946,8 +958,10 @@ router.get(
                 class: "btn btn-primary",
               },
               req.__("Create view")
-            ),
+            ) +
+            create_basic_link,
         };
+      }
       if (user_can_edit_triggers)
         triggerCard = {
           type: "card",
