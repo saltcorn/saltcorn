@@ -1099,13 +1099,25 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
-  if (default_state?._row_click_url_formula) {
+  if (
+    default_state?._row_click_url_formula &&
+    default_state?._row_click_type !== "Nothing" &&
+    default_state?._row_click_type !== "Action"
+  ) {
     let fUrl = get_expression_function(
       default_state._row_click_url_formula,
       fields
     );
-    page_opts.onRowSelect = (row) =>
-      `location.href='${fUrl(row, extraOpts.req.user)}'`;
+    if (default_state?._row_click_type === "Link new tab")
+      page_opts.onRowSelect = (row) =>
+        `window.open('${fUrl(row, extraOpts.req.user)}', '_blank').focus();`;
+    else if (default_state?._row_click_type === "Popup")
+      page_opts.onRowSelect = (row) =>
+        `ajax_modal('${fUrl(row, extraOpts.req.user)}')`;
+    else
+      page_opts.onRowSelect = (row) =>
+        `location.href='${fUrl(row, extraOpts.req.user)}'`;
+  } else if (default_state?._row_click_type !== "Action") {
   }
   page_opts.class = "";
 
@@ -1351,6 +1363,8 @@ module.exports = {
       _group_by,
       _hide_pagination,
       _row_click_url_formula,
+      _row_click_url_type,
+      _row_click_url_action,
       transpose,
       transpose_width,
       transpose_width_units,
