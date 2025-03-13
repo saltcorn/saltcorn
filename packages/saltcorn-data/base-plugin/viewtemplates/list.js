@@ -59,6 +59,7 @@ const {
   get_viewable_fields,
   parse_view_select,
   get_viewable_fields_from_layout,
+  action_url,
 } = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const {
@@ -1117,7 +1118,18 @@ const run = async (
     else
       page_opts.onRowSelect = (row) =>
         `location.href='${fUrl(row, extraOpts.req.user)}'`;
-  } else if (default_state?._row_click_type !== "Action") {
+  } else if (default_state?._row_click_type === "Action") {
+    page_opts.onRowSelect = (row) => {
+      const actionUrl = action_url(
+        viewname,
+        table,
+        default_state?._row_click_action,
+        row,
+        default_state?._row_click_action,
+        "action_name"
+      );
+      if (actionUrl.javascript) return actionUrl.javascript;
+    };
   }
   page_opts.class = "";
 
@@ -1288,7 +1300,7 @@ const remove_null_cols = (tfields, rows) =>
 const run_action = async (
   table_id,
   viewname,
-  { columns, layout },
+  { columns, layout, default_state },
   body,
   { req, res },
   { getRowQuery }
@@ -1303,6 +1315,18 @@ const run_action = async (
   );
   const table = Table.findOne({ id: table_id });
   const row = await getRowQuery(body[table.pk_name]);
+  if (!col && body.action_name === default_state?._row_click_action) {
+    const trigger = Trigger.findOne({ name: body.action_name });
+    const result = await trigger.runWithoutRow({
+      row,
+      table,
+      Table,
+      referrer: req?.get?.("Referrer"),
+      user: req.user,
+      req,
+    });
+    return { json: { success: "ok", ...(result || {}) } };
+  }
   const state_action = getState().actions[col.action_name];
   col.configuration = col.configuration || {};
   if (state_action) {
