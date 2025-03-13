@@ -1264,10 +1264,12 @@ const renderFormLayout = (form: Form): string => {
       const spinnerStr = spinner ? `spin_action_link(this);` : "";
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
-
+        const dest = form.req?.query?.dest
+          ? `?dest=${encodeURIComponent(form.req.query.dest)}`
+          : "";
         return a(
           {
-            href: `/auth/login-with/${method_label}`,
+            href: `/auth/login-with/${method_label}${dest}`,
             //TODO get url through form.req to reduce coupling
             class: [
               action_style !== "btn-link" &&
