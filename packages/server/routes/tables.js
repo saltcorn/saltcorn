@@ -77,6 +77,8 @@ const { EOL } = require("os");
 
 const path = require("path");
 const Tag = require("@saltcorn/data/models/tag");
+const { initial_config_all_fields } = require("@saltcorn/data/plugin-helper");
+const { save_menu_items } = require("@saltcorn/data/models/config");
 /**
  * @type {object}
  * @const
@@ -927,7 +929,19 @@ router.get(
           p(req.__("Views define how table rows are displayed to the user"))
         );
       }
-      if (user_can_edit_views)
+      if (user_can_edit_views) {
+        let create_basic_link = "";
+        if (views.length === 0) {
+          create_basic_link = post_btn(
+            `/table/create-basic-views/${table.id}`,
+            "Create basic views",
+            req.csrfToken(),
+            {
+              btnClass: "btn-outline-secondary",
+              formClass: "d-inline me-2",
+            }
+          );
+        }
         viewCard = {
           type: "card",
           id: "table-views",
@@ -944,8 +958,10 @@ router.get(
                 class: "btn btn-primary",
               },
               req.__("Create view")
-            ),
+            ) +
+            create_basic_link,
         };
+      }
       if (user_can_edit_triggers)
         triggerCard = {
           type: "card",
@@ -2381,6 +2397,99 @@ router.post(
       return;
     }
     await table.repairCompositePrimary();
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/create-basic-views/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const table = Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    const initial_view = async (table, viewtemplate) => {
+      const configuration = await initial_config_all_fields(
+        viewtemplate === "Edit"
+      )({ table_id: table.id });
+      //console.log(configuration);
+      const name = `${viewtemplate} ${table.name}`;
+      const view = await View.create({
+        name,
+        configuration,
+        viewtemplate,
+        table_id: table.id,
+        min_role: 100,
+      });
+      return view;
+    };
+    const list = await initial_view(table, "List");
+    const edit = await initial_view(table, "Edit");
+    const show = await initial_view(table, "Show");
+    await View.update(
+      {
+        configuration: {
+          ...list.configuration,
+          columns: [
+            ...list.configuration.columns,
+            {
+              type: "ViewLink",
+              view: `Own:Show ${table.name}`,
+              view_name: `Show ${table.name}`,
+              link_style: "",
+              view_label: "Show",
+              header_label: "Show",
+            },
+            {
+              type: "ViewLink",
+              view: `Own:Edit ${table.name}`,
+              view_name: `Edit ${table.name}`,
+              link_style: "",
+              view_label: "Edit",
+              header_label: "Edit",
+            },
+            {
+              type: "Action",
+              action_name: "Delete",
+              action_style: "btn-primary",
+            },
+          ],
+          view_to_create: `Edit ${table.name}`,
+        },
+      },
+      list.id
+    );
+    await View.update(
+      {
+        configuration: {
+          ...edit.configuration,
+          view_when_done: `List ${table.name}`,
+          destination_type: "View",
+        },
+      },
+      edit.id
+    );
+    const add_to_menu = async (item) => {
+      const current_menu = getState().getConfigCopy("menu_items", []);
+      const existing = current_menu.findIndex((m) => m.label === item.label);
+      if (existing >= 0) current_menu[existing] = item;
+      else current_menu.push(item);
+      await save_menu_items(current_menu);
+    };
+
+    await add_to_menu({
+      label: table.name,
+      type: "View",
+      min_role: 100,
+      viewname: `List ${table.name}`,
+    });
+
     res.redirect(`/table/${table.id}`);
   })
 );
