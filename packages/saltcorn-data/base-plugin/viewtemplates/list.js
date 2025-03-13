@@ -570,8 +570,8 @@ const configuration_workflow = (req) =>
           });
 
           if (
-            context.default_state._row_click_url_formula &&
-            !context.default_state._row_click_type
+            context.default_state?._row_click_url_formula &&
+            !context.default_state?._row_click_type
           ) {
             //legacy
             context.default_state._row_click_type = "Link";
