@@ -289,10 +289,16 @@ class WorkflowRun {
           if (typeof options === "string" && options.includes("{{")) {
             options = interpolate(q.options, this.context);
           }
+          const noptions = Array.isArray(options)
+            ? options.length
+            : typeof options === "string"
+              ? options.split(",").length
+              : 0;
           return {
             type: "String",
             attributes: { options },
-            fieldview: "radio_group",
+            required: true,
+            fieldview: noptions > 5 ? undefined : "radio_group",
           };
         case "Integer":
           return { type: "Integer" };
