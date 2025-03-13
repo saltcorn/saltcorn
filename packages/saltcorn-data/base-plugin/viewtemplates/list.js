@@ -567,7 +567,14 @@ const configuration_workflow = (req) =>
             tableTriggers: table.id,
             apiNeverTriggers: true,
           });
-          console.log(triggerActions);
+
+          if (
+            context.default_state._row_click_url_formula &&
+            !context.default_state._row_click_type
+          ) {
+            //legacy
+            context.default_state._row_click_type = "Link";
+          }
 
           const table_fields = table
             .getFields()
