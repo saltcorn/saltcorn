@@ -2,6 +2,9 @@
 
 ## 1.1.3 - In beta
 
+* Create basic views: if a table had no views, a button on the table page 
+  allows you to build basic views for the table with a single click
+
 * Workflows: 
     - UserForm new question type: Multiple checks
     - Options for Multiple checks and Multiple choice can use interpolations (`{{ }}`)
