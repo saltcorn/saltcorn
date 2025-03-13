@@ -678,7 +678,7 @@ const get_viewable_fields_from_layout = (
         }
         if (contents.isHTML)
           col.interpolator = (row) =>
-            interpolate(contents.contents, row, req?.user);
+            interpolate(contents.contents, row, req?.user, "HTML element");
         break;
       case "action":
         col.action_label_formula = contents.isFormula?.action_label;

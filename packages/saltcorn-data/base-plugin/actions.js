@@ -348,7 +348,7 @@ module.exports = {
         method,
       },
     }) => {
-      let url1 = interpolate(url, row, user);
+      let url1 = interpolate(url, row, user, "Webhook URL");
 
       const fetchOpts = {
         method: (method || "post").toLowerCase(),
@@ -368,7 +368,12 @@ module.exports = {
         fetchOpts.body = postBody;
       }
       if (authorization)
-        fetchOpts.headers.Authorization = interpolate(authorization, row, user);
+        fetchOpts.headers.Authorization = interpolate(
+          authorization,
+          row,
+          user,
+          "Webhook authorization"
+        );
       const response = await fetch(url1, fetchOpts);
       const contentType = response.headers.get("content-type");
       const isJSON =
@@ -733,11 +738,11 @@ module.exports = {
       if (mode === "workflow") {
         const email = {
           from,
-          to: interpolate(to_email, row, user),
-          cc: interpolate(cc_email, row, user),
-          bcc: interpolate(bcc_email, row, user),
-          subject: interpolate(subject, row, user),
-          html: interpolate(body, row, user),
+          to: interpolate(to_email, row, user, "send_email to address"),
+          cc: interpolate(cc_email, row, user, "send_email cc address"),
+          bcc: interpolate(bcc_email, row, user, "send_email bcc address"),
+          subject: interpolate(subject, row, user, "send_email subject"),
+          html: interpolate(body, row, user, "send_email html body"),
 
           //          attachments,
         };
@@ -778,7 +783,12 @@ module.exports = {
       }
       switch (to_email) {
         case "Fixed":
-          to_addr = interpolate(to_email_fixed, useRow, user);
+          to_addr = interpolate(
+            to_email_fixed,
+            useRow,
+            user,
+            "send_email to address"
+          );
           break;
         case "User":
           to_addr = user.email;
@@ -828,8 +838,12 @@ module.exports = {
         3,
         `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
-      const cc = cc_email ? interpolate(cc_email, useRow, user) : undefined;
-      const bcc = bcc_email ? interpolate(bcc_email, useRow, user) : undefined;
+      const cc = cc_email
+        ? interpolate(cc_email, useRow, user, "send_email cc address")
+        : undefined;
+      const bcc = bcc_email
+        ? interpolate(bcc_email, useRow, user, "send_email bcc address")
+        : undefined;
       const email = {
         from,
         to: to_addr,
@@ -1321,7 +1335,7 @@ module.exports = {
       },
     ],
     run: async ({ row, user, configuration: { nav_action, url }, req }) => {
-      let url1 = interpolate(url, row, user);
+      let url1 = interpolate(url, row, user, "navigate URL");
 
       switch (nav_action) {
         case "Go to URL":
@@ -1476,7 +1490,7 @@ module.exports = {
     ],
     run: async ({ row, user, configuration: { type, notify_type, text } }) => {
       //type is legacy. this name gave react problems
-      let text1 = interpolate(text, row, user);
+      let text1 = interpolate(text, row, user, "Toast text");
 
       switch (notify_type || type) {
         case "Error":
@@ -2062,9 +2076,9 @@ module.exports = {
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({
-          title: interpolate(title, row, user),
-          body: interpolate(body, row, user),
-          link: interpolate(link, row, user),
+          title: interpolate(title, row, user, "notify_user title"),
+          body: interpolate(body, row, user, "notify_user body"),
+          link: interpolate(link, row, user, "notify_user link"),
           user_id: user.id,
         });
       }

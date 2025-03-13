@@ -739,7 +739,7 @@ const render = (
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
-          segment.titles[ix] = interpolate(t, row, req.user);
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
       });
     },
@@ -1004,7 +1004,8 @@ const render = (
           interpolate(
             segment.configuration?.after_delete_url || "/",
             row,
-            req?.user
+            req?.user,
+            "delete action: after delete URL"
           )
         )}`;
       return action_link(url, req, segment);
@@ -1039,7 +1040,12 @@ const render = (
     },
     blank(segment) {
       if (segment.isHTML) {
-        return interpolate(segment.contents, { locale, ...row }, req?.user);
+        return interpolate(
+          segment.contents,
+          { locale, ...row },
+          req?.user,
+          "HTML element"
+        );
       } else return segment.contents;
     },
   };
@@ -1110,7 +1116,7 @@ module.exports = {
         where: { [tbl.pk_name]: state[tbl.pk_name] },
         joinFields,
       });
-      return interpolate(title, row);
+      return interpolate(title, row, "Edit view title string");
     } else return title;
   },
   /*authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {

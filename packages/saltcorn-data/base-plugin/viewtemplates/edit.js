@@ -715,7 +715,7 @@ const transformForm = async ({
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
-          segment.titles[ix] = interpolate(t, row, req.user);
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
       });
     },
@@ -2618,9 +2618,9 @@ module.exports = {
         joinFields,
       });
 
-      return interpolate(title, row);
+      return interpolate(title, row, null, "Edit view title string");
     } else {
-      return interpolate(title, null);
+      return interpolate(title, null, null, "Edit view title string");
     }
   },
   configCheck: async (view) => {

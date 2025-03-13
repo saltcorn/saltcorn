@@ -323,7 +323,7 @@ class WorkflowRun {
         hasMultiChecks = true;
         let options = q.options;
         if (typeof options === "string" && options.includes("{{")) {
-          options = interpolate(q.options, this.context);
+          options = interpolate(q.options, this.context, user, "Multiple checks option");
         }
         if (typeof options === "string")
           options = options.split(",").map((o) => o.trim());
@@ -567,7 +567,8 @@ class WorkflowRun {
           const output = interpolate(
             step.configuration.output_text,
             this.context,
-            user
+            user,
+            "Output text"
           );
           await this.update({
             status: "Waiting",
