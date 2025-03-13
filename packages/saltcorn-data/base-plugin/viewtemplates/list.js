@@ -563,6 +563,12 @@ const configuration_workflow = (req) =>
           const table = Table.findOne(
             context.table_id || context.exttable_name
           );
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+          });
+          console.log(triggerActions);
+
           const table_fields = table
             .getFields()
             .filter((f) => !f.calculated || f.stored);
@@ -643,6 +649,24 @@ const configuration_workflow = (req) =>
             type: "Bool",
           });
           formfields.push({
+            name: "_row_click_type",
+            label: req.__("Row click event"),
+            sublabel: req.__("What happens when a row is clicked"),
+            type: "String",
+            required: true,
+            attributes: { options: "Nothing,Link,Link new tab,Popup,Action" },
+          });
+          formfields.push({
+            name: "_row_click_action",
+            label: req.__("Row click action"),
+            sublabel: req.__("Run this action when row is clicked"),
+            type: "String",
+            required: true,
+            attributes: { options: triggerActions },
+            showIf: { _row_click_type: "Action" },
+          });
+
+          formfields.push({
             name: "_row_click_url_formula",
             label: req.__("Row click URL"),
             sublabel:
@@ -651,6 +675,7 @@ const configuration_workflow = (req) =>
               req.__("Example: <code>`/view/TheOtherView?id=${id}`</code>"),
             type: "String",
             class: "validate-expression",
+            showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
           });
           formfields.push({
             name: "transpose",
