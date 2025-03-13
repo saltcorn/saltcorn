@@ -798,16 +798,7 @@ class WorkflowRun {
           await this.update(upd);
           step = steps.find((s) => s.name === this.context.__errorHandler);
         } else {
-          console.error("Workflow error", e);
-          await this.update({ status: "Error", error: e?.message || e });
-
-          Trigger.emitEvent("Error", null, user, {
-            workflow_run: this.id,
-            message: e.message,
-            stack: e.stack,
-            step: step?.name,
-            run_page: `/actions/run/${this.id}`,
-          });
+          await this.markAsError(e, step, user);
           break;
         }
       } // try-catch
@@ -815,6 +806,20 @@ class WorkflowRun {
     return this.context;
   }
 
+  async markAsError(e: Error, step: WorkflowStep, user?: User) {
+    console.error("Workflow error", e);
+    await this.update({ status: "Error", error: e?.message || e });
+
+    const Trigger = (await import("./trigger")).default;
+
+    Trigger.emitEvent("Error", null, user, {
+      workflow_run: this.id,
+      message: e.message,
+      stack: e.stack,
+      step: step?.name,
+      run_page: `/actions/run/${this.id}`,
+    });
+  }
   async popReturnDirectives() {
     const retVals: any = {};
     allReturnDirectives.forEach((k) => {

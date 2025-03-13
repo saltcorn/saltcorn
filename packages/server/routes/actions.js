@@ -1743,6 +1743,7 @@ router.get(
       const title = run.wait_info.output ? "Workflow output" : "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } catch (e) {
+      await run.markAsError(e, step, req.user);
       const title = req.__("Error running workflow");
       res.sendWrap(title, renderForm(e.message, req.csrfToken()));
     }
