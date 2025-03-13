@@ -433,14 +433,26 @@ const ppVal = (x: any) =>
       ? x.toString()
       : JSON.stringify(x, null, 2);
 
-const interpolate = (s: string, row: any, user?: any) => {
-  if (s && typeof s === "string") {
-    const template = _.template(s, {
-      interpolate: /\{\{!(.+?)\}\}/g,
-      escape: /\{\{([^!].+?)\}\}/g,
-    });
-    return template({ row, user, ...(row || {}) });
-  } else return s;
+const interpolate = (
+  s: string,
+  row: any,
+  user?: any,
+  errorLocation?: string
+) => {
+  try {
+    if (s && typeof s === "string") {
+      const template = _.template(s, {
+        interpolate: /\{\{!(.+?)\}\}/g,
+        escape: /\{\{([^!].+?)\}\}/g,
+      });
+      return template({ row, user, ...(row || {}) });
+    } else return s;
+  } catch (e: any) {
+    e.message = `In evaluating the interpolation ${s}${
+      errorLocation ? ` in ${errorLocation}` : ""
+    }:\n\n${e.message}`;
+    throw e;
+  }
 };
 
 const prepMobileRows = (rows: Row[], fields: Field[]) => {

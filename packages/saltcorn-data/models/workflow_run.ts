@@ -264,7 +264,8 @@ class WorkflowRun {
   }
 
   async userFormFields(
-    step0?: WorkflowStep
+    step0?: WorkflowStep,
+    user?: User
   ): Promise<{ fields: FieldLike[]; validator?: (r: Row) => any }> {
     const step =
       step0 ||
@@ -287,12 +288,23 @@ class WorkflowRun {
         case "Multiple choice":
           let options = q.options;
           if (typeof options === "string" && options.includes("{{")) {
-            options = interpolate(q.options, this.context);
+            options = interpolate(
+              q.options,
+              this.context,
+              user,
+              "Multiple choice options"
+            );
           }
+          const noptions = Array.isArray(options)
+            ? options.length
+            : typeof options === "string"
+              ? options.split(",").length
+              : 0;
           return {
             type: "String",
             attributes: { options },
-            fieldview: "radio_group",
+            required: true,
+            fieldview: noptions > 5 ? undefined : "radio_group",
           };
         case "Integer":
           return { type: "Integer" };
@@ -311,7 +323,7 @@ class WorkflowRun {
         hasMultiChecks = true;
         let options = q.options;
         if (typeof options === "string" && options.includes("{{")) {
-          options = interpolate(q.options, this.context);
+          options = interpolate(q.options, this.context, user, "Multiple checks option");
         }
         if (typeof options === "string")
           options = options.split(",").map((o) => o.trim());
@@ -555,7 +567,8 @@ class WorkflowRun {
           const output = interpolate(
             step.configuration.output_text,
             this.context,
-            user
+            user,
+            "Output text"
           );
           await this.update({
             status: "Waiting",
@@ -786,16 +799,7 @@ class WorkflowRun {
           await this.update(upd);
           step = steps.find((s) => s.name === this.context.__errorHandler);
         } else {
-          console.error("Workflow error", e);
-          await this.update({ status: "Error", error: e?.message || e });
-
-          Trigger.emitEvent("Error", null, user, {
-            workflow_run: this.id,
-            message: e.message,
-            stack: e.stack,
-            step: step?.name,
-            run_page: `/actions/run/${this.id}`,
-          });
+          await this.markAsError(e, step, user);
           break;
         }
       } // try-catch
@@ -803,6 +807,20 @@ class WorkflowRun {
     return this.context;
   }
 
+  async markAsError(e: Error, step: WorkflowStep, user?: User) {
+    console.error("Workflow error", e);
+    await this.update({ status: "Error", error: e?.message || e });
+
+    const Trigger = (await import("./trigger")).default;
+
+    Trigger.emitEvent("Error", null, user, {
+      workflow_run: this.id,
+      message: e.message,
+      stack: e.stack,
+      step: step?.name,
+      run_page: `/actions/run/${this.id}`,
+    });
+  }
   async popReturnDirectives() {
     const retVals: any = {};
     allReturnDirectives.forEach((k) => {

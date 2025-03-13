@@ -660,7 +660,9 @@ const getWorkflowStepForm = async (
         //if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
         actionConfigFields.push(cfgFld);
       }
-    } catch {}
+    } catch {
+      //ignore
+    }
   }
   actionConfigFields.push({
     label: "Subcontext",
@@ -1735,11 +1737,16 @@ router.get(
       trigger_id: trigger.id,
       name: run.current_step_name,
     });
-
-    const form = await getWorkflowStepUserForm(run, trigger, step, req);
-    if (req.xhr) form.xhrSubmit = true;
-    const title = run.wait_info.output ? "Workflow output" : "Fill form";
-    res.sendWrap(title, renderForm(form, req.csrfToken()));
+    try {
+      const form = await getWorkflowStepUserForm(run, trigger, step, req);
+      if (req.xhr) form.xhrSubmit = true;
+      const title = run.wait_info.output ? "Workflow output" : "Fill form";
+      res.sendWrap(title, renderForm(form, req.csrfToken()));
+    } catch (e) {
+      await run.markAsError(e, step, req.user);
+      const title = req.__("Error running workflow");
+      res.sendWrap(title, renderForm(e.message, req.csrfToken()));
+    }
   })
 );
 
