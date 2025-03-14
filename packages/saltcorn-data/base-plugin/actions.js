@@ -1103,7 +1103,7 @@ module.exports = {
       const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
-        table?.fields || Object.keys(row||{}).map((k) => ({ name: k })),
+        table?.fields || Object.keys(row || {}).map((k) => ({ name: k })),
         {
           user,
           console,
@@ -1113,12 +1113,13 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
-      const res = await table_for_insert.tryInsertRow(calcrow, user);
+      const results = {};
+      const res = await table_for_insert.tryInsertRow(calcrow, user, results);
 
       if (res.error) return res;
       else if (configuration.id_variable)
-        return { [configuration.id_variable]: res.success };
-      else return true;
+        return { [configuration.id_variable]: res.success, ...results };
+      else return results;
     },
     namespace: "Database",
   },
