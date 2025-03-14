@@ -1103,7 +1103,7 @@ module.exports = {
       const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
-        table?.fields || Object.keys(row).map((k) => ({ name: k })),
+        table?.fields || Object.keys(row||{}).map((k) => ({ name: k })),
         {
           user,
           console,
