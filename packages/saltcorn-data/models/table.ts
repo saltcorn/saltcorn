@@ -2048,12 +2048,22 @@ class Table implements AbstractTable {
     return id;
   }
 
-  async auto_update_calc_aggregations(
+  private async auto_update_calc_aggregations(
     v0: Row,
     refetch?: boolean,
     iterations: number = 1,
     changedFields?: Set<String>
   ) {
+    const state = require("../db/state").getState();
+    const pk_name = this.pk_name;
+    state.log(
+      6,
+      `auto_update_calc_aggregations table=${this.name} id=${
+        v0[pk_name]
+      } iters=${iterations}${
+        changedFields ? ` changedFields=${[...(changedFields || [])]}` : ""
+      }`
+    );
     if (iterations > 5) return;
     const calc_agg_fields = await Field.find(
       {
@@ -2077,7 +2087,7 @@ class Table implements AbstractTable {
     let v = v0;
     if (refetch && (calc_agg_fields.length || calc_join_agg_fields.length)) {
       v = (await this.getJoinedRow({
-        where: { [this.pk_name]: v0.id },
+        where: { [pk_name]: v0.id },
       })) as Row;
     }
 
@@ -2087,7 +2097,7 @@ class Table implements AbstractTable {
       const refTable = Table.findOne({ id: calc_field.table_id });
       if (!refTable || !v[calc_field.attributes.ref]) continue;
       const val0 = v[calc_field.attributes.ref];
-      const val = typeof val0 === "object" ? val0[this.pk_name] : val0;
+      const val = typeof val0 === "object" ? val0[pk_name] : val0;
       const rows = await refTable?.getRows({
         [refTable.pk_name]: val,
       });
@@ -2116,7 +2126,7 @@ class Table implements AbstractTable {
       if (!refTable || !v[calc_field.attributes.ref]) continue;
 
       const val0 = v[calc_field.attributes.ref];
-      const val = typeof val0 === "object" ? val0[this.pk_name] : val0;
+      const val = typeof val0 === "object" ? val0[pk_name] : val0;
 
       const rows = await refTable?.getRows({
         [joinField]: val,

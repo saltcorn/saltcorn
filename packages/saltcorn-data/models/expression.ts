@@ -699,6 +699,7 @@ const apply_calculated_fields_stored = async (
   fields: Array<Field>,
   table: Table
 ): Promise<Row> => {
+  const state = require("../db/state").getState();
   let hasExprs = false;
   let transform = (x: Row) => x;
   for (const field of fields) {
@@ -721,9 +722,9 @@ const apply_calculated_fields_stored = async (
         _agg_val.table = dtable;
         _agg_val.through = through;
       }
-
+      const pk = table.pk_name;
       const reFetchedRow = await table.getJoinedRow({
-        where: { [table.pk_name]: row[table.pk_name] },
+        where: { [pk]: row[pk] },
         aggregations: {
           _agg_val,
         },
@@ -732,6 +733,12 @@ const apply_calculated_fields_stored = async (
       if (!reFetchedRow)
         throw new Error(`Error in calculating "${field.name}": row not found`);
       //transform
+      state.log(
+        6,
+        `apply_calculated_fields_stored aggregate field=${
+          field.name
+        } id=${row[pk]} val=${reFetchedRow._agg_val}`
+      );
       const oldf = transform;
       transform = async (row) => {
         row[field.name] =
@@ -786,7 +793,7 @@ const recalculate_for_stored = async (
   let maxid = null;
   let limit = 20;
   const { getState } = require("../db/state");
-  const pk_name = table.pk_name
+  const pk_name = table.pk_name;
   const go = async (rows: any) => {
     for (const row of rows) {
       try {
