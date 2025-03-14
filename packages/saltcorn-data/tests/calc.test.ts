@@ -27,6 +27,7 @@ const { interpolate, mergeIntoWhere } = utils;
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
+jest.setTimeout(30000);
 
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -517,7 +518,7 @@ describe("double joinfields in stored calculated fields", () => {
   });
 });
 
-describe("aggregations in stored calculated fields", () => {
+describe("Simple aggregations in stored calculated fields", () => {
   it("creates", async () => {
     const publisher = Table.findOne({ name: "publisher" });
     assertIsSet(publisher);
@@ -634,8 +635,76 @@ describe("aggregations in stored calculated fields", () => {
     await books.updateRow({ pages: 729 }, book.id);
     const hrow4 = await publisher.getRow({ id: 1 });
     expect(hrow4?.sum_of_pages).toBe(729);
+    const bid = await books.insertRow({
+      pages: 11,
+      publisher: 1,
+      author: "Fizz Buzz",
+    });
+    const hrow5 = await publisher.getRow({ id: 1 });
+    expect(hrow5?.sum_of_pages).toBe(740);
+    await books.deleteRows({ id: bid });
   });
 });
+describe("Sum-where aggregations in stored calculated fields", () => {
+  it("creates and updates sum field", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await Field.create({
+      table: books,
+      label: "Interesting",
+      type: "Bool",
+    });
+    await Field.create({
+      table: publisher,
+      label: "Sum of pages2",
+      type: "Integer",
+      calculated: true,
+      expression: "__aggregation",
+      attributes: {
+        aggregate: "Sum",
+        aggwhere: "interesting == true",
+        agg_field: "pages@Integer",
+        agg_relation: "books.publisher",
+        table: "books",
+        ref: "publisher",
+      },
+      stored: true,
+    });
+    const bookRows = await publisher.getRows({});
+    for (const row of bookRows) {
+      await publisher.updateRow({}, row.id);
+    }
+
+    const book = await books.getRow({ publisher: 1 });
+    assertIsSet(book);
+    const bookid = await books.insertRow({
+      pages: 12,
+      publisher: 1,
+      author: "Fizz Buzz",
+      interesting: true,
+    });
+    const hrow4 = await publisher.getRow({ id: 1 });
+    expect(hrow4?.sum_of_pages2).toBe(12);
+    await books.updateRow({ pages: 14 }, bookid);
+    const hrow6 = await publisher.getRow({ id: 1 });
+    expect(hrow6?.sum_of_pages2).toBe(14);
+
+    const bid2 = await books.insertRow({
+      pages: 11,
+      publisher: 1,
+      author: "Fizz Buzz",
+      interesting: true,
+    });
+    const hrow5 = await publisher.getRow({ id: 1 });
+    expect(hrow5?.sum_of_pages2).toBe(25);
+    await books.deleteRows({ id: bookid });
+    await books.deleteRows({ id: bid2 });
+
+  });
+});
+
 describe("join-aggregations in stored calculated fields", () => {
   it("creates", async () => {
     const books = Table.findOne({ name: "books" });
