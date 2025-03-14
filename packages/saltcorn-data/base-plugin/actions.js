@@ -1487,18 +1487,31 @@ module.exports = {
         type: "String",
         required: true,
       },
+      {
+        name: "title",
+        label: "Title",
+        sublabel: "Optional",
+        type: "String",
+      },
     ],
-    run: async ({ row, user, configuration: { type, notify_type, text } }) => {
+    run: async ({
+      row,
+      user,
+      configuration: { type, notify_type, text, title },
+    }) => {
       //type is legacy. this name gave react problems
       let text1 = interpolate(text, row, user, "Toast text");
+      let toast_title = title
+        ? interpolate(title, row, user, "Toast title")
+        : undefined;
 
       switch (notify_type || type) {
         case "Error":
-          return { error: text1 };
+          return { error: text1, toast_title };
         case "Success":
-          return { notify_success: text1 };
+          return { notify_success: text1, toast_title };
         default:
-          return { notify: text1 };
+          return { notify: text1, toast_title };
       }
     },
     namespace: "User interface",
