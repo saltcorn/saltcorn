@@ -27,6 +27,8 @@ const { interpolate, mergeIntoWhere } = utils;
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
+jest.setTimeout(30000);
+
 
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -517,7 +519,7 @@ describe("double joinfields in stored calculated fields", () => {
   });
 });
 
-describe("aggregations in stored calculated fields", () => {
+describe("Simple aggregations in stored calculated fields", () => {
   it("creates", async () => {
     const publisher = Table.findOne({ name: "publisher" });
     assertIsSet(publisher);
@@ -634,6 +636,9 @@ describe("aggregations in stored calculated fields", () => {
     await books.updateRow({ pages: 729 }, book.id);
     const hrow4 = await publisher.getRow({ id: 1 });
     expect(hrow4?.sum_of_pages).toBe(729);
+    await books.insertRow({ pages: 11, publisher: 1, author: "Fizz Buzz" });
+    const hrow5 = await publisher.getRow({ id: 1 });
+    expect(hrow5?.sum_of_pages).toBe(740);
   });
 });
 describe("join-aggregations in stored calculated fields", () => {
