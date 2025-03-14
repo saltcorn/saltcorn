@@ -29,7 +29,6 @@ getState().registerPlugin("base", require("../base-plugin"));
 afterAll(db.close);
 jest.setTimeout(30000);
 
-
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
@@ -641,6 +640,48 @@ describe("Simple aggregations in stored calculated fields", () => {
     expect(hrow5?.sum_of_pages).toBe(740);
   });
 });
+describe("Sum-where aggregations in stored calculated fields", () => {
+  it("creates and updates sum field", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    await Field.create({
+      table: publisher,
+      label: "Sum of pages2",
+      type: "Integer",
+      calculated: true,
+      expression: "__aggregation",
+      attributes: {
+        aggregate: "Sum",
+        aggwhere: "id>2",
+        agg_field: "pages@Integer",
+        agg_relation: "books.publisher",
+        table: "books",
+        ref: "publisher",
+      },
+      stored: true,
+    });
+    const bookRows = await publisher.getRows({});
+    for (const row of bookRows) {
+      await publisher.updateRow({}, row.id);
+    }
+
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const book = await books.getRow({ publisher: 1 });
+    assertIsSet(book);
+    const bookid = await books.insertRow({ pages: 12, publisher: 1, author: "Fizz Buzz" });
+    const hrow4 = await publisher.getRow({ id: 1 });
+    expect(hrow4?.sum_of_pages2).toBe(12);
+    await books.updateRow({ pages: 14 }, bookid);
+    const hrow6 = await publisher.getRow({ id: 1 });
+    expect(hrow6?.sum_of_pages2).toBe(14);
+
+    await books.insertRow({ pages: 11, publisher: 1, author: "Fizz Buzz" });
+    const hrow5 = await publisher.getRow({ id: 1 });
+    expect(hrow5?.sum_of_pages2).toBe(25);
+  });
+});
+
 describe("join-aggregations in stored calculated fields", () => {
   it("creates", async () => {
     const books = Table.findOne({ name: "books" });
