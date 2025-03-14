@@ -635,15 +635,27 @@ describe("Simple aggregations in stored calculated fields", () => {
     await books.updateRow({ pages: 729 }, book.id);
     const hrow4 = await publisher.getRow({ id: 1 });
     expect(hrow4?.sum_of_pages).toBe(729);
-    await books.insertRow({ pages: 11, publisher: 1, author: "Fizz Buzz" });
+    const bid = await books.insertRow({
+      pages: 11,
+      publisher: 1,
+      author: "Fizz Buzz",
+    });
     const hrow5 = await publisher.getRow({ id: 1 });
     expect(hrow5?.sum_of_pages).toBe(740);
+    await books.deleteRows({ id: bid });
   });
 });
 describe("Sum-where aggregations in stored calculated fields", () => {
   it("creates and updates sum field", async () => {
     const publisher = Table.findOne({ name: "publisher" });
     assertIsSet(publisher);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await Field.create({
+      table: books,
+      label: "Interesting",
+      type: "Bool",
+    });
     await Field.create({
       table: publisher,
       label: "Sum of pages2",
@@ -652,7 +664,7 @@ describe("Sum-where aggregations in stored calculated fields", () => {
       expression: "__aggregation",
       attributes: {
         aggregate: "Sum",
-        aggwhere: "id>2",
+        aggwhere: "interesting == true",
         agg_field: "pages@Integer",
         agg_relation: "books.publisher",
         table: "books",
@@ -665,20 +677,31 @@ describe("Sum-where aggregations in stored calculated fields", () => {
       await publisher.updateRow({}, row.id);
     }
 
-    const books = Table.findOne({ name: "books" });
-    assertIsSet(books);
     const book = await books.getRow({ publisher: 1 });
     assertIsSet(book);
-    const bookid = await books.insertRow({ pages: 12, publisher: 1, author: "Fizz Buzz" });
+    const bookid = await books.insertRow({
+      pages: 12,
+      publisher: 1,
+      author: "Fizz Buzz",
+      interesting: true,
+    });
     const hrow4 = await publisher.getRow({ id: 1 });
     expect(hrow4?.sum_of_pages2).toBe(12);
     await books.updateRow({ pages: 14 }, bookid);
     const hrow6 = await publisher.getRow({ id: 1 });
     expect(hrow6?.sum_of_pages2).toBe(14);
 
-    await books.insertRow({ pages: 11, publisher: 1, author: "Fizz Buzz" });
+    const bid2 = await books.insertRow({
+      pages: 11,
+      publisher: 1,
+      author: "Fizz Buzz",
+      interesting: true,
+    });
     const hrow5 = await publisher.getRow({ id: 1 });
     expect(hrow5?.sum_of_pages2).toBe(25);
+    await books.deleteRows({ id: bookid });
+    await books.deleteRows({ id: bid2 });
+
   });
 });
 
