@@ -1497,8 +1497,6 @@ function buildToast(txt, type, spin, title) {
           : "";
   const isNode = getIsNode();
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
-  console.log({ title });
-
   return {
     id: rndid,
     html: `
@@ -1565,8 +1563,7 @@ function notifyAlert(note, spin) {
     type = "info";
     txt = JSON.stringify(note, null, 2);
   }
-  console.log({ note });
-
+  
   const { id, html } = buildToast(txt, type, spin, note.toast_title);
   let $modal = $("#scmodal");
   if ($modal.length && $modal.hasClass("show"))
