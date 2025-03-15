@@ -781,8 +781,8 @@ export async function buildTablesFile(
         console.log(`Error in configuration_workflow of plugin ${plugin.name}`);
         console.log(error);
       }
-      return plugin;
     }
+    return plugin;
   };
 
   const filterFunc = async (table: string, rows: any) => {
