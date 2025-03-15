@@ -1103,7 +1103,7 @@ module.exports = {
       const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
-        table?.fields || Object.keys(row).map((k) => ({ name: k })),
+        table?.fields || Object.keys(row || {}).map((k) => ({ name: k })),
         {
           user,
           console,
@@ -1113,12 +1113,13 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
-      const res = await table_for_insert.tryInsertRow(calcrow, user);
+      const results = {};
+      const res = await table_for_insert.tryInsertRow(calcrow, user, results);
 
       if (res.error) return res;
       else if (configuration.id_variable)
-        return { [configuration.id_variable]: res.success };
-      else return true;
+        return { [configuration.id_variable]: res.success, ...results };
+      else return results;
     },
     namespace: "Database",
   },
@@ -1487,18 +1488,31 @@ module.exports = {
         type: "String",
         required: true,
       },
+      {
+        name: "title",
+        label: "Title",
+        sublabel: "Optional",
+        type: "String",
+      },
     ],
-    run: async ({ row, user, configuration: { type, notify_type, text } }) => {
+    run: async ({
+      row,
+      user,
+      configuration: { type, notify_type, text, title },
+    }) => {
       //type is legacy. this name gave react problems
       let text1 = interpolate(text, row, user, "Toast text");
+      let toast_title = title
+        ? { toast_title: interpolate(title, row, user, "Toast title") }
+        : {};
 
       switch (notify_type || type) {
         case "Error":
-          return { error: text1 };
+          return { error: text1, ...toast_title };
         case "Success":
-          return { notify_success: text1 };
+          return { notify_success: text1, ...toast_title };
         default:
-          return { notify: text1 };
+          return { notify: text1, ...toast_title };
       }
     },
     namespace: "User interface",

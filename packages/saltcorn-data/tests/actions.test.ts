@@ -228,7 +228,7 @@ describe("base plugin actions", () => {
       configuration: { table: "patients", row_expr: '{name:"Simon1"}' },
       user: { id: 1, role_id: 1 },
     });
-    expect(result).toBe(true);
+    expect(result).toStrictEqual({});
 
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
@@ -253,7 +253,7 @@ describe("base plugin actions", () => {
       },
       user: { id: 1, role_id: 1 },
     });
-    expect(result).toBe(true);
+    expect(result).toStrictEqual({});
 
     await sleep(10);
     const rows = await patients.getRows({ name: "Si3monJoe" });
