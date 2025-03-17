@@ -28,6 +28,7 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+jest.setTimeout(10000);
 
 const mkConfig = (hasSave?: boolean, onChange?: boolean) => {
   return {

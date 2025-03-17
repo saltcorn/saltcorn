@@ -1485,7 +1485,7 @@ function getIsNode() {
   }
 }
 
-function buildToast(txt, type, spin) {
+function buildToast(txt, type, spin, title) {
   const realtype = type === "error" ? "danger" : type;
   const icon =
     realtype === "success"
@@ -1514,7 +1514,7 @@ function buildToast(txt, type, spin) {
       <div class="toast-header bg-${realtype} text-white py-1 ">
         <i class="fas ${icon} me-2"></i>
         <strong class="me-auto" >
-          ${type}
+          ${title || type}
         </strong>
         ${
           spin
@@ -1563,8 +1563,8 @@ function notifyAlert(note, spin) {
     type = "info";
     txt = JSON.stringify(note, null, 2);
   }
-
-  const { id, html } = buildToast(txt, type, spin);
+  
+  const { id, html } = buildToast(txt, type, spin, note.toast_title);
   let $modal = $("#scmodal");
   if ($modal.length && $modal.hasClass("show"))
     $("#modal-toasts-area").append(html);
@@ -1639,16 +1639,19 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     }
   };
-  if (res.notify) await handle(res.notify, notifyAlert);
+  if (res.notify)
+    await handle(res.notify, (text) =>
+      notifyAlert({ type: "info", text, toast_title: res.toast_title })
+    );
   if (res.error) {
     if (window._sc_loglevel > 4) console.trace("error response", res.error);
     await handle(res.error, (text) =>
-      notifyAlert({ type: "danger", text: text })
+      notifyAlert({ type: "danger", text, toast_title: res.toast_title })
     );
   }
   if (res.notify_success)
     await handle(res.notify_success, (text) =>
-      notifyAlert({ type: "success", text: text })
+      notifyAlert({ type: "success", text, toast_title: res.toast_title })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
     const form =
