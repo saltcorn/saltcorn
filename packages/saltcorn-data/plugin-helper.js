@@ -2004,6 +2004,7 @@ const stateFieldsToWhere = ({
   let qstate = {};
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
+    if (typeof v === "undefined") return;
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
       const scState = getState();
       const language = scState.pg_ts_config;
