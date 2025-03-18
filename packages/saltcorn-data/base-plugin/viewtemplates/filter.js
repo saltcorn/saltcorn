@@ -287,7 +287,7 @@ const run = async (
   const evalCtx = { ...state };
   fields.forEach((f) => {
     //so it will be in scope in formula
-    if (typeof evalCtx[f.name] === "undefined") evalCtx[f.name] = "undefined";
+    if (typeof evalCtx[f.name] === "undefined") evalCtx[f.name] = undefined;
   });
   evalCtx.session_id = getSessionId(extra.req);
   await traverse(layout, {

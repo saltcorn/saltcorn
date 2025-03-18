@@ -2475,20 +2475,6 @@ router.post(
       },
       edit.id
     );
-    const add_to_menu = async (item) => {
-      const current_menu = getState().getConfigCopy("menu_items", []);
-      const existing = current_menu.findIndex((m) => m.label === item.label);
-      if (existing >= 0) current_menu[existing] = item;
-      else current_menu.push(item);
-      await save_menu_items(current_menu);
-    };
-
-    await add_to_menu({
-      label: table.name,
-      type: "View",
-      min_role: 100,
-      viewname: `List ${table.name}`,
-    });
 
     res.redirect(`/table/${table.id}`);
   })

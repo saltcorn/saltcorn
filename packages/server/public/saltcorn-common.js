@@ -597,6 +597,7 @@ function get_form_record(e_in, select_labels) {
       $(e_in).prop("data-join-values", {});
       const keyVals = {};
       for (const { ref, target, refTable } of joinFields) {
+        if (!rec[ref]) continue;
         keyVals[ref] = rec[ref];
         $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
           success: (val) => {
