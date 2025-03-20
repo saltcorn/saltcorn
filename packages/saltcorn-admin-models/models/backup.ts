@@ -54,6 +54,7 @@ import path from "path";
 const { exec, execSync, spawn } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
+import { CodePagePack } from "@saltcorn/types/base_types";
 
 /**
  * @param [withEventLog] - include event log
@@ -121,6 +122,22 @@ const create_pack_json = async (
         async (e: EventLog) => await event_log_pack(e)
       )
     : [];
+  const function_code_pages = getState().getConfigCopy(
+    "function_code_pages",
+    {}
+  );
+  const function_code_pages_tags = getState().getConfigCopy(
+    "function_code_pages_tags",
+    {}
+  );
+  const code_pages: Array<CodePagePack> = [];
+  Object.keys(function_code_pages).forEach((name) => {
+    code_pages.push({
+      name,
+      code: function_code_pages[name],
+      tags: function_code_pages_tags[name] || [],
+    });
+  });
 
   const pack: any = {
     tables,
@@ -135,6 +152,7 @@ const create_pack_json = async (
     models,
     model_instances,
     event_logs,
+    code_pages,
   };
 
   if (forSnapshot) {
