@@ -1577,5 +1577,8 @@
 	"Minimum": "Minimum",
 	"Maximum": "Maximum",
 	"All tags": "All tags",
-	"Manage tags...": "Manage tags..."
+	"Manage tags...": "Manage tags...",
+	"Started": "Started",
+	"Updated": "Updated",
+	"Status": "Status"
 }
