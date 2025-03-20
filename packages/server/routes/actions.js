@@ -1526,13 +1526,13 @@ router.get(
 
     const wfTable = mkTable(
       [
-        { label: "Trigger", key: (run) => trNames[run.trigger_id] },
-        { label: "Started", key: (run) => localeDateTime(run.started_at) },
+        { label: req.__("Trigger"), key: (run) => trNames[run.trigger_id] },
+        { label: req.__("Started"), key: (run) => localeDateTime(run.started_at) },
         {
-          label: "Updated",
+          label: req.__("Updated"),
           key: (run) => localeDateTime(run.status_updated_at),
         },
-        { label: "Status", key: "status" },
+        { label: req.__("Status"), key: "status" },
         {
           label: "",
           key: (run) => {
