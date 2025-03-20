@@ -322,6 +322,7 @@ const fieldFlow = (req) =>
             }
           );
         } catch (e) {
+          console.error(e);
           return {
             redirect: `/table/${context.table_id}`,
             flash: ["error", e.message],
@@ -340,6 +341,7 @@ const fieldFlow = (req) =>
             }
           );
         } catch (e) {
+          console.error(e);
           return {
             redirect: `/table/${context.table_id}`,
             flash: ["error", e.message],

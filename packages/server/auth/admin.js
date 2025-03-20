@@ -1044,6 +1044,7 @@ router.post(
         await u.update({ email, role_id, ...rest });
         req.flash("success", req.__(`User %s saved`, email));
       } catch (e) {
+        console.error(e);
         req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
     } else {

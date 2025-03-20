@@ -90,6 +90,7 @@ router.post(
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
     res.json({ reload_page: true });

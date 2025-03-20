@@ -315,6 +315,7 @@ router.post(
         await u.delete();
         req.flash("success", req.__(`Role %s deleted`, u.role));
       } catch (e) {
+        console.error(e);
         req.flash("error", e.message);
       }
     }

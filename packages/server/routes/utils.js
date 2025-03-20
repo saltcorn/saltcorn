@@ -164,7 +164,7 @@ const set_custom_http_headers = (res, req, state) => {
         validateHeaderName(k);
         validateHeaderValue(k, val);
         res.header(k, val);
-      } catch (e) {
+      } catch (e) {      
         Crash.create(e, { url: "/", headers: {} });
       }
     }
@@ -504,6 +504,7 @@ const sendHtmlFile = async (req, res, file) => {
         .sendWrap(req.__("An error occurred"), req.__("File not found"));
     }
   } catch (e) {
+    console.error(e)
     return res
       .status(404)
       .sendWrap(

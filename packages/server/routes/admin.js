@@ -307,7 +307,12 @@ router.get(
         .replace(/^(\.\.(\/|\\|$))+/, "");
       const fullpath = path.join(location, "help", safeFile);
       if (fs.existsSync(fullpath)) {
-        const { markup } = await get_help_markup(fullpath, req.query, req, true);
+        const { markup } = await get_help_markup(
+          fullpath,
+          req.query,
+          req,
+          true
+        );
 
         res.sendWrap(`Help: ${topic}`, { above: [markup] });
       } else {
@@ -1140,6 +1145,7 @@ router.post(
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
     res.json({ reload_page: true });
@@ -1636,6 +1642,7 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
       try {
         await cleanNodeModules();
       } catch (e) {
+        console.error(e);
         res_write(req.__("Error cleaning node_modules: %s\n", e.message));
       }
     }
@@ -1896,6 +1903,7 @@ router.post(
           notify: "Certificate added, please restart server",
         });
       } catch (e) {
+        console.error(e);
         res.json({ error: e.message });
       }
     } else {
@@ -1983,6 +1991,7 @@ router.post(
         );
         res.redirect("/useradmin/ssl");
       } catch (e) {
+        console.error(e);
         req.flash("error", e.message);
         res.redirect("/useradmin/ssl");
       }

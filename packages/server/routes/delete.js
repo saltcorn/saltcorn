@@ -57,6 +57,7 @@ router.post(
           req.__("Not allowed to write to table %s", table.name)
         );
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
     if (req.xhr) res.send("OK");
