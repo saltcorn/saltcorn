@@ -1304,11 +1304,9 @@ function enlarge_in_code($textarea, cm) {
   const cardHeight = $card.height();
   const vh = $(window).height();
   const cmHeight = cm.getWrapperElement().offsetHeight;
-  console.log({ cardTop, vh, $textarea, cm, $card, cmHeight });
   const newCardHeight = vh - cardTop - 35;
   if (newCardHeight > cardHeight) {
     const extending = newCardHeight - cardHeight;
-    console.log("setting height");
     cm.setSize("100%", `${cmHeight + extending}px`);
     cm.refresh();
     $card.css("min-height", newCardHeight + "px");
