@@ -93,7 +93,8 @@ const tablesList = async (
               {
                 label: tagsDropdown(
                   tags,
-                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
+                  req
                 ),
                 key: (r) => tagBadges(r),
               },
@@ -240,7 +241,7 @@ const tagBadge = (tag, type) =>
     tag.name
   );
 
-const tagsDropdown = (tags, altHeader) =>
+const tagsDropdown = (tags, altHeader, req) =>
   div(
     { class: "dropdown" },
     div(
@@ -253,7 +254,7 @@ const tagsDropdown = (tags, altHeader) =>
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
-      altHeader || "Tags",
+      altHeader || req.__("Tags"),
       i({ class: "ms-1 fas fa-caret-down" })
     ),
     div(
@@ -267,7 +268,7 @@ const tagsDropdown = (tags, altHeader) =>
           // TODO check url why view for page, what do we need for page group
           href: `javascript:unset_state_field('_tag', this)`,
         },
-        "All tags"
+        req.__("All tags")
       ),
       tags.map((tag) =>
         a(
@@ -285,7 +286,7 @@ const tagsDropdown = (tags, altHeader) =>
           // TODO check url why view for page, what do we need for page group
           href: `tag`,
         },
-        "Manage tags..."
+        req.__("Manage tags...")
       )
     )
   );
@@ -314,7 +315,7 @@ const mkAddBtn = (tags, entityType, id, req, myTagIds, on_done_redirect_str) =>
           post_dropdown_item(
             `/tag-entries/add-tag-entity/${encodeURIComponent(
               t.name
-            )}/${entityType}/${id}${on_done_redirect_str||""}`,
+            )}/${entityType}/${id}${on_done_redirect_str || ""}`,
             t.name,
             req
           )
@@ -345,7 +346,14 @@ const viewsList = async (
   const tagBadges = (view) => {
     const myTags = tag_entries.filter((te) => te.view_id === view.id);
     const myTagIds = new Set(myTags.map((t) => t.tag_id));
-    const addBtn = mkAddBtn(tags, "views", view.id, req, myTagIds, on_done_redirect_str);
+    const addBtn = mkAddBtn(
+      tags,
+      "views",
+      view.id,
+      req,
+      myTagIds,
+      on_done_redirect_str
+    );
     return (
       myTags.map((te) => tagBadge(tagsById[te.tag_id], "views")).join(nbsp) +
       addBtn
@@ -380,7 +388,8 @@ const viewsList = async (
               {
                 label: tagsDropdown(
                   tags,
-                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                  filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
+                  req
                 ),
                 key: (r) => tagBadges(r),
               },
@@ -585,7 +594,8 @@ const getPageList = async (
             {
               label: tagsDropdown(
                 tags,
-                filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
+                req
               ),
               key: (r) => tagBadges(r),
             },
@@ -709,7 +719,14 @@ const getTriggerList = async (
     const myTagIds = new Set(myTags.map((t) => t.tag_id));
     return (
       myTags.map((te) => tagBadge(tagsById[te.tag_id], "triggers")).join(nbsp) +
-      mkAddBtn(tags, "triggers", trigger.id, req, myTagIds, on_done_redirect_str)
+      mkAddBtn(
+        tags,
+        "triggers",
+        trigger.id,
+        req,
+        myTagIds,
+        on_done_redirect_str
+      )
     );
   };
   return mkTable(
@@ -729,7 +746,8 @@ const getTriggerList = async (
             {
               label: tagsDropdown(
                 tags,
-                filterOnTag ? `Tag:${filterOnTag.name}` : undefined
+                filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
+                req
               ),
               key: (r) => tagBadges(r),
             },
