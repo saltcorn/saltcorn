@@ -758,11 +758,13 @@ router.post(
       );
     }
     res.redirect(
-      type === "trigger"
-        ? `/actions`
-        : /^[a-z]+$/g.test(type)
-          ? `/${type}edit`
-          : "/"
+      type == "codepage"
+        ? `/admin/edit-codepage/${name}`
+        : type === "trigger"
+          ? `/actions`
+          : /^[a-z]+$/g.test(type)
+            ? `/${type}edit`
+            : "/"
     );
   })
 );
@@ -4148,7 +4150,8 @@ router.get(
       {}
     );
     const tags = await Tag.find();
-    const tagMarkup = span({class: "ms-1"},
+    const tagMarkup = span(
+      { class: "ms-1" },
       "Tags:",
       (function_code_pages_tags[name] || []).map((tagnm) =>
         span(
