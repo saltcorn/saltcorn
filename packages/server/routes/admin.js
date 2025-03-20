@@ -4104,16 +4104,7 @@ router.get(
       onChange: "saveAndContinue(this)",
       values: { code: existing },
       noSubmitButton: true,
-      labelCols: 0,
-      additionalButtons: [
-        {
-          label: req.__("Delete code page"),
-          class: "btn btn-outline-danger btn-sm",
-          onclick: `if(confirm('Are you sure you would like to delete this code page?'))ajax_post('/admin/delete-codepage/${encodeURIComponent(
-            name
-          )}')`,
-        },
-      ],
+      labelCols: 0,      
       fields: [
         {
           name: "code",
@@ -4215,6 +4206,16 @@ router.get(
         title: req.__(`%s code page`, name),
         contents: [
           renderForm(form, req.csrfToken()),
+          a(
+            {
+              href: `javascript:if(confirm('Are you sure you would like to delete this code page?'))ajax_post('/admin/delete-codepage/${encodeURIComponent(
+                name
+              )}')`,
+              class: "me-1 text-danger",
+            },
+            req.__("Delete code page")
+          ),
+          " | ",
           a(
             {
               href: `javascript:ajax_modal('/admin/snapshot-restore/codepage/${name}')`,
