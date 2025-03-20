@@ -2219,6 +2219,7 @@ router.post(
       await table.deleteRows({}, req.user, true);
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
+      console.error(e)
       req.flash("error", e.message);
     }
 

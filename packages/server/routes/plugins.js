@@ -1489,6 +1489,7 @@ router.post(
         for (const msg of msgs) req.flash("warning", msg);
         res.redirect(`/plugins`);
       } catch (e) {
+        console.error(e);
         req.flash("error", `${e.message}`);
         const form = pluginForm(req, plugin);
         res.sendWrap(req.__(`Edit Module`), renderForm(form, req.csrfToken()));
@@ -1595,6 +1596,7 @@ router.post(
         req.__
       );
     } catch (e) {
+      console.error(e);
       req.flash(
         "error",
         e.message || req.__("Error installing module %s", plugin.name)

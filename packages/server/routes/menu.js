@@ -615,6 +615,7 @@ router.post(
         });
         res.json({ success: "ok", ...(result || {}) });
       } catch (e) {
+        console.error(e);
         res.status(400).json({ error: e.message || e });
       }
     else res.status(404).json({ error: "Action not found" });

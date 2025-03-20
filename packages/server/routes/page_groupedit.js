@@ -628,6 +628,7 @@ router.post(
           );
           res.redirect(`/page_groupedit/${group.name}`);
         } catch (e) {
+          console.error(e);
           req.flash("error", e.message);
           res.redirect(`/page_groupedit/${group.name}`);
         }
