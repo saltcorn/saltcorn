@@ -307,7 +307,12 @@ router.get(
         .replace(/^(\.\.(\/|\\|$))+/, "");
       const fullpath = path.join(location, "help", safeFile);
       if (fs.existsSync(fullpath)) {
-        const { markup } = await get_help_markup(fullpath, req.query, req, true);
+        const { markup } = await get_help_markup(
+          fullpath,
+          req.query,
+          req,
+          true
+        );
 
         res.sendWrap(`Help: ${topic}`, { above: [markup] });
       } else {
@@ -4143,7 +4148,7 @@ router.get(
       {}
     );
     const tags = await Tag.find();
-    const tagMarkup = div(
+    const tagMarkup = span({class: "ms-1"},
       "Tags:",
       (function_code_pages_tags[name] || []).map((tagnm) =>
         span(
@@ -4205,7 +4210,18 @@ router.get(
       contents: {
         type: "card",
         title: req.__(`%s code page`, name),
-        contents: [renderForm(form, req.csrfToken()), tagMarkup],
+        contents: [
+          renderForm(form, req.csrfToken()),
+          a(
+            {
+              href: `javascript:ajax_modal('/admin/snapshot-restore/codepage/name')`,
+              class: "me-1",
+            },
+            req.__("Restore")
+          ),
+          " | ",
+          tagMarkup,
+        ],
       },
     });
   })
