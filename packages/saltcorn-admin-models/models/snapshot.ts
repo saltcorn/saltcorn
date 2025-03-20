@@ -73,7 +73,7 @@ class Snapshot {
     const latest = await Snapshot.latest();
 
     const current_pack = await backup.create_pack_json(false, true);
-
+    
     //comparing objects is not accurate (too many false positives) so we hash instead
     const hash = crypto
       .createHash("sha256")
@@ -86,7 +86,7 @@ class Snapshot {
         created: new Date(),
         pack: current_pack,
         hash,
-        name
+        name,
       });
       return true;
     } else {
@@ -138,10 +138,12 @@ class Snapshot {
           if (!Array.isArray(pack.triggers)) return null;
 
           return pack.triggers.find((p: any) => p.name === name);
+        case "codepage":
+          if (!Array.isArray(pack.code_pages)) return null;
+          return pack.code_pages.find((p: any) => p.name === name);
       }
     };
     let last = get_entity(snaps[0].pack);
-
     const history = last ? [snaps[0]] : [];
     for (const snap of snaps) {
       const current = get_entity(snap.pack);

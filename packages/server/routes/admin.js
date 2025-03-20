@@ -4214,7 +4214,7 @@ router.get(
           renderForm(form, req.csrfToken()),
           a(
             {
-              href: `javascript:ajax_modal('/admin/snapshot-restore/codepage/name')`,
+              href: `javascript:ajax_modal('/admin/snapshot-restore/codepage/${name}')`,
               class: "me-1",
             },
             req.__("Restore")
