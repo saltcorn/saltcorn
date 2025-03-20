@@ -4219,7 +4219,7 @@ router.get(
           a(
             {
               href: `javascript:ajax_modal('/admin/snapshot-restore/codepage/${name}')`,
-              class: "me-1",
+              class: "ms-1 me-1",
             },
             req.__("Restore")
           ),
