@@ -1299,6 +1299,7 @@ $(initialize_page);
 
 function enlarge_in_code($textarea, cm) {
   const $card = $textarea.closest("div.card");
+  if (!$card.length) return;
   const cardTop = $card.position().top;
   const cardHeight = $card.height();
   const vh = $(window).height();
