@@ -145,6 +145,7 @@ router.get(
             name: "regval",
             label: "",
             input_type: "code",
+            class: "enlarge-in-card",
             attributes: { mode: "application/json" },
           },
         ],
@@ -319,13 +320,16 @@ router.get(
             ),
           },
           {
-            type: "card",
-            title: cfg_link
-              ? `Registry editor: ${cfg_link}`
-              : ename && etype
-              ? `Registry editor: ${ename} ${etype}`
-              : "Registry editor",
-            contents: edContents,
+            type: "container",
+            contents: {
+              type: "card",
+              title: cfg_link
+                ? `Registry editor: ${cfg_link}`
+                : ename && etype
+                  ? `Registry editor: ${ename} ${etype}`
+                  : "Registry editor",
+              contents: edContents,
+            },
           },
         ],
       },

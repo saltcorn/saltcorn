@@ -1,4 +1,5 @@
 import db from "@saltcorn/data/db/index";
+const { getState } = require("@saltcorn/data/db/state");
 import pack from "./pack";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 
@@ -14,7 +15,7 @@ import backup from "./backup";
 const crypto = require("crypto");
 import { isEqual } from "lodash";
 import View from "@saltcorn/data/models/view";
-import { Pack } from "@saltcorn/types/base_types";
+import { CodePagePack, Pack } from "@saltcorn/types/base_types";
 import Page from "@saltcorn/data/models/page";
 import Table from "@saltcorn/data/models/table";
 import Trigger from "@saltcorn/data/models/trigger";
@@ -86,7 +87,7 @@ class Snapshot {
         created: new Date(),
         pack: current_pack,
         hash,
-        name
+        name,
       });
       return true;
     } else {
@@ -106,6 +107,18 @@ class Snapshot {
         this.pack?.pages.find((p: any) => p.name === name) as any;
       const page = await Page.findOne({ name });
       if (page) await Page.update(page.id!, pageSpec!);
+    }
+    if ((type || "").toLowerCase() === "codepage") {
+      const cppack = this.pack?.code_pages?.find((p: any) => p.name === name);
+      if (cppack) {
+        const code_pages = getState().getConfigCopy("function_code_pages", {});
+
+        await getState().setConfig("function_code_pages", {
+          ...code_pages,
+          [cppack.name]: cppack.code,
+        });
+        await getState().refresh_codepages();
+      }
     }
     if ((type || "").toLowerCase() === "trigger") {
       const { table_name, steps, ...triggerSpec } = this.pack?.triggers.find(
@@ -138,10 +151,12 @@ class Snapshot {
           if (!Array.isArray(pack.triggers)) return null;
 
           return pack.triggers.find((p: any) => p.name === name);
+        case "codepage":
+          if (!Array.isArray(pack.code_pages)) return null;
+          return pack.code_pages.find((p: any) => p.name === name);
       }
     };
     let last = get_entity(snaps[0].pack);
-
     const history = last ? [snaps[0]] : [];
     for (const snap of snaps) {
       const current = get_entity(snap.pack);
