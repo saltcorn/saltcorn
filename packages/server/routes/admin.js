@@ -4130,7 +4130,7 @@ router.get(
             ),
           input_type: "code",
           attributes: { mode: "text/javascript" },
-          class: "validate-statements",
+          class: "validate-statements enlarge-in-card",
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
