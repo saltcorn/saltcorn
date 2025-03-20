@@ -895,6 +895,7 @@ class State {
     );
     if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
     this.codepage_context = {};
+    let errMsg;
     if (Object.keys(code_pages).length > 0) {
       const fetch = require("node-fetch");
       try {
@@ -921,13 +922,15 @@ class State {
             this.codepage_context[k] = sandbox[k];
           }
         });
-      } catch (e) {
+      } catch (e: any) {
         console.error("code page load error: ", e);
+        errMsg = e?.message || e;
       }
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
     this.oldCodePages = code_pages;
+    return errMsg;
   }
 
   /**

@@ -4104,7 +4104,7 @@ router.get(
       onChange: "saveAndContinue(this)",
       values: { code: existing },
       noSubmitButton: true,
-      labelCols: 0,      
+      labelCols: 0,
       fields: [
         {
           name: "code",
@@ -4243,9 +4243,9 @@ router.post(
       ...code_pages,
       [name]: code,
     });
-    await getState().refresh_codepages();
-
-    res.json({ success: true });
+    const err = await getState().refresh_codepages();
+    if (err) res.json({ success: false, error: `Error evaluating code pages: ${err}` });
+    else res.json({ success: true });
   })
 );
 router.post(
