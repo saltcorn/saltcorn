@@ -49,6 +49,6 @@ RUN ./gradlew assembleDebug
 ENV NODE_ENV="production"
 ENV SALTCORN_DISABLE_UPGRADE="true"
 
-RUN npm install -g @saltcorn/cli@1.1.3-beta.8 --omit=dev
+RUN npm install -g @saltcorn/cli@1.1.3-beta.9 --omit=dev
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
