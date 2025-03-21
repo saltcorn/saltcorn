@@ -1485,6 +1485,7 @@ module.exports = {
         const ctx = { ...state, user_id: req.user?.id || null, user: req.user };
         let where1 = jsexprToWhere(default_state.include_fml, ctx, fields);
         mergeIntoWhere(where, where1 || {});
+        mergeIntoWhere(whereForCount, where1 || {});
       }
       if (default_state?.exclusion_relation) {
         const [reltable, relfld] = default_state.exclusion_relation.split(".");
@@ -1500,17 +1501,17 @@ module.exports = {
             )
           : {};
         const relRows = await relTable.getRows(relWhere);
-        if (relRows.length > 0)
-          mergeIntoWhere(
-            where,
-            !db.isSQLite
-              ? {
-                  id: { not: { in: relRows.map((r) => r[relfld]) } },
-                }
-              : {
-                  not: { or: relRows.map((r) => ({ id: r[relfld] })) },
-                }
-          );
+        if (relRows.length > 0) {
+          const mergeObj = !db.isSQLite
+            ? {
+                [table.pk_name]: { not: { in: relRows.map((r) => r[relfld]) } },
+              }
+            : {
+                not: { or: relRows.map((r) => ({ id: r[relfld] })) },
+              };
+          mergeIntoWhere(where, mergeObj);
+          mergeIntoWhere(whereForCount, mergeObj);
+        }
       }
       let rows = await table.getJoinedRows({
         where,
