@@ -905,6 +905,7 @@ const run = async (
   const table = Table.findOne(
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
   );
+  const pk_name = table.pk_name;
   const fields = table.getFields();
   const appState = getState();
   const locale = extraOpts.req.getLocale();
@@ -937,9 +938,9 @@ const run = async (
   await set_join_fieldviews({ table, columns, fields });
 
   readState(stateWithId, fields, extraOpts.req);
-  const id = stateWithId.id;
+  const id = stateWithId[pk_name];
   let state = { ...stateWithId };
-  if (extraOpts?.removeIdFromstate) delete state.id;
+  if (extraOpts?.removeIdFromstate) delete state[pk_name];
 
   const statehash = hashState(state, viewname);
 
@@ -990,12 +991,12 @@ const run = async (
         case RelationType.OWN:
           stateMany = {
             or: rows.map((row) => ({
-              [table.pk_name]: row[table.pk_name],
+              [pk_name]: row[pk_name],
               ...get_extra_state(row),
             })),
           };
           getRowState = (row) => ({
-            [table.pk_name]: row[table.pk_name],
+            [pk_name]: row[pk_name],
             ...get_extra_state(row),
           });
           break;
@@ -1034,7 +1035,7 @@ const run = async (
     if (this.viewtemplateObj?.runMany) {
       const runs = await view.runMany(stateMany, extraOpts);
       viewResults[segment.view + segment.relation] = (row) =>
-        runs.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+        runs.find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     } else if (this.viewtemplateObj?.renderRows) {
       const rendered = await view.viewtemplateObj.renderRows(
         view.table,
@@ -1051,7 +1052,7 @@ const run = async (
             html,
             row: rows[ix],
           }))
-          .find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+          .find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     } else {
       const results = [];
 
@@ -1063,7 +1064,7 @@ const run = async (
         });
       }
       viewResults[segment.view + segment.relation] = (row) =>
-        results.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+        results.find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     }
   });
 
