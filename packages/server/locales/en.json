@@ -1580,5 +1580,10 @@
 	"Manage tags...": "Manage tags...",
 	"Started": "Started",
 	"Updated": "Updated",
-	"Status": "Status"
+	"Status": "Status",
+	"Working directory": "Working directory",
+	"Row click event": "Row click event",
+	"What happens when a row is clicked": "What happens when a row is clicked",
+	"Row click action": "Row click action",
+	"Run this action when row is clicked": "Run this action when row is clicked"
 }
