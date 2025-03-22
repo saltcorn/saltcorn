@@ -1139,7 +1139,12 @@ module.exports = {
             name: "verification_token",
             label: "Verification Token",
             type: "String",
-          })
+          }),
+          {
+            name: "reset_password_token",
+            label: "Reset Password Token",
+            type: "String",
+          }
         );
       }
       const { joinFields, aggregations } = picked_fields_to_query(

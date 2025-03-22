@@ -4,8 +4,12 @@
  * @subcategory auth
  */
 const { getState } = require("@saltcorn/data/db/state");
-const { getMailTransport } = require("@saltcorn/data/models/email");
+const {
+  getMailTransport,
+  viewToEmailHtml,
+} = require("@saltcorn/data/models/email");
 const { get_base_url } = require("../routes/utils");
+const View = require("@saltcorn/data/models/view");
 
 /**
  * @param {string} link
@@ -23,13 +27,13 @@ const generate_email = (link, user, req, options) => {
         getState().getConfig("site_name", "Saltcorn")
       )
     : options?.from_admin
-    ? req.__(
-        "We request that you change your password on %s. You can set your new password through this link: ",
-        getState().getConfig("site_name", "Saltcorn")
-      )
-    : req.__(
-        "You have requested a link to change your password. You can do this through this link:"
-      );
+      ? req.__(
+          "We request that you change your password on %s. You can set your new password through this link: ",
+          getState().getConfig("site_name", "Saltcorn")
+        )
+      : req.__(
+          "You have requested a link to change your password. You can do this through this link:"
+        );
   const base_url = getState().getConfig("base_url", "");
   const final =
     options?.creating && base_url
@@ -94,7 +98,31 @@ ${final ? `<br />${final}<br />` : ""}
 const send_reset_email = async (user, req, options = {}) => {
   const link = await get_reset_link(user, req);
   const transporter = getMailTransport();
-  await transporter.sendMail(generate_email(link, user, req, options));
+  const reset_password_email_view_name = getState().getConfig(
+    "reset_password_email_view",
+    false
+  );
+  let email;
+  if (reset_password_email_view_name) {
+    const reset_password_email_view = await View.findOne({
+      name: reset_password_email_view_name,
+    });
+    if (reset_password_email_view) {
+      const html = await viewToEmailHtml(reset_password_email_view, {
+        id: user.id,
+      });
+      email = {
+        from: getState().getConfig("email_from"),
+        to: user.email,
+        subject:
+          reset_password_email_view.attributes?.page_title ||
+          `${req.__("Hi %s", user.email)}`,
+        html,
+      };
+    }
+  }
+  if (!email) email = generate_email(link, user, req, options);
+  await transporter.sendMail(email);
 };
 
 /**
