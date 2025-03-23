@@ -33,19 +33,28 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Image = ({ fileid, block, srctype, url, alt, style }) => {
+const Image = ({ fileid, block, srctype, url, alt, style, customClass }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const theurl = srctype === "File" ? `/files/serve/${fileid}` : url;
   return fileid === 0 ? (
-    <span>No images Available</span>
+    <span
+      {...blockProps(block)}
+      className={`${style && style.width ? "" : "w-100"} ${customClass || ""} image-widget ${
+        selected ? "selected-node" : ""
+      }`}
+      ref={(dom) => connect(drag(dom))}
+      style={reactifyStyles(style || {})}
+    >
+      No images Available
+    </span>
   ) : (
     <img
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
-      className={`${style && style.width ? "" : "w-100"} image-widget ${
+      className={`${style && style.width ? "" : "w-100"} ${customClass || ""} image-widget ${
         selected ? "selected-node" : ""
       }`}
       style={reactifyStyles(style || {})}
@@ -72,6 +81,7 @@ const ImageSettings = () => {
     block: node.data.props.block,
     style: node.data.props.style,
     isFormula: node.data.props.isFormula,
+    customClass: node.data.props.customClass,
     imgResponsiveWidths: node.data.props.imgResponsiveWidths,
   }));
   const {
@@ -85,6 +95,7 @@ const ImageSettings = () => {
     isFormula,
     filepath,
     imgResponsiveWidths,
+    customClass,
     style,
   } = node;
   const options = useContext(optionsCtx);
@@ -185,6 +196,7 @@ const ImageSettings = () => {
                   <input
                     type="text"
                     className="form-control"
+                    spellCheck={false}
                     value={url}
                     onChange={setAProp("url")}
                   />
@@ -262,6 +274,7 @@ const ImageSettings = () => {
                 <input
                   type="text"
                   value={imgResponsiveWidths}
+                  spellCheck={false}
                   className="form-control"
                   onChange={setAProp("imgResponsiveWidths")}
                 />
@@ -284,6 +297,18 @@ const ImageSettings = () => {
             setProp={setProp}
             isStyle={true}
           />
+          <tr>
+            <td>Class</td>
+            <td>
+              <input
+                type="text"
+                value={customClass}
+                className="form-control"
+                onChange={setAProp("customClass")}
+                spellCheck={false}
+              />
+            </td>
+          </tr>
           {srctype !== "Upload" && (
             <tr>
               <td colSpan="2">
@@ -321,6 +346,7 @@ Image.craft = {
       { name: "srctype", default: "File" },
       { name: "fileid", default: 0 },
       "field",
+      "customClass",
       "block",
       "imgResponsiveWidths",
       { name: "style", default: {} },

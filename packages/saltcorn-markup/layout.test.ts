@@ -109,17 +109,63 @@ describe("layout", () => {
       contents: "bar",
       textStyle: ["h1"],
     };
-    expect(render({ blockDispatch, layout: markup })).toBe(
-      '<h1>bar</h1>'
-    );
+    expect(render({ blockDispatch, layout: markup })).toBe("<h1>bar</h1>");
     const markup1 = {
       type: "blank",
       contents: "bar",
-      textStyle: ["fw-bold","small"],
+      textStyle: ["fw-bold", "small"],
     };
     expect(render({ blockDispatch, layout: markup1 })).toBe(
       '<span class="fw-bold small">bar</span>'
     );
+  });
+  it("renders text with class", () => {
+    const blockDispatch = {};
+    expect(
+      render({
+        blockDispatch,
+        layout: {
+          type: "blank",
+          contents: "bar",
+          customClass: ["myclass"],
+        },
+      })
+    ).toBe('<span class="myclass">bar</span>');
+    expect(
+      render({
+        blockDispatch,
+        layout: {
+          type: "blank",
+          contents: "bar",
+          textStyle: ["h1"],
+          customClass: ["myclass"],
+        },
+      })
+    ).toBe('<h1 class="myclass">bar</h1>');
+    expect(
+      render({
+        blockDispatch,
+        layout: {
+          type: "blank",
+          contents: "bar",
+          textStyle: ["muted"],
+          customClass: ["myclass"],
+        },
+      })
+    ).toBe('<span class="muted myclass">bar</span>');
+    expect(
+      render({
+        blockDispatch,
+        layout: {
+          type: "container",
+          contents: {
+            type: "blank",
+            contents: "bar",
+            customClass: ["myclass"],
+          },
+        },
+      })
+    ).toBe('<div style="    "><span class="myclass">bar</span></div>');
   });
 });
 

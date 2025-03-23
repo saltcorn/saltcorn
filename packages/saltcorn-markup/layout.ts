@@ -114,7 +114,7 @@ const applyTextStyle = (segment: any, inner: string): string => {
   const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
   const styleArray = textStyleToArray(segment.textStyle);
   const hs = styleArray.find((s) => s[0] === "h");
-  const no_hs = styleArray.filter((s) => s[0] !== "h").map(to_bs5);
+  const klasses = styleArray.filter((s) => s[0] !== "h").map(to_bs5);
   const inline_h = segment.textStyle && hs && segment.inline;
   const style: any = segment.font
     ? { fontFamily: segment.font, ...segment.style }
@@ -123,8 +123,8 @@ const applyTextStyle = (segment: any, inner: string): string => {
     Object.keys(style).length > 0 && !selfStylingTypes.has(segment.type);
 
   if (inline_h) style.display = "inline-block";
-
-  const klass = no_hs.join(" ");
+  if (segment.customClass) klasses.push(segment.customClass);
+  const klass = klasses.join(" ");
 
   switch (hs) {
     case "h1":
@@ -142,9 +142,9 @@ const applyTextStyle = (segment: any, inner: string): string => {
     default:
       return segment.block || (segment.display === "block" && hasStyle)
         ? div({ class: klass, style }, inner)
-        : segment.textStyle || hasStyle
-        ? span({ class: klass, style }, inner)
-        : inner;
+        : segment.textStyle || hasStyle || klass
+          ? span({ class: klass, style }, inner)
+          : inner;
   }
 };
 
@@ -292,10 +292,13 @@ const render = ({
           ? `/files/serve/${encodeURIComponent(segment.fileid)}`
           : segment.url
         : segment.encoded_image
-        ? segment.encoded_image
-        : segment.url;
+          ? segment.encoded_image
+          : segment.url;
       const imageCfg: any = {
-        class: segment.style && segment.style.width ? null : "w-100",
+        class: [
+          segment.style && segment.style.width ? null : "w-100",
+          segment.customClass,
+        ],
         alt: segment.alt,
         style: segment.style,
         srcset:
@@ -319,8 +322,8 @@ const render = ({
           srctype === "File"
             ? segment.fileid
             : segment.url?.startsWith("/files/serve/")
-            ? segment.url.substr(13)
-            : undefined;
+              ? segment.url.substr(13)
+              : undefined;
       }
       return wrap(segment, isTop, ix, img(imageCfg));
     }
@@ -644,8 +647,8 @@ const render = ({
       let displayClass = minScreenWidth
         ? `d-none d-${minScreenWidth}-${baseDisplayClass}`
         : baseDisplayClass === "block"
-        ? false // no need
-        : `d-${baseDisplayClass}`;
+          ? false // no need
+          : `d-${baseDisplayClass}`;
       if (maxScreenWidth)
         displayClass = `${displayClass} d-${maxScreenWidth}-none`;
       const allZero = (xs: any) => xs.every((x: number) => +x === 0);
@@ -865,8 +868,8 @@ const render = ({
                       segment.breakpoint
                         ? segment.breakpoint + "-"
                         : segment.breakpoints && segment.breakpoints[ixb]
-                        ? segment.breakpoints[ixb] + "-"
-                        : ""
+                          ? segment.breakpoints[ixb] + "-"
+                          : ""
                     }${segment.widths ? segment.widths[ixb] : defwidth}`,
               },
               go(newt, false, ixb)
@@ -898,8 +901,8 @@ const render = ({
                         segment.breakpoint
                           ? segment.breakpoint + "-"
                           : segment.breakpoints && segment.breakpoints[ixb]
-                          ? segment.breakpoints[ixb] + "-"
-                          : ""
+                            ? segment.breakpoints[ixb] + "-"
+                            : ""
                       }${segment.widths ? segment.widths[ixb] : defwidth}${
                         segment.aligns ? " text-" + segment.aligns[ixb] : ""
                       }${

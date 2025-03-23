@@ -914,6 +914,29 @@ function doMobileTransforms() {
   );
 }
 
+function validate_expression_elem(target) {
+  const next = target.next();
+  if (next.hasClass("expr-error")) next.remove();
+  const val = target.val();
+  if (target.hasClass("validate-expression-conditional")) {
+    const box = target
+      .closest(".form-namespace")
+      .find(`[name="${target.attr("name")}_formula"]`);
+    if (!box.prop("checked")) return;
+  }
+  if (!val) return;
+  try {
+    const AsyncFunction = Object.getPrototypeOf(
+      async function () {}
+    ).constructor;
+    AsyncFunction("return " + val);
+  } catch (error) {
+    target.after(`<small class="text-danger font-monospace d-block expr-error">
+    ${error.message}
+  </small>`);
+  }
+}
+
 function initialize_page() {
   if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
   const isNode = getIsNode();
@@ -943,28 +966,6 @@ function initialize_page() {
     validate_identifier_elem(target);
   });
 
-  const validate_expression_elem = (target) => {
-    const next = target.next();
-    if (next.hasClass("expr-error")) next.remove();
-    const val = target.val();
-    if (target.hasClass("validate-expression-conditional")) {
-      const box = target
-        .closest(".form-namespace")
-        .find(`[name="${target.attr("name")}_formula"]`);
-      if (!box.prop("checked")) return;
-    }
-    if (!val) return;
-    try {
-      const AsyncFunction = Object.getPrototypeOf(
-        async function () {}
-      ).constructor;
-      AsyncFunction("return " + val);
-    } catch (error) {
-      target.after(`<small class="text-danger font-monospace d-block expr-error">
-      ${error.message}
-    </small>`);
-    }
-  };
   $(".validate-expression").bind("input", function (e) {
     const target = $(e.target);
     validate_expression_elem(target);

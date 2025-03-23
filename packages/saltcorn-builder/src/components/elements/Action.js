@@ -72,10 +72,10 @@ const Action = ({
               color: action_textcol || "#000000",
             }
           : action_style === "on_page_load"
-          ? {
-              border: "1px red dashed",
-            }
-          : {}
+            ? {
+                border: "1px red dashed",
+              }
+            : {}
       }
     >
       <DynamicFontAwesomeIcon icon={action_icon} className="me-1" />
@@ -134,7 +134,6 @@ const ActionSettings = () => {
     step_action_names,
     spinner,
     is_submit_action,
-    
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
@@ -149,13 +148,13 @@ const ActionSettings = () => {
   const cfg_link = (options.triggerActions || []).includes(name)
     ? `/actions/configure/${encodeURIComponent(name)}`
     : name === "Multi-step action" &&
-      (options.triggerActions || []).includes(
-        step_action_names?.[use_setting_action_n]
-      )
-    ? `/actions/configure/${encodeURIComponent(
-        step_action_names?.[use_setting_action_n]
-      )}`
-    : "";
+        (options.triggerActions || []).includes(
+          step_action_names?.[use_setting_action_n]
+        )
+      ? `/actions/configure/${encodeURIComponent(
+          step_action_names?.[use_setting_action_n]
+        )}`
+      : "";
   return (
     <div>
       <table className="w-100">
@@ -393,6 +392,7 @@ const ActionSettings = () => {
                 type="text"
                 className="form-control text-to-display"
                 value={step_only_ifs?.[use_setting_action_n] || ""}
+                spellCheck={false}
                 onChange={(e) => {
                   if (!e.target) return;
                   const value = e.target.value;

@@ -195,6 +195,7 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
             type="text"
             className="form-control text-to-display"
             value={node[nodekey] || ""}
+            spellCheck={false}
             onChange={(e) => {
               if (e.target) {
                 const target_value = e.target.value;
@@ -882,10 +883,10 @@ const ConfigField = ({
   let stored_value = configuration
     ? configuration[field.name]
     : isStyle
-    ? props.style[field.name]
-    : subProp
-    ? props[subProp]?.[field.name]
-    : props[field.name];
+      ? props.style[field.name]
+      : subProp
+        ? props[subProp]?.[field.name]
+        : props[field.name];
 
   let value = or_if_undef(stored_value, field.default);
   if (valuePostfix)
@@ -955,6 +956,7 @@ const ConfigField = ({
             type="text"
             className={`field-${field?.name} form-control`}
             value={value || ""}
+            spellCheck={false}
             onChange={(e) => e.target && myOnChange(e.target.value)}
           />
         );
@@ -1016,6 +1018,7 @@ const ConfigField = ({
         type="text"
         className={`field-${field?.name} form-control`}
         value={value}
+        spellCheck={false}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
@@ -1035,8 +1038,8 @@ const ConfigField = ({
           o.name && o.label
             ? { value: o.name, label: o.label }
             : o.value && o.label
-            ? { value: o.value, label: o.label }
-            : { value: o, label: o }
+              ? { value: o.value, label: o.label }
+              : { value: o, label: o }
         );
         return (
           <Select
@@ -1133,8 +1136,8 @@ const ConfigField = ({
               configuration
                 ? configuration[field.name + "Unit"]
                 : isStyle || subProp
-                ? styleDim
-                : props[field.name + "Unit"],
+                  ? styleDim
+                  : props[field.name + "Unit"],
               "px"
             )}
             autoable={field.autoable}

@@ -184,7 +184,7 @@ const ViewLinkSettings = () => {
     relationsCache[options.tableName][safeViewName]
   );
   let safeRelation = null;
-  if (relation) {
+  if (relation && subView) {
     const subView = views.find((view) => view.name === safeViewName);
     const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
     safeRelation = new Relation(
@@ -315,6 +315,7 @@ const ViewLinkSettings = () => {
                 className="viewlink-label form-control"
                 value={extra_state_fml}
                 onChange={setAProp("extra_state_fml")}
+                spellCheck={false}
               />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">

@@ -160,6 +160,7 @@ const layoutToNodes = (
           inline={segment.inline || false}
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
+          customClass={segment.customClass || ""}
           style={segment.style || {}}
           icon={segment.icon}
           font={segment.font || ""}
@@ -580,6 +581,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
+        customClass: node.props.customClass,
         style: node.props.style,
         icon: node.props.icon,
         font: node.props.font,

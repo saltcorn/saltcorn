@@ -190,6 +190,7 @@ const LinkSettings = () => {
                 <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
                   <input
                     type="text"
+                    spellCheck={false}
                     className="form-control "
                     value={url}
                     onChange={setAProp("url")}
@@ -269,6 +270,7 @@ const LinkSettings = () => {
               <td>
                 <input
                   type="text"
+                  spellCheck={false}
                   className="form-control"
                   value={view_state_fml}
                   onChange={setAProp("view_state_fml")}
@@ -348,8 +350,8 @@ const LinkSettings = () => {
                     link_src === "Page"
                       ? url.replace("/page/", `/pageedit/edit/`)
                       : link_src === "View"
-                      ? url.replace("/view/", `/viewedit/config/`)
-                      : ""
+                        ? url.replace("/view/", `/viewedit/config/`)
+                        : ""
                   }
                 >
                   Configure this {link_src}
