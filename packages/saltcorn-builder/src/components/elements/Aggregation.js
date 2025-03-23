@@ -235,6 +235,7 @@ const AggregationSettings = () => {
                 value={aggwhere}
                 spellCheck={false}
                 onChange={setAProp("aggwhere")}
+                onInput={(e) => validate_expression_elem($(e.target))}
               />
             </td>
           </tr>

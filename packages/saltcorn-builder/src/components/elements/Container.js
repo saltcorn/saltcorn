@@ -954,6 +954,7 @@ const ContainerSettings = () => {
                   value={showIfFormula}
                   spellCheck={false}
                   onChange={setAProp("showIfFormula")}
+                  onInput={(e) => validate_expression_elem($(e.target))}
                 />
                 <div style={{ marginTop: "-5px" }}>
                   <small className="text-muted font-monospace">
