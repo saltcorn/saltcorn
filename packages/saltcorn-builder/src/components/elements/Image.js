@@ -72,6 +72,7 @@ const ImageSettings = () => {
     block: node.data.props.block,
     style: node.data.props.style,
     isFormula: node.data.props.isFormula,
+    customClass: node.data.props.customClass,
     imgResponsiveWidths: node.data.props.imgResponsiveWidths,
   }));
   const {
@@ -85,6 +86,7 @@ const ImageSettings = () => {
     isFormula,
     filepath,
     imgResponsiveWidths,
+    customClass,
     style,
   } = node;
   const options = useContext(optionsCtx);
@@ -286,6 +288,18 @@ const ImageSettings = () => {
             setProp={setProp}
             isStyle={true}
           />
+          <tr>
+            <td>Class</td>
+            <td>
+              <input
+                type="text"
+                value={customClass}
+                className="form-control"
+                onChange={setAProp("customClass")}
+                spellCheck={false}
+              />
+            </td>
+          </tr>
           {srctype !== "Upload" && (
             <tr>
               <td colSpan="2">
@@ -323,6 +337,7 @@ Image.craft = {
       { name: "srctype", default: "File" },
       { name: "fileid", default: 0 },
       "field",
+      "customClass",
       "block",
       "imgResponsiveWidths",
       { name: "style", default: {} },
