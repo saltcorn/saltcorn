@@ -22,6 +22,7 @@ import { parseStringPromise, Builder } from "xml2js";
 import { available_languages } from "@saltcorn/data/models/config";
 import type { IosCfg } from "../mobile-builder";
 import { ReqRes } from "@saltcorn/types/common_types";
+import { CapacitorPlugin } from "@saltcorn/types/base_types";
 const resizer = require("resize-with-sharp-or-jimp");
 
 /**
@@ -31,6 +32,9 @@ const resizer = require("resize-with-sharp-or-jimp");
  * @param templateDir directory of the template code that will be copied to 'buildDir'
  */
 export function prepareBuildDir(buildDir: string, templateDir: string) {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+
   if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
   copySync(templateDir, buildDir);
   rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
@@ -39,6 +43,11 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   });
   console.log(result.output.toString());
 
+  // cap-plugins needed for saltcorn-plugins
+  const additionalPlugins = state.capacitorPlugins.map(
+    (plugin: CapacitorPlugin) => `${plugin.name}@${plugin.version}`
+  );
+
   console.log("installing capacitor deps and plugins");
   const capDepsAndPlugins = [
     "@capacitor/cli@6.1.2",
@@ -46,12 +55,14 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/assets@3.0.5",
     "@capacitor/filesystem@6.0.2",
     "@capacitor/camera@6.1.1",
-    "@capacitor/geolocation@6.0.2",
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
     "@capacitor/screen-orientation@6.0.3",
     "send-intent@6.0.3",
+    ...additionalPlugins,
   ];
+  console.log("capDepsAndPlugins", capDepsAndPlugins);
+
   result = spawnSync(
     "npm",
     ["install", "--legacy-peer-deps", ...capDepsAndPlugins],
@@ -169,10 +180,38 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
+export function androidPermissions() {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+  const permissions = new Set<String>([
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "android.permission.INTERNET",
+    "android.permission.CAMERA",
+  ]);
+  for (const capPlugin of state.capacitorPlugins) {
+    for (const perm of capPlugin.androidPermissions || []) {
+      permissions.add(perm);
+    }
+  }
+  return Array.from(permissions);
+}
+
+export function androidFeatures() {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+  const features = new Set<String>(["android.hardware.camera"]);
+  for (const capPlugin of state.capacitorPlugins) {
+    for (const feature of capPlugin.androidFeatures || []) {
+      features.add(feature);
+    }
+  }
+  return Array.from(features);
+}
+
 export async function modifyAndroidManifest(
   buildDir: string,
-  allowShareTo: boolean,
-  appId: string
+  allowShareTo: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {

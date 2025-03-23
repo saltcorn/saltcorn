@@ -8,6 +8,13 @@ import * as offlineMode from "./helpers/offline_mode";
 import * as dbSchema from "./helpers/db_schema";
 import { router } from "./routing/index";
 
+const plugins = {};
+const context = require.context("./plugins-code", true, /index\.js$/);
+context.keys().forEach((key) => {
+  const pluginName = key.split("/")[1];
+  plugins[pluginName] = context(key);
+});
+
 export const mobileApp = {
   init,
   api,
@@ -17,4 +24,5 @@ export const mobileApp = {
   navigation: { ...navigation, router },
   offlineMode,
   dbSchema,
+  plugins,
 };

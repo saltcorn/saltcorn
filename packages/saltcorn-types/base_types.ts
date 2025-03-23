@@ -500,6 +500,13 @@ export type CopilotSkill = {
   execute: (config: GenObj) => Promise<{ postExec?: string } | void>;
 };
 
+export type CapacitorPlugin = {
+  name: string;
+  version: string;
+  androidPermissions?: string[];
+  androidFeatures?: string[];
+};
+
 type PluginFacilities = {
   headers?: Array<Header>;
   functions?: PluginFunction | Function;

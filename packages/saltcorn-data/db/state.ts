@@ -28,6 +28,7 @@ import {
   Action,
   AuthenticationMethod,
   CopilotSkill,
+  CapacitorPlugin,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -182,6 +183,7 @@ class State {
   waitingWorkflows?: boolean;
   keyframes: Array<string>;
   copilot_skills: Record<string, CopilotSkill>;
+  capacitorPlugins: Array<CapacitorPlugin>;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -254,6 +256,7 @@ class State {
       "bounce",
       "tada",
     ];
+    this.capacitorPlugins = [];
   }
 
   processSend(v: any) {
@@ -838,6 +841,13 @@ class State {
     const routes = withCfg("routes", []);
     this.plugin_routes[name] = routes;
     if (routes.length > 0 && this.routesChangedCb) this.routesChangedCb();
+
+    withCfg("capacitor_plugins", []).forEach((capPlugin: CapacitorPlugin) => {
+      if (this.capacitorPlugins.find((cp) => cp.name === capPlugin.name))
+        this.log(5, `Capacitor plugin ${capPlugin.name} already registered`);
+      else this.capacitorPlugins.push(capPlugin);
+    });
+
     if (hasFunctions)
       this.refresh_codepages(true).catch((e) => console.error(e));
   }

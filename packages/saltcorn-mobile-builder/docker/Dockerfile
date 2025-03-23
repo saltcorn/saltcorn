@@ -1,6 +1,6 @@
 FROM node:18
 
-RUN apt update && apt install -y wget unzip
+RUN apt update && apt install -y wget unzip jq
 RUN apt install -y openjdk-17-jdk
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
