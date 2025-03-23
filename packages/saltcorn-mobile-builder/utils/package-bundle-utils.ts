@@ -128,3 +128,23 @@ export async function copyPublicDirs(buildDir: string) {
     }
   }
 }
+
+/*
+  Copy 'mobile-app' directories from pluginDir to buildDir in:
+  buildDir/src/plugins-code/[plugin_name]
+*/
+export function copyMobileAppDirs(buildDir: string) {
+  const state = getState();
+  const srcDir = join(buildDir, "src");
+  for (const k of Object.keys(state.plugins)) {
+    const location = state.plugin_locations[k];
+    if (location) {
+      const mobileAppDir = join(location, "mobile-app");
+      if (existsSync(mobileAppDir)) {
+        copySync(mobileAppDir, join(srcDir, "plugins-code", k), {
+          recursive: true,
+        });
+      }
+    }
+  }
+}

@@ -1,13 +1,14 @@
 #!/bin/bash
 
 set -e
+cd /saltcorn-mobile-app
 
-BUILD_TYPE="$1"
-APP_VERSION="$2"
-SERVER_DOMAIN="$3"
-KEYSTORE_FILE="$4"
-KEYSTORE_ALIAS="$5"
-KEYSTORE_PASSWORD="$6"
+BUILD_TYPE=$(jq -r '.buildType' saltcorn-mobile-cfg.json)
+APP_VERSION=$(jq -r '.appVersion' saltcorn-mobile-cfg.json)
+SERVER_DOMAIN=$(jq -r '.serverDomain' saltcorn-mobile-cfg.json)
+KEYSTORE_FILE=$(jq -r '.keystoreFile' saltcorn-mobile-cfg.json)
+KEYSTORE_ALIAS=$(jq -r '.keystoreAlias' saltcorn-mobile-cfg.json)
+KEYSTORE_PASSWORD=$(jq -r '.keystorePassword' saltcorn-mobile-cfg.json)
 
 echo "BUILD_TYPE: $BUILD_TYPE"
 echo "APP_VERSION: $APP_VERSION"
@@ -20,10 +21,6 @@ export ANDROID_SDK_ROOT=/android_sdk
 export ANDROID_HOME=/android_sdk
 export GRADLE_HOME=/opt/gradle-8.4
 export PATH=$PATH:/opt/gradle-8.4/bin
-
-cd /saltcorn-mobile-app
-npm install @capacitor/cli@6.2.0 @capacitor/core@6.2.0 @capacitor/android@6.2.0
-npx cap sync
 
 # data extraction rules
 cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
