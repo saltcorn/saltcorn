@@ -33,19 +33,28 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const Image = ({ fileid, block, srctype, url, alt, style }) => {
+const Image = ({ fileid, block, srctype, url, alt, style, customClass }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const theurl = srctype === "File" ? `/files/serve/${fileid}` : url;
   return fileid === 0 ? (
-    <span>No images Available</span>
+    <span
+      {...blockProps(block)}
+      className={`${style && style.width ? "" : "w-100"} ${customClass || ""} image-widget ${
+        selected ? "selected-node" : ""
+      }`}
+      ref={(dom) => connect(drag(dom))}
+      style={reactifyStyles(style || {})}
+    >
+      No images Available
+    </span>
   ) : (
     <img
       {...blockProps(block)}
       ref={(dom) => connect(drag(dom))}
-      className={`${style && style.width ? "" : "w-100"} image-widget ${
+      className={`${style && style.width ? "" : "w-100"} ${customClass || ""} image-widget ${
         selected ? "selected-node" : ""
       }`}
       style={reactifyStyles(style || {})}
