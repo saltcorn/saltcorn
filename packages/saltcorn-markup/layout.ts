@@ -295,7 +295,10 @@ const render = ({
           ? segment.encoded_image
           : segment.url;
       const imageCfg: any = {
-        class: segment.style && segment.style.width ? null : "w-100",
+        class: [
+          segment.style && segment.style.width ? null : "w-100",
+          segment.customClass,
+        ],
         alt: segment.alt,
         style: segment.style,
         srcset:
