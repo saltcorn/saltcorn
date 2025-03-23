@@ -185,6 +185,7 @@ const ImageSettings = () => {
                   <input
                     type="text"
                     className="form-control"
+                    spellCheck={false}
                     value={url}
                     onChange={setAProp("url")}
                   />
@@ -262,6 +263,7 @@ const ImageSettings = () => {
                 <input
                   type="text"
                   value={imgResponsiveWidths}
+                  spellCheck={false}
                   className="form-control"
                   onChange={setAProp("imgResponsiveWidths")}
                 />

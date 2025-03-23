@@ -384,6 +384,7 @@ const ViewSettings = () => {
             className="viewlink-label form-control"
             value={extra_state_fml}
             onChange={setAProp("extra_state_fml")}
+            spellCheck={false}
           />
           {errorString ? (
             <small className="text-danger font-monospace d-block">

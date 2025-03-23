@@ -207,6 +207,7 @@ const TextSettings = () => {
           className="text-to-display form-control"
           value={text}
           onChange={setAProp("text")}
+          spellCheck={false}
         />
       ) : (
         <ErrorBoundary>
@@ -309,6 +310,7 @@ const TextSettings = () => {
                 value={customClass}
                 className="form-control"
                 onChange={setAProp("customClass")}
+                spellCheck={false}
               />
             </td>
           </tr>

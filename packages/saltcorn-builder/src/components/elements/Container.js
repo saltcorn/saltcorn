@@ -629,6 +629,7 @@ const ContainerSettings = () => {
                       value={imgResponsiveWidths}
                       className="form-control"
                       onChange={setAProp("imgResponsiveWidths")}
+                      spellCheck={false}
                     />
                     <small>
                       <i>
@@ -951,6 +952,7 @@ const ContainerSettings = () => {
                   type="text"
                   className="form-control text-to-display"
                   value={showIfFormula}
+                  spellCheck={false}
                   onChange={setAProp("showIfFormula")}
                 />
                 <div style={{ marginTop: "-5px" }}>
@@ -1048,6 +1050,7 @@ const ContainerSettings = () => {
           <input
             type="text"
             className="form-control"
+            spellCheck={false}
             value={url}
             onChange={setAProp("url")}
           />
@@ -1097,6 +1100,7 @@ const ContainerSettings = () => {
             type="text"
             className="form-control text-to-display"
             value={customId}
+            spellCheck={false}
             onChange={setAProp("customId")}
           />
         </OrFormula>
@@ -1108,6 +1112,7 @@ const ContainerSettings = () => {
             type="text"
             className="form-control text-to-display"
             value={customClass}
+            spellCheck={false}
             onChange={setAProp("customClass")}
           />
         </OrFormula>
@@ -1120,6 +1125,7 @@ const ContainerSettings = () => {
           className="text-to-display form-control"
           value={customCSS}
           onChange={setAProp("customCSS")}
+          spellCheck={false}
         ></textarea>
       </div>
     </Accordion>
