@@ -172,9 +172,15 @@ const configuration_workflow = (req) =>
                 name: "verification_url",
                 label: "Verification URL",
                 type: "String",
+              }),
+              new Field({
+                name: "reset_password_url",
+                label: "Reset Password URL",
+                type: "String",
               })
             );
             field_view_options.verification_url = ["as_text", "as_link"];
+            field_view_options.reset_password_url = ["as_text", "as_link"];
           }
           const rel_field_view_options = await calcrelViewOptions(
             table,
@@ -300,6 +306,11 @@ const run = async (
         name: "verification_token",
         label: "Verification Token",
         type: "String",
+      }),
+      new Field({
+        name: "reset_password_token",
+        label: "Reset Password Token",
+        type: "String",
       })
     );
   }
@@ -326,11 +337,19 @@ const run = async (
         name: "verification_url",
         label: "Verification URL",
         type: "String",
+      }),
+      new Field({
+        name: "reset_password_url",
+        label: "Reset Password URL",
+        type: "String",
       })
     );
     for (const row of rows) {
       row.verification_url = `${base}auth/verify?token=${
         row.verification_token
+      }&email=${encodeURIComponent(row.email)}`;
+      row.reset_password_url = `${base}auth/reset?token=${
+        row.reset_password_token
       }&email=${encodeURIComponent(row.email)}`;
     }
   }
@@ -1139,7 +1158,12 @@ module.exports = {
             name: "verification_token",
             label: "Verification Token",
             type: "String",
-          })
+          }),
+          {
+            name: "reset_password_token",
+            label: "Reset Password Token",
+            type: "String",
+          }
         );
       }
       const { joinFields, aggregations } = picked_fields_to_query(

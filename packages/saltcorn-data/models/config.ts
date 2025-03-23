@@ -181,6 +181,13 @@ const configTypes: ConfigTypes = {
     blurb: "A view with the login form",
     default: "",
   },
+  reset_password_email_view: {
+    type: "View users",
+    label: "Reset password view",
+    blurb:
+      "A view that will be emailed to users when they have forgotten their password",
+    default: "",
+  },
   signup_form: {
     type: "View users",
     label: "Signup view",

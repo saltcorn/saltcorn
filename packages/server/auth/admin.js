@@ -365,6 +365,7 @@ const auth_settings_form = async (req) =>
       "new_user_form",
       "user_settings_form",
       "verification_view",
+      "reset_password_email_view",
       { section_header: req.__("Additional login and signup settings") },
       "logout_url",
       "signup_role",

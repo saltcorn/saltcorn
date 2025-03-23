@@ -494,7 +494,19 @@ const config_fields_form = async ({
       name,
       ...configTypes[name],
       label: label ? req.__(label) : undefined,
-      sublabel: sublabel ? req.__(sublabel) : undefined,
+      sublabel:
+        (sublabel ? req.__(sublabel) : "") +
+        (isView
+          ? ". " +
+            a(
+              {
+                "data-dyn-href": `\`/viewedit/config/\${${name}}\``,
+                "data-show-if": `showIfFormulaInputs($('select[name=${name}]'), '${name}')`,
+                target: "_blank",
+              },
+              req.__("Configure")
+            )
+          : ""),
       disabled: state.isFixedConfig(name),
       type:
         isView || isRole || isTenant
