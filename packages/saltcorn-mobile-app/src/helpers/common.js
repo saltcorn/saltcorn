@@ -2,7 +2,6 @@
 
 import { apiCall } from "./api";
 import { Camera, CameraResultType } from "@capacitor/camera";
-import { Geolocation } from "@capacitor/geolocation";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { SendIntent } from "send-intent";
 
@@ -163,17 +162,6 @@ export async function takePhoto() {
         msg: error.message ? error.message : "An error occured.",
       },
     ]);
-    return null;
-  }
-}
-
-export async function getGeolocation(successCb, errorCb) {
-  try {
-    const coordinates = await Geolocation.getCurrentPosition();
-    if (successCb) successCb(coordinates);
-    return coordinates;
-  } catch (error) {
-    if (errorCb) errorCb(error);
     return null;
   }
 }
