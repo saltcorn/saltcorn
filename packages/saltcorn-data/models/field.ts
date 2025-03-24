@@ -860,7 +860,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(
           new_field!.reftable_name
-        )}"(id)${new_field.on_delete_sql}`
+        )}"("${new_field!.refname}")${new_field.on_delete_sql}`
       );
     } else
       await db.query(
@@ -1124,7 +1124,7 @@ class Field implements AbstractField {
         this.name
       )}_fkey" FOREIGN KEY ("${sqlsanitize(
         this.name
-      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)${
+      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" ("${this.refname}")${
         this.on_delete_sql
       }`;
       await db.query(q);
