@@ -13,6 +13,7 @@ const {
   resetToFixtures,
   toNotInclude,
   resToLoginCookie,
+  succeedJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -26,7 +27,7 @@ beforeAll(async () => {
   await resetToFixtures();
 });
 
-describe("Public auth Endpoints", () => {
+describe("AuthTest Public auth Endpoints", () => {
   it("should show login", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -46,7 +47,7 @@ describe("Public auth Endpoints", () => {
   });
 });
 
-describe("login process", () => {
+describe("AuthTest login process", () => {
   it("should say Login when not logged in", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/").expect(toRedirect("/auth/login"));
@@ -62,7 +63,7 @@ describe("login process", () => {
   });
 });
 
-describe("user settings", () => {
+describe("AuthTest user settings", () => {
   let loginCookie;
   it("should show user settings", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -121,7 +122,7 @@ describe("user settings", () => {
   });
 });
 
-describe("signup process", () => {
+describe("AuthTest signup process", () => {
   it("should sign up", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
@@ -132,7 +133,7 @@ describe("signup process", () => {
   });
 });
 
-describe("forgot password", () => {
+describe("AuthTest forgot password", () => {
   it("should show form", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app).get("/auth/forgot/").expect(toRedirect("/auth/login"));
@@ -180,7 +181,7 @@ describe("forgot password", () => {
   });
 });
 
-describe("user admin", () => {
+describe("AuthTest user admin", () => {
   it("should list tables", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
@@ -327,7 +328,7 @@ describe("user admin", () => {
         .expect(toRedirect("/"));
     });
 });
-describe("User fields", () => {
+describe("AuthTest User fields", () => {
   it("should add fields", async () => {
     const table = Table.findOne({ name: "users" });
     await Field.create({
@@ -402,7 +403,7 @@ describe("User fields", () => {
   });
 });
 
-describe("signup with custom login form", () => {
+describe("AuthTest signup with custom login form", () => {
   it("should create user fields and login form", async () => {
     const table = Table.findOne({ name: "users" });
     const fc = await Field.create({
@@ -672,7 +673,7 @@ describe("signup with custom login form", () => {
   });
 });
 
-describe("Locale files", () => {
+describe("AuthTest Locale files", () => {
   it("should be valid JSON", async () => {
     const localeFiles = await fs.promises.readdir(
       path.join(__dirname, "..", "/locales")
@@ -688,5 +689,36 @@ describe("Locale files", () => {
       const j = JSON.parse(conts);
       expect(Object.keys(j).length).toBeGreaterThan(1);
     }
+  });
+});
+
+describe("AuthTest Allowed login methods", () => {
+  it("can login with password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=ghrarhr54hg")
+      .expect(toRedirect("/"));
+  });
+  it("can disable password login", async () => {
+    const adminLoginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/roleadmin/setrole_allowed_auth_methods/40")
+      .set("Cookie", adminLoginCookie)
+      .send({
+        enabled: false,
+        method: "Password",
+      })
+      .expect(succeedJsonWith(() => true));
+  });
+  it("cannot login with password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=ghrarhr54hg")
+      .expect(toRedirect("/auth/login"));
   });
 });

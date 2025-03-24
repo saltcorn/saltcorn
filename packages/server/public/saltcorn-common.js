@@ -1769,6 +1769,21 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   }
 }
 
+function editAllowedAuthByRole(id, event) {  
+  ajax_post_json(
+    `/roleadmin/setrole_allowed_auth_methods/${id}`,
+    {
+      enabled: event.target.checked,
+      method: event.target.value,
+    },
+    {
+      complete() {
+        location.reload();
+      },
+    }
+  );
+}
+
 function reloadEmbeddedEditOwnViews(form, id) {
   form.find("div[sc-load-on-assign-id]").each(function () {
     const $e = $(this);
