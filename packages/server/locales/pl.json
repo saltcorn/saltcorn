@@ -1582,5 +1582,13 @@
   "Manage tags...": "Zarządzaj tagami...",
   "Started": "Rozpoczęto",
   "Updated": "Zaktualizowano",
-  "Status": "Status"
+  "Status": "Status",
+  "Working directory": "Katalog roboczy",  
+  "Row click event": "Zdarzenie kliknięcia w wiersz",  
+  "What happens when a row is clicked": "Co się dzieje po kliknięciu wiersz",  
+  "Row click action": "Akcja po kliknięciu wiersza",  
+  "Run this action when row is clicked": "Wykonaj tę akcję po kliknięciu wiersza",  
+  "Reset password view": "Widok resetowania hasła",  
+  "A view that will be emailed to users when they have forgotten their password": "Widok, który zostanie wysłany e-mailem do użytkowników, gdy zapomną hasła",  
+  "Allow login methods": "Zezwalaj na metody logowania" 
 }
