@@ -25,7 +25,13 @@ const {
   stateFieldsToWhere,
   readState,
 } = require("@saltcorn/data/plugin-helper");
-const { getState } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  process_send,
+  add_tenant,
+} = require("@saltcorn/data/db/state");
+const db = require("@saltcorn/data/db");
+const { loadAllPlugins } = require("../load_plugins");
 
 /**
  * @type {object}
@@ -49,8 +55,8 @@ function accessAllowedRead(req, user) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 100;
+        ? user.role_id
+        : 100;
 
   if (role === 1) return true;
   return false;
@@ -318,6 +324,36 @@ router.get(
       async function (err, user, info) {
         if (accessAllowedRead(req, user)) {
           await getState().refresh_plugins();
+          res.json({ success: true });
+        } else {
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
+router.post(
+  "/reload",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        if (accessAllowedRead(req, user)) {
+          const { tenant, new_tenant } = req.body;
+          if (new_tenant) {
+            add_tenant(new_tenant);
+
+            await db.runWithTenant(new_tenant, loadAllPlugins);
+
+            process_send({ createTenant: new_tenant });
+          }
+          if (tenant) {
+            await db.runWithTenant(tenant, async () => {
+              await getState().refresh_plugins();
+            });
+          } else await getState().refresh_plugins();
           res.json({ success: true });
         } else {
           res.status(401).json({ error: req.__("Not authorized") });
