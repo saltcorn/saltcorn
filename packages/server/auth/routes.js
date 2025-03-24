@@ -1503,7 +1503,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
         : "",
     ],
   };
-
+  const auth_method_enabled = getState().get_auth_enabled_by_role(user.role_id);
   return {
     above: [
       {
@@ -1534,7 +1534,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
           )
         ),
       },
-      ...(user.password
+      ...(user.password && auth_method_enabled?.Password !== false
         ? [
             {
               type: "card",
