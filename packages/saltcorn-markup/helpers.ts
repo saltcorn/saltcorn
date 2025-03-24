@@ -368,9 +368,9 @@ const dropdown_checkboxes = ({
   items = [],
   checked = {},
 }: {
-  btnClass: "string";
-  btnLabel: "string";
-  items: Array<{ label: "string"; value: "string" } | string>;
+  btnClass: string;
+  btnLabel: string;
+  items: Array<{ label: string; value: string } | string>;
   checked: Record<string, boolean>;
 }) =>
   div(
