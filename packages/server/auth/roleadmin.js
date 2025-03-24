@@ -200,6 +200,9 @@ router.get(
                                 .join(", "),
                               items: auth_methods,
                               checked: auth_enabled_by_role[role.id],
+                              onChange: `ajax_post_json('/roleadmin/setrole_allowed_auth_methods/${
+                                role.id
+                              }', {enabled: event.target.checked, method: event.target.value})`,
                             }),
                     },
                   ]
@@ -324,6 +327,25 @@ router.post(
     res.redirect(`/roleadmin`);
   })
 );
+
+router.post(
+  "/setrole_allowed_auth_methods/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const enabled = (req.body || {}).enabled;
+    const method = (req.body || {}).method;
+    console.log({ id, enabled, method });
+
+    const auth_method_by_role = getState().getConfigCopy("auth_method_by_role");
+    if (!auth_method_by_role[+id]) auth_method_by_role[+id] = {};
+    auth_method_by_role[+id][method] = enabled;
+    console.log(auth_method_by_role);
+    await getState().setConfig("auth_method_by_role", auth_method_by_role);
+    res.json({ success: true });
+  })
+);
+
 const unDeletableRoles = [1, 80, 100];
 /**
  * @name post/delete/:id

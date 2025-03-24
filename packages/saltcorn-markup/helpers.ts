@@ -367,11 +367,13 @@ const dropdown_checkboxes = ({
   btnLabel,
   items = [],
   checked = {},
+  onChange,
 }: {
   btnClass: string;
   btnLabel: string;
   items: Array<{ label: string; value: string } | string>;
   checked: Record<string, boolean>;
+  onChange?: string;
 }) =>
   div(
     { class: "dropdown" },
@@ -397,6 +399,7 @@ const dropdown_checkboxes = ({
               type: "checkbox",
               value: typeof item === "string" ? item : item.value,
               checked: checked[typeof item === "string" ? item : item.value],
+              onChange,
             }),
             label(
               { class: "form-check-label" },
