@@ -474,6 +474,13 @@ router.post(
         respond();
         return;
       }
+      const auth_method_enabled = getState().get_auth_enabled_by_role(
+        u.role_id
+      );
+      if (auth_method_enabled?.Password === false) {
+        respond();
+        return;
+      }
       //send email
       await send_reset_email(u, req);
 

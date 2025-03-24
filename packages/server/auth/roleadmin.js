@@ -154,7 +154,9 @@ router.get(
     const auth_enabled_by_role = {};
     for (const role of roles) {
       if (role.id === 100) continue;
-      auth_enabled_by_role[role.id] = getState().get_auth_enabled_by_role(role);
+      auth_enabled_by_role[role.id] = getState().get_auth_enabled_by_role(
+        role.id
+      );
     }
 
     send_users_page({

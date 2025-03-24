@@ -1018,17 +1018,17 @@ class State {
   }
 
   // default auth methods to enabled
-  get_auth_enabled_by_role(role: AbstractRole) {
+  get_auth_enabled_by_role(role_id: number) {
     const auth_method_by_role = this.getConfig("auth_method_by_role", {});
     const auth_methods = Object.keys(this.auth_methods);
     auth_methods.unshift("Password");
 
     const enabled: Record<string, boolean> = {};
-    if (!auth_method_by_role[role.id]) {
+    if (!auth_method_by_role[role_id]) {
       for (const auth_method of auth_methods) enabled[auth_method] = true;
     } else {
       for (const auth_method of auth_methods) {
-        const setVal = auth_method_by_role[role.id][auth_method];
+        const setVal = auth_method_by_role[role_id][auth_method];
         enabled[auth_method] = typeof setVal === "undefined" ? true : setVal;
       }
     }
