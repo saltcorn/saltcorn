@@ -1587,5 +1587,6 @@
 	"Row click action": "Row click action",
 	"Run this action when row is clicked": "Run this action when row is clicked",
 	"Reset password view": "Reset password view",
-	"A view that will be emailed to users when they have forgotten their password": "A view that will be emailed to users when they have forgotten their password"
+	"A view that will be emailed to users when they have forgotten their password": "A view that will be emailed to users when they have forgotten their password",
+	"Allow login methods": "Allow login methods"
 }

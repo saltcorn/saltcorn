@@ -4,7 +4,7 @@
  */
 
 import tags = require("./tags");
-const { a, text, div, input, text_attr, ul, li, span, label, i } = tags;
+const { a, text, div, input, text_attr, ul, li, span, label, i, button } = tags;
 
 /**
  * checks if x is defined
@@ -50,8 +50,8 @@ const select_options = (
     !selected
       ? false
       : Array.isArray(selected)
-      ? selected.includes(value)
-      : `${value}` === `${selected}`;
+        ? selected.includes(value)
+        : `${value}` === `${selected}`;
 
   return options
     .map((o: any) => {
@@ -362,6 +362,55 @@ const search_bar = (
 </div>`;
 };
 
+const dropdown_checkboxes = ({
+  btnClass,
+  btnLabel,
+  items = [],
+  checked = {},
+  onChange,
+}: {
+  btnClass: string;
+  btnLabel: string;
+  items: Array<{ label: string; value: string } | string>;
+  checked: Record<string, boolean>;
+  onChange?: string;
+}) =>
+  div(
+    { class: "dropdown" },
+    button(
+      {
+        class: `btn ${btnClass || "btn-primary"} dropdown-toggle`,
+        type: "button",
+        id: "multiSelectDropdown",
+        "data-bs-toggle": "dropdown",
+        "aria-expanded": "false",
+      },
+      btnLabel
+    ),
+    ul(
+      { class: "dropdown-menu", "aria-labelledby": "multiSelectDropdown" },
+      items.map((item) =>
+        li(
+          { class: "dropdown-item" },
+          div(
+            { class: "form-check" },
+            input({
+              class: "form-check-input",
+              type: "checkbox",
+              value: typeof item === "string" ? item : item.value,
+              checked: checked[typeof item === "string" ? item : item.value],
+              onChange,
+            }),
+            label(
+              { class: "form-check-label" },
+              typeof item === "string" ? item : item.label
+            )
+          )
+        )
+      )
+    )
+  );
+
 const HelpersExports = {
   isdef,
   select_options,
@@ -369,5 +418,6 @@ const HelpersExports = {
   pagination,
   radio_group,
   checkbox_group,
+  dropdown_checkboxes,
 };
 export = HelpersExports;

@@ -287,9 +287,19 @@ class User {
     const urow = await User.findForSession(uoSearch);
     if (!urow) return false;
     if (urow.disabled) return false;
+
+    if (!urow.auth_method_allowed("Password")) return false;
     const cmp = urow.checkPassword(password || "");
     if (cmp) return new User(urow);
     else return false;
+  }
+
+  auth_method_allowed(method_name: string): boolean {
+    const { getState } = require("../db/state");
+    const auth_method_enabled = getState().get_auth_enabled_by_role(
+      this.role_id
+    );
+    return auth_method_enabled[method_name] !== false;
   }
 
   async send_verification_email(
