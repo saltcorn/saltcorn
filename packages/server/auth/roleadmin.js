@@ -335,12 +335,10 @@ router.post(
     const { id } = req.params;
     const enabled = (req.body || {}).enabled;
     const method = (req.body || {}).method;
-    console.log({ id, enabled, method });
 
     const auth_method_by_role = getState().getConfigCopy("auth_method_by_role");
     if (!auth_method_by_role[+id]) auth_method_by_role[+id] = {};
     auth_method_by_role[+id][method] = enabled;
-    console.log(auth_method_by_role);
     await getState().setConfig("auth_method_by_role", auth_method_by_role);
     res.json({ success: true });
   })
