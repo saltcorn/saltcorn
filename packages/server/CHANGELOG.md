@@ -2,6 +2,13 @@
 
 ## 1.1.3 - In beta
 
+* A POST route for the reload management api (`/scapi/reload`) which takes as body JSON
+  a newly created tenant with `saltcorn create-tenant` CLI (`new_tenant` JSON key) or an
+  existing tenant (`tenant` JSON key) to reload.
+
+* User authentication methods (password, external identity providers) can 
+  now be disabled by role
+
 * Customize reset password email, under Login and Signup settings
 
 * Snapshot and restore code pages; show code page compilation error; expand code 
