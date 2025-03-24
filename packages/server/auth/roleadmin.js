@@ -186,7 +186,7 @@ router.get(
               ...(auth_methods.length > 1
                 ? [
                     {
-                      label: req.__("Allow login with:"),
+                      label: req.__("Allow login methods"),
                       key: (role) =>
                         role.id === 100
                           ? ""
@@ -200,9 +200,7 @@ router.get(
                                 .join(", "),
                               items: auth_methods,
                               checked: auth_enabled_by_role[role.id],
-                              onChange: `ajax_post_json('/roleadmin/setrole_allowed_auth_methods/${
-                                role.id
-                              }', {enabled: event.target.checked, method: event.target.value})`,
+                              onChange: `editAllowedAuthByRole(${role.id}, event)`,
                             }),
                     },
                   ]
