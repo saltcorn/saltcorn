@@ -15,6 +15,7 @@ const {
   link,
   post_delete_btn,
 } = require("@saltcorn/markup");
+const { dropdown_checkboxes } = require("@saltcorn/markup/helpers");
 const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const { text, form, option, select, a, i } = require("@saltcorn/markup/tags");
@@ -147,6 +148,15 @@ router.get(
     );
     const layout_by_role = getState().getConfig("layout_by_role");
     const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
+    const auth_methods = Object.keys(getState().auth_methods);
+
+    auth_methods.unshift("Password");
+    const auth_enabled_by_role = {};
+    for (const role of roles) {
+      if (role.id === 100) continue;
+      auth_enabled_by_role[role.id] = getState().get_auth_enabled_by_role(role);
+    }
+
     send_users_page({
       res,
       req,
@@ -173,6 +183,27 @@ router.get(
                     ? ""
                     : editRole2FAPolicyForm(role, twofa_policy_by_role, req),
               },
+              ...(auth_methods.length > 1
+                ? [
+                    {
+                      label: req.__("Allow login with:"),
+                      key: (role) =>
+                        role.id === 100
+                          ? ""
+                          : dropdown_checkboxes({
+                              btnClass: "btn-outline-secondary btn-sm",
+                              btnLabel: Object.entries(
+                                auth_enabled_by_role[role.id]
+                              )
+                                .filter(([method, enabled]) => enabled)
+                                .map(([method, enabled]) => method)
+                                .join(", "),
+                              items: auth_methods,
+                              checked: auth_enabled_by_role[role.id],
+                            }),
+                    },
+                  ]
+                : []),
               {
                 label: req.__("Delete"),
                 key: (r) =>

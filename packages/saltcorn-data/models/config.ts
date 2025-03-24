@@ -127,6 +127,11 @@ const configTypes: ConfigTypes = {
     label: "2FA policy by role",
     default: {},
   },
+  auth_method_by_role: {
+    type: "hidden",
+    label: "Authentication method by role",
+    default: {},
+  },
   allow_signup: {
     type: "Bool",
     label: "Allow signups",

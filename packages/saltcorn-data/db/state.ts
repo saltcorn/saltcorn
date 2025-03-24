@@ -60,6 +60,7 @@ import { writeFile, mkdir } from "fs/promises";
 import { runInContext, createContext } from "vm";
 import faIcons from "./fa5-icons";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
 
 /**
  * @param v
@@ -1014,6 +1015,24 @@ class State {
 
   emitLog(ten: string, min_level: number, msg: string) {
     globalLogEmitter(ten, min_level, msg);
+  }
+
+  // default auth methods to enabled
+  get_auth_enabled_by_role(role: AbstractRole) {
+    const auth_method_by_role = this.getConfig("auth_method_by_role", {});
+    const auth_methods = Object.keys(this.auth_methods);
+    auth_methods.unshift("Password");
+
+    const enabled: Record<string, boolean> = {};
+    if (!auth_method_by_role[role.id]) {
+      for (const auth_method of auth_methods) enabled[auth_method] = true;
+    } else {
+      for (const auth_method of auth_methods) {
+        const setVal = auth_method_by_role[role.id][auth_method];
+        enabled[auth_method] = typeof setVal === "undefined" ? true : setVal;
+      }
+    }
+    return enabled;
   }
 
   get pg_ts_config(): string {
