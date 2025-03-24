@@ -13,6 +13,7 @@ const {
   resetToFixtures,
   toNotInclude,
   resToLoginCookie,
+  succeedJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -692,12 +693,32 @@ describe("AuthTest Locale files", () => {
 });
 
 describe("AuthTest Allowed login methods", () => {
-  it("can login with new password", async () => {
+  it("can login with password", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/auth/login/")
       .send("email=staff@foo.com")
       .send("password=ghrarhr54hg")
       .expect(toRedirect("/"));
+  });
+  it("can disable password login", async () => {
+    const adminLoginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/roleadmin/setrole_allowed_auth_methods/40")
+      .set("Cookie", adminLoginCookie)
+      .send({
+        enabled: false,
+        method: "Password",
+      })
+      .expect(succeedJsonWith(() => true));
+  });
+  it("cannot login with password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/auth/login/")
+      .send("email=staff@foo.com")
+      .send("password=ghrarhr54hg")
+      .expect(toRedirect("/auth/login"));
   });
 });
