@@ -294,7 +294,7 @@ class User {
     else return false;
   }
 
-  auth_method_allowed(method_name: string) {
+  auth_method_allowed(method_name: string): boolean {
     const { getState } = require("../db/state");
     const auth_method_enabled = getState().get_auth_enabled_by_role(
       this.role_id

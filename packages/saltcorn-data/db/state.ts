@@ -1018,7 +1018,7 @@ class State {
   }
 
   // default auth methods to enabled
-  get_auth_enabled_by_role(role_id: number) {
+  get_auth_enabled_by_role(role_id: number): Record<string, boolean> {
     const auth_method_by_role = this.getConfig("auth_method_by_role", {});
     const auth_methods = Object.keys(this.auth_methods);
     auth_methods.unshift("Password");
