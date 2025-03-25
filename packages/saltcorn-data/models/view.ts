@@ -310,8 +310,6 @@ class View implements AbstractView {
     const { table, ...row } = v;
     // insert view definition into _sc_views
     const id = await db.insert("_sc_views", row);
-    // refresh views list cache
-    await require("../db/state").getState().refresh_views();
     return new View({ id, ...v });
   }
 
@@ -360,8 +358,6 @@ class View implements AbstractView {
     await db.deleteWhere("_sc_views", { id: this.id });
     // remove view from menu
     await remove_from_menu({ name: this.name, type: "View" });
-    // fresh view list cache
-    await require("../db/state").getState().refresh_views();
   }
 
   /**
@@ -383,8 +379,6 @@ class View implements AbstractView {
   static async update(v: any, id: number): Promise<void> {
     // update view description
     await db.update("_sc_views", v, id);
-    // fresh view list cache
-    await require("../db/state").getState().refresh_views();
   }
 
   /**

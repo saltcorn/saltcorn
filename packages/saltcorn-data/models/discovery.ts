@@ -249,8 +249,6 @@ const implement_discovery = async (pack: {
       }
     }
   }
-  // refresh Saltcorn table list (in memory)
-  await require("../db/state").getState().refresh_tables();
 };
 export = {
   discoverable_tables,

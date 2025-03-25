@@ -373,6 +373,7 @@ router.post(
       .map((t) => t.table_name);
     const pack = await discover_tables(tableNames);
     await implement_discovery(pack);
+    await getState().refresh_tables();
     req.flash(
       "success",
       req.__("Discovered tables: %s", tableNames.join(", "))
@@ -1367,6 +1368,8 @@ router.post(
       }
     });
     await getState().refresh_tables();
+    await getState().refresh_views();
+    await getState().refresh_triggers();
   })
 );
 
@@ -2233,7 +2236,9 @@ router.post(
     const table = Table.findOne({ name });
 
     try {
-      await table.deleteRows({}, req.user, true);
+      await db.withTransaction(async () => {
+        await table.deleteRows({}, req.user, true);
+      });
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
       console.error(e);

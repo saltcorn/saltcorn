@@ -82,10 +82,10 @@ class PageGroupMember implements AbstractPageGroupMember {
       pred = where.id
         ? (m: AbstractPageGroupMember) => m.id === +where.id!
         : where.page_group_id && where.sequence
-        ? (m: AbstractPageGroupMember) =>
-            m.page_group_id === where.page_group_id &&
-            m.sequence === where.sequence
-        : null;
+          ? (m: AbstractPageGroupMember) =>
+              m.page_group_id === where.page_group_id &&
+              m.sequence === where.sequence
+          : null;
     return pred;
   }
 
@@ -95,16 +95,12 @@ class PageGroupMember implements AbstractPageGroupMember {
    * @param noRrefresh
    * @returns the created member
    */
-  static async create(
-    f: PageGroupMemberCfg,
-    noRrefresh?: boolean
-  ): Promise<PageGroupMember> {
+  static async create(f: PageGroupMemberCfg): Promise<PageGroupMember> {
     const pageGroupMember = new PageGroupMember(f);
     const { id, ...rest } = pageGroupMember;
     const fid = await db.insert("_sc_page_group_members", rest);
     pageGroupMember.id = fid;
-    if (!noRrefresh)
-      await require("../db/state").getState().refresh_page_groups();
+
     return pageGroupMember;
   }
 
@@ -114,23 +110,17 @@ class PageGroupMember implements AbstractPageGroupMember {
    * @param row values to update
    * @param noRrefresh if true, the state won't reload
    */
-  static async update(
-    id: number,
-    row: Row,
-    noRrefresh?: boolean
-  ): Promise<void> {
+  static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_page_group_members", row, id);
-    if (!noRrefresh)
-      await require("../db/state").getState().refresh_page_groups();
   }
 
   /**
    * delete this page group member
    * @param noRrefresh if true, the state won't reload
    */
-  async delete(noRrefresh?: boolean): Promise<void> {
+  async delete(): Promise<void> {
     if (!this.id) throw new Error("Cannot delete page group member without id");
-    await PageGroupMember.delete(this.id, noRrefresh);
+    await PageGroupMember.delete(this.id);
   }
 
   /**
@@ -138,10 +128,8 @@ class PageGroupMember implements AbstractPageGroupMember {
    * @param id id of the member
    * @param noRrefresh if true, the state won't reload
    */
-  static async delete(id: number, noRrefresh?: boolean): Promise<void> {
+  static async delete(id: number): Promise<void> {
     await db.deleteWhere("_sc_page_group_members", { id });
-    if (!noRrefresh)
-      await require("../db/state").getState().refresh_page_groups();
   }
 
   connected_objects(): ConnectedObjects {

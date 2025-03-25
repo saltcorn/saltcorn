@@ -771,7 +771,6 @@ class Field implements AbstractField {
         not_null ? "set" : "drop"
       } not null;`
     );
-    await require("../db/state").getState().refresh_tables();
   }
 
   /**
@@ -870,7 +869,6 @@ class Field implements AbstractField {
           this.name
         )}" TYPE ${new_sql_type} ${using} ${def};`
       );
-    await require("../db/state").getState().refresh_tables();
   }
 
   /**
@@ -1035,7 +1033,6 @@ class Field implements AbstractField {
       }
     }
     await this.set_calc_joinfields();
-    await state.refresh_tables();
   }
 
   /**
@@ -1079,30 +1076,24 @@ class Field implements AbstractField {
     }
 
     const schema = db.getTenantSchemaPrefix();
-    const client = db.isSQLite ? db : await db.getClient();
-    await client.query("BEGIN");
 
-    await db.deleteWhere("_sc_fields", { id: this.id }, { client });
+    await db.deleteWhere("_sc_fields", { id: this.id });
 
     if (!this.calculated || this.stored) {
       if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
-      await client.query(
+      await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
         )}" drop column "${sqlsanitize(this.name)}"`
       );
       if (table.versioned) {
-        await client.query(
+        await db.query(
           `alter table ${schema}"${sqlsanitize(
             table.name
           )}__history" drop column "${sqlsanitize(this.name)}"`
         );
       }
     }
-    await client.query("COMMIT");
-
-    if (!db.isSQLite) await client.release(true);
-    await require("../db/state").getState().refresh_tables();
   }
 
   /**
@@ -1228,7 +1219,6 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
-    await require("../db/state").getState().refresh_tables();
 
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});

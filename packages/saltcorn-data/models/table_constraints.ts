@@ -130,8 +130,6 @@ class TableConstraint {
         }
     }
 
-    await require("../db/state").getState().refresh_tables();
-
     return con;
   }
 
@@ -158,7 +156,6 @@ class TableConstraint {
         }";`
       );
     }
-    await require("../db/state").getState().refresh_tables();
   }
 
   /**
@@ -175,7 +172,6 @@ class TableConstraint {
       if (c.configuration.fields && c.configuration.fields.includes(field.name))
         await c.delete();
     }
-    await require("../db/state").getState().refresh_tables();
   }
 
   /**
