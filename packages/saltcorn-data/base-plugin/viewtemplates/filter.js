@@ -851,7 +851,7 @@ module.exports = {
       );
       const table = Table.findOne(table_id);
       try {
-        await db.withTransaction(async () => {
+        return await db.withTransaction(async () => {
           if (col.action_row_variable === "each_matching_row") {
             const fields = table.getFields();
             const { joinFields, aggregations } = picked_fields_to_query(
