@@ -2487,65 +2487,67 @@ module.exports = {
       }
 
       try {
-        if (click_action) {
-          let container;
-          traverseSync(layout, {
-            container(segment) {
-              if (segment.click_action === click_action) container = segment;
-            },
-          });
-          if (!container) return { json: { error: "Action not found" } };
-          const trigger = Trigger.findOne({ name: click_action });
-          if (!trigger)
-            throw new Error(
-              `View ${name}: Container click action ${click_action} not found`
+        await db.withTransaction(async () => {
+          if (click_action) {
+            let container;
+            traverseSync(layout, {
+              container(segment) {
+                if (segment.click_action === click_action) container = segment;
+              },
+            });
+            if (!container) return { json: { error: "Action not found" } };
+            const trigger = Trigger.findOne({ name: click_action });
+            if (!trigger)
+              throw new Error(
+                `View ${name}: Container click action ${click_action} not found`
+              );
+            const result = await trigger.runWithoutRow({
+              table,
+              Table,
+              req,
+              row,
+              referrer: req?.get?.("Referrer"),
+              user: req.user,
+            });
+            return { json: { success: "ok", ...(result || {}) } };
+          } else if (onchange_action && !rndid) {
+            const fldCol = columns.find(
+              (c) =>
+                c.field_name === onchange_field &&
+                c.onchange_action === onchange_action
             );
-          const result = await trigger.runWithoutRow({
-            table,
-            Table,
-            req,
-            row,
-            referrer: req?.get?.("Referrer"),
-            user: req.user,
-          });
-          return { json: { success: "ok", ...(result || {}) } };
-        } else if (onchange_action && !rndid) {
-          const fldCol = columns.find(
-            (c) =>
-              c.field_name === onchange_field &&
-              c.onchange_action === onchange_action
-          );
-          if (!fldCol) return { json: { error: "Field not found" } };
-          const trigger = Trigger.findOne({ name: onchange_action });
-          if (!trigger)
-            throw new Error(
-              `View ${name}: On change action ${onchange_action} for field ${onchange_field} not found`
-            );
+            if (!fldCol) return { json: { error: "Field not found" } };
+            const trigger = Trigger.findOne({ name: onchange_action });
+            if (!trigger)
+              throw new Error(
+                `View ${name}: On change action ${onchange_action} for field ${onchange_field} not found`
+              );
 
-          const result = await trigger.runWithoutRow({
-            table,
-            Table,
-            req,
-            row,
-            referrer: req?.get?.("Referrer"),
-            user: req.user,
-          });
-          return { json: { success: "ok", ...(result || {}) } };
-        } else {
-          const col = columns.find(
-            (c) => c.type === "Action" && c.rndid === rndid && rndid
-          );
-          const result = await run_action_column({
-            col,
-            req,
-            table,
-            row,
-            res,
-            referrer: req?.get?.("Referrer"),
-          });
-          //console.log("result", result);
-          return { json: { success: "ok", ...(result || {}) } };
-        }
+            const result = await trigger.runWithoutRow({
+              table,
+              Table,
+              req,
+              row,
+              referrer: req?.get?.("Referrer"),
+              user: req.user,
+            });
+            return { json: { success: "ok", ...(result || {}) } };
+          } else {
+            const col = columns.find(
+              (c) => c.type === "Action" && c.rndid === rndid && rndid
+            );
+            const result = await run_action_column({
+              col,
+              req,
+              table,
+              row,
+              res,
+              referrer: req?.get?.("Referrer"),
+            });
+            //console.log("result", result);
+            return { json: { success: "ok", ...(result || {}) } };
+          }
+        });
       } catch (e) {
         console.error(e);
         return { json: { error: e.message || e } };
