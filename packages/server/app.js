@@ -66,9 +66,11 @@ const disabledCsurf = (req, res, next) => {
 };
 
 const noCsrfLookup = (state) => {
-  if (!state.plugin_routes) return null;
+  const disable_csrf_routes = state.getConfig("disable_csrf_routes", "");
+  const result = new Set(disable_csrf_routes.split(",").map((s) => s.trim()));
+
+  if (!state.plugin_routes) return result;
   else {
-    const result = new Set();
     for (const routes of Object.values(state.plugin_routes)) {
       for (const url of routes
         .filter((r) => r.noCsrf === true)
@@ -206,7 +208,7 @@ const getApp = async (opts = {}) => {
           if (fs.existsSync(path.join(loc, "locales", `${locale}.json`))) {
             const xlations = JSON.parse(
               fs.readFileSync(path.join(loc, "locales", `${locale}.json`))
-            );          
+            );
             Object.assign(staticCatalog[locale], xlations);
           }
 
