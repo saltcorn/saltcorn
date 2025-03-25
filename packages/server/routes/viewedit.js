@@ -573,6 +573,7 @@ router.post(
           //console.log(v);
           await View.create(v);
         }
+        await getState().refresh_views();
         Trigger.emitEvent("AppChange", `View ${v.name}`, req.user, {
           entity_type: "View",
           entity_name: v.name,
@@ -770,6 +771,7 @@ router.post(
     if (view.table_id) table = Table.findOne({ id: view.table_id });
     if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
     respondWorkflow(view, configFlow, wfres, req, res, table);
+    await getState().refresh_views();
   })
 );
 
@@ -835,6 +837,7 @@ router.post(
         ? `/${req.query.on_done_redirect}`
         : "/viewedit";
     res.redirect(redirectTarget);
+    await getState().refresh_views();
   })
 );
 
@@ -849,7 +852,9 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    await View.delete({ id });
+    await db.withTransaction(async (client) => {
+      await View.delete({ id });
+    });
     req.flash("success", req.__("View deleted"));
     let redirectTarget =
       req.query.on_done_redirect &&
@@ -857,6 +862,7 @@ router.post(
         ? `/${req.query.on_done_redirect}`
         : "/viewedit";
     res.redirect(redirectTarget);
+    await getState().refresh_views();
   })
 );
 
@@ -884,6 +890,7 @@ router.post(
     } else {
       res.json({ error: req.__("Unable to save: No view") });
     }
+    await getState().refresh_views();
   })
 );
 
@@ -932,6 +939,7 @@ router.post(
     } else {
       res.json({ error: "no view" });
     }
+    await getState().refresh_views();
   })
 );
 
@@ -968,6 +976,7 @@ router.post(
           : "/viewedit";
       res.redirect(redirectTarget);
     } else res.json({ success: "ok" });
+    await getState().refresh_views();
   })
 );
 
