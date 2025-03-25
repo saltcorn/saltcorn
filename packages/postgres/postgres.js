@@ -533,7 +533,7 @@ const listScTables = async () => {
   });
 };
 
-const withTransaction = async (f) => {
+const withTransaction = async (f, onError) => {
   await query("BEGIN;");
   let result;
   try {
@@ -541,7 +541,8 @@ const withTransaction = async (f) => {
     await query("COMMIT;");
   } catch (error) {
     await query("ROLLBACK;");
-    throw error;
+    if (onError) onError(error);
+    else throw error;
   }
   return result;
 };
