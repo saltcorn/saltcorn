@@ -1152,7 +1152,7 @@ class Field implements AbstractField {
     }
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
-    const table = Table.findOne({ id: f.table_id });
+    const table = fld.table || Table.findOne({ id: f.table_id });
     if (!f.calculated || f.stored) {
       if (typeof f.attributes.default === "undefined") {
         const q = `alter table ${schema}"${sqlsanitize(
