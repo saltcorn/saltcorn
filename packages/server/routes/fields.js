@@ -351,6 +351,7 @@ const fieldFlow = (req) =>
           };
         }
       );
+      await getState().refresh_tables();
 
       return {
         redirect: `/table/${context.table_id}`,
@@ -906,6 +907,7 @@ router.post(
       req.flash("success", req.__(`Field %s deleted`, f.label));
       res.redirect(`/table/${table_id}`);
     });
+    await getState().refresh_tables();
   })
 );
 

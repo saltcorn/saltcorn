@@ -529,6 +529,7 @@ router.post(
           );
         else res.redirect(`/pageedit/`);
       }
+      await getState().refresh_pages();
     }
   })
 );
@@ -693,6 +694,7 @@ router.post(
       await Page.update(page.id, {
         layout: decodeURIComponent((req.body || {}).layout),
       });
+      await getState().refresh_pages();
       Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
         entity_type: "Page",
         entity_name: page.name,
@@ -769,15 +771,18 @@ router.post(
   "/delete/:id",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
-    const { id } = req.params;
-    const page = await Page.findOne({ id });
-    Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
-      entity_type: "Page",
-      entity_name: page.name,
+    await db.withTransaction(async (client) => {
+      const { id } = req.params;
+      const page = await Page.findOne({ id });
+      Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
+        entity_type: "Page",
+        entity_name: page.name,
+      });
+      await page.delete();
+      req.flash("success", req.__(`Page deleted`));
+      res.redirect(`/pageedit`);
     });
-    await page.delete();
-    req.flash("success", req.__(`Page deleted`));
-    res.redirect(`/pageedit`);
+    await getState().refresh_pages();
   })
 );
 
@@ -861,6 +866,7 @@ router.post(
       req.__("Page %s duplicated as %s", page.name, newpage.name)
     );
     res.redirect(`/pageedit`);
+    await getState().refresh_pages();
   })
 );
 
@@ -875,5 +881,6 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     await setRole(req, res, Page);
+    await getState().refresh_pages();
   })
 );

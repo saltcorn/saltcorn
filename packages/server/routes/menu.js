@@ -656,7 +656,7 @@ router.get(
         break;
       case "json":
         res.json(icons);
-
+        break;
       default:
         res.send("");
         break;
