@@ -1588,5 +1588,7 @@
 	"Run this action when row is clicked": "Run this action when row is clicked",
 	"Reset password view": "Reset password view",
 	"A view that will be emailed to users when they have forgotten their password": "A view that will be emailed to users when they have forgotten their password",
-	"Allow login methods": "Allow login methods"
+	"Allow login methods": "Allow login methods",
+	"Disable CSRF routes": "Disable CSRF routes",
+	"Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>": "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>"
 }

@@ -283,6 +283,15 @@ const configTypes: ConfigTypes = {
     root_only: true,
     blurb: "Record all client errors in the crash log",
   },
+  disable_csrf_routes: {
+    type: "String",
+    label: "Disable CSRF routes",
+    default: "",
+    restart_required: true,
+    blurb:
+      "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
+    
+  },
   npm_available_js_code: {
     type: "String",
     label: "NPM packages in code",

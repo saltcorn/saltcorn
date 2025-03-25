@@ -398,6 +398,7 @@ const http_settings_form = async (req) =>
       "body_limit",
       "url_encoded_limit",
       ...(!db.isSQLite ? ["prune_session_interval"] : []),
+      "disable_csrf_routes",
     ],
     action: "/useradmin/http",
     submitLabel: req.__("Save"),
