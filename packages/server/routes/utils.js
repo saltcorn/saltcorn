@@ -164,7 +164,7 @@ const set_custom_http_headers = (res, req, state) => {
         validateHeaderName(k);
         validateHeaderValue(k, val);
         res.header(k, val);
-      } catch (e) {      
+      } catch (e) {
         Crash.create(e, { url: "/", headers: {} });
       }
     }
@@ -200,7 +200,20 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  * @param {function} next
  */
 const setTenant = (req, res, next) => {
-  if (db.is_it_multi_tenant()) {
+  let wrap =
+    req.method === "POST"
+      ? (f) => {
+          db.getClient().then((client) => {
+            res.on("finish", function () {
+              client.release();
+            });
+            f(client);
+          });
+        }
+      : (f) => {
+          f(null);
+        };
+  wrap((client) => {
     // for a saltcorn mobile request use 'req.user.tenant'
     if (req.smr) {
       if (
@@ -212,7 +225,7 @@ const setTenant = (req, res, next) => {
           setLanguage(req, res);
           next();
         } else {
-          db.runWithTenant(req.user.tenant, () => {
+          db.runWithTenant({ tenant: req.user.tenant, req, client }, () => {
             setLanguage(req, res, state);
             state.log(5, `${req.method} ${req.originalUrl}`);
             next();
@@ -230,7 +243,7 @@ const setTenant = (req, res, next) => {
           setLanguage(req, res);
           next();
         } else {
-          db.runWithTenant(other_domain, () => {
+          db.runWithTenant({ tenant: other_domain, req, client }, () => {
             setLanguage(req, res, state);
             if (state.logLevel >= 5)
               state.log(
@@ -251,7 +264,7 @@ const setTenant = (req, res, next) => {
           setLanguage(req, res);
           next();
         } else {
-          db.runWithTenant(ten, () => {
+          db.runWithTenant({ tenant: ten, req, client }, () => {
             setLanguage(req, res, state);
             if (state.logLevel >= 5)
               state.log(
@@ -267,17 +280,7 @@ const setTenant = (req, res, next) => {
         }
       }
     }
-  } else {
-    const state = getState();
-    setLanguage(req, res, state);
-    state.log(
-      5,
-      `${req.method} ${req.originalUrl}${
-        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
-      }`
-    );
-    next();
-  }
+  });
 };
 
 /**
@@ -504,7 +507,7 @@ const sendHtmlFile = async (req, res, file) => {
         .sendWrap(req.__("An error occurred"), req.__("File not found"));
     }
   } catch (e) {
-    console.error(e)
+    console.error(e);
     return res
       .status(404)
       .sendWrap(
