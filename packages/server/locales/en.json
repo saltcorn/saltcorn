@@ -1588,5 +1588,7 @@
 	"Run this action when row is clicked": "Run this action when row is clicked",
 	"Reset password view": "Reset password view",
 	"A view that will be emailed to users when they have forgotten their password": "A view that will be emailed to users when they have forgotten their password",
-	"Allow login methods": "Allow login methods"
+	"Allow login methods": "Allow login methods",
+	"Inherit configuration values": "Inherit configuration values",
+	"Comma-separated list of configuration settings tenants inherit from root. Ex: <code>site_name, smtp_host, allow_signup</code>": "Comma-separated list of configuration settings tenants inherit from root. Ex: <code>site_name, smtp_host, allow_signup</code>"
 }
