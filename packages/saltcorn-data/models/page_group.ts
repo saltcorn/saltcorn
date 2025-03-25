@@ -104,6 +104,8 @@ class PageGroup implements AbstractPageGroup {
       await PageGroupMember.update(next.id!, { sequence: member.sequence });
       await PageGroupMember.update(member.id!, { sequence: tmp });
     }
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
   }
 
   /**
@@ -197,6 +199,8 @@ class PageGroup implements AbstractPageGroup {
         description: member.description,
       });
     }
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
 
     return pageGroup;
   }
@@ -208,6 +212,8 @@ class PageGroup implements AbstractPageGroup {
    */
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_page_groups", row, id);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
   }
 
   /**
@@ -236,6 +242,8 @@ class PageGroup implements AbstractPageGroup {
         await db.deleteWhere("_sc_page_groups", where);
       }
     }
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
   }
 
   /**
@@ -264,6 +272,9 @@ class PageGroup implements AbstractPageGroup {
     };
     delete createObj.id;
     const newGroup = await PageGroup.create(createObj);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
+
     return newGroup;
   }
 
@@ -287,6 +298,8 @@ class PageGroup implements AbstractPageGroup {
       description: cfg.description,
     });
     this.members.push(newMember);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
 
     return new PageGroupMember(newMember);
   }
@@ -297,6 +310,8 @@ class PageGroup implements AbstractPageGroup {
   async clearMembers(): Promise<void> {
     await db.deleteWhere("_sc_page_group_members", { page_group_id: this.id });
     this.members = [];
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
   }
 
   /**
@@ -306,6 +321,8 @@ class PageGroup implements AbstractPageGroup {
   async removeMember(id: number): Promise<void> {
     const PageGroupMember = (await import("./page_group_member")).default;
     await PageGroupMember.delete(id);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
   }
 
   /**

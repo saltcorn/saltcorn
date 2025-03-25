@@ -869,6 +869,9 @@ class Field implements AbstractField {
           this.name
         )}" TYPE ${new_sql_type} ${using} ${def};`
       );
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**
@@ -1033,6 +1036,8 @@ class Field implements AbstractField {
       }
     }
     await this.set_calc_joinfields();
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client) await state.refresh_tables(true);
   }
 
   /**
@@ -1094,6 +1099,8 @@ class Field implements AbstractField {
         );
       }
     }
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**

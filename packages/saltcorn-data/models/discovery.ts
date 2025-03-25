@@ -249,6 +249,9 @@ const implement_discovery = async (pack: {
       }
     }
   }
+  // refresh Saltcorn table list (in memory)
+  if (!db.getRequestContext()?.client)
+    await require("../db/state").getState().refresh_tables(true);
 };
 export = {
   discoverable_tables,

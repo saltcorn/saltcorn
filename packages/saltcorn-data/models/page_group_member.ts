@@ -100,6 +100,8 @@ class PageGroupMember implements AbstractPageGroupMember {
     const { id, ...rest } = pageGroupMember;
     const fid = await db.insert("_sc_page_group_members", rest);
     pageGroupMember.id = fid;
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
 
     return pageGroupMember;
   }
@@ -112,6 +114,8 @@ class PageGroupMember implements AbstractPageGroupMember {
    */
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_page_group_members", row, id);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
   }
 
   /**
@@ -130,6 +134,8 @@ class PageGroupMember implements AbstractPageGroupMember {
    */
   static async delete(id: number): Promise<void> {
     await db.deleteWhere("_sc_page_group_members", { id });
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_page_groups(true);
   }
 
   connected_objects(): ConnectedObjects {

@@ -137,6 +137,8 @@ class Page implements AbstractPage {
    */
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_pages", row, id);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_pages(true);
   }
   getStringsForI18n() {
     return getStringsForI18n(this.layout);
@@ -151,6 +153,8 @@ class Page implements AbstractPage {
     const { id, ...rest } = page;
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_pages(true);
     return page;
   }
 
@@ -169,6 +173,8 @@ class Page implements AbstractPage {
       await getState().setConfig(role + "_home", "");
     }
     await remove_from_menu({ name: this.name, type: "Page" });
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_pages(true);
   }
 
   /**

@@ -149,6 +149,8 @@ class Trigger implements AbstractTrigger {
     getState().log(6, `Update trigger ID=${id} Row=${JSON.stringify(row)}`);
     if (row.table_id === "") row.table_id = null;
     await db.update("_sc_triggers", row, id);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_triggers(true);
   }
 
   /**
@@ -165,6 +167,8 @@ class Trigger implements AbstractTrigger {
       rest.table_id = table.id;
     }
     trigger.id = await db.insert("_sc_triggers", rest);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_triggers(true);
     return trigger;
   }
 
@@ -178,6 +182,8 @@ class Trigger implements AbstractTrigger {
     await db.deleteWhere("_sc_workflow_steps", { trigger_id: this.id });
     await db.deleteWhere("_sc_tag_entries", { trigger_id: this.id });
     await db.deleteWhere("_sc_triggers", { id: this.id });
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_triggers(true);
   }
 
   /**
