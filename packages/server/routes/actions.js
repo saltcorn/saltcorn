@@ -450,6 +450,7 @@ router.post(
         entity_name: form.values.name,
       });
       res.redirect(addOnDoneRedirect(`/actions/configure/${id}`, req));
+      await getState().refresh_triggers();
     }
   })
 );
@@ -500,6 +501,7 @@ router.post(
       }
       req.flash("success", req.__("Action information saved"));
       res.redirect(`/actions/`);
+      await getState().refresh_triggers();
     }
   })
 );
@@ -1144,6 +1146,7 @@ router.post(
           ? `/${req.query.on_done_redirect}`
           : "/actions/"
       );
+      await getState().refresh_triggers();
     }
   })
 );
@@ -1159,11 +1162,13 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
+    await db.withTransaction(async () => {
+      await trigger.delete();
+    });
     Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
       entity_type: "Trigger",
       entity_name: trigger.name,
     });
-    await trigger.delete();
     req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
     let redirectTarget =
       req.query.on_done_redirect &&
@@ -1171,6 +1176,7 @@ router.post(
         ? `/${req.query.on_done_redirect}`
         : "/actions/";
     res.redirect(redirectTarget);
+    await getState().refresh_triggers();
   })
 );
 
@@ -1504,7 +1510,9 @@ router.post(
   error_catcher(async (req, res) => {
     const { step_id } = req.params;
     const step = await WorkflowStep.findOne({ id: step_id });
-    await step.delete(true);
+    await db.withTransaction(async () => {
+      await step.delete(true);
+    });
     res.json({ goto: `/actions/configure/${step.trigger_id}` });
   })
 );
@@ -1527,7 +1535,10 @@ router.get(
     const wfTable = mkTable(
       [
         { label: req.__("Trigger"), key: (run) => trNames[run.trigger_id] },
-        { label: req.__("Started"), key: (run) => localeDateTime(run.started_at) },
+        {
+          label: req.__("Started"),
+          key: (run) => localeDateTime(run.started_at),
+        },
         {
           label: req.__("Updated"),
           key: (run) => localeDateTime(run.status_updated_at),
