@@ -1,6 +1,6 @@
 # Notable changes
 
-## 1.1.3 - In beta
+## 1.1.3 - Released 25 March 2025
 
 * A POST route for the reload management api (`/scapi/reload`) which takes as body JSON
   a newly created tenant with `saltcorn create-tenant` CLI (`new_tenant` JSON key) or an
