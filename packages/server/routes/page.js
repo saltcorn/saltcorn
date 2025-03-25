@@ -68,13 +68,15 @@ const runPage = async (page, req, res, tic) => {
           no_menu: page.attributes?.no_menu,
           requestFluidLayout: page.attributes?.request_fluid_layout,
         } || `${page.name} page`,
-        req.smr ? contents : add_edit_bar({
-          role,
-          title: page.name,
-          what: req.__("Page"),
-          url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
-          contents,
-        }),
+        req.smr
+          ? contents
+          : add_edit_bar({
+              role,
+              title: page.name,
+              what: req.__("Page"),
+              url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+              contents,
+            })
       );
   } else {
     getState().log(2, `Page ${page.name} not authorized`);
@@ -200,18 +202,21 @@ router.post(
         },
       });
       if (col) {
-        try {
-          const result = await run_action_column({
-            col,
-            referrer: req.get("Referrer"),
-            req,
-            res,
-          });
-          res.json({ success: "ok", ...(result || {}) });
-        } catch (e) {
-          getState().log(2, e?.stack)
-          res.status(400).json({ error: e.message || e });
-        }
+        await db.withTransaction(
+          async () => {
+            const result = await run_action_column({
+              col,
+              referrer: req.get("Referrer"),
+              req,
+              res,
+            });
+            res.json({ success: "ok", ...(result || {}) });
+          },
+          (e) => {
+            getState().log(2, e?.stack);
+            res.status(400).json({ error: e.message || e });
+          }
+        );
       } else res.status(404).json({ error: "Action not found" });
     } else res.status(404).json({ error: "Action not found" });
   })
