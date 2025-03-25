@@ -310,11 +310,17 @@ class Table implements AbstractTable {
     t.update = async (upd_rec: any) => {
       const { fields, constraints, ...updDB } = upd_rec;
       await db.update("_sc_tables", updDB, tbl.id);
+      //limited refresh if we do not have a client
+      if (!db.getRequestContext()?.client)
+        await require("../db/state").getState().refresh_tables(true);
     };
     t.delete = async (upd_rec: any) => {
       const schema = db.getTenantSchemaPrefix();
       await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
       await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [tbl.id]);
+      //limited refresh if we do not have a client
+      if (!db.getRequestContext()?.client)
+        await require("../db/state").getState().refresh_tables(true);
     };
     return t;
   }
@@ -760,6 +766,9 @@ class Table implements AbstractTable {
     // create sync info
     if (table.has_sync_info) await table.create_sync_info_table();
     // refresh tables cache
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
 
     return table;
   }
@@ -832,6 +841,9 @@ class Table implements AbstractTable {
       await db.query(
         `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
       );
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /***
@@ -2561,6 +2573,9 @@ class Table implements AbstractTable {
       );
     //1. change record
     await this.update({ name: new_name });
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**
@@ -2578,6 +2593,9 @@ class Table implements AbstractTable {
     }
     const { external, fields, constraints, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
 
     const new_table = Table.findOne({ id: this.id });
     if (!new_table) {
@@ -2709,6 +2727,9 @@ class Table implements AbstractTable {
     }
 
     parse_res.table = table;
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
 
     return parse_res;
   }
@@ -4016,6 +4037,9 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       delete attrs.NonSerial;
       await pk.update({ attributes: attrs });
     }
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   async move_include_fts_to_search_context() {
