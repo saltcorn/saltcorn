@@ -535,16 +535,15 @@ const listScTables = async () => {
 
 const withTransaction = async (f, onError) => {
   await query("BEGIN;");
-  let result;
   try {
-    result = await f();
+    const result = await f();
     await query("COMMIT;");
+    return result;
   } catch (error) {
     await query("ROLLBACK;");
-    if (onError) onError(error);
+    if (onError) return onError(error);
     else throw error;
   }
-  return result;
 };
 
 const query = (text, params) => {
