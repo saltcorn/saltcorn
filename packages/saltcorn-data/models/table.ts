@@ -310,13 +310,11 @@ class Table implements AbstractTable {
     t.update = async (upd_rec: any) => {
       const { fields, constraints, ...updDB } = upd_rec;
       await db.update("_sc_tables", updDB, tbl.id);
-      await require("../db/state").getState().refresh_tables();
     };
     t.delete = async (upd_rec: any) => {
       const schema = db.getTenantSchemaPrefix();
       await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
       await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [tbl.id]);
-      await require("../db/state").getState().refresh_tables();
     };
     return t;
   }
@@ -762,7 +760,6 @@ class Table implements AbstractTable {
     // create sync info
     if (table.has_sync_info) await table.create_sync_info_table();
     // refresh tables cache
-    await require("../db/state").getState().refresh_tables();
 
     return table;
   }
@@ -816,39 +813,25 @@ class Table implements AbstractTable {
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
     await this.update({ ownership_field_id: null });
-    const client = is_sqlite ? db : await db.getClient();
-    await client.query(`BEGIN`);
-    try {
-      // drop table
-      if (!only_forget)
-        await client.query(
-          `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
-        );
-      // delete tag entries from _sc_tag_entries
-      await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
-      // delete fields
-      await client.query(
-        `delete FROM ${schema}_sc_fields WHERE table_id = $1`,
-        [this.id]
-      );
-      // delete table description
-      await client.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [
-        this.id,
-      ]);
-      // delete versioned table
-      if (this.versioned)
-        await client.query(
-          `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
-        );
 
-      await client.query(`COMMIT`);
-    } catch (e) {
-      await client.query(`ROLLBACK`);
-      if (!is_sqlite) client.release(true);
-      throw e;
-    }
-    if (!is_sqlite) client.release(true);
-    await require("../db/state").getState().refresh_tables();
+    // drop table
+    if (!only_forget)
+      await db.query(
+        `drop table if exists ${schema}"${sqlsanitize(this.name)}"`
+      );
+    // delete tag entries from _sc_tag_entries
+    await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
+    // delete fields
+    await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
+      this.id,
+    ]);
+    // delete table description
+    await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [this.id]);
+    // delete versioned table
+    if (this.versioned)
+      await db.query(
+        `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
+      );
   }
 
   /***
@@ -2558,37 +2541,26 @@ class Table implements AbstractTable {
       throw new InvalidAdminAction("Cannot rename table on SQLite");
     const schemaPrefix = db.getTenantSchemaPrefix();
 
-    const client = await db.getClient();
-    await client.query(`BEGIN`);
-    try {
-      //rename table
+    //rename table
+    await db.query(
+      `alter table ${schemaPrefix}"${sqlsanitize(
+        this.name
+      )}" rename to "${sqlsanitize(new_name)}";`
+    );
+    //change refs
+    await db.query(
+      `update ${schemaPrefix}_sc_fields set reftable_name=$1 where reftable_name=$2`,
+      [new_name, this.name]
+    );
+    //rename history
+    if (this.versioned)
       await db.query(
         `alter table ${schemaPrefix}"${sqlsanitize(
           this.name
-        )}" rename to "${sqlsanitize(new_name)}";`
+        )}__history" rename to "${sqlsanitize(new_name)}__history";`
       );
-      //change refs
-      await db.query(
-        `update ${schemaPrefix}_sc_fields set reftable_name=$1 where reftable_name=$2`,
-        [new_name, this.name]
-      );
-      //rename history
-      if (this.versioned)
-        await db.query(
-          `alter table ${schemaPrefix}"${sqlsanitize(
-            this.name
-          )}__history" rename to "${sqlsanitize(new_name)}__history";`
-        );
-      //1. change record
-      await this.update({ name: new_name });
-      await client.query(`COMMIT`);
-    } catch (e) {
-      await client.query(`ROLLBACK`);
-      client.release(true);
-      throw e;
-    }
-    client.release(true);
-    await require("../db/state").getState().refresh_tables();
+    //1. change record
+    await this.update({ name: new_name });
   }
 
   /**
@@ -2606,7 +2578,6 @@ class Table implements AbstractTable {
     }
     const { external, fields, constraints, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
-    await require("../db/state").getState().refresh_tables();
 
     const new_table = Table.findOne({ id: this.id });
     if (!new_table) {
@@ -2738,7 +2709,6 @@ class Table implements AbstractTable {
     }
 
     parse_res.table = table;
-    await require("../db/state").getState().refresh_tables();
 
     return parse_res;
   }
@@ -4046,7 +4016,6 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       delete attrs.NonSerial;
       await pk.update({ attributes: attrs });
     }
-    await require("../db/state").getState().refresh_tables();
   }
 
   async move_include_fts_to_search_context() {
