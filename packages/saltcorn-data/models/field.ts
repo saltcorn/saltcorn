@@ -1219,7 +1219,10 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
-
+    if (!db.getRequestContext().client) {
+      // VW mode
+      await require("../db/state").getState().refresh_tables(true);
+    }
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});
       if (nrows > 0) {
