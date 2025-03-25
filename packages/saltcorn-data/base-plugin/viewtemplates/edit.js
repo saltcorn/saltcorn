@@ -2487,7 +2487,7 @@ module.exports = {
       }
 
       try {
-        await db.withTransaction(async () => {
+        return await db.withTransaction(async () => {
           if (click_action) {
             let container;
             traverseSync(layout, {
