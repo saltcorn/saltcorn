@@ -189,6 +189,10 @@ class View implements AbstractView {
     } else return [];
   }
 
+  static async state_refresh() {
+    await require("../db/state").getState().refresh_views();
+  }
+
   /**
    * Get menu label
    * @type {string|undefined}

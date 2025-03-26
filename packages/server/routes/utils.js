@@ -534,6 +534,7 @@ const setRole = async (req, res, model) => {
     roleRow && page
       ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
       : req.__(`Minimum role updated`);
+  if (model.state_refresh) await model.state_refresh();
   if (!req.xhr) {
     req.flash("success", message);
     res.redirect("/pageedit");

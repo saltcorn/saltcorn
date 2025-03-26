@@ -140,6 +140,11 @@ class Page implements AbstractPage {
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_pages(true);
   }
+
+  static async state_refresh() {
+    await require("../db/state").getState().refresh_pages();
+  }
+
   getStringsForI18n() {
     return getStringsForI18n(this.layout);
   }

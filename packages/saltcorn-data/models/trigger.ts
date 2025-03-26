@@ -138,6 +138,10 @@ class Trigger implements AbstractTrigger {
     );
   }
 
+  static async state_refresh() {
+    await require("../db/state").getState().refresh_triggers();
+  }
+
   /**
    * Update trigger
    * @param id

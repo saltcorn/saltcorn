@@ -2614,6 +2614,10 @@ class Table implements AbstractTable {
     }
   }
 
+  static async state_refresh() {
+    await require("../db/state").getState().refresh_tables();
+  }
+
   /**
    * Get table history data
    * @param id
