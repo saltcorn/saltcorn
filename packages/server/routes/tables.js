@@ -1228,99 +1228,102 @@ router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
-    await db.withTransaction(async () => {
-      const v = req.body || {};
-      if (typeof v.id === "undefined" && typeof v.external === "undefined") {
-        // insert
-        v.name = v.name.trim();
-        const { name, ...rest } = v;
-        const alltables = await Table.find({});
-        const existing_tables = [
-          "users",
-          ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
-        ];
-        if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
-          req.flash("error", req.__(`Table %s already exists`, name));
-          res.redirect(`/table/new`);
-        } else if (db.sqlsanitize(name) === "") {
-          req.flash("error", req.__(`Invalid table name %s`, name));
-          res.redirect(`/table/new`);
-        } else if (rest.provider_name && rest.provider_name !== "-") {
-          const table = await Table.create(name, rest);
-          res.redirect(`/table/provider-cfg/${table.id}`);
-        } else {
-          delete rest.provider_name;
-          const table = await Table.create(name, rest);
+    const v = req.body || {};
+    if (typeof v.id === "undefined" && typeof v.external === "undefined") {
+      // insert
+      v.name = v.name.trim();
+      const { name, ...rest } = v;
+      const alltables = await Table.find({});
+      const existing_tables = [
+        "users",
+        ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
+      ];
+      if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
+        req.flash("error", req.__(`Table %s already exists`, name));
+        res.redirect(`/table/new`);
+      } else if (db.sqlsanitize(name) === "") {
+        req.flash("error", req.__(`Invalid table name %s`, name));
+        res.redirect(`/table/new`);
+      } else if (rest.provider_name && rest.provider_name !== "-") {
+        const table = await Table.create(name, rest);
+        res.redirect(`/table/provider-cfg/${table.id}`);
+      } else {
+        delete rest.provider_name;
+        let table;
+        await db.withTransaction(async () => {
+          table = await Table.create(name, rest);
           Trigger.emitEvent("AppChange", `Table ${name}`, req.user, {
             entity_type: "Table",
             entity_name: name,
           });
-          req.flash("success", req.__(`Table %s created`, name));
-          res.redirect(`/table/${table.id}`);
-        }
-      } else if (v.external) {
-        // todo check that works after where change
-        // todo findOne can be have parameter for external table here
-        //we can only save min role
-        const table = Table.findOne({ name: v.name });
-        if (table) {
-          const exttables_min_role_read = getState().getConfigCopy(
-            "exttables_min_role_read",
-            {}
-          );
-          exttables_min_role_read[table.name] = +v.min_role_read;
-          await getState().setConfig(
-            "exttables_min_role_read",
-            exttables_min_role_read
-          );
-          if (!req.xhr) {
-            req.flash("success", req.__("Table saved"));
-            res.redirect(`/table/${table.name}`);
-          } else res.json({ success: "ok" });
-        }
-      } else {
-        const { id, _csrf, ...rest } = v;
-        const table = Table.findOne({ id: parseInt(id) });
-        const old_versioned = table.versioned;
-        const old_has_sync_info = table.has_sync_info;
-        let hasError = false;
-        let notify = "";
-        if (!rest.versioned) rest.versioned = false;
-        if (!rest.has_sync_info) rest.has_sync_info = false;
-        rest.is_user_group = !!rest.is_user_group;
-        if (rest.ownership_field_id === "_formula") {
-          rest.ownership_field_id = null;
-          const fmlValidRes = expressionValidator(rest.ownership_formula);
-          if (typeof fmlValidRes === "string") {
-            notify = req.__(`Invalid ownership formula: %s`, fmlValidRes);
-            hasError = true;
-          }
-        } else if (
-          typeof rest.ownership_field_id === "string" &&
-          rest.ownership_field_id.startsWith("Fml:")
-        ) {
-          rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
-          rest.ownership_field_id = null;
-        } else rest.ownership_formula = null;
-        await table.update(rest);
-
-        if (!req.xhr) {
-          if (!old_versioned && rest.versioned)
-            req.flash(
-              "success",
-              req.__("Table saved with version history enabled")
-            );
-          else if (old_versioned && !rest.versioned)
-            req.flash(
-              "success",
-              req.__("Table saved with version history disabled")
-            );
-          else if (!hasError) req.flash("success", req.__("Table saved"));
-          res.redirect(`/table/${id}`);
-        } else res.json({ success: "ok", notify });
+        });
+        await getState().refresh_tables();
+        req.flash("success", req.__(`Table %s created`, name));
+        res.redirect(`/table/${table.id}`);
       }
-    });
-    await getState().refresh_tables();
+    } else if (v.external) {
+      // todo check that works after where change
+      // todo findOne can be have parameter for external table here
+      //we can only save min role
+      const table = Table.findOne({ name: v.name });
+      if (table) {
+        const exttables_min_role_read = getState().getConfigCopy(
+          "exttables_min_role_read",
+          {}
+        );
+        exttables_min_role_read[table.name] = +v.min_role_read;
+        await getState().setConfig(
+          "exttables_min_role_read",
+          exttables_min_role_read
+        );
+        if (!req.xhr) {
+          req.flash("success", req.__("Table saved"));
+          res.redirect(`/table/${table.name}`);
+        } else res.json({ success: "ok" });
+      }
+    } else {
+      const { id, _csrf, ...rest } = v;
+      const table = Table.findOne({ id: parseInt(id) });
+      const old_versioned = table.versioned;
+      const old_has_sync_info = table.has_sync_info;
+      let hasError = false;
+      let notify = "";
+      if (!rest.versioned) rest.versioned = false;
+      if (!rest.has_sync_info) rest.has_sync_info = false;
+      rest.is_user_group = !!rest.is_user_group;
+      if (rest.ownership_field_id === "_formula") {
+        rest.ownership_field_id = null;
+        const fmlValidRes = expressionValidator(rest.ownership_formula);
+        if (typeof fmlValidRes === "string") {
+          notify = req.__(`Invalid ownership formula: %s`, fmlValidRes);
+          hasError = true;
+        }
+      } else if (
+        typeof rest.ownership_field_id === "string" &&
+        rest.ownership_field_id.startsWith("Fml:")
+      ) {
+        rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
+        rest.ownership_field_id = null;
+      } else rest.ownership_formula = null;
+      await db.withTransaction(async () => {
+        await table.update(rest);
+      });
+      await getState().refresh_tables();
+      if (!req.xhr) {
+        if (!old_versioned && rest.versioned)
+          req.flash(
+            "success",
+            req.__("Table saved with version history enabled")
+          );
+        else if (old_versioned && !rest.versioned)
+          req.flash(
+            "success",
+            req.__("Table saved with version history disabled")
+          );
+        else if (!hasError) req.flash("success", req.__("Table saved"));
+        res.redirect(`/table/${id}`);
+      } else res.json({ success: "ok", notify });
+    }
   })
 );
 
