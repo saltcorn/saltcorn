@@ -304,8 +304,8 @@ const fieldFlow = (req) =>
         fldRow.required = false;
       }
       const table = Table.findOne({ id: table_id });
-      await db.withTransaction(
-        async () => {
+      try {
+        await db.withTransaction(async () => {
           if (context.id) {
             const field = await Field.findOne({ id: context.id });
 
@@ -335,26 +335,25 @@ const fieldFlow = (req) =>
               }
             );
           }
-        },
-        (e) => {
-          console.error(e);
-          return {
-            redirect: `/table/${context.table_id}`,
-            flash: ["error", e.message],
-          };
-        }
-      );
-      await getState().refresh_tables();
+        });
+        await getState().refresh_tables();
 
-      return {
-        redirect: `/table/${context.table_id}`,
-        flash: [
-          "success",
-          context.id
-            ? req.__("Field %s saved", label)
-            : req.__("Field %s created", label),
-        ],
-      };
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: [
+            "success",
+            context.id
+              ? req.__("Field %s saved", label)
+              : req.__("Field %s created", label),
+          ],
+        };
+      } catch (e) {
+        console.error(e);
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: ["error", e.message],
+        };
+      }
     },
     steps: [
       {
