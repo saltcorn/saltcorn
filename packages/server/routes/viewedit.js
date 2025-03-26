@@ -682,7 +682,13 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
       },
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
-  } else res.redirect(wfres.redirect);
+  } else {
+    getState()
+      .refresh_views()
+      .then(() => {
+        res.redirect(wfres.redirect);
+      });
+  }
 };
 
 /**
@@ -855,6 +861,7 @@ router.post(
     await db.withTransaction(async (client) => {
       await View.delete({ id });
     });
+    await getState().refresh_views();
     req.flash("success", req.__("View deleted"));
     let redirectTarget =
       req.query.on_done_redirect &&
@@ -862,7 +869,6 @@ router.post(
         ? `/${req.query.on_done_redirect}`
         : "/viewedit";
     res.redirect(redirectTarget);
-    await getState().refresh_views();
   })
 );
 
@@ -882,6 +888,7 @@ router.post(
       const exview = await View.findOne({ id });
       let newcfg = { ...exview.configuration, ...(req.body || {}) };
       await View.update({ configuration: newcfg }, +id);
+      await getState().refresh_views();
       Trigger.emitEvent("AppChange", `View ${exview.name}`, req.user, {
         entity_type: "View",
         entity_name: exview.name,
@@ -890,7 +897,6 @@ router.post(
     } else {
       res.json({ error: req.__("Unable to save: No view") });
     }
-    await getState().refresh_views();
   })
 );
 
@@ -925,6 +931,7 @@ router.post(
             };
           else newcfg = { ...view.configuration, ...step.renderForm.values };
           await View.update({ configuration: newcfg }, view.id);
+          await getState().refresh_views();
           Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
             entity_type: "View",
             entity_name: view.name,
@@ -939,7 +946,6 @@ router.post(
     } else {
       res.json({ error: "no view" });
     }
-    await getState().refresh_views();
   })
 );
 
@@ -956,6 +962,7 @@ router.post(
     const { id } = req.params;
     const role = (req.body || {}).role;
     await View.update({ min_role: role }, +id);
+    await getState().refresh_views();
     const view = await View.findOne({ id });
     Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
       entity_type: "View",
@@ -976,7 +983,6 @@ router.post(
           : "/viewedit";
       res.redirect(redirectTarget);
     } else res.json({ success: "ok" });
-    await getState().refresh_views();
   })
 );
 
