@@ -330,6 +330,13 @@ const triggerForm = async (req, trigger) => {
         type: "Bool",
         showIf: { when_trigger: ["API call"] },
       },
+      {
+        name: "_response_mime",
+        label: "Response MIME type",
+        parent_field: "configuration",
+        type: "String",
+        showIf: { when_trigger: ["API call"], _raw_output: true },
+      },
     ],
   });
   // if (trigger) {
@@ -1527,7 +1534,10 @@ router.get(
     const wfTable = mkTable(
       [
         { label: req.__("Trigger"), key: (run) => trNames[run.trigger_id] },
-        { label: req.__("Started"), key: (run) => localeDateTime(run.started_at) },
+        {
+          label: req.__("Started"),
+          key: (run) => localeDateTime(run.started_at),
+        },
         {
           label: req.__("Updated"),
           key: (run) => localeDateTime(run.status_updated_at),
