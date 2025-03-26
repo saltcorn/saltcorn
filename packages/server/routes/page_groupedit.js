@@ -412,9 +412,11 @@ router.post(
       const { id, ...row } = form.values;
       if (+id) {
         await PageGroup.update(id, row);
+        await getState().refresh_page_groups();
         res.json({ success: "ok", row });
       } else {
         const pageGroup = await PageGroup.create(row);
+        await getState().refresh_page_groups();
         res.redirect(`/page_groupedit/${pageGroup.name}`);
       }
     }
@@ -478,6 +480,7 @@ router.post(
           eligible_formula,
           description: description || "",
         });
+        await getState().refresh_page_groups();
         req.flash("success", req.__("Added member"));
         res.redirect(`/page_groupedit/${page_groupname}`);
       }
@@ -497,6 +500,7 @@ router.post(
       const member = PageGroupMember.findOne({ id: member_id });
       const pageGroup = PageGroup.findOne({ id: member.page_group_id });
       await pageGroup.moveMember(member, mode);
+      await getState().refresh_page_groups();
       res.json({ success: "ok" });
     } catch (error) {
       getState().log(2, `POST /page_groupedit/move-member: '${error.message}'`);
@@ -573,6 +577,7 @@ router.post(
           eligible_formula,
           description: description || "",
         });
+      await getState().refresh_page_groups();
       req.flash("success", req.__("Updated member"));
       res.redirect(`/page_groupedit/${group.name}`);
     }
@@ -593,6 +598,7 @@ router.post(
       res.redirect("/pageedit");
     } else {
       await group.delete();
+      await getState().refresh_page_groups();
       req.flash("success", req.__("Deleted page group %s", group_id));
       res.redirect("/pageedit");
     }
@@ -622,6 +628,7 @@ router.post(
       } else {
         try {
           await group.removeMember(member_id);
+          await getState().refresh_page_groups();
           req.flash(
             "success",
             req.__("Removed member %s", member.name || member_id)
@@ -651,6 +658,7 @@ router.post(
       res.redirect("/pageedit");
     } else {
       const copy = await group.clone();
+      await getState().refresh_page_groups();
       req.flash("success", req.__("Cloned page group %s", group.name));
       res.redirect(`/page_groupedit/${copy.name}`);
     }
