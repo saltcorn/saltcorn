@@ -19,11 +19,14 @@ const {
   satisfies,
   mergeActionResults,
   cloneName,
+  isNode,
 } = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
 const { eval_expression } = expression;
+
+declare const saltcorn: any;
 
 /**
  * Trigger class
@@ -190,6 +193,23 @@ class Trigger implements AbstractTrigger {
       await require("../db/state").getState().refresh_triggers(true);
   }
 
+  static async sendEventToServer(
+    eventType: string,
+    channel: string | null = null,
+    user = {},
+    payload?: any
+  ) {
+    await saltcorn.mobileApp.api.apiCall({
+      method: "POST",
+      path: `/api/emit-event/${eventType}`,
+      body: {
+        channel,
+        user, // password is not set on mobile
+        payload,
+      },
+    });
+  }
+
   /**
    * Emit an event: run associated triggers
    * @param {*} eventType
@@ -203,6 +223,13 @@ class Trigger implements AbstractTrigger {
     userPW = {},
     payload?: any
   ): void {
+    if (
+      !isNode() &&
+      !require("../db/state").getState().mobileConfig?.isOfflineMode
+    ) {
+      Trigger.sendEventToServer(eventType, channel, userPW, payload);
+      return;
+    }
     setTimeout(async () => {
       const { password, ...user }: any = userPW || {};
       const { getState } = require("../db/state");

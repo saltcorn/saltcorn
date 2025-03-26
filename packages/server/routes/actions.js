@@ -330,6 +330,13 @@ const triggerForm = async (req, trigger) => {
         type: "Bool",
         showIf: { when_trigger: ["API call"] },
       },
+      {
+        name: "_response_mime",
+        label: "Response MIME type",
+        parent_field: "configuration",
+        type: "String",
+        showIf: { when_trigger: ["API call"], _raw_output: true },
+      },
     ],
   });
   // if (trigger) {

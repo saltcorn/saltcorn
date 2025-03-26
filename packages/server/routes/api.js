@@ -435,6 +435,34 @@ router.get(
 );
 
 /**
+ * Emit Event using POST
+ * This is used from the mobile app to send an event to the server.
+ *
+ * The user comes the JWT token and actions,
+ * listening for the event, have to check on their own if the user is allowed to run it.
+ */
+router.post(
+  "/emit-event/:eventname",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "jwt",
+      { session: false },
+      async function (err, user, info) {
+        if (user) {
+          const { eventname } = req.params;
+          const { channel, payload } = req.body;
+          Trigger.emitEvent(eventname, channel, user, payload);
+          res.json({ success: true });
+        } else {
+          getState().log(3, `API POST emit-event not authorized`);
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
+/**
  * Call Action (Trigger) using POST
  * Attention! if you have table with name "action" it can be problem in future
  * @name post/action/:actionname/
@@ -494,7 +522,16 @@ router.all(
             else if (req.headers?.scgotourl)
               res.redirect(req.headers?.scgotourl);
             else {
-              if (trigger.configuration?._raw_output) res.json(resp);
+              if (
+                trigger.configuration?._raw_output &&
+                trigger.configuration?._response_mime
+              ) {
+                res.setHeader(
+                  "content-type",
+                  trigger.configuration?._response_mime
+                );
+                res.send(resp);
+              } else if (trigger.configuration?._raw_output) res.json(resp);
               else if (resp?.error) {
                 const { error, ...rest } = resp;
                 res.json({ success: false, error, data: rest });
