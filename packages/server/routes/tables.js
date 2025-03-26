@@ -470,6 +470,7 @@ router.post(
         req.flash("error", parse_res.error);
         res.redirect(`/table/create-from-csv`);
       } else {
+        await getState().refresh_tables();
         Trigger.emitEvent(
           "AppChange",
           `Table ${parse_res.table.name}`,
@@ -489,7 +490,6 @@ router.post(
       req.flash("error", req.__("Error: missing name or file"));
       res.redirect(`/table/create-from-csv`);
     }
-    await getState().refresh_tables();
   })
 );
 
