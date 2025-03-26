@@ -485,9 +485,12 @@ router.post(
     } else if (can_install.warning) {
       req.flash("warning", can_install.warning);
     }
-    await install_pack(pack.pack, name, (p) =>
-      load_plugins.loadAndSaveNewPlugin(p)
-    );
+    await db.withTransaction(async () => {
+      await install_pack(pack.pack, name, (p) =>
+        load_plugins.loadAndSaveNewPlugin(p)
+      );
+    });
+    await getState().refresh();
     req.flash("success", req.__(`Pack %s installed`, text(name)));
     res.redirect(`/`);
   })
