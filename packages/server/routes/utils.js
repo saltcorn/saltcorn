@@ -201,7 +201,7 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  */
 const setTenant = (req, res, next) => {
   let wrap =
-    req.method === "POST"
+    req.method === "POST" && !db.isSQLite
       ? (f) => {
           db.getClient().then((client) => {
             res.on("finish", function () {

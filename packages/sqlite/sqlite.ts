@@ -434,3 +434,16 @@ export const drop_index = async (
 
 export const slugify = (s: string): string =>
   s.toLowerCase().replace(/\s+/g, "-");
+
+export const withTransaction = async (f:Function, onError: Function) => {
+  await query("BEGIN;");
+  try {
+    const result = await f();
+    await query("COMMIT;");
+    return result;
+  } catch (error) {
+    await query("ROLLBACK;");
+    if (onError) return onError(error);
+    else throw error;
+  }
+};
