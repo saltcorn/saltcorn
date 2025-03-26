@@ -2596,8 +2596,7 @@ class Table implements AbstractTable {
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_tables(true);
-
-    const new_table = Table.findOne({ id: this.id });
+    const new_table = new Table({ ...this, ...upd_rec });
     if (!new_table) {
       throw new Error(`Unable to find table with id: ${this.id}`);
     } else {
