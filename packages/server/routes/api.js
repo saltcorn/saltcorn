@@ -448,10 +448,15 @@ router.post(
       "jwt",
       { session: false },
       async function (err, user, info) {
-        const { eventname } = req.params;
-        const { channel, payload } = req.body;
-        Trigger.emitEvent(eventname, channel, user, payload);
-        res.json({ success: true });
+        if (user) {
+          const { eventname } = req.params;
+          const { channel, payload } = req.body;
+          Trigger.emitEvent(eventname, channel, user, payload);
+          res.json({ success: true });
+        } else {
+          getState().log(3, `API POST emit-event not authorized`);
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
       }
     )(req, res, next);
   })
