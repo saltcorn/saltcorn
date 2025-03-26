@@ -117,7 +117,6 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
 router.post(
   "/load_changes",
   error_catcher(async (req, res) => {
-    const result = {};
     const { syncInfos, loadUntil } = req.body || {};
     if (!loadUntil) {
       getState().log(2, `POST /load_changes: loadUntil is missing`);
@@ -131,6 +130,7 @@ router.post(
     try {
       const result = await db.withTransaction(async () => {
         let rowLimit = 1000;
+        const result = {};
 
         for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
           const table = Table.findOne({ name: tblName });
