@@ -202,21 +202,20 @@ router.post(
         },
       });
       if (col) {
-        await db.withTransaction(
-          async () => {
-            const result = await run_action_column({
+        try {
+          const result = await db.withTransaction(async () => {
+            return await run_action_column({
               col,
               referrer: req.get("Referrer"),
               req,
               res,
             });
-            res.json({ success: "ok", ...(result || {}) });
-          },
-          (e) => {
-            getState().log(2, e?.stack);
-            res.status(400).json({ error: e.message || e });
-          }
-        );
+          });
+          res.json({ success: "ok", ...(result || {}) });
+        } catch (e) {
+          getState().log(2, e?.stack);
+          res.status(400).json({ error: e.message || e });
+        }
       } else res.status(404).json({ error: "Action not found" });
     } else res.status(404).json({ error: "Action not found" });
   })

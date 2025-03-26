@@ -547,9 +547,8 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          let ins_res;
-          await db.withTransaction(async () => {
-            ins_res = await table.tryInsertRow(
+          let ins_res = await db.withTransaction(async () => {
+            return await table.tryInsertRow(
               row,
               req.user || user || { role_id: 100 }
             );
@@ -654,9 +653,8 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          let ins_res;
-          await db.withTransaction(async () => {
-            ins_res = await table.tryUpdateRow(
+          let ins_res = await db.withTransaction(async () => {
+            return await table.tryUpdateRow(
               row,
               id,
               user || req.user || { role_id: 100 }

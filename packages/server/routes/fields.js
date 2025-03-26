@@ -308,28 +308,21 @@ const fieldFlow = (req) =>
         async () => {
           if (context.id) {
             const field = await Field.findOne({ id: context.id });
-            try {
-              if (fldRow.label && field.label != fldRow.label) {
-                fldRow.name = Field.labelToName(fldRow.label);
-              }
 
-              await field.update(fldRow);
-              Trigger.emitEvent(
-                "AppChange",
-                `Field ${fldRow.name} on table ${table?.name}`,
-                req.user,
-                {
-                  entity_type: "Field",
-                  entity_name: fldRow.name || fldRow.label,
-                }
-              );
-            } catch (e) {
-              console.error(e);
-              return {
-                redirect: `/table/${context.table_id}`,
-                flash: ["error", e.message],
-              };
+            if (fldRow.label && field.label != fldRow.label) {
+              fldRow.name = Field.labelToName(fldRow.label);
             }
+
+            await field.update(fldRow);
+            Trigger.emitEvent(
+              "AppChange",
+              `Field ${fldRow.name} on table ${table?.name}`,
+              req.user,
+              {
+                entity_type: "Field",
+                entity_name: fldRow.name || fldRow.label,
+              }
+            );
           } else {
             await Field.create(fldRow);
             Trigger.emitEvent(
@@ -894,20 +887,20 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
+    const f = await Field.findOne({ id });
+    if (!f) {
+      req.flash("danger", req.__(`Field not found`));
+      res.redirect(`/table`);
+      return;
+    }
+    const table_id = f.table_id;
     await db.withTransaction(async () => {
-      const f = await Field.findOne({ id });
-      if (!f) {
-        req.flash("danger", req.__(`Field not found`));
-        res.redirect(`/table`);
-        return;
-      }
-      const table_id = f.table_id;
-
       await f.delete();
-      req.flash("success", req.__(`Field %s deleted`, f.label));
-      res.redirect(`/table/${table_id}`);
     });
     await getState().refresh_tables();
+
+    req.flash("success", req.__(`Field %s deleted`, f.label));
+    res.redirect(`/table/${table_id}`);
   })
 );
 

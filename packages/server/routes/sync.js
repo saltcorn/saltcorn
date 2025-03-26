@@ -128,9 +128,8 @@ router.post(
       return res.status(400).json({ error: "syncInfos is missing" });
     }
     const role = req.user ? req.user.role_id : 100;
-
-    await db.withTransaction(
-      async () => {
+    try {
+      const result = await db.withTransaction(async () => {
         let rowLimit = 1000;
 
         for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
@@ -159,13 +158,13 @@ router.post(
             maxLoadedId: rows.length > 0 ? rows[rows.length - 1][pkName] : 0,
           };
         }
-        res.json(result);
-      },
-      (error) => {
-        getState().log(2, `POST /load_changes: '${error.message}'`);
-        res.status(400).json({ error: error.message || error });
-      }
-    );
+        return result;
+      });
+      res.json(result);
+    } catch (error) {
+      getState().log(2, `POST /load_changes: '${error.message}'`);
+      res.status(400).json({ error: error.message || error });
+    }
   })
 );
 
@@ -196,8 +195,8 @@ router.post(
   "/deletes",
   error_catcher(async (req, res) => {
     const { syncInfos, syncTimestamp } = req.body || {};
-    await db.withTransaction(
-      async () => {
+    try {
+      const result = await db.withTransaction(async () => {
         const syncUntil = new Date(syncTimestamp);
         const result = {
           deletes: {},
@@ -211,13 +210,13 @@ router.post(
             );
           }
         }
-        res.json(result);
-      },
-      (error) => {
-        getState().log(2, `POST /sync/deletes: '${error.message}'`);
-        res.status(400).json({ error: error.message || error });
-      }
-    );
+        return result;
+      });
+      res.json(result);
+    } catch (error) {
+      getState().log(2, `POST /sync/deletes: '${error.message}'`);
+      res.status(400).json({ error: error.message || error });
+    }
   })
 );
 
