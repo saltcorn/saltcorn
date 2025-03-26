@@ -60,6 +60,7 @@ const mkTester =
       min_role: 100,
     };
     const v = await View.create(viewCfg);
+    await getState().refresh_views();
     if (remoteQueries) await sendViewToServer(viewCfg);
     const configFlow = await v.get_config_flow(mockReqRes.req);
     await configFlow.run(

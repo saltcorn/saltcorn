@@ -985,6 +985,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const view = await View.create(req.body || {});
+    await getState().refresh_views();
     res.json({ view });
   })
 );
