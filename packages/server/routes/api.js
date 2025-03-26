@@ -494,7 +494,16 @@ router.all(
             else if (req.headers?.scgotourl)
               res.redirect(req.headers?.scgotourl);
             else {
-              if (trigger.configuration?._raw_output) res.json(resp);
+              if (
+                trigger.configuration?._raw_output &&
+                trigger.configuration?._response_mime
+              ) {
+                res.setHeader(
+                  "content-type",
+                  trigger.configuration?._response_mime
+                );
+                res.send(resp);
+              } else if (trigger.configuration?._raw_output) res.json(resp);
               else if (resp?.error) {
                 const { error, ...rest } = resp;
                 res.json({ success: false, error, data: rest });
