@@ -1340,39 +1340,40 @@ router.post(
   "/delete-with-trig-views/:id",
   isAdmin,
   error_catcher(async (req, res) => {
-    await db.withTransaction(async () => {
-      const { id } = req.params;
-      const t = Table.findOne({ id });
-      if (!t) {
-        req.flash("error", `Table not found`);
-        res.redirect(`/table`);
-        return;
-      }
-      if (t.name === "users") {
-        req.flash("error", req.__(`Cannot delete users table`));
-        res.redirect(`/table`);
-        return;
-      }
-      const views = await View.find(
-        t.id ? { table_id: t.id } : { exttable_name: t.name }
-      );
-      for (const view of views) await view.delete();
-      if (t.id) {
-        const triggers = await Trigger.find({ table_id: t.id });
-        for (const trig of triggers) await trig.delete();
-      }
-      try {
+    const { id } = req.params;
+    const t = Table.findOne({ id });
+    if (!t) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    if (t.name === "users") {
+      req.flash("error", req.__(`Cannot delete users table`));
+      res.redirect(`/table`);
+      return;
+    }
+    try {
+      await db.withTransaction(async () => {
+        const views = await View.find(
+          t.id ? { table_id: t.id } : { exttable_name: t.name }
+        );
+        for (const view of views) await view.delete();
+        if (t.id) {
+          const triggers = await Trigger.find({ table_id: t.id });
+          for (const trig of triggers) await trig.delete();
+        }
+
         await t.delete();
-        req.flash("success", req.__(`Table %s deleted`, t.name));
-        res.redirect(`/table`);
-      } catch (err) {
-        req.flash("error", err.message);
-        res.redirect(`/table`);
-      }
-    });
-    await getState().refresh_tables();
-    await getState().refresh_views();
-    await getState().refresh_triggers();
+      });
+      await getState().refresh_tables();
+      await getState().refresh_views();
+      await getState().refresh_triggers();
+      req.flash("success", req.__(`Table %s deleted`, t.name));
+      res.redirect(`/table`);
+    } catch (err) {
+      req.flash("error", err.message);
+      res.redirect(`/table`);
+    }
   })
 );
 
@@ -1869,10 +1870,12 @@ router.post(
           .filter((f) => form.values[f]);
         configuration.errormsg = form.values.errormsg;
       } else configuration = form.values;
-      await TableConstraint.create({
-        table_id: table.id,
-        type,
-        configuration,
+      await db.withTransaction(async () => {
+        await TableConstraint.create({
+          table_id: table.id,
+          type,
+          configuration,
+        });
       });
       await getState().refresh_tables();
 
@@ -1964,9 +1967,12 @@ router.post(
     form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
-      await table.rename(form.values.name);
+      await db.withTransaction(async () => {
+        await table.rename(form.values.name);
+      });
+      await getState().refresh_tables();
     }
-    await getState().refresh_tables();
+
     res.redirect(`/table/${table.id}`);
   })
 );
@@ -1984,7 +1990,9 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const cons = await TableConstraint.findOne({ id });
-    await cons.delete();
+    await db.withTransaction(async () => {
+      await cons.delete();
+    });
     await getState().refresh_tables();
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
@@ -2437,13 +2445,14 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
+
+    const table = Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
     await db.withTransaction(async () => {
-      const table = Table.findOne({ id });
-      if (!table) {
-        req.flash("error", `Table not found`);
-        res.redirect(`/table`);
-        return;
-      }
       const initial_view = async (table, viewtemplate) => {
         const configuration = await initial_config_all_fields(
           viewtemplate === "Edit"
@@ -2505,9 +2514,8 @@ router.post(
         },
         edit.id
       );
-
-      res.redirect(`/table/${table.id}`);
     });
     await getState().refresh_views();
+    res.redirect(`/table/${table.id}`);
   })
 );
