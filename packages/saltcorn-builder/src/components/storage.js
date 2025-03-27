@@ -248,8 +248,8 @@ const layoutToNodes = (
             (segment.block === true
               ? "block"
               : segment.block === false
-              ? "inline-block"
-              : "block")
+                ? "inline-block"
+                : "block")
           }
           fullPageWidth={
             typeof segment.fullPageWidth === "undefined"
@@ -357,6 +357,7 @@ const layoutToNodes = (
           style={segment.style || {}}
           gx={segment.gx}
           gy={segment.gy}
+          customClass={segment.customClass}
           vAligns={segment.vAligns}
           colClasses={segment.colClasses}
           colStyles={segment.colStyles}
@@ -392,6 +393,7 @@ const layoutToNodes = (
             style={segment.style || {}}
             gx={segment.gx}
             gy={segment.gy}
+            customClass={segment.customClass}
             vAligns={segment.vAligns}
             colClasses={segment.colClasses}
             colStyles={segment.colStyles}
@@ -616,6 +618,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoints: node.props.breakpoints,
+        customClass: node.props.customClass,
         gx: +node.props.gx,
         gy: +node.props.gy,
         aligns: node.props.aligns,
