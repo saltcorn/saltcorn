@@ -6,7 +6,7 @@ metadata:
     app: {{ include "saltcorn.fullname" . }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: {{ .Values.persistence.size }}
