@@ -1209,46 +1209,46 @@ const runPost = async (
   },
   remote
 ) => {
-  await db.withTransaction(async () => {
-    const safeBody = prepSafeBody(body, columns);
-    const table = Table.findOne({ id: table_id });
-    const fields = table.getFields();
-    const prepResult = await prepare(
-      viewname,
-      table,
-      fields,
-      {
-        columns,
-        layout,
-        fixed,
-        auto_save,
-      },
-      { req, res },
-      safeBody,
-      {
-        getRowQuery,
-        saveFileQuery,
-        saveFileFromContentsQuery,
-        optionsQuery,
-        getRowByIdQuery,
-      },
-      remote
-    );
-    const view = View.findOne({ name: viewname });
-    const pagetitle = { title: viewname, no_menu: view?.attributes?.no_menu };
-    if (prepResult) {
-      let { form, row, pk, id } = prepResult;
-      const cancel = safeBody._cancel;
-      const originalID = id;
-      let trigger_return;
-      let ins_upd_error;
-      if (!cancel) {
-        getState().log(
-          6,
-          `Edit POST ready to insert/update into ${
-            table.name
-          } Row=${JSON.stringify(row)} ID=${id} Ajax=${!!req.xhr}`
-        );
+  const safeBody = prepSafeBody(body, columns);
+  const table = Table.findOne({ id: table_id });
+  const fields = table.getFields();
+  const prepResult = await prepare(
+    viewname,
+    table,
+    fields,
+    {
+      columns,
+      layout,
+      fixed,
+      auto_save,
+    },
+    { req, res },
+    safeBody,
+    {
+      getRowQuery,
+      saveFileQuery,
+      saveFileFromContentsQuery,
+      optionsQuery,
+      getRowByIdQuery,
+    },
+    remote
+  );
+  const view = View.findOne({ name: viewname });
+  const pagetitle = { title: viewname, no_menu: view?.attributes?.no_menu };
+  if (prepResult) {
+    let { form, row, pk, id } = prepResult;
+    const cancel = safeBody._cancel;
+    const originalID = id;
+    let trigger_return;
+    let ins_upd_error;
+    if (!cancel) {
+      getState().log(
+        6,
+        `Edit POST ready to insert/update into ${
+          table.name
+        } Row=${JSON.stringify(row)} ID=${id} Ajax=${!!req.xhr}`
+      );
+      await db.withTransaction(async (rollback) => {
         if (typeof id === "undefined") {
           const ins_res = await tryInsertQuery(row);
           if (ins_res.success) {
@@ -1278,222 +1278,220 @@ const runPost = async (
             trigger_return = upd_res.trigger_return;
           }
         }
-        if (ins_upd_error) {
-          getState().log(
-            6,
-            `Insert or update failure ${JSON.stringify(ins_upd_error)}`
-          );
-          res.status(422);
-          if (req.xhr) {
-            res.json({ error: ins_upd_error });
-          } else {
-            await form.fill_fkey_options(false, optionsQuery, req.user);
-            req.flash("error", text_attr(ins_upd_error));
-            res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
-          }
-          return;
-        }
-        //Edit-in-edit
-        for (const field of form.fields.filter((f) => f.isRepeat)) {
-          const view_select = parse_view_select(
-            field.metadata.view,
-            field.metadata.relation_path
-          );
-          const order_field = field.metadata.order_field;
-          const childView = View.findOne({ name: view_select.viewname });
-          if (!childView)
-            throw new InvalidConfiguration(
-              `Cannot find embedded view: ${view_select.viewname}`
-            );
-          if (
-            field.metadata.relation_path &&
-            view_select.type === "RelationPath"
-          ) {
-            const targetTbl = Table.findOne({ id: childView.table_id });
-            const relation = new Relation(
-              field.metadata.relation_path,
-              targetTbl.name,
-              displayType(await childView.get_state_fields())
-            );
-            if (relation.type === RelationType.CHILD_LIST)
-              updateViewSelect(view_select);
-          }
-
-          const childTable = Table.findOne({ id: field.metadata?.table_id });
-          const submitted_row_ids = new Set(
-            (form.values[field.name] || []).map(
-              (srow) => `${srow[childTable.pk_name]}`
-            )
-          );
-          const childFields = new Set(childTable.fields.map((f) => f.name));
-          let repeatIx = 0;
-          for (const [childRow, row_ix] of form.values[field.name].map(
-            (r, ix) => [r, ix]
-          )) {
-            // set fixed here
-            childRow[field.metadata?.relation] = id;
-            for (const [k, v] of Object.entries(
-              childView?.configuration?.fixed || {}
-            )) {
-              if (
-                typeof childRow[k] === "undefined" &&
-                !k.startsWith("_block_") &&
-                childFields.has(k) &&
-                (v || v === 0) //no nulls or empty string, but allow 0
-              )
-                childRow[k] = v;
-            }
-            if (order_field && !childRow[order_field])
-              childRow[order_field] = row_ix;
-            for (const file_field of field.fields.filter(
-              (f) => f.type === "File"
-            )) {
-              const key = `${file_field.name}_${repeatIx}`;
-              if (req.files?.[key]) {
-                const file = await File.from_req_files(
-                  req.files[key],
-                  req.user ? req.user.id : null,
-                  (file_field.attributes &&
-                    +file_field.attributes.min_role_read) ||
-                    1,
-                  file_field?.attributes?.folder
-                );
-                childRow[file_field.name] = file.path_to_serve;
-              }
-            }
-            getState().log(
-              6,
-              `Edit POST ready to insert/update Child row into ${
-                childTable.name
-              } Row=${JSON.stringify(childRow)} ID=${
-                childRow[childTable.pk_name]
-              } Ajax=${!!req.xhr}`
-            );
-            if (childRow[childTable.pk_name]) {
-              const upd_res = await childTable.tryUpdateRow(
-                childRow,
-                childRow[childTable.pk_name],
-                req.user || { role_id: 100 }
-              );
-              if (upd_res.error) {
-                getState().log(
-                  6,
-                  `Update child row failure ${JSON.stringify(upd_res)}`
-                );
-                req.flash("error", text_attr(upd_res.error));
-                res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
-                return;
-              }
-            } else {
-              const ins_res = await childTable.tryInsertRow(
-                childRow,
-                req.user || { role_id: 100 }
-              );
-              if (ins_res.error) {
-                getState().log(
-                  6,
-                  `Insert child row failure ${JSON.stringify(ins_res)}`
-                );
-                req.flash("error", text_attr(ins_res.error));
-                res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
-                return;
-              } else if (ins_res.success) {
-                submitted_row_ids.add(`${ins_res.success}`);
-              }
-            }
-            repeatIx += 1;
-          }
-
-          //need to delete any rows that are missing
-          if (originalID && field.metadata) {
-            const childRows = getRowQuery
-              ? await getRowQuery(
-                  field.metadata.table_id,
-                  view_select,
-                  originalID
-                )
-              : await childTable.getRows({
-                  [view_select.field_name]: originalID,
-                });
-            for (const db_child_row of childRows) {
-              if (
-                !submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)
-              ) {
-                await childTable.deleteRows(
-                  {
-                    [childTable.pk_name]: db_child_row[childTable.pk_name],
-                  },
-                  req.user || { role_id: 100 }
-                );
-              }
-            }
-          }
-        }
-      }
-      trigger_return = trigger_return || {};
-      if (trigger_return.notify && trigger_return.details)
-        req.flash(
-          "success",
-          div(
-            { class: "d-inline" },
-            trigger_return.notify,
-            button(
-              {
-                class: "btn btn-sm btn-outline-secondary btn-xs",
-                type: "button",
-                "data-bs-toggle": "collapse",
-                "data-bs-target": "#notifyDetails",
-                "aria-expanded": "false",
-                "aria-controls": "notifyDetails",
-              },
-              i({ class: "fas fa-plus" })
-            ),
-            div(
-              { class: "collapse", id: "notifyDetails" },
-              pre(trigger_return.details)
-            )
-          )
+        if (ins_upd_error) await rollback();
+      });
+      if (ins_upd_error) {
+        getState().log(
+          6,
+          `Insert or update failure ${JSON.stringify(ins_upd_error)}`
         );
-      else if (trigger_return.notify)
-        req.flash("success", trigger_return.notify);
-      if (trigger_return.error) req.flash("danger", trigger_return.error);
-      if (trigger_return.goto) {
-        res.redirect(trigger_return.goto);
+        res.status(422);
+        if (req.xhr) {
+          res.json({ error: ins_upd_error });
+        } else {
+          await form.fill_fkey_options(false, optionsQuery, req.user);
+          req.flash("error", text_attr(ins_upd_error));
+          res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
+        }
         return;
       }
+      //Edit-in-edit
+      for (const field of form.fields.filter((f) => f.isRepeat)) {
+        const view_select = parse_view_select(
+          field.metadata.view,
+          field.metadata.relation_path
+        );
+        const order_field = field.metadata.order_field;
+        const childView = View.findOne({ name: view_select.viewname });
+        if (!childView)
+          throw new InvalidConfiguration(
+            `Cannot find embedded view: ${view_select.viewname}`
+          );
+        if (
+          field.metadata.relation_path &&
+          view_select.type === "RelationPath"
+        ) {
+          const targetTbl = Table.findOne({ id: childView.table_id });
+          const relation = new Relation(
+            field.metadata.relation_path,
+            targetTbl.name,
+            displayType(await childView.get_state_fields())
+          );
+          if (relation.type === RelationType.CHILD_LIST)
+            updateViewSelect(view_select);
+        }
 
-      /*if (req.xhr && !originalID && !req.smr) {
+        const childTable = Table.findOne({ id: field.metadata?.table_id });
+        const submitted_row_ids = new Set(
+          (form.values[field.name] || []).map(
+            (srow) => `${srow[childTable.pk_name]}`
+          )
+        );
+        const childFields = new Set(childTable.fields.map((f) => f.name));
+        let repeatIx = 0;
+        for (const [childRow, row_ix] of form.values[field.name].map(
+          (r, ix) => [r, ix]
+        )) {
+          // set fixed here
+          childRow[field.metadata?.relation] = id;
+          for (const [k, v] of Object.entries(
+            childView?.configuration?.fixed || {}
+          )) {
+            if (
+              typeof childRow[k] === "undefined" &&
+              !k.startsWith("_block_") &&
+              childFields.has(k) &&
+              (v || v === 0) //no nulls or empty string, but allow 0
+            )
+              childRow[k] = v;
+          }
+          if (order_field && !childRow[order_field])
+            childRow[order_field] = row_ix;
+          for (const file_field of field.fields.filter(
+            (f) => f.type === "File"
+          )) {
+            const key = `${file_field.name}_${repeatIx}`;
+            if (req.files?.[key]) {
+              const file = await File.from_req_files(
+                req.files[key],
+                req.user ? req.user.id : null,
+                (file_field.attributes &&
+                  +file_field.attributes.min_role_read) ||
+                  1,
+                file_field?.attributes?.folder
+              );
+              childRow[file_field.name] = file.path_to_serve;
+            }
+          }
+          getState().log(
+            6,
+            `Edit POST ready to insert/update Child row into ${
+              childTable.name
+            } Row=${JSON.stringify(childRow)} ID=${
+              childRow[childTable.pk_name]
+            } Ajax=${!!req.xhr}`
+          );
+          if (childRow[childTable.pk_name]) {
+            const upd_res = await childTable.tryUpdateRow(
+              childRow,
+              childRow[childTable.pk_name],
+              req.user || { role_id: 100 }
+            );
+            if (upd_res.error) {
+              getState().log(
+                6,
+                `Update child row failure ${JSON.stringify(upd_res)}`
+              );
+              req.flash("error", text_attr(upd_res.error));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
+              return;
+            }
+          } else {
+            const ins_res = await childTable.tryInsertRow(
+              childRow,
+              req.user || { role_id: 100 }
+            );
+            if (ins_res.error) {
+              getState().log(
+                6,
+                `Insert child row failure ${JSON.stringify(ins_res)}`
+              );
+              req.flash("error", text_attr(ins_res.error));
+              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
+              return;
+            } else if (ins_res.success) {
+              submitted_row_ids.add(`${ins_res.success}`);
+            }
+          }
+          repeatIx += 1;
+        }
+
+        //need to delete any rows that are missing
+        if (originalID && field.metadata) {
+          const childRows = getRowQuery
+            ? await getRowQuery(
+                field.metadata.table_id,
+                view_select,
+                originalID
+              )
+            : await childTable.getRows({
+                [view_select.field_name]: originalID,
+              });
+          for (const db_child_row of childRows) {
+            if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)) {
+              await childTable.deleteRows(
+                {
+                  [childTable.pk_name]: db_child_row[childTable.pk_name],
+                },
+                req.user || { role_id: 100 }
+              );
+            }
+          }
+        }
+      }
+    }
+    trigger_return = trigger_return || {};
+    if (trigger_return.notify && trigger_return.details)
+      req.flash(
+        "success",
+        div(
+          { class: "d-inline" },
+          trigger_return.notify,
+          button(
+            {
+              class: "btn btn-sm btn-outline-secondary btn-xs",
+              type: "button",
+              "data-bs-toggle": "collapse",
+              "data-bs-target": "#notifyDetails",
+              "aria-expanded": "false",
+              "aria-controls": "notifyDetails",
+            },
+            i({ class: "fas fa-plus" })
+          ),
+          div(
+            { class: "collapse", id: "notifyDetails" },
+            pre(trigger_return.details)
+          )
+        )
+      );
+    else if (trigger_return.notify) req.flash("success", trigger_return.notify);
+    if (trigger_return.error) req.flash("danger", trigger_return.error);
+    if (trigger_return.goto) {
+      res.redirect(trigger_return.goto);
+      return;
+    }
+
+    /*if (req.xhr && !originalID && !req.smr) {
       res.json({ id, view_when_done, ...trigger_return });
       return;
     } else if (req.xhr && !req.smr) {
       res.json({ view_when_done, ...trigger_return });
       return;
     }*/
-      await whenDone(
-        viewname,
-        table_id,
-        fields,
-        pk,
-        {
-          view_when_done,
-          formula_destinations,
-          destination_type,
-          dest_url_formula,
-          page_when_done,
-          page_group_when_done,
-          redirect,
-        },
-        req,
-        res,
-        safeBody,
-        row,
-        !originalID ? { id, ...trigger_return } : trigger_return,
-        true,
-        originalID,
-        table
-      );
-    }
-  });
+    await whenDone(
+      viewname,
+      table_id,
+      fields,
+      pk,
+      {
+        view_when_done,
+        formula_destinations,
+        destination_type,
+        dest_url_formula,
+        page_when_done,
+        page_group_when_done,
+        redirect,
+      },
+      req,
+      res,
+      safeBody,
+      row,
+      !originalID ? { id, ...trigger_return } : trigger_return,
+      true,
+      originalID,
+      table
+    );
+  }
 };
 
 const doAuthPost = async ({ body, table_id, req }) => {

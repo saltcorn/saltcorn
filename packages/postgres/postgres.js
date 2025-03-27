@@ -543,12 +543,17 @@ const listScTables = async () => {
 */
 const withTransaction = async (f, onError) => {
   await query("BEGIN;");
+  let aborted = false;
+  const rollback = async () => {
+    aborted = true;
+    await query("ROLLBACK;");
+  };
   try {
-    const result = await f();
+    const result = await f(rollback);
     await query("COMMIT;");
     return result;
   } catch (error) {
-    await query("ROLLBACK;");
+    if (!aborted) await query("ROLLBACK;");
     if (onError) return onError(error);
     else throw error;
   }
