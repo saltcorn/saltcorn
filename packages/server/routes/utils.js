@@ -213,14 +213,18 @@ const setTenant = (req, res, next) => {
               1000 * 60 * 5
             );
             res.on("finish", function () {
-              if (!released) client.release();
-              clearTimeout(timeoutID);
-              released = true;
+              if (!released) {
+                client.release();
+                clearTimeout(timeoutID);
+                released = true;
+              }
             });
             res.on("close", function () {
-              if (!released) client.release();
-              clearTimeout(timeoutID);
-              released = true;
+              if (!released) {
+                client.release();
+                clearTimeout(timeoutID);
+                released = true;
+              }
             });
             f(client);
           });
