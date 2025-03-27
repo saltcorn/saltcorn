@@ -7,7 +7,7 @@ jobs:
   docker-light:
     runs-on: ubuntu-latest
     env:
-      MODE: ${{ github.ref == 'refs/heads/master' && '' || '-ci' }}
+      MODE: ${{ github.ref == 'refs/heads/master' && '-test' || '-ci' }}
       DEBUG: ${{github.ref}}
       SALTCORN_VERSION: "1.1.3"
     strategy:
