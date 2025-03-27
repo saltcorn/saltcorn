@@ -1,0 +1,97 @@
+replicaCount: 1
+
+image:
+  repository: protonalialol/saltcorn
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+env:
+  - name: NODE_OPTIONS
+    value: --max-old-space-size=512
+  - name: SALTCORN_SESSION_SECRET
+    value: topsecret
+  #- name: SQLITE_FILEPATH
+  #  value: /mnt/db/sqlite.db
+  - name: PGUSER
+    value: admin
+  - name: PGHOST
+    value: postgresql.postgresql.svc.cluster.local
+  - name: PGPORT
+    value: "5432"
+  - name: PGPASSWORD
+    value: admin
+  - name: PGDATABASE
+    value: saltcorn
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: saltcorn-18.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: saltcorn-tls
+      hosts:
+        - saltcorn.local
+
+resources:
+  limits:
+    cpu: 1
+    memory: 2048Mi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+volumes: []
+
+volumeMounts: []
+
+persistence:
+  size: 1Gi
+  storageClassName: "local-path"
+
+command:
+  - "sh"
+  - "-c"
+  - "saltcorn serve -v"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
