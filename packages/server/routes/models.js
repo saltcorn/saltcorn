@@ -93,6 +93,7 @@ router.post(
       res.sendWrap(req.__(`New model`), renderForm(form, req.csrfToken()));
     } else {
       const model = await Model.create({ ...form.values, table_id: table.id });
+      await getState().refresh_tables();
       if (model.templateObj.configuration_workflow)
         res.redirect(`/models/config/${model.id}`);
       else res.redirect(`/models/show/${model.id}`);
@@ -157,7 +158,7 @@ const get_model_workflow = (model, req) => {
   workflow.onDone = async (ctx) => {
     const { id, ...configuration } = await oldOnDone(ctx);
     await model.update({ configuration });
-
+    await getState().refresh_tables();
     return {
       redirect: `/models/show/${model.id}`,
       flash: ["success", `Model ${this.name || ""} saved`],
@@ -340,6 +341,7 @@ router.post(
     const { id } = req.params;
     const model = await Model.findOne({ id });
     await model.delete();
+    await getState().refresh_tables();
     req.flash("success", req.__("Model %s deleted", model.name));
     res.redirect(`/table/${model.table_id}`);
   })
@@ -451,7 +453,7 @@ const encode = (s) =>
         ">": "&gt;",
         "'": "&#39;",
         '"': "&quot;",
-      }[tag])
+      })[tag]
   );
 
 router.get(

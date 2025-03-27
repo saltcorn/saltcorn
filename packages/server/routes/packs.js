@@ -514,7 +514,10 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
-    await uninstall_pack(pack.pack, name);
+    await db.withTransaction(async () => {
+      await uninstall_pack(pack.pack, name);
+    });
+    await getState().refresh();
 
     req.flash("success", req.__(`Pack %s uninstalled`, text(name)));
 
