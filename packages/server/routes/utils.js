@@ -204,8 +204,14 @@ const setTenant = (req, res, next) => {
     req.method === "POST" && !db.isSQLite
       ? (f) => {
           db.getClient().then((client) => {
+            let released = false;
             res.on("finish", function () {
-              client.release();
+              if (!released) client.release();
+              released = true;
+            });
+            res.on("close", function () {
+              if (!released) client.release();
+              released = true;
             });
             f(client);
           });
