@@ -545,6 +545,9 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
       }
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
+
+      // for react-view previews
+      document.dispatchEvent(new Event("preview-loaded"));
     })
     .catch((e) => {
       console.log("Unable to fetch the preview:");
