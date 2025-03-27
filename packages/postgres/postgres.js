@@ -542,20 +542,28 @@ const listScTables = async () => {
 
 */
 const withTransaction = async (f, onError) => {
-  await query("BEGIN;");
+  const client = await getClient();
+  const reqCon = getRequestContext();
+  console.log("rcon", reqCon);
+  
+  reqCon.client = client;
+  await client.query("BEGIN;");
   let aborted = false;
   const rollback = async () => {
     aborted = true;
-    await query("ROLLBACK;");
+    await client.query("ROLLBACK;");
   };
   try {
     const result = await f(rollback);
-    if (!aborted) await query("COMMIT;");
+    if (!aborted) await client.query("COMMIT;");
     return result;
   } catch (error) {
-    if (!aborted) await query("ROLLBACK;");
+    if (!aborted) await client.query("ROLLBACK;");
     if (onError) return onError(error);
     else throw error;
+  } finally {
+    reqCon.client = null;
+    client.release();
   }
 };
 
