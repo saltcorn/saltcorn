@@ -3,8 +3,16 @@ ARG SALTCORN_VERSION=1.1.3
 
 FROM node:${NODE_BASE_IMAGE}
 
+ENV HOME=/home/node
 ENV NODE_ENV="production"
 ENV SALTCORN_DISABLE_UPGRADE="true"
+
+RUN mkdir -p ${HOME} && \
+    chown -R 1001:0 ${HOME} && \
+    chmod -R g+w ${HOME} && \
+    chmod -R g=u ${HOME}
+
+WORKDIR ${HOME}
 
 RUN npm install -g @saltcorn/cli@${SALTCORN_VERSION} --omit=dev
 
