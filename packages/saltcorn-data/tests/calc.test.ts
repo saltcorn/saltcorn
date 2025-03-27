@@ -385,8 +385,8 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
       table: patients,
     });
-    // TODO not sure why this is needed on SQLite?
-    if (db.isSQLite) await recalculate_for_stored(patients);
+    // need this to avoid race condition with next test
+    await recalculate_for_stored(patients);
   });
   it("has array content", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -701,7 +701,6 @@ describe("Sum-where aggregations in stored calculated fields", () => {
     expect(hrow5?.sum_of_pages2).toBe(25);
     await books.deleteRows({ id: bookid });
     await books.deleteRows({ id: bid2 });
-
   });
 });
 

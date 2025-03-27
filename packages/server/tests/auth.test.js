@@ -148,7 +148,7 @@ describe("AuthTest forgot password", () => {
     const u = await User.findOne({ email: "staff1@foo.com" });
     await getState().setConfig("base_url", "/");
 
-    const link = await get_reset_link(u, {});
+    const { link } = await get_reset_link(u, {});
 
     i18n.configure({
       locales: ["en"],

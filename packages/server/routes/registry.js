@@ -371,7 +371,9 @@ router.post(
         pack.config[ename] = entVal;
         break;
     }
-    await install_pack(pack);
+    await db.withTransaction(async () => {
+      await install_pack(pack);
+    });
     res.redirect(
       `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
         ename

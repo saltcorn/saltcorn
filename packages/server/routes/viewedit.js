@@ -573,6 +573,7 @@ router.post(
           //console.log(v);
           await View.create(v);
         }
+        await getState().refresh_views();
         Trigger.emitEvent("AppChange", `View ${v.name}`, req.user, {
           entity_type: "View",
           entity_name: v.name,
@@ -681,7 +682,13 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
       },
       wrap(renderBuilder(wfres.renderBuilder, req.csrfToken()), true)
     );
-  } else res.redirect(wfres.redirect);
+  } else {
+    getState()
+      .refresh_views()
+      .then(() => {
+        res.redirect(wfres.redirect);
+      });
+  }
 };
 
 /**
@@ -770,6 +777,7 @@ router.post(
     if (view.table_id) table = Table.findOne({ id: view.table_id });
     if (view.exttable_name) table = Table.findOne({ name: view.exttable_name });
     respondWorkflow(view, configFlow, wfres, req, res, table);
+    await getState().refresh_views();
   })
 );
 
@@ -835,6 +843,7 @@ router.post(
         ? `/${req.query.on_done_redirect}`
         : "/viewedit";
     res.redirect(redirectTarget);
+    await getState().refresh_views();
   })
 );
 
@@ -849,7 +858,10 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    await View.delete({ id });
+    await db.withTransaction(async () => {
+      await View.delete({ id });
+    });
+    await getState().refresh_views();
     req.flash("success", req.__("View deleted"));
     let redirectTarget =
       req.query.on_done_redirect &&
@@ -876,6 +888,7 @@ router.post(
       const exview = await View.findOne({ id });
       let newcfg = { ...exview.configuration, ...(req.body || {}) };
       await View.update({ configuration: newcfg }, +id);
+      await getState().refresh_views();
       Trigger.emitEvent("AppChange", `View ${exview.name}`, req.user, {
         entity_type: "View",
         entity_name: exview.name,
@@ -918,6 +931,7 @@ router.post(
             };
           else newcfg = { ...view.configuration, ...step.renderForm.values };
           await View.update({ configuration: newcfg }, view.id);
+          await getState().refresh_views();
           Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
             entity_type: "View",
             entity_name: view.name,
@@ -948,6 +962,7 @@ router.post(
     const { id } = req.params;
     const role = (req.body || {}).role;
     await View.update({ min_role: role }, +id);
+    await getState().refresh_views();
     const view = await View.findOne({ id });
     Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
       entity_type: "View",
@@ -976,6 +991,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const view = await View.create(req.body || {});
+    await getState().refresh_views();
     res.json({ view });
   })
 );

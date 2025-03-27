@@ -525,6 +525,8 @@ const install_pack = async (
       }
     }
   }
+  await getState().refresh_tables(true);
+
   for (const tableSpec of pack.tables) {
     const _table = Table.findOne({ name: tableSpec.name });
     if (!_table) throw new Error(`Unable to find table '${tableSpec.name}'`);
@@ -581,6 +583,8 @@ const install_pack = async (
       await _table.update({ ownership_field_id: owner_field.id });
     }
   }
+  await getState().refresh_tables(true);
+
   for (const viewSpec of pack.views) {
     viewSpec.min_role = old_to_new_role(viewSpec.min_role);
     const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
@@ -603,6 +607,8 @@ const install_pack = async (
         min_role: viewSpec.min_role || 100,
       });
   }
+  await getState().refresh_views(true);
+
   for (const triggerSpec of pack.triggers || []) {
     triggerSpec.min_role = old_to_new_role(triggerSpec.min_role);
     let id;
@@ -624,6 +630,7 @@ const install_pack = async (
       }
     }
   }
+  await getState().refresh_triggers(true);
 
   for (const pageFullSpec of pack.pages || []) {
     pageFullSpec.min_role = old_to_new_role(pageFullSpec.min_role);

@@ -605,20 +605,22 @@ router.post(
           else if (item.subitems) search(item.subitems);
         });
     search(menu_items);
-    if (menu_item)
+    if (menu_item) {
       try {
-        const result = await run_action_column({
-          col: menu_item,
-          referrer: req.get("Referrer"),
-          req,
-          res,
+        const result = await db.withTransaction(async () => {
+          return await run_action_column({
+            col: menu_item,
+            referrer: req.get("Referrer"),
+            req,
+            res,
+          });
         });
         res.json({ success: "ok", ...(result || {}) });
       } catch (e) {
         console.error(e);
         res.status(400).json({ error: e.message || e });
       }
-    else res.status(404).json({ error: "Action not found" });
+    } else res.status(404).json({ error: "Action not found" });
   })
 );
 
@@ -656,7 +658,7 @@ router.get(
         break;
       case "json":
         res.json(icons);
-
+        break;
       default:
         res.send("");
         break;

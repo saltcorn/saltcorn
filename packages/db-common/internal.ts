@@ -39,6 +39,10 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   else return s;
 };
 
+export type DatabaseClient = {
+  query: (sql: String, parameters?: any[]) => Promise<{ rows: Row[] }>;
+};
+
 type PlaceHolderStack = {
   push: (x: Value) => string; //push value, return placeholder
   is_sqlite: boolean;
@@ -680,6 +684,7 @@ export type SelectOptions = {
   has_sync_info?: boolean;
   description?: string;
   recursive?: boolean; // for File.find()
+  client?: DatabaseClient;
 };
 export const orderByIsObject = (
   object: any

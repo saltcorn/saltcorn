@@ -304,60 +304,56 @@ const fieldFlow = (req) =>
         fldRow.required = false;
       }
       const table = Table.findOne({ id: table_id });
-      if (context.id) {
-        const field = await Field.findOne({ id: context.id });
-        try {
-          if (fldRow.label && field.label != fldRow.label) {
-            fldRow.name = Field.labelToName(fldRow.label);
+      try {
+        await db.withTransaction(async () => {
+          if (context.id) {
+            const field = await Field.findOne({ id: context.id });
+
+            if (fldRow.label && field.label != fldRow.label) {
+              fldRow.name = Field.labelToName(fldRow.label);
+            }
+
+            await field.update(fldRow);
+            Trigger.emitEvent(
+              "AppChange",
+              `Field ${fldRow.name} on table ${table?.name}`,
+              req.user,
+              {
+                entity_type: "Field",
+                entity_name: fldRow.name || fldRow.label,
+              }
+            );
+          } else {
+            await Field.create(fldRow);
+            Trigger.emitEvent(
+              "AppChange",
+              `Field ${fldRow.name} on table ${table?.name}`,
+              req.user,
+              {
+                entity_type: "Field",
+                entity_name: fldRow.name || fldRow.label,
+              }
+            );
           }
+        });
+        await getState().refresh_tables();
 
-          await field.update(fldRow);
-          Trigger.emitEvent(
-            "AppChange",
-            `Field ${fldRow.name} on table ${table?.name}`,
-            req.user,
-            {
-              entity_type: "Field",
-              entity_name: fldRow.name || fldRow.label,
-            }
-          );
-        } catch (e) {
-          console.error(e);
-          return {
-            redirect: `/table/${context.table_id}`,
-            flash: ["error", e.message],
-          };
-        }
-      } else {
-        try {
-          await Field.create(fldRow);
-          Trigger.emitEvent(
-            "AppChange",
-            `Field ${fldRow.name} on table ${table?.name}`,
-            req.user,
-            {
-              entity_type: "Field",
-              entity_name: fldRow.name || fldRow.label,
-            }
-          );
-        } catch (e) {
-          console.error(e);
-          return {
-            redirect: `/table/${context.table_id}`,
-            flash: ["error", e.message],
-          };
-        }
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: [
+            "success",
+            context.id
+              ? req.__("Field %s saved", label)
+              : req.__("Field %s created", label),
+          ],
+        };
+      } catch (e) {
+        console.error(e);
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: ["error", e.message],
+        };
       }
-
-      return {
-        redirect: `/table/${context.table_id}`,
-        flash: [
-          "success",
-          context.id
-            ? req.__("Field %s saved", label)
-            : req.__("Field %s created", label),
-        ],
-      };
     },
     steps: [
       {
@@ -897,8 +893,11 @@ router.post(
       return;
     }
     const table_id = f.table_id;
+    await db.withTransaction(async () => {
+      await f.delete();
+    });
+    await getState().refresh_tables();
 
-    await f.delete();
     req.flash("success", req.__(`Field %s deleted`, f.label));
     res.redirect(`/table/${table_id}`);
   })
@@ -1514,7 +1513,9 @@ router.post(
     let val = field.type?.read
       ? field.type?.read(req.body[field_name])
       : req.body[field_name];
-    await table.updateRow({ [field_name]: val }, pk, req.user);
+    await db.withTransaction(async () => {
+      await table.updateRow({ [field_name]: val }, pk, req.user);
+    });
     let fv;
     if (field.is_fkey) {
       if (join_field) {

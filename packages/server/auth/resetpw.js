@@ -96,7 +96,7 @@ ${final ? `<br />${final}<br />` : ""}
  * @returns {Promise<void>}
  */
 const send_reset_email = async (user, req, options = {}) => {
-  const link = await get_reset_link(user, req);
+  const { link, token } = await get_reset_link(user, req);
   const transporter = getMailTransport();
   const reset_password_email_view_name = getState().getConfig(
     "reset_password_email_view",
@@ -110,6 +110,7 @@ const send_reset_email = async (user, req, options = {}) => {
     if (reset_password_email_view) {
       const html = await viewToEmailHtml(reset_password_email_view, {
         id: user.id,
+        _unhashed_reset_password_token: token,
       });
       email = {
         from: getState().getConfig("email_from"),
@@ -128,14 +129,16 @@ const send_reset_email = async (user, req, options = {}) => {
 /**
  * @param {object} user
  * @param {object} req
- * @returns {Promise<string>}
  */
 const get_reset_link = async (user, req) => {
   const token = await user.getNewResetToken();
   const base = get_base_url(req);
-  return `${base}auth/reset?token=${token}&email=${encodeURIComponent(
-    user.email
-  )}`;
+  return {
+    link: `${base}auth/reset?token=${token}&email=${encodeURIComponent(
+      user.email
+    )}`,
+    token,
+  };
 };
 
 module.exports = { send_reset_email, get_reset_link, generate_email };
