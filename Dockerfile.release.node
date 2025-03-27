@@ -25,12 +25,12 @@ RUN chown -R 1001:0 ${HOME}/node_modules && \
     chmod -R g+w ${HOME}/node_modules && \
     chmod -R g=u ${HOME}/node_modules
 
-RUN chown -R 1001:0 ${HOME}/node_modules && \
-    chmod -R g+w ${HOME}/node_modules && \
-    chmod -R g=u ${HOME}/node_modules
+RUN chown -R 1001:0 ${HOME}/.npm && \
+    chmod -R g+w ${HOME}/.npm && \
+    chmod -R g=u ${HOME}/.npm
 
-RUN chown -R 1001:0 ${HOME}/node_modules && \
-    chmod -R g+w ${HOME}/node_modules && \
-    chmod -R g=u ${HOME}/node_modules
+RUN chown -R 1001:0 ${HOME}/.cache && \
+    chmod -R g+w ${HOME}/.cache && \
+    chmod -R g=u ${HOME}/.cache
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
