@@ -205,12 +205,21 @@ const setTenant = (req, res, next) => {
       ? (f) => {
           db.getClient().then((client) => {
             let released = false;
+            const timeoutID = setTimeout(
+              () => {
+                if (!released) client.release();
+                released = true;
+              },
+              1000 * 60 * 5
+            );
             res.on("finish", function () {
               if (!released) client.release();
+              clearTimeout(timeoutID);
               released = true;
             });
             res.on("close", function () {
               if (!released) client.release();
+              clearTimeout(timeoutID);
               released = true;
             });
             f(client);
