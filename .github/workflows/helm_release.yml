@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - helm-chart
 
 jobs:
   release:
@@ -24,6 +23,7 @@ jobs:
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.7.0
+        with:
+          skip_existing: true
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          skip_existing: true
