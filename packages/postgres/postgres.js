@@ -550,7 +550,7 @@ const withTransaction = async (f, onError) => {
   };
   try {
     const result = await f(rollback);
-    await query("COMMIT;");
+    if (!aborted) await query("COMMIT;");
     return result;
   } catch (error) {
     if (!aborted) await query("ROLLBACK;");

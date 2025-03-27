@@ -858,7 +858,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    await db.withTransaction(async (client) => {
+    await db.withTransaction(async () => {
       await View.delete({ id });
     });
     await getState().refresh_views();

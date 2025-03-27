@@ -780,7 +780,7 @@ router.post(
       entity_type: "Page",
       entity_name: page.name,
     });
-    await db.withTransaction(async (client) => {
+    await db.withTransaction(async () => {
       await page.delete();
     });
     await getState().refresh_pages();

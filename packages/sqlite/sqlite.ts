@@ -435,7 +435,7 @@ export const drop_index = async (
 export const slugify = (s: string): string =>
   s.toLowerCase().replace(/\s+/g, "-");
 
-export const withTransaction = async (f:Function, onError: Function) => {
+export const withTransaction = async (f: Function, onError: Function) => {
   await query("BEGIN;");
   let aborted = false;
   const rollback = async () => {
@@ -444,7 +444,7 @@ export const withTransaction = async (f:Function, onError: Function) => {
   };
   try {
     const result = await f(rollback);
-    await query("COMMIT;");
+    if (!aborted) await query("COMMIT;");
     return result;
   } catch (error) {
     if (!aborted) await query("ROLLBACK;");
