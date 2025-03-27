@@ -259,11 +259,12 @@ const render = ({
         bs_bordered,
         bs_borderless,
         bs_wauto,
+        customClass,
       } = segment;
       const tabHtml = table(
         {
           class: !bs_style
-            ? []
+            ? customClass
             : [
                 "table",
                 bs_small && "table-sm",
@@ -271,6 +272,7 @@ const render = ({
                 bs_bordered && "table-bordered",
                 bs_borderless && "table-borderless",
                 bs_wauto && "w-auto",
+                customClass,
               ],
         },
         tbody(

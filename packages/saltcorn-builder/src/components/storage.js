@@ -314,6 +314,7 @@ const layoutToNodes = (
           rows={segment.rows || 2}
           columns={segment.columns || 2}
           bs_style={segment.bs_style || false}
+          customClass={segment.customClass}
           bs_small={segment.bs_small || false}
           bs_striped={segment.bs_striped || false}
           bs_bordered={segment.bs_bordered || false}
@@ -604,6 +605,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         columns,
         contents,
         bs_style: node.props.bs_style,
+        customClass: node.props.customClass,
         bs_small: node.props.bs_small,
         bs_striped: node.props.bs_striped,
         bs_bordered: node.props.bs_bordered,
