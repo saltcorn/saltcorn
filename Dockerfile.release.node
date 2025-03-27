@@ -13,7 +13,7 @@ RUN mkdir -p ${HOME} && \
     chmod -R g=u ${HOME}
 
 RUN npm install -g @saltcorn/cli@${SALTCORN_VERSION} --omit=dev
-RUN npm install @types/passport-oauth2
+RUN npm install -g @types/passport-oauth2 --legacy-peer-deps
 
 RUN npm cache clean --force
 
