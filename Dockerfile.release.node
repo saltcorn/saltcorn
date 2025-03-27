@@ -12,15 +12,15 @@ RUN mkdir -p ${HOME} && \
     chmod -R g+w ${HOME} && \
     chmod -R g=u ${HOME}
 
-RUN npm install -g @saltcorn/cli@${SALTCORN_VERSION} --omit=dev
-RUN npm install -g @types/passport-oauth2 --legacy-peer-deps
+WORKDIR ${HOME}
 
-RUN npm cache clean --force
+RUN npm install @saltcorn/cli@${SALTCORN_VERSION} --omit=dev
+RUN npm install @types/passport-oauth2 --legacy-peer-deps
+
 
 RUN chown -R 1001:0 /usr/local/lib/node_modules && \
     chmod -R g+w /usr/local/lib/node_modules && \
     chmod -R g=u /usr/local/lib/node_modules
 
-WORKDIR ${HOME}
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
