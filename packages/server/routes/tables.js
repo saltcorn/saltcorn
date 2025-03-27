@@ -373,6 +373,7 @@ router.post(
       .map((t) => t.table_name);
     const pack = await discover_tables(tableNames);
     await implement_discovery(pack);
+    await getState().refresh_tables();
     req.flash(
       "success",
       req.__("Discovered tables: %s", tableNames.join(", "))
@@ -469,6 +470,7 @@ router.post(
         req.flash("error", parse_res.error);
         res.redirect(`/table/create-from-csv`);
       } else {
+        await getState().refresh_tables();
         Trigger.emitEvent(
           "AppChange",
           `Table ${parse_res.table.name}`,
@@ -1247,11 +1249,15 @@ router.post(
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
-        const table = await Table.create(name, rest);
-        Trigger.emitEvent("AppChange", `Table ${name}`, req.user, {
-          entity_type: "Table",
-          entity_name: name,
+        let table;
+        await db.withTransaction(async () => {
+          table = await Table.create(name, rest);
+          Trigger.emitEvent("AppChange", `Table ${name}`, req.user, {
+            entity_type: "Table",
+            entity_name: name,
+          });
         });
+        await getState().refresh_tables();
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }
@@ -1299,8 +1305,10 @@ router.post(
         rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
         rest.ownership_field_id = null;
       } else rest.ownership_formula = null;
-      await table.update(rest);
-
+      await db.withTransaction(async () => {
+        await table.update(rest);
+      });
+      await getState().refresh_tables();
       if (!req.xhr) {
         if (!old_versioned && rest.versioned)
           req.flash(
@@ -1344,16 +1352,22 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-    const views = await View.find(
-      t.id ? { table_id: t.id } : { exttable_name: t.name }
-    );
-    for (const view of views) await view.delete();
-    if (t.id) {
-      const triggers = await Trigger.find({ table_id: t.id });
-      for (const trig of triggers) await trig.delete();
-    }
     try {
-      await t.delete();
+      await db.withTransaction(async () => {
+        const views = await View.find(
+          t.id ? { table_id: t.id } : { exttable_name: t.name }
+        );
+        for (const view of views) await view.delete();
+        if (t.id) {
+          const triggers = await Trigger.find({ table_id: t.id });
+          for (const trig of triggers) await trig.delete();
+        }
+
+        await t.delete();
+      });
+      await getState().refresh_tables();
+      await getState().refresh_views();
+      await getState().refresh_triggers();
       req.flash("success", req.__(`Table %s deleted`, t.name));
       res.redirect(`/table`);
     } catch (err) {
@@ -1414,12 +1428,15 @@ router.post(
       }
     }
     try {
-      await t.delete();
-      req.flash("success", req.__(`Table %s deleted`, t.name));
-      Trigger.emitEvent("AppChange", `Table ${t.name} deleted`, req.user, {
-        entity_type: "Table",
-        entity_name: t.name,
+      await db.withTransaction(async () => {
+        await t.delete();
+        req.flash("success", req.__(`Table %s deleted`, t.name));
+        Trigger.emitEvent("AppChange", `Table ${t.name} deleted`, req.user, {
+          entity_type: "Table",
+          entity_name: t.name,
+        });
       });
+      await getState().refresh_tables();
       res.redirect(`/table`);
     } catch (err) {
       req.flash("error", err.message);
@@ -1444,7 +1461,10 @@ router.post(
       return;
     }
     try {
-      await t.delete(true);
+      await db.withTransaction(async () => {
+        await t.delete(true);
+      });
+      await getState().refresh_tables();
       req.flash(
         "success",
         req.__(`Table %s forgotten. You can now discover it.`, t.name)
@@ -1850,11 +1870,15 @@ router.post(
           .filter((f) => form.values[f]);
         configuration.errormsg = form.values.errormsg;
       } else configuration = form.values;
-      await TableConstraint.create({
-        table_id: table.id,
-        type,
-        configuration,
+      await db.withTransaction(async () => {
+        await TableConstraint.create({
+          table_id: table.id,
+          type,
+          configuration,
+        });
       });
+      await getState().refresh_tables();
+
       Trigger.emitEvent(
         "AppChange",
         `Constraint ${type} on table ${table?.name}`,
@@ -1943,8 +1967,12 @@ router.post(
     form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
-      await table.rename(form.values.name);
+      await db.withTransaction(async () => {
+        await table.rename(form.values.name);
+      });
+      await getState().refresh_tables();
     }
+
     res.redirect(`/table/${table.id}`);
   })
 );
@@ -1962,7 +1990,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const cons = await TableConstraint.findOne({ id });
-    await cons.delete();
+    await db.withTransaction(async () => {
+      await cons.delete();
+    });
+    await getState().refresh_tables();
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
 );
@@ -2216,10 +2247,12 @@ router.post(
     const table = Table.findOne({ name });
 
     try {
-      await table.deleteRows({}, req.user, true);
+      await db.withTransaction(async () => {
+        await table.deleteRows({}, req.user, true);
+      });
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
-      console.error(e)
+      console.error(e);
       req.flash("error", e.message);
     }
 
@@ -2382,6 +2415,7 @@ router.post(
     const workflow = get_provider_workflow(table, req);
     const wfres = await workflow.run(req.body || {}, req);
     respondWorkflow(table, workflow, wfres, req, res);
+    await getState().refresh_tables();
   })
 );
 
@@ -2397,7 +2431,10 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-    await table.repairCompositePrimary();
+    await db.withTransaction(async () => {
+      await table.repairCompositePrimary();
+    });
+    await getState().refresh_tables();
     res.redirect(`/table/${table.id}`);
   })
 );
@@ -2415,68 +2452,70 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-    const initial_view = async (table, viewtemplate) => {
-      const configuration = await initial_config_all_fields(
-        viewtemplate === "Edit"
-      )({ table_id: table.id });
-      //console.log(configuration);
-      const name = `${viewtemplate} ${table.name}`;
-      const view = await View.create({
-        name,
-        configuration,
-        viewtemplate,
-        table_id: table.id,
-        min_role: 100,
-      });
-      return view;
-    };
-    const list = await initial_view(table, "List");
-    const edit = await initial_view(table, "Edit");
-    const show = await initial_view(table, "Show");
-    await View.update(
-      {
-        configuration: {
-          ...list.configuration,
-          columns: [
-            ...list.configuration.columns,
-            {
-              type: "ViewLink",
-              view: `Own:Show ${table.name}`,
-              view_name: `Show ${table.name}`,
-              link_style: "",
-              view_label: "Show",
-              header_label: "Show",
-            },
-            {
-              type: "ViewLink",
-              view: `Own:Edit ${table.name}`,
-              view_name: `Edit ${table.name}`,
-              link_style: "",
-              view_label: "Edit",
-              header_label: "Edit",
-            },
-            {
-              type: "Action",
-              action_name: "Delete",
-              action_style: "btn-primary",
-            },
-          ],
-          view_to_create: `Edit ${table.name}`,
+    await db.withTransaction(async () => {
+      const initial_view = async (table, viewtemplate) => {
+        const configuration = await initial_config_all_fields(
+          viewtemplate === "Edit"
+        )({ table_id: table.id });
+        //console.log(configuration);
+        const name = `${viewtemplate} ${table.name}`;
+        const view = await View.create({
+          name,
+          configuration,
+          viewtemplate,
+          table_id: table.id,
+          min_role: 100,
+        });
+        return view;
+      };
+      const list = await initial_view(table, "List");
+      const edit = await initial_view(table, "Edit");
+      const show = await initial_view(table, "Show");
+      await View.update(
+        {
+          configuration: {
+            ...list.configuration,
+            columns: [
+              ...list.configuration.columns,
+              {
+                type: "ViewLink",
+                view: `Own:Show ${table.name}`,
+                view_name: `Show ${table.name}`,
+                link_style: "",
+                view_label: "Show",
+                header_label: "Show",
+              },
+              {
+                type: "ViewLink",
+                view: `Own:Edit ${table.name}`,
+                view_name: `Edit ${table.name}`,
+                link_style: "",
+                view_label: "Edit",
+                header_label: "Edit",
+              },
+              {
+                type: "Action",
+                action_name: "Delete",
+                action_style: "btn-primary",
+              },
+            ],
+            view_to_create: `Edit ${table.name}`,
+          },
         },
-      },
-      list.id
-    );
-    await View.update(
-      {
-        configuration: {
-          ...edit.configuration,
-          view_when_done: `List ${table.name}`,
-          destination_type: "View",
+        list.id
+      );
+      await View.update(
+        {
+          configuration: {
+            ...edit.configuration,
+            view_when_done: `List ${table.name}`,
+            destination_type: "View",
+          },
         },
-      },
-      edit.id
-    );
-
+        edit.id
+      );
+    });
+    await getState().refresh_views();
     res.redirect(`/table/${table.id}`);
   })
 );

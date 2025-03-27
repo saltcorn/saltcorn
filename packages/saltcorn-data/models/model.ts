@@ -50,7 +50,9 @@ class Model {
       configuration: lib.configuration,
     });
     lib.id = id;
-    await require("../db/state").getState().refresh_tables();
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
     return lib;
   }
 
@@ -104,7 +106,9 @@ class Model {
       [this.id]
     );
     await db.query(`delete FROM ${schema}_sc_models WHERE id = $1`, [this.id]);
-    await require("../db/state").getState().refresh_tables();
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**

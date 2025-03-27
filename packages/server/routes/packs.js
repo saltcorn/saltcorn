@@ -18,6 +18,8 @@ const EventLog = require("@saltcorn/data/models/eventlog");
 const Model = require("@saltcorn/data/models/model");
 const ModelInstance = require("@saltcorn/data/models/model_instance");
 const load_plugins = require("../load_plugins");
+const { getState } = require("@saltcorn/data/db/state");
+const db = require("@saltcorn/data/db/index");
 
 const { is_pack } = require("@saltcorn/data/contracts");
 const {
@@ -414,6 +416,7 @@ router.post(
     if (!error && !is_pack.check(pack)) {
       error = req.__("Not a valid pack");
     }
+
     if (!error) {
       const can_install = await can_install_pack(pack);
       if (can_install.error) {
@@ -444,10 +447,12 @@ router.post(
         ],
       });
     } else {
-      await install_pack(pack, undefined, (p) =>
-        load_plugins.loadAndSaveNewPlugin(p)
-      );
-
+      await db.withTransaction(async () => {
+        await install_pack(pack, undefined, (p) =>
+          load_plugins.loadAndSaveNewPlugin(p)
+        );
+      });
+      await getState().refresh();
       res.redirect(`/`);
     }
   })
@@ -480,9 +485,12 @@ router.post(
     } else if (can_install.warning) {
       req.flash("warning", can_install.warning);
     }
-    await install_pack(pack.pack, name, (p) =>
-      load_plugins.loadAndSaveNewPlugin(p)
-    );
+    await db.withTransaction(async () => {
+      await install_pack(pack.pack, name, (p) =>
+        load_plugins.loadAndSaveNewPlugin(p)
+      );
+    });
+    await getState().refresh();
     req.flash("success", req.__(`Pack %s installed`, text(name)));
     res.redirect(`/`);
   })

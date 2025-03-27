@@ -1306,54 +1306,58 @@ const run_action = async (
   { req, res },
   { getRowQuery }
 ) => {
-  const col = columns.find(
-    (c, index) =>
-      c.type === "Action" &&
-      (c.rndid == body.rndid ||
-        (c.action_name === body.action_name &&
-          body.action_name &&
-          (body.column_index ? body.column_index === index : true)))
+  return await db.withTransaction(
+    async () => {
+      const col = columns.find(
+        (c, index) =>
+          c.type === "Action" &&
+          (c.rndid == body.rndid ||
+            (c.action_name === body.action_name &&
+              body.action_name &&
+              (body.column_index ? body.column_index === index : true)))
+      );
+      const table = Table.findOne({ id: table_id });
+      const row = await getRowQuery(body[table.pk_name]);
+      if (!col && body.action_name === default_state?._row_click_action) {
+        const trigger = Trigger.findOne({ name: body.action_name });
+        const result = await trigger.runWithoutRow({
+          row,
+          table,
+          Table,
+          referrer: req?.get?.("Referrer"),
+          user: req.user,
+          req,
+        });
+        return { json: { success: "ok", ...(result || {}) } };
+      }
+      const state_action = getState().actions[col.action_name];
+      col.configuration = col.configuration || {};
+      if (state_action) {
+        const cfgFields = await getActionConfigFields(state_action, table, {
+          mode: "list",
+          req,
+        });
+        cfgFields.forEach(({ name }) => {
+          if (typeof col.configuration[name] === "undefined")
+            col.configuration[name] = col[name];
+        });
+      }
+
+      const result = await run_action_column({
+        col,
+        req,
+        table,
+        row,
+        res,
+        referrer: req?.get?.("Referrer"),
+      });
+      return { json: { success: "ok", ...(result || {}) } };
+    },
+    (e) => {
+      Crash.create(e, req);
+      return { json: { error: e.message || e } };
+    }
   );
-  const table = Table.findOne({ id: table_id });
-  const row = await getRowQuery(body[table.pk_name]);
-  if (!col && body.action_name === default_state?._row_click_action) {
-    const trigger = Trigger.findOne({ name: body.action_name });
-    const result = await trigger.runWithoutRow({
-      row,
-      table,
-      Table,
-      referrer: req?.get?.("Referrer"),
-      user: req.user,
-      req,
-    });
-    return { json: { success: "ok", ...(result || {}) } };
-  }
-  const state_action = getState().actions[col.action_name];
-  col.configuration = col.configuration || {};
-  if (state_action) {
-    const cfgFields = await getActionConfigFields(state_action, table, {
-      mode: "list",
-      req,
-    });
-    cfgFields.forEach(({ name }) => {
-      if (typeof col.configuration[name] === "undefined")
-        col.configuration[name] = col[name];
-    });
-  }
-  try {
-    const result = await run_action_column({
-      col,
-      req,
-      table,
-      row,
-      res,
-      referrer: req?.get?.("Referrer"),
-    });
-    return { json: { success: "ok", ...(result || {}) } };
-  } catch (e) {
-    Crash.create(e, req);
-    return { json: { error: e.message || e } };
-  }
 };
 
 module.exports = {

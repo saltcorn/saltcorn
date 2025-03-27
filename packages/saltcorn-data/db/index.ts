@@ -6,7 +6,6 @@
  */
 
 import * as multiTenant from "@saltcorn/db-common/multi-tenant";
-import * as singleTenant from "@saltcorn/db-common/single-tenant";
 
 import { sqlsanitize, mkWhere, Where } from "@saltcorn/db-common/internal";
 
@@ -44,8 +43,7 @@ const dbModule = initDbModule();
 
 /** @type {db/tenant} */
 import tenantsModule = require("@saltcorn/db-common/tenants");
-const tenant: typeof multiTenant | typeof singleTenant | null =
-  tenantsModule(connectObj);
+const tenant: typeof multiTenant | null = tenantsModule(connectObj);
 if (!tenant) throw new Error("tenant is null");
 
 /**
