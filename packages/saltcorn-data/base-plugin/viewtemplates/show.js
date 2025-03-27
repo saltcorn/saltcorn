@@ -1173,6 +1173,8 @@ module.exports = {
         req,
         tbl
       );
+      const unhashed_reset_password_token =
+        state._unhashed_reset_password_token;
       readState(state, fields);
       const qstate = stateFieldsToWhere({
         fields,
@@ -1199,6 +1201,11 @@ module.exports = {
         forPublic: !req.user,
         forUser: req.user,
       });
+      if (unhashed_reset_password_token && tbl.name === "users")
+        rows.forEach((r) => {
+          r.reset_password_token = unhashed_reset_password_token;
+        });
+
       return {
         rows,
         message: null,
