@@ -1,0 +1,18 @@
+{{- if .Values.route.enabled -}}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "saltcorn.fullname" . }}
+spec:
+  host: {{ .Values.route.host }}
+  to: 
+    kind: "Service"
+    name: {{ include "saltcorn.fullname" . }}
+    weight: 100
+  port:
+    targetPort: {{ .Values.service.port }}
+  tls:
+    termination: {{ .Values.route.tls.termination }}
+    insecureEdgeTerminationPolicy: {{ .Values.route.tls.insecureEdgeTerminationPolicy }}
+---
+{{- end }}

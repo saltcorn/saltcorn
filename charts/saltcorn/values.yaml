@@ -56,7 +56,7 @@ service:
   port: 3000
 
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations: {}
   hosts:
@@ -68,6 +68,13 @@ ingress:
     - secretName: saltcorn-tls
       hosts:
         - saltcorn.local
+
+route:
+  enabled: false
+  host: "saltcorn-dev.local"
+  tls:
+    termination: "edge"
+    insecureEdgeTerminationPolicy: "Allow"
 
 resources:
   limits:
