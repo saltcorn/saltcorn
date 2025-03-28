@@ -544,9 +544,9 @@ const listScTables = async () => {
 const withTransaction = async (f, onError) => {
   const client = await getClient();
   const reqCon = getRequestContext();
-  console.log("rcon", reqCon);
-  
-  reqCon.client = client;
+  if (reqCon)
+    //if not, probably in a test
+    reqCon.client = client;
   await client.query("BEGIN;");
   let aborted = false;
   const rollback = async () => {
@@ -562,7 +562,7 @@ const withTransaction = async (f, onError) => {
     if (onError) return onError(error);
     else throw error;
   } finally {
-    reqCon.client = null;
+    if (reqCon) reqCon.client = null;
     client.release();
   }
 };
