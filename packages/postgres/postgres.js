@@ -536,7 +536,6 @@ const listScTables = async () => {
 /* rules of using this:
 
 - no try catch inside unless you rethrow: wouldnt roll back
-- no res.json, res.redirect etc inside (client is released on res finish event)
 - no state.refresh_*() inside: other works wouldnt see updates as they are in transactioon
      - you can use state.refresh_*(true) for update on own worker only
 
