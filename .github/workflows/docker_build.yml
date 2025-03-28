@@ -29,12 +29,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
       -
         name: Get branch name
-        id: vars
-        run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+        run: echo "{BRANCH}={$(echo ${GITHUB_REF#refs/heads/})}" >> $GITHUB_STATE
       -
         name: Read version from file
-        id: read_version
-        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_STATE
       - 
         name: Build and push (Branch)
         if: github.ref != 'refs/heads/master'
@@ -48,7 +46,7 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: ${{ github.repository }}:${{ steps.vars.outputs.branch }}
+          tags: ${{ github.repository }}:$BRANCH
 
       - name: Build and push (Main)
         if: github.ref == 'refs/heads/master'
