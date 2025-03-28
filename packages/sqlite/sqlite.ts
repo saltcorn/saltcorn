@@ -436,18 +436,18 @@ export const slugify = (s: string): string =>
   s.toLowerCase().replace(/\s+/g, "-");
 
 export const withTransaction = async (f: Function, onError: Function) => {
-  await query("BEGIN;");
+  //await query("BEGIN;");
   let aborted = false;
   const rollback = async () => {
     aborted = true;
-    await query("ROLLBACK;");
+    //await query("ROLLBACK;");
   };
   try {
     const result = await f(rollback);
-    if (!aborted) await query("COMMIT;");
+    //if (!aborted) await query("COMMIT;");
     return result;
   } catch (error) {
-    if (!aborted) await query("ROLLBACK;");
+    //if (!aborted) await query("ROLLBACK;");
     if (onError) return onError(error);
     else throw error;
   }
