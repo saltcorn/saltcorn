@@ -60,4 +60,4 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: ${{ github.repository }}:${{ env.VERSION }}-pre
+          tags: ${{ github.repository }}:${{ env.VERSION }}-node${{ matrix.node_version }}-pre
