@@ -536,26 +536,42 @@ const listScTables = async () => {
 /* rules of using this:
 
 - no try catch inside unless you rethrow: wouldnt roll back
-- no res.json, res.redirect etc inside (client is released on res finish event)
 - no state.refresh_*() inside: other works wouldnt see updates as they are in transactioon
      - you can use state.refresh_*(true) for update on own worker only
 
 */
 const withTransaction = async (f, onError) => {
-  await query("BEGIN;");
+  const client = await getClient();
+  const reqCon = getRequestContext();
+  if (reqCon)
+    //if not, probably in a test
+    reqCon.client = client;
+  sql_log("BEGIN;");
+  await client.query("BEGIN;");
   let aborted = false;
   const rollback = async () => {
     aborted = true;
-    await query("ROLLBACK;");
+    sql_log("ROLLBACK;");
+    await client.query("ROLLBACK;");
   };
   try {
     const result = await f(rollback);
-    if (!aborted) await query("COMMIT;");
+
+    if (!aborted) {
+      sql_log("COMMIT;");
+      await client.query("COMMIT;");
+    }
     return result;
   } catch (error) {
-    if (!aborted) await query("ROLLBACK;");
+    if (!aborted) {
+      sql_log("ROLLBACK;");
+      await client.query("ROLLBACK;");
+    }
     if (onError) return onError(error);
     else throw error;
+  } finally {
+    if (reqCon) reqCon.client = null;
+    client.release();
   }
 };
 

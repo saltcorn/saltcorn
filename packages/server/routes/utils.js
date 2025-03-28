@@ -200,93 +200,65 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  * @param {function} next
  */
 const setTenant = (req, res, next) => {
-  let wrap =
-    req.method === "POST" && !db.isSQLite
-      ? (f) => {
-          db.getClient().then((client) => {
-            let released = false;
-            res.on("finish", function () {
-              if (!released) client.release();
-              released = true;
-            });
-            res.on("close", function () {
-              if (!released) client.release();
-              released = true;
-            });
-            f(client);
-          });
-        }
-      : (f) => {
-          f(null);
-        };
-  wrap((client) => {
-    // for a saltcorn mobile request use 'req.user.tenant'
-    if (req.smr) {
-      if (
-        req.user?.tenant &&
-        req.user.tenant !== db.connectObj.default_schema
-      ) {
-        const state = getTenant(req.user.tenant);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant({ tenant: req.user.tenant, req, client }, () => {
-            setLanguage(req, res, state);
-            state.log(5, `${req.method} ${req.originalUrl}`);
-            next();
-          });
-        }
-      } else {
+  // for a saltcorn mobile request use 'req.user.tenant'
+  if (req.smr) {
+    if (req.user?.tenant && req.user.tenant !== db.connectObj.default_schema) {
+      const state = getTenant(req.user.tenant);
+      if (!state) {
         setLanguage(req, res);
         next();
+      } else {
+        db.runWithTenant({ tenant: req.user.tenant, req }, () => {
+          setLanguage(req, res, state);
+          state.log(5, `${req.method} ${req.originalUrl}`);
+          next();
+        });
       }
     } else {
-      const other_domain = get_other_domain_tenant(req.hostname);
-      if (other_domain) {
-        const state = getTenant(other_domain);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant({ tenant: other_domain, req, client }, () => {
-            setLanguage(req, res, state);
-            if (state.logLevel >= 5)
-              state.log(
-                5,
-                `${req.method} ${req.originalUrl}${
-                  state.getConfig("log_ip_address", false)
-                    ? ` IP=${req.ip}`
-                    : ""
-                }`
-              );
-            next();
-          });
-        }
+      setLanguage(req, res);
+      next();
+    }
+  } else {
+    const other_domain = get_other_domain_tenant(req.hostname);
+    if (other_domain) {
+      const state = getTenant(other_domain);
+      if (!state) {
+        setLanguage(req, res);
+        next();
       } else {
-        const ten = get_tenant_from_req(req);
-        const state = getTenant(ten);
-        if (!state) {
-          setLanguage(req, res);
+        db.runWithTenant({ tenant: other_domain, req }, () => {
+          setLanguage(req, res, state);
+          if (state.logLevel >= 5)
+            state.log(
+              5,
+              `${req.method} ${req.originalUrl}${
+                state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+              }`
+            );
           next();
-        } else {
-          db.runWithTenant({ tenant: ten, req, client }, () => {
-            setLanguage(req, res, state);
-            if (state.logLevel >= 5)
-              state.log(
-                5,
-                `${req.method} ${req.originalUrl}${
-                  state.getConfig("log_ip_address", false)
-                    ? ` IP=${req.ip}`
-                    : ""
-                }`
-              );
-            next();
-          });
-        }
+        });
+      }
+    } else {
+      const ten = get_tenant_from_req(req);
+      const state = getTenant(ten);
+      if (!state) {
+        setLanguage(req, res);
+        next();
+      } else {
+        db.runWithTenant({ tenant: ten, req }, () => {
+          setLanguage(req, res, state);
+          if (state.logLevel >= 5)
+            state.log(
+              5,
+              `${req.method} ${req.originalUrl}${
+                state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+              }`
+            );
+          next();
+        });
       }
     }
-  });
+  }
 };
 
 /**

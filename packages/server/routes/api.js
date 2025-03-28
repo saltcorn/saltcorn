@@ -734,22 +734,22 @@ router.delete(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           try {
-            await db.withTransaction(async () => {
-              if (id === "undefined") {
-                const pk_name = table.pk_name;
-                //const fields = table.getFields();
-                const row = req.body || {};
-                //readState(row, fields);
-                await table.deleteRows(
-                  { [pk_name]: row[pk_name] },
-                  user || req.user || { role_id: 100 }
-                );
-              } else
-                await table.deleteRows(
-                  { [table.pk_name]: id },
-                  user || req.user || { role_id: 100 }
-                );
-            });
+            //await db.withTransaction(async () => {
+            if (id === "undefined") {
+              const pk_name = table.pk_name;
+              //const fields = table.getFields();
+              const row = req.body || {};
+              //readState(row, fields);
+              await table.deleteRows(
+                { [pk_name]: row[pk_name] },
+                user || req.user || { role_id: 100 }
+              );
+            } else
+              await table.deleteRows(
+                { [table.pk_name]: id },
+                user || req.user || { role_id: 100 }
+              );
+            //});
             res.json({ success: true });
           } catch (e) {
             getState().log(2, `API DELETE ${table.name} error: ${e.message}`);
