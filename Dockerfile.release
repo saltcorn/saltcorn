@@ -7,6 +7,6 @@ RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 p
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
 
-RUN npm install -g @saltcorn/cli@1.1.4-alpha.2 --omit=dev
+RUN npm install -g @saltcorn/cli@1.1.4-alpha.3 --omit=dev
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]

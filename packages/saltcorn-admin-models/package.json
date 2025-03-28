@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/admin-models",
-  "version": "1.1.4-alpha.2",
+  "version": "1.1.4-alpha.3",
   "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -27,10 +27,10 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
-    "@saltcorn/types": "1.1.4-alpha.2",
-    "@saltcorn/markup": "1.1.4-alpha.2",
-    "@saltcorn/db-common": "1.1.4-alpha.2",
-    "@saltcorn/data": "1.1.4-alpha.2",
+    "@saltcorn/types": "1.1.4-alpha.3",
+    "@saltcorn/markup": "1.1.4-alpha.3",
+    "@saltcorn/db-common": "1.1.4-alpha.3",
+    "@saltcorn/data": "1.1.4-alpha.3",
     "adm-zip": "0.5.16",
     "chaos-guinea-pig": "0.2.0",
     "csv-stringify": "^6.5.2",
@@ -46,7 +46,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@saltcorn/sbadmin2": "1.1.4-alpha.2",
+    "@saltcorn/sbadmin2": "1.1.4-alpha.3",
     "@types/adm-zip": "^0.5.7",
     "@types/dateformat": "^5.0.0",
     "@types/jest": "^29.5.14",
