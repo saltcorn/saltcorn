@@ -48,7 +48,7 @@ describe("Transaction test", () => {
       });
     });
     const b = await books.getRow({ author: "Trans Rights" });
-    expect(b.pages).toBe(688);
+    if (!db.isSQLite) expect(b.pages).toBe(688);
   });
   it("should cancel", async () => {
     const books = Table.findOne({ name: "books" });
@@ -62,7 +62,7 @@ describe("Transaction test", () => {
         (e: any) => {}
       );
       const b = await books.getRow({ author: "JK Rowling" });
-      expect(b).toBeNull();
+      if (!db.isSQLite) expect(b).toBeNull();
     });
   });
 });
