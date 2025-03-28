@@ -7,10 +7,9 @@ ENV HOME=/home/node
 ENV NODE_ENV="production"
 ENV SALTCORN_DISABLE_UPGRADE="true"
 
-# Set up the working directory and adjust permissions in one go
 WORKDIR ${HOME}
 
-RUN npm install -g @saltcorn/cli@${SALTCORN_VERSION} --omit=dev && \
+RUN npm install -g @saltcorn/cli@$SALTCORN_VERSION --omit=dev && \
     for dir in ${HOME} ${HOME}/node_modules ${HOME}/.npm ${HOME}/.cache /usr/local/lib/node_modules; do \
     mkdir -p "$dir" && \
     chown -R 1001:0 "$dir" && \
