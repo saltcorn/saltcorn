@@ -9,7 +9,9 @@ ENV SALTCORN_DISABLE_UPGRADE="true"
 
 WORKDIR ${HOME}
 
-RUN npm install -g @saltcorn/cli@$SALTCORN_VERSION --omit=dev && \
+RUN echo ${NODE_BASE_IMAGE} ${SALTCORN_VERSION}
+
+RUN npm install -g @saltcorn/cli@${SALTCORN_VERSION} --omit=dev && \
     for dir in ${HOME} ${HOME}/node_modules ${HOME}/.npm ${HOME}/.cache /usr/local/lib/node_modules; do \
     mkdir -p "$dir" && \
     chown -R 1001:0 "$dir" && \
