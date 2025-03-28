@@ -546,18 +546,27 @@ const withTransaction = async (f, onError) => {
   if (reqCon)
     //if not, probably in a test
     reqCon.client = client;
+  sql_log("BEGIN;");
   await client.query("BEGIN;");
   let aborted = false;
   const rollback = async () => {
     aborted = true;
+    sql_log("ROLLBACK;");
     await client.query("ROLLBACK;");
   };
   try {
     const result = await f(rollback);
-    if (!aborted) await client.query("COMMIT;");
+
+    if (!aborted) {
+      sql_log("COMMIT;");
+      await client.query("COMMIT;");
+    }
     return result;
   } catch (error) {
-    if (!aborted) await client.query("ROLLBACK;");
+    if (!aborted) {
+      sql_log("ROLLBACK;");
+      await client.query("ROLLBACK;");
+    }
     if (onError) return onError(error);
     else throw error;
   } finally {
