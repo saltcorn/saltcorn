@@ -31,6 +31,10 @@ jobs:
         name: Get branch name
         id: vars
         run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+      -
+        name: Read version from file
+        id: read_version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
       - 
         name: Build and push (Branch)
         if: github.ref != 'refs/heads/master'
