@@ -111,7 +111,9 @@ router.post(
   error_catcher(async (req, res) => {
     const { tableName, id, _version } = req.params;
     const table = Table.findOne({ name: tableName });
-    await table.restore_row_version(id, _version);
+    await db.withTransaction(async () => {
+      await table.restore_row_version(id, _version);
+    });
     req.flash("success", req.__("Version %s restored", _version));
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })

@@ -15,7 +15,7 @@
  */
 /** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
-//const db = require("@saltcorn/data/db");
+const db = require("@saltcorn/data/db");
 const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
@@ -574,6 +574,7 @@ router.post(
           const { _versions, ...row } = req.body || {};
           const fields = table.getFields();
           readState(row, fields, req);
+
           const errors = await prepare_insert_row(row, fields);
           if (errors.length > 0) {
             getState().log(
@@ -583,11 +584,13 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          const ins_res = await table.tryInsertRow(
-            row,
-            req.user || user || { role_id: 100 }
-          );
-          if (ins_res.error) {
+          let ins_res = await db.withTransaction(async () => {
+            return await table.tryInsertRow(
+              row,
+              req.user || user || { role_id: 100 }
+            );
+          });
+          if (ins_res?.error) {
             getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
             res.status(400).json(ins_res);
           } else res.json(ins_res);
@@ -623,20 +626,22 @@ router.post(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           try {
-            if (id === "undefined") {
-              const pk_name = table.pk_name;
-              //const fields = table.getFields();
-              const row = req.body || {};
-              //readState(row, fields);
-              await table.deleteRows(
-                { [pk_name]: row[pk_name] },
-                user || req.user || { role_id: 100 }
-              );
-            } else
-              await table.deleteRows(
-                { id },
-                user || req.user || { role_id: 100 }
-              );
+            await db.withTransaction(async () => {
+              if (id === "undefined") {
+                const pk_name = table.pk_name;
+                //const fields = table.getFields();
+                const row = req.body || {};
+                //readState(row, fields);
+                await table.deleteRows(
+                  { [pk_name]: row[pk_name] },
+                  user || req.user || { role_id: 100 }
+                );
+              } else
+                await table.deleteRows(
+                  { id },
+                  user || req.user || { role_id: 100 }
+                );
+            });
             res.json({ success: true });
           } catch (e) {
             getState().log(2, `API DELETE ${table.name} error: ${e.message}`);
@@ -685,13 +690,15 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          const ins_res = await table.tryUpdateRow(
-            row,
-            id,
-            user || req.user || { role_id: 100 }
-          );
+          let ins_res = await db.withTransaction(async () => {
+            return await table.tryUpdateRow(
+              row,
+              id,
+              user || req.user || { role_id: 100 }
+            );
+          });
 
-          if (ins_res.error) {
+          if (ins_res?.error) {
             getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
             res.status(400).json(ins_res);
           } else res.json(ins_res);
@@ -727,6 +734,7 @@ router.delete(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           try {
+            //await db.withTransaction(async () => {
             if (id === "undefined") {
               const pk_name = table.pk_name;
               //const fields = table.getFields();
@@ -741,6 +749,7 @@ router.delete(
                 { [table.pk_name]: id },
                 user || req.user || { role_id: 100 }
               );
+            //});
             res.json({ success: true });
           } catch (e) {
             getState().log(2, `API DELETE ${table.name} error: ${e.message}`);

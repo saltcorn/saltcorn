@@ -452,6 +452,7 @@ router.post(
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
+      await getState().refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${form.values.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: form.values.name,
@@ -497,6 +498,7 @@ router.post(
           ...form.values.configuration,
         };
       await Trigger.update(trigger.id, form.values); //{configuration: form.values});
+      await getState().refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: trigger.name,
@@ -1136,6 +1138,7 @@ router.post(
       await Trigger.update(trigger.id, {
         configuration: { ...trigger.configuration, ...form.values },
       });
+      await getState().refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: trigger.name,
@@ -1166,11 +1169,14 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
+    await db.withTransaction(async () => {
+      await trigger.delete();
+    });
     Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
       entity_type: "Trigger",
       entity_name: trigger.name,
     });
-    await trigger.delete();
+    await getState().refresh_triggers();
     req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
     let redirectTarget =
       req.query.on_done_redirect &&
@@ -1304,6 +1310,7 @@ router.post(
     const { id } = req.params;
     const trig = await Trigger.findOne({ id });
     const newtrig = await trig.clone();
+    await getState().refresh_triggers();
     Trigger.emitEvent("AppChange", `Trigger ${newtrig.name}`, req.user, {
       entity_type: "Trigger",
       entity_name: newtrig.name,
@@ -1511,7 +1518,9 @@ router.post(
   error_catcher(async (req, res) => {
     const { step_id } = req.params;
     const step = await WorkflowStep.findOne({ id: step_id });
-    await step.delete(true);
+    await db.withTransaction(async () => {
+      await step.delete(true);
+    });
     res.json({ goto: `/actions/configure/${step.trigger_id}` });
   })
 );

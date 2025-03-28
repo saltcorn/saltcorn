@@ -1173,6 +1173,8 @@ module.exports = {
         req,
         tbl
       );
+      const unhashed_reset_password_token =
+        state._unhashed_reset_password_token;
       readState(state, fields);
       const qstate = stateFieldsToWhere({
         fields,
@@ -1199,6 +1201,11 @@ module.exports = {
         forPublic: !req.user,
         forUser: req.user,
       });
+      if (unhashed_reset_password_token && tbl.name === "users")
+        rows.forEach((r) => {
+          r.reset_password_token = unhashed_reset_password_token;
+        });
+
       return {
         rows,
         message: null,
@@ -1260,65 +1267,73 @@ module.exports = {
       return rows;
     },
     async actionQuery() {
-      const body = req.body || {};
+      return await db.withTransaction(
+        async () => {
+          const body = req.body || {};
 
-      const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
-      );
-      const table = Table.findOne({ id: table_id });
-      let row;
-      if (table.ownership_formula) {
-        const freeVars = freeVariables(table.ownership_formula);
-        const joinFields = {};
-        add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
-        row = await table.getJoinedRow({
-          where: { [table.pk_name]: body[table.pk_name] },
-          joinFields,
-          forUser: req.user || { role_id: 100 },
-          forPublic: !req.user,
-        });
-      } else
-        row = await table.getRow(
-          { [table.pk_name]: body[table.pk_name] },
-          { forUser: req.user, forPublic: !req.user }
-        );
-      try {
-        if (body.click_action) {
-          let container;
-          traverseSync(layout, {
-            container(segment) {
-              if (segment.click_action === body.click_action)
-                container = segment;
-            },
-          });
-          if (!container) return { json: { error: "Action not found" } };
-          const trigger = Trigger.findOne({ name: body.click_action });
-          if (!trigger)
-            throw new Error(
-              `View ${name}: Container click action ${body.click_action} not found`
+          const col = columns.find(
+            (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+          );
+          const table = Table.findOne({ id: table_id });
+          let row;
+          if (table.ownership_formula) {
+            const freeVars = freeVariables(table.ownership_formula);
+            const joinFields = {};
+            add_free_variables_to_joinfields(
+              freeVars,
+              joinFields,
+              table.fields
             );
-          const result = await trigger.runWithoutRow({
-            table,
-            Table,
+            row = await table.getJoinedRow({
+              where: { [table.pk_name]: body[table.pk_name] },
+              joinFields,
+              forUser: req.user || { role_id: 100 },
+              forPublic: !req.user,
+            });
+          } else
+            row = await table.getRow(
+              { [table.pk_name]: body[table.pk_name] },
+              { forUser: req.user, forPublic: !req.user }
+            );
+
+          if (body.click_action) {
+            let container;
+            traverseSync(layout, {
+              container(segment) {
+                if (segment.click_action === body.click_action)
+                  container = segment;
+              },
+            });
+            if (!container) return { json: { error: "Action not found" } };
+            const trigger = Trigger.findOne({ name: body.click_action });
+            if (!trigger)
+              throw new Error(
+                `View ${name}: Container click action ${body.click_action} not found`
+              );
+            const result = await trigger.runWithoutRow({
+              table,
+              Table,
+              req,
+              row,
+              user: req.user,
+              referrer: req?.get?.("Referrer"),
+            });
+            return { json: { success: "ok", ...(result || {}) } };
+          }
+          const result = await run_action_column({
+            col,
             req,
+            table,
             row,
-            user: req.user,
+            res,
             referrer: req?.get?.("Referrer"),
           });
           return { json: { success: "ok", ...(result || {}) } };
+        },
+        (e) => {
+          return { json: { error: e.message || e } };
         }
-        const result = await run_action_column({
-          col,
-          req,
-          table,
-          row,
-          res,
-          referrer: req?.get?.("Referrer"),
-        });
-        return { json: { success: "ok", ...(result || {}) } };
-      } catch (e) {
-        return { json: { error: e.message || e } };
-      }
+      );
     },
     /*async authorizeGetQuery(query, table_id) {
       let body = query || {};

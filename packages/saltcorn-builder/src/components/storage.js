@@ -248,8 +248,8 @@ const layoutToNodes = (
             (segment.block === true
               ? "block"
               : segment.block === false
-              ? "inline-block"
-              : "block")
+                ? "inline-block"
+                : "block")
           }
           fullPageWidth={
             typeof segment.fullPageWidth === "undefined"
@@ -314,6 +314,7 @@ const layoutToNodes = (
           rows={segment.rows || 2}
           columns={segment.columns || 2}
           bs_style={segment.bs_style || false}
+          customClass={segment.customClass}
           bs_small={segment.bs_small || false}
           bs_striped={segment.bs_striped || false}
           bs_bordered={segment.bs_bordered || false}
@@ -357,6 +358,7 @@ const layoutToNodes = (
           style={segment.style || {}}
           gx={segment.gx}
           gy={segment.gy}
+          customClass={segment.customClass}
           vAligns={segment.vAligns}
           colClasses={segment.colClasses}
           colStyles={segment.colStyles}
@@ -392,6 +394,7 @@ const layoutToNodes = (
             style={segment.style || {}}
             gx={segment.gx}
             gy={segment.gy}
+            customClass={segment.customClass}
             vAligns={segment.vAligns}
             colClasses={segment.colClasses}
             colStyles={segment.colStyles}
@@ -602,6 +605,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         columns,
         contents,
         bs_style: node.props.bs_style,
+        customClass: node.props.customClass,
         bs_small: node.props.bs_small,
         bs_striped: node.props.bs_striped,
         bs_bordered: node.props.bs_bordered,
@@ -616,6 +620,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoints: node.props.breakpoints,
+        customClass: node.props.customClass,
         gx: +node.props.gx,
         gy: +node.props.gy,
         aligns: node.props.aligns,

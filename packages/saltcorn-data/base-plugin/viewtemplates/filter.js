@@ -62,6 +62,7 @@ const {
   get_expression_function,
   eval_expression,
 } = require("../../models/expression");
+const db = require("../../db/index");
 /**
  * @returns {Workflow}
  */
@@ -321,8 +322,8 @@ const run = async (
           stat === "Percent true" || stat === "Percent false"
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
-            ? "Integer"
-            : fld.type?.name;
+              ? "Integer"
+              : fld.type?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[agg_fieldview]) {
           const readval = type.read(val);
@@ -577,13 +578,13 @@ const run = async (
           !value && !label && ix === 0 && neutral_label
             ? neutral_label
             : label_formula
-            ? eval_expression(
-                label_formula,
-                { [field_name]: value },
-                extra.req.user || { role_id: 100 },
-                "Dropdown label formula"
-              )
-            : label
+              ? eval_expression(
+                  label_formula,
+                  { [field_name]: value },
+                  extra.req.user || { role_id: 100 },
+                  "Dropdown label formula"
+                )
+              : label
         )
       );
       return select(
@@ -850,60 +851,63 @@ module.exports = {
       );
       const table = Table.findOne(table_id);
       try {
-        if (col.action_row_variable === "each_matching_row") {
-          const fields = table.getFields();
-          const { joinFields, aggregations } = picked_fields_to_query(
-            columns,
-            fields,
-            undefined,
-            req,
-            table
-          );
-          const where = stateFieldsToWhere({
-            fields,
-            state,
-            table,
-            prefix: "a.",
-          });
-          const q = stateFieldsToQuery({
-            state,
-            prefix: "a.",
-            noSortAndPaging: true,
-          });
-          if (col.action_row_limit) q.limit = col.action_row_limit;
-          let rows = await table.getJoinedRows({
-            where,
-            joinFields,
-            aggregations,
-            ...q,
-            forPublic: !req.user || req.user.role_id === 100,
-            forUser: req.user,
-          });
-          const referrer = req?.get?.("Referrer");
-          return combineResults(
-            await asyncMap(rows, async (row) => {
-              return await run_action_column({
-                col,
-                req,
-                table,
-                res,
-                referrer,
-                row,
-              });
-            })
-          );
-        } else {
-          const row = col.action_row_variable === "state" ? { ...state } : null;
-          const result = await run_action_column({
-            col,
-            req,
-            table,
-            res,
-            referrer: req?.get?.("Referrer"),
-            ...(row ? { row } : {}),
-          });
-          return { json: { success: "ok", ...(result || {}) } };
-        }
+        return await db.withTransaction(async () => {
+          if (col.action_row_variable === "each_matching_row") {
+            const fields = table.getFields();
+            const { joinFields, aggregations } = picked_fields_to_query(
+              columns,
+              fields,
+              undefined,
+              req,
+              table
+            );
+            const where = stateFieldsToWhere({
+              fields,
+              state,
+              table,
+              prefix: "a.",
+            });
+            const q = stateFieldsToQuery({
+              state,
+              prefix: "a.",
+              noSortAndPaging: true,
+            });
+            if (col.action_row_limit) q.limit = col.action_row_limit;
+            let rows = await table.getJoinedRows({
+              where,
+              joinFields,
+              aggregations,
+              ...q,
+              forPublic: !req.user || req.user.role_id === 100,
+              forUser: req.user,
+            });
+            const referrer = req?.get?.("Referrer");
+            return combineResults(
+              await asyncMap(rows, async (row) => {
+                return await run_action_column({
+                  col,
+                  req,
+                  table,
+                  res,
+                  referrer,
+                  row,
+                });
+              })
+            );
+          } else {
+            const row =
+              col.action_row_variable === "state" ? { ...state } : null;
+            const result = await run_action_column({
+              col,
+              req,
+              table,
+              res,
+              referrer: req?.get?.("Referrer"),
+              ...(row ? { row } : {}),
+            });
+            return { json: { success: "ok", ...(result || {}) } };
+          }
+        });
       } catch (e) {
         console.error(e);
         return { json: { error: e.message || e } };

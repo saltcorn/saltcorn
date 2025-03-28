@@ -33,6 +33,7 @@ const Table = ({
   bs_bordered,
   bs_borderless,
   bs_wauto,
+  customClass
 }) => {
   const {
     selected,
@@ -40,7 +41,7 @@ const Table = ({
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <table
-      className={`${selected ? "selected-node" : ""} ${
+      className={`${selected ? "selected-node" : ""} ${customClass} ${
         bs_style ? "table" : ""
       } ${bs_style && bs_small ? "table-sm" : ""} ${
         bs_style && bs_striped ? "table-striped" : ""
@@ -78,6 +79,11 @@ const fields = [
     name: "columns",
     type: "Integer",
     attributes: { min: 0 },
+  },
+  {
+    name: "customClass",
+    label: "Custom class",
+    type: "String",
   },
   {
     label: "Bootstrap style",

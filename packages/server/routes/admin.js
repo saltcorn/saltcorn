@@ -748,8 +748,11 @@ router.post(
     if (!auth) {
       req.flash("error", "Not authorized");
     } else {
-      const snap = await Snapshot.findOne({ id });
-      await snap.restore_entity(type, name);
+      const snap = await db.withTransaction(async () => {
+        const snap = await Snapshot.findOne({ id });
+        await snap.restore_entity(type, name);
+        return snap;
+      });
       req.flash(
         "success",
         `${type} ${name} restored to snapshot saved ${moment(
@@ -757,6 +760,7 @@ router.post(
         ).fromNow()}`
       );
     }
+    await getState().refresh();
     res.redirect(
       type == "codepage"
         ? `/admin/edit-codepage/${name}`
@@ -782,9 +786,12 @@ router.post(
     if (req.files?.file?.tempFilePath) {
       try {
         const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
-        await install_pack(pack, undefined, (p) =>
-          load_plugins.loadAndSaveNewPlugin(p)
-        );
+        await db.withTransaction(async () => {
+          await install_pack(pack, undefined, (p) =>
+            load_plugins.loadAndSaveNewPlugin(p)
+          );
+        });
+        await getState().refresh();
         req.flash("success", req.__("Snapshot restored"));
       } catch (e) {
         console.error(e);
@@ -3914,8 +3921,8 @@ router.post(
       //config+crashes
       await db.deleteWhere("_sc_errors");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
-      await getState().refresh();
     }
+    await getState().refresh();
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
 
@@ -4248,7 +4255,11 @@ router.post(
       [name]: code,
     });
     const err = await getState().refresh_codepages();
-    if (err) res.json({ success: false, error: `Error evaluating code pages: ${err}` });
+    if (err)
+      res.json({
+        success: false,
+        error: `Error evaluating code pages: ${err}`,
+      });
     else res.json({ success: true });
   })
 );

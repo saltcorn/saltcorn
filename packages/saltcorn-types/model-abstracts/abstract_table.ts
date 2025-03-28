@@ -21,7 +21,7 @@ export type TableCfg = {
   id?: number;
   min_role_read: number;
   min_role_write: number;
-  ownership_field_id?: number;
+  ownership_field_id?: number | null;
   ownership_formula?: string;
   versioned?: boolean;
   has_sync_info?: boolean;

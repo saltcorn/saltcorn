@@ -86,6 +86,7 @@ const Columns = ({
   vAligns,
   colClasses,
   colStyles,
+  customClass,
 }) => {
   const {
     selected,
@@ -93,7 +94,7 @@ const Columns = ({
   } = useNode((node) => ({ selected: node.events.selected }));
   return (
     <div
-      className={`row builder-columns ${selected ? "selected-node" : ""} ${
+      className={`row builder-columns ${customClass || ""} ${selected ? "selected-node" : ""} ${
         typeof gx !== "undefined" && gx !== null ? `gx-${gx}` : ""
       } ${typeof gy !== "undefined" && gy !== null ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}
@@ -135,6 +136,7 @@ const ColumnsSettings = () => {
     aligns: node.data.props.aligns,
     colClasses: node.data.props.colClasses,
     colStyles: node.data.props.colStyles,
+    customClass: node.data.props.customClass,
   }));
   const {
     actions: { setProp },
@@ -147,6 +149,7 @@ const ColumnsSettings = () => {
     aligns,
     colClasses,
     colStyles,
+    customClass,
   } = node;
   const colSetsNode = {
     vAlign: vAligns?.[setting_col_n - 1],
@@ -326,7 +329,7 @@ const ColumnsSettings = () => {
           </tbody>
         </table>
       </div>
-      <table className="w-100" accordiontitle="Gutters">
+      <table className="w-100" accordiontitle="Gutters and class">
         <tbody>
           <SettingsRow
             field={{
@@ -342,6 +345,15 @@ const ColumnsSettings = () => {
               name: "gy",
               label: "Vertical 0-5",
               type: "Integer",
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "customClass",
+              label: "Custom class",
+              type: "String",
             }}
             node={node}
             setProp={setProp}
@@ -366,6 +378,7 @@ Columns.craft = {
     style: {},
     breakpoints: ["sm", "sm"],
     setting_col_n: 1,
+    customClass: "",
   },
   related: {
     settings: ColumnsSettings,

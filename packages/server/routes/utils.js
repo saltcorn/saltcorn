@@ -164,7 +164,7 @@ const set_custom_http_headers = (res, req, state) => {
         validateHeaderName(k);
         validateHeaderValue(k, val);
         res.header(k, val);
-      } catch (e) {      
+      } catch (e) {
         Crash.create(e, { url: "/", headers: {} });
       }
     }
@@ -200,83 +200,64 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  * @param {function} next
  */
 const setTenant = (req, res, next) => {
-  if (db.is_it_multi_tenant()) {
-    // for a saltcorn mobile request use 'req.user.tenant'
-    if (req.smr) {
-      if (
-        req.user?.tenant &&
-        req.user.tenant !== db.connectObj.default_schema
-      ) {
-        const state = getTenant(req.user.tenant);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant(req.user.tenant, () => {
-            setLanguage(req, res, state);
-            state.log(5, `${req.method} ${req.originalUrl}`);
-            next();
-          });
-        }
-      } else {
+  // for a saltcorn mobile request use 'req.user.tenant'
+  if (req.smr) {
+    if (req.user?.tenant && req.user.tenant !== db.connectObj.default_schema) {
+      const state = getTenant(req.user.tenant);
+      if (!state) {
         setLanguage(req, res);
         next();
+      } else {
+        db.runWithTenant({ tenant: req.user.tenant, req }, () => {
+          setLanguage(req, res, state);
+          state.log(5, `${req.method} ${req.originalUrl}`);
+          next();
+        });
       }
     } else {
-      const other_domain = get_other_domain_tenant(req.hostname);
-      if (other_domain) {
-        const state = getTenant(other_domain);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant(other_domain, () => {
-            setLanguage(req, res, state);
-            if (state.logLevel >= 5)
-              state.log(
-                5,
-                `${req.method} ${req.originalUrl}${
-                  state.getConfig("log_ip_address", false)
-                    ? ` IP=${req.ip}`
-                    : ""
-                }`
-              );
-            next();
-          });
-        }
-      } else {
-        const ten = get_tenant_from_req(req);
-        const state = getTenant(ten);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant(ten, () => {
-            setLanguage(req, res, state);
-            if (state.logLevel >= 5)
-              state.log(
-                5,
-                `${req.method} ${req.originalUrl}${
-                  state.getConfig("log_ip_address", false)
-                    ? ` IP=${req.ip}`
-                    : ""
-                }`
-              );
-            next();
-          });
-        }
-      }
+      setLanguage(req, res);
+      next();
     }
   } else {
-    const state = getState();
-    setLanguage(req, res, state);
-    state.log(
-      5,
-      `${req.method} ${req.originalUrl}${
-        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
-      }`
-    );
-    next();
+    const other_domain = get_other_domain_tenant(req.hostname);
+    if (other_domain) {
+      const state = getTenant(other_domain);
+      if (!state) {
+        setLanguage(req, res);
+        next();
+      } else {
+        db.runWithTenant({ tenant: other_domain, req }, () => {
+          setLanguage(req, res, state);
+          if (state.logLevel >= 5)
+            state.log(
+              5,
+              `${req.method} ${req.originalUrl}${
+                state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+              }`
+            );
+          next();
+        });
+      }
+    } else {
+      const ten = get_tenant_from_req(req);
+      const state = getTenant(ten);
+      if (!state) {
+        setLanguage(req, res);
+        next();
+      } else {
+        db.runWithTenant({ tenant: ten, req }, () => {
+          setLanguage(req, res, state);
+          if (state.logLevel >= 5)
+            state.log(
+              5,
+              `${req.method} ${req.originalUrl}${
+                state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+              }`
+            );
+          next();
+        });
+      }
+    }
   }
 };
 
@@ -504,7 +485,7 @@ const sendHtmlFile = async (req, res, file) => {
         .sendWrap(req.__("An error occurred"), req.__("File not found"));
     }
   } catch (e) {
-    console.error(e)
+    console.error(e);
     return res
       .status(404)
       .sendWrap(
@@ -531,6 +512,7 @@ const setRole = async (req, res, model) => {
     roleRow && page
       ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
       : req.__(`Minimum role updated`);
+  if (model.state_refresh) await model.state_refresh();
   if (!req.xhr) {
     req.flash("success", message);
     res.redirect("/pageedit");

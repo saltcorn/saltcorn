@@ -259,11 +259,12 @@ const render = ({
         bs_bordered,
         bs_borderless,
         bs_wauto,
+        customClass,
       } = segment;
       const tabHtml = table(
         {
           class: !bs_style
-            ? []
+            ? customClass
             : [
                 "table",
                 bs_small && "table-sm",
@@ -271,6 +272,7 @@ const render = ({
                 bs_bordered && "table-bordered",
                 bs_borderless && "table-borderless",
                 bs_wauto && "w-auto",
+                customClass,
               ],
         },
         tbody(
@@ -841,6 +843,7 @@ const render = ({
             class: [
               "row",
               segment.class,
+              segment.customClass,
               sameWidths && `row-cols-1 row-cols-md-${segment.besides.length}`,
               typeof segment.gx !== "undefined" &&
                 segment.gx !== null &&
@@ -882,6 +885,7 @@ const render = ({
             class: [
               "row",
               segment.class,
+              segment.customClass,
               typeof segment.gx !== "undefined" &&
                 segment.gx !== null &&
                 `gx-${segment.gx}`,
@@ -920,7 +924,7 @@ const render = ({
             )
           )
         );
-      return isTop ? wrap(segment, isTop, ix, markup) : markup;
+      return markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   if (instanceOWithHtmlFile(layout)) {

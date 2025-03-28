@@ -129,8 +129,8 @@ class TableConstraint {
           //ignore
         }
     }
-
-    await require("../db/state").getState().refresh_tables();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
 
     return con;
   }
@@ -158,7 +158,8 @@ class TableConstraint {
         }";`
       );
     }
-    await require("../db/state").getState().refresh_tables();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**
@@ -175,7 +176,8 @@ class TableConstraint {
       if (c.configuration.fields && c.configuration.fields.includes(field.name))
         await c.delete();
     }
-    await require("../db/state").getState().refresh_tables();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**
