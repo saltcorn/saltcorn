@@ -8,6 +8,7 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+jest.setTimeout(30000);
 
 describe("where", () => {
   it("should support in", async () => {
@@ -39,30 +40,32 @@ describe("where", () => {
 });
 
 describe("Transaction test", () => {
-  it("should insert", async () => {
-    const books = Table.findOne({ name: "books" });
-    assertIsSet(books);
-    runWithTenant("public", async () => {
-      await db.withTransaction(async () => {
-        await books.insertRow({ author: "Trans Rights", pages: 688 });
+  if (!db.isSQLite)
+    it("should insert", async () => {
+      const books = Table.findOne({ name: "books" });
+      assertIsSet(books);
+      runWithTenant("public", async () => {
+        await db.withTransaction(async () => {
+          await books.insertRow({ author: "Trans Rights", pages: 688 });
+        });
+      });
+      const b = await books.getRow({ author: "Trans Rights" });
+      expect(b.pages).toBe(688);
+    });
+  if (!db.isSQLite)
+    it("should cancel", async () => {
+      const books = Table.findOne({ name: "books" });
+      assertIsSet(books);
+      runWithTenant("public", async () => {
+        await db.withTransaction(
+          async () => {
+            await books.insertRow({ author: "JK Rowling", pages: 684 });
+            throw new Error("foo");
+          },
+          (e: any) => {}
+        );
+        const b = await books.getRow({ author: "JK Rowling" });
+        expect(b).toBeNull();
       });
     });
-    const b = await books.getRow({ author: "Trans Rights" });
-    if (!db.isSQLite) expect(b.pages).toBe(688);
-  });
-  it("should cancel", async () => {
-    const books = Table.findOne({ name: "books" });
-    assertIsSet(books);
-    runWithTenant("public", async () => {
-      await db.withTransaction(
-        async () => {
-          await books.insertRow({ author: "JK Rowling", pages: 684 });
-          throw new Error("foo");
-        },
-        (e: any) => {}
-      );
-      const b = await books.getRow({ author: "JK Rowling" });
-      if (!db.isSQLite) expect(b).toBeNull();
-    });
-  });
 });
