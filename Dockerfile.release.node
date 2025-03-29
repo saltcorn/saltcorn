@@ -12,11 +12,8 @@ WORKDIR ${HOME}
 
 RUN npm install -g @saltcorn/cli@1.1.3 --omit=dev && \
     mkdir -p ${HOME} && \
-    chown -R 1001:0 ${HOME} && \
+    chown -R 1000:0 ${HOME} && \
     chmod -R g+w ${HOME} && \
-    chmod -R g=u ${HOME} && \
-    chown -R 1001:0 /usr && \
-    chmod -R g+w /usr && \
-    chmod -R g=u /usr
+    chmod -R g=u ${HOME}
 
 ENTRYPOINT ["saltcorn"]
