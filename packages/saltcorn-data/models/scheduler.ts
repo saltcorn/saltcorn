@@ -145,9 +145,14 @@ let availabilityPassed = false;
  * @param {string} port
  * @returns {Promise<void>}
  */
-const checkAvailability = async (port: number): Promise<void> => {
+const checkAvailability = async (
+  port: number,
+  host?: string
+): Promise<void> => {
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/auth/login`);
+    const response = await fetch(
+      `http://${host || "127.0.0.1"}:${port}/auth/login`
+    );
     const pass = response.status < 400;
     if (pass) availabilityPassed = true;
     else if (availabilityPassed) {
@@ -180,6 +185,7 @@ const runScheduler = async ({
   tickSeconds = 60 * 5,
   watchReaper,
   port,
+  host,
   disableScheduler,
   eachTenant = (f: () => Promise<any>) => {
     return f();
@@ -198,7 +204,7 @@ const runScheduler = async ({
   | any = {}) => {
   let stopit;
   const run = async () => {
-    if (watchReaper && port) await checkAvailability(port);
+    if (watchReaper && port) await checkAvailability(port, host);
     if (disableScheduler) return;
 
     stopit = await stop_when();
