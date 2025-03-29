@@ -395,6 +395,7 @@ export type FieldView = {
   blockDisplay?: boolean;
   handlesTextStyle?: boolean;
   description?: string;
+  fill_options_restrict?: (field: FieldLike, value: any) => Where | undefined;
   fill_options?: (
     field: FieldLike,
     force_allow_none: boolean,
