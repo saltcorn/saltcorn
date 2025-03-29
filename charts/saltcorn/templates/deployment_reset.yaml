@@ -16,9 +16,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "saltcorn.labels" . | nindent 8 }}
+        {{- include "saltcorn.labels" . | nindent 8 }}-reset
         {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}-reset
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
