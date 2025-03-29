@@ -93,9 +93,14 @@ persistence:
   storageClassName: "local-path"
 
 command:
-  - "sh"
-  - "-c"
-  - "saltcorn serve -v"
+  []
+  # - "sh"
+  # - "-c"
+  # - "saltcorn serve -v"
+
+args:
+  - "serve"
+  - "-v"
 
 nodeSelector: {}
 
