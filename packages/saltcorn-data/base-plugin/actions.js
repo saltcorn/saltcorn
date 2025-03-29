@@ -971,6 +971,14 @@ module.exports = {
       const newRow = { ...row };
       table.getFields();
       delete newRow[table.pk_name];
+      for (const field of table.fields)
+        if (
+          field.is_fkey &&
+          typeof newRow[field.name] === "object" &&
+          newRow[field.name].id
+        )
+          newRow[field.name] = newRow[field.name].id; //TODO non-id pks
+
       await table.insertRow(newRow, user);
     },
     namespace: "Database",
