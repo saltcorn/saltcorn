@@ -6,6 +6,7 @@ on:
       - '*'
     paths:
       - 'charts/**'
+      - '.github/workflows/helm_release.yml'
 
 jobs:
   release:
