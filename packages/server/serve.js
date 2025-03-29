@@ -433,6 +433,9 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
   ));
   // Server with http on port 80 / https on 443
   // todo  resolve hardcode
+
+  const listenArgs = { port };
+  if (host) listenArgs.host = host;
   if (port === 80 && cert && key) {
     const https = require("https");
     const http = require("http");
@@ -447,12 +450,12 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
       httpServer,
       httpsServer
     );
-    httpServer.listen(port, () => {
+    httpServer.listen(listenArgs, () => {
       console.log("HTTP Server running on port 80");
     });
 
     // todo port to config
-    httpsServer.listen(443, () => {
+    httpsServer.listen(listenArgs, () => {
       console.log("HTTPS Server running on port 443");
     });
   } else {
@@ -465,8 +468,10 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
     // todo refer in doc to httpserver doc
     // todo there can be added other parameters for httpserver
     httpServer.setTimeout(timeout * 1000);
-    httpServer.listen(port, () => {
-      console.log(`Saltcorn listening on http://localhost:${port}/`);
+    httpServer.listen(listenArgs, () => {
+      console.log(
+        `Saltcorn listening on http://${host || `localhost`}:${port}/`
+      );
     });
   }
   getState().processSend("Start");
