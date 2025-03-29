@@ -246,9 +246,11 @@ const runScheduler = async ({
         ];
         for (const trigger of allTriggers) {
           try {
-            await trigger.runWithoutRow({
-              ...mockReqRes,
-              user: { role_id: 1 },
+            await db.withTransaction(async () => {
+              await trigger.runWithoutRow({
+                ...mockReqRes,
+                user: { role_id: 1 },
+              });
             });
           } catch (e) {
             if (isRoot)

@@ -239,7 +239,9 @@ class WorkflowRun {
   static async runResumableWorkflows() {
     const runs = await this.getResumableWorkflows();
     for (const run of runs) {
-      await run.run({});
+      await db.withTransaction(async () => {
+        await run.run({});
+      });
     }
   }
 
@@ -323,7 +325,12 @@ class WorkflowRun {
         hasMultiChecks = true;
         let options = q.options;
         if (typeof options === "string" && options.includes("{{")) {
-          options = interpolate(q.options, this.context, user, "Multiple checks option");
+          options = interpolate(
+            q.options,
+            this.context,
+            user,
+            "Multiple checks option"
+          );
         }
         if (typeof options === "string")
           options = options.split(",").map((o) => o.trim());
