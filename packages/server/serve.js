@@ -231,19 +231,21 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  * @param {*} masterState
  * @param {object} opts
  * @param {string} opts.port
+ * @param {string} opts.host
  * @param {boolean} opts.watchReaper
  * @param {boolean} opts.disableScheduler
  * @param {number} opts.pid
  * @returns {function}
  */
 const onMessageFromWorker =
-  (masterState, { port, watchReaper, disableScheduler, pid }) =>
+  (masterState, { port, host, watchReaper, disableScheduler, pid }) =>
   (msg) => {
     //console.log("worker msg", typeof msg, msg);
     if (msg === "Start" && !masterState.started) {
       masterState.started = true;
       runScheduler({
         port,
+        host,
         watchReaper,
         disableScheduler,
         eachTenant,
@@ -272,6 +274,7 @@ module.exports =
    * @name "module.exports function"
    * @param {object} [opts = {}]
    * @param {number} [opts.port = 3000]
+   * @param {host} [opts.host]
    * @param {boolean} opts.watchReaper
    * @param {boolean} opts.disableScheduler
    * @param {number} opts.defaultNCPUs
@@ -281,6 +284,7 @@ module.exports =
    */
   async ({
     port = 3000,
+    host,
     watchReaper,
     disableScheduler,
     defaultNCPUs,
@@ -318,6 +322,7 @@ module.exports =
         "message",
         onMessageFromWorker(masterState, {
           port,
+          host,
           watchReaper,
           disableScheduler,
           pid: worker.process.pid,
@@ -391,9 +396,10 @@ module.exports =
           addWorker(cluster.fork());
         });
       } else {
-        await nonGreenlockWorkerSetup(appargs, port);
+        await nonGreenlockWorkerSetup(appargs, port, host);
         runScheduler({
           port,
+          host,
           watchReaper,
           disableScheduler,
           eachTenant,
@@ -404,7 +410,7 @@ module.exports =
       }
       Trigger.emitEvent("Startup");
     } else {
-      await nonGreenlockWorkerSetup(appargs, port);
+      await nonGreenlockWorkerSetup(appargs, port, host);
     }
   };
 
@@ -413,7 +419,7 @@ module.exports =
  * @param {*} port
  * @returns {Promise<void>}
  */
-const nonGreenlockWorkerSetup = async (appargs, port) => {
+const nonGreenlockWorkerSetup = async (appargs, port, host) => {
   process.send && process.on("message", workerDispatchMsg);
 
   const app = await getApp(appargs);

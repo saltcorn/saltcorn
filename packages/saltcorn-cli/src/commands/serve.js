@@ -21,6 +21,8 @@ class ServeCommand extends Command {
       defaultNCPUs: cpu.performanceCores || cpu.physicalCores,
     };
     serveArgs.port = flags.port || 3000;
+    if (flags.host) serveArgs.host = flags.host;
+
     if (flags.addschema) {
       try {
         const { getConfig } = require("@saltcorn/data/models/config");
@@ -61,6 +63,11 @@ ServeCommand.description = `Start the Saltcorn server`;
  * @type {object}
  */
 ServeCommand.flags = {
+  host: Flags.string({
+    name: "hostname",
+    char: "h",
+    description: "listen hostname",
+  }),
   port: Flags.integer({ char: "p", description: "port", default: 3000 }),
   verbose: Flags.boolean({ char: "v", description: "Verbose" }),
   watchReaper: Flags.boolean({ char: "r", description: "Watch reaper" }),
