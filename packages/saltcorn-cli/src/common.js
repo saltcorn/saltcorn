@@ -21,6 +21,23 @@ const maybe_as_tenant = async (ten, f) => {
     for (const tenant of tenants) await db.runWithTenant(tenant, f);
   } else return await db.runWithTenant(ten, f);
 };
+
+const maybe_as_tenant_in_transaction = async (ten, f0) => {
+  const db = require("@saltcorn/data/db");
+  const f = async () => {
+    await db.withTransaction(async () => {
+      await f0();
+    });
+  };
+  if (!ten) return await db.runWithTenant("public", f);
+  if (ten === "*") {
+    const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+    const tenants = await getAllTenants();
+
+    for (const tenant of tenants) await db.runWithTenant(tenant, f);
+  } else return await db.runWithTenant(ten, f);
+};
+
 /**
  * Init specified tenant
  * @param tenant - specified tenant
@@ -123,6 +140,7 @@ const prep_test_db = async (backupFile) => {
 
 module.exports = {
   maybe_as_tenant,
+  maybe_as_tenant_in_transaction,
   parseJSONorString,
   sleep,
   init_some_tenants,
