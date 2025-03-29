@@ -3,12 +3,12 @@ kind: Deployment
 metadata:
   name: {{ include "saltcorn.fullname" . }}-reset
   labels:
-    {{- include "saltcorn.labels" . | nindent 4 }}-reset
+    name: "reset"
 spec:
   replicas: 0
   selector:
     matchLabels:
-      {{- include "saltcorn.selectorLabels" . | nindent 6 }}-reset
+      name: "reset"
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -16,10 +16,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "saltcorn.labels" . | nindent 8 }}-reset
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        name: "reset"
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
