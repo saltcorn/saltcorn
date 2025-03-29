@@ -48,7 +48,7 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: ${{ github.repository }}:${{ env.BRANCH }}
+          tags: ${{ github.repository }}:${{ env.BRANCH }}-node${{ matrix.node_version }}
 
       - name: Build and push (Main)
         if: github.ref == 'refs/heads/master'
