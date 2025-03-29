@@ -6,6 +6,8 @@ name: pytest and pupcheck
 on:
   push:
     branches: [master]
+    paths-ignore: 
+      - charts/**
   pull_request:
     branches: [master]
 

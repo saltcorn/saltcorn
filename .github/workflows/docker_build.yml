@@ -2,6 +2,8 @@ name: Docker CI
 
 on:
   push:
+    paths-ignore: 
+      - charts/**
 
 jobs:
   build:
