@@ -2,10 +2,15 @@
 
 ## 1.1.4 - In beta
 
-* Transactional isolation:
-  Most administrative actions are now transactionally isolated
+* Transactional isolation: Most administrative actions and user-run data 
+  manipulation through forms or actions run from the web UI are now
+  transactionally isolated.
 
 * Option to disable CSRF token check from some routes (HTTP settings)
+
+### Fixes
+
+* Fix broken customized reset password email from 1.1.3
 
 ## 1.1.3 - Released 25 March 2025
 
