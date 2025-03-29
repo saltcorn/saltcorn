@@ -5,7 +5,7 @@
 import { sqlsanitize } from "./internal";
 import { AsyncLocalStorage } from "async_hooks";
 
-const is_multi_tenant = true;
+let is_multi_tenant = true;
 let connObj: any = null;
 
 type RequestContext = {
@@ -23,6 +23,7 @@ export const tenantNamespace: AsyncLocalStorage<RequestContext> =
  */
 export const init = (connObjPara: any): void => {
   connObj = connObjPara;
+  is_multi_tenant = connObjPara.multi_tenant
 };
 
 /**
