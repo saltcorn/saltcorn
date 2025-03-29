@@ -2,36 +2,19 @@ ARG NODE_BASE_IMAGE=18
 FROM node:${NODE_BASE_IMAGE}
 
 ARG SALTCORN_VERSION=1.1.3
+
 ENV HOME=/home/node
 ENV NODE_ENV="production"
+ENV NPM_CONFIG_PREFIX=${HOME}/.npm-global
 ENV SALTCORN_DISABLE_UPGRADE="true"
-
-RUN mkdir -p ${HOME} && \
-    chown -R 1001:0 ${HOME} && \
-    chmod -R g+w ${HOME} && \
-    chmod -R g=u ${HOME}
 
 WORKDIR ${HOME}
 
 RUN npm install -g @saltcorn/cli@1.1.3 --omit=dev
 
-RUN chown -R 1001:0 /usr/local/lib/node_modules && \
-    chmod -R g+w /usr/local/lib/node_modules && \
-    chmod -R g=u /usr/local/lib/node_modules
-
-RUN mkdir -p ${HOME}/node_modules && \
-    chown -R 1001:0 ${HOME}/node_modules && \
-    chmod -R g+w ${HOME}/node_modules && \
-    chmod -R g=u ${HOME}/node_modules
-
-RUN mkdir -p ${HOME}/.npm && \
-    chown -R 1001:0 ${HOME}/.npm && \
-    chmod -R g+w ${HOME}/.npm && \
-    chmod -R g=u ${HOME}/.npm
-
-RUN mkdir -p ${HOME}/.cache && \
-    chown -R 1001:0 ${HOME}/.cache && \
-    chmod -R g+w ${HOME}/.cache && \
-    chmod -R g=u ${HOME}/.cache
+RUN mkdir -p ${HOME} && \
+    chown -R 1001:0 ${HOME} && \
+    chmod -R g+w ${HOME} && \
+    chmod -R g=u ${HOME}
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]
