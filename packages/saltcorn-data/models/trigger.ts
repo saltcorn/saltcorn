@@ -233,6 +233,7 @@ class Trigger implements AbstractTrigger {
     setTimeout(async () => {
       const { password, ...user }: any = userPW || {};
       const { getState } = require("../db/state");
+      if (!getState) return; // probably in a test
       const findArgs: Where = { when_trigger: eventType };
       const state = getState();
       state.log(5, `Event ${eventType} ${channel} ${JSON.stringify(payload)}`);
