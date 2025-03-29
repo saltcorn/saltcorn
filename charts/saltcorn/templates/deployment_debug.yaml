@@ -5,7 +5,7 @@ metadata:
   labels:
     name: "debug"
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       name: "debug"
