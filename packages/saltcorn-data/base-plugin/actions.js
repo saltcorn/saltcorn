@@ -975,7 +975,7 @@ module.exports = {
         if (
           field.is_fkey &&
           typeof newRow[field.name] === "object" &&
-          newRow[field.name].id
+          newRow[field.name]?.id
         )
           newRow[field.name] = newRow[field.name].id; //TODO non-id pks
 
