@@ -2094,6 +2094,8 @@ class Table implements AbstractTable {
         where: { [pk_name]: v0.id },
       })) as Row;
     }
+    //track which rows in which tables are updated
+    const updated: { [k: string]: Set<PrimaryKeyValue> } = {};
 
     for (const calc_field of calc_agg_fields) {
       const agg_field_name = calc_field.attributes.agg_field.split("@")[0];
@@ -2105,18 +2107,23 @@ class Table implements AbstractTable {
       const rows = await refTable?.getRows({
         [refTable.pk_name]: val,
       });
+      if (!updated[refTable.name]) updated[refTable.name] = new Set();
+
       for (const row of rows) {
-        await refTable?.updateRow?.(
-          {},
-          row[refTable.pk_name],
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          iterations + 1
-        );
+        if (!updated[refTable.name].has(row[refTable.pk_name])) {
+          updated[refTable.name].add(row[refTable.pk_name]);
+          await refTable?.updateRow?.(
+            {},
+            row[refTable.pk_name],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            iterations + 1
+          );
+        }
       }
     }
     for (const calc_field of calc_join_agg_fields) {
@@ -2135,18 +2142,23 @@ class Table implements AbstractTable {
       const rows = await refTable?.getRows({
         [joinField]: val,
       });
+      if (!updated[refTable.name]) updated[refTable.name] = new Set();
+
       for (const row of rows || []) {
-        await refTable?.updateRow?.(
-          {},
-          row[refTable.pk_name],
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          iterations + 1
-        );
+        if (!updated[refTable.name].has(row[refTable.pk_name])) {
+          updated[refTable.name].add(row[refTable.pk_name]);
+          await refTable?.updateRow?.(
+            {},
+            row[refTable.pk_name],
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            iterations + 1
+          );
+        }
       }
     }
 
@@ -2167,6 +2179,8 @@ class Table implements AbstractTable {
       if (!matchings.length) continue;
       const refTable =
         (field.table as Table) || Table.findOne({ id: field.table_id });
+      if (!updated[refTable.name]) updated[refTable.name] = new Set();
+
       for (const matching of matchings) {
         //console.log({ matching, changedFields });
         if (
@@ -2189,34 +2203,40 @@ class Table implements AbstractTable {
             },
           });
           for (const row of rows)
-            await refTable?.updateRow?.(
-              {},
-              row[refTable.pk_name],
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              iterations + 1
-            );
+            if (!updated[refTable.name].has(row[refTable.pk_name])) {
+              updated[refTable.name].add(row[refTable.pk_name]);
+              await refTable?.updateRow?.(
+                {},
+                row[refTable.pk_name],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                iterations + 1
+              );
+            }
         } else {
           //no through
           const rows = await refTable!.getRows({
             [matching.field]: v[this.pk_name],
           });
           for (const row of rows) {
-            await refTable?.updateRow?.(
-              {},
-              row[refTable.pk_name],
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              iterations + 1
-            );
+            if (!updated[refTable.name].has(row[refTable.pk_name])) {
+              updated[refTable.name].add(row[refTable.pk_name]);
+              await refTable?.updateRow?.(
+                {},
+                row[refTable.pk_name],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                iterations + 1
+              );
+            }
           }
         }
       }
