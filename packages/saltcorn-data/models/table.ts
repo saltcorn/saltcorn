@@ -970,11 +970,16 @@ class Table implements AbstractTable {
    */
   async deleteRows(where: Where, user?: AbstractUser, noTrigger?: boolean) {
     //Fast truncate if user is admin and where is blank
+    const cfields = await Field.find(
+      { reftable_name: this.name },
+      { cached: true }
+    );
     if (
       (!user || user?.role_id === 1) &&
       Object.keys(where).length == 0 &&
       db.truncate &&
-      noTrigger
+      noTrigger &&
+      !cfields.length
     ) {
       try {
         await db.truncate(this.name);
@@ -1650,11 +1655,15 @@ class Table implements AbstractTable {
     this.stringify_json_fields(v1);
 
     if (retry < 3) {
-      try {
-        await db.insert(this.name + "__history", v1);
-      } catch (error) {
-        await this.insert_history_row(v1, retry + 1);
-      }
+      //TODO check we are really in a transaction
+      await db.tryCatchInTransaction(
+        async () => {
+          await db.insert(this.name + "__history", v1);
+        },
+        async (error: Error) => {
+          await this.insert_history_row(v1, retry + 1);
+        }
+      );
     } else {
       await db.insert(this.name + "__history", v1, {
         onConflictDoNothing: true,

@@ -575,6 +575,20 @@ const withTransaction = async (f, onError) => {
   }
 };
 
+const tryCatchInTransaction = async (f, onError) => {
+  const rndid = Math.floor(Math.random() * 16777215).toString(16);
+  const reqCon = getRequestContext();
+  if (reqCon?.client) await query(`SAVEPOINT sp${rndid}`);
+  try {
+    await f();
+  } catch (error) {
+    if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
+    await onError(error);
+  } finally {
+    if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
+  }
+};
+
 const query = (text, params) => {
   sql_log(text, params);
   return getMyClient().query(text, params);
@@ -624,6 +638,7 @@ const postgresExports = {
   listUserDefinedTables,
   truncate,
   withTransaction,
+  tryCatchInTransaction,
 };
 
 module.exports = (getConnectObjectPara) => {
