@@ -1655,11 +1655,15 @@ class Table implements AbstractTable {
     this.stringify_json_fields(v1);
 
     if (retry < 3) {
-      try {
-        await db.insert(this.name + "__history", v1);
-      } catch (error) {
-        await this.insert_history_row(v1, retry + 1);
-      }
+      //TODO check we are really in a transaction
+      await db.tryCatchInTransaction(
+        async () => {
+          await db.insert(this.name + "__history", v1);
+        },
+        async (error: Error) => {
+          await this.insert_history_row(v1, retry + 1);
+        }
+      );
     } else {
       await db.insert(this.name + "__history", v1, {
         onConflictDoNothing: true,
