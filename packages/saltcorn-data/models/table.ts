@@ -970,11 +970,16 @@ class Table implements AbstractTable {
    */
   async deleteRows(where: Where, user?: AbstractUser, noTrigger?: boolean) {
     //Fast truncate if user is admin and where is blank
+    const cfields = await Field.find(
+      { reftable_name: this.name },
+      { cached: true }
+    );
     if (
       (!user || user?.role_id === 1) &&
       Object.keys(where).length == 0 &&
       db.truncate &&
-      noTrigger
+      noTrigger &&
+      !cfields.length
     ) {
       try {
         await db.truncate(this.name);
