@@ -455,7 +455,8 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
     });
 
     // todo port to config
-    httpsServer.listen(listenArgs, () => {
+    const httpsListenArgs = { ...listenArgs, port: 443 };
+    httpsServer.listen(httpsListenArgs, () => {
       console.log("HTTPS Server running on port 443");
     });
   } else {
