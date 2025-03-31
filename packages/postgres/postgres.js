@@ -577,14 +577,15 @@ const withTransaction = async (f, onError) => {
 
 const tryCatchInTransaction = async (f, onError) => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
-  await query(`SAVEPOINT sp${rndid}`);
+  const reqCon = getRequestContext();
+  if (reqCon?.client) await query(`SAVEPOINT sp${rndid}`);
   try {
     await f();
   } catch (error) {
-    await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
+    if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
     await onError(error);
   } finally {
-    await query(`RELEASE SAVEPOINT sp${rndid}`);
+    if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
   }
 };
 
