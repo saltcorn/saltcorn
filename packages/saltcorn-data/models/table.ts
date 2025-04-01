@@ -981,12 +981,12 @@ class Table implements AbstractTable {
       noTrigger &&
       !cfields.length
     ) {
-      try {
+      let done = false;
+      await db.tryCatchInTransaction(async () => {
         await db.truncate(this.name);
-        return;
-      } catch {
-        //foreign keys can cause this to fail
-      }
+        done = true;
+      });
+      if (done) return;
     }
 
     // get triggers on delete
