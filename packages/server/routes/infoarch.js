@@ -179,7 +179,7 @@ router.get(
                     : "",
               },
               {
-                label: req.__("Language pack"),
+                label: req.__("Language CSV"),
                 key: (r) =>
                   a(
                     {

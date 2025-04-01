@@ -74,7 +74,7 @@ const upload_language_pack = (req) =>
         style: { cursor: "pointer" },
       },
       i({ class: "fas fa-upload me-1" }),
-      req.__("Upload language pack")
+      req.__("Upload language CSV")
     ),
     input({
       id: "upload_langpack",
