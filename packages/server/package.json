@@ -27,6 +27,7 @@
     "cookie-session": "^2.1.0",
     "cors": "2.8.5",
     "csv-stringify": "^6.5.2",
+    "csvtojson": "^2.0.10",
     "dockerode": "~4.0.4",
     "express": "^5.0.1",
     "express-fileupload": "^1.5.1",

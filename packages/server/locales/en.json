@@ -1593,5 +1593,7 @@
 	"Comma-separated list of configuration settings tenants inherit from root. Ex: <code>site_name, smtp_host, allow_signup</code>": "Comma-separated list of configuration settings tenants inherit from root. Ex: <code>site_name, smtp_host, allow_signup</code>",
 	"Disable CSRF routes": "Disable CSRF routes",
 	"Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>": "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
-	"Only day": "Only day"
+	"Only day": "Only day",
+	"Language CSV": "Language CSV",
+	"Upload language CSV": "Upload language CSV"
 }
