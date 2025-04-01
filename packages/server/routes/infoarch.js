@@ -237,19 +237,19 @@ router.get(
     const default_lang =
       Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
       getState().getConfig("default_locale", "en");
-
+    const langHdr = `${lang}.${cfgLangs[lang].name}`;
     const cfgStrings = getState().getConfig("localizer_strings", {});
     const translation = cfgStrings[lang] || {};
     const strings = getState()
       .getStringsForI18n()
-      .map((s) => ({ [default_lang]: s, [lang]: translation[s] || s }));
+      .map((s) => ({ [default_lang]: s, [langHdr]: translation[s] || s }));
     res.type("text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${lang}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Pragma", "no-cache");
     stringify(strings, {
       header: true,
-      columns: [default_lang, lang],
+      columns: [default_lang, langHdr],
       quoted: true,
     }).pipe(res);
   })
