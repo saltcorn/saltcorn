@@ -40,7 +40,6 @@ test.describe('E2E Test Suite', () => {
         await context.close();
     });
 
-
     // Add table by uplaoding csv
     test('Add table by uploading csv file', async () => {
         // click table button
@@ -73,7 +72,7 @@ test.describe('E2E Test Suite', () => {
             await functions.drag_And_Drop(pageobject.Column2DOB, pageobject.Column1Address);
         });
         await page.waitForTimeout(5000);
-         // click on next button
+        // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         await functions.views();

@@ -19,7 +19,6 @@ test.describe('E2E Test Suite', () => {
     context = await browser.newContext({
       ignoreHTTPSErrors: true
     });
-
     page = await context.newPage();
 
     // Maximize the screen
@@ -64,8 +63,7 @@ test.describe('E2E Test Suite', () => {
     // input view name and discription
     await page.fill(pageobject.InputName, 'NewView_List');
     await page.fill(pageobject.discriptiontext, 'view for table');
-
-    await page.waitForTimeout(10000)
+    //await page.waitForTimeout(5000)
 
     // validate the view pattern in table dropdown
     await customAssert('View Pattern should be list', async () => {
@@ -96,15 +94,12 @@ test.describe('E2E Test Suite', () => {
       await page.locator(pageobject.nextoption).click();
       await page.locator(pageobject.nextoption).click();
     });
-
     await functions.submit();
 
     await functions.views();
-
     await page.waitForSelector(pageobject.newviewlink);
     await page.click(pageobject.newviewlink);
 
- 
       await customAssert('Click on the email to edit', async () => {
         const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
       
@@ -113,16 +108,11 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(4000)
         
         const editIconLocator = emailEditLocator.locator('.editicon');
-  
         // Assertion to check if edit icon is visible
         await expect(editIconLocator).toBeVisible();
         // Click to edit after verifying visibility
         await emailEditLocator.click(); 
-  
-
     });
-
-   
 
     await customAssert('Click on the edit icon and verify OK and Cancel button visibility', async () => {
 
@@ -208,7 +198,7 @@ test.describe('E2E Test Suite', () => {
     await functions.submit();
     await page.click(pageobject.EditlinkLocator);
     // Click on add row button
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(10000);
     await page.click(pageobject.addrowlocator);
     // click on tab cell to activate it
     await page.waitForSelector(pageobject.Nametab);
@@ -254,8 +244,6 @@ test.describe('E2E Test Suite', () => {
     await checkboxLocator.click();
     await page.waitForTimeout(2000);
     await functions.views();
-
-
   });
   // Create List view for employee table and add show Department link
   test('Create List view for Employee table and add show Department link', async () => {
@@ -352,6 +340,4 @@ test.describe('E2E Test Suite', () => {
     });
 
   });
-
-
 });

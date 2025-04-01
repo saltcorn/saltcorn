@@ -4,7 +4,6 @@ const PageFunctions = require('../pageobject/function.js');
 const PageObject = require('../pageobject/locators.js');
 const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
-const fs = require('fs');
 
 test.describe('E2E Test Suite', () => {
     let functions;
@@ -198,7 +197,6 @@ test.describe('E2E Test Suite', () => {
         // Click on next button
         await functions.submit();
         await page.waitForLoadState('networkidle');
-
     });
 
     test('Create Participants table', async () => {
@@ -228,7 +226,6 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(1000);
         // Enter room coulmn
         await functions.fill_Text(pageobject.labelTextboxlocator, 'Room');
-
         // Click on next button
         await functions.submit();
         await functions.submit();
@@ -260,7 +257,6 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption(pageobject.onDeleteSelect, { label: 'Fail' });
         });
         await functions.submit();
-
     });
 
     test('create view to add message', async () => {
@@ -380,9 +376,9 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(2000);
 
         // Select Message.room for message relation
-        await page.locator('#inputmsg_relation').selectOption({ label:'Messages.room' });
+        await page.locator('#inputmsg_relation').selectOption({ label: 'Messages.room' });
         // Select user for sender field
-        await page.locator('#inputmsgsender_field').selectOption({ label:'sender' });
+        await page.locator('#inputmsgsender_field').selectOption({ label: 'sender' });
         // Select Message_show for message view
         await page.click('#inputmsgview', { force: true });
         await page.locator('#inputmsgview').selectOption({ label: 'Message_Show' }, { force: true });
@@ -402,11 +398,11 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.fielddropdown);
             // Select 'Date of birth' from the dropdown
             await page.selectOption('select.form-control.form-select', 'Sender');
-          });
+        });
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
-        
+
         // Select room view for destination after message add
         await page.selectOption(pageobject.destinationview, { label: 'Room.room' });
         // click on next button
@@ -429,5 +425,4 @@ test.describe('E2E Test Suite', () => {
         await page.fill(pageobject.inputcontent, 'Hi Testing again');
         await page.locator('#inputroom').selectOption({ label: 'Room1' }, { force: true });
     });
-
 }); 

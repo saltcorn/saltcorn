@@ -79,7 +79,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.addFieldButtonLocator);
         // Fill the lable name
         await functions.fill_Text(pageobject.labelTextboxlocator, 'Estimated Hours');
-        await customAssert('Select type key to employee ', async () => {
+        await customAssert('Select input type integer', async () => {
             const type1 = await page.$("#inputtype");
             await type1?.selectOption("Integer");
         });

@@ -38,7 +38,6 @@ test.describe('E2E Test Suite', () => {
         await context.close();
     });
 
-
     test('Create Builder Mode', async () => {
         await functions.create_New_Page('TestPage');
         await page.waitForSelector(pageobject.cardSource);
@@ -61,7 +60,6 @@ test.describe('E2E Test Suite', () => {
         const TextTitle = page.locator(pageobject.textSource);
         await customAssert('Text box should be visible', async () => await expect(page.locator(pageobject.textlocator)).toBeVisible());
         await page.locator(pageobject.cardBoxClick).click();
-
     });
 
     test('Add Library', async () => {
@@ -111,7 +109,6 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Page URL should be /testpage2', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'page/testpage2');
         });
-
     });
 
     test('Create Third page', async () => {
@@ -204,7 +201,6 @@ test.describe('E2E Test Suite', () => {
         await page.fill(pageobject.InputName, 'TestView');
         await page.fill(pageobject.discriptiontext, 'create view and use the library for page');
 
-
         // validate the view pattern in table dropdown
         await customAssert('View Pattern should be list', async () => {
             // select list pattern
@@ -229,7 +225,6 @@ test.describe('E2E Test Suite', () => {
         await dropdown.selectOption('TestPage');
         // submit the page  
         await functions.submit();
-
     });
 
     test('verify page by view', async () => {
@@ -341,7 +336,6 @@ test.describe('E2E Test Suite', () => {
         await page.fill(pageobject.InputName, 'Table_View');
         await page.fill(pageobject.discriptiontext, 'create view and use the library for page');
 
-
         // validate the view pattern in table dropdown
         await customAssert('View Pattern should be list', async () => {
             // select list pattern
@@ -352,7 +346,6 @@ test.describe('E2E Test Suite', () => {
         await customAssert('View Settings should be visible', async () => {
             await page.click(pageobject.viewSetting);
             await expect(page.locator(pageobject.viewSetting)).toBeVisible();
-
         });
 
         await page.locator(pageobject.mypage).fill("My_Page");
@@ -371,7 +364,5 @@ test.describe('E2E Test Suite', () => {
             // await page.waitForTimeout(2000);
             await functions.clear_Data();
         });
-
     });
-
 });

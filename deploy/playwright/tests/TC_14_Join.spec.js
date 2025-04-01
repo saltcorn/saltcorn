@@ -52,7 +52,7 @@ test.describe('E2E Test Suite', () => {
     // Fill the discription
     await functions.fill_Text(pageobject.descriptionSelector, 'task assigned to');
     // select the input type
-    await customAssert('Select type key to employee ', async () => {
+    await customAssert('Select type key to People ', async () => {
       const type1 = await page.$("#inputtype");
       await type1?.selectOption("Key to People");
     });

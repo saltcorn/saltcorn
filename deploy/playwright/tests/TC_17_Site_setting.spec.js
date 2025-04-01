@@ -32,6 +32,7 @@ test.describe('E2E Test Suite', () => {
     await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
   });
+  
   test.afterAll(async () => {
     // Close the page and context after all test
     await page.close();
