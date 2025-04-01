@@ -16,6 +16,7 @@ const {
   send_admin_page,
   config_fields_form,
   save_config_from_form,
+  upload_language_pack,
 } = require("../markup/admin.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { div, a, i, text, button } = require("@saltcorn/markup/tags");
@@ -23,6 +24,7 @@ const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const { stringify } = require("csv-stringify");
+const csvtojson = require("csvtojson");
 
 /**
  * @type {object}
@@ -199,13 +201,17 @@ router.get(
             ],
             Object.values(cfgLangs)
           ),
-          a(
-            {
-              href: "/site-structure/localizer/add-lang",
-              class: "btn btn-primary mt-1",
-            },
-            i({ class: "fas fa-plus-square me-1" }),
-            req.__("Add language")
+          div(
+            { class: "d-flex mt-1" },
+            a(
+              {
+                href: "/site-structure/localizer/add-lang",
+                class: "btn btn-primary me-2",
+              },
+              i({ class: "fas fa-plus-square me-1" }),
+              req.__("Add language")
+            ),
+            upload_language_pack(req)
           )
         ),
       },
@@ -218,26 +224,67 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { lang } = req.params;
+    if (lang === "__proto__" || lang === "constructor") {
+      res.redirect(`/`);
+      return;
+    }
     const cfgLangs = getState().getConfig("localizer_languages");
 
     if (!cfgLangs[lang]) {
       req.flash("error", req.__("Language not found"));
       return res.redirect(`/site-structure/localizer`);
     }
+    const default_lang =
+      Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
+      getState().getConfig("default_locale", "en");
+
     const cfgStrings = getState().getConfig("localizer_strings", {});
     const translation = cfgStrings[lang] || {};
     const strings = getState()
       .getStringsForI18n()
-      .map((s) => ({ en: s, [lang]: translation[s] || s }));
+      .map((s) => ({ [default_lang]: s, [lang]: translation[s] || s }));
     res.type("text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${lang}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Pragma", "no-cache");
     stringify(strings, {
       header: true,
-      columns: ["en", lang],
+      columns: [default_lang, lang],
       quoted: true,
     }).pipe(res);
+  })
+);
+
+router.post(
+  "/localizer/upload-language-pack",
+  isAdmin,
+  setTenant, // TODO why is this needed?????
+  error_catcher(async (req, res) => {
+    if (req.files?.file?.tempFilePath) {
+      const cfgLangs = getState().getConfig("localizer_languages");
+      const default_lang =
+        Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
+        getState().getConfig("default_locale", "en");
+      const cfgStrings = getState().getConfigCopy("localizer_strings");
+
+      try {
+        const rows = await csvtojson().fromFile(req.files?.file?.tempFilePath);
+        const langs = Object.keys(rows[0]).filter((k) => k !== default_lang);
+        for (const lang of langs)
+          for (const row of rows) {
+            const defstring = row[default_lang];
+            if (cfgStrings[lang]) cfgStrings[lang][defstring] = row[lang];
+            else cfgStrings[lang] = { [defstring]: row[lang] };
+          }
+        await getState().setConfig("localizer_strings", cfgStrings);
+
+        req.flash("success", `Updated languages: ${langs.join(", ")}`);
+      } catch (e) {
+        console.error(e);
+        req.flash("error", e.message);
+      }
+    }
+    res.redirect(`/site-structure/localizer`);
   })
 );
 

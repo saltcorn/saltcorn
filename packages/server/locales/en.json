@@ -1594,5 +1594,6 @@
 	"Disable CSRF routes": "Disable CSRF routes",
 	"Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>": "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
 	"Only day": "Only day",
-	"Language pack": "Language pack"
+	"Language pack": "Language pack",
+	"Upload language pack": "Upload language pack"
 }
