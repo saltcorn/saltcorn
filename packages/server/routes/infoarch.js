@@ -22,6 +22,7 @@ const { div, a, i, text, button } = require("@saltcorn/markup/tags");
 const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
+const { stringify } = require("csv-stringify");
 
 /**
  * @type {object}
@@ -176,6 +177,17 @@ router.get(
                     : "",
               },
               {
+                label: req.__("Language pack"),
+                key: (r) =>
+                  a(
+                    {
+                      href: `/site-structure/localizer/download-pack/${r.locale}`,
+                    },
+                    i({ class: "fas fa-download me-2" }),
+                    req.__("Download")
+                  ),
+              },
+              {
                 label: req.__("Delete"),
                 key: (r) =>
                   post_delete_btn(
@@ -198,6 +210,34 @@ router.get(
         ),
       },
     });
+  })
+);
+
+router.get(
+  "/localizer/download-pack/:lang",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { lang } = req.params;
+    const cfgLangs = getState().getConfig("localizer_languages");
+
+    if (!cfgLangs[lang]) {
+      req.flash("error", req.__("Language not found"));
+      return res.redirect(`/site-structure/localizer`);
+    }
+    const cfgStrings = getState().getConfig("localizer_strings", {});
+    const translation = cfgStrings[lang] || {};
+    const strings = getState()
+      .getStringsForI18n()
+      .map((s) => ({ en: s, [lang]: translation[s] || s }));
+    res.type("text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${lang}.csv"`);
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Pragma", "no-cache");
+    stringify(strings, {
+      header: true,
+      columns: ["en", lang],
+      quoted: true,
+    }).pipe(res);
   })
 );
 
