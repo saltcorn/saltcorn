@@ -12,12 +12,17 @@ const path = require("path");
 const { getState } = require("@saltcorn/data/db/state");
 const { oneOf } = require("@saltcorn/types/generators");
 const { configTypes } = require("@saltcorn/data/models/config");
-const get_md_file = async (topic) => {
+const get_md_file = async (topic, isFullPath) => {
   try {
-    const fp = File.normalise_in_base(__dirname, `${topic}.tmd`);
-    if (!fp) return false;
-    const fileBuf = await fs.readFile(fp);
-    return fileBuf.toString();
+    if (isFullPath) {
+      const fileBuf = await fs.readFile(topic);
+      return fileBuf.toString();
+    } else {
+      const fp = File.normalise_in_base(__dirname, `${topic}.tmd`);
+      if (!fp) return false;
+      const fileBuf = await fs.readFile(fp);
+      return fileBuf.toString();
+    }
   } catch (e) {
     return false;
   }
@@ -27,7 +32,7 @@ md.renderer.rules.table_open = function (tokens, idx) {
   return '<table class="help-md">';
 };
 
-const get_help_markup = async (topic, query, req) => {
+const get_help_markup = async (topic, query, req, isFullPath) => {
   try {
     const context = {
       user: req.user,
@@ -37,9 +42,9 @@ const get_help_markup = async (topic, query, req) => {
       query,
       oneOf,
       moment,
-      configTypes
+      configTypes,
     };
-    const mdTemplate = await get_md_file(topic);
+    const mdTemplate = await get_md_file(topic, isFullPath);
     if (!mdTemplate) return { markup: "Topic not found" };
     const template = _.template(mdTemplate, {
       evaluate: /\{\{#(.+?)\}\}/g,

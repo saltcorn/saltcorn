@@ -195,6 +195,7 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
             type="text"
             className="form-control text-to-display"
             value={node[nodekey] || ""}
+            spellCheck={false}
             onChange={(e) => {
               if (e.target) {
                 const target_value = e.target.value;
@@ -544,6 +545,9 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
       }
       const newHtml = $(".preview-scratchpad").html();
       setPreviews((prevState) => ({ ...prevState, [node_id]: newHtml }));
+
+      // for react-view previews
+      document.dispatchEvent(new Event("preview-loaded"));
     })
     .catch((e) => {
       console.log("Unable to fetch the preview:");
@@ -879,16 +883,15 @@ const ConfigField = ({
     });
     onChange && onChange(field.name, v, setProp);
   };
-  let value = or_if_undef(
-    configuration
-      ? configuration[field.name]
-      : isStyle
+  let stored_value = configuration
+    ? configuration[field.name]
+    : isStyle
       ? props.style[field.name]
       : subProp
-      ? props[subProp]?.[field.name]
-      : props[field.name],
-    field.default
-  );
+        ? props[subProp]?.[field.name]
+        : props[field.name];
+
+  let value = or_if_undef(stored_value, field.default);
   if (valuePostfix)
     value = `${value}`.replaceAll(valuePostfix || "__nosuchstring", "");
   if (field.input_type === "fromtype") field.input_type = null;
@@ -912,8 +915,14 @@ const ConfigField = ({
     typeof field?.attributes?.options === "string"
       ? field.attributes?.options.split(",").map((s) => s.trim())
       : field?.attributes?.options || field.options;
-
-  if (hasSelect && typeof value === "undefined") {
+  if (
+    typeof field.default !== "undefined" &&
+    typeof stored_value === "undefined"
+  ) {
+    useEffect(() => {
+      myOnChange(field.default);
+    }, []);
+  } else if (hasSelect && typeof value === "undefined") {
     //pick first value to mimic html form behaviour
     const options = getOptions();
     let o;
@@ -950,6 +959,7 @@ const ConfigField = ({
             type="text"
             className={`field-${field?.name} form-control`}
             value={value || ""}
+            spellCheck={false}
             onChange={(e) => e.target && myOnChange(e.target.value)}
           />
         );
@@ -988,6 +998,8 @@ const ConfigField = ({
         className={`field-${field?.name} form-control`}
         value={value || ""}
         step={0.01}
+        max={or_if_undef(field?.attributes?.max, undefined)}
+        min={or_if_undef(field?.attributes?.min, undefined)}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
@@ -1009,6 +1021,7 @@ const ConfigField = ({
         type="text"
         className={`field-${field?.name} form-control`}
         value={value}
+        spellCheck={false}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
@@ -1028,8 +1041,8 @@ const ConfigField = ({
           o.name && o.label
             ? { value: o.name, label: o.label }
             : o.value && o.label
-            ? { value: o.value, label: o.label }
-            : { value: o, label: o }
+              ? { value: o.value, label: o.label }
+              : { value: o, label: o }
         );
         return (
           <Select
@@ -1126,8 +1139,8 @@ const ConfigField = ({
               configuration
                 ? configuration[field.name + "Unit"]
                 : isStyle || subProp
-                ? styleDim
-                : props[field.name + "Unit"],
+                  ? styleDim
+                  : props[field.name + "Unit"],
               "px"
             )}
             autoable={field.autoable}
@@ -1538,18 +1551,32 @@ const ButtonOrLinkSettingsRows = ({
         ]
       : []),
     values[keyPrefix + "style"] !== "on_page_load" ? (
-      <tr key="btntitle">
-        <td>
-          <label>Hover title</label>
-        </td>
-        <td>
-          <input
-            className="form-control"
-            value={values[keyPrefix + "title"]}
-            onChange={setAProp(keyPrefix + "title")}
-          />
-        </td>
-      </tr>
+      <Fragment>
+        <tr key="btntitle">
+          <td>
+            <label>Hover title</label>
+          </td>
+          <td>
+            <input
+              className="form-control linkoractiontitle"
+              value={values[keyPrefix + "title"]}
+              onChange={setAProp(keyPrefix + "title")}
+            />
+          </td>
+        </tr>
+        <tr key="btnclass">
+          <td>
+            <label>Class</label>
+          </td>
+          <td>
+            <input
+              className="form-control linkoractionclass"
+              value={values[keyPrefix + "class"]}
+              onChange={setAProp(keyPrefix + "class")}
+            />
+          </td>
+        </tr>
+      </Fragment>
     ) : null,
   ];
 };

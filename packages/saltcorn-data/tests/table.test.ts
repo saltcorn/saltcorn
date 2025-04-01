@@ -1966,7 +1966,7 @@ describe("Table constraints", () => {
       name: "favbook",
       label: "Favbook",
       type: "Key to books",
-      attributes: { summary_field: "author" },
+      attributes: { summary_field: "author", include_fts: true },
     });
     await table.insertRow({
       name: "Tom",
@@ -1980,7 +1980,30 @@ describe("Table constraints", () => {
         type: "Index",
         configuration: { field: "_fts" },
       });
+      const table1 = Table.findOne("TableWithFTS");
+      expect(
+        table1?.fields
+          .filter((f) => f.name === "search_context")
+          .map((f) => f.name).length
+      ).toBe(1);
       await con.delete();
+      await Field.create({
+        table,
+        name: "favpatient",
+        label: "Fave Patient",
+        type: "Key to patients",
+        attributes: { summary_field: "name", include_fts: true },
+      });
+      const con1 = await TableConstraint.create({
+        table_id: table.id,
+        type: "Index",
+        configuration: { field: "_fts" },
+      });
+      const table2 = Table.findOne("TableWithFTS");
+      expect(table2?.getField("search_context")?.expression).toBe(
+        `favbook?.author||"" + " " + favpatient?.name||""`
+      );
+      await con1.delete();
     }
   });
 });

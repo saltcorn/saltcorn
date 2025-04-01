@@ -178,6 +178,58 @@ const getAdminLoginCookie = async () => {
   return resToLoginCookie(res);
 };
 
+const getAdminJwt = async () => {
+  const app = await getApp({ disableCsrf: true });
+  const headers = {
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Saltcorn-Client": "mobile-app",
+  };
+  const res = await request(app)
+    .get(
+      `/auth/login-with/jwt?email=${encodeURIComponent(
+        "admin@foo.com"
+      )}&password=${encodeURIComponent("AhGGr6rhu45")}`
+    )
+
+    .set(headers);
+  if (res.statusCode !== 200) console.log(res.text);
+  return res.body;
+};
+
+const getStaffJwt = async () => {
+  const app = await getApp({ disableCsrf: true });
+  const headers = {
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Saltcorn-Client": "mobile-app",
+  };
+  const res = await request(app)
+    .get(
+      `/auth/login-with/jwt?email${encodeURIComponent(
+        "staff@foo.com"
+      )}&password=${encodeURIComponent("ghrarhr54hg")}`
+    )
+    .set(headers);
+  if (res.statusCode !== 200) console.log(res.text);
+  return res.body;
+};
+
+const getUserJwt = async () => {
+  const app = await getApp({ disableCsrf: true });
+  const headers = {
+    "X-Requested-With": "XMLHttpRequest",
+    "X-Saltcorn-Client": "mobile-app",
+  };
+  const res = await request(app)
+    .get(
+      `/auth/login-with/jwt?email=${encodeURIComponent(
+        "user@foo.com"
+      )}&password=${encodeURIComponent("GFeggwrwq45fjn")}`
+    )
+    .set(headers);
+  if (res.statusCode !== 200) console.log(res.text);
+  return res.body;
+};
+
 /**
  *
  * @param {*} width
@@ -402,6 +454,9 @@ module.exports = {
   getStaffLoginCookie,
   getAdminLoginCookie,
   getUserLoginCookie,
+  getAdminJwt,
+  getStaffJwt,
+  getUserJwt,
   prepScreenInfoCookie,
   prepUserAgent,
   itShouldRedirectUnauthToLogin,

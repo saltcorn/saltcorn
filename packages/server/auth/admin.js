@@ -365,6 +365,7 @@ const auth_settings_form = async (req) =>
       "new_user_form",
       "user_settings_form",
       "verification_view",
+      "reset_password_email_view",
       { section_header: req.__("Additional login and signup settings") },
       "logout_url",
       "signup_role",
@@ -397,6 +398,7 @@ const http_settings_form = async (req) =>
       "body_limit",
       "url_encoded_limit",
       ...(!db.isSQLite ? ["prune_session_interval"] : []),
+      "disable_csrf_routes",
     ],
     action: "/useradmin/http",
     submitLabel: req.__("Save"),
@@ -423,6 +425,9 @@ const permissions_settings_form = async (req) =>
       "min_role_edit_pages",
       "min_role_edit_triggers",
       "min_role_edit_menu",
+      "min_role_edit_files",
+      "min_role_edit_search",
+      "min_role_create_snapshots",
       //hidden            "exttables_min_role_read",
     ],
     action: "/useradmin/permissions",
@@ -465,7 +470,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await auth_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -523,7 +528,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await http_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -594,7 +599,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await permissions_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -677,7 +682,11 @@ router.get(
               p(
                 req.__(
                   `Saltcorn can automatically obtain an SSL certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a> for single domains`
-                )
+                ) +
+                  ". " +
+                  req.__(
+                    `To obtain a certificate, the administrator's email address will be shared with Let's Encrypt.`
+                  )
               ),
               h5(
                 req.__("Currently: "),
@@ -794,7 +803,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await ssl_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -998,15 +1007,15 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     let form, sub2;
-    if (req.body.id) {
-      const user = await User.findOne({ id: req.body.id });
+    if ((req.body || {}).id) {
+      const user = await User.findOne({ id: (req.body || {}).id });
       form = await userForm(req, user);
       sub2 = user.email;
     } else {
       form = await userForm(req);
       sub2 = "New";
     }
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -1037,6 +1046,7 @@ router.post(
         await u.update({ email, role_id, ...rest });
         req.flash("success", req.__(`User %s saved`, email));
       } catch (e) {
+        console.error(e);
         req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
     } else {

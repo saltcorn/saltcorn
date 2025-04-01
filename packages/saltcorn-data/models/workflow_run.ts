@@ -16,6 +16,7 @@ import utils from "../utils";
 import moment from "moment";
 import { mkTable } from "@saltcorn/markup/index";
 import mocks from "../tests/mocks";
+import { FieldLike } from "@saltcorn/types/base_types";
 const { mockReqRes } = mocks;
 const { ensure_final_slash, interpolate } = utils;
 const { eval_expression } = Expression;
@@ -238,7 +239,9 @@ class WorkflowRun {
   static async runResumableWorkflows() {
     const runs = await this.getResumableWorkflows();
     for (const run of runs) {
-      await run.run({});
+      await db.withTransaction(async () => {
+        await run.run({});
+      });
     }
   }
 
@@ -262,7 +265,10 @@ class WorkflowRun {
     });
   }
 
-  async userFormFields(step0?: WorkflowStep) {
+  async userFormFields(
+    step0?: WorkflowStep,
+    user?: User
+  ): Promise<{ fields: FieldLike[]; validator?: (r: Row) => any }> {
     const step =
       step0 ||
       (await WorkflowStep.findOne({
@@ -282,10 +288,25 @@ class WorkflowRun {
         case "Free text":
           return { type: "String" };
         case "Multiple choice":
+          let options = q.options;
+          if (typeof options === "string" && options.includes("{{")) {
+            options = interpolate(
+              q.options,
+              this.context,
+              user,
+              "Multiple choice options"
+            );
+          }
+          const noptions = Array.isArray(options)
+            ? options.length
+            : typeof options === "string"
+              ? options.split(",").length
+              : 0;
           return {
             type: "String",
-            attributes: { options: q.options },
-            fieldview: "radio_group",
+            attributes: { options },
+            required: true,
+            fieldview: noptions > 5 ? undefined : "radio_group",
           };
         case "Integer":
           return { type: "Integer" };
@@ -295,11 +316,63 @@ class WorkflowRun {
           return {};
       }
     };
-    return (step.configuration.user_form_questions || []).map((q: any) => ({
-      label: q.label,
-      name: q.var_name,
-      ...qTypeToField(q),
-    }));
+
+    const formFields: FieldLike[] = [];
+    let hasMultiChecks = false;
+    const multiCheckOptions: any = {};
+    (step.configuration.user_form_questions || []).forEach((q: any) => {
+      if (q.qtype === "Multiple checks") {
+        hasMultiChecks = true;
+        let options = q.options;
+        if (typeof options === "string" && options.includes("{{")) {
+          options = interpolate(
+            q.options,
+            this.context,
+            user,
+            "Multiple checks option"
+          );
+        }
+        if (typeof options === "string")
+          options = options.split(",").map((o) => o.trim());
+        multiCheckOptions[q.var_name] = options;
+        formFields.push({
+          input_type: "section_header",
+          label: " ",
+          sublabel: `<span class="fst-normal">${q.label}</span>`,
+        } as FieldLike);
+        options.forEach((o: string, ix: number) => {
+          formFields.push({
+            label: o,
+            name: `${q.var_name}_${ix}`,
+            type: "Bool",
+          } as FieldLike);
+        });
+      } else
+        formFields.push({
+          label: q.label,
+          name: q.var_name,
+          ...qTypeToField(q),
+        } as FieldLike);
+    });
+
+    const formElems: { fields: FieldLike[]; validator?: (r: Row) => any } = {
+      fields: formFields,
+    };
+    if (hasMultiChecks)
+      formElems.validator = (row: Row) => {
+        (step.configuration.user_form_questions || []).forEach((q: any) => {
+          if (q.qtype === "Multiple checks") {
+            row[q.var_name] = [];
+            multiCheckOptions[q.var_name].forEach((o: string, ix: number) => {
+              if (row[`${q.var_name}_${ix}`]) {
+                row[q.var_name].push(o);
+              }
+              delete row[`${q.var_name}_${ix}`];
+            });
+          }
+        });
+      };
+    return formElems;
   }
 
   set_current_step(stepName: string) {
@@ -434,12 +507,23 @@ class WorkflowRun {
 
           return resp;
         }
-        if (step.action_name === "Stop") {
+        if (
+          step.action_name === "Stop" ||
+          step.action_name === "TerminateWorkflow"
+        ) {
+          const resp = step.configuration.return_value
+            ? eval_expression(
+                step.configuration.return_value,
+                this.context,
+                user,
+                `Return value expression in step ${step.name}`
+              )
+            : {};
           await this.update({
             status: "Finished",
           });
 
-          return {};
+          return resp;
         }
 
         if (
@@ -490,7 +574,8 @@ class WorkflowRun {
           const output = interpolate(
             step.configuration.output_text,
             this.context,
-            user
+            user,
+            "Output text"
           );
           await this.update({
             status: "Waiting",
@@ -563,6 +648,26 @@ class WorkflowRun {
             status: "Waiting",
             wait_info: {},
           });
+          if (step.configuration.immediately_bg) {
+            const runNow = async () => {
+              return await this.run({
+                user,
+                interactive: false,
+                noNotifications,
+                api_call: false,
+                trace,
+                req,
+              });
+            };
+            if (trace) this.createTrace(step.name, user);
+            setTimeout(
+              () => {
+                runNow().catch((e) => console.error("Workflow bg error", e));
+              },
+              (step.configuration.wait_delay || 0) * 1000
+            );
+            break;
+          }
           state.waitingWorkflows = true;
           if (trace) this.createTrace(step.name, user);
           break;
@@ -701,16 +806,7 @@ class WorkflowRun {
           await this.update(upd);
           step = steps.find((s) => s.name === this.context.__errorHandler);
         } else {
-          console.error("Workflow error", e);
-          await this.update({ status: "Error", error: e.message });
-
-          Trigger.emitEvent("Error", null, user, {
-            workflow_run: this.id,
-            message: e.message,
-            stack: e.stack,
-            step: step?.name,
-            run_page: `/actions/run/${this.id}`,
-          });
+          await this.markAsError(e, step, user);
           break;
         }
       } // try-catch
@@ -718,6 +814,20 @@ class WorkflowRun {
     return this.context;
   }
 
+  async markAsError(e: Error, step: WorkflowStep, user?: User) {
+    console.error("Workflow error", e);
+    await this.update({ status: "Error", error: e?.message || e });
+
+    const Trigger = (await import("./trigger")).default;
+
+    Trigger.emitEvent("Error", null, user, {
+      workflow_run: this.id,
+      message: e.message,
+      stack: e.stack,
+      step: step?.name,
+      run_page: `/actions/run/${this.id}`,
+    });
+  }
   async popReturnDirectives() {
     const retVals: any = {};
     allReturnDirectives.forEach((k) => {

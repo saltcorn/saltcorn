@@ -495,6 +495,17 @@ const store_actions_dropdown = (req) => {
           '<i class="far fa-arrow-alt-circle-up"></i>&nbsp;' +
             req.__("Upgrade installed modules")
         ),
+      db.getTenantSchema() === db.connectObj.default_schema &&
+        a(
+          {
+            class: "dropdown-item",
+            href: `/plugins/reinstall-all`,
+            onClick: `notifyAlert('${req.__("Upgrading modules...")}', true)`,
+          },
+          '<i class="fas fa-pump-medical"></i>&nbsp;' +
+            req.__("Clean modules and restart")
+        ),
+
       (db.getTenantSchema() === db.connectObj.default_schema ||
         tenants_install_git) &&
         a(
@@ -558,6 +569,7 @@ const plugin_store_html = (items, req) => {
       },
       {
         besides: items.map(store_item_html(req)),
+        gy: 3,
         widths: items.map(() => 4),
       },
     ],
@@ -839,7 +851,7 @@ router.post(
     flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
     flow.autoSave = true;
     flow.saveURL = `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`;
-    const wfres = await flow.run(req.body);
+    const wfres = await flow.run(req.body || {});
     if (wfres.renderForm) {
       if (module.layout) {
         wfres.renderForm.additionalButtons = [
@@ -893,7 +905,7 @@ router.post(
       module = getState().plugins[getState().plugin_module_names[plugin.name]];
     }
     const flow = module.configuration_workflow();
-    const step = await flow.singleStepForm(req.body, req);
+    const step = await flow.singleStepForm(req.body || {}, req);
     if (step?.renderForm) {
       if (step.renderForm.hasErrors || step.savingErrors)
         res.status(400).send(step.savingErrors || "Error");
@@ -1003,7 +1015,7 @@ router.post(
       ...(plugin.configuration || {}),
       ...(user._attributes?.layout?.config || {}),
     });
-    const valResult = form.validate(req.body);
+    const valResult = form.validate(req.body || {});
     if (form.hasErrors) {
       req.flash("warning", req.__("An error occurred"));
       return res.sendWrap(
@@ -1056,7 +1068,7 @@ router.post(
       ...(plugin.configuration || {}),
       ...(user._attributes?.layout?.config || {}),
     });
-    const valResult = form.validate(req.body);
+    const valResult = form.validate(req.body || {});
     if (form.hasErrors) {
       return res.status(400).json({ error: req.__("An error occured") });
     }
@@ -1154,10 +1166,10 @@ router.get(
  * @function
  */
 router.get(
-  "/public/:plugin/*",
+  "/public/:plugin/*filepath",
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
-    const filepath = req.params[0];
+    const filepath = path.join(...req.params.filepath);
     const hasVersion = plugin.includes("@");
     const location =
       getState().plugin_locations[hasVersion ? plugin.split("@")[0] : plugin];
@@ -1167,7 +1179,10 @@ router.get(
         .replace(/^(\.\.(\/|\\|$))+/, "");
       const fullpath = path.join(location, "public", safeFile);
       if (fs.existsSync(fullpath))
-        res.sendFile(fullpath, { maxAge: hasVersion ? "100d" : "1d" });
+        res.sendFile(fullpath, {
+          maxAge: hasVersion ? "100d" : "1d",
+          dotfiles: "allow",
+        });
       else {
         getState().log(6, `Plugin serve public: file not found ${fullpath}`);
         res.status(404).send(req.__("Not found"));
@@ -1394,6 +1409,30 @@ router.get(
 );
 
 /**
+ * @name get/upgrade
+ * @function
+ * @memberof module:routes/plugins~pluginsRouter
+ * @function
+ */
+router.get(
+  "/reinstall-all",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    //TODO make this post
+    const schema = db.getTenantSchema();
+    if (schema === db.connectObj.default_schema) {
+      await PluginInstaller.cleanPluginsDirectory();
+      req.flash("success", req.__(`Modules cleaned, server restarting...`));
+      setTimeout(() => {
+        if (process.send) getState().processSend("RestartServer");
+        else process.exit(0);
+      }, 1000);
+    }
+    res.redirect(`/plugins`);
+  })
+);
+
+/**
  * @name get/upgrade-plugin/:name
  * @function
  * @memberof module:routes/plugins~pluginsRouter
@@ -1428,7 +1467,7 @@ router.post(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const plugin = new Plugin(req.body);
+    const plugin = new Plugin(req.body || {});
     const schema = db.getTenantSchema();
     const tenants_install_git = getRootState().getConfig(
       "tenants_install_git",
@@ -1450,6 +1489,7 @@ router.post(
         for (const msg of msgs) req.flash("warning", msg);
         res.redirect(`/plugins`);
       } catch (e) {
+        console.error(e);
         req.flash("error", `${e.message}`);
         const form = pluginForm(req, plugin);
         res.sendWrap(req.__(`Edit Module`), renderForm(form, req.csrfToken()));
@@ -1505,7 +1545,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { name } = req.params;
-    const { version } = req.body;
+    const { version } = req.body || {};
     const tenants_unsafe_plugins = getRootState().getConfig(
       "tenants_unsafe_plugins",
       false
@@ -1556,6 +1596,7 @@ router.post(
         req.__
       );
     } catch (e) {
+      console.error(e);
       req.flash(
         "error",
         e.message || req.__("Error installing module %s", plugin.name)

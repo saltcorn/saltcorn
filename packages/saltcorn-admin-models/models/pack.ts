@@ -502,8 +502,16 @@ const install_pack = async (
       );
       if (existing) {
         tbl_pk = await existing.getField(existing.pk_name);
-        const { id, ownership_field_id, ownership_field_name, ...updrow } =
-          tableSpec;
+        const {
+          id,
+          ownership_field_id,
+          ownership_field_name,
+          triggers,
+          constraints,
+          fields,
+          ...updrow
+        } = tableSpec;
+
         await existing.update(updrow);
       } else {
         tableSpec.min_role_read = old_to_new_role(tableSpec.min_role_read);
@@ -517,6 +525,8 @@ const install_pack = async (
       }
     }
   }
+  await getState().refresh_tables(true);
+
   for (const tableSpec of pack.tables) {
     const _table = Table.findOne({ name: tableSpec.name });
     if (!_table) throw new Error(`Unable to find table '${tableSpec.name}'`);
@@ -573,6 +583,8 @@ const install_pack = async (
       await _table.update({ ownership_field_id: owner_field.id });
     }
   }
+  await getState().refresh_tables(true);
+
   for (const viewSpec of pack.views) {
     viewSpec.min_role = old_to_new_role(viewSpec.min_role);
     const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
@@ -595,6 +607,8 @@ const install_pack = async (
         min_role: viewSpec.min_role || 100,
       });
   }
+  await getState().refresh_views(true);
+
   for (const triggerSpec of pack.triggers || []) {
     triggerSpec.min_role = old_to_new_role(triggerSpec.min_role);
     let id;
@@ -616,6 +630,7 @@ const install_pack = async (
       }
     }
   }
+  await getState().refresh_triggers(true);
 
   for (const pageFullSpec of pack.pages || []) {
     pageFullSpec.min_role = old_to_new_role(pageFullSpec.min_role);
@@ -846,7 +861,7 @@ const fetch_available_packs_from_store = async (): Promise<
     getFetchProxyOptions()
   );
 
-  const json = await response.json();
+  const json: any = await response.json();
   return json.success;
 };
 
@@ -870,7 +885,7 @@ const fetch_pack_by_name = async (
     packs_store_endpoint + "?name=" + encodeURIComponent(name),
     getFetchProxyOptions()
   );
-  const json = await response.json();
+  const json: any = await response.json();
   if (json.success.length == 1) return json.success[0];
   else return null;
 };

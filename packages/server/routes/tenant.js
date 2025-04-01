@@ -265,7 +265,7 @@ router.post(
     const base_url = get_cfg_tenant_base_url(req);
     const form = tenant_form(req, base_url);
     // validate ui form
-    const valres = form.validate(req.body);
+    const valres = form.validate(req.body || {});
     if (valres.errors)
       res.sendWrap(
         req.__("Create application"),
@@ -548,7 +548,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await tenant_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_infoarch_page({
         res,
@@ -872,11 +872,11 @@ router.post(
       return;
     }
     const { subdomain } = req.params;
-    const { base_url } = req.body;
+    const { base_url } = req.body || {};
     const saneDomain = domain_sanitize(subdomain);
 
     // save description
-    const { description } = req.body;
+    const { description } = req.body || {};
     await Tenant.update(saneDomain, { description: description });
 
     await db.runWithTenant(saneDomain, async () => {

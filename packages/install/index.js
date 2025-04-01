@@ -13,7 +13,7 @@
 //const { cli } = require("cli-ux");
 const path = require("path");
 const fs = require("fs");
-const inquirer = require("inquirer");
+const inquirer = require("inquirer").default;
 const tcpPortUsed = require("tcp-port-used");
 const envPaths = require("env-paths");
 const si = require("systeminformation");
@@ -365,7 +365,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   }
   const packages =
     installer === "apt"
-      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev", "zip"]
+      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev", "zip", "unzip"]
       : ["systemd-devel"];
   if (!skipChromium) {
     if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");
@@ -668,7 +668,7 @@ After=network.target
 
 [Service]
 Type=${hasSDnotify ? `notify` : `simple`}
-${hasSDnotify ? "WatchdogSec=5" : ""}
+${hasSDnotify ? "WatchdogSec=30" : ""}
 User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}

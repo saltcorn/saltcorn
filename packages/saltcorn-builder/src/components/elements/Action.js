@@ -72,10 +72,10 @@ const Action = ({
               color: action_textcol || "#000000",
             }
           : action_style === "on_page_load"
-          ? {
-              border: "1px red dashed",
-            }
-          : {}
+            ? {
+                border: "1px red dashed",
+              }
+            : {}
       }
     >
       <DynamicFontAwesomeIcon icon={action_icon} className="me-1" />
@@ -85,8 +85,7 @@ const Action = ({
 };
 
 export /**
- * @category saltcorn-builder
- * @subcategory components
+ * @category saltcorn-builder * @subcategory components
  * @namespace
  * @returns {div}
  */
@@ -108,11 +107,13 @@ const ActionSettings = () => {
     action_bgcol: node.data.props.action_bgcol,
     action_bordercol: node.data.props.action_bordercol,
     action_textcol: node.data.props.action_textcol,
+    action_class: node.data.props.action_class,
     nsteps: node.data.props.nsteps,
     step_only_ifs: node.data.props.step_only_ifs,
     step_action_names: node.data.props.step_action_names,
     setting_action_n: node.data.props.setting_action_n,
     spinner: node.data.props.spinner,
+    is_submit_action: node.data.props.is_submit_action,
   }));
   const {
     actions: { setProp },
@@ -132,6 +133,7 @@ const ActionSettings = () => {
     step_only_ifs,
     step_action_names,
     spinner,
+    is_submit_action,
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
@@ -146,13 +148,13 @@ const ActionSettings = () => {
   const cfg_link = (options.triggerActions || []).includes(name)
     ? `/actions/configure/${encodeURIComponent(name)}`
     : name === "Multi-step action" &&
-      (options.triggerActions || []).includes(
-        step_action_names?.[use_setting_action_n]
-      )
-    ? `/actions/configure/${encodeURIComponent(
-        step_action_names?.[use_setting_action_n]
-      )}`
-    : "";
+        (options.triggerActions || []).includes(
+          step_action_names?.[use_setting_action_n]
+        )
+      ? `/actions/configure/${encodeURIComponent(
+          step_action_names?.[use_setting_action_n]
+        )}`
+      : "";
   return (
     <div>
       <table className="w-100">
@@ -313,6 +315,18 @@ const ActionSettings = () => {
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
       ) : null}
+      {options.mode === "edit" && name !== "Save" ? (
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            name="block"
+            type="checkbox"
+            checked={is_submit_action}
+            onChange={setAProp("is_submit_action", { checked: true })}
+          />
+          <label className="form-check-label">This is the submit action</label>
+        </div>
+      ) : null}
       {name === "Multi-step action" ? (
         <Fragment>
           <label>Steps</label>
@@ -378,6 +392,7 @@ const ActionSettings = () => {
                 type="text"
                 className="form-control text-to-display"
                 value={step_only_ifs?.[use_setting_action_n] || ""}
+                spellCheck={false}
                 onChange={(e) => {
                   if (!e.target) return;
                   const value = e.target.value;

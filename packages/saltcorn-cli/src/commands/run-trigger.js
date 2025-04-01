@@ -2,8 +2,11 @@
  * @category saltcorn-cli
  * @module commands/run-trigger
  */
-const { Command, Flags, Args, ux } = require("@oclif/core");
-const { maybe_as_tenant, init_some_tenants } = require("../common");
+const { Command, Flags, Args } = require("@oclif/core");
+const {
+  maybe_as_tenant_in_transaction,
+  init_some_tenants,
+} = require("../common");
 
 /**
  * RunTriggerCommand Class
@@ -21,7 +24,7 @@ class RunTriggerCommand extends Command {
     const { mockReqRes } = require("@saltcorn/data/tests/mocks");
     const Trigger = require(`@saltcorn/data/models/trigger`);
     const that = this;
-    await maybe_as_tenant(flags.tenant, async () => {
+    await maybe_as_tenant_in_transaction(flags.tenant, async () => {
       const trigger = await Trigger.findOne({ name: args.trigger });
       if (!trigger) {
         console.error(`Trigger ${args.trigger} not found`);
@@ -29,6 +32,7 @@ class RunTriggerCommand extends Command {
       }
       await trigger.runWithoutRow({ user: { role_id: 1 } });
     });
+    this.exit(0);
   }
 }
 /**

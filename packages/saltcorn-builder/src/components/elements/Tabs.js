@@ -121,8 +121,8 @@ const Tabs = ({
                     (typeof titles[ix].label === "undefined"
                       ? titles[ix]
                       : titles[ix].label === ""
-                      ? "(empty)"
-                      : titles[ix].label)}
+                        ? "(empty)"
+                        : titles[ix].label)}
                 </a>
               </li>
             );
@@ -331,6 +331,7 @@ const TabsSettings = () => {
                     <td>
                       <input
                         type="text"
+                        spellCheck={false}
                         className="form-control"
                         value={tabId}
                         onChange={setAProp("tabId")}
@@ -398,6 +399,7 @@ const TabsSettings = () => {
                   type="text"
                   className="form-control text-to-display"
                   value={titles[use_setting_tab_n] || ""}
+                  spellCheck={false}
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;
@@ -417,6 +419,7 @@ const TabsSettings = () => {
                   <td colSpan={2}>
                     <input
                       type="text"
+                      spellCheck={false}
                       className="form-control text-to-display"
                       value={showif?.[use_setting_tab_n] || ""}
                       onChange={(e) => {

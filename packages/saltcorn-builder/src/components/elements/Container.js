@@ -36,6 +36,7 @@ import {
   AlignBottom,
   SlashCircle,
   Image,
+  Images,
   Rainbow,
   Palette,
   EyeFill,
@@ -194,6 +195,7 @@ const ContainerSettings = () => {
     bgColor: node.data.props.bgColor,
     isFormula: node.data.props.isFormula,
     bgFileId: node.data.props.bgFileId,
+    bgField: node.data.props.bgField,
     imageSize: node.data.props.imageSize,
     htmlElement: node.data.props.htmlElement,
     vAlign: node.data.props.vAlign,
@@ -260,6 +262,7 @@ const ContainerSettings = () => {
     click_action,
     style,
     transform,
+    bgField,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -339,6 +342,17 @@ const ContainerSettings = () => {
             }}
             node={node}
             setProp={setProp}
+          />
+          <SettingsRow
+            field={{
+              name: "opacity",
+              label: "Opacity",
+              type: "Float",
+              attributes: { min: 0, max: 1 },
+            }}
+            node={node}
+            setProp={setProp}
+            isStyle={true}
           />
           <SettingsRow
             field={{
@@ -462,6 +476,9 @@ const ContainerSettings = () => {
               options: [
                 { value: "None", label: <SlashCircle /> },
                 { value: "Image", label: <Image /> },
+                ...(options.mode === "show"
+                  ? [{ value: "Image Field", label: <Images /> }]
+                  : []),
                 { value: "Color", label: <Palette /> },
                 { value: "Gradient", label: <Rainbow /> },
               ],
@@ -532,30 +549,59 @@ const ContainerSettings = () => {
             </Fragment>
           )}
           {bgType === "Image" && (
-            <Fragment>
-              <tr>
-                <td>
-                  <label>File</label>
-                </td>
-                <td>
-                  <select
-                    value={bgFileId}
-                    className="form-control-sm w-100 form-select"
-                    onChange={setAProp("bgFileId")}
-                  >
-                    {options.images.map((f, ix) => (
-                      <option key={ix} value={f.id}>
-                        {f.filename}
+            <tr>
+              <td>
+                <label>File</label>
+              </td>
+              <td>
+                <select
+                  value={bgFileId}
+                  className="form-control-sm w-100 form-select"
+                  onChange={setAProp("bgFileId")}
+                >
+                  {options.images.map((f, ix) => (
+                    <option key={ix} value={f.id}>
+                      {f.filename}
+                    </option>
+                  ))}
+                  {(uploadedFiles || []).map((uf, ix) => (
+                    <option key={ix} value={uf.id}>
+                      {uf.filename}
+                    </option>
+                  ))}{" "}
+                </select>
+              </td>
+            </tr>
+          )}
+          {bgType === "Image Field" && (
+            <tr>
+              <td>
+                <label>File field</label>
+              </td>
+              <td>
+                <select
+                  value={bgField}
+                  className="form-control-sm w-100 form-select"
+                  onChange={setAProp("bgField")}
+                >
+                  {options.fields
+                    .filter(
+                      (f) =>
+                        f.type === "String" ||
+                        (f.type && f.type.name === "String") ||
+                        (f.type && f.type === "File")
+                    )
+                    .map((f, ix) => (
+                      <option key={ix} value={f.name}>
+                        {f.label}
                       </option>
                     ))}
-                    {(uploadedFiles || []).map((uf, ix) => (
-                      <option key={ix} value={uf.id}>
-                        {uf.filename}
-                      </option>
-                    ))}{" "}
-                  </select>
-                </td>
-              </tr>
+                </select>
+              </td>
+            </tr>
+          )}
+          {(bgType === "Image" || bgType === "Image Field") && (
+            <Fragment>
               <tr>
                 <td>
                   <label>Size</label>
@@ -583,6 +629,7 @@ const ContainerSettings = () => {
                       value={imgResponsiveWidths}
                       className="form-control"
                       onChange={setAProp("imgResponsiveWidths")}
+                      spellCheck={false}
                     />
                     <small>
                       <i>
@@ -863,7 +910,7 @@ const ContainerSettings = () => {
               name: "animateName",
               label: "Animation",
               type: "select",
-              options: ["None", ...options.keyframes || []],
+              options: ["None", ...(options.keyframes || [])],
             }}
             node={node}
             setProp={setProp}
@@ -882,8 +929,12 @@ const ContainerSettings = () => {
             node={node}
             setProp={setProp}
           />
-           <SettingsRow
-            field={{ name: "animateInitialHide", label: "Initially hidden", type: "Bool" }}
+          <SettingsRow
+            field={{
+              name: "animateInitialHide",
+              label: "Initially hidden",
+              type: "Bool",
+            }}
             node={node}
             setProp={setProp}
           />
@@ -901,7 +952,9 @@ const ContainerSettings = () => {
                   type="text"
                   className="form-control text-to-display"
                   value={showIfFormula}
+                  spellCheck={false}
                   onChange={setAProp("showIfFormula")}
+                  onInput={(e) => validate_expression_elem($(e.target))}
                 />
                 <div style={{ marginTop: "-5px" }}>
                   <small className="text-muted font-monospace">
@@ -998,6 +1051,7 @@ const ContainerSettings = () => {
           <input
             type="text"
             className="form-control"
+            spellCheck={false}
             value={url}
             onChange={setAProp("url")}
           />
@@ -1047,6 +1101,7 @@ const ContainerSettings = () => {
             type="text"
             className="form-control text-to-display"
             value={customId}
+            spellCheck={false}
             onChange={setAProp("customId")}
           />
         </OrFormula>
@@ -1058,6 +1113,7 @@ const ContainerSettings = () => {
             type="text"
             className="form-control text-to-display"
             value={customClass}
+            spellCheck={false}
             onChange={setAProp("customClass")}
           />
         </OrFormula>
@@ -1070,6 +1126,7 @@ const ContainerSettings = () => {
           className="text-to-display form-control"
           value={customCSS}
           onChange={setAProp("customCSS")}
+          spellCheck={false}
         ></textarea>
       </div>
     </Accordion>
@@ -1086,6 +1143,7 @@ Container.craft = {
     vAlign: "top",
     hAlign: "left",
     bgFileId: 0,
+    bgField: "",
     rotate: 0,
     isFormula: {},
     bgType: "None",

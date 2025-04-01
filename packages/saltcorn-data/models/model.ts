@@ -50,7 +50,9 @@ class Model {
       configuration: lib.configuration,
     });
     lib.id = id;
-    await require("../db/state").getState().refresh_tables();
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
     return lib;
   }
 
@@ -104,7 +106,9 @@ class Model {
       [this.id]
     );
     await db.query(`delete FROM ${schema}_sc_models WHERE id = $1`, [this.id]);
-    await require("../db/state").getState().refresh_tables();
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**
@@ -135,11 +139,11 @@ class Model {
     hyperparameters: any,
     state: {}
   ): Promise<ModelInstance | string> {
-    const trainf = this.templateObj.train;
+    const trainf = this.templateObj!.train;
     const table = Table.findOne({ id: this.table_id });
     const result = trainf
       ? await trainf({
-          table,
+          table: table!,
           configuration: this.configuration,
           hyperparameters,
           state,
@@ -195,8 +199,9 @@ class Model {
       if (!row) return instance.parameters;
 
       const template = this.templateObj;
-      const results = await template.predict({
+      const results = await template!.predict({
         ...instance,
+        id: instance.id!,
         model: this,
         rows: [row],
       });

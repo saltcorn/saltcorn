@@ -15,7 +15,9 @@ export const sqlsanitize = (nm: string | symbol): string => {
   if (typeof nm === "symbol") {
     return nm.description ? sqlsanitize(nm.description) : "";
   }
-  const s = nm.replace(/[^A-Za-z_0-9]*/g, "");
+  // https://stackoverflow.com/a/70273329/19839414
+  // \p{Letter}/u
+  const s = nm.replace(/[^\p{Letter}_0-9]*/gu, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
 };
@@ -35,6 +37,10 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   const s = nm.replace(/[^A-Za-z_0-9."]*/g, "");
   if (s[0] >= "0" && s[0] <= "9") return `_${s}`;
   else return s;
+};
+
+export type DatabaseClient = {
+  query: (sql: String, parameters?: any[]) => Promise<{ rows: Row[] }>;
 };
 
 type PlaceHolderStack = {
@@ -96,13 +102,14 @@ export const ftsFieldsSqlExpr = (
     .filter((f: any) => f.is_fkey && f?.attributes?.include_fts)
     .forEach((f) => {
       fldsArray.push(
-        `coalesce((select ${f.attributes.summary_field} from ${
+        `coalesce((select "${f.attributes.summary_field}" from ${
           schema ? `"${schema}".` : ""
-        }"${f.reftable_name}" rt where rt.id=${
+        }"${f.reftable_name}" rt where rt."${f.refname}"=${
           table ? `"${sqlsanitize(table)}".` : ""
         }"${f.name}"),'')`
       );
     });
+  fldsArray.sort();
   let flds = fldsArray.join(" || ' ' || ");
   if (flds === "") flds = "''";
   return flds;
@@ -177,11 +184,13 @@ const subSelectWhere =
         table: string;
         tenant?: string;
         through?: string;
+        through_pk?: string;
         valField?: string;
       };
     }
   ): string => {
-    const tenantPrefix = v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
+    const tenantPrefix =
+      !phs.is_sqlite && v.inSelect.tenant ? `"${v.inSelect.tenant}".` : "";
     if (v.inSelect.through && v.inSelect.valField) {
       const whereObj = prefixFieldsInWhere(v.inSelect.where, "ss2");
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -193,7 +202,7 @@ const subSelectWhere =
         v.inSelect.valField
       }" from ${tenantPrefix}"${v.inSelect.table}" ss1 join ${tenantPrefix}"${
         v.inSelect.through
-      }" ss2 on ss2.id = ss1."${v.inSelect.field}" ${where})`;
+      }" ss2 on ss2."${v.inSelect.through_pk || "id"}" = ss1."${v.inSelect.field}" ${where})`;
     } else {
       const whereObj = v.inSelect.where;
       const wheres = whereObj ? Object.entries(whereObj) : [];
@@ -221,7 +230,13 @@ const inSelectWithLevels =
       inSelectWithLevels: {
         where: Where;
         schema?: string;
-        joinLevels: { table: string; fkey?: string; inboundKey?: string }[];
+        joinLevels: {
+          table: string;
+          fkey?: string;
+          inboundKey?: string;
+          pk_name?: string;
+          ref_name?: string;
+        }[];
       };
     }
   ): string => {
@@ -236,7 +251,9 @@ const inSelectWithLevels =
         : "";
 
     for (let i = 0; i < joinLevels.length; i++) {
-      const { table, fkey, inboundKey } = joinLevels[i];
+      const { table, fkey, inboundKey, pk_name, ref_name } = joinLevels[i];
+      const pk = pk_name || "id";
+      const refname = ref_name || "id";
       const alias = quote(sqlsanitize(`${table}SubJ${i}`));
       if (i === 0) {
         selectParts.push(
@@ -245,7 +262,7 @@ const inSelectWithLevels =
           )}`
         );
         whereObj = prefixFieldsInWhere(v.inSelectWithLevels.where, alias);
-        if (joinLevels.length === 1) inColumn = quote(`${alias}.id`);
+        if (joinLevels.length === 1) inColumn = quote(`${alias}."${pk}"`);
       } else if (i < joinLevels.length - 1) {
         if (fkey) {
           selectParts.push(
@@ -253,13 +270,13 @@ const inSelectWithLevels =
               sqlsanitize(`${table}`)
             )} ${alias} on ${quote(
               `${lastAlias}.${sqlsanitize(fkey)}`
-            )} = ${alias}.id`
+            )} = ${alias}."${pk}"`
           );
         } else {
           selectParts.push(
             `join ${schema}${quote(
               sqlsanitize(`${table}`)
-            )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
+            )} ${alias} on ${quote(`${lastAlias}."${refname}"`)} = ${quote(
               `${alias}.${sqlsanitize(inboundKey!)}`
             )}`
           );
@@ -271,11 +288,11 @@ const inSelectWithLevels =
           selectParts.push(
             `join ${schema}${quote(
               sqlsanitize(`${table}`)
-            )} ${alias} on ${quote(`${lastAlias}.id`)} = ${quote(
+            )} ${alias} on ${quote(`${lastAlias}."${refname}"`)} = ${quote(
               `${alias}.${sqlsanitize(`${inboundKey}`)}`
             )}`
           );
-          inColumn = quote(`${alias}.id`);
+          inColumn = quote(`${alias}."${pk}"`);
         }
       }
       lastAlias = alias;
@@ -285,9 +302,10 @@ const inSelectWithLevels =
       whereObj && wheres.length > 0
         ? "where " + wheres.map(whereClause(phs)).join(" and ")
         : "";
-    return `${quote(sqlsanitizeAllowDots(k))} in (select ${quote(
+    const sqlPart = `${quote(sqlsanitizeAllowDots(k))} in (select ${quote(
       sqlsanitizeAllowDots(inColumn!)
     )} ${selectParts.join(" ")} ${where})`;
+    return sqlPart;
   };
 
 /**
@@ -303,8 +321,8 @@ const quote = (s: string): string =>
   s.includes(".")
     ? s.split(".").map(quote).join(".")
     : s.includes('"')
-    ? s
-    : `"${s}"`;
+      ? s
+      : `"${s}"`;
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
@@ -368,92 +386,101 @@ const whereClause =
     k === "_fts"
       ? whereFTS(v, phs)
       : typeof (v || {}).not !== "undefined" && v.not.in
-      ? `not (${quote(sqlsanitizeAllowDots(k))} = ${
-          phs.is_sqlite ? "" : "ANY"
-        } (${phs.push(v.not.in)}))`
-      : typeof (v || {}).in !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))} = ${
-          phs.is_sqlite ? "" : "ANY"
-        } (${phs.push(v.in)})`
-      : k === "or" && Array.isArray(v)
-      ? whereOr(phs)(v)
-      : k === "and" && Array.isArray(v)
-      ? whereAnd(phs)(v)
-      : typeof (v || {}).slugify !== "undefined"
-      ? slugifyQuery(k, v.slugify, phs)
-      : k === "not" && typeof v === "object"
-      ? `not (${Object.entries(v)
-          .map((kv) => whereClause(phs)(kv))
-          .join(" and ")})`
-      : k === "eq" && Array.isArray(v)
-      ? // @ts-ignore
-        equals(v, phs)
-      : v && v.or && Array.isArray(v.or)
-      ? wrapParens(
-          v.or.map((vi: any) => whereClause(phs)([k, vi])).join(" or ")
-        )
-      : Array.isArray(v)
-      ? v.map((vi) => whereClause(phs)([k, vi])).join(" and ")
-      : typeof (v || {}).ilike !== "undefined"
-      ? `${quote(sqlsanitizeAllowDots(k))} ${
-          phs.is_sqlite ? "LIKE" : "ILIKE"
-        } '%' || ${phs.push(v.ilike)} || '%'`
-      : v instanceof RegExp
-      ? `${quote(sqlsanitizeAllowDots(k))} ${
-          phs.is_sqlite ? "REGEXP" : "~"
-        } ${phs.push(v.source)}`
-      : typeof (v || {}).gt !== "undefined" &&
-        typeof (v || {}).lt !== "undefined"
-      ? `${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}>${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.gt)
-        )} and ${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}<${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.lt)
-        )}`
-      : typeof (v || {}).gt !== "undefined"
-      ? `${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}>${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.gt)
-        )}`
-      : typeof (v || {}).lt !== "undefined"
-      ? `${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          quote(sqlsanitizeAllowDots(k))
-        )}<${v.equal ? "=" : ""}${castDate(
-          v.day_only,
-          phs.is_sqlite,
-          phs.push(v.lt)
-        )}`
-      : typeof (v || {}).inSelect !== "undefined"
-      ? subSelectWhere(phs)(k, v)
-      : typeof (v || {}).inSelectWithLevels !== "undefined"
-      ? inSelectWithLevels(phs)(k, v)
-      : typeof (v || {}).json !== "undefined"
-      ? jsonWhere(k, v.json, phs)
-      : v === null
-      ? `${quote(sqlsanitizeAllowDots(k))} is null`
-      : k === "not"
-      ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
-      : `${quote(sqlsanitizeAllowDots(k))}=${
-          typeof v === "symbol" ? v.description : phs.push(v)
-        }`;
+        ? `not (${quote(sqlsanitizeAllowDots(k))} = ${
+            phs.is_sqlite ? "" : "ANY"
+          } (${phs.push(v.not.in)}))`
+        : typeof (v || {}).in !== "undefined"
+          ? `${quote(sqlsanitizeAllowDots(k))} = ${
+              phs.is_sqlite ? "" : "ANY"
+            } (${phs.push(v.in)})`
+          : k === "or" && Array.isArray(v)
+            ? whereOr(phs)(v)
+            : k === "and" && Array.isArray(v)
+              ? whereAnd(phs)(v)
+              : typeof (v || {}).slugify !== "undefined"
+                ? slugifyQuery(k, v.slugify, phs)
+                : k === "not" && typeof v === "object"
+                  ? `not (${Object.entries(v)
+                      .map((kv) => whereClause(phs)(kv))
+                      .join(" and ")})`
+                  : k === "_false" && v
+                    ? "FALSE"
+                    : k === "eq" && Array.isArray(v)
+                      ? // @ts-ignore
+                        equals(v, phs)
+                      : v && v.or && Array.isArray(v.or)
+                        ? wrapParens(
+                            v.or
+                              .map((vi: any) => whereClause(phs)([k, vi]))
+                              .join(" or ")
+                          )
+                        : Array.isArray(v)
+                          ? v
+                              .map((vi) => whereClause(phs)([k, vi]))
+                              .join(" and ")
+                          : typeof (v || {}).ilike !== "undefined"
+                            ? `${quote(sqlsanitizeAllowDots(k))} ${
+                                phs.is_sqlite ? "LIKE" : "ILIKE"
+                              } '%' || ${phs.push(v.ilike)} || '%'`
+                            : v instanceof RegExp
+                              ? `${quote(sqlsanitizeAllowDots(k))} ${
+                                  phs.is_sqlite ? "REGEXP" : "~"
+                                } ${phs.push(v.source)}`
+                              : typeof (v || {}).gt !== "undefined" &&
+                                  typeof (v || {}).lt !== "undefined"
+                                ? `${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    quote(sqlsanitizeAllowDots(k))
+                                  )}>${v.equal ? "=" : ""}${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    phs.push(v.gt)
+                                  )} and ${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    quote(sqlsanitizeAllowDots(k))
+                                  )}<${v.equal ? "=" : ""}${castDate(
+                                    v.day_only,
+                                    phs.is_sqlite,
+                                    phs.push(v.lt)
+                                  )}`
+                                : typeof (v || {}).gt !== "undefined"
+                                  ? `${castDate(
+                                      v.day_only,
+                                      phs.is_sqlite,
+                                      quote(sqlsanitizeAllowDots(k))
+                                    )}>${v.equal ? "=" : ""}${castDate(
+                                      v.day_only,
+                                      phs.is_sqlite,
+                                      phs.push(v.gt)
+                                    )}`
+                                  : typeof (v || {}).lt !== "undefined"
+                                    ? `${castDate(
+                                        v.day_only,
+                                        phs.is_sqlite,
+                                        quote(sqlsanitizeAllowDots(k))
+                                      )}<${v.equal ? "=" : ""}${castDate(
+                                        v.day_only,
+                                        phs.is_sqlite,
+                                        phs.push(v.lt)
+                                      )}`
+                                    : typeof (v || {}).inSelect !== "undefined"
+                                      ? subSelectWhere(phs)(k, v)
+                                      : typeof (v || {}).inSelectWithLevels !==
+                                          "undefined"
+                                        ? inSelectWithLevels(phs)(k, v)
+                                        : typeof (v || {}).json !== "undefined"
+                                          ? jsonWhere(k, v.json, phs)
+                                          : v === null
+                                            ? `${quote(sqlsanitizeAllowDots(k))} is null`
+                                            : k === "not"
+                                              ? `not (${typeof v === "symbol" ? v.description : phs.push(v)})`
+                                              : `${quote(sqlsanitizeAllowDots(k))}=${
+                                                  typeof v === "symbol"
+                                                    ? v.description
+                                                    : phs.push(v)
+                                                }`;
 
 function isdef(x: any) {
   return typeof x !== "undefined";
@@ -499,17 +526,17 @@ function jsonWhere(
               phs.is_sqlite ? "LIKE" : "ILIKE"
             } '%' || ${phs.push(vj.ilike as Value)} || '%'`
           : isdef(vj.gte) || isdef(vj.lte)
-          ? andArray(
-              [
-                isdef(vj.gte)
-                  ? `${lhs(k, kj, false)} >= ${phs.push(vj.gte as Value)}`
-                  : "",
-                isdef(vj.lte)
-                  ? `${lhs(k, kj, false)} <= ${phs.push(vj.lte as Value)}`
-                  : "",
-              ].filter((s) => s)
-            )
-          : `${lhs(k, kj, true)}=${phs.push(vj as Value)}`
+            ? andArray(
+                [
+                  isdef(vj.gte)
+                    ? `${lhs(k, kj, false)} >= ${phs.push(vj.gte as Value)}`
+                    : "",
+                  isdef(vj.lte)
+                    ? `${lhs(k, kj, false)} <= ${phs.push(vj.lte as Value)}`
+                    : "",
+                ].filter((s) => s)
+              )
+            : `${lhs(k, kj, true)}=${phs.push(vj as Value)}`
       )
     );
   }
@@ -556,8 +583,8 @@ const toInt = (x: number | string): number | null =>
   typeof x === "number"
     ? Math.round(x)
     : typeof x === "string"
-    ? parseInt(x)
-    : null;
+      ? parseInt(x)
+      : null;
 
 export type CoordOpts = {
   latField: number | string;
@@ -649,7 +676,7 @@ export type SelectOptions = {
   versioned?: boolean; //TODO rm this and below
   min_role_read?: number;
   min_role_write?: number;
-  ownership_field_id?: string;
+  ownership_field_id?: number;
   ownership_formula?: string;
   provider_name?: string;
   provider_cfg?: any;
@@ -657,6 +684,7 @@ export type SelectOptions = {
   has_sync_info?: boolean;
   description?: string;
   recursive?: boolean; // for File.find()
+  client?: DatabaseClient;
 };
 export const orderByIsObject = (
   object: any
@@ -721,29 +749,32 @@ export const mkSelectOptions = (
     selopts.orderBy === "RANDOM()"
       ? "order by RANDOM()"
       : selopts.orderBy &&
-        typeof selopts.orderBy === "object" &&
-        "distance" in selopts.orderBy
-      ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
-      : selopts.orderBy && typeof selopts.orderBy === "string" && selopts.nocase
-      ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
-          selopts.orderDesc ? " DESC" : ""
-        }`
-      : selopts.orderBy && typeof selopts.orderBy === "string"
-      ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
-          selopts.orderDesc ? " DESC" : ""
-        }`
-      : selopts.orderBy &&
-        typeof selopts.orderBy === "object" &&
-        "operator" in selopts.orderBy &&
-        typeof selopts.orderBy.operator === "object"
-      ? `order by ${getOperatorOrder(selopts.orderBy as any, values, isSQLite)}`
-      : "";
+          typeof selopts.orderBy === "object" &&
+          "distance" in selopts.orderBy
+        ? `order by ${getDistanceOrder(selopts.orderBy.distance)}`
+        : selopts.orderBy &&
+            typeof selopts.orderBy === "string" &&
+            selopts.nocase
+          ? `order by lower(${quote(sqlsanitizeAllowDots(selopts.orderBy))})${
+              selopts.orderDesc ? " DESC" : ""
+            }`
+          : selopts.orderBy && typeof selopts.orderBy === "string"
+            ? `order by ${quote(sqlsanitizeAllowDots(selopts.orderBy))}${
+                selopts.orderDesc ? " DESC" : ""
+              }`
+            : selopts.orderBy &&
+                typeof selopts.orderBy === "object" &&
+                "operator" in selopts.orderBy &&
+                typeof selopts.orderBy.operator === "object"
+              ? `order by ${getOperatorOrder(selopts.orderBy as any, values, isSQLite)}`
+              : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
   return [orderby, limit, offset].filter((s) => s).join(" ");
 };
 
 export type Row = { [key: string]: any };
+export type PrimaryKeyValue = number | string;
 
 export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
   if (!inputWhere) return {};
@@ -755,11 +786,13 @@ export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
     } else if (k === "or") {
       whereObj.or = Array.isArray(inputWhere[k])
         ? inputWhere[k].map((w: Where) => prefixFieldsInWhere(w, tablePrefix))
-        : prefixFieldsInWhere(inputWhere[k], tablePrefix);
+        : [prefixFieldsInWhere(inputWhere[k], tablePrefix)];
     } else if (k === "and") {
       whereObj.and = Array.isArray(inputWhere[k])
         ? inputWhere[k].map((w: Where) => prefixFieldsInWhere(w, tablePrefix))
         : prefixFieldsInWhere(inputWhere[k], tablePrefix);
+    } else if (k === "eq") {
+      whereObj[k] = inputWhere[k]; // TODO check for fieldnames
     } else whereObj[`${tablePrefix}."${k}"`] = inputWhere[k];
   });
   return whereObj;

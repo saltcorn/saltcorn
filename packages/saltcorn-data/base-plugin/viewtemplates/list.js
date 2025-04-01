@@ -59,6 +59,7 @@ const {
   get_viewable_fields,
   parse_view_select,
   get_viewable_fields_from_layout,
+  action_url,
 } = require("./viewable_fields");
 const { getState } = require("../../db/state");
 const {
@@ -183,7 +184,7 @@ const configuration_workflow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(
                 action,
                 table,
-                { mode: "list" }
+                { mode: "list", req }
               );
             }
           }
@@ -563,6 +564,19 @@ const configuration_workflow = (req) =>
           const table = Table.findOne(
             context.table_id || context.exttable_name
           );
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+          });
+
+          if (
+            context.default_state?._row_click_url_formula &&
+            !context.default_state?._row_click_type
+          ) {
+            //legacy
+            context.default_state._row_click_type = "Link";
+          }
+
           const table_fields = table
             .getFields()
             .filter((f) => !f.calculated || f.stored);
@@ -643,6 +657,24 @@ const configuration_workflow = (req) =>
             type: "Bool",
           });
           formfields.push({
+            name: "_row_click_type",
+            label: req.__("Row click event"),
+            sublabel: req.__("What happens when a row is clicked"),
+            type: "String",
+            required: true,
+            attributes: { options: "Nothing,Link,Link new tab,Popup,Action" },
+          });
+          formfields.push({
+            name: "_row_click_action",
+            label: req.__("Row click action"),
+            sublabel: req.__("Run this action when row is clicked"),
+            type: "String",
+            required: true,
+            attributes: { options: triggerActions },
+            showIf: { _row_click_type: "Action" },
+          });
+
+          formfields.push({
             name: "_row_click_url_formula",
             label: req.__("Row click URL"),
             sublabel:
@@ -651,6 +683,7 @@ const configuration_workflow = (req) =>
               req.__("Example: <code>`/view/TheOtherView?id=${id}`</code>"),
             type: "String",
             class: "validate-expression",
+            showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
           });
           formfields.push({
             name: "transpose",
@@ -821,8 +854,8 @@ const initial_config = async ({ table_id, exttable_name }) => {
       const fieldview = f.type?.fieldviews?.show
         ? "show"
         : f.type?.fieldviews?.as_text
-        ? "as_text"
-        : undefined;
+          ? "as_text"
+          : undefined;
       const col = {
         type: "field",
         fieldview,
@@ -872,6 +905,7 @@ const run = async (
   const table = Table.findOne(
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
   );
+  const pk_name = table.pk_name;
   const fields = table.getFields();
   const appState = getState();
   const locale = extraOpts.req.getLocale();
@@ -904,7 +938,10 @@ const run = async (
   await set_join_fieldviews({ table, columns, fields });
 
   readState(stateWithId, fields, extraOpts.req);
-  const { id, ...state } = stateWithId || {};
+  const id = stateWithId[pk_name];
+  let state = { ...stateWithId };
+  if (extraOpts?.removeIdFromstate) delete state[pk_name];
+
   const statehash = hashState(state, viewname);
 
   const { rows, rowCount } = await listQuery(state, statehash);
@@ -954,12 +991,12 @@ const run = async (
         case RelationType.OWN:
           stateMany = {
             or: rows.map((row) => ({
-              [table.pk_name]: row[table.pk_name],
+              [pk_name]: row[pk_name],
               ...get_extra_state(row),
             })),
           };
           getRowState = (row) => ({
-            [table.pk_name]: row[table.pk_name],
+            [pk_name]: row[pk_name],
             ...get_extra_state(row),
           });
           break;
@@ -998,7 +1035,7 @@ const run = async (
     if (this.viewtemplateObj?.runMany) {
       const runs = await view.runMany(stateMany, extraOpts);
       viewResults[segment.view + segment.relation] = (row) =>
-        runs.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+        runs.find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     } else if (this.viewtemplateObj?.renderRows) {
       const rendered = await view.viewtemplateObj.renderRows(
         view.table,
@@ -1015,7 +1052,7 @@ const run = async (
             html,
             row: rows[ix],
           }))
-          .find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+          .find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     } else {
       const results = [];
 
@@ -1027,7 +1064,7 @@ const run = async (
         });
       }
       viewResults[segment.view + segment.relation] = (row) =>
-        results.find((rh) => rh.row[table.pk_name] == row[table.pk_name])?.html;
+        results.find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     }
   });
 
@@ -1064,13 +1101,36 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
-  if (default_state?._row_click_url_formula) {
+  if (
+    default_state?._row_click_url_formula &&
+    default_state?._row_click_type !== "Nothing" &&
+    default_state?._row_click_type !== "Action"
+  ) {
     let fUrl = get_expression_function(
       default_state._row_click_url_formula,
       fields
     );
-    page_opts.onRowSelect = (row) =>
-      `location.href='${fUrl(row, extraOpts.req.user)}'`;
+    if (default_state?._row_click_type === "Link new tab")
+      page_opts.onRowSelect = (row) =>
+        `window.open('${fUrl(row, extraOpts.req.user)}', '_blank').focus();`;
+    else if (default_state?._row_click_type === "Popup")
+      page_opts.onRowSelect = (row) =>
+        `ajax_modal('${fUrl(row, extraOpts.req.user)}')`;
+    else
+      page_opts.onRowSelect = (row) =>
+        `location.href='${fUrl(row, extraOpts.req.user)}'`;
+  } else if (default_state?._row_click_type === "Action") {
+    page_opts.onRowSelect = (row) => {
+      const actionUrl = action_url(
+        viewname,
+        table,
+        default_state?._row_click_action,
+        row,
+        default_state?._row_click_action,
+        "action_name"
+      );
+      if (actionUrl.javascript) return actionUrl.javascript;
+    };
   }
   page_opts.class = "";
 
@@ -1241,46 +1301,63 @@ const remove_null_cols = (tfields, rows) =>
 const run_action = async (
   table_id,
   viewname,
-  { columns, layout },
+  { columns, layout, default_state },
   body,
   { req, res },
   { getRowQuery }
 ) => {
-  const col = columns.find(
-    (c, index) =>
-      c.type === "Action" &&
-      (c.rndid == body.rndid ||
-        (c.action_name === body.action_name &&
-          body.action_name &&
-          (body.column_index ? body.column_index === index : true)))
+  return await db.withTransaction(
+    async () => {
+      const col = columns.find(
+        (c, index) =>
+          c.type === "Action" &&
+          (c.rndid == body.rndid ||
+            (c.action_name === body.action_name &&
+              body.action_name &&
+              (body.column_index ? body.column_index === index : true)))
+      );
+      const table = Table.findOne({ id: table_id });
+      const row = await getRowQuery(body[table.pk_name]);
+      if (!col && body.action_name === default_state?._row_click_action) {
+        const trigger = Trigger.findOne({ name: body.action_name });
+        const result = await trigger.runWithoutRow({
+          row,
+          table,
+          Table,
+          referrer: req?.get?.("Referrer"),
+          user: req.user,
+          req,
+        });
+        return { json: { success: "ok", ...(result || {}) } };
+      }
+      const state_action = getState().actions[col.action_name];
+      col.configuration = col.configuration || {};
+      if (state_action) {
+        const cfgFields = await getActionConfigFields(state_action, table, {
+          mode: "list",
+          req,
+        });
+        cfgFields.forEach(({ name }) => {
+          if (typeof col.configuration[name] === "undefined")
+            col.configuration[name] = col[name];
+        });
+      }
+
+      const result = await run_action_column({
+        col,
+        req,
+        table,
+        row,
+        res,
+        referrer: req?.get?.("Referrer"),
+      });
+      return { json: { success: "ok", ...(result || {}) } };
+    },
+    (e) => {
+      Crash.create(e, req);
+      return { json: { error: e.message || e } };
+    }
   );
-  const table = Table.findOne({ id: table_id });
-  const row = await getRowQuery(body.id);
-  const state_action = getState().actions[col.action_name];
-  col.configuration = col.configuration || {};
-  if (state_action) {
-    const cfgFields = await getActionConfigFields(state_action, table, {
-      mode: "list",
-    });
-    cfgFields.forEach(({ name }) => {
-      if (typeof col.configuration[name] === "undefined")
-        col.configuration[name] = col[name];
-    });
-  }
-  try {
-    const result = await run_action_column({
-      col,
-      req,
-      table,
-      row,
-      res,
-      referrer: req?.get?.("Referrer"),
-    });
-    return { json: { success: "ok", ...(result || {}) } };
-  } catch (e) {
-    Crash.create(e, req);
-    return { json: { error: e.message || e } };
-  }
 };
 
 module.exports = {
@@ -1301,11 +1378,6 @@ module.exports = {
    * @param {object} opts
    * @returns {boolean}
    */
-  display_state_form: (opts) => false,
-  /**
-   * @param {object} opts
-   * @returns {boolean}
-   */
   default_state_form: ({ default_state }) => {
     if (!default_state) return default_state;
     const {
@@ -1320,6 +1392,8 @@ module.exports = {
       _group_by,
       _hide_pagination,
       _row_click_url_formula,
+      _row_click_url_type,
+      _row_click_url_action,
       transpose,
       transpose_width,
       transpose_width_units,
@@ -1415,6 +1489,7 @@ module.exports = {
         const ctx = { ...state, user_id: req.user?.id || null, user: req.user };
         let where1 = jsexprToWhere(default_state.include_fml, ctx, fields);
         mergeIntoWhere(where, where1 || {});
+        mergeIntoWhere(whereForCount, where1 || {});
       }
       if (default_state?.exclusion_relation) {
         const [reltable, relfld] = default_state.exclusion_relation.split(".");
@@ -1430,17 +1505,17 @@ module.exports = {
             )
           : {};
         const relRows = await relTable.getRows(relWhere);
-        if (relRows.length > 0)
-          mergeIntoWhere(
-            where,
-            !db.isSQLite
-              ? {
-                  id: { not: { in: relRows.map((r) => r[relfld]) } },
-                }
-              : {
-                  not: { or: relRows.map((r) => ({ id: r[relfld] })) },
-                }
-          );
+        if (relRows.length > 0) {
+          const mergeObj = !db.isSQLite
+            ? {
+                [table.pk_name]: { not: { in: relRows.map((r) => r[relfld]) } },
+              }
+            : {
+                not: { or: relRows.map((r) => ({ id: r[relfld] })) },
+              };
+          mergeIntoWhere(where, mergeObj);
+          mergeIntoWhere(whereForCount, mergeObj);
+        }
       }
       let rows = await table.getJoinedRows({
         where,
@@ -1461,10 +1536,21 @@ module.exports = {
     },
     async getRowQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow(
-        { id },
-        { forUser: req.user, forPublic: !req.user }
-      );
+      if (table.ownership_formula) {
+        const freeVars = freeVariables(table.ownership_formula);
+        const joinFields = {};
+        add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
+        return await table.getJoinedRow({
+          where: { [table.pk_name]: id },
+          joinFields,
+          forUser: req.user || { role_id: 100 },
+          forPublic: !req.user,
+        });
+      } else
+        return await table.getRow(
+          { [table.pk_name]: id },
+          { forUser: req.user, forPublic: !req.user }
+        );
     },
   }),
   configCheck: async (view) => {

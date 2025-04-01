@@ -14,6 +14,7 @@ const User = require("@saltcorn/data/models/user");
 const Model = require("@saltcorn/data/models/model");
 const Trigger = require("@saltcorn/data/models/trigger");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
+const Notification = require("@saltcorn/data/models/notification");
 const {
   mkTable,
   renderForm,
@@ -50,8 +51,12 @@ const {
   code,
   pre,
   button,
+  text_attr,
+  br,
+  select,
+  option,
 } = require("@saltcorn/markup/tags");
-const stringify = require("csv-stringify");
+const { stringify } = require("csv-stringify");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const fs = require("fs").promises;
 const {
@@ -66,11 +71,14 @@ const {
   InvalidConfiguration,
   removeAllWhiteSpace,
   comparingCaseInsensitive,
+  validSqlId,
 } = require("@saltcorn/data/utils");
 const { EOL } = require("os");
 
 const path = require("path");
 const Tag = require("@saltcorn/data/models/tag");
+const { initial_config_all_fields } = require("@saltcorn/data/plugin-helper");
+const { save_menu_items } = require("@saltcorn/data/models/config");
 /**
  * @type {object}
  * @const
@@ -359,12 +367,13 @@ router.post(
   error_catcher(async (req, res) => {
     const tbls = await discoverable_tables();
     const form = discoverForm(tbls, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     const tableNames = tbls
       .filter((t) => form.values[t.table_name])
       .map((t) => t.table_name);
     const pack = await discover_tables(tableNames);
     await implement_discovery(pack);
+    await getState().refresh_tables();
     req.flash(
       "success",
       req.__("Discovered tables: %s", tableNames.join(", "))
@@ -437,8 +446,8 @@ router.post(
   setTenant,
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
-    if (req.body.name && req.files && req.files.file) {
-      const name = req.body.name;
+    if ((req.body || {}).name && req.files && req.files.file) {
+      const name = (req.body || {}).name;
       const alltables = await Table.find({});
       const existing_tables = [
         "users",
@@ -461,6 +470,16 @@ router.post(
         req.flash("error", parse_res.error);
         res.redirect(`/table/create-from-csv`);
       } else {
+        await getState().refresh_tables();
+        Trigger.emitEvent(
+          "AppChange",
+          `Table ${parse_res.table.name}`,
+          req.user,
+          {
+            entity_type: "Table",
+            entity_name: parse_res.table.name,
+          }
+        );
         req.flash(
           "success",
           req.__(`Created table %s.`, parse_res.table.name) + parse_res.success
@@ -483,7 +502,10 @@ const buildTableMarkup = (table) => {
   const members = fields
     // .filter((f) => !f.reftable_name)
     .map((f) =>
-      indentString(`${removeAllWhiteSpace(f.type_name)} ${f.name}`, 6)
+      indentString(
+        `${removeAllWhiteSpace(f.type_name)} ${validSqlId(f.name)}`,
+        6
+      )
     )
     .join(EOL);
   const keys = table
@@ -645,8 +667,8 @@ router.get(
               div(
                 {
                   id: "erd-wrapper",
-                  style: "height: calc(100vh - 250px);",
-                  class: "overflow-scroll position-relative",
+                  style:
+                    "height: calc(100vh - 250px); overflow: hidden !important;",
                 },
                 screenshotPanel(),
                 pre(
@@ -696,7 +718,14 @@ const typeBadges = (f, req) => {
   if (f.primary_key) s += badge("warning", req.__("Primary key"));
   if (f.required) s += badge("primary", req.__("Required"));
   if (f.is_unique) s += badge("success", req.__("Unique"));
-  if (f.calculated) s += badge("info", req.__("Calculated"));
+  if (f.calculated)
+    s += badge(
+      "info",
+      req.__("Calculated"),
+      f.expression && f.expression !== "__aggregation"
+        ? text_attr(f.expression)
+        : undefined
+    );
   if (f.stored) s += badge("warning", req.__("Stored"));
   return s;
 };
@@ -709,9 +738,14 @@ const attribBadges = (f) => {
   let s = "";
   if (f.attributes) {
     Object.entries(f.attributes).forEach(([k, v]) => {
+      if (k === "summary_field") s += badge("secondary", "Summary", v);
+      if (k === "include_fts" && v)
+        s += badge("secondary", "FTS", "Include in full-text search");
       if (
         [
+          "include_fts",
           "summary_field",
+          "importance",
           "on_delete_cascade",
           "on_delete",
           "unique_error_msg",
@@ -781,7 +815,8 @@ router.get(
     const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
     triggers.sort(comparingCaseInsensitive("name"));
     let fieldCard;
-    const nPrimaryKeys = fields.filter((f) => f.primary_key).length;
+    const primaryKeys = fields.filter((f) => f.primary_key);
+    const nPrimaryKeys = primaryKeys.length;
 
     if (fields.length === 0) {
       fieldCard = [
@@ -845,11 +880,13 @@ router.get(
         { hover: true }
       );
       fieldCard = [
-        nPrimaryKeys > 1 &&
+        nPrimaryKeys !== 1 &&
+          !table.external &&
+          !table.provider_name &&
           div(
             { class: "alert alert-danger", role: "alert" },
             i({ class: "fas fa-exclamation-triangle" }),
-            "This table has composite primary keys which is not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
+            "This table has composite, non-defaulted integer, or no primary keys, which are not supported in Saltcorn. A procedure to introduce a single autoincrementing primary key is available.",
             post_btn(
               `/table/repair-composite-primary/${table.id}`,
               "Add autoincrementing primary key",
@@ -894,7 +931,19 @@ router.get(
           p(req.__("Views define how table rows are displayed to the user"))
         );
       }
-      if (user_can_edit_views)
+      if (user_can_edit_views) {
+        let create_basic_link = "";
+        if (views.length === 0) {
+          create_basic_link = post_btn(
+            `/table/create-basic-views/${table.id}`,
+            "Create basic views",
+            req.csrfToken(),
+            {
+              btnClass: "btn-outline-secondary",
+              formClass: "d-inline me-2",
+            }
+          );
+        }
         viewCard = {
           type: "card",
           id: "table-views",
@@ -911,8 +960,10 @@ router.get(
                 class: "btn btn-primary",
               },
               req.__("Create view")
-            ),
+            ) +
+            create_basic_link,
         };
+      }
       if (user_can_edit_triggers)
         triggerCard = {
           type: "card",
@@ -977,8 +1028,8 @@ router.get(
               table.name === "users"
                 ? `/useradmin/`
                 : fields.length === 1
-                ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
-                : `/list/${encodeURIComponent(table.name)}`,
+                  ? `javascript:;` // Fix problem with edition of table with only one column ID / Primary Key
+                  : `/list/${encodeURIComponent(table.name)}`,
           },
           i({ class: "fas fa-2x fa-edit" }),
           "<br/>",
@@ -1096,6 +1147,15 @@ router.get(
                 req,
                 true
               ),
+            req.user.role_id === 1 &&
+              table.name !== "users" &&
+              post_dropdown_item(
+                `/table/delete-with-trig-views/${table.id}`,
+                '<i class="fas fa-trash"></i>&nbsp;' +
+                  req.__("Delete table+views+triggers"),
+                req,
+                true
+              ),
           ])
         )
     );
@@ -1168,7 +1228,7 @@ router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
-    const v = req.body;
+    const v = req.body || {};
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
       v.name = v.name.trim();
@@ -1189,7 +1249,15 @@ router.post(
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
-        const table = await Table.create(name, rest);
+        let table;
+        await db.withTransaction(async () => {
+          table = await Table.create(name, rest);
+          Trigger.emitEvent("AppChange", `Table ${name}`, req.user, {
+            entity_type: "Table",
+            entity_name: name,
+          });
+        });
+        await getState().refresh_tables();
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }
@@ -1237,8 +1305,10 @@ router.post(
         rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
         rest.ownership_field_id = null;
       } else rest.ownership_formula = null;
-      await table.update(rest);
-
+      await db.withTransaction(async () => {
+        await table.update(rest);
+      });
+      await getState().refresh_tables();
       if (!req.xhr) {
         if (!old_versioned && rest.versioned)
           req.flash(
@@ -1253,6 +1323,56 @@ router.post(
         else if (!hasError) req.flash("success", req.__("Table saved"));
         res.redirect(`/table/${id}`);
       } else res.json({ success: "ok", notify });
+    }
+  })
+);
+
+//delete-with-trig-views
+/**
+ * Delete Table Route Handler definition
+ * /delete:/id, where id is table id in _sc_tables
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ * @function
+ */
+router.post(
+  "/delete-with-trig-views/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const t = Table.findOne({ id });
+    if (!t) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    if (t.name === "users") {
+      req.flash("error", req.__(`Cannot delete users table`));
+      res.redirect(`/table`);
+      return;
+    }
+    try {
+      await db.withTransaction(async () => {
+        const views = await View.find(
+          t.id ? { table_id: t.id } : { exttable_name: t.name }
+        );
+        for (const view of views) await view.delete();
+        if (t.id) {
+          const triggers = await Trigger.find({ table_id: t.id });
+          for (const trig of triggers) await trig.delete();
+        }
+
+        await t.delete();
+      });
+      await getState().refresh_tables();
+      await getState().refresh_views();
+      await getState().refresh_triggers();
+      req.flash("success", req.__(`Table %s deleted`, t.name));
+      res.redirect(`/table`);
+    } catch (err) {
+      req.flash("error", err.message);
+      res.redirect(`/table`);
     }
   })
 );
@@ -1308,8 +1428,15 @@ router.post(
       }
     }
     try {
-      await t.delete();
-      req.flash("success", req.__(`Table %s deleted`, t.name));
+      await db.withTransaction(async () => {
+        await t.delete();
+        req.flash("success", req.__(`Table %s deleted`, t.name));
+        Trigger.emitEvent("AppChange", `Table ${t.name} deleted`, req.user, {
+          entity_type: "Table",
+          entity_name: t.name,
+        });
+      });
+      await getState().refresh_tables();
       res.redirect(`/table`);
     } catch (err) {
       req.flash("error", err.message);
@@ -1334,7 +1461,10 @@ router.post(
       return;
     }
     try {
-      await t.delete(true);
+      await db.withTransaction(async () => {
+        await t.delete(true);
+      });
+      await getState().refresh_tables();
       req.flash(
         "success",
         req.__(`Table %s forgotten. You can now discover it.`, t.name)
@@ -1458,7 +1588,10 @@ router.get(
       res.redirect(`/table/${table.id}`);
       return;
     }
-    const rows = await table.getRows({}, { orderBy: "id", forUser: req.user });
+    const rows = await table.getRows(
+      {},
+      { orderBy: table.pk_name, forUser: req.user }
+    );
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
@@ -1534,12 +1667,12 @@ router.get(
                     r.type === "Unique"
                       ? r.configuration.fields.join(", ")
                       : r.type === "Index" && r.configuration?.field === "_fts"
-                      ? "Full text search"
-                      : r.type === "Index"
-                      ? r.configuration.field
-                      : r.type === "Formula"
-                      ? r.configuration.formula
-                      : "",
+                        ? "Full text search"
+                        : r.type === "Index"
+                          ? r.configuration.field
+                          : r.type === "Formula"
+                            ? r.configuration.formula
+                            : "",
                 },
                 {
                   label: req.__("Delete"),
@@ -1581,7 +1714,7 @@ const constraintForm = (req, table, fields, type) => {
     case "Formula":
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,
-
+        onSubmit: "press_store_button(this)",
         fields: [
           {
             name: "formula",
@@ -1616,6 +1749,7 @@ const constraintForm = (req, table, fields, type) => {
         blurb: req.__(
           "Tick the boxes for the fields that should be jointly unique"
         ),
+        onSubmit: "press_store_button(this)",
         fields: [
           ...fields.map((f) => ({
             name: f.name,
@@ -1633,21 +1767,14 @@ const constraintForm = (req, table, fields, type) => {
     case "Index":
       const fieldopts = fields.map((f) => ({ label: f.label, name: f.name }));
       const hasIncludeFts = fields.filter((f) => f.attributes?.include_fts);
-      if (!db.isSQLite && !hasIncludeFts.length)
+      if (!db.isSQLite)
         fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,
-        blurb:
-          req.__(
-            "Choose the field to be indexed. This make searching the table faster."
-          ) +
-          " " +
-          (hasIncludeFts.length
-            ? req.__(
-                `Full-text search index is not available as the table contains Key fields (%s) with the "Include in full-text search" option enabled. Disable this before creating a Full-text search index`,
-                hasIncludeFts.map((f) => f.name).join(",")
-              )
-            : ""),
+        blurb: req.__(
+          "Choose the field to be indexed. This make searching the table faster."
+        ),
+        onSubmit: "press_store_button(this)",
         fields: [
           {
             type: "String",
@@ -1656,6 +1783,11 @@ const constraintForm = (req, table, fields, type) => {
             required: true,
             attributes: {
               options: fieldopts,
+              explainers: hasIncludeFts
+                ? {
+                    _fts: "Full text search index is not compatible with Key fields with the 'Include in Full text search' option. A new field will be created for your search context",
+                  }
+                : {},
             },
           },
         ],
@@ -1728,7 +1860,7 @@ router.post(
     }
     const fields = table.getFields();
     const form = constraintForm(req, table, fields, type);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
       let configuration = {};
@@ -1738,11 +1870,24 @@ router.post(
           .filter((f) => form.values[f]);
         configuration.errormsg = form.values.errormsg;
       } else configuration = form.values;
-      await TableConstraint.create({
-        table_id: table.id,
-        type,
-        configuration,
+      await db.withTransaction(async () => {
+        await TableConstraint.create({
+          table_id: table.id,
+          type,
+          configuration,
+        });
       });
+      await getState().refresh_tables();
+
+      Trigger.emitEvent(
+        "AppChange",
+        `Constraint ${type} on table ${table?.name}`,
+        req.user,
+        {
+          entity_type: "TableConstraint",
+          entity_name: table.name,
+        }
+      );
     }
     res.redirect(`/table/constraints/${table.id}`);
   })
@@ -1819,11 +1964,15 @@ router.post(
     const table = Table.findOne({ id });
     const form = renameForm(table.id, req);
 
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
-      await table.rename(form.values.name);
+      await db.withTransaction(async () => {
+        await table.rename(form.values.name);
+      });
+      await getState().refresh_tables();
     }
+
     res.redirect(`/table/${table.id}`);
   })
 );
@@ -1841,7 +1990,10 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const cons = await TableConstraint.findOne({ id });
-    await cons.delete();
+    await db.withTransaction(async () => {
+      await cons.delete();
+    });
+    await getState().refresh_tables();
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
 );
@@ -1889,18 +2041,52 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
               "Cancel",
               req.csrfToken(),
               {
-                btnClass: "btn-danger",
+                btnClass: "btn-danger mb-2",
                 formClass: "d-inline me-2",
                 icon: "fa fa-times",
               }
             ),
-            post_btn(
-              `/table/finish_upload_to_table/${table.name}/${path.basename(
-                newPath
-              )}`,
-              "Proceed",
-              req.csrfToken(),
-              { icon: "fa fa-check", formClass: "d-inline" }
+            form(
+              {
+                action: `/table/finish_upload_to_table/${table.name}/${path.basename(
+                  newPath
+                )}`,
+                method: "post",
+                class: "d-inline",
+              },
+              input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+              button(
+                { type: "submit", class: "btn btn-primary mb-2" },
+                i({ class: "fa fa-check" }),
+                "Proceed"
+              ),
+              br(),
+              i({ class: "muted" }, "Method"),
+              select(
+                {
+                  name: "import_method",
+                  class: "form-select from-control mb-2",
+                },
+                option("Auto"),
+                option({ value: "copy" }, "COPY (fast but strict)"),
+                option(
+                  { value: "row-by-row" },
+                  "Row-by-row (Slower but more accepting)"
+                )
+              ),
+              div(
+                { class: "form-check" },
+                input({
+                  class: "form-check-input",
+                  type: "checkbox",
+                  id: "import_async",
+                  name: "import_async",
+                }),
+                label(
+                  { class: "form-check-label", for: "import_async" },
+                  "Asynchronous"
+                )
+              )
             )
           ),
         },
@@ -2005,15 +2191,43 @@ router.post(
     const f = await File.findOne(filename);
 
     try {
-      const parse_res = await table.import_csv_file(f.location, {
-        recalc_stored: true,
-      });
-      if (parse_res.error) req.flash("error", parse_res.error);
-      else req.flash("success", parse_res.success);
+      const { import_method, import_async } = req.body || {};
+
+      const promise = table
+        .import_csv_file(f.location, {
+          recalc_stored: true,
+          method: import_method || "Auto",
+        })
+        .finally(() => {
+          fs.unlink(f.location);
+        });
+      if (import_async) {
+        promise
+          .then((parse_res) => {
+            Notification.create({
+              title: "CSV import complete",
+              body: parse_res.error || parse_res.success,
+              user_id: req.user.id,
+            });
+          })
+          .catch((e) => {
+            console.error("CSV upload error", e);
+            Notification.create({
+              title: "Error importing CSV file",
+              body: e.message,
+              user_id: req.user.id,
+            });
+          });
+        req.flash("success", req.__("Processing CSV file"));
+      } else {
+        const parse_res = await promise;
+        if (parse_res.error) req.flash("error", parse_res.error);
+        else req.flash("success", parse_res.success);
+      }
     } catch (e) {
+      console.error("CSV upload error", e);
       req.flash("error", e.message);
     }
-    await fs.unlink(f.location);
     res.redirect(`/table/${table.id}`);
   })
 );
@@ -2033,9 +2247,12 @@ router.post(
     const table = Table.findOne({ name });
 
     try {
-      await table.deleteRows({}, req.user, true);
+      await db.withTransaction(async () => {
+        await table.deleteRows({}, req.user, true);
+      });
       req.flash("success", req.__("Deleted all rows"));
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
 
@@ -2186,9 +2403,19 @@ router.post(
       res.redirect(`/table`);
       return;
     }
+    Trigger.emitEvent(
+      "AppChange",
+      `Table ${table.name} configuration`,
+      req.user,
+      {
+        entity_type: "Table",
+        entity_name: table.name,
+      }
+    );
     const workflow = get_provider_workflow(table, req);
-    const wfres = await workflow.run(req.body, req);
+    const wfres = await workflow.run(req.body || {}, req);
     respondWorkflow(table, workflow, wfres, req, res);
+    await getState().refresh_tables();
   })
 );
 
@@ -2204,7 +2431,91 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-    await table.repairCompositePrimary();
+    await db.withTransaction(async () => {
+      await table.repairCompositePrimary();
+    });
+    await getState().refresh_tables();
+    res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.post(
+  "/create-basic-views/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const table = Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    await db.withTransaction(async () => {
+      const initial_view = async (table, viewtemplate) => {
+        const configuration = await initial_config_all_fields(
+          viewtemplate === "Edit"
+        )({ table_id: table.id });
+        //console.log(configuration);
+        const name = `${viewtemplate} ${table.name}`;
+        const view = await View.create({
+          name,
+          configuration,
+          viewtemplate,
+          table_id: table.id,
+          min_role: 100,
+        });
+        return view;
+      };
+      const list = await initial_view(table, "List");
+      const edit = await initial_view(table, "Edit");
+      const show = await initial_view(table, "Show");
+      await View.update(
+        {
+          configuration: {
+            ...list.configuration,
+            columns: [
+              ...list.configuration.columns,
+              {
+                type: "ViewLink",
+                view: `Own:Show ${table.name}`,
+                view_name: `Show ${table.name}`,
+                link_style: "",
+                view_label: "Show",
+                header_label: "Show",
+              },
+              {
+                type: "ViewLink",
+                view: `Own:Edit ${table.name}`,
+                view_name: `Edit ${table.name}`,
+                link_style: "",
+                view_label: "Edit",
+                header_label: "Edit",
+              },
+              {
+                type: "Action",
+                action_name: "Delete",
+                action_style: "btn-primary",
+              },
+            ],
+            view_to_create: `Edit ${table.name}`,
+          },
+        },
+        list.id
+      );
+      await View.update(
+        {
+          configuration: {
+            ...edit.configuration,
+            view_when_done: `List ${table.name}`,
+            destination_type: "View",
+          },
+        },
+        edit.id
+      );
+    });
+    await getState().refresh_views();
     res.redirect(`/table/${table.id}`);
   })
 );

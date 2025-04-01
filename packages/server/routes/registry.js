@@ -145,6 +145,7 @@ router.get(
             name: "regval",
             label: "",
             input_type: "code",
+            class: "enlarge-in-card",
             attributes: { mode: "application/json" },
           },
         ],
@@ -319,13 +320,16 @@ router.get(
             ),
           },
           {
-            type: "card",
-            title: cfg_link
-              ? `Registry editor: ${cfg_link}`
-              : ename && etype
-              ? `Registry editor: ${ename} ${etype}`
-              : "Registry editor",
-            contents: edContents,
+            type: "container",
+            contents: {
+              type: "card",
+              title: cfg_link
+                ? `Registry editor: ${cfg_link}`
+                : ename && etype
+                  ? `Registry editor: ${ename} ${etype}`
+                  : "Registry editor",
+              contents: edContents,
+            },
           },
         ],
       },
@@ -340,7 +344,7 @@ router.post(
     const { etype, ename, q } = req.query;
     const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
 
-    const entVal = JSON.parse(req.body.regval);
+    const entVal = JSON.parse((req.body || {}).regval);
     let pack = {
       plugins: [],
       tables: [],
@@ -367,7 +371,9 @@ router.post(
         pack.config[ename] = entVal;
         break;
     }
-    await install_pack(pack);
+    await db.withTransaction(async () => {
+      await install_pack(pack);
+    });
     res.redirect(
       `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
         ename

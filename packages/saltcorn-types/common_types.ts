@@ -1,3 +1,6 @@
+import type { FieldView, FieldLike, Req,Res } from "./base_types";
+import type { AbstractTable } from "./model-abstracts/abstract_table";
+
 /**
  * Those are the common types
  * @module
@@ -16,8 +19,8 @@ export type SuccessMessage = {
 };
 
 export type ReqRes = {
-  req?: any;
-  res?: any;
+  req: Req;
+  res?: Res;
 };
 
 export type ResultMessage = ErrorMessage | SuccessMessage;
@@ -44,8 +47,10 @@ export type Type = {
   primaryKey?: { sql_type: string; default_sql?: string };
   presets?: any;
   contract?: any;
-  fieldviews?: any;
-  attributes?: GenObj;
+  fieldviews?: Record<string, FieldView>;
+  attributes?:
+    | Array<FieldLike>
+    | (({ table }: { table: AbstractTable }) => Promise<Array<FieldLike>>);
   validate_attributes?: Function;
   distance_operators?: { [opName: string]: any };
 };

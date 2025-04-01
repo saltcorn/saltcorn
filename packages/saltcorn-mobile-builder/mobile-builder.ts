@@ -28,6 +28,7 @@ import {
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
+  copyMobileAppDirs,
   bundleMobileAppCode,
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
@@ -116,7 +117,9 @@ export class MobileBuilder {
   isUnsecureKeyStore: boolean;
   buildType: "debug" | "release";
   iosParams?: IosCfg;
-  capacitorHelper: CapacitorHelper;
+
+  private capacitorHelper: CapacitorHelper;
+  private pluginsLoaded = false;
 
   /**
    *
@@ -187,6 +190,8 @@ export class MobileBuilder {
 
   public async prepareStep() {
     try {
+      await loadAllPlugins();
+      this.pluginsLoaded = true;
       prepareBuildDir(this.buildDir, this.templateDir);
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
@@ -231,9 +236,13 @@ export class MobileBuilder {
         this.plugins
       );
       if (resultCode !== 0) return resultCode;
+      if (!this.pluginsLoaded) {
+        await loadAllPlugins();
+        this.pluginsLoaded = true;
+      }
+      copyMobileAppDirs(this.buildDir);
       resultCode = bundleMobileAppCode(this.buildDir);
       if (resultCode !== 0) return resultCode;
-      await loadAllPlugins();
       await copyPublicDirs(this.buildDir);
       await buildTablesFile(this.buildDir, this.includedPlugins);
       if (this.splashPage)
@@ -286,7 +295,7 @@ export class MobileBuilder {
         join(this.buildDir, basename(this.keyStorePath))
       );
     }
-    await modifyAndroidManifest(this.buildDir, this.allowShareTo, this.appId);
+    await modifyAndroidManifest(this.buildDir, this.allowShareTo);
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
     modifyGradleConfig(this.buildDir, this.appVersion);

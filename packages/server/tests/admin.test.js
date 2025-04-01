@@ -472,6 +472,18 @@ describe("actions", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/actions/"));
   });
+  it("post Never trigger with table", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/actions/new")
+      .set("Cookie", loginCookie)
+      .send("action=run_js_code")
+      .send("table_id=2")
+      .send("name=NeverTableTrigger")
+      .send("when_trigger=Never")
+      .expect(302);
+  });
 });
 describe("localizer", () => {
   itShouldRedirectUnauthToLogin("/site-structure/localizer");
@@ -647,6 +659,9 @@ describe("clear all page", () => {
       .send("users=on")
       .send("config=on")
       .send("plugins=on")
+      .send("triggers=on")
+      .send("library=on")
+      .send("eventlog=on")
       .expect(toRedirect("/auth/create_first_user"));
   });
   it("restores backup after clear all", async () => {

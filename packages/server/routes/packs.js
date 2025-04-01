@@ -18,6 +18,8 @@ const EventLog = require("@saltcorn/data/models/eventlog");
 const Model = require("@saltcorn/data/models/model");
 const ModelInstance = require("@saltcorn/data/models/model_instance");
 const load_plugins = require("../load_plugins");
+const { getState } = require("@saltcorn/data/db/state");
+const db = require("@saltcorn/data/db/index");
 
 const { is_pack } = require("@saltcorn/data/contracts");
 const {
@@ -223,7 +225,7 @@ router.post(
       model_instances: [],
       event_logs: [],
     };
-    for (const k of Object.keys(req.body)) {
+    for (const k of Object.keys(req.body || {})) {
       const [type, name, ...rest] = k.split(".");
       switch (type) {
         case "table":
@@ -392,11 +394,11 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     var pack, error;
-    const source = req.body.source || "from_text";
+    const source = (req.body || {}).source || "from_text";
     try {
       switch (source) {
         case "from_text":
-          pack = JSON.parse(req.body.pack);
+          pack = JSON.parse((req.body || {}).pack);
           break;
         case "from_file":
           if (req.files?.pack_file?.tempFilePath)
@@ -414,6 +416,7 @@ router.post(
     if (!error && !is_pack.check(pack)) {
       error = req.__("Not a valid pack");
     }
+
     if (!error) {
       const can_install = await can_install_pack(pack);
       if (can_install.error) {
@@ -424,7 +427,7 @@ router.post(
     }
     if (error) {
       const form = install_pack_form(req);
-      form.values = { pack: req.body.pack };
+      form.values = { pack: (req.body || {}).pack };
       req.flash("error", error);
       res.sendWrap(req.__(`Install Pack`), {
         above: [
@@ -444,10 +447,12 @@ router.post(
         ],
       });
     } else {
-      await install_pack(pack, undefined, (p) =>
-        load_plugins.loadAndSaveNewPlugin(p)
-      );
-
+      await db.withTransaction(async () => {
+        await install_pack(pack, undefined, (p) =>
+          load_plugins.loadAndSaveNewPlugin(p)
+        );
+      });
+      await getState().refresh();
       res.redirect(`/`);
     }
   })
@@ -480,9 +485,12 @@ router.post(
     } else if (can_install.warning) {
       req.flash("warning", can_install.warning);
     }
-    await install_pack(pack.pack, name, (p) =>
-      load_plugins.loadAndSaveNewPlugin(p)
-    );
+    await db.withTransaction(async () => {
+      await install_pack(pack.pack, name, (p) =>
+        load_plugins.loadAndSaveNewPlugin(p)
+      );
+    });
+    await getState().refresh();
     req.flash("success", req.__(`Pack %s installed`, text(name)));
     res.redirect(`/`);
   })
@@ -506,7 +514,10 @@ router.post(
       res.redirect(`/plugins`);
       return;
     }
-    await uninstall_pack(pack.pack, name);
+    await db.withTransaction(async () => {
+      await uninstall_pack(pack.pack, name);
+    });
+    await getState().refresh();
 
     req.flash("success", req.__(`Pack %s uninstalled`, text(name)));
 

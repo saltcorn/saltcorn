@@ -224,15 +224,25 @@ const send_infoarch_page = (args) => {
   const tenant_list =
     db.is_it_multi_tenant() &&
     db.getTenantSchema() === db.connectObj.default_schema;
-  const isUserAdmin = args.req?.user.role_id === 1;
+  const role = args.req?.user.role_id || 100;
+  const isUserAdmin = role === 1;
+  const state = getState();
+  const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
+  const canEditSearch = state.getConfig("min_role_edit_search", 1) >= role;
+  const canCreateSnapshot =
+    state.getConfig("min_role_create_snapshots", 1) >= role && role > 1;
+
   return send_settings_page({
     main_section: "Site structure",
     main_section_href: "/site-structure",
     sub_sections: [
-      { text: "Menu", href: "/menu" },
+      ...(canEditMenu ? [{ text: "Menu", href: "/menu" }] : []),
+      ...(canEditSearch ? [{ text: "Search", href: "/search/config" }] : []),
+      ...(canCreateSnapshot
+        ? [{ text: "Snapshots", href: "/site-structure/create-snapshot" }]
+        : []),
       ...(isUserAdmin
         ? [
-            { text: "Search", href: "/search/config" },
             { text: "Library", href: "/library/list" },
             { text: "Languages", href: "/site-structure/localizer" },
             ...(tenant_list
@@ -281,14 +291,22 @@ const send_users_page = (args) => {
  * @returns {void}
  */
 const send_files_page = (args) => {
+  const isUserAdmin = args.req?.user.role_id === 1;
   return send_settings_page({
     main_section: "Files",
     main_section_href: "/files",
-    sub_sections: [
-      { text: "Files", href: "/files" },
-      { text: "Storage", href: "/files/storage" },
-      { text: "Settings", href: "/files/settings" },
-    ],
+    no_nav_pills: !isUserAdmin,
+    sub_sections: isUserAdmin
+      ? [
+          { text: "Files", href: "/files" },
+          ...(isUserAdmin
+            ? [
+                { text: "Storage", href: "/files/storage" },
+                { text: "Settings", href: "/files/settings" },
+              ]
+            : []),
+        ]
+      : null,
     ...args,
   });
 };
@@ -476,14 +494,26 @@ const config_fields_form = async ({
       name,
       ...configTypes[name],
       label: label ? req.__(label) : undefined,
-      sublabel: sublabel ? req.__(sublabel) : undefined,
+      sublabel:
+        (sublabel ? req.__(sublabel) : "") +
+        (isView
+          ? ". " +
+            a(
+              {
+                "data-dyn-href": `\`/viewedit/config/\${${name}}\``,
+                "data-show-if": `showIfFormulaInputs($('select[name=${name}]'), '${name}')`,
+                target: "_blank",
+              },
+              req.__("Configure")
+            )
+          : ""),
       disabled: state.isFixedConfig(name),
       type:
         isView || isRole || isTenant
           ? "String"
           : configTypes[name].input_type
-          ? undefined
-          : configTypes[name].type,
+            ? undefined
+            : configTypes[name].type,
       input_type: configTypes[name].input_type,
       showIf,
       help: configTypes[name].helpTopic
@@ -492,10 +522,10 @@ const config_fields_form = async ({
       attributes: isView
         ? await viewAttributes(name)
         : isRole
-        ? roleAttribs
-        : isTenant
-        ? await getTenants()
-        : configTypes[name].attributes,
+          ? roleAttribs
+          : isTenant
+            ? await getTenants()
+            : configTypes[name].attributes,
     });
   }
   const form = new Form({

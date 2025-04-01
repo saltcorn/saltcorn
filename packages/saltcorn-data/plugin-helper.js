@@ -12,6 +12,7 @@ const Tag = require("./models/tag");
 const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
+const mjml = require("@saltcorn/markup/mjml-tags");
 const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 const {
   Relation,
@@ -72,7 +73,9 @@ const link_view = (
   extraState,
   link_target_blank,
   label_attr, // for sorting
-  link_title
+  link_title,
+  link_class,
+  req
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -102,7 +105,7 @@ const link_view = (
           }`,
           style,
           title: link_title,
-          class: [textStyle, link_style, link_size, extraClass],
+          class: [textStyle, link_style, link_size, extraClass, link_class],
         },
         show_icon_and_label(link_icon, label)
       );
@@ -116,6 +119,7 @@ const link_view = (
             link_size,
             !link_style && "btn btn-link",
             extraClass,
+            link_class,
           ],
           title: link_title,
           type: "button",
@@ -126,12 +130,22 @@ const link_view = (
         },
         show_icon_and_label(link_icon, label)
       );
+  } else if (req?.generate_email && (link_style || "").includes("btn")) {
+    return mjml.emailButton(
+      {
+        href: url,
+        title: link_title,
+        btnStyle: link_style,
+        style,
+      },
+      label
+    );
   } else
     return a(
       {
         ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
         href: url,
-        class: [textStyle, link_style, link_size, extraClass],
+        class: [textStyle, link_style, link_size, extraClass, link_class],
         style,
         title: link_title,
         target: link_target_blank ? "_blank" : undefined,
@@ -297,7 +311,7 @@ const calcrelViewOptions = async (table, viewtemplate) => {
  * @param nrecurse
  * @returns {Promise<object>}
  */
-const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
+const calcfldViewConfig = async (fields, isEdit, nrecurse = 2, mode, req) => {
   const fieldViewConfigForms = {};
   for (const f of fields) {
     f.fill_table();
@@ -306,11 +320,15 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
       f.type === "Key"
         ? getState().keyFieldviews
         : f.type === "File"
-        ? getState().fileviews
-        : (f.type && f.type.fieldviews) || {};
+          ? getState().fileviews
+          : (f.type && f.type.fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews)) {
       if (fv.configFields)
-        fieldViewConfigForms[f.name][nm] = await applyAsync(fv.configFields, f);
+        fieldViewConfigForms[f.name][nm] = await applyAsync(
+          fv.configFields,
+          f,
+          { mode, req, ...(req?.__ ? { __: req.__ } : {}) }
+        );
     }
     if (f.type === "Key") {
       if (f.reftable_name && nrecurse > 0) {
@@ -319,7 +337,9 @@ const calcfldViewConfig = async (fields, isEdit, nrecurse = 2) => {
           const joinedCfg = await calcfldViewConfig(
             reftable.fields,
             isEdit,
-            nrecurse - 1
+            nrecurse - 1,
+            mode,
+            req
           );
           Object.entries(joinedCfg).forEach(([nm, o]) => {
             fieldViewConfigForms[`${f.name}.${nm}`] = o;
@@ -765,7 +785,11 @@ const get_link_view_opts = async (table, viewname, accept = () => true) => {
  */
 const getActionConfigFields = async (action, table, extra = {}) =>
   typeof action.configFields === "function"
-    ? await action.configFields({ table, ...extra })
+    ? await action.configFields({
+        table,
+        ...extra,
+        ...(extra?.req ? { __: extra.req.__ } : {}),
+      })
     : action.configFields || [];
 
 /**
@@ -823,7 +847,7 @@ const field_picker_fields = async ({
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
-    const cfgFields = await getActionConfigFields(action, table);
+    const cfgFields = await getActionConfigFields(action, table, { req });
 
     for (const field of cfgFields) {
       const cfgFld = {
@@ -880,9 +904,8 @@ const field_picker_fields = async ({
   const { link_view_opts, view_name_opts, view_relation_opts } =
     await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
-  const { child_field_list, child_relations } = await table.get_child_relations(
-    true
-  );
+  const { child_field_list, child_relations } =
+    await table.get_child_relations(true);
   const join_field_options = await table.get_join_field_options(true, true);
   const join_field_view_options = {
     ...field_view_options,
@@ -1912,14 +1935,19 @@ const queryToString = (query) => {
   return JSON.stringify(relObj);
 };
 
-const handleRelationPath = (queryObj, qstate) => {
+const handleRelationPath = (queryObj, qstate, table) => {
   if (queryObj.path.length > 0) {
     const levels = [];
     let lastTableName = queryObj.sourcetable;
     let where = null;
     for (const level of queryObj.path) {
       if (level.inboundKey) {
-        levels.push({ ...level });
+        const tbl = Table.findOne(level.table);
+        levels.push({
+          ...level,
+          pk_name: tbl?.pk_name,
+          ref_name: tbl?.getField?.(level.inboundKey)?.refname,
+        });
         lastTableName = level.table;
         if (!where)
           where = {
@@ -1931,13 +1959,22 @@ const handleRelationPath = (queryObj, qstate) => {
         const refField = lastTable.fields.find(
           (field) => field.name === level.fkey
         );
-        levels.push({ table: refField.reftable_name, fkey: level.fkey });
+        levels.push({
+          table: refField.reftable_name,
+          fkey: level.fkey,
+          pk_name: refField?.refname,
+        });
         lastTableName = refField.reftable_name;
+        const finalTable = Table.findOne({ name: lastTableName });
         if (!where)
-          where = { id: queryObj.srcId !== "NULL" ? queryObj.srcId : null };
+          where = {
+            [finalTable?.pk_name || "id"]:
+              queryObj.srcId !== "NULL" ? queryObj.srcId : null,
+          };
       }
     }
-    addOrCreateList(qstate, "id", {
+
+    addOrCreateList(qstate, table?.pk_name || "id", {
       inSelectWithLevels: {
         joinLevels: levels,
         schema: db.getTenantSchema(),
@@ -1967,6 +2004,7 @@ const stateFieldsToWhere = ({
   let qstate = {};
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
+    if (typeof v === "undefined") return;
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
       const scState = getState();
       const language = scState.pg_ts_config;
@@ -1979,8 +2017,8 @@ const stateFieldsToWhere = ({
         table: prefix
           ? prefix.replaceAll(".", "")
           : table
-          ? table.name
-          : undefined,
+            ? table.name
+            : undefined,
         schema: db.isSQLite ? undefined : db.getTenantSchema(),
       };
       return;
@@ -1993,11 +2031,15 @@ const stateFieldsToWhere = ({
 
     const field = fields.find((fld) => fld.name === k);
     if (k === "_relation_path_" || k === "_inbound_relation_path_")
-      handleRelationPath(typeof v === "string" ? stringToQuery(v) : v, qstate);
+      handleRelationPath(
+        typeof v === "string" ? stringToQuery(v) : v,
+        qstate,
+        table
+      );
     else if (k.startsWith(".")) {
       const queryObj = parseRelationPath(k);
       queryObj.srcId = v;
-      handleRelationPath(queryObj, qstate);
+      handleRelationPath(queryObj, qstate, table);
     } else if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
@@ -2106,6 +2148,7 @@ const stateFieldsToWhere = ({
       const [jFieldNm, throughPart, finalPart] = k.split(".");
       const [thoughTblNm, throughField] = throughPart.split("->");
       const [jtNm, lblField] = finalPart.split("->");
+      const jtTbl = Table.findOne(jtNm);
       let where = { [db.sqlsanitize(lblField)]: v };
       qstate[jFieldNm] = [
         ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
@@ -2115,7 +2158,7 @@ const stateFieldsToWhere = ({
             table: db.sqlsanitize(thoughTblNm),
             tenant: db.isSQLite ? undefined : db.getTenantSchema(),
             field: db.sqlsanitize(throughField),
-            valField: "id",
+            valField: jtTbl?.pk_name || "id",
             through: db.sqlsanitize(jtNm),
             where,
           },
@@ -2143,7 +2186,7 @@ const stateFieldsToWhere = ({
           inSelect: {
             table: db.sqlsanitize(jtNm),
             tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-            field: "id",
+            field: jTable.pk_name,
             where,
           },
         },
@@ -2158,8 +2201,10 @@ const stateFieldsToWhere = ({
           isString =
             labelField.type?.name === "String" &&
             !labelField.attributes?.exact_search_only;
-        qstate.id = [
-          ...(qstate.id ? [qstate.id] : []),
+
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
           {
             // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
@@ -2175,16 +2220,18 @@ const stateFieldsToWhere = ({
         ];
       } else if (kpath.length === 4) {
         const [jtNm, jFieldNm, tblName, lblField] = kpath;
-        qstate.id = [
-          ...(qstate.id ? [qstate.id] : []),
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
           {
             // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
             inSelect: {
               table: db.sqlsanitize(jtNm),
               tenant: db.isSQLite ? undefined : db.getTenantSchema(),
               field: db.sqlsanitize(jFieldNm),
-              valField: "id",
+              valField: Table.findOne(jtNm)?.pk_name || "id",
               through: db.sqlsanitize(tblName),
+              through_pk: Table.findOne(tblName)?.pk_name || "id",
               where: { [db.sqlsanitize(lblField)]: v },
             },
           },
@@ -2283,12 +2330,12 @@ const initial_config_all_fields =
               ([nm, fv]) => fv.isEdit === isEdit
             )[0]
           : f.type === "File" && !isEdit
-          ? Object.keys(getState().fileviews)[0]
-          : f.type === "File" && isEdit
-          ? "upload"
-          : f.type === "Key"
-          ? "select"
-          : undefined;
+            ? Object.keys(getState().fileviews)[0]
+            : f.type === "File" && isEdit
+              ? "upload"
+              : f.type === "Key"
+                ? "select"
+                : undefined;
         cfg.columns.push({
           field_name: f.name,
           type: "Field",
@@ -2361,7 +2408,8 @@ const readState = (state, fields, req) => {
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
-      if (
+      if (current === "null") state[f.name] = null;
+      else if (
         Array.isArray(current) &&
         current.length &&
         typeof current[0] === "object"
@@ -2666,8 +2714,8 @@ const displayType = (stateFields) =>
   stateFields.every((sf) => !sf.required)
     ? ViewDisplayType.NO_ROW_LIMIT
     : stateFields.some((sf) => sf.name === "id")
-    ? ViewDisplayType.ROW_REQUIRED
-    : ViewDisplayType.INVALID;
+      ? ViewDisplayType.ROW_REQUIRED
+      : ViewDisplayType.INVALID;
 
 const build_schema_data = async () => {
   const allViews = await View.find({}, { cached: true });
@@ -2713,8 +2761,8 @@ const build_schema_data = async () => {
  * @param {function} getRowVal
  */
 const pathToState = (relation, getRowVal) => {
-  const targetTbl = Table.findOne({ name: relation.targetTblName });
-  const pkName = targetTbl.pk_name;
+  const sourceTbl = Table.findOne({ name: relation.sourceTblName });
+  const pkName = sourceTbl?.pk_name || "id";
   const path = relation.path;
   switch (relation.type) {
     case RelationType.CHILD_LIST:
@@ -2726,7 +2774,8 @@ const pathToState = (relation, getRowVal) => {
               getRowVal(pkName),
           };
     case RelationType.PARENT_SHOW:
-      return { id: getRowVal(path[0].fkey) };
+      const targetTable = Table.findOne({ name: relation.targetTblName });
+      return { [targetTable?.pk_name || "id"]: getRowVal(path[0].fkey) };
     case RelationType.OWN:
       return { [pkName]: getRowVal(pkName) };
     case RelationType.INDEPENDENT:

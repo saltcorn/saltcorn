@@ -88,11 +88,12 @@ router.post(
     const { table_id } = req.params;
     const table = await Table.findOne({ id: table_id });
     const form = newModelForm(table, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(req.__(`New model`), renderForm(form, req.csrfToken()));
     } else {
       const model = await Model.create({ ...form.values, table_id: table.id });
+      await getState().refresh_tables();
       if (model.templateObj.configuration_workflow)
         res.redirect(`/models/config/${model.id}`);
       else res.redirect(`/models/show/${model.id}`);
@@ -157,7 +158,7 @@ const get_model_workflow = (model, req) => {
   workflow.onDone = async (ctx) => {
     const { id, ...configuration } = await oldOnDone(ctx);
     await model.update({ configuration });
-
+    await getState().refresh_tables();
     return {
       redirect: `/models/show/${model.id}`,
       flash: ["success", `Model ${this.name || ""} saved`],
@@ -204,7 +205,7 @@ router.post(
       return;
     }
     const workflow = get_model_workflow(model, req);
-    const wfres = await workflow.run(req.body, req);
+    const wfres = await workflow.run(req.body || {}, req);
     respondWorkflow(model, table, workflow, wfres, req, res);
   })
 );
@@ -340,6 +341,7 @@ router.post(
     const { id } = req.params;
     const model = await Model.findOne({ id });
     await model.delete();
+    await getState().refresh_tables();
     req.flash("success", req.__("Model %s deleted", model.name));
     res.redirect(`/table/${model.table_id}`);
   })
@@ -394,7 +396,7 @@ router.post(
     const model = await Model.findOne({ id });
     const table = Table.findOne({ id: model.table_id });
     const form = model_train_form(model, table, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(req.__(`Train model`), renderForm(form, req.csrfToken()));
     } else {
@@ -435,7 +437,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const model_instance = await ModelInstance.findOne({ id });
-    await model_instance.make_default(!req.body.enabled);
+    await model_instance.make_default(!(req.body || {}).enabled);
     res.redirect(`/models/show/${model_instance.model_id}`);
   })
 );
@@ -451,7 +453,7 @@ const encode = (s) =>
         ">": "&gt;",
         "'": "&#39;",
         '"': "&quot;",
-      }[tag])
+      })[tag]
   );
 
 router.get(

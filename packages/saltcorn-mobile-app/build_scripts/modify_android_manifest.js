@@ -2,8 +2,19 @@ const { parseStringPromise, Builder } = require("xml2js");
 const { join } = require("path");
 const { readFileSync, writeFileSync } = require("fs");
 
+const readMobileConfig = () => {
+  console.log("Reading mobile config");
+  const content = readFileSync(
+    "/saltcorn-mobile-app/saltcorn-mobile-cfg.json",
+    "utf8"
+  );
+  console.log(content);
+  return JSON.parse(content);
+};
+
 (async () => {
   try {
+    const { permissions, features } = readMobileConfig();
     const androidManifest = join(
       "android",
       "app",
@@ -14,17 +25,12 @@ const { readFileSync, writeFileSync } = require("fs");
     const content = readFileSync(androidManifest);
     const parsed = await parseStringPromise(content);
 
-    parsed.manifest["uses-permission"] = [
-      { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
-      { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
-      { $: { "android:name": "android.permission.INTERNET" } },
-      { $: { "android:name": "android.permission.CAMERA" } },
-      { $: { "android:name": "android.permission.ACCESS_COARSE_LOCATION" } },
-      { $: { "android:name": "android.permission.ACCESS_FINE_LOCATION" } },
-    ];
-    parsed.manifest["uses-feature"] = [
-      { $: { "android:name": "android.hardware.location.gps" } },
-    ];
+    parsed.manifest["uses-permission"] = permissions.map((p) => ({
+      $: { "android:name": p },
+    }));
+    parsed.manifest["uses-feature"] = features.map((f) => ({
+      $: { "android:name": f },
+    }));
 
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,

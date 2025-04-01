@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/filemanager",
-  "version": "1.1.1-rc.4",
+  "version": "1.1.4-beta.1",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -17,7 +17,7 @@
     "rollup-plugin-livereload": "^2.0.0",
     "rollup-plugin-svelte": "^7.0.0",
     "@rollup/plugin-terser": "0.4.4",
-    "svelte": "^3.0.0",
+    "svelte": "^4.2.19",
     "svelte-fa": "^3.0.3"
   },
   "dependencies": {

@@ -117,8 +117,8 @@ class Page implements AbstractPage {
       where.id
         ? (v: Page) => v.id === +where.id
         : where.name
-        ? (v: Page) => v.name === where.name
-        : satisfies(where)
+          ? (v: Page) => v.name === where.name
+          : satisfies(where)
     );
     return p
       ? new Page({
@@ -137,8 +137,14 @@ class Page implements AbstractPage {
    */
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_pages", row, id);
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_pages(true);
+  }
+
+  static async state_refresh() {
     await require("../db/state").getState().refresh_pages();
   }
+
   getStringsForI18n() {
     return getStringsForI18n(this.layout);
   }
@@ -152,8 +158,8 @@ class Page implements AbstractPage {
     const { id, ...rest } = page;
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
-    await require("../db/state").getState().refresh_pages();
-
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_pages(true);
     return page;
   }
 
@@ -172,7 +178,8 @@ class Page implements AbstractPage {
       await getState().setConfig(role + "_home", "");
     }
     await remove_from_menu({ name: this.name, type: "Page" });
-    await require("../db/state").getState().refresh_pages();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_pages(true);
   }
 
   /**

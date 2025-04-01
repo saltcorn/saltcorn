@@ -156,7 +156,7 @@ const configuration_workflow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(
                 action,
                 table,
-                { mode: "show" }
+                { mode: "show", req }
               );
             }
           }
@@ -172,9 +172,15 @@ const configuration_workflow = (req) =>
                 name: "verification_url",
                 label: "Verification URL",
                 type: "String",
+              }),
+              new Field({
+                name: "reset_password_url",
+                label: "Reset Password URL",
+                type: "String",
               })
             );
             field_view_options.verification_url = ["as_text", "as_link"];
+            field_view_options.reset_password_url = ["as_text", "as_link"];
           }
           const rel_field_view_options = await calcrelViewOptions(
             table,
@@ -300,6 +306,11 @@ const run = async (
         name: "verification_token",
         label: "Verification Token",
         type: "String",
+      }),
+      new Field({
+        name: "reset_password_token",
+        label: "Reset Password Token",
+        type: "String",
       })
     );
   }
@@ -326,11 +337,19 @@ const run = async (
         name: "verification_url",
         label: "Verification URL",
         type: "String",
+      }),
+      new Field({
+        name: "reset_password_url",
+        label: "Reset Password URL",
+        type: "String",
       })
     );
     for (const row of rows) {
       row.verification_url = `${base}auth/verify?token=${
         row.verification_token
+      }&email=${encodeURIComponent(row.email)}`;
+      row.reset_password_url = `${base}auth/reset?token=${
+        row.reset_password_token
       }&email=${encodeURIComponent(row.email)}`;
     }
   }
@@ -700,6 +719,17 @@ const render = (
     link(segment) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "text");
+      if (
+        req?.generate_email &&
+        req.get_base_url &&
+        segment.url.startsWith("/")
+      ) {
+        const targetPrefix = req.get_base_url();
+        const safePrefix = (targetPrefix || "").endsWith("/")
+          ? targetPrefix.substring(0, targetPrefix.length - 1)
+          : targetPrefix || "";
+        segment.url = safePrefix + segment.url;
+      }
     },
     view_link(segment) {
       evalMaybeExpr(segment, "view_label", "label");
@@ -728,7 +758,7 @@ const render = (
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
-          segment.titles[ix] = interpolate(t, row, req.user);
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
       });
     },
@@ -758,6 +788,10 @@ const render = (
       evalMaybeExpr(segment, "customClass");
       evalMaybeExpr(segment, "customId");
       evalMaybeExpr(segment, "url");
+      if (segment.bgType === "Image Field") {
+        segment.bgType = "Image";
+        segment.bgFileId = row[segment.bgField];
+      }
 
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
@@ -939,8 +973,8 @@ const render = (
           stat === "Percent true" || stat === "Percent false"
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
-            ? "Integer"
-            : aggField.type?.name;
+              ? "Integer"
+              : aggField.type?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[column.agg_fieldview]) {
           const readval = type.read(val);
@@ -989,7 +1023,8 @@ const render = (
           interpolate(
             segment.configuration?.after_delete_url || "/",
             row,
-            req?.user
+            req?.user,
+            "delete action: after delete URL"
           )
         )}`;
       return action_link(url, req, segment);
@@ -1024,7 +1059,12 @@ const render = (
     },
     blank(segment) {
       if (segment.isHTML) {
-        return interpolate(segment.contents, { locale, ...row }, req?.user);
+        return interpolate(
+          segment.contents,
+          { locale, ...row },
+          req?.user,
+          "HTML element"
+        );
       } else return segment.contents;
     },
   };
@@ -1076,8 +1116,6 @@ module.exports = {
   runMany,
   renderRows,
   initial_config,
-  /** @type {boolean} */
-  display_state_form: false,
   routes: { run_action },
   /**
    * @param {object} opts
@@ -1097,7 +1135,7 @@ module.exports = {
         where: { [tbl.pk_name]: state[tbl.pk_name] },
         joinFields,
       });
-      return interpolate(title, row);
+      return interpolate(title, row, null, "Show view title string");
     } else return title;
   },
   /*authorise_get: async ({ query, table_id }, { authorizeGetQuery }) => {
@@ -1120,7 +1158,12 @@ module.exports = {
             name: "verification_token",
             label: "Verification Token",
             type: "String",
-          })
+          }),
+          {
+            name: "reset_password_token",
+            label: "Reset Password Token",
+            type: "String",
+          }
         );
       }
       const { joinFields, aggregations } = picked_fields_to_query(
@@ -1130,6 +1173,8 @@ module.exports = {
         req,
         tbl
       );
+      const unhashed_reset_password_token =
+        state._unhashed_reset_password_token;
       readState(state, fields);
       const qstate = stateFieldsToWhere({
         fields,
@@ -1156,6 +1201,11 @@ module.exports = {
         forPublic: !req.user,
         forUser: req.user,
       });
+      if (unhashed_reset_password_token && tbl.name === "users")
+        rows.forEach((r) => {
+          r.reset_password_token = unhashed_reset_password_token;
+        });
+
       return {
         rows,
         message: null,
@@ -1217,53 +1267,73 @@ module.exports = {
       return rows;
     },
     async actionQuery() {
-      const body = req.body;
+      return await db.withTransaction(
+        async () => {
+          const body = req.body || {};
 
-      const col = columns.find(
-        (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
-      );
-      const table = Table.findOne({ id: table_id });
-      const row = await table.getRow(
-        { [table.pk_name]: body[table.pk_name] },
-        { forUser: req.user, forPublic: !req.user }
-      );
-      try {
-        if (body.click_action) {
-          let container;
-          traverseSync(layout, {
-            container(segment) {
-              if (segment.click_action === body.click_action)
-                container = segment;
-            },
-          });
-          if (!container) return { json: { error: "Action not found" } };
-          const trigger = Trigger.findOne({ name: body.click_action });
-          if (!trigger)
-            throw new Error(
-              `View ${name}: Container click action ${body.click_action} not found`
+          const col = columns.find(
+            (c) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+          );
+          const table = Table.findOne({ id: table_id });
+          let row;
+          if (table.ownership_formula) {
+            const freeVars = freeVariables(table.ownership_formula);
+            const joinFields = {};
+            add_free_variables_to_joinfields(
+              freeVars,
+              joinFields,
+              table.fields
             );
-          const result = await trigger.runWithoutRow({
-            table,
-            Table,
+            row = await table.getJoinedRow({
+              where: { [table.pk_name]: body[table.pk_name] },
+              joinFields,
+              forUser: req.user || { role_id: 100 },
+              forPublic: !req.user,
+            });
+          } else
+            row = await table.getRow(
+              { [table.pk_name]: body[table.pk_name] },
+              { forUser: req.user, forPublic: !req.user }
+            );
+
+          if (body.click_action) {
+            let container;
+            traverseSync(layout, {
+              container(segment) {
+                if (segment.click_action === body.click_action)
+                  container = segment;
+              },
+            });
+            if (!container) return { json: { error: "Action not found" } };
+            const trigger = Trigger.findOne({ name: body.click_action });
+            if (!trigger)
+              throw new Error(
+                `View ${name}: Container click action ${body.click_action} not found`
+              );
+            const result = await trigger.runWithoutRow({
+              table,
+              Table,
+              req,
+              row,
+              user: req.user,
+              referrer: req?.get?.("Referrer"),
+            });
+            return { json: { success: "ok", ...(result || {}) } };
+          }
+          const result = await run_action_column({
+            col,
             req,
+            table,
             row,
-            user: req.user,
+            res,
             referrer: req?.get?.("Referrer"),
           });
           return { json: { success: "ok", ...(result || {}) } };
+        },
+        (e) => {
+          return { json: { error: e.message || e } };
         }
-        const result = await run_action_column({
-          col,
-          req,
-          table,
-          row,
-          res,
-          referrer: req?.get?.("Referrer"),
-        });
-        return { json: { success: "ok", ...(result || {}) } };
-      } catch (e) {
-        return { json: { error: e.message || e } };
-      }
+      );
     },
     /*async authorizeGetQuery(query, table_id) {
       let body = query || {};

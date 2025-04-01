@@ -3,7 +3,7 @@
  * @module commands/install-pack
  */
 const { Command, Flags } = require("@oclif/core");
-const { maybe_as_tenant } = require("../common");
+const { maybe_as_tenant_in_transaction } = require("../common");
 const fs = require("fs");
 
 /**
@@ -36,7 +36,7 @@ class InstallPackCommand extends Command {
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, undefined, tenants);
 
-    await maybe_as_tenant(flags.tenant, async () => {
+    await maybe_as_tenant_in_transaction(flags.tenant, async () => {
       if (flags.name) {
         const pack = await fetch_pack_by_name(flags.name);
         if (!pack) {

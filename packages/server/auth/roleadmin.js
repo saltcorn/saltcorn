@@ -15,6 +15,7 @@ const {
   link,
   post_delete_btn,
 } = require("@saltcorn/markup");
+const { dropdown_checkboxes } = require("@saltcorn/markup/helpers");
 const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const { text, form, option, select, a, i } = require("@saltcorn/markup/tags");
@@ -147,6 +148,17 @@ router.get(
     );
     const layout_by_role = getState().getConfig("layout_by_role");
     const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
+    const auth_methods = Object.keys(getState().auth_methods);
+
+    auth_methods.unshift("Password");
+    const auth_enabled_by_role = {};
+    for (const role of roles) {
+      if (role.id === 100) continue;
+      auth_enabled_by_role[role.id] = getState().get_auth_enabled_by_role(
+        role.id
+      );
+    }
+
     send_users_page({
       res,
       req,
@@ -173,6 +185,28 @@ router.get(
                     ? ""
                     : editRole2FAPolicyForm(role, twofa_policy_by_role, req),
               },
+              ...(auth_methods.length > 1
+                ? [
+                    {
+                      label: req.__("Allow login methods"),
+                      key: (role) =>
+                        role.id === 100
+                          ? ""
+                          : dropdown_checkboxes({
+                              btnClass: "btn-outline-secondary btn-sm",
+                              btnLabel: Object.entries(
+                                auth_enabled_by_role[role.id]
+                              )
+                                .filter(([method, enabled]) => enabled)
+                                .map(([method, enabled]) => method)
+                                .join(", "),
+                              items: auth_methods,
+                              checked: auth_enabled_by_role[role.id],
+                              onChange: `editAllowedAuthByRole(${role.id}, event)`,
+                            }),
+                    },
+                  ]
+                : []),
               {
                 label: req.__("Delete"),
                 key: (r) =>
@@ -227,7 +261,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await roleForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_users_page({
         res,
@@ -265,7 +299,7 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const layout_by_role = getState().getConfigCopy("layout_by_role");
-    layout_by_role[+id] = req.body.layout;
+    layout_by_role[+id] = (req.body || {}).layout;
     await getState().setConfig("layout_by_role", layout_by_role);
     req.flash("success", req.__(`Saved layout for role`));
 
@@ -286,13 +320,30 @@ router.post(
     const twofa_policy_by_role = getState().getConfigCopy(
       "twofa_policy_by_role"
     );
-    twofa_policy_by_role[+id] = req.body.policy;
+    twofa_policy_by_role[+id] = (req.body || {}).policy;
     await getState().setConfig("twofa_policy_by_role", twofa_policy_by_role);
     req.flash("success", req.__(`Saved 2FA policy for role`));
 
     res.redirect(`/roleadmin`);
   })
 );
+
+router.post(
+  "/setrole_allowed_auth_methods/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const enabled = (req.body || {}).enabled;
+    const method = (req.body || {}).method;
+
+    const auth_method_by_role = getState().getConfigCopy("auth_method_by_role");
+    if (!auth_method_by_role[+id]) auth_method_by_role[+id] = {};
+    auth_method_by_role[+id][method] = enabled;
+    await getState().setConfig("auth_method_by_role", auth_method_by_role);
+    res.json({ success: true });
+  })
+);
+
 const unDeletableRoles = [1, 80, 100];
 /**
  * @name post/delete/:id
@@ -315,6 +366,7 @@ router.post(
         await u.delete();
         req.flash("success", req.__(`Role %s deleted`, u.role));
       } catch (e) {
+        console.error(e);
         req.flash("error", e.message);
       }
     }

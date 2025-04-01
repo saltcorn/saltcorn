@@ -68,20 +68,26 @@ const runPage = async (page, req, res, tic) => {
           no_menu: page.attributes?.no_menu,
           requestFluidLayout: page.attributes?.request_fluid_layout,
         } || `${page.name} page`,
-        req.smr ? contents : add_edit_bar({
-          role,
-          title: page.name,
-          what: req.__("Page"),
-          url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
-          contents,
-        }),
+        req.smr
+          ? contents
+          : add_edit_bar({
+              role,
+              title: page.name,
+              what: req.__("Page"),
+              url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+              contents,
+            })
       );
   } else {
     getState().log(2, `Page ${page.name} not authorized`);
+    if (!req.user) {
+      res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
+      return;
+    }
     res
       .status(404)
       .sendWrap(
-        req.__("Internal Error"),
+        req.__("Page not found"),
         req.__("Page %s not found", page.name)
       );
   }
@@ -123,6 +129,10 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
     }
   } else {
     getState().log(2, `Pagegroup ${pageGroup.name} not authorized`);
+    if (!req.user) {
+      res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
+      return;
+    }
     res
       .status(404)
       .sendWrap(
@@ -193,15 +203,17 @@ router.post(
       });
       if (col) {
         try {
-          const result = await run_action_column({
-            col,
-            referrer: req.get("Referrer"),
-            req,
-            res,
+          const result = await db.withTransaction(async () => {
+            return await run_action_column({
+              col,
+              referrer: req.get("Referrer"),
+              req,
+              res,
+            });
           });
           res.json({ success: "ok", ...(result || {}) });
         } catch (e) {
-          getState().log(2, e?.stack)
+          getState().log(2, e?.stack);
           res.status(400).json({ error: e.message || e });
         }
       } else res.status(404).json({ error: "Action not found" });

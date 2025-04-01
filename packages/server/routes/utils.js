@@ -89,8 +89,8 @@ function isAdmin(req, res, next) {
       req.user && req.user.pending_user
         ? "/auth/twofa/login/totp"
         : req.user
-        ? "/"
-        : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
+          ? "/"
+          : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
     );
   }
 }
@@ -115,8 +115,8 @@ const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
       req.user && req.user.pending_user
         ? "/auth/twofa/login/totp"
         : req.user
-        ? "/"
-        : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
+          ? "/"
+          : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
     );
   }
 };
@@ -200,83 +200,64 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  * @param {function} next
  */
 const setTenant = (req, res, next) => {
-  if (db.is_it_multi_tenant()) {
-    // for a saltcorn mobile request use 'req.user.tenant'
-    if (req.smr) {
-      if (
-        req.user?.tenant &&
-        req.user.tenant !== db.connectObj.default_schema
-      ) {
-        const state = getTenant(req.user.tenant);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant(req.user.tenant, () => {
-            setLanguage(req, res, state);
-            state.log(5, `${req.method} ${req.originalUrl}`);
-            next();
-          });
-        }
-      } else {
+  // for a saltcorn mobile request use 'req.user.tenant'
+  if (req.smr) {
+    if (req.user?.tenant && req.user.tenant !== db.connectObj.default_schema) {
+      const state = getTenant(req.user.tenant);
+      if (!state) {
         setLanguage(req, res);
         next();
+      } else {
+        db.runWithTenant({ tenant: req.user.tenant, req }, () => {
+          setLanguage(req, res, state);
+          state.log(5, `${req.method} ${req.originalUrl}`);
+          next();
+        });
       }
     } else {
-      const other_domain = get_other_domain_tenant(req.hostname);
-      if (other_domain) {
-        const state = getTenant(other_domain);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant(other_domain, () => {
-            setLanguage(req, res, state);
-            if (state.logLevel >= 5)
-              state.log(
-                5,
-                `${req.method} ${req.originalUrl}${
-                  state.getConfig("log_ip_address", false)
-                    ? ` IP=${req.ip}`
-                    : ""
-                }`
-              );
-            next();
-          });
-        }
-      } else {
-        const ten = get_tenant_from_req(req);
-        const state = getTenant(ten);
-        if (!state) {
-          setLanguage(req, res);
-          next();
-        } else {
-          db.runWithTenant(ten, () => {
-            setLanguage(req, res, state);
-            if (state.logLevel >= 5)
-              state.log(
-                5,
-                `${req.method} ${req.originalUrl}${
-                  state.getConfig("log_ip_address", false)
-                    ? ` IP=${req.ip}`
-                    : ""
-                }`
-              );
-            next();
-          });
-        }
-      }
+      setLanguage(req, res);
+      next();
     }
   } else {
-    const state = getState();
-    setLanguage(req, res, state);
-    state.log(
-      5,
-      `${req.method} ${req.originalUrl}${
-        state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
-      }`
-    );
-    next();
+    const other_domain = get_other_domain_tenant(req.hostname);
+    if (other_domain) {
+      const state = getTenant(other_domain);
+      if (!state) {
+        setLanguage(req, res);
+        next();
+      } else {
+        db.runWithTenant({ tenant: other_domain, req }, () => {
+          setLanguage(req, res, state);
+          if (state.logLevel >= 5)
+            state.log(
+              5,
+              `${req.method} ${req.originalUrl}${
+                state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+              }`
+            );
+          next();
+        });
+      }
+    } else {
+      const ten = get_tenant_from_req(req);
+      const state = getTenant(ten);
+      if (!state) {
+        setLanguage(req, res);
+        next();
+      } else {
+        db.runWithTenant({ tenant: ten, req }, () => {
+          setLanguage(req, res, state);
+          if (state.logLevel >= 5)
+            state.log(
+              5,
+              `${req.method} ${req.originalUrl}${
+                state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+              }`
+            );
+          next();
+        });
+      }
+    }
   }
 };
 
@@ -342,6 +323,10 @@ const getSessionStore = (pruneInterval) => {
       sameSite: "strict",
     });
   } else*/
+  if (!db.connectObj.session_secret)
+    console.warn(
+      "WARNING: Session secret not set, degrading functionality. Set session_secret in the config file"
+    );
   let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
   if (sameSite === "unset") sameSite = undefined;
   if (db.isSQLite) {
@@ -431,8 +416,8 @@ const admin_config_route = ({
           action: super_path + path,
         })
       : typeof get_form === "function"
-      ? await get_form(req)
-      : get_form;
+        ? await get_form(req)
+        : get_form;
 
   router.get(
     path,
@@ -446,7 +431,7 @@ const admin_config_route = ({
     isAdmin,
     error_catcher(async (req, res) => {
       const form = await getTheForm(req);
-      form.validate(req.body);
+      form.validate(req.body || {});
       if (form.hasErrors) {
         response(form, req, res);
       } else {
@@ -493,13 +478,14 @@ const sendHtmlFile = async (req, res, file) => {
       path.dirname(fullPath)
     );
     if (scFile && role <= scFile.min_role_read) {
-      res.sendFile(fullPath);
+      res.sendFile(fullPath, { dotfiles: "allow" });
     } else {
       return res
         .status(404)
         .sendWrap(req.__("An error occurred"), req.__("File not found"));
     }
   } catch (e) {
+    console.error(e);
     return res
       .status(404)
       .sendWrap(
@@ -517,7 +503,7 @@ const sendHtmlFile = async (req, res, file) => {
  */
 const setRole = async (req, res, model) => {
   const { id } = req.params;
-  const role = req.body.role;
+  const role = (req.body || {}).role;
   await model.update(+id, { min_role: role });
   const page = model.findOne({ id });
   const roles = await User.get_roles();
@@ -526,6 +512,7 @@ const setRole = async (req, res, model) => {
     roleRow && page
       ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
       : req.__(`Minimum role updated`);
+  if (model.state_refresh) await model.state_refresh();
   if (!req.xhr) {
     req.flash("success", message);
     res.redirect("/pageedit");

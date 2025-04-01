@@ -83,10 +83,10 @@ const AggregationSettings = () => {
     stat === "Percent true" || stat === "Percent false"
       ? "Float"
       : stat === "Count" || stat === "CountUnique"
-      ? "Integer"
-      : stat === "Array_Agg"
-      ? "Array"
-      : targetFieldType;
+        ? "Integer"
+        : stat === "Array_Agg"
+          ? "Array"
+          : targetFieldType;
   const fvs = options.agg_fieldview_options[outcomeType];
 
   const [fetchedCfgFields, setFetchedCfgFields] = useState([]);
@@ -107,7 +107,7 @@ const AggregationSettings = () => {
           agg_outcome_type: outcomeType,
           agg_fieldview,
           agg_field: targetField?.name,
-          mode: options?.mode
+          mode: options?.mode,
         }),
       }
     )
@@ -233,7 +233,9 @@ const AggregationSettings = () => {
                 type="text"
                 className="form-control"
                 value={aggwhere}
+                spellCheck={false}
                 onChange={setAProp("aggwhere")}
+                onInput={(e) => validate_expression_elem($(e.target))}
               />
             </td>
           </tr>

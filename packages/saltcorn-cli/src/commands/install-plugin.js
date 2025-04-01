@@ -3,7 +3,7 @@
  * @module commands/install-plugin
  */
 const { Command, Flags } = require("@oclif/core");
-const { maybe_as_tenant, init_some_tenants } = require("../common");
+const { maybe_as_tenant_in_transaction, init_some_tenants } = require("../common");
 const fs = require("fs");
 const path = require("path");
 
@@ -35,7 +35,7 @@ class InstallPluginCommand extends Command {
 
     const Plugin = require("@saltcorn/data/models/plugin");
 
-    await maybe_as_tenant(flags.tenant, async () => {
+    await maybe_as_tenant_in_transaction(flags.tenant, async () => {
       if (flags.name) {
         const plugin = await Plugin.store_by_name(flags.name);
         if (!plugin) {

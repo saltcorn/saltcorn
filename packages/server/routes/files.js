@@ -19,6 +19,7 @@ const {
   error_catcher,
   setTenant,
   is_relative_url,
+  isAdminOrHasConfigMinRole,
 } = require("./utils.js");
 const {
   h1,
@@ -156,7 +157,7 @@ router.get(
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     // todo limit select from file by 10 or 20
     const { dir, search } = req.query;
@@ -221,11 +222,11 @@ router.get(
  * @function
  */
 router.get(
-  "/download/*",
+  "/download/*serve_path",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
-    const serve_path = req.params[0];
+    const serve_path = path.join(...req.params.serve_path);
     const file = await File.findOne(serve_path);
 
     if (
@@ -234,7 +235,7 @@ router.get(
     ) {
       res.type(file.mimetype);
       if (file.s3_store) s3storage.serveObject(file, res, true);
-      else res.download(file.location, file.filename);
+      else res.download(file.location, file.filename, { dotfiles: "allow" });
     } else {
       res
         .status(404)
@@ -245,13 +246,12 @@ router.get(
 
 router.post(
   "/download-zip",
-  isAdmin,
-
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
-    const files = req.body.files;
-    const location = req.body.location;
+    const files = (req.body || {}).files;
+    const location = (req.body || {}).location;
     const zip = new Zip();
 
     for (const fileNm of files) {
@@ -280,11 +280,11 @@ router.post(
  * @function
  */
 router.get(
-  "/serve/*",
+  "/serve/*serve_path",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
-    const serve_path = req.params[0];
+    const serve_path = path.join(...req.params.serve_path);
     //let file;
     //if (typeof strictParseInt(id) !== "undefined")
     const file = await File.findOne(serve_path);
@@ -298,7 +298,7 @@ router.get(
       const maxAge = getState().getConfig("files_cache_maxage", 86400);
       res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
       if (file.s3_store) s3storage.serveObject(file, res, false);
-      else res.sendFile(file.location);
+      else res.sendFile(file.location, { dotfiles: "allow" });
     } else {
       getState().log(
         5,
@@ -320,12 +320,12 @@ router.get(
  * @function
  */
 router.get(
-  "/resize/:width_str/:height_str/*",
+  "/resize/:width_str/:height_str/*serve_path",
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const { width_str, height_str } = req.params;
-    const serve_path = req.params[0];
+    const serve_path = path.join(...req.params.serve_path);
 
     const file = await File.findOne(serve_path);
 
@@ -343,7 +343,7 @@ router.get(
         const height =
           height_str && height_str !== "0" ? strictParseInt(height_str) : null;
         if (!width) {
-          res.sendFile(file.location);
+          res.sendFile(file.location, { dotfiles: "allow" });
           return;
         }
         const basenm = path.join(
@@ -359,7 +359,7 @@ router.get(
             toFileName: fnm,
           });
         }
-        res.sendFile(fnm);
+        res.sendFile(fnm, { dotfiles: "allow" });
       }
     } else {
       res
@@ -376,12 +376,12 @@ router.get(
  * @function
  */
 router.post(
-  "/setrole/*",
-  isAdmin,
+  "/setrole/*serve_path",
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
-    const serve_path = req.params[0];
+    const serve_path = path.join(...req.params.serve_path);
     const file = await File.findOne(serve_path);
-    const role = req.body.role;
+    const role = (req.body || {}).role;
     const roles = await User.get_roles();
     const roleRow = roles.find((r) => r.id === +role);
 
@@ -396,12 +396,12 @@ router.post(
 );
 
 router.post(
-  "/move/*",
-  isAdmin,
+  "/move/*serve_path",
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
-    const serve_path = req.params[0];
+    const serve_path = path.join(...req.params.serve_path);
     const file = await File.findOne(serve_path);
-    const new_path = req.body.new_path;
+    const new_path = (req.body || {}).new_path;
 
     if (file) {
       await file.move_to_dir(new_path);
@@ -423,11 +423,11 @@ router.post(
  * @function
  */
 router.post(
-  "/setname/*",
-  isAdmin,
+  "/setname/*serve_path",
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
-    const serve_path = req.params[0];
-    const filename = req.body.value;
+    const serve_path = path.join(...req.params.serve_path);
+    const filename = (req.body || {}).value;
 
     const file = await File.findOne(serve_path);
     await file.rename(filename);
@@ -443,11 +443,11 @@ router.post(
  * @function
  */
 router.post(
-  "/unzip/*",
-  isAdmin,
+  "/unzip/*serve_path",
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
-    const serve_path = req.params[0];
-    const filename = req.body.value;
+    const serve_path = path.join(...req.params.serve_path);
+    const filename = (req.body || {}).value;
 
     const file = await File.findOne(serve_path);
     const dir = path.dirname(file.location);
@@ -458,9 +458,9 @@ router.post(
 
 router.post(
   "/new-folder",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
-    const { name, folder } = req.body;
+    const { name, folder } = req.body || {};
     await File.new_folder(name, folder);
 
     res.json({ success: "ok" });
@@ -477,7 +477,7 @@ router.post(
   "/upload",
   setTenant,
   error_catcher(async (req, res) => {
-    let { folder, sortBy, sortDesc } = req.body;
+    let { folder, sortBy, sortDesc } = req.body || {};
     let jsonResp = {};
     const min_role_upload = getState().getConfig("min_role_upload", 1);
     const role = req.user && req.user.id ? req.user.role_id : 100;
@@ -489,7 +489,8 @@ router.post(
       if (!req.xhr) req.flash("warning", req.__("No file found"));
       else jsonResp = { error: "No file found" };
     } else {
-      const min_role_read = req.body ? req.body.min_role_read || 1 : 1;
+      const min_role_read =
+        req.body || {} ? (req.body || {}).min_role_read || 1 : 1;
       const f = await File.from_req_files(
         req.files.file,
         req.user.id,
@@ -533,10 +534,10 @@ router.post(
  * @function
  */
 router.post(
-  "/delete/*",
-  isAdmin,
+  "/delete/*serve_path",
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
-    const serve_path = req.params[0];
+    const serve_path = path.join(...req.params.serve_path);
     const { redirect } = req.query;
     const f = await File.findOne(serve_path);
     if (!f) {
@@ -625,7 +626,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await storage_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_files_page({
         res,
@@ -702,7 +703,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await files_settings_form(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_files_page({
         res,

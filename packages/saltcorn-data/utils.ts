@@ -11,7 +11,7 @@ import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
-const _ = require("underscore");
+import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 
@@ -34,6 +34,13 @@ const removeEmptyStrings = (obj: GenObj) => {
   var o: GenObj = {};
   Object.entries(obj).forEach(([k, v]) => {
     if (v !== "" && v !== null) o[k] = v;
+  });
+  return o;
+};
+const removeEmptyStringsKeepNull = (obj: GenObj) => {
+  var o: GenObj = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v !== "") o[k] = v;
   });
   return o;
 };
@@ -119,12 +126,15 @@ const sat1 = (obj: any, [k, v]: [k: string, v: any]): boolean =>
   v && v.or
     ? v.or.some((v1: any) => sat1(obj, [k, v1]))
     : v && v.in
-    ? v.in.includes(obj[k])
-    : v && v.json
-    ? Object.entries(v.json).every((kv: [k: string, v: any]) =>
-        sat1(obj[k], kv)
-      )
-    : obj[k] === v;
+      ? v.in.includes(obj[k])
+      : v && v.ilike
+        ? typeof obj[k] === "string" &&
+          obj[k].toLowerCase().includes(v.ilike.toLowerCase())
+        : v && v.json
+          ? Object.entries(v.json).every((kv: [k: string, v: any]) =>
+              sat1(obj[k], kv)
+            )
+          : obj[k] === v;
 
 const satisfies = (where: Where) => (obj: any) =>
   Object.entries(where || {}).every((kv) => sat1(obj, kv));
@@ -346,15 +356,15 @@ const getSafeSaltcornCmd = () => {
   return process.env.PATH!.indexOf("saltcorn-cli/bin") > 0
     ? "saltcorn"
     : process.env.JEST_WORKER_ID === undefined
-    ? join(dirname(require!.main!.filename), "saltcorn")
-    : join(
-        dirname(require!.main!.filename),
-        "..",
-        "..",
-        "saltcorn-cli",
-        "bin",
-        "saltcorn"
-      );
+      ? join(dirname(require!.main!.filename), "saltcorn")
+      : join(
+          dirname(require!.main!.filename),
+          "..",
+          "..",
+          "saltcorn-cli",
+          "bin",
+          "saltcorn"
+        );
 };
 
 /**
@@ -366,8 +376,8 @@ const getSafeBaseUrl = () => {
   return !path
     ? ""
     : path.endsWith("/")
-    ? path.substring(0, path.length - 1)
-    : path;
+      ? path.substring(0, path.length - 1)
+      : path;
 };
 
 /**
@@ -392,7 +402,8 @@ const dollarizeObject = (state: object) =>
 /**
  * @returns true if the NODE_ENV is 'test'
  */
-const isTest = () => process.env.NODE_ENV === "test";
+const isTest = () =>
+  process.env.NODE_ENV === "test" || process.env.REMOTE_QUERIES === "true";
 
 /**
  * Compare objects (for Array.sort) by property name or function
@@ -419,17 +430,29 @@ const ppVal = (x: any) =>
   typeof x === "string"
     ? x
     : typeof x === "function"
-    ? x.toString()
-    : JSON.stringify(x, null, 2);
+      ? x.toString()
+      : JSON.stringify(x, null, 2);
 
-const interpolate = (s: string, row: any, user?: any) => {
-  if (s && typeof s === "string") {
-    const template = _.template(s, {
-      interpolate: /\{\{!(.+?)\}\}/g,
-      escape: /\{\{([^!].+?)\}\}/g,
-    });
-    return template({ row, user, ...(row || {}) });
-  } else return s;
+const interpolate = (
+  s: string,
+  row: any,
+  user?: any,
+  errorLocation?: string
+) => {
+  try {
+    if (s && typeof s === "string") {
+      const template = _.template(s, {
+        interpolate: /\{\{!(.+?)\}\}/g,
+        escape: /\{\{([^!].+?)\}\}/g,
+      });
+      return template({ row, user, ...(row || {}) });
+    } else return s;
+  } catch (e: any) {
+    e.message = `In evaluating the interpolation ${s}${
+      errorLocation ? ` in ${errorLocation}` : ""
+    }:\n\n${e.message}`;
+    throw e;
+  }
 };
 
 const prepMobileRows = (rows: Row[], fields: Field[]) => {
@@ -527,6 +550,7 @@ export = {
   dollarizeObject,
   objectToQueryString,
   removeEmptyStrings,
+  removeEmptyStringsKeepNull,
   removeDefaultColor,
   prefixFieldsInWhere,
   isEmpty,

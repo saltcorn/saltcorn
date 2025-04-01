@@ -1,4 +1,4 @@
-import { AbstractTable } from "./abstract_table";
+import type { AbstractTable } from "./abstract_table";
 import type { ConnectedObjects } from "../base_types";
 import type { AbstractTag } from "./abstract_tag";
 

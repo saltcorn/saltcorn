@@ -17,10 +17,12 @@ import Page from "@saltcorn/data/models/page";
 import File from "@saltcorn/data/models/file";
 import type User from "@saltcorn/data/models/user";
 import { getState } from "@saltcorn/data/db/state";
-import type { PluginLayout } from "@saltcorn/types/base_types";
+import type { PluginLayout, RunExtra } from "@saltcorn/types/base_types";
 import { parseStringPromise, Builder } from "xml2js";
 import { available_languages } from "@saltcorn/data/models/config";
 import type { IosCfg } from "../mobile-builder";
+import { ReqRes } from "@saltcorn/types/common_types";
+import { CapacitorPlugin } from "@saltcorn/types/base_types";
 const resizer = require("resize-with-sharp-or-jimp");
 
 /**
@@ -30,6 +32,9 @@ const resizer = require("resize-with-sharp-or-jimp");
  * @param templateDir directory of the template code that will be copied to 'buildDir'
  */
 export function prepareBuildDir(buildDir: string, templateDir: string) {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+
   if (existsSync(buildDir)) rmSync(buildDir, { force: true, recursive: true });
   copySync(templateDir, buildDir);
   rmSync(`${buildDir}/node_modules`, { recursive: true, force: true });
@@ -38,6 +43,11 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
   });
   console.log(result.output.toString());
 
+  // cap-plugins needed for saltcorn-plugins
+  const additionalPlugins = state.capacitorPlugins.map(
+    (plugin: CapacitorPlugin) => `${plugin.name}@${plugin.version}`
+  );
+
   console.log("installing capacitor deps and plugins");
   const capDepsAndPlugins = [
     "@capacitor/cli@6.1.2",
@@ -45,16 +55,22 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/assets@3.0.5",
     "@capacitor/filesystem@6.0.2",
     "@capacitor/camera@6.1.1",
-    "@capacitor/geolocation@6.0.2",
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
     "@capacitor/screen-orientation@6.0.3",
-    "send-intent",
+    "send-intent@6.0.3",
+    ...additionalPlugins,
   ];
-  result = spawnSync("npm", ["install", ...capDepsAndPlugins], {
-    cwd: buildDir,
-    maxBuffer: 1024 * 1024 * 10,
-  });
+  console.log("capDepsAndPlugins", capDepsAndPlugins);
+
+  result = spawnSync(
+    "npm",
+    ["install", "--legacy-peer-deps", ...capDepsAndPlugins],
+    {
+      cwd: buildDir,
+      maxBuffer: 1024 * 1024 * 10,
+    }
+  );
   console.log(result.output.toString());
 
   console.log("installing cordova plugins");
@@ -62,10 +78,14 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "cordova-plugin-file@8.1.3",
     "cordova-plugin-inappbrowser@6.0.0",
   ];
-  result = spawnSync("npm", ["install", ...cordovaPlugins], {
-    cwd: buildDir,
-    maxBuffer: 1024 * 1024 * 10,
-  });
+  result = spawnSync(
+    "npm",
+    ["install", "--legacy-peer-deps", ...cordovaPlugins],
+    {
+      cwd: buildDir,
+      maxBuffer: 1024 * 1024 * 10,
+    }
+  );
 }
 
 export interface ScCapacitorConfig {
@@ -160,10 +180,38 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
+export function androidPermissions() {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+  const permissions = new Set<String>([
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "android.permission.INTERNET",
+    "android.permission.CAMERA",
+  ]);
+  for (const capPlugin of state.capacitorPlugins) {
+    for (const perm of capPlugin.androidPermissions || []) {
+      permissions.add(perm);
+    }
+  }
+  return Array.from(permissions);
+}
+
+export function androidFeatures() {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+  const features = new Set<String>(["android.hardware.camera"]);
+  for (const capPlugin of state.capacitorPlugins) {
+    for (const feature of capPlugin.androidFeatures || []) {
+      features.add(feature);
+    }
+  }
+  return Array.from(features);
+}
+
 export async function modifyAndroidManifest(
   buildDir: string,
-  allowShareTo: boolean,
-  appId: string
+  allowShareTo: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {
@@ -302,16 +350,20 @@ export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
   }
 }
 
+export function extractDomain(url: string) {
+  let domain = url;
+  if (domain.startsWith("http://")) domain = domain.substring(7);
+  if (domain.startsWith("https://")) domain = domain.substring(8);
+  if (domain.endsWith("/")) domain = domain.substring(0, domain.length - 1);
+  if (domain.includes(":")) domain = domain.substring(0, domain.indexOf(":"));
+  return domain;
+}
+
 export function writeNetworkSecurityConfig(
   buildDir: string,
   serverPath: string
 ) {
   console.log("writeNetworkSecurityConfig");
-  let domain = serverPath;
-  if (domain.startsWith("http://")) domain = domain.substring(7);
-  if (domain.startsWith("https://")) domain = domain.substring(8);
-  if (domain.endsWith("/")) domain = domain.substring(0, domain.length - 1);
-  if (domain.includes(":")) domain = domain.substring(0, domain.indexOf(":"));
   const networkSecurityConfig = join(
     buildDir,
     "android",
@@ -327,7 +379,7 @@ export function writeNetworkSecurityConfig(
     `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">${domain}</domain>
+    <domain includeSubdomains="true">${extractDomain(serverPath)}</domain>
   </domain-config>
 </network-security-config>
   `
@@ -675,8 +727,8 @@ export async function copySiteLogo(buildDir: string) {
         if (file) {
           const base64 = readFileSync(file.location, "base64");
           writeFileSync(
-            join(buildDir, "www", "data", "encoded_site_logo.js"),
-            `var _sc_site_logo = "data:${file.mimetype};base64, ${base64}"`
+            join(buildDir, "www", "data", "encoded_site_logo.txt"),
+            `data:${file.mimetype};base64, ${base64}`
           );
         } else {
           console.log(`The file '${siteLogo}' does not exist`);
@@ -740,6 +792,59 @@ export async function buildTablesFile(
   buildDir: string,
   includedPlugins?: string[]
 ) {
+  const state = getState();
+  if (!state) throw new Error("Unable to get the state object");
+  await state.refresh_config(true);
+
+  // remove cfgs with excludeFromMobile or input_type=password
+  const filterPluginFunc = async (plugin: any) => {
+    let module = state.plugins[plugin.name];
+    if (!module) module = state.plugins[state.plugin_module_names[plugin.name]];
+    if (module?.configuration_workflow) {
+      try {
+        const flow = await module.configuration_workflow();
+        for (const step of flow?.steps || []) {
+          if (step.form) {
+            const form = await step.form({});
+            for (const field of form?.fields || []) {
+              if (
+                field.exclude_from_mobile ||
+                field.input_type === "password"
+              ) {
+                delete plugin.configuration[field.name];
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.log(`Error in configuration_workflow of plugin ${plugin.name}`);
+        console.log(error);
+      }
+    }
+    return plugin;
+  };
+
+  const filterFunc = async (table: string, rows: any) => {
+    switch (table) {
+      case "_sc_plugins":
+        const included = rows.filter((plugin: any) =>
+          includedPlugins ? includedPlugins.includes(plugin.name) : true
+        );
+        return await Promise.all(included.map(filterPluginFunc));
+      case "_sc_config":
+        const allCfgs = state.configs;
+        // remove cfgs with excludeFromMobile or input_type=password
+        return rows.filter((row: any) => {
+          const cfg = allCfgs[row.key];
+          return (
+            cfg && !(cfg.excludeFromMobile || cfg.input_type === "password")
+          );
+        });
+      default:
+        return rows;
+    }
+  };
+
   const wwwDir = join(buildDir, "www", "data");
   const scTables = (await db.listScTables()).filter(
     (table: Row) =>
@@ -749,6 +854,8 @@ export async function buildTablesFile(
         "_sc_session",
         "_sc_event_log",
         "_sc_snapshots",
+        "_sc_workflow_runs",
+        "_sc_workflow_trace",
       ].indexOf(table.name) === -1
   );
   const tablesWithData = await Promise.all(
@@ -756,29 +863,23 @@ export async function buildTablesFile(
       const dbData = await db.select(row.name);
       return {
         table: row.name,
-        rows:
-          row.name !== "_sc_plugins"
-            ? dbData
-            : dbData.filter(
-                (plugin: any) =>
-                  !includedPlugins || includedPlugins.includes(plugin.name)
-              ),
+        rows: await filterFunc(row.name, dbData),
       };
     })
   );
   const createdAt = new Date();
   writeFileSync(
-    join(wwwDir, "tables.js"),
-    `var _sc_tables = ${JSON.stringify({
+    join(wwwDir, "tables.json"),
+    JSON.stringify({
       created_at: createdAt.valueOf(),
       sc_tables: tablesWithData,
-    })}`
+    })
   );
   writeFileSync(
-    join(wwwDir, "tables_created_at.js"),
-    `var _sc_tables_created_at = ${JSON.stringify({
+    join(wwwDir, "tables_created_at.json"),
+    JSON.stringify({
       created_at: createdAt.valueOf(),
-    })}`
+    })
   );
 }
 
@@ -788,19 +889,7 @@ export async function buildTablesFile(
  */
 export function copyTranslationFiles(buildDir: string) {
   const localesDir = join(require.resolve("@saltcorn/server"), "..", "locales");
-  const translations = new Array<string>();
-  for (const key of Object.keys(available_languages)) {
-    const buffer = fs.readFileSync(join(localesDir, `${key}.json`));
-    translations.push(
-      `${key}: { translations: ${JSON.stringify(
-        JSON.parse(buffer.toString())
-      )} }`
-    );
-  }
-  fs.writeFileSync(
-    join(buildDir, "www", "data", "translations.js"),
-    `var _sc_translations = { ${translations.join(",")} }`
-  );
+  copySync(localesDir, join(buildDir, "www", "data", "locales"));
 }
 
 /**
@@ -853,18 +942,16 @@ export async function prepareSplashPage(
     if (!state) throw new Error("Unable to get the state object");
     // @ts-ignore
     global.window = {};
-    const contents = await page.run(
-      {},
-      {
-        req: {
-          user,
-          getLocale: () => {
-            return "en";
-          },
-          isSplashPage: true,
+    const runExtra = {
+      req: {
+        user,
+        getLocale: () => {
+          return "en";
         },
-      }
-    );
+        isSplashPage: true,
+      },
+    };
+    const contents = await page.run({}, runExtra as any);
     const sbadmin2 = state.plugins["sbadmin2"];
     const html = (<PluginLayout>sbadmin2.layout).wrap({
       title: page.title,

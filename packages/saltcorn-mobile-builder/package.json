@@ -3,34 +3,34 @@
   "description": "plugin to to build a mobile app from a tenant application",
   "homepage": "https://saltcorn.com",
   "repository": "github:saltcorn/saltcorn",
-  "version": "1.1.1-rc.4",
+  "version": "1.1.4-beta.1",
   "author": "Christian Hugo",
   "scripts": {
     "test": "jest ./tests/ --runInBand",
     "build": "webpack --mode development"
   },
   "dependencies": {
-    "@saltcorn/markup": "1.1.1-rc.4",
-    "@saltcorn/data": "1.1.1-rc.4",
-    "@saltcorn/db-common": "1.1.1-rc.4",
-    "@saltcorn/server": "1.1.1-rc.4",
-    "@saltcorn/base-plugin": "1.1.1-rc.4",
-    "@saltcorn/sbadmin2": "1.1.1-rc.4",
-    "@saltcorn/mobile-app": "1.1.1-rc.4",
-    "fs-extra": "^10.0.1",
-    "live-plugin-manager": "^0.17.1",
+    "@saltcorn/markup": "1.1.4-beta.1",
+    "@saltcorn/data": "1.1.4-beta.1",
+    "@saltcorn/db-common": "1.1.4-beta.1",
+    "@saltcorn/server": "1.1.4-beta.1",
+    "@saltcorn/base-plugin": "1.1.4-beta.1",
+    "@saltcorn/sbadmin2": "1.1.4-beta.1",
+    "@saltcorn/mobile-app": "1.1.4-beta.1",
+    "fs-extra": "^11.3.0",
+    "live-plugin-manager": "^1.0.0",
     "resize-with-sharp-or-jimp": "0.1.8",
-    "webpack-merge": "^5.8.0",
-    "webpack": "5.68.0",
-    "webpack-cli": "4.9.2",
-    "xml2js": "0.6.0"
+    "webpack-merge": "^6.0.1",
+    "webpack": "5.97.1",
+    "webpack-cli": "6.0.1",
+    "xml2js": "0.6.2"
   },
   "devDependencies": {
-    "@types/node": "^16.11.7",
-    "@types/xml2js": "0.4.11",
+    "@types/node": "^18.11.9",
+    "@types/xml2js": "0.4.14",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "@types/jest": "^29.5.11"
+    "ts-jest": "^29.2.5",
+    "@types/jest": "^29.5.14"
   },
   "jest": {
     "preset": "ts-jest",

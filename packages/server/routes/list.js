@@ -111,7 +111,9 @@ router.post(
   error_catcher(async (req, res) => {
     const { tableName, id, _version } = req.params;
     const table = Table.findOne({ name: tableName });
-    await table.restore_row_version(id, _version);
+    await db.withTransaction(async () => {
+      await table.restore_row_version(id, _version);
+    });
     req.flash("success", req.__("Version %s restored", _version));
     res.redirect(`/list/_versions/${table.name}/${id}`);
   })
@@ -190,7 +192,7 @@ const typeToGridType = (t, field) => {
   if (field.calculated) {
     jsgField.editor = false;
   }
-  if (field.primary_key) {
+  if (field.primary_key && !field?.attributes?.NonSerial) {
     jsgField.editor = false;
   }
   return jsgField;
@@ -221,8 +223,8 @@ jsGrid.fields.versions = VersionsField;
 // end of versionsField
 
 const arrangeIdFirst = (flds) => {
-  const noId = flds.filter((f) => f.name !== "id");
-  const id = flds.find((f) => f.name === "id");
+  const noId = flds.filter((f) => !f.primary_key);
+  const id = flds.find((f) => f.primary_key);
   if (id) return [id, ...noId];
   else return flds;
 };
@@ -282,6 +284,7 @@ router.get(
       cellClick: "__delete_tabulator_row",
     });
     const isDark = getState().getLightDarkMode(req.user) === "dark";
+    const pkNm = table.pk_name;
     res.sendWrap(
       {
         title: req.__(`%s data table`, table.name),
@@ -401,12 +404,13 @@ router.get(
                     col[k] = window[v.substring(2)];
                 })
               })   
+              window.tabulator_table_primary_key = "${table.pk_name}";
               window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${encodeURIComponent(
                     table.name
                   )}?tabulator_pagination_format=true${
-                  table.versioned ? "&versioncount=on" : ""
-                }",                   
+                    table.versioned ? "&versioncount=on" : ""
+                  }",                   
                   layout:"fitColumns", 
                   columns,
                   height:"100%",
@@ -420,15 +424,19 @@ router.get(
                   ajaxContentType:"json",
                   sortMode:"remote",
                   initialSort:[
-                    {column:"id", dir:"asc"},
+                    {column:"${table.pk_name}", dir:"asc"},
                   ],                 
               });
               window.tabulator_table.on("cellEdited", function(cell){
                 const row = cell.getRow().getData()
+                const fieldName = cell.getColumn().getField()
+                let ident = (row.${pkNm}||"");
+                if(fieldName === "${pkNm}")
+                  ident = "";
                 ajax_indicator(true);
                 $.ajax({
                   type: "POST",
-                  url: "/api/${table.name}/" + (row.id||""),
+                  url: "/api/${table.name}/" + ident,
                   data: row,
                   headers: {
                     "CSRF-Token": _sc_globalCsrf,
@@ -438,8 +446,8 @@ router.get(
                   ajax_indicator(false);
                   //if (item._versions) item._versions = +item._versions + 1;
                   //data.resolve(fixKeys(item));
-                  if(resp.success &&(typeof resp.success ==="number" || typeof resp.success ==="string") && !row.id) {
-                    window.tabulator_table.updateRow(cell.getRow(), {id: resp.success});
+                  if(resp.success &&(typeof resp.success ==="number" || typeof resp.success ==="string") && !row.${pkNm}) {
+                    window.tabulator_table.updateRow(cell.getRow(), {${pkNm}: resp.success});
                   }
 
                 }).fail(function (resp) {

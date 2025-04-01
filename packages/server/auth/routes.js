@@ -197,7 +197,7 @@ const resetForm = (body, req) => {
  * @param {boolean} noMethods
  * @returns {object}
  */
-const getAuthLinks = (current, noMethods) => {
+const getAuthLinks = (current, noMethods, req) => {
   const links = { methods: [] };
   const state = getState();
   if (current !== "login") links.login = "/auth/login";
@@ -205,11 +205,14 @@ const getAuthLinks = (current, noMethods) => {
     links.signup = "/auth/signup";
   if (current !== "forgot" && state.getConfig("allow_forgot"))
     links.forgot = "/auth/forgot";
+  const dest = req?.query?.dest
+    ? `?dest=${encodeURIComponent(req.query.dest)}`
+    : "";
   if (!noMethods)
     Object.entries(getState().auth_methods).forEach(([name, auth]) => {
       const url = auth.postUsernamePassword
-        ? `javascript:$('form.login').attr('action','/auth/login-with/${name}').submit();`
-        : `/auth/login-with/${name}`;
+        ? `javascript:$('form.login').attr('action','/auth/login-with/${name}${dest}').submit();`
+        : `/auth/login-with/${name}${dest}`;
       links.methods.push({
         icon: auth.icon,
         label: auth.label,
@@ -303,7 +306,7 @@ router.get(
         res.sendAuthWrap(
           req.__(`Login`),
           loginForm(req),
-          getAuthLinks("login")
+          getAuthLinks("login", false, req)
         );
       else {
         const resp = await login_form.run_possibly_on_page(
@@ -311,13 +314,13 @@ router.get(
           req,
           res,
           false,
-          true
+          { hiddenLoginDest: true }
         );
         if (!resp) {
           res.sendAuthWrap(
             req.__(`Login`),
             loginForm(req),
-            getAuthLinks("login")
+            getAuthLinks("login", false, req)
           );
         } else if (login_form.default_render_page) {
           const page = Page.findOne({ name: login_form.default_render_page });
@@ -328,7 +331,11 @@ router.get(
         } else res.sendAuthWrap(req.__(`Login`), resp, { methods: [] });
       }
     } else
-      res.sendAuthWrap(req.__(`Login`), loginForm(req), getAuthLinks("login"));
+      res.sendAuthWrap(
+        req.__(`Login`),
+        loginForm(req),
+        getAuthLinks("login", false, req)
+      );
   })
 );
 
@@ -432,9 +439,9 @@ router.post(
   "/reset",
   error_catcher(async (req, res) => {
     const result = await User.resetPasswordWithToken({
-      email: req.body.email,
-      reset_password_token: req.body.token,
-      password: req.body.password,
+      email: (req.body || {}).email,
+      reset_password_token: (req.body || {}).token,
+      password: (req.body || {}).password,
     });
     if (result.success) {
       req.flash(
@@ -457,13 +464,20 @@ router.post(
   "/forgot",
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot")) {
-      const { email } = req.body;
+      const { email } = req.body || {};
       const u = await User.findOne({ email });
       const respond = () => {
         req.flash("success", req.__("Email with password reset link sent"));
         res.redirect("/auth/login");
       };
       if (!u || !u.password) {
+        respond();
+        return;
+      }
+      const auth_method_enabled = getState().get_auth_enabled_by_role(
+        u.role_id
+      );
+      if (auth_method_enabled?.Password === false) {
         respond();
         return;
       }
@@ -534,6 +548,17 @@ router.get(
   })
 );
 
+const default_language_field = new Field({
+  label: "Language",
+  name: "default_language",
+  input_type: "select",
+  attributes: { onChange: "cfu_translate(this)" },
+  options: Object.entries(available_languages).map(([locale, language]) => ({
+    value: locale,
+    label: language,
+  })),
+});
+
 /**
  * @name get/create_first_user
  * @function
@@ -545,6 +570,7 @@ router.get(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
+      form.fields.unshift(default_language_field);
       form.action = "/auth/create_first_user";
       form.submitLabel = req.__("Create user");
       form.class = "create-first-user";
@@ -553,9 +579,29 @@ router.get(
       );
       const restore = restore_backup(
         req.csrfToken(),
-        [i({ class: "fas fa-upload me-2 mt-2" }), req.__("Restore a backup")],
+        [
+          i({ class: "fas fa-upload me-2 mt-2" }),
+          span(req.__("Restore a backup")),
+        ],
         `/auth/create_from_restore`
       );
+      const translations = {};
+      Object.keys(available_languages).map((locale) => {
+        translations[locale] = {
+          submitLabel: req.__({ phrase: "Create user", locale }),
+          header: req.__({ phrase: "Create first user", locale }),
+          blurb: req.__({
+            phrase:
+              "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.",
+            locale,
+          }),
+          restore: req.__({ phrase: "Restore a backup", locale }),
+          language: req.__({ phrase: "Language", locale }),
+          email: req.__({ phrase: "E-mail", locale }),
+          password: req.__({ phrase: "Password", locale }),
+        };
+      });
+
       res.sendAuthWrap(
         req.__(`Create first user`),
         form,
@@ -565,7 +611,8 @@ router.get(
             domReady(
               `$('form.create-first-user button[type=submit]').click(function(){press_store_button(this)})`
             )
-          )
+          ) +
+          script(`window.cfu_translations = ${JSON.stringify(translations)}`)
       );
     } else {
       req.flash("danger", req.__("Users already present"));
@@ -614,7 +661,8 @@ router.post(
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
-      form.validate(req.body);
+      form.fields.unshift(default_language_field);
+      form.validate(req.body || {});
 
       if (form.hasErrors) {
         form.action = "/auth/create_first_user";
@@ -624,8 +672,14 @@ router.post(
         );
         res.sendAuthWrap(req.__(`Create first user`), form, {});
       } else {
-        const { email, password } = form.values;
-        const u = await User.create({ email, password, role_id: 1 });
+        const { email, password, default_language } = form.values;
+        const u = await User.create({
+          email,
+          password,
+          role_id: 1,
+          language: default_language,
+        });
+        await getState().setConfig("default_locale", default_language);
         req.login(u.session_object, function (err) {
           if (!err) {
             Trigger.emitEvent("Login", null, u);
@@ -784,7 +838,7 @@ router.post(
     const form = await getNewUserForm(new_user_form, req, !req.user.email);
     form.action = "/auth/signup_final_ext";
 
-    await form.asyncValidate(req.body);
+    await form.asyncValidate(req.body || {});
     if (form.hasErrors) {
       res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       return;
@@ -846,7 +900,7 @@ router.post(
           });
         }
       }
-      await form.asyncValidate(req.body);
+      await form.asyncValidate(req.body || {});
       if (form.hasErrors) {
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else if (form.values.email && !check_email_mask(form.values.email)) {
@@ -961,7 +1015,7 @@ router.post(
           req,
           false
         );
-        await signup_form.asyncValidate(req.body);
+        await signup_form.asyncValidate(req.body || {});
         if (signup_form.hasErrors) {
           signup_form.action = "/auth/signup";
           res.sendAuthWrap(
@@ -1010,7 +1064,7 @@ router.post(
     }
 
     const form = await default_signup_form(req);
-    await form.asyncValidate(req.body);
+    await form.asyncValidate(req.body || {});
 
     if (form.hasErrors) {
       form.action = "/auth/signup";
@@ -1049,9 +1103,9 @@ router.post(
  */
 function handler(req, res) {
   console.log(
-    `Failed login attempt for: ${req.body.email} from ${req.ip} UA ${req.get(
-      "User-Agent"
-    )}`
+    `Failed login attempt for: ${(req.body || {}).email} from ${
+      req.ip
+    } UA ${req.get("User-Agent")}`
   );
   req.flash(
     "error",
@@ -1084,7 +1138,7 @@ const userLimiter = rateLimit({
   // TBD create config parameter
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 3, // limit each IP to 100 requests per windowMs
-  keyGenerator: (req) => userIdKey(req.body),
+  keyGenerator: (req) => userIdKey(req.body || {}),
   handler,
 });
 
@@ -1111,14 +1165,14 @@ router.post(
   }),
   error_catcher(async (req, res) => {
     ipLimiter.resetKey(req.ip);
-    userLimiter.resetKey(userIdKey(req.body));
+    userLimiter.resetKey(userIdKey(req.body || {}));
     if (req.user.pending_user) {
       res.redirect("/auth/twofa/login/totp");
       return;
     }
     let maxAge = null;
     if (req.session.cookie)
-      if (req.body.remember) {
+      if ((req.body || {}).remember) {
         const setDur = +getState().getConfig("cookie_duration_remember", 720);
         if (setDur) {
           maxAge = setDur * 60 * 60 * 1000;
@@ -1147,10 +1201,10 @@ router.post(
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
     } else if (
-      req.body.dest &&
-      is_relative_url(decodeURIComponent(req.body.dest))
+      (req.body || {}).dest &&
+      is_relative_url(decodeURIComponent((req.body || {}).dest))
     ) {
-      res.redirect(decodeURIComponent(req.body.dest));
+      res.redirect(decodeURIComponent((req.body || {}).dest));
     } else res.redirect("/");
   })
 );
@@ -1176,6 +1230,7 @@ router.get(
     } else {
       const auth = getState().auth_methods[method];
       if (auth) {
+        if (req.query?.dest) res.cookie("login_dest", req.query.dest);
         const passportParams =
           typeof auth.parameters === "function"
             ? auth.parameters(req)
@@ -1218,6 +1273,7 @@ router.post(
         typeof auth.parameters === "function"
           ? auth.parameters(req)
           : auth.parameters;
+      if (req.query?.dest) res.cookie("login_dest", req.query.dest);
       passport.authenticate(method, passportParams)(
         req,
         res,
@@ -1248,6 +1304,12 @@ const loginCallback = (req, res) => () => {
   } else {
     Trigger.emitEvent("Login", null, req.user);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
+    if (req.cookies["login_dest"]) {
+      res.clearCookie("login_dest");
+      res.redirect(req.cookies["login_dest"]);
+      return;
+    }
+
     res.redirect("/");
   }
 };
@@ -1441,7 +1503,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
         : "",
     ],
   };
-
+  const auth_method_enabled = getState().get_auth_enabled_by_role(user.role_id);
   return {
     above: [
       {
@@ -1472,7 +1534,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
           )
         ),
       },
-      ...(user.password
+      ...(user.password && auth_method_enabled?.Password !== false
         ? [
             {
               type: "card",
@@ -1566,9 +1628,9 @@ router.post(
   loggedIn,
   error_catcher(async (req, res) => {
     const u = await User.findForSession({ id: req.user.id });
-    const newlang = available_languages[req.body.locale];
+    const newlang = available_languages[(req.body || {}).locale];
     if (newlang && u) {
-      await u.set_language(req.body.locale);
+      await u.set_language((req.body || {}).locale);
       req.login(u.session_object, function (err) {
         if (!err) {
           req.flash("success", req.__("Language changed to %s", newlang));
@@ -1656,7 +1718,7 @@ router.post(
   "/set-email",
   error_catcher(async (req, res) => {
     const form = setEmailForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors || !req.user || !req.user.id) {
       res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
       return;
@@ -1706,7 +1768,7 @@ router.post(
       );
       return;
     }
-    if (req.body.new_password && user.password) {
+    if ((req.body || {}).new_password && user.password) {
       const pwform = changPwForm(req);
 
       pwform.fields[0].validator = (oldpw) => {
@@ -1715,7 +1777,7 @@ router.post(
         else return req.__("Password does not match");
       };
 
-      pwform.validate(req.body);
+      pwform.validate(req.body || {});
 
       if (pwform.hasErrors) {
         res.sendWrap(
@@ -1738,7 +1800,7 @@ router.post(
             json() {},
             redirect() {},
           };
-          await view.runPost({ id: user.id }, req.body, {
+          await view.runPost({ id: user.id }, req.body || {}, {
             req,
             res: fakeRes,
             redirect: "/auth/settings",
@@ -1773,7 +1835,7 @@ router.all(
       return;
     }
     verifier.action = "/auth/verification-flow";
-    const wfres = await verifier.run(req.body || {}, req);
+    const wfres = await verifier.run(req.body || {} || {}, req);
     if (wfres.flash) req.flash(wfres.flash[0], wfres.flash[1]);
     if (wfres.renderForm) {
       res.sendWrap(
@@ -1860,7 +1922,7 @@ router.post(
     }
 
     const form = totpForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       req.flash("danger", req.__("Error processing form"));
       console.log("Error processing form");
@@ -1918,7 +1980,7 @@ router.post(
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
     const form = totpForm(req, "/auth/twofa/disable/totp");
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       req.flash("danger", req.__("Error processing form"));
       res.redirect("/auth/twofa/disable/totp");

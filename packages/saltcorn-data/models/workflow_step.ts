@@ -15,7 +15,7 @@ import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
 const { jsIdentifierValidator } = require("../utils");
 
-const { eval_expression } = Expression;
+const { eval_expression, get_async_expression_function } = Expression;
 
 const { getState } = require("../db/state");
 /**
@@ -127,11 +127,51 @@ class WorkflowStep {
     if (connect_prev_next) {
       const allSteps = await WorkflowStep.find({ trigger_id: this.trigger_id });
       const allStepNames = new Set(allSteps.map((s) => s.name));
+      const forStepInitialBodySteps = new Set(
+        allSteps
+          .filter((s) => s.action_name === "ForLoop")
+          .map((s) => s.configuration.loop_body_initial_step)
+      );
+
+      if (
+        this.initial_step &&
+        this.next_step &&
+        allStepNames.has(this.next_step)
+      )
+        await db.query(
+          `update ${schema}_sc_workflow_steps SET initial_step = true WHERE trigger_id = $1 and name = $2`,
+          [this.trigger_id, this.next_step]
+        );
+      if (forStepInitialBodySteps.has(this.name)) {
+        const forSteps = allSteps.filter(
+          (s) =>
+            s.action_name === "ForLoop" &&
+            s.configuration.loop_body_initial_step == this.name
+        );
+        for (const forStep of forSteps) {
+          await forStep.update({
+            configuration: {
+              ...forStep.configuration,
+              loop_body_initial_step:
+                this.next_step && allStepNames.has(this.next_step)
+                  ? this.next_step
+                  : "",
+            },
+          });
+        }
+      }
+
       if (this.next_step && allStepNames.has(this.next_step))
         await db.query(
           `update ${schema}_sc_workflow_steps SET next_step = $1 WHERE trigger_id = $2 and next_step = $3`,
           [this.next_step, this.trigger_id, this.name]
         );
+      else if (!this.next_step) {
+        await db.query(
+          `update ${schema}_sc_workflow_steps SET next_step = null WHERE trigger_id = $1 and next_step = $2`,
+          [this.trigger_id, this.name]
+        );
+      }
     }
     await db.query(`delete FROM ${schema}_sc_workflow_steps WHERE id = $1`, [
       this.id,
@@ -189,12 +229,14 @@ class WorkflowStep {
       return { [this.configuration.query_variable]: rows };
     }
     if (this.action_name === "SetContext") {
-      return eval_expression(
+      const f = get_async_expression_function(
         this.configuration.ctx_values,
-        context,
-        user,
-        `Context values expression in ${this.name} step`
+        Object.keys(context).map((k) => ({ name: k })) as any[],
+        {
+          user,
+        }
       );
+      return await f(context, user);
     }
     if (this.action_name === "SetErrorHandler") {
       return { __errorHandler: this.configuration.error_handling_step };
@@ -209,6 +251,9 @@ class WorkflowStep {
       });
     } else {
       const trigger = await Trigger.findOne({ name: this.action_name });
+      if (!trigger)
+        throw new Error(`Action or trigger not found: ${this.action_name}`);
+
       state_action = getState().actions[trigger.action];
       if (!state_action)
         throw new Error(`Action or trigger not found: ${this.action_name}`);
@@ -247,6 +292,110 @@ class WorkflowStep {
       return await state_action.run(runargs);
     }
   }
+
+  static getDiagramLoopLinkBacks(steps: WorkflowStep[]) {
+    const loopLinks: Record<string, string> = {};
+    const for_steps = steps.filter((s) => s.action_name === "ForLoop");
+    for (const for_step of for_steps) {
+      const visited: Set<string> = new Set([]);
+      let step = steps.find(
+        (s) => s.name === for_step.configuration.loop_body_initial_step
+      );
+      let lastName;
+      while (step) {
+        lastName = step.name;
+        visited.add(step.name);
+        step = steps.find(
+          (s) => s.name === step?.next_step && !visited.has(s.name)
+        );
+      }
+      if (lastName) loopLinks[lastName] = for_step.name;
+    }
+    return loopLinks;
+  }
+
+  static generate_diagram(steps: WorkflowStep[], options = {}) {
+    const stepNames: string[] = steps.map((s) => s.name);
+    const nodeLines = steps.map(
+      (s) => `  ${s.mmname}["\`**${s.name}**
+    ${s.action_name}\`"]:::wfstep${s.id}${s.only_if ? "@{ shape: hex }" : ""}`
+    );
+
+    nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
+    const linkLines = [];
+    let step_ix = 0;
+    const loopLinks = WorkflowStep.getDiagramLoopLinkBacks(steps);
+    
+    for (const step of steps) {
+      if (step.initial_step)
+        linkLines.push(
+          `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
+            step.name
+          }"></i> ---${step.mmname}`
+        );
+      if (stepNames.includes(step.next_step as string)) {
+        linkLines.push(
+          `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmnext}`
+        );
+      } else if (step.next_step) {
+        let found = false;
+        for (const otherStep of stepNames)
+          if (step.next_step.includes(otherStep)) {
+            linkLines.push(
+              `  ${step.mmname} --> ${WorkflowStep.mmescape(otherStep)}`
+            );
+            found = true;
+          }
+        if (!found) {
+          linkLines.push(
+            `  ${step.mmname}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.mmname}</a> ---_End_${step.mmname}`
+          );
+          nodeLines.push(
+            `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+          );
+        }
+      } else if (!step.next_step) {
+        if (loopLinks[step.name]) {
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-"></i> --- ${WorkflowStep.mmescape(
+              loopLinks[step.name]
+            )}`
+          );
+        } else {
+          linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
+          nodeLines.push(
+            `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+          );
+        }
+      }
+      if (step.action_name === "ForLoop") {
+        if (stepNames.includes(step.configuration.loop_body_initial_step))
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-${step.configuration.loop_body_initial_step}"></i> --- ${WorkflowStep.mmescape(
+              step.configuration.loop_body_initial_step
+            )}`
+          );
+        else
+          linkLines.push(
+            `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes init-for-body btw-nodes-${step.id}-"></i> --- ${step.mmname}`
+          );
+      }
+
+      step_ix += 1;
+    }
+    if (!steps.length || !steps.find((s) => s.initial_step)) {
+      linkLines.push(`  _Start --> _End`);
+      nodeLines.push(
+        `  _End:::wfaddstart@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
+      );
+    }
+    const fc =
+      "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
+    //console.log(fc);
+
+    return fc;
+  }
+
   static builtInActionExplainers(opts: any = {}) {
     const actionExplainers: any = {};
     actionExplainers.SetContext = "Set variables in the context";
@@ -260,7 +409,7 @@ class WorkflowStep {
       "Display the output of running a Saltcorn view. Pause workflow until the message is read.";
     actionExplainers.WaitUntil = "Pause until a time in the future";
     actionExplainers.WaitNextTick =
-      "Pause until the next scheduler invocation (at most 5 minutes)";
+      "Decouple workflow from invocation. Pause until the next scheduler invocation (at most 5 minutes), or run in background immediately.";
     actionExplainers.UserForm =
       "Ask a user one or more questions, pause until they are answered";
     actionExplainers.ForLoop =
@@ -268,7 +417,8 @@ class WorkflowStep {
     actionExplainers.SetErrorHandler = "Set the error handling step";
     actionExplainers.EditViewForm =
       "Ask the user to fill in a form from an Edit view, storing the response in the context";
-    actionExplainers.Stop = "Terminate the workflow run execution immediately";
+    actionExplainers.TerminateWorkflow =
+      "Terminate the entire workflow run execution immediately";
     if (opts?.api_call)
       actionExplainers.APIResponse = "Provide the response to an API call";
 
@@ -297,6 +447,7 @@ class WorkflowStep {
       sublabel:
         "Javascript identifier; the name of the variable the current item from the loop array will be set to in each loop iteration",
       name: "item_variable",
+      class: "validate-identifier",
       type: "String",
       showIf: { wf_action_name: "ForLoop" },
     });
@@ -366,6 +517,7 @@ class WorkflowStep {
       label: "Response variable",
       name: "response_variable",
       sublabel: "Context variable to write the form response to",
+      class: "validate-identifier",
       type: "String",
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "EditViewForm" },
@@ -401,6 +553,17 @@ class WorkflowStep {
       showIf: { wf_action_name: "APIResponse" },
     });
     actionConfigFields.push({
+      label: "Return value",
+      name: "return_value",
+      sublabel: "JavaScript expression for the return value",
+      type: "String",
+      fieldview: "textarea",
+      class: "validate-expression",
+      default: "{}",
+      showIf: { wf_action_name: "TerminateWorkflow" },
+    });
+
+    actionConfigFields.push({
       label: "Output text",
       name: "output_text",
       sublabel:
@@ -427,6 +590,20 @@ class WorkflowStep {
       showIf: { wf_action_name: "Output" },
     });
     actionConfigFields.push({
+      label: "Run immedately",
+      name: "immediately_bg",
+      sublabel:
+        "Run workflow immediately in background, instead of waiting for next scheduler run.",
+      type: "Bool",
+      showIf: { wf_action_name: "WaitNextTick" },
+    });
+    actionConfigFields.push({
+      label: "Delay (s)",
+      name: "wait_delay",
+      type: "Float",
+      showIf: { wf_action_name: "WaitNextTick", immediately_bg: true },
+    });
+    actionConfigFields.push({
       label: "Table",
       name: "query_table",
       type: "String",
@@ -451,6 +628,7 @@ class WorkflowStep {
         "Name of the step which will be invoked on errors in subsequent steps. When an error occurs, execution jumps to the error handling step and continues fron the error handling step's next_step. The error handling step can be changed in the workflow.",
       type: "String",
       required: true,
+      class: "validate-identifier",
       attributes: await stepOptions(),
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "SetErrorHandler" },
@@ -458,6 +636,7 @@ class WorkflowStep {
     actionConfigFields.push({
       label: "Variable",
       name: "query_variable",
+      class: "validate-identifier",
       sublabel: "Context variable to write to query results to",
       type: "String",
       required: true,
@@ -480,6 +659,7 @@ class WorkflowStep {
           {
             label: "Variable name",
             name: "var_name",
+            class: "validate-identifier",
             type: "String",
             sublabel:
               "The answer will be set in the context with this variable name",
@@ -496,7 +676,7 @@ class WorkflowStep {
                 "Checkbox",
                 "Free text",
                 "Multiple choice",
-                //"Multiple checks",
+                "Multiple checks",
                 "Integer",
                 "Float",
                 //"File upload",

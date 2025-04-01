@@ -98,9 +98,12 @@ const run_code = async ({
       row,
       field_names: table ? table.fields.map((f) => f.name) : undefined,
     };
-  if (!isNode() && run_where === "Server") {
-    // stop on the app and run the action server side
-    return { server_eval: true };
+  if (!isNode()) {
+    const { isOfflineMode } = getState().mobileConfig;
+    if (!isOfflineMode && run_where === "Server") {
+      // stop on the app and run the action server side
+      return { server_eval: true };
+    }
   }
   const Actions = {};
   Object.entries(getState().actions).forEach(([k, v]) => {
@@ -158,7 +161,7 @@ const run_code = async ({
     User,
     View,
     EventLog,
-    Buffer,
+    Buffer: isNode() ? Buffer : require("buffer"),
     Trigger,
     Notification,
     setTimeout,
@@ -345,7 +348,7 @@ module.exports = {
         method,
       },
     }) => {
-      let url1 = interpolate(url, row, user);
+      let url1 = interpolate(url, row, user, "Webhook URL");
 
       const fetchOpts = {
         method: (method || "post").toLowerCase(),
@@ -365,7 +368,12 @@ module.exports = {
         fetchOpts.body = postBody;
       }
       if (authorization)
-        fetchOpts.headers.Authorization = interpolate(authorization, row, user);
+        fetchOpts.headers.Authorization = interpolate(
+          authorization,
+          row,
+          user,
+          "Webhook authorization"
+        );
       const response = await fetch(url1, fetchOpts);
       const contentType = response.headers.get("content-type");
       const isJSON =
@@ -506,6 +514,13 @@ module.exports = {
             type: "String",
           },
           {
+            name: "bcc_email",
+            label: "bcc",
+            sublabel:
+              "bcc addresses, comma separated, <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },
+          {
             name: "subject",
             label: "Subject",
             sublabel:
@@ -634,6 +649,13 @@ module.exports = {
           type: "String",
         },
         {
+          name: "bcc_email",
+          label: "bcc address",
+          sublabel:
+            "bcc addresses, comma separated, <code>{{ }}</code> interpolations usable",
+          type: "String",
+        },
+        {
           name: "subject",
           label: "Subject",
           sublabel: "Subject of email",
@@ -701,6 +723,7 @@ module.exports = {
         to_email_field,
         to_email_fixed,
         cc_email,
+        bcc_email,
         only_if,
         attachment_path,
         disable_notify,
@@ -715,10 +738,11 @@ module.exports = {
       if (mode === "workflow") {
         const email = {
           from,
-          to: interpolate(to_email, row, user),
-          cc: interpolate(cc_email, row, user),
-          subject: interpolate(subject, row, user),
-          html: interpolate(body, row, user),
+          to: interpolate(to_email, row, user, "send_email to address"),
+          cc: interpolate(cc_email, row, user, "send_email cc address"),
+          bcc: interpolate(bcc_email, row, user, "send_email bcc address"),
+          subject: interpolate(subject, row, user, "send_email subject"),
+          html: interpolate(body, row, user, "send_email html body"),
 
           //          attachments,
         };
@@ -733,6 +757,7 @@ module.exports = {
       const fvs = [
         ...freeVariablesInInterpolation(to_email_fixed),
         ...freeVariablesInInterpolation(cc_email),
+        ...freeVariablesInInterpolation(bcc_email),
         ...(subject_formula ? freeVariables(subject) : []),
         ...freeVariables(only_if),
       ];
@@ -758,7 +783,12 @@ module.exports = {
       }
       switch (to_email) {
         case "Fixed":
-          to_addr = interpolate(to_email_fixed, useRow, user);
+          to_addr = interpolate(
+            to_email_fixed,
+            useRow,
+            user,
+            "send_email to address"
+          );
           break;
         case "User":
           to_addr = user.email;
@@ -808,11 +838,17 @@ module.exports = {
         3,
         `Sending email from ${from} to ${to_addr} with subject ${the_subject}`
       );
-      const cc = cc_email ? interpolate(cc_email, useRow, user) : undefined;
+      const cc = cc_email
+        ? interpolate(cc_email, useRow, user, "send_email cc address")
+        : undefined;
+      const bcc = bcc_email
+        ? interpolate(bcc_email, useRow, user, "send_email bcc address")
+        : undefined;
       const email = {
         from,
         to: to_addr,
         cc,
+        bcc,
         subject: the_subject,
         ...setBody,
         attachments,
@@ -935,6 +971,14 @@ module.exports = {
       const newRow = { ...row };
       table.getFields();
       delete newRow[table.pk_name];
+      for (const field of table.fields)
+        if (
+          field.is_fkey &&
+          typeof newRow[field.name] === "object" &&
+          newRow[field.name]?.id
+        )
+          newRow[field.name] = newRow[field.name].id; //TODO non-id pks
+
       await table.insertRow(newRow, user);
     },
     namespace: "Database",
@@ -1067,7 +1111,7 @@ module.exports = {
       const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
-        table?.fields || Object.keys(row).map((k) => ({ name: k })),
+        table?.fields || Object.keys(row || {}).map((k) => ({ name: k })),
         {
           user,
           console,
@@ -1077,12 +1121,13 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
-      const res = await table_for_insert.tryInsertRow(calcrow, user);
+      const results = {};
+      const res = await table_for_insert.tryInsertRow(calcrow, user, results);
 
       if (res.error) return res;
       else if (configuration.id_variable)
-        return { [configuration.id_variable]: res.success };
-      else return true;
+        return { [configuration.id_variable]: res.success, ...results };
+      else return results;
     },
     namespace: "Database",
   },
@@ -1118,10 +1163,10 @@ module.exports = {
                     when_trigger === "Validate"
                       ? ["Row"]
                       : mode === "filter"
-                      ? ["Filter state"]
-                      : mode === "workflow"
-                      ? ["Database", "Active edit view"]
-                      : ["Form", "Database"],
+                        ? ["Filter state"]
+                        : mode === "workflow"
+                          ? ["Database", "Active edit view"]
+                          : ["Form", "Database"],
                 },
               },
             ]
@@ -1299,7 +1344,7 @@ module.exports = {
       },
     ],
     run: async ({ row, user, configuration: { nav_action, url }, req }) => {
-      let url1 = interpolate(url, row, user);
+      let url1 = interpolate(url, row, user, "navigate URL");
 
       switch (nav_action) {
         case "Go to URL":
@@ -1451,18 +1496,31 @@ module.exports = {
         type: "String",
         required: true,
       },
+      {
+        name: "title",
+        label: "Title",
+        sublabel: "Optional",
+        type: "String",
+      },
     ],
-    run: async ({ row, user, configuration: { type, notify_type, text } }) => {
+    run: async ({
+      row,
+      user,
+      configuration: { type, notify_type, text, title },
+    }) => {
       //type is legacy. this name gave react problems
-      let text1 = interpolate(text, row, user);
+      let text1 = interpolate(text, row, user, "Toast text");
+      let toast_title = title
+        ? { toast_title: interpolate(title, row, user, "Toast title") }
+        : {};
 
       switch (notify_type || type) {
         case "Error":
-          return { error: text1 };
+          return { error: text1, ...toast_title };
         case "Success":
-          return { notify_success: text1 };
+          return { notify_success: text1, ...toast_title };
         default:
-          return { notify: text1 };
+          return { notify: text1, ...toast_title };
       }
     },
     namespace: "User interface",
@@ -1492,21 +1550,21 @@ module.exports = {
         "Actions",
         a(
           {
-            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html",
             target: "_blank",
           },
           "Table"
         ),
         a(
           {
-            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.File-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models.File-1.html",
             target: "_blank",
           },
           "File"
         ),
         a(
           {
-            href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.User-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models.User-1.html",
             target: "_blank",
           },
           "User"
@@ -1524,7 +1582,7 @@ module.exports = {
           label: "Code",
           input_type: "code",
           attributes: { mode: "application/javascript" },
-          class: "validate-statements",
+          class: "validate-statements enlarge-in-card",
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
@@ -1652,7 +1710,7 @@ module.exports = {
         else {
           const keyfield = table.getField(ref);
           const refTable = Table.findOne({ name: keyfield.reftable_name });
-          const refRow = await refTable.getRow({ id: row[ref] });
+          const refRow = await refTable.getRow({ [table.pk_name]: row[ref] });
           code = refRow[target];
         }
       } else code = row[code_field];
@@ -1904,14 +1962,19 @@ module.exports = {
 
         const existingRow = dest_rows.find((r) => r[pk_field] === existPK);
 
-        const is_different_for_key = (k) => newRow[k] !== existingRow[k];
+        const is_different_for_key = (k) => newRow[k] != existingRow[k];
 
-        if (Object.keys(newRow).some(is_different_for_key))
+        if (Object.keys(newRow).some(is_different_for_key)) {
+          const upd = {};
+          Object.keys(newRow).forEach((k) => {
+            if (is_different_for_key(k)) upd[k] = newRow[k];
+          });
           await table_for_insert.updateRow(
-            newRow,
+            upd,
             existingRow[table_for_insert.pk_name],
             user
           );
+        }
       }
     },
     namespace: "Database",
@@ -2026,23 +2089,23 @@ module.exports = {
         typeof user_spec === "number"
           ? { id: user_spec }
           : typeof user_spec === "object"
-          ? user_spec
-          : User.valid_email(user_spec)
-          ? { email: user_spec }
-          : user_spec === "*"
-          ? {}
-          : eval_expression(
-              user_spec,
-              row || {},
-              user,
-              "Notify user user where"
-            );
+            ? user_spec
+            : User.valid_email(user_spec)
+              ? { email: user_spec }
+              : user_spec === "*"
+                ? {}
+                : eval_expression(
+                    user_spec,
+                    row || {},
+                    user,
+                    "Notify user user where"
+                  );
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({
-          title: interpolate(title, row, user),
-          body: interpolate(body, row, user),
-          link: interpolate(link, row, user),
+          title: interpolate(title, row, user, "notify_user title"),
+          body: interpolate(body, row, user, "notify_user body"),
+          link: interpolate(link, row, user, "notify_user link"),
           user_id: user.id,
         });
       }
@@ -2114,6 +2177,64 @@ module.exports = {
       }
     },
     namespace: "Database",
+  },
+
+  download_file_to_browser: {
+    description: "Download a file to the user's browser",
+    configFields: async ({ table, mode }) => {
+      if (mode === "workflow") {
+        return [
+          {
+            name: "filepath_expr",
+            label: "File path",
+            class: "validate-expression",
+            sublabel:
+              'JavaScript expression, based on the context, for the file path within the file store. If giving a literal filename, enclose in quotes: "myfile.zip"',
+            type: "String",
+          },
+        ];
+      }
+      let field_opts = [];
+      if (table) {
+        field_opts = table.fields
+          .filter((f) => f.type === "File")
+          .map((f) => f.name);
+      }
+      return [
+        {
+          name: "file_field",
+          label: "File field",
+          type: "String",
+          required: true,
+          attributes: { options: field_opts },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      configuration: { filepath_expr, file_field },
+      user,
+      mode,
+    }) => {
+      let filepath;
+      if (mode === "workflow") {
+        filepath = eval_expression(
+          filepath_expr,
+          row,
+          user,
+          "download filepath formula"
+        );
+      } else filepath = row[file_field];
+      if (!filepath) return;
+      const file = await File.findOne(filepath);
+      return {
+        download: {
+          filename: file.filename,
+          mimetype: file.mimetype,
+          blob: await file.get_contents("base64"),
+        },
+      };
+    },
   },
 
   install_progressive_web_app: {

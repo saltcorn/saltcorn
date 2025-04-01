@@ -39,6 +39,7 @@ const {
   InvalidConfiguration,
   isNode,
   isWeb,
+  isTest,
   mergeIntoWhere,
   dollarizeObject,
   getSessionId,
@@ -110,7 +111,9 @@ const configuration_workflow = (req) =>
         name: req.__("Layout"),
         builder: async (context) => {
           const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields().filter((f) => !f.primary_key);
+          const fields = table
+            .getFields()
+            .filter((f) => !f.primary_key || f.attributes?.NonSerial);
           for (const field of fields) {
             if (field.type === "Key") {
               field.reftable = Table.findOne({
@@ -172,7 +175,7 @@ const configuration_workflow = (req) =>
               actionConfigForms[name] = await getActionConfigFields(
                 action,
                 table,
-                { mode: "edit" }
+                { mode: "edit", req }
               );
             }
           }
@@ -372,7 +375,7 @@ const configuration_workflow = (req) =>
                   "Delete allocated row if there are no changes."
                 ),
                 type: "Bool",
-                showif: { auto_create: true },
+                showIf: { auto_create: true },
               },
               {
                 name: "split_paste",
@@ -530,11 +533,11 @@ const run = async (
   viewname,
   cfg,
   state,
-  { res, req, isPreview },
+  { res, req, isPreview, hiddenLoginDest },
   { editQuery }
 ) => {
   const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
-  return await editQuery(state, mobileReferrer, isPreview);
+  return await editQuery(state, mobileReferrer, isPreview, hiddenLoginDest);
 };
 
 /**
@@ -659,8 +662,8 @@ const transformForm = async ({
         }
       }
       if (segment.action_name === "Delete") {
-        if (form.values && form.values.id) {
-          segment.action_url = `/delete/${table.name}/${form.values.id}`;
+        if (form.values && form.values[table.pk_name]) {
+          segment.action_url = `/delete/${table.name}/${form.values[table.pk_name]}`;
         } else {
           segment.type = "blank";
           segment.contents = "";
@@ -712,7 +715,7 @@ const transformForm = async ({
 
       (segment.titles || []).forEach((t, ix) => {
         if (typeof t === "string" && t.includes("{{")) {
-          segment.titles[ix] = interpolate(t, row, req.user);
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
       });
     },
@@ -944,6 +947,7 @@ const render = async ({
   delete_unchanged_auto_create,
   isPreview,
   auto_created_row,
+  hiddenLoginDest,
 }) => {
   const form = await getForm(
     table,
@@ -1001,6 +1005,12 @@ const render = async ({
       ? mobileReferrer
       : req.headers?.referer;
   }
+  if (hiddenLoginDest && req.query.dest) {
+    form.hidden("dest");
+    if (!req.query.dest.includes(":/") && !req.query.dest.includes("//"))
+      form.values.dest = req.query.dest;
+  }
+
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
@@ -1081,13 +1091,26 @@ const render = async ({
   }
   let deleteUnchangedScript = "";
   if (auto_created_row && delete_unchanged_auto_create && !isPreview) {
-    if (!form.onChange) form.onChange = "";
-
-    form.onChange += "this.setAttribute('data-form-changed','true');";
+    if (hasSave) {
+      if (!form.onSubmit) form.onSubmit = "";
+      form.onSubmit += "this.setAttribute('data-form-changed','true');";
+    } else {
+      if (!form.onChange) form.onChange = "";
+      form.onChange += "this.setAttribute('data-form-changed','true');";
+    }
     deleteUnchangedScript = script(
       `((curScript)=>{window.addEventListener("beforeunload", () => check_delete_unsaved("${table.name}", curScript));})(document.currentScript)`
     );
   }
+
+  const formId = isTest()
+    ? "test-form-id"
+    : `form${Math.floor(Math.random() * 16777215).toString(16)}`;
+  const identicalFieldsScript = script(
+    domReady(
+      `document.getElementById('${formId}').addEventListener("change", handle_identical_fields, true);`
+    )
+  );
 
   if (actually_auto_save) {
     for (const field of form.fields) {
@@ -1105,12 +1128,39 @@ const render = async ({
     viewname,
     optionsQuery,
   });
+  form.id = formId;
   return (
     renderForm(form, !isRemote && req.csrfToken ? req.csrfToken() : false) +
     reloadAfterCloseInModalScript +
     confirmLeaveScript +
-    deleteUnchangedScript
+    deleteUnchangedScript +
+    identicalFieldsScript
   );
+};
+
+const identicalFieldNames = (columns) => {
+  const fieldNames = new Set();
+  const result = new Set();
+  for (const field of columns) {
+    if (field.type === "Field") {
+      if (fieldNames.has(field.field_name)) result.add(field.field_name);
+      else fieldNames.add(field.field_name);
+    }
+  }
+  return result;
+};
+
+const prepSafeBody = (body, columns) => {
+  const safeBody = { ...body }; // avoid mutation (shallow copy should be enough)
+  const identicalFields = identicalFieldNames(columns);
+  for (const field of identicalFields) {
+    if (body && body[field] && Array.isArray(body[field])) {
+      // should all be the same (see saltcorn.js handle_identical_fields())
+      // or at least the submit still works (e.g. different plugin fieldviews)
+      safeBody[field] = body[field][0];
+    }
+  }
+  return safeBody;
 };
 
 /**
@@ -1159,6 +1209,7 @@ const runPost = async (
   },
   remote
 ) => {
+  const safeBody = prepSafeBody(body, columns);
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
   const prepResult = await prepare(
@@ -1172,7 +1223,7 @@ const runPost = async (
       auto_save,
     },
     { req, res },
-    body,
+    safeBody,
     {
       getRowQuery,
       saveFileQuery,
@@ -1186,7 +1237,7 @@ const runPost = async (
   const pagetitle = { title: viewname, no_menu: view?.attributes?.no_menu };
   if (prepResult) {
     let { form, row, pk, id } = prepResult;
-    const cancel = body._cancel;
+    const cancel = safeBody._cancel;
     const originalID = id;
     let trigger_return;
     let ins_upd_error;
@@ -1197,170 +1248,193 @@ const runPost = async (
           table.name
         } Row=${JSON.stringify(row)} ID=${id} Ajax=${!!req.xhr}`
       );
-      if (typeof id === "undefined") {
-        const ins_res = await tryInsertQuery(row);
-        if (ins_res.success) {
-          id = ins_res.success;
-          row[pk.name] = id;
-          trigger_return = ins_res.trigger_return;
-        } else {
-          ins_upd_error = ins_res.error;
-        }
-      } else {
-        const upd_res = await tryUpdateQuery(row, id);
-        if (upd_res.error) {
-          ins_upd_error = upd_res.error;
-        }
-        trigger_return = upd_res.trigger_return;
-      }
-      if (ins_upd_error) {
-        getState().log(
-          6,
-          `Insert or update failure ${JSON.stringify(ins_upd_error)}`
-        );
-        res.status(422);
-        if (req.xhr) {
-          res.json({ error: ins_upd_error });
-        } else {
-          await form.fill_fkey_options(false, optionsQuery, req.user);
-          req.flash("error", text_attr(ins_upd_error));
-          res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
-        }
-        return;
-      }
-      //Edit-in-edit
-      for (const field of form.fields.filter((f) => f.isRepeat)) {
-        const view_select = parse_view_select(
-          field.metadata.view,
-          field.metadata.relation_path
-        );
-        const order_field = field.metadata.order_field;
-        const childView = View.findOne({ name: view_select.viewname });
-        if (!childView)
-          throw new InvalidConfiguration(
-            `Cannot find embedded view: ${view_select.viewname}`
-          );
-        if (
-          field.metadata.relation_path &&
-          view_select.type === "RelationPath"
-        ) {
-          const targetTbl = Table.findOne({ id: childView.table_id });
-          const relation = new Relation(
-            field.metadata.relation_path,
-            targetTbl.name,
-            displayType(await childView.get_state_fields())
-          );
-          if (relation.type === RelationType.CHILD_LIST)
-            updateViewSelect(view_select);
-        }
-
-        const childTable = Table.findOne({ id: field.metadata?.table_id });
-        const submitted_row_ids = new Set(
-          (form.values[field.name] || []).map(
-            (srow) => `${srow[childTable.pk_name]}`
-          )
-        );
-        const childFields = new Set(childTable.fields.map((f) => f.name));
-        let repeatIx = 0;
-        for (const [childRow, row_ix] of form.values[field.name].map(
-          (r, ix) => [r, ix]
-        )) {
-          // set fixed here
-          childRow[field.metadata?.relation] = id;
-          for (const [k, v] of Object.entries(
-            childView?.configuration?.fixed || {}
-          )) {
-            if (
-              typeof childRow[k] === "undefined" &&
-              !k.startsWith("_block_") &&
-              childFields.has(k)
-            )
-              childRow[k] = v;
+      const doReturn = await db.withTransaction(async (rollback) => {
+        if (typeof id === "undefined") {
+          const ins_res = await tryInsertQuery(row);
+          if (ins_res.success) {
+            id = ins_res.success;
+            row[pk.name] = id;
+            trigger_return = ins_res.trigger_return;
+          } else {
+            ins_upd_error = ins_res.error;
           }
-          if (order_field && !childRow[order_field])
-            childRow[order_field] = row_ix;
-          for (const file_field of field.fields.filter(
-            (f) => f.type === "File"
-          )) {
-            const key = `${file_field.name}_${repeatIx}`;
-            if (req.files?.[key]) {
-              const file = await File.from_req_files(
-                req.files[key],
-                req.user ? req.user.id : null,
-                (file_field.attributes &&
-                  +file_field.attributes.min_role_read) ||
-                  1,
-                file_field?.attributes?.folder
-              );
-              childRow[file_field.name] = file.path_to_serve;
-            }
-          }
-          getState().log(
-            6,
-            `Edit POST ready to insert/update Child row into ${
-              childTable.name
-            } Row=${JSON.stringify(childRow)} ID=${
-              childRow[childTable.pk_name]
-            } Ajax=${!!req.xhr}`
-          );
-          if (childRow[childTable.pk_name]) {
-            const upd_res = await childTable.tryUpdateRow(
-              childRow,
-              childRow[childTable.pk_name],
+        } else {
+          if (table.getField(table.pk_name).attributes.NonSerial) {
+            const upd_res = await tryInsertOrUpdateImpl(
+              row,
+              id,
+              table,
               req.user || { role_id: 100 }
             );
             if (upd_res.error) {
-              getState().log(
-                6,
-                `Update child row failure ${JSON.stringify(upd_res)}`
-              );
-              req.flash("error", text_attr(upd_res.error));
-              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
-              return;
+              ins_upd_error = upd_res.error;
             }
+            trigger_return = upd_res.trigger_return;
           } else {
-            const ins_res = await childTable.tryInsertRow(
-              childRow,
-              req.user || { role_id: 100 }
-            );
-            if (ins_res.error) {
-              getState().log(
-                6,
-                `Insert child row failure ${JSON.stringify(ins_res)}`
-              );
-              req.flash("error", text_attr(ins_res.error));
-              res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
-              return;
-            } else if (ins_res.success) {
-              submitted_row_ids.add(`${ins_res.success}`);
+            const upd_res = await tryUpdateQuery(row, id);
+            if (upd_res.error) {
+              ins_upd_error = upd_res.error;
             }
+            trigger_return = upd_res.trigger_return;
           }
-          repeatIx += 1;
         }
+        if (ins_upd_error) {
+          await rollback();
+          getState().log(
+            6,
+            `Insert or update failure ${JSON.stringify(ins_upd_error)}`
+          );
+          res.status(422);
+          if (req.xhr) {
+            res.json({ error: ins_upd_error });
+          } else {
+            await form.fill_fkey_options(false, optionsQuery, req.user);
+            req.flash("error", text_attr(ins_upd_error));
+            res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
+          }
+          return true;
+        }
+        for (const field of form.fields.filter((f) => f.isRepeat)) {
+          const view_select = parse_view_select(
+            field.metadata.view,
+            field.metadata.relation_path
+          );
+          const order_field = field.metadata.order_field;
+          const childView = View.findOne({ name: view_select.viewname });
+          if (!childView)
+            throw new InvalidConfiguration(
+              `Cannot find embedded view: ${view_select.viewname}`
+            );
+          if (
+            field.metadata.relation_path &&
+            view_select.type === "RelationPath"
+          ) {
+            const targetTbl = Table.findOne({ id: childView.table_id });
+            const relation = new Relation(
+              field.metadata.relation_path,
+              targetTbl.name,
+              displayType(await childView.get_state_fields())
+            );
+            if (relation.type === RelationType.CHILD_LIST)
+              updateViewSelect(view_select);
+          }
 
-        //need to delete any rows that are missing
-        if (originalID && field.metadata) {
-          const childRows = getRowQuery
-            ? await getRowQuery(
-                field.metadata.table_id,
-                view_select,
-                originalID
+          const childTable = Table.findOne({ id: field.metadata?.table_id });
+          const submitted_row_ids = new Set(
+            (form.values[field.name] || []).map(
+              (srow) => `${srow[childTable.pk_name]}`
+            )
+          );
+          const childFields = new Set(childTable.fields.map((f) => f.name));
+          let repeatIx = 0;
+          for (const [childRow, row_ix] of form.values[field.name].map(
+            (r, ix) => [r, ix]
+          )) {
+            // set fixed here
+            childRow[field.metadata?.relation] = id;
+            for (const [k, v] of Object.entries(
+              childView?.configuration?.fixed || {}
+            )) {
+              if (
+                typeof childRow[k] === "undefined" &&
+                !k.startsWith("_block_") &&
+                childFields.has(k) &&
+                (v || v === 0) //no nulls or empty string, but allow 0
               )
-            : await childTable.getRows({
-                [view_select.field_name]: originalID,
-              });
-          for (const db_child_row of childRows) {
-            if (!submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)) {
-              await childTable.deleteRows(
-                {
-                  [childTable.pk_name]: db_child_row[childTable.pk_name],
-                },
+                childRow[k] = v;
+            }
+            if (order_field && !childRow[order_field])
+              childRow[order_field] = row_ix;
+            for (const file_field of field.fields.filter(
+              (f) => f.type === "File"
+            )) {
+              const key = `${file_field.name}_${repeatIx}`;
+              if (req.files?.[key]) {
+                const file = await File.from_req_files(
+                  req.files[key],
+                  req.user ? req.user.id : null,
+                  (file_field.attributes &&
+                    +file_field.attributes.min_role_read) ||
+                    1,
+                  file_field?.attributes?.folder
+                );
+                childRow[file_field.name] = file.path_to_serve;
+              }
+            }
+            getState().log(
+              6,
+              `Edit POST ready to insert/update Child row into ${
+                childTable.name
+              } Row=${JSON.stringify(childRow)} ID=${
+                childRow[childTable.pk_name]
+              } Ajax=${!!req.xhr}`
+            );
+            if (childRow[childTable.pk_name]) {
+              const upd_res = await childTable.tryUpdateRow(
+                childRow,
+                childRow[childTable.pk_name],
                 req.user || { role_id: 100 }
               );
+              if (upd_res.error) {
+                await rollback();
+
+                getState().log(
+                  6,
+                  `Update child row failure ${JSON.stringify(upd_res)}`
+                );
+                req.flash("error", text_attr(upd_res.error));
+                res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
+                return true;
+              }
+            } else {
+              const ins_res = await childTable.tryInsertRow(
+                childRow,
+                req.user || { role_id: 100 }
+              );
+              if (ins_res.error) {
+                await rollback();
+                getState().log(
+                  6,
+                  `Insert child row failure ${JSON.stringify(ins_res)}`
+                );
+                req.flash("error", text_attr(ins_res.error));
+                res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
+                return true;
+              } else if (ins_res.success) {
+                submitted_row_ids.add(`${ins_res.success}`);
+              }
+            }
+            repeatIx += 1;
+          }
+
+          //need to delete any rows that are missing
+          if (originalID && field.metadata) {
+            const childRows = getRowQuery
+              ? await getRowQuery(
+                  field.metadata.table_id,
+                  view_select,
+                  originalID
+                )
+              : await childTable.getRows({
+                  [view_select.field_name]: originalID,
+                });
+            for (const db_child_row of childRows) {
+              if (
+                !submitted_row_ids.has(`${db_child_row[childTable.pk_name]}`)
+              ) {
+                await childTable.deleteRows(
+                  {
+                    [childTable.pk_name]: db_child_row[childTable.pk_name],
+                  },
+                  req.user || { role_id: 100 }
+                );
+              }
             }
           }
         }
-      }
+      });
+      if (doReturn) return;
+      //Edit-in-edit
     }
     trigger_return = trigger_return || {};
     if (trigger_return.notify && trigger_return.details)
@@ -1416,7 +1490,7 @@ const runPost = async (
       },
       req,
       res,
-      body,
+      safeBody,
       row,
       !originalID ? { id, ...trigger_return } : trigger_return,
       true,
@@ -2042,6 +2116,26 @@ const tryUpdateImpl = async (row, id, table, user) => {
   return upd_res;
 };
 
+const tryInsertOrUpdateImpl = async (row, id, table, user) => {
+  const result = {};
+  const exists = await table.getRow({ [table.pk_name]: id });
+  if (exists) {
+    const upd_res = await table.tryUpdateRow(
+      row,
+      id,
+      user || { role_id: 100 },
+      result
+    );
+    upd_res.trigger_return = result;
+    return upd_res;
+  } else {
+    const result = {};
+    const ins_res = await table.tryInsertRow(row, user, result);
+    ins_res.trigger_return = result;
+    return ins_res;
+  }
+};
+
 module.exports = {
   /** @type {string} */
   name: "Edit",
@@ -2055,8 +2149,6 @@ module.exports = {
   authorizeDataStream,
   get_state_fields,
   initial_config,
-  /** @type {boolean} */
-  display_state_form: false,
   authorise_post,
   /**
    * @param {object} opts
@@ -2093,13 +2185,17 @@ module.exports = {
     req,
     res,
   }) => ({
-    async editQuery(state, mobileReferrer, isPreview) {
+    async editQuery(state, mobileReferrer, isPreview, hiddenLoginDest) {
       const table = Table.findOne({ id: table_id });
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
       let row = null;
       let auto_created_row = false;
-      if (Object.keys(uniques).length > 0) {
+      const unique_constraints = table.constraints.filter(
+        (tc) => tc.type === "Unique"
+      );
+
+      const getRow = async (where) => {
         // add joinfields from certain locations if they are not fields in columns
         const joinFields = {};
         const picked = picked_fields_to_query([], fields, layout, req, table);
@@ -2112,13 +2208,31 @@ module.exports = {
         Object.entries(picked.joinFields).forEach(([nm, jfv]) => {
           if (!colFields.has(jfv.ref)) joinFields[nm] = jfv;
         });
-        row = await table.getJoinedRow({
-          where: uniques,
+        return await table.getJoinedRow({
+          where,
           joinFields,
           forPublic: !req.user,
           forUser: req.user,
         });
-      } else if (auto_create && !isPreview) {
+      };
+      if (Object.keys(uniques).length > 0) {
+        row = await getRow(uniques);
+      } else if (unique_constraints.length) {
+        for (const tc of unique_constraints) {
+          const fields = tc.configuration.fields;
+          if (
+            fields &&
+            (fields || []).every((fname) => typeof state[fname] !== "undefined")
+          ) {
+            const where = {};
+            fields.forEach((fnm) => (where[fnm] = state[fnm]));
+            row = await getRow(where);
+            break;
+          }
+        }
+      }
+
+      if (!row && auto_create && !isPreview) {
         row = {};
         fields.forEach((f) => {
           if (typeof state[f.name] !== "undefined") {
@@ -2159,6 +2273,7 @@ module.exports = {
         delete_unchanged_auto_create,
         isPreview,
         auto_created_row,
+        hiddenLoginDest,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
@@ -2348,17 +2463,18 @@ module.exports = {
         onchange_field,
         click_action,
         ...body
-      } = req.body;
+      } = req.body || {};
 
       const table = Table.findOne({ id: table_id });
-      let row = body.id
-        ? await table.getRow(
-            { id: body.id },
+      const pk_name = table.pk_name;
+      let row = body[pk_name]
+        ? (await table.getRow(
+            { [pk_name]: body[pk_name] },
             {
               forPublic: !req.user,
               forUser: req.user,
             }
-          )
+          )) || {}
         : {};
 
       table.fields.forEach((f) => {
@@ -2375,65 +2491,67 @@ module.exports = {
       }
 
       try {
-        if (click_action) {
-          let container;
-          traverseSync(layout, {
-            container(segment) {
-              if (segment.click_action === click_action) container = segment;
-            },
-          });
-          if (!container) return { json: { error: "Action not found" } };
-          const trigger = Trigger.findOne({ name: click_action });
-          if (!trigger)
-            throw new Error(
-              `View ${name}: Container click action ${click_action} not found`
+        return await db.withTransaction(async () => {
+          if (click_action) {
+            let container;
+            traverseSync(layout, {
+              container(segment) {
+                if (segment.click_action === click_action) container = segment;
+              },
+            });
+            if (!container) return { json: { error: "Action not found" } };
+            const trigger = Trigger.findOne({ name: click_action });
+            if (!trigger)
+              throw new Error(
+                `View ${name}: Container click action ${click_action} not found`
+              );
+            const result = await trigger.runWithoutRow({
+              table,
+              Table,
+              req,
+              row,
+              referrer: req?.get?.("Referrer"),
+              user: req.user,
+            });
+            return { json: { success: "ok", ...(result || {}) } };
+          } else if (onchange_action && !rndid) {
+            const fldCol = columns.find(
+              (c) =>
+                c.field_name === onchange_field &&
+                c.onchange_action === onchange_action
             );
-          const result = await trigger.runWithoutRow({
-            table,
-            Table,
-            req,
-            row,
-            referrer: req?.get?.("Referrer"),
-            user: req.user,
-          });
-          return { json: { success: "ok", ...(result || {}) } };
-        } else if (onchange_action && !rndid) {
-          const fldCol = columns.find(
-            (c) =>
-              c.field_name === onchange_field &&
-              c.onchange_action === onchange_action
-          );
-          if (!fldCol) return { json: { error: "Field not found" } };
-          const trigger = Trigger.findOne({ name: onchange_action });
-          if (!trigger)
-            throw new Error(
-              `View ${name}: On change action ${onchange_action} for field ${onchange_field} not found`
-            );
+            if (!fldCol) return { json: { error: "Field not found" } };
+            const trigger = Trigger.findOne({ name: onchange_action });
+            if (!trigger)
+              throw new Error(
+                `View ${name}: On change action ${onchange_action} for field ${onchange_field} not found`
+              );
 
-          const result = await trigger.runWithoutRow({
-            table,
-            Table,
-            req,
-            row,
-            referrer: req?.get?.("Referrer"),
-            user: req.user,
-          });
-          return { json: { success: "ok", ...(result || {}) } };
-        } else {
-          const col = columns.find(
-            (c) => c.type === "Action" && c.rndid === rndid && rndid
-          );
-          const result = await run_action_column({
-            col,
-            req,
-            table,
-            row,
-            res,
-            referrer: req?.get?.("Referrer"),
-          });
-          //console.log("result", result);
-          return { json: { success: "ok", ...(result || {}) } };
-        }
+            const result = await trigger.runWithoutRow({
+              table,
+              Table,
+              req,
+              row,
+              referrer: req?.get?.("Referrer"),
+              user: req.user,
+            });
+            return { json: { success: "ok", ...(result || {}) } };
+          } else {
+            const col = columns.find(
+              (c) => c.type === "Action" && c.rndid === rndid && rndid
+            );
+            const result = await run_action_column({
+              col,
+              req,
+              table,
+              row,
+              res,
+              referrer: req?.get?.("Referrer"),
+            });
+            //console.log("result", result);
+            return { json: { success: "ok", ...(result || {}) } };
+          }
+        });
       } catch (e) {
         console.error(e);
         return { json: { error: e.message || e } };
@@ -2511,9 +2629,9 @@ module.exports = {
         joinFields,
       });
 
-      return interpolate(title, row);
+      return interpolate(title, row, null, "Edit view title string");
     } else {
-      return interpolate(title, null);
+      return interpolate(title, null, null, "Edit view title string");
     }
   },
   configCheck: async (view) => {

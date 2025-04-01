@@ -230,7 +230,7 @@ const translateAttributes = (attrs, req) =>
  * @returns {object}
  */
 const translateAttribute = (attr, req) => {
-  let res = { ...attr };
+  let res = { ...attr, label: req.__(attr.label) };
   if (res.sublabel) res.sublabel = req.__(res.sublabel);
   if (res.isRepeat) res = new FieldRepeat(res);
   return res;
@@ -303,48 +303,57 @@ const fieldFlow = (req) =>
         fldRow.is_unique = false;
         fldRow.required = false;
       }
-      if (context.id) {
-        const field = await Field.findOne({ id: context.id });
-        try {
-          if (fldRow.label && field.label != fldRow.label) {
-            fldRow.name = Field.labelToName(fldRow.label);
+      const table = Table.findOne({ id: table_id });
+      try {
+        await db.withTransaction(async () => {
+          if (context.id) {
+            const field = await Field.findOne({ id: context.id });
+
+            if (fldRow.label && field.label != fldRow.label) {
+              fldRow.name = Field.labelToName(fldRow.label);
+            }
+
+            await field.update(fldRow);
+            Trigger.emitEvent(
+              "AppChange",
+              `Field ${fldRow.name} on table ${table?.name}`,
+              req.user,
+              {
+                entity_type: "Field",
+                entity_name: fldRow.name || fldRow.label,
+              }
+            );
+          } else {
+            await Field.create(fldRow);
+            Trigger.emitEvent(
+              "AppChange",
+              `Field ${fldRow.name} on table ${table?.name}`,
+              req.user,
+              {
+                entity_type: "Field",
+                entity_name: fldRow.name || fldRow.label,
+              }
+            );
           }
+        });
+        await getState().refresh_tables();
 
-          await field.update(fldRow);
-          Trigger.emitEvent("AppChange", `Field ${fldRow.name}`, req.user, {
-            entity_type: "Field",
-            entity_name: fldRow.name || fldRow.label,
-          });
-        } catch (e) {
-          return {
-            redirect: `/table/${context.table_id}`,
-            flash: ["error", e.message],
-          };
-        }
-      } else {
-        try {
-          await Field.create(fldRow);
-          Trigger.emitEvent("AppChange", `Field ${fldRow.name}`, req.user, {
-            entity_type: "Field",
-            entity_name: fldRow.name || fldRow.label,
-          });
-        } catch (e) {
-          return {
-            redirect: `/table/${context.table_id}`,
-            flash: ["error", e.message],
-          };
-        }
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: [
+            "success",
+            context.id
+              ? req.__("Field %s saved", label)
+              : req.__("Field %s created", label),
+          ],
+        };
+      } catch (e) {
+        console.error(e);
+        return {
+          redirect: `/table/${context.table_id}`,
+          flash: ["error", e.message],
+        };
       }
-
-      return {
-        redirect: `/table/${context.table_id}`,
-        flash: [
-          "success",
-          context.id
-            ? req.__("Field %s saved", label)
-            : req.__("Field %s created", label),
-        ],
-      };
     },
     steps: [
       {
@@ -669,8 +678,8 @@ const fieldFlow = (req) =>
               a.type?.name === "String" && b.type?.name !== "String"
                 ? -1
                 : a.type?.name !== "String" && b.type?.name === "String"
-                ? 1
-                : 0
+                  ? 1
+                  : 0
             )
             .map((f) => ({
               value: f.name,
@@ -884,8 +893,11 @@ router.post(
       return;
     }
     const table_id = f.table_id;
+    await db.withTransaction(async () => {
+      await f.delete();
+    });
+    await getState().refresh_tables();
 
-    await f.delete();
     req.flash("success", req.__(`Field %s deleted`, f.label));
     res.redirect(`/table/${table_id}`);
   })
@@ -902,7 +914,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
     const wf = fieldFlow(req);
-    const wfres = await wf.run(req.body, req);
+    const wfres = await wf.run(req.body || {}, req);
     if (wfres.renderForm) {
       const table = Table.findOne({ id: wfres.context.table_id });
       res.sendWrap(req.__(`Field attributes`), {
@@ -953,7 +965,7 @@ router.post(
     "min_role_inspect_tables",
   ]),
   error_catcher(async (req, res) => {
-    let { formula, tablename, stored } = req.body;
+    let { formula, tablename, stored } = req.body || {};
     if (stored === "false") stored = false;
 
     const table = Table.findOne({ name: tablename });
@@ -1017,7 +1029,7 @@ router.post(
     );
 
     const fields = table.getFields();
-    let row = { ...req.body };
+    let row = { ...(req.body || {}) };
     if (row && Object.keys(row).length > 0) readState(row, fields);
 
     //need to get join fields from ownership into row
@@ -1165,8 +1177,8 @@ router.post(
               typeof value === "string"
                 ? value
                 : value?.toString
-                ? value.toString()
-                : `${value}`
+                  ? value.toString()
+                  : `${value}`
             );
           return;
         }
@@ -1280,7 +1292,7 @@ router.post(
       value = row && row[fieldName];
     }
 
-    const configuration = req.body.configuration;
+    const configuration = (req.body || {}).configuration;
     if (!field) {
       res.send("");
       return;
@@ -1289,8 +1301,8 @@ router.post(
       field.type === "Key"
         ? state.keyFieldviews
         : field.type === "File"
-        ? state.fileviews
-        : field.type.fieldviews;
+          ? state.fileviews
+          : field.type.fieldviews;
     if (!field.type || !fieldviews) {
       res.send("");
       return;
@@ -1378,8 +1390,9 @@ router.post(
       agg_outcome_type,
       agg_fieldview,
       agg_field,
+      mode,
       _columndef,
-    } = req.body;
+    } = req.body || {};
     const table = Table.findOne({ name: tableName });
     if (agg_outcome_type && agg_fieldview) {
       const type = getState().types[agg_outcome_type];
@@ -1389,7 +1402,9 @@ router.post(
         return;
       }
       const field = table.getField(agg_field);
-      const cfgfields = await applyAsync(fv.configFields, field || { table });
+      const cfgfields = await applyAsync(fv.configFields, field || { table }, {
+        mode,
+      });
       res.json(cfgfields);
       return;
     }
@@ -1412,7 +1427,13 @@ router.post(
       res.send(req.query?.accept == "json" ? "[]" : "");
       return;
     }
-    const fieldViewConfigForms = await calcfldViewConfig([field], false, 0);
+    const fieldViewConfigForms = await calcfldViewConfig(
+      [field],
+      false,
+      0,
+      mode,
+      req
+    );
     const formFields = fieldViewConfigForms[field.name][fv_name];
     if (!formFields) {
       res.send(req.query?.accept == "json" ? "[]" : "");
@@ -1492,7 +1513,9 @@ router.post(
     let val = field.type?.read
       ? field.type?.read(req.body[field_name])
       : req.body[field_name];
-    await table.updateRow({ [field_name]: val }, pk, req.user);
+    await db.withTransaction(async () => {
+      await table.updateRow({ [field_name]: val }, pk, req.user);
+    });
     let fv;
     if (field.is_fkey) {
       if (join_field) {

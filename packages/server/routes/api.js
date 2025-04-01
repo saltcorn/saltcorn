@@ -15,7 +15,7 @@
  */
 /** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
-//const db = require("@saltcorn/data/db");
+const db = require("@saltcorn/data/db");
 const { error_catcher } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
@@ -30,6 +30,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const File = require("@saltcorn/data/models/file");
 //const load_plugins = require("../load_plugins");
 const passport = require("passport");
+const path = require("path");
 
 const {
   readState,
@@ -77,8 +78,8 @@ function accessAllowedRead(req, user, table, allow_ownership) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 100;
+        ? user.role_id
+        : 100;
 
   return (
     role <= table.min_role_read ||
@@ -100,8 +101,8 @@ function accessAllowedWrite(req, user, table) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 100;
+        ? user.role_id
+        : 100;
 
   return (
     role <= table.min_role_write ||
@@ -121,8 +122,8 @@ function accessAllowed(req, user, trigger) {
     req.user && req.user.id
       ? req.user.role_id
       : user && user.role_id
-      ? user.role_id
-      : 100;
+        ? user.role_id
+        : 100;
 
   return role <= trigger.min_role;
 }
@@ -164,7 +165,7 @@ router.post(
         ) {
           const queries = view.queries(false, req);
           if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
-            const { args } = req.body;
+            const { args } = req.body || {};
             const resp = await queries[queryName](...args, true);
             res.json({ success: resp, alerts: getFlashes(req) });
           } else {
@@ -192,7 +193,7 @@ router.post(
 );
 
 router.get(
-  "/serve-files/*",
+  "/serve-files/*serve_path",
   //passport.authenticate("api-bearer", { session: false }),
   error_catcher(async (req, res, next) => {
     await passport.authenticate(
@@ -201,7 +202,7 @@ router.get(
       async function (err, user, info) {
         const role = req?.user?.role_id || user?.role_id || 100;
         const user_id = req?.user?.id || user?.id;
-        const serve_path = req.params[0];
+        const serve_path = path.join(...req.params.serve_path);
         const file = await File.findOne(serve_path);
         if (
           file &&
@@ -214,7 +215,7 @@ router.get(
           res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
           if (file.s3_store)
             res.status(404).json({ error: req.__("Not found") });
-          else res.sendFile(file.location);
+          else res.sendFile(file.location, { dotfiles: "allow" });
         } else {
           res.status(404).json({ error: req.__("Not found") });
         }
@@ -396,8 +397,8 @@ router.get(
             const derefs = Array.isArray(dereference)
               ? dereference
               : !dereference
-              ? []
-              : [dereference];
+                ? []
+                : [dereference];
             derefs.forEach((f) => {
               const field = table.getField(f);
               if (field?.attributes?.summary_field)
@@ -426,6 +427,34 @@ router.get(
           } else res.json({ success: rows.map(limitFields(fields)) });
         } else {
           getState().log(3, `API get ${table.name} not authorized`);
+          res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
+/**
+ * Emit Event using POST
+ * This is used from the mobile app to send an event to the server.
+ *
+ * The user comes the JWT token and actions,
+ * listening for the event, have to check on their own if the user is allowed to run it.
+ */
+router.post(
+  "/emit-event/:eventname",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "jwt",
+      { session: false },
+      async function (err, user, info) {
+        if (user) {
+          const { eventname } = req.params;
+          const { channel, payload } = req.body;
+          Trigger.emitEvent(eventname, channel, user, payload);
+          res.json({ success: true });
+        } else {
+          getState().log(3, `API POST emit-event not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
         }
       }
@@ -466,7 +495,7 @@ router.all(
         if (accessAllowed(req, user, trigger)) {
           try {
             let resp;
-            const row = req.method === "GET" ? req.query : req.body;
+            const row = req.method === "GET" ? req.query : req.body || {};
             if (trigger.action === "Workflow") {
               resp = await trigger.runWithoutRow({
                 req,
@@ -479,7 +508,7 @@ router.all(
               const action = getState().actions[trigger.action];
               resp = await action.run({
                 configuration: trigger.configuration,
-                body: req.body,
+                body: req.body || {},
                 row,
                 req,
                 user: user || req.user,
@@ -493,7 +522,16 @@ router.all(
             else if (req.headers?.scgotourl)
               res.redirect(req.headers?.scgotourl);
             else {
-              if (trigger.configuration?._raw_output) res.json(resp);
+              if (
+                trigger.configuration?._raw_output &&
+                trigger.configuration?._response_mime
+              ) {
+                res.setHeader(
+                  "content-type",
+                  trigger.configuration?._response_mime
+                );
+                res.send(resp);
+              } else if (trigger.configuration?._raw_output) res.json(resp);
               else if (resp?.error) {
                 const { error, ...rest } = resp;
                 res.json({ success: false, error, data: rest });
@@ -533,9 +571,10 @@ router.post(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
-          const { _versions, ...row } = req.body;
+          const { _versions, ...row } = req.body || {};
           const fields = table.getFields();
           readState(row, fields, req);
+
           const errors = await prepare_insert_row(row, fields);
           if (errors.length > 0) {
             getState().log(
@@ -545,11 +584,13 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          const ins_res = await table.tryInsertRow(
-            row,
-            req.user || user || { role_id: 100 }
-          );
-          if (ins_res.error) {
+          let ins_res = await db.withTransaction(async () => {
+            return await table.tryInsertRow(
+              row,
+              req.user || user || { role_id: 100 }
+            );
+          });
+          if (ins_res?.error) {
             getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
             res.status(400).json(ins_res);
           } else res.json(ins_res);
@@ -585,20 +626,22 @@ router.post(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           try {
-            if (id === "undefined") {
-              const pk_name = table.pk_name;
-              //const fields = table.getFields();
-              const row = req.body;
-              //readState(row, fields);
-              await table.deleteRows(
-                { [pk_name]: row[pk_name] },
-                user || req.user || { role_id: 100 }
-              );
-            } else
-              await table.deleteRows(
-                { id },
-                user || req.user || { role_id: 100 }
-              );
+            await db.withTransaction(async () => {
+              if (id === "undefined") {
+                const pk_name = table.pk_name;
+                //const fields = table.getFields();
+                const row = req.body || {};
+                //readState(row, fields);
+                await table.deleteRows(
+                  { [pk_name]: row[pk_name] },
+                  user || req.user || { role_id: 100 }
+                );
+              } else
+                await table.deleteRows(
+                  { id },
+                  user || req.user || { role_id: 100 }
+                );
+            });
             res.json({ success: true });
           } catch (e) {
             getState().log(2, `API DELETE ${table.name} error: ${e.message}`);
@@ -635,7 +678,7 @@ router.post(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
-          const { _versions, ...row } = req.body;
+          const { _versions, ...row } = req.body || {};
           const fields = table.getFields();
           readState(row, fields, req);
           const errors = await prepare_update_row(table, row, id);
@@ -647,13 +690,15 @@ router.post(
             res.status(400).json({ error: errors.join(", ") });
             return;
           }
-          const ins_res = await table.tryUpdateRow(
-            row,
-            id,
-            user || req.user || { role_id: 100 }
-          );
+          let ins_res = await db.withTransaction(async () => {
+            return await table.tryUpdateRow(
+              row,
+              id,
+              user || req.user || { role_id: 100 }
+            );
+          });
 
-          if (ins_res.error) {
+          if (ins_res?.error) {
             getState().log(2, `API POST ${table.name} error: ${ins_res.error}`);
             res.status(400).json(ins_res);
           } else res.json(ins_res);
@@ -689,10 +734,11 @@ router.delete(
       async function (err, user, info) {
         if (accessAllowedWrite(req, user, table)) {
           try {
+            //await db.withTransaction(async () => {
             if (id === "undefined") {
               const pk_name = table.pk_name;
               //const fields = table.getFields();
-              const row = req.body;
+              const row = req.body || {};
               //readState(row, fields);
               await table.deleteRows(
                 { [pk_name]: row[pk_name] },
@@ -700,9 +746,10 @@ router.delete(
               );
             } else
               await table.deleteRows(
-                { id },
+                { [table.pk_name]: id },
                 user || req.user || { role_id: 100 }
               );
+            //});
             res.json({ success: true });
           } catch (e) {
             getState().log(2, `API DELETE ${table.name} error: ${e.message}`);

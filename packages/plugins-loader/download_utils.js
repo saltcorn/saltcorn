@@ -51,6 +51,7 @@ const loadTarball = (rootFolder, url, name) => {
     headers: {
       "User-Agent": "request",
     },
+    ...getFetchProxyOptions()
   };
   const writeTarball = async (res) => {
     const filePath = join(rootFolder, "plugins_folder", `${name}.tar.gz`);

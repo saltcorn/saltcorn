@@ -2,7 +2,8 @@
  * @category saltcorn-cli
  * @module commands/add-schema
  */
-const { Command, Flags, ux } = require("@oclif/core");
+const { Command, Flags } = require("@oclif/core");
+const inquirer = require("inquirer").default;
 
 /**
  * AddSchemaCommand Class
@@ -17,10 +18,15 @@ class AddSchemaCommand extends Command {
     const { flags } = await this.parse(AddSchemaCommand);
     const reset = require("@saltcorn/data/db/reset_schema");
     if (!flags.force) {
-      const ans = await ux.confirm(
-        `This adds Saltcorn schema to existing database\nContinue (y/n)?`
-      );
-      if (!ans) {
+      const confirmation = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "continue",
+          message: "This adds Saltcorn schema to existing database\nContinue?",
+          default: false,
+        },
+      ]);
+      if (!confirmation.continue) {
         console.log(`Success: Command execution canceled`);
         this.exit(1);
       }

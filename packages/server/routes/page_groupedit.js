@@ -392,9 +392,9 @@ router.post(
   "/edit-properties",
   isAdmin,
   error_catcher(async (req, res) => {
-    const form = await groupPropsForm(req, !req.body.id);
+    const form = await groupPropsForm(req, !(req.body || {}).id);
     form.hidden("id");
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       if (!req.xhr) {
         // from new
@@ -412,9 +412,11 @@ router.post(
       const { id, ...row } = form.values;
       if (+id) {
         await PageGroup.update(id, row);
+        await getState().refresh_page_groups();
         res.json({ success: "ok", row });
       } else {
         const pageGroup = await PageGroup.create(row);
+        await getState().refresh_page_groups();
         res.redirect(`/page_groupedit/${pageGroup.name}`);
       }
     }
@@ -457,7 +459,7 @@ router.post(
       res.redirect(`/page_groupedit/${page_groupname}`);
     }
     const form = await addMemberForm(group, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(
         req.__(`%s add-member`, group.name),
@@ -478,6 +480,7 @@ router.post(
           eligible_formula,
           description: description || "",
         });
+        await getState().refresh_page_groups();
         req.flash("success", req.__("Added member"));
         res.redirect(`/page_groupedit/${page_groupname}`);
       }
@@ -497,6 +500,7 @@ router.post(
       const member = PageGroupMember.findOne({ id: member_id });
       const pageGroup = PageGroup.findOne({ id: member.page_group_id });
       await pageGroup.moveMember(member, mode);
+      await getState().refresh_page_groups();
       res.json({ success: "ok" });
     } catch (error) {
       getState().log(2, `POST /page_groupedit/move-member: '${error.message}'`);
@@ -554,7 +558,7 @@ router.post(
     const group = PageGroup.findOne({ id: member.page_group_id });
     const form = await editMemberForm(member, req);
     form.hidden("id");
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(
         req.__(`%s edit-member`, member.name || member.id),
@@ -573,6 +577,7 @@ router.post(
           eligible_formula,
           description: description || "",
         });
+      await getState().refresh_page_groups();
       req.flash("success", req.__("Updated member"));
       res.redirect(`/page_groupedit/${group.name}`);
     }
@@ -593,6 +598,7 @@ router.post(
       res.redirect("/pageedit");
     } else {
       await group.delete();
+      await getState().refresh_page_groups();
       req.flash("success", req.__("Deleted page group %s", group_id));
       res.redirect("/pageedit");
     }
@@ -622,12 +628,14 @@ router.post(
       } else {
         try {
           await group.removeMember(member_id);
+          await getState().refresh_page_groups();
           req.flash(
             "success",
             req.__("Removed member %s", member.name || member_id)
           );
           res.redirect(`/page_groupedit/${group.name}`);
         } catch (e) {
+          console.error(e);
           req.flash("error", e.message);
           res.redirect(`/page_groupedit/${group.name}`);
         }
@@ -650,6 +658,7 @@ router.post(
       res.redirect("/pageedit");
     } else {
       const copy = await group.clone();
+      await getState().refresh_page_groups();
       req.flash("success", req.__("Cloned page group %s", group.name));
       res.redirect(`/page_groupedit/${copy.name}`);
     }
@@ -678,7 +687,7 @@ router.post(
       req.flash(
         "success",
         req.__(
-          "Page %s added to menu. Adjust access permissions in <a href=\"/menu\">Settings &raquo; Menu</a>",
+          'Page %s added to menu. Adjust access permissions in <a href="/menu">Settings &raquo; Menu</a>',
           group.name
         )
       );

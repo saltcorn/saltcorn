@@ -358,6 +358,13 @@ const configuration_workflow = (req) =>
                 required: true,
               },
               {
+                name: "local_state",
+                label: req.__("Local state"),
+                type: "Bool",
+                sublabel: req.__("Isolate state of each repeated view"),
+                required: true,
+              },
+              {
                 input_type: "section_header",
                 label: "Row restrictions",
               },
@@ -527,6 +534,7 @@ const run = async (
     empty_view,
     groupby,
     lazy_accordions,
+    local_state,
     ...cols
   },
   state,
@@ -686,9 +694,12 @@ const run = async (
       {
         class: "d-inline",
         "data-sc-embed-viewname": show_view,
-        "data-sc-view-source": `/view/${show_view}?${table.pk_name}=${
-          r.row[table.pk_name]
-        }`,
+        "data-sc-view-source": local_state
+          ? false
+          : `/view/${show_view}?${table.pk_name}=${r.row[table.pk_name]}`,
+        "data-sc-local-state": local_state
+          ? `/view/${show_view}?${table.pk_name}=${r.row[table.pk_name]}`
+          : false,
       },
       view_decoration === "Accordion" && lazy_accordions && !neverLazy
         ? ""
@@ -713,74 +724,74 @@ const run = async (
           div({ class: "card-body" }, wrapScEmbed(r))
         )
       : view_decoration === "Tabs"
-      ? div(
-          {
-            class: ["tab-pane fade", ix == 0 && "show active"],
-            id: `feedtab${viewname.replaceAll(" ", "_")}_${ix}`,
-            role: "tabpanel",
-            "aria-labelledby": `feedtab${viewname.replaceAll(
-              " ",
-              "_"
-            )}_${ix}-tab`,
-          },
-          wrapScEmbed(r)
-        )
-      : view_decoration === "Accordion"
-      ? div(
-          { class: "accordion-item" },
-          h2(
-            { class: "accordion-header", id: `a${stateHash}head${ix}` },
-            button(
-              {
-                class: [
-                  "accordion-button",
-                  (initial_open_accordions === "None" ||
-                    (initial_open_accordions === "First" && ix > 0)) &&
-                    "collapsed",
-                ],
-                type: "button",
-                "data-bs-toggle": "collapse",
-                "data-bs-target": `#a${stateHash}tab${ix}`,
-                "aria-expanded": "false",
-                "aria-controls": `a${stateHash}tab${ix}`,
-              },
-              (title_formula
-                ? eval_expression(
-                    title_formula,
-                    r.row,
-                    extraArgs.req.user,
-                    `Accordion title formula`
-                  )
-                : "") || "Missing title"
-            )
-          ),
-          div(
+        ? div(
             {
-              class: [
-                "accordion-collapse",
-                "collapse",
-                !(
-                  initial_open_accordions === "None" ||
-                  (initial_open_accordions === "First" && ix > 0)
-                ) && "show",
-              ],
-              id: `a${stateHash}tab${ix}`,
-              "aria-labelledby": `a${stateHash}head${ix}`,
-              "data-bs-parent": `#top${stateHash}`,
+              class: ["tab-pane fade", ix == 0 && "show active"],
+              id: `feedtab${viewname.replaceAll(" ", "_")}_${ix}`,
+              role: "tabpanel",
+              "aria-labelledby": `feedtab${viewname.replaceAll(
+                " ",
+                "_"
+              )}_${ix}-tab`,
             },
-            div(
-              { class: ["accordion-body"] },
-              wrapScEmbed(
-                r,
-                !(
-                  initial_open_accordions === "None" ||
-                  (initial_open_accordions === "First" && ix > 0)
+            wrapScEmbed(r)
+          )
+        : view_decoration === "Accordion"
+          ? div(
+              { class: "accordion-item" },
+              h2(
+                { class: "accordion-header", id: `a${stateHash}head${ix}` },
+                button(
+                  {
+                    class: [
+                      "accordion-button",
+                      (initial_open_accordions === "None" ||
+                        (initial_open_accordions === "First" && ix > 0)) &&
+                        "collapsed",
+                    ],
+                    type: "button",
+                    "data-bs-toggle": "collapse",
+                    "data-bs-target": `#a${stateHash}tab${ix}`,
+                    "aria-expanded": "false",
+                    "aria-controls": `a${stateHash}tab${ix}`,
+                  },
+                  (title_formula
+                    ? eval_expression(
+                        title_formula,
+                        r.row,
+                        extraArgs.req.user,
+                        `Accordion title formula`
+                      )
+                    : "") || "Missing title"
+                )
+              ),
+              div(
+                {
+                  class: [
+                    "accordion-collapse",
+                    "collapse",
+                    !(
+                      initial_open_accordions === "None" ||
+                      (initial_open_accordions === "First" && ix > 0)
+                    ) && "show",
+                  ],
+                  id: `a${stateHash}tab${ix}`,
+                  "aria-labelledby": `a${stateHash}head${ix}`,
+                  "data-bs-parent": `#top${stateHash}`,
+                },
+                div(
+                  { class: ["accordion-body"] },
+                  wrapScEmbed(
+                    r,
+                    !(
+                      initial_open_accordions === "None" ||
+                      (initial_open_accordions === "First" && ix > 0)
+                    )
+                  )
                 )
               )
             )
-          )
-        )
-      : wrapScEmbed(r);
+          : wrapScEmbed(r);
 
   const showRow = (r) =>
     div(
@@ -814,24 +825,27 @@ const run = async (
             (is_in_card && masonry_columns
               ? div({ class: "card-columns" }, sr.map(showRowInner))
               : view_decoration === "Accordion"
-              ? div(
-                  {
-                    class: ["accordion", lazy_accordions && "lazy-accoordion"],
-                    id: `top${stateHash}`,
-                  },
-                  sr.map(showRowInner)
-                )
-              : div(
-                  {
-                    class: [
-                      "row",
-                      !masonry_columns &&
-                        is_in_card &&
-                        `row-cols-md-${cols[`cols_md`]} g-4 mb-3`,
-                    ],
-                  },
-                  sr.map(showRow)
-                ))
+                ? div(
+                    {
+                      class: [
+                        "accordion",
+                        lazy_accordions && "lazy-accoordion",
+                      ],
+                      id: `top${stateHash}`,
+                    },
+                    sr.map(showRowInner)
+                  )
+                : div(
+                    {
+                      class: [
+                        "row",
+                        !masonry_columns &&
+                          is_in_card &&
+                          `row-cols-md-${cols[`cols_md`]} g-4 mb-3`,
+                      ],
+                    },
+                    sr.map(showRow)
+                  ))
         ),
         paginate,
         create_link_div,
@@ -869,32 +883,32 @@ const run = async (
       is_in_card && masonry_columns
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
         : view_decoration === "Tabs"
-        ? div(
-            ul(
-              { class: "nav nav-tabs", role: "tablist" },
-              sresp.map(tabHeader)
-            ),
-            div({ class: "tab-content" }, sresp.map(showRowInner))
-          )
-        : view_decoration === "Accordion"
-        ? div(
-            {
-              class: ["accordion", lazy_accordions && "lazy-accoordion"],
-              id: `top${stateHash}`,
-            },
-            sresp.map(showRowInner)
-          )
-        : div(
-            {
-              class: [
-                "row",
-                !masonry_columns &&
-                  is_in_card &&
-                  `row-cols-md-${cols.cols_md} row-cols-sm-${cols.cols_sm} row-cols-sm-${cols.cols_lg}  row-cols-cl-${cols.cols_xl} g-4 mb-3`,
-              ],
-            },
-            sresp.map(showRow)
-          ),
+          ? div(
+              ul(
+                { class: "nav nav-tabs", role: "tablist" },
+                sresp.map(tabHeader)
+              ),
+              div({ class: "tab-content" }, sresp.map(showRowInner))
+            )
+          : view_decoration === "Accordion"
+            ? div(
+                {
+                  class: ["accordion", lazy_accordions && "lazy-accoordion"],
+                  id: `top${stateHash}`,
+                },
+                sresp.map(showRowInner)
+              )
+            : div(
+                {
+                  class: [
+                    "row",
+                    !masonry_columns &&
+                      is_in_card &&
+                      `row-cols-md-${cols.cols_md} row-cols-sm-${cols.cols_sm} row-cols-sm-${cols.cols_lg}  row-cols-cl-${cols.cols_xl} g-4 mb-3`,
+                  ],
+                },
+                sresp.map(showRow)
+              ),
       paginate,
       create_link_div,
     ])
@@ -911,7 +925,6 @@ module.exports = {
   run,
   get_state_fields,
   /** @type {boolean} */
-  display_state_form: false,
   /**
    * @param {object} opts
    * @param {*} opts.create_view_label

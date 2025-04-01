@@ -4,8 +4,9 @@
  */
 
 // todo support for  users without emails (using user.id)
-const { Command, Flags, Args, ux } = require("@oclif/core");
+const { Command, Flags, Args } = require("@oclif/core");
 const { maybe_as_tenant } = require("../common");
+const inquirer = require("inquirer").default;
 
 /**
  * DeleteUserCommand Class
@@ -38,12 +39,18 @@ class DeleteUserCommand extends Command {
       // make changes
       // todo handle errors
       if (!flags.force) {
-        const ans = await ux.confirm(
-          `This will delete user ${args.user_email} ${
-            typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
-          }.\nContinue (y/n)?`
-        );
-        if (!ans) {
+        const confirmation = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "continue",
+            message: `This will delete user ${args.user_email} ${
+              typeof flags.tenant !== "undefined" ? "from " + flags.tenant : ""
+            }.\nContinue?`,
+            default: false,
+          },
+        ]);
+
+        if (!confirmation.continue) {
           console.log(`Success: Command execution canceled`);
           this.exit(1);
         }

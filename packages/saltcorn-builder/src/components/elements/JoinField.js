@@ -449,6 +449,7 @@ const JoinFieldSettings = () => {
                 name="join_field"
                 data-fieldname="join_field"
                 readOnly="readonly"
+                spellCheck={false}
                 value={name}
               />
             </td>

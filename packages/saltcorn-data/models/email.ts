@@ -31,14 +31,17 @@ const getMailTransport = (): Transporter => {
     "smtp_allow_self_signed",
     false
   );
+  const username = getState().getConfig("smtp_username");
   const transportOptions: any = {
     host: getState().getConfig("smtp_host"),
     port,
     secure,
-    auth: {
-      user: getState().getConfig("smtp_username"),
-      pass: getState().getConfig("smtp_password"),
-    },
+    auth: username
+      ? {
+          user: username,
+          pass: getState().getConfig("smtp_password"),
+        }
+      : undefined,
   };
   if (smtp_allow_self_signed)
     transportOptions.tls = { rejectUnauthorized: false };
@@ -72,7 +75,7 @@ const viewToMjml = async (view: View, state: any) => {
  */
 const viewToEmailHtml = async (view: View, state: any) => {
   const mjmlMarkup = await viewToMjml(view, state);
-  const html = mjml2html(mjmlMarkup, { minify: true });
+  const html = await mjml2html(mjmlMarkup, { minify: true });
   if (html.errors && html.errors.length > 0) {
     html.errors.forEach((e) => {
       //console.error("MJML error: ", e);

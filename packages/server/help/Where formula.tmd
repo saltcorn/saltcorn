@@ -27,4 +27,6 @@ a `$`:
 {{# for (const field of srcTable.fields) { }} | {{ field.label }} | `${{ field.name }}` | {{ field.pretty_type }} | 
 {{# } }}
 
+The ID of the logged in user is accessible with the identifier `$user_id`
+
 You can mix the two types of variables, as in `a == $b`

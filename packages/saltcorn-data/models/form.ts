@@ -14,11 +14,11 @@ import {
   instanceOfSuccessMsg,
   Type,
 } from "@saltcorn/types/common_types";
-import type { FieldLike } from "@saltcorn/types/base_types";
+import type { GenObj } from "@saltcorn/types/common_types";
 import Field from "./field";
 import User from "./user";
 import FieldRepeat from "./fieldrepeat";
-import type { Layout, Header } from "@saltcorn/types/base_types";
+import type { FieldLike, Layout, Header } from "@saltcorn/types/base_types";
 
 const { is } = require("contractis");
 
@@ -51,7 +51,7 @@ class Form implements AbstractForm {
   // only for workflow and userConfig Forms
   additionalHeaders?: Array<Header>;
   onChange?: string;
-  validator?: (arg0: any) => any;
+  validator?: (arg0: GenObj) => any;
   hasErrors: boolean;
   xhrSubmit: boolean;
   splitPaste: boolean;
@@ -60,6 +60,7 @@ class Form implements AbstractForm {
   req: any;
   tabs?: string;
   __?: any;
+  isWorkflow?: boolean;
 
   /**
    * Constructor
@@ -94,6 +95,7 @@ class Form implements AbstractForm {
     this.onSubmit = o.onSubmit;
     this.tabs = o.tabs;
     this.isOwner = !!o.isOwner;
+    this.isWorkflow = !!o.isWorkflow;
     this.req = o.req;
     this.__ = o.__ || (o.req && o.req.__);
     if (o.validate) this.validate(o.validate);
@@ -200,6 +202,8 @@ class Form implements AbstractForm {
     this.hasErrors = false;
     this.errors = {};
     this.fields.forEach((f) => {
+      // bail out if fieldview is not edit
+      if ((f as any)?.fieldviewObj && !(f as any).fieldviewObj.isEdit) return;
       if (f instanceof Field && f?.input_type === "section_header") return;
       if (hasFieldMembers(f)) {
         if (f.disabled || f.calculated) return;
@@ -213,6 +217,21 @@ class Form implements AbstractForm {
           if (fv && !fv.isEdit) return;
         }
       }
+      const showIfFailed = ([k, criteria]: any[]) => {
+        if (v[k] && typeof criteria === "string" && v[k] != criteria)
+          return true;
+        if (
+          v[k] &&
+          Array.isArray(criteria) &&
+          !criteria.some((target) => target == v[k])
+        )
+          //includes with == instead of ===
+          return true;
+        if (v[k] && criteria === true && !v[k]) return true;
+        if (v[k] && criteria === false && v[k]) return true;
+      };
+      if (f.showIf && Object.entries(f.showIf).some(showIfFailed)) return;
+
       const valres = f.validate(v);
       if (instanceOfErrorMsg(valres)) {
         this.errors[f.name] = valres.error;
@@ -287,6 +306,7 @@ namespace Form {
     req?: any;
     tabs?: any;
     validate?: any;
+    isWorkflow?: boolean;
     __?: any;
   };
 

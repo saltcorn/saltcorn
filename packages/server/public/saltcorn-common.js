@@ -103,15 +103,26 @@ function rep_del(e) {
   var myrep = $(e).closest(".form-repeat");
   var ix = myrep.index();
   var parent = myrep.parent();
-  myrep.remove();
   parent.children().each(function (childix, element) {
     if (childix > ix) {
       reindex(element, childix, childix - 1);
     }
   });
+  myrep.remove();
 }
 
 function reindex(element, oldix, newix) {
+  $(element)
+    .find("input,textarea")
+    .each(function () {
+      $(this).attr("value", $(this).val());
+    });
+  $(element)
+    .find("select")
+    .each(function () {
+      $(this).find(":selected").attr("selected", "selected");
+    });
+
   $(element).html(
     $(element)
       .html()
@@ -307,11 +318,11 @@ function apply_showif() {
         a.label === dynwhere.neutral_label
           ? -1
           : b.label === dynwhere.neutral_label
-          ? 1
-          : (a.label?.toLowerCase?.() || a.label) >
-            (b.label?.toLowerCase?.() || b.label)
-          ? 1
-          : -1
+            ? 1
+            : (a.label?.toLowerCase?.() || a.label) >
+                (b.label?.toLowerCase?.() || b.label)
+              ? 1
+              : -1
       );
       if (!dynwhere.required)
         toAppend.unshift({ label: dynwhere.neutral_label || "", value: "" });
@@ -509,6 +520,7 @@ function apply_showif() {
     var el = $(this);
     var date = new Date(el.attr("datetime"));
     const options = parse(el.attr("locale-date-options"));
+    options.timeZone = "UTC";
     el.text(date.toLocaleDateString(locale, options));
   });
   $("time[locale-date-format]").each(function () {
@@ -585,6 +597,7 @@ function get_form_record(e_in, select_labels) {
       $(e_in).prop("data-join-values", {});
       const keyVals = {};
       for (const { ref, target, refTable } of joinFields) {
+        if (!rec[ref]) continue;
         keyVals[ref] = rec[ref];
         $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
           success: (val) => {
@@ -901,6 +914,29 @@ function doMobileTransforms() {
   );
 }
 
+function validate_expression_elem(target) {
+  const next = target.next();
+  if (next.hasClass("expr-error")) next.remove();
+  const val = target.val();
+  if (target.hasClass("validate-expression-conditional")) {
+    const box = target
+      .closest(".form-namespace")
+      .find(`[name="${target.attr("name")}_formula"]`);
+    if (!box.prop("checked")) return;
+  }
+  if (!val) return;
+  try {
+    const AsyncFunction = Object.getPrototypeOf(
+      async function () {}
+    ).constructor;
+    AsyncFunction("return " + val);
+  } catch (error) {
+    target.after(`<small class="text-danger font-monospace d-block expr-error">
+    ${error.message}
+  </small>`);
+  }
+}
+
 function initialize_page() {
   if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
   const isNode = getIsNode();
@@ -909,29 +945,32 @@ function initialize_page() {
     if (e.keyCode === 13) e.target.blur();
   });
 
-  const validate_expression_elem = (target) => {
+  const validate_identifier_elem = (target) => {
     const next = target.next();
     if (next.hasClass("expr-error")) next.remove();
     const val = target.val();
-    if (target.hasClass("validate-expression-conditional")) {
-      const box = target
-        .closest(".form-namespace")
-        .find(`[name="${target.attr("name")}_formula"]`);
-      if (!box.prop("checked")) return;
-    }
     if (!val) return;
     try {
-      Function("return " + val);
+      Function(val, "return 1");
     } catch (error) {
       target.after(`<small class="text-danger font-monospace d-block expr-error">
-      ${error.message}
+      Invalid identifier
     </small>`);
     }
   };
+  $(".validate-identifier").attr("spellcheck", false);
+  $(".validate-expression").attr("spellcheck", false);
+
+  $(".validate-identifier").bind("input", function (e) {
+    const target = $(e.target);
+    validate_identifier_elem(target);
+  });
+
   $(".validate-expression").bind("input", function (e) {
     const target = $(e.target);
     validate_expression_elem(target);
   });
+
   $(".validate-expression-conditional").each(function () {
     const theInput = $(this);
     theInput
@@ -1084,8 +1123,8 @@ function initialize_page() {
           type === "Integer" || type === "Float"
             ? "number"
             : type === "Bool"
-            ? "checkbox"
-            : "text"
+              ? "checkbox"
+              : "text"
         }" ${
           type === "Float"
             ? `step="${
@@ -1120,7 +1159,11 @@ function initialize_page() {
       decodeURIComponent($(that).attr("data-explainers"))
     );
     var currentVal = explainers[$(that).val()];
-    $("#" + id).html(`<strong>${$(that).val()}</strong>: ${currentVal}`);
+    $("#" + id).html(
+      `<strong>${
+        $(that).find("option:selected").text() || $(that).val()
+      }</strong>: ${currentVal}`
+    );
     if (currentVal) $("#" + id).show();
     else $("#" + id).hide();
   }
@@ -1152,6 +1195,7 @@ function initialize_page() {
           if (_sc_lightmode === "dark") cmOpts.theme = "blackboard";
           const cm = CodeMirror.fromTextArea(el, cmOpts);
           $(el).addClass("codemirror-enabled");
+          if ($(el).hasClass("enlarge-in-card")) enlarge_in_code($(el), cm);
           cm.on(
             "change",
             $.debounce(
@@ -1253,6 +1297,22 @@ function initialize_page() {
 }
 
 $(initialize_page);
+
+function enlarge_in_code($textarea, cm) {
+  const $card = $textarea.closest("div.card");
+  if (!$card.length) return;
+  const cardTop = $card.position().top;
+  const cardHeight = $card.height();
+  const vh = $(window).height();
+  const cmHeight = cm.getWrapperElement().offsetHeight;
+  const newCardHeight = vh - cardTop - 35;
+  if (newCardHeight > cardHeight) {
+    const extending = newCardHeight - cardHeight;
+    cm.setSize("100%", `${cmHeight + extending}px`);
+    cm.refresh();
+    $card.css("min-height", newCardHeight + "px");
+  }
+}
 
 function cancel_inline_edit(e, opts1) {
   var opts = JSON.parse(decodeURIComponent(opts1 || "") || "{}");
@@ -1444,16 +1504,16 @@ function getIsNode() {
   }
 }
 
-function buildToast(txt, type, spin) {
+function buildToast(txt, type, spin, title) {
   const realtype = type === "error" ? "danger" : type;
   const icon =
     realtype === "success"
       ? "fa-check-circle"
       : realtype === "danger"
-      ? "fa-times-circle"
-      : realtype === "warning"
-      ? "fa-exclamation-triangle"
-      : "";
+        ? "fa-times-circle"
+        : realtype === "warning"
+          ? "fa-exclamation-triangle"
+          : "";
   const isNode = getIsNode();
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   return {
@@ -1473,7 +1533,7 @@ function buildToast(txt, type, spin) {
       <div class="toast-header bg-${realtype} text-white py-1 ">
         <i class="fas ${icon} me-2"></i>
         <strong class="me-auto" >
-          ${type}
+          ${title || type}
         </strong>
         ${
           spin
@@ -1523,7 +1583,7 @@ function notifyAlert(note, spin) {
     txt = JSON.stringify(note, null, 2);
   }
 
-  const { id, html } = buildToast(txt, type, spin);
+  const { id, html } = buildToast(txt, type, spin, note.toast_title);
   let $modal = $("#scmodal");
   if ($modal.length && $modal.hasClass("show"))
     $("#modal-toasts-area").append(html);
@@ -1539,7 +1599,7 @@ function emptyAlerts() {
   $("#toasts-area").html("");
 }
 
-function press_store_button(clicked, keepOld) {
+function press_store_button(clicked, keepOld, disable) {
   let btn = clicked;
   if ($(clicked).is("form")) btn = $(clicked).find("button[type=submit]");
   if (keepOld) {
@@ -1547,18 +1607,29 @@ function press_store_button(clicked, keepOld) {
     $(btn).data("old-text", oldText);
   }
   const width = $(btn).width();
-  $(btn).html('<i class="fas fa-spinner fa-spin"></i>').width(width);
+  const height = $(btn).height();
+  $(btn)
+    .html('<i class="fas fa-spinner fa-spin"></i>')
+    .width(width)
+    .height(height);
+  setTimeout(() => {
+    $(btn).prop("disabled", true);
+  }, 50);
 }
 
 function restore_old_button(btnId) {
-  const btn = $(`#${btnId}`);
+  const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
   btn.html(oldText);
-  btn.css({ width: "" });
+  btn.css({ width: "", height: "" }).prop("disabled", false);
   btn.removeData("old-text");
 }
 
-async function common_done(res, viewnameOrElem, isWeb = true) {
+async function common_done(res, viewnameOrElem0, isWeb = true) {
+  const viewnameOrElem =
+    viewnameOrElem0 === "undefined"
+      ? last_route_viewname
+      : viewnameOrElem0 || last_route_viewname;
   const viewname =
     typeof viewnameOrElem === "string"
       ? viewnameOrElem
@@ -1587,16 +1658,19 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
       if (evalres) await common_done(evalres, viewnameOrElem, isWeb);
     }
   };
-  if (res.notify) await handle(res.notify, notifyAlert);
+  if (res.notify)
+    await handle(res.notify, (text) =>
+      notifyAlert({ type: "info", text, toast_title: res.toast_title })
+    );
   if (res.error) {
     if (window._sc_loglevel > 4) console.trace("error response", res.error);
     await handle(res.error, (text) =>
-      notifyAlert({ type: "danger", text: text })
+      notifyAlert({ type: "danger", text, toast_title: res.toast_title })
     );
   }
   if (res.notify_success)
     await handle(res.notify_success, (text) =>
-      notifyAlert({ type: "success", text: text })
+      notifyAlert({ type: "success", text, toast_title: res.toast_title })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
     const form =
@@ -1693,6 +1767,21 @@ async function common_done(res, viewnameOrElem, isWeb = true) {
   if (res.reload_page) {
     (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
   }
+}
+
+function editAllowedAuthByRole(id, event) {  
+  ajax_post_json(
+    `/roleadmin/setrole_allowed_auth_methods/${id}`,
+    {
+      enabled: event.target.checked,
+      method: event.target.value,
+    },
+    {
+      complete() {
+        location.reload();
+      },
+    }
+  );
 }
 
 function reloadEmbeddedEditOwnViews(form, id) {
@@ -2094,7 +2183,7 @@ function update_time_of_week(nm) {
   };
 }
 
-function select_by_view_click(element, event, required) {
+function select_by_view_click(element, event, required, multiple) {
   const isAlreadySelected = $(element).hasClass("selected");
   $(element)
     .closest(".select-by-view-container")
@@ -2125,6 +2214,34 @@ function restrict_options(selector, restriction) {
       if (Array.isArray(restriction))
         if (val && !restriction.find((rid) => rid == val)) $o.remove();
     });
+}
+
+function handle_identical_fields(event) {
+  let form = null;
+  if (event.currentTarget.tagName === "FORM") form = event.currentTarget;
+  else form = $(event.currentTarget).closest("form")[0];
+  if (!form) {
+    console.warn("No form found");
+  } else {
+    const name = event.target.name;
+    const newValue = event.target.value;
+    const tagName = event.target.tagName;
+    const isRadio = event.target.type === "radio";
+    if (tagName === "SELECT" || isRadio) {
+      form.querySelectorAll(`select[name="${name}"]`).forEach((select) => {
+        $(select).val(newValue); //.trigger("change");
+      });
+      form
+        .querySelectorAll(`input[type="radio"][name="${name}"]`)
+        .forEach((input) => {
+          input.checked = input.value === newValue;
+        });
+    } else if (tagName === "INPUT") {
+      form.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+        input.value = newValue;
+      });
+    }
+  }
 }
 
 const observer = new IntersectionObserver(

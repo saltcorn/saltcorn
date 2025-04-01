@@ -1,6 +1,85 @@
 # Notable changes
 
-## 1.1.1 - In beta
+## 1.1.4 - In beta
+
+* Transactional isolation: Most administrative actions and user-run data 
+  manipulation through forms or actions run from the web UI are now
+  transactionally isolated.
+
+* Option to disable CSRF token check from some routes (HTTP settings)
+
+### Fixes
+
+* Fix broken customized reset password email from 1.1.3
+
+## 1.1.3 - Released 25 March 2025
+
+* A POST route for the reload management api (`/scapi/reload`) which takes as body JSON
+  a newly created tenant with `saltcorn create-tenant` CLI (`new_tenant` JSON key) or an
+  existing tenant (`tenant` JSON key) to reload.
+
+* User authentication methods (password, external identity providers) can 
+  now be disabled by role
+
+* Customize reset password email, under Login and Signup settings
+
+* Snapshot and restore code pages; show code page compilation error; expand code 
+  editor height to fill screeen.
+
+* Toast action can now set the title
+
+* List view: Row click can now open in a new tab, in a popup, or can run an action.
+
+* Create basic views: if a table had no views, a button on the table page 
+  allows you to build basic views for the table with a single click
+
+* Workflows: 
+    - UserForm new question type: Multiple checks
+    - Options for Multiple checks and Multiple choice can use interpolations (`{{ }}`)
+      so options can be dynamically generated from the context
+    - Improve UX for editing For Loops.
+    - UserForm multiple choice switch to dropdown if >5 options
+
+### Fixes
+
+* Fix serving JSDoc (Table, File, User links in run_js_code)
+* Destination redirect on login now works on custom login forms and with external identity providers
+* insert_any_row now works from pages
+* Fix various capacitor build errors.
+
+## 1.1.2 - Released 4 March 2025
+
+* Actions:
+    - New action: download_file_to_browser
+    - Workflows on mobile apps
+
+* Email: 
+    - Improve button appearance
+    - All links are absolute
+    - Option to use unauthenticated SMTP
+
+* Builder:
+    - Container background image by file field in Show views
+    - Container opacity setting
+    - Set custom class on links and actions
+    - Fix error toast when saving on Firefox
+    - Set action to be submit action - action run on enter keypress.
+
+* Restore large backups: stream JSON files to database, use system unzip
+
+* Handle multiple fields with same name in Edit.
+
+* Upgrade a large number of dependencies (express, typescript, oclif, pg, webpack, typescript, axios, mjml, svelte). Node.js 18+ is require for this release. 
+
+### Security
+
+* View roles are now strictly enforced, including when views are embedded.
+
+### Fixes
+
+* Much work on primary keys not called "id"
+
+## 1.1.1 - Released 2 February 2025
 
 * Full-text search improvements: 
     - An index for full-text search can now be created. When creating an index in

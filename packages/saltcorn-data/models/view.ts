@@ -10,6 +10,7 @@ import db from "../db";
 import utils from "../utils";
 const {
   removeEmptyStrings,
+  removeEmptyStringsKeepNull,
   stringToJSON,
   InvalidConfiguration,
   satisfies,
@@ -32,6 +33,7 @@ import type {
   Tablely,
   RunExtra,
   ConnectedObjects,
+  Res,
 } from "@saltcorn/types/base_types";
 import type Table from "./table";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
@@ -46,6 +48,8 @@ import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 import { remove_from_menu } from "./config";
+
+declare const saltcorn: any;
 
 /**
  * View Class
@@ -114,8 +118,8 @@ class View implements AbstractView {
       where.id
         ? (v: View) => v.id === +where.id
         : where.name
-        ? (v: View) => v.name === where.name
-        : satisfies(where)
+          ? (v: View) => v.name === where.name
+          : satisfies(where)
     );
     return v
       ? new View({ ...v, configuration: structuredClone(v.configuration) })
@@ -185,6 +189,10 @@ class View implements AbstractView {
     } else return [];
   }
 
+  static async state_refresh() {
+    await require("../db/state").getState().refresh_views();
+  }
+
   /**
    * Get menu label
    * @type {string|undefined}
@@ -212,10 +220,10 @@ class View implements AbstractView {
             table_id: table.id,
           }
         : typeWithDefinedMember<Table>(table, "name")
-        ? { exttable_name: table.name }
-        : typeof table === "string"
-        ? { exttable_name: table }
-        : { table_id: table },
+          ? { exttable_name: table.name }
+          : typeof table === "string"
+            ? { exttable_name: table }
+            : { table_id: table },
       { orderBy: "name", nocase: true, cached: true }
     );
 
@@ -245,10 +253,10 @@ class View implements AbstractView {
         this.table
           ? ` on ${this.table.name}`
           : this.table_name
-          ? ` on ${this.table_name}`
-          : this.exttable_name
-          ? ` on ${this.exttable_name}`
-          : ""
+            ? ` on ${this.table_name}`
+            : this.exttable_name
+              ? ` on ${this.exttable_name}`
+              : ""
       }]`,
     };
   }
@@ -307,7 +315,8 @@ class View implements AbstractView {
     // insert view definition into _sc_views
     const id = await db.insert("_sc_views", row);
     // refresh views list cache
-    await require("../db/state").getState().refresh_views();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_views(true);
     return new View({ id, ...v });
   }
 
@@ -357,7 +366,8 @@ class View implements AbstractView {
     // remove view from menu
     await remove_from_menu({ name: this.name, type: "View" });
     // fresh view list cache
-    await require("../db/state").getState().refresh_views();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_views(true);
   }
 
   /**
@@ -380,7 +390,8 @@ class View implements AbstractView {
     // update view description
     await db.update("_sc_views", v, id);
     // fresh view list cache
-    await require("../db/state").getState().refresh_views();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_views(true);
   }
 
   /**
@@ -447,6 +458,17 @@ class View implements AbstractView {
   }
 
   /**
+   * @returns {string}
+   */
+  async runServerSide(query: any): Promise<string> {
+    const response = await saltcorn.mobileApp.api.apiCall({
+      method: "GET",
+      path: `/view/${this.name}/run`,
+    });
+    return response.data;
+  }
+
+  /**
    * Run (Execute) View
    * @param {any} query
    * @param  {RunExtra} extraArgs
@@ -463,13 +485,9 @@ class View implements AbstractView {
     const table_id = this.exttable_name || this.table_id;
     const role = extraArgs.req?.user?.role_id || 100;
     const state = require("../db/state").getState();
-    if (role > this.min_role)
-      state.log(
-        2,
-        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
-      );
+    if (role > this.min_role) return "";
     try {
-      const viewState = removeEmptyStrings(query);
+      const viewState = removeEmptyStringsKeepNull(query);
       state.log(
         5,
         `Running view ${this.name} with state ${JSON.stringify(viewState)}`
@@ -566,21 +584,26 @@ class View implements AbstractView {
     query: any,
     req: any,
     res: any,
-    remote: boolean = false
+    remote: boolean = false,
+    extra: any = {}
   ): Promise<string | { goto?: string }> {
     const view = this;
     if (isWeb(req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return "";
+    if (!isNode() && this.viewtemplateObj?.name === "WorkflowRoom") {
+      const { isOfflineMode } = require("../db/state").getState().mobileConfig;
+      if (!isOfflineMode) return await this.runServerSide(query);
+    }
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
       const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
         // return contents
-        return await db_page.run(query, { res, req });
+        return await db_page.run(query, { res, req, ...extra });
       }
     }
     const state = view.combine_state_and_default_state(query);
-    const resp = await view.run(state, { res, req }, remote);
+    const resp = await view.run(state, { res, req, ...extra }, remote);
     //console.log(req.headers);
 
     const isModal = req.headers?.saltcornmodalrequest;
@@ -609,11 +632,7 @@ class View implements AbstractView {
     else if (!this.viewtemplateObj) return [];
     const role = extraArgs.req?.user?.role_id || 100;
     const state = require("../db/state").getState();
-    if (role > this.min_role)
-      state.log(
-        2,
-        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
-      );
+    if (role > this.min_role) return [];
     state.log(
       5,
       `runMany view ${this.name} with state ${JSON.stringify(query)}`
@@ -693,11 +712,7 @@ class View implements AbstractView {
       remote = false;
     }
     const role = extraArgs.req.user?.role_id || 100;
-    if (role > this.min_role)
-      state.log(
-        2,
-        `WARNING: running embedded view ${this.name} without role permission. This will be disabled in 1.1.2`
-      );
+    if (role > this.min_role) return "";
     try {
       if (isWeb(extraArgs.req)) this.check_viewtemplate();
       else if (!this.viewtemplateObj) return;
@@ -737,7 +752,7 @@ class View implements AbstractView {
   async runRoute(
     route: string,
     body: any,
-    res: NonNullable<any>,
+    res: Res,
     extraArgs: RunExtra,
     remote: boolean = false
   ): Promise<any> {

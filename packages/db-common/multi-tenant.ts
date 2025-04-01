@@ -5,10 +5,17 @@
 import { sqlsanitize } from "./internal";
 import { AsyncLocalStorage } from "async_hooks";
 
-const is_multi_tenant = true;
+let is_multi_tenant = true;
 let connObj: any = null;
 
-export const tenantNamespace = new AsyncLocalStorage();
+type RequestContext = {
+  tenant: string;
+  client?: any;
+  req?: any;
+};
+
+export const tenantNamespace: AsyncLocalStorage<RequestContext> =
+  new AsyncLocalStorage();
 
 /**
  * set the connection object of the multi-tenant
@@ -16,6 +23,7 @@ export const tenantNamespace = new AsyncLocalStorage();
  */
 export const init = (connObjPara: any): void => {
   connObj = connObjPara;
+  is_multi_tenant = connObjPara.multi_tenant
 };
 
 /**
@@ -36,11 +44,15 @@ export const enable_multi_tenant = (): void => {};
  * @returns {object}
  */
 export const runWithTenant = <Type>(
-  tenant: string,
+  tenantOrMore: string | RequestContext,
   f: () => Promise<Type>
 ): Promise<Type> => {
-  if (!is_multi_tenant) return f();
-  else return tenantNamespace.run(sqlsanitize(tenant).toLowerCase(), f);
+  const tenant0 =
+    typeof tenantOrMore === "string" ? tenantOrMore : tenantOrMore?.tenant;
+  const tenant = sqlsanitize(tenant0).toLowerCase();
+  const client = typeof tenantOrMore === "string" ? null : tenantOrMore.client;
+  const req = typeof tenantOrMore === "string" ? null : tenantOrMore.req;
+  return tenantNamespace.run({ tenant, client, req }, f);
 };
 /**
  * Get tenant schema name
@@ -48,5 +60,11 @@ export const runWithTenant = <Type>(
 export const getTenantSchema = (): string => {
   if (!connObj) throw new Error("The connection object is not initialized");
   const storeVal = tenantNamespace.getStore();
-  return storeVal || connObj.default_schema;
+  return storeVal?.tenant || connObj.default_schema;
+};
+
+export const getRequestContext = (): RequestContext | undefined => {
+  if (!connObj) throw new Error("The connection object is not initialized");
+  const storeVal = tenantNamespace.getStore();
+  return storeVal;
 };

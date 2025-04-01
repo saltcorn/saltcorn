@@ -35,9 +35,11 @@ router.post(
     // todo check that works after where change
     const table = Table.findOne({ name: tableName });
     const role = req.user && req.user.id ? req.user.role_id : 100;
+    const where = { [table.pk_name]: id };
+
     try {
       if (role <= table.min_role_write)
-        await table.deleteRows({ id }, req.user || { role_id: 100 });
+        await table.deleteRows(where, req.user || { role_id: 100 });
       else if (
         (table.ownership_field_id || table.ownership_formula) &&
         req.user
@@ -47,7 +49,7 @@ router.post(
           { forUser: req.user, forPublic: !req.user }
         );
         if (row && table.is_owner(req.user, row))
-          await table.deleteRows({ id }, req.user || { role_id: 100 });
+          await table.deleteRows(where, req.user || { role_id: 100 });
         else req.flash("error", req.__("Not authorized"));
       } else
         req.flash(
@@ -55,6 +57,7 @@ router.post(
           req.__("Not allowed to write to table %s", table.name)
         );
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
     if (req.xhr) res.send("OK");

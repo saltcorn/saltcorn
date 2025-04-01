@@ -6,7 +6,14 @@ import type User from "@saltcorn/data/models/user";
 import utils = require("@saltcorn/data/utils");
 const { safeEnding } = utils;
 import File from "@saltcorn/data/models/file";
-import { copyPrepopulatedDb } from "./common-build-utils";
+import {
+  copyPrepopulatedDb,
+  extractDomain,
+  androidPermissions,
+  androidFeatures,
+} from "./common-build-utils";
+import { writeFileSync } from "fs";
+const { getState } = require("@saltcorn/data/db/state");
 
 import type { IosCfg } from "../mobile-builder";
 
@@ -74,7 +81,10 @@ export class CapacitorHelper {
           this.gradleBuild();
         }
       }
-    } else this.buildWithDocker();
+    } else {
+      this.writeDockerCfg();
+      this.buildWithDocker();
+    }
     if (this.isIOS) this.xCodeBuild();
   }
 
@@ -244,25 +254,47 @@ export class CapacitorHelper {
       );
   }
 
+  /**
+   * write a JSON file with:
+   *   buildType, appVersion, serverURL,
+   *   keyStoreFile, keyStoreAlias, keyStorePassword,
+   *   app permissions
+   */
+  private writeDockerCfg() {
+    const cfg = {
+      buildType: this.buildType,
+      appVersion: this.appVersion,
+      serverDomain: extractDomain(this.serverURL),
+      keyStoreFile: this.keyStoreFile,
+      keyStoreAlias: this.keyStoreAlias,
+      keyStorePassword: this.keyStorePassword,
+      permissions: androidPermissions(),
+      features: androidFeatures(),
+    };
+    const cfgFile = join(this.buildDir, "saltcorn-mobile-cfg.json");
+    writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
+  }
+
   private buildWithDocker() {
     console.log("building with docker");
+    const userParams = [];
+    if (process.getuid && process.getgid)
+      userParams.push("--user", `${process.getuid()}:${process.getgid()}`);
+    else
+      console.log(
+        "Warning: process.getuid and process.getgid not available, using default user"
+      );
+
+    const state = getState();
     const spawnParams = [
       "run",
+      ...userParams,
       "--network",
       "host",
       "-v",
       `${this.buildDir}:/saltcorn-mobile-app`,
-      "saltcorn/capacitor-builder",
+      `saltcorn/capacitor-builder:${state.scVersion}`,
     ];
-    spawnParams.push(this.buildType);
-    spawnParams.push(this.appVersion);
-    spawnParams.push(this.serverURL);
-    if (this.buildType === "release")
-      spawnParams.push(
-        this.keyStoreFile,
-        this.keyStoreAlias,
-        this.keyStorePassword
-      );
     const result = spawnSync("docker", spawnParams, {
       cwd: ".",
       maxBuffer: 1024 * 1024 * 10,

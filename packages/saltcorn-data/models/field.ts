@@ -94,6 +94,7 @@ class Field implements AbstractField {
   table_id?: number;
   table?: AbstractTable | null;
   in_auto_save?: boolean;
+  exclude_from_mobile?: boolean;
 
   // to use 'this[k] = v'
   [key: string]: any;
@@ -169,6 +170,7 @@ class Field implements AbstractField {
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
     this.in_auto_save = o.in_auto_save;
+    this.exclude_from_mobile = o.exclude_from_mobile;
   }
 
   /**
@@ -347,6 +349,7 @@ class Field implements AbstractField {
       formFieldNames!.forEach((nm) => {
         fakeEnv[nm] = "$" + nm;
       });
+      if (user) fakeEnv.$user_id = user.id;
 
       this.attributes.dynamic_where = {
         table: this.reftable_name,
@@ -403,9 +406,16 @@ class Field implements AbstractField {
       if (!this.attributes) this.attributes = {};
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
+
+      const Table = require("./table");
+      const refTable = Table.findOne(this.reftable_name);
+      const pk_name = refTable.pk_name;
+      if (fieldviewObj?.fill_options_restrict && !where)
+        where = fieldviewObj?.fill_options_restrict(this, existingValue);
+
       const whereWithExisting =
         existingValue && where
-          ? { or: [{ id: existingValue }, where] } //TODO pk_name
+          ? { or: [{ [pk_name]: existingValue }, where] } //TODO pk_name
           : where;
 
       const rows = !optionsQuery
@@ -526,10 +536,10 @@ class Field implements AbstractField {
     return this.attributes?.on_delete === "Cascade"
       ? " on delete cascade"
       : this.attributes?.on_delete === "Set null"
-      ? " on delete set null"
-      : this.attributes?.on_delete_cascade //legacy
-      ? " on delete cascade"
-      : "";
+        ? " on delete set null"
+        : this.attributes?.on_delete_cascade //legacy
+          ? " on delete cascade"
+          : "";
   }
   /**
    * @type {string}
@@ -567,8 +577,8 @@ class Field implements AbstractField {
         this.type
           ? JSON.stringify(this.type, null, 2)
           : this.typename
-          ? this.typename
-          : "unknown type"
+            ? this.typename
+            : "unknown type"
       } for field ${this.name} in table ${this.table_id}`
     );
   }
@@ -655,7 +665,9 @@ class Field implements AbstractField {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
     let typeObj = this.type as Type;
-    let fvObj = this.fieldview && typeObj?.fieldviews?.[this.fieldview];
+    let fvObj = this.fieldview
+      ? typeObj?.fieldviews?.[this.fieldview]
+      : undefined;
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
@@ -668,8 +680,11 @@ class Field implements AbstractField {
           !type || (!typeObj.read && !typeObj.readFromFormRecord)
             ? whole_rec[this.form_name]
             : typeObj.readFromFormRecord
-            ? typeObj.readFromFormRecord(whole_rec, this.form_name)
-            : (typeObj as any).read(whole_rec[this.form_name], this.attributes);
+              ? typeObj.readFromFormRecord(whole_rec, this.form_name)
+              : (typeObj as any).read(
+                  whole_rec[this.form_name],
+                  this.attributes
+                );
       }
     }
     if (typeof readval === "undefined" || readval === null)
@@ -758,7 +773,6 @@ class Field implements AbstractField {
         not_null ? "set" : "drop"
       } not null;`
     );
-    await require("../db/state").getState().refresh_tables();
   }
 
   /**
@@ -815,7 +829,7 @@ class Field implements AbstractField {
           new_field!.table!.name
         )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
           new_field.name
-        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"(id)${
+        )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname || "id"}")${
           new_field.on_delete_sql
         }`
       );
@@ -847,7 +861,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(
           new_field!.reftable_name
-        )}"(id)${new_field.on_delete_sql}`
+        )}"("${new_field!.refname}")${new_field.on_delete_sql}`
       );
     } else
       await db.query(
@@ -857,7 +871,9 @@ class Field implements AbstractField {
           this.name
         )}" TYPE ${new_sql_type} ${using} ${def};`
       );
-    await require("../db/state").getState().refresh_tables();
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**
@@ -903,6 +919,7 @@ class Field implements AbstractField {
         calc_joinfields.push({
           targetTable: targetTable.name,
           field: myField.name,
+          targetField: path[1],
         });
       } else if (path.length === 3) {
         const myField = table.getField(path[0]);
@@ -919,10 +936,12 @@ class Field implements AbstractField {
           field: myField.name,
           through: [throughField.name],
           throughTable: [throughTable.name],
+          targetField: path[2],
         });
         calc_joinfields.push({
           targetTable: throughTable.name,
           field: myField.name,
+          targetField: path[1],
         });
       }
     });
@@ -1002,7 +1021,7 @@ class Field implements AbstractField {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           this.table!.name // ensured above
-        )}" rename column "${sqlsanitize(this.name)}" TO ${f.name};`
+        )}" rename column "${sqlsanitize(this.name)}" TO "${f.name}";`
       );
     }
     await db.update("_sc_fields", v, this.id);
@@ -1019,7 +1038,8 @@ class Field implements AbstractField {
       }
     }
     await this.set_calc_joinfields();
-    await state.refresh_tables();
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client) await state.refresh_tables(true);
   }
 
   /**
@@ -1063,30 +1083,26 @@ class Field implements AbstractField {
     }
 
     const schema = db.getTenantSchemaPrefix();
-    const client = db.isSQLite ? db : await db.getClient();
-    await client.query("BEGIN");
 
-    await db.deleteWhere("_sc_fields", { id: this.id }, { client });
+    await db.deleteWhere("_sc_fields", { id: this.id });
 
     if (!this.calculated || this.stored) {
       if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
-      await client.query(
+      await db.query(
         `alter table ${schema}"${sqlsanitize(
           table.name
         )}" drop column "${sqlsanitize(this.name)}"`
       );
       if (table.versioned) {
-        await client.query(
+        await db.query(
           `alter table ${schema}"${sqlsanitize(
             table.name
           )}__history" drop column "${sqlsanitize(this.name)}"`
         );
       }
     }
-    await client.query("COMMIT");
-
-    if (!db.isSQLite) await client.release(true);
-    await require("../db/state").getState().refresh_tables();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
   }
 
   /**
@@ -1108,7 +1124,7 @@ class Field implements AbstractField {
         this.name
       )}_fkey" FOREIGN KEY ("${sqlsanitize(
         this.name
-      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" (id)${
+      )}") references ${schema}"${sqlsanitize(this.reftable_name)}" ("${this.refname}")${
         this.on_delete_sql
       }`;
       await db.query(q);
@@ -1145,7 +1161,7 @@ class Field implements AbstractField {
     }
 
     const sql_type = bare ? f.sql_bare_type : f.sql_type;
-    const table = Table.findOne({ id: f.table_id });
+    const table = fld.table || Table.findOne({ id: f.table_id });
     if (!f.calculated || f.stored) {
       if (typeof f.attributes.default === "undefined") {
         const q = `alter table ${schema}"${sqlsanitize(
@@ -1167,14 +1183,14 @@ class Field implements AbstractField {
       } else {
         const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
-          f.sql_bare_type
-        }) RETURNS void AS $$
+        f.sql_bare_type
+      }) RETURNS void AS $$
       BEGIN
       EXECUTE format('alter table ${schema}"${sqlsanitize(
-          table.name
-        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
-          f.required ? "not null" : ""
-        } default %L', thedef);
+        table.name
+      )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+        f.required ? "not null" : ""
+      } default %L', thedef);
       END;
       $$ LANGUAGE plpgsql;`;
         await db.query(q);
@@ -1212,7 +1228,10 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
-    await require("../db/state").getState().refresh_tables();
+
+    //limited refresh if we do not have a client
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_tables(true);
 
     if (f.calculated && f.stored) {
       const nrows = await table.countRows({});

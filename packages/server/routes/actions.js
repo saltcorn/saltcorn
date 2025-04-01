@@ -15,10 +15,6 @@ const {
 const { ppVal, jsIdentifierValidator } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
-const View = require("@saltcorn/data/models/view");
-const {
-  getForm,
-} = require("@saltcorn/data/base-plugin/viewtemplates/viewable_fields");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const { getTriggerList } = require("./common_lists");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
@@ -29,6 +25,9 @@ const Tag = require("@saltcorn/data/models/tag");
 const db = require("@saltcorn/data/db");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
+const {
+  getWorkflowStepUserForm,
+} = require("@saltcorn/data/web-mobile-commons");
 
 /**
  * @type {object}
@@ -331,6 +330,13 @@ const triggerForm = async (req, trigger) => {
         type: "Bool",
         showIf: { when_trigger: ["API call"] },
       },
+      {
+        name: "_response_mime",
+        label: "Response MIME type",
+        parent_field: "configuration",
+        type: "String",
+        showIf: { when_trigger: ["API call"], _raw_output: true },
+      },
     ],
   });
   // if (trigger) {
@@ -424,7 +430,7 @@ router.post(
   error_catcher(async (req, res) => {
     const form = await triggerForm(req);
 
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,
@@ -446,6 +452,7 @@ router.post(
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
+      await getState().refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${form.values.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: form.values.name,
@@ -471,7 +478,7 @@ router.post(
 
     const form = await triggerForm(req, trigger);
 
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,
@@ -491,6 +498,7 @@ router.post(
           ...form.values.configuration,
         };
       await Trigger.update(trigger.id, form.values); //{configuration: form.values});
+      await getState().refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: trigger.name,
@@ -504,83 +512,6 @@ router.post(
     }
   })
 );
-
-function genWorkflowDiagram(steps) {
-  const stepNames = steps.map((s) => s.name);
-  const nodeLines = steps.map(
-    (s) => `  ${s.mmname}["\`**${s.name}**
-  ${s.action_name}\`"]:::wfstep${s.id}${s.only_if ? "@{ shape: hex }" : ""}`
-  );
-
-  nodeLines.unshift(`  _Start@{ shape: circle, label: "Start" }`);
-  const linkLines = [];
-  let step_ix = 0;
-  for (const step of steps) {
-    if (step.initial_step)
-      linkLines.push(
-        `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
-          step.name
-        }"></i> ---${step.mmname}`
-      );
-    if (stepNames.includes(step.next_step)) {
-      linkLines.push(
-        `  ${step.mmname} -- <i class="fas fa-plus add-btw-nodes btw-nodes-${step.id}-${step.next_step}"></i> --- ${step.mmnext}`
-      );
-    } else if (step.next_step) {
-      let found = false;
-      for (const otherStep of stepNames)
-        if (step.next_step.includes(otherStep)) {
-          linkLines.push(
-            `  ${step.mmname} --> ${WorkflowStep.mmescape(otherStep)}`
-          );
-          found = true;
-        }
-      if (!found) {
-        linkLines.push(
-          `  ${step.mmname}-- <a href="/actions/stepedit/${step.trigger_id}/${step.id}">Error: missing next step in ${step.mmname}</a> ---_End_${step.mmname}`
-        );
-        nodeLines.push(
-          `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-        );
-      }
-    } else if (!step.next_step) {
-      linkLines.push(`  ${step.mmname} --> _End_${step.mmname}`);
-      nodeLines.push(
-        `  _End_${step.mmname}:::wfadd${step.id}@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-      );
-    }
-    if (step.action_name === "ForLoop") {
-      linkLines.push(
-        `  ${step.mmname}-.->${WorkflowStep.mmescape(
-          step.configuration.loop_body_initial_step
-        )}`
-      );
-    }
-    if (step.action_name === "EndForLoop") {
-      // TODO this is not correct. improve.
-      let forStep;
-      for (let i = step_ix; i >= 0; i -= 1) {
-        if (steps[i].action_name === "ForLoop") {
-          forStep = steps[i];
-          break;
-        }
-      }
-      if (forStep) linkLines.push(`  ${step.mmname} --> ${forStep.mmname}`);
-    }
-    step_ix += 1;
-  }
-  if (!steps.length || !steps.find((s) => s.initial_step)) {
-    linkLines.push(`  _Start --> _End`);
-    nodeLines.push(
-      `  _End:::wfaddstart@{ shape: circle, label: "<i class='fas fa-plus with-link'></i>" }`
-    );
-  }
-  const fc =
-    "flowchart TD\n" + nodeLines.join("\n") + "\n" + linkLines.join("\n");
-  //console.log(fc);
-
-  return fc;
-}
 
 const getWorkflowConfig = async (req, id, table, trigger) => {
   let steps = await WorkflowStep.find(
@@ -627,7 +558,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   }
   return (
     copilot_form +
-    pre({ class: "mermaid" }, genWorkflowDiagram(steps)) +
+    pre({ class: "mermaid" }, WorkflowStep.generate_diagram(steps)) +
     script(
       { defer: "defer" },
       `function tryAddWFNodes() {
@@ -640,7 +571,10 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
       const idnext = cls.split(" ").find(c=>c.startsWith("btw-nodes-")).
           substr(10);
       const [idprev, nmnext] = idnext.split("-");
-      location.href = '/actions/stepedit/${trigger.id}?after_step='+idprev+'&before_step='+nmnext;
+      if(cls.includes("init-for-body"))
+        location.href = '/actions/stepedit/${trigger.id}?after_step_for='+idprev+'&before_step='+nmnext;
+      else
+        location.href = '/actions/stepedit/${trigger.id}?after_step='+idprev+'&before_step='+nmnext;
     })
     $("g.node").on("click", (e)=>{
        const $e = $(e.target || e).closest("g.node")
@@ -691,7 +625,8 @@ const getWorkflowStepForm = async (
   req,
   step_id,
   after_step,
-  before_step
+  before_step,
+  after_step_for
 ) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   const actionExplainers = {};
@@ -710,6 +645,7 @@ const getWorkflowStepForm = async (
     try {
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "workflow",
+        req,
       });
 
       for (const field of cfgFields) {
@@ -730,10 +666,12 @@ const getWorkflowStepForm = async (
               ...(field.showIf || {}),
             },
           };
-        if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        //if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
         actionConfigFields.push(cfgFld);
       }
-    } catch {}
+    } catch {
+      //ignore
+    }
   }
   actionConfigFields.push({
     label: "Subcontext",
@@ -807,6 +745,7 @@ const getWorkflowStepForm = async (
         label: req.__("Step name"),
         type: "String",
         required: true,
+        class: "validate-identifier",
         sublabel: "An identifier by which this step can be referred to.",
         validator: jsIdentifierValidator,
       },
@@ -819,6 +758,7 @@ const getWorkflowStepForm = async (
       {
         name: "wf_only_if",
         label: req.__("Only if..."),
+        class: "validate-expression",
         sublabel:
           "Optional JavaScript expression based on the run context. If given, the chosen action will only be executed if evaluates to true",
         type: "String",
@@ -854,9 +794,11 @@ const getWorkflowStepForm = async (
   });
   form.hidden("wf_step_id");
   form.hidden("_after_step");
+  form.hidden("_after_step_for");
   if (before_step) form.values.wf_next_step = before_step;
   if (after_step == "0") form.values.wf_initial_step = true;
   else if (after_step) form.values._after_step = after_step;
+  else if (after_step_for) form.values._after_step_for = after_step_for;
   if (step_id) {
     const step = await WorkflowStep.findOne({ id: step_id });
     if (!step) throw new Error("Step not found");
@@ -888,7 +830,7 @@ const getMultiStepForm = async (req, id, table) => {
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
-    const cfgFields = await getActionConfigFields(action, table);
+    const cfgFields = await getActionConfigFields(action, table, { req });
 
     for (const field of cfgFields) {
       const cfgFld = {
@@ -1110,6 +1052,7 @@ router.get(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        req,
       });
       // create form
       const form = new Form({
@@ -1168,13 +1111,14 @@ router.post(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        req,
       });
       form = new Form({
         action: `/actions/configure/${id}`,
         fields: cfgFields,
       });
     }
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       if (req.xhr) {
         res.status(400).json({ error: form.errorSummary });
@@ -1194,6 +1138,7 @@ router.post(
       await Trigger.update(trigger.id, {
         configuration: { ...trigger.configuration, ...form.values },
       });
+      await getState().refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: trigger.name,
@@ -1224,11 +1169,14 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
+    await db.withTransaction(async () => {
+      await trigger.delete();
+    });
     Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
       entity_type: "Trigger",
       entity_name: trigger.name,
     });
-    await trigger.delete();
+    await getState().refresh_triggers();
     req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
     let redirectTarget =
       req.query.on_done_redirect &&
@@ -1362,6 +1310,7 @@ router.post(
     const { id } = req.params;
     const trig = await Trigger.findOne({ id });
     const newtrig = await trig.clone();
+    await getState().refresh_triggers();
     Trigger.emitEvent("AppChange", `Trigger ${newtrig.name}`, req.user, {
       entity_type: "Trigger",
       entity_name: newtrig.name,
@@ -1381,18 +1330,19 @@ router.post(
  * @function
  */
 router.get(
-  "/stepedit/:trigger_id/:step_id?",
+  "/stepedit/:trigger_id{/:step_id}",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const { trigger_id, step_id } = req.params;
-    const { initial_step, after_step, before_step } = req.query;
+    const { initial_step, after_step, before_step, after_step_for } = req.query;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(
       trigger,
       req,
       step_id,
       after_step,
-      before_step
+      before_step,
+      after_step_for
     );
 
     if (initial_step) form.values.wf_initial_step = true;
@@ -1429,7 +1379,7 @@ router.post(
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(trigger, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       if (req.xhr) {
         res.json({ error: form.errorSummary });
@@ -1460,6 +1410,7 @@ router.post(
       wf_only_if,
       wf_step_id,
       _after_step,
+      _after_step_for,
       ...configuration
     } = form.values;
     Object.entries(configuration).forEach(([k, v]) => {
@@ -1506,7 +1457,21 @@ router.post(
         });
         if (astep) await astep.update({ next_step: step.name });
       }
+      if (_after_step_for && _after_step_for !== "undefined") {
+        const astep = await WorkflowStep.findOne({
+          id: _after_step_for,
+          trigger_id,
+        });
+        if (astep)
+          await astep.update({
+            configuration: {
+              ...step.configuration,
+              loop_body_initial_step: step.name,
+            },
+          });
+      }
     } catch (e) {
+      console.error(e);
       const emsg =
         e.message ===
         'duplicate key value violates unique constraint "workflow_steps_name_uniq"'
@@ -1528,7 +1493,7 @@ router.post(
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     await WorkflowStep.deleteForTrigger(trigger.id);
-    const description = req.body.description;
+    const description = (req.body || {}).description;
     await Trigger.update(trigger.id, { description });
     const steps = await getState().functions.copilot_generate_workflow.run(
       description,
@@ -1553,7 +1518,9 @@ router.post(
   error_catcher(async (req, res) => {
     const { step_id } = req.params;
     const step = await WorkflowStep.findOne({ id: step_id });
-    await step.delete(true);
+    await db.withTransaction(async () => {
+      await step.delete(true);
+    });
     res.json({ goto: `/actions/configure/${step.trigger_id}` });
   })
 );
@@ -1575,13 +1542,16 @@ router.get(
 
     const wfTable = mkTable(
       [
-        { label: "Trigger", key: (run) => trNames[run.trigger_id] },
-        { label: "Started", key: (run) => localeDateTime(run.started_at) },
+        { label: req.__("Trigger"), key: (run) => trNames[run.trigger_id] },
         {
-          label: "Updated",
+          label: req.__("Started"),
+          key: (run) => localeDateTime(run.started_at),
+        },
+        {
+          label: req.__("Updated"),
           key: (run) => localeDateTime(run.status_updated_at),
         },
-        { label: "Status", key: "status" },
+        { label: req.__("Status"), key: "status" },
         {
           label: "",
           key: (run) => {
@@ -1700,7 +1670,7 @@ router.get(
       req,
       active_sub: "Workflow runs",
       page_title: req.__(`Workflow runs`),
-      sub2_page: trigger.name,
+      sub2_page: trigger?.name,
       contents: {
         above: [
           {
@@ -1712,15 +1682,16 @@ router.get(
                 { class: "table table-condensed w-unset" },
                 tbody(
                   tr(th("Run ID"), td(run.id)),
-                  tr(
-                    th("Trigger"),
-                    td(
-                      a(
-                        { href: `/actions/configure/${trigger.id}` },
-                        trigger.name
+                  trigger &&
+                    tr(
+                      th("Trigger"),
+                      td(
+                        a(
+                          { href: `/actions/configure/${trigger.id}` },
+                          trigger.name
+                        )
                       )
-                    )
-                  ),
+                    ),
                   tr(th("Started at"), td(localeDateTime(run.started_at))),
                   tr(th("Started by user"), td(run.started_by)),
                   tr(th("Status"), td(run.status)),
@@ -1764,41 +1735,6 @@ router.post(
   })
 );
 
-const getWorkflowStepUserForm = async (run, trigger, step, req) => {
-  if (step.action_name === "EditViewForm") {
-    const view = View.findOne({ name: step.configuration.edit_view });
-    const table = Table.findOne({ id: view.table_id });
-    const form = await getForm(
-      table,
-      view.name,
-      view.configuration.columns,
-      view.configuration.layout,
-      null,
-      req
-    );
-    await form.fill_fkey_options(false, undefined, req?.user);
-    form.action = `/actions/fill-workflow-form/${run.id}`;
-    if (run.context[step.configuration.response_variable])
-      Object.assign(
-        form.values,
-        run.context[step.configuration.response_variable]
-      );
-
-    return form;
-  }
-
-  let blurb = run.wait_info.output || step.configuration?.form_header || "";
-  if (run.wait_info.markdown && run.wait_info.output) blurb = md.render(blurb);
-  const form = new Form({
-    action: `/actions/fill-workflow-form/${run.id}`,
-    submitLabel: run.wait_info.output ? req.__("OK") : req.__("Submit"),
-    blurb,
-    formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
-    fields: await run.userFormFields(step),
-  });
-  return form;
-};
-
 router.get(
   "/fill-workflow-form/:id",
   error_catcher(async (req, res) => {
@@ -1820,11 +1756,17 @@ router.get(
       trigger_id: trigger.id,
       name: run.current_step_name,
     });
-
-    const form = await getWorkflowStepUserForm(run, trigger, step, req);
-    if (req.xhr) form.xhrSubmit = true;
-    const title = run.wait_info.output ? "Workflow output" : "Fill form";
-    res.sendWrap(title, renderForm(form, req.csrfToken()));
+    try {
+      const form = await getWorkflowStepUserForm(run, trigger, step, req);
+      if (req.xhr) form.xhrSubmit = true;
+      const title = run.wait_info.output ? "Workflow output" : "Fill form";
+      res.sendWrap(title, renderForm(form, req.csrfToken()));
+    } catch (e) {
+      console.error(e);
+      await run.markAsError(e, step, req.user);
+      const title = req.__("Error running workflow");
+      res.sendWrap(title, renderForm(e.message, req.csrfToken()));
+    }
   })
 );
 
@@ -1850,7 +1792,7 @@ router.post(
     });
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       const title = "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));
@@ -1864,8 +1806,8 @@ router.post(
       if (req.xhr) {
         const retDirs = await run.popReturnDirectives();
 
-        if (runres?.popup) retDirs.popup = runres.popup;
-        res.json({ success: "ok", ...retDirs });
+        //if (runres?.popup) retDirs.popup = runres.popup;
+        res.json({ success: "ok", ...runres, ...retDirs });
       } else {
         if (run.context.goto) res.redirect(run.context.goto);
         else res.redirect("/");
@@ -1927,7 +1869,6 @@ interactive workflows for not logged in
 actions can declare which variables they inject into scope
 
 show unconnected steps
-why is code not initialising
 drag and drop edges
 
 */

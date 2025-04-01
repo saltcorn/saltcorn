@@ -85,6 +85,7 @@ const Text = ({
   icon,
   font,
   style,
+  customClass,
 }) => {
   const {
     connectors: { connect, drag },
@@ -103,7 +104,7 @@ const Text = ({
     <div
       className={`${
         isBlock(block, inline, textStyle) ? "d-block" : "d-inline-block"
-      } ${Array.isArray(textStyle) ? textStyle.join(" ") : textStyle} is-text ${
+      } ${customClass || ""} ${Array.isArray(textStyle) ? textStyle.join(" ") : textStyle} is-text ${
         isFormula.text ? "font-monospace" : ""
       } ${selected ? "selected-node" : ""}`}
       ref={(dom) => connect(drag(dom))}
@@ -160,6 +161,7 @@ const TextSettings = () => {
     isFormula: node.data.props.isFormula,
     textStyle: node.data.props.textStyle,
     labelFor: node.data.props.labelFor,
+    customClass: node.data.props.customClass,
     icon: node.data.props.icon,
     font: node.data.props.font,
     style: node.data.props.style,
@@ -175,6 +177,7 @@ const TextSettings = () => {
     icon,
     font,
     style,
+    customClass,
   } = node;
   const { mode, fields, icons } = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
@@ -204,6 +207,7 @@ const TextSettings = () => {
           className="text-to-display form-control"
           value={text}
           onChange={setAProp("text")}
+          spellCheck={false}
         />
       ) : (
         <ErrorBoundary>
@@ -298,6 +302,18 @@ const TextSettings = () => {
             setProp={setProp}
             isStyle={true}
           />
+          <tr>
+            <td>Class</td>
+            <td>
+              <input
+                type="text"
+                value={customClass}
+                className="form-control"
+                onChange={setAProp("customClass")}
+                spellCheck={false}
+              />
+            </td>
+          </tr>
           <SettingsRow
             field={{
               name: "color",

@@ -331,6 +331,7 @@
     on:drop={handleDrop}
     ondragover="return false"
     class="row"
+    role="region"
   >
     <div class="col-8">
       <div>
@@ -383,7 +384,7 @@
       </div>
 
       <div class="filelist">
-        <table class="table table-sm">
+        <table class="table table-sm table-hover">
           <thead>
             <tr>
               <th />

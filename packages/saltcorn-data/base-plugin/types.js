@@ -74,8 +74,8 @@ const number_slider = (type) => ({
         type === "Integer"
           ? 1
           : attrs.decimal_places
-          ? Math.pow(10, -attrs.decimal_places)
-          : "0.01",
+            ? Math.pow(10, -attrs.decimal_places)
+            : "0.01",
       id: `input${text_attr(nm)}`,
       ...(isdef(attrs.max) && { max: attrs.max }),
       ...(isdef(attrs.min) && { min: attrs.min }),
@@ -107,8 +107,8 @@ const range_interval = (type) => ({
               value: text_attr(state[`_gte_${nm}`]),
             }
           : isdef(attrs.min)
-          ? { value: text_attr(attrs.min) }
-          : {}),
+            ? { value: text_attr(attrs.min) }
+            : {}),
         ...(isdef(attrs.max) && { max: attrs.max }),
         ...(isdef(attrs.min) && { min: attrs.min }),
         type: "range",
@@ -122,8 +122,8 @@ const range_interval = (type) => ({
               value: text_attr(state[`_lte_${nm}`]),
             }
           : isdef(attrs.max)
-          ? { value: text_attr(attrs.max) }
-          : {}),
+            ? { value: text_attr(attrs.max) }
+            : {}),
         ...(isdef(attrs.max) && { max: attrs.max }),
         ...(isdef(attrs.min) && { min: attrs.min }),
         type: "range",
@@ -192,7 +192,7 @@ const progress_bar = (type) => ({
       name: "show_label",
       type: "Bool",
       label: "Show value",
-      showif: { radial: true },
+      showIf: { radial: true },
     },
   ],
   isEdit: false,
@@ -285,7 +285,12 @@ const show_with_html = {
   run: (v, req, attrs = {}) => {
     const ctx = { ...getState().eval_context };
     ctx.it = v;
-    const rendered = interpolate(attrs?.code, ctx, req?.user);
+    const rendered = interpolate(
+      attrs?.code,
+      ctx,
+      req?.user,
+      "show_with_html code"
+    );
     return rendered;
   },
 };
@@ -552,18 +557,18 @@ const getStrOptions = (v, optsStr, exclude_values_string) => {
               )
             )
           : o && typeof o.name !== "undefined" && typeof o.label !== "undefined"
-          ? option(
-              {
-                value: o.name,
-                ...((eqStr(v, o.name) ||
-                  (ix === 0 && typeof v === "undefined" && o.disabled)) && {
-                  selected: true,
-                }),
-                ...(o.disabled && { disabled: true }),
-              },
-              o.label
-            )
-          : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
+            ? option(
+                {
+                  value: o.name,
+                  ...((eqStr(v, o.name) ||
+                    (ix === 0 && typeof v === "undefined" && o.disabled)) && {
+                    selected: true,
+                  }),
+                  ...(o.disabled && { disabled: true }),
+                },
+                o.label
+              )
+            : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
 };
 const join_fields_in_formula = (fml) => {
@@ -749,6 +754,8 @@ const string = {
         label: "Options",
         type: "String",
         required: false,
+        copilot_description:
+          'Use this to restrict your field to a list of options (separated by commas). For instance, enter "Red, Green, Blue" here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.',
         sublabel:
           'Use this to restrict your field to a list of options (separated by commas). For instance, enter <kbd class="fst-normal">Red, Green, Blue</kbd> here if the permissible values are Red, Green and Blue. Leave blank if the string can hold any value.',
         attributes: { autofocus: true },
@@ -826,8 +833,8 @@ const string = {
     typeof options === "string"
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
-      ? is.str
-      : is.one_of(options.map((o) => (typeof o === "string" ? o : o.name))),
+        ? is.str
+        : is.one_of(options.map((o) => (typeof o === "string" ? o : o.name))),
   /**
    * @namespace
    * @category saltcorn-data
@@ -1088,53 +1095,57 @@ const string = {
                       ...getStrOptions(v, attrs.options, attrs.exclude_values),
                     ]
                   : required || attrs.force_required
-                  ? getStrOptions(v, attrs.options, attrs.exclude_values)
-                  : [
-                      option({ value: "" }, attrs.neutral_label || ""),
-                      ...getStrOptions(v, attrs.options, attrs.exclude_values),
-                    ]
+                    ? getStrOptions(v, attrs.options, attrs.exclude_values)
+                    : [
+                        option({ value: "" }, attrs.neutral_label || ""),
+                        ...getStrOptions(
+                          v,
+                          attrs.options,
+                          attrs.exclude_values
+                        ),
+                      ]
               )
           : attrs.options
-          ? none_available(required)
-          : attrs.calcOptions
-          ? select(
-              {
-                class: ["form-control", "form-select", cls],
-                name: text_attr(nm),
-                disabled: attrs.disabled,
-                "data-fieldname": text_attr(field.name),
-                id: `input${text_attr(nm)}`,
-                onChange: attrs.onChange,
-                onBlur: attrs.onChange,
-                autocomplete: "off",
-                "data-selected": v,
-                "data-calc-options": encodeURIComponent(
-                  JSON.stringify(attrs.calcOptions)
-                ),
-              },
-              option({ value: "" }, "")
-            )
-          : input({
-              type: attrs.input_type || "text",
-              disabled: attrs.disabled,
-              readonly: attrs.readonly,
-              class: ["form-control", cls],
-              placeholder: attrs.placeholder,
-              onChange: attrs.onChange,
-              "data-fieldname": text_attr(field.name),
-              name: text_attr(nm),
-              required: !!(required || attrs.force_required),
-              maxlength: isdef(attrs.max_length) && attrs.max_length,
-              minlength: isdef(attrs.min_length) && attrs.min_length,
-              pattern: !!attrs.regexp && attrs.regexp,
-              autofocus: !!attrs.autofocus,
-              title:
-                !!attrs.re_invalid_error &&
-                !!attrs.regexp &&
-                attrs.re_invalid_error,
-              id: `input${text_attr(nm)}`,
-              ...(isdef(v) && { value: text_attr(v) }),
-            }),
+            ? none_available(required)
+            : attrs.calcOptions
+              ? select(
+                  {
+                    class: ["form-control", "form-select", cls],
+                    name: text_attr(nm),
+                    disabled: attrs.disabled,
+                    "data-fieldname": text_attr(field.name),
+                    id: `input${text_attr(nm)}`,
+                    onChange: attrs.onChange,
+                    onBlur: attrs.onChange,
+                    autocomplete: "off",
+                    "data-selected": v,
+                    "data-calc-options": encodeURIComponent(
+                      JSON.stringify(attrs.calcOptions)
+                    ),
+                  },
+                  option({ value: "" }, "")
+                )
+              : input({
+                  type: attrs.input_type || "text",
+                  disabled: attrs.disabled,
+                  readonly: attrs.readonly,
+                  class: ["form-control", cls],
+                  placeholder: attrs.placeholder,
+                  onChange: attrs.onChange,
+                  "data-fieldname": text_attr(field.name),
+                  name: text_attr(nm),
+                  required: !!(required || attrs.force_required),
+                  maxlength: isdef(attrs.max_length) && attrs.max_length,
+                  minlength: isdef(attrs.min_length) && attrs.min_length,
+                  pattern: !!attrs.regexp && attrs.regexp,
+                  autofocus: !!attrs.autofocus,
+                  title:
+                    !!attrs.re_invalid_error &&
+                    !!attrs.regexp &&
+                    attrs.re_invalid_error,
+                  id: `input${text_attr(nm)}`,
+                  ...(isdef(v) && { value: text_attr(v) }),
+                }),
     },
     fill_formula_btn: {
       isEdit: true,
@@ -1938,10 +1949,15 @@ const float = {
   },
   /** @type {object[]} */
   attributes: [
-    { name: "min", type: "Float", required: false },
-    { name: "max", type: "Float", required: false },
-    { name: "units", type: "String", required: false },
-    { name: "decimal_places", type: "Integer", required: false },
+    { name: "min", label: "Minimum", type: "Float", required: false },
+    { name: "max", label: "Maximum", type: "Float", required: false },
+    { name: "units", label: "Units", type: "String", required: false },
+    {
+      name: "decimal_places",
+      label: "Decimal places",
+      type: "Integer",
+      required: false,
+    },
   ],
   /**
    * @param {object} v
@@ -2038,8 +2054,8 @@ const date = {
         return typeof d === "string" || typeof d === "number"
           ? shower(new Date(d), {}, local)
           : d && d.toISOString
-          ? shower(d, {}, local)
-          : "";
+            ? shower(d, {}, local)
+            : "";
       },
     },
     /**
@@ -2056,8 +2072,8 @@ const date = {
         return typeof d === "string" || typeof d === "number"
           ? localeDate(new Date(d), {}, locale)
           : d && d.toISOString
-          ? localeDate(d, {}, local)
-          : "";
+            ? localeDate(d, {}, local)
+            : "";
       },
     },
     /**
@@ -2252,16 +2268,16 @@ const bool = {
         typeof v === "undefined" || v === null
           ? ""
           : req.generate_email
-          ? v
-            ? "&#10004;"
-            : "&#10008;"
-          : v
-          ? i({
-              class: "fas fa-lg fa-check-circle text-success",
-            })
-          : i({
-              class: "fas fa-lg fa-times-circle text-danger",
-            }),
+            ? v
+              ? "&#10004;"
+              : "&#10008;"
+            : v
+              ? i({
+                  class: "fas fa-lg fa-check-circle text-success",
+                })
+              : i({
+                  class: "fas fa-lg fa-times-circle text-danger",
+                }),
     },
     /**
      * @namespace
@@ -2275,8 +2291,8 @@ const bool = {
         v === true
           ? input({ disabled: true, type: "checkbox", checked: true })
           : v === false
-          ? input({ type: "checkbox", disabled: true })
-          : "",
+            ? input({ type: "checkbox", disabled: true })
+            : "",
     },
     /**
      * @namespace
@@ -2387,8 +2403,8 @@ const bool = {
           ? !(!isdef(v) || v === null)
             ? ""
             : v
-            ? "T"
-            : "F"
+              ? "T"
+              : "F"
           : input({
               type: "hidden",
               "data-fieldname": text_attr(field.name),
@@ -2410,16 +2426,16 @@ const bool = {
                   !isdef(v) || v === null
                     ? "btn-secondary"
                     : v
-                    ? "btn-success"
-                    : "btn-danger",
+                      ? "btn-success"
+                      : "btn-danger",
                 ],
                 id: `trib${text_attr(nm)}`,
               },
               !isdef(v) || v === null
                 ? attrs?.null_label || "?"
                 : v
-                ? attrs?.true_label || "T"
-                : attrs?.false_label || "F"
+                  ? attrs?.true_label || "T"
+                  : attrs?.false_label || "F"
             ),
     },
   },

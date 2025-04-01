@@ -238,7 +238,7 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: ["foo bar"],
-      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ plainto_tsquery('english', $1)`,
+      where: `where to_tsvector('english', coalesce("description",'') || ' ' || coalesce("name",'')) @@ plainto_tsquery('english', $1)`,
     });
     expect(
       mkWhere({
@@ -246,7 +246,7 @@ describe("mkWhere", () => {
       })
     ).toStrictEqual({
       values: ["foo:*"],
-      where: `where to_tsvector('english', coalesce("name",'') || ' ' || coalesce("description",'')) @@ to_tsquery('english', $1)`,
+      where: `where to_tsvector('english', coalesce("description",'') || ' ' || coalesce("name",'')) @@ to_tsquery('english', $1)`,
     });
     expect(
       mkWhere(
@@ -260,7 +260,7 @@ describe("mkWhere", () => {
       )
     ).toStrictEqual({
       values: ["foo"],
-      where: `where coalesce("name",'') || ' ' || coalesce("description",'') LIKE '%' || ? || '%'`,
+      where: `where coalesce("description",'') || ' ' || coalesce("name",'') LIKE '%' || ? || '%'`,
     });
   });
   it("should query subselect", () => {
@@ -307,7 +307,7 @@ describe("mkWhere", () => {
     ).toStrictEqual({
       values: [7],
       where:
-        'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2.id = ss1."bar" where "ss2"."baz"=$1)',
+        'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2."id" = ss1."bar" where "ss2"."baz"=$1)',
     });
     expect(
       mkWhere({
@@ -405,6 +405,26 @@ describe("mkWhere", () => {
       where: 'where (("bar"=$1 or "bar"=$2) and ("foo"=$3 or "foo" is null))',
     });
   });
+  it("should false", () => {
+    expect(mkWhere({ _false: true })).toStrictEqual({
+      values: [],
+      where: "where FALSE",
+    });
+  });
+  it("equate strings", () => {
+    expect(mkWhere({ eq: ["ALL", "ALL"] })).toStrictEqual({
+      values: ["ALL", "ALL"],
+      where: "where $1::text=$2::text",
+    });
+  });
+  it("equate strings in or", () => {
+    expect(
+      mkWhere({ or: [{ eq: ["ALL", Symbol("name")] }, { eq: ["ALL", "ALL"] }] })
+    ).toStrictEqual({
+      values: ["ALL", "ALL", "ALL"],
+      where: 'where ($1::text="name" or $2::text=$3::text)',
+    });
+  });
 });
 
 describe("sqlsanitize", () => {
@@ -419,6 +439,9 @@ describe("sqlsanitize", () => {
   });
   it("should remove chars from invalid name", () => {
     expect(sqlsanitize("ffoo--oo--uu")).toBe("ffoooouu");
+    expect(sqlsanitize("ffoo--oo;-uu")).toBe("ffoooouu");
+    expect(sqlsanitize('ffoo-"oo--uu')).toBe("ffoooouu");
+    expect(sqlsanitize('ffoo-"oo-"uu')).toBe("ffoooouu");
   });
   it("should remove chars from invalid symbol", () => {
     expect(sqlsanitize(Symbol("ffoo--oo--uu"))).toBe("ffoooouu");

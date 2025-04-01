@@ -540,7 +540,6 @@ module.exports = {
   run,
   get_state_fields,
   /** @type {boolean} */
-  display_state_form: false,
   routes: { submit_msg_ajax, ack_read, fetch_older_msg },
   /** @type {boolean} */
   noAutoTest: true,
@@ -663,7 +662,7 @@ module.exports = {
         null,
         req
       );
-      form.validate(req.body);
+      form.validate(req.body || {});
       if (!form.hasErrors) {
         const use_fixed = await fill_presets(msgtable, req, fixed);
         const row = {

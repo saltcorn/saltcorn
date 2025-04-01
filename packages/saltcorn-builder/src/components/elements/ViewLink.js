@@ -74,7 +74,7 @@ const ViewLink = ({
   const displabel = label || (names.length > 1 ? names[1] : names[0]);
   return (
     <span
-      className={`${textStyle} ${inModal ? "btn btn-secondary btn-sm" : ""} ${
+      className={`${textStyle} ${
         selected ? "selected-node" : "is-builder-link"
       } ${link_style} ${link_size || ""} ${block ? "d-block" : ""}`}
       ref={(dom) => connect(drag(dom))}
@@ -114,6 +114,7 @@ const ViewLinkSettings = () => {
     link_size: node.data.props.link_size,
     link_icon: node.data.props.link_icon,
     link_title: node.data.props.link_title,
+    link_class: node.data.props.link_class,
     textStyle: node.data.props.textStyle,
     link_bgcol: node.data.props.link_bgcol,
     link_bordercol: node.data.props.link_bordercol,
@@ -183,7 +184,7 @@ const ViewLinkSettings = () => {
     relationsCache[options.tableName][safeViewName]
   );
   let safeRelation = null;
-  if (relation) {
+  if (relation && subView) {
     const subView = views.find((view) => view.name === safeViewName);
     const subTbl = tables.find((tbl) => tbl.id === subView.table_id);
     safeRelation = new Relation(
@@ -314,6 +315,7 @@ const ViewLinkSettings = () => {
                 className="viewlink-label form-control"
                 value={extra_state_fml}
                 onChange={setAProp("extra_state_fml")}
+                spellCheck={false}
               />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">
@@ -403,6 +405,7 @@ ViewLink.craft = {
       "link_icon",
       "link_size",
       "link_title",
+      "link_class",
       "link_target_blank",
       "link_bgcol",
       "link_bordercol",

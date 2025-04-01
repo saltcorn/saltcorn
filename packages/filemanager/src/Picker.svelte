@@ -159,7 +159,7 @@
       {/if}
       <!-- files and directories -->
       <div class="filelist">
-        <table class="table table-sm">
+        <table class="table table-sm table-hover">
           <!-- meta headers -->
           <thead>
             <tr>

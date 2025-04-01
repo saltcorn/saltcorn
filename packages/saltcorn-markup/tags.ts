@@ -9,7 +9,7 @@ import escape from "escape-html";
 import htmlTags from "html-tags";
 import voidHtmlTags from "html-tags/void";
 
-const voidHtmlTagsSet = new Set(voidHtmlTags);
+const voidHtmlTagsSet = new Set<string>(voidHtmlTags);
 
 //https://stackoverflow.com/a/59220393
 /**

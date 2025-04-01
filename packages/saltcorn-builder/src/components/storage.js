@@ -160,6 +160,7 @@ const layoutToNodes = (
           inline={segment.inline || false}
           textStyle={segment.textStyle || ""}
           labelFor={segment.labelFor || ""}
+          customClass={segment.customClass || ""}
           style={segment.style || {}}
           icon={segment.icon}
           font={segment.font || ""}
@@ -194,6 +195,7 @@ const layoutToNodes = (
           action_size={segment.action_size || ""}
           action_icon={segment.action_icon || ""}
           action_title={segment.action_title || ""}
+          action_class={segment.action_class || ""}
           action_bgcol={segment.action_bgcol || ""}
           action_bordercol={segment.action_bordercol || ""}
           action_textcol={segment.action_textcol || ""}
@@ -202,6 +204,7 @@ const layoutToNodes = (
           step_action_names={segment.step_action_names || ""}
           confirm={segment.confirm}
           spinner={segment.spinner}
+          is_submit_action={segment.is_submit_action}
           configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
@@ -245,8 +248,8 @@ const layoutToNodes = (
             (segment.block === true
               ? "block"
               : segment.block === false
-              ? "inline-block"
-              : "block")
+                ? "inline-block"
+                : "block")
           }
           fullPageWidth={
             typeof segment.fullPageWidth === "undefined"
@@ -254,6 +257,7 @@ const layoutToNodes = (
               : segment.fullPageWidth
           }
           bgFileId={segment.bgFileId}
+          bgField={segment.bgField}
           imageSize={segment.imageSize || "contain"}
           imgResponsiveWidths={segment.imgResponsiveWidths}
           bgType={segment.bgType || "None"}
@@ -310,6 +314,7 @@ const layoutToNodes = (
           rows={segment.rows || 2}
           columns={segment.columns || 2}
           bs_style={segment.bs_style || false}
+          customClass={segment.customClass}
           bs_small={segment.bs_small || false}
           bs_striped={segment.bs_striped || false}
           bs_bordered={segment.bs_bordered || false}
@@ -353,6 +358,7 @@ const layoutToNodes = (
           style={segment.style || {}}
           gx={segment.gx}
           gy={segment.gy}
+          customClass={segment.customClass}
           vAligns={segment.vAligns}
           colClasses={segment.colClasses}
           colStyles={segment.colStyles}
@@ -388,6 +394,7 @@ const layoutToNodes = (
             style={segment.style || {}}
             gx={segment.gx}
             gy={segment.gy}
+            customClass={segment.customClass}
             vAligns={segment.vAligns}
             colClasses={segment.colClasses}
             colStyles={segment.colStyles}
@@ -543,6 +550,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
           display: node.props.display,
           fullPageWidth: node.props.fullPageWidth || false,
           bgFileId: node.props.bgFileId,
+          bgField: node.props.bgField,
           bgType: node.props.bgType,
           imageSize: node.props.imageSize,
           imgResponsiveWidths: node.props.imgResponsiveWidths,
@@ -576,6 +584,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         textStyle: node.props.textStyle,
         isFormula: node.props.isFormula,
         labelFor: node.props.labelFor,
+        customClass: node.props.customClass,
         style: node.props.style,
         icon: node.props.icon,
         font: node.props.font,
@@ -596,6 +605,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         columns,
         contents,
         bs_style: node.props.bs_style,
+        customClass: node.props.customClass,
         bs_small: node.props.bs_small,
         bs_striped: node.props.bs_striped,
         bs_bordered: node.props.bs_bordered,
@@ -610,6 +620,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoints: node.props.breakpoints,
+        customClass: node.props.customClass,
         gx: +node.props.gx,
         gy: +node.props.gy,
         aligns: node.props.aligns,
@@ -682,12 +693,14 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         action_size: node.props.action_size,
         action_icon: node.props.action_icon,
         action_title: node.props.action_title,
+        action_class: node.props.action_class,
         action_bgcol: node.props.action_bgcol,
         action_bordercol: node.props.action_bordercol,
         action_textcol: node.props.action_textcol,
         minRole: node.props.minRole,
         confirm: node.props.confirm,
         spinner: node.props.spinner,
+        is_submit_action: node.props.is_submit_action,
         nsteps: node.props.nsteps,
         step_only_ifs: node.props.step_only_ifs,
         step_action_names: node.props.step_action_names,
@@ -700,7 +713,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         block: node.props.block,
         configuration: node.props.configuration,
         confirm: node.props.confirm,
-        spinner: node.props.spinner,
+        is_submit_action: node.props.is_submit_action,
         action_name: node.props.name,
         ...(node.props.name !== "Clear" && node.props.action_row_variable
           ? {
@@ -713,7 +726,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         action_size: node.props.action_size,
         action_icon: node.props.action_icon,
         action_title: node.props.action_title,
+        action_class: node.props.action_class,
         action_bgcol: node.props.action_bgcol,
+        spinner: node.props.spinner,
         action_bordercol: node.props.action_bordercol,
         action_textcol: node.props.action_textcol,
         nsteps: node.props.nsteps,

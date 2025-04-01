@@ -47,7 +47,7 @@ const test_person_table = async (persons: Table) => {
   });
 
   assertIsSet(row1);
-  expect(persons.is_owner({ id: 1 }, row1)).toBe(true);
+  expect(persons.is_owner({ id: 1, role_id: 100 }, row1)).toBe(true);
   const owned_row = await persons.getJoinedRow({
     where: { id: row1.id },
 
@@ -333,10 +333,75 @@ describe("Table with row ownership formula", () => {
     await persons.deleteRows({ lastname: "Tim" }, owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
 
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      owner: 1,
+    });
+    expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({
+      owner: 3,
+    });
+    await persons.delete();
+  });
+  it("should create and delete table with reversed formula", async () => {
+    const persons = await Table.create("TableOwnedFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    const owner = await Field.create({
+      table: persons,
+      name: "owner",
+      type: "Key to users",
+    });
+
+    const own_opts = await Table.findOne({
+      name: "TableOwnedFml",
+    })?.ownership_options();
+    expect(own_opts?.length).toBe(1);
+    expect(own_opts?.[0].label).toBe("owner");
+    expect(own_opts?.[0].value).toBe(`${owner.id}`);
+    await persons.update({ ownership_formula: "owner===user.id" });
+
+    await persons.insertRow({ lastname: "Joe", age: 12 });
+    await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
+    await test_person_table(persons);
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      { role_id: 100 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", owner: owner_user.id },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.deleteRows({ lastname: "Tim" }, non_owner_user);
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.deleteRows({ lastname: "Tim" }, owner_user);
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      owner: 1,
+    });
+    expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({
+      owner: 3,
+    });
+
     await persons.delete();
   });
 });
-describe("Table with row ownership joined formula", () => {
+describe("Table with row ownership joined formula nocalc", () => {
   it("should create and delete table", async () => {
     const department = await Table.create("_Department");
     await Field.create({
@@ -380,6 +445,96 @@ describe("Table with row ownership joined formula", () => {
     await persons.update({
       ownership_formula: "department?.manager===user.id",
     });
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      department: {
+        inSelect: {
+          field: "id",
+          table: "_Department",
+          tenant: "public",
+          where: { manager: 1 },
+        },
+      },
+    });
+
+    await department.insertRow({ name: "Accounting", manager: 1 });
+    await department.insertRow({ name: "HR", manager: 2 });
+
+    await persons.insertRow({ lastname: "Joe", age: 12, department: 2 });
+    await persons.insertRow({ lastname: "Sam", age: 13, department: 1 });
+    await test_person_table(persons);
+    //insert
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      { role_id: 100 }
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      non_owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    await persons.insertRow(
+      { age: 99, lastname: "Tim", department: 1 },
+      owner_user
+    );
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.delete();
+    await department.delete();
+  });
+  it("should create and delete table reversed formula", async () => {
+    const department = await Table.create("_Department");
+    await Field.create({
+      table: department,
+      name: "name",
+      type: "String",
+    });
+    const manager = await Field.create({
+      table: department,
+      name: "manager",
+      type: "Key to users",
+    });
+    await department.update({ ownership_field_id: manager.id });
+
+    const persons = await Table.create("TableOwnedJnFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    const deptkey = await Field.create({
+      table: persons,
+      name: "department",
+      type: "Key to _Department",
+    });
+
+    const own_opts = await Table.findOne({
+      name: "TableOwnedJnFml",
+    })?.ownership_options();
+    expect(own_opts?.length).toBe(1);
+    //expect(own_opts).toBe(1);
+    expect(own_opts?.[0].label).toBe("Inherit department");
+    expect(own_opts?.[0].value).toBe(
+      "Fml:department?.manager===user.id /* Inherit department */"
+    );
+    await persons.update({
+      ownership_formula: "user.id===department?.manager",
+    });
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      department: {
+        inSelect: {
+          field: "id",
+          table: "_Department",
+          tenant: "public",
+          where: { manager: 1 },
+        },
+      },
+    });
+
     await department.insertRow({ name: "Accounting", manager: 1 });
     await department.insertRow({ name: "HR", manager: 2 });
 
@@ -554,6 +709,11 @@ describe("User group no spaces", () => {
     expect(uobj.UserWorksOnProject_by_user).toEqual([
       { id: 1, project: 1, user: 3 },
     ]);
+    const owned_rows = await projs.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows.length).toBe(1);
 
     const myproj = await projs.getRow({ id: projid });
     assertIsSet(myproj);
@@ -573,6 +733,7 @@ describe("User group no spaces", () => {
 
     // admin is not "owner" but can still read/write due to min_role etc.
     const adminobj = await User.findForSession({ role_id: 1 });
+    assertIsSet(adminobj)
     expect(projs.is_owner(adminobj, myproj)).toBe(false);
     expect(projs.is_owner(adminobj, myproj1)).toBe(false);
 
@@ -597,6 +758,11 @@ describe("User group no spaces", () => {
     await tasks.update({
       ownership_formula: task_opts?.[0].value.replace("Fml:", ""),
     });
+    const owned_rows1 = await tasks.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows1.length).toBe(0);
 
     const subtasks = await Table.create("subtasks");
 
@@ -616,6 +782,14 @@ describe("User group no spaces", () => {
           "Fml:user.UserWorksOnProject_by_user.map(g=>g.project).includes(task?.project) /* Inherit task */",
       },
     ]);
+    await subtasks.update({
+      ownership_formula: subtask_opts?.[0].value.replace("Fml:", ""),
+    });
+    const owned_rows2 = await subtasks.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows2.length).toBe(0);
 
     await subtasks.delete();
     await tasks.delete();
@@ -677,6 +851,11 @@ describe("User group with spaces in name", () => {
     const myproj = await projs.getRow({ id: projid });
     assertIsSet(myproj);
     expect(projs.is_owner(uobj, myproj)).toBe(true);
+    const owned_rows = await projs.getJoinedRows({
+      where: {},
+      forUser: uobj,
+    });
+    expect(owned_rows.length).toBe(1);
 
     const projid1 = await projects.insertRow({ name: "Take out trash" });
     const staff = await User.findOne({ role_id: 40 });
@@ -692,6 +871,7 @@ describe("User group with spaces in name", () => {
 
     // admin is not "owner" but can still read/write due to min_role etc.
     const adminobj = await User.findForSession({ role_id: 1 });
+    assertIsSet(adminobj)
     expect(projs.is_owner(adminobj, myproj)).toBe(false);
     expect(projs.is_owner(adminobj, myproj1)).toBe(false);
 
@@ -742,3 +922,57 @@ describe("User group with spaces in name", () => {
     await projects.delete();
   });
 });
+
+describe("ownership_formula_where", () => {
+  it("should create table", async () => {
+    const tasks = await Table.create("tasks1");
+    await Field.create({
+      table: tasks,
+      name: "name",
+      type: "String",
+    });
+  });
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({ ownership_formula: 'user?.clearance==="ALL"' });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      clearance: "ALL",
+    });
+    expect(where).toStrictEqual({ eq: ["ALL", "ALL"] });
+  });
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({ ownership_formula: 'user?.clearance==="ALL"' });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      clearance: "NONE",
+    });
+    expect(where).toStrictEqual({ eq: ["NONE", "ALL"] });
+  });
+
+  it("should do constant eq user", async () => {
+    const tasks = Table.findOne("tasks1");
+    assertIsSet(tasks);
+    await tasks.update({
+      ownership_formula:
+        'user.department === name || user.department === "ALL"',
+    });
+    const where = tasks.ownership_formula_where({
+      id: 1,
+      role_id: 80,
+      department: "ALL",
+    });
+    expect(JSON.stringify(where)).toBe(
+      JSON.stringify({
+        or: [{ eq: ["ALL", Symbol("name")] }, { eq: ["ALL", "ALL"] }],
+      })
+    );
+  });
+});
+
+//user.department === bankid.access || user.department === "ALL

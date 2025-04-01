@@ -6,7 +6,7 @@
     "minipass": "3.1.6",
     "supertest": "7.0.0",
     "typedoc": "^0.24.8",
-    "typescript": "^4.4.4"
+    "typescript": "5.1.6"
   },
   "scripts": {
     "dev": "nodemon packages/saltcorn/index.js",
@@ -65,7 +65,9 @@
     }
   },
   "overrides": {
-    "immer": "9.0.6"
+    "immer": "9.0.6",
+    "node-gyp": ">=10.2.0",
+    "glob": ">=9.3.5"
   },
   "workspaces": [
     "./packages/*"

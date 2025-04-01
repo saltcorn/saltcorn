@@ -19,9 +19,16 @@ const npmMocks = {
   "env-paths": join(mocksDir, "npm", "env-paths"),
   "fs-extended-attributes": join(mocksDir, "npm", "fs-extended-attributes"),
   tar: join(mocksDir, "npm", "tar"),
+  "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
 };
 
 const saltcornMocks = {
+  "./internal/async_json_stream": join(
+    mocksDir,
+    "models",
+    "internal",
+    "async_json_stream"
+  ),
   "./pack": join(mocksDir, "models", "pack"),
   "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),
@@ -30,6 +37,7 @@ const saltcornMocks = {
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
   "./html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
+  "../migrate": join(mocksDir, "saltcorn", "migrate"),
 };
 
 const dbMocks = {
@@ -101,6 +109,9 @@ module.exports = {
   plugins: [
     new webpack.ProvidePlugin({
       process: "process/browser",
+    }),
+    new webpack.DefinePlugin({
+      "process.env.IGNORE_DYNAMIC_REQUIRE": JSON.stringify("true"),
     }),
   ],
 };

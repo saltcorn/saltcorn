@@ -56,6 +56,35 @@ function getDirEntryCordova(directory) {
   });
 }
 
+export async function readJSONCordova(fileName, dirName) {
+  const text = await readTextCordova(fileName, dirName);
+  return JSON.parse(text);
+}
+
+export async function readTextCordova(fileName, dirName) {
+  const dirEntry = await getDirEntryCordova(dirName);
+  return new Promise((resolve, reject) => {
+    dirEntry.getFile(
+      fileName,
+      { create: false, exclusive: false },
+      function (fileEntry) {
+        fileEntry.file(function (file) {
+          let reader = new FileReader();
+          reader.onloadend = function (e) {
+            resolve(this.result);
+          };
+          reader.readAsText(file);
+        });
+      },
+      function (err) {
+        console.log(`unable to read  ${fileName}`);
+        console.log(err);
+        reject(err);
+      }
+    );
+  });
+}
+
 export async function readBinaryCordova(fileName, dirName) {
   const dirEntry = await getDirEntryCordova(dirName);
   return new Promise((resolve, reject) => {

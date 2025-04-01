@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/sqlite",
-  "version": "1.1.1-rc.4",
+  "version": "1.1.4-beta.1",
   "description": "Sqlite structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -27,7 +27,7 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
-    "@saltcorn/db-common": "1.1.1-rc.4"
+    "@saltcorn/db-common": "1.1.4-beta.1"
   },
   "optionalDependencies": {
     "sqlite3": "5.1.7"
@@ -37,8 +37,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^16.11.7",
-    "@types/sqlite3": "^3.1.7",
-    "typescript": "^4.4.4"
+    "@types/node": "^18.11.9",
+    "@types/sqlite3": "^3.1.11",
+    "typescript": "5.1.6"
   }
 }

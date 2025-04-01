@@ -34,10 +34,7 @@ function updateQueryStringParameter(uri1, key, value) {
     uri = uris[0];
   }
 
-  var re = new RegExp(
-    "([?&])" + escapeRegExp(key) + "=.*?(&|$)",
-    "i"
-  );
+  var re = new RegExp("([?&])" + escapeRegExp(key) + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
   if (uri.match(re)) {
     if (Array.isArray(value)) {
@@ -79,7 +76,7 @@ function removeQueryStringParameter(uri1, key, value) {
   let re;
   if (value) {
     re = new RegExp(
-      "([?&])" + escapeRegExp(key) + "=" + value + "?(&|$)",
+      "([?&])" + escapeRegExp(key) + "=" + encodeURIComponent(value) + "?(&|$)",
       "gi"
     );
   } else {
@@ -134,11 +131,13 @@ function set_state_field(key, value, e) {
 function check_state_field(that, e) {
   const checked = that.checked;
   const name = that.name;
-  const value = encodeURIComponent(that.value);
+  const value = that.value;
   let dest;
   if (checked)
     dest = addQueryStringParameter(get_current_state_url(e), name, value);
   else dest = removeQueryStringParameter(get_current_state_url(e), name, value);
+  console.log({ dest, name, value, tvalue: that.value });
+
   pjax_to(dest.replace("&&", "&").replace("?&", "?"), e);
 }
 
@@ -189,8 +188,8 @@ function pjax_to(href, e) {
   let $dest = localizer.length
     ? localizer
     : inModal
-    ? $("#scmodal .modal-body")
-    : $("#page-inner-content");
+      ? $("#scmodal .modal-body")
+      : $("#page-inner-content");
   if (!$dest.length) window.location.href = href;
   else {
     loadPage = false;
@@ -267,6 +266,8 @@ function reset_spinners() {
   });
 }
 
+let last_route_viewname;
+
 function view_post(viewnameOrElem, route, data, onDone, sendState) {
   const viewname =
     typeof viewnameOrElem === "string"
@@ -274,6 +275,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
           .attr("data-sc-embed-viewname");
+  last_route_viewname = viewname;
   const query = sendState
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
@@ -693,7 +695,7 @@ function ajax_post(url, args) {
     },
     ...(args || {}),
   })
-    .done(ajax_done)
+    .done((res) => ajax_done(res))
     .fail((e, ...more) => {
       if (!checkNetworkError(e))
         return ajax_done(
@@ -922,7 +924,7 @@ function poll_mobile_build_finished(
     data: { out_dir_name: outDirName, mode: mode },
     success: function (res) {
       if (!res.finished) {
-        if (pollCount >= 100) {
+        if (pollCount >= 150) {
           removeSpinner("buildMobileAppBtnId", orginalBtnHtml);
           notifyAlert({
             type: "danger",
@@ -1319,6 +1321,23 @@ function check_delete_unsaved(tablename, script_tag) {
           "CSRF-Token": _sc_globalCsrf,
         },
       });
+  }
+}
+
+function cfu_translate(that) {
+  const locale = that.value;
+  const translations = window.cfu_translations[locale];
+  if (translations) {
+    $("button[type=submit]").text(translations.submitLabel);
+    $("h1").text(translations.header);
+    $('form[action="/auth/create_first_user"]')
+      .parent()
+      .find("p")
+      .text(translations.blurb);
+    $("label[for=upload_to_restore] span").text(translations.restore);
+    $("label[for=inputdefault_language]").text(translations.language);
+    $("label[for=inputemail]").text(translations.email);
+    $("label[for=inputpassword]").text(translations.password);
   }
 }
 

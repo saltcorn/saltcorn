@@ -135,7 +135,7 @@ describe("Misc view tests", () => {
     const link_views = await View.find({
       table_id: table.id,
     });
-    expect(link_views.length).toBe(10);
+    expect(link_views.length).toBe(11);
   });
   it("should find where", async () => {
     const link_views = await View.find_all_views_where(
@@ -250,10 +250,11 @@ describe("View with routes", () => {
     expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
     var html, json;
     const spy = {
+      ...mockReqRes.res,
       send(h: any) {
         html = h;
       },
-      json(h: GenObj) {
+      json(h: unknown) {
         json = h;
       },
     };

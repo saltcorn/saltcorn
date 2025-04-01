@@ -27,6 +27,7 @@ const { interpolate, mergeIntoWhere } = utils;
 getState().registerPlugin("base", require("../base-plugin"));
 
 afterAll(db.close);
+jest.setTimeout(30000);
 
 beforeAll(async () => {
   await require("../db/reset_schema")();
@@ -384,6 +385,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
       table: patients,
     });
+    // need this to avoid race condition with next test
     await recalculate_for_stored(patients);
   });
   it("has array content", async () => {
@@ -516,7 +518,7 @@ describe("double joinfields in stored calculated fields", () => {
   });
 });
 
-describe("aggregations in stored calculated fields", () => {
+describe("Simple aggregations in stored calculated fields", () => {
   it("creates", async () => {
     const publisher = Table.findOne({ name: "publisher" });
     assertIsSet(publisher);
@@ -575,7 +577,7 @@ describe("aggregations in stored calculated fields", () => {
       pages: 210,
       publisher: hid,
     });
-    await recalculate_for_stored(publisher, { id: hid });
+    //await recalculate_for_stored(publisher, { id: hid });
     const hrow2 = await publisher.getRow({ id: hid });
     expect(hrow2?.number_of_books).toBe(2);
     const trigger = await Trigger.create({
@@ -633,8 +635,75 @@ describe("aggregations in stored calculated fields", () => {
     await books.updateRow({ pages: 729 }, book.id);
     const hrow4 = await publisher.getRow({ id: 1 });
     expect(hrow4?.sum_of_pages).toBe(729);
+    const bid = await books.insertRow({
+      pages: 11,
+      publisher: 1,
+      author: "Fizz Buzz",
+    });
+    const hrow5 = await publisher.getRow({ id: 1 });
+    expect(hrow5?.sum_of_pages).toBe(740);
+    await books.deleteRows({ id: bid });
   });
 });
+describe("Sum-where aggregations in stored calculated fields", () => {
+  it("creates and updates sum field", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    await Field.create({
+      table: books,
+      label: "Interesting",
+      type: "Bool",
+    });
+    await Field.create({
+      table: publisher,
+      label: "Sum of pages2",
+      type: "Integer",
+      calculated: true,
+      expression: "__aggregation",
+      attributes: {
+        aggregate: "Sum",
+        aggwhere: "interesting == true",
+        agg_field: "pages@Integer",
+        agg_relation: "books.publisher",
+        table: "books",
+        ref: "publisher",
+      },
+      stored: true,
+    });
+    const bookRows = await publisher.getRows({});
+    for (const row of bookRows) {
+      await publisher.updateRow({}, row.id);
+    }
+
+    const book = await books.getRow({ publisher: 1 });
+    assertIsSet(book);
+    const bookid = await books.insertRow({
+      pages: 12,
+      publisher: 1,
+      author: "Fizz Buzz",
+      interesting: true,
+    });
+    const hrow4 = await publisher.getRow({ id: 1 });
+    expect(hrow4?.sum_of_pages2).toBe(12);
+    await books.updateRow({ pages: 14 }, bookid);
+    const hrow6 = await publisher.getRow({ id: 1 });
+    expect(hrow6?.sum_of_pages2).toBe(14);
+
+    const bid2 = await books.insertRow({
+      pages: 11,
+      publisher: 1,
+      author: "Fizz Buzz",
+      interesting: true,
+    });
+    const hrow5 = await publisher.getRow({ id: 1 });
+    expect(hrow5?.sum_of_pages2).toBe(25);
+    await books.deleteRows({ id: bookid });
+    await books.deleteRows({ id: bid2 });
+  });
+});
+
 describe("join-aggregations in stored calculated fields", () => {
   it("creates", async () => {
     const books = Table.findOne({ name: "books" });
@@ -667,6 +736,69 @@ describe("join-aggregations in stored calculated fields", () => {
     const bookrow = await books.getRow({ id: 2 });
 
     expect(bookrow?.books_same_pub).toBe(1);
+    await books.insertRow({ author: "Boring bloke", pages: 54, publisher: 1 });
+    const bookrow1 = await books.getRow({ id: 2 });
+
+    expect(bookrow1?.books_same_pub).toBe(2);
+  });
+});
+describe("join-aggregations in stored calculated fields again", () => {
+  it("creates", async () => {
+    const sumtable = await Table.create("DateSummary");
+    const banktable = await Table.create("Bank");
+    const xacttable = await Table.create("Transaction");
+    await Field.create({
+      table: banktable,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    await Field.create({
+      table: sumtable,
+      name: "bankid",
+      label: "BankID",
+      type: "Key to Bank",
+    });
+    await Field.create({
+      table: xacttable,
+      name: "tbankid",
+      label: "TBankID",
+      type: "Key to Bank",
+    });
+    await Field.create({
+      table: xacttable,
+      name: "amount",
+      label: "Amount",
+      type: "Integer",
+    });
+    await Field.create({
+      table: sumtable,
+      name: "sumamount",
+      label: "SumAmount",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "__aggregation",
+      attributes: {
+        ref: "tbankid",
+        table: "bankid->Transaction",
+        aggwhere: "", //"transactiondate == summarydate",
+        agg_field: "amount@Integer",
+        aggregate: "Sum",
+        agg_relation: "bankid->Transaction.tbankid",
+      },
+    });
+    await banktable.insertRow({ name: "Lloyds" });
+    await banktable.insertRow({ name: "Starling" });
+    await banktable.insertRow({ name: "HSBC" });
+    await sumtable.insertRow({ bankid: 2 });
+    await sumtable.insertRow({ bankid: 1 });
+    await sumtable.insertRow({ bankid: 3 });
+    await xacttable.insertRow({ tbankid: 2, amount: 10 });
+    //await recalculate_for_stored(sumtable);
+    const sumrow = await sumtable.getRow({ id: 1 });
+
+    expect(sumrow?.sumamount).toBe(10);
   });
 });
 
@@ -909,6 +1041,20 @@ describe("jsexprToWhere", () => {
         { or: [{ foo: false }, { foo: null }] },
       ],
     });
+  });
+  it("jsexprToWhere equate constant", () => {
+    expect(
+      jsexprToWhere("user.clearance==5", { user: { clearance: 5 } })
+    ).toEqual({ eq: [5, 5] });
+    expect(
+      jsexprToWhere('user.clearance=="ALL"', { user: { clearance: "ALL" } })
+    ).toEqual({ eq: ["ALL", "ALL"] });
+    expect(
+      jsexprToWhere("user.clearance==5", { user: { clearance: 6 } })
+    ).toEqual({ eq: [6, 5] });
+    expect(
+      jsexprToWhere('user.clearance=="ALL"', { user: { clearance: "NONE" } })
+    ).toEqual({ eq: ["NONE", "ALL"] });
   });
   it("translates date limits", () => {
     expect(jsexprToWhere("foo>=year+'-'+month+'-01'").foo.gt).toMatch(/^202/);

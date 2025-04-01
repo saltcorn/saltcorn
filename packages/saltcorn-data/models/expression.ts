@@ -45,6 +45,7 @@ type ExtendedNode = {
   property?: ExtendedNode;
   value?: ExtendedNode;
   key?: ExtendedNode;
+  expression?: ExtendedNode;
   properties?: any;
 } & Node;
 
@@ -109,7 +110,7 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     // @ts-ignore
     return compile(ast);
   } catch (e: any) {
-    console.error(e);
+    //console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );
@@ -264,13 +265,15 @@ function jsexprToWhere(
             typeof cright === "function"
               ? cright(cleft)
               : typeof cleft === "function"
-              ? cleft(cright)
-              : typeof cleft === "string" || cleft === null
-              ? { eq: [cleft, cright] }
-              : typeof cright === "symbol" && typeof cleft !== "symbol"
-              ? { [crightName]: cleft }
-              : { [cleftName]: cright };
-          //console.log({ cleft, cleftName, cright, cmp });
+                ? cleft(cright)
+                : typeof cleft === "string" ||
+                    (typeof cleft === "number" && typeof cright === "number") ||
+                    cleft === null
+                  ? { eq: [cleft, cright] }
+                  : typeof cright === "symbol" && typeof cleft !== "symbol"
+                    ? { [crightName]: cleft }
+                    : { [cleftName]: cright };
+          //console.log({ cleft, cleftName, cright, cmp, tycleft: typeof cleft });
 
           const operators: StringToFunction = {
             "=="() {
@@ -314,6 +317,9 @@ function jsexprToWhere(
           if (callee.name === "Date") return new Date();
           throw new Error("Unknown new expression");
         },
+        ChainExpression() {
+          return compile(node.expression!);
+        },
         MemberExpression() {
           const cleft = compile(node.object!);
           const cleftName =
@@ -325,8 +331,7 @@ function jsexprToWhere(
           const field = fields.find((f) => f.name === cleftName);
 
           if (!field) {
-            console.log({ cleftName, cleft, cright, crightName });
-
+            //console.log({ cleftName, cleft, cright, crightName });
             throw new Error(`Field not found: ${cleftName}`);
           }
           return (val: any) => ({
@@ -375,7 +380,7 @@ function jsexprToWhere(
     // @ts-ignore
     return compile(ast);
   } catch (e: any) {
-    console.error(e);
+    //console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );
@@ -694,6 +699,7 @@ const apply_calculated_fields_stored = async (
   fields: Array<Field>,
   table: Table
 ): Promise<Row> => {
+  const state = require("../db/state").getState();
   let hasExprs = false;
   let transform = (x: Row) => x;
   for (const field of fields) {
@@ -716,9 +722,9 @@ const apply_calculated_fields_stored = async (
         _agg_val.table = dtable;
         _agg_val.through = through;
       }
-
+      const pk = table.pk_name;
       const reFetchedRow = await table.getJoinedRow({
-        where: { [table.pk_name]: row[table.pk_name] },
+        where: { [pk]: row[pk] },
         aggregations: {
           _agg_val,
         },
@@ -727,6 +733,12 @@ const apply_calculated_fields_stored = async (
       if (!reFetchedRow)
         throw new Error(`Error in calculating "${field.name}": row not found`);
       //transform
+      state.log(
+        6,
+        `apply_calculated_fields_stored aggregate field=${
+          field.name
+        } id=${row[pk]} val=${reFetchedRow._agg_val}`
+      );
       const oldf = transform;
       transform = async (row) => {
         row[field.name] =
@@ -781,14 +793,15 @@ const recalculate_for_stored = async (
   let maxid = null;
   let limit = 20;
   const { getState } = require("../db/state");
+  const pk_name = table.pk_name;
   const go = async (rows: any) => {
     for (const row of rows) {
       try {
         getState().log(
           6,
-          `recalculate_for_stored on table ${table.name} row ${row.id}`
+          `recalculate_for_stored on table ${table.name} row ${row[pk_name]}`
         );
-        await table.updateRow({}, row.id, undefined, true);
+        await table.updateRow({}, row[pk_name], undefined, true);
       } catch (e: any) {
         console.error(e);
       }
@@ -799,12 +812,15 @@ const recalculate_for_stored = async (
     await go(rows);
   } else {
     do {
-      rows = await table.getRows(maxid !== null ? { id: { gt: maxid } } : {}, {
-        orderBy: "id",
-        limit: limit,
-      });
+      rows = await table.getRows(
+        maxid !== null ? { [pk_name]: { gt: maxid } } : {},
+        {
+          orderBy: pk_name,
+          limit: limit,
+        }
+      );
       await go(rows);
-      if (rows.length > 0) maxid = rows[rows.length - 1].id;
+      if (rows.length > 0) maxid = rows[rows.length - 1][pk_name];
     } while (rows.length === limit);
   }
 };

@@ -19,6 +19,8 @@ const {
   toRedirect,
   toInclude,
   succeedJsonWithWholeBody,
+  getAdminJwt,
+  toSucceed,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/tests/mocks");
@@ -520,6 +522,27 @@ describe("API action", () => {
     const table = Table.findOne({ name: "triggercounter" });
     const counts = await table.getRows({});
     expect(counts.map((c) => c.thing)).toContain("no body");
+  });
+});
+
+describe("API emit", () => {
+  it("emits an event via POST with JWT", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const token = await getAdminJwt();
+    await request(app)
+      .post("/api/emit-event/event1")
+      .set("Authorization", `jwt ${token}`)
+      .send({ payload: { latitude: 20, longitude: 30 } })
+      .expect(succeedJsonWith((success) => success === true));
+    await sleep(200);
+  });
+
+  it("denies an event without JWT", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/event1")
+      .send({ payload: { latitude: 20, longitude: 30 } })
+      .expect(notAuthorized);
   });
 });
 

@@ -19,11 +19,14 @@ const {
   satisfies,
   mergeActionResults,
   cloneName,
+  isNode,
 } = require("../utils");
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
 const { eval_expression } = expression;
+
+declare const saltcorn: any;
 
 /**
  * Trigger class
@@ -138,6 +141,10 @@ class Trigger implements AbstractTrigger {
     );
   }
 
+  static async state_refresh() {
+    await require("../db/state").getState().refresh_triggers();
+  }
+
   /**
    * Update trigger
    * @param id
@@ -149,7 +156,8 @@ class Trigger implements AbstractTrigger {
     getState().log(6, `Update trigger ID=${id} Row=${JSON.stringify(row)}`);
     if (row.table_id === "") row.table_id = null;
     await db.update("_sc_triggers", row, id);
-    await require("../db/state").getState().refresh_triggers();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_triggers(true);
   }
 
   /**
@@ -166,7 +174,8 @@ class Trigger implements AbstractTrigger {
       rest.table_id = table.id;
     }
     trigger.id = await db.insert("_sc_triggers", rest);
-    await require("../db/state").getState().refresh_triggers();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_triggers(true);
     return trigger;
   }
 
@@ -180,7 +189,25 @@ class Trigger implements AbstractTrigger {
     await db.deleteWhere("_sc_workflow_steps", { trigger_id: this.id });
     await db.deleteWhere("_sc_tag_entries", { trigger_id: this.id });
     await db.deleteWhere("_sc_triggers", { id: this.id });
-    await require("../db/state").getState().refresh_triggers();
+    if (!db.getRequestContext()?.client)
+      await require("../db/state").getState().refresh_triggers(true);
+  }
+
+  static async sendEventToServer(
+    eventType: string,
+    channel: string | null = null,
+    user = {},
+    payload?: any
+  ) {
+    await saltcorn.mobileApp.api.apiCall({
+      method: "POST",
+      path: `/api/emit-event/${eventType}`,
+      body: {
+        channel,
+        user, // password is not set on mobile
+        payload,
+      },
+    });
   }
 
   /**
@@ -196,9 +223,17 @@ class Trigger implements AbstractTrigger {
     userPW = {},
     payload?: any
   ): void {
+    if (
+      !isNode() &&
+      !require("../db/state").getState().mobileConfig?.isOfflineMode
+    ) {
+      Trigger.sendEventToServer(eventType, channel, userPW, payload);
+      return;
+    }
     setTimeout(async () => {
       const { password, ...user }: any = userPW || {};
       const { getState } = require("../db/state");
+      if (!getState) return; // probably in a test
       const findArgs: Where = { when_trigger: eventType };
       const state = getState();
       state.log(5, `Event ${eventType} ${channel} ${JSON.stringify(payload)}`);
@@ -584,7 +619,16 @@ class Trigger implements AbstractTrigger {
       name: newname,
     };
     delete createObj.id;
-    return await Trigger.create(createObj);
+    const trig = await Trigger.create(createObj);
+    if (trig.action === "Workflow") {
+      const WorkflowStep = require("@saltcorn/data/models/workflow_step");
+      const steps = await WorkflowStep.find({ trigger_id: this.id });
+      for (const step of steps) {
+        const { id, trigger_id, ...stepNoId } = step;
+        await WorkflowStep.create({ ...stepNoId, trigger_id: trig.id });
+      }
+    }
+    return trig;
   }
 
   async getTags(): Promise<Array<AbstractTag>> {

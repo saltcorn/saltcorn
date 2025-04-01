@@ -56,8 +56,8 @@ const convertDateParam = (
     typeof date === "number"
     ? new Date(date)
     : date instanceof Date
-    ? date
-    : null;
+      ? date
+      : null;
 };
 /**
  * User
@@ -67,7 +67,7 @@ class User {
   email: string;
   password: string;
   language?: string;
-  _attributes?: any;
+  _attributes: GenObj;
   api_token?: string | null;
   verification_token?: string;
   verified_on?: Date;
@@ -182,9 +182,9 @@ class User {
    * @returns {Promise<{error: string}|User>}
    */
   static async create(uo: GenObj): Promise<User | ErrorMessage> {
-    const { email, password, passwordRepeat, role_id, ...rest } = uo;
+    const { email, password, passwordRepeat, role_id, language, ...rest } = uo;
     const hasPw = typeof password !== "undefined";
-    const u = new User({ email, password, role_id });
+    const u = new User({ email, password, role_id, language });
     if (hasPw && User.unacceptable_password_reason(u.password))
       return {
         error:
@@ -287,9 +287,19 @@ class User {
     const urow = await User.findForSession(uoSearch);
     if (!urow) return false;
     if (urow.disabled) return false;
+
+    if (!urow.auth_method_allowed("Password")) return false;
     const cmp = urow.checkPassword(password || "");
     if (cmp) return new User(urow);
     else return false;
+  }
+
+  auth_method_allowed(method_name: string): boolean {
+    const { getState } = require("../db/state");
+    const auth_method_enabled = getState().get_auth_enabled_by_role(
+      this.role_id
+    );
+    return auth_method_enabled[method_name] !== false;
   }
 
   async send_verification_email(
@@ -650,8 +660,8 @@ class User {
     const dateVal = !date
       ? date
       : db.isSQLite
-      ? date.valueOf()
-      : date.toISOString();
+        ? date.valueOf()
+        : date.toISOString();
     await this.update({ last_mobile_login: dateVal });
   }
 }

@@ -298,7 +298,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await customEventForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,
@@ -329,7 +329,7 @@ router.post(
  * @function
  */
 router.post(
-  "/custom/delete/:name?",
+  "/custom/delete{/:name}",
   isAdmin,
   error_catcher(async (req, res) => {
     let { name } = req.params;
@@ -356,7 +356,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await logSettingsForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_events_page({
         res,
@@ -459,33 +459,70 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const ev = await EventLog.findOneWithUser(id);
+    const { or_less, or_more } = req.query;
     const locale = getState().getConfig("default_locale", "en");
-    send_events_page({
-      res,
-      req,
-      active_sub: "Event log",
-      sub2_page: ev.id,
-      contents: {
-        type: "card",
-        contents:
-          table(
-            { class: "table eventlog" },
-            tbody(
-              tr(
-                th(req.__("When")),
-                td(localeDateTime(ev.occur_at, {}, locale))
-              ),
-              tr(th(req.__("Type")), td(ev.event_type)),
-              tr(th(req.__("Channel")), td(ev.channel)),
-              tr(th(req.__("User")), td(ev.email))
-            )
-          ) +
-          div(
-            { class: "eventpayload" },
-            ev.payload ? pre(text(JSON.stringify(ev.payload, null, 2))) : ""
-          ),
-      },
-    });
+    let ev = await EventLog.findOneWithUser(id);
+    if (!ev && (or_less || or_more)) {
+      const evFound = await EventLog.find(
+        {
+          id: or_less ? { lt: +id } : { gt: +id },
+        },
+        { limit: 1, orderBy: "id", orderDesc: !!or_less }
+      );
+      if (evFound.length) ev = await EventLog.findOneWithUser(evFound[0].id);
+    }
+    if (!ev) {
+      req.flash("warning", "Event not found");
+      res.redirect("/eventlog");
+    } else
+      send_events_page({
+        res,
+        req,
+        active_sub: "Event log",
+        sub2_page: ev.id,
+        contents: {
+          type: "card",
+          contents:
+            table(
+              { class: "table eventlog" },
+              tbody(
+                tr(
+                  th(req.__("When")),
+                  td(
+                    div(
+                      { class: "d-flex justify-content-between" },
+                      div(localeDateTime(ev.occur_at, {}, locale)),
+                      div(
+                        +id > 1
+                          ? a(
+                              {
+                                href: `/eventlog/${ev.id - 1}?or_less=1`,
+                                class: "btn btn-sm btn-secondary me-1",
+                              },
+                              i({ class: "fas fa-chevron-left" })
+                            )
+                          : "",
+                        a(
+                          {
+                            href: `/eventlog/${ev.id + 1}?or_more=1`,
+                            class: "btn btn-sm btn-secondary",
+                          },
+                          i({ class: "fas fa-chevron-right" })
+                        )
+                      )
+                    )
+                  )
+                ),
+                tr(th(req.__("Type")), td(ev.event_type)),
+                tr(th(req.__("Channel")), td(ev.channel)),
+                tr(th(req.__("User")), td(ev.email))
+              )
+            ) +
+            div(
+              { class: "eventpayload" },
+              ev.payload ? pre(text(JSON.stringify(ev.payload, null, 2))) : ""
+            ),
+        },
+      });
   })
 );

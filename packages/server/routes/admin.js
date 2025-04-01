@@ -117,6 +117,7 @@ const { get_help_markup } = require("../help/index.js");
 const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
 const Tag = require("@saltcorn/data/models/tag");
+const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
@@ -236,6 +237,7 @@ admin_config_route({
               id: "testemail",
               href: "/admin/send-test-email",
               class: "btn btn-primary",
+              onclick: "spin_action_link(this)",
             },
             req.__("Send test email")
           ),
@@ -262,12 +264,14 @@ router.get(
       html: req.__("Hello from Saltcorn"),
     };
     try {
-      await getMailTransport().sendMail(email);
+      const sendres = await getMailTransport().sendMail(email);
+      getState().log(6, sendres);
       req.flash(
         "success",
         req.__("Email sent to %s with no errors", req.user.email)
       );
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
 
@@ -288,6 +292,53 @@ router.get(
     const { markup } = await get_help_markup(topic, req.query, req);
 
     res.sendWrap(`Help: ${topic}`, { above: [markup] });
+  })
+);
+
+router.get(
+  "/help-plugin/:plugin/:topic",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { plugin, topic } = req.params;
+    const location = getState().plugin_locations[plugin];
+    if (location) {
+      const safeFile = path
+        .normalize(topic + ".tmd")
+        .replace(/^(\.\.(\/|\\|$))+/, "");
+      const fullpath = path.join(location, "help", safeFile);
+      if (fs.existsSync(fullpath)) {
+        const { markup } = await get_help_markup(
+          fullpath,
+          req.query,
+          req,
+          true
+        );
+
+        res.sendWrap(`Help: ${topic}`, { above: [markup] });
+      } else {
+        getState().log(6, `Plugin serve help: file not found ${fullpath}`);
+        res.status(404).send(req.__("Not found"));
+      }
+    } else {
+      getState().log(6, `Plugin serve heko: plogin not found ${plugin}`);
+      res.status(404).send(req.__("Not found"));
+    }
+  })
+);
+
+router.get(
+  "/jsdoc/*filepath",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const fullPath = File.normalise_in_base(
+      path.join(__dirname, "..", "docs"),
+      ...req.params.filepath
+    );
+    if (fs.existsSync(fullPath)) res.sendFile(fullPath, { dotfiles: "allow" });
+    else {
+      res.status(404);
+      res.sendWrap(`File not found`, { above: ["Help file not found"] });
+    }
   })
 );
 
@@ -384,6 +435,7 @@ router.get(
                     req.csrfToken(),
                     {
                       btnClass: "btn-outline-primary",
+                      spinner: true,
                     }
                   )
                 ),
@@ -657,9 +709,11 @@ router.get(
           {
             label: req.__("When"),
             key: (r) =>
-              `${moment(
-                r.created
-              ).fromNow()}<br><small>${localeDateTime(r.created, {}, locale)}</small>`,
+              `${moment(r.created).fromNow()}<br><small>${localeDateTime(
+                r.created,
+                {},
+                locale
+              )}</small>`,
           },
           {
             label: req.__("Name"),
@@ -694,8 +748,11 @@ router.post(
     if (!auth) {
       req.flash("error", "Not authorized");
     } else {
-      const snap = await Snapshot.findOne({ id });
-      await snap.restore_entity(type, name);
+      const snap = await db.withTransaction(async () => {
+        const snap = await Snapshot.findOne({ id });
+        await snap.restore_entity(type, name);
+        return snap;
+      });
       req.flash(
         "success",
         `${type} ${name} restored to snapshot saved ${moment(
@@ -703,12 +760,15 @@ router.post(
         ).fromNow()}`
       );
     }
+    await getState().refresh();
     res.redirect(
-      type === "trigger"
-        ? `/actions`
-        : /^[a-z]+$/g.test(type)
-        ? `/${type}edit`
-        : "/"
+      type == "codepage"
+        ? `/admin/edit-codepage/${name}`
+        : type === "trigger"
+          ? `/actions`
+          : /^[a-z]+$/g.test(type)
+            ? `/${type}edit`
+            : "/"
     );
   })
 );
@@ -726,9 +786,12 @@ router.post(
     if (req.files?.file?.tempFilePath) {
       try {
         const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
-        await install_pack(pack, undefined, (p) =>
-          load_plugins.loadAndSaveNewPlugin(p)
-        );
+        await db.withTransaction(async () => {
+          await install_pack(pack, undefined, (p) =>
+            load_plugins.loadAndSaveNewPlugin(p)
+          );
+        });
+        await getState().refresh();
         req.flash("success", req.__("Snapshot restored"));
       } catch (e) {
         console.error(e);
@@ -757,7 +820,9 @@ router.get(
       return;
     }
     const auto_backup_directory = getState().getConfig("auto_backup_directory");
-    res.download(path.join(auto_backup_directory, filename), filename);
+    res.download(path.join(auto_backup_directory, filename), filename, {
+      dotfiles: "allow",
+    });
   })
 );
 
@@ -833,7 +898,8 @@ const autoBackupForm = (req) => {
         label: req.__("Backup now"),
         id: "btnBackupNow",
         class: "btn btn-outline-secondary",
-        onclick: "ajax_post('/admin/auto-backup-now')",
+        onclick:
+          "ajax_post('/admin/auto-backup-now');press_store_button(this);",
       },
     ],
     fields: [
@@ -982,7 +1048,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await snapshotForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
 
     await save_config_from_form(form);
 
@@ -1000,7 +1066,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await backupFilePrefixForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_admin_page({
         res,
@@ -1029,7 +1095,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = await autoBackupForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     if (form.hasErrors) {
       send_admin_page({
         res,
@@ -1072,7 +1138,7 @@ router.post(
  * Do Snapshot now
  */
 router.post(
-  "/snapshot-now/:snapshotname?",
+  "/snapshot-now{/:snapshotname}",
   isAdmin,
   error_catcher(async (req, res) => {
     const { snapshotname } = req.params;
@@ -1088,6 +1154,7 @@ router.post(
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));
     } catch (e) {
+      console.error(e);
       req.flash("error", e.message);
     }
     res.json({ reload_page: true });
@@ -1194,7 +1261,7 @@ router.get(
                       isRoot && can_update
                         ? post_btn(
                             "/admin/upgrade",
-                            req.__("Upgrade"),
+                            req.__("Upgrade") + " (latest)",
                             req.csrfToken(),
                             {
                               btnClass: "btn-primary btn-sm",
@@ -1202,21 +1269,22 @@ router.get(
                             }
                           )
                         : isRoot && is_latest
-                        ? span(
-                            { class: "badge bg-primary ms-2" },
-                            req.__("Latest")
-                          ) +
-                          post_btn(
-                            "/admin/check-for-upgrade",
-                            req.__("Check updates"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm px-1 py-0",
-                              formClass: "d-inline",
-                            }
-                          )
-                        : "",
-                      !git_commit &&
+                          ? span(
+                              { class: "badge bg-primary ms-2" },
+                              req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : "",
+                      isRoot &&
+                        !git_commit &&
                         a(
                           {
                             id: rndid,
@@ -1556,24 +1624,35 @@ const cleanNodeModules = async () => {
     throw new Error(
       `'${topSaltcornDir}' is not a Saltcorn installation directory`
     );
+  await PluginInstaller.cleanPluginsDirectory();
 };
 
 const doInstall = async (req, res, version, deepClean, runPull) => {
+  const state = getState();
+  let res_write = (s) => {
+    try {
+      res.write(s);
+      state.log(5, s);
+    } catch (e) {
+      console.error("Install write error: ", e?.message || e);
+    }
+  };
   if (db.getTenantSchema() !== db.connectObj.default_schema) {
     req.flash("error", req.__("Not possible for tenant"));
     res.redirect("/admin");
   } else {
-    res.write(
+    res_write(
       version === "latest"
         ? req.__("Starting upgrade, please wait...\n")
         : req.__("Installing %s, please wait...\n", version)
     );
     if (deepClean) {
-      res.write(req.__("Cleaning node_modules...\n"));
+      res_write(req.__("Cleaning node_modules...\n"));
       try {
         await cleanNodeModules();
       } catch (e) {
-        res.write(req.__("Error cleaning node_modules: %s\n", e.message));
+        console.error(e);
+        res_write(req.__("Error cleaning node_modules: %s\n", e.message));
       }
     }
     const child = spawn(
@@ -1584,33 +1663,37 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
       }
     );
     child.stdout.on("data", (data) => {
-      res.write(data);
+      res_write(data);
     });
     child.stderr?.on("data", (data) => {
-      res.write(data);
+      res_write(data);
     });
     child.on("exit", async function (code, signal) {
       if (code === 0) {
         if (deepClean) {
-          res.write(req.__("Installing sd-notify") + "\n");
+          res_write(req.__("Installing sd-notify") + "\n");
           const sdNotifyCode = await tryInstallSdNotify(req, res);
-          res.write(
+          res_write(
             req.__("sd-notify install done with code %s", sdNotifyCode) + "\n"
           );
         }
         if (runPull) {
-          res.write(
+          res_write(
             req.__("Pulling the capacitor-builder docker image...") + "\n"
           );
           const pullCode = await pullCapacitorBuilder(req, res, version);
-          res.write(req.__("Pull done with code %s", pullCode) + "\n");
+          res_write(req.__("Pull done with code %s", pullCode) + "\n");
           if (pullCode === 0) {
-            res.write(req.__("Pruning docker...") + "\n");
+            res_write(req.__("Pruning docker...") + "\n");
             const pruneCode = await pruneDocker(req, res);
-            res.write(req.__("Prune done with code %s", pruneCode) + "\n");
+            res_write(req.__("Prune done with code %s", pruneCode) + "\n");
           }
         }
       }
+      setTimeout(() => {
+        getState().processSend("RestartServer");
+        process.exit(0);
+      }, 200);
       res.end(
         version === "latest"
           ? req.__(
@@ -1620,16 +1703,12 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
               `Install done with code ${code}.\n\nPress the BACK button in your browser, then RELOAD the page.`
             )
       );
-      setTimeout(() => {
-        getState().processSend("RestartServer");
-        process.exit(0);
-      }, 100);
     });
   }
 };
 
 router.post("/install", isAdmin, async (req, res) => {
-  const { version, deep_clean } = req.body;
+  const { version, deep_clean } = req.body || {};
   await doInstall(req, res, version, deep_clean === "on", false);
 });
 
@@ -1833,6 +1912,7 @@ router.post(
           notify: "Certificate added, please restart server",
         });
       } catch (e) {
+        console.error(e);
         res.json({ error: e.message });
       }
     } else {
@@ -1920,6 +2000,7 @@ router.post(
         );
         res.redirect("/useradmin/ssl");
       } catch (e) {
+        console.error(e);
         req.flash("error", e.message);
         res.redirect("/useradmin/ssl");
       }
@@ -1970,9 +2051,8 @@ router.get(
     const filename = `${moment(start).format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
     const go = async () => {
-      const { passes, errors, pass, warnings } = await runConfigurationCheck(
-        req
-      );
+      const { passes, errors, pass, warnings } =
+        await runConfigurationCheck(req);
       const end = new Date();
       const secs = Math.round((end.getTime() - start.getTime()) / 1000);
 
@@ -2090,7 +2170,10 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
 
 const imageAvailable = async () => {
   try {
-    const image = new Docker().getImage("saltcorn/capacitor-builder");
+    const state = getState();
+    const image = new Docker().getImage(
+      `saltcorn/capacitor-builder:${state.scVersion}`
+    );
     await image.inspect();
     return true;
   } catch (e) {
@@ -3246,8 +3329,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-        ? "_finish_step"
-        : "";
+          ? "_finish_step"
+          : "";
     res.json({
       finished: await checkFiles(out_dir_name, [
         `logs${stepDesc}.txt`,
@@ -3322,8 +3405,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-        ? "_finish_step"
-        : "";
+          ? "_finish_step"
+          : "";
     const resultMsg = files.find(
       (file) => file.filename === `logs${stepDesc}.txt`
     )
@@ -3349,7 +3432,7 @@ router.post(
   "/build-mobile-app/finish",
   isAdmin,
   error_catcher(async (req, res) => {
-    const { out_dir_name, build_dir } = req.body;
+    const { out_dir_name, build_dir } = req.body || {};
     const content = await fs.promises.readFile(
       path.join(build_dir, "spawnParams.json")
     );
@@ -3435,7 +3518,10 @@ router.post(
   "/build-mobile-app",
   isAdmin,
   error_catcher(async (req, res) => {
-    getState().log(2, `starting mobile build: ${JSON.stringify(req.body)}`);
+    getState().log(
+      2,
+      `starting mobile build: ${JSON.stringify(req.body || {})}`
+    );
     const msgs = [];
     let mode = "full";
     let {
@@ -3460,7 +3546,7 @@ router.post(
       keystoreFile,
       keystoreAlias,
       keystorePassword,
-    } = req.body;
+    } = req.body || {};
     const receiveShareTriggers = Trigger.find({
       when_trigger: "ReceiveMobileShareData",
     });
@@ -3725,7 +3811,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     try {
-      const newCfg = { ...req.body };
+      const newCfg = { ...(req.body || {}) };
       const excludedPlugins = (await Plugin.find())
         .filter(
           (plugin) =>
@@ -3753,7 +3839,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const form = clearAllForm(req);
-    form.validate(req.body);
+    form.validate(req.body || {});
     //order: page_groups, pages, views, user fields, tableconstraints, fields, table triggers, table history, tables, plugins, config+crashes+nontable triggers, users
     if (form.values.page_groups) {
       await PageGroup.delete({});
@@ -3779,6 +3865,9 @@ router.post(
     }
     if (form.values.triggers) {
       await db.deleteWhere("_sc_tag_entries", { not: { trigger_id: null } });
+      await db.deleteWhere("_sc_workflow_trace");
+      await db.deleteWhere("_sc_workflow_runs");
+      await db.deleteWhere("_sc_workflow_steps");
       await db.deleteWhere("_sc_triggers");
       await getState().refresh_triggers();
     }
@@ -3832,8 +3921,8 @@ router.post(
       //config+crashes
       await db.deleteWhere("_sc_errors");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
-      await getState().refresh();
     }
+    await getState().refresh();
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
 
@@ -4027,15 +4116,6 @@ router.get(
       values: { code: existing },
       noSubmitButton: true,
       labelCols: 0,
-      additionalButtons: [
-        {
-          label: req.__("Delete code page"),
-          class: "btn btn-outline-danger btn-sm",
-          onclick: `if(confirm('Are you sure you would like to delete this code page?'))ajax_post('/admin/delete-codepage/${encodeURIComponent(
-            name
-          )}')`,
-        },
-      ],
       fields: [
         {
           name: "code",
@@ -4045,14 +4125,14 @@ router.get(
             "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions. Declare a constant <code>k</code> as <code>globalThis.k = ...</code> In scope: " +
             a(
               {
-                href: "https://saltcorn.github.io/saltcorn/classes/_saltcorn_data.models.Table-1.html",
+                href: "/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html",
                 target: "_blank",
               },
               "Table"
             ),
           input_type: "code",
           attributes: { mode: "text/javascript" },
-          class: "validate-statements",
+          class: "validate-statements enlarge-in-card",
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
@@ -4072,7 +4152,8 @@ router.get(
       {}
     );
     const tags = await Tag.find();
-    const tagMarkup = div(
+    const tagMarkup = span(
+      { class: "ms-1" },
       "Tags:",
       (function_code_pages_tags[name] || []).map((tagnm) =>
         span(
@@ -4134,7 +4215,28 @@ router.get(
       contents: {
         type: "card",
         title: req.__(`%s code page`, name),
-        contents: [renderForm(form, req.csrfToken()), tagMarkup],
+        contents: [
+          renderForm(form, req.csrfToken()),
+          a(
+            {
+              href: `javascript:if(confirm('Are you sure you would like to delete this code page?'))ajax_post('/admin/delete-codepage/${encodeURIComponent(
+                name
+              )}')`,
+              class: "me-1 text-danger",
+            },
+            req.__("Delete code page")
+          ),
+          " | ",
+          a(
+            {
+              href: `javascript:ajax_modal('/admin/snapshot-restore/codepage/${name}')`,
+              class: "ms-1 me-1",
+            },
+            req.__("Restore")
+          ),
+          " | ",
+          tagMarkup,
+        ],
       },
     });
   })
@@ -4147,14 +4249,18 @@ router.post(
     const { name } = req.params;
     const code_pages = getState().getConfigCopy("function_code_pages", {});
 
-    const code = req.body.code;
+    const code = (req.body || {}).code;
     await getState().setConfig("function_code_pages", {
       ...code_pages,
       [name]: code,
     });
-    await getState().refresh_codepages();
-
-    res.json({ success: true });
+    const err = await getState().refresh_codepages();
+    if (err)
+      res.json({
+        success: false,
+        error: `Error evaluating code pages: ${err}`,
+      });
+    else res.json({ success: true });
   })
 );
 router.post(

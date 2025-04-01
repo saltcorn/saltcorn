@@ -46,6 +46,7 @@ class RunTestsCommand extends Command {
   async prepareTestServer(env, port) {
     let serverEnv = JSON.parse(JSON.stringify(env));
     serverEnv.SQLITE_FILEPATH = "/tmp/sctestdb_server";
+    serverEnv.REMOTE_QUERIES = true;
     spawnSync("packages/saltcorn-cli/bin/saltcorn", ["fixtures", "-r"], {
       stdio: "inherit",
       env: serverEnv,

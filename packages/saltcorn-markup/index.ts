@@ -99,18 +99,20 @@ const post_btn = (
           spinner ? "press_store_button(this);" : ""
         }${buildButtonCallback(reload_on_done, reload_delay)};${onClick}"`
       : onClick
-      ? `onclick="${spinner ? "press_store_button(this);" : ""}${onClick}"`
-      : ajax && confirm
-      ? `onclick="if(confirm('${req.__("Are you sure?")}')) {${
-          spinner ? "press_store_button(this);" : ""
-        }${buildButtonCallback(reload_on_done, reload_delay)}}"`
-      : ajax
-      ? `onclick="${
-          spinner ? "press_store_button(this);" : ""
-        }${buildButtonCallback(reload_on_done, reload_delay)}"`
-      : confirm
-      ? `onclick="return confirm('${req.__("Are you sure?")}')"`
-      : ""
+        ? `onclick="${spinner ? "press_store_button(this);" : ""}${onClick}"`
+        : ajax && confirm
+          ? `onclick="if(confirm('${req.__("Are you sure?")}')) {${
+              spinner ? "press_store_button(this);" : ""
+            }${buildButtonCallback(reload_on_done, reload_delay)}}"`
+          : ajax
+            ? `onclick="${
+                spinner ? "press_store_button(this);" : ""
+              }${buildButtonCallback(reload_on_done, reload_delay)}"`
+            : confirm
+              ? `onclick="return confirm('${req.__("Are you sure?")}')"`
+              : spinner
+                ? 'onclick="press_store_button(this);"'
+                : ""
   } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
     style ? ` style="${style}"` : ""
   }${title ? ` title=${text_attr(title)}` : ""}>${show_icon_and_label(

@@ -63,8 +63,9 @@ const action_url = (
   confirm,
   colIndex
 ) => {
+  const pk_name = table.pk_name;
   if (action_name === "Delete")
-    return `/delete/${table.name}/${r.id}?redirect=/view/${viewname}`;
+    return `/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}`;
   else if (action_name === "GoBack")
     return {
       javascript: isNode()
@@ -73,12 +74,12 @@ const action_url = (
     };
   else if (action_name.startsWith("Toggle")) {
     const field_name = action_name.replace("Toggle ", "");
-    return `/edit/toggle/${table.name}/${r.id}/${field_name}?redirect=/view/${viewname}`;
+    return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
   }
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
     javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
-      r ? `, id:'${r?.id}'` : ""
+      r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
     }${columnIndex(colIndex)}});`,
   };
 };
@@ -113,6 +114,7 @@ const action_link = (
     action_icon,
     action_bgcol,
     action_title,
+    action_class,
     action_bordercol,
     action_textcol,
     spinner,
@@ -132,10 +134,12 @@ const action_link = (
       {
         href: "javascript:void(0)",
         onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}`,
-        class:
+        class: [
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+          action_class,
+        ],
         style,
         title: action_title,
       },
@@ -288,8 +292,8 @@ const pathToQuery = (relation, srcTable, subTable, row) => {
   switch (relation.type) {
     case RelationType.CHILD_LIST:
       return path.length === 1
-        ? `?${path[0].inboundKey}=${row.id}` // works for OneToOneShow as well
-        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row.id}`;
+        ? `?${path[0].inboundKey}=${row[srcTable.pk_name]}` // works for OneToOneShow as well
+        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row[srcTable.pk_name]}`;
     case RelationType.PARENT_SHOW:
       const fkey = path[0].fkey;
       const reffield = srcTable.fields.find((f) => f.name === fkey);
@@ -358,6 +362,7 @@ const view_linker = (
     extra_state_fml,
     link_target_blank,
     link_title,
+    link_class,
   },
   fields,
   __ = (s) => s,
@@ -369,6 +374,9 @@ const view_linker = (
   srcViewName,
   label_attr //for sorting
 ) => {
+  const safePrefix = (targetPrefix || "").endsWith("/")
+    ? targetPrefix.substring(0, targetPrefix.length - 1)
+    : targetPrefix || "";
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
     if (!view_label_formula) return view_label;
@@ -391,6 +399,7 @@ const view_linker = (
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join("&");
   };
+
   if (relation) {
     const topview = View.findOne({ name: srcViewName });
     const srcTable = Table.findOne({ id: topview.table_id });
@@ -418,7 +427,7 @@ const view_linker = (
             );
           } else label = get_label(view, r);
 
-          const target = `/view/${encodeURIComponent(view)}${query}`;
+          const target = `${safePrefix}/view/${encodeURIComponent(view)}${query}`;
           return link_view(
             isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             label,
@@ -434,7 +443,9 @@ const view_linker = (
             get_extra_state(r),
             link_target_blank,
             label_attr,
-            link_title
+            link_title,
+            link_class,
+            req
           );
         }
       },
@@ -450,9 +461,6 @@ const view_linker = (
         return {
           label: vnm,
           key: (r) => {
-            const safePrefix = targetPrefix.endsWith("/")
-              ? targetPrefix.substring(0, targetPrefix.length - 1)
-              : targetPrefix;
             const target = `${safePrefix}/view/${encodeURIComponent(
               vnm
             )}${get_query(r)}`;
@@ -471,7 +479,9 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class,
+              req
             );
           },
         };
@@ -480,7 +490,7 @@ const view_linker = (
         return {
           label: ivnm,
           key: (r) => {
-            const target = `/view/${encodeURIComponent(ivnm)}`;
+            const target = `${safePrefix}/view/${encodeURIComponent(ivnm)}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(ivnm, r),
@@ -496,7 +506,9 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class,
+              req
             );
           },
         };
@@ -507,7 +519,7 @@ const view_linker = (
         return {
           label: viewnm,
           key: (r) => {
-            const target = `/view/${encodeURIComponent(viewnm)}?${varPath}=${
+            const target = `${safePrefix}/view/${encodeURIComponent(viewnm)}?${varPath}=${
               r.id
             }`;
             return link_view(
@@ -525,7 +537,9 @@ const view_linker = (
               get_extra_state(r),
               link_target_blank,
               label_attr,
-              link_title
+              link_title,
+              link_class,
+              req
             );
           },
         };
@@ -538,7 +552,7 @@ const view_linker = (
             const reffield = fields.find((f) => f.name === pfld);
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             if (r[pfld]) {
-              const target = `/view/${encodeURIComponent(pviewnm)}?${
+              const target = `${safePrefix}/view/${encodeURIComponent(pviewnm)}?${
                 reffield.refname
               }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
               return link_view(
@@ -561,7 +575,9 @@ const view_linker = (
                 get_extra_state(r),
                 link_target_blank,
                 label_attr,
-                link_title
+                link_title,
+                link_class,
+                req
               );
             } else return "";
           },
@@ -662,7 +678,7 @@ const get_viewable_fields_from_layout = (
         }
         if (contents.isHTML)
           col.interpolator = (row) =>
-            interpolate(contents.contents, row, req?.user);
+            interpolate(contents.contents, row, req?.user, "HTML element");
         break;
       case "action":
         col.action_label_formula = contents.isFormula?.action_label;
@@ -1066,8 +1082,8 @@ const get_viewable_fields = (
             column.stat === "Percent true" || column.stat === "Percent false"
               ? "Float"
               : column.stat === "Count" || column.stat === "CountUnique"
-              ? "Integer"
-              : aggField?.type?.name;
+                ? "Integer"
+                : aggField?.type?.name;
           const type = getState().types[outcomeType];
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x) =>
@@ -1148,19 +1164,19 @@ const get_viewable_fields = (
                       { row, ...column, ...(column?.configuration || {}) }
                     )
                 : column.fieldview &&
-                  f.type.fieldviews &&
-                  f.type.fieldviews[column.fieldview]
-                ? (row) =>
-                    f.type.fieldviews[column.fieldview].run(
-                      row[f_with_val.name],
-                      req,
-                      { row, ...f.attributes, ...column.configuration }
-                    )
-                : isShow
-                ? f.type.showAs
-                  ? (row) => f.type.showAs(row[f_with_val.name])
-                  : (row) => text(row[f_with_val.name])
-                : f.listKey,
+                    f.type.fieldviews &&
+                    f.type.fieldviews[column.fieldview]
+                  ? (row) =>
+                      f.type.fieldviews[column.fieldview].run(
+                        row[f_with_val.name],
+                        req,
+                        { row, ...f.attributes, ...column.configuration }
+                      )
+                  : isShow
+                    ? f.type.showAs
+                      ? (row) => f.type.showAs(row[f_with_val.name])
+                      : (row) => text(row[f_with_val.name])
+                    : f.listKey,
             sortlink:
               !f.calculated || f.stored
                 ? sortlinkForName(f.name, req, viewname, statehash)
@@ -1256,8 +1272,8 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
     typeof _sortdesc == "undefined"
       ? _sortby === fname
       : _sortdesc
-      ? "false"
-      : "true";
+        ? "false"
+        : "true";
   return `sortby('${text(fname)}', ${desc}, '${statehash}', this)`;
 };
 
@@ -1279,8 +1295,8 @@ const headerLabelForName = (label, fname, req, __, statehash) => {
     _sortby !== fname
       ? ""
       : _sortdesc
-      ? i({ class: "fas fa-caret-down" })
-      : i({ class: "fas fa-caret-up" });
+        ? i({ class: "fas fa-caret-down" })
+        : i({ class: "fas fa-caret-up" });
   return label + arrow;
 };
 
@@ -1316,8 +1332,9 @@ const splitUniques = (fields, state, fuzzyStrings) => {
  * @param {string} viewname
  * @param {object[]} [columns]
  * @param {object} layout0
- * @param {boolean} id
+ * @param {boolean|null} id
  * @param {object} req
+ * @param {boolean} isRemote
  * @returns {Promise<Form>}
  */
 const getForm = async (
@@ -1427,6 +1444,15 @@ const getForm = async (
     const loginForm = getState().getConfig("login_form", "");
     if (loginForm && viewname === loginForm) isMobileLogin = true;
   }
+  let submitActionJS = undefined;
+  const submitActionCol = columns.find((c) => c.is_submit_action);
+
+  if (submitActionCol) {
+    submitActionJS = `event.preventDefault();view_post(this, 'run_action', {rndid:'${submitActionCol.rndid}', ...get_form_record(this) })`;
+    if (layout.above) layout.above.push(`<input type="submit" hidden />`);
+    //TODO what if there is no above, e.g. all in card or container
+  }
+
   const form = new Form({
     action: action,
     onSubmit:
@@ -1436,7 +1462,7 @@ const getForm = async (
               ? `formSubmit(this, '/view/', '${viewname}')`
               : "loginFormSubmit(this)"
           }`
-        : undefined,
+        : submitActionJS,
     viewname: viewname,
     fields: tfields,
     layout,

@@ -10,7 +10,11 @@ const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 
-const { isAdmin, error_catcher } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  isAdminOrHasConfigMinRole,
+} = require("./utils.js");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -94,7 +98,7 @@ const searchConfigForm = (tables, views, req) => {
  */
 router.get(
   "/config",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_search"),
   error_catcher(async (req, res) => {
     const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
@@ -131,12 +135,12 @@ router.get(
  */
 router.post(
   "/config",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_search"),
   error_catcher(async (req, res) => {
     const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
-    const result = form.validate(req.body);
+    const result = form.validate(req.body || {});
 
     if (result.success) {
       const dbversion = await db.getVersion(true);

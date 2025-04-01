@@ -20,6 +20,15 @@ import {
   ViewTemplate,
   MobileConfig,
   PluginRoute,
+  Header,
+  PluginFunction,
+  TableProvider,
+  ModelPattern,
+  FieldView,
+  Action,
+  AuthenticationMethod,
+  CopilotSkill,
+  CapacitorPlugin,
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
@@ -50,6 +59,8 @@ import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 import { runInContext, createContext } from "vm";
 import faIcons from "./fa5-icons";
+import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
+import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
 
 /**
  * @param v
@@ -130,36 +141,36 @@ class State {
   triggers: Array<Trigger>;
   virtual_triggers: Array<Trigger>;
   viewtemplates: Record<string, ViewTemplate>;
-  modelpatterns: Record<string, any>;
+  modelpatterns: Record<string, ModelPattern>;
   tables: Array<Table>;
   types: Record<string, Type>;
-  stashed_fieldviews: Record<string, any>;
+  stashed_fieldviews: Record<string, Record<string, FieldView>>;
   pages: Array<Page>;
   page_groups: Array<PageGroup>;
   fields: Array<Field>;
   configs: ConfigTypes;
-  fileviews: Record<string, any>;
-  actions: Record<string, any>;
-  auth_methods: Record<string, any>;
+  fileviews: Record<string, FieldView>;
+  actions: Record<string, Action>;
+  auth_methods: Record<string, AuthenticationMethod>;
   plugins: Record<string, Plugin>;
-  table_providers: Record<string, any>;
+  table_providers: Record<string, TableProvider>;
   plugin_cfgs: Record<string, any>;
   plugin_locations: any;
   plugin_module_names: any;
   plugin_routes: Record<string, Array<PluginRoute>>;
   routesChangedCb?: Function;
-  eventTypes: any;
+  eventTypes: Record<string, { hasChannel: boolean; name?: string }>;
   fonts: Record<string, string>;
   icons: Array<string>;
   layouts: Record<string, PluginLayout>;
   userLayouts: Record<string, PluginLayout>;
-  headers: any;
-  function_context: any;
-  codepage_context: any;
+  headers: Record<string, Array<Header>>;
+  function_context: Record<string, Function>;
+  codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
-  functions: any;
-  keyFieldviews: any;
-  external_tables: any;
+  functions: Record<string, Function | PluginFunction>;
+  keyFieldviews: Record<string, unknown>;
+  external_tables: Record<string, AbstractTable>;
   verifier: any;
   i18n: I18n.I18n;
   mobileConfig?: MobileConfig;
@@ -172,6 +183,8 @@ class State {
   scVersion: string;
   waitingWorkflows?: boolean;
   keyframes: Array<string>;
+  copilot_skills: Record<string, CopilotSkill>;
+  capacitorPlugins: Array<CapacitorPlugin>;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -202,6 +215,7 @@ class State {
     this.plugin_module_names = {};
     this.plugin_routes = {};
     this.table_providers = {};
+    this.copilot_skills = {};
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.icons = get_standard_icons();
@@ -243,6 +257,7 @@ class State {
       "bounce",
       "tada",
     ];
+    this.capacitorPlugins = [];
   }
 
   processSend(v: any) {
@@ -766,13 +781,13 @@ class State {
       }
     );
     Object.entries(withCfg("fileviews", {})).forEach(([k, v]) => {
-      this.fileviews[k] = v;
+      this.fileviews[k] = v as FieldView;
     });
     Object.entries(withCfg("actions", {})).forEach(([k, v]) => {
-      this.actions[k] = v;
+      this.actions[k] = v as Action;
     });
     Object.entries(withCfg("eventTypes", {})).forEach(([k, v]) => {
-      this.eventTypes[k] = v;
+      this.eventTypes[k] = v as { hasChannel: boolean };
     });
     Object.entries(withCfg("fonts", {})).forEach(([k, v]) => {
       this.fonts[k] = v as string;
@@ -781,10 +796,13 @@ class State {
       this.icons.push(icon);
     });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
-      this.table_providers[k] = v;
+      this.table_providers[k] = v as TableProvider;
     });
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
-      this.auth_methods[k] = v;
+      this.auth_methods[k] = v as AuthenticationMethod;
+    });
+    Object.entries(withCfg("copilot_skills", {})).forEach(([k, v]) => {
+      this.copilot_skills[k] = v as CopilotSkill;
     });
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
@@ -824,6 +842,13 @@ class State {
     const routes = withCfg("routes", []);
     this.plugin_routes[name] = routes;
     if (routes.length > 0 && this.routesChangedCb) this.routesChangedCb();
+
+    withCfg("capacitor_plugins", []).forEach((capPlugin: CapacitorPlugin) => {
+      if (this.capacitorPlugins.find((cp) => cp.name === capPlugin.name))
+        this.log(5, `Capacitor plugin ${capPlugin.name} already registered`);
+      else this.capacitorPlugins.push(capPlugin);
+    });
+
     if (hasFunctions)
       this.refresh_codepages(true).catch((e) => console.error(e));
   }
@@ -881,6 +906,7 @@ class State {
     );
     if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
     this.codepage_context = {};
+    let errMsg;
     if (Object.keys(code_pages).length > 0) {
       const fetch = require("node-fetch");
       try {
@@ -907,13 +933,15 @@ class State {
             this.codepage_context[k] = sandbox[k];
           }
         });
-      } catch (e) {
+      } catch (e: any) {
         console.error("code page load error: ", e);
+        errMsg = e?.message || e;
       }
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
     this.oldCodePages = code_pages;
+    return errMsg;
   }
 
   /**
@@ -930,6 +958,7 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
+    this.copilot_skills = {};
     this.layouts = { emergency: emergency_layout };
     this.headers = {};
     this.function_context = { moment, slugify: db.slugify };
@@ -988,6 +1017,24 @@ class State {
     globalLogEmitter(ten, min_level, msg);
   }
 
+  // default auth methods to enabled
+  get_auth_enabled_by_role(role_id: number): Record<string, boolean> {
+    const auth_method_by_role = this.getConfig("auth_method_by_role", {});
+    const auth_methods = Object.keys(this.auth_methods);
+    auth_methods.unshift("Password");
+
+    const enabled: Record<string, boolean> = {};
+    if (!auth_method_by_role[role_id]) {
+      for (const auth_method of auth_methods) enabled[auth_method] = true;
+    } else {
+      for (const auth_method of auth_methods) {
+        const setVal = auth_method_by_role[role_id][auth_method];
+        enabled[auth_method] = typeof setVal === "undefined" ? true : setVal;
+      }
+    }
+    return enabled;
+  }
+
   get pg_ts_config(): string {
     const lang_dict: any = {
       en: "english",
@@ -1039,7 +1086,9 @@ class State {
               "zlib",
             ].includes(moduleName)
           ) {
-            this.codeNPMmodules[moduleName] = require(moduleName);
+            if (process.env.IGNORE_DYNAMIC_REQUIRE !== "true") {
+              this.codeNPMmodules[moduleName] = require(moduleName);
+            }
           } else {
             const defaultVersion: any = {
               cheerio: "1.0.0-rc.12",

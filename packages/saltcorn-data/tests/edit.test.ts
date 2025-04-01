@@ -28,6 +28,7 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+jest.setTimeout(10000);
 
 const mkConfig = (hasSave?: boolean, onChange?: boolean) => {
   return {
@@ -555,7 +556,7 @@ describe("Edit view field onchange", () => {
       "run_action",
       body,
       mockReqRes.res,
-      { req: { body } },
+      { req: { ...mockReqRes.req, body }, res: mockReqRes.res },
       false
     );
     expect(mockReqRes.getStored().json).toStrictEqual({
@@ -762,7 +763,7 @@ describe("Edit view components", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"}, "${view.name}")});</script></form>`
+      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){common_done({"notify":"Hello!"}, "${view.name}")});</script></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){document.getElementById('test-form-id').addEventListener("change", handle_identical_fields, true);});</script>`
     );
   });
   it("runs button action", async () => {
@@ -807,7 +808,7 @@ describe("Edit view components", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><a href="javascript:void(0)" onclick="view_post(this, 'run_action', {rndid:'b6fd72', ...get_form_record(this)});" class="btn btn btn-primary ">toast</a></form>`
+      `<form data-viewname="${view.name}" action="/view/${view.name}" class="form-namespace " method="post" data-row-values="%7B%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><a href="javascript:void(0)" onclick="view_post(this, 'run_action', {rndid:'b6fd72', ...get_form_record(this)});" class="btn btn btn-primary ">toast</a></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){document.getElementById('test-form-id').addEventListener("change", handle_identical_fields, true);});</script>`
     );
     mockReqRes.reset();
     const body = { rndid: "b6fd72", id: "1" };
@@ -815,7 +816,7 @@ describe("Edit view components", () => {
       "run_action",
       body,
       mockReqRes.res,
-      { req: { body } },
+      { req: { ...mockReqRes.req, body }, res: mockReqRes.res },
       false
     );
     expect(mockReqRes.getStored().json).toStrictEqual({
@@ -912,6 +913,7 @@ describe("Edit view components", () => {
       mockReqRes.res,
       {
         req: {
+          ...mockReqRes.req,
           body,
           user: {
             email: "admin@foo.com",
@@ -920,6 +922,7 @@ describe("Edit view components", () => {
             language: "en",
           },
         },
+        res: mockReqRes.res,
       },
       false
     );
@@ -986,6 +989,7 @@ describe("Edit view components", () => {
       mockReqRes.res,
       {
         req: {
+          ...mockReqRes.req,
           body,
           user: {
             email: "admin@foo.com",
@@ -994,6 +998,7 @@ describe("Edit view components", () => {
             language: "en",
           },
         },
+        res: mockReqRes.res,
       },
       false
     );

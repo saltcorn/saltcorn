@@ -198,6 +198,7 @@ const run = async (
     lresp = await lview.run(state1, {
       ...extraArgs,
       onRowSelect: (v) => `select_id('${v.id}', this)`,
+      removeIdFromstate: true,
     });
   }
 
@@ -320,7 +321,6 @@ module.exports = {
    * @param {boolean} opts._omit_state_form
    * @returns {boolean}
    */
-  display_state_form: ({ list_view, _omit_state_form }) => false,
   queries: ({
     table_id,
     viewname,

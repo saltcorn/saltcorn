@@ -1,5 +1,5 @@
 /*eslint-env browser*/
-/*global $, KTDrawer, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page */
+/*global $, KTDrawer, reload_embedded_view, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page */
 
 function combineFormAndQuery(form, query) {
   let paramsList = [];
@@ -121,6 +121,55 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
     );
   } finally {
     removeLoadSpinner();
+  }
+}
+
+async function ajaxSubmitForm(e, force_no_reload, event) {
+  const form = $(e).closest("form");
+  const action = form.attr("action");
+  if (event) event.preventDefault();
+  try {
+    const { isOfflineMode } =
+      parent.saltcorn.data.state.getState().mobileConfig;
+    let responseData = null;
+    if (isOfflineMode) {
+      const { path, query } =
+        parent.saltcorn.mobileApp.navigation.splitPathQuery(action);
+      const formData = new FormData(form[0]);
+      const data = {};
+      for (const [k, v] of formData.entries()) data[k] = v;
+      responseData = await parent.saltcorn.mobileApp.navigation.router.resolve({
+        pathname: `post${path}`,
+        query: query,
+        body: data,
+      });
+    } else {
+      const response = await parent.saltcorn.mobileApp.api.apiCall({
+        path: action,
+        method: "POST",
+        body: new FormData(form[0]),
+      });
+      responseData = response.data;
+    }
+    var no_reload = $("#scmodal").hasClass("no-submit-reload");
+    const on_close_reload_view = $("#scmodal").attr(
+      "data-on-close-reload-view"
+    );
+    $("#scmodal").modal("hide");
+    if (on_close_reload_view) {
+      const viewE = $(`[data-sc-embed-viewname="${on_close_reload_view}"]`);
+      if (viewE.length) reload_embedded_view(on_close_reload_view);
+      else if (!force_no_reload)
+        await parent.saltcorn.mobileApp.navigation.reload();
+    } else if (!force_no_reload && !no_reload)
+      await parent.saltcorn.mobileApp.navigation.reload();
+    else common_done(responseData, form.attr("data-viewname"));
+  } catch (error) {
+    // var title = request.getResponseHeader("Page-Title");
+    // if (title) $("#scmodal .modal-title").html(decodeURIComponent(title));
+    // var body = request.responseText;
+    // if (body) $("#scmodal .modal-body").html(body);
+    parent.saltcorn.mobileApp.common.errorAlert(error);
   }
 }
 
@@ -481,7 +530,7 @@ async function mobile_modal(url, opts = {}) {
         query: query,
         alerts: [],
       });
-      const modalContent = page.content;
+      const modalContent = typeof page === "string" ? page : page.content;
       const title = page.title;
       if (title) $("#scmodal .modal-title").html(title);
       $("#scmodal .modal-body").html(modalContent);
@@ -502,6 +551,10 @@ function closeModal() {
   $("#scmodal").modal("toggle");
 }
 
+async function ajax_post(url, args) {
+  await local_post(url, args);
+}
+
 async function local_post(url, args) {
   try {
     showLoadSpinner();
@@ -517,6 +570,10 @@ async function local_post(url, args) {
   } finally {
     removeLoadSpinner();
   }
+}
+
+async function ajax_post_json(url, data, cb) {
+  await local_post_json(url, data, cb);
 }
 
 async function local_post_json(url, data, cb) {
@@ -679,6 +736,8 @@ async function clear_state(omit_fields_str, e) {
   }
 }
 
+let last_route_viewname;
+
 async function view_post(viewnameOrElem, route, data, onDone, sendState) {
   const viewname =
     typeof viewnameOrElem === "string"
@@ -686,6 +745,7 @@ async function view_post(viewnameOrElem, route, data, onDone, sendState) {
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
           .attr("data-sc-embed-viewname");
+  last_route_viewname = viewname;
   const buildQuery = () => {
     const query = parent.saltcorn.mobileApp.navigation.currentQuery();
     return query ? `?${query}` : "";

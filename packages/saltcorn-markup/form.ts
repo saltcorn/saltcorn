@@ -49,7 +49,9 @@ const rmInitialDot = (s: string): string =>
   s && s[0] === "." ? s.replace(".", "") : s;
 
 const buildActionAttribute = (form: Form): string =>
-  isNode && !form.req?.smr ? form.action! : "javascript:void(0)";
+  (isNode && !form.req?.smr) || form.isWorkflow
+    ? form.action!
+    : "javascript:void(0)";
 
 /**
  * @param sIf
@@ -64,18 +66,18 @@ const mkShowIf = (sIf: any): string =>
               target
             )}]').prop('checked')===${JSON.stringify(value)}`
           : Array.isArray(value)
-          ? `[${value
-              .map((v) => `'${v}'`)
-              .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
-              target
-            )}]:not(:disabled)').val())`
-          : target.includes("|_")
-          ? `splitTargetMatch(e.data("data-closest-form-ns").find('[data-fieldname=${
-              rmInitialDot(target).split("|_")[0]
-            }]:not(:disabled)').val(),'${value}', '${target}')`
-          : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
-              target
-            )}]:not(:disabled)').val()==='${value}'`
+            ? `[${value
+                .map((v) => `'${v}'`)
+                .join()}].includes(e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
+                target
+              )}]:not(:disabled)').val())`
+            : target.includes("|_")
+              ? `splitTargetMatch(e.data("data-closest-form-ns").find('[data-fieldname=${
+                  rmInitialDot(target).split("|_")[0]
+                }]:not(:disabled)').val(),'${value}', '${target}')`
+              : `e.data("data-closest-form-ns").find('[data-fieldname=${rmInitialDot(
+                  target
+                )}]:not(:disabled)').val()==='${value}'`
       )
       .join(" && ")
   );
@@ -127,35 +129,11 @@ const formRowWrap = (
           mkSubLabelAndHelp(hdr)
         )
       : hdr.input_type === "dynamic_fields"
-      ? inner
-      : hdr.type?.name === "Bool" && fStyle === "vert"
-      ? div(
-          { class: "form-check" },
-          inner,
-          label(
-            {
-              for: `input${text_attr(hdr.form_name)}`,
-            },
-            text(hdr.label)
-          ),
-          hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
-        ) + mkSubLabelAndHelp(hdr)
-      : [
-          hdr.label !== " " &&
-            div(
-              {
-                class: [
-                  hdr.type?.name === "Bool" &&
-                    isHoriz(fStyle) &&
-                    labelCols &&
-                    `col-${labelCols} text-end`,
-                  hdr.type?.name !== "Bool" &&
-                    isHoriz(fStyle) &&
-                    labelCols &&
-                    `col-sm-${labelCols} text-md-end`,
-                  labelCols === 0 && "d-none",
-                ],
-              },
+        ? inner
+        : hdr.type?.name === "Bool" && fStyle === "vert"
+          ? div(
+              { class: "form-check" },
+              inner,
               label(
                 {
                   for: `input${text_attr(hdr.form_name)}`,
@@ -163,23 +141,47 @@ const formRowWrap = (
                 text(hdr.label)
               ),
               hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
-            ),
-          div(
-            {
-              class: [
-                hdr.type?.name === "Bool" &&
-                  isHoriz(fStyle) &&
-                  `col-${12 - labelCols}`,
-                hdr.type?.name !== "Bool" &&
-                  isHoriz(fStyle) &&
-                  `col-sm-${12 - labelCols}`,
-              ],
-            },
-            inner,
-            text(error),
-            mkSubLabelAndHelp(hdr)
-          ),
-        ]
+            ) + mkSubLabelAndHelp(hdr)
+          : [
+              hdr.label !== " " &&
+                div(
+                  {
+                    class: [
+                      hdr.type?.name === "Bool" &&
+                        isHoriz(fStyle) &&
+                        labelCols &&
+                        `col-${labelCols} text-end`,
+                      hdr.type?.name !== "Bool" &&
+                        isHoriz(fStyle) &&
+                        labelCols &&
+                        `col-sm-${labelCols} text-md-end`,
+                      labelCols === 0 && "d-none",
+                    ],
+                  },
+                  label(
+                    {
+                      for: `input${text_attr(hdr.form_name)}`,
+                    },
+                    text(hdr.label)
+                  ),
+                  hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+                ),
+              div(
+                {
+                  class: [
+                    hdr.type?.name === "Bool" &&
+                      isHoriz(fStyle) &&
+                      `col-${12 - labelCols}`,
+                    hdr.type?.name !== "Bool" &&
+                      isHoriz(fStyle) &&
+                      `col-sm-${12 - labelCols}`,
+                  ],
+                },
+                inner,
+                text(error),
+                mkSubLabelAndHelp(hdr)
+              ),
+            ]
   );
 
 /**
@@ -483,8 +485,8 @@ const innerField =
           hdr.parent_field && v && isdef(v[hdr.parent_field]?.[hdr.name])
             ? v[hdr.parent_field]?.[hdr.name]
             : v && isdef(v[hdr.form_name])
-            ? v[hdr.form_name]
-            : hdr.default,
+              ? v[hdr.form_name]
+              : hdr.default,
           validClass,
           v
         );
@@ -500,7 +502,7 @@ const innerField =
           hdr.class || ""
         }"${maybe_disabled} data-fieldname="${text_attr(
           hdr.form_name
-        )}" name="${text_attr(name)}" id="input${text_attr(name)}"${
+        )}" name="${text_attr(name)}"${hdr.attributes.onChange ? ` onchange="${hdr.attributes.onChange}"` : ""} id="input${text_attr(name)}"${
           hdr.attributes && hdr.attributes.explainers
             ? ` data-explainers="${encodeURIComponent(
                 JSON.stringify(hdr.attributes.explainers)
@@ -570,12 +572,12 @@ const innerField =
              <option ${tow_d === "Sunday" ? "selected" : ""}>Sunday</option>
              </select>
              <input class="form-control ${validClass} ${
-            hdr.class || ""
-          }"${maybe_disabled} id="input${text_attr(
-            name
-          )}__time" type="text" placeholder="Select time of day.." ${
-            tow_h && tow_m ? `value="${tow_h}:${tow_m}" ` : 'value="12:00" '
-          }readonly="readonly"></div>` +
+               hdr.class || ""
+             }"${maybe_disabled} id="input${text_attr(
+               name
+             )}__time" type="text" placeholder="Select time of day.." ${
+               tow_h && tow_m ? `value="${tow_h}:${tow_m}" ` : 'value="12:00" '
+             }readonly="readonly"></div>` +
           script(
             domReady(`$('#input${text_attr(name)}__time').flatpickr({
             noCalendar: true,
@@ -691,8 +693,8 @@ const mkFormRow =
     hdr.isRepeat && hdr.fancyMenuEditor
       ? mkFormRowForRepeatFancy(v, errors, formStyle, labelCols, hdr)
       : hdr.isRepeat
-      ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
-      : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
+        ? mkFormRowForRepeat(v, errors, formStyle, labelCols, hdr)
+        : mkFormRowForField(v, errors, formStyle, labelCols)(hdr);
 
 /**
  * @param v
@@ -947,6 +949,7 @@ const displayEdit = (
     }
   }
   if (!fieldview) {
+    if (hdr.typename === "FieldRepeat") return;
     if (!hdr.type)
       throw new Error(`Unknown type ${hdr.typename} in field ${name}`);
     else throw new Error(`Cannot find fieldview for field ${name}`);
@@ -1016,17 +1019,18 @@ const mkFormRowForField =
         labelCols
       );
   };
-const helpLink = ({ topic, context, dynContext }: any) => {
+const helpLink = ({ topic, context, dynContext, plugin }: any) => {
   let qs = "";
   Object.keys(context || {}).forEach((k) => {
     qs += `${encodeURIComponent(k)}=${encodeURIComponent(context[k])}&`;
   });
+  const basepath = plugin ? `/admin/help-plugin/${plugin}` : "/admin/help";
   return a(
     {
-      href: `javascript:ajax_modal('/admin/help/${topic}?${qs}')`,
+      href: `javascript:ajax_modal('${basepath}/${topic}?${qs}')`,
       "data-dyn-href":
         !!dynContext &&
-        `\`javascript:ajax_modal('/admin/help/${topic}?${qs}&${dynContext
+        `\`javascript:ajax_modal('${basepath}/${topic}?${qs}&${dynContext
           .map((k: string) => `${k}=\${${k}}`)
           .join("&")}')\``,
     },
@@ -1260,10 +1264,12 @@ const renderFormLayout = (form: Form): string => {
       const spinnerStr = spinner ? `spin_action_link(this);` : "";
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
-
+        const dest = form.req?.query?.dest
+          ? `?dest=${encodeURIComponent(form.req.query.dest)}`
+          : "";
         return a(
           {
-            href: `/auth/login-with/${method_label}`,
+            href: `/auth/login-with/${method_label}${dest}`,
             //TODO get url through form.req to reduce coupling
             class: [
               action_style !== "btn-link" &&
@@ -1299,8 +1305,8 @@ const renderFormLayout = (form: Form): string => {
                 dest
                   ? `window.location.href='${dest}';`
                   : form.req?.xhr
-                  ? `location.reload();`
-                  : `history.back();`
+                    ? `location.reload();`
+                    : `history.back();`
               }}})" type="button"`
             );
           } else {
@@ -1331,8 +1337,8 @@ const renderFormLayout = (form: Form): string => {
               ? "history.back()"
               : "parent.saltcorn.mobileApp.navigation.goBack()"
             : isWeb
-            ? `history.go(${-1 * configuration.steps})`
-            : `parent.saltcorn.mobileApp.navigation.goBack(${configuration.steps})`;
+              ? `history.go(${-1 * configuration.steps})`
+              : `parent.saltcorn.mobileApp.navigation.goBack(${configuration.steps})`;
         if (configuration.save_first) {
           const complete = `()=>${doNav}`;
           return mkBtn(
@@ -1379,12 +1385,13 @@ const renderFormLayout = (form: Form): string => {
         );
       if (action_link) return action_link;
 
-      if (isNode && !form.req?.smr) {
-        const submitAttr = form.xhrSubmit
-          ? `onClick="${spinnerStr}${
-              form.onSubmit ? `${form.onSubmit};` : ""
-            }ajaxSubmitForm(this, true)" type="button"`
-          : 'type="submit"';
+      if ((isNode && !form.req?.smr) || form.isWorkflow) {
+        const submitAttr =
+          form.xhrSubmit || form.isWorkflow
+            ? `onClick="${spinnerStr}${
+                form.onSubmit ? `${form.onSubmit};` : ""
+              }ajaxSubmitForm(this, true)" type="button"`
+            : 'type="submit"';
         return mkBtn(submitAttr);
       }
       return mkBtn('type="submit"');
@@ -1464,12 +1471,13 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   }
   const hasValues = Object.keys(extraValues).length > 0;
   const isMobile = !isNode || form.req?.smr;
+  const mobileWorkflow = isMobile && form.isWorkflow;
   const top = `<form data-viewname="${
     form.viewname
   }" action="${buildActionAttribute(form)}"${
-    form.onSubmit || form.xhrSubmit
+    form.onSubmit || form.xhrSubmit || mobileWorkflow
       ? ` onsubmit="${form.onSubmit || ""}${
-          form.xhrSubmit && !isMobile
+          (form.xhrSubmit && !isMobile) || mobileWorkflow
             ? `;ajaxSubmitForm(this, true, event)`
             : ""
         }" `
@@ -1482,7 +1490,7 @@ const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
     hasValues
       ? ` data-row-values="${encodeURIComponent(JSON.stringify(extraValues))}"`
       : ""
-  }>`;
+  }${form.id ? ` id="${form.id}"` : ""}>`;
   const blurbp = form.blurb
     ? Array.isArray(form.blurb)
       ? form.blurb.join("")
@@ -1607,7 +1615,7 @@ const mkForm = (
   }action="${buildActionAttribute(form)}"${
     form.onSubmit || form.xhrSubmit
       ? ` onsubmit="${form.onSubmit || ""}${
-          form.xhrSubmit && !isMobile
+          (form.xhrSubmit && !isMobile) || form.isWorkflow
             ? `;ajaxSubmitForm(this, true, event)`
             : ""
         }"`
@@ -1643,22 +1651,22 @@ const mkForm = (
     ${
       form.noSubmitButton
         ? ""
-        : form.xhrSubmit
-        ? `<button type="button" class="btn ${
-            form.submitButtonClass || "btn-primary"
-          }" onClick="${
-            form.onSubmit ? `${form.onSubmit};` : ""
-          }ajaxSubmitForm(this, true)">${text(
-            form.submitLabel || "Save"
-          )}</button>`
-        : `<button type="submit" class="btn ${
-            form.submitButtonClass || "btn-primary"
-          }">${text(form.submitLabel || "Save")}</button>`
+        : form.xhrSubmit || form.isWorkflow
+          ? `<button type="button" class="btn ${
+              form.submitButtonClass || "btn-primary"
+            }" onClick="${
+              form.onSubmit ? `${form.onSubmit};` : ""
+            }ajaxSubmitForm(this, true)">${text(
+              form.submitLabel || "Save"
+            )}</button>`
+          : `<button type="submit" class="btn ${
+              form.submitButtonClass || "btn-primary"
+            }">${text(form.submitLabel || "Save")}</button>`
     }${
-    form.additionalButtons
-      ? displayAdditionalButtons(form.additionalButtons, true)
-      : ""
-  }
+      form.additionalButtons
+        ? displayAdditionalButtons(form.additionalButtons, true)
+        : ""
+    }
   </div>
 </div>`;
   return (

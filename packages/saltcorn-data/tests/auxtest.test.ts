@@ -2,6 +2,8 @@ import View from "../models/view";
 import db from "../db";
 import Table from "../models/table";
 import Field from "../models/field";
+import async_json_stream from "../models/internal/async_json_stream";
+const fs = require("fs");
 
 const {
   get_parent_views,
@@ -52,6 +54,23 @@ describe("string manipulators", () => {
   });
   it("validSqlId", async () => {
     expect(validSqlId("Sr. Søejer")).toBe("sr_soejer");
+  });
+});
+
+describe("async_json_stream", () => {
+  it("writes test file", async () => {
+    const data = [
+      { name: "Tom", age: 13 },
+      { name: "Harry", age: 41 },
+    ];
+    fs.writeFileSync("/tmp/testjsondata.json", JSON.stringify(data));
+  });
+  it("reads", async () => {
+    const data = [];
+    await async_json_stream("/tmp/testjsondata.json", async (person) => {
+      data.push(person);
+    });
+    expect(data.length).toBe(2);
   });
 });
 
@@ -127,6 +146,7 @@ describe("plugin helper", () => {
     expect(x[0].views.map((v: View) => v.name).sort()).toStrictEqual([
       "author_multi_edit",
       "authoredit",
+      "authoredit_identicals",
       "authoredit_with_independent_list",
       "authoredit_with_independent_list_legacy",
       "authoredit_with_show",

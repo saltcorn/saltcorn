@@ -18,6 +18,7 @@ const {
   csrfField,
   isAdminOrHasConfigMinRole,
   checkEditPermission,
+  is_relative_url,
 } = require("./utils");
 
 const Table = require("@saltcorn/data/models/table");
@@ -161,7 +162,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { entry_type, tag_id } = req.params;
-    const { ids } = req.body;
+    const { ids } = req.body || {};
     if (!ids) {
       req.flash("error", req.__("Please select at least one item"));
       return res.redirect(`/tag-entries/add/${entry_type}/${tag_id}`);
@@ -192,18 +193,23 @@ router.post(
     const auth = checkEditPermission(entitytype, req.user);
     if (!auth) req.flash("error", "Not authorized");
     else await tag.addEntry({ [fieldName]: +entityid });
+    let redirectTarget =
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : null;
     switch (entitytype) {
       case "views":
-        res.redirect(`/viewedit`);
+        res.redirect(redirectTarget || `/viewedit`);
         break;
       case "pages":
-        res.redirect(`/pageedit`);
+        res.redirect(redirectTarget || `/pageedit`);
         break;
       case "tables":
-        res.redirect(`/table`);
+        res.redirect(redirectTarget || `/table`);
         break;
       case "triggers":
-        res.redirect(`/actions`);
+        res.redirect(redirectTarget || `/actions`);
         break;
 
       default:
@@ -218,7 +224,7 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     let { entry_type, object_id } = req.params;
-    let { tag_ids } = req.body;
+    let { tag_ids } = req.body || {};
     object_id = parseInt(object_id);
     tag_ids = tag_ids.map((id) => parseInt(id));
     const tags = (await Tag.find()).filter((tag) => tag_ids.includes(tag.id));

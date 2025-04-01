@@ -25,7 +25,7 @@ import {
 import { existsSync, readdirSync, statSync, createReadStream } from "fs";
 import { join, basename } from "path";
 import dateFormat from "dateformat";
-import stringify from "csv-stringify/lib/sync";
+import { stringify } from "csv-stringify/sync";
 import csvtojson from "csvtojson";
 import pack from "./pack";
 const {
@@ -51,9 +51,10 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
-const { exec } = require("child_process");
+const { exec, execSync, spawn } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
+import { CodePagePack } from "@saltcorn/types/base_types";
 
 /**
  * @param [withEventLog] - include event log
@@ -90,7 +91,7 @@ const create_pack_json = async (
 
   // triggers
   const triggers = await asyncMap(Trigger.find({}), trigger_pack);
-  
+
   // roles
   const roles = await Role.find({});
   // library
@@ -121,6 +122,22 @@ const create_pack_json = async (
         async (e: EventLog) => await event_log_pack(e)
       )
     : [];
+  const function_code_pages = getState().getConfigCopy(
+    "function_code_pages",
+    {}
+  );
+  const function_code_pages_tags = getState().getConfigCopy(
+    "function_code_pages_tags",
+    {}
+  );
+  const code_pages: Array<CodePagePack> = [];
+  Object.keys(function_code_pages).forEach((name) => {
+    code_pages.push({
+      name,
+      code: function_code_pages[name],
+      tags: function_code_pages_tags[name] || [],
+    });
+  });
 
   const pack: any = {
     tables,
@@ -135,6 +152,7 @@ const create_pack_json = async (
     models,
     model_instances,
     event_logs,
+    code_pages,
   };
 
   if (forSnapshot) {
@@ -307,7 +325,7 @@ const zipFolder = async (folder: string, zipFileName: string) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
       const cmd = `zip ${
         backup_system_zip_level ? `-${backup_system_zip_level} ` : ""
-      }-r "${absZipPath}" .`;
+      }-rq "${absZipPath}" .`;
       exec(cmd, { cwd: folder }, (error: any) => {
         if (error) reject(error);
         else resolve(undefined);
@@ -347,6 +365,17 @@ const create_backup = async (fnm?: string): Promise<string> => {
   return zipFileName;
 };
 
+// https://stackoverflow.com/a/74743490/19839414
+function executableIsAvailable(name: string) {
+  const shell = (cmd: string) => execSync(cmd, { encoding: "utf8" });
+  try {
+    shell(`which ${name}`);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 /**
  * @function
  * @param {string} fnm
@@ -354,13 +383,30 @@ const create_backup = async (fnm?: string): Promise<string> => {
  * @returns {Promise<void>}
  */
 const extract = async (fnm: string, dir: string): Promise<void> => {
-  return new Promise(function (resolve, reject) {
-    const zip = new Zip(fnm);
-    zip.extractAllToAsync(dir, true, function (err) {
-      if (err) reject(new Error("Error opening zip file: " + err));
-      else resolve();
+  const backup_with_system_zip = executableIsAvailable("unzip");
+  const state = getState();
+  if (backup_with_system_zip) {
+    return await new Promise((resolve, reject) => {
+      var subprocess = spawn("unzip", [File.normalise(fnm), "-d", dir]);
+      subprocess.stdout.on("data", (data: any) => {
+        state.log(6, data.toString());
+      });
+      subprocess.stderr.on("data", (data: any) => {
+        state.log(1, data.toString());
+      });
+      subprocess.on("close", function (exitCode: any) {
+        if (exitCode != 0) reject(new Error("unzip failed"));
+        else resolve(undefined);
+      });
     });
-  });
+  } else
+    return new Promise(function (resolve, reject) {
+      const zip = new Zip(fnm);
+      zip.extractAllToAsync(dir, true, false, function (err: any) {
+        if (err) reject(new Error("Error opening zip file: " + err));
+        else resolve();
+      });
+    });
 };
 
 /**
@@ -470,7 +516,7 @@ const restore_tables = async (
         fnm_json,
         table.name === "users" && !restore_first_user
       );
-      if (res.error) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
     } else if (existsSync(fnm_csv)) {
       const res = await table.import_csv_file(fnm_csv, {
         skip_first_data_row: table.name === "users" && !restore_first_user,
@@ -483,13 +529,8 @@ const restore_tables = async (
         "tables",
         sanitiseTableName(table.name) + "__history.json"
       );
-      if (existsSync(fnm_hist_json)) {
-        const fileContents = (await readFile(fnm_hist_json)).toString();
-        const rows = JSON.parse(fileContents);
-        for (const row of rows) {
-          await table.insert_history_row(row);
-        }
-      }
+      if (existsSync(fnm_hist_json))
+        await table.import_json_history_file(fnm_hist_json);
     }
   }
   for (const table of tables) {
@@ -532,8 +573,11 @@ const restore = async (
   state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
+
   //unzip
+  state.log(6, `Unzipping ${fnm} to ${tmpDir}`);
   await extract(fnm, tmpDir.path);
+  state.log(6, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
@@ -552,6 +596,7 @@ const restore = async (
   }
   let err;
   //install pack
+  state.log(6, `Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );
@@ -564,13 +609,18 @@ const restore = async (
     `;
   }
   //config
+  state.log(6, `Restoring config`);
   await restore_config(basePath);
+
+  state.log(6, `Restoring pack`);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
+  state.log(6, `Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
+  state.log(6, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 

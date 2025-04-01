@@ -17,11 +17,15 @@ const {
 } = require("@saltcorn/db-common/internal");
 
 let getTenantSchema;
+let getRequestContext;
 let getConnectObject = null;
 let pool = null;
-let client = null;
 
 let log_sql_enabled = false;
+
+const quote = (s) => `"${s}"`;
+
+const ppPK = (pk) => (pk ? quote(pk) : "id");
 
 /**
  * Control Logging sql statements to console
@@ -70,20 +74,20 @@ const changeConnection = async (connObj = Object.create(null)) => {
 };
 
 const begin = async () => {
-  client = await getClient();
-  await client.query("BEGIN");
+  //client = await getClient();
+  await query("BEGIN");
 };
 
 const commit = async () => {
-  await client.query("COMMIT");
-  client.release(true);
-  client = null;
+  await query("COMMIT");
 };
 
 const rollback = async () => {
-  await client.query("ROLLBACK");
-  client.release(true);
-  client = null;
+  await query("ROLLBACK");
+};
+
+const getMyClient = (selopts) => {
+  return selopts?.client || getRequestContext()?.client || pool;
 };
 
 /**
@@ -104,7 +108,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
     false
   )}`;
   sql_log(sql, values);
-  const tq = await (client || selectopts.client || pool).query(sql, values);
+  const tq = await getMyClient(selectopts).query(sql, values);
 
   return tq.rows;
 };
@@ -123,7 +127,7 @@ const drop_reset_schema = async (schema) => {
   COMMENT ON SCHEMA "${schema}" IS 'standard public schema';`;
   sql_log(sql);
 
-  await pool.query(sql);
+  await getMyClient().query(sql);
 };
 
 /**
@@ -148,7 +152,7 @@ const count = async (tbl, whereObj) => {
 FROM   pg_catalog.pg_class c
 WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
       sql_log(sql);
-      const tq = await (client || pool).query(sql, []);
+      const tq = await getMyClient().query(sql, []);
       const n = +tq.rows[0].int8;
       if (n && n > 10000) return n;
     } catch {
@@ -160,7 +164,7 @@ WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
     tbl
   )}" ${where}`;
   sql_log(sql, values);
-  const tq = await (client || pool).query(sql, values);
+  const tq = await getMyClient().query(sql, values);
 
   return parseInt(tq.rows[0].count);
 };
@@ -173,7 +177,7 @@ WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
 const getVersion = async (short) => {
   const sql = `SELECT version();`;
   sql_log(sql);
-  const tq = await pool.query(sql);
+  const tq = await getMyClient().query(sql);
   const v = tq.rows[0].version;
   if (short) {
     const ws = v.split(" ");
@@ -196,7 +200,7 @@ const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
   )}" ${where}`;
   sql_log(sql, values);
 
-  const tq = await (client || opts.client || pool).query(sql, values);
+  const tq = await getMyClient(opts).query(sql, values);
 
   return tq.rows;
 };
@@ -205,7 +209,7 @@ const truncate = async (tbl) => {
   const sql = `truncate "${getTenantSchema()}"."${sqlsanitize(tbl)}"`;
   sql_log(sql, []);
 
-  const tq = await (client || pool).query(sql, []);
+  const tq = await getMyClient().query(sql, []);
 
   return tq.rows;
 };
@@ -242,13 +246,13 @@ const insert = async (tbl, obj, opts = Object.create(null)) => {
       ? `insert into "${schema}"."${sqlsanitize(
           tbl
         )}"(${fnameList}) values(${valPosList.join()}) ${conflict}returning ${
-          opts.noid ? "*" : opts.pk_name || "id"
+          opts.noid ? "*" : ppPK(opts.pk_name)
         }`
       : `insert into "${schema}"."${sqlsanitize(
           tbl
-        )}" DEFAULT VALUES returning ${opts.noid ? "*" : opts.pk_name || "id"}`;
+        )}" DEFAULT VALUES returning ${opts.noid ? "*" : ppPK(opts.pk_name)}`;
   sql_log(sql, valList);
-  const { rows } = await (client || opts.client || pool).query(sql, valList);
+  const { rows } = await getMyClient(opts).query(sql, valList);
   if (opts.noid) return;
   else if (conflict && rows.length === 0) return;
   else return rows[0][opts.pk_name || "id"];
@@ -274,9 +278,9 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
   const q = `update "${getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where ${opts.pk_name || "id"}=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
   sql_log(q, valList);
-  await (client || opts.client || pool).query(q, valList);
+  await getMyClient(opts).query(q, valList);
 };
 
 /**
@@ -300,7 +304,7 @@ const updateWhere = async (tbl, obj, whereObj, opts = Object.create(null)) => {
     tbl
   )}" set ${assigns} ${where}`;
   sql_log(q, valList);
-  await (client || opts.client || pool).query(q, valList);
+  await getMyClient().query(q, valList);
 };
 
 /**
@@ -346,13 +350,13 @@ const getClient = async () => await pool.connect();
  * @param {string} tblname - table name
  * @returns {Promise<void>} no result
  */
-const reset_sequence = async (tblname) => {
+const reset_sequence = async (tblname, pkname = "id") => {
   const sql = `SELECT setval(pg_get_serial_sequence('"${getTenantSchema()}"."${sqlsanitize(
     tblname
-  )}"', 'id'), coalesce(max(id),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
+  )}"', '${pkname}'), coalesce(max("${pkname}"),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
     tblname
   )}";`;
-  await (client || pool).query(sql);
+  await getMyClient().query(sql);
 };
 
 /**
@@ -371,7 +375,7 @@ const add_unique_constraint = async (table_name, field_names) => {
     .map((f) => `"${sqlsanitize(f)}"`)
     .join(",")});`;
   sql_log(sql);
-  await pool.query(sql);
+  await getMyClient().query(sql);
 };
 
 /**
@@ -388,7 +392,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
     .map((f) => sqlsanitize(f))
     .join("_")}_unique";`;
   sql_log(sql);
-  await pool.query(sql);
+  await getMyClient().query(sql);
 };
 
 /**
@@ -405,7 +409,7 @@ const add_index = async (table_name, field_name) => {
     table_name
   )}" ("${sqlsanitize(field_name)}");`;
   sql_log(sql);
-  await pool.query(sql);
+  await getMyClient().query(sql);
 };
 
 /**
@@ -424,7 +428,7 @@ const add_fts_index = async (table_name, field_expression, language) => {
     language || "english"
   }', ${field_expression}));`;
   sql_log(sql);
-  await pool.query(sql);
+  await getMyClient().query(sql);
 };
 const drop_fts_index = async (table_name) => {
   // TBD check that there are no problems with lenght of constraint name
@@ -432,7 +436,7 @@ const drop_fts_index = async (table_name) => {
     table_name
   )}_fts_index";`;
   sql_log(sql);
-  await pool.query(sql);
+  await getMyClient().query(sql);
 };
 
 /**
@@ -447,7 +451,7 @@ const drop_index = async (table_name, field_name) => {
     table_name
   )}_${sqlsanitize(field_name)}_index";`;
   sql_log(sql);
-  await pool.query(sql);
+  await getMyClient().query(sql);
 };
 
 /**
@@ -460,7 +464,6 @@ const drop_index = async (table_name, field_name) => {
  * @returns {Promise<void>} no results
  */
 const copyFrom = async (fileStream, tableName, fieldNames, client) => {
-  const quote = (s) => `"${s}"`;
   const sql = `COPY "${getTenantSchema()}"."${sqlsanitize(
     tableName
   )}" (${fieldNames.map(quote).join(",")}) FROM STDIN CSV HEADER`;
@@ -474,7 +477,7 @@ const copyToJson = async (fileStream, tableName, client) => {
   const sql = `COPY (SELECT (row_to_json("${sqlsanitize(tableName)}".*) || ',')
   FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO STDOUT`;
   sql_log(sql);
-  const stream = (client || pool).query(copyStreams.to(sql));
+  const stream = (client || getMyClient()).query(copyStreams.to(sql));
 
   return await pipeline(stream, replace("\\\\", "\\"), fileStream);
 };
@@ -486,7 +489,7 @@ const slugify = (s) =>
     .replace(/[^\w-]/g, "");
 
 const time = async () => {
-  const result = await (client || pool).query("select now()");
+  const result = await getMyClient().query("select now()");
   const row = result.rows[0];
   return new Date(row.now);
 };
@@ -496,7 +499,7 @@ const time = async () => {
  * @returns
  */
 const listTables = async () => {
-  const tq = await pool.query(
+  const tq = await getMyClient().query(
     `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}'`
   );
   return tq.rows.map((row) => {
@@ -509,7 +512,7 @@ const listTables = async () => {
  * @returns
  */
 const listUserDefinedTables = async () => {
-  const tq = await pool.query(
+  const tq = await getMyClient().query(
     `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}' AND table_name NOT LIKE '_sc_%'`
   );
   return tq.rows.map((row) => {
@@ -522,12 +525,73 @@ const listUserDefinedTables = async () => {
  * @returns
  */
 const listScTables = async () => {
-  const tq = await pool.query(
+  const tq = await getMyClient().query(
     `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}' AND table_name LIKE '_sc_%'`
   );
   return tq.rows.map((row) => {
     return { name: row.table_name };
   });
+};
+
+/* rules of using this:
+
+- no try catch inside unless you rethrow: wouldnt roll back
+- no state.refresh_*() inside: other works wouldnt see updates as they are in transactioon
+     - you can use state.refresh_*(true) for update on own worker only
+
+*/
+const withTransaction = async (f, onError) => {
+  const client = await getClient();
+  const reqCon = getRequestContext();
+  if (reqCon)
+    //if not, probably in a test
+    reqCon.client = client;
+  sql_log("BEGIN;");
+  await client.query("BEGIN;");
+  let aborted = false;
+  const rollback = async () => {
+    aborted = true;
+    sql_log("ROLLBACK;");
+    await client.query("ROLLBACK;");
+  };
+  try {
+    const result = await f(rollback);
+
+    if (!aborted) {
+      sql_log("COMMIT;");
+      await client.query("COMMIT;");
+    }
+    return result;
+  } catch (error) {
+    if (!aborted) {
+      sql_log("ROLLBACK;");
+      await client.query("ROLLBACK;");
+    }
+    if (onError) return onError(error);
+    else throw error;
+  } finally {
+    if (reqCon) reqCon.client = null;
+    client.release();
+  }
+};
+
+const tryCatchInTransaction = async (f, onError) => {
+  const rndid = Math.floor(Math.random() * 16777215).toString(16);
+  const reqCon = getRequestContext();
+  if (reqCon?.client) await query(`SAVEPOINT sp${rndid}`);
+  try {
+    await f();
+  } catch (error) {
+    if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
+    await onError(error);
+  } finally {
+    if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
+  }
+};
+
+const query = (text, params) => {
+  sql_log(text, params);
+  return getMyClient().query(text, params);
 };
 
 const postgresExports = {
@@ -537,10 +601,7 @@ const postgresExports = {
    * @param {object} params
    * @returns {object}
    */
-  query: (text, params) => {
-    sql_log(text, params);
-    return (client || pool).query(text, params);
-  },
+  query,
   begin,
   commit,
   rollback,
@@ -576,6 +637,8 @@ const postgresExports = {
   listScTables,
   listUserDefinedTables,
   truncate,
+  withTransaction,
+  tryCatchInTransaction,
 };
 
 module.exports = (getConnectObjectPara) => {
@@ -587,6 +650,9 @@ module.exports = (getConnectObjectPara) => {
       getTenantSchema = require("@saltcorn/db-common/tenants")(
         connectObj
       ).getTenantSchema;
+      getRequestContext = require("@saltcorn/db-common/tenants")(
+        connectObj
+      ).getRequestContext;
       postgresExports.pool = pool;
     } else {
       throw new Error("Unable to retrieve a database connection object.");
