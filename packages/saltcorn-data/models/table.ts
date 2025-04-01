@@ -981,12 +981,12 @@ class Table implements AbstractTable {
       noTrigger &&
       !cfields.length
     ) {
-      try {
+      let done = false;
+      await db.tryCatchInTransaction(async () => {
         await db.truncate(this.name);
-        return;
-      } catch {
-        //foreign keys can cause this to fail
-      }
+        done = true;
+      });
+      if (done) return;
     }
 
     // get triggers on delete
@@ -1654,21 +1654,10 @@ class Table implements AbstractTable {
 
     this.stringify_json_fields(v1);
 
-    if (retry < 3) {
-      //TODO check we are really in a transaction
-      await db.tryCatchInTransaction(
-        async () => {
-          await db.insert(this.name + "__history", v1);
-        },
-        async (error: Error) => {
-          await this.insert_history_row(v1, retry + 1);
-        }
-      );
-    } else {
-      await db.insert(this.name + "__history", v1, {
-        onConflictDoNothing: true,
-      });
-    }
+    const id = await db.insert(this.name + "__history", v1, {
+      onConflictDoNothing: true,
+    });
+    if (!id && retry <= 3) await this.insert_history_row(v1, retry + 1);
   }
 
   async latestSyncInfo(id: PrimaryKeyValue) {
