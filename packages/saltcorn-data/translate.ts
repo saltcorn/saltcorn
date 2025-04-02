@@ -1,4 +1,4 @@
-const { getState } = require("../db/state");
+const { getState } = require("./db/state");
 
 export const hasLLM = () => {
   return !!getState().functions.llm_generate;
