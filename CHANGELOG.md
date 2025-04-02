@@ -6,6 +6,7 @@
     - upload and download CSV files with the translation strings (under Site structure/Languages)
     - Text nodes inside HTML elements are translated
     - The site name and addiotnal login strings are translated
+    - Translate app strings with LLM if module is present
 
 * Transactional isolation: Most administrative actions and user-run data 
   manipulation through forms or actions run from the web UI are now
