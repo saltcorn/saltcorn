@@ -58,22 +58,22 @@ const subItem = (currentUrl) => (item) =>
         )
       )
     : item.link
-    ? a(
-        {
-          class: [
-            "collapse-item",
-            active(currentUrl, item) && "active",
-            item.class,
-          ],
-          href: text(item.link),
-          target: item.target_blank ? "_blank" : undefined,
-        },
-        show_icon(item.icon, "mr-05"),
-        item.label
-      )
-    : item.type === "Separator"
-    ? hr({ class: "sidebar-divider my-0" })
-    : h6({ class: "collapse-header" }, item.label);
+      ? a(
+          {
+            class: [
+              "collapse-item",
+              active(currentUrl, item) && "active",
+              item.class,
+            ],
+            href: text(item.link),
+            target: item.target_blank ? "_blank" : undefined,
+          },
+          show_icon(item.icon, "mr-05"),
+          item.label
+        )
+      : item.type === "Separator"
+        ? hr({ class: "sidebar-divider my-0" })
+        : h6({ class: "collapse-header" }, item.label);
 
 /**
  * @param {object} item
@@ -147,45 +147,45 @@ const sideBarItem = (currentUrl) => (item) => {
           ),
         ]
       : item.link
-      ? a(
-          {
-            class: "nav-link",
-            href: text(item.link),
-            target: item.target_blank ? "_blank" : undefined,
-          },
-          show_icon(item.icon),
-          span(text(item.label))
-        )
-      : item.type === "Search"
-      ? form(
-          {
-            action: "/search",
-            class: "menusearch ms-2 me-3",
-            method: "get",
-          },
-          div(
-            { class: "input-group search-bar" },
-
-            input({
-              type: "search",
-              class: "form-control search-bar pl-2p5",
-              placeholder: item.label,
-              id: "inputq",
-              name: "q",
-              "aria-label": "Search",
-              "aria-describedby": "button-search-submit",
-            }),
-
-            button(
-              {
-                class: "btn btn-outline-secondary search-bar",
-                type: "submit",
-              },
-              i({ class: "fas fa-search" })
-            )
+        ? a(
+            {
+              class: "nav-link",
+              href: text(item.link),
+              target: item.target_blank ? "_blank" : undefined,
+            },
+            show_icon(item.icon),
+            span(text(item.label))
           )
-        )
-      : span({ class: "nav-link" }, text(item.label))
+        : item.type === "Search"
+          ? form(
+              {
+                action: "/search",
+                class: "menusearch ms-2 me-3",
+                method: "get",
+              },
+              div(
+                { class: "input-group search-bar" },
+
+                input({
+                  type: "search",
+                  class: "form-control search-bar pl-2p5",
+                  placeholder: item.label,
+                  id: "inputq",
+                  name: "q",
+                  "aria-label": "Search",
+                  "aria-describedby": "button-search-submit",
+                }),
+
+                button(
+                  {
+                    class: "btn btn-outline-secondary search-bar",
+                    type: "submit",
+                  },
+                  i({ class: "fas fa-search" })
+                )
+              )
+            )
+          : span({ class: "nav-link" }, text(item.label))
   );
 };
 
@@ -193,13 +193,12 @@ const sideBarItem = (currentUrl) => (item) => {
  * @param {string} currentUrl
  * @returns {function}
  */
-const sideBarSection = (currentUrl) => (section) =>
-  [
-    section.section &&
-      hr({ class: "sidebar-divider" }) +
-        div({ class: "sidebar-heading" }, section.section),
-    section.items.map(sideBarItem(currentUrl)).join(""),
-  ];
+const sideBarSection = (currentUrl) => (section) => [
+  section.section &&
+    hr({ class: "sidebar-divider" }) +
+      div({ class: "sidebar-heading" }, section.section),
+  section.items.map(sideBarItem(currentUrl)).join(""),
+];
 
 /**
  * @param {object} brand
@@ -323,21 +322,23 @@ const renderBody = (title, body, role, req) =>
  * @param {object} authLinks
  * @returns {hr|a}
  */
-const renderAuthLinks = (authLinks) => {
+const renderAuthLinks = (authLinks, req) => {
+  const __ = req?.__ || ((s) => s);
   let links = [];
   if (authLinks.login)
-    links.push(link(authLinks.login, "Already have an account? Login!"));
-  if (authLinks.forgot) links.push(link(authLinks.forgot, "Forgot password?"));
+    links.push(link(authLinks.login, __("Already have an account? Login!")));
+  if (authLinks.forgot)
+    links.push(link(authLinks.forgot, __("Forgot password?")));
   if (authLinks.signup)
-    links.push(link(authLinks.signup, "Create an account!"));
+    links.push(link(authLinks.signup, __("Create an account!")));
   if (authLinks.publicUser)
-    links.push(link(authLinks.publicUser, "Continue as public user"));
+    links.push(link(authLinks.publicUser, __("Continue as public user")));
   const meth_links = (authLinks.methods || [])
     .map(({ url, icon, label }) =>
       a(
         { href: url, class: "btn btn-secondary btn-user btn-block" },
         icon || "",
-        `&nbsp;Login with ${label}`
+        `&nbsp;${__("Login with %s", label)}`
       )
     )
     .join("");
@@ -393,8 +394,8 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
   <body ${bodyAttr}>
     ${rest}
     <script src="${safeSlash()}static_assets/${
-    db.connectObj.version_tag
-  }/jquery-3.6.0.min.js"></script>
+      db.connectObj.version_tag
+    }/jquery-3.6.0.min.js"></script>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/bootstrap.bundle.min.js"></script>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/jquery.easing.min.js"></script>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.js"></script>
@@ -422,6 +423,7 @@ const authWrap = ({
   csrfToken,
   authLinks,
   bodyClass,
+  req,
 }) =>
   wrapIt(
     headers,
@@ -440,7 +442,7 @@ const authWrap = ({
                       <h1 class="h4 text-gray-900 mb-4">${title}</h1>
                     </div>
                     ${renderForm(formModify(form), csrfToken)}
-                    ${renderAuthLinks(authLinks)}
+                    ${renderAuthLinks(authLinks, req)}
                     ${afterForm ? afterForm : ""}
                   </div>
                 </div>
