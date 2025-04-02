@@ -318,7 +318,9 @@ test.describe('E2E Test Suite', () => {
 
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1_3);
     await functions.fill_Text(pageobject.htmltextlocator, `
-    <div style="background-color: #d1ecf1; border: 2px solid #17a2b8; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+    <div style="background-color: #d1ecf1; border: 2px solid #17a2b8; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;" 
+     onmouseover="this.style.transform='scale(1.1)'" 
+     onmouseout="this.style.transform='scale(1)'">
         <h3 style="color: #0c5460; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Pro Plan</h3>
         <p style="color: #0c5460; font-size: 20px; font-weight: bold;">₹499 / month</p>
         
@@ -329,7 +331,7 @@ test.describe('E2E Test Suite', () => {
             <li>✔ Free Custom Domain</li>
             <li style="color: red;">❌ Advanced Analytics & Reports</li>
         </ul>
-        <a href="https://e2etest.saltcorn.co/page/Payment_Page" style="text-decoration: none;">
+        <a href="https://e2etest.saltcorn.co/page/Payment_Page?plan=Pro&amount=499" style="text-decoration: none;">
         <button style="background-color: #0056b3; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
         </a>
     </div>
@@ -337,7 +339,9 @@ test.describe('E2E Test Suite', () => {
 
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1_2);
     await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="background-color: #d4edda; border: 2px solid #28a745; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+      <div style="background-color: #d4edda; border: 2px solid #28a745; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;" 
+     onmouseover="this.style.transform='scale(1.1)'" 
+     onmouseout="this.style.transform='scale(1)'"> 
           <h3 style="color: #155724; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Basic Plan</h3>
           <p style="color: #155724; font-size: 20px; font-weight: bold;">₹199 / month</p>
           
@@ -348,7 +352,7 @@ test.describe('E2E Test Suite', () => {
               <li style="color: red;">❌ Free Custom Domain & Hosting</li>
               <li style="color: red;">❌ Advanced Analytics & Reports</li>
           </ul>
-          <a href="https://e2etest.saltcorn.co/page/Payment_Page" style="text-decoration: none;">
+          <a href="https://e2etest.saltcorn.co/page/Payment_Page?plan=Basic&amount=199" style="text-decoration: none;">
           <button style="background-color: #218838; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
           </a>
       </div>
@@ -356,7 +360,9 @@ test.describe('E2E Test Suite', () => {
 
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1_4);
     await functions.fill_Text(pageobject.htmltextlocator, `
-  <div style="background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+  <div style="background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;" 
+     onmouseover="this.style.transform='scale(1.1)'" 
+     onmouseout="this.style.transform='scale(1)'">
       <h3 style="color: #856404; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Premium Plan</h3>
       <p style="color: #856404; font-size: 20px; font-weight: bold;">₹999 / month</p>
       
@@ -367,14 +373,16 @@ test.describe('E2E Test Suite', () => {
           <li>✔ Free Custom Domain & Hosting</li>
           <li>✔ Advanced Analytics & Reports</li>
       </ul>
-      <a href="https://e2etest.saltcorn.co/page/Payment_Page" style="text-decoration: none;">
+      <a href="https://e2etest.saltcorn.co/page/Payment_Page?plan=Premium&amount=999" style="text-decoration: none;">
       <button style="background-color: #d39e00; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
       </a>
   </div>
 `);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1);
     await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="background-color: #e3f2fd; border: 2px solid #2196f3; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+      <div style="background-color: #e3f2fd; border: 2px solid #2196f3; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;"
+     onmouseover="this.style.transform='scale(1.1)'" 
+     onmouseout="this.style.transform='scale(1)'">
           <h3 style="color: #0d47a1; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Free Plan</h3>
           <p style="color: #0d47a1; font-size: 20px; font-weight: bold;">₹0 / month</p>
           
@@ -396,26 +404,26 @@ test.describe('E2E Test Suite', () => {
     // Create a new page for landing page
     await functions.create_New_Page('Payment_Page');
     await page.waitForTimeout(2000);
-    // Drag and drop the text source
-    await page.waitForSelector(pageobject.htmlCodeSource);
+    // Drag and drop the htmlCodeSource
+    await page.click(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
     await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+      <div style="display: flex; justify-content: center; align-items: flex-start; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
           <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2); width: 600px; text-align: center;">
               <h2 style="color: #333; margin-bottom: 20px;">Saltcorn Secure Payment</h2>
   
               <form style="width: 100%;" onsubmit="event.preventDefault(); window.location.href='https://e2etest.saltcorn.co/page/Thank_you';">
-                  <div style="display: flex; flex-direction: column; margin-bottom: 15px;">
+                  <div style="display: flex; flex-direction: column; margin-bottom: 15px; text-align: left;">
                       <label style="font-weight: bold; margin-bottom: 5px;">Cardholder Name</label>
                       <input type="text" placeholder="Card Holder Name" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
                   </div>
   
-                  <div style="display: flex; flex-direction: column; margin-bottom: 15px;">
+                  <div style="display: flex; flex-direction: column; margin-bottom: 15px; text-align: left;">
                       <label style="font-weight: bold; margin-bottom: 5px;">Card Number</label>
                       <input type="number" placeholder="1234 5678 9012 3456" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
                   </div>
   
-                  <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                  <div style="display: flex; gap: 15px; margin-bottom: 15px; text-align: left;">
                       <div style="display: flex; flex-direction: column; width: 50%;">
                           <label style="font-weight: bold; margin-bottom: 5px;">Expiry Date</label>
                           <input type="text" placeholder="MM/YY" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
@@ -443,7 +451,7 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
     await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+      <div style="display: flex; justify-content: center; align-items: flex-start; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
           <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2); width: 600px; text-align: center;">
               <h2 style="color: #28a745; font-size: 24px; margin-bottom: 10px;">Thank You for Your Payment!</h2>
               <p style="color: #555; font-size: 18px; margin-bottom: 20px;">Your transaction is Processing... A confirmation email will be sent to your email address.</p>

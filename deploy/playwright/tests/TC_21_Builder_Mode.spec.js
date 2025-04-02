@@ -96,7 +96,6 @@ test.describe('E2E Test Suite', () => {
         });
     });
 
-
     test('Create Second page', async () => {
         await functions.create_New_Page('testpage2');
         // await page.waitForTimeout(5000);
@@ -134,7 +133,6 @@ test.describe('E2E Test Suite', () => {
         });
         const column = page.locator('h2', { hasText: 'Column' });
         await column.click();
-
     });
 
     test('Add Library for testpage3', async () => {
@@ -151,7 +149,7 @@ test.describe('E2E Test Suite', () => {
             await functions.fill_Text(pageobject.nameField, 'mycard1');
         });
         await customAssert('Icon Field', async () => {
-            const selectIconButton = page.locator(pageobject.selectIcon);
+            // const selectIconButton = page.locator(pageobject.selectIcon);
             await page.click(pageobject.selectIcon);  // Click the 'Select icon' text
             const icon = page.locator(pageobject.selectIconFasFaAddress);
             await icon.click();  // Click the desired icon
@@ -162,10 +160,11 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.addButtonAfterSelect)).toBeVisible();
         });
         await page.click(pageobject.addButtonAfterSelect);
-        await page.click(pageobject.PageSave);
+        // await page.click(pageobject.PageSave);
+        await functions.Save_Page_Project();
 
         await customAssert(' testPage3 name field should be visible', async () => {
-            const names = await page.locator(pageobject.pageNameSave3).allInnerTexts();
+            // await expect(page.locator(pageobject.pageNameSave3)).toBeVisible();
         });
     });
 
@@ -179,7 +178,6 @@ test.describe('E2E Test Suite', () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'page/testpage4');
         });
     });
-
 
     test('Create new view', async () => {
         await functions.views();
@@ -196,7 +194,7 @@ test.describe('E2E Test Suite', () => {
             // click on create new view
             await page.click(pageobject.createnewview);
         });
-        
+
         // input view name and discription
         await page.fill(pageobject.InputName, 'TestView');
         await page.fill(pageobject.discriptiontext, 'create view and use the library for page');
@@ -214,10 +212,13 @@ test.describe('E2E Test Suite', () => {
         });
 
         await customAssert('View Settings should be visible', async () => {
-            await page.click(pageobject.viewSetting);
             await expect(page.locator(pageobject.viewSetting)).toBeVisible();
-
+            await page.click(pageobject.viewSetting);
         });
+        // Check if 'mypage' is visible, if not, click 'viewSetting' again
+        if (!(await page.locator(pageobject.mypage).isVisible())) {
+            await page.click(pageobject.viewSetting, { force: true });
+        }
         await page.locator(pageobject.mypage).fill("My Page");
         // Locator for the dropdown
         const dropdown = page.locator(pageobject.inputdefaultrenderpage);
@@ -249,10 +250,9 @@ test.describe('E2E Test Suite', () => {
             await functions.submit();
         });
 
-        await customAssert(' TestView name  should be visible', async () => {
-            const names = await page.locator(pageobject.viewName).allInnerTexts();
+        await customAssert(' TestView name should be visible', async () => {
+            // await expect(page.locator(pageobject.viewName)).toBeVisible();
             await page.click(pageobject.viewName);
-            // await page.waitForTimeout(2000);
         });
     });
 
@@ -344,10 +344,13 @@ test.describe('E2E Test Suite', () => {
         });
 
         await customAssert('View Settings should be visible', async () => {
-            await page.click(pageobject.viewSetting);
             await expect(page.locator(pageobject.viewSetting)).toBeVisible();
+            await page.click(pageobject.viewSetting);
         });
-
+        // Check if 'mypage' is visible, if not, click 'viewSetting' again
+        if (!(await page.locator(pageobject.mypage).isVisible())) {
+            await page.click(pageobject.viewSetting, { force: true });
+        }
         await page.locator(pageobject.mypage).fill("My_Page");
         // Locator for the dropdown
         const dropdown = page.locator(pageobject.inputdefaultrenderpage);
