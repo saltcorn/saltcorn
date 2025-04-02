@@ -5,6 +5,7 @@
 const { Command, Flags, Args } = require("@oclif/core");
 const { maybe_as_tenant, init_some_tenants } = require("../../common");
 const { getState, features } = require("@saltcorn/data/db/state");
+const { translate } = require("@saltcorn/data/translate");
 const path = require("path");
 const fs = require("fs");
 
@@ -51,10 +52,7 @@ class TranslateCommand extends Command {
           continue;
         }
         process.stdout.write(`Translating ${key} to: `);
-        const answer = await getState().functions.llm_generate.run(key, {
-          systemPrompt: systemPrompt(args.locale),
-          temperature: 0,
-        });
+        const answer = await translate(key, args.locale);
         console.log(answer);
         locale[key] = answer;
         count += 1;
@@ -82,23 +80,8 @@ class TranslateCommand extends Command {
 }
 
 // prompt explain: tables, users, tenants
-const languageNames = new Intl.DisplayNames(["en"], {
-  type: "language",
-});
-const skipKeys = ["HTTP", "Plugins"];
 
-const systemPrompt = (
-  locale,
-) => `You are purely a translation assistant. Translate 
-the entered text into ${languageNames.of(locale)} without any additional information.
-the translation is in the domain of database user interface/ application development software. the term Table referes to 
-the database table, the row is a row in the database table, media is the type of media file,
-the user is the user account in the system, with each user having a role that defines permissions, and as the system is 
-multi-tenant the term tenant refers an instance of the application for a particular purpose. 
-2FA is two factor authentication, building refers to building software applications. A view is a 
-representation of the database content on the screen for the user, and actions are user-defined ways of 
-manipulating data or files. The system is modular, and an extension is known as a Module. Use technical language. 
-Translate anything the user enters to ${languageNames.of(locale)}.`;
+const skipKeys = ["HTTP", "Plugins"];
 
 TranslateCommand.args = {
   locale: Args.string({
