@@ -462,33 +462,20 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_i18n() {
-    const localeDir = join(__dirname, "..", "app-locales", this.tenant);
-    try {
-      //avoid race condition
-      if (!existsSync(localeDir)) await mkdir(localeDir, { recursive: true });
-    } catch (e) {
-      console.error("app-locale create error", e);
-    }
+    const staticCatalog: Record<string, Record<string, string>> = {};
+
     const allStrings = this.getConfig("localizer_strings", {});
     for (const lang of Object.keys(this.getConfig("localizer_languages", {}))) {
-      //write json file
-      const strings = allStrings[lang];
-      if (strings)
-        await writeFile(
-          join(localeDir, `${lang}.json`),
-          JSON.stringify(strings, null, 2)
-        );
+      staticCatalog[lang] = allStrings[lang] || {};
     }
     this.log(5, "Refresh i18n");
 
     this.i18n = new I18n.I18n();
     this.i18n.configure({
       locales: Object.keys(this.getConfig("localizer_languages", {})),
-      directory: localeDir,
-      autoReload: false,
-      updateFiles: false,
-      syncFiles: false,
+      staticCatalog,
       mustacheConfig: { disable: true },
+      defaultLocale: this.getConfig("default_locale"),
     });
   }
 
