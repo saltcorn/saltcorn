@@ -25,6 +25,7 @@ const Form = require("@saltcorn/data/models/form");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const { stringify } = require("csv-stringify");
 const csvtojson = require("csvtojson");
+const { hasLLM } = require("@saltcorn/data/translate");
 
 /**
  * @type {object}
@@ -340,7 +341,19 @@ router.get(
         above: [
           {
             type: "card",
-            contents: [renderForm(form, req.csrfToken())],
+            contents: [
+              renderForm(form, req.csrfToken()),
+              hasLLM() &&
+                renderForm(
+                  new Form({
+                    fields: [],
+                    action: `/site-structure/localizer/translate-llm/${lang}`,
+                    submitLabel: "Translate with LLM",
+                    submitButtonClass: "btn-secondary",
+                  }),
+                  req.csrfToken()
+                ),
+            ],
           },
           !is_default && {
             type: "card",
