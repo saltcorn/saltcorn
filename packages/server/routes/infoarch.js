@@ -348,7 +348,7 @@ router.get(
                   new Form({
                     fields: [],
                     action: `/site-structure/localizer/translate-llm/${lang}`,
-                    submitLabel: "Translate with LLM",
+                    submitLabel: req.__("Translate with LLM"),
                     onSubmit: "press_store_button(this)",
 
                     submitButtonClass: "btn-secondary",
@@ -412,7 +412,7 @@ router.post(
     const default_lang =
       Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
       getState().getConfig("default_locale", "en");
-
+    let count = 0;
     for (const defstring of getState().getStringsForI18n()) {
       const cfgStrings = getState().getConfigCopy("localizer_strings", {});
       if (
@@ -420,12 +420,21 @@ router.post(
         cfgStrings[lang][defstring] !== defstring
       )
         continue;
+      if (count >= 20) break;
+      count += 1;
       const translated = await translate(defstring, lang, default_lang);
       if (cfgStrings[lang]) cfgStrings[lang][defstring] = translated;
       else cfgStrings[lang] = { [defstring]: translated };
       await getState().setConfig("localizer_strings", cfgStrings);
     }
-
+    if (count == 20)
+      req.flash(
+        "success",
+        req.__(
+          `Translated %s strings. Click 'Translate with LLM' again to continue`, count
+        )
+      );
+    else req.flash("success", req.__(`Finished translating %s strings.`, count));
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );

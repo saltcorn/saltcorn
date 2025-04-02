@@ -1598,5 +1598,7 @@
 	"Upload language CSV": "Upload language CSV",
 	"Create an account!": "Create an account!",
 	"Login with %s": "Login with %s",
-	"Already have an account? Login!": "Already have an account? Login!"
+	"Already have an account? Login!": "Already have an account? Login!",
+	"Translated %s strings. Click 'Translate with LLM' again to continue": "Translated %s strings. Click 'Translate with LLM' again to continue",
+	"Translate with LLM": "Translate with LLM"
 }
