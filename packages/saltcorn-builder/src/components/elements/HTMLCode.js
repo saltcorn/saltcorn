@@ -52,9 +52,9 @@ const fields = (mode) => {
         const walker = document.createTreeWalker(div, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
           const s = walker.currentNode.data?.trim?.();
-          if (s) children.push(s);
+          if (s && !(s.startsWith("{{") && s.endsWith("}}"))) children.push(s);
         }
-        segment.text_strings = children.sort();     
+        segment.text_strings = children.sort();
       },
       sublabel:
         mode === "show" || mode === "list"
