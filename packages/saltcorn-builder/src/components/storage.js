@@ -483,6 +483,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
             nodes[node.linkedNodes[f.nodeID]]
           );
         } else s[f.segment_name || f.name || f] = node.props[f.name || f];
+        if(f.onSave) f.onSave(s, node.props)
       });
       if (related.fields.some((f) => f.canBeFormula))
         s.isFormula = node.props.isFormula;

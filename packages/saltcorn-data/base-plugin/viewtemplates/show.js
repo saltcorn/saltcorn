@@ -715,6 +715,7 @@ const render = (
     }
   };
   const layout = structuredClone(layout0);
+  translateLayout(layout, locale);
   traverseSync(layout, {
     link(segment) {
       evalMaybeExpr(segment, "url");
@@ -806,7 +807,6 @@ const render = (
       }
     },
   });
-  translateLayout(layout, locale);
   const blockDispatch = {
     field({ field_name, fieldview, configuration, click_to_edit }) {
       let field = fields.find((fld) => fld.name === field_name);

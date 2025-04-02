@@ -55,6 +55,7 @@ describe("State queries", () => {
       "Hello I am iPhone XR",
       "Hello I am Laptop",
       "Hello I am Surface Pro 7",
+      "Saltcorn",
     ]);
   });
   it("should query type names", async () => {

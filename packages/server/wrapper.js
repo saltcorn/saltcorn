@@ -324,10 +324,13 @@ const get_headers = (req, version_tag, description, extras = []) => {
  * @param state
  * @returns {{name: *, logo: (string|undefined)}}
  */
-const get_brand = (state) => {
+const get_brand = (state, req) => {
   const logo_id = state.getConfig("site_logo_id", "");
+  const locale = req.getLocale();
+  const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
+  const name = __(state.getConfig("site_name", "Saltcorn"));
   return {
-    name: state.getConfig("site_name"),
+    name,
     logo: logo_id && logo_id !== "0" ? `/files/serve/${logo_id}` : undefined,
   };
 };
@@ -352,7 +355,7 @@ module.exports = (version_tag) =>
             form,
             authLinks,
             afterForm: html.length === 1 ? html[0] : html.join(""),
-            brand: get_brand(state),
+            brand: get_brand(state, req),
             menu: get_menu(req),
             alerts: getFlashes(req),
             headers: get_headers(req, version_tag),
@@ -382,7 +385,7 @@ module.exports = (version_tag) =>
         res.send(
           layout.wrap({
             title,
-            brand: get_brand(state),
+            brand: get_brand(state, req),
             menu: get_menu(req),
             currentUrl,
             originalUrl: req.originalUrl,
@@ -436,7 +439,7 @@ module.exports = (version_tag) =>
       res.send(
         layout.wrap({
           title,
-          brand: no_menu ? undefined : get_brand(state),
+          brand: no_menu ? undefined : get_brand(state, req),
           menu: no_menu ? undefined : get_menu(req),
           currentUrl,
           originalUrl: req.originalUrl,
