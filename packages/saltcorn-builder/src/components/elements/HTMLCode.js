@@ -54,7 +54,7 @@ const fields = (mode) => {
           const s = walker.currentNode.data?.trim?.();
           if (s && !(s.startsWith("{{") && s.endsWith("}}"))) children.push(s);
         }
-        segment.text_strings = children.sort();
+        segment.text_strings = [...new Set(children.sort())];
       },
       sublabel:
         mode === "show" || mode === "list"
