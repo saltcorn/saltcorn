@@ -25,7 +25,7 @@ const Form = require("@saltcorn/data/models/form");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const { stringify } = require("csv-stringify");
 const csvtojson = require("csvtojson");
-const { hasLLM } = require("@saltcorn/data/translate");
+const { hasLLM, translate } = require("@saltcorn/data/translate");
 
 /**
  * @type {object}
@@ -349,6 +349,8 @@ router.get(
                     fields: [],
                     action: `/site-structure/localizer/translate-llm/${lang}`,
                     submitLabel: "Translate with LLM",
+                    onSubmit: "press_store_button(this)",
+
                     submitButtonClass: "btn-secondary",
                   }),
                   req.csrfToken()
@@ -385,6 +387,46 @@ router.get(
         ],
       },
     });
+  })
+);
+
+router.post(
+  "/localizer/translate-llm/:lang/",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { lang, defstring } = req.params;
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgLangs = getState().getConfig("localizer_languages");
+
+    if (!cfgLangs[lang]) {
+      req.flash("error", req.__("Language not found"));
+      return res.redirect(`/site-structure/localizer`);
+    }
+    const default_lang =
+      Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
+      getState().getConfig("default_locale", "en");
+
+    for (const defstring of getState().getStringsForI18n()) {
+      const cfgStrings = getState().getConfigCopy("localizer_strings", {});
+      if (
+        cfgStrings[lang][defstring] &&
+        cfgStrings[lang][defstring] !== defstring
+      )
+        continue;
+      const translated = await translate(defstring, lang, default_lang);
+      if (cfgStrings[lang]) cfgStrings[lang][defstring] = translated;
+      else cfgStrings[lang] = { [defstring]: translated };
+      await getState().setConfig("localizer_strings", cfgStrings);
+    }
+
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
 
