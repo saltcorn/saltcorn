@@ -59,6 +59,33 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
     })
   );
 
+const upload_language_pack = (req) =>
+  form(
+    {
+      method: "post",
+      action: "/site-structure/localizer/upload-language-pack",
+      encType: "multipart/form-data",
+    },
+    input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+    label(
+      {
+        class: "btn btn-outline-secondary",
+        for: "upload_langpack",
+        style: { cursor: "pointer" },
+      },
+      i({ class: "fas fa-upload me-1" }),
+      req.__("Upload language CSV")
+    ),
+    input({
+      id: "upload_langpack",
+      class: "d-none",
+      name: "file",
+      type: "file",
+      accept: "text/csv",
+      onchange: "this.form.submit();",
+    })
+  );
+
 /**
  * Add Edit Bar
  * @param {object} opts
@@ -648,4 +675,5 @@ module.exports = {
   check_if_restart_required,
   flash_restart,
   send_tags_page,
+  upload_language_pack,
 };
