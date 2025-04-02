@@ -45,6 +45,17 @@ const fields = (mode) => {
       name: "text",
       type: "textarea",
       segment_name: "contents",
+      onSave: (segment, node_props) => {
+        const div = document.createElement("div");
+        div.innerHTML = (node_props.text || "").trim();
+        const children = []; // Type: Node[]
+        const walker = document.createTreeWalker(div, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const s = walker.currentNode.data?.trim?.();
+          if (s) children.push(s);
+        }
+        segment.text_strings = children.sort();     
+      },
       sublabel:
         mode === "show" || mode === "list"
           ? "Access fields with <code>{{ var_name }}</code>"
