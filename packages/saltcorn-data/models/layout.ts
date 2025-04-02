@@ -122,6 +122,7 @@ const getStringsForI18n = (layout: Layout): string[] => {
   traverseSync(layout, {
     blank(s: any) {
       if (typeof s === "string") strings.push(s);
+      else if (s.text_strings) strings.push(...s.text_strings);
       else if (s.contents) strings.push(s.contents);
     },
     link({ text }: { text: string }) {
