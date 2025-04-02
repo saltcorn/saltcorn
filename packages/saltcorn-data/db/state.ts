@@ -231,7 +231,7 @@ class State {
     this.i18n = new I18n.I18n();
     this.i18n.configure({
       locales: [],
-      directory: join(__dirname, "..", "app-locales"),
+      staticCatalog: {},
       mustacheConfig: { disable: true },
     });
     this.logLevel = 1;
