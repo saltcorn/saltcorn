@@ -25,6 +25,7 @@ const Form = require("@saltcorn/data/models/form");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const { stringify } = require("csv-stringify");
 const csvtojson = require("csvtojson");
+const { hasLLM, translate } = require("@saltcorn/data/translate");
 
 /**
  * @type {object}
@@ -340,7 +341,21 @@ router.get(
         above: [
           {
             type: "card",
-            contents: [renderForm(form, req.csrfToken())],
+            contents: [
+              renderForm(form, req.csrfToken()),
+              hasLLM() &&
+                renderForm(
+                  new Form({
+                    fields: [],
+                    action: `/site-structure/localizer/translate-llm/${lang}`,
+                    submitLabel: req.__("Translate with LLM"),
+                    onSubmit: "press_store_button(this)",
+
+                    submitButtonClass: "btn-secondary",
+                  }),
+                  req.csrfToken()
+                ),
+            ],
           },
           !is_default && {
             type: "card",
@@ -372,6 +387,55 @@ router.get(
         ],
       },
     });
+  })
+);
+
+router.post(
+  "/localizer/translate-llm/:lang/",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { lang, defstring } = req.params;
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgLangs = getState().getConfig("localizer_languages");
+
+    if (!cfgLangs[lang]) {
+      req.flash("error", req.__("Language not found"));
+      return res.redirect(`/site-structure/localizer`);
+    }
+    const default_lang =
+      Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
+      getState().getConfig("default_locale", "en");
+    let count = 0;
+    for (const defstring of getState().getStringsForI18n()) {
+      const cfgStrings = getState().getConfigCopy("localizer_strings", {});
+      if (
+        cfgStrings[lang][defstring] &&
+        cfgStrings[lang][defstring] !== defstring
+      )
+        continue;
+      if (count >= 20) break;
+      count += 1;
+      const translated = await translate(defstring, lang, default_lang);
+      if (cfgStrings[lang]) cfgStrings[lang][defstring] = translated;
+      else cfgStrings[lang] = { [defstring]: translated };
+      await getState().setConfig("localizer_strings", cfgStrings);
+    }
+    if (count == 20)
+      req.flash(
+        "success",
+        req.__(
+          `Translated %s strings. Click 'Translate with LLM' again to continue`, count
+        )
+      );
+    else req.flash("success", req.__(`Finished translating %s strings.`, count));
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
 
