@@ -716,6 +716,16 @@ const apply_calculated_fields_stored = async (
         field: field.attributes.agg_field.split("@")[0],
         orderBy: field.attributes.agg_order_by,
       };
+      const fldType = field.attributes.agg_field.split("@")[1];
+      const coerceToNumber =
+        ["Sum", "Count", "CountUnique", "Avg"].includes(
+          field.attributes.aggregate
+        ) ||
+        field.attributes.aggregate.startsWith("Percent ") ||
+        ((["Max", "Min"].includes(field.attributes.aggregate) ||
+          field.attributes.aggregate.startsWith("Latest ") ||
+          field.attributes.aggregate.startsWith("Earliest ")) &&
+          ["Integer", "Float", "Money"].includes(fldType));
       if (_agg_val.table?.includes?.("->")) {
         const [ttable, dtable] = _agg_val.table.split("->");
         const [through, rest] = _agg_val.agg_relation.split("->");
@@ -742,14 +752,16 @@ const apply_calculated_fields_stored = async (
       const oldf = transform;
       transform = async (row) => {
         row[field.name] =
-          /* (field.type as any)?.name === "JSON"
-            ? JSON.stringify(reFetchedRow._agg_val)
-            :*/ reFetchedRow._agg_val;
+          coerceToNumber && typeof reFetchedRow._agg_val === "string"
+            ? +reFetchedRow._agg_val
+            : reFetchedRow._agg_val;
 
         return await oldf(row);
       };
     }
   }
+  let row1 = hasExprs ? await transform(row) : row;
+  hasExprs = false;
   for (const field of fields) {
     if (
       field.calculated &&
@@ -777,8 +789,8 @@ const apply_calculated_fields_stored = async (
     }
   }
   if (hasExprs) {
-    return await transform(row);
-  } else return row;
+    return await transform(row1);
+  } else return row1;
 };
 /**
  * Recalculate calculated columns that are stored in db

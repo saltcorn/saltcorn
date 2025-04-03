@@ -32,7 +32,7 @@ const toJsType = (type) =>
 const expressionBlurb = (type, stored, table, req) => {
   const allFields = table.fields;
   const fields = stored
-    ? allFields.filter((f) => !f.stored)
+    ? allFields.filter((f) => !f.stored || f.expression === "__aggregation")
     : allFields.filter((f) => !f.calculated);
   const funs = getState().functions;
   const funNames = Object.entries(funs)
