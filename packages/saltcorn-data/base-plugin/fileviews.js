@@ -235,12 +235,13 @@ module.exports = {
     run: (nm, file_name, attrs, cls, reqd, field) => {
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
       const customInput =
-        attrs?.button_style && attrs.button_style !== "default";
+        attrs?.button_style &&
+        attrs.button_style !== "default" &&
+        attrs.button_style !== " ";
       const id = `input${text_attr(nm)}`;
       return (
-        text(file_name || "") +
         input({
-          class: `${cls} ${field.class || ""}`,
+          class: [cls, field.class, file_name && "file-has-existing"],
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: id,
@@ -251,7 +252,8 @@ module.exports = {
           accept: attrs.files_accept_filter || undefined,
           ...(customInput ? { hidden: true } : {}),
         }) +
-        (customInput ? buildCustomInput(id, attrs) : "")
+        (customInput ? buildCustomInput(id, attrs) : "") +
+        span({ class: "file-upload-exising" }, text(file_name || ""))
       );
     },
   },

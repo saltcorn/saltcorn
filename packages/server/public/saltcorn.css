@@ -818,5 +818,15 @@ tr:hover span.add-tag {
 }
 
 #saltcorn-file-manager .filelist tr.selected td {
-  background-color: var(--bs-secondary-bg-subtle, var(--tblr-secondary-bg-subtle, gray));;
+  background-color: var(
+    --bs-secondary-bg-subtle,
+    var(--tblr-secondary-bg-subtle, gray)
+  );
+}
+
+input[type="file"].file-has-existing {
+  font-size: 0;
+}
+::file-selector-button {
+  font-size: initial;
 }

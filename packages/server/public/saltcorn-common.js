@@ -1294,7 +1294,13 @@ function initialize_page() {
       });
     }
   });
-}
+
+  $('input[type="file"].file-has-existing').on("change", (e) => {
+    const $elem = $(e.target);
+    $elem.removeClass("file-has-existing");
+    $elem.parent().find("span.file-upload-exising").remove();
+  });
+} //initialize_page
 
 $(initialize_page);
 
@@ -1769,7 +1775,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   }
 }
 
-function editAllowedAuthByRole(id, event) {  
+function editAllowedAuthByRole(id, event) {
   ajax_post_json(
     `/roleadmin/setrole_allowed_auth_methods/${id}`,
     {
@@ -2238,7 +2244,7 @@ function handle_identical_fields(event) {
         });
     } else if (tagName === "INPUT") {
       form.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
-        input.value = newValue;
+        if (input.type !== "file") input.value = newValue;
       });
     }
   }
