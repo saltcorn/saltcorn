@@ -20,7 +20,7 @@ const toJsType = (type) =>
     Date: "Date class",
     String: "string",
     Color: "string",
-  }[type] || type);
+  })[type] || type;
 
 /**
  * @param {string} type
@@ -31,7 +31,9 @@ const toJsType = (type) =>
  */
 const expressionBlurb = (type, stored, table, req) => {
   const allFields = table.fields;
-  const fields = allFields.filter((f) => !f.calculated);
+  const fields = stored
+    ? allFields.filter((f) => !f.stored)
+    : allFields.filter((f) => !f.calculated);
   const funs = getState().functions;
   const funNames = Object.entries(funs)
     .filter(([k, v]) => !(!stored && v.isAsync))
