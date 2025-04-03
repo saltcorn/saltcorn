@@ -391,7 +391,7 @@ const viewsList = async (
                   filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
                   req
                 ),
-                key: (r) => tagBadges(r),
+                key: (r) => (r.id ? tagBadges(r) : ""),
               },
             ]),
         {
