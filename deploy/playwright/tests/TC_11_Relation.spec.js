@@ -170,7 +170,7 @@ test.describe('E2E Test Suite', () => {
         // Fill the lable name
         await functions.fill_Text(pageobject.labelTextboxlocator, 'Department');
         // select the input type
-        await customAssert('Select type key to employee ', async () => {
+        await customAssert('Select type key to Department ', async () => {
             const type1 = await page.$("#inputtype");
             await type1?.selectOption("Key to Department");
         });

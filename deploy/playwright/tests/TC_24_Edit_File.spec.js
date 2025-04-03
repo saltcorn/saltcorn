@@ -4,7 +4,6 @@ const PageFunctions = require('../pageobject/function.js');
 const PageObject = require('../pageobject/locators.js');
 const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
-const fs = require('fs');
 
 test.describe('E2E Test Suite', () => {
     let functions;
@@ -19,7 +18,6 @@ test.describe('E2E Test Suite', () => {
         context = await browser.newContext({
             ignoreHTTPSErrors: true
         });
-
         page = await context.newPage();
 
         // Maximize the screen
@@ -74,7 +72,6 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         // click on next button
         await functions.submit();
-
     });
 
     test('Create view with list view pattern', async () => {
@@ -97,7 +94,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('field view dropdown should be visible', async () => {
             await page.waitForSelector(pageobject.fieldViewdropdown);
             await expect(page.locator(pageobject.fieldViewdropdown)).toBeVisible();
-            // Select 'showDay' from the dropdown
+            // Select 'Thumbnail' from the dropdown
             await page.selectOption(pageobject.fieldViewdropdown, { label: 'Thumbnail' }); // If using a select dropdown
         });
 
@@ -141,8 +138,6 @@ test.describe('E2E Test Suite', () => {
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
-        await page.waitForTimeout(1000);
-
         await page.selectOption(pageobject.destinationview, { label: 'File_list [List on File]' }); // If using a select dropdown
         // click on next button
         await functions.submit();
@@ -234,5 +229,4 @@ test.describe('E2E Test Suite', () => {
         await page.goBack();
         await expect(page.locator(pageobject.containText)).toBeVisible();
     });
-
 }); 

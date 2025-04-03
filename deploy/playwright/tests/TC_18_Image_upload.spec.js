@@ -10,7 +10,7 @@ test.describe('E2E Test Suite', () => {
   let pageobject;
   let context;
   let page;
-   
+
   test.beforeAll(async ({ browser }) => {
     // Initialize the log file
     Logger.initialize();
@@ -30,16 +30,15 @@ test.describe('E2E Test Suite', () => {
     await functions.navigate_To_Base_URL(baseURL, derivedURL);
     await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
-  
+
     await functions.clear_Data();
-    
+
   });
 
   test.afterAll(async () => {
     // Ensure the page and context close properly after tests
     await page.close();
     await context.close();
-   
   });
 
   test('validate image name', async () => {
@@ -63,11 +62,11 @@ test.describe('E2E Test Suite', () => {
     const filePath = 'Csv_file_to_uplaod/images.jpg';
     await fileInput.setInputFiles(filePath);
     await page.waitForTimeout(10000);
-    
+
     // Wait for the save button and click to save the uploaded image
     await page.waitForSelector(pageobject.UploadImageSave, { state: 'visible' });
     await page.click(pageobject.UploadImageSave);
-    
+
     // Locate and click the newly created "saltcorn_image" page link
     const saltcornImageLink = page.locator(pageobject.CreatedPageName);
     await expect(saltcornImageLink).toBeVisible();

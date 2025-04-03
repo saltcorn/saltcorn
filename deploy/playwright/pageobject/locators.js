@@ -646,16 +646,17 @@ class PageLocators {
     this.containerClick = '.canvas root-canvas ';
     this.dragElement1 = 'div.d-inline-flex.wrap-builder-elem >> div.inner > i.fas.fa-address-card';
     this.testPage4 = 'li.breadcrumb-item.fw-bold[aria-current="page"] a';
-    this.pageNameSave3 = 'table.table >> tbody >> tr >> td:nth-child(3) >> a';
+    this.pageNameSave3 = 'a[href="/page/testpage3"]'
+    //'table.table >> tbody >> tr >> td:nth-child(3) >> a';
     this.actionButton = 'button.btn.btn-primary.selected-node';
     this.ClickToEditCheckBox = 'input[type="checkbox"][name="inline"]'
     this.editedUserName = 'table tbody td div input'
     this.submitEditedName = 'button[type="submit"].btn.btn-sm.btn-primary'
-    this.viewSetting = "role=button[name='View settings']";
+    this.viewSetting = 'button:has-text("View settings")';
     this.inputdefaultrenderpage = '#inputdefault_render_page';
     this.mycardDrag = 'div.toolbar-row > div.d-inline-flex.wrap-builder-elem[draggable="true"]';
     this.mypage = "input[data-fieldname='page_title']";
-    this.viewName = 'table.table >> tbody >> tr >> td:nth-child(1) >> a';
+    this.viewName = 'a[href="/view/TestView"]';
     this.createview = 'h5:has-text("Create view")';
     this.addstep = 'a.btn.btn-secondary';
     this.ctxvalues='#inputctx_values';
@@ -699,6 +700,46 @@ class PageLocators {
     this.AddMsg = 'a[href="/view/Message_Add"]';
     this.inputcontent = '#inputcontent';
     this.fourthrowcolumn = '.builder-columns.row:nth-of-type(4) .split-col:nth-of-type(2) .canvas';
+
+    this.MoneyHeader = 'h5:has-text("money")';
+    this.installmoney = 'form[action="/plugins/install/money"] button:has-text("Install")';
+    this.Subs_Plantable = 'a:has-text("Subscription_Plan")';
+    this.inputcurrency = '#inputcurrency';
+    this.inputfilestype = '#inputfiles_accept_filter'
+    this.inputfeatures = '#inputfeatures';
+    this.view2editplan = 'text=Edit_Plan [Edit] Subscription_Plan';
+    this.configureEditPlan = 'a[href="/viewedit/config/Edit_Plan"]';
+    this.PlanListlink = 'a[href="/view/Plan_List"]';
+    this.addplanlink = 'a:has-text("Add New Plan")';
+    this.inputplan_name = '#inputplan_name';
+    this.inputprice = '#inputprice';
+    this.inputcta_link = '#inputcta_link';
+    this.CenterButtonalign = 'button.field-hAlign.btn.btn-sm.btn-outline-secondary[title="Center"]';
+    this.widthInput = 'div.builder-config-field[data-field-name="width"] input.field-width';
+    this.heightInput = 'div.builder-config-field[data-field-name="height"] input.field-height';
+    this.h1Button = 'button.btn.btn-sm.btn-outline-secondary.style-h1[title="Heading 1"]';
+    this.h2Button = 'button.btn.btn-sm.btn-outline-secondary.style-h2[title="Heading 2"]';
+    this.linkTitleInput = 'div.builder-config-field[data-field-name="link_title"] input.field-link_title';
+    this.column1 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(1) .canvas';
+    this.column2 = '(//div[contains(@class, "split-col")])[2]';
+    this.column3 = '(//div[contains(@class, "split-col")])[3]';
+    this.column4 = '(//div[contains(@class, "split-col")])[4]';
+    this.column1_2 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(2) .canvas';
+    this.column1_3 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(3) .canvas';
+    this.column1_4 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(4) .canvas';
+    this.LandingPage = 'a[href="/page/Landing_Page"]';
+    this.SubscribeButton = 'button:has-text("Subscribe"):nth-of-type(1)';
+    this.CardholderNameInput = '//input[@id="cardholder-name"]';
+    this.CardNumberInput = '#card-number';
+    this.Exdateinput = '#expiry-date';
+    this.CVVinput = '#cvv';
+    this.ProceedToPayButton = 'button:has-text("Proceed to Pay")';
+    this.inputpagename = '#inputpagename';
+    this.inputtext = '#inputtext';
+    this.Searchiconbar = '[placeholder="Search icon..."]';
+    this.planbutton = 'button i.far.fa-paper-plane';
+    this.inputtooltip = '#inputtooltip';
+    this.inputmax_role = '#inputmax_role';
   }
 }
 

@@ -39,7 +39,6 @@ test.describe('E2E Test Suite', () => {
         await context.close();
     });
 
-
     // Create the Task table
     test('Create task table', async () => {
         await functions.clear_Data();

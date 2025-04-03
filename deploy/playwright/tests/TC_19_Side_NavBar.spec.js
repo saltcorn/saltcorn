@@ -237,6 +237,5 @@ test.describe('E2E Test Suite', () => {
           await page.goto(baseURL + derivedURL + pageobject.admin_Clear_All);
           await functions.navi_Setting_Dropdown_Clear();
     });
- 
 });
 

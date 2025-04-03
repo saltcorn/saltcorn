@@ -99,7 +99,7 @@ test.describe('E2E Test Suite', () => {
         // Fill the lable name 
         await functions.fill_Text(pageobject.labelTextboxlocator, 'Helper');
         // select the input type
-        await customAssert('Select type key to employee ', async () => {
+        await customAssert('Select type key to People ', async () => {
             const type1 = await page.$("#inputtype");
             await type1?.selectOption("Key to People");
         });
@@ -115,7 +115,7 @@ test.describe('E2E Test Suite', () => {
         // Fill the lable name
         await functions.fill_Text(pageobject.labelTextboxlocator, 'Task');
         // select the input type
-        await customAssert('Select type key to employee ', async () => {
+        await customAssert('Select type key to Task ', async () => {
             const type1 = await page.$("#inputtype");
             await type1?.selectOption("Key to Task");
         });

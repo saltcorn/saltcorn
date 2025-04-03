@@ -15,8 +15,6 @@ const fs = require('fs');
     return `${firstName} ${lastName}`;
 };
 
-
-
 test.describe('E2E Test Suite', () => {
     let functions;
     let pageobject;
@@ -151,7 +149,6 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.saveactionbutton)).toHaveText('Save');
             await page.click(pageobject.saveactionbutton);
         });
-
     });
 
     test('Verify Adding new Workflow', async () => {
@@ -272,10 +269,8 @@ test.describe('E2E Test Suite', () => {
         const randomName = generateRandomName();
         await page.fill('#inputname', randomName);
 
-
         const submitButton = page.locator('button.btn.btn-primary');
         await submitButton.click();
-
 
         await customAssert('Verify modal header text', async () => {
             await page.waitForTimeout(2000);
@@ -286,7 +281,6 @@ test.describe('E2E Test Suite', () => {
         });
 
         await page.click('.btn.btn-primary');
-
     });
 
     test('Verify workflow through view', async () => {
@@ -319,7 +313,6 @@ test.describe('E2E Test Suite', () => {
         await page.locator("table.table-sm td").nth(0).click();
         await page.waitForTimeout(5000);
 
-
         await customAssert('Page URL should be /actions', async () => {
             expect(page.url()).toBe(`${baseURL}${derivedURL}view/WorkFlowRoom`);
         });
@@ -335,10 +328,5 @@ test.describe('E2E Test Suite', () => {
         await expect(page.getByText("###Greetings!")).toBeVisible();
         const name = "James smith";  // Set the variable dynamically
         await expect(page.getByText(`###Greetings!\nHello ${randomName}`, { exact: true })).toBeVisible();
-
-
-
-
     });
-
 });

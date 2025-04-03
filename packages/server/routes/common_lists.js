@@ -284,7 +284,7 @@ const tagsDropdown = (tags, altHeader, req) =>
         {
           class: "dropdown-item",
           // TODO check url why view for page, what do we need for page group
-          href: `tag`,
+          href: `/tag`,
         },
         req.__("Manage tags...")
       )
