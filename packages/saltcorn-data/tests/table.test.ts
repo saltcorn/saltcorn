@@ -2475,9 +2475,13 @@ describe("Table insert/update expanded joinfields", () => {
     });
     const prow1 = await readings.getRow({ id: pid1 });
     expect(prow1?.patient_id).toBe(1);
+
     await readings.updateRow({ patient_id: { id: 2, name: "Foobar" } }, pid1);
     const prow2 = await readings.getRow({ id: pid1 });
     expect(prow2?.patient_id).toBe(2);
+    await readings.updateRow({ patient_id: 1 }, { id: pid1 } as any);
+    const prow3 = await readings.getRow({ id: pid1 });
+    expect(prow3?.patient_id).toBe(1);
   });
 });
 

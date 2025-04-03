@@ -1409,6 +1409,9 @@ class Table implements AbstractTable {
         this.name + " updateRow called with null as primary key value"
       );
 
+    // normalise id passed from expanded join field
+    if (typeof id === "object") id = id[this.pk_name];
+
     this.normalise_fkey_values(v);
 
     let joinFields = {};
