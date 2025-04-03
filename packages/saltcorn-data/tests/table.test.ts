@@ -2454,6 +2454,33 @@ describe("agg latest multiple test", () => {
   });
 });
 
+describe("Table insert/update expanded joinfields", () => {
+  it("insert expanded", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const now = new Date();
+    const pid0 = await readings.insertRow({
+      patient_id: 1,
+      temperature: 42,
+      date: now,
+    });
+    const prow0 = await readings.getRow({ id: pid0 });
+    expect(prow0?.patient_id).toBe(1);
+    const pid1 = await readings.insertRow({
+      patient_id: { id: 1, name: "Foobar" },
+      temperature: 42,
+      date: now,
+    });
+    const prow1 = await readings.getRow({ id: pid1 });
+    expect(prow1?.patient_id).toBe(1);
+    await readings.updateRow({ patient_id: { id: 2, name: "Foobar" } }, pid1);
+    const prow2 = await readings.getRow({ id: pid1 });
+    expect(prow2?.patient_id).toBe(2);
+  });
+});
+
 describe("grandparent join", () => {
   it("should define rows", async () => {
     const table = Table.findOne({ name: "patients" });
