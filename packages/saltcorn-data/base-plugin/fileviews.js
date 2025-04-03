@@ -239,25 +239,18 @@ module.exports = {
       const id = `input${text_attr(nm)}`;
       return (
         text(file_name || "") +
-        (typeof attrs.files_accept_filter !== "undefined" ||
-        attrs.files_accept_filter !== null
-          ? input({
-              class: `${cls} ${field.class || ""}`,
-              "data-fieldname": field.form_name,
-              name: text_attr(nm),
-              id: id,
-              type: "file",
-              accept: attrs.files_accept_filter,
-              ...(customInput ? { hidden: true } : {}),
-            })
-          : input({
-              class: `${cls} ${field.class || ""}`,
-              "data-fieldname": field.form_name,
-              name: text_attr(nm),
-              id: id,
-              type: "file",
-              ...(customInput ? { hidden: true } : {}),
-            })) +
+        input({
+          class: `${cls} ${field.class || ""}`,
+          "data-fieldname": field.form_name,
+          name: text_attr(nm),
+          id: id,
+          type: "file",
+          disabled: attrs.disabled,
+          onChange: attrs.onChange,
+          readonly: attrs.readonly,
+          accept: attrs.files_accept_filter || undefined,
+          ...(customInput ? { hidden: true } : {}),
+        }) +
         (customInput ? buildCustomInput(id, attrs) : "")
       );
     },
