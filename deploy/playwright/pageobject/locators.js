@@ -729,10 +729,10 @@ class PageLocators {
     this.column1_4 = '.builder-columns.row:nth-of-type(1) .split-col:nth-of-type(4) .canvas';
     this.LandingPage = 'a[href="/page/Landing_Page"]';
     this.SubscribeButton = 'button:has-text("Subscribe"):nth-of-type(1)';
-    this.CardholderNameInput = 'input[placeholder="Card Holder Name"]';
-    this.CardNumberInput = 'input[placeholder="1234 5678 9012 3456"]';
-    this.Exdateinput = 'input[placeholder="MM/YY"]';
-    this.CVVinput = 'input[placeholder="123"]';
+    this.CardholderNameInput = '//input[@id="cardholder-name"]';
+    this.CardNumberInput = '#card-number';
+    this.Exdateinput = '#expiry-date';
+    this.CVVinput = '#cvv';
     this.ProceedToPayButton = 'button:has-text("Proceed to Pay")';
     this.inputpagename = '#inputpagename';
     this.inputtext = '#inputtext';

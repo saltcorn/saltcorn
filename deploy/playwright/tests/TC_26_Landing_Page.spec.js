@@ -331,7 +331,7 @@ test.describe('E2E Test Suite', () => {
             <li>✔ Free Custom Domain</li>
             <li style="color: red;">❌ Advanced Analytics & Reports</li>
         </ul>
-        <a href="https://e2etest.saltcorn.co/page/Payment_Page?plan=Pro&amount=499" style="text-decoration: none;">
+        <a href="/page/Payment_Page?plan=Pro&amount=499" style="text-decoration: none;">
         <button style="background-color: #0056b3; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
         </a>
     </div>
@@ -352,7 +352,7 @@ test.describe('E2E Test Suite', () => {
               <li style="color: red;">❌ Free Custom Domain & Hosting</li>
               <li style="color: red;">❌ Advanced Analytics & Reports</li>
           </ul>
-          <a href="https://e2etest.saltcorn.co/page/Payment_Page?plan=Basic&amount=199" style="text-decoration: none;">
+          <a href="/page/Payment_Page?plan=Basic&amount=199" style="text-decoration: none;">
           <button style="background-color: #218838; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
           </a>
       </div>
@@ -373,7 +373,7 @@ test.describe('E2E Test Suite', () => {
           <li>✔ Free Custom Domain & Hosting</li>
           <li>✔ Advanced Analytics & Reports</li>
       </ul>
-      <a href="https://e2etest.saltcorn.co/page/Payment_Page?plan=Premium&amount=999" style="text-decoration: none;">
+      <a href="/page/Payment_Page?plan=Premium&amount=999" style="text-decoration: none;">
       <button style="background-color: #d39e00; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
       </a>
   </div>
@@ -400,50 +400,61 @@ test.describe('E2E Test Suite', () => {
     await functions.Save_Page_Project();
   });
 
-  test('Create a payment page and thank you and Test the landing Page', async () => {
+  test('Create a Payment page for subscription', async () => {
     // Create a new page for landing page
     await functions.create_New_Page('Payment_Page');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(10000);
     // Drag and drop the htmlCodeSource
-    await page.click(pageobject.htmlCodeSource);
+    await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
     await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="display: flex; justify-content: center; align-items: flex-start; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-          <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2); width: 600px; text-align: center;">
-              <h2 style="color: #333; margin-bottom: 20px;">Saltcorn Secure Payment</h2>
-  
-              <form style="width: 100%;" onsubmit="event.preventDefault(); window.location.href='https://e2etest.saltcorn.co/page/Thank_you';">
-                  <div style="display: flex; flex-direction: column; margin-bottom: 15px; text-align: left;">
-                      <label style="font-weight: bold; margin-bottom: 5px;">Cardholder Name</label>
-                      <input type="text" placeholder="Card Holder Name" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
-                  </div>
-  
-                  <div style="display: flex; flex-direction: column; margin-bottom: 15px; text-align: left;">
-                      <label style="font-weight: bold; margin-bottom: 5px;">Card Number</label>
-                      <input type="number" placeholder="1234 5678 9012 3456" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
-                  </div>
-  
-                  <div style="display: flex; gap: 15px; margin-bottom: 15px; text-align: left;">
-                      <div style="display: flex; flex-direction: column; width: 50%;">
-                          <label style="font-weight: bold; margin-bottom: 5px;">Expiry Date</label>
-                          <input type="text" placeholder="MM/YY" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
-                      </div>
-  
-                      <div style="display: flex; flex-direction: column; width: 50%;">
-                          <label style="font-weight: bold; margin-bottom: 5px;">CVV</label>
-                          <input type="password" placeholder="123" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
-                      </div>
-                  </div>
-  
-                  <button type="submit" style="background: #007bff; color: white; padding: 15px; width: 100%; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; margin-top: 15px;">
-                      Proceed to Pay
-                  </button>
-              </form>
-          </div>
-      </div>
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2); width: 600px; text-align: center;">
+        <h2 style="color: #333; margin-bottom: 20px;">Saltcorn Secure Payment</h2>
+
+        <form style="width: 100%;" onsubmit="event.preventDefault(); window.location.href='/page/Thank_you';">
+            <!-- Cardholder Name -->
+            <div style="display: flex; flex-direction: column; margin-bottom: 15px; text-align: left;">
+                <label for="cardholder-name" style="font-weight: bold; margin-bottom: 5px;">Cardholder Name</label>
+                <input type="text" id="cardholder-name" name="cardholder_name" placeholder="Card Holder Name"
+                    style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
+            </div>
+
+            <!-- Card Number -->
+            <div style="display: flex; flex-direction: column; margin-bottom: 15px; text-align: left;">
+                <label for="card-number" style="font-weight: bold; margin-bottom: 5px;">Card Number</label>
+                <input type="text" id="card-number" name="card_number" placeholder="1234 5678 9012 3456"
+                    style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
+            </div>
+
+            <!-- Expiry Date & CVV -->
+            <div style="display: flex; gap: 15px; margin-bottom: 15px; text-align: left;">
+                <!-- Expiry Date -->
+                <div style="display: flex; flex-direction: column; width: 50%;">
+                    <label for="expiry-date" style="font-weight: bold; margin-bottom: 5px;">Expiry Date</label>
+                    <input type="text" id="expiry-date" name="expiry_date" placeholder="MM/YY"
+                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
+                </div>
+
+                <!-- CVV -->
+                <div style="display: flex; flex-direction: column; width: 50%;">
+                    <label for="cvv" style="font-weight: bold; margin-bottom: 5px;">CVV</label>
+                    <input type="password" id="cvv" name="cvv" placeholder="123"
+                        style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;" required>
+                </div>
+            </div>
+
+            <button type="submit" style="background: #007bff; color: white; padding: 15px; width: 100%; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; margin-top: 15px;">
+                Proceed to Pay
+            </button>
+        </form>
+    </div>
+</div>
   `);
     await functions.Save_Page_Project();
+  });
 
+  test('Create thank you page after payment', async () => {
     // Create a new page for thank you
     await functions.create_New_Page('Thank_you');
     await page.waitForTimeout(2000);
@@ -462,20 +473,26 @@ test.describe('E2E Test Suite', () => {
       </div>
   `);
     await functions.Save_Page_Project();
+  });
 
+  test('Test the landing Page, Payment page and thankyou page', async () => {
     // test the landing page
     await page.click(pageobject.newPage_sidebar);
     await page.click(pageobject.LandingPage);
     await customAssert('Subscribe button on plan card should be visible and clickable', async () => {
       // click on subscribe button
       await page.click(pageobject.SubscribeButton);
+      await page.waitForTimeout(2000);
     });
+    console.log(await page.url());
     // enter details
-    await functions.fill_Text(pageobject.CardholderNameInput, 'john doe');
-    await functions.fill_Text(pageobject.CardNumberInput, '4111111111111111');
-    await functions.fill_Text(pageobject.Exdateinput, '10/36');
-    await functions.fill_Text(pageobject.CVVinput, '926');
-    await customAssert('Subscribe button on plan card should be visible and clickable', async () => {
+    await customAssert('Enter card details for payment', async () => {
+      await functions.fill_Text(pageobject.CardholderNameInput, 'john doe');
+      await functions.fill_Text(pageobject.CardNumberInput, '4111111111111111');
+      await functions.fill_Text(pageobject.Exdateinput, '10/36');
+      await functions.fill_Text(pageobject.CVVinput, '926');
+    });
+    await customAssert('Proceed button on payment page should be visible and clickable', async () => {
       await expect(page.locator(pageobject.ProceedToPayButton)).toBeVisible();
       // click to proceed button
       await page.click(pageobject.ProceedToPayButton);
