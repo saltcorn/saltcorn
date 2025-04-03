@@ -1902,12 +1902,21 @@ router.post(
 const renameForm = (table_id, req) =>
   new Form({
     action: `/table/rename/${table_id}`,
-    labelCols: 3,
+    blurb: req.__(
+      "You may need to adjust view relations associated with this table after renaming it"
+    ),
     fields: [
       {
         name: "name",
         label: req.__("New table name"),
         type: "String",
+      },
+    ],
+    additionalButtons: [
+      {
+        label: req.__("Cancel"),
+        class: "btn btn-danger",
+        onclick: "history.back()",
       },
     ],
     values: { name: Table.findOne({ id: table_id })?.name },
