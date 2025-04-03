@@ -340,6 +340,22 @@ describe("single joinfields in stored calculated fields", () => {
       },
       stored: true,
     });
+    await Field.create({
+      table: books,
+      label: "idp1",
+      type: "Integer",
+      calculated: true,
+      expression: "id+1",
+      stored: false,
+    });
+    await Field.create({
+      table: books,
+      label: "storedsum",
+      type: "Integer",
+      calculated: true,
+      expression: "number_of_fans+idp1",
+      stored: true,
+    });
   });
   it("change value without triggering infinite loop", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -351,11 +367,19 @@ describe("single joinfields in stored calculated fields", () => {
     assertIsSet(books);
     const book = await books.getRow({ id: patient.favbook });
     assertIsSet(book);
+
     expect(book.pages).toBe(728);
     await books.updateRow({ pages: 729 }, book.id);
     await books.updateRow({ pages: 728 }, book.id);
-    const field = books.getField("number_of_fans");
-    await field?.delete();
+    const bid = await books.insertRow({ author: "Terry Eagleton", pages: 456 });
+    const book1 = await books.getRow({ id: bid });
+    assertIsSet(book1);
+    expect(book1.storedsum).toBe(4);
+
+    await books.getField("number_of_fans")!.delete();
+    await books.getField("idp1")!.delete();
+    await books.getField("storedsum")!.delete();
+    await books.deleteRows({ id: bid });
   });
 });
 

@@ -2029,6 +2029,7 @@ class Table implements AbstractTable {
     const newRow = { [pk_name]: id, ...v };
     await this.auto_update_calc_aggregations(newRow);
     if (!noTrigger) {
+      apply_calculated_fields([newRow], this.fields);
       const trigPromise = Trigger.runTableTriggers(
         "Insert",
         this,
