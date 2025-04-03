@@ -83,7 +83,12 @@ router.get(
         : view.attributes?.page_title ||
           scan_for_page_title(contents0, view.name); //legacy
     if ((title || "").includes("{{")) {
-      title = await view.interpolate_title_string(title, query);
+      try {
+        title = await view.interpolate_title_string(title, query);
+      } catch (e) {
+        console.error(e);
+        title = e?.message || e;
+      }
     }
     title = { title };
     if (isModal && view.attributes?.popup_width)
