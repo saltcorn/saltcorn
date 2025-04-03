@@ -1910,6 +1910,7 @@ const renameForm = (table_id, req) =>
         type: "String",
       },
     ],
+    values: { name: Table.findOne({ id: table_id })?.name },
   });
 
 /**
