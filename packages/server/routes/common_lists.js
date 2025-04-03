@@ -349,7 +349,7 @@ const viewsList = async (
     const addBtn = mkAddBtn(
       tags,
       "views",
-      view.id,
+      view.id || view.name,
       req,
       myTagIds,
       on_done_redirect_str
