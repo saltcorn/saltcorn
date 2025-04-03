@@ -27,8 +27,8 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
   const selectedProperty = !selectedCategory
     ? false
     : selectedDirection
-    ? `${selectedCategory}-${selectedDirection}`
-    : selectedCategory;
+      ? `${selectedCategory}-${selectedDirection}`
+      : selectedCategory;
   const setCatAndDir = (c, d) => {
     setSelectedCategory(c);
     setSelectedDirection(d);
@@ -149,8 +149,8 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                               sizeWithStyle
                                 ? style["width"]
                                 : node.width
-                                ? `${node.width}${node.widthUnits || "px"}`
-                                : ""
+                                  ? `${node.width}${node.widthUnit || "px"}`
+                                  : ""
                             }
                           />
                           x
@@ -164,8 +164,8 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                               sizeWithStyle
                                 ? style["height"]
                                 : node.height
-                                ? `${node.height}${node.heightUnits || "px"}`
-                                : ""
+                                  ? `${node.height}${node.heightUnit || "px"}`
+                                  : ""
                             }
                           />
                         </div>

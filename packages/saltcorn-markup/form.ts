@@ -1641,8 +1641,8 @@ const mkForm = (
   </div>`
     : "";
   const bot = `<div class="form-group row">
-  ${form.formStyle !== "vert" ? '<div class="col-sm-2"></div>' : ""}
-  <div class="col-sm-${form.formStyle === "vert" ? "12" : "10"}">
+  ${form.formStyle !== "vert" ? `<div class="col-sm-${form.labelCols || 2}"></div>` : ""}
+  <div class="col-sm-${form.formStyle === "vert" ? "12" : 12 - (form.labelCols || 2)}">
     ${
       form.additionalButtons
         ? displayAdditionalButtons(form.additionalButtons, false)
