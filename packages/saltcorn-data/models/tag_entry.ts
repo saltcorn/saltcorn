@@ -50,7 +50,7 @@ class TagEntry implements AbstractTagEntry {
     if (ex) return new TagEntry(ex);
     const eid = await db.insert("_sc_tag_entries", {
       tag_id: cfg.tag_id,
-      table_id: cfg.table_id || null,
+      table_id: cfg.table_id,
       view_id: cfg.view_id,
       page_id: cfg.page_id,
       trigger_id: cfg.trigger_id,
