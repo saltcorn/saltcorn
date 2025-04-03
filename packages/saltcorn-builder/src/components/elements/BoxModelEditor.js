@@ -35,8 +35,6 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
   };
   //console.log(node.style);
   const style = node.style;
-  console.log({ node, sizeWithStyle });
-
   return (
     <Fragment>
       <div className="w-100 text-center">
