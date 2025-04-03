@@ -7,6 +7,7 @@ const {
   label,
   text,
 } = require("@saltcorn/markup/tags");
+const db = require("@saltcorn/data/db");
 
 const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
@@ -192,7 +193,11 @@ router.post(
     const fieldName = idField(entitytype);
     const auth = checkEditPermission(entitytype, req.user);
     if (!auth) req.flash("error", "Not authorized");
-    else await tag.addEntry({ [fieldName]: +entityid });
+    else
+      await db.withTransaction(async () => {
+        await tag.addEntry({ [fieldName]: +entityid });
+      });
+
     let redirectTarget =
       req.query.on_done_redirect &&
       is_relative_url("/" + req.query.on_done_redirect)
