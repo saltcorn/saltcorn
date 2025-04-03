@@ -1843,7 +1843,11 @@ class Table implements AbstractTable {
 
   normalise_fkey_values(v_in: Row) {
     for (const field of this.fields)
-      if (field.is_fkey && typeof v_in[field.name] === "object") {
+      if (
+        field.is_fkey &&
+        v_in[field.name] &&
+        typeof v_in[field.name] === "object"
+      ) {
         //get pkey
         const pk = Table.findOne({ name: field.reftable_name })?.pk_name;
         if (pk) v_in[field.name] = v_in[field.name][pk];
