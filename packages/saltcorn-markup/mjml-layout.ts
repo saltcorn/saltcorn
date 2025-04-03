@@ -1,5 +1,5 @@
 import tags = require("./tags");
-const { table, tr, td } = tags;
+const { table, tr, td, tbody } = tags;
 import mjml = require("./mjml-tags");
 const {
   div,
@@ -496,6 +496,30 @@ const render = ({
     }
     if (segment.type === "dropdown_menu") {
       return "";
+    }
+    if (segment.type === "table") {
+      const ntimes = (n: number, f: (i: number) => any) => {
+        const res = [];
+        for (let index = 0; index < n; index++) {
+          res.push(f(index));
+        }
+        return res;
+      };
+      const tabHtml = table(
+        {
+          class: segment.customClass || undefined,
+        },
+        tbody(
+          ntimes(segment.rows, (ri) =>
+            tr(
+              ntimes(segment.columns, (ci) =>
+                td(go(segment.contents?.[ri]?.[ci]))
+              )
+            )
+          )
+        )
+      );
+      return tabHtml;
     }
     if (segment.above) {
       return segment.above
