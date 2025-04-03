@@ -302,8 +302,12 @@ describe("User join fields and aggregations in ownership", () => {
 });
 describe("Roles", () => {
   it("has 4 roles", async () => {
-    const roles = await User.get_roles()
-    expect(roles.length).toBe(4)
+    const roles = await User.get_roles();
+    expect(roles.length).toBe(4);
+    expect(roles.map((r) => r.role_id)).toContain(80);
+    expect(roles.map((r) => r.role_id)).toContain(40);
+    expect(roles.map((r) => r.role_id)).toContain(100);
+    expect(roles.map((r) => r.role_id)).toContain(1);
   });
 });
 
