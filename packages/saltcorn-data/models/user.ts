@@ -609,7 +609,7 @@ class User {
    * Get available roles
    * @returns {Promise<*>}
    */
-  static async get_roles(): Promise<Row[] | undefined> {
+  static async get_roles(): Promise<Row[]> {
     return await db.select("_sc_roles", {}, { orderBy: "id" });
   }
 

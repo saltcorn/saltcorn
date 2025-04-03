@@ -300,6 +300,13 @@ describe("User join fields and aggregations in ownership", () => {
     expect(books.is_owner(u, bookRows[1])).toBe(false);
   });
 });
+describe("Roles", () => {
+  it("has 4 roles", async () => {
+    const roles = await User.get_roles()
+    expect(roles.length).toBe(4)
+  });
+});
+
 describe("SQL injection tests on user table", () => {
   const test_sql_injection = async (where: any, { can_fail }: any = {}) => {
     let found_users;
