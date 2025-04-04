@@ -156,6 +156,7 @@ const run_code = async ({
     fetchJSON,
     fetch,
     run_js_code,
+    tryCatchInTransaction: db.tryCatchInTransaction,
     URL,
     File,
     User,
