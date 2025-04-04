@@ -77,10 +77,12 @@ router.get(
     const isModal = req.headers?.saltcornmodalrequest;
 
     const contents0 = await view.run_possibly_on_page(query, req, res);
+    const __ = (s) =>
+      state.i18n.__({ phrase: s, locale: req.getLocale() }) || s;
     let title =
       isModal && view.attributes?.popup_title
-        ? view.attributes?.popup_title
-        : view.attributes?.page_title ||
+        ? __(view.attributes?.popup_title)
+        : __(view.attributes?.page_title) ||
           scan_for_page_title(contents0, view.name); //legacy
     if ((title || "").includes("{{")) {
       try {

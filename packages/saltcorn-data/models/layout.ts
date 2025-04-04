@@ -134,6 +134,12 @@ const getStringsForI18n = (layout: Layout): string[] => {
     tabs({ titles }: { titles: string[] }) {
       strings.push(...titles);
     },
+    action(seg) {
+      if (!seg.isFormula?.action_label) strings.push(seg.action_label);
+    },
+    view_link(seg) {
+      if (!seg.isFormula?.label) strings.push(seg.view_label);
+    },
   });
   return strings;
 };
@@ -154,7 +160,7 @@ const translateLayout = (layout: Layout, locale: string): void => {
   traverseSync(layout, {
     blank(s: any) {
       if (s.text_strings && typeof s.contents === "string")
-        for (const str of s.text_strings) {          
+        for (const str of s.text_strings) {
           s.contents = s.contents.replaceAll(str, __(str));
         }
       else s.contents = __(s.contents);
@@ -167,6 +173,12 @@ const translateLayout = (layout: Layout, locale: string): void => {
     },
     tabs(s: { titles: string[] }) {
       s.titles = s.titles.map((t: string) => __(t));
+    },
+    action(seg) {
+      if (!seg.isFormula?.action_label) seg.action_label = __(seg.action_label);
+    },
+    view_link(seg) {
+      if (!seg.isFormula?.label) seg.view_label = __(seg.view_label);
     },
   });
 };
