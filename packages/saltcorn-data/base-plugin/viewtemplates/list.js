@@ -1413,7 +1413,7 @@ module.exports = {
    * @param {*} opts.create_view_label
    * @returns {string[]}
    */
-  getStringsForI18n({ columns, create_view_label }) {
+  getStringsForI18n({ columns, layout, create_view_label }) {
     const strings = [];
     const maybeAdd = (s) => {
       if (s) strings.push(s);
@@ -1425,6 +1425,9 @@ module.exports = {
       maybeAdd(column.view_label);
       maybeAdd(column.label);
       maybeAdd(column.action_label);
+    }
+    for (const lseg of layout?.besides || []) {
+      maybeAdd(lseg.header_label);
     }
     maybeAdd(create_view_label);
     return strings;
