@@ -1409,6 +1409,11 @@ class Table implements AbstractTable {
         this.name + " updateRow called with null as primary key value"
       );
 
+    // normalise id passed from expanded join field
+    if (typeof id === "object") id = id[this.pk_name];
+
+    this.normalise_fkey_values(v);
+
     let joinFields = {};
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       joinFields = this.storedExpressionJoinFields();
@@ -1839,6 +1844,19 @@ class Table implements AbstractTable {
     return undefined;
   }
 
+  normalise_fkey_values(v_in: Row) {
+    for (const field of this.fields)
+      if (
+        field.is_fkey &&
+        v_in[field.name] &&
+        typeof v_in[field.name] === "object"
+      ) {
+        //get pkey
+        const pk = Table.findOne({ name: field.reftable_name })?.pk_name;
+        if (pk) v_in[field.name] = v_in[field.name][pk];
+      }
+  }
+
   /**
    * Insert row into the table. By passing in the user as
    * the second argument, tt will check write rights. If a user object is not
@@ -1888,6 +1906,9 @@ class Table implements AbstractTable {
             .map((f) => f.name),
         }
       : {};
+
+    this.normalise_fkey_values(v_in);
+
     if (user && user.role_id > this.min_role_write) {
       if (this.ownership_field_id) {
         const owner_field = fields.find(
