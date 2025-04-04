@@ -247,7 +247,7 @@ describe("Workflow run error handling with transaction and database ops", () => 
     const trigger = await Trigger.create({
       action: "Workflow",
       when_trigger: "Never",
-      name: "mywf1",
+      name: "mywferrdb",
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
@@ -297,7 +297,7 @@ describe("Workflow run error handling with transaction and database ops", () => 
       await db.withTransaction(async () => {
         const user = await User.findOne({ id: 1 });
         assertIsSet(user);
-        const trigger = Trigger.findOne({ name: "mywf1" });
+        const trigger = Trigger.findOne({ name: "mywferrdb" });
         assertIsSet(trigger);
         const wfrun = await WorkflowRun.create({
           trigger_id: trigger.id,
