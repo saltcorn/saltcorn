@@ -137,6 +137,9 @@ const getStringsForI18n = (layout: Layout): string[] => {
     action(seg) {
       if (!seg.isFormula?.action_label) strings.push(seg.action_label);
     },
+    view_link(seg) {
+      if (!seg.isFormula?.label) strings.push(seg.view_label);
+    },
   });
   return strings;
 };
@@ -173,6 +176,9 @@ const translateLayout = (layout: Layout, locale: string): void => {
     },
     action(seg) {
       if (!seg.isFormula?.action_label) seg.action_label = __(seg.action_label);
+    },
+    view_link(seg) {
+      if (!seg.isFormula?.label) seg.view_label = __(seg.view_label);
     },
   });
 };
