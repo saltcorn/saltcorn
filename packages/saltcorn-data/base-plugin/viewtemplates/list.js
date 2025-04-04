@@ -1423,6 +1423,7 @@ module.exports = {
       maybeAdd(column.header_label);
       maybeAdd(column.link_text);
       maybeAdd(column.view_label);
+      maybeAdd(column.label);
       maybeAdd(column.action_label);
     }
     maybeAdd(create_view_label);

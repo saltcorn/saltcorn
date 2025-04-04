@@ -379,7 +379,7 @@ const view_linker = (
     : targetPrefix || "";
   const get_label = (def, row) => {
     if (!view_label || view_label.length === 0) return def;
-    if (!view_label_formula) return view_label;
+    if (!view_label_formula) return __(view_label);
     return eval_expression(view_label, row, user, "View Link label formula");
   };
   const get_extra_state = (row) => {
