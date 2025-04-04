@@ -829,7 +829,12 @@ class WorkflowRun {
           }
         }
       ); // try-catch
-      if (returnVal || returnVal === null || returnVal === false)
+      if (
+        returnVal ||
+        returnVal === null ||
+        returnVal === false ||
+        returnVal === ""
+      )
         return returnVal;
       if (do_break) break;
     } //while
