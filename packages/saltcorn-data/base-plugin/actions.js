@@ -825,11 +825,11 @@ module.exports = {
         const view = await View.findOne({ name: viewname });
         setBody.html = await viewToEmailHtml(view, { id: row[table.pk_name] });
       }
-
+      // if user not supplied, default to admin rights in line with convention for insertRow/updateRow
       const attachments = await loadAttachments(
         attachment_path,
         row,
-        user ? user : { role_id: 100 }
+        user ? user : { role_id: 1 }
       );
       const the_subject = subject_formula
         ? eval_expression(subject, useRow, user, "send_email subject formula")
