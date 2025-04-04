@@ -829,7 +829,8 @@ class WorkflowRun {
           }
         }
       ); // try-catch
-      if (returnVal) return returnVal;
+      if (returnVal || returnVal === null || returnVal === false)
+        return returnVal;
       if (do_break) break;
     } //while
     return this.context;
