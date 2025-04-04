@@ -794,7 +794,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   (columns || []).forEach((column) => {
     if (column.type === "Field") {
       const tbl_fld = table_fields.find((f) => f.name == column.field_name);
-      if (tbl_fld) {
+      if (tbl_fld && !tbl_fld.primary_key) {
         const f = new Field(tbl_fld);
         f.required = false;
         if (column.header_label) f.label = column.header_label;
