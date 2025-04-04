@@ -454,7 +454,8 @@ class View implements AbstractView {
   getStringsForI18n(): string[] {
     if (!this.viewtemplateObj || !this.viewtemplateObj.getStringsForI18n)
       return [];
-    return this.viewtemplateObj.getStringsForI18n(this.configuration);
+    const inView = this.viewtemplateObj.getStringsForI18n(this.configuration);
+    return [...inView, this.attributes.page_title, this.attributes.popup_title];
   }
 
   /**
