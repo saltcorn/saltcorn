@@ -159,11 +159,17 @@ const loadAttachments = async (path: string, row: any, user: any) => {
   const _File = (await import("./file")).default;
   const _Table = (await import("./table")).default;
   const allowed = (file: File | null) => {
-    return (
+    const isAllowed =
       file &&
       (user.role_id <= file.min_role_read ||
-        (user.id && user.id === file.user_id))
-    );
+        (user.id && user.id === file.user_id));
+    if (file && !isAllowed) {
+      getState().log(
+        4,
+        `Not authorized to attach file to email: ${file.location} role=${user.role_id}`
+      );
+    }
+    return isAllowed;
   };
   const result = [];
   if (path?.indexOf(".") >= 0) {
