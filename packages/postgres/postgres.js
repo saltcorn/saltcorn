@@ -580,7 +580,7 @@ const tryCatchInTransaction = async (f, onError) => {
   const reqCon = getRequestContext();
   if (reqCon?.client) await query(`SAVEPOINT sp${rndid}`);
   try {
-    await f();
+    return await f();
   } catch (error) {
     if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
     await onError(error);

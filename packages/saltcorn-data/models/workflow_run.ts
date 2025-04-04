@@ -450,7 +450,7 @@ class WorkflowRun {
       );
       this.step_start = new Date();
       let do_break = false;
-      await db.tryCatchInTransaction(
+      const returnVal = await db.tryCatchInTransaction(
         async () => {
           if (allWorkflowNames.has(step.action_name) && !waiting_fulfilled) {
             const wfTrigger = allWorkflows.find(
@@ -830,6 +830,7 @@ class WorkflowRun {
         }
       ); // try-catch
       if (do_break) break;
+      if (returnVal) return returnVal;
     } //while
     return this.context;
   }
