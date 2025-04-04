@@ -618,7 +618,13 @@ const run = async (
       throw new InvalidConfiguration(
         `View ${viewname} incorrectly configured: cannot find empty view ${empty_view}`
       );
-    return await emptyView.run(state, extraArgs);
+    return div(
+      {
+        class: "d-inline",
+        "data-sc-embed-viewname": emptyView.name,
+      },
+      await emptyView.run(state, extraArgs)
+    );
   }
 
   if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
