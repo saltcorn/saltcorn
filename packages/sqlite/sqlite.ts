@@ -455,7 +455,7 @@ export const withTransaction = async (f: Function, onError: Function) => {
 
 export const tryCatchInTransaction = async (f: Function, onError: Function) => {
   try {
-    await f();
+    return await f();
   } catch (error) {
     await onError(error);
   }

@@ -491,6 +491,7 @@ class WorkflowRun {
                 });
                 waiting_fulfilled = true;
               } else {
+                do_break = true;
                 return subrunres;
               }
             }
@@ -505,7 +506,7 @@ class WorkflowRun {
             await this.update({
               status: "Finished",
             });
-
+            do_break = true;
             return resp;
           }
           if (
@@ -523,7 +524,7 @@ class WorkflowRun {
             await this.update({
               status: "Finished",
             });
-
+            do_break = true;
             return resp;
           }
 
