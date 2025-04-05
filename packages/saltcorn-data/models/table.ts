@@ -1859,7 +1859,7 @@ class Table implements AbstractTable {
 
   /**
    * Insert row into the table. By passing in the user as
-   * the second argument, tt will check write rights. If a user object is not
+   * the second argument, it will check write rights. If a user object is not
    * supplied, the insert goes ahead without checking write permissions.
    *
    * Returns the primary key value of the inserted row.
