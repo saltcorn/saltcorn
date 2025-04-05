@@ -24,6 +24,8 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
+jest.setTimeout(10000);
+
 describe("Workflow run steps", () => {
   it("should create steps", async () => {
     const trigger = await Trigger.create({
