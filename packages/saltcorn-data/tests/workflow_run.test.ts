@@ -473,3 +473,60 @@ describe("Workflow run actions", () => {
     expect(wfrun.context.books[0].publisher).toBe(2);
   });
 });
+
+describe("Workflow run userform", () => {
+  it("should create steps", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "uformwf",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: { code: `return {x:1}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "second_step",
+      next_step: "",
+      action_name: "UserForm",
+      initial_step: false,
+      configuration: {
+        form_header: "",
+        user_id_expression: "",
+        user_form_questions: [
+          {
+            label: "What is your name",
+            qtype: "Free text",
+            var_name: "name",
+          },
+        ],
+      },
+    });
+  });
+  it("should run", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "uformwf" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+    });
+    await wfrun.run({ user });
+    expect(wfrun.context.x).toBe(1);
+    expect(wfrun.status).toBe("Waiting");
+    expect(wfrun.wait_info).toStrictEqual({ form: true, user_id: 1 });
+
+    await wfrun.provide_form_input({ name: "Tom" });
+    const runres = await wfrun.run({
+      user,
+    });
+    expect(wfrun.status).toBe("Finished");
+    expect(wfrun.context.name).toBe("Tom");
+
+  });
+});
