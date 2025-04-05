@@ -44,7 +44,7 @@ describe("Transaction test", () => {
     it("should insert", async () => {
       const books = Table.findOne({ name: "books" });
       assertIsSet(books);
-      runWithTenant("public", async () => {
+      await runWithTenant("public", async () => {
         await db.withTransaction(async () => {
           await books.insertRow({ author: "Trans Rights", pages: 688 });
         });
@@ -56,7 +56,7 @@ describe("Transaction test", () => {
     it("should cancel", async () => {
       const books = Table.findOne({ name: "books" });
       assertIsSet(books);
-      runWithTenant("public", async () => {
+      await runWithTenant("public", async () => {
         await db.withTransaction(
           async () => {
             await books.insertRow({ author: "JK Rowling", pages: 684 });
