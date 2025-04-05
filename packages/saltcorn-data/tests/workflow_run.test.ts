@@ -492,7 +492,7 @@ describe("Workflow run userform", () => {
     await WorkflowStep.create({
       trigger_id: trigger.id!,
       name: "second_step",
-      next_step: "",
+      next_step: "third",
       action_name: "UserForm",
       initial_step: false,
       configuration: {
@@ -505,6 +505,17 @@ describe("Workflow run userform", () => {
             var_name: "name",
           },
         ],
+      },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "third",
+      next_step: "",
+      action_name: "Output",
+      initial_step: false,
+      configuration: {
+        markdown: false,
+        output_text: "hello {{name}}",
       },
     });
   });
@@ -522,11 +533,49 @@ describe("Workflow run userform", () => {
     expect(wfrun.wait_info).toStrictEqual({ form: true, user_id: 1 });
 
     await wfrun.provide_form_input({ name: "Tom" });
-    const runres = await wfrun.run({
+    await wfrun.run({
+      user,
+    });
+    expect(wfrun.status).toBe("Waiting");
+    expect(wfrun.context.name).toBe("Tom");
+    expect(wfrun.wait_info.output).toBe("hello Tom");
+
+    await wfrun.provide_form_input({});
+    await wfrun.run({
       user,
     });
     expect(wfrun.status).toBe("Finished");
-    expect(wfrun.context.name).toBe("Tom");
+  });
+  it("should run interactively", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "uformwf" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+    });
+    const runres0 = await wfrun.run({ user, interactive: true });
+    expect(runres0.popup).toContain("/actions/fill-workflow-form/");
+    expect(runres0.popup).toContain("?resume=");
 
+    expect(wfrun.context.x).toBe(1);
+    expect(wfrun.status).toBe("Waiting");
+    expect(wfrun.wait_info).toStrictEqual({ form: true, user_id: 1 });
+
+    await wfrun.provide_form_input({ name: "Tom" });
+    const runres1 = await wfrun.run({
+      user,
+      interactive: true,
+    });
+    expect(runres1.popup).toContain("/actions/fill-workflow-form/");
+    expect(runres1.popup).toContain("?resume=");
+    expect(wfrun.status).toBe("Waiting");
+    expect(wfrun.wait_info.output).toBe("hello Tom");
+    expect(wfrun.context.name).toBe("Tom");
+    await wfrun.provide_form_input({});
+    await wfrun.run({
+      user,
+    });
+    expect(wfrun.status).toBe("Finished");
   });
 });
