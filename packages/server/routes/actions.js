@@ -1331,7 +1331,12 @@ router.post(
       "success",
       req.__("Trigger %s duplicated as %s", trig.name, newtrig.name)
     );
-    res.redirect(`/actions`);
+    res.redirect(
+      req.query.on_done_redirect &&
+        is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : `/actions`
+    );
   })
 );
 

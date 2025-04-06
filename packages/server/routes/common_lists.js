@@ -679,7 +679,7 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
     post_dropdown_item(
-      `/actions/clone/${trigger.id}`,
+      `/actions/clone/${trigger.id}${on_done_redirect_str}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
       req
     ),
@@ -734,7 +734,11 @@ const getTriggerList = async (
       { label: req.__("Name"), key: "name" },
       {
         label: req.__("Test run"),
-        key: (r) => link(`/actions/testrun/${r.id}${on_done_redirect_str}`, req.__("Test run")),
+        key: (r) =>
+          link(
+            `/actions/testrun/${r.id}${on_done_redirect_str}`,
+            req.__("Test run")
+          ),
       },
       {
         label: req.__("Configure"),
