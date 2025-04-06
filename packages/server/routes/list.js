@@ -19,6 +19,7 @@ const {
   i,
   text,
   button,
+  a,
   input,
   label,
   form,
@@ -373,6 +374,21 @@ router.get(
                   },
                   form(
                     { class: "px-2" },
+                    a(
+                      {
+                        onclick: `event.stopPropagation();allnonecols(true,this)`,
+                        href: "javascript:;",
+                      },
+                      "All"
+                    ),
+                    " | ",
+                    a(
+                      {
+                        onclick: `event.stopPropagation();allnonecols(false,this)`,
+                        href: "javascript:;",
+                      },
+                      "None"
+                    ),
                     fields.map((f) =>
                       div(
                         { class: "form-check" },
@@ -403,7 +419,7 @@ router.get(
                   if(typeof v === "string" && v.startsWith("__"))
                     col[k] = window[v.substring(2)];
                 })
-              })   
+              })
               window.tabulator_table_primary_key = "${table.pk_name}";
               window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${encodeURIComponent(
@@ -411,7 +427,7 @@ router.get(
                   )}?tabulator_pagination_format=true${
                     table.versioned ? "&versioncount=on" : ""
                   }",                   
-                  layout:"fitColumns", 
+                  layout:"fitData", 
                   columns,
                   height:"100%",
                   pagination:true,
@@ -421,10 +437,24 @@ router.get(
                   movableColumns: true,
                   ajaxContentType:"json",
                   sortMode:"remote",
+                  resizableColumnGuide:true,                  
+                  columnDefaults:{
+                      resizable:true,
+                      maxWidth:500
+                  },
                   initialSort:[
                     {column:"${table.pk_name}", dir:"asc"},
                   ],                 
               });
+              window.allnonecols= (do_show, e) =>{
+                columns.forEach(col=>{
+                  if(col.frozen && !do_show) return;
+                  if (do_show) window.tabulator_table.showColumn(col.field);
+                  else window.tabulator_table.hideColumn(col.field);
+                  $(e).closest("form").find("input").prop("checked", do_show)
+                })            
+              }
+
               window.tabulator_table.on("cellEdited", function(cell){
                 const row = cell.getRow().getData()
                 const fieldName = cell.getColumn().getField()
