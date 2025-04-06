@@ -93,7 +93,6 @@ class PageLocators {
     this.Eventloglocator = 'a[href="/eventlog"]';
     this.discriptiontext = '#inputdescription';
     this.viewtabledropdown = '#inputtable_name';
-    this.viewminimumroledropdown = '#inputmin_role';
     this.choosefilebutton = '#inputfile';
     this.createviewfromtable = '#table-views > div > a';
     this.textstyle = '.form-control form-select';
@@ -344,20 +343,6 @@ class PageLocators {
     this.fileUploadDebugCheckbox = 'input[type="checkbox"][name="file_upload_debug"]';
     this.fileUploadLimitInput = 'input[type="number"][name="file_upload_limit"]';
     this.fileUploadTimeoutInput = 'input[type="number"][name="file_upload_timeout"]';
-    this.typeDropdown = 'select[name="type"]';
-    this.viewnameDropdown = 'select[name="viewname"]';
-    this.textInput = 'input[type="text"][name="text"]';
-    this.iconPickerButton = 'button[id="myEditor_icon"]';
-    this.tooltipInput = 'input[type="text"][name="tooltip"]';
-    this.minRoleDropdown = 'select[name="min_role"]';
-    this.disableOnMobileCheckbox = 'input[type="checkbox"][name="disable_on_mobile"]';
-    this.targetBlankCheckbox = 'input[type="checkbox"][name="target_blank"]';
-    this.inModalCheckbox = 'input[type="checkbox"][name="in_modal"]';
-    this.styleDropdown = 'select[name="style"]';
-    this.locationDropdown = 'select[name="location"]';
-    this.updateButton = 'button[id="btnUpdate"]';
-    this.addButton = 'button[id="btnAdd"]';
-    this.recalculateButton = 'button[id="btnRecalc"]';
     this.alertDanger = 'div.alert.alert-danger[role="alert"]';
     this.controlFlowCategory = 'div#blockly-0';
     this.logicCategory = 'div#blockly-1';
@@ -735,11 +720,27 @@ class PageLocators {
     this.CVVinput = '#cvv';
     this.ProceedToPayButton = 'button:has-text("Proceed to Pay")';
     this.inputpagename = '#inputpagename';
-    this.inputtext = '#inputtext';
+    this.inputviewname = 'select[name="viewname"]';
+    this.iconPickerButton = 'button[id="myEditor_icon"]';
     this.Searchiconbar = '[placeholder="Search icon..."]';
     this.planbutton = 'button i.far.fa-paper-plane';
-    this.inputtooltip = '#inputtooltip';
+    this.tooltipInput = 'input[type="text"][name="tooltip"]';
+    this.minRoleDropdown = 'select[name="min_role"]';
     this.inputmax_role = '#inputmax_role';
+    this.styleDropdown = 'select[name="style"]';
+    this.typeDropdown = 'select[name="type"]'; 
+    this.inputlocation = '#inputlocation';
+    this.disable_on_mobile = '#inputdisable_on_mobile';
+    this.Open_newtab = '#inputtarget_blank';
+    this.Open_popup = '#inputin_modal';
+    this.updateButton = 'button[id="btnUpdate"]';
+    this.btnAdd = 'button[id="btnAdd"]';
+    this.recalculateButton = 'button[id="btnRecalc"]';
+    this.viewnameDropdown = 'select[name="viewname"]';
+    this.inputtype = '#inputtype';
+    this.SubscriptionMenu = 'a.nav-link[href="/page/Landing_Page"] >> text=Subscription';
+    this.PlanListMenu = 'a.nav-link[href="/view/Plan_List"]';
+    this.removebtn = 'a.btnRemove >> i.fa-trash-alt';
   }
 }
 
