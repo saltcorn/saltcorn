@@ -924,7 +924,7 @@ const render = ({
             )
           )
         );
-      return markup;
+      return isTop ? wrap(segment, isTop, ix, markup) : markup;
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   if (instanceOWithHtmlFile(layout)) {
