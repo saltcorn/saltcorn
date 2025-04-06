@@ -117,7 +117,8 @@ class EventLog {
     }
     const ev = new EventLog(o);
     const { id, ...rest } = ev;
-
+    if (typeof rest.payload !== "undefined")
+      rest.payload = JSON.stringify(rest.payload);
     ev.id = await db.insert("_sc_event_log", rest);
     return ev;
   }
