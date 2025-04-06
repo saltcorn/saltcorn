@@ -15,6 +15,8 @@ const {
   tenant_letsencrypt_name,
   isAdminOrHasConfigMinRole,
   checkEditPermission,
+  addOnDoneRedirect,
+  is_relative_url,
 } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const Plugin = require("@saltcorn/data/models/plugin");
@@ -723,7 +725,10 @@ router.get(
             label: req.__("Restore"),
             key: (r) =>
               post_btn(
-                `/admin/snapshot-restore/${type}/${name}/${r.id}`,
+                addOnDoneRedirect(
+                  `/admin/snapshot-restore/${type}/${name}/${r.id}`,
+                  req
+                ),
                 req.__("Restore"),
                 req.csrfToken()
               ),
@@ -762,13 +767,16 @@ router.post(
     }
     await getState().refresh();
     res.redirect(
-      type == "codepage"
-        ? `/admin/edit-codepage/${name}`
-        : type === "trigger"
-          ? `/actions`
-          : /^[a-z]+$/g.test(type)
-            ? `/${type}edit`
-            : "/"
+      req.query.on_done_redirect &&
+        is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : type == "codepage"
+          ? `/admin/edit-codepage/${name}`
+          : type === "trigger"
+            ? `/actions`
+            : /^[a-z]+$/g.test(type)
+              ? `/${type}edit`
+              : "/"
     );
   })
 );
