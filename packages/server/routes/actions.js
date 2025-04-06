@@ -1262,7 +1262,13 @@ router.get(
             ? `/actions/run/${runres?.__wf_run_id}`
             : `/actions/runs/?trigger=${trigger.id}`
         );
-      else res.redirect(`/actions/`);
+      else
+        res.redirect(
+          req.query.on_done_redirect &&
+            is_relative_url("/" + req.query.on_done_redirect)
+            ? `/${req.query.on_done_redirect}`
+            : `/actions/`
+        );
     } else {
       send_events_page({
         res,

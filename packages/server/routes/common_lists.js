@@ -734,7 +734,7 @@ const getTriggerList = async (
       { label: req.__("Name"), key: "name" },
       {
         label: req.__("Test run"),
-        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
+        key: (r) => link(`/actions/testrun/${r.id}${on_done_redirect_str}`, req.__("Test run")),
       },
       {
         label: req.__("Configure"),
