@@ -738,7 +738,11 @@ const getTriggerList = async (
       },
       {
         label: req.__("Configure"),
-        key: (r) => link(`/actions/configure/${r.id}`, req.__("Configure")),
+        key: (r) =>
+          link(
+            `/actions/configure/${r.id}${on_done_redirect_str}`,
+            req.__("Configure")
+          ),
       },
       ...(tagId
         ? []
