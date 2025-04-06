@@ -205,7 +205,7 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
       a(
         {
           class: "dropdown-item",
-          href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}')`,
+          href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}${on_done_redirect_str}')`,
         },
         '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
       ),
