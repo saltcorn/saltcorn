@@ -437,7 +437,8 @@ router.get(
                     req.csrfToken(),
                     {
                       btnClass: "btn-outline-primary",
-                      spinner: true,
+                      klass: "backupadminbtn",
+                      onClick: "spin_action_link($('.backupadminbtn'));setTimeout(()=> reset_spinners($('.backupadminbtn')), 3000)"
                     }
                   )
                 ),
