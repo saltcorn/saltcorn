@@ -487,7 +487,7 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
         type: "button",
         onClick: `$(this).next().val(Math.max(${
           isdef(attrs.min) ? attrs.min : "-Infinity"
-        },+$(this).next().val()-$(attrs.stepsize || 1))).trigger('change');${
+        },+$(this).next().val()-${attrs.stepsize || 1})).trigger('change');${
           attrs.onChange || ""
         }`,
       },
@@ -513,7 +513,7 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
         type: "button",
         onClick: `$(this).prev().val(Math.min(${
           isdef(attrs.max) ? attrs.max : "Infinity"
-        },+$(this).prev().val()+$(attrs.stepsize||1))).trigger('change');${
+        },+$(this).prev().val()+${attrs.stepsize||1})).trigger('change');${
           attrs.onChange || ""
         }`,
       },
