@@ -438,6 +438,7 @@ router.get(
                     {
                       btnClass: "btn-outline-primary",
                       klass: "backupadminbtn",
+                      //TODO not sure how to tell when backup done 
                       onClick: "spin_action_link($('.backupadminbtn'));setTimeout(()=> reset_spinners($('.backupadminbtn')), 3000)"
                     }
                   )
