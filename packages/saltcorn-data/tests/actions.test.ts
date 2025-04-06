@@ -378,7 +378,7 @@ describe("base plugin actions", () => {
 
   //TODO recalculate_stored_fields, set_user_language
 });
-describe("Events", () => {
+describe("Events and eventlog", () => {
   it("should add custom event", async () => {
     await getState().setConfig("custom_events", [
       {
@@ -425,6 +425,77 @@ describe("Events", () => {
     const evs1 = await EventLog.find({ event_type: "BarWasHere" });
     expect(evs1.length).toBe(1);
   });
+  it("should emit custom event with array payload", async () => {
+    const evs = await EventLog.find({ event_type: "BarWasHere" });
+
+    Trigger.emitEvent("BarWasHere", "Baz", {}, [{ x: 1 }, { x: 2 }]);
+
+    await sleep(200);
+    const evs1 = await EventLog.find(
+      { event_type: "BarWasHere" },
+      { orderBy: "id" }
+    );
+    expect(evs1.length).toBe(evs.length + 1);
+
+    expect(Array.isArray(evs1[evs1.length - 1].payload)).toBe(true);
+  });
+  it("should emit custom event with object payload", async () => {
+    const evs = await EventLog.find({ event_type: "BarWasHere" });
+
+    Trigger.emitEvent("BarWasHere", "Baz", {}, { x: 1 });
+
+    await sleep(200);
+    const evs1 = await EventLog.find(
+      { event_type: "BarWasHere" },
+      { orderBy: "id" }
+    );
+    expect(evs1.length).toBe(evs.length + 1);
+
+    expect(evs1[evs1.length - 1].payload.x).toBe(1);
+  });
+  it("should emit custom event with string payload", async () => {
+    const evs = await EventLog.find({ event_type: "BarWasHere" });
+
+    Trigger.emitEvent("BarWasHere", "Baz", {}, "Hello!");
+
+    await sleep(200);
+    const evs1 = await EventLog.find(
+      { event_type: "BarWasHere" },
+      { orderBy: "id" }
+    );
+    expect(evs1.length).toBe(evs.length + 1);
+
+    expect(evs1[evs1.length - 1].payload).toBe("Hello!");
+  });
+  it("should emit custom event with null payload", async () => {
+    const evs = await EventLog.find({ event_type: "BarWasHere" });
+
+    Trigger.emitEvent("BarWasHere", "Baz", {}, null);
+
+    await sleep(200);
+    const evs1 = await EventLog.find(
+      { event_type: "BarWasHere" },
+      { orderBy: "id" }
+    );
+    expect(evs1.length).toBe(evs.length + 1);
+
+    expect(evs1[evs1.length - 1].payload).toBe(null);
+  });
+  it("should emit custom event with bool payload", async () => {
+    const evs = await EventLog.find({ event_type: "BarWasHere" });
+
+    Trigger.emitEvent("BarWasHere", "Baz", {}, true);
+
+    await sleep(200);
+    const evs1 = await EventLog.find(
+      { event_type: "BarWasHere" },
+      { orderBy: "id" }
+    );
+    expect(evs1.length).toBe(evs.length + 1);
+
+    expect(evs1[evs1.length - 1].payload).toBe(true);
+  });
+
   it("should emit table event", async () => {
     await Trigger.emitEvent("Insert", "readings");
     const evs = await EventLog.find({ event_type: "Insert" });
