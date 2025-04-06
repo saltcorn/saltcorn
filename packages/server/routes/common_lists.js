@@ -205,7 +205,7 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
       a(
         {
           class: "dropdown-item",
-          href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}')`,
+          href: `javascript:ajax_modal('/admin/snapshot-restore/view/${view.name}${on_done_redirect_str}')`,
         },
         '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
       ),
@@ -674,12 +674,12 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
     a(
       {
         class: "dropdown-item",
-        href: `javascript:ajax_modal('/admin/snapshot-restore/trigger/${trigger.name}')`,
+        href: `javascript:ajax_modal('/admin/snapshot-restore/trigger/${trigger.name}${on_done_redirect_str}')`,
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
     post_dropdown_item(
-      `/actions/clone/${trigger.id}`,
+      `/actions/clone/${trigger.id}${on_done_redirect_str}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
       req
     ),
@@ -734,11 +734,19 @@ const getTriggerList = async (
       { label: req.__("Name"), key: "name" },
       {
         label: req.__("Test run"),
-        key: (r) => link(`/actions/testrun/${r.id}`, req.__("Test run")),
+        key: (r) =>
+          link(
+            `/actions/testrun/${r.id}${on_done_redirect_str}`,
+            req.__("Test run")
+          ),
       },
       {
         label: req.__("Configure"),
-        key: (r) => link(`/actions/configure/${r.id}`, req.__("Configure")),
+        key: (r) =>
+          link(
+            `/actions/configure/${r.id}${on_done_redirect_str}`,
+            req.__("Configure")
+          ),
       },
       ...(tagId
         ? []

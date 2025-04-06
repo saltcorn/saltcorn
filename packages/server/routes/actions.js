@@ -508,7 +508,13 @@ router.post(
         return;
       }
       req.flash("success", req.__("Action information saved"));
-      res.redirect(`/actions/`);
+
+      res.redirect(
+        req.query.on_done_redirect &&
+          is_relative_url("/" + req.query.on_done_redirect)
+          ? `/${req.query.on_done_redirect}`
+          : `/actions/`
+      );
     }
   })
 );
@@ -1256,7 +1262,13 @@ router.get(
             ? `/actions/run/${runres?.__wf_run_id}`
             : `/actions/runs/?trigger=${trigger.id}`
         );
-      else res.redirect(`/actions/`);
+      else
+        res.redirect(
+          req.query.on_done_redirect &&
+            is_relative_url("/" + req.query.on_done_redirect)
+            ? `/${req.query.on_done_redirect}`
+            : `/actions/`
+        );
     } else {
       send_events_page({
         res,
@@ -1319,7 +1331,12 @@ router.post(
       "success",
       req.__("Trigger %s duplicated as %s", trig.name, newtrig.name)
     );
-    res.redirect(`/actions`);
+    res.redirect(
+      req.query.on_done_redirect &&
+        is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : `/actions`
+    );
   })
 );
 
