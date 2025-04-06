@@ -328,7 +328,7 @@ class Trigger implements AbstractTrigger {
         event_type: eventType,
         channel,
         user_id: (<any>(userPW || {})).id || null,
-        payload: typeof payload === "string" ? { text: payload } : payload,
+        payload: payload,
         occur_at: new Date(),
       });
     }, 0);
