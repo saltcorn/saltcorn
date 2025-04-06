@@ -127,14 +127,14 @@ router.post(
 const typeToGridType = (t, field) => {
   const jsgField = { field: field.name, title: field.label, editor: true };
   if (t.name === "String" && field.attributes && field.attributes.options) {
-    jsgField.editor = "select";
+    jsgField.editor = "list";
 
     const values = field.attributes.options.split(",").map((o) => o.trim());
     if (!field.required) values.unshift("");
 
     jsgField.editorParams = { values };
   } else if (t === "Key" || t === "File") {
-    jsgField.editor = "select";
+    jsgField.editor = "list";
     const values = {};
 
     field.options.forEach(({ label, value }) => (values[value] = label));
