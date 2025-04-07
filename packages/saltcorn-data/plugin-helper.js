@@ -2082,6 +2082,14 @@ const stateFieldsToWhere = ({
       const datefield = db.sqlsanitize(k.replace("_lte_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
+    } else if (k.startsWith("_gt_")) {
+      const datefield = db.sqlsanitize(k.replace("_gt_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield) addOrCreateList(qstate, datefield, { gt: v });
+    } else if (k.startsWith("_lt_")) {
+      const datefield = db.sqlsanitize(k.replace("_lt_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield) addOrCreateList(qstate, datefield, { lt: v });
     } else if (k.startsWith("_not_")) {
       const notfield = db.sqlsanitize(k.replace("_not_", ""));
       const nfield = fields.find((fld) => fld.name === notfield);
