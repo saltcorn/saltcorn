@@ -2082,6 +2082,13 @@ const stateFieldsToWhere = ({
       const datefield = db.sqlsanitize(k.replace("_lte_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
+    } else if (k.startsWith("_not_")) {
+      const notfield = db.sqlsanitize(k.replace("_not_", ""));
+      const nfield = fields.find((fld) => fld.name === notfield);
+      if (nfield) {
+        if (!qstate.not) qstate.not = {};
+        qstate.not[notfield] = v;
+      }
     } else if (field && field.type.name === "String" && v && v.slugify) {
       qstate[k] = v;
     } else if (Array.isArray(v) && field && field.type && field.type.read) {

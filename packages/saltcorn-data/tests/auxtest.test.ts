@@ -432,6 +432,15 @@ describe("stateFieldsToWhere", () => {
       ],
     });
   });
+  it("not", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { _not_age: 5 },
+    });
+    expect(w).toStrictEqual({
+      not: { age: 5 },
+    });
+  });
   it("date bounds", async () => {
     const w = stateFieldsToWhere({
       fields,
