@@ -407,17 +407,23 @@ router.get(
                   target: field?.attributes?.summary_field,
                 };
             });
-            rows = await table.getJoinedRows({
-              where: qstate,
-              joinFields,
-              limit: use_limit,
-              offset: use_offset,
-              orderDesc:
-                (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
-              orderBy: orderByField?.name || undefined,
-              forPublic: !(req.user || user),
-              forUser: req.user || user,
-            });
+            try {
+              rows = await table.getJoinedRows({
+                where: qstate,
+                joinFields,
+                limit: use_limit,
+                offset: use_offset,
+                orderDesc:
+                  (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
+                orderBy: orderByField?.name || undefined,
+                forPublic: !(req.user || user),
+                forUser: req.user || user,
+              });
+            } catch (e) {
+              console.error(e);
+              res.json({ error: "API error" });
+              return;
+            }
           }
           if (tabulator_pagination_format) {
             res.json({
