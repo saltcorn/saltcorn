@@ -671,7 +671,6 @@ class PageLocators {
     this.AddMsg = 'a[href="/view/Message_Add"]';
     this.inputcontent = '#inputcontent';
     this.fourthrowcolumn = '.builder-columns.row:nth-of-type(4) .split-col:nth-of-type(2) .canvas';
-
     this.MoneyHeader = 'h5:has-text("money")';
     this.installmoney = 'form[action="/plugins/install/money"] button:has-text("Install")';
     this.Subs_Plantable = 'a:has-text("Subscription_Plan")';
@@ -727,6 +726,12 @@ class PageLocators {
     this.SubscriptionMenu = 'a.nav-link[href="/page/Landing_Page"] >> text=Subscription';
     this.PlanListMenu = 'a.nav-link[href="/view/Plan_List"]';
     this.removebtn = 'a.btnRemove >> i.fa-trash-alt';
+    this.Many2ManyHeader = 'h5:has-text("many-to-many")';
+    this.installmany2many = 'form[action="/plugins/install/many-to-many"] button:has-text("Install")';
+    this.view2relation = 'text=Relation [Checkboxes many-to-many] My_Table';
+    this.checkboxAdam = 'input.form-check-input[onchange*="value: \'Adam\'"]';
+    this.donaldCheckbox = 'input.form-check-input[onchange*="value: \'Donald\'"]';
+
   }
 }
 
