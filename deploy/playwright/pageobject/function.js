@@ -752,6 +752,32 @@ async install_money() {
   });
 }
 
+async install_ManyToMany() {
+  await this.navigate_To_Settings();
+  // Navigate to Module
+  await this.navigate_To_module();
+  // Search with 'flatpickr' in the search bar
+  await this.fill_Text(this.locators.SearchModule, 'many-to-many');
+  // Assert that the flatpickr module is visible and click on it
+  await customAssert('many-to-many module should be visible', async () => {
+    await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
+    await this.page.click('button#button-search-submit');
+  });
+  // Wait for a few seconds
+  await this.page.waitForTimeout(2000);    
+  // Click the Install button
+  await this.page.click(this.locators.installmany2many);
+  // Assert the success message is visible
+  await customAssert('Success message should be visible', async () => {
+    await this.page.waitForSelector(this.locators.successmessage);
+    await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+  });
+  await this.navigate_modules_To_Installed();
+  await customAssert('many-to-many module should be present in installed tab', async () => {
+    await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
+  });
+}
+
 }
 
 module.exports = PageFunctions;
