@@ -73,9 +73,9 @@ test.describe('E2E Test Suite', () => {
       await page.click(pageobject.assignedToTab);
       await page.waitForTimeout(1000);
       await page.click('text=Adam', { force: true });
-      await page.click(pageobject.assignedToTab2);
+      await page.locator(pageobject.assignedToTab).nth(1).click();
       await page.click('text=Brandon');
-      await page.click(pageobject.assignedToTab3);
+      await page.locator(pageobject.assignedToTab).nth(2).click();
       await page.click('text=Cherry');
     });
   });
@@ -223,9 +223,9 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Select Teams on people table', async () => {
       await page.click(pageobject.teamsCell);
       await page.click('text=Maintenance');
-      await page.click(pageobject.teamsCell2);
+      await page.locator(pageobject.teamsCell).nth(1).click();
       await page.click('text=Engineering');
-      await page.click(pageobject.teamsCell3);
+      await page.locator(pageobject.teamsCell).nth(2).click();
       await page.click('text=Management');
       // await page.reload();
     });

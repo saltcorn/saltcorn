@@ -93,11 +93,11 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.estimatedHourscell);
             await page.keyboard.type('2');
 
-            await page.click(pageobject.estimatedHourscell2);
+            await page.locator(pageobject.estimatedHourscell).nth(1).click();
             await page.keyboard.type('1');
             await page.waitForTimeout(1000);
 
-            await page.click(pageobject.estimatedHourscell3);
+            await page.locator(pageobject.estimatedHourscell).nth(2).click();
             await page.keyboard.type('3');
             await page.waitForTimeout(2000);
             await functions.click_table();

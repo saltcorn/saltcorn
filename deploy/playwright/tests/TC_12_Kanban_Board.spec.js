@@ -135,9 +135,9 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Add status for every task in table ', async () => {
             await page.click(pageobject.statustab);
             await page.click('text=Backlog');
-            await page.click(pageobject.statusCell2);
+            await page.locator(pageobject.statustab).nth(1).click();
             await page.click('text=InProgress');
-            await page.click(pageobject.statusCell3);
+            await page.locator(pageobject.statustab).nth(2).click();
             await page.click('text=Iteration');
             await page.waitForTimeout(2000);
         });

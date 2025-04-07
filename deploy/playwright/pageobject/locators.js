@@ -401,8 +401,6 @@ class PageLocators {
     this.onDeleteSelect = 'select[data-fieldname="on_delete"]';
     this.manageCell = 'div.tabulator-cell[tabulator-field="manage"]';
     this.departmentCell1 = 'div.tabulator-cell[tabulator-field="department"]';
-    this.departmentCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="department"])[2]';
-    this.departmentCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="department"])[3]';
     this.view2showDepartment = 'text=Show_Department [Show] Department';
     this.view2showEmployee = 'text=Show_Employee [Show] Employee';
     this.EmployeeListlink = 'a[href="/view/List_Employee"]';
@@ -456,8 +454,6 @@ class PageLocators {
     this.configurekanban = 'a[href="/viewedit/config/Kanban_Board"]';
     this.InProgressStatus = 'div.kancontainer[data-column-value="InProgress"]';
     this.statustab = 'div.tabulator-cell[tabulator-field="status"]';
-    this.statusCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="status"])[2]';
-    this.statusCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="status"])[3]';
     this.Column2FullName = 'div.d-flex.justify-content-between.h-100:has-text("Column 2: Full name")';
     this.Column0Address = 'div.d-flex.justify-content-between.h-100:has-text("Column 0: Address")';
     this.Column1Address = 'div.d-flex.justify-content-between.h-100:has-text("Column 1: Address")';
@@ -485,8 +481,6 @@ class PageLocators {
     this.LineBreakElement = 'div.wrap-builder-elem[title="Line break"]';
     this.EditButton2 = 'a.btn.btn-primary[href="/view/Edit_People?id=2"]';
     this.assignedToTab = 'div.tabulator-cell[tabulator-field="assigned_to"]';
-    this.assignedToTab2 = '(//div[@class="tabulator-cell" and @tabulator-field="assigned_to"])[2]';
-    this.assignedToTab3 = '(//div[@class="tabulator-cell" and @tabulator-field="assigned_to"])[3]';
     this.joinField = 'div[title="Join field"]';
     this.fieldsButton = '#f-top-dropdown';
     this.assignedToDropdown = '#_field_assigned_to';
@@ -501,10 +495,6 @@ class PageLocators {
     this.showAssigneeLink = 'a[href="/view/Show_People?id=2"]';
     this.Peopletable = 'a:has-text("People")';
     this.teamsCell = 'div.tabulator-cell[tabulator-field="team"]';
-    this.teamsCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[2]';
-    this.teamsCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[3]';
-    this.teamsCell4 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[4]';
-    this.teamsCell5 = '(//div[@class="tabulator-cell" and @tabulator-field="team"])[5]';
     this.teamDropdown = '#_field_assigned_to\\.team'; // Escape the dot
     this.nameItem = 'ul.ps-0 li.dropdown-item.field-val-item:nth-of-type(2)';
     this.nameSpan = 'span.link-style:has-text("name")';
@@ -519,8 +509,6 @@ class PageLocators {
     this.countTaskLocator = 'span.link-style:has-text("Count Task")';
     this.minInputLocator = 'input[type="number"]#inputmin';
     this.estimatedHourscell = 'div.tabulator-cell[tabulator-field="estimated_hours"]';
-    this.estimatedHourscell2 = '(//div[@class="tabulator-cell" and @tabulator-field="estimated_hours"])[1]';
-    this.estimatedHourscell3 = '(//div[@class="tabulator-cell" and @tabulator-field="estimated_hours"])[2]';
     this.SumTaskLocator = 'span.link-style:has-text("Sum Task")';
     this.Array_AggLocator = 'span.link-style:has-text("Array_Agg Task")';
     this.configureShowPeople = 'a[href="/viewedit/config/Show_People"]';
@@ -548,8 +536,6 @@ class PageLocators {
     this.taskHelper = 'a:has-text("Task_Helper")';
     this.HelperCell = 'div.tabulator-cell[tabulator-field="helper"]';
     this.TaskCell = 'div.tabulator-cell[tabulator-field="task"]';
-    this.TaskCell2 = '(//div[@class="tabulator-cell" and @tabulator-field="task"])[2]';
-    this.TaskCell3 = '(//div[@class="tabulator-cell" and @tabulator-field="task"])[3]';
     this.view2editHelper = 'text=Edit_Helper [EditBadges] People';
     this.txttaskbadge = 'text=View: PersonTaskBadges [Badges] People';
     this.closeIcon = 'i.ms-1.fas.fa-lg.fa-times';
