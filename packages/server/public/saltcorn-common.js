@@ -252,7 +252,7 @@ function apply_showif() {
       decodeURIComponent(e.attr("data-fetch-options"))
     );
     if (window._sc_loglevel > 4) console.log("dynwhere", dynwhere);
-    const kvToQs = ([k, v], is_or) => {
+    const kvToQs = ([k, v], is_or, no_blanks) => {
       return k === "or" && Array.isArray(v)
         ? v
             .map((v1) =>
@@ -264,11 +264,11 @@ function apply_showif() {
         : k === "not"
           ? Object.entries(v)
               .map((kv) => {
-                const q = kvToQs(kv);
+                const q = kvToQs(kv, false, true);
                 return q ? `_not_${q}` : "";
               })
               .join("&")
-          : v[0] === "$" && rec[v.substring(1)] === ""
+          : v[0] === "$" && rec[v.substring(1)] === "" && no_blanks
             ? ""
             : typeof v === "object" && v !== null
               ? Object.entries(v)
