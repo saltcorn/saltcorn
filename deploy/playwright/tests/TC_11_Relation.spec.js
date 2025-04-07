@@ -189,9 +189,9 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.EditlinkLocator);
         await page.click(pageobject.departmentCell1);
         await page.click('text=Earn');
-        await page.click(pageobject.departmentCell2);
+        await page.locator(pageobject.departmentCell1).nth(1).click();
         await page.click('text=Spend');
-        await page.click(pageobject.departmentCell3);
+        await page.locator(pageobject.departmentCell1).nth(2).click();
         await page.click('text=Collect');
         await page.waitForTimeout(2000);
         await functions.click_table();

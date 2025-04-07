@@ -159,9 +159,9 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Select task for person', async () => {
             await page.click(pageobject.TaskCell);
             await page.click('text=Buy Milk');
-            await page.click(pageobject.TaskCell2);
+            await page.locator(pageobject.TaskCell).nth(1).click();
             await page.click('text=Take out trash');
-            await page.click(pageobject.TaskCell3);
+            await page.locator(pageobject.TaskCell).nth(2).click();
             await page.click('text=Empty Fridge');
             await page.waitForTimeout(1000);
         });
