@@ -168,7 +168,11 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   // switch on sql logging
   if (sql_log) db.set_sql_logging(); // dont override cli flag
   // migrate database
-  if (!disableMigrate) await migrate(db.connectObj.default_schema, true);
+  if (!disableMigrate)
+    await db.runWithTenant(
+      db.connectObj.default_schema,
+      async () => await migrate(db.connectObj.default_schema, true)
+    );
   // load all plugins
   await loadAllPlugins(true);
   // switch on sql logging - but it was initiated before???
