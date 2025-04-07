@@ -268,19 +268,21 @@ function apply_showif() {
                 return q ? `_not_${q}` : "";
               })
               .join("&")
-          : typeof v === "object" && v !== null
-            ? Object.entries(v)
-                .map(([k1, v1]) => {
-                  const q = v1[0] === "$" ? rec[v1.substring(1)] : v1;
-                  return k1 === "equal" || !q
-                    ? ""
-                    : `_${k1}${v.equal ? "e" : ""}_${k}=${q}`;
-                })
-                .filter(Boolean)
-                .join("&")
-            : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}${
-                is_or ? "&_or_field=" + k : ""
-              }`;
+          : v[0] === "$" && rec[v.substring(1)] === ""
+            ? ""
+            : typeof v === "object" && v !== null
+              ? Object.entries(v)
+                  .map(([k1, v1]) => {
+                    const q = v1[0] === "$" ? rec[v1.substring(1)] : v1;
+                    return k1 === "equal" || !q
+                      ? ""
+                      : `_${k1}${v.equal ? "e" : ""}_${k}=${q}`;
+                  })
+                  .filter(Boolean)
+                  .join("&")
+              : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}${
+                  is_or ? "&_or_field=" + k : ""
+                }`;
     };
     const qss = Object.entries(dynwhere.whereParsed).map((kv) => kvToQs(kv));
     if (dynwhere.existingValue) {
