@@ -261,9 +261,15 @@ function apply_showif() {
                 .join("&")
             )
             .join("&")
-        : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}${
-            is_or ? "&_or_field=" + k : ""
-          }`;
+        : k === "not"
+          ? Object.entries(v)
+              .map((kv) => `_not_${kvToQs(kv, true)}`)
+              .join("&")
+          : v[0] === "$" && rec[v.substring(1)] === ""
+            ? ""
+            : `${k}=${v[0] === "$" ? rec[v.substring(1)] : v}${
+                is_or ? "&_or_field=" + k : ""
+              }`;
     };
     const qss = Object.entries(dynwhere.whereParsed).map((kv) => kvToQs(kv));
     if (dynwhere.existingValue) {
