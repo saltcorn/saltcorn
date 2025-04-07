@@ -32,6 +32,7 @@ const {
 } = require("./utils");
 const moment = require("moment");
 const { getState } = require("@saltcorn/data/db/state");
+const { comparingCaseInsensitive } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -136,11 +137,18 @@ const typeToGridType = (t, field) => {
     jsgField.editorParams = { values };
   } else if (t === "Key" || t === "File") {
     jsgField.editor = "list";
-    const values = {};
-
-    field.options.forEach(({ label, value }) => (values[value] = label));
+    const values = [];
+    const valuesObj = {};
+    field.options
+      .sort(comparingCaseInsensitive("label"))
+      .forEach(({ label, value }) => {
+        //en space. tabulator workaround
+        const l = label === "" ? "\u2002" : label;
+        values.push({ label: l, value });
+        valuesObj[value] = l;
+      });
     jsgField.editorParams = { values };
-    jsgField.formatterParams = { values };
+    jsgField.formatterParams = { values: valuesObj };
     jsgField.formatter = "__lookupIntToString";
   } else if (t.name === "Float" || t.name === "Integer") {
     jsgField.editor = "number";
