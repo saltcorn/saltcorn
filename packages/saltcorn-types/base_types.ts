@@ -351,7 +351,7 @@ export type RouteAction = (
 ) => Promise<any>;
 
 export type PluginFunction = {
-  run: (arg0: any) => any;
+  run: (...arg0: any[]) => any;
   returns?: string;
   arguments?: string[];
   isAsync?: boolean;

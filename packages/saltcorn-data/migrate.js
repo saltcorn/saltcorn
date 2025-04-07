@@ -24,14 +24,14 @@ const fudge = is_sqlite
             .replace("jsonb", "json")
   : (s) => s;
 
-const doMigrationStep = async (name, contents, client) => {
+const doMigrationStep = async (name, contents) => {
   const execMany = async (sqls) => {
     if (Array.isArray(sqls)) {
       for (const sql of sqls) {
-        await client.query(sql);
+        await db.query(sql);
       }
     } else {
-      return await client.query(sqls);
+      return await db.query(sqls);
     }
   };
 
@@ -81,21 +81,18 @@ const migrate = async (schema0, verbose) => {
           !dbmigrations.has(file.replace(".js", ""))
       );
     if (files.length > 0) {
-      const client = is_sqlite ? db : await db.getClient();
-      if (!is_sqlite) {
-        db.sql_log(`SET search_path TO "${schema}";`);
-        await client.query(`SET search_path TO "${schema}";`);
-      }
       for (const file of files) {
         const name = file.replace(".js", "");
         if (!dbmigrations.has(name)) {
           if (verbose)
             console.log("Tenant %s running migration %s", schema0, name);
           const contents = require(path.join(__dirname, "migrations", name));
-          await doMigrationStep(name, contents, client);
+          await db.withTransaction(async () => {
+            if (!is_sqlite) await db.query(`SET search_path TO "${schema}";`);
+            await doMigrationStep(name, contents);
+          });
         }
       }
-      if (!is_sqlite) client.release(true);
     }
   } else {
     for (let [k, v] of Object.entries(window.saltcorn.data.migrations)) {

@@ -32,6 +32,7 @@ import {
 } from "@saltcorn/types/base_types";
 import { Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
+import type Model from "../models/model";
 import User from "../models/user";
 const { PluginManager } = require("live-plugin-manager");
 
@@ -532,14 +533,17 @@ class State {
   }
 
   async refresh_page_groups(noSignal: boolean) {
-    try {
-      //sometimes this is run before migration
-      const PageGroup = (await import("../models/page_group")).default;
-      this.page_groups = await PageGroup.find();
-      if (!noSignal) this.log(5, "Refresh page groups");
-    } catch (e) {
-      console.error("error initializing page groups", e);
-    }
+    await db.tryCatchInTransaction(
+      async () => {
+        //sometimes this is run before migration
+        const PageGroup = (await import("../models/page_group")).default;
+        this.page_groups = await PageGroup.find();
+        if (!noSignal) this.log(5, "Refresh page groups");
+      },
+      (e:Error) => {
+        console.error("error initializing page groups", e);
+      }
+    );
     if (!noSignal && db.is_node)
       process_send({ refresh: "page_groups", tenant: db.getTenantSchema() });
   }
@@ -562,11 +566,14 @@ class State {
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
     const Model = require("../models/model");
-    let allModels = [];
-    try {
-      //needed for refresh in pre-model migration
-      allModels = await Model.find({});
-    } catch (e) {}
+    let allModels: Model[] = [];
+    await db.tryCatchInTransaction(
+      async () => {
+        //needed for refresh in pre-model migration
+        allModels = await Model.find({});
+      },
+      (e: Error) => {}
+    );
     for (const table of allTables) {
       if (table.provider_name) {
         table.provider_cfg = stringToJSON(table.provider_cfg);

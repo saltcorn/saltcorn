@@ -178,7 +178,7 @@ const domain_sanitize = (s: string): string =>
  * @returns {Promise<void>} no result
  */
 const eachTenant = async (f: () => Promise<any>): Promise<void> => {
-  await f();
+  await db.runWithTenant(db.connectObj.default_schema, f);
   if (db.is_it_multi_tenant()) {
     const tenantList = await getAllTenants();
     for (const domain of tenantList) await db.runWithTenant(domain, f);
