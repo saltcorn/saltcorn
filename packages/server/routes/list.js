@@ -139,11 +139,6 @@ const typeToGridType = (t, field) => {
     jsgField.editor = "list";
     const values = [];
     const valuesObj = {};
-    console.log("opts", field.options);
-    console.log(
-      "srt opts",
-      field.options.sort(comparingCaseInsensitive("label"))
-    );
     field.options
       .sort(comparingCaseInsensitive("label"))
       .forEach(({ label, value }) => {
