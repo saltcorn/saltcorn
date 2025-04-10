@@ -209,7 +209,9 @@ const configuration_workflow = (req) =>
           });
 
           return {
-            fields: fields.map((f) => f.toBuilder),
+            fields: fields
+              .filter((f) => !f.calculated || f.stored)
+              .map((f) => f.toBuilder),
             tableName: table.name,
             parent_field_list: my_parent_field_list,
             child_field_list: [table.name],
