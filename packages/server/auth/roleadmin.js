@@ -110,10 +110,7 @@ const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
  */
 const roleForm = (req) =>
   new Form({
-    action: "/roleadmin/edit",
-    validator: (vs) => {
-      if (vs.id > 1 && vs.id < 11) return req.__("Role IDs 2-10 are reserved");
-    },
+    action: "/roleadmin/edit",    
     fields: [
       {
         name: "id",
