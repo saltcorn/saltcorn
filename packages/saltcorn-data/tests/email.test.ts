@@ -230,7 +230,7 @@ describe("MJML Mail Transformations", () => {
         },
       ],
     });
-    getState().setConfig("base_url", "https://example.com");
+    await getState().setConfig("base_url", "https://example.com");
     const html = await email.viewToEmailHtml(v, { id: 1 });
     //writeFileSync("emailout2", html);
     expect(trimLines(html)).toBe(
