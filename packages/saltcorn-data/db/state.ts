@@ -184,7 +184,7 @@ class State {
   scVersion: string;
   waitingWorkflows?: boolean;
   keyframes: Array<string>;
-  copilot_skills: Record<string, CopilotSkill>;
+  copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
 
   private oldCodePages: Record<string, string> | undefined;
@@ -216,7 +216,7 @@ class State {
     this.plugin_module_names = {};
     this.plugin_routes = {};
     this.table_providers = {};
-    this.copilot_skills = {};
+    this.copilot_skills = [];
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.icons = get_standard_icons();
@@ -540,7 +540,7 @@ class State {
         this.page_groups = await PageGroup.find();
         if (!noSignal) this.log(5, "Refresh page groups");
       },
-      (e:Error) => {
+      (e: Error) => {
         console.error("error initializing page groups", e);
       }
     );
@@ -795,8 +795,14 @@ class State {
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v as AuthenticationMethod;
     });
-    Object.entries(withCfg("copilot_skills", {})).forEach(([k, v]) => {
-      this.copilot_skills[k] = v as CopilotSkill;
+    withCfg("copilot_skills", []).forEach((v: CopilotSkill) => {
+      if (
+        v?.function_name &&
+        !this.copilot_skills
+          .map((s) => s.function_name)
+          .includes(v?.function_name)
+      )
+        this.copilot_skills.push(v);
     });
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
@@ -952,7 +958,7 @@ class State {
     this.fileviews = {};
     this.actions = {};
     this.auth_methods = {};
-    this.copilot_skills = {};
+    this.copilot_skills = [];
     this.layouts = { emergency: emergency_layout };
     this.headers = {};
     this.function_context = { moment, slugify: db.slugify };

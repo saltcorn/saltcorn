@@ -525,7 +525,7 @@ type PluginFacilities = {
   modelpatterns?: Record<string, ModelPattern>;
   authentication?: Record<string, AuthenticationMethod>;
   table_providers?: Record<string, TableProvider>;
-  copilot_skills?: Record<string, CopilotSkill>;
+  copilot_skills?: Array<CopilotSkill>;
 };
 
 type PluginWithConfig = {
