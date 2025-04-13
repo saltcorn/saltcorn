@@ -2,11 +2,23 @@
 
 ## 1.1.4 - In beta
 
+* Role IDs 2-10 are now available for use. As a consequence, backups from before Saltcorn 0.8.7 can no
+  longer be restored. To restore a backup from 0.8.6, restore on Saltcorn any version 0.8.7 - 1.0 
+  and then backup again.
+
+* Admin table data edit improvements:
+    - Change layout which should work better with many fields
+    - When editing Key fields, the values in the dropdown are sorted and NULL (blank) is first
+    - Show/hide all/none fields link
+    - Update tabulator version
+
 * Translations: 
     - upload and download CSV files with the translation strings (under Site structure/Languages)
     - Text nodes inside HTML elements are translated
     - The site name and addiotnal login strings are translated
     - Translate app strings with LLM if module is present
+    - Translate Action and viewlink labels, list headers and page and popup titles.
+
 
 * Transactional isolation: Most administrative actions and user-run data 
   manipulation through forms or actions run from the web UI are now
@@ -17,6 +29,11 @@
 ### Fixes
 
 * Fix broken customized reset password email from 1.1.3
+* 3152: Use actions in a feed's empty view
+* 3066: Give error message on faulty interpolation in page title
+* 3054: Use !==, >, >= etc in dynamnic where in Edit
+* 2893: Fix link to manage tags in table admin
+* 2821: use tables element in emails
 
 ## 1.1.3 - Released 25 March 2025
 

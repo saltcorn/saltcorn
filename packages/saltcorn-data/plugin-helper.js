@@ -252,7 +252,11 @@ const calcfldViewOptions = (fields, mode, noFollowKeys = false) => {
     } else if (f.type && f.type.fieldviews) {
       const tfvs = Object.entries(f.type.fieldviews).filter(
         ([k, fv]) =>
-          (f.calculated ? !fv.isEdit : !fv.isEdit || isEdit || isFilter) &&
+          (isFilter && f.calculated && f.stored
+            ? fv.isEdit || fv.isFilter
+            : f.calculated
+              ? !fv.isEdit
+              : !fv.isEdit || isEdit || isFilter) &&
           !(mode !== "list" && fv.expandColumns)
       );
       let tfvs_ordered = [];

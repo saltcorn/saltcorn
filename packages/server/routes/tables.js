@@ -1246,6 +1246,7 @@ router.post(
         res.redirect(`/table/new`);
       } else if (rest.provider_name && rest.provider_name !== "-") {
         const table = await Table.create(name, rest);
+        await getState().refresh_tables();
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
@@ -2362,6 +2363,7 @@ const get_provider_workflow = (table, req) => {
   workflow.onDone = async (ctx) => {
     const { table_id, ...configuration } = await oldOnDone(ctx);
     await table.update({ provider_cfg: configuration });
+    await getState().refresh_tables();
 
     return {
       redirect: `/table/${table.id}`,
