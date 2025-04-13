@@ -40,7 +40,7 @@ describe("getMailTransport", () => {
         return;
       },
     });
-    const mailTransport = email.getMailTransport();
+    const mailTransport = await email.getMailTransport();
     mailTransport.sendMail({
       from: "me",
       to: "you",

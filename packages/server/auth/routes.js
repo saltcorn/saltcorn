@@ -12,7 +12,10 @@ const Page = require("@saltcorn/data/models/page");
 const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 
-const { send_verification_email } = require("@saltcorn/data/models/email");
+const {
+  send_verification_email,
+  getOauth2Client,
+} = require("@saltcorn/data/models/email");
 const {
   error_catcher,
   loggedIn,
@@ -2095,5 +2098,32 @@ router.post(
     await user.relogin(req);
     Trigger.emitEvent("Login", null, user);
     res.redirect("/");
+  })
+);
+
+router.get(
+  "/callback_mail",
+  error_catcher(async (req, res) => {
+    const code = req.query.code;
+    try {
+      if (!code) throw new Error("No code received");
+      const smtpRedirectUri = getState().getConfig("smtp_redirect_uri");
+      const client = getOauth2Client();
+      const tokenResult = await client.getToken({
+        code,
+        redirect_uri: smtpRedirectUri,
+      });
+      await getState().setConfig("smtp_oauth_token_data", tokenResult.token);
+      req.flash("success", req.__("Access token retrieved successfully"));
+    } catch (error) {
+      console.error("Error retrieving access token:", error);
+      req.flash(
+        "danger",
+        req.__("Error retrieving access") + " " + error.message ||
+          "Unknown error"
+      );
+    } finally {
+      res.redirect("/admin/email");
+    }
   })
 );

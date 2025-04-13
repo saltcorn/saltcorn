@@ -81,8 +81,7 @@ class Notification {
         ${o.link}`,
         html: `${o.body}<br/><a href="${o.link}">${o.link}</a>`,
       };
-      emailModule
-        .getMailTransport()
+      (await emailModule.getMailTransport())
         .sendMail(email)
         .catch((e) => getState()?.log(1, e.message));
     }

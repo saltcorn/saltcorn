@@ -97,7 +97,7 @@ ${final ? `<br />${final}<br />` : ""}
  */
 const send_reset_email = async (user, req, options = {}) => {
   const { link, token } = await get_reset_link(user, req);
-  const transporter = getMailTransport();
+  const transporter = await getMailTransport();
   const reset_password_email_view_name = getState().getConfig(
     "reset_password_email_view",
     false
