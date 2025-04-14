@@ -930,7 +930,12 @@ router.get(
         '&nbsp;<i class="fas fa-edit"></i>'
       ) +
       a(
-        { href: `/actions/testrun/${id}`, class: "ms-2" },
+        {
+          href: `/actions/testrun/${id}`,
+          class: "ms-2",
+          onclick: `press_store_button(this)`,
+        },
+
         req.__("Test run") + "&nbsp;&raquo;"
       );
     if (trigger.action === "Workflow") {
@@ -1277,7 +1282,7 @@ router.get(
         sub2_page: "Test run output",
         contents: {
           type: "card",
-          title: req.__("Test run output"),
+          title: req.__("Test run output") + " - " + trigger.name,
           contents: div(
             div({ class: "testrunoutput" }, output),
             runres
@@ -1298,6 +1303,7 @@ router.get(
               {
                 href: `/actions/testrun/${id}`,
                 class: "ms-1 mt-4 btn btn-primary",
+                onclick: `press_store_button(this)`,
               },
               i({ class: "fas fa-redo me-1" }),
               req.__("Re-run")

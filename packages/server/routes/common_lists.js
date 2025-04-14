@@ -737,7 +737,10 @@ const getTriggerList = async (
         key: (r) =>
           link(
             `/actions/testrun/${r.id}${on_done_redirect_str}`,
-            req.__("Test run")
+            req.__("Test run"),
+            {
+              onclick: `press_store_button(this)`,
+            }
           ),
       },
       {
