@@ -260,6 +260,13 @@ to install everything. If successful, you should now be able to run `saltcorn` i
 ## Deployment tips
 
 - If your Saltcorn server is running behind a reverse proxy such as Nginx, refer to the [Socket.io reverse proxy documentation](https://socket.io/docs/v3/reverse-proxy/#nginx). This configuration is essential for Socket.io, which powers the chat, log-viewer, and streaming API functionalities (e.g. for the [recorder plugin](https://www.npmjs.com/package/@saltcorn/recorder)).
+  - If you're behind Apache >= 2.4.47 then all you need in your virtual host section is two lines:
+    ```
+    # To identify the tenant
+    ProxyPreserveHost On 
+
+    ProxyPass / http://localhost:3000/ upgrade=websocket 
+    ```
 
 ## Development tips
 
