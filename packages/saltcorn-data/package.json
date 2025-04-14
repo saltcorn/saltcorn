@@ -71,6 +71,7 @@
     "pluralize": "^8.0.0",
     "process": "0.11.10",
     "punycode": "^2.3.1",
+    "simple-oauth2": "^5.1.0",
     "tmp-promise": "^3.0.3",
     "uuid": "^11.0.5",
     "vm-browserify": "^1.1.2",
@@ -93,6 +94,7 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
+    "@types/simple-oauth2": "5.0.7",
     "@types/i18n": "^0.13.2",
     "@types/bcryptjs": "^2.4.2",
     "@types/dateformat": "^5.0.0",

@@ -97,7 +97,10 @@ const {
 const packagejson = require("../package.json");
 const Form = require("@saltcorn/data/models/form");
 const { get_latest_npm_version } = require("@saltcorn/data/models/config");
-const { getMailTransport } = require("@saltcorn/data/models/email");
+const {
+  getMailTransport,
+  getOauth2Client,
+} = require("@saltcorn/data/models/email");
 const {
   getBaseDomain,
   hostname_matches_baseurl,
@@ -216,8 +219,22 @@ admin_config_route({
   flash: "Email settings updated",
   field_names: [
     "smtp_host",
-    "smtp_username",
-    "smtp_password",
+    "smtp_auth_method",
+    { name: "smtp_username", showIf: { smtp_auth_method: "password" } },
+    { name: "smtp_password", showIf: { smtp_auth_method: "password" } },
+    {
+      name: "smtp_api_option",
+      showIf: {
+        smtp_host: "outlook.office365.com",
+        smtp_auth_method: "oauth2",
+      },
+    },
+    { name: "smtp_authorize_url", showIf: { smtp_auth_method: "oauth2" } },
+    { name: "smtp_token_url", showIf: { smtp_auth_method: "oauth2" } },
+    { name: "smtp_redirect_uri", showIf: { smtp_auth_method: "oauth2" } },
+    { name: "smtp_client_id", showIf: { smtp_auth_method: "oauth2" } },
+    { name: "smtp_client_secret", showIf: { smtp_auth_method: "oauth2" } },
+    { name: "smtp_outh_scopes", showIf: { smtp_auth_method: "oauth2" } },
     "smtp_port",
     "smtp_secure",
     "smtp_allow_self_signed",
@@ -243,6 +260,40 @@ admin_config_route({
             },
             req.__("Send test email")
           ),
+          a(
+            {
+              id: "authenticate_oauth",
+              href: "/admin/authorize-mail-oauth",
+              class: "btn btn-primary ms-2",
+              onclick: "spin_action_link(this)",
+            },
+            req.__("Authorize")
+          ),
+          script(`
+  function authMethodChange(method) {
+    const btn = document.getElementById("authenticate_oauth");
+    if (method === "oauth2") {
+      btn.classList.remove("d-none");
+      btn.classList.add("d-inline");
+      // get 
+    }
+    else {
+      btn.classList.add("d-none");
+      btn.classList.remove("d-inline");
+    }
+
+  }
+  ${domReady(`
+  const authMethod = document.getElementById('inputsmtp_auth_method');
+  if (authMethod) {
+    const authMethodValue = authMethod.value;
+    authMethodChange(authMethodValue);
+    authMethod.addEventListener('change', (e) => {
+      const authMethod = e.target.value;
+      authMethodChange(authMethod);
+    });
+  }`)}
+`),
         ],
       },
     });
@@ -266,7 +317,7 @@ router.get(
       html: req.__("Hello from Saltcorn"),
     };
     try {
-      const sendres = await getMailTransport().sendMail(email);
+      const sendres = await (await getMailTransport()).sendMail(email);
       getState().log(6, sendres);
       req.flash(
         "success",
@@ -278,6 +329,27 @@ router.get(
     }
 
     res.redirect("/admin/email");
+  })
+);
+
+/**
+ * do the redirect to the oauth2 provider
+ */
+router.get(
+  "/authorize-mail-oauth",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const client = getOauth2Client();
+    const smtpRedirectUri = getState().getConfig("smtp_redirect_uri");
+    const scopes = getState().getConfig("smtp_outh_scopes");
+    const scopeArray = scopes.split(" ").map((s) => s.trim());
+
+    // Mail.Send SMTP.Send profile openid email https://outlook.office365.com/IMAP.AccessAsUser.All
+    const authorizeUrl = client.authorizeURL({
+      redirect_uri: smtpRedirectUri,
+      scope: scopeArray,
+    });
+    res.redirect(authorizeUrl);
   })
 );
 
@@ -438,8 +510,9 @@ router.get(
                     {
                       btnClass: "btn-outline-primary",
                       klass: "backupadminbtn",
-                      //TODO not sure how to tell when backup done 
-                      onClick: "spin_action_link($('.backupadminbtn'));setTimeout(()=> reset_spinners($('.backupadminbtn')), 3000)"
+                      //TODO not sure how to tell when backup done
+                      onClick:
+                        "spin_action_link($('.backupadminbtn'));setTimeout(()=> reset_spinners($('.backupadminbtn')), 3000)",
                     }
                   )
                 ),
@@ -773,12 +846,12 @@ router.post(
         is_relative_url("/" + req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : type == "codepage"
-          ? `/admin/edit-codepage/${name}`
-          : type === "trigger"
-            ? `/actions`
-            : /^[a-z]+$/g.test(type)
-              ? `/${type}edit`
-              : "/"
+        ? `/admin/edit-codepage/${name}`
+        : type === "trigger"
+        ? `/actions`
+        : /^[a-z]+$/g.test(type)
+        ? `/${type}edit`
+        : "/"
     );
   })
 );
@@ -1279,20 +1352,20 @@ router.get(
                             }
                           )
                         : isRoot && is_latest
-                          ? span(
-                              { class: "badge bg-primary ms-2" },
-                              req.__("Latest")
-                            ) +
-                            post_btn(
-                              "/admin/check-for-upgrade",
-                              req.__("Check updates"),
-                              req.csrfToken(),
-                              {
-                                btnClass: "btn-primary btn-sm px-1 py-0",
-                                formClass: "d-inline",
-                              }
-                            )
-                          : "",
+                        ? span(
+                            { class: "badge bg-primary ms-2" },
+                            req.__("Latest")
+                          ) +
+                          post_btn(
+                            "/admin/check-for-upgrade",
+                            req.__("Check updates"),
+                            req.csrfToken(),
+                            {
+                              btnClass: "btn-primary btn-sm px-1 py-0",
+                              formClass: "d-inline",
+                            }
+                          )
+                        : "",
                       isRoot &&
                         !git_commit &&
                         a(
@@ -2061,8 +2134,9 @@ router.get(
     const filename = `${moment(start).format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
     const go = async () => {
-      const { passes, errors, pass, warnings } =
-        await runConfigurationCheck(req);
+      const { passes, errors, pass, warnings } = await runConfigurationCheck(
+        req
+      );
       const end = new Date();
       const secs = Math.round((end.getTime() - start.getTime()) / 1000);
 
@@ -3339,8 +3413,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-          ? "_finish_step"
-          : "";
+        ? "_finish_step"
+        : "";
     res.json({
       finished: await checkFiles(out_dir_name, [
         `logs${stepDesc}.txt`,
@@ -3415,8 +3489,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-          ? "_finish_step"
-          : "";
+        ? "_finish_step"
+        : "";
     const resultMsg = files.find(
       (file) => file.filename === `logs${stepDesc}.txt`
     )

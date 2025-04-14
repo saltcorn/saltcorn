@@ -11,6 +11,8 @@ import User from "./user";
 import mocks from "../tests/mocks";
 import mjml2html from "mjml";
 const { mockReqRes } = mocks;
+import { AuthorizationCode } from "simple-oauth2";
+import type { Options as MailOpts } from "nodemailer/lib/mailer";
 
 const emailMockReqRes = {
   req: {
@@ -21,32 +23,120 @@ const emailMockReqRes = {
   res: mockReqRes.res,
 };
 
+type MicosoftGraphTransporter = {
+  sendMail: (mail: MailOpts) => Promise<any>;
+};
+
+const isMicrosoftGraph = () => {
+  const smtpHost = getState().getConfig("smtp_host");
+  const apiOption = getState().getConfig("smtp_api_option");
+  return smtpHost === "outlook.office365.com" && apiOption === "Graph";
+};
+
 /**
  * @returns
  */
-const getMailTransport = (): Transporter => {
-  const port = getState().getConfig("smtp_port");
-  const secure = getState().getConfig("smtp_secure", port === 465);
-  const smtp_allow_self_signed = getState().getConfig(
-    "smtp_allow_self_signed",
-    false
-  );
-  const username = getState().getConfig("smtp_username");
-  const transportOptions: any = {
-    host: getState().getConfig("smtp_host"),
-    port,
-    secure,
-    auth: username
-      ? {
-          user: username,
-          pass: getState().getConfig("smtp_password"),
-        }
-      : undefined,
-  };
-  if (smtp_allow_self_signed)
-    transportOptions.tls = { rejectUnauthorized: false };
-  return createTransport(transportOptions);
+const getMailTransport = async (): Promise<
+  Transporter | MicosoftGraphTransporter
+> => {
+  if (isMicrosoftGraph()) return getMicrosoftGraphTransport();
+  else {
+    const port = getState().getConfig("smtp_port");
+    const secure = getState().getConfig("smtp_secure", port === 465);
+    const smtp_allow_self_signed = getState().getConfig(
+      "smtp_allow_self_signed",
+      false
+    );
+    const username = getState().getConfig("smtp_username");
+    const isOauth = getState().getConfig("smtp_auth_method") === "oauth2";
+
+    const transportOptions: any = {
+      host: getState().getConfig("smtp_host"),
+      port,
+      secure,
+      auth: username
+        ? {
+            user: username,
+            ...(!isOauth
+              ? { pass: getState().getConfig("smtp_password") }
+              : { type: "OAuth2", accessToken: await getTokenString() }),
+          }
+        : undefined,
+    };
+    if (smtp_allow_self_signed)
+      transportOptions.tls = { rejectUnauthorized: false };
+    return createTransport(transportOptions);
+  }
 };
+
+const getMicrosoftGraphTransport = async () => {
+  const tokenStr = await getTokenString();
+  return {
+    sendMail: async (mail: MailOpts) => {
+      const graphMail = convertToGraphMail(mail);
+      return await sendGraphMail(graphMail, tokenStr);
+    },
+  };
+};
+
+const convertToGraphMail = (mail: MailOpts) => {
+  return {
+    message: {
+      subject: mail.subject,
+      body: {
+        contentType: mail.html ? "HTML" : "Text",
+        content: mail.html ? mail.html : mail.text,
+      },
+      toRecipients: [
+        {
+          emailAddress: {
+            address: mail.to,
+          },
+        },
+      ],
+      // comma separated list of cc addresses
+      ccRecipients:
+        typeof mail.cc === "string"
+          ? mail.cc.split(",").map((address: string) => ({
+              emailAddress: {
+                address,
+              },
+            }))
+          : [],
+      // comma separated list of bcc addresses
+      bccRecipients:
+        typeof mail.bcc === "string"
+          ? mail.bcc.split(",").map((address: string) => ({
+              emailAddress: {
+                address,
+              },
+            }))
+          : [],
+    },
+    saveToSentItems: true,
+  };
+};
+
+async function sendGraphMail(mail: any, tokenStr: string) {
+  const response = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${tokenStr}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(mail),
+  });
+  if (response.ok) {
+    return {
+      success: true,
+      status: response.status,
+      message: "Email sent successfully",
+    };
+  } else {
+    const error = await response.json();
+    throw new Error("Failed to send email: " + JSON.stringify(error));
+  }
+}
 
 const viewToMjml = async (view: View, state: any) => {
   const result = await view.run(state, emailMockReqRes);
@@ -113,7 +203,7 @@ const send_verification_email = async (
           subject: "Please verify your email address",
           html,
         };
-        await getMailTransport().sendMail(email);
+        await (await getMailTransport()).sendMail(email);
         if (req)
           req.flash(
             "success",
@@ -209,6 +299,56 @@ const getFileAggregations = async (table: Table) => {
   return result;
 };
 
+const getOauth2Client = (
+  {
+    tokenUrl,
+    authorizeUrl,
+    clientId,
+    clientSecret,
+  }: {
+    tokenUrl: string;
+    authorizeUrl: string;
+    clientId: string;
+    clientSecret: string;
+  } = {
+    tokenUrl: getState().getConfig("smtp_token_url"),
+    authorizeUrl: getState().getConfig("smtp_authorize_url"),
+    clientId: getState().getConfig("smtp_client_id"),
+    clientSecret: getState().getConfig("smtp_client_secret"),
+  }
+) => {
+  const url = new URL(tokenUrl);
+  const tokenHost = url.origin;
+  const tokenPath = url.pathname;
+  const authUrl = new URL(authorizeUrl);
+  const authHost = authUrl.origin;
+  const authPath = authUrl.pathname;
+  return new AuthorizationCode({
+    client: {
+      id: clientId,
+      secret: clientSecret,
+    },
+    auth: {
+      tokenHost: tokenHost,
+      tokenPath: tokenPath,
+      authorizeHost: authHost,
+      authorizePath: authPath,
+    },
+  });
+};
+
+const getTokenString = async () => {
+  const tokenData = getState().getConfig("smtp_oauth_token_data");
+  const client = getOauth2Client();
+  let wrapped = client.createToken(tokenData);
+  if (wrapped.expired()) {
+    const refreshed = await wrapped.refresh();
+    await getState().setConfig("smtp_oauth_token_data", refreshed.token);
+    wrapped = refreshed;
+  }
+  return wrapped.token.access_token as string;
+};
+
 export = {
   getMailTransport,
   send_verification_email,
@@ -218,4 +358,6 @@ export = {
   loadAttachments,
   getFileAggregations,
   mjml2html,
+  getOauth2Client,
+  getTokenString,
 };
