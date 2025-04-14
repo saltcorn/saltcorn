@@ -636,6 +636,7 @@ function updateViewPreview() {
 
         $preview.find("textarea").attr("disabled", true);
         $preview.find("input").attr("readonly", true);
+        document.dispatchEvent(new Event("preview-loaded"));
       },
     });
   }

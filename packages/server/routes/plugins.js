@@ -1169,6 +1169,9 @@ router.get(
   "/public/:plugin/*filepath",
   error_catcher(async (req, res) => {
     const { plugin } = req.params;
+    const { disable_cache } = req.query;
+    if (disable_cache === "true")
+      res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
     const filepath = path.join(...req.params.filepath);
     const hasVersion = plugin.includes("@");
     const location =
@@ -1180,7 +1183,7 @@ router.get(
       const fullpath = path.join(location, "public", safeFile);
       if (fs.existsSync(fullpath))
         res.sendFile(fullpath, {
-          maxAge: hasVersion ? "100d" : "1d",
+          maxAge: disable_cache ? 0 : hasVersion ? "100d" : "1d",
           dotfiles: "allow",
         });
       else {
