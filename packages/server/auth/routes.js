@@ -22,6 +22,7 @@ const {
   csrfField,
   setTenant,
   is_relative_url,
+  isAdmin,
 } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
@@ -2103,6 +2104,7 @@ router.post(
 
 router.get(
   "/callback_mail",
+  isAdmin,
   error_catcher(async (req, res) => {
     const code = req.query.code;
     try {
