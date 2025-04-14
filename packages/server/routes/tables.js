@@ -1018,7 +1018,8 @@ router.get(
     // Table Data card
     const dataCard = div(
       { class: "d-flex text-center" },
-      div({ class: "mx-auto" }, h4(`${nrows}`), req.__("Rows")),
+      nrows !== null &&
+        div({ class: "mx-auto" }, h4(`${nrows}`), req.__("Rows")),
       div(
         { class: "mx-auto" },
         a(

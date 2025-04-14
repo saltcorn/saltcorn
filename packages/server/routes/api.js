@@ -426,10 +426,16 @@ router.get(
             }
           }
           if (tabulator_pagination_format) {
-            res.json({
-              last_page: Math.ceil((await table.countRows()) / +tabulator_size),
-              data: rows.map(limitFields(fields)),
-            });
+            const count = await table.countRows();
+            if (count === null)
+              res.json({
+                data: rows.map(limitFields(fields)),
+              });
+            else
+              res.json({
+                last_page: Math.ceil(count / +tabulator_size),
+                data: rows.map(limitFields(fields)),
+              });
           } else res.json({ success: rows.map(limitFields(fields)) });
         } else {
           getState().log(3, `API get ${table.name} not authorized`);

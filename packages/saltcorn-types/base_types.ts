@@ -488,7 +488,7 @@ export type AuthenticationMethod = {
 export type TableProvider = {
   configuration_workflow: (req: Req) => AbstractWorkflow;
   fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
-  get_table: (cfg: GenObj) => Promise<AbstractTable>;
+  get_table: (cfg: GenObj) => Promise<Partial<AbstractTable>>;
 };
 
 export type CopilotSkill = {
