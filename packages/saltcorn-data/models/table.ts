@@ -1379,7 +1379,8 @@ class Table implements AbstractTable {
 
     if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
       return;
-    let existing;
+    let existing: Row | undefined | null;
+    let changedFromCalc = new Set([]);
     let v = { ...v_in };
     //these may have changed
     let changedFieldNames = new Set([
@@ -1611,6 +1612,9 @@ class Table implements AbstractTable {
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
     if (!stringified) this.stringify_json_fields(v);
+    const really_changed_field_names: Set<String> = existing
+      ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
+      : changedFieldNames;
     await db.update(this.name, v, id, {
       pk_name,
       ...sqliteJsonCols,
@@ -1623,13 +1627,13 @@ class Table implements AbstractTable {
       else await this.insertSyncInfo(id, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
-
-    await this.auto_update_calc_aggregations(
-      newRow,
-      !existing,
-      (autoRecalcIterations || 0) + 1,
-      changedFieldNames
-    );
+    if (really_changed_field_names.size > 0)
+      await this.auto_update_calc_aggregations(
+        newRow,
+        !existing,
+        (autoRecalcIterations || 0) + 1,
+        really_changed_field_names
+      );
 
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
