@@ -1612,7 +1612,7 @@ class Table implements AbstractTable {
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
     if (!stringified) this.stringify_json_fields(v);
-    const really_changed_field_names: any = existing
+    const really_changed_field_names: Set<String> = existing
       ? new Set(
           Object.keys(v).filter(
             (k) => typeof v !== "undefined" && v[k] !== (existing as Row)[k]
@@ -1631,13 +1631,13 @@ class Table implements AbstractTable {
       else await this.insertSyncInfo(id, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
-
-    await this.auto_update_calc_aggregations(
-      newRow,
-      !existing,
-      (autoRecalcIterations || 0) + 1,
-      really_changed_field_names
-    );
+    if (really_changed_field_names.size > 0)
+      await this.auto_update_calc_aggregations(
+        newRow,
+        !existing,
+        (autoRecalcIterations || 0) + 1,
+        really_changed_field_names
+      );
 
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
