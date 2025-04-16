@@ -1613,11 +1613,7 @@ class Table implements AbstractTable {
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
     if (!stringified) this.stringify_json_fields(v);
     const really_changed_field_names: Set<String> = existing
-      ? new Set(
-          Object.keys(v).filter(
-            (k) => typeof v !== "undefined" && v[k] !== (existing as Row)[k]
-          )
-        )
+      ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
       : changedFieldNames;
     await db.update(this.name, v, id, {
       pk_name,
