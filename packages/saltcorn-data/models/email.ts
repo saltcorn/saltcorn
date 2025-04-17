@@ -133,6 +133,9 @@ async function sendGraphMail(mail: any, tokenStr: string) {
       success: true,
       status: response.status,
       message: "Email sent successfully",
+      accepted: mail.message.toRecipients.map(
+        (recipient: any) => recipient.emailAddress.address
+      ),
     };
   } else {
     const error = await response.json();
