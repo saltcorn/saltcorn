@@ -127,7 +127,7 @@ const discover_tables = async (
     console.log(rows);
 
     const fields = (await asyncMap(rows, make_field)).filter(
-      (f: FieldCfg) => f.type
+      (f: FieldCfg) => f?.type
     );
 
     // try to find column name for primary key of table
