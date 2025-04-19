@@ -83,10 +83,10 @@ const findType = (sql_name: string): any => {
   if (!state) {
     throw new Error("unable to get state");
   }
-  const t = Object.entries(state.types).find(
-    ([k, v]: [k: string, v: any]) =>
-      v.sql_name.toLowerCase() === sql_name.toLowerCase()
-  );
+  const t = Object.entries(state.types).find(([k, v]: [k: string, v: any]) => {
+    typeof v.sql_name === "string" &&
+      v.sql_name.toLowerCase() === sql_name.toLowerCase();
+  });
   if (t) {
     return t[0];
   }
