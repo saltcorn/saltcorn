@@ -87,13 +87,15 @@ const convertToGraphMail = (mail: MailOpts) => {
         contentType: mail.html ? "HTML" : "Text",
         content: mail.html ? mail.html : mail.text,
       },
-      toRecipients: [
-        {
-          emailAddress: {
-            address: mail.to,
-          },
-        },
-      ],
+      // comma separated list of to addresses
+      toRecipients:
+        typeof mail.to === "string"
+          ? mail.to.split(",").map((address: string) => ({
+              emailAddress: {
+                address,
+              },
+            }))
+          : [],
       // comma separated list of cc addresses
       ccRecipients:
         typeof mail.cc === "string"
@@ -131,6 +133,9 @@ async function sendGraphMail(mail: any, tokenStr: string) {
       success: true,
       status: response.status,
       message: "Email sent successfully",
+      accepted: mail.message.toRecipients.map(
+        (recipient: any) => recipient.emailAddress.address
+      ),
     };
   } else {
     const error = await response.json();
