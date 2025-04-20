@@ -215,6 +215,7 @@ function pjax_to(href, e) {
         $dest.html(res);
         if (localizer.length) localizer.attr("data-sc-local-state", href);
         initialize_page();
+        document.dispatchEvent(new Event("pjax-loaded"));
       },
       error: function (res) {
         if (!checkNetworkError(res))
