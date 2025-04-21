@@ -53,7 +53,9 @@ export type Type = {
     | (({ table }: { table: AbstractTable }) => Promise<Array<FieldLike>>);
   validate_attributes?: Function;
   distance_operators?: { [opName: string]: any };
-  discovery_match?: (info_schema_col: GenObj) => Promise<FieldLike | void>;
+  discovery_match?: (
+    info_schema_col: GenObj
+  ) => Promise<Partial<FieldLike> | void>;
 };
 
 export function instanceOfType(object: any): object is Type {

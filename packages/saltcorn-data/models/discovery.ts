@@ -96,12 +96,16 @@ const findType = (sql_name: string): string | undefined => {
 
 const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
   const type = findType(c.data_type);
+  const basicField = {
+    name: c.column_name,
+    label: c.column_name,
+    type,
+    required: c.is_nullable === "NO",
+  };
   if (type)
     return {
-      name: c.column_name,
-      label: c.column_name,
+      ...basicField,
       type,
-      required: c.is_nullable === "NO",
     };
   const state = getState();
   if (!state) {
@@ -110,7 +114,7 @@ const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
   for (const [k, v] of Object.entries(state.types)) {
     if (v.discovery_match) {
       const match = await v.discovery_match(c);
-      if (match) return match;
+      if (match) return { ...basicField, ...match };
     }
   }
 };
@@ -134,7 +138,7 @@ const discover_tables = async (
       [schema, tnm]
     );
     // TBD add logic about column length, scale, etc
-    console.log(rows);
+    //console.log(rows);
 
     const fields = (await asyncMap(rows, make_field)).filter(
       (f: FieldCfg) => f?.type
