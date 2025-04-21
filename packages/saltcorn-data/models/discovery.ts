@@ -103,6 +103,16 @@ const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
       type,
       required: c.is_nullable === "NO",
     };
+  const state = getState();
+  if (!state) {
+    throw new Error("unable to get state");
+  }
+  for (const [k, v] of Object.entries(state.types)) {
+    if (v.discovery_match) {
+      const match = await v.discovery_match(c);
+      if (match) return match;
+    }
+  }
 };
 
 /**
