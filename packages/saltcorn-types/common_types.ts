@@ -1,4 +1,4 @@
-import type { FieldView, FieldLike, Req,Res } from "./base_types";
+import type { FieldView, FieldLike, Req, Res } from "./base_types";
 import type { AbstractTable } from "./model-abstracts/abstract_table";
 
 /**
@@ -53,6 +53,9 @@ export type Type = {
     | (({ table }: { table: AbstractTable }) => Promise<Array<FieldLike>>);
   validate_attributes?: Function;
   distance_operators?: { [opName: string]: any };
+  discovery_match?: (
+    info_schema_col: GenObj
+  ) => Promise<Partial<FieldLike> | void>;
 };
 
 export function instanceOfType(object: any): object is Type {

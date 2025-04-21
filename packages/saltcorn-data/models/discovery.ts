@@ -13,6 +13,8 @@ import state from "../db/state";
 const { getState } = state;
 import Field from "./field";
 import Table from "./table";
+import utils from "../utils";
+const { asyncMap } = utils;
 
 // create table discmetable(id serial primary key, name text, age integer not null); ALTER TABLE discmetable OWNER TO tomn;
 /**
@@ -61,7 +63,7 @@ const get_existing_views = async (schema0?: string): Promise<Row[]> => {
  * @param {string} sql_name - SQL type name
  * @returns {string|void} return Saltcorn type
  */
-const findType = (sql_name: string): any => {
+const findType = (sql_name: string): string | undefined => {
   const fixed: string | undefined = {
     // todo more types
     // todo attributes: length, pres
@@ -83,12 +85,37 @@ const findType = (sql_name: string): any => {
   if (!state) {
     throw new Error("unable to get state");
   }
-  const t = Object.entries(state.types).find(
-    ([k, v]: [k: string, v: any]) =>
+  for (const [k, v] of Object.entries(state.types)) {
+    if (
+      typeof v.sql_name === "string" &&
       v.sql_name.toLowerCase() === sql_name.toLowerCase()
-  );
-  if (t) {
-    return t[0];
+    )
+      return k;
+  }
+};
+
+const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
+  const type = findType(c.data_type);
+  const basicField = {
+    name: c.column_name,
+    label: c.column_name,
+    type,
+    required: c.is_nullable === "NO",
+  };
+  if (type)
+    return {
+      ...basicField,
+      type,
+    };
+  const state = getState();
+  if (!state) {
+    throw new Error("unable to get state");
+  }
+  for (const [k, v] of Object.entries(state.types)) {
+    if (v.discovery_match) {
+      const match = await v.discovery_match(c);
+      if (match) return { ...basicField, ...match };
+    }
   }
 };
 
@@ -111,14 +138,11 @@ const discover_tables = async (
       [schema, tnm]
     );
     // TBD add logic about column length, scale, etc
-    const fields = rows
-      .map((c: Row) => ({
-        name: c.column_name,
-        label: c.column_name,
-        type: findType(c.data_type),
-        required: c.is_nullable === "NO",
-      }))
-      .filter((f: FieldCfg) => f.type);
+    //console.log(rows);
+
+    const fields = (await asyncMap(rows, make_field)).filter(
+      (f: FieldCfg) => f?.type
+    );
 
     // try to find column name for primary key of table
     const pkq = await db.query(
