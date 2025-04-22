@@ -1067,7 +1067,10 @@ const run = async (
         results.find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     }
   });
-
+  const is_row_click =
+    (default_state?._row_click_url_formula ||
+      default_state?._row_click_action) &&
+    default_state?._row_click_type !== "Nothing";
   const tfields = layout?.list_columns
     ? get_viewable_fields_from_layout(
         viewname,
@@ -1081,7 +1084,8 @@ const run = async (
         state,
         viewname,
         layout.besides,
-        viewResults
+        viewResults,
+        is_row_click
       )
     : get_viewable_fields(
         viewname,
@@ -1093,7 +1097,8 @@ const run = async (
         extraOpts.req,
         __,
         state,
-        viewname
+        viewname,
+        is_row_click
       );
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;

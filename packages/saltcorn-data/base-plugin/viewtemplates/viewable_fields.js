@@ -622,7 +622,8 @@ const get_viewable_fields_from_layout = (
   state = {},
   srcViewName,
   layoutCols,
-  viewResults
+  viewResults,
+  in_row_click
 ) => {
   const typeMap = {
     field: "Field",
@@ -699,7 +700,8 @@ const get_viewable_fields_from_layout = (
     __,
     (state = {}),
     srcViewName,
-    viewResults
+    viewResults,
+    in_row_click
   );
 };
 
@@ -725,7 +727,8 @@ const get_viewable_fields = (
   __,
   state = {},
   srcViewName,
-  viewResults
+  viewResults,
+  in_row_click
 ) => {
   const dropdown_actions = [];
   const checkShowIf = (tFieldGenF) => (column, index) => {
@@ -861,7 +864,7 @@ const get_viewable_fields = (
             if (url.javascript)
               return a(
                 {
-                  href: "javascript:" + url.javascript,
+                  href: "javascript:void(0)",
                   class: [
                     column.in_dropdown && "dropdown-item",
                     column.action_style !== "btn-link" &&
@@ -869,9 +872,10 @@ const get_viewable_fields = (
                         column.action_size || ""
                       }`,
                   ],
-                  onclick: column.spinner
-                    ? "spin_action_link(this)"
-                    : undefined,
+                  onclick:
+                    url.javascript +
+                    (column.spinner ? ";spin_action_link(this)" : "") +
+                    (in_row_click ? ";event.stopPropagation()" : ""),
                 },
                 !!icon &&
                   icon !== "empty" &&
