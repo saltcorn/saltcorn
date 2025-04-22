@@ -204,7 +204,8 @@ const make_link = (
     link_size,
   },
   fields,
-  __ = (s) => s
+  __ = (s) => s,
+  in_row_click
 ) => {
   return {
     label: "",
@@ -225,13 +226,15 @@ const make_link = (
       if (in_dropdown) attrs.class = ["dropdown-item"];
       if (link_style) attrs.class = [...(attrs.class || []), link_style];
       if (link_size) attrs.class = [...(attrs.class || []), link_size];
+      if (in_row_click) attrs.onclick = "event.stopPropagation()";
       if (in_modal)
         return a(
           {
             ...attrs,
-            href: isNode()
-              ? `javascript:ajax_modal('${href}');`
-              : `javascript:mobile_modal('${href}');`,
+            href: "javascript:void(0)",
+            onclick: isNode()
+              ? `ajax_modal('${href}');` + (attrs.onclick || "")
+              : `mobile_modal('${href}');` + (attrs.onclick || ""),
           },
           !!theIcon && theIcon !== "empty" && i({ class: theIcon }),
           txt
@@ -936,7 +939,7 @@ const get_viewable_fields = (
           return false;
         } else return r;
       } else if (column.type === "Link") {
-        const r = make_link(column, fields, __);
+        const r = make_link(column, fields, __, in_row_click);
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
