@@ -124,7 +124,9 @@ const userForm = async (req, user) => {
   const roles = (await User.get_roles()).filter((r) => r.role !== "public");
   roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
   const can_reset = getState().getConfig("smtp_host", "") !== "";
-  const userFields = await getUserFields(req);
+  const userFields = (await getUserFields(req)).filter(
+    (f) => f.type !== "File"
+  );
   const form = new Form({
     fields: userFields,
     action: "/useradmin/save",
