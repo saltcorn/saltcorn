@@ -204,7 +204,8 @@ const make_link = (
     link_size,
   },
   fields,
-  __ = (s) => s
+  __ = (s) => s,
+  in_row_click
 ) => {
   return {
     label: "",
@@ -225,13 +226,15 @@ const make_link = (
       if (in_dropdown) attrs.class = ["dropdown-item"];
       if (link_style) attrs.class = [...(attrs.class || []), link_style];
       if (link_size) attrs.class = [...(attrs.class || []), link_size];
+      if (in_row_click) attrs.onclick = "event.stopPropagation()";
       if (in_modal)
         return a(
           {
             ...attrs,
-            href: isNode()
-              ? `javascript:ajax_modal('${href}');`
-              : `javascript:mobile_modal('${href}');`,
+            href: "javascript:void(0)",
+            onclick: isNode()
+              ? `ajax_modal('${href}');` + (attrs.onclick || "")
+              : `mobile_modal('${href}');` + (attrs.onclick || ""),
           },
           !!theIcon && theIcon !== "empty" && i({ class: theIcon }),
           txt
@@ -372,7 +375,8 @@ const view_linker = (
   state = {},
   req,
   srcViewName,
-  label_attr //for sorting
+  label_attr, //for sorting
+  in_row_click
 ) => {
   const safePrefix = (targetPrefix || "").endsWith("/")
     ? targetPrefix.substring(0, targetPrefix.length - 1)
@@ -445,7 +449,8 @@ const view_linker = (
             label_attr,
             link_title,
             link_class,
-            req
+            req,
+            in_row_click
           );
         }
       },
@@ -481,7 +486,8 @@ const view_linker = (
               label_attr,
               link_title,
               link_class,
-              req
+              req,
+              in_row_click
             );
           },
         };
@@ -508,7 +514,8 @@ const view_linker = (
               label_attr,
               link_title,
               link_class,
-              req
+              req,
+              in_row_click
             );
           },
         };
@@ -539,7 +546,8 @@ const view_linker = (
               label_attr,
               link_title,
               link_class,
-              req
+              req,
+              in_row_click
             );
           },
         };
@@ -577,7 +585,8 @@ const view_linker = (
                 label_attr,
                 link_title,
                 link_class,
-                req
+                req,
+                in_row_click
               );
             } else return "";
           },
@@ -803,6 +812,7 @@ const get_viewable_fields = (
                   "data-bs-toggle": "dropdown",
                   "aria-haspopup": "true",
                   "aria-expanded": "false",
+                  onclick: in_row_click ? "event.stopPropagation()" : undefined,
                   style:
                     column.action_style === "btn-custom-color"
                       ? `background-color: ${
@@ -918,7 +928,9 @@ const get_viewable_fields = (
           "",
           state,
           req,
-          srcViewName
+          srcViewName,
+          undefined,
+          in_row_click
         );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
@@ -927,7 +939,7 @@ const get_viewable_fields = (
           return false;
         } else return r;
       } else if (column.type === "Link") {
-        const r = make_link(column, fields, __);
+        const r = make_link(column, fields, __, in_row_click);
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
         if (column.in_dropdown) {

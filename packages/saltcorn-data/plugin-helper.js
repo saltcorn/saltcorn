@@ -75,7 +75,8 @@ const link_view = (
   label_attr, // for sorting
   link_title,
   link_class,
-  req
+  req,
+  in_row_click
 ) => {
   let style =
     link_style === "btn btn-custom-color"
@@ -94,15 +95,15 @@ const link_view = (
       ajaxOpts = `, {${Object.entries(popup)
         .map(([k, v]) => `'${k}': '${v}'`)
         .join(",")}}`;
+    const stopProp = in_row_click ? ";event.stopPropagation()" : "";
     if (!link_style)
       return a(
         {
           ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
-          href: `javascript:${
-            isNode()
-              ? `ajax_modal('${url}'${ajaxOpts})`
-              : `mobile_modal('${url}'${ajaxOpts})`
-          }`,
+          href: `javascript:void(0)`,
+          onclick: isNode()
+            ? `ajax_modal('${url}'${ajaxOpts})` + stopProp
+            : `mobile_modal('${url}'${ajaxOpts})` + stopProp,
           style,
           title: link_title,
           class: [textStyle, link_style, link_size, extraClass, link_class],
@@ -124,8 +125,8 @@ const link_view = (
           title: link_title,
           type: "button",
           onClick: isNode()
-            ? `ajax_modal('${url}'${ajaxOpts})`
-            : `mobile_modal('${url}')`,
+            ? `ajax_modal('${url}'${ajaxOpts})` + stopProp
+            : `mobile_modal('${url}')` + stopProp,
           style,
         },
         show_icon_and_label(link_icon, label)
@@ -148,6 +149,7 @@ const link_view = (
         class: [textStyle, link_style, link_size, extraClass, link_class],
         style,
         title: link_title,
+        onclick: in_row_click ? "event.stopPropagation()" : undefined,
         target: link_target_blank ? "_blank" : undefined,
       },
       show_icon_and_label(link_icon, label)

@@ -1018,7 +1018,8 @@ function initialize_page() {
       );
     }
   });
-  $("[data-inline-edit-dest-url]").click(function () {
+  $("[data-inline-edit-dest-url]").click(function (event) {
+    event.stopPropagation();
     var url = $(this).attr("data-inline-edit-dest-url");
     var current =
       $(this).attr("data-inline-edit-current") ||
@@ -1042,7 +1043,7 @@ function initialize_page() {
           })
         );
         $(this).replaceWith(
-          `<form method="post" action="/field/save-click-edit" onsubmit="inline_ajax_submit_with_fielddata(event, '${opts}')"        
+          `<form method="post" action="/field/save-click-edit" onclick="event.stopPropagation()" onsubmit="inline_ajax_submit_with_fielddata(event, '${opts}')"        
       <input type="hidden" name="_csrf" value="${_sc_globalCsrf}">
       <input type="hidden" name="_fielddata" value="${fielddata}">
       <div class="input-group">

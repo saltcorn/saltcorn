@@ -712,7 +712,7 @@ describe("Misc List views", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain(
-      `<a href="javascript:view_post('${view.name}', 'run_action', {rndid:'d5af6d', id:'1'});" class="btn btn-primary ">toast</a>`
+      `<a href="javascript:void(0)" class="btn btn-primary " onclick="view_post('${view.name}', 'run_action', {rndid:'d5af6d', id:'1'});">toast</a>`
     );
     mockReqRes.reset();
     const body = { action_name: "toast", id: "1" };
