@@ -124,7 +124,9 @@ const userForm = async (req, user) => {
   const roles = (await User.get_roles()).filter((r) => r.role !== "public");
   roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
   const can_reset = getState().getConfig("smtp_host", "") !== "";
-  const userFields = await getUserFields(req);
+  const userFields = (await getUserFields(req)).filter(
+    (f) => f.type !== "File"
+  );
   const form = new Form({
     fields: userFields,
     action: "/useradmin/save",
@@ -988,6 +990,27 @@ router.get(
                     { req: req, confirm: true }
                   )
                 ),
+            ],
+          },
+          {
+            type: "card",
+            title: req.__("Two-factor authentication"),
+            contents: [
+              div(
+                user._attributes.totp_enabled
+                  ? req.__("Two-factor authentication is enabled")
+                  : req.__("Two-factor authentication is disabled")
+              ),
+              div(
+                user._attributes.totp_enabled
+                  ? post_btn(
+                      `/auth/twofa/disable-totp-admin/${user.id}`,
+                      req.__("Disable 2FA"),
+                      req.csrfToken(),
+                      { btnClass: "btn-danger", req }
+                    )
+                  : ""
+              ),
             ],
           },
         ],
