@@ -154,7 +154,7 @@ describe("Misc List views", () => {
     expect(vres1).not.toContain("Herman Melville");
     expect(vres1).toContain("Leo Tolstoy");
   });
-  it("dropdown menu", async () => {
+  it("list view with dropdown menu", async () => {
     const view = await mkViewWithCfg({
       configuration: {
         layout: {
@@ -228,7 +228,7 @@ describe("Misc List views", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain(
-      `<form action="/delete/books/1?redirect=/view/${view.name}" method="post">`
+      `ajax_post_btn('/delete/books/1?redirect=/view/${view.name}', true)`
     );
     expect(vres1).toContain('<a href="/view/show_publisher?id=1">AK Press</a>');
     expect(vres1).toContain("dropdown-menu");

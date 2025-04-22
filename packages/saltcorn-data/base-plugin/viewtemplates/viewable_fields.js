@@ -64,8 +64,11 @@ const action_url = (
   colIndex
 ) => {
   const pk_name = table.pk_name;
+  const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   if (action_name === "Delete")
-    return `/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}`;
+    return {
+      javascript: `${confirmStr}ajax_post_btn('/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}', true)`,
+    };
   else if (action_name === "GoBack")
     return {
       javascript: isNode()
@@ -76,7 +79,6 @@ const action_url = (
     const field_name = action_name.replace("Toggle ", "");
     return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
   }
-  const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   return {
     javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
       r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""

@@ -723,9 +723,15 @@ function checkNetworkError(e) {
 }
 
 function ajax_post_btn(e, reload_on_done, reload_delay) {
-  var form = $(e).closest("form");
-  var url = form.attr("action");
-  var form_data = form.serialize();
+  let form_data = "";
+  let url;
+  if (typeof e === "string") url = e;
+  else if (e) {
+    var form = $(e).closest("form");
+    url = form.attr("action");
+    form_data = form.serialize();
+  }
+
   $.ajax(url, {
     type: "POST",
     headers: {
