@@ -372,7 +372,8 @@ const view_linker = (
   state = {},
   req,
   srcViewName,
-  label_attr //for sorting
+  label_attr, //for sorting
+  in_row_click
 ) => {
   const safePrefix = (targetPrefix || "").endsWith("/")
     ? targetPrefix.substring(0, targetPrefix.length - 1)
@@ -918,7 +919,9 @@ const get_viewable_fields = (
           "",
           state,
           req,
-          srcViewName
+          srcViewName,
+          undefined,
+          in_row_click
         );
         if (column.header_label) r.label = text(__(column.header_label));
         Object.assign(r, setWidth);
