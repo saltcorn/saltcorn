@@ -2011,6 +2011,30 @@ router.post(
     res.redirect("/auth/settings");
   })
 );
+router.post(
+  "/twofa/disable-totp-admin/:uid",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { uid } = req.params;
+    const user = await User.findOne({ id: uid });
+    if (!user) {
+      req.flash("danger", req.__("User not found"));
+      res.redirect("/useradmin");
+      return;
+    }
+
+    user._attributes.totp_enabled = false;
+    delete user._attributes.totp_key;
+    await user.update({ _attributes: user._attributes });
+    req.flash(
+      "success",
+      req.__(
+        "Two-factor authentication with Time-based One-Time Password disabled"
+      )
+    );
+    res.redirect(`/useradmin/${uid}`);
+  })
+);
 /**
  * totpForm (TWA)
  * @param {*} req

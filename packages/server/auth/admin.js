@@ -992,6 +992,27 @@ router.get(
                 ),
             ],
           },
+          {
+            type: "card",
+            title: req.__("Two-factor authentication"),
+            contents: [
+              div(
+                user._attributes.totp_enabled
+                  ? req.__("Two-factor authentication is enabled")
+                  : req.__("Two-factor authentication is disabled")
+              ),
+              div(
+                user._attributes.totp_enabled
+                  ? post_btn(
+                      `/auth/twofa/disable-totp-admin/${user.id}`,
+                      req.__("Disable 2FA"),
+                      req.csrfToken(),
+                      { btnClass: "btn-danger", req }
+                    )
+                  : ""
+              ),
+            ],
+          },
         ],
       },
     });
