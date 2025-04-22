@@ -149,6 +149,7 @@ const link_view = (
         class: [textStyle, link_style, link_size, extraClass, link_class],
         style,
         title: link_title,
+        onclick: in_row_click ? "event.stopPropagation()" : undefined,
         target: link_target_blank ? "_blank" : undefined,
       },
       show_icon_and_label(link_icon, label)
