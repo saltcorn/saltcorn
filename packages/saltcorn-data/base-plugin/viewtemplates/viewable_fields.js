@@ -809,6 +809,7 @@ const get_viewable_fields = (
                   "data-bs-toggle": "dropdown",
                   "aria-haspopup": "true",
                   "aria-expanded": "false",
+                  onclick: in_row_click ? "event.stopPropagation()" : undefined,
                   style:
                     column.action_style === "btn-custom-color"
                       ? `background-color: ${
