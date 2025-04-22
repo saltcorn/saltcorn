@@ -446,7 +446,8 @@ const view_linker = (
             label_attr,
             link_title,
             link_class,
-            req
+            req,
+            in_row_click
           );
         }
       },
@@ -482,7 +483,8 @@ const view_linker = (
               label_attr,
               link_title,
               link_class,
-              req
+              req,
+              in_row_click
             );
           },
         };
@@ -509,7 +511,8 @@ const view_linker = (
               label_attr,
               link_title,
               link_class,
-              req
+              req,
+              in_row_click
             );
           },
         };
@@ -540,7 +543,8 @@ const view_linker = (
               label_attr,
               link_title,
               link_class,
-              req
+              req,
+              in_row_click
             );
           },
         };
@@ -578,7 +582,8 @@ const view_linker = (
                 label_attr,
                 link_title,
                 link_class,
-                req
+                req,
+                in_row_click
               );
             } else return "";
           },

@@ -75,7 +75,8 @@ const link_view = (
   label_attr, // for sorting
   link_title,
   link_class,
-  req
+  req,
+  in_row_click
 ) => {
   let style =
     link_style === "btn btn-custom-color"
