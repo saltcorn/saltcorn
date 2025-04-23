@@ -2,6 +2,17 @@
 
 ## 1.1.4 - In beta
 
+* Admin can disable 2FA for any user. 
+
+* Introduce an API for discovering SQL columns in types provided by modules, 
+  which have type modifiers (e.g. vector length in pgvector)
+
+* List: Enabling Row click action or link no longer breaks Links, actions
+  and dropdown menus in columns
+
+* Email server can be authorized with OAuth. Use GraphAPI for Microsoft 
+  email servers.
+
 * Role IDs 2-10 are now available for use. As a consequence, backups from before Saltcorn 0.8.7 can no
   longer be restored. To restore a backup from 0.8.6, restore on Saltcorn any version 0.8.7 - 1.0 
   and then backup again.
@@ -34,6 +45,8 @@
 * 3054: Use !==, >, >= etc in dynamnic where in Edit
 * 2893: Fix link to manage tags in table admin
 * 2821: use tables element in emails
+* 3186: Admin user edit no longer clears file fields on user
+* 3184: Fix delete columns in list views embedded in Edit views
 
 ## 1.1.3 - Released 25 March 2025
 
