@@ -27,8 +27,6 @@ describe("tags", () => {
     expect(ul({ class: "foo" }, [["hello ", "world"]])).toBe(
       `<ul class="foo">hello world</ul>`
     );
-    expect(Array.isArray(["hello ", "world"])).toBe(true);
-    expect(Array.isArray({})).toBe(false);
     expect(i({ class: "fas fa-plus-square" })).toBe(
       '<i class="fas fa-plus-square"></i>'
     );
