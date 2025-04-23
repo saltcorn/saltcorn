@@ -28,7 +28,7 @@ import type {
   TableCfg,
   TablePack,
 } from "@saltcorn/types/model-abstracts/abstract_table";
-
+import type { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
 import type {
   ForUserRequest,
   AbstractUser,
@@ -102,7 +102,7 @@ const transposeObjects = (objs: Row[]): Row => {
   for (const o of objs) {
     Object.keys(o).forEach((k) => keys.add(k));
   }
-  const res: any = {};
+  const res: Row = {};
   keys.forEach((k: string) => {
     res[k] = [];
   });
@@ -307,14 +307,14 @@ class Table implements AbstractTable {
     const t = json_list_to_external_table(getRows, tbl.fields, { countRows });
     delete t.min_role_read; //it is a getter
     Object.assign(t, tbl);
-    t.update = async (upd_rec: any) => {
+    t.update = async (upd_rec: Row) => {
       const { fields, constraints, ...updDB } = upd_rec;
       await db.update("_sc_tables", updDB, tbl.id);
       //limited refresh if we do not have a client
       if (!db.getRequestContext()?.client)
         await require("../db/state").getState().refresh_tables(true);
     };
-    t.delete = async (upd_rec: any) => {
+    t.delete = async (upd_rec: Row) => {
       const schema = db.getTenantSchemaPrefix();
       await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
       await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [tbl.id]);
@@ -410,8 +410,8 @@ class Table implements AbstractTable {
         else t.fields = [];
       } else
         t.fields = flds
-          .filter((f: any) => f.table_id === t.id)
-          .map((f: any) => new Field(f));
+          .filter((f: FieldCfg) => f.table_id === t.id)
+          .map((f: FieldCfg) => new Field(f));
 
       t.constraints = constraints
         .filter((f: any) => f.table_id === t.id)
@@ -451,8 +451,8 @@ class Table implements AbstractTable {
       );
       dbs = tbls.map((t: TableCfg) => {
         t.fields = flds
-          .filter((f: any) => f.table_id === t.id)
-          .map((f: any) => new Field(f));
+          .filter((f: FieldCfg) => f.table_id === t.id)
+          .map((f: FieldCfg) => new Field(f));
 
         return new Table(t);
       });
@@ -661,15 +661,15 @@ class Table implements AbstractTable {
    * extract primary key type name from fields
    * @param fields
    */
-  private static pkSqlType(fields?: any[]): {
+  private static pkSqlType(fields?: (FieldCfg | string)[]): {
     pk_type: string;
     pk_sql_type: string;
   } {
     let pk_type: string = "Integer";
     let pk_sql_type = db.isSQLite ? "integer" : "serial";
     if (fields && Array.isArray(fields)) {
-      const pk_field = (fields as any).find?.(
-        (f: Field) => typeof f !== "string" && f?.primary_key
+      const pk_field = fields.find?.(
+        (f) => typeof f !== "string" && f?.primary_key
       );
       pk_type =
         (typeof pk_field === "string"
@@ -1355,13 +1355,13 @@ class Table implements AbstractTable {
       | {
           noTrigger?: boolean;
           resultCollector?: object;
-          restore_of_version?: any;
+          restore_of_version?: number;
           syncTimestamp?: Date;
           additionalTriggerValues?: Row;
           autoRecalcIterations?: number;
         },
     resultCollector?: object,
-    restore_of_version?: any,
+    restore_of_version?: number,
     syncTimestamp?: Date,
     additionalTriggerValues?: Row,
     autoRecalcIterations?: number
@@ -2269,7 +2269,7 @@ class Table implements AbstractTable {
     v: Row,
     user?: AbstractUser,
     resultCollector?: object
-  ): Promise<{ error: string } | { success: any }> {
+  ): Promise<{ error: string } | { success: PrimaryKeyValue }> {
     try {
       const id = await this.insertRow(v, user, resultCollector);
       if (!id) return { error: "Not authorized" };
@@ -2479,7 +2479,7 @@ class Table implements AbstractTable {
       id,
       _version: version,
     });
-    var r: any = {};
+    var r: Row = {};
     this.fields.forEach((f: Field) => {
       if (!f.calculated) r[f.name] = row[f.name];
     });
@@ -3636,7 +3636,7 @@ ${rejectDetails}`,
         }
       }
     }
-    const isConstant = (x: any) =>
+    const isConstant = (x: unknown) =>
       ["string", "number", "boolean"].includes(typeof x);
     //TODO user groups
     if (wh.eq && !wh.eq.every(isConstant)) return {};
