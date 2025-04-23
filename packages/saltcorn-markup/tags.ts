@@ -14,7 +14,7 @@ import type {
   Element,
   Attributes,
   AttributeVal,
-  TagFunction,
+  TagFunction,TagExports
 } from "./types";
 
 const voidHtmlTagsSet = new Set<string>(voidHtmlTags);
@@ -68,22 +68,7 @@ const allTags: { [k: string]: TagFunction } = Object.fromEntries(
   htmlTags.map((tag) => [tag, mkTag(tag, voidHtmlTagsSet.has(tag))])
 );
 
-type ExportsType = {
-  [key: string]: any; // "...allTags" properties
-
-  genericElement: (
-    tagName: string,
-    first?: Attributes | Element,
-    ...rest: Element[]
-  ) => string;
-  domReady: (js: string) => string;
-  text: (t: string | number, customWhiteList?: IWhiteList) => string;
-  text_attr: (t: string | number) => string;
-  nbsp: string;
-  mkTag: typeof mkTag;
-};
-
-const tagsExports: ExportsType = {
+const tagsExports: TagExports = {
   ...allTags,
   /**
    * @param {string} tagName
@@ -102,6 +87,6 @@ const tagsExports: ExportsType = {
   nbsp: "&nbsp;",
   /** @type {module:mktag} */
   mkTag,
-};
+} as TagExports;
 
 export = tagsExports;

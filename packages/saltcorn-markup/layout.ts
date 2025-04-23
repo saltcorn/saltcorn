@@ -43,6 +43,7 @@ import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
 import helpers = require("./helpers");
 import renderMJML from "./mjml-layout";
 const { search_bar } = helpers;
+import { StyleVal, Element } from "./types";
 
 declare const window: any;
 
@@ -528,7 +529,7 @@ const render = ({
                           class: ["tab-pane", ix == 0 && "show active"],
                           id: `tab-${title}`,
                         },
-                        contents
+                        contents as Element
                       )
                   )
                 )
