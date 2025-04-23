@@ -8,7 +8,7 @@ export type StyleVal =
   | null
   | (string | Falsy)[]
   | { [key: string]: string | number };
-export type AttributeVal = string | boolean | undefined | null;
+export type AttributeVal = string | boolean | number | undefined | null;
 export type Element = string | number | boolean | null | undefined | Element[];
 export type Attributes = {
   [attribute: string]: AttributeVal | ClassVal | StyleVal;
