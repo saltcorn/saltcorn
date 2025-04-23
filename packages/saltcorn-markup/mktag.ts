@@ -82,7 +82,7 @@ const mkTag =
     var body = "";
     var attribs = " ";
 
-    const argIter = (arg: string | any) => {
+    const argIter = (arg: Element) => {
       if (typeof arg === "undefined" || arg === null || arg === false) {
         //do nothing
       } else if (typeof arg === "string") {
