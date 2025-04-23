@@ -63,10 +63,12 @@ const ppAttrib = ([k, v]: [string, any]): string =>
           ? ppStyle(v)
           : `${k}="${v}"`;
 
-type Element = string | number | boolean | Element[];
-type Attributes = {
-  class: ClassVal;
-};
+type Element = string | number | boolean | null | undefined | Element[];
+type Attributes =
+  | {
+      [attribute: string]: string | boolean | undefined | null;
+    }
+  | { class?: ClassVal; style?: StyleVal };
 
 /**
  * @param {string} tnm
@@ -75,7 +77,7 @@ type Attributes = {
  */
 const mkTag =
   (tnm: string, voidTag?: boolean) =>
-  (...args: string | any): string => {
+  (first?: Attributes | Element, ...args: Element[]): string => {
     var body = "";
     var attribs = " ";
 
@@ -84,18 +86,19 @@ const mkTag =
         //do nothing
       } else if (typeof arg === "string") {
         body += arg;
-      } else if (typeof arg === "object") {
-        if (Array.isArray(arg)) {
-          arg.forEach(argIter);
-        } else {
-          attribs += Object.entries(arg)
-            .map(ppAttrib)
-            .filter((s) => s)
-            .join(" ");
-        }
+      } else if (Array.isArray(arg)) {
+        arg.forEach(argIter);
       } else body += arg;
     };
-    args.forEach(argIter);
+    if (typeof first === "object" && !Array.isArray(first)) {
+      attribs += Object.entries(first as Attributes)
+        .map(ppAttrib)
+        .filter((s) => s)
+        .join(" ");
+      args.forEach(argIter);
+    } else {
+      [first, ...args].forEach(argIter);
+    }
     if (attribs === " ") attribs = "";
     return voidTag
       ? `<${tnm}${attribs}>`

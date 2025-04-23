@@ -15,6 +15,8 @@ describe("tags", () => {
     expect(input({ type: "text" })).toBe('<input type="text">');
     expect(div(5)).toBe("<div>5</div>");
     expect(div()).toBe("<div></div>");
+    expect(div("Hello world")).toBe("<div>Hello world</div>");
+    expect(div(["Hello world"])).toBe("<div>Hello world</div>");
     expect(i()).toBe("<i></i>");
     expect(hr()).toBe("<hr>");
     expect(div(["hello ", "world"])).toBe("<div>hello world</div>");
