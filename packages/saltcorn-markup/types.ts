@@ -142,7 +142,7 @@ type TagNames =
   | "wbr";
 
 type TagFunctionExports = {
-  [key in `${TagNames}`]: TagFunction; // "...allTags" properties
+  [key in TagNames]: TagFunction; // "...allTags" properties
 };
 
 export interface TagExports extends TagFunctionExports {
