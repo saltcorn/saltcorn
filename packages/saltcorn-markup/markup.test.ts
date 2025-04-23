@@ -15,6 +15,9 @@ describe("tags", () => {
     expect(input({ type: "text" })).toBe('<input type="text">');
     expect(div(5)).toBe("<div>5</div>");
     expect(div()).toBe("<div></div>");
+    expect(div(null)).toBe("<div></div>");
+    expect(div("Hello world")).toBe("<div>Hello world</div>");
+    expect(div(["Hello world"])).toBe("<div>Hello world</div>");
     expect(i()).toBe("<i></i>");
     expect(hr()).toBe("<hr>");
     expect(div(["hello ", "world"])).toBe("<div>hello world</div>");
@@ -24,8 +27,6 @@ describe("tags", () => {
     expect(ul({ class: "foo" }, [["hello ", "world"]])).toBe(
       `<ul class="foo">hello world</ul>`
     );
-    expect(Array.isArray(["hello ", "world"])).toBe(true);
-    expect(Array.isArray({})).toBe(false);
     expect(i({ class: "fas fa-plus-square" })).toBe(
       '<i class="fas fa-plus-square"></i>'
     );
@@ -96,6 +97,19 @@ describe("tags", () => {
     expect(text('<span style="color:#2ecc71;">green</span>')).toBe(
       '<span style="color:#2ecc71;">green</span>'
     );
+    expect(text('<article style="color:#2ecc71;">green</article>')).toBe(
+      "<article>green</article>"
+    );
+    expect(
+      text('<article style="color:#2ecc71;">green</article>', {
+        article: ["style"],
+      })
+    ).toBe('<article style="color:#2ecc71;">green</article>');
+    expect(
+      text('<progress onclick="foo()">green</progress>', {
+        progress: ["onclick"],
+      })
+    ).toBe('<progress onclick="foo()">green</progress>');
   });
 });
 

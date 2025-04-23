@@ -21,6 +21,7 @@ const {
   genericElement,
 } = tags;
 import crypto from "crypto";
+import { StyleVal, Element } from "./types";
 
 const isBlock = (segment: any) => {
   if (["h1", "h2", "h3", "h4", "h5", "h6"].indexOf(segment.textStyle) >= 0) {
@@ -30,7 +31,7 @@ const isBlock = (segment: any) => {
   }
 };
 
-const transformTextStyle = (textStyle: string) => {
+const transformTextStyle = (textStyle: string): { [key: string]: string | number } => {
   switch (textStyle) {
     case "h1":
       return {
@@ -350,7 +351,7 @@ const render = ({
                           class: ["tab-pane", ix == 0 && "show active"],
                           id: `tab-${title}`,
                         },
-                        contents
+                        contents as Element
                       )
                   )
                 )

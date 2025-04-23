@@ -8,6 +8,14 @@ import xss, { whiteList, IWhiteList } from "xss";
 import escape from "escape-html";
 import htmlTags from "html-tags";
 import voidHtmlTags from "html-tags/void";
+import type {
+  ClassVal,
+  StyleVal,
+  Element,
+  Attributes,
+  AttributeVal,
+  TagFunction,TagExports
+} from "./types";
 
 const voidHtmlTagsSet = new Set<string>(voidHtmlTags);
 
@@ -56,29 +64,22 @@ const text_attr = (t: string | number) => (t === 0 ? "0" : escape(<string>t));
 
 /**
  */
-const allTags: { [k: string]: (...args: any[]) => string } = Object.fromEntries(
+const allTags: { [k: string]: TagFunction } = Object.fromEntries(
   htmlTags.map((tag) => [tag, mkTag(tag, voidHtmlTagsSet.has(tag))])
 );
 
-type ExportsType = {
-  [key: string]: any; // "...allTags" properties
-  genericElement: (tagName: string, ...rest: any[]) => string;
-  domReady: (js: string) => string;
-  text: (t: string | number) => string;
-  text_attr: (t: string | number) => string;
-  nbsp: string;
-  mkTag: typeof mkTag;
-};
-
-const tagsExports: ExportsType = {
+const tagsExports: TagExports = {
   ...allTags,
   /**
    * @param {string} tagName
    * @param  {...*} rest
    * @returns {string}
    */
-  genericElement: (tagName: string, ...rest: any[]) =>
-    mkTag(tagName, false)(...rest),
+  genericElement: (
+    tagName: string,
+    attributes_or_first_child?: Attributes | Element,
+    ...children: Element[]
+  ) => mkTag(tagName, false)(attributes_or_first_child, ...children),
   domReady,
   text,
   text_attr,
@@ -86,6 +87,6 @@ const tagsExports: ExportsType = {
   nbsp: "&nbsp;",
   /** @type {module:mktag} */
   mkTag,
-};
+} as TagExports;
 
 export = tagsExports;

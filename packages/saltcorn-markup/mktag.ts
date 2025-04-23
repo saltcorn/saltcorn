@@ -1,3 +1,11 @@
+import type {
+  ClassVal,
+  StyleVal,
+  Element,
+  Attributes,
+  AttributeVal,
+} from "./types";
+
 /**
  * @category saltcorn-markup
  * @module mktag
@@ -12,18 +20,12 @@ const camelToCssCase = (str: string): string =>
   str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 
 /**
- * @param {string|string[]} cs
- * @returns {string}
- */
-const ppClasses = (cs: string | string[]): string =>
-  typeof cs === "string" ? cs : !cs ? "" : cs.filter((c) => c).join(" ");
-
-/**
  * @param {string|string[]} c
  * @returns {string}
  */
-const ppClass = (c: string | string[]): string => {
-  const clss = ppClasses(c);
+const ppClass = (cs: ClassVal): string => {
+  const clss =
+    typeof cs === "string" ? cs : !cs ? "" : cs.filter((c) => c).join(" ");
   return clss ? `class="${clss}"` : "";
 };
 
@@ -31,25 +33,19 @@ const ppClass = (c: string | string[]): string => {
  * @param {string|string[]|object} [cs]
  * @returns {string}
  */
-const ppStyles = (cs: string | string[] | { [key: string]: string }): string =>
-  typeof cs === "string"
-    ? cs
-    : !cs
-    ? ""
-    : Array.isArray(cs)
-    ? cs.filter((c) => c).join(";")
-    : typeof cs === "object"
-    ? Object.entries(cs)
-        .map(([k, v]) => `${camelToCssCase(k)}:${v}`)
-        .join(";")
-    : "";
-
-/**
- * @param {string|string[]|object} [cs]
- * @returns {string}
- */
-const ppStyle = (c: string | string[] | { [key: string]: string }): string => {
-  const clss = ppStyles(c);
+const ppStyle = (cs: StyleVal): string => {
+  const clss =
+    typeof cs === "string"
+      ? cs
+      : !cs
+        ? ""
+        : Array.isArray(cs)
+          ? cs.filter((c) => c).join(";")
+          : typeof cs === "object"
+            ? Object.entries(cs)
+                .map(([k, v]) => `${camelToCssCase(k)}:${v}`)
+                .join(";")
+            : "";
   return clss ? `style="${clss}"` : "";
 };
 
@@ -59,18 +55,21 @@ const ppStyle = (c: string | string[] | { [key: string]: string }): string => {
  * @param {boolean} [opts.v]
  * @returns {string}
  */
-const ppAttrib = ([k, v]: [string, any]): string =>
+const ppAttrib = ([k, v]: [
+  string,
+  AttributeVal | ClassVal | StyleVal,
+]): string =>
   typeof v === "boolean"
     ? v
       ? k
       : ""
     : typeof v === "undefined"
-    ? ""
-    : k === "class"
-    ? ppClass(v)
-    : k === "style"
-    ? ppStyle(v)
-    : `${k}="${v}"`;
+      ? ""
+      : k === "class"
+        ? ppClass(v as ClassVal)
+        : k === "style"
+          ? ppStyle(v as StyleVal)
+          : `${k}="${v}"`;
 
 /**
  * @param {string} tnm
@@ -79,27 +78,35 @@ const ppAttrib = ([k, v]: [string, any]): string =>
  */
 const mkTag =
   (tnm: string, voidTag?: boolean) =>
-  (...args: string | any): string => {
+  (
+    attributes_or_first_child?: Attributes | Element,
+    ...children: Element[]
+  ): string => {
     var body = "";
     var attribs = " ";
 
-    const argIter = (arg: string | any) => {
+    const argIter = (arg: Element) => {
       if (typeof arg === "undefined" || arg === null || arg === false) {
         //do nothing
       } else if (typeof arg === "string") {
         body += arg;
-      } else if (typeof arg === "object") {
-        if (Array.isArray(arg)) {
-          arg.forEach(argIter);
-        } else {
-          attribs += Object.entries(arg)
-            .map(ppAttrib)
-            .filter((s) => s)
-            .join(" ");
-        }
+      } else if (Array.isArray(arg)) {
+        arg.forEach(argIter);
       } else body += arg;
     };
-    args.forEach(argIter);
+    if (
+      typeof attributes_or_first_child === "object" &&
+      !Array.isArray(attributes_or_first_child) &&
+      attributes_or_first_child !== null
+    ) {
+      attribs += Object.entries(attributes_or_first_child as Attributes)
+        .map(ppAttrib)
+        .filter((s) => s)
+        .join(" ");
+      children.forEach(argIter);
+    } else {
+      [attributes_or_first_child, ...children].forEach(argIter);
+    }
     if (attribs === " ") attribs = "";
     return voidTag
       ? `<${tnm}${attribs}>`
