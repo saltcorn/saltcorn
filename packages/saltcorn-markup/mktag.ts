@@ -1,3 +1,11 @@
+import type {
+  ClassVal,
+  StyleVal,
+  Element,
+  Attributes,
+  AttributeVal,
+} from "./types";
+
 /**
  * @category saltcorn-markup
  * @module mktag
@@ -10,9 +18,6 @@
  */
 const camelToCssCase = (str: string): string =>
   str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-
-type ClassVal = string | string[];
-type StyleVal = string | string[] | { [key: string]: string };
 
 /**
  * @param {string|string[]} c
@@ -50,7 +55,10 @@ const ppStyle = (cs: StyleVal): string => {
  * @param {boolean} [opts.v]
  * @returns {string}
  */
-const ppAttrib = ([k, v]: [string, any]): string =>
+const ppAttrib = ([k, v]: [
+  string,
+  AttributeVal | ClassVal | StyleVal,
+]): string =>
   typeof v === "boolean"
     ? v
       ? k
@@ -58,17 +66,10 @@ const ppAttrib = ([k, v]: [string, any]): string =>
     : typeof v === "undefined"
       ? ""
       : k === "class"
-        ? ppClass(v)
+        ? ppClass(v as ClassVal)
         : k === "style"
-          ? ppStyle(v)
+          ? ppStyle(v as StyleVal)
           : `${k}="${v}"`;
-
-type Element = string | number | boolean | null | undefined | Element[];
-type Attributes =
-  | {
-      [attribute: string]: string | boolean | undefined | null;
-    }
-  | { class?: ClassVal; style?: StyleVal };
 
 /**
  * @param {string} tnm
