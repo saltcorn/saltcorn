@@ -1,21 +1,20 @@
-import type {  IWhiteList } from "xss";
-
+import type { IWhiteList } from "xss";
 
 export type Falsy = null | false | 0 | undefined;
 
-export type ClassVal = string | (string | Falsy)[];
+export type ClassVal = string | Falsy | (string | Falsy)[];
 export type StyleVal =
   | string
   | null
-  | string[]
+  | (string | Falsy)[]
   | { [key: string]: string | number };
 export type AttributeVal = string | boolean | undefined | null;
 export type Element = string | number | boolean | null | undefined | Element[];
-export type Attributes =
-  | {
-      [attribute: string]: AttributeVal;
-    }
-  | { class?: ClassVal; style?: StyleVal };
+export type Attributes = {
+  [attribute: string]: AttributeVal | ClassVal | StyleVal;
+  class?: ClassVal;
+  style?: StyleVal;
+};
 
 export type TagFunction = (
   first?: Attributes | Element,
@@ -156,5 +155,5 @@ export interface TagExports extends TagFunctionExports {
   text: (t: string | number, customWhiteList?: IWhiteList) => string;
   text_attr: (t: string | number) => string;
   nbsp: string;
-  mkTag: (tnm: string, voidTag?: boolean)=> TagFunction;
+  mkTag: (tnm: string, voidTag?: boolean) => TagFunction;
 }
