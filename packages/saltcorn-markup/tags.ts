@@ -64,7 +64,7 @@ type ExportsType = {
   [key: string]: any; // "...allTags" properties
   genericElement: (tagName: string, ...rest: any[]) => string;
   domReady: (js: string) => string;
-  text: (t: string | number) => string;
+  text: (t: string | number, customWhiteList?: IWhiteList) => string;
   text_attr: (t: string | number) => string;
   nbsp: string;
   mkTag: typeof mkTag;

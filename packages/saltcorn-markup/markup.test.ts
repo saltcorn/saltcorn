@@ -96,6 +96,19 @@ describe("tags", () => {
     expect(text('<span style="color:#2ecc71;">green</span>')).toBe(
       '<span style="color:#2ecc71;">green</span>'
     );
+    expect(text('<article style="color:#2ecc71;">green</article>')).toBe(
+      "<article>green</article>"
+    );
+    expect(
+      text('<article style="color:#2ecc71;">green</article>', {
+        article: ["style"],
+      })
+    ).toBe('<article style="color:#2ecc71;">green</article>');
+    expect(
+      text('<progress onclick="foo()">green</progress>', {
+        progress: ["onclick"],
+      })
+    ).toBe('<progress onclick="foo()">green</progress>');
   });
 });
 
