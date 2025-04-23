@@ -77,9 +77,9 @@ const tagsExports: TagExports = {
    */
   genericElement: (
     tagName: string,
-    first?: Attributes | Element,
-    ...rest: Element[]
-  ) => mkTag(tagName, false)(first, ...rest),
+    attributes_or_first_child?: Attributes | Element,
+    ...children: Element[]
+  ) => mkTag(tagName, false)(attributes_or_first_child, ...children),
   domReady,
   text,
   text_attr,

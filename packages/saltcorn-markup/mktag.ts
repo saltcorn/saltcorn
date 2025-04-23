@@ -78,7 +78,7 @@ const ppAttrib = ([k, v]: [
  */
 const mkTag =
   (tnm: string, voidTag?: boolean) =>
-  (first?: Attributes | Element, ...args: Element[]): string => {
+  (attributes_or_first_child?: Attributes | Element, ...children: Element[]): string => {
     var body = "";
     var attribs = " ";
 
@@ -91,14 +91,14 @@ const mkTag =
         arg.forEach(argIter);
       } else body += arg;
     };
-    if (typeof first === "object" && !Array.isArray(first)) {
-      attribs += Object.entries(first as Attributes)
+    if (typeof attributes_or_first_child === "object" && !Array.isArray(attributes_or_first_child)) {
+      attribs += Object.entries(attributes_or_first_child as Attributes)
         .map(ppAttrib)
         .filter((s) => s)
         .join(" ");
-      args.forEach(argIter);
+      children.forEach(argIter);
     } else {
-      [first, ...args].forEach(argIter);
+      [attributes_or_first_child, ...children].forEach(argIter);
     }
     if (attribs === " ") attribs = "";
     return voidTag

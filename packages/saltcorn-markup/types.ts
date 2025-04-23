@@ -17,8 +17,8 @@ export type Attributes = {
 };
 
 export type TagFunction = (
-  first?: Attributes | Element,
-  ...args: Element[]
+  attributes_or_first_child?: Attributes | Element,
+  ...children: Element[]
 ) => string;
 
 type TagNames =
@@ -148,8 +148,8 @@ type TagFunctionExports = {
 export interface TagExports extends TagFunctionExports {
   genericElement: (
     tagName: string,
-    first?: Attributes | Element,
-    ...rest: Element[]
+    attributes_or_first_child?: Attributes | Element,
+    ...children: Element[]
   ) => string;
   domReady: (js: string) => string;
   text: (t: string | number, customWhiteList?: IWhiteList) => string;
