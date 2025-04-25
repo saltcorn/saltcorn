@@ -1170,6 +1170,16 @@ const getTenant = (ten: string) => {
   return tenants[ten];
 };
 
+const getCtx__ = (): ((s: string) => string) => {
+  const ctx = db.getRequestContext();
+  const locale = ctx?.req?.getLocale();
+  if (locale) {
+    const state = getState();
+    if (state) return (s) => state.i18n.__({ phrase: s, locale });
+  }
+  return ctx?.req?.__ || ((s: string) => s);
+};
+
 const getRootState = () => singleton;
 /**
  * Returns all Tenants (from State)
@@ -1298,4 +1308,5 @@ export = {
   getAllTenants,
   process_send,
   getRootState,
+  getCtx__,
 };
