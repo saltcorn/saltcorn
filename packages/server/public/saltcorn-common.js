@@ -1125,7 +1125,8 @@ function initialize_page() {
     } else if (is_key) {
       const [tblName, target] = type.replace("Key:", "").split(".");
       doAjaxOptionsFetch(tblName, target);
-    } else
+    } else {
+      const parent = $(this).parent();
       $(this).replaceWith(
         `<form method="post" action="${url}" ${
           ajax
@@ -1155,17 +1156,13 @@ function initialize_page() {
                   : "any"
               }"`
             : ""
-        } name="${key}" ${
-          type === "Bool"
-            ? current
-              ? "checked"
-              : ""
-            : `value="${escapeHtml(current)}"`
-        }>
+        } name="${key}" ${type === "Bool" ? (current ? "checked" : "") : ``}>
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
-      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      <button onclick="cancel_inline_edit(event, '${opts.replaceAll("'", "\\'")}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
       );
+      if (type !== "Bool") parent.find(`[name="${key}"]`).val(current);
+    }
   });
   if (!isNode) {
     doMobileTransforms();
