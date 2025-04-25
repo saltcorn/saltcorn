@@ -3780,7 +3780,8 @@ ${rejectDetails}`,
 
     process_aggregations(this, aggregations, fldNms, values, schema);
 
-    const odbUnderscore = opts.orderBy ? opts.orderBy.replace(/\./g, "_") : "";
+    const odbUnderscore =
+      typeof opts.orderBy === "string" ? opts.orderBy.replace(/\./g, "_") : "";
     const selectopts: SelectOptions = this.processSelectOptions({
       limit: opts.limit,
       orderBy:
