@@ -1165,7 +1165,7 @@ const get_viewable_fields = (
             label: headerLabelForName(
               column.header_label
                 ? text(__(column.header_label))
-                : text(f.label),
+                : text(__(f.label)),
               f.name,
               req,
               __,

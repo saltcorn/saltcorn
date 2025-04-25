@@ -668,7 +668,9 @@ const configuration_workflow = (req) =>
             sublabel: req.__("What happens when a row is clicked"),
             type: "String",
             required: true,
-            attributes: { options: "Nothing,Link,Link new tab,Popup,Action" },
+            attributes: {
+              options: ["Nothing", "Link", "Link new tab", "Popup", "Action"],
+            },
           });
           formfields.push({
             name: "_row_click_action",

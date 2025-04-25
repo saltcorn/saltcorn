@@ -413,7 +413,7 @@ const menuForm = async (req) => {
         //default: "Standard",
         attributes: {
           inline: true,
-          options: "Standard, Mobile Bottom, Secondary Menu",
+          options: ["Standard", "Mobile Bottom", "Secondary Menu"],
         },
       },
     ],

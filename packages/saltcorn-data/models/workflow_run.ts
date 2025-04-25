@@ -280,7 +280,7 @@ class WorkflowRun {
         case "Yes/No":
           return {
             type: "String",
-            attributes: { options: "Yes,No" },
+            attributes: { options: ["Yes", "No"] },
             fieldview: "radio_group",
           };
         case "Checkbox":

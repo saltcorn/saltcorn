@@ -736,6 +736,14 @@ function escapeHtml(text) {
   });
 }
 
+function unescapeHtml(str) {
+  if (!str || !str.replace) return str;
+  return str
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
+}
+
 function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
@@ -1125,7 +1133,8 @@ function initialize_page() {
     } else if (is_key) {
       const [tblName, target] = type.replace("Key:", "").split(".");
       doAjaxOptionsFetch(tblName, target);
-    } else
+    } else {
+      const parent = $(this).parent();
       $(this).replaceWith(
         `<form method="post" action="${url}" ${
           ajax
@@ -1155,17 +1164,18 @@ function initialize_page() {
                   : "any"
               }"`
             : ""
-        } name="${key}" ${
-          type === "Bool"
-            ? current
-              ? "checked"
-              : ""
-            : `value="${escapeHtml(current)}"`
-        }>
+        } name="${key}" ${type === "Bool" ? (current ? "checked" : "") : ``}>
       <button type="submit" class="btn btn-sm btn-primary">OK</button>
-      <button onclick="cancel_inline_edit(event, '${opts}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+      <button onclick="cancel_inline_edit(event, '${opts.replaceAll("'", "\\'")}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
       );
+      if (type !== "Bool") {
+        const newVal = $(this).attr("data-inline-edit-unescape")
+          ? unescapeHtml(current)
+          : current;
+        parent.find(`[name="${key}"]`).val(newVal);
+      }
+    }
   });
   if (!isNode) {
     doMobileTransforms();

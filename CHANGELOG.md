@@ -29,6 +29,7 @@
     - The site name and addiotnal login strings are translated
     - Translate app strings with LLM if module is present
     - Translate Action and viewlink labels, list headers and page and popup titles.
+    - Options from String field attributes can now be translated.
 
 
 * Transactional isolation: Most administrative actions and user-run data 
