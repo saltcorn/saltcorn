@@ -26,6 +26,7 @@ const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const { stringify } = require("csv-stringify");
 const csvtojson = require("csvtojson");
 const { hasLLM, translate } = require("@saltcorn/data/translate");
+const { escapeHtml } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -365,7 +366,7 @@ router.get(
                 [
                   {
                     label: req.__("In default language"),
-                    key: "in_default",
+                    key: (r) => escapeHtml(r.in_default),
                   },
                   {
                     label: req.__("In %s", form.values.name),
@@ -376,7 +377,7 @@ router.get(
                             r.in_default
                           )}`,
                         },
-                        r.translated
+                        escapeHtml(r.translated)
                       ),
                   },
                 ],
@@ -431,10 +432,12 @@ router.post(
       req.flash(
         "success",
         req.__(
-          `Translated %s strings. Click 'Translate with LLM' again to continue`, count
+          `Translated %s strings. Click 'Translate with LLM' again to continue`,
+          count
         )
       );
-    else req.flash("success", req.__(`Finished translating %s strings.`, count));
+    else
+      req.flash("success", req.__(`Finished translating %s strings.`, count));
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
