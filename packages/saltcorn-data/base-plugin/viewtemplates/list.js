@@ -583,13 +583,19 @@ const configuration_workflow = (req) =>
           const formfields = [];
           const { child_field_list, child_relations } =
             await table.get_child_relations();
+          const joinFields = context.columns?.filter(
+            (jf) => jf.type === "JoinField"
+          );
           formfields.push({
             name: "_order_field",
             label: req.__("Default order by"),
             type: "String",
             attributes: {
               asideNext: true,
-              options: table_fields.map((f) => f.name),
+              options: [
+                ...table_fields.map((f) => f.name),
+                ...(joinFields ? joinFields.map((jf) => jf.join_field) : []),
+              ],
             },
           });
           formfields.push({
