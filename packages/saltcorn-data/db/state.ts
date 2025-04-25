@@ -1178,7 +1178,7 @@ const getApp__ = (): ((s: string) => string) => {
   const locale = ctx?.req?.getLocale();
   if (locale) {
     const state = getState();
-    if (state) return (s) => state.i18n.__({ phrase: s, locale });
+    if (state) return (s) => state.i18n.__({ phrase: s, locale }) || s;
   }
   return (s: string) => s;
 };
