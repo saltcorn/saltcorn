@@ -84,6 +84,8 @@ test.describe('E2E Test Suite', () => {
     await page.selectOption(pageobject.inputlocation, { label: 'Standard' });
     // Click on add button
     await page.click(pageobject.btnAdd);
+    await page.waitForTimeout(500);
+
     // Reload the page
     await page.reload();
   });
