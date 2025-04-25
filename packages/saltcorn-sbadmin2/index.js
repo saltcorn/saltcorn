@@ -29,6 +29,7 @@ const {
   headersInHead,
   headersInBody,
   show_icon,
+  activeChecker,
 } = require("@saltcorn/markup/layout_utils");
 const db = require("@saltcorn/data/db");
 const { isNode } = require("@saltcorn/data/utils");
@@ -98,13 +99,13 @@ const logit = (x, s) => {
  * @returns {boolean}
  */
 const active = (currentUrl, item) =>
-  (item.link && currentUrl.startsWith(item.link)) ||
-  (item.altlinks && item.altlinks.some((l) => currentUrl.startsWith(l))) ||
+  (item.link && activeChecker(item.link, currentUrl)) ||
+  (item.altlinks && item.altlinks.some((l) => activeChecker(l, currentUrl))) ||
   (item.subitems &&
     item.subitems.some(
       (si) =>
-        (si.link && currentUrl.startsWith(si.link)) ||
-        (si.altlinks && si.altlinks.some((l) => currentUrl.startsWith(l)))
+        (si.link && activeChecker(si.link, currentUrl)) ||
+        (si.altlinks && si.altlinks.some((l) => activeChecker(l, currentUrl)))
     ));
 
 /**

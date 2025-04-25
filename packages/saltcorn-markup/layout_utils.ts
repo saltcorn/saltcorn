@@ -38,6 +38,15 @@ const isNode = typeof window === "undefined";
 const labelToId = (item: string): string => text(item.replace(" ", ""));
 
 /**
+ * check if a link should be highlighted as active
+ * @param link link to check
+ * @param currentUrl current URL
+ * @returns true if the link is active
+ */
+const activeChecker = (link: string, currentUrl: string) =>
+  new RegExp(`^${link}(\\/|$)`).test(currentUrl);
+
+/**
  * @param {string} currentUrl
  * @param {object} item
  * @returns {boolean}
@@ -878,4 +887,5 @@ export = {
   renderTabs,
   show_icon,
   show_icon_and_label,
+  activeChecker,
 };
