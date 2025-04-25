@@ -544,7 +544,7 @@ const getStrOptions = (v, optsStr, exclude_values_string) => {
         .map((o) =>
           option(
             { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
-            __(text_attr(o))
+            text_attr(o)
           )
         )
     : optsStr.map((o, ix) =>
