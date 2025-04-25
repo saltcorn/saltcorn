@@ -739,9 +739,9 @@ function escapeHtml(text) {
 function unescapeHtml(str) {
   if (!str || !str.replace) return str;
   return str
-    .replaceAll("&amp;", "&")
     .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">");
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
 }
 
 function reload_on_init() {
