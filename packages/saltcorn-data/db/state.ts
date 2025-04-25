@@ -989,6 +989,16 @@ class State {
     const menu = this.getConfig("menu_items", []);
     strings.push(...menu.map(({ label }: { label: string }) => label));
     strings.push(this.getConfig("site_name"));
+    for (const table of this.tables)
+      for (const field of table.fields)
+        if (
+          ((typeof field.type !== "string" && field.type?.name === "String") ||
+            field.type === "String") &&
+          field.attributes?.options
+        )
+          strings.push(
+            ...field.attributes.options.split(",").map((s: string) => s.trim())
+          );
 
     return Array.from(new Set(strings)).filter(
       (s) => s && removeAllWhiteSpace(s)
