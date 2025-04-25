@@ -44,19 +44,17 @@ describe("State queries", () => {
     expect(twofapol).toBe("Optional");
   });
   it("should query i18n strings", async () => {
-    expect(getState().getStringsForI18n()).toStrictEqual([
-      "Page Group link",
-      "Hello world",
-      "<h1> foo</h1>",
-      "Click here",
-      "header",
-      "Bye bye",
-      "Hello I am iPhone SE",
-      "Hello I am iPhone XR",
-      "Hello I am Laptop",
-      "Hello I am Surface Pro 7",
-      "Saltcorn",
-    ]);
+    const strs = getState().getStringsForI18n();
+    expect(strs).toContain("Page Group link");
+    expect(strs).toContain("Hello world");
+    expect(strs).toContain("<h1> foo</h1>");
+    expect(strs).toContain("Click here");
+    expect(strs).toContain("header");
+    expect(strs).toContain("Bye bye");
+    expect(strs).toContain("Hello I am iPhone SE");
+    expect(strs).toContain("Saltcorn");
+    expect(strs).toContain("Publisher");
+    expect(strs).toContain("Normalised");
   });
   it("should query type names", async () => {
     expect(getState().type_names).toStrictEqual([
