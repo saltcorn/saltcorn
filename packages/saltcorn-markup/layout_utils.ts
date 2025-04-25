@@ -47,14 +47,16 @@ const activeChecker = (link: string, currentUrl: string) =>
   new RegExp(`^${link}(\\/|$)`).test(currentUrl);
 
 /**
- * @param {string} currentUrl
- * @param {object} item
- * @returns {boolean}
+ * @param currentUrl
+ * @param item
+ * @returns
  */
 const active = (currentUrl: string, item: any): boolean =>
-  (item.link && currentUrl.startsWith(item.link)) ||
+  (item.link && activeChecker(item.link, currentUrl)) ||
   (item.subitems &&
-    item.subitems.some((si: any) => si.link && currentUrl.startsWith(si.link)));
+    item.subitems.some(
+      (si: any) => si.link && activeChecker(si.link, currentUrl)
+    ));
 
 /**
  * @param {object[]} [sections]
