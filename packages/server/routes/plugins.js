@@ -102,7 +102,7 @@ const pluginForm = (req, plugin) => {
         name: "source",
         type: getState().types.String,
         required: true,
-        attributes: { options: "npm,local,github,git" },
+        attributes: { options: ["npm", "local", "github", "git"] },
         sublabel: req.__(
           "Source of module for install. Few options:" +
             "npm - download from npm repository," +

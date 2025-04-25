@@ -141,7 +141,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 required: true,
                 attributes: {
-                  options: "Link,Embedded,Popup",
+                  options: ["Link", "Embedded", "Popup"],
                 },
                 showIf: { view_to_create: create_view_opts.map((o) => o.name) },
               },
