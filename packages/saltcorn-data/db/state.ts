@@ -990,7 +990,8 @@ class State {
     strings.push(...menu.map(({ label }: { label: string }) => label));
     strings.push(this.getConfig("site_name"));
     for (const table of this.tables)
-      for (const field of table.fields)
+      for (const field of table.fields) {
+        strings.push(field.label);
         if (
           ((typeof field.type !== "string" && field.type?.name === "String") ||
             field.type === "String") &&
@@ -999,6 +1000,7 @@ class State {
           strings.push(
             ...field.attributes.options.split(",").map((s: string) => s.trim())
           );
+      }
 
     return Array.from(new Set(strings)).filter(
       (s) => s && removeAllWhiteSpace(s)
@@ -1178,12 +1180,12 @@ const getApp__ = (): ((s: string) => string) => {
     const state = getState();
     if (state) return (s) => state.i18n.__({ phrase: s, locale });
   }
-  return ((s: string) => s);
+  return (s: string) => s;
 };
 
 //For builtin strings
 const getReq__ = (): ((s: string) => string) => {
-  const ctx = db.getRequestContext();  
+  const ctx = db.getRequestContext();
   return ctx?.req?.__ || ((s: string) => s);
 };
 
@@ -1316,5 +1318,5 @@ export = {
   process_send,
   getRootState,
   getApp__,
-  getReq__
+  getReq__,
 };
