@@ -463,9 +463,8 @@ router.post(
       return;
     }
     const cfgStrings = getState().getConfigCopy("localizer_strings");
-    if (cfgStrings[lang])
-      cfgStrings[lang][defstring] = text((req.body || {}).value);
-    else cfgStrings[lang] = { [defstring]: text((req.body || {}).value) };
+    if (cfgStrings[lang]) cfgStrings[lang][defstring] = (req.body || {}).value;
+    else cfgStrings[lang] = { [defstring]: (req.body || {}).value };
     await getState().setConfig("localizer_strings", cfgStrings);
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
