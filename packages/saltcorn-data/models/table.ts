@@ -3780,6 +3780,7 @@ ${rejectDetails}`,
 
     process_aggregations(this, aggregations, fldNms, values, schema);
 
+    const odbUnderscore = opts.orderBy ? opts.orderBy.replace(/\./g, "_") : "";
     const selectopts: SelectOptions = this.processSelectOptions({
       limit: opts.limit,
       orderBy:
@@ -3787,10 +3788,12 @@ ${rejectDetails}`,
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
-            ? opts.orderBy
-            : opts.orderBy.toLowerCase?.() === "random()"
-              ? opts.orderBy
-              : "a." + opts.orderBy),
+          ? opts.orderBy
+          : joinFields[odbUnderscore]
+          ? odbUnderscore
+          : opts.orderBy.toLowerCase?.() === "random()"
+          ? opts.orderBy
+          : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     });
