@@ -34,7 +34,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
-const { getState, getCtx__ } = require("../db/state");
+const { getState, getApp__ } = require("../db/state");
 const { localeDate, localeDateTime } = require("@saltcorn/markup");
 const { freeVariables, eval_expression } = require("../models/expression");
 const Table = require("../models/table");
@@ -535,7 +535,7 @@ const getStrOptions = (v, optsStr, exclude_values_string) => {
           .filter(Boolean)
       )
     : new Set([]);
-  const __ = typeof optsStr === "string" ? getCtx__() : (s) => s;
+  const __ = typeof optsStr === "string" ? getApp__() : (s) => s;
   return typeof optsStr === "string"
     ? optsStr
         .split(",")

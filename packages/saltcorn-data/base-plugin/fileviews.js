@@ -26,6 +26,7 @@ const { isNode } = require("../utils");
 const { select_options } = require("@saltcorn/markup/helpers");
 const File = require("../models/file");
 const path = require("path");
+const { getReq__ } = require("../db/state");
 
 const btnStyles = [
   { name: "default", label: "Default selector" },
@@ -64,6 +65,7 @@ const btnStylesForLink = [
 ];
 
 const buildCustomInput = (id, attrs) => {
+  const __ = getReq__();
   return (
     button(
       {
@@ -72,14 +74,14 @@ const buildCustomInput = (id, attrs) => {
         class: attrs.button_style,
         onclick: `document.getElementById('${id}').click()`,
       },
-      attrs?.label ? attrs.label : "Choose File"
+      attrs?.label ? attrs.label : __("Choose File")
     ) +
     span(
       {
         id: `${id}-custom-text`,
         class: "custom-file-label",
       },
-      "No file chosen"
+      __("No file chosen")
     ) +
     script(
       domReady(
