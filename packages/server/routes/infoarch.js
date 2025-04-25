@@ -376,6 +376,7 @@ router.get(
                           "data-inline-edit-dest-url": `/site-structure/localizer/save-string/${lang}/${encodeURIComponent(
                             r.in_default
                           )}`,
+                          "data-inline-edit-unescape": "true",
                         },
                         escapeHtml(r.translated)
                       ),

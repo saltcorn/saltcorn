@@ -736,6 +736,14 @@ function escapeHtml(text) {
   });
 }
 
+function unescapeHtml(str) {
+  if (!str || !str.replace) return str;
+  return str
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">");
+}
+
 function reload_on_init() {
   localStorage.setItem("reload_on_init", true);
 }
@@ -1161,7 +1169,12 @@ function initialize_page() {
       <button onclick="cancel_inline_edit(event, '${opts.replaceAll("'", "\\'")}')" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
       </form>`
       );
-      if (type !== "Bool") parent.find(`[name="${key}"]`).val(current);
+      if (type !== "Bool") {
+        const newVal = $(this).attr("data-inline-edit-unescape")
+          ? unescapeHtml(current)
+          : current;
+        parent.find(`[name="${key}"]`).val(newVal);
+      }
     }
   });
   if (!isNode) {
