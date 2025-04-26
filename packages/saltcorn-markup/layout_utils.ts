@@ -38,14 +38,25 @@ const isNode = typeof window === "undefined";
 const labelToId = (item: string): string => text(item.replace(" ", ""));
 
 /**
- * @param {string} currentUrl
- * @param {object} item
- * @returns {boolean}
+ * check if a link should be highlighted as active
+ * @param link link to check
+ * @param currentUrl current URL
+ * @returns true if the link is active
+ */
+const activeChecker = (link: string, currentUrl: string) =>
+  new RegExp(`^${link}(\\/|\\?|#|$)`).test(currentUrl);
+
+/**
+ * @param currentUrl
+ * @param item
+ * @returns
  */
 const active = (currentUrl: string, item: any): boolean =>
-  (item.link && currentUrl.startsWith(item.link)) ||
+  (item.link && activeChecker(item.link, currentUrl)) ||
   (item.subitems &&
-    item.subitems.some((si: any) => si.link && currentUrl.startsWith(si.link)));
+    item.subitems.some(
+      (si: any) => si.link && activeChecker(si.link, currentUrl)
+    ));
 
 /**
  * @param {object[]} [sections]
@@ -878,5 +889,6 @@ export = {
   renderTabs,
   show_icon,
   show_icon_and_label,
+  activeChecker,
   validID
 };
