@@ -878,4 +878,5 @@ export = {
   renderTabs,
   show_icon,
   show_icon_and_label,
+  validID
 };
