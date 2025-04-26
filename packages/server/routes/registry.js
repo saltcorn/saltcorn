@@ -374,6 +374,23 @@ router.post(
     await db.withTransaction(async () => {
       await install_pack(pack);
     });
+    switch (etype) {
+      case "table":
+        await getState().refresh_tables();
+        break;
+      case "view":
+        await getState().refresh_views();
+        break;
+      case "page":
+        await getState().refresh_pages();
+        break;
+      case "trigger":
+        await getState().refresh_triggers();
+        break;
+      case "config":
+        await getState().refresh_config();
+        break;
+    }
     res.redirect(
       `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
         ename

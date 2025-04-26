@@ -360,7 +360,16 @@ router.get(
  */
 router.get(
   "/help/:topic",
-  isAdmin,
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_inspect_tables",
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_triggers",
+    "min_role_edit_search",
+    "min_role_edit_menu",
+    "min_role_edit_files",
+  ]),
   error_catcher(async (req, res) => {
     const { topic } = req.params;
     const { markup } = await get_help_markup(topic, req.query, req);
@@ -846,12 +855,12 @@ router.post(
         is_relative_url("/" + req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : type == "codepage"
-        ? `/admin/edit-codepage/${name}`
-        : type === "trigger"
-        ? `/actions`
-        : /^[a-z]+$/g.test(type)
-        ? `/${type}edit`
-        : "/"
+          ? `/admin/edit-codepage/${name}`
+          : type === "trigger"
+            ? `/actions`
+            : /^[a-z]+$/g.test(type)
+              ? `/${type}edit`
+              : "/"
     );
   })
 );
@@ -1352,20 +1361,20 @@ router.get(
                             }
                           )
                         : isRoot && is_latest
-                        ? span(
-                            { class: "badge bg-primary ms-2" },
-                            req.__("Latest")
-                          ) +
-                          post_btn(
-                            "/admin/check-for-upgrade",
-                            req.__("Check updates"),
-                            req.csrfToken(),
-                            {
-                              btnClass: "btn-primary btn-sm px-1 py-0",
-                              formClass: "d-inline",
-                            }
-                          )
-                        : "",
+                          ? span(
+                              { class: "badge bg-primary ms-2" },
+                              req.__("Latest")
+                            ) +
+                            post_btn(
+                              "/admin/check-for-upgrade",
+                              req.__("Check updates"),
+                              req.csrfToken(),
+                              {
+                                btnClass: "btn-primary btn-sm px-1 py-0",
+                                formClass: "d-inline",
+                              }
+                            )
+                          : "",
                       isRoot &&
                         !git_commit &&
                         a(
@@ -2134,9 +2143,8 @@ router.get(
     const filename = `${moment(start).format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
     const go = async () => {
-      const { passes, errors, pass, warnings } = await runConfigurationCheck(
-        req
-      );
+      const { passes, errors, pass, warnings } =
+        await runConfigurationCheck(req);
       const end = new Date();
       const secs = Math.round((end.getTime() - start.getTime()) / 1000);
 
@@ -3413,8 +3421,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-        ? "_finish_step"
-        : "";
+          ? "_finish_step"
+          : "";
     res.json({
       finished: await checkFiles(out_dir_name, [
         `logs${stepDesc}.txt`,
@@ -3489,8 +3497,8 @@ router.get(
       mode === "prepare"
         ? "_prepare_step"
         : mode === "finish"
-        ? "_finish_step"
-        : "";
+          ? "_finish_step"
+          : "";
     const resultMsg = files.find(
       (file) => file.filename === `logs${stepDesc}.txt`
     )

@@ -890,4 +890,5 @@ export = {
   show_icon,
   show_icon_and_label,
   activeChecker,
+  validID
 };

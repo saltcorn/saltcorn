@@ -455,6 +455,11 @@ const interpolate = (
   }
 };
 
+function escapeHtml(str: string): string {
+  if (!str || !str.replace) return str;
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 const prepMobileRows = (rows: Row[], fields: Field[]) => {
   const dateFields = fields.filter(
     (f) => instanceOfType(f.type) && f.type?.name === "Date"
@@ -598,4 +603,5 @@ export = {
   ensure_final_slash,
   getFetchProxyOptions,
   jsIdentifierValidator,
+  escapeHtml
 };

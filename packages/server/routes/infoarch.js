@@ -19,13 +19,19 @@ const {
   upload_language_pack,
 } = require("../markup/admin.js");
 const { getState } = require("@saltcorn/data/db/state");
-const { div, a, i, text, button } = require("@saltcorn/markup/tags");
-const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
+const { span, div, a, i, text, button } = require("@saltcorn/markup/tags");
+const {
+  mkTable,
+  renderForm,
+  post_delete_btn,
+  post_btn,
+} = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const { stringify } = require("csv-stringify");
 const csvtojson = require("csvtojson");
 const { hasLLM, translate } = require("@saltcorn/data/translate");
+const { escapeHtml } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -365,18 +371,35 @@ router.get(
                 [
                   {
                     label: req.__("In default language"),
-                    key: "in_default",
+                    key: (r) => escapeHtml(r.in_default),
                   },
                   {
                     label: req.__("In %s", form.values.name),
                     key: (r) =>
-                      div(
-                        {
-                          "data-inline-edit-dest-url": `/site-structure/localizer/save-string/${lang}/${encodeURIComponent(
-                            r.in_default
-                          )}`,
-                        },
-                        r.translated
+                      span(
+                        div(
+                          {
+                            "data-inline-edit-dest-url": `/site-structure/localizer/save-string/${lang}/${encodeURIComponent(
+                              r.in_default
+                            )}`,
+                            "data-inline-edit-unescape": "true",
+                            class: "d-inline",
+                          },
+                          escapeHtml(r.translated)
+                        ),
+                        r.in_default !== r.translated &&
+                          post_btn(
+                            `/site-structure/localizer/delete-string/${lang}/${encodeURIComponent(
+                              r.in_default
+                            )}`,
+                            "",
+                            req.csrfToken(),
+                            {
+                              icon: "fas fa-trash-alt",
+                              btnClass: "btn-sm btn-xs btn-link link-danger",
+                              formClass: "d-inline",
+                            }
+                          )
                       ),
                   },
                 ],
@@ -431,10 +454,12 @@ router.post(
       req.flash(
         "success",
         req.__(
-          `Translated %s strings. Click 'Translate with LLM' again to continue`, count
+          `Translated %s strings. Click 'Translate with LLM' again to continue`,
+          count
         )
       );
-    else req.flash("success", req.__(`Finished translating %s strings.`, count));
+    else
+      req.flash("success", req.__(`Finished translating %s strings.`, count));
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
@@ -459,9 +484,28 @@ router.post(
       return;
     }
     const cfgStrings = getState().getConfigCopy("localizer_strings");
-    if (cfgStrings[lang])
-      cfgStrings[lang][defstring] = text((req.body || {}).value);
-    else cfgStrings[lang] = { [defstring]: text((req.body || {}).value) };
+    if (cfgStrings[lang]) cfgStrings[lang][defstring] = (req.body || {}).value;
+    else cfgStrings[lang] = { [defstring]: (req.body || {}).value };
+    await getState().setConfig("localizer_strings", cfgStrings);
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
+  })
+);
+
+router.post(
+  "/localizer/delete-string/:lang/:defstring",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { lang, defstring } = req.params;
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgStrings = getState().getConfigCopy("localizer_strings");
+    if (cfgStrings[lang]) delete cfgStrings[lang][defstring];
     await getState().setConfig("localizer_strings", cfgStrings);
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
