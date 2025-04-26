@@ -36,6 +36,7 @@ import {
   TextareaT,
 } from "react-bootstrap-icons";
 import { chunk } from "lodash";
+import { rand_ident } from "./elements/utils";
 
 /**
  *
@@ -468,7 +469,7 @@ const ActionElem = ({ connectors, options }) => (
       confirm={false}
       action_label={""}
       isFormula={{}}
-      rndid={"not_assigned"}
+      rndid={rand_ident()}
       configuration={{}}
     />
   </WrapElem>
