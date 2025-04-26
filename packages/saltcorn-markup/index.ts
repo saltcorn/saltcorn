@@ -10,7 +10,7 @@ import tabs = require("./tabs");
 import tags = require("./tags");
 const { a, text, div, button, hr, time, i, input, text_attr } = tags;
 import layoutUtils = require("./layout_utils");
-const { alert, toast, show_icon_and_label } = layoutUtils;
+const { alert, toast, show_icon_and_label, validID } = layoutUtils;
 
 /**
  * @param {string} href
@@ -155,17 +155,19 @@ const post_dropdown_item = (
   confirm?: boolean,
   what?: string
 ): string => {
-  const id = href
-    .split("/")
-    .join("")
-    .split(" ")
-    .join("")
-    .split("?")
-    .join("")
-    .split("=")
-    .join("")
-    .split("%")
-    .join("");
+  const id = validID(
+    href
+      .split("/")
+      .join("")
+      .split(" ")
+      .join("")
+      .split("?")
+      .join("")
+      .split("=")
+      .join("")
+      .split("%")
+      .join("")
+  );
   return `<a class="dropdown-item" onclick="${
     confirm
       ? `if(confirm('${
