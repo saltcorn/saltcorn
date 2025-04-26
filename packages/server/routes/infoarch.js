@@ -19,8 +19,13 @@ const {
   upload_language_pack,
 } = require("../markup/admin.js");
 const { getState } = require("@saltcorn/data/db/state");
-const { div, a, i, text, button } = require("@saltcorn/markup/tags");
-const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
+const { span, div, a, i, text, button } = require("@saltcorn/markup/tags");
+const {
+  mkTable,
+  renderForm,
+  post_delete_btn,
+  post_btn,
+} = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const { stringify } = require("csv-stringify");
@@ -371,14 +376,30 @@ router.get(
                   {
                     label: req.__("In %s", form.values.name),
                     key: (r) =>
-                      div(
-                        {
-                          "data-inline-edit-dest-url": `/site-structure/localizer/save-string/${lang}/${encodeURIComponent(
-                            r.in_default
-                          )}`,
-                          "data-inline-edit-unescape": "true",
-                        },
-                        escapeHtml(r.translated)
+                      span(
+                        div(
+                          {
+                            "data-inline-edit-dest-url": `/site-structure/localizer/save-string/${lang}/${encodeURIComponent(
+                              r.in_default
+                            )}`,
+                            "data-inline-edit-unescape": "true",
+                            class: "d-inline",
+                          },
+                          escapeHtml(r.translated)
+                        ),
+                        r.in_default !== r.translated &&
+                          post_btn(
+                            `/site-structure/localizer/delete-string/${lang}/${encodeURIComponent(
+                              r.in_default
+                            )}`,
+                            "",
+                            req.csrfToken(),
+                            {
+                              icon: "fas fa-trash-alt",
+                              btnClass: "btn-sm btn-xs btn-link link-danger",
+                              formClass: "d-inline",
+                            }
+                          )
                       ),
                   },
                 ],
@@ -465,6 +486,26 @@ router.post(
     const cfgStrings = getState().getConfigCopy("localizer_strings");
     if (cfgStrings[lang]) cfgStrings[lang][defstring] = (req.body || {}).value;
     else cfgStrings[lang] = { [defstring]: (req.body || {}).value };
+    await getState().setConfig("localizer_strings", cfgStrings);
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
+  })
+);
+
+router.post(
+  "/localizer/delete-string/:lang/:defstring",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { lang, defstring } = req.params;
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgStrings = getState().getConfigCopy("localizer_strings");
+    if (cfgStrings[lang]) delete cfgStrings[lang][defstring];
     await getState().setConfig("localizer_strings", cfgStrings);
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
