@@ -307,12 +307,7 @@ const fieldFlow = (req) =>
       try {
         await db.withTransaction(async () => {
           if (context.id) {
-            const field = await Field.findOne({ id: context.id });
-
-            if (fldRow.label && field.label != fldRow.label) {
-              fldRow.name = Field.labelToName(fldRow.label);
-            }
-
+            const field = await Field.findOne({ id: context.id });          
             await field.update(fldRow);
             Trigger.emitEvent(
               "AppChange",
