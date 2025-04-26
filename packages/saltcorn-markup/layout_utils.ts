@@ -44,7 +44,7 @@ const labelToId = (item: string): string => text(item.replace(" ", ""));
  * @returns true if the link is active
  */
 const activeChecker = (link: string, currentUrl: string) =>
-  new RegExp(`^${link}(\\/|$)`).test(currentUrl);
+  new RegExp(`^${link}(\\/|\\?|#|$)`).test(currentUrl);
 
 /**
  * @param currentUrl
