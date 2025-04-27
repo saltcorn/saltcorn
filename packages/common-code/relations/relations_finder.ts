@@ -64,7 +64,11 @@ export class RelationsFinder {
             );
           if (targetTbl.name === "users" && paths.length === 0) {
             result.push(
-              new Relation(".", targetTbl.name, ViewDisplayType.NO_ROW_LIMIT)
+              new Relation(
+                Relation.fixedUserRelation,
+                targetTbl.name,
+                ViewDisplayType.NO_ROW_LIMIT
+              )
             );
           }
           break;

@@ -257,7 +257,10 @@ const make_link = (
  */
 const parse_view_select = (view, relation) => {
   if (relation) {
-    const { sourcetable, path } = parseRelationPath(relation);
+    const { sourcetable, path } =
+      relation === Relation.fixedUserRelation
+        ? { sourcetable: "users", path: [] }
+        : parseRelationPath(relation);
     return {
       type: "RelationPath",
       viewname: view,

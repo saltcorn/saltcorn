@@ -530,6 +530,7 @@ const renderRows = async (
           if (row[k]?.id === null) return null;
           return row[k]?.id || row[k];
         };
+        const get_user_id = () => (extra.req.user ? extra.req.user.id : 0);
         if (view.view_select.type === "RelationPath" && view.table_id) {
           const targetTbl = Table.findOne({ id: view.table_id });
           const relation = new Relation(
@@ -537,7 +538,10 @@ const renderRows = async (
             targetTbl.name,
             displayType(await view.get_state_fields())
           );
-          state1 = pathToState(relation, get_row_val);
+          state1 = pathToState(
+            relation,
+            relation.isFixedRelation() ? get_user_id : get_row_val
+          );
         } else {
           switch (view.view_select.type) {
             case "Own":

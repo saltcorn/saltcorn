@@ -1,13 +1,19 @@
 import React from "react";
 import { removeWhitespaces } from "./utils";
-import { parseLegacyRelation, RelationType } from "@saltcorn/common-code";
+import {
+  parseLegacyRelation,
+  RelationType,
+  Relation,
+} from "@saltcorn/common-code";
 
-const buildBadgeCfgs = (sourceTblName, type, path, caches) => {
+const buildBadgeCfgs = (sourceTblName, type, path, caches, relString) => {
   if (type === RelationType.OWN)
     return [{ table: `${sourceTblName} (same table)` }];
   else if (type === RelationType.INDEPENDENT)
     return [{ table: "None (no relation)" }];
   else if (path.length === 0) return [{ table: "invalid relation" }];
+  else if (relString === Relation.fixedUserRelation)
+    return [{ table: "logged in user" }];
   else {
     const result = [];
     let currentCfg = null;
@@ -83,7 +89,8 @@ export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
           relation.sourceTblName,
           relation.type,
           relation.path,
-          caches
+          caches,
+          relation.relationString
         ).map(buildBadge)}
       </div>
     );
@@ -102,7 +109,13 @@ export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
     else
       return (
         <div className="overflow-scroll">
-          {buildBadgeCfgs(parentTbl, type, path, caches).map(buildBadge)}
+          {buildBadgeCfgs(
+            parentTbl,
+            type,
+            path,
+            caches,
+            relation.relationString
+          ).map(buildBadge)}
         </div>
       );
   }

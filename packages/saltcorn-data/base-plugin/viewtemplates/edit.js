@@ -845,12 +845,22 @@ const transformForm = async ({
             segment.type = "blank";
             segment.contents = div({ "sc-load-on-assign-id": view.name });
             return;
-          } else if (!row && type !== RelationType.INDEPENDENT) {
+          } else if (
+            !row &&
+            type !== RelationType.INDEPENDENT &&
+            !relation.isFixedRelation()
+          ) {
             segment.type = "blank";
             segment.contents = "";
             return;
           }
-          state = pathToState(relation, (k) => row[k]);
+          const userId = req?.user?.id;
+          state = pathToState(
+            relation,
+            relation.isFixedRelation()
+              ? () => userId
+              : (k) => row[k]
+          );
         }
       } else {
         const isIndependent = view_select.type === "Independent";
