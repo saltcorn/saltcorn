@@ -860,5 +860,17 @@
 	"Always show create view": "Vis altid opret visning",
 	"If off, only show create view if the query state is about the current user": "Hvis slukket, vis kun opret visning, hvis forespørgselstilstanden handler om den nuværende bruger.",
 	"The current theme has no user specific settings": "The current theme has no user specific settings",
-	"View '%s' was loaded": "View '%s' was loaded"
+	"View '%s' was loaded": "View '%s' was loaded",
+	"After delete": "After delete",
+	"Working directory": "Working directory",
+	"All tags": "All tags",
+	"Manage tags...": "Manage tags...",
+	"Triggers on table": "Triggers on table",
+	"Create trigger": "Create trigger",
+	"Create model": "Create model",
+	"Delete table": "Delete table",
+	"Delete table+views+triggers": "Delete table+views+triggers",
+	"Sync information": "Sync information",
+	"Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app": "Sync information tracks the last modification or deletion timestamp so that the table data can be synchronized with the mobile app",
+	"Models": "Models"
 }
