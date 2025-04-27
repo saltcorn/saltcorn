@@ -1551,7 +1551,7 @@ const ButtonOrLinkSettingsRows = ({
         ]
       : []),
     values[keyPrefix + "style"] !== "on_page_load" ? (
-      <Fragment>
+      <Fragment key="btnfrag">
         <tr key="btntitle">
           <td>
             <label>Hover title</label>
@@ -1773,7 +1773,16 @@ export const buildLayers = (relations, tableName, tableNameCache) => {
         fkeys: [],
         relPath: relation.relationString,
       });
-    } else {
+    } else if (relation.isFixedRelation()) {
+      currentLevel.fkeys.push({
+        name: "logged in user",
+        table: "users",
+        inboundKeys: [],
+        fkeys: [],
+        relPath: relation.relationString,
+      });
+    }
+    else {
       let currentTbl = relation.sourceTblName;
       for (const pathElement of relation.path) {
         if (pathElement.inboundKey) {

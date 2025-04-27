@@ -2806,10 +2806,14 @@ const pathToState = (relation, getRowVal) => {
     case RelationType.NONE:
       return {};
     case RelationType.RELATION_PATH:
-      return {
-        [relation.relationString]:
-          getRowVal(path[0].fkey ? path[0].fkey : pkName) || "NULL",
-      };
+      return relation.isFixedRelation()
+        ? {
+            [pkName]: getRowVal(pkName),
+          }
+        : {
+            [relation.relationString]:
+              getRowVal(path[0].fkey ? path[0].fkey : pkName) || "NULL",
+          };
   }
 };
 

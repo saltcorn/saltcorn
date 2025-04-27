@@ -12,6 +12,8 @@ export class Relation {
   viewDisplayType: any;
   path: any[];
 
+  static fixedUserRelation = ".users._logged_in_ref_without_rel_";
+
   /**
    * @param relationString
    * @param targetTblName
@@ -25,16 +27,26 @@ export class Relation {
     this.relationString = relationString;
     this.targetTblName = targetTblName;
     this.viewDisplayType = viewDisplayType;
-    const { sourcetable, path } = parseRelationPath(relationString);
-    this.sourceTblName = sourcetable;
-    this.path = path;
+    if (this.isFixedRelation()) {
+      this.sourceTblName = "users";
+      this.path = [
+        {
+          fkey: "logged in user",
+        },
+      ];
+    } else {
+      const { sourcetable, path } = parseRelationPath(relationString);
+      this.sourceTblName = sourcetable;
+      this.path = path;
+    }
   }
 
   /**
    * get the relation type
    */
   get type() {
-    if (this.path.length === 1 && this.path[0].inboundKey)
+    if (this.isFixedRelation()) return RelationType.RELATION_PATH;
+    else if (this.path.length === 1 && this.path[0].inboundKey)
       return this.viewDisplayType === ViewDisplayType.NO_ROW_LIMIT
         ? RelationType.CHILD_LIST
         : ViewDisplayType.ROW_REQUIRED
@@ -50,5 +62,9 @@ export class Relation {
         ? RelationType.OWN
         : RelationType.INDEPENDENT;
     else return RelationType.RELATION_PATH;
+  }
+
+  isFixedRelation() {
+    return this.relationString === Relation.fixedUserRelation;
   }
 }
