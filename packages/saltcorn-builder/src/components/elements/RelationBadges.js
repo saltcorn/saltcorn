@@ -106,7 +106,7 @@ export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
           {buildBadge({ table: path[0].table }, 0)}
         </div>
       );
-    else
+    else if (relation)
       return (
         <div className="overflow-scroll">
           {buildBadgeCfgs(
@@ -118,5 +118,6 @@ export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
           ).map(buildBadge)}
         </div>
       );
+    else return null;
   }
 };
