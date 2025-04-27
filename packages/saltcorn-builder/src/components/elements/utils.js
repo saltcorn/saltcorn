@@ -1551,7 +1551,7 @@ const ButtonOrLinkSettingsRows = ({
         ]
       : []),
     values[keyPrefix + "style"] !== "on_page_load" ? (
-      <Fragment>
+      <Fragment key="btnfrag">
         <tr key="btntitle">
           <td>
             <label>Hover title</label>
