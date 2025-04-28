@@ -87,28 +87,28 @@ const convertToGraphMail = (mail: MailOpts) => {
         contentType: mail.html ? "HTML" : "Text",
         content: mail.html ? mail.html : mail.text,
       },
-      // comma separated list of to addresses
+      // semicolon separated list of to addresses
       toRecipients:
         typeof mail.to === "string"
-          ? mail.to.split(",").map((address: string) => ({
+          ? mail.to.split(/[,;]/).map((address: string) => ({
               emailAddress: {
                 address,
               },
             }))
           : [],
-      // comma separated list of cc addresses
+      // semicolon separated list of cc addresses
       ccRecipients:
         typeof mail.cc === "string"
-          ? mail.cc.split(",").map((address: string) => ({
+          ? mail.cc.split(/[,;]/).map((address: string) => ({
               emailAddress: {
                 address,
               },
             }))
           : [],
-      // comma separated list of bcc addresses
+      // semicolon separated list of bcc addresses
       bccRecipients:
         typeof mail.bcc === "string"
-          ? mail.bcc.split(",").map((address: string) => ({
+          ? mail.bcc.split(/[,;]/).map((address: string) => ({
               emailAddress: {
                 address,
               },
