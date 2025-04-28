@@ -438,6 +438,7 @@ router.post(
     let count = 0;
     for (const defstring of getState().getStringsForI18n()) {
       const cfgStrings = getState().getConfigCopy("localizer_strings", {});
+      if (!cfgStrings[lang]) cfgStrings[lang] = {};
       if (
         cfgStrings[lang][defstring] &&
         cfgStrings[lang][defstring] !== defstring
