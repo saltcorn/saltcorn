@@ -1,6 +1,8 @@
 # Notable changes
 
-## 1.1.4 - In beta
+## 1.2.0 - In Beta
+
+## 1.1.4 - Released 28 April 2025
 
 * Admin can disable 2FA for any user. 
 
