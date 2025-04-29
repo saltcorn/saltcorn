@@ -514,9 +514,6 @@ class File {
       const dir = path.dirname(newPath);
 
       const files_in_dir = new Set(fs.readdirSync(dir));
-      // console.log({files_in_dir});
-
-      // TODO make more efficient: read all names in dir and see if in array instead of existsSync every iteration
       for (let i = 1; i < 999999999; i++) {
         let newbase = newFnm;
 
