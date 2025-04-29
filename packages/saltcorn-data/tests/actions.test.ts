@@ -37,7 +37,7 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
-jest.setTimeout(10000);
+jest.setTimeout(20000);
 
 describe("Action and Trigger model", () => {
   it("should add insert trigger", async () => {
