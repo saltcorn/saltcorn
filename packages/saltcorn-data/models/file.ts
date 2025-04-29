@@ -511,7 +511,8 @@ class File {
     const newFnm = suggest || uuidv4();
     let newPath = join(file_store, tenant, newFnm);
     if (renameIfExisting) {
-      for (let i = 0; i < 5000; i++) {
+      // TODO make more efficient: read all names in dir and see if in array instead of existsSync every iteration
+      for (let i = 0; i < 50000; i++) {
         let newbase = newFnm;
         if (i) {
           const ext = path.extname(newFnm);
