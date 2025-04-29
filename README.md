@@ -270,6 +270,39 @@ to install everything. If successful, you should now be able to run `saltcorn` i
 
 ## Development tips
 
+### Dev server
+
+cd to your saltcorn repository clone, then then run this in shell:
+
+`npm run tsc; while [ 1 ]; do SALTCORN_NWORKERS=1 saltcorn serve --dev;done`
+
+This will restart the server and rebuild with tsc every time you save a file in the saltcorn repo or in a local plugin.
+
+### Working with local plugins
+
+A Local plugin means that the code lives in your home directory and when you edit it, the plugin updates in the instance after a restart (which will happen automatically on save, when running the dev server)
+
+If you have a plugin checked out in a directory, you can install it in the running instance through the CLI in two different ways:
+
+* If the plugin is not already installed in the instance, run `saltcorn install-plugin -d path_to_plugin` (if the plugin is checked out in path_to_plugin)
+
+* if the plugin is already installed in the instance, you can convert it to a local plugin with the `dev:localize-plugin` CLI command: `saltcorn dev:localize-plugin plugin_name {path_to_plugin}`.
+
+* You can also unlocalize a plugin, see the help for `dev:localize-plugin`
+
+### Running tests
+
+Run all jest tests with `saltcorn run-tests`
+
+Run jest tests for a specific package: `saltcorn run-tests saltcorn-data` to run tests for the data package - third argument should match directory name inside `packages/`
+
+Tests coverage reporter: `saltcorn run-tests saltcorn-data -c`
+
+Run a specific test by matching name: `saltcorn run-tests saltcorn-data -t 'File class'`
+
+
+See github/pytest.yml for running the python-based security tests. 
+
 ### Prettier
 
 we use prettier:
@@ -282,13 +315,6 @@ to format code:
 
 Run this before every pull request.
 
-### dev server
-
-`nodemon packages/saltcorn-cli/bin/saltcorn serve`
-
-to also watch a local module
-
-`nodemon --watch ../saltcorn-kanban/ packages/saltcorn-cli/bin/saltcorn serve`
 
 ### React build builder
 
