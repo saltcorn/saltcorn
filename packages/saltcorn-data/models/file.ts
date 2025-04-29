@@ -510,17 +510,23 @@ class File {
 
     const newFnm = suggest || uuidv4();
     let newPath = join(file_store, tenant, newFnm);
-    if (renameIfExisting) {
+    if (renameIfExisting && fs.existsSync(newPath)) {
+      const dir = path.dirname(newPath);
+
+      const files_in_dir = new Set(fs.readdirSync(dir));
+      // console.log({files_in_dir});
+
       // TODO make more efficient: read all names in dir and see if in array instead of existsSync every iteration
-      for (let i = 0; i < 50000; i++) {
+      for (let i = 1; i < 999999999; i++) {
         let newbase = newFnm;
-        if (i) {
-          const ext = path.extname(newFnm);
-          const filenoext = path.basename(newFnm, ext);
-          newbase = path.join(path.dirname(newFnm), `${filenoext}_${i}${ext}`);
-        }
-        newPath = File.get_new_path(newbase, false);
-        if (!fs.existsSync(newPath)) {
+
+        const ext = path.extname(newFnm);
+        const filenoext = path.basename(newFnm, ext);
+        const newFileName = `${filenoext}_${i}${ext}`;
+        newbase = path.join(path.dirname(newFnm), newFileName);
+
+        newPath = join(file_store, tenant, newbase);
+        if (!files_in_dir.has(newFileName)) {
           break;
         }
       }
