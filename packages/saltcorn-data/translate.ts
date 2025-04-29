@@ -21,6 +21,7 @@ export const translate = async (
   2FA is two factor authentication, building refers to building software applications. A view is a 
   representation of the database content on the screen for the user, and actions are user-defined ways of 
   manipulating data or files. The system is modular, and an extension is known as a Module. Use technical language. 
+  If there is more than one possibility, just give the most likely. Do not enumerate all the possibilities.
   Translate anything the user enters${srcLocale ? ` from ${languageNames.of(srcLocale)}` : ""} to ${languageNames.of(locale)}.`;
 
   process.stdout.write(`Translating ${str} to: `);
