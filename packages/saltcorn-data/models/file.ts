@@ -10,7 +10,12 @@ import { v4 as uuidv4 } from "uuid";
 import { join, parse } from "path";
 const { asyncMap } = require("../utils");
 import { mkdir, unlink } from "fs/promises";
-import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type {
+  Where,
+  SelectOptions,
+  Row,
+  PartialSome,
+} from "@saltcorn/db-common/internal";
 import axios from "axios";
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
@@ -764,6 +769,15 @@ namespace File {
     isDirectory?: boolean;
   };
 }
-type FileCfg = File.FileCfg;
+type FileCfg = PartialSome<
+  File,
+  | "filename"
+  | "location"
+  | "uploaded_at"
+  | "size_kb"
+  | "mime_super"
+  | "mime_sub"
+  | "min_role_read"
+>;
 
 export = File;

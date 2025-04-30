@@ -5,7 +5,12 @@
  * @subcategory models
  */
 import db from "../db";
-import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type {
+  Where,
+  SelectOptions,
+  Row,
+  PartialSome,
+} from "@saltcorn/db-common/internal";
 import User from "./user";
 import state from "../db/state";
 import emailModule from "./email";
@@ -108,14 +113,6 @@ class Notification {
   }
 }
 
-type NotificationCfg = {
-  id?: number;
-  created?: Date;
-  title: string;
-  body?: string;
-  link?: string;
-  user_id: number;
-  read?: boolean;
-};
+type NotificationCfg = PartialSome<Notification, "title" | "user_id">;
 
 export = Notification;

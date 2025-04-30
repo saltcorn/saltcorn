@@ -10,6 +10,7 @@ import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_fi
 import { instanceOfType, SuccessMessage } from "@saltcorn/types/common_types";
 import type { Layout } from "@saltcorn/types/base_types";
 import type { FieldLike } from "@saltcorn/types/base_types";
+import { PartialSome } from "@saltcorn/db-common/internal";
 
 /**
  * FieldRepeat Class
@@ -107,17 +108,6 @@ class FieldRepeat implements AbstractFieldRepeat {
   }
 }
 
-namespace FieldRepeat {
-  export type FieldRepeatCfg = {
-    name: string;
-    label?: string;
-    fields: Array<FieldLike>;
-    layout?: Layout;
-    showIf?: any;
-    metadata?: any;
-    fancyMenuEditor?: boolean;
-    defaultNone?: boolean;
-  };
-}
-type FieldRepeatCfg = FieldRepeat.FieldRepeatCfg;
+type FieldRepeatCfg = PartialSome<FieldRepeat, "name" | "fields">;
+
 export = FieldRepeat;

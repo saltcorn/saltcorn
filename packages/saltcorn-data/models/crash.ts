@@ -6,7 +6,11 @@
  */
 import db from "../db";
 import moment from "moment";
-import type { SelectOptions, Where } from "@saltcorn/db-common/internal";
+import type {
+  PartialSome,
+  SelectOptions,
+  Where,
+} from "@saltcorn/db-common/internal";
 /**
  * Crash Class
  * @category saltcorn-data
@@ -117,19 +121,9 @@ class Crash {
   }
 }
 
-namespace Crash {
-  export type CrashCfg = {
-    id?: number;
-    user_id?: number;
-    stack: string;
-    message: string;
-    tenant: string;
-    url: string;
-    occur_at: number | string | Date;
-    headers: string | any;
-    body?: any;
-  };
-}
-type CrashCfg = Crash.CrashCfg;
+type CrashCfg = PartialSome<
+  Crash,
+  "stack" | "message" | "tenant" | "url" | "occur_at" | "headers"
+>;
 
 export = Crash;
