@@ -2,7 +2,12 @@ import Page from "./page";
 import Table from "./table";
 import Trigger from "./trigger";
 import View from "./view";
-import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type {
+  Where,
+  SelectOptions,
+  Row,
+  PartialSome,
+} from "@saltcorn/db-common/internal";
 import db from "../db";
 import TagEntry from "./tag_entry";
 import type { TagEntryCfg } from "./tag_entry";
@@ -180,15 +185,7 @@ class Tag implements AbstractTag {
   }
 }
 
-namespace Tag {
-  export type TagCfg = {
-    name: string;
-    id?: number;
-    entries?: Array<TagEntry | TagEntryCfg>;
-  };
-}
-
 type AttrNames = "table_id" | "view_id" | "page_id" | "trigger_id";
-type TagCfg = Tag.TagCfg;
+type TagCfg = PartialSome<Tag, "name">;
 
 export = Tag;

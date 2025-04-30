@@ -355,16 +355,7 @@ async function addApplyButtonToForm(
     ];
   }
 }
-namespace Workflow {
-  export type WorkflowCfg = {
-    steps?: any[];
-    onDone?: (context: any) => any;
-    onStepSuccess?: (step: any, context: any) => any;
-    action?: string;
-    previewURL?: string;
-    onStepSave?: (step: any, context: any, formVals: any) => any;
-  };
-}
-type WorkflowCfg = Workflow.WorkflowCfg;
+
+type WorkflowCfg = Partial<Workflow>
 
 export = Workflow;

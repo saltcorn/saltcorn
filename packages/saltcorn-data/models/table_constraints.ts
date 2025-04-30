@@ -8,6 +8,7 @@ import {
   type Where,
   type SelectOptions,
   ftsFieldsSqlExpr,
+  PartialSome,
 } from "@saltcorn/db-common/internal";
 import db from "../db";
 import type Field from "./field";
@@ -25,7 +26,7 @@ class TableConstraint {
   type: TypeOption;
   id?: number | null;
   configuration: any;
-
+  table?: Table
   /**
    * @param {object} o
    */
@@ -192,15 +193,6 @@ class TableConstraint {
 const type_options = ["Unique", "Index", "Formula"] as const;
 type TypeOption = (typeof type_options)[number];
 
-namespace TableConstraint {
-  export type TableConstraintCfg = {
-    table_id?: number | string;
-    table?: Table;
-    id?: number;
-    configuration?: string | any;
-    type: TypeOption;
-  };
-}
-type TableConstraintCfg = TableConstraint.TableConstraintCfg;
+type TableConstraintCfg = PartialSome<TableConstraint, "type">;
 
 export = TableConstraint;
