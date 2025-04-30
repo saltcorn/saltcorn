@@ -34,7 +34,7 @@ export type FieldCfg = {
   help?: { topic: string; context?: Row; dynContext?: string[] };
   description?: string;
   type?: string | Type;
-  options?: any;
+  options?: Array<string | { label: string; value: string }>;
   required?: boolean;
   is_unique?: boolean;
   hidden?: boolean;
