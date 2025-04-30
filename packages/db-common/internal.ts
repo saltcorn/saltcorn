@@ -785,6 +785,9 @@ export type Row = { [key: string]: any };
 export type StrongRow = { [key: string]: Value };
 export type PrimaryKeyValue = number | string;
 
+//https://stackoverflow.com/a/57390160/19839414
+export type PartialSome<T, K extends keyof T> = Partial<T> & Pick<T, K>
+
 export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
   if (!inputWhere) return {};
   const whereObj: Where = {};
