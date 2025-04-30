@@ -399,7 +399,7 @@ export type FieldView = {
   fill_options?: (
     field: FieldLike,
     force_allow_none: boolean,
-    where: Where,
+    where: Where | undefined,
     extraCtx: GenObj,
     optionsQuery?: any,
     formFieldNames?: string[],

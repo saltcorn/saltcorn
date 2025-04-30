@@ -21,7 +21,12 @@ const {
   structuredClone,
   validSqlId,
 } = require("../utils");
-import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
+import type {
+  Where,
+  SelectOptions,
+  Row,
+  Value,
+} from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
   GenObj,
@@ -38,6 +43,7 @@ import type {
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 //import { fileSync } from "tmp-promise";
 import File from "./file";
+import { FieldView } from "@saltcorn/types/base_types";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -61,8 +67,8 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: (value: any, whole_rec?: any) => boolean | string | undefined;
-  showIf?: any;
+  validator: (value: Value, whole_rec?: Row) => boolean | string | undefined;
+  showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
   class: string;
@@ -72,7 +78,7 @@ class Field implements AbstractField {
   description?: string;
   type?: string | Type;
   typename?: string;
-  help?: { topic: string; context?: any };
+  help?: { topic: string; context?: Row; dynContext?: string[] };
   options?: any;
   required: boolean;
   is_unique: boolean;
@@ -95,9 +101,10 @@ class Field implements AbstractField {
   table?: AbstractTable | null;
   in_auto_save?: boolean;
   exclude_from_mobile?: boolean;
+  fieldviewObj?: FieldView;
+  preset_options?: string[];
 
   // to use 'this[k] = v'
-  [key: string]: any;
 
   /**
    * Constructor
@@ -958,7 +965,7 @@ class Field implements AbstractField {
    * @param {object} v
    * @returns {Promise<void>}
    */
-  async update(v: Row): Promise<void> {
+  async update(v: Partial<Field>): Promise<void> {
     const f = new Field({ ...this, ...v });
     const state = require("../db/state").getState();
     const rename: boolean = f.name !== this.name;
@@ -1026,14 +1033,15 @@ class Field implements AbstractField {
     }
     await db.update("_sc_fields", v, this.id);
 
-    Object.entries(v).forEach(([k, v]: [string, any]) => {
-      if (k !== "type") this[k] = v;
+    Object.keys(v).forEach((k: string) => {
+      // @ts-ignore
+      if (k !== "type") this[k] = v[k];
     });
     if (
       v.type &&
       v.type !== (typeof this.type === "string" ? this.type : this.type?.name)
     ) {
-      if (state.types[v.type]) {
+      if (typeof v.type === "string" && state.types[v.type]) {
         this.type = state.types[v.type];
       }
     }

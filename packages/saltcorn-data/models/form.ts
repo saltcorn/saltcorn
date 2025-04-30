@@ -33,7 +33,7 @@ const isFieldLike = (object: any): object is FieldLike => {
 class Form implements AbstractForm {
   fields: Array<Field | FieldRepeat>;
   errors: any;
-  values: any;
+  values: GenObj;
   action?: string;
   viewname?: string;
   layout?: Layout;
