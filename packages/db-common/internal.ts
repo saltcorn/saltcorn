@@ -146,7 +146,15 @@ const whereFTS = (
     }to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
 };
 
-export type Value = string | number | boolean | Date | Value[];
+export type Value =
+  | string
+  | number
+  | boolean
+  | Date
+  | Value[]
+  | null
+  | { [k: string]: Value };
+
 export type JsonPathElem = string | number;
 export type JsonPath = JsonPathElem | JsonPathElem[];
 
@@ -774,6 +782,7 @@ export const mkSelectOptions = (
 };
 
 export type Row = { [key: string]: any };
+export type StrongRow = { [key: string]: Value };
 export type PrimaryKeyValue = number | string;
 
 export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {

@@ -55,14 +55,17 @@ export const buildInsertSql = (
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
   const valPosList = kvs
-    .map(([k, v], ix: any) =>
-      v && v.next_version_by_id
+    .map(([k, v]) =>
+      v &&
+      typeof v === "object" &&
+      "next_version_by_id" in v &&
+      v.next_version_by_id
         ? `coalesce((select max(_version) from "${sqlsanitize(
             tbl
           )}" where id=${+v.next_version_by_id}), 0)+1`
         : reprAsJson(v, opts.jsonCols?.includes(k))
-        ? "json(?)"
-        : "?"
+          ? "json(?)"
+          : "?"
     )
     .join();
   const valList = kvs
