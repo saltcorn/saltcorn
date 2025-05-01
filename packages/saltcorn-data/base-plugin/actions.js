@@ -2038,8 +2038,19 @@ module.exports = {
         type: "Float",
         required: true,
       },
+      {
+        name: "sleep_where",
+        label: "Sleep where",
+        input_type: "select",
+        options: ["Client page", "Server"],
+      },
     ],
-    run: async ({ configuration: { seconds } }) => {
+
+    run: async ({ configuration: { seconds, sleep_where } }) => {
+      if (sleep_where === "Server") {
+        await sleep((seconds || 0) * 1000);
+        return;
+      }
       return {
         eval_js: `return new Promise((resolve) => setTimeout(resolve, ${
           (seconds || 0) * 1000
