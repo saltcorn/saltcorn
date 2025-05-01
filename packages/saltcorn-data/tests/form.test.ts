@@ -166,7 +166,7 @@ describe("String form with validator failure ", () => {
         label: "Name",
         type: "String",
         validator(s) {
-          if (s.length < 3) return "Too short";
+          if (s?.length < 3) return "Too short";
         },
       }),
     ],
@@ -188,7 +188,7 @@ describe("String form with validator success", () => {
         label: "Name",
         type: "String",
         validator(s) {
-          if (s.length < 3) return "Too short";
+          if (s?.length < 3) return "Too short";
         },
       }),
     ],

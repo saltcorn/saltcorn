@@ -1,3 +1,4 @@
+import { Row, Value } from "@saltcorn/db-common/internal";
 import type { GenObj, Type } from "../common_types";
 import type { AbstractTable } from "./abstract_table";
 
@@ -22,18 +23,18 @@ export type FieldCfg = {
   label?: string;
   name?: string;
   fieldview?: string;
-  validator?: (arg0: any) => boolean | string | undefined;
-  showIf?: any;
+  validator?: (value: any, whole_rec?: Row) => boolean | string | undefined;
+  showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
   class?: string;
   id?: number;
   default?: string;
   sublabel?: string;
-  help?: { topic: string; context?: any };
+  help?: { topic: string; context?: Row; dynContext?: string[] };
   description?: string;
   type?: string | Type;
-  options?: any;
+  options?: Array<string | { label: string; value: string }>;
   required?: boolean;
   is_unique?: boolean;
   hidden?: boolean;
@@ -46,7 +47,7 @@ export type FieldCfg = {
   input_type?: InputType;
   reftable_name?: string;
   reftable?: AbstractTable;
-  attributes?: string | GenObj;
+  attributes?: GenObj;
   table_id?: number;
   reftype?: string | Type;
   refname?: string;

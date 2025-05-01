@@ -73,15 +73,8 @@ class TagEntry implements AbstractTagEntry {
 }
 
 namespace TagEntry {
-  export type TagEntryCfg = {
-    id?: number;
-    tag_id?: number;
-    table_id?: number;
-    view_id?: number;
-    page_id?: number;
-    trigger_id?: number;
-  };
+  export type TagEntryCfg = Partial<TagEntry>
 }
-type TagEntryCfg = TagEntry.TagEntryCfg;
+type TagEntryCfg = Partial<TagEntry>;
 
 export = TagEntry;
