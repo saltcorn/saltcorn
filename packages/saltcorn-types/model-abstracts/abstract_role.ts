@@ -3,9 +3,6 @@ export interface AbstractRole {
   role: string;
 }
 
-export type RoleCfg = {
-  id: number;
-  role: string;
-};
+export type RoleCfg = AbstractRole
 
 export type RolePack = {} & RoleCfg;

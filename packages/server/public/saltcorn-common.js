@@ -2254,8 +2254,11 @@ function restrict_options(selector, restriction) {
 
 function handle_identical_fields(event) {
   let form = null;
-  if (event.currentTarget.tagName === "FORM") form = event.currentTarget;
-  else form = $(event.currentTarget).closest("form")[0];
+  if (event.srcElement) form = $(event.srcElement).closest("form")[0];
+  if (!form) {
+    if (event.currentTarget.tagName === "FORM") form = event.currentTarget;
+    else form = $(event.currentTarget).closest("form")[0];
+  }
   if (!form) {
     console.warn("No form found");
   } else {

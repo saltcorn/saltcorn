@@ -11,7 +11,12 @@ import { validate } from "email-validator";
 import Trigger from "./trigger";
 import Table from "./table";
 
-import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
+import {
+  Row,
+  SelectOptions,
+  Where,
+  PartialSome,
+} from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
   GenObj,
@@ -133,7 +138,7 @@ class User {
   async changePasswordTo(newpw: string, expireToken?: boolean): Promise<void> {
     const password = await User.hashPassword(newpw);
     this.password = password;
-    const upd: Row = { password };
+    const upd: Partial<User> = { password };
     if (expireToken) upd.reset_password_token = null;
     const { getState } = require("../db/state");
     if (getState().getConfig("plain_password_triggers", false))
@@ -443,7 +448,7 @@ class User {
    * @param row
    * @returns {Promise<void>}
    */
-  async update(row: Row, plainPassword?: string): Promise<void> {
+  async update(row: Partial<User>, plainPassword?: string): Promise<void> {
     if (plainPassword)
       await User.table.updateRow(
         row,
@@ -662,28 +667,10 @@ class User {
       : db.isSQLite
         ? date.valueOf()
         : date.toISOString();
-    await this.update({ last_mobile_login: dateVal });
+    await this.update({ last_mobile_login: dateVal as unknown as Date });
   }
 }
 
-namespace User {
-  export type UserCfg = {
-    id?: number | string;
-    email: string;
-    password: string;
-    disabled?: boolean;
-    language?: string;
-    _attributes?: string | any;
-    api_token?: string;
-    verification_token?: string;
-    verified_on?: Date | number | string;
-    role_id?: number | string;
-    reset_password_token?: string; // 10 chars length
-    reset_password_expiry?: Date | number | string;
-    last_mobile_login?: Date | number | string;
-    [key: string]: any;
-  };
-}
-type UserCfg = User.UserCfg;
+type UserCfg = PartialSome<User, "email" | "password">;
 
 export = User;

@@ -78,7 +78,7 @@ class Role implements AbstractRole {
    * @param {*} row
    * @returns {Promise<void>}
    */
-  public async update(row: Row): Promise<void> {
+  public async update(row: Partial<Role>): Promise<void> {
     await db.update("_sc_roles", row, this.id);
   }
 }

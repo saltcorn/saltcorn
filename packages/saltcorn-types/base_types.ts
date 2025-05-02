@@ -39,15 +39,22 @@ type FieldLikeBasics = {
   sublabel?: string;
   validator?: (arg0: any) => boolean | string | undefined;
   attributes?: GenObj;
-  showIf?: any;
+  showIf?: { [field_name: string]: string | boolean | string[] };
 };
+type FieldLikeWithSelectInputType = {
+  input_type: "select";
+  options: Array<string | { label: string; value: string }>;
+} & FieldLikeBasics;
 type FieldLikeWithInputType = {
   input_type: string;
 } & FieldLikeBasics;
 type FieldLikeWithType = {
   type: string | Type;
 } & FieldLikeBasics;
-export type FieldLike = FieldLikeWithInputType | FieldLikeWithType;
+export type FieldLike =
+  | FieldLikeWithSelectInputType
+  | FieldLikeWithInputType
+  | FieldLikeWithType;
 
 export type Header = {
   script?: string;
@@ -399,7 +406,7 @@ export type FieldView = {
   fill_options?: (
     field: FieldLike,
     force_allow_none: boolean,
-    where: Where,
+    where: Where | undefined,
     extraCtx: GenObj,
     optionsQuery?: any,
     formFieldNames?: string[],
