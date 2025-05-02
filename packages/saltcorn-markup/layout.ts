@@ -43,9 +43,9 @@ import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
 import helpers = require("./helpers");
 import renderMJML from "./mjml-layout";
 const { search_bar } = helpers;
-import { StyleVal, Element } from "./types";
+import { StyleVal, Element, ClassVal } from "./types";
 
-declare const window: any;
+declare const window: Window & typeof globalThis;
 
 /**
  * @param {any|any[]} [alerts]
@@ -61,9 +61,17 @@ const couldHaveAlerts = (alerts?: any | any[]): boolean =>
  */
 const makeSegments = (
   body: string | any,
-  alerts: any[],
-  isWeb: boolean
-): any => {
+  isWeb: boolean,
+  alerts?: Array<{
+    type: "error" | "danger" | "success" | "warning";
+    msg: string;
+  }>
+): {
+  above: Array<{
+    type: string;
+    contents: Element;
+  }>;
+} => {
   const toastSegments =
     couldHaveAlerts(alerts) && !body.noWrapTop
       ? [
@@ -81,7 +89,7 @@ const makeSegments = (
                 "aria-live": "polite",
                 "aria-atomic": "true",
               },
-              (alerts || []).map((a: any) => toast(a.type, a.msg))
+              (alerts || []).map((a) => toast(a.type, a.msg))
             ),
           },
         ]
@@ -155,7 +163,10 @@ namespace LayoutExports {
     blockDispatch?: any;
     layout: any;
     role?: any;
-    alerts?: any;
+    alerts?: Array<{
+      type: "error" | "danger" | "success" | "warning";
+      msg: string;
+    }>;
     is_owner?: boolean;
     req?: any;
     hints?: any;
@@ -297,7 +308,14 @@ const render = ({
         : segment.encoded_image
           ? segment.encoded_image
           : segment.url;
-      const imageCfg: any = {
+      const imageCfg: {
+        class?: string[] | ClassVal;
+        alt?: string;
+        style: StyleVal;
+        srcset?: string;
+        src?: string;
+        "mobile-img-path"?: string;
+      } = {
         class: [
           segment.style && segment.style.width ? null : "w-100",
           segment.customClass,
@@ -672,7 +690,14 @@ const render = ({
       const useImgTagAsBg = hasImgBg && imageSize !== "repeat" && isTop;
       let image = undefined;
       if (hasImgBg && useImgTagAsBg) {
-        const imgCfg: any = {
+        const imgCfg: {
+          class: string[] | ClassVal | undefined;
+          srcset?: string | undefined;
+          src?: string | undefined;
+          "mobile-img-path"?: string | undefined;
+          style: StyleVal | undefined;
+          alt: string | undefined;
+        } = {
           class: `containerbgimage `,
           srcset: imgResponsiveWidths
             ? imgResponsiveWidths
@@ -696,7 +721,14 @@ const render = ({
           }px ${borderStyle || "none"} ${borderColor || "black"};`
         : "";
 
-      const transforms: any = { ...transform };
+      const transforms: {
+        [key: string]: string;
+        rotate: string;
+        scaleX: string;
+        scaleY: string;
+        translateX: string;
+        translateY: string;
+      } = { ...transform };
       if (rotate && rotate !== "0") transforms.rotate = `${rotate}deg`;
       let stransform = Object.keys(transforms).length
         ? "transform: " +
@@ -838,7 +870,8 @@ const render = ({
 
       if (cardDeck) {
         const sameWidths =
-          !segment.widths || segment.widths.every((w: any) => w === defwidth);
+          !(segment.widths as number[]) ||
+          (segment.widths as number[]).every((w) => w === defwidth);
         markup = div(
           {
             class: [
@@ -856,29 +889,39 @@ const render = ({
             ],
             style: segment.style,
           },
-          segment.besides.map((t: any, ixb: number) => {
-            if (!t) return ""; //blank col
-            const newt = { ...t };
-            newt.class = t.class
-              ? Array.isArray(t.class)
-                ? ["h-100", ...t.class]
-                : t.class + " h-100"
-              : "h-100";
-            return div(
-              {
-                class: sameWidths
-                  ? "col"
-                  : `col-${
-                      segment.breakpoint
-                        ? segment.breakpoint + "-"
-                        : segment.breakpoints && segment.breakpoints[ixb]
-                          ? segment.breakpoints[ixb] + "-"
-                          : ""
-                    }${segment.widths ? segment.widths[ixb] : defwidth}`,
+          segment.besides.map(
+            (
+              t: {
+                class?: string | string[];
+                style?: StyleVal;
+                customClass?: string;
+                [key: string]: any;
               },
-              go(newt, false, ixb)
-            );
-          })
+              ixb: number
+            ) => {
+              if (!t) return ""; //blank col
+              const newt = { ...t };
+              newt.class = t.class
+                ? Array.isArray(t.class)
+                  ? ["h-100", ...t.class]
+                  : t.class + " h-100"
+                : "h-100";
+              return div(
+                {
+                  class: sameWidths
+                    ? "col"
+                    : `col-${
+                        segment.breakpoint
+                          ? segment.breakpoint + "-"
+                          : segment.breakpoints && segment.breakpoints[ixb]
+                            ? segment.breakpoints[ixb] + "-"
+                            : ""
+                      }${segment.widths ? segment.widths[ixb] : defwidth}`,
+                },
+                go(newt, false, ixb)
+              );
+            }
+          )
         );
       } else
         markup = div(
@@ -957,7 +1000,7 @@ const render = ({
       is_owner,
       req,
     });
-  else return go(makeSegments(layout, alerts, isWeb), true, 0);
+  else return go(makeSegments(layout, isWeb, alerts), true, 0);
 };
 
 // declaration merging

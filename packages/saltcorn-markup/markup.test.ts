@@ -1,6 +1,9 @@
 import { describe, it, expect } from "@jest/globals";
-import tags = require("./tags");
-import mjml = require("./mjml-tags");
+// import tags = require("./tags");
+// import mjml = require("./mjml-tags");
+import * as tags from "./tags";
+import * as mjml from "./mjml-tags";
+
 const { a, input, div, ul, text, text_attr, i, hr, genericElement } = tags;
 
 describe("tags", () => {

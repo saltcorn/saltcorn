@@ -31,7 +31,9 @@ const isBlock = (segment: any) => {
   }
 };
 
-const transformTextStyle = (textStyle: string): { [key: string]: string | number } => {
+const transformTextStyle = (
+  textStyle: string
+): { [key: string]: string | number } => {
   switch (textStyle) {
     case "h1":
       return {
@@ -160,7 +162,10 @@ namespace LayoutExports {
     blockDispatch?: any;
     layout: any;
     role?: any;
-    alerts?: any;
+    alerts?: Array<{
+      type: "error" | "danger" | "success" | "warning";
+      msg: string;
+    }>;
     is_owner?: boolean;
     req?: any;
   };
