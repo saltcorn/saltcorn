@@ -4,6 +4,7 @@
  */
 
 import tags = require("./tags");
+import { Falsy } from "./types";
 const { a, text, div, input, text_attr, ul, li, span, label, i, button } = tags;
 
 /**
@@ -22,7 +23,11 @@ const isdef = (x: any): boolean => typeof x !== "undefined";
  */
 const select_options = (
   v: string | any,
-  hdr: any,
+  hdr: {
+    name: string;
+    options: Array<{ label: string; value: string } | string>;
+    [key: string]: any;
+  } = { name: "", options: [] },
   force_required?: boolean,
   neutral_label: string = "",
   sort: boolean = true
@@ -31,22 +36,22 @@ const select_options = (
   const options1 = force_required
     ? options0.filter((o: any) => (typeof o === "string" ? o : o.value))
     : options0;
-  let options = options1.map((o: any) => ({
+  let options = options1.map((o) => ({
     label: typeof o === "string" ? o : o.label,
     value: typeof o === "string" ? o : o.value,
   }));
   if (sort)
-    options.sort((a: any, b: any) =>
+    options.sort((a, b) =>
       (a.label?.toLowerCase?.() || a.label) >
       (b.label?.toLowerCase?.() || b.label)
         ? 1
         : -1
     );
-  options = options.map((o: any) =>
+  options = options.map((o) =>
     o.value === "" ? { ...o, label: neutral_label || o.label } : o
   );
   const selected = typeof v === "object" ? (v ? v[hdr.name] : undefined) : v;
-  const isSelected = (value: any) =>
+  const isSelected = (value: string) =>
     !selected
       ? false
       : Array.isArray(selected)
@@ -54,7 +59,7 @@ const select_options = (
         : `${value}` === `${selected}`;
 
   return options
-    .map((o: any) => {
+    .map((o: { label: string; value: string; [key: string]: any }) => {
       const label = o.label;
       const value = o.value;
       return `<option value="${text_attr(value)}"${
@@ -68,11 +73,12 @@ const select_options = (
 namespace HelpersExports {
   export type RadioGroupOpts = {
     name: string;
-    options: any;
+    options: Array<{ label: string; value: string } | string>;
     value: string;
-    inline: any;
+    inline: boolean;
     form_name: string;
-    onChange: any;
+    onChange: string | undefined;
+    required: boolean;
     [key: string]: any; // "...rest" properties
   };
 }
@@ -101,8 +107,8 @@ const radio_group = ({
 }: RadioGroupOpts): string =>
   div(
     (options || [])
-      .filter((o: any) => (typeof o === "string" ? o : o.value))
-      .map((o: any, ix: number) => {
+      .filter((o) => (typeof o === "string" ? o : o.value))
+      .map((o, ix: number) => {
         const myvalue = typeof o === "string" ? o : o.value;
         const id = `input${text_attr(name)}${ix}`;
         return div(
@@ -131,11 +137,11 @@ const radio_group = ({
 namespace HelpersExports {
   export type CheckBoxGroupOpts = {
     name: string;
-    options: any;
+    options: Array<{ label: string; value: string } | string>;
     value: string;
     inline: boolean;
     form_name: string;
-    onChange: any;
+    onChange: string | undefined;
     [key: string]: any; // "...rest" properties
   };
 }
@@ -152,8 +158,8 @@ const checkbox_group = ({
 }: CheckBoxGroupOpts): string =>
   div(
     (options || [])
-      .filter((o: any) => (typeof o === "string" ? o : o.value))
-      .map((o: any, ix: number) => {
+      .filter((o) => (typeof o === "string" ? o : o.value))
+      .map((o, ix: number) => {
         const myvalue = typeof o === "string" ? o : o.value;
         const id = `input${text_attr(name)}${ix}`;
         return div(
@@ -269,7 +275,7 @@ namespace HelpersExports {
     contents: string;
     badges?: string[];
     stateField: string;
-    onClick: any;
+    onClick: string | undefined;
     hints?: any;
   };
 }
@@ -283,7 +289,7 @@ type SearchBarOpts = HelpersExports.SearchBarOpts;
  */
 const search_bar = (
   name: string,
-  v: any,
+  v: string | number,
   {
     placeHolder,
     has_dropdown,

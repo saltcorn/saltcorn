@@ -28,7 +28,7 @@ const {
   input,
 } = tags;
 
-declare const window: any;
+declare const window: Window & typeof globalThis;
 const isNode = typeof window === "undefined";
 
 /**
@@ -51,21 +51,34 @@ const activeChecker = (link: string, currentUrl: string) =>
  * @param item
  * @returns
  */
-const active = (currentUrl: string, item: any): boolean =>
+const active = (currentUrl: string, item: SectionOpts): boolean =>
   (item.link && activeChecker(item.link, currentUrl)) ||
   (item.subitems &&
-    item.subitems.some(
-      (si: any) => si.link && activeChecker(si.link, currentUrl)
-    ));
+    item.subitems.some((si) => si.link && activeChecker(si.link, currentUrl)));
+
+type SectionOpts = {
+  location: string;
+  subitems: SectionOpts[];
+  link: string;
+  items?: SectionOpts[];
+  type?: string;
+  icon?: string;
+  label: string;
+  target_blank?: boolean;
+  style?: string;
+  class?: string;
+  tooltip?: string;
+  isUser?: boolean;
+};
 
 /**
  * @param {object[]} [sections]
  * @returns {object[]}
  */
-const innerSections = (sections?: any[]) => {
-  var items = new Array<any>();
+const innerSections = (sections: SectionOpts[]): SectionOpts[] => {
+  const items: SectionOpts[] = [];
   (sections || []).forEach((section) => {
-    (section.items || []).forEach((item: any) => {
+    (section.items || []).forEach((item: SectionOpts) => {
       items.push(item);
     });
   });
@@ -78,13 +91,19 @@ const makeTooltip = (text: string, placement: string = "top") => ({
   title: text,
 });
 
-type NavSubItemsOpts = {
-  label: string;
-  subitems: any[];
-  icon?: string;
-  isUser: boolean;
-  tooltip?: string;
-};
+// type NavSubItemsOpts = {
+//   label: string;
+//   subitems: any[];
+//   icon?: string;
+//   isUser: boolean;
+//   tooltip?: string;
+// };
+
+// Defining NavSubItemsOpts as a type alias for SectionOpts
+type NavSubItemsOpts = Pick<
+  SectionOpts,
+  "label" | "subitems" | "icon" | "isUser" | "tooltip"
+>;
 
 const show_icon = (icon: string | undefined, cls?: string, no_fw?: Boolean) =>
   icon && icon !== "empty"
@@ -110,39 +129,46 @@ const show_icon_and_label = (
         : i({ class: [icon, cls] })) + (label === " " ? "" : "&nbsp;")
     : "") + (label === " " && icon ? "" : label);
 
-const navSubItemsIterator = (si: any) =>
+// type SiOpts = {
+//   type: string;
+//   label: string;
+//   link: string;
+//   target_blank: boolean;
+// }
+
+const navSubItemsIterator = (si: SectionOpts): string =>
   si?.type === "Separator"
     ? hr({ class: "mx-3 my-1" })
     : si?.subitems
-    ? div(
-        {
-          class: "dropdown-item btn-group dropstart",
-          ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
-        },
-        a(
+      ? div(
           {
-            type: "button",
-            class: "dropdown-item dropdown-toggle p-0",
-            "data-bs-toggle": "dropdown",
-            "aria-expanded": "false",
+            class: "dropdown-item btn-group dropstart",
+            ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
           },
-          si.label
-        ),
-        ul(
-          { class: "dropdown-menu" },
-          si?.subitems.map((si1: any) => li(navSubItemsIterator(si1)))
+          a(
+            {
+              type: "button",
+              class: "dropdown-item dropdown-toggle p-0",
+              "data-bs-toggle": "dropdown",
+              "aria-expanded": "false",
+            },
+            si.label
+          ),
+          ul(
+            { class: "dropdown-menu" },
+            si?.subitems.map((si1) => li(navSubItemsIterator(si1)))
+          )
         )
-      )
-    : a(
-        {
-          class: ["dropdown-item", si.style || "", si.class],
-          href: si.link,
-          target: si.target_blank ? "_blank" : undefined,
-          ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
-        },
-        show_icon(si.icon, "mr-05"),
-        si.label
-      );
+      : a(
+          {
+            class: ["dropdown-item", si.style || "", si.class],
+            href: si.link,
+            target: si.target_blank ? "_blank" : undefined,
+            ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
+          },
+          show_icon(si.icon, "mr-05"),
+          si.label
+        );
 
 /**
  * @param {object} opts
@@ -180,7 +206,7 @@ const navSubitems = ({
         class: ["dropdown-menu", isUser && "dropdown-menu-end"],
         "aria-labelledby": `dropdown${labelToId(label)}`,
       },
-      subitems.map(navSubItemsIterator)
+      subitems?.map(navSubItemsIterator)
     )
   );
 };
@@ -190,7 +216,7 @@ const navSubitems = ({
  * @param {object[]} sections
  * @returns {div}
  */
-const rightNavBar = (currentUrl: string, sections: any[]): string =>
+const rightNavBar = (currentUrl: string, sections: SectionOpts[]): string =>
   div(
     { class: "collapse navbar-collapse", id: "navbarResponsive" },
     ul(
@@ -200,57 +226,57 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
         s.location === "Mobile Bottom"
           ? ""
           : s.subitems
-          ? navSubitems(s)
-          : s.link
-          ? li(
-              {
-                class: ["nav-item", active(currentUrl, s) && "active"],
-              },
-              a(
-                {
-                  class: ["nav-link js-scroll-trigger", s.style || ""],
-                  href: text(s.link),
-                  target: s.target_blank ? "_blank" : undefined,
-                  ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
-                },
-                show_icon(s.icon, "mr-05"),
-                text(s.label)
-              )
-            )
-          : s.type === "Separator"
-          ? div({ class: "border-start", style: "width:1px" })
-          : s.type === "Search"
-          ? li(
-              form(
-                {
-                  action: "/search",
-                  class: "menusearch",
-                  method: "get",
-                },
-                div(
-                  { class: "input-group search-bar" },
-
-                  input({
-                    type: "search",
-                    class: "form-control search-bar ps-2 hasbl",
-                    placeholder: s.label,
-                    id: "inputq",
-                    name: "q",
-                    "aria-label": "Search",
-                    "aria-describedby": "button-search-submit",
-                  }),
-                  button(
+            ? navSubitems(s)
+            : s.link
+              ? li(
+                  {
+                    class: ["nav-item", active(currentUrl, s) && "active"],
+                  },
+                  a(
                     {
-                      class: "btn btn-outline-secondary search-bar",
-                      type: "submit",
+                      class: ["nav-link js-scroll-trigger", s.style || ""],
+                      href: text(s.link),
+                      target: s.target_blank ? "_blank" : undefined,
                       ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
                     },
-                    i({ class: "fas fa-search" })
+                    show_icon(s.icon, "mr-05"),
+                    text(s.label)
                   )
                 )
-              )
-            )
-          : ""
+              : s.type === "Separator"
+                ? div({ class: "border-start", style: "width:1px" })
+                : s.type === "Search"
+                  ? li(
+                      form(
+                        {
+                          action: "/search",
+                          class: "menusearch",
+                          method: "get",
+                        },
+                        div(
+                          { class: "input-group search-bar" },
+
+                          input({
+                            type: "search",
+                            class: "form-control search-bar ps-2 hasbl",
+                            placeholder: s.label,
+                            id: "inputq",
+                            name: "q",
+                            "aria-label": "Search",
+                            "aria-describedby": "button-search-submit",
+                          }),
+                          button(
+                            {
+                              class: "btn btn-outline-secondary search-bar",
+                              type: "submit",
+                              ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
+                            },
+                            i({ class: "fas fa-search" })
+                          )
+                        )
+                      )
+                    )
+                  : ""
       )
     )
   );
@@ -259,7 +285,7 @@ const rightNavBar = (currentUrl: string, sections: any[]): string =>
  * @param {object[]} sections
  * @returns {boolean}
  */
-const hasMobileItems = (sections: any[]): boolean =>
+const hasMobileItems = (sections: SectionOpts[]): boolean =>
   innerSections(sections).some((s) => s.location === "Mobile Bottom");
 
 /**
@@ -271,7 +297,7 @@ const hasMobileItems = (sections: any[]): boolean =>
  */
 const mobileBottomNavBar = (
   currentUrl: string,
-  sections: any[],
+  sections: SectionOpts[],
   cls: string = "",
   clsLink: string = ""
 ): string =>
@@ -286,27 +312,27 @@ const mobileBottomNavBar = (
           s.location !== "Mobile Bottom"
             ? ""
             : //: s.subitems
-            //? navSubitems(s)
-            s.link
-            ? div(
-                {
-                  class: [
-                    "mt-2 text-center",
-                    active(currentUrl, s) ? "active" : "opacity-50",
-                  ],
-                },
-                a(
+              //? navSubitems(s)
+              s.link
+              ? div(
                   {
-                    class: [s.style || "", clsLink],
-                    href: text(s.link),
-                    target: s.target_blank ? "_blank" : undefined,
+                    class: [
+                      "mt-2 text-center",
+                      active(currentUrl, s) ? "active" : "opacity-50",
+                    ],
                   },
-                  show_icon(s.icon, "fa-lg", true),
-                  br(),
-                  small(text(s.label))
+                  a(
+                    {
+                      class: [s.style || "", clsLink],
+                      href: text(s.link),
+                      target: s.target_blank ? "_blank" : undefined,
+                    },
+                    show_icon(s.icon, "fa-lg", true),
+                    br(),
+                    small(text(s.label))
+                  )
                 )
-              )
-            : ""
+              : ""
         )
       )
     : "";
@@ -369,9 +395,14 @@ const leftNavBar = (namelogo?: LeftNavBarOpts): string[] => {
  */
 const navbar = (
   brand: LeftNavBarOpts,
-  sections: any[],
+  sections: SectionOpts[],
   currentUrl: string,
-  opts: any = { fixedTop: true }
+  opts: {
+    fixedTop: boolean;
+    class?: string;
+    colorscheme?: string;
+    fluid?: boolean;
+  } = { fixedTop: true }
 ): string =>
   nav(
     {
@@ -400,10 +431,10 @@ const alert = (type: string, s: string): string => {
     realtype === "success"
       ? "fa-check-circle"
       : realtype === "danger"
-      ? "fa-times-circle"
-      : realtype === "warning"
-      ? "fa-exclamation-triangle"
-      : "";
+        ? "fa-times-circle"
+        : realtype === "warning"
+          ? "fa-exclamation-triangle"
+          : "";
   return s && s.length > 0
     ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
         <i class="fas ${icon} me-1"></i>${s}
@@ -427,10 +458,10 @@ const toast = (type: string, s: string, id?: string): string => {
       realtype === "success"
         ? "fa-check-circle"
         : realtype === "danger"
-        ? "fa-times-circle"
-        : realtype === "warning"
-        ? "fa-exclamation-triangle"
-        : "";
+          ? "fa-times-circle"
+          : realtype === "warning"
+            ? "fa-exclamation-triangle"
+            : "";
     return div(
       {
         class: "toast show",
@@ -514,6 +545,26 @@ const standardBreadcrumbItem =
       href ? a({ href }, text) : text,
       postLinkText ? "&nbsp;" + postLinkText : ""
     );
+    
+namespace Workflow {
+  export type WorkflowOpts = {
+    steps: StepsOpts[];
+    startAtStepURL?: (stepName: string) => string;
+    saveURL: string;
+  };
+  export type StepsOpts = {
+    currentStep: number;
+    name: string;
+  };
+  export type BreadcrumbItemOpts = {
+    workflow: WorkflowOpts;
+    step: StepsOpts;
+    href?: string;
+    pageGroupLink?: boolean;
+    text: string;
+    postLinkText?: string;
+  };
+}
 
 /**
  * @param {object} opts
@@ -524,12 +575,9 @@ const standardBreadcrumbItem =
 const workflowBreadcrumbItem = ({
   workflow,
   step,
-}: {
-  workflow: any;
-  step: any;
-}): string =>
+}: Workflow.BreadcrumbItemOpts): string =>
   workflow.steps
-    .map((wfstep: any, ix: number) =>
+    .map((wfstep, ix: number) =>
       li(
         {
           class: [
@@ -559,12 +607,16 @@ const workflowBreadcrumbItem = ({
  * @param {object[]} crumbs
  * @returns {string}
  */
-const breadcrumbs = (crumbs: any[], right: any, after: any): string =>
+const breadcrumbs = (
+  crumbs: Workflow.BreadcrumbItemOpts[],
+  right: any,
+  after: any
+): string =>
   nav(
     { "aria-label": "breadcrumb" },
     ol(
       { class: "breadcrumb" },
-      crumbs.map((c: any, ix: number) =>
+      crumbs.map((c, ix: number) =>
         c.workflow
           ? workflowBreadcrumbItem(c)
           : standardBreadcrumbItem(crumbs.length)(c, ix)
@@ -584,7 +636,19 @@ const normaliseHeaderForMobile = (header: string) => {
  * @param {object[]} headers
  * @returns {string}
  */
-const headersInHead = (headers: any[], isDark?: boolean): string =>
+const headersInHead = (
+  headers: {
+    script: string;
+    scriptBody?: string;
+    defer?: boolean;
+    integrity?: string;
+    css: string;
+    cssDark: string;
+    style?: string;
+    headerTag: string;
+  }[],
+  isDark?: boolean
+): string =>
   headers
     .filter((h) => h.css)
     .map(
@@ -618,7 +682,18 @@ const headersInHead = (headers: any[], isDark?: boolean): string =>
  * @param {object[]} headers
  * @returns {string}
  */
-const headersInBody = (headers: any[]): string =>
+const headersInBody = (
+  headers: {
+    script: string;
+    scriptBody?: string;
+    defer?: boolean;
+    integrity?: string;
+    css?: string;
+    cssDark?: string;
+    style?: string;
+    headerTag?: string;
+  }[] = []
+): string =>
   headers
     .filter((h) => h.script)
     .map(
@@ -641,7 +716,13 @@ const headersInBody = (headers: any[]): string =>
  * @param {object[]} tabList
  * @returns {ul}
  */
-const cardHeaderTabs = (tabList: any): string =>
+const cardHeaderTabs = (
+  tabList: {
+    href: string;
+    label: string;
+    active: boolean;
+  }[]
+): string =>
   ul(
     { class: "nav nav-tabs card-header-tabs" },
     tabList.map(
@@ -724,7 +805,9 @@ const renderTabs = (
   }: RenderTabsOpts,
   go: (segment: any, isTop: boolean, ix: number) => any,
   activeTabTitle?: string,
-  hints?: any,
+  hints?: {
+    tabClass?: string;
+  },
   isMobile?: boolean
 ) => {
   const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
@@ -890,5 +973,5 @@ export = {
   show_icon,
   show_icon_and_label,
   activeChecker,
-  validID
+  validID,
 };
