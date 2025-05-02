@@ -23,11 +23,7 @@ const isdef = (x: any): boolean => typeof x !== "undefined";
  */
 const select_options = (
   v: string | any,
-  hdr: {
-    name: string;
-    options: Array<{ label: string; value: string } | string>;
-    [key: string]: any;
-  } = { name: "", options: [] },
+  hdr: any,
   force_required?: boolean,
   neutral_label: string = "",
   sort: boolean = true
@@ -36,18 +32,18 @@ const select_options = (
   const options1 = force_required
     ? options0.filter((o: any) => (typeof o === "string" ? o : o.value))
     : options0;
-  let options = options1.map((o) => ({
+  let options = options1.map((o: any) => ({
     label: typeof o === "string" ? o : o.label,
     value: typeof o === "string" ? o : o.value,
   }));
   if (sort)
-    options.sort((a, b) =>
+    options.sort((a: any, b: any) =>
       (a.label?.toLowerCase?.() || a.label) >
       (b.label?.toLowerCase?.() || b.label)
         ? 1
         : -1
     );
-  options = options.map((o) =>
+  options = options.map((o: any) =>
     o.value === "" ? { ...o, label: neutral_label || o.label } : o
   );
   const selected = typeof v === "object" ? (v ? v[hdr.name] : undefined) : v;
