@@ -1264,7 +1264,8 @@ const available_languages = {
   pl: "Polski",
   uk: "Українська",
   si: "Sinhala",
-  el: "ελληνικά"
+  el: "ελληνικά",
+  th: "แบบไทย",
 };
 /**
  * Get Config variable value by key (contract)
