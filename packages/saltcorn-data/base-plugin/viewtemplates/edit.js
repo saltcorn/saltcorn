@@ -1117,9 +1117,11 @@ const render = async ({
     ? "test-form-id"
     : `form${Math.floor(Math.random() * 16777215).toString(16)}`;
   const identicalFieldsScript = script(
-    domReady(
-      `document.getElementById('${formId}').addEventListener("change", handle_identical_fields, true);`
-    )
+    domReady(`
+  const editForm = document.getElementById('${formId}')
+  if (editForm) {
+    editForm.addEventListener("change", handle_identical_fields, true);
+  }`)
   );
 
   if (actually_auto_save) {
