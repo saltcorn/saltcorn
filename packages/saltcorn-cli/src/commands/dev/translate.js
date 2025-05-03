@@ -51,7 +51,6 @@ class TranslateCommand extends Command {
           //console.log("Skipping", locale[key]);
           continue;
         }
-        process.stdout.write(`Translating ${key} to: `);
         const answer = await translate(key, args.locale);
         console.log(answer);
         locale[key] = answer;
