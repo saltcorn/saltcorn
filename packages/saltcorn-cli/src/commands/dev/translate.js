@@ -51,8 +51,7 @@ class TranslateCommand extends Command {
           //console.log("Skipping", locale[key]);
           continue;
         }
-        const answer = await translate(key, args.locale);
-        console.log(answer);
+        const answer = await translate(key, args.locale);        
         locale[key] = answer;
         count += 1;
         fs.writeFileSync(
