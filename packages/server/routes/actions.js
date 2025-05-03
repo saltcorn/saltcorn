@@ -1559,7 +1559,11 @@ router.get(
     const q = {};
     const selOpts = { orderBy: "started_at", orderDesc: true, limit: 20 };
     if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);
-    if (trigger) q.trigger_id = trigger;
+    let trName = "";
+    if (trigger) {
+      q.trigger_id = trigger;
+      trName = trNames[+q.trigger_id];
+    }
     const runs = await WorkflowRun.find(q, selOpts);
     const count = await WorkflowRun.count(q);
 
@@ -1607,15 +1611,18 @@ router.get(
         },
       }
     );
+    const title = trName
+      ? req.__(`Workflow runs: %s`, trName)
+      : req.__(`Workflow runs`);
     send_events_page({
       res,
       req,
       active_sub: "Workflow runs",
-      page_title: req.__(`Workflow runs`),
+      page_title: title,
       contents: {
         type: "card",
         titleAjaxIndicator: true,
-        title: req.__("Workflow runs"),
+        title,
         contents: wfTable,
       },
     });
