@@ -1439,7 +1439,7 @@ module.exports = {
       },
     ],
 
-    run: async ({ row, table, user, configuration: { form_action } }) => {
+    run: async ({ row, table, user, req, configuration: { form_action } }) => {
       const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
@@ -1447,9 +1447,24 @@ module.exports = {
         case "Save":
           if (!row[table.pk_name]) {
             //we will save server side so we can set id
+
+            for (const field of table.fields) {
+              if (field.type === "File" && req?.files[field.name]) {
+                const file = await File.from_req_files(
+                  req.files[field.name],
+                  user ? user.id : null,
+                  (field.attributes && +field.attributes.min_role_read) || 1,
+                  field?.attributes?.folder
+                );
+                row[field.name] = file.path_to_serve;
+              }
+            }
             const result = await table.tryInsertRow(row, user);
             if (result.success)
-              return { set_fields: { [table.pk_name]: result.success } };
+              return {
+                notify_success: req ? req.__("Saved") : "Saved",
+                set_fields: { [table.pk_name]: result.success },
+              };
             else {
               getState().log(
                 3,
