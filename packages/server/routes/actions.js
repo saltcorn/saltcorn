@@ -1488,7 +1488,7 @@ router.post(
         if (astep)
           await astep.update({
             configuration: {
-              ...step.configuration,
+              ...astep.configuration,
               loop_body_initial_step: step.name,
             },
           });
