@@ -1612,7 +1612,10 @@ router.get(
       }
     );
     const title = trName
-      ? req.__(`Workflow runs: %s`, trName)
+      ? req.__(
+          `Workflow runs: %s`,
+          a({ href: `/actions/configure/${+trigger}` }, trName)
+        )
       : req.__(`Workflow runs`);
     send_events_page({
       res,
