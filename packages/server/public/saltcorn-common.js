@@ -561,6 +561,16 @@ function splitTargetMatch(elemValue, target, keySpec) {
   return elemValueShort === target;
 }
 
+function get_form_data(e_in, rndid) {
+  const e = e_in.viewname
+    ? $(`form[data-viewname="${e_in.viewname}"]`)
+    : $(e_in).closest(".form-namespace");
+  const form = $(e).closest("form");
+  const data = new FormData(form[0]);
+  data.append("rndid", rndid);
+  return data;
+}
+
 function get_form_record(e_in, select_labels) {
   const rec = {};
 

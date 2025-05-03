@@ -669,6 +669,28 @@ const transformForm = async ({
           segment.contents = "";
         }
       } else if (
+        segment.action_name === "form_action" &&
+        segment.configuration?.form_action === "Save" &&
+        table.fields.some((f) => f.type === "File")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm
+        );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+          url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+        }
+        segment.action_link = action_link(url, req, segment);
+      } else if (
         !["Sign up", ...builtInActions].includes(segment.action_name) &&
         !segment.action_name.startsWith("Login")
       ) {
