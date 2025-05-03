@@ -1264,6 +1264,20 @@ const available_languages = {
   pl: "Polski",
   uk: "Українська",
   si: "Sinhala",
+  el: "ελληνικά",
+  th: "แบบไทย",
+  bn: "বাংলা",
+  cs: "Český",
+  et: "eesti",
+  id: "Indonesia",
+  ja: "日本語",
+  lv: "Latviešu",
+  lt: "Lietuvių",
+  ne: "नेपाली",
+  sr: "Српски",
+  sk: "slovenský",
+  sl: "slovenščina",
+  tr: "Türkçe",
 };
 /**
  * Get Config variable value by key (contract)
