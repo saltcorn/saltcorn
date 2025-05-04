@@ -75,6 +75,7 @@ const {
   action_url,
   action_link,
   view_linker,
+  edit_build_in_actions,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -87,17 +88,6 @@ const db = require("../../db");
 const { prepare_update_row } = require("../../web-mobile-commons");
 const _ = require("underscore");
 const { Relation, RelationType } = require("@saltcorn/common-code");
-
-const builtInActions = [
-  "Save",
-  "SaveAndContinue",
-  "UpdateMatchingRows",
-  "SubmitWithAjax",
-  "Reset",
-  "GoBack",
-  "Delete",
-  "Cancel",
-];
 
 /**
  * @param {object} req
@@ -140,7 +130,7 @@ const configuration_workflow = (req) =>
             tableTriggers: table.id,
             apiNeverTriggers: true,
             builtInLabel: "Edit Actions",
-            builtIns: builtInActions,
+            builtIns: edit_build_in_actions,
           });
 
           const actionConfigForms = {
@@ -228,7 +218,7 @@ const configuration_workflow = (req) =>
             roles,
             actions,
             triggerActions,
-            builtInActions,
+            builtInActions: edit_build_in_actions,
             //fieldViewConfigForms,
             actionConfigForms,
             images,
@@ -669,7 +659,7 @@ const transformForm = async ({
           segment.contents = "";
         }
       } else if (
-        !["Sign up", ...builtInActions].includes(segment.action_name) &&
+        !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
         !segment.action_name.startsWith("Login")
       ) {
         let url = action_url(
