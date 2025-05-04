@@ -29,12 +29,20 @@ const {
   stateFieldsToWhere,
   stateFieldsToQuery,
   readState,
+  run_action_column,
 } = require("../../plugin-helper");
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
-const { getForm, fill_presets } = require("./viewable_fields");
+const {
+  getForm,
+  fill_presets,
+  action_url,
+  action_link,
+  edit_build_in_actions,
+} = require("./viewable_fields");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
+const { traverse } = require("../../models/layout");
 
 /**
  *
@@ -294,6 +302,13 @@ const run = async (
     optionsQuery,
     req.user || { role_id: 100 }
   );
+  await transformForm({
+    form,
+    table: msgtable,
+    req,
+    res,
+    viewname: msgform,
+  });
   return div(
     n_retrieved === limit &&
       button(
@@ -310,6 +325,72 @@ const run = async (
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
   );
+};
+
+const transformForm = async ({ form, table, req, res, viewname }) => {
+  const row = {};
+  await traverse(form.layout, {
+    async action(segment) {
+      if (segment.action_style === "on_page_load") {
+        segment.type = "blank";
+        segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return;
+        }
+        if (req.method === "POST") return;
+
+        //run action
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: req?.get?.("Referrer"),
+            req,
+            res,
+            table,
+            row,
+          });
+
+          if (actionResult)
+            segment.contents = script(
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
+            );
+        } catch (e) {
+          getState().log(
+            5,
+            `Error in Edit ${viewname} on page load action: ${e.message}`
+          );
+          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
+          throw e;
+        }
+      } else if (
+        !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
+        !segment.action_name.startsWith("Login")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm
+        );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+
+          url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+        }
+        segment.action_link = action_link(url, req, segment);
+      }
+    },
+  });
 };
 
 /**
@@ -531,6 +612,19 @@ const virtual_triggers = (
     },
   ];
 };
+
+const run_action = async (
+  table_id,
+  viewname,
+  { msgform },
+  body,
+  { req, res }
+) => {
+  const view = View.findOne({ name: msgform });
+  const result = await view.runRoute("run_action", req.body, res, { req, res });
+  return result;
+};
+
 module.exports = {
   /** @type {string} */
   name: "Room",
@@ -540,7 +634,7 @@ module.exports = {
   run,
   get_state_fields,
   /** @type {boolean} */
-  routes: { submit_msg_ajax, ack_read, fetch_older_msg },
+  routes: { submit_msg_ajax, ack_read, fetch_older_msg, run_action },
   /** @type {boolean} */
   noAutoTest: true,
   /**

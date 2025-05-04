@@ -1527,6 +1527,18 @@ const objToQueryString = (o) =>
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join("&");
 
+// edit template build in actions
+const edit_build_in_actions = [
+  "Save",
+  "SaveAndContinue",
+  "UpdateMatchingRows",
+  "SubmitWithAjax",
+  "Reset",
+  "GoBack",
+  "Delete",
+  "Cancel",
+];
+
 module.exports = {
   get_viewable_fields,
   get_viewable_fields_from_layout,
@@ -1540,4 +1552,5 @@ module.exports = {
   fill_presets,
   get_view_link_query,
   make_link,
+  edit_build_in_actions,
 };

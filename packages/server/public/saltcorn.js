@@ -295,9 +295,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
               : "application/json",
           data: typeof data === "string" ? data : JSON.stringify(data),
         }
-      : { contentType: false, processData: false }),
-
-    data: data,
+      : { contentType: false, processData: false, data: data }),
   })
     .done(function (res) {
       if (onDone) onDone(res);
