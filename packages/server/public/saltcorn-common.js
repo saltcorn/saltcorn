@@ -561,6 +561,16 @@ function splitTargetMatch(elemValue, target, keySpec) {
   return elemValueShort === target;
 }
 
+function get_form_data(e_in, rndid) {
+  const e = e_in.viewname
+    ? $(`form[data-viewname="${e_in.viewname}"]`)
+    : $(e_in).closest(".form-namespace");
+  const form = $(e).closest("form");
+  const data = new FormData(form[0]);
+  data.append("rndid", rndid);
+  return data;
+}
+
 function get_form_record(e_in, select_labels) {
   const rec = {};
 
@@ -2252,9 +2262,34 @@ function restrict_options(selector, restriction) {
     });
 }
 
+// alternative to jQuery.closest
+// bubbles until the end of the item view of a feed
+// needed when don't want to bubble too far because the browser removed an invalid form
+function formInEmbed(event) {
+  let form = null;
+  let el = event.srcElement;
+  while (el) {
+    if (el.hasAttribute && el.hasAttribute("data-sc-embed-viewname")) {
+      break;
+    }
+    if (el.tagName && el.tagName.toLowerCase() === "form") {
+      form = el;
+      break;
+    }
+    el = el.parentElement;
+  }
+  return form;
+}
+
 function handle_identical_fields(event) {
   let form = null;
-  if (event.srcElement) form = $(event.srcElement).closest("form")[0];
+  if (event.srcElement) {
+    form = formInEmbed(event);
+    if (!form) {
+      console.warn("No form found");
+      return;
+    }
+  }
   if (!form) {
     if (event.currentTarget.tagName === "FORM") form = event.currentTarget;
     else form = $(event.currentTarget).closest("form")[0];
@@ -2268,16 +2303,25 @@ function handle_identical_fields(event) {
     const isRadio = event.target.type === "radio";
     if (tagName === "SELECT" || isRadio) {
       form.querySelectorAll(`select[name="${name}"]`).forEach((select) => {
-        $(select).val(newValue); //.trigger("change");
+        const closestEmbed = select.closest("[data-sc-embed-viewname]");
+        if (!closestEmbed || !form.contains(closestEmbed)) {
+          $(select).val(newValue);
+        }
       });
       form
         .querySelectorAll(`input[type="radio"][name="${name}"]`)
         .forEach((input) => {
-          input.checked = input.value === newValue;
+          const closestEmbed = input.closest("[data-sc-embed-viewname]");
+          if (!closestEmbed || !form.contains(closestEmbed)) {
+            input.checked = input.value === newValue;
+          }
         });
     } else if (tagName === "INPUT") {
       form.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
-        if (input.type !== "file") input.value = newValue;
+        const closestEmbed = input.closest("[data-sc-embed-viewname]");
+        if (!closestEmbed || !form.contains(closestEmbed)) {
+          if (input.type !== "file") input.value = newValue;
+        }
       });
     }
   }

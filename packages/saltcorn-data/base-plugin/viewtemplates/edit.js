@@ -659,6 +659,28 @@ const transformForm = async ({
           segment.contents = "";
         }
       } else if (
+        segment.action_name === "form_action" &&
+        segment.configuration?.form_action === "Save" &&
+        table.fields.some((f) => f.type === "File")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm
+        );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+          url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+        }
+        segment.action_link = action_link(url, req, segment);
+      } else if (
         !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
         !segment.action_name.startsWith("Login")
       ) {
@@ -1107,9 +1129,7 @@ const render = async ({
     ? "test-form-id"
     : `form${Math.floor(Math.random() * 16777215).toString(16)}`;
   const identicalFieldsScript = script(
-    domReady(
-      `document.getElementById('${formId}').addEventListener("change", handle_identical_fields, true);`
-    )
+    domReady(`const editForm = document.getElementById('${formId}'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);`)
   );
 
   if (actually_auto_save) {

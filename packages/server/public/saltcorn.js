@@ -280,17 +280,24 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
   const query = sendState
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
+  const isFormData = data instanceof FormData;
   $.ajax("/view/" + viewname + "/" + route + query, {
-    dataType: "json",
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
     },
-    contentType:
-      typeof data === "string"
-        ? "application/x-www-form-urlencoded"
-        : "application/json",
-    data: typeof data === "string" ? data : JSON.stringify(data),
+    ...(!isFormData
+      ? {
+          dataType: "json",
+          contentType:
+            typeof data === "string"
+              ? "application/x-www-form-urlencoded"
+              : "application/json",
+          data: typeof data === "string" ? data : JSON.stringify(data),
+        }
+      : { contentType: false, processData: false }),
+
+    data: data,
   })
     .done(function (res) {
       if (onDone) onDone(res);
