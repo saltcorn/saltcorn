@@ -618,8 +618,7 @@ const run_action = async (
   viewname,
   { msgform },
   body,
-  { req, res },
-  {}
+  { req, res }
 ) => {
   const view = View.findOne({ name: msgform });
   const result = await view.runRoute("run_action", req.body, res, { req, res });
