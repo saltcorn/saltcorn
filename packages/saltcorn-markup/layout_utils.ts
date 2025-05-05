@@ -435,12 +435,23 @@ const alert = (type: string, s: string): string => {
         : realtype === "warning"
           ? "fa-exclamation-triangle"
           : "";
+
+  /* Will be using tag functions */
   return s && s.length > 0
-    ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
-        <i class="fas ${icon} me-1"></i>${s}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-        </button>
-      </div>`
+    ? div(
+        {
+          class: `alert alert-${realtype} alert-dismissible fade show`,
+          role: "alert",
+        },
+        icon ? i({ class: `fas ${icon} me-1` }) : "",
+        s,
+        button({
+          type: "button",
+          class: "btn-close",
+          "data-bs-dismiss": "alert",
+          "aria-label": "Close",
+        })
+      )
     : "";
 };
 
@@ -545,7 +556,7 @@ const standardBreadcrumbItem =
       href ? a({ href }, text) : text,
       postLinkText ? "&nbsp;" + postLinkText : ""
     );
-    
+
 namespace Workflow {
   export type WorkflowOpts = {
     steps: StepsOpts[];
@@ -694,7 +705,7 @@ const headersInBody = (
     headerTag?: string;
   }[] = []
 ): string =>
-  headers
+  /* headers
     .filter((h) => h.script)
     .map(
       (h) =>
@@ -710,6 +721,30 @@ const headersInBody = (
   headers
     .filter((h) => h.scriptBody)
     .map((h) => `<script>${h.scriptBody}</script>`)
+    .join(""); */
+
+  /* Will be using tag functions */
+  headers
+    .filter((h) => h.script)
+    .map((h) =>
+      script(
+        {
+          ...(h.defer ? { defer: true } : {}),
+          src: isNode ? h.script : normaliseHeaderForMobile(h.script),
+          ...(h.integrity
+            ? {
+                integrity: h.integrity,
+                crossorigin: "anonymous",
+              }
+            : {}),
+        },
+        ""
+      )
+    )
+    .join("") +
+  headers
+    .filter((h) => h.scriptBody)
+    .map((h) => script(h.scriptBody))
     .join("");
 
 /**

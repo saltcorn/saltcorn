@@ -30,6 +30,7 @@ const {
   iframe,
   script,
   text_attr,
+  form,
 } = tags;
 const {
   toast,
@@ -844,12 +845,18 @@ const render = ({
       return "<br />";
     }
     if (segment.type === "search_bar") {
-      return `<form action="/search" method="get">${search_bar("q", "", {
-        has_dropdown: segment.has_dropdown,
-        autofocus: segment.autofocus,
-        contents: go(segment.contents),
-        hints,
-      })}</form>`;
+      return form(
+        {
+          action: "/search",
+          method: "get",
+        },
+        search_bar("q", "", {
+          has_dropdown: segment.has_dropdown,
+          autofocus: segment.autofocus,
+          contents: go(segment.contents),
+          hints,
+        })
+      );
     }
     if (segment.above) {
       return segment.above

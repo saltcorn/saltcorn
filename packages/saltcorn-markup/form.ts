@@ -21,6 +21,9 @@ const {
   li,
   input,
   pre,
+  select,
+  textarea,
+  option,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -491,114 +494,164 @@ const innerField =
           v
         );
       case "hidden":
-        return `<input type="hidden" class="form-control ${validClass} ${
-          hdr.class || ""
-        }" name="${text_attr(name)}" ${
-          v ? `value="${text_attr(v[hdr.form_name])}"` : ""
-        }>`;
+        return input({
+          class: `form-control ${validClass} ${hdr.class || ""}`,
+          type: "hidden",
+          name: text_attr(name),
+          ...(v ? { value: text_attr(v[hdr.form_name]) } : {}),
+        });
       case "select":
         const opts = select_options(v, hdr, false, "", false);
-        return `<select class="form-control form-select ${validClass} ${
-          hdr.class || ""
-        }"${maybe_disabled} data-fieldname="${text_attr(
-          hdr.form_name
-        )}" name="${text_attr(name)}"${hdr.attributes.onChange ? ` onchange="${hdr.attributes.onChange}"` : ""} id="input${text_attr(name)}"${
-          hdr.attributes && hdr.attributes.explainers
-            ? ` data-explainers="${encodeURIComponent(
-                JSON.stringify(hdr.attributes.explainers)
-              )}"`
-            : ""
-        }>${opts}</select>`;
+        return select(
+          {
+            class: `form-control form-select ${validClass} ${hdr.class || ""}`,
+            "data-fieldname": text_attr(hdr.form_name),
+            ...(hdr.attributes.onChange
+              ? { onchange: hdr.attributes.onChange }
+              : {}),
+            ...(hdr.attributes.explainers
+              ? {
+                  "data-explainers": encodeURIComponent(
+                    JSON.stringify(hdr.attributes.explainers)
+                  ),
+                }
+              : {}),
+            ...(hdr.attributes.autocomplete
+              ? { autocomplete: hdr.attributes.autocomplete }
+              : {}),
+            ...(hdr.attributes.multiple ? { multiple: "multiple" } : {}),
+            ...(hdr.attributes.size ? { size: hdr.attributes.size } : {}),
+            ...(maybe_disabled
+              ? { disabled: true, "data-disabled": "true" }
+              : {}),
+            name: text_attr(name),
+            id: `input${text_attr(name)}`,
+          },
+          opts
+        );
+
       case "textarea":
-        return `<textarea class="form-control ${validClass} ${
-          hdr.class || ""
-        }"${maybe_disabled} data-fieldname="${text_attr(
-          hdr.form_name
-        )}" name="${text_attr(name)}" id="input${text_attr(name)}">${text(
-          v[hdr.form_name] || ""
-        )}</textarea>`;
+        return textarea(
+          {
+            class: `form-control ${validClass} ${hdr.class || ""}`,
+            ...(maybe_disabled
+              ? { disabled: true, "data-disabled": "true" }
+              : {}),
+            "data-fieldname": text_attr(hdr.form_name),
+            name: text_attr(name),
+            id: `input${text_attr(name)}`,
+          },
+          text(v[hdr.form_name] || "")
+        );
       case "code":
-        return `<textarea mode="${
-          (hdr.attributes || {}).mode || ""
-        }" class="to-code form-control ${validClass} ${
-          hdr.class || ""
-        }"${maybe_disabled} data-fieldname="${text_attr(
-          hdr.form_name
-        )}" name="${text_attr(name)}" id="input${text_attr(name)}">${
+        return textarea(
+          {
+            mode: (hdr.attributes || {}).mode || "",
+            class: `to-code form-control ${validClass} ${hdr.class || ""}`,
+            ...(maybe_disabled
+              ? { disabled: true, "data-disabled": "true" }
+              : {}),
+            "data-fieldname": text_attr(hdr.form_name),
+            name: text_attr(name),
+            id: `input${text_attr(name)}`,
+          },
           v[hdr.form_name] || ""
-        }</textarea>`;
+        );
       case "time_of_day":
-        return (
-          `<input class="form-control ${validClass} ${
-            hdr.class || ""
-          }"${maybe_disabled} data-fieldname="${text_attr(
-            hdr.form_name
-          )}" name="${text_attr(name)}" id="input${text_attr(
-            name
-          )}" type="text" placeholder="Select time of day.." readonly="readonly" value="${text_attr(
-            v[hdr.form_name]
-          )}">` +
+        return [
+          input({
+            class: `form-control ${validClass} ${hdr.class || ""}`,
+            ...(maybe_disabled
+              ? { disabled: true, "data-disabled": "true" }
+              : {}),
+            "data-fieldname": text_attr(hdr.form_name),
+            name: text_attr(name),
+            id: `input${text_attr(name)}`,
+            type: "text",
+            placeholder: "Select time of day..",
+            readonly: true,
+            value:
+              v && isdef(v[hdr.form_name]) ? text_attr(v[hdr.form_name]) : "",
+          }),
           script(
             domReady(`$('#input${text_attr(name)}').flatpickr({
-            noCalendar: true,
-            enableTime: true,
-            time_24hr: true,
-            timeFormat: 'H:i'
-          });`)
-          )
-        );
+              noCalendar: true,
+              enableTime: true,
+              time_24hr: true,
+              timeFormat: 'H:i'
+            });`)
+          ),
+        ].join("");
       case "time_of_week":
         const tow_val = v[hdr.form_name];
         let tow_d, tow_h, tow_m;
         if (tow_val) {
           [tow_d, tow_h, tow_m] = tow_val.split(" ");
         }
-        return (
-          `<input type="hidden" name="${text_attr(name)}" id="inputh${text_attr(
-            name
-          )}" data-fieldname="${text_attr(hdr.form_name)}" value="${text_attr(
-            tow_val
-          )}"><div class="d-flex"><select class="form-control form-select" id="input${text_attr(
-            name
-          )}__day" onchange="update_time_of_week('${text_attr(name)}')(this)">
-             <option ${tow_d === "Monday" ? "selected" : ""}>Monday</option>
-             <option ${tow_d === "Tuesday" ? "selected" : ""}>Tuesday</option>
-             <option ${
-               tow_d === "Wednesday" ? "selected" : ""
-             }>Wednesday</option>
-             <option ${tow_d === "Thursday" ? "selected" : ""}>Thursday</option>
-             <option ${tow_d === "Friday" ? "selected" : ""}>Friday</option>
-             <option ${tow_d === "Saturday" ? "selected" : ""}>Saturday</option>
-             <option ${tow_d === "Sunday" ? "selected" : ""}>Sunday</option>
-             </select>
-             <input class="form-control ${validClass} ${
-               hdr.class || ""
-             }"${maybe_disabled} id="input${text_attr(
-               name
-             )}__time" type="text" placeholder="Select time of day.." ${
-               tow_h && tow_m ? `value="${tow_h}:${tow_m}" ` : 'value="12:00" '
-             }readonly="readonly"></div>` +
+        return [
+          input({
+            type: "hidden",
+            name: text_attr(name),
+            id: `inputh${text_attr(name)}`,
+            "data-fieldname": text_attr(hdr.form_name),
+            value: text_attr(tow_val),
+          }),
+          div({ class: "d-flex" }, [
+            select(
+              {
+                class: "form-control form-select",
+                id: `input${text_attr(name)}__day`,
+                onchange: `update_time_of_week('${text_attr(name)}')(this)`,
+              },
+              [
+                option({ selected: tow_d === "Monday" }, "Monday"),
+                option({ selected: tow_d === "Tuesday" }, "Tuesday"),
+                option({ selected: tow_d === "Wednesday" }, "Wednesday"),
+                option({ selected: tow_d === "Thursday" }, "Thursday"),
+                option({ selected: tow_d === "Friday" }, "Friday"),
+                option({ selected: tow_d === "Saturday" }, "Saturday"),
+                option({ selected: tow_d === "Sunday" }, "Sunday"),
+              ]
+            ),
+            input({
+              class: `form-control ${validClass} ${hdr.class || ""}`,
+              ...(maybe_disabled
+                ? { disabled: true, "data-disabled": "true" }
+                : {}),
+              id: `input${text_attr(name)}__time`,
+              type: "text",
+              placeholder: "Select time of day..",
+              readonly: true,
+              value: tow_h && tow_m ? `${tow_h}:${tow_m}` : "12:00",
+            }),
+          ]),
           script(
             domReady(`$('#input${text_attr(name)}__time').flatpickr({
-            noCalendar: true,
-            enableTime: true,
-            time_24hr: true,
-            timeFormat: 'H:i',
-            onChange: update_time_of_week('${text_attr(name)}')
-          });`)
-          )
-        );
+              noCalendar: true,
+              enableTime: true,
+              time_24hr: true,
+              timeFormat: 'H:i',
+              onChange: update_time_of_week('${text_attr(name)}')
+            });`)
+          ),
+        ].join("");
+
       case "date":
-        return (
-          `<input class="form-control ${validClass} ${
-            hdr.class || ""
-          }"${maybe_disabled} data-fieldname="${text_attr(
-            hdr.form_name
-          )}" name="${text_attr(name)}" id="input${text_attr(
-            name
-          )}" type="text" placeholder="Select date.." readonly="readonly" value="${text_attr(
-            v[hdr.form_name]
-          )}">` +
+        return [
+          input({
+            class: `form-control ${validClass} ${hdr.class || ""}`,
+            ...(maybe_disabled
+              ? { disabled: true, "data-disabled": "true" }
+              : {}),
+            "data-fieldname": text_attr(hdr.form_name),
+            name: text_attr(name),
+            id: `input${text_attr(name)}`,
+            type: "text",
+            placeholder: "Select date..",
+            readonly: true,
+            value:
+              v && isdef(v[hdr.form_name]) ? text_attr(v[hdr.form_name]) : "",
+          }),
           script(
             domReady(`$('#input${text_attr(name)}').flatpickr({              
               enableTime: true,
@@ -617,20 +670,25 @@ const innerField =
                   : ""
               }
             });`)
-          )
-        );
+          ),
+        ].join("");
       case "file":
         if (hdr.attributes && hdr.attributes.select_file_where) {
           hdr.input_type = "select";
           return innerField(v, errors, nameAdd)(hdr);
         } else
-          return `${
-            v[hdr.form_name] ? text(v[hdr.form_name]) : ""
-          }<input type="file" class="form-control-file ${validClass} ${
-            hdr.class || ""
-          }"${maybe_disabled} name="${text_attr(name)}" id="input${text_attr(
-            name
-          )}">`;
+          return [
+            v && isdef(v[hdr.form_name]) ? text(v[hdr.form_name]) : "",
+            input({
+              type: "file",
+              class: `form-control-file ${validClass} ${hdr.class || ""}`,
+              ...(maybe_disabled
+                ? { disabled: true, "data-disabled": "true" }
+                : {}),
+              name: text_attr(name),
+              id: `input${text_attr(name)}`,
+            }),
+          ].join("");
       case "search":
         return search_bar(name, v && v[hdr.form_name]);
       case "section_header":
@@ -645,21 +703,24 @@ const innerField =
       case "custom_html":
         return hdr.attributes.html;
       default:
-        const the_input = `<input type="${
-          hdr.input_type
-        }" class="form-control ${validClass} ${
-          hdr.class || ""
-        }"${maybe_disabled}${
-          hdr.attributes?.autocomplete
-            ? ` autocomplete="${hdr.attributes?.autocomplete}"`
-            : ""
-        } data-fieldname="${text_attr(
-          hdr.form_name
-        )}" name="${name}" id="input${text_attr(name)}"${
-          v && isdef(v[hdr.form_name])
-            ? ` value="${text_attr(v[hdr.form_name])}"`
-            : ""
-        }${hdr.attributes?.autofocus ? " autofocus" : ""}>`;
+        const the_input = input({
+          type: hdr.input_type,
+          class: `form-control ${validClass} ${hdr.class || ""}`,
+          ...(maybe_disabled
+            ? { disabled: true, "data-disabled": "true" }
+            : {}),
+          ...(hdr.attributes?.autocomplete
+            ? { autocomplete: hdr.attributes.autocomplete }
+            : {}),
+          "data-fieldname": text_attr(hdr.form_name),
+          name: name,
+          id: `input${text_attr(name)}`,
+          ...(v && isdef(v[hdr.form_name])
+            ? { value: text_attr(v[hdr.form_name]) }
+            : {}),
+          ...(hdr.attributes?.autofocus ? { autofocus: true } : {}),
+        });
+
         const inner = hdr.postText
           ? div(
               { class: "input-group" },
@@ -994,7 +1055,12 @@ const mkFormRowForField =
   (hdr: any): string => {
     const name: any = hdr.form_name + nameAdd;
     const errorFeedback = errors[name]
-      ? `<div class="invalid-feedback">${text(errors[name])}</div>`
+      ? div(
+          {
+            class: "invalid-feedback",
+          },
+          text(errors[name])
+        )
       : "";
     if (hdr.input_type === "hidden" && hdr.showIf) {
       return span(
@@ -1216,9 +1282,12 @@ const renderFormLayout = (form: Form): string => {
         if (instanceOfField(field0)) field.form_name = field0.form_name;
 
         const errorFeedback = form.errors[field.name]
-          ? `<div class="invalid-feedback">${text(
-              form.errors[field.name]
-            )}</div>`
+          ? div(
+              {
+                class: "invalid-feedback",
+              },
+              text(form.errors[field.name])
+            )
           : "";
         if (segment.fieldview) field.fieldview = segment.fieldview;
         field.attributes = { ...field.attributes, ...segment.configuration };
@@ -1281,18 +1350,27 @@ const renderFormLayout = (form: Form): string => {
           action_label || action_name
         );
       }
-      const mkBtn = (onclick_or_type: string) =>
-        `<button ${onclick_or_type} class="${
-          action_style === "btn-link"
-            ? ""
-            : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-        }"${style ? ` style="${style}"` : ""}${
-          spinner && !onclick_or_type?.startsWith?.("on")
-            ? ` onclick="spin_action_link(this)"`
-            : ""
-        }>${action_icon ? `<i class="${action_icon}"></i>&nbsp;` : ""}${text(
-          action_label || form.submitLabel || action_name || "Save"
-        )}</button>`;
+
+      const mkBtn = (onclick_or_type: string) => {
+        const [onClickAttr, typeAttr] = onclick_or_type.split(' type="');
+        const attrs: Record<string, string> = {
+          [onClickAttr.startsWith("onClick") ? "onclick" : "type"]: onClickAttr,
+          ...(typeAttr && { type: typeAttr.replace(/"/g, "") }),
+          class:
+            action_style === "btn-link"
+              ? ""
+              : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
+          ...(style && { style }),
+          ...(spinner && !onclick_or_type?.startsWith?.("on")
+            ? { onclick: "spin_action_link(this)" }
+            : {}),
+        };
+
+        return button(attrs, [
+          ...(action_icon ? [i({ class: action_icon }), "&nbsp;"] : []),
+          text(action_label || form.submitLabel || action_name || "save"),
+        ]);
+      };
 
       if (action_name === "Delete") {
         if (action_url) {
@@ -1531,15 +1609,19 @@ const displayAdditionalButtons = (
 ): string =>
   additionalButtons
     .filter((btn) => !!btn.afterSave === !!afterSave)
-    .map(
-      (btn) =>
-        `<button type="button" id="${btn.id}" class="${btn.class}${
-          afterSave ? " ms-2" : ""
-        }"${btn.onclick ? ` onclick="${btn.onclick}"` : ""} ${
-          btn.disabled ? "disabled" : ""
-        }>${btn.label}</button>&nbsp;`
+    .map((btn) =>
+      button(
+        {
+          type: "button",
+          id: btn.id,
+          class: `${btn.class}${afterSave ? " ms-2" : ""}`,
+          ...(btn.onclick ? { onclick: btn.onclick } : {}),
+          ...(btn.disabled ? { disabled: true } : {}),
+        },
+        text(btn.label)
+      )
     )
-    .join("");
+    .join("&nbsp;");
 
 const mkFormContentNoLayout = (form: Form, errors: any = {}) => {
   const tabHtmls: any = {};
