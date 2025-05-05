@@ -1183,7 +1183,7 @@ class Table implements AbstractTable {
    * // get the rows in the book table with author = "Henrik Pontoppidan"
    * const myBooks = await bookTable.getRows({author: "Henrik Pontoppidan"})
    *
-   * // get the 3 most recent books written by "Henrik Pontoppidan" with more that 500 pages
+   * // get the 3 most recent books written by "Henrik Pontoppidan" with more than 500 pages
    * const myBooks = await bookTable.getRows({author: "Henrik Pontoppidan", pages: {gt: 500}}, {orderBy: "published", orderDesc: true})
    * ```
    *
