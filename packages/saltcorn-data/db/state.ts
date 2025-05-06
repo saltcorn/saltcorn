@@ -1098,6 +1098,7 @@ class State {
               "stream",
               "url",
               "zlib",
+              "v8",
             ].includes(moduleName)
           ) {
             if (process.env.IGNORE_DYNAMIC_REQUIRE !== "true") {
