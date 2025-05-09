@@ -7,7 +7,7 @@ const { get_extra_menu } = require("@saltcorn/data/web-mobile-commons");
 //const db = require("@saltcorn/data/db");
 const { h3, div, small, domReady } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
-const renderLayout = require("@saltcorn/markup/layout");
+const { render: renderLayout } = require("@saltcorn/markup/layout");
 /**
  * get flashes
  * @param req

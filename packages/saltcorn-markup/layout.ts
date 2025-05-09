@@ -1011,5 +1011,5 @@ const render = ({
 };
 
 // declaration merging
-const LayoutExports = render;
+const LayoutExports = {render, makeSegments, textStyleToArray, applyTextStyle};
 export = LayoutExports;

@@ -36,7 +36,7 @@ const {
   script,
   domReady,
 } = require("@saltcorn/markup/tags");
-const renderLayout = require("@saltcorn/markup/layout");
+const { render: renderLayout } = require("@saltcorn/markup/layout");
 
 const {
   stateFieldsToWhere,

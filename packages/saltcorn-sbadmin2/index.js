@@ -22,7 +22,7 @@ const {
   form,
   input,
 } = require("@saltcorn/markup/tags");
-const renderLayout = require("@saltcorn/markup/layout");
+const { render: renderLayout } = require("@saltcorn/markup/layout");
 const { renderForm, link } = require("@saltcorn/markup");
 const {
   toast,

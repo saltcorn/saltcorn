@@ -1,6 +1,6 @@
 import db from "../db/index";
 import layoutMarkup from "@saltcorn/markup/layout";
-const renderLayout = layoutMarkup;
+const { render: renderLayout } = layoutMarkup;
 import Table from "../models/table";
 import TableConstraint from "../models/table_constraints";
 import Form from "../models/form";

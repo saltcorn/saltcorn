@@ -341,8 +341,8 @@ const search_bar = (
         ),
     input({
       type: "search",
-      class: `form-control search-bar ${
-        (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
+      class: `form-control search-bar${
+        (badges && badges.length > 0) || has_dropdown ? " br-none" : ""
       }${hints?.searchBar?.inputClass ? ` ${hints?.searchBar?.inputClass}` : ""}`,
       ...(autofocus ? { autofocus: true } : {}),
       placeholder: placeHolder || "Search for...",

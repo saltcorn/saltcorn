@@ -25,7 +25,7 @@ const {
   textarea,
   option,
 } = tags;
-import renderLayout = require("./layout");
+import {render as renderLayout} from "./layout";
 import helpers = require("./helpers");
 const { isdef, select_options, search_bar } = helpers;
 import type { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
@@ -1763,4 +1763,4 @@ const mkForm = (
   );
 };
 
-export = { renderForm, mkFormContentNoLayout };
+export = { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout };

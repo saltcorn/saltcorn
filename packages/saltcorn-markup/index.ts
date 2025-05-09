@@ -3,11 +3,12 @@
  * @module
  */
 import renderFormModule = require("./form");
-const { renderForm } = renderFormModule;
+const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } = renderFormModule;
 import renderBuilder = require("./builder");
 import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
+import helpers = require("./helpers");
 const { a, text, div, button, hr, time, i, input, text_attr } = tags;
 import layoutUtils = require("./layout_utils");
 const { alert, toast, show_icon_and_label, validID } = layoutUtils;
@@ -277,6 +278,9 @@ export = {
   mkTable,
   badge,
   renderForm,
+  mkFormContentNoLayout,
+  mkForm,
+  renderFormLayout,
   settingsDropdown,
   renderBuilder,
   link,
@@ -296,4 +300,5 @@ export = {
   tags,
   alert,
   toast,
+  helpers
 };
