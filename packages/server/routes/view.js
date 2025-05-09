@@ -154,7 +154,7 @@ router.get(
           : contents0;
       res.sendWrap(
         title,
-        !req.smr && !req.xhr
+        !req.smr && !req.rvr
           ? add_edit_bar({
               role,
               title: view.name,

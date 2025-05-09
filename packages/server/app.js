@@ -395,6 +395,9 @@ const getApp = async (opts = {}) => {
     if (req.headers["x-saltcorn-client"] === "mobile-app") {
       req.smr = true; // saltcorn-mobile-request
     }
+    if (req.headers["x-saltcorn-client"] === "react-view") {
+      req.rvr = true; // react-view-request
+    }
     return next();
   });
   app.use(setTenant);
