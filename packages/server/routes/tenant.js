@@ -435,7 +435,7 @@ router.get(
               {
                 label: req.__("Subdomain"),
                 key: (r) =>
-                  link(getNewURL(req, r.subdomain), text(r.subdomain)),
+                  link(getNewURL(req, r.subdomain, get_cfg_tenant_base_url(req)), text(r.subdomain)),
               },
               {
                 label: req.__("Description"),
