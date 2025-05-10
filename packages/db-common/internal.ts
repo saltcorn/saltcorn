@@ -388,6 +388,19 @@ const slugifyQuery = (k: string, s: string, phs: PlaceHolderStack) =>
 const castDate = (doCast: boolean, is_sqlite: boolean, s: string) =>
   !doCast ? s : is_sqlite ? `date(${s})` : `${s}::date`;
 
+/*
+ * add elements of the array as single items to the placeholder stack
+ * and return the same amount of placeholders
+ */
+const prepSqliteIn = (v: any[], phs: PlaceHolderStack) => {
+  const placeholders = [];
+  for (const current of v) {
+    phs.push(current);
+    placeholders.push("?");
+  }
+  return placeholders.join(", ");
+};
+
 const whereClause =
   (phs: PlaceHolderStack): (([k, v]: [string, any | [any, any]]) => string) =>
   ([k, v]: [string, any | [any, any]]): string =>
@@ -398,9 +411,11 @@ const whereClause =
             phs.is_sqlite ? "" : "ANY"
           } (${phs.push(v.not.in)}))`
         : typeof (v || {}).in !== "undefined"
-          ? `${quote(sqlsanitizeAllowDots(k))} = ${
-              phs.is_sqlite ? "" : "ANY"
-            } (${phs.push(v.in)})`
+          ? `${quote(sqlsanitizeAllowDots(k))} ${
+              phs.is_sqlite
+                ? `IN (${prepSqliteIn(v.in, phs)} )`
+                : `= ANY (${phs.push(v.in)})`
+            }`
           : k === "or" && Array.isArray(v)
             ? whereOr(phs)(v)
             : k === "and" && Array.isArray(v)

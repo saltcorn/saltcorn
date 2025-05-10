@@ -4026,14 +4026,9 @@ router.post(
           await f.delete();
       }
       await db.deleteWhere("users");
-      if (!db.isSQLite)
-        await db.deleteWhere("_sc_roles", {
-          not: { id: { in: [1, 40, 80, 100] } },
-        });
-      else
-        await db.query(
-          `delete FROM "_sc_roles" WHERE id NOT IN (1, 40, 80, 100)`
-        );
+      await db.deleteWhere("_sc_roles", {
+        not: { id: { in: [1, 40, 80, 100] } },
+      });
 
       if (db.reset_sequence) await db.reset_sequence("users");
       req.logout(function (err) {
