@@ -53,9 +53,16 @@ router.get(
       }`
     );
     if (!view) {
-      req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       state.log(2, `View ${viewname} not found`);
-      res.redirect("/");
+      const errMsg = req.__(`No such view: %s`, text(viewname));
+      if (!req.rvr) {
+        req.flash("danger", errMsg);
+        res.redirect("/");
+      } else {
+        res.status(404).json({
+          error: errMsg,
+        });
+      }
       return;
     }
     const tic = new Date();
@@ -147,7 +154,7 @@ router.get(
           : contents0;
       res.sendWrap(
         title,
-        !req.smr
+        !req.smr && !req.rvr
           ? add_edit_bar({
               role,
               title: view.name,
