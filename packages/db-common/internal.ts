@@ -407,13 +407,15 @@ const whereClause =
     k === "_fts"
       ? whereFTS(v, phs)
       : typeof (v || {}).not !== "undefined" && v.not.in
-        ? `not (${quote(sqlsanitizeAllowDots(k))} = ${
-            phs.is_sqlite ? "" : "ANY"
-          } (${phs.push(v.not.in)}))`
+        ? `not (${quote(sqlsanitizeAllowDots(k))} ${
+            phs.is_sqlite
+              ? `IN (${prepSqliteIn(v.not.in, phs)})`
+              : `= ANY (${phs.push(v.not.in)})`
+          })`
         : typeof (v || {}).in !== "undefined"
           ? `${quote(sqlsanitizeAllowDots(k))} ${
               phs.is_sqlite
-                ? `IN (${prepSqliteIn(v.in, phs)} )`
+                ? `IN (${prepSqliteIn(v.in, phs)})`
                 : `= ANY (${phs.push(v.in)})`
             }`
           : k === "or" && Array.isArray(v)
