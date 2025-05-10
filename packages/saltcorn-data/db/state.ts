@@ -1098,6 +1098,10 @@ class State {
               "stream",
               "url",
               "zlib",
+              "v8",
+              "http2",
+              "path",
+              "tls",
             ].includes(moduleName)
           ) {
             if (process.env.IGNORE_DYNAMIC_REQUIRE !== "true") {
