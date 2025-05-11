@@ -141,6 +141,18 @@ describe("Table create basic tests", () => {
     const vs = await table.distinctValues("height1");
     expect(vs).toEqual([7]);
   });
+  it("should delete rows", async () => {
+    const table = Table.findOne({ name: "mytable1" });
+    assertIsSet(table);
+    let rows = await table.getRows();
+    expect(rows.length).toBe(1);
+    await db.deleteWhere(table.name, { height1: { in: [6, 8, 9] } });
+    rows = await table.getRows();
+    expect(rows.length).toBe(1);
+    await db.deleteWhere(table.name, { height1: { not: { in: [6, 8, 9] } } });
+    rows = await table.getRows();
+    expect(rows.length).toBe(0);
+  });
   it("should delete", async () => {
     const table = Table.findOne({ name: "mytable1" });
     assertIsSet(table);
