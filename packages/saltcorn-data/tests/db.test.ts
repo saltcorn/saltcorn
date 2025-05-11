@@ -69,27 +69,40 @@ describe("Transaction test", () => {
 });
 
 describe("delete where test", () => {
+  const existingRows = [
+    { id: 1, author: "Herman Melville", pages: 967, publisher: null },
+    { id: 2, author: "Leo Tolstoy", pages: 728, publisher: 1 },
+    { id: 3, author: "Trans Rights", pages: 688, publisher: null },
+  ];
+
+  beforeAll(async () => {
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const rows = await books.getRows();
+    if (rows.length === 2) {
+      await books.insertRow(existingRows[2]);
+    }
+  });
+
   it("should delete where", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     await books.insertRow({ author: "Crime and Punishment", pages: 688 });
     await books.insertRow({ author: "For Whom the Bell Tolls", pages: 401 });
     let rows = await books.getRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(5);
     await db.deleteWhere(books.name, { author: "The Gambler" });
     rows = await books.getRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(5);
     await db.deleteWhere(books.name, { author: "Crime and Punishment" });
     rows = await books.getRows();
-    expect(rows.length).toBe(3);
+    expect(rows.length).toBe(4);
+
     await db.deleteWhere(books.name, {
-      not: { author: "For Whom the Bell Tolls" },
+      not: { or: existingRows.map((r) => ({ author: r.author })) },
     });
     rows = await books.getRows();
-    expect(rows.length).toBe(1);
-    await db.deleteWhere(books.name);
-    rows = await books.getRows();
-    expect(rows.length).toBe(0);
+    expect(rows.length).toBe(3);
   });
 
   it("should delete where with not in", async () => {
@@ -100,7 +113,7 @@ describe("delete where test", () => {
     await books.insertRow({ author: "The Gambler", pages: 501 });
     await books.insertRow({ author: "The Idiot", pages: 601 });
     let rows = await books.getRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(7);
 
     await db.deleteWhere(books.name, {
       author: {
@@ -110,34 +123,40 @@ describe("delete where test", () => {
             "For Whom the Bell Tolls",
             "The Gambler",
             "The Idiot",
+            ...existingRows.map((r) => r.author),
           ],
         },
       },
     });
     rows = await books.getRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(7);
     await db.deleteWhere(books.name, {
       author: {
         not: {
-          and: [
+          or: [
             {
               in: ["Crime and Punishment", "For Whom the Bell Tolls"],
             },
             { in: ["The Gambler", "The Idiot"] },
+            { in: existingRows.map((r) => r.author) },
           ],
         },
       },
     });
     rows = await books.getRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(7);
     await db.deleteWhere(books.name, {
-      author: { not: { in: ["The Gambler"] } },
+      author: {
+        not: { in: ["The Gambler", ...existingRows.map((r) => r.author)] },
+      },
     });
     rows = await books.getRows();
-    expect(rows.length).toBe(1);
-    await db.deleteWhere(books.name, { pages: { not: { in: [601] } } });
+    expect(rows.length).toBe(4);
+    await db.deleteWhere(books.name, {
+      author: { not: { in: existingRows.map((r) => r.author) } },
+    });
     rows = await books.getRows();
-    expect(rows.length).toBe(0);
+    expect(rows.length).toBe(3);
   });
 
   it("should delete where with in", async () => {
@@ -148,16 +167,16 @@ describe("delete where test", () => {
     await books.insertRow({ author: "The Gambler", pages: 501 });
     await books.insertRow({ author: "The Idiot", pages: 601 });
     let rows = await books.getRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(7);
 
     await db.deleteWhere(books.name, { author: { in: ["David Copperfield"] } });
     rows = await books.getRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(7);
     await db.deleteWhere(books.name, {
       author: { in: ["The Gambler", "The Idiot"] },
     });
     rows = await books.getRows();
-    expect(rows.length).toBe(2);
+    expect(rows.length).toBe(5);
 
     await db.deleteWhere(books.name, {
       author: {
@@ -168,6 +187,6 @@ describe("delete where test", () => {
       },
     });
     rows = await books.getRows();
-    expect(rows.length).toBe(0);
+    expect(rows.length).toBe(3);
   });
 });
