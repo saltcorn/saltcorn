@@ -4029,7 +4029,6 @@ router.post(
       await db.deleteWhere("_sc_roles", {
         not: { id: { in: [1, 40, 80, 100] } },
       });
-
       if (db.reset_sequence) await db.reset_sequence("users");
       req.logout(function (err) {
         if (req.session.destroy)
