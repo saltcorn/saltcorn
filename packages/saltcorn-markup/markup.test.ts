@@ -12,16 +12,14 @@ import tabs from "./tabs";
 import mkTable from "./table";
 // import index = require("./index");
 import index from "./index";
+import builder from "./builder";
 
 const {
-  link,
   post_btn,
   post_delete_btn,
   post_dropdown_item,
   settingsDropdown,
   localeDate,
-  localeTime,
-  localeDateTime,
 } = index;
 
 const { a, input, div, ul, text, text_attr, i, hr, genericElement } = tags;
@@ -229,13 +227,6 @@ describe("tabs", () => {
     const result = tabs({
       Tab1: "Content1",
     });
-    // expect(result).toContain('<ul class="nav nav-tabs" role="tablist">');
-    // expect(result).toContain('<li class="nav-item">');
-    // expect(result).toContain('<a class="nav-link active" data-bs-toggle="tab"');
-    // expect(result).toContain('href="#Tab3');
-    // expect(result).toContain('<div class="tab-pane fade show active"');
-    // expect(result).toContain('id="Tab1"');
-    // expect(result).toContain("Content1");
     expect(result).toBe(
       `<ul class="nav nav-tabs" role="tablist"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#Tab1" id="Tab1-tab" role="tab" aria-controls="home" aria-selected="true">Tab1</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="Tab1" role="tabpanel" aria-labelledby="Tab1-tab">Content1</div></div>`
     );
@@ -243,16 +234,6 @@ describe("tabs", () => {
 
   it("renders tabs with multiple contents", () => {
     const result = tabs({ Tab1: "Content1", Tab2: "Content2" });
-    // expect(result).toContain('<ul class="nav nav-tabs" role="tablist">');
-    // expect(result).toContain('<li class="nav-item">');
-    // expect(result).toContain('<a class="nav-link active" data-bs-toggle="tab"');
-    // expect(result).toContain('href="#Tab2"');
-    // expect(result).toContain('<div class="tab-pane fade show active"');
-    // expect(result).toContain('id="Tab1');
-    // expect(result).toContain("Content1");
-    // expect(result).toContain('<div class="tab-pane fade"');
-    // expect(result).toContain('id="Tab2"');
-    // expect(result).toContain("Content2");
     expect(result).toBe(
       `<ul class="nav nav-tabs" role="tablist"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#Tab1" id="Tab1-tab" role="tab" aria-controls="home" aria-selected="true">Tab1</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#Tab2" id="Tab2-tab" role="tab" aria-controls="home" aria-selected="true">Tab2</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="Tab1" role="tabpanel" aria-labelledby="Tab1-tab">Content1</div><div class="tab-pane fade" id="Tab2" role="tabpanel" aria-labelledby="Tab2-tab">Content2</div></div>`
     );
@@ -263,27 +244,12 @@ describe("tabs", () => {
       ["Tab1", "Content1"],
       ["Tab2", "Content2"],
     ]);
-    // expect(result).toContain('<ul class="nav nav-tabs" role="tablist">');
-    // expect(result).toContain('<li class="nav-item">');
-    // expect(result).toContain('<a class="nav-link active" data-bs-toggle="tab"');
-    // expect(result).toContain('href="#Tab1"');
-    // expect(result).toContain('<a class="nav-link" data-bs-toggle="tab"');
-    // expect(result).toContain('href="#Tab2"');
-    // expect(result).toContain('<div class="tab-pane fade show active"');
-    // expect(result).toContain('id="Tab1"');
-    // expect(result).toContain("Content1");
-    // expect(result).toContain('<div class="tab-pane fade"');
-    // expect(result).toContain('id="Tab2"');
-    // expect(result).toContain("Content2");
     expect(result).toBe(
       `<ul class="nav nav-tabs" role="tablist"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#Tab1" id="Tab1-tab" role="tab" aria-controls="home" aria-selected="true">Tab1</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#Tab2" id="Tab2-tab" role="tab" aria-controls="home" aria-selected="true">Tab2</a></li></ul><div class="tab-content"><div class="tab-pane fade show active" id="Tab1" role="tabpanel" aria-labelledby="Tab1-tab">Content1</div><div class="tab-pane fade" id="Tab2" role="tabpanel" aria-labelledby="Tab2-tab">Content2</div></div>`
     );
   });
   it("handles empty tabs gracefully", () => {
     const result = tabs({});
-    // expect(result).toContain('<ul class="nav nav-tabs" role="tablist">');
-    // expect(result).not.toContain('<li class="nav-item">');
-    // expect(result).toContain('<div class="tab-content"></div>');
     expect(result).toBe(
       `<ul class="nav nav-tabs" role="tablist"></ul><div class="tab-content"></div>`
     );
@@ -301,14 +267,6 @@ describe("table", () => {
       { name: "UserName2", age: 30 },
     ];
     const result = mkTable(headers, rows);
-    // expect(result).toContain('<table class="table table-sm');
-    // expect(result).toContain("<thead>");
-    // expect(result).toContain("<th>Name</th>");
-    // expect(result).toContain("<th>Age</th>");
-    // expect(result).toContain("<td>UserName1</td>");
-    // expect(result).toContain("<td>25</td>");
-    // expect(result).toContain("<td>UserName2</td>");
-    // expect(result).toContain("<td>30</td>");
     expect(result).toBe(
       `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>UserName1</td><td>25</td></tr><tr><td>UserName2</td><td>30</td></tr></tbody></table></div>`
     );
@@ -330,13 +288,6 @@ describe("table", () => {
       { name: "UserName2", age: 30 },
     ];
     const result = mkTable(headers, rows, { transpose: true });
-    // expect(result).toContain('<table class="table table-sm"');
-    // expect(result).toContain("<th>Name</th>");
-    // expect(result).toContain("<td>UserName1</td>");
-    // expect(result).toContain("<td>UserName2</td>");
-    // expect(result).toContain("<th>Age</th>");
-    // expect(result).toContain("<td>254</td>");
-    // expect(result).toContain("<td>30</td>");
     expect(result).toBe(
       `<div class="table-responsive"><table class="table table-sm"><tbody><tr><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
     );
@@ -359,47 +310,10 @@ describe("table", () => {
     ];
 
     const result = mkTable(headers, rows, { transpose: true });
-    // expect(result).toContain('<table class="table table-sm');
-    // expect(result).toContain("<th>Name</th>");
-    // expect(result).toContain("<td>UserName1</td>");
-    // expect(result).toContain("<td>UserName2</td>");
-    // expect(result).toContain("<th>Age</th>");
-    // expect(result).toContain("<td>25</td>");
-    // expect(result).toContain("<td>30</td>");
     expect(result).toBe(
       `<div class="table-responsive"><table class="table table-sm"><tbody><tr><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
     );
   });
-
-  // it("renders a header cell", () => {
-  //   const header = { label: "Name", align: "center", width: "100px" };
-  //   const result = headerCell(header);
-  //   expect(result).toBe(
-  //     '<th style="text-align: center;width: 100px;">Name</th>'
-  //   );
-  // });
-
-  // it("renders a table with groupped rows", () => {
-  //   const headers = [
-  //     {
-  //       label: "Name",
-  //       key: "name",
-  //     },
-  //     {
-  //       label: "Age",
-  //       key: "age",
-  //     },
-  //   ];
-  //   const groupedRows = {
-  //     Group1: [
-  //       { name: "UserName1", age: 25 },
-  //       { name: "UserName2", age: 30 },
-  //     ],
-  //     Group2: [{ name: "UserName3", age: 35 }],
-  //   };
-  //   const result = mkTable(headers, groupedRows, {grouped: true})
-  //   expect(result)
-  // });
 
   it("renders a table with pagination", () => {
     const headers = [
@@ -416,8 +330,6 @@ describe("table", () => {
       get_page_link: (page: number) => `?page=${page}`,
     };
     const result = mkTable(headers, rows, { pagination: paginationOpts });
-    // expect(result).toContain('<nav aria-label="pagination">');
-    // expect(result).toContain('<a href="?page=2">2</a>');
     expect(result).toBe(
       `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>UserName1</td><td>25</td></tr><tr><td>UserName2</td><td>30</td></tr></tbody></table><ul class="pagination"><li class="page-item active"><span class="page-link link-style" onclick="?page=1" role="link">1</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=2" role="link">2</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=3" role="link">3</span></li></ul></div>`
     );
@@ -425,11 +337,6 @@ describe("table", () => {
 });
 
 describe("mjml-layout", () => {
-  // describe('isBlock', ()=> {
-  //   it('returns true for block elements', ()=> {
-  //     expect(isBlock({}))
-  //   })
-  // })
   describe("transformTextStyle", () => {
     it("transforms text styles correctly", () => {
       expect(transformTextStyle("h1")).toEqual({
@@ -509,34 +416,6 @@ describe("mjml-layout", () => {
   });
 
   describe("renderMJML", () => {
-    // it("renders a simple container layout", () => {
-    //   const layout = {
-    //     tag: "container",
-    //     children: [
-    //       {
-    //         type: "blank",
-    //         contents: "Hello World",
-    //       },
-    //       {
-    //         type: "line_break",
-    //       },
-    //       {
-    //         type: "blank",
-    //         contents: "Another Line",
-    //       },
-    //     ],
-    //     bgColor: "#ffffff",
-    //   };
-    //   const result = renderMJML({
-    //     layout,
-    //     req: { isSubView: false },
-    //   });
-    //   expect(result).toContain("<mj-section");
-    //   expect(result).toContain("Hello World");
-    //   expect(result).toContain("Another Line");
-    //   expect(result.backgroundColor).toBe("#ffffff");
-    // });
-
     it("renders a layout with an image", () => {
       const layout = {
         type: "container",
@@ -717,7 +596,6 @@ describe("mjml-layout", () => {
     );
   });
 
-  // Might need to remove this
   it("renders a layout with a dropdown menu", () => {
     const layout = {
       type: "container",
@@ -819,33 +697,7 @@ describe("mjml-layout", () => {
 });
 
 describe("index", () => {
-  // describe("link", () => {
-  //   it("renders a simple link", () => {
-  //     const result = link("/home", "Home");
-  //     expect(result).toBe('<a href="/home">Home</a>');
-  //   });
-
-  //   it("renders a link with additional attributes", () => {
-  //     const result = link("/home", "Home", { class: "nav-link" });
-  //     expect(result).toBe('<a href="/home" class="nav-link">Home</a>');
-  //   });
-  // });
-
   describe("post-bn", () => {
-    // it("renders a basic post button", () => {
-    //   //
-    //   const result = post_btn("/submit", "Submit", "csrfToken123", {
-    //     btnClass: "btn-primary",
-    //   });
-    //   // expect(result).toContain('<form action="/submit" method="post">');
-    //   // expect(result).toContain(
-    //   //   '<input type="hidden" name="_csrf" value="csrfToken123">'
-    //   // );
-    //   // expect(result).toContain(
-    //   //   '<button type="submit" class=" btn btn-primary">Submit</button>'
-    //   // );
-    //   expect(result).toBe(`<form action=\"/submit\" method=\"post\"> <input type=\"hidden\" name=\"_csrf\" value=\"csrfToken123\"><button type=\"submit\"  class=\" btn  btn-primary\">Submit</button></form>`)
-    // });
     it("renders a basic post button", () => {
       const result = post_btn("/submit", "Submit", "csrfToken123", {
         btnClass: "btn-primary",
@@ -946,50 +798,70 @@ describe("index", () => {
       expect(result).toContain(">January 1, 2023</time>");
     });
   });
+});
 
-  // describe("localeTime", () => {
-  //   it("renders a localized time", () => {
-  //     const date = new Date("2023-01-01T12:34:56Z");
-  //     const result = localeTime(date, {}, "en");
-  //     expect(result).toContain('<time datetime="2023-01-01T12:34:56.000Z"');
-  //     expect(result).toContain(">12:34 PM</time>");
-  //   });
+describe("builder", () => {
+  it("renders the builder with default options", () => {
+    const options = { someOption: "value" };
+    const context = { someContent: "value" };
+    const action = "/submit";
+    const stepName = "step1";
+    const layout = { type: "container", contents: [] };
+    const csrfToken = "csrfToken123";
 
-  //   it("renders a localized time with custom options", () => {
-  //     const date = new Date("2023-01-01T12:34:56Z");
-  //     const result = localeTime(
-  //       date,
-  //       { hour: "2-digit", minute: "2-digit", second: "2-digit" },
-  //       "en"
-  //     );
-  //     expect(result).toContain('<time datetime="2023-01-01T12:34:56.000Z"');
-  //     expect(result).toContain(">12:34:56 PM</time>");
-  //   });
-  // });
+    const result = builder(
+      { options, context, action, stepName, layout },
+      csrfToken
+    );
+    expect(result).toContain('<div id="saltcorn-builder"></div>');
+    expect(result).toContain(
+      '<form action="/submit" method="post" id="scbuildform">'
+    );
+    expect(result).toContain('<input type="hidden" name="contextEnc"');
+    expect(result).toContain(
+      '<input type="hidden" name="stepName" value="step1">'
+    );
+    expect(result).toContain(
+      '<input type="hidden" name="_csrf" value="csrfToken123"'
+    );
+    expect(result).toContain("builder.renderBuilder(");
+  });
 
-  // describe("localeDateTime", () => {
-  //   it("renders a localized date and time", () => {
-  //     const date = new Date("2023-01-01T12:34:56Z");
-  //     const result = localeDateTime(date, {}, "en");
-  //     expect(result).toContain('<time datetime="2023-01-01T12:34:56.000Z"');
-  //     expect(result).toContain(">1/1/2023, 12:34 PM</time>");
-  //   });
+  it("renders the builder with a version tag", () => {
+    const options = { someOptions: "value" };
+    const context = { someContext: "value" };
+    const action = "/submit";
+    const stepName = "step1";
+    const layout = { type: "container", contents: [] };
+    const csrfToken = "csrfToken123";
+    const version_tag = "v1.0.0";
 
-  //   it("renders a localized date and time with custom options", () => {
-  //     const date = new Date("2023-01-01T12:34:56Z");
-  //     const result = localeDateTime(
-  //       date,
-  //       {
-  //         year: "numeric",
-  //         month: "long",
-  //         day: "numeric",
-  //         hour: "2-digit",
-  //         minute: "2-digit",
-  //       },
-  //       "en"
-  //     );
-  //     expect(result).toContain('<time datetime="2023-01-01T12:34:56.000Z"');
-  //     expect(result).toContain(">January 1, 2023, 12:34 PM</time>");
-  //   });
-  // });
+    const result = builder(
+      { options, context, action, stepName, layout, version_tag },
+      csrfToken
+    );
+    expect(result).toContain(
+      '<script src="/static_assets/v1.0.0/builder_bundle.js"></script>'
+    );
+    expect(result).toContain(
+      '<link rel="stylesheet" type="text/css" media="screen" href="/static_assets/v1.0.0/saltcorn-builder.css">'
+    );
+  });
+
+  it("renders the builder with custom mode", () => {
+    const options = { someOption: "value" };
+    const context = { someOptions: "value" };
+    const action = "/submit";
+    const stepName = "step1";
+    const layout = { type: "container", contents: [] };
+    const csrfToken = "csrfToken123";
+    const mode = "edit";
+
+    const result = builder(
+      { options, context, action, stepName, layout, mode },
+      csrfToken
+    );
+    expect(result).toContain("builder.renderBuilder(");
+    expect(result).toContain('"edit"');
+  });
 });

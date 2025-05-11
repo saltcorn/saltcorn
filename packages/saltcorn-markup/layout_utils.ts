@@ -91,15 +91,6 @@ const makeTooltip = (text: string, placement: string = "top") => ({
   title: text,
 });
 
-// type NavSubItemsOpts = {
-//   label: string;
-//   subitems: any[];
-//   icon?: string;
-//   isUser: boolean;
-//   tooltip?: string;
-// };
-
-// Defining NavSubItemsOpts as a type alias for SectionOpts
 type NavSubItemsOpts = Pick<
   SectionOpts,
   "label" | "subitems" | "icon" | "isUser" | "tooltip"
@@ -128,13 +119,6 @@ const show_icon_and_label = (
           )
         : i({ class: [icon, cls] })) + (label === " " ? "" : "&nbsp;")
     : "") + (label === " " && icon ? "" : label);
-
-// type SiOpts = {
-//   type: string;
-//   label: string;
-//   link: string;
-//   target_blank: boolean;
-// }
 
 const navSubItemsIterator = (si: SectionOpts): string =>
   si?.type === "Separator"
@@ -705,25 +689,6 @@ const headersInBody = (
     headerTag?: string;
   }[] = []
 ): string =>
-  /* headers
-    .filter((h) => h.script)
-    .map(
-      (h) =>
-        `<script ${h.defer ? "defer " : ""}src="${
-          isNode ? h.script : normaliseHeaderForMobile(h.script)
-        }" ${
-          h.integrity
-            ? `integrity="${h.integrity}" crossorigin="anonymous"`
-            : ""
-        }></script>`
-    )
-    .join("") +
-  headers
-    .filter((h) => h.scriptBody)
-    .map((h) => `<script>${h.scriptBody}</script>`)
-    .join(""); */
-
-  /* Will be using tag functions */
   headers
     .filter((h) => h.script)
     .map((h) =>
@@ -1009,4 +974,9 @@ export = {
   show_icon_and_label,
   activeChecker,
   validID,
+  navSubItemsIterator,
+  navSubitems,
+  rightNavBar,
+  leftNavBar,
+  innerSections,
 };
