@@ -25,7 +25,7 @@ const {
   script,
   a,
 } = require("@saltcorn/markup/tags");
-const { render: renderLayout } = require("@saltcorn/markup/layout");
+const renderLayout = require("@saltcorn/markup/layout");
 
 const {
   readState,

@@ -281,10 +281,9 @@ describe("dropdown_checkboxes", () => {
     };
     const result = dropdown_checkboxes(opts);
 
-    // Verify checked state
     expect(result).toContain('value="1" checked');
     expect(result).not.toContain('value="2" checked');
-    expect(result).toContain('value="2"'); // Unchecked option should still render
+    expect(result).toContain('value="2"');
   });
 
   it("renders dropdown checkboxes with options", () => {

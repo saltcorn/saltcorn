@@ -550,7 +550,7 @@ const render = ({
       );
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
-  if (req.isSubView) {
+  if (req?.isSubView) {
     return go(layout, true, 0);
   } else if (layout.type === "container") {
     const inner = div(
@@ -571,5 +571,13 @@ const render = ({
 };
 
 // declaration merging
-const LayoutExports = render;
+// const LayoutExports = render;
+// export = LayoutExports;
+const LayoutExports = {
+  renderMJML: render,
+  transformLinkSize,
+  transformTextStyle,
+  applyTextStyle,
+  isBlock,
+};
 export = LayoutExports;

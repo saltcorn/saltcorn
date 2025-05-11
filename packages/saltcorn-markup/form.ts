@@ -25,7 +25,7 @@ const {
   textarea,
   option,
 } = tags;
-import {render as renderLayout} from "./layout";
+import renderLayout = require("./layout");
 import helpers = require("./helpers");
 const { isdef, select_options, search_bar } = helpers;
 import type { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";

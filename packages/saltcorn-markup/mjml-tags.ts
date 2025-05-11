@@ -81,7 +81,7 @@ const emailButton = (
       break;
   }
 //  console.log({ href, btnStyle, rawType, label, style, borderColor, color });
-  return `<a rel="noopener" target="_blank" ${title ? `title="${title}" ` : ""}href="${href}" style="${style && style.includes("color") ? `${style};border-width:1px; border-style: solid;` : `background-color: ${bgColor}; color: ${color};`} ${borderColor ? `border-color: ${borderColor};border-width:1px; border-style: solid;` : ""} font-size: 18px; font-family: Helvetica, Arial, sans-serif; font-weight: bold; text-decoration: none; padding: 14px 20px; border-radius: 5px; display: inline-block; mso-padding-alt: 0;">
+  return `<a rel="noopener" target="_blank" ${title ? `title="${title}" ` : ""}href="${href}" style="${style && style.includes("color") ? `${style}; border-width: 1px; border-style: solid;` : `background-color: ${bgColor}; color: ${color};`} ${borderColor ? `border-color: ${borderColor};border-width:1px; border-style: solid; ` : ""}font-size: 18px; font-family: Helvetica, Arial, sans-serif; font-weight: bold; text-decoration: none; padding: 14px 20px; border-radius: 5px; display: inline-block; mso-padding-alt: 0;">
     <!--[if mso]>
     <i style="letter-spacing: 25px; mso-font-width: -100%; mso-text-raise: 30pt;">&nbsp;</i>
     <![endif]-->

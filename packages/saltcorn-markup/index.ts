@@ -9,7 +9,7 @@ import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
 import helpers = require("./helpers");
-const { a, text, div, button, hr, time, i, input, text_attr } = tags;
+const { a, text, div, button, hr, time, i, input, text_attr, form } = tags;
 import layoutUtils = require("./layout_utils");
 const { alert, toast, show_icon_and_label, validID } = layoutUtils;
 
@@ -94,7 +94,7 @@ const post_btn = (
     formClass ? ` class="${formClass}"` : ""
   }>
   ${ajax ? "" : `<input type="hidden" name="_csrf" value="${csrfToken}">`}
-<button ${ajax ? 'type="button"' : 'type="submit"'} ${
+<button ${ajax ? 'type="button"' : 'type="submit"'}${
     onClick && ajax
       ? `onclick="${
           spinner ? "press_store_button(this);" : ""
@@ -128,18 +128,39 @@ const post_btn = (
  * @param what- Item
  * @returns return html form
  */
-const post_delete_btn = (href: string, req: any, what?: string): string =>
-  `<form action="${text(href)}" method="post" >
-   <input type="hidden" name="_csrf" value="${req.csrfToken()}">
-   <button type="submit" class="btn btn-danger btn-sm" 
-     onclick="return confirm('${
-       what
-         ? req.__("Are you sure you want to delete %s?", what)
-         : req.__("Are you sure?")
-     }')" />
-     <i class="fas fa-trash-alt"></i>
-   </button>
- </form>`;
+// const post_delete_btn = (href: string, req: any, what?: string): string =>
+//   `<form action="${text(href)}" method="post">
+//    <input type="hidden" name="_csrf" value="${req.csrfToken()}">
+//    <button type="submit" class="btn btn-danger btn-sm" 
+//      onclick="return confirm('${
+//        what
+//          ? req.__("Are you sure you want to delete %s?", what)
+//          : req.__("Are you sure?")
+//      }')">
+//      <i class="fas fa-trash-alt"></i>
+//    </button>
+//  </form>`;
+const post_delete_btn = (
+  href: string,
+  req: any,
+  what?: string
+): string =>
+  form(
+    { action: text(href), method: "post" },
+    input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+    button(
+      {
+        type: "submit",
+        class: "btn btn-danger btn-sm",
+        onclick: `return confirm('${
+          what
+            ? req.__("Are you sure you want to delete %s?", what)
+            : req.__("Are you sure?")
+        }')`,
+      },
+      i({ class: "fas fa-trash-alt" })
+    )
+  );
 
 /**
  * @param href

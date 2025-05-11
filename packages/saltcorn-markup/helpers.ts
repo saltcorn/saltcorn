@@ -333,7 +333,7 @@ const search_bar = (
       : button(
           {
             class: "btn btn-outline-secondary search-bar",
-            ...(clickHandler ? { onClick: clickHandler } : {}),
+            onClick: clickHandler || undefined,
             type: "submit",
             id: "button-search-submit",
           },

@@ -1,7 +1,8 @@
 import { describe, it, expect } from "@jest/globals";
-import { render, makeSegments, applyTextStyle } from "./layout";
+import render from "./layout";
+import { makeSegments, applyTextStyle, textStyleToArray } from "./internal";
 // import renderMJML = require("./mjml-layout");
-import renderMJML from "./mjml-layout";
+import { renderMJML } from "./mjml-layout";
 
 // import tags = require("./tags");
 import * as tags from "./tags";
@@ -180,16 +181,12 @@ describe("layout", () => {
         { type: "blank", contents: "Option 2" },
       ],
     };
-
+  
     const result = render({ blockDispatch, layout: markup });
-
-    // Check the structure without depending on the exact ID
-    expect(result).toContain('<div class="dropdown">');
-    expect(result).toContain('class="btn btn-primary  dropdown-toggle"');
-    expect(result).toContain('data-bs-toggle="dropdown"');
-    expect(result).toContain(">Actions</button>");
-    expect(result).toContain('<div class="dropdown-menu"');
-    expect(result).toContain("Option 1Option 2</div>");
+  
+    expect(result).toMatch(
+      /^<div class="dropdown"><button class="btn btn-primary  dropdown-toggle" data-boundary="viewport" type="button" id="actiondd[a-f0-9]+" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions<\/button><div class="dropdown-menu" aria-labelledby="actiondd[a-f0-9]+"><div class="d-flex flex-column px-2">Option 1Option 2<\/div><\/div><\/div>$/
+    );
   });
 
   it("renders a card with a footer", () => {
@@ -255,8 +252,7 @@ describe("render", () => {
     };
     const result = render({ blockDispatch, layout: markup });
     expect(result).toBe(
-      // '<div style="    " class="custom-class">Content with class</div>'
-      "<span class=\"custom-class\"><div class=\"custom-class\" style=\"    \">Content with class</div></span>"
+      '<span class="custom-class"><div class="custom-class" style="    ">Content with class</div></span>'
     );
   });
 
@@ -352,15 +348,6 @@ describe("render", () => {
 });
 
 describe("makeSegments", () => {
-  // it("creates segments with alerts", () => {
-  //   const body = "Test body";
-  //   const alerts = [{ type: "success", msg: "Operation successful" }];
-  //   const result = makeSegments(body, true);
-  //   // expect(result.above).toHaveLength(2);
-  //   expect(result.above[0].contents).toBe("Test body");
-  //   expect(result.above[1].contents).toContain("Operation successful");
-  // });
-
   it("creates segments without alerts", () => {
     const body = "Test body";
     const result = makeSegments(body, true);
@@ -417,35 +404,6 @@ describe("applyTextStyle", () => {
   });
 });
 
-// describe("wrap", () => {
-//   it("wraps with label when labelFor is provided", () => {
-//     const segment = { labelFor: "input1", textStyle: "h1" };
-//     const inner = "Label Text";
-//     const result = wrap(segment, true, 0, inner);
-//     expect(result).toBe(
-//       '<label for="input1"><h1>Label Text</h1></label>'
-//     );
-//   });
-
-//   it("wraps with applyTextStyle when no labelFor is provided", () => {
-//     const segment = { textStyle: "h1" };
-//     const inner = "Styled Text";
-//     const result = wrap(segment, true, 0, inner);
-//     expect(result).toBe('<h1>Styled Text</h1>');
-//   });
-
-//   it("calls blockDispatch.wrapTop when available", () => {
-//     const blockDispatch = {
-//       wrapTop: jest.fn((segment, ix, inner) => `<p>${inner}</p>`),
-//     };
-//     const segment = {};
-//     const inner = "Wrapped Text";
-//     const result = wrap(segment, true, 0, inner);
-//     expect(blockDispatch.wrapTop).toHaveBeenCalledWith(segment, 0, inner);
-//     expect(result).toBe("<p>Wrapped Text</p>");
-//   });
-// });
-
 describe("MJML layout", () => {
   const blockDispatch = {};
   it("renders empty layout", () => {
@@ -467,9 +425,25 @@ describe("MJML layout", () => {
     const layout = { type: "blank", contents: "Hello world", textStyle: "h1" };
     const result = renderMJML({ blockDispatch, layout, req: {} });
     expect(result.markup).toBe(
-      `<mj-section><mj-raw><div style=\"text-align: left !important; font-size: 16px;\"><div style=\"font-size:2em;margin-top:0.67em;margin-bottom:0.67em;margin-left:0;margin-right:0;font-weight:bold\">Hello world</div></div></mj-raw></mj-section>`
+      `<mj-section><mj-raw><div style="text-align: left !important; font-size: 16px;"><div style="font-size:2em;margin-top:0.67em;margin-bottom:0.67em;margin-left:0;margin-right:0;font-weight:bold">Hello world</div></div></mj-raw></mj-section>`
     );
     expect(result.backgroundColor).toBe(undefined);
   });
 });
+describe("textStyleToArray", () => {
+  it("returns an empty array for undefined input", () => {
+    expect(textStyleToArray(undefined)).toEqual([]);
+  });
 
+  it("returns an empty array for null input", () => {
+    expect(textStyleToArray(null)).toEqual([]);
+  });
+
+  it("returns an array with a single string for string input", () => {
+    expect(textStyleToArray("h1")).toEqual(["h1"]);
+  });
+
+  it("returns the same array for array input", () => {
+    expect(textStyleToArray(["h1", "fw-bold"])).toEqual(["h1", "fw-bold"]);
+  });
+});

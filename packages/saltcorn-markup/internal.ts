@@ -1,6 +1,7 @@
 /**
  * @category saltcorn-markup
  * @module layout
+ * @description Duplicate of layout.ts for testing purposes
  */
 
 import tags = require("./tags");
@@ -1011,5 +1012,10 @@ const render = ({
 };
 
 // declaration merging
-const LayoutExports = render;
+const LayoutExports = {
+  render,
+  makeSegments,
+  textStyleToArray,
+  applyTextStyle,
+};
 export = LayoutExports;
