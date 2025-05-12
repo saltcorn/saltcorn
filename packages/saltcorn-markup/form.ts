@@ -495,8 +495,8 @@ const innerField =
         );
       case "hidden":
         return input({
-          class: `form-control ${validClass} ${hdr.class || ""}`,
           type: "hidden",
+          class: `form-control ${validClass} ${hdr.class || ""}`,
           name: text_attr(name),
           ...(v ? { value: text_attr(v[hdr.form_name]) } : {}),
         });
@@ -1351,26 +1351,18 @@ const renderFormLayout = (form: Form): string => {
         );
       }
 
-      const mkBtn = (onclick_or_type: string) => {
-        const [onClickAttr, typeAttr] = onclick_or_type.split(' type="');
-        const attrs: Record<string, string> = {
-          [onClickAttr.startsWith("onClick") ? "onclick" : "type"]: onClickAttr,
-          ...(typeAttr && { type: typeAttr.replace(/"/g, "") }),
-          class:
-            action_style === "btn-link"
-              ? ""
-              : `btn ${action_style || "btn-primary"} ${action_size || ""}`,
-          ...(style && { style }),
-          ...(spinner && !onclick_or_type?.startsWith?.("on")
-            ? { onclick: "spin_action_link(this)" }
-            : {}),
-        };
-
-        return button(attrs, [
-          ...(action_icon ? [i({ class: action_icon }), "&nbsp;"] : []),
-          text(action_label || form.submitLabel || action_name || "save"),
-        ]);
-      };
+      const mkBtn = (onclick_or_type: string) =>
+        `<button ${onclick_or_type} class="${
+          action_style === "btn-link"
+            ? ""
+            : `btn ${action_style || "btn-primary"} ${action_size || ""}`
+        }"${style ? ` style="${style}"` : ""}${
+          spinner && !onclick_or_type?.startsWith?.("on")
+            ? ` onclick="spin_action_link(this)"`
+            : ""
+        }>${
+          action_icon ? `<i class="${text(action_icon)}"></i>&nbsp;` : ""
+        }${text(action_label || form.submitLabel || action_name || "Save")}</button>`;
 
       if (action_name === "Delete") {
         if (action_url) {

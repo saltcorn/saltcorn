@@ -73,7 +73,6 @@ const select_options = (
       return option(
         {
           value: text_attr(value),
-          class: "form-control",
           ...(isSelected(value) ? { selected: true } : {}),
         },
         text(label)

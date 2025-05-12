@@ -20,10 +20,10 @@ describe("select_options", () => {
     };
     const result = select_options("1", hdr);
     expect(result).toContain(
-      '<option value="1" class="form-control" selected>Option 1</option>'
+      '<option value="1" selected>Option 1</option>'
     );
     expect(result).toContain(
-      '<option value="2" class="form-control">Option 2</option>'
+      '<option value="2">Option 2</option>'
     );
   });
 
@@ -36,10 +36,10 @@ describe("select_options", () => {
     };
     const result = select_options("", hdr, false, "Select an option");
     expect(result).toContain(
-      '<option value="" class="form-control">Select an option</option>'
+      '<option value="">Select an option</option>'
     );
     expect(result).toContain(
-      '<option value="1" class="form-control">Option 1</option>'
+      '<option value="1">Option 1</option>'
     );
   });
 
@@ -47,7 +47,7 @@ describe("select_options", () => {
     const hdr = { options: [{ value: "1", label: "Option 1" }] };
     const result = select_options("1", hdr, false, "Select");
     expect(result).toContain(
-      '<option value="1" class="form-control" selected>Option 1</option>'
+      '<option value="1" selected>Option 1</option>'
     );
   });
 
