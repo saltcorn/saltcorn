@@ -536,6 +536,13 @@ module.exports = {
             fieldview: "textarea",
             required: true,
           },
+          {
+            name: "locale",
+            label: "Locale",
+            sublabel:
+              "Language override. Two-letter code (<code>en</code>, <code>fr</code> etc) or language name. <code>{{ }}</code> interpolations usable",
+            type: "String",
+          },
           /*    {
             name: "attachment_paths",
             label: "Attachments",
@@ -689,6 +696,13 @@ module.exports = {
             "Only send email if this formula evaluates to true. Leave blank to always send email",
           type: "String",
         },
+        {
+          name: "locale",
+          label: "Locale",
+          sublabel:
+            "Language override. Two-letter code (<code>en</code>, <code>fr</code> etc) or language name. <code>{{ }}</code> interpolations usable",
+          type: "String",
+        },
         { name: "disable_notify", label: "Disable notification", type: "Bool" },
         {
           name: "confirm_field",
@@ -730,6 +744,7 @@ module.exports = {
         disable_notify,
         confirm_field,
         body,
+        locale,
       },
       user,
       mode,
@@ -759,6 +774,7 @@ module.exports = {
         ...freeVariablesInInterpolation(to_email_fixed),
         ...freeVariablesInInterpolation(cc_email),
         ...freeVariablesInInterpolation(bcc_email),
+        ...freeVariablesInInterpolation(locale),
         ...(subject_formula ? freeVariables(subject) : []),
         ...freeVariables(only_if),
       ];
@@ -822,8 +838,26 @@ module.exports = {
         const html = mjml2html(mjml, { minify: true });
         setBody.html = html.html;
       } else {
+        const opts = {};
+        if (locale) {
+          opts.locale = interpolate(locale, useRow, user, "send_email locale");
+          const cfgLangs = getState().getConfig("localizer_languages");
+          if (
+            Object.values(cfgLangs || {})
+              .map((r) => r.name)
+              .includes(opts.locale)
+          ) {
+            opts.locale = Object.values(cfgLangs).find((r) => r.name).locale;
+          }
+        }
         const view = await View.findOne({ name: viewname });
-        setBody.html = await viewToEmailHtml(view, { id: row[table.pk_name] });
+        setBody.html = await viewToEmailHtml(
+          view,
+          {
+            [table.pk_name]: row[table.pk_name],
+          },
+          opts
+        );
       }
       // if user not supplied, default to admin rights in line with convention for insertRow/updateRow
       const attachments = await loadAttachments(

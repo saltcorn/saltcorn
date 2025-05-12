@@ -143,8 +143,16 @@ async function sendGraphMail(mail: any, tokenStr: string) {
   }
 }
 
-const viewToMjml = async (view: View, state: any) => {
-  const result = await view.run(state, emailMockReqRes);
+const viewToMjml = async (
+  view: View,
+  state: any,
+  options: { locale?: string } = {}
+) => {
+  const reqRes = emailMockReqRes;
+  if (options?.locale) {
+    reqRes.req.getLocale = () => options.locale;
+  }
+  const result = await view.run(state, reqRes);
   const faCss = link({
     href: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css",
     rel: "stylesheet",
@@ -168,8 +176,12 @@ const viewToMjml = async (view: View, state: any) => {
  * @param state state params for the view
  * @returns email formatted html
  */
-const viewToEmailHtml = async (view: View, state: any) => {
-  const mjmlMarkup = await viewToMjml(view, state);
+const viewToEmailHtml = async (
+  view: View,
+  state: any,
+  options: { locale?: string } = {}
+) => {
+  const mjmlMarkup = await viewToMjml(view, state, options);
   const html = await mjml2html(mjmlMarkup, { minify: true });
   if (html.errors && html.errors.length > 0) {
     html.errors.forEach((e) => {
