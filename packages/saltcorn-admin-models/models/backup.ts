@@ -303,11 +303,13 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
 
   const cfgs = await db.select("_sc_config");
 
+  const state = getState();
   for (const cfg of cfgs) {
-    await writeFile(
-      join(dirpath, cfg.key),
-      JSON.stringify(db.isSQLite ? JSON.parse(cfg.value) : cfg.value)
-    );
+    if (!state.isFixedConfig(cfg.key))
+      await writeFile(
+        join(dirpath, cfg.key),
+        JSON.stringify(db.isSQLite ? JSON.parse(cfg.value) : cfg.value)
+      );
   }
 };
 
