@@ -783,6 +783,14 @@ router.get(
     flow.autoSave = true;
     flow.saveURL = `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`;
     const wfres = await flow.run(plugin.configuration || {});
+    if (wfres.renderForm) {
+      const fields = wfres.renderForm.fields;
+      const fixed = db.connectObj.fixed_plugin_configuration?.[name];
+      Object.keys(fixed || {}).forEach((k) => {
+        const ix = fields.findIndex((f) => f.name === k);
+        fields.splice(ix, 1);
+      });
+    }
     if (module.layout) {
       wfres.renderForm.additionalButtons = [
         ...(wfres.renderForm.additionalButtons || []),
