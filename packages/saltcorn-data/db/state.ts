@@ -384,6 +384,18 @@ class State {
    * @param {string} key
    * @returns {boolean}
    */
+  isFixedPluginConfig(plugin_name: string, key: string): boolean {
+    return (
+      typeof db.connectObj.fixed_plugin_configuration?.[plugin_name]?.[key] !==
+      "undefined"
+    );
+  }
+
+  /**
+   * Returns true if key is defined in fixed_configuration for tenant
+   * @param {string} key
+   * @returns {boolean}
+   */
   isFixedConfig(key: string): boolean {
     return (
       typeof db.connectObj.fixed_configuration[key] !== "undefined" ||
@@ -730,12 +742,16 @@ class State {
   registerPlugin(
     name: string,
     plugin: Plugin,
-    cfg?: SingleConfig,
+    setCfg?: SingleConfig,
     location?: string,
     modname?: string
   ) {
     this.log(6, `Register Plugin: ${name} at ${location}`);
     this.plugins[name] = plugin;
+    const cfg = {
+      ...setCfg,
+      ...(db.connectObj.fixed_plugin_configuration?.[name] || {}),
+    };
     this.plugin_cfgs[name] = cfg;
     if (plugin.exposed_configs && cfg) {
       const exposedCfgs: any = {};
