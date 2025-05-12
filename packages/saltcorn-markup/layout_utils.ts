@@ -91,15 +91,6 @@ const makeTooltip = (text: string, placement: string = "top") => ({
   title: text,
 });
 
-// type NavSubItemsOpts = {
-//   label: string;
-//   subitems: any[];
-//   icon?: string;
-//   isUser: boolean;
-//   tooltip?: string;
-// };
-
-// Defining NavSubItemsOpts as a type alias for SectionOpts
 type NavSubItemsOpts = Pick<
   SectionOpts,
   "label" | "subitems" | "icon" | "isUser" | "tooltip"
@@ -128,13 +119,6 @@ const show_icon_and_label = (
           )
         : i({ class: [icon, cls] })) + (label === " " ? "" : "&nbsp;")
     : "") + (label === " " && icon ? "" : label);
-
-// type SiOpts = {
-//   type: string;
-//   label: string;
-//   link: string;
-//   target_blank: boolean;
-// }
 
 const navSubItemsIterator = (si: SectionOpts): string =>
   si?.type === "Separator"
@@ -435,12 +419,23 @@ const alert = (type: string, s: string): string => {
         : realtype === "warning"
           ? "fa-exclamation-triangle"
           : "";
+
+  /* Will be using tag functions */
   return s && s.length > 0
-    ? `<div class="alert alert-${realtype} alert-dismissible fade show" role="alert">
-        <i class="fas ${icon} me-1"></i>${s}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-        </button>
-      </div>`
+    ? div(
+        {
+          class: `alert alert-${realtype} alert-dismissible fade show`,
+          role: "alert",
+        },
+        icon ? i({ class: `fas ${icon} me-1` }) : "",
+        s,
+        button({
+          type: "button",
+          class: "btn-close",
+          "data-bs-dismiss": "alert",
+          "aria-label": "Close",
+        })
+      )
     : "";
 };
 
@@ -545,7 +540,7 @@ const standardBreadcrumbItem =
       href ? a({ href }, text) : text,
       postLinkText ? "&nbsp;" + postLinkText : ""
     );
-    
+
 namespace Workflow {
   export type WorkflowOpts = {
     steps: StepsOpts[];
@@ -696,20 +691,25 @@ const headersInBody = (
 ): string =>
   headers
     .filter((h) => h.script)
-    .map(
-      (h) =>
-        `<script ${h.defer ? "defer " : ""}src="${
-          isNode ? h.script : normaliseHeaderForMobile(h.script)
-        }" ${
-          h.integrity
-            ? `integrity="${h.integrity}" crossorigin="anonymous"`
-            : ""
-        }></script>`
+    .map((h) =>
+      script(
+        {
+          ...(h.defer ? { defer: true } : {}),
+          src: isNode ? h.script : normaliseHeaderForMobile(h.script),
+          ...(h.integrity
+            ? {
+                integrity: h.integrity,
+                crossorigin: "anonymous",
+              }
+            : {}),
+        },
+        ""
+      )
     )
     .join("") +
   headers
     .filter((h) => h.scriptBody)
-    .map((h) => `<script>${h.scriptBody}</script>`)
+    .map((h) => script(h.scriptBody))
     .join("");
 
 /**
@@ -974,4 +974,9 @@ export = {
   show_icon_and_label,
   activeChecker,
   validID,
+  navSubItemsIterator,
+  navSubitems,
+  rightNavBar,
+  leftNavBar,
+  innerSections,
 };

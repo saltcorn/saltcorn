@@ -3,12 +3,14 @@
  * @module
  */
 import renderFormModule = require("./form");
-const { renderForm } = renderFormModule;
+const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } =
+  renderFormModule;
 import renderBuilder = require("./builder");
 import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
-const { a, text, div, button, hr, time, i, input, text_attr } = tags;
+import helpers = require("./helpers");
+const { a, text, div, button, hr, time, i, input, text_attr, form, span } = tags;
 import layoutUtils = require("./layout_utils");
 const { alert, toast, show_icon_and_label, validID } = layoutUtils;
 
@@ -89,36 +91,69 @@ const post_btn = (
     title,
   }: PostBtnOpts | any = {}
 ): string =>
-  `<form action="${text(href)}" method="post"${
-    formClass ? ` class="${formClass}"` : ""
-  }>
-  ${ajax ? "" : `<input type="hidden" name="_csrf" value="${csrfToken}">`}
-<button ${ajax ? 'type="button"' : 'type="submit"'} ${
-    onClick && ajax
-      ? `onclick="${
-          spinner ? "press_store_button(this);" : ""
-        }${buildButtonCallback(reload_on_done, reload_delay)};${onClick}"`
-      : onClick
-        ? `onclick="${spinner ? "press_store_button(this);" : ""}${onClick}"`
-        : ajax && confirm
-          ? `onclick="if(confirm('${req.__("Are you sure?")}')) {${
-              spinner ? "press_store_button(this);" : ""
-            }${buildButtonCallback(reload_on_done, reload_delay)}}"`
-          : ajax
-            ? `onclick="${
-                spinner ? "press_store_button(this);" : ""
-              }${buildButtonCallback(reload_on_done, reload_delay)}"`
-            : confirm
-              ? `onclick="return confirm('${req.__("Are you sure?")}')"`
-              : spinner
-                ? 'onclick="press_store_button(this);"'
-                : ""
-  } class="${klass} btn ${small ? "btn-sm" : ""} ${btnClass}"${
-    style ? ` style="${style}"` : ""
-  }${title ? ` title=${text_attr(title)}` : ""}>${show_icon_and_label(
-    icon,
-    s
-  )}</button></form>`;
+  form(
+    {
+      action: text(href),
+      method: "post",
+      ...(formClass ? { class: formClass } : {}),
+    },
+    [
+      ajax ? "" : input({ type: "hidden", name: "_csrf", value: csrfToken }),
+      button(
+        {
+          ...(ajax ? { type: "button" } : { type: "submit" }),
+          ...(onClick && ajax
+            ? {
+                onclick: `${spinner ? "press_store_button(this);" : ""}${buildButtonCallback(
+                  reload_on_done,
+                  reload_delay
+                )};${onClick}`,
+              }
+            : {
+                ...(onClick
+                  ? {
+                      onclick: `${spinner ? "press_store_button(this);" : ""}${onClick}`,
+                    }
+                  : {
+                      ...(ajax && confirm
+                        ? {
+                            onclick: `if(confirm('${req.__("Are you sure?")}')) {${
+                              spinner ? "press_store_button(this);" : ""
+                            }${buildButtonCallback(reload_on_done, reload_delay)}}`,
+                          }
+                        : {
+                            ...(ajax
+                              ? {
+                                  onclick: `${spinner ? "press_store_button(this);" : ""}${buildButtonCallback(
+                                    reload_on_done,
+                                    reload_delay
+                                  )}`,
+                                }
+                              : {
+                                  ...(confirm
+                                    ? {
+                                        onclick: `return confirm('${req.__("Are you sure?")}')`,
+                                      }
+                                    : {
+                                        ...(spinner
+                                          ? {
+                                              onclick:
+                                                "press_store_button(this);",
+                                            }
+                                          : {}),
+                                      }),
+                                }),
+                          }),
+                    }),
+              }),
+          class: `${klass} btn ${small ? "btn-sm" : ""} ${btnClass}`,
+          ...(style ? { style } : {}),
+          ...(title ? { title: text_attr(title) } : {}),
+        },
+        show_icon_and_label(icon, s)
+      ),
+    ]
+  );
 
 /**
  * UI Form for Delete Item confirmation
@@ -128,17 +163,22 @@ const post_btn = (
  * @returns return html form
  */
 const post_delete_btn = (href: string, req: any, what?: string): string =>
-  `<form action="${text(href)}" method="post" >
-   <input type="hidden" name="_csrf" value="${req.csrfToken()}">
-   <button type="submit" class="btn btn-danger btn-sm" 
-     onclick="return confirm('${
-       what
-         ? req.__("Are you sure you want to delete %s?", what)
-         : req.__("Are you sure?")
-     }')" />
-     <i class="fas fa-trash-alt"></i>
-   </button>
- </form>`;
+  form(
+    { action: text(href), method: "post" },
+    input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+    button(
+      {
+        type: "submit",
+        class: "btn btn-danger btn-sm",
+        onclick: `return confirm('${
+          what
+            ? req.__("Are you sure you want to delete %s?", what)
+            : req.__("Are you sure?")
+        }')`,
+      },
+      i({ class: "fas fa-trash-alt" })
+    )
+  );
 
 /**
  * @param href
@@ -168,18 +208,32 @@ const post_dropdown_item = (
       .split("%")
       .join("")
   );
-  return `<a class="dropdown-item" onclick="${
-    confirm
-      ? `if(confirm('${
-          what
-            ? req.__("Are you sure you want to delete %s?", what)
-            : req.__("Are you sure?")
-        }')) `
-      : ""
-  }$('#${id}').submit()">${s}</a>
-  <form id="${id}" action="${text(href)}" method="post">
-    <input type="hidden" name="_csrf" value="${req.csrfToken()}">
-  </form>`;
+
+  const confirmationScript = confirm
+    ? `if(confirm('${
+        what
+          ? req.__("Are you sure you want to delete %s?", what)
+          : req.__("Are you sure?")
+      }')) `
+    : "";
+
+  return [
+    a({
+      class: "dropdown-item",
+      onclick: `${confirmationScript}$('#${id}').submit()`
+    }, s),
+    form({
+      id,
+      action: text(href),
+      method: "post"
+    }, [
+      input({
+        type: "hidden",
+        name: "_csrf",
+        value: req.csrfToken()
+      })
+    ])
+  ].join("");
 };
 
 /**
@@ -200,7 +254,7 @@ const settingsDropdown = (id: string, elems: any): string =>
         "aria-haspopup": "true",
         "aria-expanded": "false",
       },
-      '<i class="fas fa-ellipsis-h"></i>'
+      i({ class: "fas fa-ellipsis-h" })
     ),
     div(
       {
@@ -270,13 +324,17 @@ const localeDate = (
         date.toLocaleDateString(locale || "en", options)
       )
     : "";
+
 const badge = (col: string, lbl: string): string =>
-  `<span class="badge bg-${col}">${lbl}</span>&nbsp;`;
+  `${span({ class: `badge bg-${col}` }, lbl)}&nbsp;`;
 
 export = {
   mkTable,
   badge,
   renderForm,
+  mkFormContentNoLayout,
+  mkForm,
+  renderFormLayout,
   settingsDropdown,
   renderBuilder,
   link,
@@ -296,4 +354,5 @@ export = {
   tags,
   alert,
   toast,
+  helpers,
 };

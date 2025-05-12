@@ -4,8 +4,20 @@
  */
 
 import tags = require("./tags");
-import { Falsy } from "./types";
-const { a, text, div, input, text_attr, ul, li, span, label, i, button } = tags;
+const {
+  a,
+  text,
+  div,
+  input,
+  text_attr,
+  ul,
+  li,
+  span,
+  label,
+  i,
+  button,
+  option,
+} = tags;
 
 /**
  * checks if x is defined
@@ -54,15 +66,19 @@ const select_options = (
         ? selected.includes(value)
         : `${value}` === `${selected}`;
 
-  return options
-    .map((o: { label: string; value: string; [key: string]: any }) => {
+  return options.map(
+    (o: { label: string; value: string; [key: string]: any }) => {
       const label = o.label;
       const value = o.value;
-      return `<option value="${text_attr(value)}"${
-        isSelected(value) ? " selected" : ""
-      }>${text(label)}</option>`;
-    })
-    .join("");
+      return option(
+        {
+          value: text_attr(value),
+          ...(isSelected(value) ? { selected: true } : {}),
+        },
+        text(label)
+      );
+    }
+  );
 };
 
 // declaration merging
@@ -302,66 +318,81 @@ const search_bar = (
   const clickHandler = stateField
     ? `(function(v, that){v ? set_state_field('${stateField}', v, that):unset_state_field('${stateField}', that);})($('#${input_id}').val(), this)`
     : onClick || "";
-  return `<div class="${
-    hints?.searchBar?.iconButton === false ? "" : "input-group"
-  }${
-    hints?.searchBar?.containerClass
-      ? ` ${hints?.searchBar?.containerClass}`
-      : ""
-  } search-bar" id="search-input-group-${rndid}">
-  ${
+  return div(
+    {
+      class: `${hints?.searchBar?.iconButton === false ? "" : "input-group"}${
+        hints?.searchBar?.containerClass
+          ? ` ${hints?.searchBar?.containerClass}`
+          : ""
+      } search-bar`,
+      id: `search-input-group-${rndid}`,
+    },
     hints?.searchBar?.iconButton === false
       ? i({ class: ["fas fa-search", hints?.searchBar?.iconClass] })
-      : `<button class="btn btn-outline-secondary search-bar" ${
-          clickHandler ? `onClick="${clickHandler}"` : ""
-        } type="submit" id="button-search-submit">
-  <i class="fas fa-search"></i>
-  </button>`
-  }
-<input type="search" class="form-control search-bar ${
-    (badges && badges.length > 0) || has_dropdown ? "br-none" : ""
-  }${hints?.searchBar?.inputClass ? ` ${hints?.searchBar?.inputClass}` : ""}" ${
-    autofocus ? `autofocus ` : ""
-  }placeholder="${placeHolder || "Search for..."}" 
-}" 
-  }" 
-       id="${input_id}" name="${name}" 
-       ${
-         clickHandler
-           ? `onsearch="${clickHandler}" onChange="${clickHandler}"`
-           : ""
-       }
-       aria-label="Search" aria-describedby="button-search-submit" ${
-         v ? `value="${text_attr(v)}"` : ""
-       }>
-  ${
+      : button(
+          {
+            class: "btn btn-outline-secondary search-bar",
+            onClick: clickHandler || undefined,
+            type: "submit",
+            id: "button-search-submit",
+          },
+          i({ class: "fas fa-search" })
+        ),
+    input({
+      type: "search",
+      class: `form-control search-bar${
+        (badges && badges.length > 0) || has_dropdown ? " br-none" : ""
+      }${hints?.searchBar?.inputClass ? ` ${hints?.searchBar?.inputClass}` : ""}`,
+      ...(autofocus ? { autofocus: true } : {}),
+      placeholder: placeHolder || "Search for...",
+      id: input_id,
+      name,
+      ...(clickHandler
+        ? { onsearch: clickHandler, onChange: clickHandler }
+        : {}),
+      ...(v ? { value: text_attr(v) } : {}),
+      "aria-label": "Search",
+      "aria-describedby": "button-search-submit",
+    }),
     badges && badges.length > 0
-      ? `<div class="input-group-text">${badges
-          .map(
-            (b: any) =>
-              `<span class="badge bg-primary">${b.text}${
-                b.onclick
-                  ? `<a href="javascript:${b.onclick}"><i class="ms-1 fas fa-lg fa-times"></i></a> `
-                  : ""
-              }</span>`
+      ? div(
+          { class: "input-group-text" },
+          badges.map((b: any) =>
+            span(
+              { class: "badge bg-primary" },
+              b.text,
+              b.onclick
+                ? a(
+                    { href: `javascript:${b.onclick}` },
+                    i({ class: "ms-1 fas fa-lg fa-times" })
+                  )
+                : ""
+            )
           )
-          .join("&nbsp;")}
-  </div>`
-      : ""
-  }
-  ${
+        )
+      : null,
     has_dropdown
-      ? `<button class="btn btn-outline-secondary dropdown-toggle search-bar" id="dd${rndid}" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="align_dropdown('${rndid}')"></button>`
-      : ""
-  }
-  ${
+      ? button({
+          class: "btn btn-outline-secondary dropdown-toggle search-bar",
+          id: `dd${rndid}`,
+          type: "button",
+          "data-bs-toggle": "dropdown",
+          "aria-haspopup": "true",
+          "aria-expanded": "false",
+          onclick: `align_dropdown('${rndid}')`,
+        })
+      : null,
     has_dropdown
-      ? `<div class="dropdown-menu search-bar p-2" id="dm${rndid}" aria-labelledby="dd${rndid}">
-      ${contents}
-      </div>`
-      : ""
-  }
-</div>`;
+      ? div(
+          {
+            class: "dropdown-menu search-bar p-2",
+            id: `dm${rndid}`,
+            "aria-labelledby": `dd${rndid}`,
+          },
+          contents
+        )
+      : null
+  );
 };
 
 const dropdown_checkboxes = ({
