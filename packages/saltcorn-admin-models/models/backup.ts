@@ -63,6 +63,8 @@ const create_pack_json = async (
   withEventLog: boolean = false,
   forSnapshot: boolean = false
 ): Promise<object> => {
+  const state = getState();
+
   // tables
   const tables = await asyncMap(
     await Table.find({}),
@@ -122,11 +124,11 @@ const create_pack_json = async (
         async (e: EventLog) => await event_log_pack(e)
       )
     : [];
-  const function_code_pages = getState().getConfigCopy(
+  const function_code_pages = state.getConfigCopy(
     "function_code_pages",
     {}
   );
-  const function_code_pages_tags = getState().getConfigCopy(
+  const function_code_pages_tags = state.getConfigCopy(
     "function_code_pages_tags",
     {}
   );
@@ -158,9 +160,12 @@ const create_pack_json = async (
   if (forSnapshot) {
     const cfgs = await db.select("_sc_config");
     const config: any = {};
+
     for (const cfg of cfgs) {
       //exclude base url, multitenancy, ssl/lets encrypt,
       if (configTypes[cfg.key]?.excludeFromSnapshot) continue;
+      if (state.isFixedConfig(cfg.key)) continue;
+
       config[cfg.key] = (db.isSQLite ? JSON.parse(cfg.value) : cfg.value)?.v;
     }
     pack.config = config;
