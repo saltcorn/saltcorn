@@ -540,7 +540,7 @@ module.exports = {
             name: "locale",
             label: "Locale",
             sublabel:
-              "Language override. Two-letter code (<code>en</code>, <code>fr</code> etc) or <code>{{ }}</code> interpolations",
+              "Language override. Two-letter code (<code>en</code>, <code>fr</code> etc) or language name. <code>{{ }}</code> interpolations usable",
             type: "String",
           },
           /*    {
@@ -700,7 +700,7 @@ module.exports = {
           name: "locale",
           label: "Locale",
           sublabel:
-            "Language override. Two-letter code (<code>en</code>, <code>fr</code> etc) or <code>{{ }}</code> interpolations",
+            "Language override. Two-letter code (<code>en</code>, <code>fr</code> etc) or language name. <code>{{ }}</code> interpolations usable",
           type: "String",
         },
         { name: "disable_notify", label: "Disable notification", type: "Bool" },
@@ -841,6 +841,14 @@ module.exports = {
         const opts = {};
         if (locale) {
           opts.locale = interpolate(locale, useRow, user, "send_email locale");
+          const cfgLangs = getState().getConfig("localizer_languages");
+          if (
+            Object.values(cfgLangs || {})
+              .map((r) => r.name)
+              .includes(opts.locale)
+          ) {
+            opts.locale = Object.values(cfgLangs).find((r) => r.name).locale;
+          }
         }
         const view = await View.findOne({ name: viewname });
         setBody.html = await viewToEmailHtml(
