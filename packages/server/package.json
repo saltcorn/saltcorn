@@ -7,7 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.735.0",
-    "@dr.pogodin/csurf": "^1.14.1",
+    "@dr.pogodin/csurf": "1.15.0",
     "@saltcorn/base-plugin": "1.2.0-beta.3",
     "@saltcorn/builder": "1.2.0-beta.3",
     "@saltcorn/data": "1.2.0-beta.3",
