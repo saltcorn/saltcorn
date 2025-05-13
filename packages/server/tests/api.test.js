@@ -400,6 +400,172 @@ describe("API authentication", () => {
       .set("Authorization", "Bearer " + u.api_token)
       .expect(200);
   });
+  describe("action authentication", () => {
+    let adminToken, staffToken;
+
+    beforeAll(async () => {
+      await Trigger.create({
+        action: "run_js_code",
+        when_trigger: "API call",
+        name: "apicalladmin",
+        min_role: 1,
+        configuration: {
+          code: `return {area: 1}`,
+        },
+      });
+      await Trigger.create({
+        action: "run_js_code",
+        when_trigger: "API call",
+        name: "apicallstaff",
+        min_role: 40,
+        configuration: {
+          code: `return {area: 40}`,
+        },
+      });
+      await Trigger.create({
+        action: "run_js_code",
+        when_trigger: "API call",
+        name: "apicallpublic",
+        min_role: 100,
+        configuration: {
+          code: `return {area: 100}`,
+        },
+      });
+
+      const admin = await User.findOne({ email: "admin@foo.com" });
+      const staff = await User.findOne({ email: "staff@foo.com" });
+      adminToken = await admin.getNewAPIToken();
+      staffToken = await staff.getNewAPIToken();
+    });
+
+    it("should POST to trigger with admin token", async () => {
+      const app = await getApp({ disableCsrf: true });
+      for (const { triggerName, expectedArea } of [
+        { triggerName: "apicalladmin", expectedArea: 1 },
+        { triggerName: "apicallstaff", expectedArea: 40 },
+        { triggerName: "apicallpublic", expectedArea: 100 },
+      ]) {
+        await request(app)
+          .post(`/api/action/${triggerName}`)
+          .set("Authorization", "Bearer " + adminToken)
+          .set("Content-Type", "application/json")
+          .set("Accept", "application/json")
+          .expect(
+            succeedJsonWithWholeBody(
+              (resp) =>
+                resp?.data?.area === expectedArea && resp.success === true
+            )
+          );
+      }
+    });
+
+    it("should POST to trigger with admin session", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      for (const { triggerName, expectedArea } of [
+        { triggerName: "apicalladmin", expectedArea: 1 },
+        { triggerName: "apicallstaff", expectedArea: 40 },
+        { triggerName: "apicallpublic", expectedArea: 100 },
+      ]) {
+        await request(app)
+          .post(`/api/action/${triggerName}`)
+          .set("Cookie", loginCookie)
+          .set("Content-Type", "application/json")
+          .set("Accept", "application/json")
+          .expect(
+            succeedJsonWithWholeBody(
+              (resp) =>
+                resp?.data?.area === expectedArea && resp.success === true
+            )
+          );
+      }
+    });
+
+    it("should POST to trigger with staff token", async () => {
+      const app = await getApp({ disableCsrf: true });
+      for (const { triggerName, expectedArea } of [
+        { triggerName: "apicallstaff", expectedArea: 40 },
+        { triggerName: "apicallpublic", expectedArea: 100 },
+      ]) {
+        await request(app)
+          .post(`/api/action/${triggerName}`)
+          .set("Authorization", "Bearer " + staffToken)
+          .set("Content-Type", "application/json")
+          .set("Accept", "application/json")
+          .expect(
+            succeedJsonWithWholeBody(
+              (resp) =>
+                resp?.data?.area === expectedArea && resp.success === true
+            )
+          );
+      }
+    });
+
+    it("should POST to trigger with staff session", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getStaffLoginCookie();
+      for (const { triggerName, expectedArea } of [
+        { triggerName: "apicallstaff", expectedArea: 40 },
+        { triggerName: "apicallpublic", expectedArea: 100 },
+      ]) {
+        await request(app)
+          .post(`/api/action/${triggerName}`)
+          .set("Cookie", loginCookie)
+          .set("Content-Type", "application/json")
+          .set("Accept", "application/json")
+          .expect(
+            succeedJsonWithWholeBody(
+              (resp) =>
+                resp?.data?.area === expectedArea && resp.success === true
+            )
+          );
+      }
+    });
+
+    it("should POST to trigger as public", async () => {
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/api/action/apicallpublic")
+        .set("Content-Type", "application/json")
+        .set("Accept", "application/json")
+        .expect(
+          succeedJsonWithWholeBody(
+            (resp) => resp?.data?.area === 100 && resp.success === true
+          )
+        );
+    });
+
+    it("should not POST to trigger with staff token", async () => {
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/api/action/apicalladmin")
+        .set("Authorization", "Bearer " + staffToken)
+        .set("Content-Type", "application/json")
+        .set("Accept", "application/json")
+        .expect(notAuthorized);
+    });
+
+    it("should not Post to trigger with staff session", async () => {
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/api/action/apicalladmin")
+        .set("Cookie", await getStaffLoginCookie())
+        .set("Content-Type", "application/json")
+        .set("Accept", "application/json")
+        .expect(notAuthorized);
+    });
+
+    it("should not POST to trigger without any authentication", async () => {
+      const app = await getApp({ disableCsrf: true });
+      for (const triggerName of ["apicalladmin", "apicallstaff"]) {
+        await request(app)
+          .post(`/api/action/${triggerName}`)
+          .set("Content-Type", "application/json")
+          .set("Accept", "application/json")
+          .expect(notAuthorized);
+      }
+    });
+  });
 });
 
 describe("API action", () => {
