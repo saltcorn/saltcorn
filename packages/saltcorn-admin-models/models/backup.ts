@@ -55,7 +55,7 @@ const { exec, execSync, spawn } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
-const packagejson = require("../../package.json");
+const packagejson = require("../package.json");
 const os = require("os");
 const semver = require("semver");
 
