@@ -950,7 +950,8 @@ const mkFormRowForRepeat = (
       a(
         {
           class: "btn btn-sm btn-outline-primary mb-3",
-          href: `javascript:$('#${rndid}').html(decodeURIComponent($('#${rndid} pre').text()))`,
+          onclick: `$('#${rndid}').html(decodeURIComponent($('#${rndid} pre').text()))`,
+          href: `javascript:void(0)`,
           title: "Add",
         },
         i({ class: "fas fa-plus" })
