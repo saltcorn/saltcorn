@@ -2563,17 +2563,17 @@ class Table implements AbstractTable {
     const interval_secs =
       typeof options === "number" ? options : options?.interval_secs;
     const schemaPrefix = db.getTenantSchemaPrefix();
+    const pk = this.pk_name;
+
     if (typeof interval_secs === "number" && interval_secs > 0.199) {
       await db.query(`
       delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
-        where (${sqlsanitize(this.pk_name)}, _version) in (
-          select h1.${sqlsanitize(this.pk_name)}, h1._version
+        where (${sqlsanitize(pk)}, _version) in (
+          select h1."${sqlsanitize(pk)}", h1._version
           FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
           JOIN ${schemaPrefix}"${sqlsanitize(
             this.name
-          )}__history" h2 ON h1.${sqlsanitize(this.pk_name)} = h2.${sqlsanitize(
-            this.pk_name
-          )}
+          )}__history" h2 ON h1.${sqlsanitize(pk)} = h2.${sqlsanitize(pk)}
           AND h1._version < h2._version
           AND h1._time < h2._time
           AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
@@ -2583,7 +2583,6 @@ class Table implements AbstractTable {
       const isDistinct = this.fields
         .map((f) => `curr."${f.name}" IS DISTINCT FROM prev."${f.name}"`)
         .join(" OR ");
-      const pk = this.pk_name;
       await db.query(`
         WITH ordered_versions AS (
         SELECT *,
@@ -2593,21 +2592,16 @@ class Table implements AbstractTable {
         ),
         paired AS (
         SELECT 
-          curr."_version",
+          curr."_version" AS this_version,
           prev."_version" AS prev_version,
-
-          (${isDistinct}) AS state_changed
+          curr."${pk}" AS id,
+          (${isDistinct}) AS is_changed
         FROM ordered_versions curr
         LEFT JOIN ordered_versions prev
           ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
-        )
-        SELECT 
-        COUNT(*) AS total,
-        COUNT(*) FILTER (WHERE NOT state_changed) AS unchanged,
-        COUNT(*) FILTER (WHERE state_changed) AS changed,
-        ROUND(100.0 * COUNT(*) FILTER (WHERE NOT state_changed) / COUNT(*), 2) AS percent_unchanged
-        FROM paired;
-`);
+        )     
+        DELETE FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+          where (${sqlsanitize(pk)}, _version) in (select id, this_version from paired where not is_changed);`);
     }
   }
   /**
