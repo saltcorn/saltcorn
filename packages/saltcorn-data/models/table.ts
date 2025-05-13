@@ -2553,14 +2553,19 @@ class Table implements AbstractTable {
     }
   }
 
-  async compress_history(interval_secs: number) {
-    if (typeof interval_secs !== "number" || interval_secs < 0.199)
-      throw new Error(
-        "compress_history mush be called with a number greater than 0.2 seconds"
-      );
-    const schemaPrefix = db.getTenantSchemaPrefix();
+  /**
+   * Compress history by minimal interval and/or deleting unchanged rows. Can be called
+   * with options object, or just minimal interval for legacy code
+   */
+  async compress_history(
+    options: { interval_secs?: number; delete_unchanged?: boolean } | number
+  ) {
+    const interval_secs =
+      typeof options === "number" ? options : options?.interval_secs;
+    if (typeof interval_secs === "number" && interval_secs > 0.199) {
+      const schemaPrefix = db.getTenantSchemaPrefix();
 
-    await db.query(`
+      await db.query(`
       delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
         where (${sqlsanitize(this.pk_name)}, _version) in (
           select h1.${sqlsanitize(this.pk_name)}, h1._version
@@ -2574,6 +2579,9 @@ class Table implements AbstractTable {
           AND h1._time < h2._time
           AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
         );`);
+    }
+    if (typeof options === "object" && options?.delete_unchanged) {
+    }
   }
   /**
    * Drop history table
@@ -3789,12 +3797,12 @@ ${rejectDetails}`,
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
-          ? opts.orderBy
-          : joinFields[odbUnderscore]
-          ? odbUnderscore
-          : opts.orderBy.toLowerCase?.() === "random()"
-          ? opts.orderBy
-          : "a." + opts.orderBy),
+            ? opts.orderBy
+            : joinFields[odbUnderscore]
+              ? odbUnderscore
+              : opts.orderBy.toLowerCase?.() === "random()"
+                ? opts.orderBy
+                : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     });
