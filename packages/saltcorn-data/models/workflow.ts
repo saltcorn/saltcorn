@@ -36,6 +36,7 @@ class Workflow implements AbstractWorkflow {
   startAtStepURL?: (stepName: string) => string;
   autoSave?: boolean;
   previewURL?: string;
+  modifyForm?: (form: Form) => void;
 
   /**
    * Workflow constructor
@@ -49,6 +50,7 @@ class Workflow implements AbstractWorkflow {
     this.previewURL = o.previewURL;
     this.__ = (s: any) => s;
     this.onStepSave = o.onStepSave;
+    this.modifyForm = o.modifyForm;
   }
   async singleStepForm(body?: any, req?: any): Promise<RunResult | undefined> {
     if (req) this.__ = (s: any) => req.__(s);
@@ -65,6 +67,7 @@ class Workflow implements AbstractWorkflow {
     const step = this.steps[stepIx];
     if (step.form) {
       const form = await applyAsync(step.form, context);
+      if (this.modifyForm) this.modifyForm(form);
       let savingErrors = null;
       const valres = form.validate(stepBody);
       if (valres.errors) {
@@ -125,6 +128,7 @@ class Workflow implements AbstractWorkflow {
     const step = this.steps[stepIx];
     if (step.form) {
       const form = await applyAsync(step.form, context);
+      if (this.modifyForm) this.modifyForm(form);
 
       const valres = form.validate(stepBody);
       if (valres.errors) {
@@ -201,6 +205,8 @@ class Workflow implements AbstractWorkflow {
     }
     if (step.form) {
       const form = await applyAsync(step.form, context);
+      if (this.modifyForm) this.modifyForm(form);
+
       form.hidden("stepName", "contextEnc");
       form.values.stepName = step.name;
       form.values.contextEnc = encodeURIComponent(JSON.stringify(context));
@@ -212,8 +218,8 @@ class Workflow implements AbstractWorkflow {
                 fld.name
               ]
             : step.contextField
-            ? (context[step.contextField] || {})[fld.name]
-            : context[fld.name];
+              ? (context[step.contextField] || {})[fld.name]
+              : context[fld.name];
         if (
           typeof ctxValue !== "undefined" &&
           typeof form.values[fld.name] === "undefined"
@@ -356,6 +362,6 @@ async function addApplyButtonToForm(
   }
 }
 
-type WorkflowCfg = Partial<Workflow>
+type WorkflowCfg = Partial<Workflow>;
 
 export = Workflow;

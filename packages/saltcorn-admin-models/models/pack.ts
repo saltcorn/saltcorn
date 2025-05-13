@@ -119,11 +119,20 @@ const plugin_pack = async (name: string): Promise<PluginPack> => {
   const Plugin = (await import("@saltcorn/data/models/plugin")).default;
   const plugin = await Plugin.findOne({ name });
   if (!plugin) throw new Error(`Unable to find plugin '${name}'`);
+  const configuration = plugin.configuration
+    ? { ...plugin.configuration }
+    : null;
+  if (configuration) {
+    const state = getState();
+    Object.keys(configuration).forEach((k) => {
+      if (state.isFixedPluginConfig(name, k)) delete configuration[k];
+    });
+  }
   return {
     name: plugin.name,
     source: plugin.source,
     location: plugin.location,
-    configuration: plugin.configuration,
+    configuration,
     deploy_private_key: plugin.deploy_private_key,
     version: plugin.version || "latest",
   };

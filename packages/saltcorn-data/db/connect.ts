@@ -105,7 +105,10 @@ const getConnectObject = (connSpec: any = {}) => {
     default: [],
     transform: stringToJSON,
   });
-
+  setKey("fixed_plugin_configuration", "SALTCORN_FIXED_PLUGIN_CONFIGURATION", {
+    default: {},
+    transform: stringToJSON,
+  });
   if (
     connObj.sslmode ||
     connObj.sslcert ||
