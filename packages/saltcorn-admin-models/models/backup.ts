@@ -10,7 +10,7 @@ import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
 import Plugin from "@saltcorn/data/models/plugin";
-import migrate from "@saltcorn/data/migrate";
+import migrate, { getMigrationsInDB } from "@saltcorn/data/migrate";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
 import {
@@ -55,6 +55,8 @@ const { exec, execSync, spawn } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
+const os = require("os");
+const semver = require("semver");
 
 /**
  * @param [withEventLog] - include event log
@@ -124,10 +126,7 @@ const create_pack_json = async (
         async (e: EventLog) => await event_log_pack(e)
       )
     : [];
-  const function_code_pages = state.getConfigCopy(
-    "function_code_pages",
-    {}
-  );
+  const function_code_pages = state.getConfigCopy("function_code_pages", {});
   const function_code_pages_tags = state.getConfigCopy(
     "function_code_pages_tags",
     {}
@@ -318,6 +317,37 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
   }
 };
 
+const backup_info_file = async (root_dirpath: string): Promise<void> => {
+  const state = getState();
+  const migrations_run = await getMigrationsInDB();
+  const dbversion = await db.getVersion(true);
+  const saltcorn_version = db.connectObj.sc_version;
+
+  await writeFile(
+    join(root_dirpath, "backup-info.json"),
+    JSON.stringify(
+      {
+        saltcorn_version,
+        migrations_run,
+        backup_date: new Date().toISOString(),
+        node_version: process.version,
+        database_type: db.isSQLite ? "SQLite" : "PostgreSQL",
+        database_version: dbversion,
+        os: {
+          platform: os.platform(),
+          arch: os.arch(),
+          machine: os.machine(),
+          version: os.version(),
+          type: os.type(),
+          release: os.release(),
+        },
+      },
+      null,
+      2
+    )
+  );
+};
+
 const zipFolder = async (folder: string, zipFileName: string) => {
   const backup_with_system_zip = getState().getConfig(
     "backup_with_system_zip",
@@ -356,6 +386,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
   await backup_files(tmpDir.path);
   await backup_config(tmpDir.path);
   await backup_migrations(tmpDir.path);
+  await backup_info_file(tmpDir.path);
 
   const day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
 
@@ -602,6 +633,23 @@ const restore = async (
     if (!found) return "Not a valid backup file";
   }
   let err;
+
+  if (existsSync(join(basePath, "backup-info.json"))) {
+    const info = JSON.parse(
+      (await readFile(join(basePath, "backup-info.json"))).toString()
+    );
+    const saltcorn_version = db.connectObj.sc_version;
+
+    if (
+      info.saltcorn_version &&
+      semver.gt(info.saltcorn_version, saltcorn_version)
+    ) {
+      err = `Warning: backup is from a more recent version (${
+        info.saltcorn_version
+      }) than the installed version (${saltcorn_version}). `;
+    }
+  }
+
   //install pack
   state.log(6, `Reading pack`);
   const pack = JSON.parse(
