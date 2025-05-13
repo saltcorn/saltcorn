@@ -2562,9 +2562,8 @@ class Table implements AbstractTable {
   ) {
     const interval_secs =
       typeof options === "number" ? options : options?.interval_secs;
+    const schemaPrefix = db.getTenantSchemaPrefix();
     if (typeof interval_secs === "number" && interval_secs > 0.199) {
-      const schemaPrefix = db.getTenantSchemaPrefix();
-
       await db.query(`
       delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
         where (${sqlsanitize(this.pk_name)}, _version) in (
@@ -2581,6 +2580,34 @@ class Table implements AbstractTable {
         );`);
     }
     if (typeof options === "object" && options?.delete_unchanged) {
+      const isDistinct = this.fields
+        .map((f) => `curr."${f.name}" IS DISTINCT FROM prev."${f.name}"`)
+        .join(" OR ");
+      const pk = this.pk_name;
+      await db.query(`
+        WITH ordered_versions AS (
+        SELECT *,
+                ROW_NUMBER() OVER (ORDER BY "${pk}", "_version") AS rn
+        FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+        WHERE "${sqlsanitize(pk)}" IS NOT NULL
+        ),
+        paired AS (
+        SELECT 
+          curr."_version",
+          prev."_version" AS prev_version,
+
+          (${isDistinct}) AS state_changed
+        FROM ordered_versions curr
+        LEFT JOIN ordered_versions prev
+          ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
+        )
+        SELECT 
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE NOT state_changed) AS unchanged,
+        COUNT(*) FILTER (WHERE state_changed) AS changed,
+        ROUND(100.0 * COUNT(*) FILTER (WHERE NOT state_changed) / COUNT(*), 2) AS percent_unchanged
+        FROM paired;
+`);
     }
   }
   /**
