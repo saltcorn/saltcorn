@@ -57,6 +57,8 @@ import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
 const packagejson = require("../../package.json");
 const os = require("os");
+const semver = require("semver");
+
 /**
  * @param [withEventLog] - include event log
  */
@@ -631,6 +633,18 @@ const restore = async (
     if (!found) return "Not a valid backup file";
   }
   let err;
+
+  if (existsSync(join(basePath, "backup-info.json"))) {
+    const info = JSON.parse(
+      (await readFile(join(basePath, "backup-info.json"))).toString()
+    );
+    if (info.saltcorn_version && semver.gt(info.saltcorn_version, packagejson.version)) {
+      err = `Warning: backup is from a more recent version (${
+        info.saltcorn_version
+      }) than the installed version (${packagejson.version}). `;
+    }
+  }
+
   //install pack
   state.log(6, `Reading pack`);
   const pack = JSON.parse(
