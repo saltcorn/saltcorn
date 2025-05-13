@@ -201,7 +201,7 @@ describe("undo/redo", () => {
   });
 });
 describe("history compression", () => {
-  it("should create table", async () => {
+  it("should compress by time", async () => {
     if (!db.isSQLite) {
       const tc = await Table.create("counttable32");
 
@@ -239,6 +239,49 @@ describe("history compression", () => {
       expect(h2c.length).toBe(2);
       expect(h2c.map((h) => h.number)).toContain(202);
       expect(h2c.map((h) => h.number)).toContain(205);
+    }
+  });
+  it("should delete unchanged", async () => {
+    if (!db.isSQLite) {
+      const tc = await Table.create("counttable33");
+
+      await Field.create({
+        table: tc,
+        label: "Number",
+        type: "Integer",
+        required: true,
+      });
+      await tc.update({ versioned: true });
+      await tc.insertRow({ id: 1, number: 101 });
+      await tc.insertRow({ id: 2, number: 201 });
+
+      await tc.updateRow({ number: 101 }, 1);
+      await tc.updateRow({ number: 101 }, 1);
+      await tc.updateRow({ number: 202 }, 2);
+      await tc.updateRow({ number: 102 }, 1);
+      await tc.updateRow({ number: 103 }, 1);
+
+      const h1 = await tc.get_history(1);
+      expect(h1.length).toBe(5);
+      expect(h1.map((h) => h.number)).toContain(101);
+      expect(h1.map((h) => h.number)).toContain(102);
+      const h2 = await tc.get_history(2);
+      expect(h2.length).toBe(2);
+      expect(h2.map((h) => h.number)).toContain(202);
+
+      await tc.compress_history({ delete_unchanged: true });
+      db.set_sql_logging(false);
+
+      const h1c = await tc.get_history(1);
+      expect(h1c.length).toBe(3);
+      expect(h1c.map((h) => h.number)).toContain(101);
+      expect(h1c.filter((h) => h.number === 101).length).toBe(1);
+      expect(h1c.map((h) => h.number)).toContain(102);
+      expect(h1c.map((h) => h.number)).toContain(103);
+      const h2c = await tc.get_history(2);
+      expect(h2c.length).toBe(2);
+      expect(h2c.map((h) => h.number)).toContain(201);
+      expect(h2c.map((h) => h.number)).toContain(202);
     }
   });
 });

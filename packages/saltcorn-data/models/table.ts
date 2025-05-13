@@ -2553,27 +2553,56 @@ class Table implements AbstractTable {
     }
   }
 
-  async compress_history(interval_secs: number) {
-    if (typeof interval_secs !== "number" || interval_secs < 0.199)
-      throw new Error(
-        "compress_history mush be called with a number greater than 0.2 seconds"
-      );
+  /**
+   * Compress history by minimal interval and/or deleting unchanged rows. Can be called
+   * with options object, or just minimal interval for legacy code
+   */
+  async compress_history(
+    options: { interval_secs?: number; delete_unchanged?: boolean } | number
+  ) {
+    const interval_secs =
+      typeof options === "number" ? options : options?.interval_secs;
     const schemaPrefix = db.getTenantSchemaPrefix();
+    const pk = this.pk_name;
 
-    await db.query(`
+    if (typeof interval_secs === "number" && interval_secs > 0.199) {
+      await db.query(`
       delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
-        where (${sqlsanitize(this.pk_name)}, _version) in (
-          select h1.${sqlsanitize(this.pk_name)}, h1._version
+        where (${sqlsanitize(pk)}, _version) in (
+          select h1."${sqlsanitize(pk)}", h1._version
           FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
           JOIN ${schemaPrefix}"${sqlsanitize(
             this.name
-          )}__history" h2 ON h1.${sqlsanitize(this.pk_name)} = h2.${sqlsanitize(
-            this.pk_name
-          )}
+          )}__history" h2 ON h1.${sqlsanitize(pk)} = h2.${sqlsanitize(pk)}
           AND h1._version < h2._version
           AND h1._time < h2._time
           AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
         );`);
+    }
+    if (typeof options === "object" && options?.delete_unchanged) {
+      const isDistinct = this.fields
+        .map((f) => `curr."${f.name}" IS DISTINCT FROM prev."${f.name}"`)
+        .join(" OR ");
+      await db.query(`
+        WITH ordered_versions AS (
+        SELECT *,
+                ROW_NUMBER() OVER (ORDER BY "${pk}", "_version") AS rn
+        FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+        WHERE "${sqlsanitize(pk)}" IS NOT NULL
+        ),
+        paired AS (
+        SELECT 
+          curr."_version" AS this_version,
+          prev."_version" AS prev_version,
+          curr."${pk}" AS id,
+          (${isDistinct}) AS is_changed
+        FROM ordered_versions curr
+        LEFT JOIN ordered_versions prev
+          ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
+        )     
+        DELETE FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+          where (${sqlsanitize(pk)}, _version) in (select id, this_version from paired where not is_changed);`);
+    }
   }
   /**
    * Drop history table
@@ -3789,12 +3818,12 @@ ${rejectDetails}`,
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
           : joinFields[opts.orderBy] || aggregations[opts.orderBy]
-          ? opts.orderBy
-          : joinFields[odbUnderscore]
-          ? odbUnderscore
-          : opts.orderBy.toLowerCase?.() === "random()"
-          ? opts.orderBy
-          : "a." + opts.orderBy),
+            ? opts.orderBy
+            : joinFields[odbUnderscore]
+              ? odbUnderscore
+              : opts.orderBy.toLowerCase?.() === "random()"
+                ? opts.orderBy
+                : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     });
