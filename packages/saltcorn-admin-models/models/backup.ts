@@ -55,7 +55,6 @@ const { exec, execSync, spawn } = require("child_process");
 
 import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
-const packagejson = require("../package.json");
 const os = require("os");
 const semver = require("semver");
 
@@ -322,12 +321,13 @@ const backup_info_file = async (root_dirpath: string): Promise<void> => {
   const state = getState();
   const migrations_run = await getMigrationsInDB();
   const dbversion = await db.getVersion(true);
+  const saltcorn_version = db.connectObj.sc_version;
 
   await writeFile(
     join(root_dirpath, "backup-info.json"),
     JSON.stringify(
       {
-        saltcorn_version: packagejson.version,
+        saltcorn_version,
         migrations_run,
         backup_date: new Date().toISOString(),
         node_version: process.version,
@@ -638,10 +638,15 @@ const restore = async (
     const info = JSON.parse(
       (await readFile(join(basePath, "backup-info.json"))).toString()
     );
-    if (info.saltcorn_version && semver.gt(info.saltcorn_version, packagejson.version)) {
+    const saltcorn_version = db.connectObj.sc_version;
+
+    if (
+      info.saltcorn_version &&
+      semver.gt(info.saltcorn_version, saltcorn_version)
+    ) {
       err = `Warning: backup is from a more recent version (${
         info.saltcorn_version
-      }) than the installed version (${packagejson.version}). `;
+      }) than the installed version (${saltcorn_version}). `;
     }
   }
 
