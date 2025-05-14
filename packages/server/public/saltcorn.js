@@ -36,7 +36,9 @@ function updateQueryStringParameter(uri1, key, value) {
 
   var re = new RegExp("([?&])" + escapeRegExp(key) + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
-  if (uri.match(re)) {
+  if (value === "") {
+    return removeQueryStringParameter(uri, key);
+  } else if (uri.match(re)) {
     if (Array.isArray(value)) {
       var rmuri = removeQueryStringParameter(uri, key);
       return updateQueryStringParameter(rmuri, key, value);
@@ -125,13 +127,7 @@ function select_id(id, e) {
 }
 
 function set_state_field(key, value, e) {
-  if (value === "")
-    pjax_to(removeQueryStringParameter(get_current_state_url(e), key), e);
-  else
-    pjax_to(
-      updateQueryStringParameter(get_current_state_url(e), key, value),
-      e
-    );
+  pjax_to(updateQueryStringParameter(get_current_state_url(e), key, value), e);
 }
 
 function check_state_field(that, e) {
