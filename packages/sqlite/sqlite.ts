@@ -31,7 +31,12 @@ import {
   doListScTables,
   do_add_index,
   do_drop_index,
+  slugify,
+  withTransaction,
+  tryCatchInTransaction,
 } from "@saltcorn/db-common/sqlite-commons";
+
+export { slugify, withTransaction, tryCatchInTransaction };
 
 let sqliteDatabase: Database | null = null;
 let connectObj: any = null;
@@ -430,33 +435,4 @@ export const drop_index = async (
   field_name: string
 ): Promise<void> => {
   await do_drop_index(table_name, [field_name], query, false, sql_log);
-};
-
-export const slugify = (s: string): string =>
-  s.toLowerCase().replace(/\s+/g, "-");
-
-export const withTransaction = async (f: Function, onError: Function) => {
-  //await query("BEGIN;");
-  let aborted = false;
-  const rollback = async () => {
-    aborted = true;
-    //await query("ROLLBACK;");
-  };
-  try {
-    const result = await f(rollback);
-    //if (!aborted) await query("COMMIT;");
-    return result;
-  } catch (error) {
-    //if (!aborted) await query("ROLLBACK;");
-    if (onError) return onError(error);
-    else throw error;
-  }
-};
-
-export const tryCatchInTransaction = async (f: Function, onError: Function) => {
-  try {
-    return await f();
-  } catch (error) {
-    await onError(error);
-  }
 };

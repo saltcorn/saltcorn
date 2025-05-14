@@ -211,6 +211,52 @@ export const do_drop_index = async (
 };
 
 /**
+ * replace spaces with dashes
+ * @param s - string to slugify
+ * @returns slugified string
+ */
+export const slugify = (s: string): string =>
+  s.toLowerCase().replace(/\s+/g, "-");
+
+/**
+ * simulate the pg transaction behavior with aborted flag
+ * @param f code to run in transaction
+ * @param onError error callback
+ * @returns result of f
+ */
+export const withTransaction = async (f: Function, onError: Function) => {
+  //await query("BEGIN;");
+  let aborted = false;
+  const rollback = async () => {
+    aborted = true;
+    //await query("ROLLBACK;");
+  };
+  try {
+    const result = await f(rollback);
+    //if (!aborted) await query("COMMIT;");
+    return result;
+  } catch (error) {
+    //if (!aborted) await query("ROLLBACK;");
+    if (onError) return onError(error);
+    else throw error;
+  }
+};
+
+/**
+ * simulate the pg with rollback behavior
+ * @param f code to run
+ * @param onError error callback
+ * @returns result of f
+ */
+export const tryCatchInTransaction = async (f: Function, onError: Function) => {
+  try {
+    return await f();
+  } catch (error) {
+    await onError(error);
+  }
+};
+
+/**
  *
  * @param queryFunc
  * @returns
