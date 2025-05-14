@@ -36,7 +36,9 @@ function updateQueryStringParameter(uri1, key, value) {
 
   var re = new RegExp("([?&])" + escapeRegExp(key) + "=.*?(&|$)", "i");
   var separator = uri.indexOf("?") !== -1 ? "&" : "?";
-  if (uri.match(re)) {
+  if (value === "") {
+    return removeQueryStringParameter(uri, key);
+  } else if (uri.match(re)) {
     if (Array.isArray(value)) {
       var rmuri = removeQueryStringParameter(uri, key);
       return updateQueryStringParameter(rmuri, key, value);
