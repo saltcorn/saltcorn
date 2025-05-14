@@ -2,6 +2,21 @@
 
 ## 1.2.0 - In Beta
 
+* Warn if restoring a backup from a more recent version of Saltcorn
+
+* Table.compress_history can now delete unchanged rows
+
+* Fixed configuration variables (`fixed_configuration` in configuration file)
+  are now hidden from backups and the user configuration. This allows you to
+  use this better for configuration secrets
+
+* send_email action: Option to set locale
+
+### Fixes
+
+* Allow actions in room edit views
+* Save form action with file fields
+
 ## 1.1.4 - Released 28 April 2025
 
 * Admin can disable 2FA for any user. 
