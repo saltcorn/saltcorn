@@ -17,12 +17,17 @@ import {
   doListScTables,
   do_add_index,
   do_drop_index,
+  slugify,
+  withTransaction,
+  tryCatchInTransaction,
 } from "@saltcorn/db-common/sqlite-commons";
 import {
   CapacitorSQLite,
   SQLiteConnection,
   SQLiteDBConnection,
 } from "@capacitor-community/sqlite";
+
+export { slugify, withTransaction, tryCatchInTransaction };
 
 declare let window: any;
 
