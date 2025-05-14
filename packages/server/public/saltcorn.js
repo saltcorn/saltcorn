@@ -125,7 +125,13 @@ function select_id(id, e) {
 }
 
 function set_state_field(key, value, e) {
-  pjax_to(updateQueryStringParameter(get_current_state_url(e), key, value), e);
+  if (value === "")
+    pjax_to(removeQueryStringParameter(get_current_state_url(e), key), e);
+  else
+    pjax_to(
+      updateQueryStringParameter(get_current_state_url(e), key, value),
+      e
+    );
 }
 
 function check_state_field(that, e) {
