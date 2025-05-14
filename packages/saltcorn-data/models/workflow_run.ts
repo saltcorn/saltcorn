@@ -319,58 +319,74 @@ class WorkflowRun {
 
     const formFields: FieldLike[] = [];
     let hasMultiChecks = false;
-    const multiCheckOptions: any = {};
-    (step.configuration.user_form_questions || []).forEach((q: any) => {
-      if (q.qtype === "Multiple checks") {
-        hasMultiChecks = true;
-        let options = q.options;
-        if (typeof options === "string" && options.includes("{{")) {
-          options = interpolate(
-            q.options,
-            this.context,
-            user,
-            "Multiple checks option"
-          );
-        }
-        if (typeof options === "string")
-          options = options.split(",").map((o) => o.trim());
-        multiCheckOptions[q.var_name] = options;
-        formFields.push({
-          input_type: "section_header",
-          label: " ",
-          sublabel: `<span class="fst-normal">${q.label}</span>`,
-        } as FieldLike);
-        options.forEach((o: string, ix: number) => {
+    const multiCheckOptions: { [key: string]: string[] } = {};
+    (step.configuration.user_form_questions || []).forEach(
+      (q: {
+        qtype: string;
+        var_name: string;
+        label: string;
+        options: string[] | string;
+        required?: boolean;
+      }) => {
+        if (q.qtype === "Multiple checks") {
+          hasMultiChecks = true;
+          let options = q.options;
+          if (typeof options === "string" && options.includes("{{")) {
+            options = interpolate(
+              q.options as string,
+              this.context,
+              user,
+              "Multiple checks option"
+            );
+          }
+          if (typeof options === "string")
+            options = options.split(",").map((o) => o.trim());
+          multiCheckOptions[q.var_name] = options;
           formFields.push({
-            label: o,
-            name: `${q.var_name}_${ix}`,
-            type: "Bool",
+            input_type: "section_header",
+            label: " ",
+            sublabel: `<span class="fst-normal">${q.label}</span>`,
           } as FieldLike);
-        });
-      } else
-        formFields.push({
-          label: q.label,
-          name: q.var_name,
-          ...qTypeToField(q),
-        } as FieldLike);
-    });
+          options.forEach((o: string, ix: number) => {
+            formFields.push({
+              label: o,
+              name: `${q.var_name}_${ix}`,
+              type: "Bool",
+            } as FieldLike);
+          });
+        } else
+          formFields.push({
+            label: q.label,
+            name: q.var_name,
+            ...qTypeToField(q),
+          } as FieldLike);
+      }
+    );
 
     const formElems: { fields: FieldLike[]; validator?: (r: Row) => any } = {
       fields: formFields,
     };
     if (hasMultiChecks)
       formElems.validator = (row: Row) => {
-        (step.configuration.user_form_questions || []).forEach((q: any) => {
-          if (q.qtype === "Multiple checks") {
-            row[q.var_name] = [];
-            multiCheckOptions[q.var_name].forEach((o: string, ix: number) => {
-              if (row[`${q.var_name}_${ix}`]) {
-                row[q.var_name].push(o);
-              }
-              delete row[`${q.var_name}_${ix}`];
-            });
+        (step.configuration.user_form_questions || []).forEach(
+          (q: {
+            qtype: string;
+            var_name: string;
+            label: string;
+            options: string[] | string;
+            required?: boolean;
+          }) => {
+            if (q.qtype === "Multiple checks") {
+              row[q.var_name] = [];
+              multiCheckOptions[q.var_name].forEach((o: string, ix: number) => {
+                if (row[`${q.var_name}_${ix}`]) {
+                  row[q.var_name].push(o);
+                }
+                delete row[`${q.var_name}_${ix}`];
+              });
+            }
           }
-        });
+        );
       };
     return formElems;
   }
@@ -431,7 +447,7 @@ class WorkflowRun {
     }
 
     //find current step
-    let step: any;
+    let step: WorkflowStep | undefined | null;
     if (this.current_step?.length)
       step = steps.find((step) => step.name === this.current_step_name);
     else step = steps.find((step) => step.initial_step);
@@ -440,7 +456,7 @@ class WorkflowRun {
       await this.update({ status: "Running" });
     //run in loop
     while (step) {
-      if (step.name !== this.current_step) {
+      if (step.name !== (this.current_step as unknown as string)) {
         this.set_current_step(step.name);
         await this.update({ current_step: this.current_step });
       }
@@ -450,16 +466,35 @@ class WorkflowRun {
       );
       this.step_start = new Date();
       let do_break = false;
+      /**
+       * Executes a workflow step within a database transaction, handling various workflow actions
+       * such as sub-workflows, API responses, user forms, output views, loops, and error handling.
+       *
+       * @template T - The type of the value returned by the transaction callback.
+       *
+       * @param {() => Promise<T>} transactionCallback - An asynchronous function that contains the logic
+       * to be executed within the transaction. This function may include workflow actions, updates to
+       * the workflow state, and context modifications.
+       *
+       * @param {(error: any) => Promise<void>} errorHandler - An asynchronous function that handles errors
+       * occurring during the transaction. This function may update the workflow state to reflect the error
+       * or invoke an error handler step if defined.
+       *
+       * @returns {Promise<T>} A promise that resolves to the result of the transaction callback or the
+       * return value of a workflow step. The result type depends on the specific workflow action executed.
+       *
+       * @throws {Error} If an unhandled error occurs during the transaction or workflow execution.
+       */
       const returnVal = await db.tryCatchInTransaction(
         async () => {
-          if (allWorkflowNames.has(step.action_name) && !waiting_fulfilled) {
+          if (allWorkflowNames.has(step?.action_name) && !waiting_fulfilled) {
             const wfTrigger = allWorkflows.find(
-              (wf) => wf.name === step.action_name
+              (wf) => wf.name === step?.action_name
             );
             if (wfTrigger?.action === "Workflow") {
               const subwfrun = await WorkflowRun.create({
                 trigger_id: wfTrigger!.id!,
-                context: step.configuration.subcontext
+                context: step?.configuration.subcontext
                   ? structuredClone(this.context[step.configuration.subcontext])
                   : structuredClone(this.context),
                 started_by: this.started_by,
@@ -478,7 +513,7 @@ class WorkflowRun {
               });
 
               if (subwfrun.status === "Finished") {
-                if (step.configuration.subcontext)
+                if (step?.configuration.subcontext)
                   Object.assign(
                     this.context[step.configuration.subcontext],
                     subwfrun.context
@@ -496,7 +531,7 @@ class WorkflowRun {
               }
             }
           }
-          if (step.action_name === "APIResponse") {
+          if (step?.action_name === "APIResponse") {
             const resp = eval_expression(
               step.configuration.response_expression,
               this.context,
@@ -510,8 +545,8 @@ class WorkflowRun {
             return resp;
           }
           if (
-            step.action_name === "Stop" ||
-            step.action_name === "TerminateWorkflow"
+            step?.action_name === "Stop" ||
+            step?.action_name === "TerminateWorkflow"
           ) {
             const resp = step.configuration.return_value
               ? eval_expression(
@@ -529,8 +564,8 @@ class WorkflowRun {
           }
 
           if (
-            (step.action_name === "UserForm" ||
-              step.action_name === "EditViewForm") &&
+            (step?.action_name === "UserForm" ||
+              step?.action_name === "EditViewForm") &&
             !waiting_fulfilled
           ) {
             let user_id;
@@ -573,7 +608,7 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step.action_name === "Output" && !waiting_fulfilled) {
+          if (step?.action_name === "Output" && !waiting_fulfilled) {
             const output = interpolate(
               step.configuration.output_text,
               this.context,
@@ -599,7 +634,7 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step.action_name === "DataOutput" && !waiting_fulfilled) {
+          if (step?.action_name === "DataOutput" && !waiting_fulfilled) {
             const output_val = eval_expression(
               step.configuration.output_expr,
               this.context,
@@ -624,7 +659,7 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step.action_name === "OutputView" && !waiting_fulfilled) {
+          if (step?.action_name === "OutputView" && !waiting_fulfilled) {
             const View = (await import("./view")).default;
             const view = View.findOne({ name: step.configuration.view });
 
@@ -655,7 +690,7 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step.action_name === "WaitNextTick" && !waiting_fulfilled) {
+          if (step?.action_name === "WaitNextTick" && !waiting_fulfilled) {
             await this.update({
               status: "Waiting",
               wait_info: {},
@@ -686,7 +721,7 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step.action_name === "WaitUntil" && !waiting_fulfilled) {
+          if (step?.action_name === "WaitUntil" && !waiting_fulfilled) {
             const resume_at = eval_expression(
               step.configuration.resume_at,
               { moment, ...this.context },
@@ -705,7 +740,7 @@ class WorkflowRun {
             return;
           }
           let result: any;
-          if (step.action_name === "ForLoop") {
+          if (step?.action_name === "ForLoop") {
             const array = eval_expression(
               step.configuration.array_expression,
               this.context,
@@ -724,24 +759,24 @@ class WorkflowRun {
               });
 
               step = steps.find(
-                (s) => s.name === step.configuration.loop_body_initial_step
+                (s) => s.name === step?.configuration.loop_body_initial_step
               );
 
               return;
             }
           } else if (waiting_fulfilled) {
             waiting_fulfilled = false;
-          } else result = await step.run(this.context, user);
+          } else if (step && user) result = await step.run(this.context, user);
 
           const nextUpdate: any = {};
           if (typeof result === "object" && result !== null) {
             Object.assign(this.context, result);
             nextUpdate.context = this.context;
           }
-          if (trace) this.createTrace(step.name, user);
+          if (trace) this.createTrace(step?.name as string, user);
 
           //find next step
-          const nextStep = this.get_next_step(step, user);
+          const nextStep = step ? this.get_next_step(step, user) : null;
 
           if (!nextStep) {
             if (this.current_step.length > 1) {
@@ -813,7 +848,7 @@ class WorkflowRun {
             return ret;
           }
         },
-        async (e: any) => {
+        async (e) => {
           if (this.context.__errorHandler) {
             const upd = {
               context: { ...this.context, __error: e },
@@ -824,7 +859,7 @@ class WorkflowRun {
               this.context.__errorHandler;
             await this.update(upd);
             step = steps.find((s) => s.name === this.context.__errorHandler);
-          } else {
+          } else if (step) {
             await this.markAsError(e, step, user);
             do_break = true;
           }

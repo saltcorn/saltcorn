@@ -671,7 +671,7 @@ class Field implements AbstractField {
   async generate(): Promise<any> {
     if (this.is_fkey) {
       const rows = await db.select(
-        this.reftable_name,
+        this.reftable_name as string,
         {},
         { limit: 1, orderBy: "RANDOM()" }
       );

@@ -17,6 +17,35 @@ const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 import utils from "../utils";
 const { isNode } = utils;
 
+type connectObjType = {
+  connectionString?: string;
+  sqlite_path?: string;
+  password?: string;
+  user?: string;
+  database?: string;
+  host?: string;
+  port?: string;
+  session_secret?: string;
+  sslmode?: string;
+  sslcert?: string;
+  sslkey?: string;
+  sslrootcert?: string;
+  jwt_secret?: string;
+  multi_tenant?: boolean;
+  file_store?: string;
+  default_schema?: string;
+  fixed_configuration?: any;
+  inherit_configuration?: any;
+  version_tag?: string;
+  // connectionString?: string;
+  // ssl?: {
+  //   sslmode?: string;
+  //   sslrootcert?: string;
+  //   sslcert?: string;
+  //   sslkey?: string;
+  // };
+};
+
 /**
  * Default data path?
  */
@@ -179,7 +208,7 @@ const getConfigFile = () => {
  * @param connObj - connectin object
  * @returns - Returns true if Saltcorn configured to use SQLite as database
  */
-const is_sqlite = (connObj: any) => {
+const is_sqlite = (connObj: connectObjType) => {
   if (!isNode()) return true;
   if (connObj.connectionString)
     return connObj.connectionString.startsWith("sqlite");

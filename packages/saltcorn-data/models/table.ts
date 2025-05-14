@@ -4196,7 +4196,7 @@ async function dump_table_to_json_file(filePath: string, tableName: string) {
   const writeStream = createWriteStream(filePath);
   const client = db.isSQLite ? db : await db.getClient();
   writeStream.write("[");
-  await db.copyToJson(writeStream, tableName, client);
+  db.copyToJson && (await db.copyToJson(writeStream, tableName, client));
   if (!db.isSQLite) await client.release(true);
   writeStream.destroy();
   const h = await open(filePath, "r+");

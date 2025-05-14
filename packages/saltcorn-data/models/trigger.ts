@@ -24,6 +24,7 @@ const {
 import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
+import User = require("./user");
 const { eval_expression } = expression;
 
 declare const saltcorn: any;
@@ -217,12 +218,12 @@ class Trigger implements AbstractTrigger {
    * @param {object} [userPW = {}]
    * @param {*} payload
    */
-  static emitEvent(
+  static async emitEvent(
     eventType: string,
     channel: string | null = null,
-    userPW = {},
+    userPW: User | object = {},
     payload?: any
-  ): void {
+  ): Promise<void> {
     if (
       !isNode() &&
       !require("../db/state").getState().mobileConfig?.isOfflineMode
@@ -231,7 +232,7 @@ class Trigger implements AbstractTrigger {
       return;
     }
     setTimeout(async () => {
-      const { password, ...user }: any = userPW || {};
+      const { password, ...user } = userPW as User;
       const { getState } = require("../db/state");
       if (!getState) return; // probably in a test
       const findArgs: Where = { when_trigger: eventType };
