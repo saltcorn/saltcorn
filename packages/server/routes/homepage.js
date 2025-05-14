@@ -62,6 +62,7 @@ const tableCard = (tables, req) => ({
       : "") + tableTable(tables, req),
   bodyClass: "py-0 pe-0",
   footer: div(
+    { class: "text-nowrap", style: { overflowX: "hidden" } },
     a({ href: `/table/new`, class: "btn btn-primary" }, req.__("Create table")),
     a(
       {
