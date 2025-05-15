@@ -997,7 +997,7 @@ class Field implements AbstractField {
    * @param {object} v
    * @returns {Promise<void>}
    */
-  async update(v: Partial<Field>): Promise<void> {
+  async update(v: Partial<Field> | Partial<FieldCfg>): Promise<void> {
     const f = new Field({ ...this, ...v });
     const state = require("../db/state").getState();
     const rename: boolean = f.name !== this.name;
