@@ -68,7 +68,8 @@
     "immer": "9.0.6",
     "node-gyp": ">=10.2.0",
     "glob": ">=9.3.5",
-    "parse5": "7.2.1"
+    "parse5": "7.2.1",
+    "parse5-htmlparser2-tree-adapter": "7.0.0"
   },
   "workspaces": [
     "./packages/*"
