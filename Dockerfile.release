@@ -3,7 +3,7 @@ FROM debian:12
 ENV NODE_ENV "production"
 ENV SALTCORN_DISABLE_UPGRADE "true"
 
-RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 postgresql-client git chromium npm nodejs
+RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 postgresql-client git chromium npm nodejs zip unzip python3-setuptools python3-venv
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
 
