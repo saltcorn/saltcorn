@@ -57,7 +57,9 @@
   },
   "overrides": {
     "immer": "9.0.6",
-    "glob-parent": "^5.1.2"
+    "glob-parent": "^5.1.2",
+    "parse5": "7.2.1",
+    "parse5-htmlparser2-tree-adapter": "7.0.0"
   },
   "jest": {
     "testEnvironment": "jsdom"
