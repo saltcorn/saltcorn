@@ -315,8 +315,6 @@ class Field implements AbstractField {
     user?: any
   ): Promise<void> {
     let where = where0;
-    console.trace("fill field", this.name, "for user", user);
-
     if (
       !where &&
       this.attributes.where &&
