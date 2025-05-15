@@ -1868,6 +1868,7 @@ router.post(
     );
     if (err) req.flash("error", err);
     else req.flash("success", req.__("Successfully restored backup"));
+    await getState().refresh_plugins();
     fs.unlink(newPath, function () {});
     res.redirect(`/admin`);
   })

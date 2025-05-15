@@ -646,6 +646,7 @@ router.post(
       if (err) req.flash("error", err);
       else req.flash("success", req.__("Successfully restored backup"));
       fs.unlink(newPath, function () {});
+      await getState().refresh_plugins();
       res.redirect(`/auth/login`);
     } else {
       req.flash("danger", req.__("Users already present"));
