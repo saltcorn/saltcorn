@@ -2,6 +2,11 @@
 
 ## 1.2.0 - In Beta
 
+* Table read permissions are now strictly enforced in all filter dropdowns. 
+  Previously, this was enforced in Field elements but not DropDownFilter elements.
+  The user must now have read permission to the table that fills the options
+  in the select dropdown.
+
 * Warn if restoring a backup from a more recent version of Saltcorn
 
 * Table.compress_history can now delete unchanged rows
