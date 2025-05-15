@@ -581,3 +581,228 @@ describe("Workflow run userform", () => {
     expect(wfrun.status).toBe("Finished");
   });
 });
+
+describe("Workflow step advanced operations", () => {
+  it("should generate a diagram", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "diagramTrigger",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "startStep",
+      next_step: "endStep",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{x: 1}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "endStep",
+      initial_step: false,
+      action_name: "SetContext",
+      configuration: { ctx_values: "{y: 2}" },
+    });
+    const steps = await WorkflowStep.find({ trigger_id: trigger.id! });
+    const diagram = WorkflowStep.generate_diagram(steps);
+    expect(diagram).toContain("startStep");
+    expect(diagram).toContain("endStep");
+  });
+
+  it("should handle delete with connect_prev_next", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "deleteTrigger",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "step1",
+      next_step: "step2",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{x: 1}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "step2",
+      next_step: "step3",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: "{y: 2}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "step3",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: "{z: 3}" },
+    });
+
+    const step2 = await WorkflowStep.findOne({ name: "step2" });
+    assertIsSet(step2);
+    await step2.delete(true);
+
+    const updatedStep1 = await WorkflowStep.findOne({ name: "step1" });
+    assertIsSet(updatedStep1);
+    expect(updatedStep1.next_step).toBe("step3");
+  });
+
+  it("should find steps with specific conditions", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "findTrigger",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "findStep1",
+      next_step: "findStep2",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{x: 1}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "findStep2",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: "{y: 2}" },
+    });
+
+    const steps = await WorkflowStep.find({ trigger_id: trigger.id! });
+    expect(steps.length).toBe(2);
+    expect(steps[0].name).toBe("findStep1");
+    expect(steps[1].name).toBe("findStep2");
+  });
+
+// More tests for update, delete, and 'get diagram loop link backs'
+  it("should update a workflow steop", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "updateTrigger",
+    });
+    const step = await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "updateStep",
+      next_step: "nextStep",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{x: 1}" },
+    });
+    const fetchedStep = await WorkflowStep.findOne({ name: "updateStep" });
+    assertIsSet(fetchedStep);
+    await fetchedStep.update({
+      next_step: "updatedNextStep",
+    });
+    const updatedStep = await WorkflowStep.findOne({ name: "updateStep" });
+    assertIsSet(updatedStep);
+    expect(updatedStep.next_step).toBe("updatedNextStep");
+  });
+
+  it("should get diagram loop link backs", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "loopTrigger",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "forLoopStep",
+      action_name: "ForLoop",
+      initial_step: true,
+      configuration: {
+        loop_body_initial_step: "loopBodyStep",
+      },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "loopBodyStep",
+      next_step: "endStep",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: `return {y: 2}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "endStep",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: `return {z: 3}` },
+    });
+    const steps = await WorkflowStep.find({ trigger_id: trigger.id! });
+    const loopLinks = WorkflowStep.getDiagramLoopLinkBacks(steps);
+    expect(loopLinks["endStep"]).toBe("forLoopStep");
+  });
+
+  it("should delet a workflow step and connect previous to next", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "deleteConnectTrigger",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "stepA",
+      next_step: "stepB",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: { ctx_values: "{x: 1}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "stepB",
+      next_step: "stepC",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: "{y: 2}" },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "stepC",
+      action_name: "SetContext",
+      initial_step: false,
+      configuration: { ctx_values: "{z: 3}" },
+    });
+
+    const stepB = await WorkflowStep.findOne({ name: "stepB" });
+    assertIsSet(stepB);
+    await stepB.delete(true);
+
+    const updatedStepA = await WorkflowStep.findOne({ name: "stepA" });
+    assertIsSet(updatedStepA);
+    expect(updatedStepA.next_step).toBe("stepC");
+  });
+
+  it('should handle reserved names in mermaid diagram generation', async () => {
+    const trigger = await Trigger.create({
+      action: 'Workflow',
+      when_trigger: 'Never',
+      name: 'reservedNamesTrigger',
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: 'end',
+      next_step: 'subgraph',
+      action_name: 'SetContext',
+      initial_step: true,
+      configuration: { ctx_values: '{x: 1}' },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: 'subgraph',
+      action_name: 'SetContext',
+      initial_step: false,
+      configuration: { ctx_values: '{y: 2}' },
+    });
+    const steps = await WorkflowStep.find({ trigger_id: trigger.id! });
+    const diagram = WorkflowStep.generate_diagram(steps);
+    expect(diagram).toContain('flowchart TD');
+    expect(diagram).toContain('_end_["`**end**\n    SetContext`"]:::wfstep');
+    expect(diagram).toContain('_subgraph_["`**subgraph**\n    SetContext`"]:::wfstep');
+    expect(diagram).toContain('_Start--');
+    expect(diagram).toContain('--> _End__subgraph_');
+  })
+});

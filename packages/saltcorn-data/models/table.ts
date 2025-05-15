@@ -90,6 +90,7 @@ import type {
 import { get_formula_examples } from "./internal/table_helper";
 import { getAggAndField, process_aggregations } from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
+import { StepType } from "types";
 
 /**
  * Transponce Objects
@@ -4018,10 +4019,10 @@ ${rejectDetails}`,
   /**
    *
    */
-  async slug_options(): Promise<Array<{ label: string; steps: any }>> {
+  async slug_options(): Promise<Array<{ label: string; steps: Array<StepType> }>> {
     const fields = this.fields;
     const unique_fields = fields.filter((f) => f.is_unique);
-    const opts: Array<{ label: string; steps: any }> = [];
+    const opts: Array<{ label: string; steps: Array<StepType> }> = [];
     unique_fields.forEach((f: Field) => {
       const label =
         instanceOfType(f.type) && f.type.name === "String"
@@ -4049,11 +4050,11 @@ ${rejectDetails}`,
    *
    */
   static async allSlugOptions(): Promise<{
-    [nm: string]: Array<{ label: string; steps: any }>;
+    [nm: string]: Array<{ label: string; steps: Array<StepType> }>;
   }> {
     const tables = await Table.find({}, { cached: true });
     const options: {
-      [nm: string]: Array<{ label: string; steps: any }>;
+      [nm: string]: Array<{ label: string; steps: Array<StepType> }>;
     } = {};
     for (const table of tables) {
       options[table.name] = await table.slug_options();

@@ -107,3 +107,9 @@ export type StepResType = ResultType & {
   goto_step?: number;
   clear_return_values?: boolean;
 };
+
+export type StepType = {
+  field: string;
+  unique: boolean;
+  transform: string | null;
+};
