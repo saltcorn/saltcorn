@@ -12,6 +12,8 @@ export interface AbstractTable {
   fields: AbstractField[];
   getTags(): Promise<Array<AbstractTag>>;
   getForeignTables(): Promise<Array<AbstractTable>>;
+  min_role_read: number;
+  min_role_write: number;
 }
 
 /**

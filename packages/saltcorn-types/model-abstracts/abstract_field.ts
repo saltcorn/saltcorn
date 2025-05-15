@@ -1,4 +1,4 @@
-import { Row, Value } from "@saltcorn/db-common/internal";
+import { PrimaryKeyValue, Row, Value } from "@saltcorn/db-common/internal";
 import type { GenObj, Type } from "../common_types";
 import type { AbstractTable } from "./abstract_table";
 
@@ -17,6 +17,7 @@ export interface AbstractField {
   is_fkey: boolean;
   reftable_name?: string;
   pretty_type?: string;
+  id?: PrimaryKeyValue;
 }
 
 export type FieldCfg = {
