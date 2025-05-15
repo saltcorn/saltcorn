@@ -5,6 +5,8 @@ import type { AbstractTag } from "./abstract_tag";
 export interface AbstractTable {
   name: string;
   id?: number;
+  ownership_field_id?: number | null;
+  ownership_formula?: string;
   // is actually a getter
   sql_name: string;
   fields: AbstractField[];
@@ -14,7 +16,7 @@ export interface AbstractTable {
 
 /**
  * Fields required to construct a table
- * 
+ *
  */
 export type TableCfg = {
   name: string;

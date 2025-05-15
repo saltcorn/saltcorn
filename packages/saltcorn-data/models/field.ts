@@ -506,7 +506,15 @@ class Field implements AbstractField {
       ];
     }
     if (this.is_fkey) {
-      await this.fill_fkey_options(false, where);
+      await this.fill_fkey_options(
+        false,
+        where,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        req ? req.user || { role_id: 100 } : undefined
+      );
       return this.options || [];
     }
     if (instanceOfType(this.type) && this.type.name === "Bool") {
