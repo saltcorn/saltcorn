@@ -1,4 +1,4 @@
-wget -qO - https://deb.nodesource.com/setup_22.x | bash -
+wget -qO - https://deb.nodesource.com/setup_24.x | bash -
 apt-get install -qqy nodejs
 sudo setcap 'cap_net_bind_service=+ep' `which node`
 echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf
