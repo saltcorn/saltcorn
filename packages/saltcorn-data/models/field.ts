@@ -20,6 +20,7 @@ const {
   apply,
   structuredClone,
   validSqlId,
+  mergeIntoWhere,
 } = require("../utils");
 import type {
   Where,
@@ -95,10 +96,10 @@ class Field implements AbstractField {
   tab?: string;
   reftype?: string | Type;
   refname: string = "";
-  reftable?: AbstractTable;
+  reftable?: Table;
   attributes: GenObj;
   table_id?: number;
-  table?: AbstractTable | null;
+  table?: Table | null;
   in_auto_save?: boolean;
   exclude_from_mobile?: boolean;
   fieldviewObj?: FieldView;
@@ -158,7 +159,7 @@ class Field implements AbstractField {
       this.reftable_name = o.reftable_name || (o.reftable && o.reftable.name);
       if (o.type && typeof o.type === "string" && o.type.startsWith("Key to "))
         this.reftable_name = o.type.replace("Key to ", "");
-      this.reftable = o.reftable;
+      this.reftable = o.reftable as Table;
       this.type = "Key";
       this.input_type =
         !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
@@ -173,7 +174,7 @@ class Field implements AbstractField {
     if (o.table_id) this.table_id = o.table_id;
 
     if (o.table) {
-      this.table = o.table;
+      this.table = o.table as Table;
       if (o.table.id && !o.table_id) this.table_id = o.table.id;
     }
     this.in_auto_save = o.in_auto_save;
@@ -314,7 +315,6 @@ class Field implements AbstractField {
     user?: any
   ): Promise<void> {
     let where = where0;
-
     if (
       !where &&
       this.attributes.where &&
@@ -506,7 +506,15 @@ class Field implements AbstractField {
       ];
     }
     if (this.is_fkey) {
-      await this.fill_fkey_options(false, where);
+      await this.fill_fkey_options(
+        false,
+        where,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        req ? req.user || { role_id: 100 } : undefined
+      );
       return this.options || [];
     }
     if (instanceOfType(this.type) && this.type.name === "Bool") {
@@ -517,8 +525,32 @@ class Field implements AbstractField {
       ];
     }
     this.fill_table();
+    if (!this.table) return [];
     let whereS = "";
     let values = [];
+
+    const role_id = req ? req.user?.role_id || 100 : 1;
+    if (role_id > this.table.min_role_read) {
+      if (this.table.ownership_field_id) {
+        const ownership_field = this.table.fields.find(
+          (f) => f.id === this.table?.ownership_field_id
+        );
+        if (ownership_field) {
+          if (!where) where = {};
+          where[ownership_field.name] = req.user?.id;
+        }
+      } else if (this.table.ownership_formula) {
+        const wh = this.table.ownership_formula_where(req?.user);
+        if (!where) where = wh;
+        else
+          try {
+            mergeIntoWhere(where, wh);
+          } catch (e) {
+            //ignore, ownership formula is too difficult to merge with where
+            // TODO user groups
+          }
+      } else return [];
+    }
     if (where) {
       const whereValues = db.mkWhere(where);
       whereS = whereValues.where;
@@ -965,7 +997,7 @@ class Field implements AbstractField {
    * @param {object} v
    * @returns {Promise<void>}
    */
-  async update(v: Partial<Field>): Promise<void> {
+  async update(v: Partial<Field> | Partial<FieldCfg>): Promise<void> {
     const f = new Field({ ...this, ...v });
     const state = require("../db/state").getState();
     const rename: boolean = f.name !== this.name;

@@ -5,16 +5,20 @@ import type { AbstractTag } from "./abstract_tag";
 export interface AbstractTable {
   name: string;
   id?: number;
+  ownership_field_id?: number | null;
+  ownership_formula?: string;
   // is actually a getter
   sql_name: string;
   fields: AbstractField[];
   getTags(): Promise<Array<AbstractTag>>;
   getForeignTables(): Promise<Array<AbstractTable>>;
+  min_role_read: number;
+  min_role_write: number;
 }
 
 /**
  * Fields required to construct a table
- * 
+ *
  */
 export type TableCfg = {
   name: string;
