@@ -55,6 +55,7 @@ const {
 } = expression;
 
 import type TableConstraint from "./table_constraints";
+import { validate as isValidUUID } from "uuid";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
@@ -2740,7 +2741,14 @@ class Table implements AbstractTable {
     const isBools = state
       .getConfig("csv_bool_values", "true false yes no on off y n t f")
       .split(" ");
-
+    const isValidJSON = (v: string) => {
+      try {
+        JSON.parse(v);
+        return true;
+      } catch {
+        return false;
+      }
+    };
     for (const [k, vs] of Object.entries(rowsTr)) {
       const required = (<any[]>vs).every((v: any) => v !== "");
       const nonEmpties = (<any[]>vs).filter((v: any) => v !== "");
@@ -2759,6 +2767,18 @@ class Table implements AbstractTable {
           type = "Integer";
         else type = "Float";
       else if (nonEmpties.every((v: any) => isDate(v))) type = "Date";
+      else if (state.types.UUID && nonEmpties.every((v: any) => isValidUUID(v)))
+        type = "UUID";
+      else if (
+        state.types.JSON &&
+        nonEmpties.every(
+          (v: any) =>
+            typeof v === "string" &&
+            (v[0] === "{" || v[0] === "[") &&
+            isValidJSON(v)
+        )
+      )
+        type = "JSON";
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
@@ -2773,13 +2793,20 @@ class Table implements AbstractTable {
       });
       //console.log(fld);
       if (db.sqlsanitize(k.toLowerCase()) === "id") {
-        if (type !== "Integer") {
+        if (db.isSQLite && type !== "Integer") {
           await table.delete();
           return { error: `Columns named "id" must have only integers` };
         }
         if (!required) {
           await table.delete();
           return { error: `Columns named "id" must not have missing values` };
+        }
+        if (
+          typeof fld.type === "object" &&
+          (fld.type.name === "String" || fld.type.name === "UUID")
+        ) {
+          const existing = table.getField("id")!;
+          await existing.update({ type: fld.type.name });
         }
         continue;
       }

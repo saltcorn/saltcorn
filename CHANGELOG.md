@@ -2,6 +2,9 @@
 
 ## 1.2.0 - In Beta
 
+* Create Table by CSV upload now accepts String and UUID primary keys and 
+  JSON fields (if UUID and JSON modules are installed)
+
 * Table read permissions are now strictly enforced in all filter dropdowns. 
   Previously, this was enforced in Field elements but not DropDownFilter elements.
   The user must now have read permission to the table that fills the options
