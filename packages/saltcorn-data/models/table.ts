@@ -2776,6 +2776,10 @@ class Table implements AbstractTable {
       });
       //console.log(fld);
       if (db.sqlsanitize(k.toLowerCase()) === "id") {
+        if (db.isSQLite && type !== "Integer") {
+          await table.delete();
+          return { error: `Columns named "id" must have only integers` };
+        }
         if (!required) {
           await table.delete();
           return { error: `Columns named "id" must not have missing values` };
