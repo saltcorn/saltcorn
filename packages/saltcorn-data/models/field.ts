@@ -838,6 +838,7 @@ class Field implements AbstractField {
     })`;
 
     const schema = db.getTenantSchemaPrefix();
+    new_field.fill_table()
     this.fill_table();
     if (!this.table) {
       throw new Error(

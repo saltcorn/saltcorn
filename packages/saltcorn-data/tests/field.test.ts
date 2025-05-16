@@ -403,7 +403,7 @@ describe("Field update", () => {
       expect(fc1.is_fkey).toBe(true);
     }
   });
-  it("changes string to fkey ref", async () => {
+  it("changes string to fkey ref and back", async () => {
     const csv = `id,cost,somenum, vatable
 Book, 5,4, f
 Pencil, 0.5,2, t`;
@@ -435,6 +435,13 @@ Pencil, 0.5,2, t`;
       expect(fc1.type).toBe("Key");
       expect(fc1.reftable_name).toBe("Invoice4");
       expect(fc1.is_fkey).toBe(true);
+      await fc1.update({
+        type: "String",
+      });
+      const table2 = await Table.findOne("changingtable1str");
+      const fc2 = table2!.fields[1];
+      expect((fc2.type as Type).name).toBe("String");
+      expect(fc2.is_fkey).toBe(false);
     }
   });
   it("changes fkey ref to int", async () => {
