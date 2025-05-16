@@ -2741,7 +2741,14 @@ class Table implements AbstractTable {
     const isBools = state
       .getConfig("csv_bool_values", "true false yes no on off y n t f")
       .split(" ");
-
+    const isValidJSON = (v: string) => {
+      try {
+        JSON.parse(v);
+        return true;
+      } catch {
+        return false;
+      }
+    };
     for (const [k, vs] of Object.entries(rowsTr)) {
       const required = (<any[]>vs).every((v: any) => v !== "");
       const nonEmpties = (<any[]>vs).filter((v: any) => v !== "");
@@ -2762,6 +2769,16 @@ class Table implements AbstractTable {
       else if (nonEmpties.every((v: any) => isDate(v))) type = "Date";
       else if (state.types.UUID && nonEmpties.every((v: any) => isValidUUID(v)))
         type = "UUID";
+      else if (
+        state.types.JSON &&
+        nonEmpties.every(
+          (v: any) =>
+            typeof v === "string" &&
+            (v[0] === "{" || v[0] === "[") &&
+            isValidJSON(v)
+        )
+      )
+        type = "JSON";
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
