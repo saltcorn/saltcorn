@@ -1414,7 +1414,7 @@ Pencil, 0.5,2, t`;
     assertsIsSuccessMessage(res);
     expect(res.table.fields.length).toEqual(4); //and id
   });
-  it("should succeed on non-int id", async () => {
+  it("should succeed on string pk", async () => {
     const csv = `id,cost,somenum, vatable
 Book, 5,4, f
 Pencil, 0.5,2, t`;
@@ -1429,6 +1429,28 @@ Pencil, 0.5,2, t`;
     expect(pk.type.name).toBe("String");
     expect(res.details).not.toContain("Reject");
     const table = Table.findOne({ name: "Invoice2" });
+    assertIsSet(table);
+    const rows = await table.getRows();
+    expect(rows.length).toBe(2);
+  });
+  it("should succeed on uuid pk", async () => {
+    await db.query('create extension if not exists "uuid-ossp";');
+
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    const csv = `id,cost,somenum, vatable
+179f7e88-ae48-495e-a080-68c471fac2ac, 5,4, f
+d1403829-cc1e-49b5-bcdc-488973e640ba, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await writeFile(fnm, csv);
+    const res = await Table.create_from_csv("InvoiceCsvUUID", fnm);
+    assertsIsSuccessMessage(res);
+    expect(res.table.fields.length).toEqual(4); // incl id
+    const pk = res.table.fields.find((f: Field) => f.primary_key);
+    assertIsSet(pk);
+    expect(pk.name).toBe("id");
+    expect(pk.type.name).toBe("UUID");
+    expect(res.details).not.toContain("Reject");
+    const table = Table.findOne({ name: "InvoiceCsvUUID" });
     assertIsSet(table);
     const rows = await table.getRows();
     expect(rows.length).toBe(2);

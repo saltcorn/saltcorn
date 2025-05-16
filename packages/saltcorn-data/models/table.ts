@@ -55,6 +55,7 @@ const {
 } = expression;
 
 import type TableConstraint from "./table_constraints";
+import { validate as isValidUUID } from "uuid";
 
 import csvtojson from "csvtojson";
 import moment from "moment";
@@ -2759,6 +2760,8 @@ class Table implements AbstractTable {
           type = "Integer";
         else type = "Float";
       else if (nonEmpties.every((v: any) => isDate(v))) type = "Date";
+      else if (state.types.UUID && nonEmpties.every((v: any) => isValidUUID(v)))
+        type = "UUID";
       else type = "String";
       const label = (k.charAt(0).toUpperCase() + k.slice(1)).replace(/_/g, " ");
 
@@ -2777,7 +2780,10 @@ class Table implements AbstractTable {
           await table.delete();
           return { error: `Columns named "id" must not have missing values` };
         }
-        if (typeof fld.type === "object" && fld.type.name === "String") {
+        if (
+          typeof fld.type === "object" &&
+          (fld.type.name === "String" || fld.type.name === "UUID")
+        ) {
           const existing = table.getField("id")!;
           await existing.update({ type: fld.type.name });
         }
