@@ -1414,18 +1414,20 @@ Pencil, 0.5,2, t`;
     assertsIsSuccessMessage(res);
     expect(res.table.fields.length).toEqual(4); //and id
   });
-  it("should fail non-int id", async () => {
-    const csv = `id,cost,!, vatable
+  it("should succeed on non-int id", async () => {
+    const csv = `id,cost,somenum, vatable
 Book, 5,4, f
 Pencil, 0.5,2, t`;
     const fnm = "/tmp/test2.csv";
     await writeFile(fnm, csv);
     const res = await Table.create_from_csv("Invoice2", fnm);
-    expect(res).toEqual({
-      error: `Columns named "id" must have only integers`,
-    });
+    assertsIsSuccessMessage(res);
+    expect(res.table.fields.length).toEqual(4); // incl id
+    expect(res.details).not.toContain("Reject");
     const table = Table.findOne({ name: "Invoice2" });
-    expect(table).toBe(null);
+    assertIsSet(table);
+    const rows = await table.getRows();
+    expect(rows.length).toBe(2);
   });
   it("should fail missing id", async () => {
     const csv = `id,cost,!, vatable
