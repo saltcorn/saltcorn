@@ -3,10 +3,12 @@ import Field from "../models/field";
 import db from "../db";
 const { getState } = require("../db/state");
 
-import { assertIsSet } from "./assertions";
+import { assertIsSet, assertsIsSuccessMessage } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
 import { Type } from "@saltcorn/types/common_types";
+import { writeFile } from "fs/promises";
+
 const { sleep, plugin_with_routes } = mocks;
 
 getState().registerPlugin("base", require("../base-plugin"));
@@ -398,6 +400,40 @@ describe("Field update", () => {
       const fc1 = table1!.fields[1];
       expect(fc1.type).toBe("Key");
       expect(fc1.reftable_name).toBe("books");
+      expect(fc1.is_fkey).toBe(true);
+    }
+  });
+  it("changes string to fkey ref", async () => {
+    const csv = `id,cost,somenum, vatable
+Book, 5,4, f
+Pencil, 0.5,2, t`;
+    const fnm = "/tmp/test2.csv";
+    await writeFile(fnm, csv);
+    const res = await Table.create_from_csv("Invoice4", fnm);
+    assertsIsSuccessMessage(res);
+
+    const table = await Table.create("changingtable1str");
+
+    const fc = await Field.create({
+      table,
+      name: "invoice",
+      label: "Invoice",
+      type: "String",
+      required: false,
+    });
+
+    await table.insertRow({ invoice: "Book" });
+
+    //db.set_sql_logging();
+
+    if (!db.isSQLite) {
+      await fc.update({
+        type: "Key to Invoice4",
+      });
+      const table1 = await Table.findOne("changingtable1str");
+      const fc1 = table1!.fields[1];
+      expect(fc1.type).toBe("Key");
+      expect(fc1.reftable_name).toBe("Invoice4");
       expect(fc1.is_fkey).toBe(true);
     }
   });
