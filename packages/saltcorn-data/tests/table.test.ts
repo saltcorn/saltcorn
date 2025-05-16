@@ -1423,6 +1423,10 @@ Pencil, 0.5,2, t`;
     const res = await Table.create_from_csv("Invoice2", fnm);
     assertsIsSuccessMessage(res);
     expect(res.table.fields.length).toEqual(4); // incl id
+    const pk = res.table.fields.find((f: Field) => f.primary_key);
+    assertIsSet(pk);
+    expect(pk.name).toBe("id");
+    expect(pk.type.name).toBe("String");
     expect(res.details).not.toContain("Reject");
     const table = Table.findOne({ name: "Invoice2" });
     assertIsSet(table);
