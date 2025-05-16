@@ -163,7 +163,13 @@ class Field implements AbstractField {
       this.type = "Key";
       this.input_type =
         !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
-      this.reftype = o.reftype || "Integer";
+      let default_reftype;
+      if (this.reftable && this.reftable.fields)
+        default_reftype = (
+          this.reftable.fields.find((f) => f.primary_key)?.type as Type
+        )?.name;
+
+      this.reftype = o.reftype || default_reftype || "Integer";
       this.refname = o.refname || "id";
     }
 
@@ -819,6 +825,12 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async alter_sql_type(new_field: Field) {
+    if (new_field.is_fkey && new_field?.reftable_name && !new_field.reftable) {
+      const Table = require("./table");
+      const refTable = Table.findOne(new_field?.reftable_name);
+      new_field.reftable = refTable;
+      new_field.reftype = refTable.pk_type.name;
+    }
     let new_sql_type = new_field.sql_type;
     let def = "";
     let using = `USING ("${sqlsanitize(this.name)}"::${
