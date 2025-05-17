@@ -10,6 +10,7 @@ const { getConfigFile, configFilePath } = require("../db/connect");
 import { writeFileSync } from "fs";
 import { tz } from "moment-timezone";
 import utils from "../utils";
+import { Req } from "@saltcorn/types/base_types";
 const { isNode, sleep, ensure_final_slash } = utils;
 const allTimezones = tz.names();
 const defaultTimezone = tz.guess();
@@ -1524,7 +1525,7 @@ const get_latest_npm_version = async (
  * @param {object} req
  * @returns {string}
  */
-const get_base_url = (req?: any): string => {
+const get_base_url = (req?: Req): string => {
   const { getState } = require("../db/state");
 
   const cfg = getState().getConfig("base_url", "");

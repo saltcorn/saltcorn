@@ -34,6 +34,7 @@ import type {
   RunExtra,
   ConnectedObjects,
   Res,
+  Req,
 } from "@saltcorn/types/base_types";
 import type Table from "./table";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
@@ -512,7 +513,7 @@ class View implements AbstractView {
     }
   }
 
-  queries(remote?: boolean, req?: any, res?: any) {
+  queries(remote?: boolean, req?: Req, res?: any) {
     const queryObj = this?.viewtemplateObj?.queries
       ? this.viewtemplateObj!.queries({ ...this, req, res })
       : {};
@@ -545,7 +546,7 @@ class View implements AbstractView {
               }
             );
             for (const { type, msg } of response.data.alerts)
-              req.flash(type, msg);
+              req?.flash(type, msg);
             const result = Array.isArray(response.data.success)
               ? prepMobileRows(response.data.success, fields)
               : response.data.success;
@@ -554,7 +555,7 @@ class View implements AbstractView {
           } catch (error: any) {
             state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
             if (error.request?.status === 401)
-              error.message = req.__("Not authorized");
+              error.message = req?.__("Not authorized");
             else
               error.message = `Unable to call POST ${url}:\n${error.message}`;
             throw error;
@@ -587,8 +588,8 @@ class View implements AbstractView {
    */
   async run_possibly_on_page(
     query: any,
-    req: any,
-    res: any,
+    req: Req,
+    res: Res,
     remote: boolean = false,
     extra: any = {}
   ): Promise<string | { goto?: string }> {
