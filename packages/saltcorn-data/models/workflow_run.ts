@@ -848,7 +848,7 @@ class WorkflowRun {
             return ret;
           }
         },
-        async (e) => {
+        async (e: any) => {
           if (this.context.__errorHandler) {
             const upd = {
               context: { ...this.context, __error: e },

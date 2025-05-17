@@ -87,11 +87,15 @@ import type {
   FieldLike,
   JoinFieldOption,
   RelationOption,
+  CalcJoinfield,
+  ResultType,
+  StepType,
+  SubField,
+  ErrorObj,
 } from "@saltcorn/types/base_types";
 import { get_formula_examples } from "./internal/table_helper";
 import { getAggAndField, process_aggregations } from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
-import { CalcJoinfield, ResultType, StepType, SubField, ErrorObj } from "types";
 
 /**
  * Transponce Objects

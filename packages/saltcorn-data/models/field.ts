@@ -44,8 +44,7 @@ import type {
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 //import { fileSync } from "tmp-promise";
 import File from "./file";
-import { FieldView } from "@saltcorn/types/base_types";
-import { CalcJoinfield } from "types";
+import { FieldView , CalcJoinfield} from "@saltcorn/types/base_types";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;

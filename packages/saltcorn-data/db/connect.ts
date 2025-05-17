@@ -15,7 +15,7 @@ const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
 import utils from "../utils";
-import { ConnectObjType } from "types";
+import type { ConnectObjType } from "@saltcorn/types/base_types";
 const { isNode } = utils;
 
 /**

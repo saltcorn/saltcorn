@@ -6,7 +6,12 @@ import { serialize, deserialize } from "v8";
 import { createReadStream, readdirSync } from "fs";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import { Row, Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
-import type { ConnectedObjects, Req } from "@saltcorn/types/base_types";
+import type {
+  ConnectedObjects,
+  Req,
+  ResultType,
+  StepResType,
+} from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
@@ -14,7 +19,7 @@ import { existsSync } from "fs-extra";
 import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
-import { ResultType, StepResType } from "types";
+// import { ResultType, StepResType } from "types";'
 
 const getFetchProxyOptions = () => {
   if (process.env["HTTPS_PROXY"]) {
