@@ -20,6 +20,7 @@ import type {
   JoinFields,
   JoinOptions,
   AggregationOptions,
+  JoinField,
 } from "@saltcorn/db-common/internal";
 
 import Field from "./field";
@@ -90,7 +91,7 @@ import type {
 import { get_formula_examples } from "./internal/table_helper";
 import { getAggAndField, process_aggregations } from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
-import { StepType } from "types";
+import { CalcJoinfield, ResultType, StepType, SubField, ErrorObj } from "types";
 
 /**
  * Transponce Objects
@@ -434,7 +435,7 @@ class Table implements AbstractTable {
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Table[]> {
     const { external, ...where } = where0;
-    let externals: any[] = [],
+    let externals: Array<Table> = [],
       dbs = [];
     if (external !== false) {
       //do include externals
@@ -714,7 +715,7 @@ class Table implements AbstractTable {
         )}" (id ${pk_sql_type} primary key)`
       );
     // populate table definition row
-    const tblrow: any = {
+    const tblrow = {
       name,
       versioned: options.versioned || false,
       has_sync_info: options.has_sync_info || false,
@@ -1417,7 +1418,7 @@ class Table implements AbstractTable {
 
     this.normalise_fkey_values(v);
 
-    let joinFields = {};
+    let joinFields = {} as JoinFields;
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       joinFields = this.storedExpressionJoinFields();
     }
@@ -1513,7 +1514,7 @@ class Table implements AbstractTable {
           forUser: user,
           joinFields,
         });
-      const valResCollector: any = resultCollector || {};
+      const valResCollector = resultCollector || {};
       await Trigger.runTableTriggers(
         "Validate",
         this,
@@ -1530,7 +1531,7 @@ class Table implements AbstractTable {
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       //if any freevars are join fields, update row in db first
       const freeVarFKFields = new Set(
-        Object.values(joinFields).map((jf: any) => jf.ref)
+        Object.values(joinFields).map((jf: JoinField) => jf.ref)
       );
       let need_to_update = Object.keys(v_in).some((k) =>
         freeVarFKFields.has(k)
@@ -1762,8 +1763,8 @@ class Table implements AbstractTable {
       );
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
-    } catch (e: any) {
-      return { error: this.normalise_error_message(e.message) };
+    } catch (e) {
+      return { error: this.normalise_error_message((e as ErrorObj).message) };
     }
   }
 
@@ -1946,7 +1947,7 @@ class Table implements AbstractTable {
       if (field_write_check) return field_write_check;
     }
     //check validate here based on v_in
-    const valResCollector: any = resultCollector || {};
+    const valResCollector: ResultType = resultCollector || {};
     await Trigger.runTableTriggers(
       "Validate",
       this,
@@ -2191,7 +2192,7 @@ class Table implements AbstractTable {
     for (const field of stored_fields) {
       if (!field.attributes.calc_joinfields) continue;
       const matchings = field.attributes.calc_joinfields.filter(
-        (jf: any) => jf.targetTable === this.name
+        (jf: CalcJoinfield) => jf.targetTable === this.name
       );
       if (!matchings.length) continue;
       const refTable =
@@ -2278,9 +2279,9 @@ class Table implements AbstractTable {
       if (id?.includes?.("Not authorized")) return { error: id };
       if (id?.error) return id;
       return { success: id };
-    } catch (e: any) {
+    } catch (e) {
       await require("../db/state").getState().log(5, e);
-      return { error: this.normalise_error_message(e.message) };
+      return { error: this.normalise_error_message((e as ErrorObj).message) };
     }
   }
 
@@ -2751,21 +2752,20 @@ class Table implements AbstractTable {
       }
     };
     for (const [k, vs] of Object.entries(rowsTr)) {
-      const required = (<any[]>vs).every((v: any) => v !== "");
-      const nonEmpties = (<any[]>vs).filter((v: any) => v !== "");
+      const required = (<any[]>vs).every((v) => v !== "");
+      const nonEmpties = (<any[]>vs).filter((v) => v !== "");
 
       let type;
       if (
-        nonEmpties.every((v: any) =>
+        nonEmpties.every((v) =>
           //https://www.postgresql.org/docs/11/datatype-boolean.html
 
           isBools.includes(v && v.toLowerCase && v.toLowerCase())
         )
       )
         type = "Bool";
-      else if (nonEmpties.every((v: any) => !isNaN(v)))
-        if (nonEmpties.every((v: any) => Number.isSafeInteger(+v)))
-          type = "Integer";
+      else if (nonEmpties.every((v) => !isNaN(v)))
+        if (nonEmpties.every((v) => Number.isSafeInteger(+v))) type = "Integer";
         else type = "Float";
       else if (nonEmpties.every((v: any) => isDate(v))) type = "Date";
       else if (state.types.UUID && nonEmpties.every((v: any) => isValidUUID(v)))
@@ -2819,9 +2819,9 @@ class Table implements AbstractTable {
       }
       try {
         await Field.create(fld);
-      } catch (e: any) {
+      } catch (e) {
         await table.delete();
-        return { error: `Error in header ${k}: ${e.message}` };
+        return { error: `Error in header ${k}: ${(e as ErrorObj).message}` };
       }
     }
     const parse_res = await table.import_csv_file(filePath);
@@ -2929,7 +2929,10 @@ class Table implements AbstractTable {
     const fields = this.fields.filter((f) => !f.calculated);
     const okHeaders: any = {};
     const pk_name = this.pk_name;
-    const renames: any[] = [];
+    const renames: Array<{
+      from: string;
+      to: string;
+    }> = [];
     const fkey_fields: Field[] = [];
     const json_schema_fields: Field[] = [];
 
@@ -2945,7 +2948,8 @@ class Table implements AbstractTable {
       ) {
         okHeaders[f.name] = f;
         renames.push({
-          from: headers.find((h: string) => Field.labelToName(h) === f.name),
+          from:
+            headers.find((h: string) => Field.labelToName(h) === f.name) || "",
           to: f.name,
         });
       } else if (
@@ -2973,14 +2977,16 @@ class Table implements AbstractTable {
       )
         fkey_fields.push(f);
     }
-    const fieldNames = headers.map((hnm: any) => {
+    const fieldNames = headers.map((hnm) => {
       if (okHeaders[hnm]) return okHeaders[hnm].name;
     });
     // also id
     // todo support uuid
     if (headers.includes(`id`)) okHeaders.id = { type: "Integer" };
 
-    const renamesInv: any = {};
+    const renamesInv: {
+      [k: string]: string | undefined;
+    } = {};
     renames.forEach(({ from, to }) => {
       renamesInv[to] = from;
     });
@@ -3038,7 +3044,7 @@ class Table implements AbstractTable {
           })
             .fromStream(readStream)
             .subscribe(
-              async (rec: any) => {
+              async (rec: { [key: string]: any }) => {
                 i += 1;
                 if (options?.skip_first_data_row && i === 2) return;
                 try {
@@ -3137,13 +3143,13 @@ class Table implements AbstractTable {
                             client,
                             pk_name,
                           });
-                        } catch (e: any) {
+                        } catch (e) {
                           if (
-                            !(e?.message || "").includes(
+                            !((e as ErrorObj)?.message || "").includes(
                               "current transaction is aborted, commands ignored until end of transaction"
                             )
                           )
-                            rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
+                            rejectDetails += `Reject row ${i} because: ${(e as ErrorObj)?.message}\n`;
                           rejects += 1;
                         }
                     } else if (options?.no_table_write) {
@@ -3157,21 +3163,22 @@ class Table implements AbstractTable {
                           pk_name,
                         });
                       } catch (e: any) {
-                        rejectDetails += `Reject row ${i} because: ${e?.message}\n`;
+                        rejectDetails += `Reject row ${i} because: ${(e as ErrorObj)?.message}\n`;
                         rejects += 1;
                       }
                   } else {
                     rejectDetails += `Reject row ${i} because: ${rowOk}\n`;
                     rejects += 1;
                   }
-                } catch (e: any) {
+                } catch (e) {
                   await client.query("ROLLBACK");
 
                   if (!db.isSQLite) await client.release(true);
-                  reject({ error: `${e.message} in row ${i}` });
+                  if (e instanceof Error)
+                    reject({ error: `${e.message} in row ${i}` });
                 }
               },
-              (err: any) => {
+              (err: Error) => {
                 reject({ error: !err ? err : err.message || err });
               },
               () => {
@@ -3181,9 +3188,9 @@ class Table implements AbstractTable {
         });
         readStream.destroy();
       }
-    } catch (e: any) {
+    } catch (e) {
       return {
-        error: `Error processing CSV file: ${!e ? e : e.error || e.message || e}
+        error: `Error processing CSV file: ${!e ? e : (e as ErrorObj).error || (e as ErrorObj).message || e}
 ${rejectDetails}`,
       };
     }
@@ -3293,11 +3300,11 @@ ${rejectDetails}`,
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
           rec.role_id = rec.role_id * 10;
         await db.insert(this.name, rec, { noid: true, client, pk_name });
-      } catch (e: any) {
+      } catch (e) {
         await client.query("ROLLBACK");
 
         if (!db.isSQLite) await client.release(true);
-        importError = `${e.message} in row ${i}`;
+        importError = `${(e as ErrorObj).message} in row ${i}`;
       }
     };
     await async_json_stream(filePath, async (row: Row) => {
@@ -3343,7 +3350,7 @@ ${rejectDetails}`,
         for (const pf of table.fields.filter(
           (f: Field) => !f.calculated || f.stored
         )) {
-          const subTwo: any = {
+          const subTwo: SubField = {
             name: pf.name,
             subFields: new Array<any>(),
             fieldPath: `${f.name}.${pf.name}`,
@@ -3360,7 +3367,7 @@ ${rejectDetails}`,
               for (const gpf of table1.fields.filter(
                 (f: Field) => !f.calculated || f.stored
               )) {
-                const subThree: any = {
+                const subThree: SubField = {
                   name: gpf.name,
                   subFields: new Array<any>(),
                   fieldPath: `${f.name}.${pf.name}.${gpf.name}`,
@@ -3707,13 +3714,19 @@ ${rejectDetails}`,
    */
   async getJoinedQuery(
     opts: (JoinOptions & ForUserRequest) | any = {}
-  ): Promise<any> {
+  ): Promise<
+    Partial<JoinOptions> & {
+      sql?: string;
+      values?: any[];
+      notAuthorized?: boolean;
+    }
+  > {
     const fields = this.fields;
     let fldNms = [];
     let joinq = "";
     let joinTables: string[] = [];
     let joinFields: JoinFields = opts.joinFields || {};
-    let aggregations: any = opts.aggregations || {};
+    let aggregations = opts.aggregations || {};
     const schema = db.getTenantSchemaPrefix();
     const { forUser, forPublic } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
@@ -3924,7 +3937,7 @@ ${rejectDetails}`,
       await this.getJoinedQuery(opts);
 
     if (notAuthorized) return [];
-    const res = await db.query(sql, values);
+    const res = await db.query(sql as string, values);
     if (res.rows?.length === 0) return []; // check
     let calcRow = apply_calculated_fields(
       res.rows.map((row: Row) => this.parse_json_fields(row)),
@@ -3935,7 +3948,7 @@ ${rejectDetails}`,
     if (
       db.isSQLite &&
       Object.values(aggregations || {}).some(
-        (agg: any) => agg.aggregate.toLowerCase() === "array_agg"
+        (agg) => agg.aggregate.toLowerCase() === "array_agg"
       )
     ) {
       Object.entries(aggregations || {}).forEach(([k, agg]: any) => {
@@ -4019,7 +4032,9 @@ ${rejectDetails}`,
   /**
    *
    */
-  async slug_options(): Promise<Array<{ label: string; steps: Array<StepType> }>> {
+  async slug_options(): Promise<
+    Array<{ label: string; steps: Array<StepType> }>
+  > {
     const fields = this.fields;
     const unique_fields = fields.filter((f) => f.is_unique);
     const opts: Array<{ label: string; steps: Array<StepType> }> = [];

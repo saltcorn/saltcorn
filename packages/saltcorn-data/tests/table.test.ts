@@ -21,7 +21,8 @@ import {
   stateFieldsToWhere,
 } from "../plugin-helper";
 import expressionModule from "../models/expression";
-import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
+import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
+import { ResultMessage } from "@saltcorn/types/common_types";
 const { freeVariables, jsexprToWhere } = expressionModule;
 
 afterAll(db.close);
@@ -2698,5 +2699,177 @@ describe("Table slug options", () => {
         steps: [{ field: "created_at", unique: true, transform: null }],
       },
     ]);
+  });
+});
+
+describe("ownership options", () => {
+  it("should return user reference fields", async () => {
+    await Table.create("test_table");
+    const table = Table.findOne({ name: "test_table" });
+    assertIsSet(table);
+
+    table.fields = [
+      {
+        name: "user_id",
+        reftable_name: "users",
+        id: 1,
+        label: "",
+        validator: function (
+          value: any,
+          whole_rec?: Row
+        ): boolean | string | undefined {
+          throw new Error("Function not implemented.");
+        },
+        class: "",
+        required: false,
+        is_unique: false,
+        hidden: false,
+        disabled: false,
+        calculated: false,
+        primary_key: false,
+        stored: false,
+        is_fkey: false,
+        input_type: "hidden",
+        refname: "",
+        attributes: {},
+        toJson: undefined,
+        toBuilder: undefined,
+        type_name: undefined,
+        form_name: "",
+        fill_fkey_options: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        distinct_values: function (): Promise<
+          { label: string; value: string; jsvalue?: boolean }[]
+        > {
+          throw new Error("Function not implemented.");
+        },
+        on_delete_sql: "",
+        sql_type: "",
+        pretty_type: "",
+        sql_bare_type: "",
+        generate: function (): Promise<any> {
+          throw new Error("Function not implemented.");
+        },
+        showIfEnabled: function (whole_rec: any): boolean {
+          throw new Error("Function not implemented.");
+        },
+        multipartFormData: false,
+        validate: function (whole_rec: any): ResultMessage {
+          throw new Error("Function not implemented.");
+        },
+        add_unique_constraint: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        remove_unique_constraint: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        toggle_not_null: function (not_null: boolean): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        alter_sql_type: function (new_field: Field): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        fill_table: function (): void {
+          throw new Error("Function not implemented.");
+        },
+        set_calc_joinfields: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        update: function (v: Partial<Field>): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        listKey: undefined,
+        presets: null,
+        delete: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        enable_fkey_constraint: function (table: Table): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+      },
+      {
+        name: "other_field",
+        reftable_name: "other_table",
+        id: 2,
+        label: "",
+        validator: function (
+          value: any,
+          whole_rec?: Row
+        ): boolean | string | undefined {
+          throw new Error("Function not implemented.");
+        },
+        class: "",
+        required: false,
+        is_unique: false,
+        hidden: false,
+        disabled: false,
+        calculated: false,
+        primary_key: false,
+        stored: false,
+        is_fkey: false,
+        input_type: "hidden",
+        refname: "",
+        attributes: {},
+        toJson: undefined,
+        toBuilder: undefined,
+        type_name: undefined,
+        form_name: "",
+        fill_fkey_options: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        distinct_values: function (): Promise<
+          { label: string; value: string; jsvalue?: boolean }[]
+        > {
+          throw new Error("Function not implemented.");
+        },
+        on_delete_sql: "",
+        sql_type: "",
+        pretty_type: "",
+        sql_bare_type: "",
+        generate: function (): Promise<any> {
+          throw new Error("Function not implemented.");
+        },
+        showIfEnabled: function (whole_rec: any): boolean {
+          throw new Error("Function not implemented.");
+        },
+        multipartFormData: false,
+        validate: function (whole_rec: any): ResultMessage {
+          throw new Error("Function not implemented.");
+        },
+        add_unique_constraint: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        remove_unique_constraint: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        toggle_not_null: function (not_null: boolean): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        alter_sql_type: function (new_field: Field): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        fill_table: function (): void {
+          throw new Error("Function not implemented.");
+        },
+        set_calc_joinfields: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        update: function (v: Partial<Field>): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        listKey: undefined,
+        presets: null,
+        delete: function (): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+        enable_fkey_constraint: function (table: Table): Promise<void> {
+          throw new Error("Function not implemented.");
+        },
+      },
+    ];
+
+    const options = await table.ownership_options();
+    expect(options).toEqual([{ label: "user_id", value: "1" }]);
   });
 });

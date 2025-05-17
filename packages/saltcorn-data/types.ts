@@ -2,6 +2,7 @@ import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
 import { GenObj } from "@saltcorn/types/common_types";
 import * as multiTenant from "@saltcorn/db-common/multi-tenant";
 import { ReadStream, WriteStream } from "fs";
+import { User } from "models";
 
 export type DbExportsType = {
   tenant: typeof multiTenant;
@@ -91,6 +92,20 @@ export type DbExportsType = {
     tenantId: string,
     fn: (tenantId: string) => Promise<void>
   ) => Promise<void>;
+  drop_reset_schema: () => Promise<void>;
+  listTables: () => Promise<any>;
+  listUserDefinedTables: () => Promise<any>;
+  listScTables: () => Promise<any>;
+  dropTable: (table: string) => Promise<any>;
+  dropTables: (tables: string[]) => Promise<any>;
+  get_db_filepath: () => string;
+  setConnectionObject: (connectObj: any) => void;
+  changeConnection: (connectObj: any) => void;
+  begin: () => Promise<void>;
+  commit: () => Promise<void>;
+  rollback: () => Promise<void>;
+  get_sql_logging: () => boolean;
+  getVersion: () => Promise<string>;
 };
 
 export type ResultType = {
@@ -113,3 +128,48 @@ export type StepType = {
   unique: boolean;
   transform: string | null;
 };
+
+export type ConnectObjType = {
+  connectionString?: string;
+  sqlite_path?: string;
+  password?: string;
+  user?: string;
+  database?: string;
+  host?: string;
+  port?: string;
+  session_secret?: string;
+  sslmode?: string;
+  sslcert?: string;
+  sslkey?: string;
+  sslrootcert?: string;
+  jwt_secret?: string;
+  multi_tenant?: boolean;
+  file_store?: string;
+  default_schema?: string;
+  fixed_configuration?: any;
+  inherit_configuration?: any;
+  version_tag?: string;
+};
+
+export type CalcJoinfield = {
+  targetTable: string;
+  field: string;
+  targetField: string;
+  through?: any[];
+  throughTable?: any[];
+};
+
+export type ErrorObj = {
+  name: string;
+  message: string;
+  stack?: string;
+  code?: string;
+  [key: string]: any;
+};
+
+export type SubField = {
+  name: string;
+  table?: string;
+  subFields: any[];
+  fieldPath: string;
+} 

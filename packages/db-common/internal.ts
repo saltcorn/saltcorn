@@ -725,7 +725,7 @@ export const orderByIsOperator = (
 
 export type JoinField = {
   ref: any;
-  target: any;
+  target?: any;
   through?: any;
   rename_object?: any;
   ontable?: any;

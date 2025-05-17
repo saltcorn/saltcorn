@@ -252,7 +252,7 @@ export type ViewTemplate = {
     viewname: string,
     configuration: any
   ) => Promise<Array<FieldLike>> | Array<FieldLike>;
-  configuration_workflow?: (req: Req) => AbstractWorkflow;
+  configuration_workflow?: (req: Partial<Req>) => AbstractWorkflow;
   view_quantity?: "Many" | "ZeroOrOne" | "One";
   initial_config?: (arg0: { table_id: number }) => Promise<any>;
   configCheck?: (
@@ -435,6 +435,9 @@ export type Req = {
   __: (s: string) => string;
   get: (s: string) => string;
   body: any;
+  sessionID?: string;
+  protocol?: string;
+  hostname?: string;
   [k: string]: any;
 };
 export type Res = {

@@ -45,6 +45,7 @@ import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 //import { fileSync } from "tmp-promise";
 import File from "./file";
 import { FieldView } from "@saltcorn/types/base_types";
+import { CalcJoinfield } from "types";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -959,7 +960,7 @@ class Field implements AbstractField {
       joinFields,
       fields
     );
-    const calc_joinfields: any = [];
+    const calc_joinfields: Array<CalcJoinfield> = [];
     Object.values(joinFields).forEach((jf: any) => {
       const path = [...jf.rename_object];
       if (path.length === 2) {

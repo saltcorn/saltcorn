@@ -6,7 +6,7 @@ import { serialize, deserialize } from "v8";
 import { createReadStream, readdirSync } from "fs";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import { Row, Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
-import type { ConnectedObjects } from "@saltcorn/types/base_types";
+import type { ConnectedObjects, Req } from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
@@ -248,7 +248,7 @@ const isNode = (): boolean => {
  * a saltcorn mobile request is identified by the smr header
  * @param req express request
  */
-const isWeb = (req: any): boolean => {
+const isWeb = (req: Req): boolean => {
   return isNode() && !req?.smr;
 };
 
@@ -257,7 +257,7 @@ const isWeb = (req: any): boolean => {
  * @param req express request
  */
 
-const getSessionId = (req: any): string => {
+const getSessionId = (req: Req): string => {
   return req?.sessionID || req?.cookies?.["express:sess"];
 };
 

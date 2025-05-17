@@ -582,7 +582,7 @@ describe("Workflow run userform", () => {
   });
 });
 
-describe("Workflow step advanced operations", () => {
+describe("Workflow step operations", () => {
   it("should generate a diagram", async () => {
     const trigger = await Trigger.create({
       action: "Workflow",
