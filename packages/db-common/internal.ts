@@ -104,7 +104,7 @@ export const ftsFieldsSqlExpr = (
       fldsArray.push(
         `coalesce((select "${f.attributes.summary_field}" from ${
           schema ? `"${schema}".` : ""
-        }"${f.reftable_name}" rt where rt."${f.refname}"=${
+        }"${sqlsanitize(f.reftable_name)}" rt where rt."${f.refname}"=${
           table ? `"${sqlsanitize(table)}".` : ""
         }"${f.name}"),'')`
       );
