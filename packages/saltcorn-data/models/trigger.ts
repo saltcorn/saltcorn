@@ -232,8 +232,6 @@ class Trigger implements AbstractTrigger {
       return;
     }
     setTimeout(async () => {
-      // const { password, ...user } = userPW as User;
-
       const { password, ...user } = (userPW || {}) as User;
       const { getState } = require("../db/state");
       if (!getState) return; // probably in a test
