@@ -168,8 +168,10 @@ const run_code = async ({
     setTimeout,
     interpolate,
     require,
-    setConfig: (k, v) => sysState.setConfig(k, v),
-    getConfig: (k) => sysState.getConfig(k),
+    setConfig: (k, v) =>
+      sysState.isFixedConfig(k) ? undefined : sysState.setConfig(k, v),
+    getConfig: (k) =>
+      sysState.isFixedConfig(k) ? undefined : sysState.getConfig(k),
     channel: table ? table.name : channel,
     session_id: rest.req && getSessionId(rest.req),
     request_headers: rest?.req?.headers,
