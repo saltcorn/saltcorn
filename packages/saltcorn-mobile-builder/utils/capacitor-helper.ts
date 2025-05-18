@@ -180,7 +180,7 @@ export class CapacitorHelper {
             `\n\n${result.error.toString()}`
         );
     };
-    for (const platform of this.platforms) addFn(platform);
+    for (const platform of this.platforms) if (platform !== "web") addFn(platform);
   }
 
   public generateAssets() {

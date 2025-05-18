@@ -1,4 +1,4 @@
-/*global saltcorn, Capacitor, cordova */
+/*global saltcorn, Capacitor, cordova, _test_schema_ */
 
 import {
   startOfflineMode,
@@ -30,6 +30,8 @@ import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
 import { jwtDecode } from "jwt-decode";
 
 import { Network } from "@capacitor/network";
+
+import { defineCustomElements } from "jeep-sqlite/loader";
 
 async function addScript(scriptObj) {
   let waited = 0;
@@ -162,13 +164,15 @@ const initI18Next = async () => {
   for (const key of Object.keys(
     saltcorn.data.models.config.available_languages
   )) {
-    const localeFile = await readJSONCordova(
-      `${key}.json`,
-      `${cordova.file.applicationDirectory}public/data/locales`
-    );
-    resources[key] = {
-      translation: localeFile,
-    };
+    if (Capacitor.platform !== "web") {
+      const localeFile = await readJSONCordova(
+        `${key}.json`,
+        `${cordova.file.applicationDirectory}public/data/locales`
+      );
+      resources[key] = {
+        translation: localeFile,
+      };
+    }
   }
   await i18next.use(i18nextSprintfPostProcessor).init({
     lng: "en",
@@ -305,22 +309,28 @@ const postShare = async (shareData) => {
 };
 
 const readSchemaIfNeeded = async () => {
-  let tablesJSON = null;
-  const { created_at } = await readJSONCordova(
-    "tables_created_at.json",
-    `${cordova.file.applicationDirectory}${"public"}/data`
-  );
-  const updateNeeded = await dbUpdateNeeded(created_at);
-  if (updateNeeded) {
-    tablesJSON = await readJSONCordova(
-      "tables.json",
+  if (Capacitor.platform !== "web") {
+    let tablesJSON = null;
+    const { created_at } = await readJSONCordova(
+      "tables_created_at.json",
       `${cordova.file.applicationDirectory}${"public"}/data`
     );
+    const updateNeeded = await dbUpdateNeeded(created_at);
+    if (updateNeeded) {
+      tablesJSON = await readJSONCordova(
+        "tables.json",
+        `${cordova.file.applicationDirectory}${"public"}/data`
+      );
+    }
+    return { updateNeeded, tablesJSON };
+  } else {
+    // test environment
+    return { updateNeeded: true, tablesJSON: _test_schema_ };
   }
-  return { updateNeeded, tablesJSON };
 };
 
 const readSiteLogo = async (state) => {
+  if (Capacitor.platform === "web") return "";
   try {
     const base64 = await readTextCordova(
       "encoded_site_logo.txt",
@@ -340,6 +350,13 @@ const readSiteLogo = async (state) => {
 // device is ready
 export async function init(mobileConfig) {
   try {
+    if (Capacitor.platform === "web") {
+      defineCustomElements(window);
+      await customElements.whenDefined("jeep-sqlite");
+      const jeepSqlite = document.createElement("jeep-sqlite");
+      document.body.appendChild(jeepSqlite);
+      await jeepSqlite.componentOnReady();
+    }
     const lastLocation = takeLastLocation();
     document.addEventListener("resume", onResume, false);
     await addScripts(mobileConfig.version_tag);

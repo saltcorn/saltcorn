@@ -37,6 +37,14 @@ module.exports = {
       },
     ],
   },
+  resolve: {
+    fallback: {
+      "crypto": require.resolve("crypto-browserify"),
+      vm: require.resolve("vm-browserify"),
+      stream: require.resolve("stream-browserify"),
+
+    }
+  },
   target: "web", // Use web target for browser compatibility
   mode: "development",
 };
