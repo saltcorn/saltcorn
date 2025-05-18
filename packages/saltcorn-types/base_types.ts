@@ -533,6 +533,7 @@ type PluginFacilities = {
   authentication?: Record<string, AuthenticationMethod>;
   table_providers?: Record<string, TableProvider>;
   copilot_skills?: Array<CopilotSkill>;
+  icons?: Array<string>
 };
 
 type PluginWithConfig = {
