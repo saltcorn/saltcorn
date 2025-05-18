@@ -21,6 +21,7 @@ import type {
   JoinOptions,
   AggregationOptions,
   JoinField,
+  Value,
 } from "@saltcorn/db-common/internal";
 
 import Field from "./field";
@@ -89,7 +90,7 @@ import type {
   RelationOption,
   CalcJoinfield,
   ResultType,
-  StepType,
+  SlugStepType,
   SubField,
   ErrorObj,
 } from "@saltcorn/types/base_types";
@@ -3721,7 +3722,7 @@ ${rejectDetails}`,
   ): Promise<
     Partial<JoinOptions> & {
       sql?: string;
-      values?: any[];
+      values?: Value[];
       notAuthorized?: boolean;
     }
   > {
@@ -4037,11 +4038,11 @@ ${rejectDetails}`,
    *
    */
   async slug_options(): Promise<
-    Array<{ label: string; steps: Array<StepType> }>
+    Array<{ label: string; steps: Array<SlugStepType> }>
   > {
     const fields = this.fields;
     const unique_fields = fields.filter((f) => f.is_unique);
-    const opts: Array<{ label: string; steps: Array<StepType> }> = [];
+    const opts: Array<{ label: string; steps: Array<SlugStepType> }> = [];
     unique_fields.forEach((f: Field) => {
       const label =
         instanceOfType(f.type) && f.type.name === "String"
@@ -4069,11 +4070,11 @@ ${rejectDetails}`,
    *
    */
   static async allSlugOptions(): Promise<{
-    [nm: string]: Array<{ label: string; steps: Array<StepType> }>;
+    [nm: string]: Array<{ label: string; steps: Array<SlugStepType> }>;
   }> {
     const tables = await Table.find({}, { cached: true });
     const options: {
-      [nm: string]: Array<{ label: string; steps: Array<StepType> }>;
+      [nm: string]: Array<{ label: string; steps: Array<SlugStepType> }>;
     } = {};
     for (const table of tables) {
       options[table.name] = await table.slug_options();

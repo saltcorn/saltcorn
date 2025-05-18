@@ -553,7 +553,7 @@ class State {
         this.page_groups = await PageGroup.find();
         if (!noSignal) this.log(5, "Refresh page groups");
       },
-      async (e: Error) => {
+      (e: Error) => {
         console.error("error initializing page groups", e);
       }
     );
@@ -585,7 +585,7 @@ class State {
         //needed for refresh in pre-model migration
         allModels = await Model.find({});
       },
-      async (e: Error) => {}
+      (e: Error) => {}
     );
     for (const table of allTables) {
       if (table.provider_name) {

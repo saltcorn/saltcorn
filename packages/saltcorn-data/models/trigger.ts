@@ -218,12 +218,12 @@ class Trigger implements AbstractTrigger {
    * @param {object} [userPW = {}]
    * @param {*} payload
    */
-  static async emitEvent(
+  static emitEvent(
     eventType: string,
     channel: string | null = null,
     userPW: User | object = {},
     payload?: any
-  ): Promise<void> {
+  ): void {
     if (
       !isNode() &&
       !require("../db/state").getState().mobileConfig?.isOfflineMode

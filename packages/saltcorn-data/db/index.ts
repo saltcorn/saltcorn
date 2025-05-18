@@ -43,7 +43,7 @@ const dbModule = initDbModule();
 
 /** @type {db/tenant} */
 import tenantsModule = require("@saltcorn/db-common/tenants");
-import { DbExportsType } from "@saltcorn/types/base_types";
+import { DbExportsType } from "@saltcorn/db-common/types";
 const tenant: typeof multiTenant | null = tenantsModule(connectObj);
 if (!tenant) throw new Error("tenant is null");
 
