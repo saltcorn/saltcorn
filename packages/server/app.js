@@ -239,8 +239,7 @@ const getApp = async (opts = {}) => {
   app.use(passport.authenticate(["jwt", "session"]));
   app.use((req, res, next) => {
     // no jwt and session id at the same time
-    //TODO
-    // if (!(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]))
+    if (!(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]))
       next();
   });
   app.use(flash());
