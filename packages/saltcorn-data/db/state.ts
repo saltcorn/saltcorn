@@ -30,7 +30,7 @@ import {
   CopilotSkill,
   CapacitorPlugin,
 } from "@saltcorn/types/base_types";
-import { Type } from "@saltcorn/types/common_types";
+import { GenObj, Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config";
 import type Model from "../models/model";
 import User from "../models/user";
@@ -604,7 +604,7 @@ class State {
       table.constraints = allConstraints
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));
-      table.fields.forEach((f: Field) => {
+      table.fields.forEach((f: GenObj) => {
         if (db.isSQLite && typeof f.attributes === "string")
           f.attributes = JSON.parse(f.attributes);
         if (
@@ -624,6 +624,17 @@ class State {
               localized.attributes.localized_by = {};
 
             localized.attributes.localized_by[f.attributes.locale] = f.name;
+          }
+        }
+        if (f.type === "Key") {
+          const reftable = allTables.find(
+            (t: GenObj) => t.name === f.reftable_name
+          );
+          if (reftable) {
+            const refPK = (reftable.fields || []).find(
+              (f: GenObj) => f.primary_key
+            );
+            if (refPK) f.reftype = refPK.type?.name || refPK.type;
           }
         }
       });

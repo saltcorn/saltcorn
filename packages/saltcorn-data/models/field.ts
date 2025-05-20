@@ -164,10 +164,14 @@ class Field implements AbstractField {
       this.input_type =
         !this.fieldview || this.fieldview === "select" ? "select" : "fromtype";
       let default_reftype;
-      if (this.reftable && this.reftable.fields)
-        default_reftype = (
-          this.reftable.fields.find((f) => f.primary_key)?.type as Type
-        )?.name;
+      if (this.reftable && this.reftable.fields) {
+        const reffield = this.reftable.fields.find((f) => f.primary_key);
+        if (reffield)
+          default_reftype =
+            typeof reffield.type === "string"
+              ? reffield.type
+              : reffield.type?.name;
+      }
 
       this.reftype = o.reftype || default_reftype || "Integer";
       this.refname = o.refname || "id";
@@ -838,7 +842,7 @@ class Field implements AbstractField {
     })`;
 
     const schema = db.getTenantSchemaPrefix();
-    new_field.fill_table()
+    new_field.fill_table();
     this.fill_table();
     if (!this.table) {
       throw new Error(
