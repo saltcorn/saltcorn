@@ -626,10 +626,15 @@ class State {
             localized.attributes.localized_by[f.attributes.locale] = f.name;
           }
         }
-        if (f.type === "Key")
-          f.reftable = allTables.find(
+        if (f.type === "Key") {
+          const reftable = allTables.find(
             (t: GenObj) => t.name === f.reftable_name
           );
+          if (reftable) {
+            const refPK = reftable.fields.find((f: GenObj) => f.primary_key);
+            if (refPK) f.reftype = refPK.type?.name || refPK.type;
+          }
+        }
       });
       const models = allModels.filter((m: any) => m.table_id == table.id);
       for (const model of models) {
