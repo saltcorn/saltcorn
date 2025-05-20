@@ -631,7 +631,9 @@ class State {
             (t: GenObj) => t.name === f.reftable_name
           );
           if (reftable) {
-            const refPK = reftable.fields.find((f: GenObj) => f.primary_key);
+            const refPK = (reftable.fields || []).find(
+              (f: GenObj) => f.primary_key
+            );
             if (refPK) f.reftype = refPK.type?.name || refPK.type;
           }
         }
