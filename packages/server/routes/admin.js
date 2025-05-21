@@ -220,7 +220,7 @@ admin_config_route({
   field_names: [
     "smtp_host",
     "smtp_auth_method",
-    { name: "smtp_username", showIf: { smtp_auth_method: "password" } },
+    "smtp_username",
     { name: "smtp_password", showIf: { smtp_auth_method: "password" } },
     {
       name: "smtp_api_option",
