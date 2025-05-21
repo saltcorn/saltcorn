@@ -220,7 +220,7 @@ admin_config_route({
   field_names: [
     "smtp_host",
     "smtp_auth_method",
-    { name: "smtp_username", showIf: { smtp_auth_method: "password" } },
+    "smtp_username",
     { name: "smtp_password", showIf: { smtp_auth_method: "password" } },
     {
       name: "smtp_api_option",
@@ -343,11 +343,15 @@ router.get(
     const smtpRedirectUri = getState().getConfig("smtp_redirect_uri");
     const scopes = getState().getConfig("smtp_outh_scopes");
     const scopeArray = scopes.split(" ").map((s) => s.trim());
+    const smtpHost = getState().getConfig("smtp_host");
 
     // Mail.Send SMTP.Send profile openid email https://outlook.office365.com/IMAP.AccessAsUser.All
     const authorizeUrl = client.authorizeURL({
       redirect_uri: smtpRedirectUri,
       scope: scopeArray,
+      ...(smtpHost === "smtp.gmail.com"
+        ? { access_type: "offline", prompt: "consent" }
+        : {}),
     });
     res.redirect(authorizeUrl);
   })

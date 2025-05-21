@@ -360,7 +360,11 @@ const getTokenString = async () => {
   let wrapped = client.createToken(tokenData);
   if (wrapped.expired()) {
     const refreshed = await wrapped.refresh();
-    await getState().setConfig("smtp_oauth_token_data", refreshed.token);
+    const newTokenData = { ...refreshed.token };
+    if (!newTokenData.refresh_token && tokenData.refresh_token) {
+      newTokenData.refresh_token = tokenData.refresh_token;
+    }
+    await getState().setConfig("smtp_oauth_token_data", newTokenData);
     wrapped = refreshed;
   }
   return wrapped.token.access_token as string;
