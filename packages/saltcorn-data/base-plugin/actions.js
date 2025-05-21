@@ -893,18 +893,25 @@ module.exports = {
       try {
         const sendres = await (await getMailTransport()).sendMail(email);
         getState().log(5, `send_email result: ${JSON.stringify(sendres)}`);
-        if (confirm_field && sendres.accepted.length > 0) {
+        if (confirm_field) {
           const confirm_fld = table.getField(confirm_field);
-          if (confirm_fld && confirm_fld.type.name === "Date")
+          if (sendres.accepted.length > 0) {
+            if (confirm_fld && confirm_fld.type.name === "Date")
+              await table.updateRow(
+                { [confirm_field]: new Date() },
+                row[table.pk_name]
+              );
+            else if (confirm_fld && confirm_fld.type.name === "Bool")
+              await table.updateRow(
+                { [confirm_field]: true },
+                row[table.pk_name]
+              );
+          } else if (confirm_fld && confirm_fld.type.name === "Bool") {
             await table.updateRow(
-              { [confirm_field]: new Date() },
+              { [confirm_field]: false },
               row[table.pk_name]
             );
-          else if (confirm_fld && confirm_fld.type.name === "Bool")
-            await table.updateRow(
-              { [confirm_field]: true },
-              row[table.pk_name]
-            );
+          }
         }
         if (disable_notify) return;
         else return { notify: `E-mail sent to ${to_addr}` };
