@@ -1,6 +1,6 @@
 # Notable changes
 
-## 1.2.0 - In Beta
+## 1.2.0 - Released 21 May 2025
 
 * Create Table by CSV upload now accepts String and UUID primary keys and 
   JSON fields (if UUID and JSON modules are installed)
