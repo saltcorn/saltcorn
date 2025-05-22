@@ -269,6 +269,15 @@ const getApp = async (opts = {}) => {
     );
   let version_tag = db.connectObj.version_tag;
 
+  if (process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD) {
+    app.use(
+      "/mobile_test_build",
+      express.static(process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD, {
+        maxAge: development_mode ? 0 : "100d",
+      })
+    );
+  }
+
   app.use(
     `/static_assets/${version_tag}`,
     express.static(__dirname + "/public", {
