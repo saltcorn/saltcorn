@@ -217,7 +217,7 @@ class ReleaseCommand extends Command {
         stdio: "inherit",
         cwd: `packages/saltcorn-cli/`,
       });*/
-    await publish("saltcorn-cli"); //, "next");
+    await publish("saltcorn-cli", "next");
     fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
