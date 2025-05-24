@@ -35,10 +35,23 @@ const write_csv = async (rows, columns, fields, filename) => {
           if (f.type.name === "FloatArray") {
             const dims = rows.map((r) => r[column.field_name].length);
             const maxDims = Math.max(...dims);
-            for (let i = i < maxDims; i++; ) {
+            for (let i = 0; i < maxDims; i++) {
               colWriters.push({
                 header: column.field_name + i,
                 write: (row) => row[column.field_name][i],
+              });
+            }
+          } else if (f.type.name === "PGVector") {
+            const row0 = rows.find((r) => r[column.field_name]);
+            const dims = JSON.parse(row0[column.field_name]).length;
+            for (let i = 0; i < dims; i++) {
+              colWriters.push({
+                header: column.field_name + i,
+                write: (row) => {
+                  const pgvs = row[column.field_name];
+                  if (!pgvs) return "";
+                  return JSON.parse(pgvs)[i];
+                },
               });
             }
           } else {
