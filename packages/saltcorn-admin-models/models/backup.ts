@@ -57,6 +57,7 @@ import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
 const os = require("os");
 const semver = require("semver");
+import AWS from "aws-sdk";
 
 /**
  * @param [withEventLog] - include event log
@@ -783,6 +784,33 @@ const auto_backup_now_tenant = async (state: any) => {
       await unlink(fileName);
       break;
     //await  SftpClient()
+    case "S3":
+      const s3 = new AWS.S3({
+        accessKeyId: state.getConfig("storage_s3_access_key"),
+        secretAccessKey: state.getConfig("storage_s3_access_secret"),
+        region: state.getConfig("storage_s3_region"),
+      })
+
+      const bucket = state.getConfig("storage_s3_bucket");
+      const s3Key = basename(fileName);
+
+      const fileStream = createReadStream(fileName);
+      const params: AWS.S3.PutObjectRequest = {
+        Bucket: bucket,
+        Key: s3Key,
+        Body: fileStream,
+        ACL: "public-read",
+        // ContentType: "application/zip",
+      };
+
+      try {
+        const uploadResult = await s3.upload(params).promise();
+        state.log(6, `S3 Upload result: ${uploadResult.Location}`);
+      } catch (err: any) {
+        state.log(1, `S3 Upload error: ${err.message}`);
+        throw new Error(`S3 Upload error: ${err}`);
+      }
+      break;
     default:
       throw new Error("Unknown destination: " + destination);
   }

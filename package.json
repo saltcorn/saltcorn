@@ -73,5 +73,11 @@
   },
   "workspaces": [
     "./packages/*"
-  ]
+  ],
+  "volta": {
+    "node": "18.20.8"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1692.0"
+  }
 }
