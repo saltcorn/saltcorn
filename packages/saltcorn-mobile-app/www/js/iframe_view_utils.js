@@ -288,15 +288,22 @@ async function loginFormSubmit(e, entryView) {
 async function local_post_btn(e) {
   try {
     showLoadSpinner();
-    const form = $(e).closest("form");
-    const url = form.attr("action");
-    const method = form.attr("method");
-    const { path, query } =
-      parent.saltcorn.mobileApp.navigation.splitPathQuery(url);
-    await parent.saltcorn.mobileApp.navigation.handleRoute(
-      `${method}${path}`,
-      combineFormAndQuery(form, query)
-    );
+    let path, query;
+    if (typeof e === "string") {
+      const pq = parent.saltcorn.mobileApp.navigation.splitPathQuery(e);
+      path = pq.path;
+      query = pq.query;
+    } else {
+      const form = $(e).closest("form");
+      const method = form.attr("method");
+      const pq = parent.saltcorn.mobileApp.navigation.splitPathQuery(
+        form.attr("action")
+      );
+      path = `${method}${pq.path}`;
+      query = pq.query;
+      combineFormAndQuery(form, query);
+    }
+    await parent.saltcorn.mobileApp.navigation.handleRoute(path, query);
   } finally {
     removeLoadSpinner();
   }

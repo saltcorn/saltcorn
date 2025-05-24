@@ -67,7 +67,9 @@ const action_url = (
   const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
   if (action_name === "Delete")
     return {
-      javascript: `${confirmStr}ajax_post_btn('/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}', true)`,
+      javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${
+        !isNode() ? "post" : ""
+      }/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}', true)`,
     };
   else if (action_name === "GoBack")
     return {
