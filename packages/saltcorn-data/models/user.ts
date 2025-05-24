@@ -645,6 +645,18 @@ class User {
     }
   }
 
+  static async destroy_all_tenant_sessions(tenant?: string): Promise<void> {
+    if (!db.isSQLite) {
+      const schema = tenant || db.getTenantSchema();
+
+      await db.query(
+        `delete from _sc_session 
+        where sess->'passport'->'user'->>'tenant' = $1`,
+        [schema]
+      );
+    }
+  }
+
   /**
    * @param {object} req
    */
