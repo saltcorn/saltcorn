@@ -702,14 +702,51 @@ const delete_old_backups = async () => {
   const directory = getState().getConfig("auto_backup_directory");
   const expire_days = getState().getConfig("auto_backup_expire_days");
   const backup_file_prefix = getState().getConfig("backup_file_prefix");
+  const destination = getState().getConfig("auto_backup_destination");
+
   if (!expire_days || expire_days < 0) return;
-  const files = await readdir(directory);
-  for (const file of files) {
-    if (!file.startsWith(backup_file_prefix)) continue;
-    const stats = await stat(path.join(directory, file));
-    const ageDays =
-      (new Date().getTime() - stats.birthtime.getTime()) / (1000 * 3600 * 24);
-    if (ageDays > expire_days) await unlink(path.join(directory, file));
+
+  if (destination === "Local directory") {
+    const files = await readdir(directory);
+    for (const file of files) {
+      if (!file.startsWith(backup_file_prefix)) continue;
+      const stats = await stat(path.join(directory, file));
+      const ageDays =
+        (new Date().getTime() - stats.birthtime.getTime()) / (1000 * 3600 * 24);
+      if (ageDays > expire_days) await unlink(path.join(directory, file));
+    }
+  } else if (destination === "S3") {
+    const s3 = new AWS.S3({
+      accessKeyId: getState().getConfig("storage_s3_access_key"),
+      secretAccessKey: getState().getConfig("storage_s3_access_secret"),
+      region: getState().getConfig("storage_s3_region"),
+    });
+
+    const bucket = getState().getConfig("storage_s3_bucket");
+    const listParams: AWS.S3.ListObjectsV2Request = {
+      Bucket: bucket,
+      Prefix: backup_file_prefix,
+    };
+
+    try {
+      s3.listObjects
+      const listedObjects = await s3.listObjectsV2(listParams).promise();
+      if (listedObjects.Contents) {
+        for (const obj of listedObjects.Contents) {
+          if (!obj.Key || !obj.LastModified) continue;
+          const ageDays =
+            (new Date().getTime() - new Date(obj.LastModified).getTime()) /
+            (1000 * 3600 * 24);
+          if (ageDays > expire_days) {
+            await s3
+              .deleteObject({ Bucket: bucket, Key: obj.Key })
+              .promise();
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error(`Error deleting old backups from S3: ${err.message}`);
+    }
   }
 };
 /**
@@ -783,7 +820,6 @@ const auto_backup_now_tenant = async (state: any) => {
       }
       await unlink(fileName);
       break;
-    //await  SftpClient()
     case "S3":
       const s3 = new AWS.S3({
         accessKeyId: state.getConfig("storage_s3_access_key"),
@@ -799,8 +835,8 @@ const auto_backup_now_tenant = async (state: any) => {
         Bucket: bucket,
         Key: s3Key,
         Body: fileStream,
-        ACL: "public-read",
-        // ContentType: "application/zip",
+        ACL: "private",
+        ContentType: "application/zip",
       };
 
       try {
@@ -810,6 +846,7 @@ const auto_backup_now_tenant = async (state: any) => {
         state.log(1, `S3 Upload error: ${err.message}`);
         throw new Error(`S3 Upload error: ${err}`);
       }
+      await delete_old_backups();
       break;
     default:
       throw new Error("Unknown destination: " + destination);
