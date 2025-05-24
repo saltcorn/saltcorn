@@ -60,7 +60,7 @@ describe("Transaction test", () => {
             await books.insertRow({ author: "JK Rowling", pages: 684 });
             throw new Error("foo");
           },
-          (e: any) => {}
+          async (e: Error) => {}
         );
         const b = await books.getRow({ author: "JK Rowling" });
         expect(b).toBeNull();

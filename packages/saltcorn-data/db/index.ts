@@ -43,6 +43,7 @@ const dbModule = initDbModule();
 
 /** @type {db/tenant} */
 import tenantsModule = require("@saltcorn/db-common/tenants");
+import { DbExportsType } from "@saltcorn/db-common/types";
 const tenant: typeof multiTenant | null = tenantsModule(connectObj);
 if (!tenant) throw new Error("tenant is null");
 
@@ -52,7 +53,7 @@ if (!tenant) throw new Error("tenant is null");
 const getTenantSchemaPrefix = (): string =>
   isSQLite ? "" : `"${tenant.getTenantSchema()}".`;
 
-const dbExports: any = {
+const dbExports: DbExportsType = {
   ...tenant,
   sqlsanitize,
   connectObj,

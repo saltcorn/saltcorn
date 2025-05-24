@@ -15,6 +15,7 @@ const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
 import utils from "../utils";
+import type { ConnectObjType } from "@saltcorn/types/base_types";
 const { isNode } = utils;
 
 /**
@@ -179,7 +180,7 @@ const getConfigFile = () => {
  * @param connObj - connectin object
  * @returns - Returns true if Saltcorn configured to use SQLite as database
  */
-const is_sqlite = (connObj: any) => {
+const is_sqlite = (connObj: ConnectObjType) => {
   if (!isNode()) return true;
   if (connObj.connectionString)
     return connObj.connectionString.startsWith("sqlite");

@@ -71,7 +71,7 @@ class WorkflowStep {
   /**
    * @param {object} lib_in
    */
-  static async create(step_in: WorkflowStepCfg): Promise<void> {
+  static async create(step_in: WorkflowStepCfg): Promise<WorkflowStep> {
     const step = new WorkflowStep(step_in);
     if (step.initial_step) {
       await db.updateWhere(

@@ -435,6 +435,9 @@ export type Req = {
   __: (s: string) => string;
   get: (s: string) => string;
   body: any;
+  sessionID?: string;
+  protocol?: string;
+  hostname?: string;
   [k: string]: any;
 };
 export type Res = {
@@ -629,4 +632,70 @@ export type PluginRoute = {
   method?: string;
   csrf?: boolean; // undefined => check csrf
   callback: ({ req, res }: { req: any; res: any }) => void;
+};
+
+export type ResultType = {
+  set_fields?: GenObj;
+  halt_steps?: boolean;
+  notify?: string;
+  notify_success?: string;
+  error?: string;
+  goto?: string;
+  [key: string]: any;
+};
+
+export type StepResType = ResultType & {
+  goto_step?: number;
+  clear_return_values?: boolean;
+};
+
+export type SlugStepType = {
+  field: string;
+  unique: boolean;
+  transform: string | null;
+};
+
+export type ConnectObjType = {
+  connectionString?: string;
+  sqlite_path?: string;
+  password?: string;
+  user?: string;
+  database?: string;
+  host?: string;
+  port?: string;
+  session_secret?: string;
+  sslmode?: string;
+  sslcert?: string;
+  sslkey?: string;
+  sslrootcert?: string;
+  jwt_secret?: string;
+  multi_tenant?: boolean;
+  file_store?: string;
+  default_schema?: string;
+  fixed_configuration?: any;
+  inherit_configuration?: any;
+  version_tag?: string;
+};
+
+export type CalcJoinfield = {
+  targetTable: string;
+  field: string;
+  targetField: string;
+  through?: any[];
+  throughTable?: any[];
+};
+
+export type ErrorObj = {
+  name: string;
+  message: string;
+  stack?: string;
+  code?: string;
+  [key: string]: any;
+};
+
+export type SubField = {
+  name: string;
+  table?: string;
+  subFields: any[];
+  fieldPath: string;
 };

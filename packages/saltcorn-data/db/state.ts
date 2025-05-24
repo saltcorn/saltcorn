@@ -39,7 +39,8 @@ const { PluginManager } = require("live-plugin-manager");
 import moment from "moment";
 
 import db from ".";
-const { migrate } = require("../migrate");
+import { migrate } from "../migrate"; // Shows the true args and return type
+// const { migrate } = require("../migrate"); // Shows the args and return type as 'any'
 import config from "../models/config";
 const { getAllConfig, setConfig, deleteConfig, configTypes } = config;
 const emergency_layout = require("@saltcorn/markup/emergency_layout");
@@ -1256,10 +1257,10 @@ const set_tenant_base_url = (tenant_subdomain: string, value?: string) => {
  * @returns {Promise<void>}
  */
 const init_multi_tenant = async (
-  plugin_loader: Function,
+  plugin_loader: (s: string) => Promise<void>,
   disableMigrate: boolean,
   tenantList: string[]
-) => {
+): Promise<void> => {
   // for each domain
   if (singleton?.configs?.base_url?.value) {
     const cfg_domain = get_domain(singleton?.configs?.base_url.value);

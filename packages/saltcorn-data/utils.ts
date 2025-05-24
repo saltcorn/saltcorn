@@ -6,7 +6,12 @@ import { serialize, deserialize } from "v8";
 import { createReadStream, readdirSync } from "fs";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
 import { Row, Where, prefixFieldsInWhere } from "@saltcorn/db-common/internal";
-import type { ConnectedObjects } from "@saltcorn/types/base_types";
+import type {
+  ConnectedObjects,
+  Req,
+  ResultType,
+  StepResType,
+} from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
@@ -14,6 +19,7 @@ import { existsSync } from "fs-extra";
 import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
+// import { ResultType, StepResType } from "types";'
 
 const getFetchProxyOptions = () => {
   if (process.env["HTTPS_PROXY"]) {
@@ -121,10 +127,16 @@ class NotAuthorized extends Error {
     this.severity = 5; //syslog equivalent severity level
   }
 }
-
-const sat1 = (obj: any, [k, v]: [k: string, v: any]): boolean =>
+type VType = {
+  or?: any[];
+  in?: any[];
+  ilike?: string;
+  json?: GenObj;
+  [key: string]: any;
+};
+const sat1 = (obj: GenObj, [k, v]: [k: string, v: VType]): boolean =>
   v && v.or
-    ? v.or.some((v1: any) => sat1(obj, [k, v1]))
+    ? v.or.some((v1) => sat1(obj, [k, v1]))
     : v && v.in
       ? v.in.includes(obj[k])
       : v && v.ilike
@@ -196,12 +208,12 @@ const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
   return where;
 };
 
-const mergeActionResults = (result: any, stepres: any) => {
+const mergeActionResults = (result: ResultType, stepres: StepResType) => {
   Object.keys(stepres || {}).forEach((k) => {
     if (k === "set_fields") {
       if (!result.set_fields) result.set_fields = {};
       Object.keys(stepres.set_fields || {}).forEach((f) => {
-        result.set_fields[f] = stepres.set_fields[f];
+        (result.set_fields ??= {})[f] = (stepres.set_fields ??= {})[f];
       });
     } else if (
       !["notify", "notify_success", "error", "eval_js", "download"].includes(k)
@@ -226,7 +238,7 @@ const isStale = (date: Date | string, hours: number = 24): boolean => {
   return new Date(date).valueOf() < now.valueOf() - oneday;
 };
 
-declare const window: any;
+declare const window: Window & typeof globalThis;
 
 /**
  * returns true if it's a node enviroment,
@@ -241,7 +253,7 @@ const isNode = (): boolean => {
  * a saltcorn mobile request is identified by the smr header
  * @param req express request
  */
-const isWeb = (req: any): boolean => {
+const isWeb = (req: Req): boolean => {
   return isNode() && !req?.smr;
 };
 
@@ -250,7 +262,7 @@ const isWeb = (req: any): boolean => {
  * @param req express request
  */
 
-const getSessionId = (req: any): string => {
+const getSessionId = (req: Req): string => {
   return req?.sessionID || req?.cookies?.["express:sess"];
 };
 
@@ -603,5 +615,5 @@ export = {
   ensure_final_slash,
   getFetchProxyOptions,
   jsIdentifierValidator,
-  escapeHtml
+  escapeHtml,
 };

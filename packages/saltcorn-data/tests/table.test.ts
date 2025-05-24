@@ -21,7 +21,8 @@ import {
   stateFieldsToWhere,
 } from "../plugin-helper";
 import expressionModule from "../models/expression";
-import { sqlBinOp, sqlFun } from "@saltcorn/db-common/internal";
+import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
+import { ResultMessage } from "@saltcorn/types/common_types";
 const { freeVariables, jsexprToWhere } = expressionModule;
 
 afterAll(db.close);
@@ -2594,5 +2595,109 @@ describe("grandparent join", () => {
       parent_parent_name: "Granny",
       parent_parent_parent_name: "Greatgranny",
     });
+  });
+});
+
+// Testing slug_options method
+describe("Table slug options", () => {
+  it("should return slug options for unique string fields", async () => {
+    const table = await Table.create("slug_test_table");
+    await Field.create({
+      table,
+      name: "title",
+      label: "Title",
+      type: "String",
+      is_unique: true,
+    });
+    await Field.create({
+      table,
+      name: "description",
+      label: "Description",
+      type: "String",
+    });
+
+    const options = await table.slug_options();
+    expect(options).toEqual([
+      { label: "", steps: [] },
+      {
+        label: "/:id",
+        steps: [{ field: "id", unique: true, transform: null }],
+      },
+      {
+        label: "/slugify-title",
+        steps: [{ field: "title", unique: true, transform: "slugify" }],
+      },
+    ]);
+  });
+
+  it("should return the default option with id if no unique string fields exist", async () => {
+    const table = await Table.create("slug_test_table_no_unique");
+    await Field.create({
+      table,
+      name: "description",
+      label: "Description",
+      type: "String",
+    });
+    await Field.create({
+      table,
+      name: "age",
+      label: "Age",
+      type: "Integer",
+      is_unique: false,
+    });
+
+    const options = await table.slug_options();
+    expect(options).toEqual([
+      { label: "", steps: [] },
+      {
+        label: "/:id",
+        steps: [{ field: "id", unique: true, transform: null }],
+      },
+    ]);
+  });
+
+  it("should handle tables with no fields", async () => {
+    const table = await Table.create("slug_test_table_empty");
+    const options = await table.slug_options();
+    expect(options).toEqual([
+      { label: "", steps: [] },
+      {
+        label: "/:id",
+        steps: [{ field: "id", unique: true, transform: null }],
+      },
+    ]);
+  });
+
+  it("should handle tables with non-string unique fields", async () => {
+    const table = await Table.create("slug_test_table_non_string");
+    await Field.create({
+      table,
+      name: "age",
+      type: "Integer",
+      is_unique: true,
+    });
+    await Field.create({
+      table,
+      name: "created_at",
+      type: "Date",
+      is_unique: true,
+    });
+
+    const options = await table.slug_options();
+    expect(options).toEqual([
+      { label: "", steps: [] },
+      {
+        label: "/:id",
+        steps: [{ field: "id", unique: true, transform: null }],
+      },
+      {
+        label: "/:age",
+        steps: [{ field: "age", unique: true, transform: null }],
+      },
+      {
+        label: "/:created_at",
+        steps: [{ field: "created_at", unique: true, transform: null }],
+      },
+    ]);
   });
 });
