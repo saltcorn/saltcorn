@@ -1811,7 +1811,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
     ajax_post_json(`/actions/resume-workflow/${res.resume_workflow}`, {});
   }
   if (res.reload_page) {
-    (isWeb ? location : parent).reload(); //TODO notify to cookie if reload or goto
+    (isWeb ? location : parent.saltcorn.mobileApp.navigation).reload(); //TODO notify to cookie if reload or goto
   }
 }
 

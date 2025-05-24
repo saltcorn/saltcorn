@@ -17,6 +17,7 @@ const {
   structuredClone,
   isNode,
   isWeb,
+  isOfflineMode,
   prepMobileRows,
   hashString,
   cloneName,
@@ -484,7 +485,7 @@ class View implements AbstractView {
   async run(
     query: any,
     extraArgs: RunExtra,
-    remote: boolean = !isNode()
+    remote: boolean = !isNode() && !isOfflineMode()
   ): Promise<any> {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return "";

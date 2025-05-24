@@ -5,6 +5,10 @@
  */
 import { Row, sqlsanitize, Value, mkWhere, Where } from "./internal";
 
+function isDateFromIframe(val: any) {
+  return Object.prototype.toString.call(val) === "[object Date]";
+}
+
 /**
  * @param v
  * @returns
@@ -12,7 +16,9 @@ import { Row, sqlsanitize, Value, mkWhere, Where } from "./internal";
  */
 export const reprAsJson = (v: any, jsonCol?: boolean): boolean =>
   (jsonCol && (v === true || v === false)) ||
-  (typeof v === "object" && v !== null && !(v instanceof Date));
+  (typeof v === "object" &&
+    v !== null &&
+    !(v instanceof Date || isDateFromIframe(v)));
 
 const isDate = (value: any): boolean =>
   value && Object.prototype.toString.call(value) === "[object Date]";

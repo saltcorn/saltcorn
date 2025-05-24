@@ -27,6 +27,7 @@ export const postView = async (context) => {
     xhr: context.xhr,
     files: context.files,
     refererRoute,
+    body: body,
   });
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
@@ -81,6 +82,7 @@ export const postViewRoute = async (context) => {
     xhr: context.xhr,
     query,
     refererRoute,
+    body: context.data || {},
   });
   const view = await saltcorn.data.models.View.findOne({
     name: context.params.viewname,
