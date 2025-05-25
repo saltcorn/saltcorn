@@ -145,15 +145,16 @@ Script.prototype.runInContext = function (context) {
       }
     });
 
-    // remove new properties from `win`
-    forEach(Object_keys(win), function (key) {
-      if (indexOf(winOriginal, key) === -1) delete win[key];
-    });
+    // TODO find another way or replace this completely with web workers?
+    // // remove new properties from `win`
+    // forEach(Object_keys(win), function (key) {
+    //   if (indexOf(winOriginal, key) === -1) delete win[key];
+    // });
 
-    // restore overwritten window vars to original values
-    forEach(originalToRestore, function (orig) {
-      win[orig.key] = orig.value;
-    });
+    // // restore overwritten window vars to original values
+    // forEach(originalToRestore, function (orig) {
+    //   win[orig.key] = orig.value;
+    // });
   }
   return res;
 };
