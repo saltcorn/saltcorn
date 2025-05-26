@@ -1656,16 +1656,14 @@ class Table implements AbstractTable {
         really_changed_field_names,
         keyChanged
       );
-      if (existing) {
-        if (keyChanged)
-          await this.auto_update_calc_aggregations(
-            existing,
-            !existing,
-            (autoRecalcIterations || 0) + 1,
-            really_changed_field_names,
-            keyChanged
-          );
-      }
+      if (existing && keyChanged)
+        await this.auto_update_calc_aggregations(
+          existing,
+          !existing,
+          (autoRecalcIterations || 0) + 1,
+          really_changed_field_names,
+          keyChanged
+        );
     }
 
     if (!noTrigger) {
