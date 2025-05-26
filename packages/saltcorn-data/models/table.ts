@@ -1433,12 +1433,6 @@ class Table implements AbstractTable {
         joinFields,
         fields
       );
-    if (!existing)
-      existing = await this.getJoinedRow({
-        where: { [pk_name]: id },
-        forUser: user,
-        joinFields,
-      });
     if (
       user &&
       role &&
@@ -1628,6 +1622,20 @@ class Table implements AbstractTable {
     const really_changed_field_names: Set<string> = existing
       ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
       : changedFieldNames;
+    let keyChanged = false;
+    for (const fnm of really_changed_field_names || []) {
+      const field = this.getField(fnm);
+      if (field?.is_fkey) {
+        keyChanged = true;
+        break;
+      }
+    }
+    if (!existing && really_changed_field_names.size && keyChanged)
+      existing = await this.getJoinedRow({
+        where: { [pk_name]: id },
+        forUser: user,
+        joinFields,
+      });
     await db.update(this.name, v, id, {
       pk_name,
       ...sqliteJsonCols,
@@ -1641,14 +1649,6 @@ class Table implements AbstractTable {
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (really_changed_field_names.size > 0) {
-      let keyChanged = false;
-      for (const fnm of really_changed_field_names || []) {
-        const field = this.getField(fnm);
-        if (field?.is_fkey) {
-          keyChanged = true;
-          break;
-        }
-      }
       await this.auto_update_calc_aggregations(
         newRow,
         !existing,
