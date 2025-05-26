@@ -633,17 +633,18 @@ describe("Simple aggregations in stored calculated fields", () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     const ps = await publisher.getRows({}, { orderBy: "id" });
-    console.log("ps",ps);
 
-    expect(ps[0].number_of_books).toBe(1);
+    expect(ps[1].number_of_books).toBe(0);
     expect(ps[2].number_of_books).toBe(2);
     const cbook = await books.getRow({ publisher: 3 });
     assertIsSet(cbook);
     await books.updateRow({ publisher: 2 }, cbook.id);
-    //await recalculate_for_stored(publisher, {});
+    await recalculate_for_stored(publisher, {});
 
     const ps1 = await publisher.getRows({}, { orderBy: "id" });
-    console.log("ps1",ps1);
+    expect(ps1[1].number_of_books).toBe(1);
+    expect(ps1[2].number_of_books).toBe(1);
+    
   });
 
   it("creates and updates sum field", async () => {
