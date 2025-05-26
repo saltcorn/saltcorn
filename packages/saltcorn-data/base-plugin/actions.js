@@ -2117,6 +2117,12 @@ module.exports = {
     },
     namespace: "Control",
   },
+  refresh_user_session: {
+    description: "Refresh the user session with database row",
+
+    run: async ({ user }) => {},
+    namespace: "Control",
+  },
   notify_user: {
     description: "Send a notification to a specific user",
     configFields: () => [
