@@ -1377,12 +1377,12 @@ class Table implements AbstractTable {
     // migrating to options arg
     if (typeof noTrigger === "object") {
       const extraOptions = noTrigger;
-      noTrigger = extraOptions.noTrigger;
       resultCollector = extraOptions.resultCollector;
       restore_of_version = extraOptions.restore_of_version;
       syncTimestamp = extraOptions.syncTimestamp;
       additionalTriggerValues = extraOptions.additionalTriggerValues;
       autoRecalcIterations = extraOptions.autoRecalcIterations;
+      noTrigger = extraOptions.noTrigger;
     }
 
     if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
@@ -1433,7 +1433,12 @@ class Table implements AbstractTable {
         joinFields,
         fields
       );
-
+    if (!existing)
+      existing = await this.getJoinedRow({
+        where: { [pk_name]: id },
+        forUser: user,
+        joinFields,
+      });
     if (
       user &&
       role &&
@@ -1620,7 +1625,7 @@ class Table implements AbstractTable {
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
     if (!stringified) this.stringify_json_fields(v);
-    const really_changed_field_names: Set<String> = existing
+    const really_changed_field_names: Set<string> = existing
       ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
       : changedFieldNames;
     await db.update(this.name, v, id, {
@@ -1635,13 +1640,22 @@ class Table implements AbstractTable {
       else await this.insertSyncInfo(id, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
-    if (really_changed_field_names.size > 0)
+    if (really_changed_field_names.size > 0) {
       await this.auto_update_calc_aggregations(
         newRow,
         !existing,
         (autoRecalcIterations || 0) + 1,
         really_changed_field_names
       );
+      if (existing) {
+        await this.auto_update_calc_aggregations(
+          existing,
+          !existing,
+          (autoRecalcIterations || 0) + 1,
+          really_changed_field_names
+        );
+      }
+    }
 
     if (!noTrigger) {
       const trigPromise = Trigger.runTableTriggers(
@@ -2079,7 +2093,7 @@ class Table implements AbstractTable {
     v0: Row,
     refetch?: boolean,
     iterations: number = 1,
-    changedFields?: Set<String>
+    changedFields?: Set<string>
   ) {
     const state = require("../db/state").getState();
     const pk_name = this.pk_name;
@@ -2117,16 +2131,21 @@ class Table implements AbstractTable {
         where: { [pk_name]: v0.id },
       })) as Row;
     }
+    let keyChanged = false;
+    for (const fnm of changedFields || []) {
+      const field = this.getField(fnm);
+      if (field?.is_fkey) {
+        keyChanged = true;
+        break;
+      }
+    }
+
     //track which rows in which tables are updated
     const updated: { [k: string]: Set<PrimaryKeyValue> } = {};
 
     for (const calc_field of calc_agg_fields) {
       const agg_field_name = calc_field.attributes.agg_field.split("@")[0];
-      if (
-        changedFields &&
-        !changedFields.has(agg_field_name) &&
-        calc_field.attributes.aggregate !== "Count"
-      )
+      if (changedFields && !changedFields.has(agg_field_name) && !keyChanged)
         continue;
 
       const refTable = Table.findOne({ id: calc_field.table_id });
