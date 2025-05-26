@@ -626,6 +626,26 @@ describe("Simple aggregations in stored calculated fields", () => {
     const hrow4 = await publisher.getRow({ id: hid });
     expect(hrow4?.number_of_books).toBe(2);
   });
+  it("moves from one parent to another", async () => {
+    const publisher = Table.findOne({ name: "publisher" });
+    assertIsSet(publisher);
+
+    const books = Table.findOne({ name: "books" });
+    assertIsSet(books);
+    const ps = await publisher.getRows({}, { orderBy: "id" });
+    console.log("ps",ps);
+
+    expect(ps[0].number_of_books).toBe(1);
+    expect(ps[2].number_of_books).toBe(2);
+    const cbook = await books.getRow({ publisher: 3 });
+    assertIsSet(cbook);
+    await books.updateRow({ publisher: 2 }, cbook.id);
+    //await recalculate_for_stored(publisher, {});
+
+    const ps1 = await publisher.getRows({}, { orderBy: "id" });
+    console.log("ps1",ps1);
+  });
+
   it("creates and updates sum field", async () => {
     const publisher = Table.findOne({ name: "publisher" });
     assertIsSet(publisher);
