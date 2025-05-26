@@ -1641,19 +1641,30 @@ class Table implements AbstractTable {
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (really_changed_field_names.size > 0) {
+      let keyChanged = false;
+      for (const fnm of really_changed_field_names || []) {
+        const field = this.getField(fnm);
+        if (field?.is_fkey) {
+          keyChanged = true;
+          break;
+        }
+      }
       await this.auto_update_calc_aggregations(
         newRow,
         !existing,
         (autoRecalcIterations || 0) + 1,
-        really_changed_field_names
+        really_changed_field_names,
+        keyChanged
       );
       if (existing) {
-        await this.auto_update_calc_aggregations(
-          existing,
-          !existing,
-          (autoRecalcIterations || 0) + 1,
-          really_changed_field_names
-        );
+        if (keyChanged)
+          await this.auto_update_calc_aggregations(
+            existing,
+            !existing,
+            (autoRecalcIterations || 0) + 1,
+            really_changed_field_names,
+            keyChanged
+          );
       }
     }
 
@@ -2093,7 +2104,8 @@ class Table implements AbstractTable {
     v0: Row,
     refetch?: boolean,
     iterations: number = 1,
-    changedFields?: Set<string>
+    changedFields?: Set<string>,
+    keyChanged: boolean = false
   ) {
     const state = require("../db/state").getState();
     const pk_name = this.pk_name;
@@ -2130,14 +2142,6 @@ class Table implements AbstractTable {
       v = (await this.getJoinedRow({
         where: { [pk_name]: v0.id },
       })) as Row;
-    }
-    let keyChanged = false;
-    for (const fnm of changedFields || []) {
-      const field = this.getField(fnm);
-      if (field?.is_fkey) {
-        keyChanged = true;
-        break;
-      }
     }
 
     //track which rows in which tables are updated
