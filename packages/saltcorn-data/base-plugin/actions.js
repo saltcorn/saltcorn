@@ -2118,9 +2118,14 @@ module.exports = {
     namespace: "Control",
   },
   refresh_user_session: {
-    description: "Refresh the user session with database row",
+    description: "Refresh the user session with row from the users table",
 
-    run: async ({ user }) => {},
+    run: async ({ user, req }) => {
+      if (!user?.id) return;
+      const u = await User.findOne({ id: user.id });
+      if (!u) return;
+      await u.relogin(req);
+    },
     namespace: "Control",
   },
   notify_user: {
