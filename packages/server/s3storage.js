@@ -12,7 +12,7 @@ function createS3Client() {
       secretAccessKey: getState().getConfig("storage_s3_access_secret"),
       accessKeyId: getState().getConfig("storage_s3_access_key"),
     },
-    region: getState().getConfig("storage_s3_region"),
+    region: getState().getConfig("storage_s3_region") || "us-east-1",
     endpoint: getState().getConfig("storage_s3_endpoint"),
   });
 }
@@ -35,7 +35,7 @@ module.exports = {
       const s3upload = multer({
         storage: multerS3({
           s3: createS3Client(),
-          bucket: getState().getConfig("storage_s3_bucket"),
+          bucket: getState().getConfig("storage_s3_bucket") ?? "emlatech",
           metadata: function (req, file, cb) {
             cb(null, { fieldName: file.fieldname });
           },
