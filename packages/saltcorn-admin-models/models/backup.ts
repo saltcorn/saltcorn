@@ -57,6 +57,13 @@ import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
 const os = require("os");
 const semver = require("semver");
+import {
+  S3,
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 
 /**
  * @param [withEventLog] - include event log
@@ -701,14 +708,53 @@ const delete_old_backups = async () => {
   const directory = getState().getConfig("auto_backup_directory");
   const expire_days = getState().getConfig("auto_backup_expire_days");
   const backup_file_prefix = getState().getConfig("backup_file_prefix");
+  const destination = getState().getConfig("auto_backup_destination");
+
   if (!expire_days || expire_days < 0) return;
-  const files = await readdir(directory);
-  for (const file of files) {
-    if (!file.startsWith(backup_file_prefix)) continue;
-    const stats = await stat(path.join(directory, file));
-    const ageDays =
-      (new Date().getTime() - stats.birthtime.getTime()) / (1000 * 3600 * 24);
-    if (ageDays > expire_days) await unlink(path.join(directory, file));
+
+  if (destination === "Local directory") {
+    const files = await readdir(directory);
+    for (const file of files) {
+      if (!file.startsWith(backup_file_prefix)) continue;
+      const stats = await stat(path.join(directory, file));
+      const ageDays =
+        (new Date().getTime() - stats.birthtime.getTime()) / (1000 * 3600 * 24);
+      if (ageDays > expire_days) await unlink(path.join(directory, file));
+    }
+  } else if (destination === "S3") {
+    const s3 = new S3Client({
+      credentials: {
+        accessKeyId: getState().getConfig("storage_s3_access_key"),
+        secretAccessKey: getState().getConfig("storage_s3_access_secret"),
+      },
+      region: getState().getConfig("storage_s3_region"),
+    });
+
+    const bucket = getState().getConfig("storage_s3_bucket");
+
+    const listParams = {
+      Bucket: bucket,
+      Prefix: backup_file_prefix,
+    };
+
+    try {
+      const listedObjects = await s3.send(new ListObjectsV2Command(listParams));
+      if (listedObjects.Contents) {
+        for (const obj of listedObjects.Contents) {
+          if (!obj.Key || !obj.LastModified) continue;
+          const ageDays =
+            (new Date().getTime() - new Date(obj.LastModified).getTime()) /
+            (1000 * 3600 * 24);
+          if (ageDays > expire_days) {
+            await s3.send(
+              new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key })
+            );
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error(`Error deleting old backups from S3: ${err.message}`);
+    }
   }
 };
 /**
@@ -782,7 +828,44 @@ const auto_backup_now_tenant = async (state: any) => {
       }
       await unlink(fileName);
       break;
-    //await  SftpClient()
+    case "S3":
+      const s3 = new S3({
+        credentials: {
+          accessKeyId: state.getConfig("storage_s3_access_key"),
+          secretAccessKey: state.getConfig("storage_s3_access_secret"),
+        },
+        region: state.getConfig("storage_s3_region"),
+        endpoint: state
+          .getConfig("storage_s3_endpoint")
+          ?.replace(/^(http:\/\/)?/, "https://"),
+      });
+
+      const bucket = state.getConfig("storage_s3_bucket");
+      const s3Key = basename(fileName);
+      const fileStream = () => createReadStream(fileName);
+      try {
+        const uploadResult = await new Upload({
+          client: s3,
+          params: {
+            Bucket: bucket,
+            Key: s3Key,
+            Body: fileStream(),
+            ACL: "private",
+            ContentType: "application/zip",
+          },
+        }).done();
+
+        if (uploadResult.$metadata.httpStatusCode !== 200) {
+          throw new Error(
+            `S3 Upload failed with status code ${uploadResult.$metadata.httpStatusCode}`
+          );
+        }
+      } catch (err: any) {
+        state.log(1, `S3 Upload error: ${err.message}`);
+        throw new Error(err?.message);
+      }
+      await delete_old_backups();
+      break;
     default:
       throw new Error("Unknown destination: " + destination);
   }
@@ -795,23 +878,25 @@ const auto_backup_now = async () => {
     await tenantModule.eachTenant(async () => {
       try {
         await auto_backup_now_tenant(state);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         await Crash.create(e, {
           url: `Scheduler auto backup for tenant`,
           headers: {},
         });
+        throw new Error(e);
       }
     });
   else
     try {
       await auto_backup_now_tenant(state);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       await Crash.create(e, {
         url: `Scheduler auto backup`,
         headers: {},
       });
+      throw new Error(e);
     }
 };
 export = {
