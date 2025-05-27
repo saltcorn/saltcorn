@@ -57,8 +57,12 @@ import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
 const os = require("os");
 const semver = require("semver");
-import AWS from "aws-sdk";
-import { S3 } from "@aws-sdk/client-s3";
+import {
+  S3,
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 
 /**
@@ -718,21 +722,23 @@ const delete_old_backups = async () => {
       if (ageDays > expire_days) await unlink(path.join(directory, file));
     }
   } else if (destination === "S3") {
-    const s3 = new AWS.S3({
-      accessKeyId: getState().getConfig("storage_s3_access_key"),
-      secretAccessKey: getState().getConfig("storage_s3_access_secret"),
+    const s3 = new S3Client({
+      credentials: {
+        accessKeyId: getState().getConfig("storage_s3_access_key"),
+        secretAccessKey: getState().getConfig("storage_s3_access_secret"),
+      },
       region: getState().getConfig("storage_s3_region"),
     });
 
     const bucket = getState().getConfig("storage_s3_bucket");
-    const listParams: AWS.S3.ListObjectsV2Request = {
+
+    const listParams = {
       Bucket: bucket,
       Prefix: backup_file_prefix,
     };
 
     try {
-      s3.listObjects;
-      const listedObjects = await s3.listObjectsV2(listParams).promise();
+      const listedObjects = await s3.send(new ListObjectsV2Command(listParams));
       if (listedObjects.Contents) {
         for (const obj of listedObjects.Contents) {
           if (!obj.Key || !obj.LastModified) continue;
@@ -740,7 +746,9 @@ const delete_old_backups = async () => {
             (new Date().getTime() - new Date(obj.LastModified).getTime()) /
             (1000 * 3600 * 24);
           if (ageDays > expire_days) {
-            await s3.deleteObject({ Bucket: bucket, Key: obj.Key }).promise();
+            await s3.send(
+              new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key })
+            );
           }
         }
       }
@@ -846,7 +854,7 @@ const auto_backup_now_tenant = async (state: any) => {
             ContentType: "application/zip",
           },
         }).done();
-        
+
         if (uploadResult.$metadata.httpStatusCode !== 200) {
           throw new Error(
             `S3 Upload failed with status code ${uploadResult.$metadata.httpStatusCode}`

@@ -35,7 +35,7 @@ module.exports = {
       const s3upload = multer({
         storage: multerS3({
           s3: createS3Client(),
-          bucket: getState().getConfig("storage_s3_bucket") ?? "emlatech",
+          bucket: getState().getConfig("storage_s3_bucket"),
           metadata: function (req, file, cb) {
             cb(null, { fieldName: file.fieldname });
           },
