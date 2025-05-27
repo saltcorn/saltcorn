@@ -58,6 +58,8 @@ import { CodePagePack } from "@saltcorn/types/base_types";
 const os = require("os");
 const semver = require("semver");
 import AWS from "aws-sdk";
+import { S3 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 
 /**
  * @param [withEventLog] - include event log
@@ -729,7 +731,7 @@ const delete_old_backups = async () => {
     };
 
     try {
-      s3.listObjects
+      s3.listObjects;
       const listedObjects = await s3.listObjectsV2(listParams).promise();
       if (listedObjects.Contents) {
         for (const obj of listedObjects.Contents) {
@@ -738,9 +740,7 @@ const delete_old_backups = async () => {
             (new Date().getTime() - new Date(obj.LastModified).getTime()) /
             (1000 * 3600 * 24);
           if (ageDays > expire_days) {
-            await s3
-              .deleteObject({ Bucket: bucket, Key: obj.Key })
-              .promise();
+            await s3.deleteObject({ Bucket: bucket, Key: obj.Key }).promise();
           }
         }
       }
@@ -821,30 +821,40 @@ const auto_backup_now_tenant = async (state: any) => {
       await unlink(fileName);
       break;
     case "S3":
-      const s3 = new AWS.S3({
-        accessKeyId: state.getConfig("storage_s3_access_key"),
-        secretAccessKey: state.getConfig("storage_s3_access_secret"),
+      const s3 = new S3({
+        credentials: {
+          accessKeyId: state.getConfig("storage_s3_access_key"),
+          secretAccessKey: state.getConfig("storage_s3_access_secret"),
+        },
         region: state.getConfig("storage_s3_region"),
-      })
+        endpoint: state
+          .getConfig("storage_s3_endpoint")
+          ?.replace(/^(http:\/\/)?/, "https://"),
+      });
 
       const bucket = state.getConfig("storage_s3_bucket");
       const s3Key = basename(fileName);
-
-      const fileStream = createReadStream(fileName);
-      const params: AWS.S3.PutObjectRequest = {
-        Bucket: bucket,
-        Key: s3Key,
-        Body: fileStream,
-        ACL: "private",
-        ContentType: "application/zip",
-      };
-
+      const fileStream = () => createReadStream(fileName);
       try {
-        const uploadResult = await s3.upload(params).promise();
-        state.log(6, `S3 Upload result: ${uploadResult.Location}`);
+        const uploadResult = await new Upload({
+          client: s3,
+          params: {
+            Bucket: bucket,
+            Key: s3Key,
+            Body: fileStream(),
+            ACL: "private",
+            ContentType: "application/zip",
+          },
+        }).done();
+        
+        if (uploadResult.$metadata.httpStatusCode !== 200) {
+          throw new Error(
+            `S3 Upload failed with status code ${uploadResult.$metadata.httpStatusCode}`
+          );
+        }
       } catch (err: any) {
         state.log(1, `S3 Upload error: ${err.message}`);
-        throw new Error(`S3 Upload error: ${err}`);
+        throw new Error(err?.message);
       }
       await delete_old_backups();
       break;
@@ -860,23 +870,25 @@ const auto_backup_now = async () => {
     await tenantModule.eachTenant(async () => {
       try {
         await auto_backup_now_tenant(state);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         await Crash.create(e, {
           url: `Scheduler auto backup for tenant`,
           headers: {},
         });
+        throw new Error(e);
       }
     });
   else
     try {
       await auto_backup_now_tenant(state);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       await Crash.create(e, {
         url: `Scheduler auto backup`,
         headers: {},
       });
+      throw new Error(e);
     }
 };
 export = {
