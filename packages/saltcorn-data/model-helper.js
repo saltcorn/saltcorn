@@ -42,15 +42,20 @@ const write_csv = async (rows, columns, fields, filename) => {
               });
             }
           } else if (f.type.name === "PGVector") {
+            rows.forEach((row) => {
+              const pgvs = row[column.field_name];
+              if (!pgvs) return;
+              row[column.field_name] = JSON.parse(pgvs);
+            });
             const row0 = rows.find((r) => r[column.field_name]);
-            const dims = JSON.parse(row0[column.field_name]).length;
+            const dims = row0[column.field_name].length;
             for (let i = 0; i < dims; i++) {
               colWriters.push({
                 header: column.field_name + i,
                 write: (row) => {
                   const pgvs = row[column.field_name];
                   if (!pgvs) return "";
-                  return JSON.parse(pgvs)[i];
+                  return pgvs[i];
                 },
               });
             }

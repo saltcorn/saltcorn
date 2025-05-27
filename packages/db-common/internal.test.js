@@ -141,6 +141,16 @@ describe("mkWhere", () => {
     });
   });
   it("should query not null", () => {
+    expect(mkWhere({ not: { id: null, x: null } })).toStrictEqual({
+      values: [],
+      where: 'where not ("id" is null and "x" is null)',
+    });
+    expect(
+      mkWhere({ and: [{ not: { id: null } }, { not: { x: null } }] })
+    ).toStrictEqual({
+      values: [],
+      where: 'where (not ("id" is null) and not ("x" is null))',
+    });
     expect(mkWhere({ not: { id: null } })).toStrictEqual({
       values: [],
       where: 'where not ("id" is null)',

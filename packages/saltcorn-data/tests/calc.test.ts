@@ -1016,6 +1016,17 @@ describe("jsexprToWhere", () => {
     const { where } = mkWhere(w);
     expect(where).toEqual('where not ("group" is null)');
   });
+  /* TODO
+
+  it("double exclamation", () => {
+    const w = jsexprToWhere("!!group", {});
+    console.log(w);
+    
+    expect(w).toEqual({ not: { group: null } });
+
+    const { where } = mkWhere(w);
+    expect(where).toEqual('where not ("group" is null)');
+  }); */
   it("translates greater than", () => {
     expect(jsexprToWhere("foo>4")).toEqual({ foo: { gt: 4 } });
   });
