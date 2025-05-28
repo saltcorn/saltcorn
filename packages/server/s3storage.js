@@ -12,7 +12,7 @@ function createS3Client() {
       secretAccessKey: getState().getConfig("storage_s3_access_secret"),
       accessKeyId: getState().getConfig("storage_s3_access_key"),
     },
-    region: getState().getConfig("storage_s3_region"),
+    region: getState().getConfig("storage_s3_region") || "us-east-1",
     endpoint: getState().getConfig("storage_s3_endpoint"),
   });
 }
