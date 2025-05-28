@@ -7,7 +7,11 @@
 const express = require("express");
 const mountRoutes = require("./routes");
 
-const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  getRootState,
+  init_multi_tenant,
+} = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const CustomStrategy = require("passport-custom").Strategy;
@@ -69,21 +73,14 @@ const disabledCsurf = (req, res, next) => {
   next();
 };
 
-const noCsrfLookup = (state) => {
+const noCsrfLookup = (state, pluginRoutesHandler) => {
   const disable_csrf_routes = state.getConfig("disable_csrf_routes", "");
   const result = new Set(disable_csrf_routes.split(",").map((s) => s.trim()));
 
-  if (!state.plugin_routes) return result;
-  else {
-    for (const routes of Object.values(state.plugin_routes)) {
-      for (const url of routes
-        .filter((r) => r.noCsrf === true)
-        .map((r) => r.url)) {
-        result.add(url);
-      }
-    }
-    return result;
+  for (const url of pluginRoutesHandler.noCsrfUrls) {
+    result.add(url);
   }
+  return result;
 };
 
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
@@ -409,13 +406,14 @@ const getApp = async (opts = {}) => {
         db.getTenantSchema(),
         getState().plugin_routes || {}
       );
+      noCsrf = noCsrfLookup(getRootState(), pluginRoutesHandler);
     };
   });
 
   const csurf = csrf();
   let noCsrf = null;
   if (!opts.disableCsrf) {
-    noCsrf = noCsrfLookup(getState());
+    noCsrf = noCsrfLookup(getState(), pluginRoutesHandler);
     app.use(function (req, res, next) {
       if (
         noCsrf?.has(req.url) ||
