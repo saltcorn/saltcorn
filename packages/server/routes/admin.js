@@ -487,19 +487,18 @@ router.get(
     backupForm.values.auto_backup_expire_days = getState().getConfig(
       "auto_backup_expire_days"
     );
-    backupForm.values.storage_s3_bucket =
-      getState().getConfig("storage_s3_bucket");
-    backupForm.values.storage_s3_endpoint = getState().getConfig(
-      "storage_s3_endpoint"
+    backupForm.values.backup_s3_bucket =
+      getState().getConfig("backup_s3_bucket");
+    backupForm.values.backup_s3_endpoint =
+      getState().getConfig("backup_s3_endpoint");
+    backupForm.values.backup_s3_access_key = getState().getConfig(
+      "backup_s3_access_key"
     );
-    backupForm.values.storage_s3_access_key = getState().getConfig(
-      "storage_s3_access_key"
+    backupForm.values.backup_s3_access_secret = getState().getConfig(
+      "backup_s3_access_secret"
     );
-    backupForm.values.storage_s3_access_secret = getState().getConfig(
-      "storage_s3_access_secret"
-    );
-    backupForm.values.storage_s3_region =
-      getState().getConfig("storage_s3_region");
+    backupForm.values.backup_s3_region =
+      getState().getConfig("backup_s3_region");
     aBackupFilePrefixForm.values.backup_with_event_log = getState().getConfig(
       "backup_with_event_log"
     );
@@ -1106,7 +1105,7 @@ const autoBackupForm = (req) => {
       {
         type: "String",
         label: req.__("S3 Endpoint"),
-        name: "storage_s3_endpoint",
+        name: "backup_s3_endpoint",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "S3",
@@ -1115,7 +1114,7 @@ const autoBackupForm = (req) => {
       {
         type: "String",
         label: req.__("S3 Bucket Name"),
-        name: "storage_s3_bucket",
+        name: "backup_s3_bucket",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "S3",
@@ -1124,7 +1123,7 @@ const autoBackupForm = (req) => {
       {
         type: "String",
         label: req.__("S3 Access Key"),
-        name: "storage_s3_access_key",
+        name: "backup_s3_access_key",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "S3",
@@ -1134,7 +1133,7 @@ const autoBackupForm = (req) => {
         type: "String",
         label: req.__("S3 Secret Key"),
         fieldview: "password",
-        name: "storage_s3_access_secret",
+        name: "backup_s3_access_secret",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "S3",
@@ -1143,7 +1142,7 @@ const autoBackupForm = (req) => {
       {
         type: "String",
         label: req.__("S3 Region"),
-        name: "storage_s3_region",
+        name: "backup_s3_region",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "S3",

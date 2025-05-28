@@ -291,7 +291,6 @@ const configTypes: ConfigTypes = {
     restart_required: true,
     blurb:
       "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
-    
   },
   npm_available_js_code: {
     type: "String",
@@ -783,6 +782,67 @@ const configTypes: ConfigTypes = {
     excludeFromMobile: true,
   },
   storage_s3_access_secret: {
+    type: "String",
+    input_type: "password",
+    label: "Amazon S3 Secret Access Key",
+    excludeFromSnapshot: true,
+    default: "",
+    blurb:
+      "The secret access key associated with your Amazon S3 Access Key ID.",
+    excludeFromMobile: true,
+  },
+  backup_s3_secure: {
+    type: "Bool",
+    label: "Use Amazon S3 Secure Connection.",
+    excludeFromSnapshot: true,
+    default: true,
+    sublabel: "Connect to Amazon S3 (or compatible) securely.",
+    excludeFromMobile: true,
+  },
+  backup_s3_bucket: {
+    type: "String",
+    label: "Amazon S3 Bucket",
+    excludeFromSnapshot: true,
+    default: "",
+    blurb: "Name you selected for your S3 bucket in AWS.",
+    excludeFromMobile: true,
+  },
+  backup_s3_path_prefix: {
+    type: "String",
+    label: "Amazon S3 Path Prefix",
+    excludeFromSnapshot: true,
+    default: "",
+    blurb: "Prefix you selected for your S3 bucket in AWS.",
+    excludeFromMobile: true,
+  },
+  backup_s3_endpoint: {
+    type: "String",
+    label: "Amazon S3 Endpoint",
+    excludeFromSnapshot: true,
+    default: "s3.amazonaws.com",
+    blurb:
+      "Hostname of your S3 Compatible Storage provider. Defaults to 's3.amazonaws.com'.",
+    excludeFromMobile: true,
+  },
+  backup_s3_region: {
+    type: "String",
+    label: "Amazon S3 Region",
+    excludeFromSnapshot: true,
+    default: "us-east-1",
+    blurb:
+      "AWS region you selected when creating your S3 bucket. Default ti 'us-east-1'.",
+    excludeFromMobile: true,
+  },
+  backup_s3_access_key: {
+    type: "String",
+    label: "Amazon S3 Access Key ID",
+    excludeFromSnapshot: true,
+    default: "",
+    blurb:
+      "Only required if you do not want to authenticate to S3 using an IAM role. Enter the Access Key ID provided by your Amazon EC2 administrator.",
+    excludeFromMobile: true,
+  },
+  backup_s3_access_secret: {
     type: "String",
     input_type: "password",
     label: "Amazon S3 Secret Access Key",
