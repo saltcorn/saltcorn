@@ -724,13 +724,16 @@ const delete_old_backups = async () => {
   } else if (destination === "S3") {
     const s3 = new S3Client({
       credentials: {
-        accessKeyId: getState().getConfig("storage_s3_access_key"),
-        secretAccessKey: getState().getConfig("storage_s3_access_secret"),
+        accessKeyId: getState().getConfig("backup_s3_access_key"),
+        secretAccessKey: getState().getConfig("backup_s3_access_secret"),
       },
-      region: getState().getConfig("storage_s3_region"),
+      region: getState().getConfig("backup_s3_region"),
+      endpoint: getState()
+        .getConfig("backup_s3_endpoint")
+        ?.replace(/^(http:\/\/)?/, "https://"),
     });
 
-    const bucket = getState().getConfig("storage_s3_bucket");
+    const bucket = getState().getConfig("backup_s3_bucket");
 
     const listParams = {
       Bucket: bucket,
@@ -831,16 +834,16 @@ const auto_backup_now_tenant = async (state: any) => {
     case "S3":
       const s3 = new S3({
         credentials: {
-          accessKeyId: state.getConfig("storage_s3_access_key"),
-          secretAccessKey: state.getConfig("storage_s3_access_secret"),
+          accessKeyId: state.getConfig("backup_s3_access_key"),
+          secretAccessKey: state.getConfig("backup_s3_access_secret"),
         },
-        region: state.getConfig("storage_s3_region"),
+        region: state.getConfig("backup_s3_region"),
         endpoint: state
-          .getConfig("storage_s3_endpoint")
+          .getConfig("backup_s3_endpoint")
           ?.replace(/^(http:\/\/)?/, "https://"),
       });
 
-      const bucket = state.getConfig("storage_s3_bucket");
+      const bucket = state.getConfig("backup_s3_bucket");
       const s3Key = basename(fileName);
       const fileStream = () => createReadStream(fileName);
       try {
