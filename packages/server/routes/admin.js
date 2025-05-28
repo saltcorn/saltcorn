@@ -1098,7 +1098,7 @@ const autoBackupForm = (req) => {
         name: "auto_backup_expire_days",
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
-          auto_backup_destination: "Local directory",
+          auto_backup_destination: ["Local directory", "S3"],
         },
       },
       ...(isRoot
