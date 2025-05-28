@@ -151,6 +151,10 @@ function valid_js_var_name(s) {
   return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
 }
 
+function add_extra_state(base_url, extra_state_fml, row) {
+  return base_url;
+}
+
 const apply_showif_fetching_urls = new Set();
 
 function apply_showif() {
@@ -426,6 +430,37 @@ function apply_showif() {
       target.find("tr").filter(function () {
         $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
       });
+    });
+  });
+  $("[data-view-source]").each(function (ix, element) {
+    const e = $(element);
+    const rec = get_form_record(e);
+    const current = e.prop("data-view-source-current");
+    const fml = e.attr("data-view-source");
+    const viewname = e.attr("data-sc-embed-viewname");
+    let newUrl;
+    newUrl = new Function("row", "return " + fml)(rec);
+    if (current && current == newUrl) return;
+
+    e.prop("data-view-source-current", newUrl); // to prevent concurrent fetches
+    $.ajax(newUrl, {
+      headers: {
+        pjaxpageload: "true",
+        localizedstate: "true", //no admin bar
+      },
+      success: function (res, textStatus, request) {
+        const newE = `<div class="d-inline" 
+        data-sc-embed-viewname="${viewname}" 
+        data-sc-view-source="${newUrl}" 
+        data-view-source-current="${newUrl}" 
+        data-view-source="${fml}">${res}</div>`;
+        $e.replaceWith(newE);
+        initialize_page();
+      },
+      error: function (res) {
+        if (!checkNetworkError(res))
+          notifyAlert({ type: "danger", text: res.responseText });
+      },
     });
   });
   $("[data-source-url]").each(function (ix, element) {
