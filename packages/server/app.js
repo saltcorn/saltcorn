@@ -434,7 +434,23 @@ const getApp = async (opts = {}) => {
   mountRoutes(app);
   app.use((req, res, next) => {
     const tenant = db.getTenantSchema();
-    pluginRoutesHandler.tenantRouters[tenant](req, res, next);
+    if (!pluginRoutesHandler.tenantRouters[tenant]) {
+      // if tenant router is not initialized, try to initialize it
+      pluginRoutesHandler.initTenantRouter(
+        tenant,
+        getState().plugin_routes || {}
+      );
+      getState().routesChangedCb = () => {
+        pluginRoutesHandler.initTenantRouter(
+          tenant,
+          getState().plugin_routes || {}
+        );
+        noCsrf = noCsrfLookup(getRootState(), pluginRoutesHandler);
+      };
+    }
+    if (pluginRoutesHandler.tenantRouters[tenant])
+      pluginRoutesHandler.tenantRouters[tenant](req, res, next);
+    else next();
   });
   // set tenant homepage as / root
   app.get("/", error_catcher(homepage));
