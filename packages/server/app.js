@@ -432,6 +432,9 @@ const getApp = async (opts = {}) => {
   } else app.use(disabledCsurf);
 
   mountRoutes(app);
+  // set tenant homepage as / root
+  app.get("/", error_catcher(homepage));
+  
   app.use((req, res, next) => {
     const tenant = db.getTenantSchema();
     if (!pluginRoutesHandler.tenantRouters[tenant]) {
@@ -452,8 +455,6 @@ const getApp = async (opts = {}) => {
       pluginRoutesHandler.tenantRouters[tenant](req, res, next);
     else next();
   });
-  // set tenant homepage as / root
-  app.get("/", error_catcher(homepage));
   // /robots.txt
   app.get(
     "/robots.txt",
