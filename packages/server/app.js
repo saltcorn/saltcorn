@@ -28,7 +28,10 @@ const {
   getSessionStore,
   setTenant,
 } = require("./routes/utils.js");
-const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+const {
+  getAllTenants,
+  eachTenant,
+} = require("@saltcorn/admin-models/models/tenant");
 const path = require("path");
 const helmet = require("helmet");
 const wrapper = require("./wrapper");
@@ -45,6 +48,7 @@ const cors = require("cors");
 const api = require("./routes/api");
 const scapi = require("./routes/scapi");
 const fs = require("fs");
+const PluginRoutesHandler = require("./plugin_routes_handler");
 
 const locales = Object.keys(available_languages);
 // jwt config
@@ -80,24 +84,6 @@ const noCsrfLookup = (state) => {
     }
     return result;
   }
-};
-
-const prepPluginRouter = (pluginRoutes) => {
-  const router = express.Router();
-  for (const routes of Object.values(pluginRoutes)) {
-    for (const route of routes) {
-      switch (route.method) {
-        case "post":
-          router.post(route.url, error_catcher(route.callback));
-          break;
-        case "get":
-        default:
-          router.get(route.url, error_catcher(route.callback));
-          break;
-      }
-    }
-  }
-  return router;
 };
 
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
@@ -412,6 +398,20 @@ const getApp = async (opts = {}) => {
   app.use("/api", api);
   app.use("/scapi", scapi);
 
+  const pluginRoutesHandler = new PluginRoutesHandler();
+  await eachTenant(async () => {
+    pluginRoutesHandler.initTenantRouter(
+      db.getTenantSchema(),
+      getState().plugin_routes || {}
+    );
+    getState().routesChangedCb = () => {
+      pluginRoutesHandler.initTenantRouter(
+        db.getTenantSchema(),
+        getState().plugin_routes || {}
+      );
+    };
+  });
+
   const csurf = csrf();
   let noCsrf = null;
   if (!opts.disableCsrf) {
@@ -434,14 +434,9 @@ const getApp = async (opts = {}) => {
   } else app.use(disabledCsurf);
 
   mountRoutes(app);
-  // mount plugin router with a callback for changes
-  let pluginRouter = prepPluginRouter(getState().plugin_routes || {});
-  getState().routesChangedCb = () => {
-    pluginRouter = prepPluginRouter(getState().plugin_routes || {});
-    noCsrf = noCsrfLookup(getState());
-  };
   app.use((req, res, next) => {
-    pluginRouter(req, res, next);
+    const tenant = db.getTenantSchema();
+    pluginRoutesHandler.tenantRouters[tenant](req, res, next);
   });
   // set tenant homepage as / root
   app.get("/", error_catcher(homepage));
