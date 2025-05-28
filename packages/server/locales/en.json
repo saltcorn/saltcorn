@@ -1604,5 +1604,9 @@
 	"You may need to adjust view relations associated with this table after renaming it": "You may need to adjust view relations associated with this table after renaming it",
 	"Error running workflow": "Error running workflow",
 	"Choose File": "Choose File",
-	"No file chosen": "No file chosen"
+	"No file chosen": "No file chosen",
+	"S3 Bucket Name": "S3 Bucket Name",
+	"S3 Access Key": "S3 Access Key",
+	"S3 Secret Key": "S3 Secret Key",
+	"S3 Region": "S3 Region"
 }
