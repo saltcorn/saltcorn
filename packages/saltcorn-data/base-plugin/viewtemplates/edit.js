@@ -869,9 +869,7 @@ const transformForm = async ({
           const userId = req?.user?.id;
           state = pathToState(
             relation,
-            relation.isFixedRelation()
-              ? () => userId
-              : (k) => row[k]
+            relation.isFixedRelation() ? () => userId : (k) => row[k]
           );
         }
       } else {
