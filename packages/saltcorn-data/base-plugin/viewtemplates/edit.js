@@ -843,7 +843,9 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       } // end edit in edit
+
       let state = {};
+      let urlFormula;
       if (view_select.type === "RelationPath" && view.table_id) {
         const targetTbl = Table.findOne({ id: view.table_id });
         if (targetTbl) {
@@ -855,15 +857,25 @@ const transformForm = async ({
           const type = relation.type;
           if (!row && type == RelationType.OWN) {
             segment.type = "blank";
-            segment.contents = div({ "sc-load-on-assign-id": view.name });
+            urlFormula = `(row)=>add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            segment.contents = segment.contents = div({
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-view-source": urlFormula,
+            });
             return;
           } else if (
             !row &&
             type !== RelationType.INDEPENDENT &&
             !relation.isFixedRelation()
           ) {
-            segment.type = "blank";
-            segment.contents = "";
+            // TODO CH fix this please
+            urlFormula = `(row)=>add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            segment.contents = segment.contents = div({
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-view-source": urlFormula,
+            });
             return;
           }
           const userId = req?.user?.id;
@@ -875,29 +887,38 @@ const transformForm = async ({
       } else {
         const isIndependent = view_select.type === "Independent";
         // legacy none check ?
-        if (!row && !isIndependent) {
-          segment.type = "blank";
-          segment.contents = "";
-          return;
-        }
+
         if (!view)
           throw new InvalidConfiguration(
             `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
           );
         switch (view_select.type) {
           case "Own":
-            state = { id: row.id };
+            state = { id: row?.id };
+            urlFormula = `(row)=>add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
           case "Independent":
             state = {};
+            urlFormula = `(row)=>add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
           case "ChildList":
           case "OneToOneShow":
-            state = { [view_select.field_name]: row.id };
+            state = { [view_select.field_name]: row?.id };
+            urlFormula = `(row)=>add_extra_state('/view/${viewname}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
           case "ParentShow":
-            state = { id: row[view_select.field_name] };
+            state = { id: row?.[view_select.field_name] };
+            urlFormula = `(row)=>add_extra_state('/view/${viewname}/?id='+row.${row[view_select.field_name]}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
+        }
+        if (!row && !isIndependent) {
+          segment.type = "blank";
+          segment.contents = div({
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-view-source": urlFormula,
+          });
+          return;
         }
       }
       const extra_state = segment.extra_state_fml
@@ -918,6 +939,8 @@ const transformForm = async ({
           class: "d-inline",
           "data-sc-embed-viewname": view.name,
           "data-sc-view-source": `/view/${view.name}${qs}`,
+          "data-view-source-current": `/view/${view.name}${qs}`,
+          "data-view-source": urlFormula,
         },
         await view.run(
           { ...state, ...extra_state },
@@ -1127,7 +1150,9 @@ const render = async ({
     ? "test-form-id"
     : `form${Math.floor(Math.random() * 16777215).toString(16)}`;
   const identicalFieldsScript = script(
-    domReady(`const editForm = document.getElementById('${formId}'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);`)
+    domReady(
+      `const editForm = document.getElementById('${formId}'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);`
+    )
   );
 
   if (actually_auto_save) {
