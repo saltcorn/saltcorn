@@ -630,7 +630,7 @@ export type RelationOption = {
 export type PluginRoute = {
   url: string;
   method?: string;
-  csrf?: boolean; // undefined => check csrf
+  noCsrf?: boolean;
   callback: ({ req, res }: { req: any; res: any }) => void;
 };
 
