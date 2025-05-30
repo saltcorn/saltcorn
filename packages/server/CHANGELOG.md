@@ -1,5 +1,17 @@
 # Notable changes
 
+## 1.3.0 - In beta
+
+* S3 automated backup destination
+
+* refresh_user_session action: run then the sessions user variable needs to be
+  updated because the users table row has changed.
+
+### Fixes
+
+* Restore partial matches with full text search
+* Several mobile builder fixes
+
 ## 1.2.0 - Released 21 May 2025
 
 * Create Table by CSV upload now accepts String and UUID primary keys and 

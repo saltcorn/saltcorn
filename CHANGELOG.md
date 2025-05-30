@@ -2,6 +2,8 @@
 
 ## 1.3.0 - In beta
 
+* S3 automated backup destination
+
 * refresh_user_session action: run then the sessions user variable needs to be
   updated because the users table row has changed.
 

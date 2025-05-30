@@ -7,7 +7,11 @@
 const express = require("express");
 const mountRoutes = require("./routes");
 
-const { getState, init_multi_tenant } = require("@saltcorn/data/db/state");
+const {
+  getState,
+  getRootState,
+  init_multi_tenant,
+} = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const passport = require("passport");
 const CustomStrategy = require("passport-custom").Strategy;
@@ -28,7 +32,10 @@ const {
   getSessionStore,
   setTenant,
 } = require("./routes/utils.js");
-const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+const {
+  getAllTenants,
+  eachTenant,
+} = require("@saltcorn/admin-models/models/tenant");
 const path = require("path");
 const helmet = require("helmet");
 const wrapper = require("./wrapper");
@@ -45,6 +52,7 @@ const cors = require("cors");
 const api = require("./routes/api");
 const scapi = require("./routes/scapi");
 const fs = require("fs");
+const PluginRoutesHandler = require("./plugin_routes_handler");
 
 const locales = Object.keys(available_languages);
 // jwt config
@@ -65,39 +73,14 @@ const disabledCsurf = (req, res, next) => {
   next();
 };
 
-const noCsrfLookup = (state) => {
+const noCsrfLookup = (state, pluginRoutesHandler) => {
   const disable_csrf_routes = state.getConfig("disable_csrf_routes", "");
   const result = new Set(disable_csrf_routes.split(",").map((s) => s.trim()));
 
-  if (!state.plugin_routes) return result;
-  else {
-    for (const routes of Object.values(state.plugin_routes)) {
-      for (const url of routes
-        .filter((r) => r.noCsrf === true)
-        .map((r) => r.url)) {
-        result.add(url);
-      }
-    }
-    return result;
+  for (const url of pluginRoutesHandler.noCsrfUrls) {
+    result.add(url);
   }
-};
-
-const prepPluginRouter = (pluginRoutes) => {
-  const router = express.Router();
-  for (const routes of Object.values(pluginRoutes)) {
-    for (const route of routes) {
-      switch (route.method) {
-        case "post":
-          router.post(route.url, error_catcher(route.callback));
-          break;
-        case "get":
-        default:
-          router.get(route.url, error_catcher(route.callback));
-          break;
-      }
-    }
-  }
-  return router;
+  return result;
 };
 
 // todo console.log app instance info when app stxarts - avoid to show secrets (password, etc)
@@ -412,10 +395,25 @@ const getApp = async (opts = {}) => {
   app.use("/api", api);
   app.use("/scapi", scapi);
 
+  const pluginRoutesHandler = new PluginRoutesHandler();
+  await eachTenant(async () => {
+    pluginRoutesHandler.initTenantRouter(
+      db.getTenantSchema(),
+      getState().plugin_routes || {}
+    );
+    getState().routesChangedCb = () => {
+      pluginRoutesHandler.initTenantRouter(
+        db.getTenantSchema(),
+        getState().plugin_routes || {}
+      );
+      noCsrf = noCsrfLookup(getRootState(), pluginRoutesHandler);
+    };
+  });
+
   const csurf = csrf();
   let noCsrf = null;
   if (!opts.disableCsrf) {
-    noCsrf = noCsrfLookup(getState());
+    noCsrf = noCsrfLookup(getState(), pluginRoutesHandler);
     app.use(function (req, res, next) {
       if (
         noCsrf?.has(req.url) ||
@@ -434,17 +432,29 @@ const getApp = async (opts = {}) => {
   } else app.use(disabledCsurf);
 
   mountRoutes(app);
-  // mount plugin router with a callback for changes
-  let pluginRouter = prepPluginRouter(getState().plugin_routes || {});
-  getState().routesChangedCb = () => {
-    pluginRouter = prepPluginRouter(getState().plugin_routes || {});
-    noCsrf = noCsrfLookup(getState());
-  };
-  app.use((req, res, next) => {
-    pluginRouter(req, res, next);
-  });
   // set tenant homepage as / root
   app.get("/", error_catcher(homepage));
+  
+  app.use((req, res, next) => {
+    const tenant = db.getTenantSchema();
+    if (!pluginRoutesHandler.tenantRouters[tenant]) {
+      // if tenant router is not initialized, try to initialize it
+      pluginRoutesHandler.initTenantRouter(
+        tenant,
+        getState().plugin_routes || {}
+      );
+      getState().routesChangedCb = () => {
+        pluginRoutesHandler.initTenantRouter(
+          tenant,
+          getState().plugin_routes || {}
+        );
+        noCsrf = noCsrfLookup(getRootState(), pluginRoutesHandler);
+      };
+    }
+    if (pluginRoutesHandler.tenantRouters[tenant])
+      pluginRoutesHandler.tenantRouters[tenant](req, res, next);
+    else next();
+  });
   // /robots.txt
   app.get(
     "/robots.txt",
