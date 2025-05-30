@@ -538,6 +538,7 @@ function saveAndContinue(e, k, event) {
         form.append(
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
         );
+        apply_showif();
         reloadEmbeddedEditOwnViews(form, res.id);
       }
       common_done(res, form.attr("data-viewname"));
