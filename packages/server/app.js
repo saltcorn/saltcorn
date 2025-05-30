@@ -237,9 +237,13 @@ const getApp = async (opts = {}) => {
 
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
+  const isPlaywright = process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD?.length > 0;
   app.use((req, res, next) => {
     // no jwt and session id at the same time
-    if (!(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]))
+    if (
+      !(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]) ||
+      isPlaywright
+    )
       next();
   });
   app.use(flash());

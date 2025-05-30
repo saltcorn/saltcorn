@@ -7,7 +7,7 @@ cd $SCRIPT_DIR
 PATH=../../packages/saltcorn-cli/bin/:$PATH
 PGDATABASE=saltcorn_test saltcorn reset-schema -f
 PGDATABASE=saltcorn_test saltcorn restore ./backups/guitars_backup.zip
-PGDATABASE=saltcorn_test saltcorn build-app -p web -e guitar_feed -t view -b $BUILD_DIR -u admin@foo.com -s http://localhost:3000
+PGDATABASE=saltcorn_test saltcorn build-app -p web -e guitar_feed -t view -b $BUILD_DIR -u admin@foo.com -s http://localhost:3010
 
 # put tables.json into test_schema.js like this: var _test_schema_ = [content from tables.json]
 if [ -f $BUILD_DIR/www/data/tables.json ]; then
@@ -15,11 +15,11 @@ if [ -f $BUILD_DIR/www/data/tables.json ]; then
 fi
 
 echo Starting background Saltcorn server...
-PGDATABASE=saltcorn_test SALTCORN_SERVE_MOBILE_TEST_BUILD=/tmp/saltcorn_build/www saltcorn serve -p 3000 &
+PGDATABASE=saltcorn_test SALTCORN_SERVE_MOBILE_TEST_BUILD=/tmp/saltcorn_build/www saltcorn serve -p 3010 &
 SCPID=$!
 trap "kill $SCPID" EXIT
 
-while ! nc -z localhost 3000; do
+while ! nc -z localhost 3010; do
   sleep 0.2
 done
 
