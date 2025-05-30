@@ -447,12 +447,16 @@ function apply_showif() {
     const e = $(element);
     const rec = get_form_record(e);
     const current = e.attr("data-view-source-current");
-    if (!current) return;
+    if (!current) {
+      return;
+    }
+    const encFml = e.attr("data-view-source");
+    const fml = decodeURIComponent(encFml);
+    //console.log("fml", fml);
 
-    const fml = e.attr("data-view-source");
     const viewname = e.attr("data-sc-embed-viewname");
-    let newUrl;
-    newUrl = new Function("row", "return " + fml)(rec);
+
+    const newUrl = new Function("row", "return " + fml)(rec);
     //console.log("current-new", current, newUrl);
 
     if (current && current == newUrl) return;
@@ -468,7 +472,8 @@ function apply_showif() {
         data-sc-embed-viewname="${viewname}" 
         data-sc-view-source="${newUrl}" 
         data-view-source-current="${newUrl}" 
-        data-view-source="${fml}">${res}</div>`;
+        data-view-source="${encFml}">${res}</div>`;
+
         e.replaceWith(newE);
         initialize_page();
       },

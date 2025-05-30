@@ -861,7 +861,7 @@ const transformForm = async ({
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
-              "data-view-source": urlFormula,
+              "data-view-source": encodeURIComponent(urlFormula),
             });
             return;
           } else if (
@@ -874,7 +874,7 @@ const transformForm = async ({
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
-              "data-view-source": urlFormula,
+              "data-view-source": encodeURIComponent(urlFormula),
             });
             return;
           }
@@ -918,7 +918,7 @@ const transformForm = async ({
           segment.contents = div({
             class: "d-inline",
             "data-sc-embed-viewname": view.name,
-            "data-view-source": urlFormula,
+            "data-view-source": encodeURIComponent(urlFormula),
           });
           return;
         }
@@ -942,7 +942,7 @@ const transformForm = async ({
           "data-sc-embed-viewname": view.name,
           "data-sc-view-source": `/view/${view.name}${qs}`,
           "data-view-source-current": `/view/${view.name}${qs}`,
-          "data-view-source": urlFormula,
+          "data-view-source": encodeURIComponent(urlFormula),
         },
         await view.run(
           { ...state, ...extra_state },
