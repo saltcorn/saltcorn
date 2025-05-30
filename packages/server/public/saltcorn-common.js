@@ -152,7 +152,18 @@ function valid_js_var_name(s) {
 }
 
 function add_extra_state(base_url, extra_state_fml, row) {
-  return base_url;
+  //console.log("add_extra_state", { base_url, extra_state_fml, row });
+  if (!extra_state_fml) return base_url;
+  let extra_state = new Function(
+    "row",
+    `{${Object.keys(row).join(",")}}`,
+    "return " + extra_state_fml
+  )(row, row);
+  let qs = Object.entries(extra_state)
+    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+    .join("&");
+  let sepChar = base_url.includes("?") ? "&" : "?";
+  return base_url + sepChar + qs;
 }
 
 const apply_showif_fetching_urls = new Set();
@@ -435,14 +446,18 @@ function apply_showif() {
   $("[data-view-source]").each(function (ix, element) {
     const e = $(element);
     const rec = get_form_record(e);
-    const current = e.prop("data-view-source-current");
+    const current = e.attr("data-view-source-current");
+    if (!current) return;
+
     const fml = e.attr("data-view-source");
     const viewname = e.attr("data-sc-embed-viewname");
     let newUrl;
     newUrl = new Function("row", "return " + fml)(rec);
+    //console.log("current-new", current, newUrl);
+
     if (current && current == newUrl) return;
 
-    e.prop("data-view-source-current", newUrl); // to prevent concurrent fetches
+    e.attr("data-view-source-current", newUrl); // to prevent concurrent fetches
     $.ajax(newUrl, {
       headers: {
         pjaxpageload: "true",
@@ -454,7 +469,7 @@ function apply_showif() {
         data-sc-view-source="${newUrl}" 
         data-view-source-current="${newUrl}" 
         data-view-source="${fml}">${res}</div>`;
-        $e.replaceWith(newE);
+        e.replaceWith(newE);
         initialize_page();
       },
       error: function (res) {

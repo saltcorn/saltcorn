@@ -857,7 +857,7 @@ const transformForm = async ({
           const type = relation.type;
           if (!row && type == RelationType.OWN) {
             segment.type = "blank";
-            urlFormula = `add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -870,7 +870,7 @@ const transformForm = async ({
             !relation.isFixedRelation()
           ) {
             // TODO CH fix this please
-            urlFormula = `add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -883,6 +883,8 @@ const transformForm = async ({
             relation,
             relation.isFixedRelation() ? () => userId : (k) => row[k]
           );
+          // TODO CH fix this please
+          urlFormula = `add_extra_state('/view/${view.name}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
         }
       } else {
         const isIndependent = view_select.type === "Independent";
@@ -895,20 +897,20 @@ const transformForm = async ({
         switch (view_select.type) {
           case "Own":
             state = { id: row?.id };
-            urlFormula = `add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
           case "Independent":
             state = {};
-            urlFormula = `add_extra_state('/view/${viewname}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
           case "ChildList":
           case "OneToOneShow":
             state = { [view_select.field_name]: row?.id };
-            urlFormula = `add_extra_state('/view/${viewname}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
           case "ParentShow":
             state = { id: row?.[view_select.field_name] };
-            urlFormula = `add_extra_state('/view/${viewname}/?id='+row.${row[view_select.field_name]}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${row[view_select.field_name]}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             break;
         }
         if (!row && !isIndependent) {
