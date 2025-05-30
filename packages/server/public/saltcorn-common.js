@@ -473,7 +473,8 @@ function apply_showif() {
         const newE = `<div class="d-inline" 
         data-sc-embed-viewname="${viewname}" 
         data-sc-view-source="${newUrl}" 
-        data-view-source-current="${newUrl}" 
+        data-view-source-current="${newUrl}"
+        data-view-source-need-fields="${needFields}"
         data-view-source="${encFml}">${res}</div>`;
 
         e.replaceWith(newE);

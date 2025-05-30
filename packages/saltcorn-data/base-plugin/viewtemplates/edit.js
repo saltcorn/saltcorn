@@ -852,7 +852,7 @@ const transformForm = async ({
           const st = pathToState(relation, (k) => `row.` + k);
           return Object.entries(st)
             .map(([k, v]) => {
-              needFields.add(k);
+              needFields.add(v.split(".")[1]);
               return `${k}='+${v}+'`;
             })
             .join("&");
