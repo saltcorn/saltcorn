@@ -846,11 +846,15 @@ const transformForm = async ({
 
       let state = {};
       let urlFormula;
+      let needFields = new Set();
       if (view_select.type === "RelationPath" && view.table_id) {
         const pathToUrlFormula = (relation) => {
           const st = pathToState(relation, (k) => `row.` + k);
           return Object.entries(st)
-            .map(([k, v]) => `${k}='+${v}+'`)
+            .map(([k, v]) => {
+              needFields.add(k);
+              return `${k}='+${v}+'`;
+            })
             .join("&");
         };
 
@@ -869,6 +873,7 @@ const transformForm = async ({
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
+              "data-view-source-need-fields": [...needFields].join(","),
               "data-view-source": encodeURIComponent(urlFormula),
             });
             return;
@@ -881,6 +886,7 @@ const transformForm = async ({
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
+              "data-view-source-need-fields": [...needFields].join(","),
               "data-view-source": encodeURIComponent(urlFormula),
             });
             return;
@@ -905,19 +911,23 @@ const transformForm = async ({
           case "Own":
             state = { id: row?.id };
             urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            needFields.push("id");
             break;
           case "Independent":
             state = {};
             urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            needFields.push("id");
             break;
           case "ChildList":
           case "OneToOneShow":
             state = { [view_select.field_name]: row?.id };
             urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            needFields.push("id");
             break;
           case "ParentShow":
             state = { id: row?.[view_select.field_name] };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${row[view_select.field_name]}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            needFields.push(view_select.field_name);
             break;
         }
         if (!row && !isIndependent) {
@@ -925,6 +935,7 @@ const transformForm = async ({
           segment.contents = div({
             class: "d-inline",
             "data-sc-embed-viewname": view.name,
+            "data-view-source-need-fields": [...needFields].join(","),
             "data-view-source": encodeURIComponent(urlFormula),
           });
           return;
@@ -949,6 +960,7 @@ const transformForm = async ({
           "data-sc-embed-viewname": view.name,
           "data-sc-view-source": `/view/${view.name}${qs}`,
           "data-view-source-current": `/view/${view.name}${qs}`,
+          "data-view-source-need-fields": [...needFields].join(","),
           "data-view-source": encodeURIComponent(urlFormula),
         },
         await view.run(

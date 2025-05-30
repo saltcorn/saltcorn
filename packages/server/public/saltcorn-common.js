@@ -448,6 +448,11 @@ function apply_showif() {
     const rec = get_form_record(e);
     const current = e.attr("data-view-source-current");
     const encFml = e.attr("data-view-source");
+    const needFields = e.attr("data-view-source-need-fields");
+    if (needFields) {
+      const isSet = (v) => v !== null && v !== "" && typeof v !== "undefined";
+      if (needFields.split(",").some((k) => !isSet(rec[k]))) return;
+    }
     const fml = decodeURIComponent(encFml);
     //console.log("fml", fml);
 
