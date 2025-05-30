@@ -847,6 +847,13 @@ const transformForm = async ({
       let state = {};
       let urlFormula;
       if (view_select.type === "RelationPath" && view.table_id) {
+        const pathToUrlFormula = (relation) => {
+          const st = pathToState(relation, (k) => `row.` + k);
+          return Object.entries(st)
+            .map(([k, v]) => `${k}='+${v}+'`)
+            .join("&");
+        };
+
         const targetTbl = Table.findOne({ id: view.table_id });
         if (targetTbl) {
           const relation = new Relation(
@@ -854,10 +861,11 @@ const transformForm = async ({
             targetTbl.name,
             displayType(await view.get_state_fields())
           );
+          const relFmlQS = pathToUrlFormula(relation);
           const type = relation.type;
           if (!row && type == RelationType.OWN) {
             segment.type = "blank";
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -869,8 +877,7 @@ const transformForm = async ({
             type !== RelationType.INDEPENDENT &&
             !relation.isFixedRelation()
           ) {
-            // TODO CH fix this please
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -883,8 +890,8 @@ const transformForm = async ({
             relation,
             relation.isFixedRelation() ? () => userId : (k) => row[k]
           );
-          // TODO CH fix this please
-          urlFormula = `add_extra_state('/view/${view.name}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
+
+          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
         }
       } else {
         const isIndependent = view_select.type === "Independent";

@@ -447,9 +447,6 @@ function apply_showif() {
     const e = $(element);
     const rec = get_form_record(e);
     const current = e.attr("data-view-source-current");
-    if (!current) {
-      return;
-    }
     const encFml = e.attr("data-view-source");
     const fml = decodeURIComponent(encFml);
     //console.log("fml", fml);
