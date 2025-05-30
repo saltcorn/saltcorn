@@ -911,23 +911,23 @@ const transformForm = async ({
           case "Own":
             state = { id: row?.id };
             urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
-            needFields.push("id");
+            needFields.add("id");
             break;
           case "Independent":
             state = {};
             urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
-            needFields.push("id");
+            needFields.add("id");
             break;
           case "ChildList":
           case "OneToOneShow":
             state = { [view_select.field_name]: row?.id };
             urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
-            needFields.push("id");
+            needFields.add("id");
             break;
           case "ParentShow":
             state = { id: row?.[view_select.field_name] };
             urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
-            needFields.push(view_select.field_name);
+            needFields.add(view_select.field_name);
             break;
         }
         if (!row && !isIndependent) {
