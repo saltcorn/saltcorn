@@ -865,7 +865,7 @@ const transformForm = async ({
           const type = relation.type;
           if (!row && type == RelationType.OWN) {
             segment.type = "blank";
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -877,7 +877,7 @@ const transformForm = async ({
             type !== RelationType.INDEPENDENT &&
             !relation.isFixedRelation()
           ) {
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
