@@ -220,9 +220,13 @@ const getApp = async (opts = {}) => {
 
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
+  const isPlaywright = process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD?.length > 0;
   app.use((req, res, next) => {
     // no jwt and session id at the same time
-    if (!(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]))
+    if (
+      !(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]) ||
+      isPlaywright
+    )
       next();
   });
   app.use(flash());
@@ -251,6 +255,15 @@ const getApp = async (opts = {}) => {
       })
     );
   let version_tag = db.connectObj.version_tag;
+
+  if (process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD) {
+    app.use(
+      "/mobile_test_build",
+      express.static(process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD, {
+        maxAge: development_mode ? 0 : "100d",
+      })
+    );
+  }
 
   app.use(
     `/static_assets/${version_tag}`,

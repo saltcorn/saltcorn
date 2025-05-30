@@ -13,7 +13,7 @@ const User = require("@saltcorn/data/models/user");
  *
  */
 class BuildAppCommand extends Command {
-  supportedPlatforms = ["android", "ios"];
+  supportedPlatforms = ["android", "ios", "web"];
   staticPlugins = ["base", "sbadmin2"];
 
   validateParameters(flags) {
