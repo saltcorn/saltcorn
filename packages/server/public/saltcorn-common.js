@@ -1793,7 +1793,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           form.append(
             `<input type="hidden" name="id" value="${res.set_fields[k]}">`
           );
-          reloadEmbeddedEditOwnViews(form, res.set_fields[k]);
+          apply_showif();
           return;
         }
         if (input.attr("type") === "checkbox")
@@ -1880,29 +1880,6 @@ function editAllowedAuthByRole(id, event) {
       },
     }
   );
-}
-
-function reloadEmbeddedEditOwnViews(form, id) {
-  form.find("div[sc-load-on-assign-id]").each(function () {
-    const $e = $(this);
-    const viewname = $e.attr("sc-load-on-assign-id");
-    const newUrl = `/view/${viewname}?id=${id}`;
-    $.ajax(newUrl, {
-      headers: {
-        pjaxpageload: "true",
-        localizedstate: "true", //no admin bar
-      },
-      success: function (res, textStatus, request) {
-        const newE = `<div class="d-inline" data-sc-embed-viewname="${viewname}" data-sc-view-source="${newUrl}">${res}</div>`;
-        $e.replaceWith(newE);
-        initialize_page();
-      },
-      error: function (res) {
-        if (!checkNetworkError(res))
-          notifyAlert({ type: "danger", text: res.responseText });
-      },
-    });
-  });
 }
 
 const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {

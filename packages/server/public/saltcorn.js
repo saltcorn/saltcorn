@@ -539,7 +539,6 @@ function saveAndContinue(e, k, event) {
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
         );
         apply_showif();
-        reloadEmbeddedEditOwnViews(form, res.id);
       }
       common_done(res, form.attr("data-viewname"));
       if (focusedEl) focusedEl.setAttribute("previous-val", focusedEl.value);
