@@ -1254,7 +1254,10 @@ describe("Edit view components", () => {
     expect(vres1).not.toContain("Michael");
 
     const vres0 = await view.run({}, mockReqRes);
-    expect(vres0).not.toContain('data-sc-embed-viewname="patientlist"');
+    expect(vres0).toContain('data-sc-embed-viewname="patientlist"');
+    expect(vres0).toContain('data-view-source="add_extra_state');
+    expect(vres0).toContain('data-view-source-need-fields');
+    expect(vres0).not.toContain('data-view-source-current');
     expect(vres0).toContain("<form");
   });
 });
