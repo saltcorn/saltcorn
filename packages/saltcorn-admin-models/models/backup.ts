@@ -115,17 +115,24 @@ const create_pack_json = async (
   // models
   const models = (await Model.find({})).map((m: Model) => m.toJson);
   // model instances
-  const model_instances = await asyncMap(
-    await ModelInstance.find({}),
-    async (modelinst: ModelInstance) => {
-      const model = await Model.findOne({ id: modelinst.model_id });
-      if (!model)
-        throw new Error(`Model of instance '${modelinst.name}' not found`);
-      const table = await Table.findOne({ id: model.table_id });
-      if (!table) throw new Error(`Table of model '${model.name}' not found`);
-      return await model_instance_pack(modelinst.name, model.name, table.name);
-    }
-  );
+  const model_instances = forSnapshot
+    ? []
+    : await asyncMap(
+        await ModelInstance.find({}),
+        async (modelinst: ModelInstance) => {
+          const model = await Model.findOne({ id: modelinst.model_id });
+          if (!model)
+            throw new Error(`Model of instance '${modelinst.name}' not found`);
+          const table = await Table.findOne({ id: model.table_id });
+          if (!table)
+            throw new Error(`Table of model '${model.name}' not found`);
+          return await model_instance_pack(
+            modelinst.name,
+            model.name,
+            table.name
+          );
+        }
+      );
   // optional event log
   const event_logs = withEventLog
     ? await asyncMap(
