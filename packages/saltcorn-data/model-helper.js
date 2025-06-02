@@ -62,7 +62,12 @@ const write_csv = async (rows, columns, fields, filename) => {
           } else if (f.type.name === "Bool") {
             colWriters.push({
               header: column.field_name,
-              write: (row) => (row[column.field_name] ? 1.0 : 0.0),
+              write: (row) =>
+                row[column.field_name] === true
+                  ? 1.0
+                  : row[column.field_name] === false
+                    ? 0.0
+                    : "",
             });
           } else {
             colWriters.push({
