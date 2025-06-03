@@ -5,8 +5,8 @@ import i18next from "i18next";
 
 // post/delete/:name/:id
 export const deleteRows = async (context) => {
-  const { name, id } = context.params;
-  const table = await saltcorn.data.models.Table.findOne({ name });
+  const { tableName, id } = context.params;
+  const table = await saltcorn.data.models.Table.findOne({ name: tableName });
   const { isOfflineMode, localTableIds, user } =
     saltcorn.data.state.getState().mobileConfig;
   if (isOfflineMode || localTableIds.indexOf(table.id) >= 0) {
@@ -21,7 +21,7 @@ export const deleteRows = async (context) => {
     //   await offlineHelper.setOfflineSession(null);
     // }
   } else {
-    await apiCall({ method: "POST", path: `/delete/${name}/${id}` });
+    await apiCall({ method: "POST", path: `/delete/${tableName}/${id}` });
   }
   const redirect = context.data?.after_delete_url
     ? context.data.after_delete_url === "/"
