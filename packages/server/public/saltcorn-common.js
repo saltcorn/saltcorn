@@ -151,6 +151,21 @@ function valid_js_var_name(s) {
   return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
 }
 
+function add_extra_state(base_url, extra_state_fml, row) {
+  //console.log("add_extra_state", { base_url, extra_state_fml, row });
+  if (!extra_state_fml) return base_url;
+  let extra_state = new Function(
+    "row",
+    `{${Object.keys(row).join(",")}}`,
+    "return " + extra_state_fml
+  )(row, row);
+  let qs = Object.entries(extra_state)
+    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+    .join("&");
+  let sepChar = base_url.includes("?") ? "&" : "?";
+  return base_url + sepChar + qs;
+}
+
 const apply_showif_fetching_urls = new Set();
 
 function apply_showif() {
@@ -426,6 +441,49 @@ function apply_showif() {
       target.find("tr").filter(function () {
         $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
       });
+    });
+  });
+  $("[data-view-source]").each(function (ix, element) {
+    const e = $(element);
+    const rec = get_form_record(e);
+    const current = e.attr("data-view-source-current");
+    const encFml = e.attr("data-view-source");
+    const needFields = e.attr("data-view-source-need-fields");
+    if (needFields) {
+      const isSet = (v) => v !== null && v !== "" && typeof v !== "undefined";
+      if (needFields.split(",").some((k) => !isSet(rec[k]))) return;
+    }
+    const fml = decodeURIComponent(encFml);
+    //console.log("fml", fml);
+
+    const viewname = e.attr("data-sc-embed-viewname");
+
+    const newUrl = new Function("row", "return " + fml)(rec);
+    //console.log("current-new", current, newUrl);
+
+    if (current && current == newUrl) return;
+
+    e.attr("data-view-source-current", newUrl); // to prevent concurrent fetches
+    $.ajax(newUrl, {
+      headers: {
+        pjaxpageload: "true",
+        localizedstate: "true", //no admin bar
+      },
+      success: function (res, textStatus, request) {
+        const newE = `<div class="d-inline" 
+        data-sc-embed-viewname="${viewname}" 
+        data-sc-view-source="${newUrl}" 
+        data-view-source-current="${newUrl}"
+        data-view-source-need-fields="${needFields}"
+        data-view-source="${encFml}">${res}</div>`;
+
+        e.replaceWith(newE);
+        initialize_page();
+      },
+      error: function (res) {
+        if (!checkNetworkError(res))
+          notifyAlert({ type: "danger", text: res.responseText });
+      },
     });
   });
   $("[data-source-url]").each(function (ix, element) {
@@ -1741,7 +1799,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           form.append(
             `<input type="hidden" name="id" value="${res.set_fields[k]}">`
           );
-          reloadEmbeddedEditOwnViews(form, res.set_fields[k]);
+          apply_showif();
           return;
         }
         if (input.attr("type") === "checkbox")
@@ -1828,29 +1886,6 @@ function editAllowedAuthByRole(id, event) {
       },
     }
   );
-}
-
-function reloadEmbeddedEditOwnViews(form, id) {
-  form.find("div[sc-load-on-assign-id]").each(function () {
-    const $e = $(this);
-    const viewname = $e.attr("sc-load-on-assign-id");
-    const newUrl = `/view/${viewname}?id=${id}`;
-    $.ajax(newUrl, {
-      headers: {
-        pjaxpageload: "true",
-        localizedstate: "true", //no admin bar
-      },
-      success: function (res, textStatus, request) {
-        const newE = `<div class="d-inline" data-sc-embed-viewname="${viewname}" data-sc-view-source="${newUrl}">${res}</div>`;
-        $e.replaceWith(newE);
-        initialize_page();
-      },
-      error: function (res) {
-        if (!checkNetworkError(res))
-          notifyAlert({ type: "danger", text: res.responseText });
-      },
-    });
-  });
 }
 
 const repeaterCopyValuesToForm = (form, editor, noTriggerChange) => {
