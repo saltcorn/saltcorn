@@ -1,0 +1,67 @@
+name: Playwright Mobile Tests
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+jobs:
+  build:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saltcorn_test
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+      - run: psql -d saltcorn_test --command='create extension "uuid-ossp";'
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: saltcorn_test
+          PGPASSWORD: postgres
+      - run: npm install --legacy-peer-deps
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+          SKIP_DOCKER_IMAGE_INSTALL: "true"
+      - run: npm run tsc
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./deploy/playwright_mobile
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+        working-directory: ./deploy/playwright_mobile
+
+      - name: Run Playwright mobile tests
+        run: deploy/playwright_mobile/run.sh
+        env:
+          CI: true
+          SALTCORN_MULTI_TENANT: true
+          SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+          SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: saltcorn_test
+          PGPASSWORD: postgres
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: deploy/playwright_mobile/playwright-report/
+          retention-days: 30

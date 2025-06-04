@@ -21,7 +21,10 @@
     "axios": "^1.7.7",
     "jwt-decode": "4.0.0",
     "i18next": "24.2.2",
-    "i18next-sprintf-postprocessor": "0.2.2"
+    "i18next-sprintf-postprocessor": "0.2.2",
+    "crypto-browserify": "3.12.1",
+    "vm-browserify":"1.1.2",
+    "stream-browserify":"3.0.0"
   },
   "devDependencies": {
     "xml2js": "0.6.2",

@@ -6,6 +6,8 @@
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <script src="data/config.js"></script>
+    <!-- only set in test mode -->
+    <script src="data/test_schema.js"></script>
     <script type="module" src="./dist/bundle.js"></script>
     <script src="js/iframe_view_utils.js"></script>
 
@@ -14,12 +16,16 @@
       if (window.saltcorn) window.saltcorn.mobileApp = mobileApp;
       else window.saltcorn = { mobileApp };
 
-      document.addEventListener("deviceready", () => {
+      if (Capacitor.platform !== "web") {
+        document.addEventListener("deviceready", () => {
+          saltcorn.mobileApp.init(_sc_mobile_config);
+        });
+        document.addEventListener("backbutton", async () => {
+          await saltcorn.mobileApp.navigation.goBack(1, true);
+        });
+      } else {
         saltcorn.mobileApp.init(_sc_mobile_config);
-      });
-      document.addEventListener("backbutton", async () => {
-        await saltcorn.mobileApp.navigation.goBack(1, true);
-      });
+      }
     </script>
   </head>
 
