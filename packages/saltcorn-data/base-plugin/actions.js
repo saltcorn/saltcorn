@@ -1895,6 +1895,14 @@ module.exports = {
             .map((t) => t.name),
         },
         {
+          name: "where",
+          label: "where",
+          sublabel:
+            "Where-expression on source table for subset of rows to synchronize",
+          type: "String",
+          class: "validate-expression",
+        },
+        {
           name: "table_dest",
           label: "Destination table",
           sublabel: "Table to sync to",
@@ -1955,6 +1963,7 @@ module.exports = {
         pk_field,
         delete_rows,
         match_field_names,
+        where,
       },
       user,
       ...rest
@@ -1966,8 +1975,11 @@ module.exports = {
 
       const source_table = Table.findOne({ name: table_src });
       if (!source_table) return { error: "Source table not found" };
+      let q = {};
+      if (where)
+        q = eval_expression(where, {}, user, "sync_table_from_external where");
 
-      const source_rows = await source_table.getRows({});
+      const source_rows = await source_table.getRows(q);
       if (!source_rows) return { error: "No data received" };
       const table_for_insert = Table.findOne({ name: table_dest });
       const dest_rows = await table_for_insert.getRows({});
