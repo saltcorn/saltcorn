@@ -333,6 +333,7 @@ export async function replaceIframeInnerContent(content) {
   }
   iframe.contentWindow.scrollTo(0, 0);
   iframe.contentWindow.initialize_page();
+  iframeDocument.dispatchEvent(new Event("mobile-loaded"));
 }
 
 export function splitPathQuery(url) {

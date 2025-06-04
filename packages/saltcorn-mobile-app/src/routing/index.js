@@ -1,6 +1,11 @@
 import UniversalRouter from "universal-router";
 
-import { updateTableRow, insertTableRow } from "./routes/api";
+import {
+  runAction,
+  loadTableRows,
+  updateTableRow,
+  insertTableRow,
+} from "./routes/api";
 import { getLoginView, logoutAction, getSignupView } from "./routes/auth";
 import { deleteRows } from "./routes/delete";
 import { postToggleField } from "./routes/edit";
@@ -23,13 +28,27 @@ import {
 const routes = [
   // api
   {
+    path: "post/api/action/:action",
+    action: runAction,
+  },
+  {
+    path: "get/api/:tableName",
+    action: loadTableRows,
+  },
+  {
     path: "post/api/:tableName/:id",
     action: updateTableRow,
   },
+
   {
     path: "post/api/:tableName/",
     action: insertTableRow,
   },
+  {
+    path: "post/api/:tableName",
+    action: insertTableRow,
+  },
+
   // auth
   {
     path: "get/auth/login",
@@ -44,10 +63,16 @@ const routes = [
     action: getSignupView,
   },
   // delete
+  
   {
-    path: "post/delete/:name/:id",
+    path: "post/delete/:tableName/:id", // legacy
     action: deleteRows,
   },
+  {
+    path: "delete/api/:tableName/:id",
+    action: deleteRows,
+  },
+  
   // edit
   {
     path: "post/edit/toggle/:name/:id/:field_name",

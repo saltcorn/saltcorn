@@ -3,6 +3,8 @@
 set -e
 cd /saltcorn-mobile-app
 
+echo "Running as user: $(whoami)"
+
 BUILD_TYPE=$(jq -r '.buildType' saltcorn-mobile-cfg.json)
 APP_VERSION=$(jq -r '.appVersion' saltcorn-mobile-cfg.json)
 SERVER_DOMAIN=$(jq -r '.serverDomain' saltcorn-mobile-cfg.json)
