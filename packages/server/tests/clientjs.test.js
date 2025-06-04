@@ -253,4 +253,20 @@ test("unique_field_from_rows test", () => {
     "bar"
   );
   expect($("#mkuniq11").val()).toBe("bar104");
+  $("body").append(`<input id="mkuniq12" value="YPL240724A"></div>`);
+  unique_field_from_rows(
+    [
+      { foo: "YPL240724A2" },
+      { foo: "YPL240724A1_COPY-1" },
+      { foo: "YPL240724A1" },
+    ],
+    "mkuniq12",
+    "foo",
+    false,
+    1,
+    true,
+    "Digits",
+    "YPL240724A"
+  );
+  expect($("#mkuniq12").val()).toBe("YPL240724A3");
 });

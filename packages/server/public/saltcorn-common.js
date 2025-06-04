@@ -2016,7 +2016,8 @@ function unique_field_from_rows(
       .filter((v) => v !== value)
       .map((s) => s.replace(value_wspace, ""))
       .map((s) => (numtype ? +s : s))
-      .sort(numtype ? (a, b) => a - b : undefined);
+      .filter((s) => (numtype ? !isNaN(s) : true))
+      .sort((a, b) => a - b);
     if (stripped.length === 0) newname = `${value_wspace}${gen_char(start)}`;
     else {
       const i = char_to_i(stripped[stripped.length - 1]);
