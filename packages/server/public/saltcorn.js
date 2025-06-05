@@ -1338,6 +1338,14 @@ function check_delete_unsaved(tablename, script_tag) {
   }
 }
 
+function delprevwfroomrun(viewname, e, runid) {
+  e.preventDefault();
+  e.stopPropagation();
+  view_post(viewname, "delprevrun", { run_id: runid });
+  $(e.target).closest(".prevwfroomrun").remove();
+  return false;
+}
+
 function cfu_translate(that) {
   const locale = that.value;
   const translations = window.cfu_translations[locale];
