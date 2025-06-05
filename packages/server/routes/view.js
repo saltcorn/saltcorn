@@ -9,6 +9,7 @@ const Router = require("express-promise-router");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
+const Page = require("@saltcorn/data/models/page");
 
 const { text, style, div } = require("@saltcorn/markup/tags");
 const {
@@ -41,11 +42,28 @@ module.exports = router;
 router.get(
   ["/:viewname", "/:viewname/*slug"],
   error_catcher(async (req, res) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModePage = state.getConfig("maintenance_mode_page", "");
+
+    if (
+      maintenanceModeEnabled &&
+      (!req.user || req.user.role_id > 1) &&
+      maintenanceModePage
+    ) {
+      const maintenancePage = await Page.findOne({ name: maintenanceModePage });
+      if (maintenancePage) {
+        const tic = new Date();
+        await maintenancePage.run(req.query, { res, req });
+        return;
+      }
+    }
+
     const { viewname } = req.params;
     const query = { ...req.query };
     const view = await View.findOne({ name: viewname });
     const role = req.user && req.user.id ? req.user.role_id : 100;
-    const state = getState();
+    // const state = getState();
     state.log(
       3,
       `Route /view/${viewname} user=${req.user?.id}${

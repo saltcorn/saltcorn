@@ -145,8 +145,24 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
 router.get(
   "/:pagename",
   error_catcher(async (req, res) => {
-    const { pagename } = req.params;
     const state = getState();
+    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModePage = state.getConfig("maintenance_mode_page", "");
+
+    if (
+      maintenanceModeEnabled &&
+      (!req.user || req.user.role_id > 1) &&
+      maintenanceModePage
+    ) {
+      const maintenancePage = await Page.findOne({ name: maintenanceModePage });
+      if (maintenancePage) {
+        await runPage(maintenancePage, req, res, new Date());
+        return;
+      }
+    }
+
+    const { pagename } = req.params;
+    // const state = getState();
     state.log(
       3,
       `Route /page/${pagename} user=${req.user?.id}${

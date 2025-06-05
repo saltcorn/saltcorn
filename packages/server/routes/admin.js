@@ -196,6 +196,8 @@ admin_config_route({
     { section_header: "Extension store" },
     "plugins_store_endpoint",
     "packs_store_endpoint",
+    "maintenance_mode_enabled",
+    "maintenance_mode_page",
   ],
   response(form, req, res) {
     send_admin_page({

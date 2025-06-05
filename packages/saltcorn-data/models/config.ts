@@ -1305,6 +1305,18 @@ const configTypes: ConfigTypes = {
     type: "Integer",
     label: "Delete error workflows after days",
   },
+  maintenance_mode_enabled: {
+    type: "Bool",
+    label: "Enable maintenance mode",
+    default: false,
+    blurb: "Enable maintenance mode to restrict access to non-admin users",
+  },
+  maintenance_mode_page: {
+    type: "Page",
+    label: "Maintenance mode page",
+    default: "",
+    blurb: "Select the page to display during maintenance mode",
+  }
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
