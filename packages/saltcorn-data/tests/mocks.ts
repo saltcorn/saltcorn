@@ -73,7 +73,11 @@ const plugin_with_routes = () => ({
   },
   external_tables: {
     exttab: json_list_to_external_table(
-      () => [{ name: "Sam", age: 56 }],
+      () => [
+        { name: "Sam", age: 56 },
+        { name: "Alex", age: 49 },
+        { name: "Homer", age: 51 },
+      ],
       [
         { name: "name", label: "Name", type: "String" },
         { name: "age", label: "Age", type: "Integer" },
