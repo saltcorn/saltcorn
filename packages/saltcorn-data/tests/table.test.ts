@@ -2293,6 +2293,17 @@ describe("external tables", () => {
     expect(dbtables.map((t) => t.name)).not.toContain("exttab");
     expect(dbtables.map((t) => t.name)).toContain("books");
   });
+  it("should query", async () => {
+    const table = Table.findOne({ name: "exttab" });
+    assertIsSet(table);
+    const rows0 = await table.getRows({ name: "Sam" });
+    expect(rows0.length).toBe(1);
+    expect(rows0[0].name).toBe("Sam");
+    const rows1 = await table.getRows({
+      or: [{ name: "Sam" }, { name: "Alex" }],
+    });
+    expect(rows1.length).toBe(2);
+  });
   it("should build view", async () => {
     const table = Table.findOne({ name: "exttab" });
     assertIsSet(table);
