@@ -19,12 +19,14 @@ const {
   details,
   summary,
 } = require("@saltcorn/markup/tags");
-const Table = require("@saltcorn/data/models/table");
 const { isAdmin, error_catcher } = require("./utils");
 const { send_infoarch_page } = require("../markup/admin.js");
+const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
 const Form = require("@saltcorn/data/models/form");
+const Trigger = require("@saltcorn/data/models/trigger");
+const Plugin = require("@saltcorn/data/models/plugin");
 const {
   table_pack,
   view_pack,
@@ -40,8 +42,8 @@ const {
   event_log_pack,
   install_pack,
 } = require("@saltcorn/admin-models/models/pack");
-const Trigger = require("@saltcorn/data/models/trigger");
 const { getState } = require("@saltcorn/data/db/state");
+const { sleep } = require("@saltcorn/data/utils");
 /**
  * @type {object}
  * @const
@@ -81,6 +83,10 @@ router.get(
       {},
       { orderBy: "name", nocase: true }
     );
+    const all_plugins = await Plugin.find(
+      { name: { not: { in: ["base", "sbadmin2"] } } },
+      { orderBy: "name", nocase: true }
+    );
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
     const all_configs_obj = await getState().getAllConfigOrDefaults();
@@ -91,7 +97,7 @@ router.get(
       }))
       .filter((c) => isRoot || !c.root_only);
 
-    let tables, views, pages, triggers, configs;
+    let tables, views, pages, triggers, configs, plugins;
     if (q) {
       const qlower = q.toLowerCase();
       const includesQ = (s) => s.toLowerCase().includes(qlower);
@@ -113,12 +119,17 @@ router.get(
         return includesQ(JSON.stringify(pack));
       });
       configs = all_configs.filter((c) => includesQ(JSON.stringify(c)));
+      plugins = all_plugins.filter(
+        (p) =>
+          includesQ(p.name) || includesQ(JSON.stringify(p.configuration || {}))
+      );
     } else {
       tables = all_tables;
       views = all_views;
       pages = all_pages;
       triggers = all_triggers;
       configs = all_configs;
+      plugins = all_plugins;
     }
     const li_link = (etype1, ename1) =>
       li(
@@ -224,6 +235,20 @@ router.get(
 
         edContents = renderForm(mkForm(trpack), req.csrfToken());
         break;
+      case "module":
+        const plugin = all_plugins.find((p) => p.name === ename);
+        cfg_link =
+          `${ename} ${etype}` +
+          a(
+            {
+              class: "ms-1 me-3",
+              href: `/plugins/configure/${encodeURIComponent(ename)}`,
+            },
+            "Configure&nbsp;",
+            i({ class: "fas fa-cog" })
+          );
+        edContents = renderForm(mkForm(plugin.configuration), req.csrfToken());
+        break;
     }
     send_infoarch_page({
       res,
@@ -315,6 +340,16 @@ router.get(
                       configs.map((t) => li_link("config", t.name))
                     )
                   )
+                ),
+                li(
+                  details(
+                    { open: q || etype === "module" },
+                    summary("Modules"),
+                    ul(
+                      { class: "ps-3" },
+                      plugins.map((m) => li_link("module", m.name))
+                    )
+                  )
                 )
               )
             ),
@@ -372,7 +407,12 @@ router.post(
         break;
     }
     await db.withTransaction(async () => {
-      await install_pack(pack);
+      if (etype === "module") {
+        const plugin = await Plugin.findOne({ name: ename });
+        if (!plugin) throw new Error(`Module ${ename} not found`);
+        plugin.configuration = entVal;
+        await plugin.upsert();
+      } else await install_pack(pack);
     });
     switch (etype) {
       case "table":
@@ -389,6 +429,13 @@ router.post(
         break;
       case "config":
         await getState().refresh_config();
+        break;
+      case "module":
+        getState().processSend({
+          refresh_plugin_cfg: ename,
+          tenant: db.getTenantSchema(),
+        });
+        await sleep(500);
         break;
     }
     res.redirect(
