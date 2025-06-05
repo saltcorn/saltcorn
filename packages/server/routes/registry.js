@@ -410,6 +410,17 @@ router.post(
       if (etype === "module") {
         const plugin = await Plugin.findOne({ name: ename });
         if (!plugin) throw new Error(`Module ${ename} not found`);
+        let module = getState().plugins[plugin.name];
+        if (!module) {
+          module =
+            getState().plugins[getState().plugin_module_names[plugin.name]];
+        }
+        const flow = module.configuration_workflow();
+        if (flow?.onStepSave) await flow.onStepSave({}, {}, entVal);
+        if (flow?.onDone) {
+          const doneRes = await flow.onDone(entVal);
+          if (doneRes?.cleanup) await doneRes.cleanup();
+        }
         plugin.configuration = entVal;
         await plugin.upsert();
       } else await install_pack(pack);
