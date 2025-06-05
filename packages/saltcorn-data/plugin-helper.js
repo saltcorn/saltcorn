@@ -2522,6 +2522,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       ([k, v]) => {
         if (k === "or" && Array.isArray(v))
           return v.some((v1) => Object.entries(v1).every((kv1) => sat(x)(kv1)));
+        else if (v?.in) return v.in.includes(x[k]);
         else if (Array.isArray(v)) return v.every((v1) => sat(x)([k, v1]));
         else if (k === "_fts")
           return JSON.stringify(x)

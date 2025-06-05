@@ -2303,6 +2303,10 @@ describe("external tables", () => {
       or: [{ name: "Sam" }, { name: "Alex" }],
     });
     expect(rows1.length).toBe(2);
+    const rows2 = await table.getRows({
+      name: { in: ["Sam", "Alex"] },
+    });
+    expect(rows2.length).toBe(2);
   });
   it("should build view", async () => {
     const table = Table.findOne({ name: "exttab" });
