@@ -1896,9 +1896,9 @@ module.exports = {
         },
         {
           name: "where",
-          label: "where",
+          label: "Query",
           sublabel:
-            "Where-expression on source table for subset of rows to synchronize",
+            "Query-expression on source table for subset of rows to synchronize. Example: <code>{ status: 'Open' }</code>",
           type: "String",
           class: "validate-expression",
         },
