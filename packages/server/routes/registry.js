@@ -415,11 +415,13 @@ router.post(
           module =
             getState().plugins[getState().plugin_module_names[plugin.name]];
         }
-        const flow = module.configuration_workflow();
-        if (flow?.onStepSave) await flow.onStepSave({}, {}, entVal);
-        if (flow?.onDone) {
-          const doneRes = await flow.onDone(entVal);
-          if (doneRes?.cleanup) await doneRes.cleanup();
+        if (module.configuration_workflow) {
+          const flow = module.configuration_workflow();
+          if (flow?.onStepSave) await flow.onStepSave({}, {}, entVal);
+          if (flow?.onDone) {
+            const doneRes = await flow.onDone(entVal);
+            if (doneRes?.cleanup) await doneRes.cleanup();
+          }
         }
         plugin.configuration = entVal;
         await plugin.upsert();
