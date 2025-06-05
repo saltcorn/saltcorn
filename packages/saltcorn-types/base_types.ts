@@ -537,6 +537,7 @@ type PluginFacilities = {
   table_providers?: Record<string, TableProvider>;
   copilot_skills?: Array<CopilotSkill>;
   icons?: Array<string>
+  exchange?: Record<string, Array<unknown>>;
 };
 
 type PluginWithConfig = {
