@@ -553,6 +553,13 @@ const no_views_logged_in = async (req, res) => {
  * @returns {Promise<boolean>}
  */
 const get_config_response = async (role_id, res, req) => {
+  const state = getState();
+  const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+  if (maintenanceModeEnabled && (req.user && req.user.role_id > 1)) {
+    res.status(503).send("Page Unavailable: in maintenance mode");
+    return true;
+  }
+
   const wrap = async (
     contents,
     homeCfg,

@@ -162,7 +162,6 @@ router.get(
     }
 
     const { pagename } = req.params;
-    // const state = getState();
     state.log(
       3,
       `Route /page/${pagename} user=${req.user?.id}${
@@ -193,6 +192,13 @@ router.post(
   "/:pagename/preview",
   isAdmin,
   error_catcher(async (req, res) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).json({ error: "in maintenance mode" });
+      return;
+    }
+
     const { pagename } = req.params;
     const page = await Page.findOne({ name: pagename });
     if (!page) {
@@ -207,6 +213,13 @@ router.post(
 router.post(
   "/:pagename/action/:rndid",
   error_catcher(async (req, res) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).json({ error: "in maintenance mode" });
+      return;
+    }
+
     const { pagename, rndid } = req.params;
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const db_page = await Page.findOne({ name: pagename });

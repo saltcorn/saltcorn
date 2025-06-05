@@ -52,6 +52,18 @@ const { extract } = require("@saltcorn/admin-models/models/backup");
 const router = new Router();
 module.exports = router;
 
+router.use(
+  error_catcher(async (req, res, next) => {
+    const state = getState();
+    const maintenanceModeEnabled =  state.getConfig("maintenance_mode_enabled", false);
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).send("Page Unavailable: in maintenance mode");
+      return;
+    }
+    next();
+  })
+)
+
 const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
   res.set("SaltcornModalWidth", "1200px");
   res.sendWrap(req.__("Please select a file"), {

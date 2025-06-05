@@ -63,7 +63,6 @@ router.get(
     const query = { ...req.query };
     const view = await View.findOne({ name: viewname });
     const role = req.user && req.user.id ? req.user.role_id : 100;
-    // const state = getState();
     state.log(
       3,
       `Route /view/${viewname} user=${req.user?.id}${
@@ -241,6 +240,16 @@ router.post(
  */
 router.post(
   "/:viewname/:route",
+  error_catcher(async (req, res, next) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).json({ error: "in maintenance mode" });
+      return;
+    }
+    next();
+  }),
   error_catcher(async (req, res) => {
     const { viewname, route } = req.params;
     const role = req.user && req.user.id ? req.user.role_id : 100;
@@ -276,6 +285,15 @@ router.post(
  */
 router.post(
   ["/:viewname", "/:viewname/*slug"],
+  error_catcher(async (req, res, next) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).send("Page Unavailable: in maintenance mode");
+      return;
+    }
+    next();
+  }),
   setTenant,
   error_catcher(async (req, res) => {
     const { viewname } = req.params;
