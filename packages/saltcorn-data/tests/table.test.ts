@@ -1575,9 +1575,29 @@ Pencil, 0.5,2, t`;
     expect(fields.map((f: Field) => f.name)).toContain("id");
     const nameField = fields.find((f: Field) => f.name === "id");
     expect(nameField.type.name).toBe("String");
-   
+
     const allrows = await table.getRows();
     expect(allrows.length).toBe(2);
+  });
+  it("should import JSON columns", async () => {
+    //db.set_sql_logging();
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    const csv = `id,cost,count, attrs
+1, 5,4, "{""foo"":5}"
+3, 0.5,2, "{""foo"":6}"`;
+    const fnm = "/tmp/test2impok.csv";
+    await writeFile(fnm, csv);
+    const result = await Table.create_from_csv("Invoice8", fnm);
+    assertsIsSuccessMessage(result);
+    const { table } = result;
+    const fields = table.getFields();
+    const nameField = fields.find((f: Field) => f.name === "attrs");
+    expect(nameField.type.name).toBe("JSON");
+
+    const allrows = await table.getRows({}, { orderBy: "id" });
+    expect(allrows.length).toBe(2);    
+    expect(allrows[0].attrs.foo).toBe(5)
   });
 });
 
