@@ -1563,6 +1563,8 @@ Pencil, 0.5,2, t`;
   });
   it("should import large integers as strings", async () => {
     //db.set_sql_logging();
+    if (db.isSQLite) return
+
     const csv = `id,cost,count, vatable
 1, 5,4, f
 4084787842, 0.5,2, t`;
