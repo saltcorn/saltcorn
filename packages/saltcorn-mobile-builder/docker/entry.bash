@@ -106,3 +106,9 @@ if [ "$BUILD_TYPE" == "debug" ]; then
   cd /saltcorn-mobile-app/android
   ./gradlew assembleDebug
 fi
+
+
+# permission problem before running again
+rm -rf /saltcorn-mobile-app/node_modules
+rm -rf /saltcorn-mobile-app/android/.gradle
+chmod -R 777 /saltcorn-mobile-app/android

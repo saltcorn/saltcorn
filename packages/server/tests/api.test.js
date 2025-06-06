@@ -223,6 +223,57 @@ describe("API read", () => {
       );
   });
 });
+describe("API count", () => {
+  it("should count books for public simple", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/books/count")
+      .expect(succeedJsonWith((count) => count === 2));
+  });
+
+  // it("should count books for public fts", async () => {
+
+  it("should count books for public with search", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/books/count?pages=967")
+      .expect(succeedJsonWith((count) => count === 1));
+  });
+  it("should count with fkey args ", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/patients/count/?favbook=1")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((count) => count === 1));
+  });
+  it("should count with fkey args with no value", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/patients/count/?favbook=")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((count) => count === 0));
+  });
+  it("should count books for public with search and one field", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/books/count/?fields=author&pages=967")
+      .expect(succeedJsonWith((count) => count === 1));
+  });
+  it("should not allow public count access to patients", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app).get("/api/patients/count").expect(notAuthorized);
+  });
+  it("should allow staff count access to patients", async () => {
+    const loginCookie = await getStaffLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/api/patients/count")
+      .set("Cookie", loginCookie)
+      .expect(succeedJsonWith((count) => count === 2));
+  });
+});
 describe("API post", () => {
   it("should post books", async () => {
     const loginCookie = await getAdminLoginCookie();

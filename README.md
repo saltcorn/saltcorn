@@ -267,6 +267,7 @@ to install everything. If successful, you should now be able to run `saltcorn` i
 
     ProxyPass / http://localhost:3000/ upgrade=websocket 
     ```
+- If a mobile app build gives you `Error: EACCES: permission denied, rmdir '/home/saltcorn/mobile_app_build/android/.gradle/8.4'` or similar, try running `sudo rm -rf /home/saltcorn/mobile_app_build/android/.gradle/8.4` once. From version 1.3.0-beta.5 on, it should disappear.
 
 ## Development tips
 
