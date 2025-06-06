@@ -15,7 +15,7 @@ const Page = require("@saltcorn/data/models/page");
 const PageGroup = require("@saltcorn/data/models/page_group");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { link, mkTable } = require("@saltcorn/markup");
-const { div, a, p, i, h5, span } = require("@saltcorn/markup/tags");
+const { div, a, p, i, h5, span, title } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { get_cached_packs } = require("@saltcorn/admin-models/models/pack");
 // const { restore_backup } = require("../markup/admin");
@@ -555,9 +555,24 @@ const no_views_logged_in = async (req, res) => {
 const get_config_response = async (role_id, res, req) => {
   const state = getState();
   const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
-  if (maintenanceModeEnabled && (req.user && req.user.role_id > 1)) {
-    res.status(503).send("Page Unavailable: in maintenance mode");
-    return true;
+  const maintenanceModePage = state.getConfig("maintenance_mode_page", "");
+
+  if(maintenanceModeEnabled && (!req.user || req.user.role_id > 1) && maintenanceModePage) {
+    const db_page = await Page.findOne({ name: maintenanceModePage });
+    if (db_page) {
+      res.sendWrap(
+        {
+          title: db_page.title,
+          description: db_page.description,
+          bodyClass: "page_" + db.sqlsanitize(maintenanceModePage),
+        },
+        await db_page.run(req.query, { res, req })
+      );
+      return true;
+    } else {
+      res.status(503).send("Page Unavailable: in maintenance mode");
+      return true;
+    }
   }
 
   const wrap = async (
