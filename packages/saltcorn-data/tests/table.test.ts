@@ -1585,7 +1585,7 @@ Pencil, 0.5,2, t`;
 
     const csv = `id,cost,count, attrs
 1, 5,4, "{""foo"":5}"
-3, 0.5,2, "{""foo"":6}"`;
+3, 0.5,2, "[7]"`;
     const fnm = "/tmp/test2impok.csv";
     await writeFile(fnm, csv);
     const result = await Table.create_from_csv("Invoice8", fnm);
@@ -1596,8 +1596,9 @@ Pencil, 0.5,2, t`;
     expect(nameField.type.name).toBe("JSON");
 
     const allrows = await table.getRows({}, { orderBy: "id" });
-    expect(allrows.length).toBe(2);    
-    expect(allrows[0].attrs.foo).toBe(5)
+    expect(allrows.length).toBe(2);
+    expect(allrows[0].attrs.foo).toBe(5);
+    expect(allrows[1].attrs[0]).toBe(7);
   });
 });
 

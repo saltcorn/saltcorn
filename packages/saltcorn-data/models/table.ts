@@ -3162,7 +3162,7 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-
+                      this.stringify_json_fields(rec);
                       if (options?.no_table_write) {
                         if (existing) {
                           Object.entries(existing).forEach(([k, v]) => {
