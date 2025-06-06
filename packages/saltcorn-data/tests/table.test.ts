@@ -1561,6 +1561,24 @@ Pencil, 0.5,2, t`;
     const allrows = await table.getRows();
     expect(allrows.length).toBe(2);
   });
+  it("should import large integers as strings", async () => {
+    //db.set_sql_logging();
+    const csv = `id,cost,count, vatable
+1, 5,4, f
+4084787842, 0.5,2, t`;
+    const fnm = "/tmp/test2impok.csv";
+    await writeFile(fnm, csv);
+    const result = await Table.create_from_csv("Invoice7", fnm);
+    assertsIsSuccessMessage(result);
+    const { table } = result;
+    const fields = table.getFields();
+    expect(fields.map((f: Field) => f.name)).toContain("id");
+    const nameField = fields.find((f: Field) => f.name === "id");
+    expect(nameField.type.name).toBe("String");
+   
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
+  });
 });
 
 describe("Table field uppercase", () => {
