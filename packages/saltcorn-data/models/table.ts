@@ -2797,7 +2797,15 @@ class Table implements AbstractTable {
       )
         type = "Bool";
       else if (nonEmpties.every((v) => !isNaN(v)))
-        if (nonEmpties.every((v) => Number.isSafeInteger(+v))) type = "Integer";
+        if (
+          nonEmpties.every(
+            (v) =>
+              Number.isSafeInteger(+v) && v <= 2147483647 && v > -2147483648
+          )
+        )
+          type = "Integer";
+        else if (nonEmpties.every((v) => Number.isSafeInteger(+v)))
+          type = "String";
         else type = "Float";
       else if (nonEmpties.every((v: any) => isDate(v))) type = "Date";
       else if (state.types.UUID && nonEmpties.every((v: any) => isValidUUID(v)))
