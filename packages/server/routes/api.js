@@ -135,6 +135,21 @@ const getFlashes = (req) =>
     })
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
 
+router.use(
+  error_catcher(async (req, res, next) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).json({ error: "in maintenance mode" });
+      return;
+    }
+    next();
+  })
+);
+
 router.post(
   "/viewQuery/:viewName/:queryName",
   error_catcher(async (req, res, next) => {
