@@ -954,9 +954,36 @@ class View implements AbstractView {
     else return mobileConfig?.localTableIds.indexOf(this.table_id) < 0;
   }
 
+  /**
+   * get all tags associated with this view
+   * @returns a promise with the tags
+   */
   async getTags(): Promise<Array<AbstractTag>> {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ view_id: this.id });
+  }
+
+  /**
+   * emit a Real-time collaboration event for this view.
+   * @param eventType event without view name (e.g. "DROP_EVENT")
+   * @param data object you want to get in the event handler
+   */
+  emitRealTimeEvent(eventType: string, data: any): void {
+    const { getState } = require("../db/state");
+    const state = getState();
+    if (state.hasJoinedRealTimeSockets) {
+      const withViewName = this.getRealTimeEventName(eventType);
+      state.emitRealTimeUpdate(db.getTenantSchema(), withViewName, data);
+    }
+  }
+
+  /**
+   * get event name with view name in it (e.g. DROP_EVENT_my_kanban_view).
+   * @param eventType event without view name (e.g. "DROP_EVENT")
+   * @returns the full event name
+   */
+  getRealTimeEventName(eventType: string): string {
+    return `${eventType}_${this.name}`;
   }
 }
 

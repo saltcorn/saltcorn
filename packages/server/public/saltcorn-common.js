@@ -2075,6 +2075,25 @@ function init_room(viewname, room_id) {
   });
 }
 
+function init_collab_room(viewname, eventCfgs) {
+  const socket = io({ transports: ["websocket"] });
+  for (const [event, cfg] of Object.entries(eventCfgs.events)) {
+    socket.on(event, cfg.callback);
+  }
+  socket.on("connect", function () {
+    socket.emit("join_collab_room", viewname, (ack) => {
+      if (ack && ack.status === "ok") {
+        console.log(`Joined collaboration room for view '${viewname}'`);
+      } else {
+        console.error("Failed to join collaboration room:", ack);
+      }
+    });
+  });
+  socket.on("disconnect", function () {
+    console.log("Disconnected from the server");
+  });
+}
+
 function cancel_form(form) {
   if (!form) return;
   $(form).trigger("reset");
