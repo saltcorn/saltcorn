@@ -455,6 +455,7 @@ class Trigger implements AbstractTrigger {
           table,
           ...runargs,
           configuration,
+          trigger_id: this.id,
         });
         state.log(6, `Multistep step result ${JSON.stringify(stepres)}`);
         if (stepres?.goto_step) {
@@ -484,6 +485,7 @@ class Trigger implements AbstractTrigger {
         table,
         ...runargs,
         configuration: this.configuration,
+        trigger_id: this.id,
       })
     );
   }
@@ -500,6 +502,7 @@ class Trigger implements AbstractTrigger {
             user,
             table,
             row,
+            trigger_id: trigger.id,
             ...row,
             ...(extraArgs || {}),
           });
@@ -512,6 +515,7 @@ class Trigger implements AbstractTrigger {
             table,
             user,
             configuration: trigger.configuration,
+            trigger_id: trigger.id,
             row,
             ...row,
             ...(extraArgs || {}),
