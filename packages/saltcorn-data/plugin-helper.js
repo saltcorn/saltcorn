@@ -2675,6 +2675,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
         goRun = () =>
           state_action.run({
             configuration: trigger.configuration,
+            trigger_id: trigger.id,
             user: req.user,
             req,
             ...rest,
