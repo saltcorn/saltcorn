@@ -236,14 +236,14 @@ const getApp = async (opts = {}) => {
   //legacy
   app.use(
     express.static(__dirname + "/public", {
-      maxAge: development_mode ? 0 : 1000 * 60 * 15,
+      maxAge: 1000 * 60 * 60 * 24,
     })
   );
   app.use(
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
-        maxAge: development_mode ? 0 : 1000 * 60 * 30,
+        maxAge: 1000 * 60 * 60 * 24,
       }
     )
   );
@@ -251,7 +251,7 @@ const getApp = async (opts = {}) => {
   if (process.env.SALTCORN_SERVE_ADDITIONAL_DIR)
     app.use(
       express.static(process.env.SALTCORN_SERVE_ADDITIONAL_DIR, {
-        maxAge: development_mode ? 0 : 1000 * 60 * 15,
+        maxAge: 1000 * 60 * 60 * 24,
       })
     );
   let version_tag = db.connectObj.version_tag;
@@ -260,7 +260,7 @@ const getApp = async (opts = {}) => {
     app.use(
       "/mobile_test_build",
       express.static(process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD, {
-        maxAge: development_mode ? 0 : "100d",
+        maxAge: "100d",
       })
     );
   }
@@ -268,7 +268,7 @@ const getApp = async (opts = {}) => {
   app.use(
     `/static_assets/${version_tag}`,
     express.static(__dirname + "/public", {
-      maxAge: development_mode ? 0 : "100d",
+      maxAge: "100d",
     })
   );
   app.use(
@@ -276,7 +276,7 @@ const getApp = async (opts = {}) => {
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
       {
-        maxAge: development_mode ? 0 : "100d",
+        maxAge: "100d",
       }
     )
   );
@@ -286,7 +286,7 @@ const getApp = async (opts = {}) => {
       path.dirname(require.resolve("@saltcorn/filemanager/package.json")) +
         "/public/build",
       {
-        maxAge: development_mode ? 0 : "100d",
+        maxAge: "100d",
       }
     )
   );
@@ -447,7 +447,7 @@ const getApp = async (opts = {}) => {
   mountRoutes(app);
   // set tenant homepage as / root
   app.get("/", error_catcher(homepage));
-  
+
   app.use((req, res, next) => {
     const tenant = db.getTenantSchema();
     if (!pluginRoutesHandler.tenantRouters[tenant]) {

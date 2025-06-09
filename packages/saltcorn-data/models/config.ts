@@ -406,7 +406,7 @@ const configTypes: ConfigTypes = {
     excludeFromSnapshot: true,
     default: false,
     blurb:
-      "Disable JS/CSS asset caching, show full error to user on crash, enable editing field type",
+      "Show full error to user on crash, enable editing field type",
   },
   smtp_host: {
     type: "String",
