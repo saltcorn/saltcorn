@@ -2077,8 +2077,8 @@ function init_room(viewname, room_id) {
 
 function init_collab_room(viewname, eventCfgs) {
   const socket = io({ transports: ["websocket"] });
-  for (const [event, cfg] of Object.entries(eventCfgs.events)) {
-    socket.on(event, cfg.callback);
+  for (const [event, callback] of Object.entries(eventCfgs.events)) {
+    socket.on(event, callback);
   }
   socket.on("connect", function () {
     socket.emit("join_collab_room", viewname, (ack) => {
