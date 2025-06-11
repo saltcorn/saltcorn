@@ -2,18 +2,18 @@ const sql_pg = `
 CREATE TABLE IF NOT EXISTS _sc_metadata (
     id serial primary key,
     mdtype text NOT NULL,
-    name text NOT NULL,
+    mdname text NOT NULL,
     user_id integer references users(id) on delete cascade,
     written_at timestamp not null,
-    body jsonb
+    mdbody jsonb
 );`;
 
 const sql_sqlite = `CREATE TABLE IF NOT EXISTS _sc_metadata (
     id integer primary key,
     mdtype text NOT NULL,
-    name text NOT NULL,
+    mdname text NOT NULL,
     user_id integer references users(id) on delete cascade,
     written_at timestamp not null,
-    body json
+    mdbody json
 );`;
 module.exports = { sql_pg, sql_sqlite };
