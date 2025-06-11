@@ -2,6 +2,8 @@
 
 ## 1.3.0 - In beta
 
+* Maintenance mode - a chosen page is shown on all requests when maintenance mode is enabled
+
 * S3 automated backup destination
 
 * refresh_user_session action: run then the sessions user variable needs to be
