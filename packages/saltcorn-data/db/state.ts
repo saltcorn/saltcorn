@@ -870,6 +870,7 @@ class State {
     if (verifier) {
       this.verifier = verifier;
     }
+    
     const existingScripts = new Set(
       Object.values(this.headers)
         .flat(1)
