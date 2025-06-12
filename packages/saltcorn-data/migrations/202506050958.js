@@ -1,19 +1,11 @@
-const sql_pg = `
+const sql = `
 CREATE TABLE IF NOT EXISTS _sc_metadata (
     id serial primary key,
-    mdtype text NOT NULL,
-    mdname text NOT NULL,
+    type text NOT NULL,
+    name text NOT NULL,
     user_id integer references users(id) on delete cascade,
     written_at timestamp not null,
-    mdbody jsonb
+    body jsonb
 );`;
 
-const sql_sqlite = `CREATE TABLE IF NOT EXISTS _sc_metadata (
-    id integer primary key,
-    mdtype text NOT NULL,
-    mdname text NOT NULL,
-    user_id integer references users(id) on delete cascade,
-    written_at timestamp not null,
-    mdbody json
-);`;
-module.exports = { sql_pg, sql_sqlite };
+module.exports = { sql };

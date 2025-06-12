@@ -12,7 +12,7 @@ import type {
   PartialSome,
 } from "@saltcorn/db-common/internal";
 
-type MetaDataCfg = PartialSome<MetaData, "mdname" | "mdtype" | "mdbody">;
+type MetaDataCfg = PartialSome<MetaData, "name" | "type" | "body">;
 
 /**
  * MetaData Class
@@ -20,10 +20,10 @@ type MetaDataCfg = PartialSome<MetaData, "mdname" | "mdtype" | "mdbody">;
  */
 class MetaData {
   id?: number;
-  mdname: string;
-  mdtype: string;
+  name: string;
+  type: string;
   user_id?: number;
-  mdbody: unknown;
+  body: unknown;
   written_at: Date;
 
   /**
@@ -32,14 +32,14 @@ class MetaData {
    */
   constructor(o: MetaDataCfg | MetaData) {
     this.id = o.id;
-    this.mdbody = typeof o.mdbody === "string" ? JSON.parse(o.mdbody) : o.mdbody;
+    this.body = typeof o.body === "string" ? JSON.parse(o.body) : o.body;
     this.written_at =
       (["string", "number"].includes(typeof o.written_at)
         ? new Date(o.written_at as any)
         : o.written_at) || new Date();
     this.user_id = o.user_id;
-    this.mdname = o.mdname;
-    this.mdtype = o.mdtype;
+    this.name = o.name;
+    this.type = o.type;
   }
 
   /**
