@@ -66,7 +66,7 @@ module.exports =
       notify.ready();
       const watchdogInterval = notify.watchdogInterval();
       if (watchdogInterval && watchdogInterval > 0) {
-        const interval = Math.floor(watchdogInterval / 2);
+        const interval = Math.floor(watchdogInterval / 3);
         setInterval(() => {
           watchDog(interval, notify, opts);
         }, interval);
