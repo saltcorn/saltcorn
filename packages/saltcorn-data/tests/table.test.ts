@@ -747,6 +747,20 @@ describe("Table get data", () => {
     expect(reads[0].author).toBe("Herman Melville");
     expect(reads[0].pages).toBe(967);
   });
+  it("should get null bools", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const id = await readings.insertRow({
+      temperature: 38,
+      normalised: null,
+      patient_id: 1,
+      date: new Date(),
+    });
+    const rows = await readings.getJoinedRows({ where: { id } });
+    expect(rows[0].normalised).toBe(null);
+    const rows1 = await readings.getRows({ id });
+    expect(rows1[0].normalised).toBe(null);
+  });
 });
 describe("Table sorting", () => {
   const getPagesWithOrder = async (selopts: any) => {
@@ -1563,7 +1577,7 @@ Pencil, 0.5,2, t`;
   });
   it("should import large integers as strings", async () => {
     //db.set_sql_logging();
-    if (db.isSQLite) return
+    if (db.isSQLite) return;
 
     const csv = `id,cost,count, vatable
 1, 5,4, f
