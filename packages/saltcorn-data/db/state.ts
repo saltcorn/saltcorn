@@ -870,8 +870,18 @@ class State {
     if (verifier) {
       this.verifier = verifier;
     }
+    const existingScripts = new Set(
+      Object.values(this.headers)
+        .flat(1)
+        .map((h) => h.script)
+        .filter(Boolean)
+    );
     withCfg("headers", []).forEach((h: any) => {
-      if (!this.headers[name].includes(h)) this.headers[name].push(h);
+      if (
+        !this.headers[name].includes(h) &&
+        !(h.script && existingScripts.has(h.script))
+      )
+        this.headers[name].push(h);
     });
     const routes = withCfg("routes", []);
     this.plugin_routes[name] = routes;
