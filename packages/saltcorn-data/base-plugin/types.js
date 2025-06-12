@@ -2477,7 +2477,7 @@ const bool = {
    * @param {object} v
    * @returns {object}
    */
-  readFromDB: (v) => !!v,
+  readFromDB: (v) => (v === null ? null : !!v),
   /**
    * @param {object} v
    * @returns {object}
