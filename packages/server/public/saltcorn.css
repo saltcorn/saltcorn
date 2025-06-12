@@ -824,6 +824,14 @@ tr:hover span.add-tag {
   );
 }
 
+.prevwfroomrun i.fa-trash-alt {
+  display: none;
+}
+
+.prevwfroomrun:hover i.fa-trash-alt {
+  display: inline;
+}
+
 input[type="file"].file-has-existing {
   font-size: 0;
 }

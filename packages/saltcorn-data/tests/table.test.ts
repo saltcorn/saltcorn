@@ -747,6 +747,21 @@ describe("Table get data", () => {
     expect(reads[0].author).toBe("Herman Melville");
     expect(reads[0].pages).toBe(967);
   });
+  it("should get null bools", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const id = await readings.insertRow({
+      temperature: 38,
+      normalised: null,
+      patient_id: 1,
+      date: new Date(),
+    });
+    const rows = await readings.getJoinedRows({ where: { id } });
+    expect(rows[0].normalised).toBe(null);
+    const rows1 = await readings.getRows({ id });
+    expect(rows1[0].normalised).toBe(null);
+    await readings.deleteRows({ id });
+  });
 });
 describe("Table sorting", () => {
   const getPagesWithOrder = async (selopts: any) => {
@@ -1561,6 +1576,47 @@ Pencil, 0.5,2, t`;
     const allrows = await table.getRows();
     expect(allrows.length).toBe(2);
   });
+  it("should import large integers as strings", async () => {
+    //db.set_sql_logging();
+    if (db.isSQLite) return;
+
+    const csv = `id,cost,count, vatable
+1, 5,4, f
+4084787842, 0.5,2, t`;
+    const fnm = "/tmp/test2impok.csv";
+    await writeFile(fnm, csv);
+    const result = await Table.create_from_csv("Invoice7", fnm);
+    assertsIsSuccessMessage(result);
+    const { table } = result;
+    const fields = table.getFields();
+    expect(fields.map((f: Field) => f.name)).toContain("id");
+    const nameField = fields.find((f: Field) => f.name === "id");
+    expect(nameField.type.name).toBe("String");
+
+    const allrows = await table.getRows();
+    expect(allrows.length).toBe(2);
+  });
+  it("should import JSON columns", async () => {
+    //db.set_sql_logging();
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    const csv = `id,cost,count, attrs
+1, 5,4, "{""foo"":5}"
+3, 0.5,2, "[7]"`;
+    const fnm = "/tmp/test2impok.csv";
+    await writeFile(fnm, csv);
+    const result = await Table.create_from_csv("Invoice8", fnm);
+    assertsIsSuccessMessage(result);
+    const { table } = result;
+    const fields = table.getFields();
+    const nameField = fields.find((f: Field) => f.name === "attrs");
+    expect(nameField.type.name).toBe("JSON");
+
+    const allrows = await table.getRows({}, { orderBy: "id" });
+    expect(allrows.length).toBe(2);
+    expect(allrows[0].attrs.foo).toBe(5);
+    expect(allrows[1].attrs[0]).toBe(7);
+  });
 });
 
 describe("Table field uppercase", () => {
@@ -2292,6 +2348,21 @@ describe("external tables", () => {
     const dbtables = await Table.find_with_external({ external: false });
     expect(dbtables.map((t) => t.name)).not.toContain("exttab");
     expect(dbtables.map((t) => t.name)).toContain("books");
+  });
+  it("should query", async () => {
+    const table = Table.findOne({ name: "exttab" });
+    assertIsSet(table);
+    const rows0 = await table.getRows({ name: "Sam" });
+    expect(rows0.length).toBe(1);
+    expect(rows0[0].name).toBe("Sam");
+    const rows1 = await table.getRows({
+      or: [{ name: "Sam" }, { name: "Alex" }],
+    });
+    expect(rows1.length).toBe(2);
+    const rows2 = await table.getRows({
+      name: { in: ["Sam", "Alex"] },
+    });
+    expect(rows2.length).toBe(2);
   });
   it("should build view", async () => {
     const table = Table.findOne({ name: "exttab" });

@@ -135,6 +135,21 @@ const getFlashes = (req) =>
     })
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
 
+router.use(
+  error_catcher(async (req, res, next) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).json({ error: "in maintenance mode" });
+      return;
+    }
+    next();
+  })
+);
+
 router.post(
   "/viewQuery/:viewName/:queryName",
   error_catcher(async (req, res, next) => {
@@ -445,6 +460,44 @@ router.get(
     )(req, res, next);
   })
 );
+
+router.get("/:tableName/count", async (req, res, next) => {
+  const { tableName } = req.params;
+  const { approximate, ...req_query } = req.query;
+
+  const table = Table.findOne(
+    strictParseInt(tableName)
+      ? { id: strictParseInt(tableName) }
+      : { name: tableName }
+  );
+  if (!table) {
+    getState().log(3, `API get ${tableName} table not found`);
+    res.status(404).json({ error: req.__("Not found") });
+    return;
+  }
+  await passport.authenticate(
+    ["api-bearer", "jwt"],
+    { session: false },
+    async function (err, user, info) {
+      if (accessAllowedRead(req, user, table)) {
+        const tbl_fields = table.getFields();
+        readState(req_query, tbl_fields, req);
+        const qstate = stateFieldsToWhere({
+          fields: tbl_fields,
+          approximate: !!approximate,
+          state: req_query,
+          table,
+          prefix: "a.",
+        });
+        const count = await table.countRows(qstate);
+        res.json({ success: count });
+      } else {
+        getState().log(3, `API get ${table.name} not authorized`);
+        res.status(401).json({ error: req.__("Not authorized") });
+      }
+    }
+  )(req, res, next);
+});
 
 /**
  * Emit Event using POST

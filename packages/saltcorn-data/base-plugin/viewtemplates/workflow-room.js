@@ -274,6 +274,7 @@ const run = async (
         req.__("Previous runs"),
         runs.map((run1) =>
           div(
+            { class: "d-flex prevwfroomrun" },
             a(
               {
                 href: `javascript:void(0)`,
@@ -281,7 +282,11 @@ const run = async (
                 class: ["text-nowrap", run1.id == run.id && "fw-bold"],
               },
               localeDateTime(run1.started_at, {}, locale)
-            )
+            ),
+            i({
+              class: "far fa-trash-alt ms-2",
+              onclick: `delprevwfroomrun('${viewname}', event, ${run1.id})`,
+            })
           )
         )
       ),
@@ -326,6 +331,17 @@ const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
   };
 };
 
+const delprevrun = async (table_id, viewname, config, body, { req, res }) => {
+  const { run_id } = body;
+  let run = await WorkflowRun.findOne({
+    id: +run_id,
+  });
+  if (run && (req.user?.role_id === 1 || run.started_by === req.user?.id))
+    await run.delete();
+
+  return;
+};
+
 /**
  * @param {*} table_id
  * @param {string} viewname
@@ -348,7 +364,7 @@ module.exports = {
   run,
   tableless: true,
   get_state_fields,
-  routes: { submit_form },
+  routes: { submit_form, delprevrun },
   /** @type {boolean} */
   noAutoTest: true,
   /**

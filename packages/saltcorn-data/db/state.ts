@@ -181,6 +181,7 @@ class State {
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
+  hasJoinedRealTimeSockets: boolean;
   queriesCache?: Record<string, any>;
   scVersion: string;
   waitingWorkflows?: boolean;
@@ -242,6 +243,7 @@ class State {
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
     this.hasJoinedLogSockets = false;
+    this.hasJoinedRealTimeSockets = false;
     try {
       this.scVersion = require("../../package.json").version;
     } catch (e) {
@@ -444,6 +446,8 @@ class State {
       await this.refresh_i18n();
       this.hasJoinedLogSockets =
         (this.configs.joined_log_socket_ids?.value || []).length > 0;
+      this.hasJoinedRealTimeSockets =
+        (this.configs.joined_real_time_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
@@ -711,6 +715,8 @@ class State {
         if (key === "log_level") this.logLevel = +value;
         if (key === "joined_log_socket_ids")
           this.hasJoinedLogSockets = (value || []).length > 0;
+        if (key === "joined_real_time_socket_ids")
+          this.hasJoinedRealTimeSockets = (value || []).length > 0;
         if (db.is_node)
           process_send({ refresh: "config", tenant: db.getTenantSchema() });
         else {
@@ -1063,8 +1069,16 @@ class State {
     globalLogEmitter = f;
   }
 
+  setCollabEmitter(f: Function) {
+    globalCollabEmitter = f;
+  }
+
   emitLog(ten: string, min_level: number, msg: string) {
     globalLogEmitter(ten, min_level, msg);
+  }
+
+  emitRealTimeUpdate(ten: string, type: string, data: any) {
+    globalCollabEmitter(ten, type, data);
   }
 
   // default auth methods to enabled
@@ -1171,6 +1185,7 @@ class State {
  */
 let globalRoomEmitter: Function = () => {};
 let globalLogEmitter: Function = () => {};
+let globalCollabEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State("public");

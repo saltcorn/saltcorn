@@ -406,7 +406,7 @@ const configTypes: ConfigTypes = {
     excludeFromSnapshot: true,
     default: false,
     blurb:
-      "Disable JS/CSS asset caching, show full error to user on crash, enable editing field type",
+      "Show full error to user on crash, enable editing field type",
   },
   smtp_host: {
     type: "String",
@@ -1265,6 +1265,12 @@ const configTypes: ConfigTypes = {
     default: [],
     excludeFromMobile: true,
   },
+  joined_real_time_socket_ids: {
+    type: "hidden",
+    label: "Joined real time socket ids",
+    default: [],
+    excludeFromMobile: true,
+  },
   prune_session_interval: {
     type: "Integer",
     label: "Prune session interval (seconds)",
@@ -1305,6 +1311,18 @@ const configTypes: ConfigTypes = {
     type: "Integer",
     label: "Delete error workflows after days",
   },
+  maintenance_mode_enabled: {
+    type: "Bool",
+    label: "Enable maintenance mode",
+    default: false,
+    blurb: "Enable maintenance mode to restrict access to non-admin users",
+  },
+  maintenance_mode_page: {
+    type: "Page",
+    label: "Maintenance mode page",
+    default: "",
+    blurb: "Select the page to display during maintenance mode",
+  }
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

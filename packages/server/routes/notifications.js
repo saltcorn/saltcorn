@@ -20,6 +20,18 @@ const db = require("@saltcorn/data/db");
 const router = new Router();
 module.exports = router;
 
+router.use(
+  error_catcher(async (req, res, next) => {
+    const state = getState();
+    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+      res.status(503).send("Page Unavailable: in maintenance mode");
+      return;
+    }
+    next();
+  })
+);
+
 const notificationSettingsForm = () =>
   new Form({
     action: `/notifications/settings`,

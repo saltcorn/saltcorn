@@ -25,6 +25,7 @@ const View = require("@saltcorn/data/models/view");
 const User = require("@saltcorn/data/models/user");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
 const Field = require("@saltcorn/data/models/field");
+const Page = require("@saltcorn/data/models/page");
 
 /**
  * Restore Backup
@@ -494,6 +495,7 @@ const config_fields_form = async ({
     const isView = (configTypes[name].type || "").startsWith("View ");
     const isRole = configTypes[name].type === "Role";
     const isTenant = configTypes[name].type === "Tenant";
+    const isPage = configTypes[name].type === "Page";
     const label = configTypes[name].label || name;
     const sublabel = configTypes[name].sublabel || configTypes[name].blurb;
 
@@ -536,7 +538,7 @@ const config_fields_form = async ({
               )
             : ""),
         type:
-          isView || isRole || isTenant
+          isView || isRole || isTenant || isPage
             ? "String"
             : configTypes[name].input_type
               ? undefined
@@ -552,7 +554,14 @@ const config_fields_form = async ({
             ? roleAttribs
             : isTenant
               ? await getTenants()
-              : configTypes[name].attributes,
+              : isPage
+                ? {
+                    options: (await Page.find()).map((p) => ({
+                      label: p.name,
+                      name: p.name,
+                    })),
+                  }
+                : configTypes[name].attributes,
       });
   }
   const form = new Form({
