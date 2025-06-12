@@ -188,6 +188,7 @@ class State {
   keyframes: Array<string>;
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
+  exchange: Record<string, Array<unknown>>;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -230,6 +231,7 @@ class State {
     this.plugins_cfg_context = {};
     this.keyFieldviews = {};
     this.external_tables = {};
+    this.exchange = {};
     this.verifier = null;
     this.i18n = new I18n.I18n();
     this.i18n.configure({
@@ -829,6 +831,10 @@ class State {
     Object.entries(withCfg("authentication", {})).forEach(([k, v]) => {
       this.auth_methods[k] = v as AuthenticationMethod;
     });
+    Object.entries(withCfg("exchange", {})).forEach(([k, v]) => {
+      if (!this.exchange[k]) this.exchange[k] = [];
+      this.exchange[k].push(...(v as Array<unknown>));
+    });
     withCfg("copilot_skills", []).forEach((v: CopilotSkill) => {
       if (
         v?.function_name &&
@@ -838,6 +844,7 @@ class State {
       )
         this.copilot_skills.push(v);
     });
+
     Object.entries(withCfg("external_tables", {})).forEach(
       ([k, v]: [k: string, v: any]) => {
         if (!v.name) v.name = k;
@@ -1011,6 +1018,7 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.eventTypes = {};
+    this.exchange = {};
     this.verifier = null;
     this.fonts = standard_fonts;
     this.icons = get_standard_icons();
