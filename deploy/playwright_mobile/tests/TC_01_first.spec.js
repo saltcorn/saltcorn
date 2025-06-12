@@ -40,34 +40,24 @@ test.describe("Mobile Test Suite", () => {
   });
 
   test("login with valid credentials", async () => {
-    const iframeElement = await page.locator("iframe");
-    const iframeHandle = await iframeElement.elementHandle();
-    if (!iframeHandle) {
-      throw new Error("Iframe not found");
-    }
-    const iframe = await iframeHandle.contentFrame();
+    const iframe = page.frameLocator("iframe");
+
     await iframe.locator('input[type="email"]').fill("admin@foo.com");
     await iframe.locator('input[type="password"]').fill("AhGGr6rhu45");
     await iframe.locator('button[type="submit"]').click();
 
     await page.waitForTimeout(3000);
 
-    const newIframeElement = await page.locator("iframe");
-    const newIframeHandle = await newIframeElement.elementHandle();
-    if (!newIframeHandle) throw new Error("Iframe not found after login");
-    const newIframe = await newIframeHandle.contentFrame();
+    const newIframe = page.frameLocator("iframe");
 
-    const sidebarUserEmail = newIframe.locator(
-      "#accordionSidebar h6.collapse-header"
-    );
-    await expect(sidebarUserEmail).toHaveText("admin@foo.com");
-
-    const guitars = newIframe.locator(
-      '.card-body div[data-sc-embed-viewname="show_guitar"]'
-    );
-    await expect(guitars).toHaveCount(5);
-
-    const addButton = newIframe.locator('button:has-text("Add guitar")');
-    await expect(addButton).toBeVisible();
+    await expect(
+      newIframe.locator("#accordionSidebar h6.collapse-header")
+    ).toHaveText("admin@foo.com");
+    await expect(
+      newIframe.locator('.card-body div[data-sc-embed-viewname="show_guitar"]')
+    ).toHaveCount(5);
+    await expect(
+      newIframe.locator('button:has-text("Add guitar")')
+    ).toBeVisible();
   });
 });
