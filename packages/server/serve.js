@@ -183,7 +183,10 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   }
   eachTenant(async () => {
     const state = getState();
-    if (state) await state.setConfig("joined_log_socket_ids", []);
+    if (state) {
+      await state.setConfig("joined_log_socket_ids", []);
+      await state.setConfig("joined_real_time_socket_ids", []);
+    }
   });
   if (useClusterAdaptor) setupPrimary();
 };
@@ -518,6 +521,11 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
       .emit("log_msg", { text: msg, time, level });
   });
 
+  // Real-time collaboration emitter
+  getState().setCollabEmitter((tenant, type, data) => {
+    io.of("/").to(`_${tenant}_collab_room_`).emit(type, data);
+  });
+
   io.of("/").on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
       const ten = get_tenant_from_req(socket.request) || "public";
@@ -563,6 +571,38 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
         } catch (err) {
           getState().log(1, `Socket join_logs stream: ${err.stack}`);
           callback({ status: "error", msg: err.message || "unknown error" });
+        }
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      else await f();
+    });
+
+    // or join the room more generally and later register views ??
+    socket.on("join_collab_room", async (viewname, callback) => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = async () => {
+        try {
+          const view = View.findOne({ name: viewname });
+          if (!view) throw new Error(`View ${viewname} not found`);
+          const user = socket.request.user;
+          const role_id = user ? user.role_id : 100;
+          if (view.min_role < role_id)
+            throw new Error("Not authorized to join collaboration room");
+          socket.join(`_${tenant}_collab_room_`);
+          const socketIds = await getState().getConfig(
+            "joined_real_time_socket_ids"
+          );
+          socketIds.push(socket.id);
+          await getState().setConfig(
+            "joined_real_time_socket_ids",
+            [...socketIds]
+          );
+          if (typeof callback === "function") callback({ status: "ok" });
+        } catch (err) {
+          getState().log(1, `Socket join_collab_room: ${err.stack}`);
+          if (typeof callback === "function")
+            callback({ status: "error", msg: err.message || "unknown error" });
         }
       };
       if (tenant && tenant !== "public") db.runWithTenant(tenant, f);

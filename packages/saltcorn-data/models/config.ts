@@ -1265,6 +1265,12 @@ const configTypes: ConfigTypes = {
     default: [],
     excludeFromMobile: true,
   },
+  joined_real_time_socket_ids: {
+    type: "hidden",
+    label: "Joined real time socket ids",
+    default: [],
+    excludeFromMobile: true,
+  },
   prune_session_interval: {
     type: "Integer",
     label: "Prune session interval (seconds)",
