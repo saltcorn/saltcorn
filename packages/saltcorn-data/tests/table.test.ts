@@ -760,6 +760,7 @@ describe("Table get data", () => {
     expect(rows[0].normalised).toBe(null);
     const rows1 = await readings.getRows({ id });
     expect(rows1[0].normalised).toBe(null);
+    await readings.deleteRows({ id });
   });
 });
 describe("Table sorting", () => {
