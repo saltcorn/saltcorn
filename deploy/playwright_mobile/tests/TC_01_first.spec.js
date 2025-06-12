@@ -19,18 +19,24 @@ test.describe("Mobile Test Suite", () => {
 
   test("open login page", async () => {
     await page.goto("http://localhost:3010/mobile_test_build/index.html");
-    const iframeElement = await page.locator("iframe");
-    const iframeHandle = await iframeElement.elementHandle();
-    if (!iframeHandle) {
-      throw new Error("Iframe not found");
+
+    const iframe = page.frameLocator("iframe");
+    try {
+      await expect(iframe.locator('input[type="email"]')).toBeVisible();
+      await expect(iframe.locator('input[type="password"]')).toBeVisible();
+      await expect(iframe.locator('button[type="submit"]')).toBeVisible();
+    } catch (error) {
+      console.error("Test failed — dumping iframe HTML...");
+      const iframeHandle = await page.locator("iframe").elementHandle();
+      if (iframeHandle) {
+        const contentFrame = await iframeHandle.contentFrame();
+        if (contentFrame) {
+          const html = await contentFrame.content();
+          console.log("Iframe HTML content:\n", html);
+        } else console.error("Could not get iframe contentFrame.");
+      } else console.error("Could not get iframe element handle.");
+      throw error;
     }
-    const iframe = await iframeHandle.contentFrame();
-    const emailInput = await iframe.locator('input[type="email"]');
-    await expect(emailInput).toBeVisible();
-    const passwordInput = await iframe.locator('input[type="password"]');
-    await expect(passwordInput).toBeVisible();
-    const submitButton = await iframe.locator('button[type="submit"]');
-    await expect(submitButton).toBeVisible();
   });
 
   test("login with valid credentials", async () => {
