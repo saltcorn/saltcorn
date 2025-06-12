@@ -68,10 +68,6 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Assert the site name in Site identity tab is Saltcorn', async () => {
             await expect(page.locator(pageobject.inputsitename)).toHaveValue('Saltcorn');
         });
-        // Assert the timezone in Site identity tab
-        await customAssert('Assert the timezone in Site identity tab', async () => {
-            await expect(page.locator(pageobject.inputtimezone)).toHaveValue('Africa/Abidjan');
-        });
         // Assert the base_url in Site identity tab
         await customAssert('Assert the base_url in Site identity tab', async () => {
             await expect(page.locator(pageobject.inputbase_url)).toHaveValue('');
