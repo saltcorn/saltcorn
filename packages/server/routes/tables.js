@@ -2467,9 +2467,10 @@ router.post(
     }
     await db.withTransaction(async () => {
       const initial_view = async (table, viewtemplate) => {
-        const configuration = await initial_config_all_fields(
-          viewtemplate === "Edit"
-        )({ table_id: table.id });
+        const isEdit = viewtemplate === "Edit";
+        const configuration = await initial_config_all_fields(isEdit)({
+          table_id: table.id,
+        });
         //console.log(configuration);
         const name = `${viewtemplate} ${table.name}`;
         const view = await View.create({
@@ -2477,7 +2478,7 @@ router.post(
           configuration,
           viewtemplate,
           table_id: table.id,
-          min_role: 100,
+          min_role: isEdit ? table.min_role_write : table.min_role_read,
         });
         return view;
       };
