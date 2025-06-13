@@ -2450,6 +2450,15 @@ router.post(
   })
 );
 
+const basicViewForm = (table, req) => {
+  return new Form({
+    submitLabel: req.__("Create views"),
+    action: `/table/create-basic-views/${table.id}`,
+    formStyle: "vert",
+    fields: [],
+  });
+};
+
 router.get(
   "/create-basic-views/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
@@ -2464,15 +2473,7 @@ router.get(
       return;
     }
     res.set("Page-Title", req.__("Create basic views"));
-    const page = post_btn(
-      `/table/create-basic-views/${table.id}`,
-      "Create basic views",
-      req.csrfToken(),
-      {
-        btnClass: "btn-primary",
-        formClass: "d-inline ms-2",
-      }
-    );
+    const page = renderForm(basicViewForm(table, req), req.csrfToken());
 
     res.send(page);
   })

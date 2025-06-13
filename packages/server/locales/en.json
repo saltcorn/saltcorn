@@ -1614,5 +1614,6 @@
 	"Enable maintenance mode to restrict access to non-admin users": "Enable maintenance mode to restrict access to non-admin users",
 	"Maintenance mode page": "Maintenance mode page",
 	"Select the page to display during maintenance mode": "Select the page to display during maintenance mode",
-	"Create basic views": "Create basic views"
+	"Create basic views": "Create basic views",
+	"Create views": "Create views"
 }
