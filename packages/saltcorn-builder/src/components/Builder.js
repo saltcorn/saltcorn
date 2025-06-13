@@ -223,14 +223,14 @@ const SettingsPanel = () => {
         {selected ? (
           <Fragment>
             {selected.isDeletable && (
-              <button className="btn btn-sm btn-danger" onClick={deleteThis}>
+              <button className="btn btn-sm btn-danger delete-element-builder" onClick={deleteThis}>
                 <FontAwesomeIcon icon={faTrashAlt} className="me-1" />
                 Delete
               </button>
             )}
             {hasChildren && !selected.isDeletable ? (
               <button
-                className="btn btn-sm btn-danger"
+                className="btn btn-sm btn-danger delete-children-builder"
                 onClick={deleteChildren}
               >
                 <FontAwesomeIcon icon={faTrashAlt} className="me-1" />
@@ -239,7 +239,7 @@ const SettingsPanel = () => {
             ) : (
               <button
                 title="Duplicate element with its children"
-                className="btn btn-sm btn-secondary ms-2"
+                className="btn btn-sm btn-secondary ms-2 duplicate-element-builder"
                 onClick={duplicate}
               >
                 <FontAwesomeIcon icon={faCopy} className="me-1" />
@@ -293,7 +293,7 @@ const AddColumnButton = () => {
     );
   };
   return (
-    <button className="btn btn-primary mt-2" onClick={addColumn}>
+    <button className="btn btn-primary mt-2 add-column-builder" onClick={addColumn}>
       <FontAwesomeIcon icon={faPlus} className="me-2" />
       Add column
     </button>
@@ -316,7 +316,7 @@ const HistoryPanel = () => {
     <Fragment>
       {canUndo && (
         <button
-          className="btn btn-sm btn-secondary ms-2 me-2"
+          className="btn btn-sm btn-secondary ms-2 me-2 undo-builder"
           title="Undo"
           onClick={() => actions.history.undo()}
         >
@@ -325,7 +325,7 @@ const HistoryPanel = () => {
       )}
       {canRedo && (
         <button
-          className="btn btn-sm btn-secondary"
+          className="btn btn-sm btn-secondary redo-builder"
           title="Redo"
           onClick={() => actions.history.redo()}
         >
