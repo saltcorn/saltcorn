@@ -2453,6 +2453,7 @@ router.post(
 
 const basicViewForm = async (table, req) => {
   const tables = await Table.find();
+  const vts = viewtemplates_with_create_basic_option();
   return new Form({
     submitLabel: req.__("Create views"),
     action: `/table/create-basic-views/${table.id}`,
@@ -2472,8 +2473,22 @@ const basicViewForm = async (table, req) => {
         name: "template_table",
         attributes: { options: tables.map((t) => t.name) },
       },
+      ...vts.map((vt) => ({
+        type: "Bool",
+        label: vt,
+        name: vt,
+        default: true,
+      })),
     ],
   });
+};
+
+const viewtemplates_with_create_basic_option = () => {
+  const vts = [];
+  Object.entries(getState().viewtemplates).forEach(([nm, obj]) => {
+    if (obj.createBasicView) vts.push(nm);
+  });
+  return vts;
 };
 
 router.get(
@@ -2549,11 +2564,11 @@ router.post(
           viewpattern: viewtemplate,
           tablename: table.name,
         });
-      const all_views_created = {
-        List: getName("List"),
-        Show: getName("Show"),
-        Edit: getName("Edit"),
-      };
+      const all_views_created = {};
+      const vts = viewtemplates_with_create_basic_option();
+      vts.forEach((vt) => {
+        if (form.values[vt]) all_views_created[vt] = getName(vt);
+      });
 
       const initial_view = async (table, viewtemplate) => {
         const isEdit = viewtemplate === "Edit";
@@ -2567,7 +2582,6 @@ router.post(
             ? Table.findOne(form.values.template_table)
             : undefined,
         });
-        //console.log(configuration);
         const view = await View.create({
           name,
           configuration,
@@ -2577,9 +2591,9 @@ router.post(
         });
         return view;
       };
-      const list = await initial_view(table, "List");
-      const edit = await initial_view(table, "Edit");
-      const show = await initial_view(table, "Show");
+      for (const vtnm of Object.keys(all_views_created)) {
+        await initial_view(table, vtnm);
+      }
     });
     await getState().refresh_views();
     res.redirect(`/table/${table.id}`);
