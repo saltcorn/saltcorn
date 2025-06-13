@@ -1389,7 +1389,7 @@ const createBasicView = async ({
   const configuration = await initial_config_all_fields(false)({
     table_id: table.id,
   });
-
+  delete configuration.layout;
   let template_table_views = {};
   if (template_view) {
     (
@@ -1415,6 +1415,8 @@ const createBasicView = async ({
           (c) => c.field_type === field_type
         );
         if (matched) {
+          if (matched.configuration)
+            Object.assign(mycol, matched.configuration);
           Object.assign(mycol, matched);
           mycol.field_name = field_name;
         }
