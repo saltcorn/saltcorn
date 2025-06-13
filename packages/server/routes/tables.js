@@ -2544,16 +2544,30 @@ router.post(
       );
 
     await db.withTransaction(async () => {
-      const initial_view = async (table, viewtemplate) => {
-        const isEdit = viewtemplate === "Edit";
-        const configuration = await initial_config_all_fields(isEdit)({
-          table_id: table.id,
-        });
-        //console.log(configuration);
-        const name = interpolate(form.values.naming_convention, {
+      const getName = (viewtemplate) =>
+        interpolate(form.values.naming_convention, {
           viewpattern: viewtemplate,
           tablename: table.name,
         });
+      const all_views_created = {
+        List: getName("List"),
+        Show: getName("Show"),
+        Edit: getName("Edit"),
+      };
+
+      const initial_view = async (table, viewtemplate) => {
+        const isEdit = viewtemplate === "Edit";
+        const vtObj = getState().viewtemplates[viewtemplate];
+        const name = getName(viewtemplate);
+        const configuration = await vtObj.createBasicView({
+          table,
+          viewname: name,
+          all_views_created,
+          template_table: form.values.template_table
+            ? Table.findOne(form.values.template_table)
+            : undefined,
+        });
+        //console.log(configuration);
         const view = await View.create({
           name,
           configuration,
@@ -2566,49 +2580,6 @@ router.post(
       const list = await initial_view(table, "List");
       const edit = await initial_view(table, "Edit");
       const show = await initial_view(table, "Show");
-      await View.update(
-        {
-          configuration: {
-            ...list.configuration,
-            columns: [
-              ...list.configuration.columns,
-              {
-                type: "ViewLink",
-                view: `Own:Show ${table.name}`,
-                view_name: `Show ${table.name}`,
-                link_style: "",
-                view_label: "Show",
-                header_label: "Show",
-              },
-              {
-                type: "ViewLink",
-                view: `Own:Edit ${table.name}`,
-                view_name: `Edit ${table.name}`,
-                link_style: "",
-                view_label: "Edit",
-                header_label: "Edit",
-              },
-              {
-                type: "Action",
-                action_name: "Delete",
-                action_style: "btn-primary",
-              },
-            ],
-            view_to_create: `Edit ${table.name}`,
-          },
-        },
-        list.id
-      );
-      await View.update(
-        {
-          configuration: {
-            ...edit.configuration,
-            view_when_done: `List ${table.name}`,
-            destination_type: "View",
-          },
-        },
-        edit.id
-      );
     });
     await getState().refresh_views();
     res.redirect(`/table/${table.id}`);

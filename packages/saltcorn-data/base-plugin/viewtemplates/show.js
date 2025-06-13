@@ -1108,7 +1108,17 @@ const run_action = async (
   }
   return result;
 };
-
+const createBasicView = async ({
+  table,
+  viewname,
+  template_table,
+  all_views_created,
+}) => {
+  const configuration = await initial_config_all_fields(false)({
+    table_id: table.id,
+  });
+  return configuration;
+};
 module.exports = {
   /** @type {string} */
   name: "Show",
@@ -1120,6 +1130,7 @@ module.exports = {
   runMany,
   renderRows,
   initial_config,
+  createBasicView,
   routes: { run_action },
   /**
    * @param {object} opts

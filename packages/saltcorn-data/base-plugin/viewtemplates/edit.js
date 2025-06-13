@@ -2200,6 +2200,23 @@ const tryInsertOrUpdateImpl = async (row, id, table, user) => {
   }
 };
 
+const createBasicView = async ({
+  table,
+  viewname,
+  template_table,
+  all_views_created,
+}) => {
+  const configuration = await initial_config_all_fields(true)({
+    table_id: table.id,
+  });
+  if (all_views_created.List) {
+    configuration.view_when_done = all_views_created.List;
+    configuration.destination_type = "View";
+  }
+
+  return configuration;
+};
+
 module.exports = {
   /** @type {string} */
   name: "Edit",
@@ -2213,6 +2230,7 @@ module.exports = {
   authorizeDataStream,
   get_state_fields,
   initial_config,
+  createBasicView,
   authorise_post,
   /**
    * @param {object} opts

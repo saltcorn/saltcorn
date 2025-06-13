@@ -1372,6 +1372,44 @@ const run_action = async (
     }
   );
 };
+const createBasicView = async ({
+  table,
+  viewname,
+  template_table,
+  all_views_created,
+}) => {
+  const configuration = await initial_config_all_fields(false)({
+    table_id: table.id,
+  });
+  if (all_views_created.Show) {
+    configuration.columns.push({
+      type: "ViewLink",
+      view: `Own:${all_views_created.Show}`,
+      view_name: all_views_created.Show,
+      link_style: "",
+      view_label: "Show",
+      header_label: "Show",
+    });
+  }
+  if (all_views_created.Edit) {
+    configuration.view_to_create = all_views_created.Edit;
+    configuration.columns.push({
+      type: "ViewLink",
+      view: `Own:${all_views_created.Edit}`,
+      view_name: all_views_created.Edit,
+      link_style: "",
+      view_label: "Edit",
+      header_label: "Edit",
+    });
+  }
+  configuration.columns.push({
+    type: "Action",
+    action_name: "Delete",
+    action_style: "btn-primary",
+  });
+
+  return configuration;
+};
 
 module.exports = {
   /** @type {string} */
@@ -1445,6 +1483,7 @@ module.exports = {
     maybeAdd(create_view_label);
     return strings;
   },
+  createBasicView,
   queries: ({
     table_id,
     exttable_name,
