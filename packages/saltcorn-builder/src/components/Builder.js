@@ -471,7 +471,7 @@ const Builder = ({ options, layout, mode }) => {
                               ? faCaretSquareLeft
                               : faCaretSquareRight
                           }
-                          className={"float-end fa-lg"}
+                          className={"float-end fa-lg builder-expand-toggle-left"}
                           onClick={() => setIsLeftEnlarged(!isLeftEnlarged)}
                           title={isLeftEnlarged ? "Shrink" : "Enlarge"}
                         />
@@ -545,7 +545,7 @@ const Builder = ({ options, layout, mode }) => {
                         icon={
                           isEnlarged ? faCaretSquareRight : faCaretSquareLeft
                         }
-                        className={"float-end me-2 mt-1 fa-lg"}
+                        className={"float-end me-2 mt-1 fa-lg builder-expand-toggle-right"}
                         onClick={() => setIsEnlarged(!isEnlarged)}
                         title={isEnlarged ? "Shrink" : "Enlarge"}
                       />
