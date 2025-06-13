@@ -1382,8 +1382,6 @@ const createBasicView = async ({
   /* 
   FROM TEMPLATE TABLE
 
-  - fieldviews, fieldview settings
-  - has delete? delete button style, header label
   - has show link? label, style, hdr label
   - has edit link? label, style, hdr label
   - create new row options
@@ -1439,11 +1437,17 @@ const createBasicView = async ({
       header_label: "Edit",
     });
   }
-  configuration.columns.push({
-    type: "Action",
-    action_name: "Delete",
-    action_style: "btn-primary",
-  });
+  if (template_view) {
+    const matched = template_view.configuration.columns.find(
+      (c) => c.type === "Action" && c.action_name === "Delete"
+    );
+    if (matched) configuration.columns.push(matched);
+  } else
+    configuration.columns.push({
+      type: "Action",
+      action_name: "Delete",
+      action_style: "btn-primary",
+    });
 
   return configuration;
 };
