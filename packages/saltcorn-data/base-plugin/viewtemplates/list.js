@@ -1390,9 +1390,16 @@ const createBasicView = async ({
     table_id: table.id,
   });
 
-  console.log(template_view.configuration.columns);
-
+  let template_table_views = {};
   if (template_view) {
+    (
+      await View.find({
+        table_id: template_table.id,
+      })
+    ).forEach((v) => {
+      template_table_views[v.name] = v.viewtemplate;
+    });
+
     template_view.configuration.columns.forEach((c) => {
       if (c.type === "Field") {
         const field = template_table.getField(c.field_name);
@@ -1414,26 +1421,57 @@ const createBasicView = async ({
       }
     });
   }
+  //show link
   if (all_views_created.Show) {
-    configuration.columns.push({
-      type: "ViewLink",
-      view: `Own:${all_views_created.Show}`,
-      view_name: all_views_created.Show,
-      link_style: "",
-      view_label: "Show",
-      header_label: "Show",
-    });
+    if (template_view) {
+      //find link to show view
+      const col = template_view.configuration.columns.find(
+        (c) => c.type === "ViewLink" && template_table_views[c.view] === "Show"
+      );
+      if (col) {
+        configuration.columns.push({
+          ...col,
+          view: `Own:${all_views_created.Show}`,
+          view_name: all_views_created.Show,
+          relation: undefined,
+        });
+      }
+    } else
+      configuration.columns.push({
+        type: "ViewLink",
+        view: `Own:${all_views_created.Show}`,
+        view_name: all_views_created.Show,
+        link_style: "",
+        view_label: "Show",
+        header_label: "Show",
+      });
   }
+
+  //edit link
   if (all_views_created.Edit) {
     configuration.view_to_create = all_views_created.Edit;
-    configuration.columns.push({
-      type: "ViewLink",
-      view: `Own:${all_views_created.Edit}`,
-      view_name: all_views_created.Edit,
-      link_style: "",
-      view_label: "Edit",
-      header_label: "Edit",
-    });
+    if (template_view) {
+      //find link to show view
+      const col = template_view.configuration.columns.find(
+        (c) => c.type === "ViewLink" && template_table_views[c.view] === "Edit"
+      );
+      if (col) {
+        configuration.columns.push({
+          ...col,
+          view: `Own:${all_views_created.Show}`,
+          view_name: all_views_created.Show,
+          relation: undefined,
+        });
+      }
+    } else
+      configuration.columns.push({
+        type: "ViewLink",
+        view: `Own:${all_views_created.Edit}`,
+        view_name: all_views_created.Edit,
+        link_style: "",
+        view_label: "Edit",
+        header_label: "Edit",
+      });
   }
   if (template_view) {
     const matched = template_view.configuration.columns.find(
@@ -1484,6 +1522,7 @@ const createBasicView = async ({
     configuration.default_state._borderless =
       template_view.configuration.default_state._borderless;
   }
+  //console.log("new cols", configuration.columns);
   return configuration;
 };
 

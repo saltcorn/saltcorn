@@ -2563,7 +2563,7 @@ router.post(
         interpolate(form.values.naming_convention, {
           viewpattern: viewtemplate,
           tablename: table.name,
-        });
+        }).trim();
       const all_views_created = {};
       const vts = viewtemplates_with_create_basic_option();
       vts.forEach((vt) => {
