@@ -1428,7 +1428,9 @@ const createBasicView = async ({
     if (template_view) {
       //find link to show view
       const col = template_view.configuration.columns.find(
-        (c) => c.type === "ViewLink" && template_table_views[c.view] === "Show"
+        (c) =>
+          c.type === "ViewLink" &&
+          template_table_views[c.view?.split?.(":")[1]] === "Show"
       );
       if (col) {
         configuration.columns.push({
@@ -1436,6 +1438,7 @@ const createBasicView = async ({
           view: `Own:${all_views_created.Show}`,
           view_name: all_views_created.Show,
           relation: undefined,
+          view_label: col.view_label || col.label,
         });
       }
     } else
@@ -1455,14 +1458,17 @@ const createBasicView = async ({
     if (template_view) {
       //find link to show view
       const col = template_view.configuration.columns.find(
-        (c) => c.type === "ViewLink" && template_table_views[c.view] === "Edit"
+        (c) =>
+          c.type === "ViewLink" &&
+          template_table_views[c.view?.split?.(":")[1]] === "Edit"
       );
       if (col) {
         configuration.columns.push({
           ...col,
-          view: `Own:${all_views_created.Show}`,
-          view_name: all_views_created.Show,
+          view: `Own:${all_views_created.Edit}`,
+          view_name: all_views_created.Edit,
           relation: undefined,
+          view_label: col.view_label || col.label,
         });
       }
     } else
