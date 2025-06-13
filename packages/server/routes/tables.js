@@ -2581,6 +2581,12 @@ router.post(
           template_table: form.values.template_table
             ? Table.findOne(form.values.template_table)
             : undefined,
+          template_view: form.values.template_table
+            ? View.findOne({
+                table_id: Table.findOne(form.values.template_table).id,
+                viewtemplate,
+              })
+            : undefined,
         });
         const view = await View.create({
           name,

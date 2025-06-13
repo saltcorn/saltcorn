@@ -1375,12 +1375,49 @@ const run_action = async (
 const createBasicView = async ({
   table,
   viewname,
+  template_view,
   template_table,
   all_views_created,
 }) => {
+  /* 
+  FROM TEMPLATE TABLE
+
+  - fieldviews, fieldview settings
+  - has delete? delete button style, header label
+  - has show link? label, style, hdr label
+  - has edit link? label, style, hdr label
+  - create new row options
+  - list layout settings
+  */
+
   const configuration = await initial_config_all_fields(false)({
     table_id: table.id,
   });
+
+  console.log(template_view.configuration.columns);
+
+  if (template_view) {
+    template_view.configuration.columns.forEach((c) => {
+      if (c.type === "Field") {
+        const field = template_table.getField(c.field_name);
+        c.field_type = field.type.name || field.type;
+      }
+    });
+    configuration.columns.forEach((mycol) => {
+      if (mycol.type === "Field") {
+        const field_name = mycol.field_name;
+        const field = table.getField(field_name);
+        const field_type = field.type.name || field.type;
+        const matched = template_view.configuration.columns.find(
+          (c) => c.field_type === field_type
+        );
+        if (matched) {
+          Object.assign(mycol, matched);
+          mycol.field_name = field_name;
+        }
+      }
+    });
+  }
   if (all_views_created.Show) {
     configuration.columns.push({
       type: "ViewLink",
