@@ -2451,7 +2451,8 @@ router.post(
   })
 );
 
-const basicViewForm = (table, req) => {
+const basicViewForm = async (table, req) => {
+  const tables = await Table.find();
   return new Form({
     submitLabel: req.__("Create views"),
     action: `/table/create-basic-views/${table.id}`,
@@ -2464,6 +2465,12 @@ const basicViewForm = (table, req) => {
         attributes: { spellcheck: false },
         sublabel:
           "Use <code>{{ }}</code> to access: <code>viewpattern</code>, <code>tablename</code>",
+      },
+      {
+        type: "String",
+        label: "Template table",
+        name: "template_table",
+        attributes: { options: tables.map((t) => t.name) },
       },
     ],
   });
@@ -2483,9 +2490,13 @@ router.get(
       return;
     }
     res.set("Page-Title", req.__("Create basic views"));
-    const form = basicViewForm(table, req);
+    const form = await basicViewForm(table, req);
     form.values.naming_convention = getState().getConfig(
       "viewgen_naming_convention"
+    );
+    form.values.template_table = getState().getConfig(
+      "viewgen_template_table",
+      ""
     );
     const page = renderForm(form, req.csrfToken());
 
@@ -2506,7 +2517,7 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-    const form = basicViewForm(table, req);
+    const form = await basicViewForm(table, req);
     form.validate(req.body || {});
     if (form.hasErrors) {
       req.flash("error", req.__("An error occurred"));
@@ -2514,16 +2525,22 @@ router.post(
       return;
     }
 
-    const current_naming_convention = getState().getConfig(
-      "viewgen_naming_convention"
-    );
     if (
       form.values.naming_convention &&
-      form.values.naming_convention !== current_naming_convention
+      form.values.naming_convention !==
+        getState().getConfig("viewgen_naming_convention")
     )
       await getState().setConfig(
         "viewgen_naming_convention",
         form.values.naming_convention
+      );
+    if (
+      form.values.template_table !==
+      getState().getConfig("viewgen_template_table")
+    )
+      await getState().setConfig(
+        "viewgen_template_table",
+        form.values.template_table
       );
 
     await db.withTransaction(async () => {
