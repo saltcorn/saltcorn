@@ -934,14 +934,12 @@ router.get(
       if (user_can_edit_views) {
         let create_basic_link = "";
         if (views.length === 0) {
-          create_basic_link = post_btn(
-            `/table/create-basic-views/${table.id}`,
-            "Create basic views",
-            req.csrfToken(),
+          create_basic_link = a(
             {
-              btnClass: "btn-outline-secondary",
-              formClass: "d-inline ms-2",
-            }
+              class: "btn btn-outline-secondary ms-2",
+              href: `javascript:ajax_modal('/table/create-basic-views/${table.id}')`,
+            },
+            req.__("Create basic views")
           );
         }
         viewCard = {
@@ -2449,6 +2447,34 @@ router.post(
     });
     await getState().refresh_tables();
     res.redirect(`/table/${table.id}`);
+  })
+);
+
+router.get(
+  "/create-basic-views/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const table = Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    res.set("Page-Title", req.__("Create basic views"));
+    const page = post_btn(
+      `/table/create-basic-views/${table.id}`,
+      "Create basic views",
+      req.csrfToken(),
+      {
+        btnClass: "btn-primary",
+        formClass: "d-inline ms-2",
+      }
+    );
+
+    res.send(page);
   })
 );
 
