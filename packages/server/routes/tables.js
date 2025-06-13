@@ -940,7 +940,7 @@ router.get(
             req.csrfToken(),
             {
               btnClass: "btn-outline-secondary",
-              formClass: "d-inline me-2",
+              formClass: "d-inline ms-2",
             }
           );
         }
