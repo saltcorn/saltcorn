@@ -1322,7 +1322,15 @@ const configTypes: ConfigTypes = {
     label: "Maintenance mode page",
     default: "",
     blurb: "Select the page to display during maintenance mode",
-  }
+  },
+  viewgen_naming_convention: {
+    type: "String",
+    label: "Naming convention",
+    default: "{{viewpattern}} {{tablename}}",
+    blurb: "",
+    excludeFromMobile: true,
+  },
+
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

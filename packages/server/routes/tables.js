@@ -72,6 +72,7 @@ const {
   removeAllWhiteSpace,
   comparingCaseInsensitive,
   validSqlId,
+  interpolate,
 } = require("@saltcorn/data/utils");
 const { EOL } = require("os");
 
@@ -2455,7 +2456,16 @@ const basicViewForm = (table, req) => {
     submitLabel: req.__("Create views"),
     action: `/table/create-basic-views/${table.id}`,
     formStyle: "vert",
-    fields: [],
+    fields: [
+      {
+        type: "String",
+        label: "View naming convention",
+        name: "naming_convention",
+        attributes: { spellcheck: false },
+        sublabel:
+          "Use <code>{{ }}</code> to access: <code>viewpattern</code>, <code>tablename</code>",
+      },
+    ],
   });
 };
 
@@ -2473,7 +2483,11 @@ router.get(
       return;
     }
     res.set("Page-Title", req.__("Create basic views"));
-    const page = renderForm(basicViewForm(table, req), req.csrfToken());
+    const form = basicViewForm(table, req);
+    form.values.naming_convention = getState().getConfig(
+      "viewgen_naming_convention"
+    );
+    const page = renderForm(form, req.csrfToken());
 
     res.send(page);
   })
@@ -2492,6 +2506,26 @@ router.post(
       res.redirect(`/table`);
       return;
     }
+    const form = basicViewForm(table, req);
+    form.validate(req.body || {});
+    if (form.hasErrors) {
+      req.flash("error", req.__("An error occurred"));
+      res.redirect(`/table/${table.id}`);
+      return;
+    }
+
+    const current_naming_convention = getState().getConfig(
+      "viewgen_naming_convention"
+    );
+    if (
+      form.values.naming_convention &&
+      form.values.naming_convention !== current_naming_convention
+    )
+      await getState().setConfig(
+        "viewgen_naming_convention",
+        form.values.naming_convention
+      );
+
     await db.withTransaction(async () => {
       const initial_view = async (table, viewtemplate) => {
         const isEdit = viewtemplate === "Edit";
@@ -2499,7 +2533,10 @@ router.post(
           table_id: table.id,
         });
         //console.log(configuration);
-        const name = `${viewtemplate} ${table.name}`;
+        const name = interpolate(form.values.naming_convention, {
+          viewpattern: viewtemplate,
+          tablename: table.name,
+        });
         const view = await View.create({
           name,
           configuration,
