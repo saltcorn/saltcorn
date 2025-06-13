@@ -1384,8 +1384,6 @@ const createBasicView = async ({
 
   - has show link? label, style, hdr label
   - has edit link? label, style, hdr label
-  - create new row options
-  - list layout settings
   */
 
   const configuration = await initial_config_all_fields(false)({
@@ -1449,6 +1447,43 @@ const createBasicView = async ({
       action_style: "btn-primary",
     });
 
+  // create new row options
+  if (template_view && all_views_created.Edit) {
+    configuration.create_view_display =
+      template_view.configuration.create_view_display;
+    configuration.create_view_location =
+      template_view.configuration.create_view_location;
+    configuration.create_link_style =
+      template_view.configuration.create_link_style;
+    configuration.create_link_size =
+      template_view.configuration.create_link_size;
+  }
+  // list layout settings
+  if (template_view && template_view.configuration.default_state) {
+    if (!configuration.default_state) configuration.default_state = {};
+    configuration.default_state._rows_per_page =
+      template_view.configuration.default_state._rows_per_page;
+    configuration.default_state._hide_pagination =
+      template_view.configuration.default_state._hide_pagination;
+    configuration.default_state.transpose =
+      template_view.configuration.default_state.transpose;
+    configuration.default_state.transpose_width =
+      template_view.configuration.default_state.transpose_width;
+    configuration.default_state.transpose_width_units =
+      template_view.configuration.default_state.transpose_width_units;
+    configuration.default_state._omit_header =
+      template_view.configuration.default_state._omit_header;
+    configuration.default_state.hide_null_columns =
+      template_view.configuration.default_state.hide_null_columns;
+    configuration.default_state._hover_rows =
+      template_view.configuration.default_state._hover_rows;
+    configuration.default_state._striped_rows =
+      template_view.configuration.default_state._striped_rows;
+    configuration.default_state._card_rows =
+      template_view.configuration.default_state._card_rows;
+    configuration.default_state._borderless =
+      template_view.configuration.default_state._borderless;
+  }
   return configuration;
 };
 
