@@ -82,6 +82,8 @@ const {
   getStringsForI18n,
   translateLayout,
   traverseSync,
+  splitLayoutContainerFields,
+  findLayoutBranchWith,
 } = require("../../models/layout");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
@@ -2218,8 +2220,66 @@ const createBasicView = async ({
 
     return configuration;
   }
+  const { inner, outer } = splitLayoutContainerFields(
+    template_view.configuration.layout
+  );
 
-  
+  const templateFieldTypes = {},
+    templateFieldLabels = {};
+  for (const field of template_table.fields) {
+    templateFieldTypes[field.name] = field.type_name;
+    templateFieldLabels[field.name] = field.label;
+  }
+  const defaultBranch = findLayoutBranchWith(inner.contents.above, (s) => {
+    return s.type === "field";
+  });
+  const inners = [],
+    columns = [];
+  for (const field of table.fields) {
+    if (field.primary_key) continue;
+    const branch =
+      findLayoutBranchWith(inner.contents.above, (s) => {
+        return (
+          s.type === "field" &&
+          templateFieldTypes[s.field_name] === field.type_name
+        );
+      }) || defaultBranch;
+    let oldField;
+    traverseSync(branch, {
+      field(s) {
+        oldField = template_table.getField(s.field_name);
+      },
+    });
+    const newBranch = structuredClone(branch);
+    let newCol = {};
+    traverseSync(newBranch, {
+      field(s) {
+        s.field_name = field.name;
+        newCol = {
+          type: "Field",
+          fieldview: s.fieldview,
+          field_name: field.name,
+        };
+      },
+      blank(s) {
+        if (s.contents === oldField.label) s.contents = field.label;
+      },
+    });
+    inners.push(newBranch);
+    columns.push(newCol);
+  }
+  const cfg = {
+    layout: outer({ above: inners }),
+    columns,
+  };
+  if (all_views_created.List) {
+    cfg.view_when_done = all_views_created.List;
+    cfg.destination_type = "View";
+  }
+
+  //console.log("show cfg", cfg);
+
+  return cfg;
 };
 
 module.exports = {
