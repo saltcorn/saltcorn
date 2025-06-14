@@ -23,6 +23,7 @@ const {
   getStringsForI18n,
   translateLayout,
   splitLayoutContainerFields,
+  findLayoutBranchWith,
 } = require("../../models/layout");
 const { check_view_columns } = require("../../plugin-testing");
 
@@ -1126,13 +1127,54 @@ const createBasicView = async ({
   const { inner, outer } = splitLayoutContainerFields(
     template_view.configuration.layout
   );
+
+  const templateFieldTypes = {},
+    templateFieldLabels = {};
+  for (const field of template_table.fields) {
+    templateFieldTypes[field.name] = field.type_name;
+    templateFieldLabels[field.name] = field.label;
+  }
+
+  const defaultBranch = findLayoutBranchWith(inner.contents.above, (s) => {
+    return s.type === "field";
+  });
+  const inners = [],
+    columns = [];
+  for (const field of table.fields) {
+    if (field.primary_key) continue;
+    const branch =
+      findLayoutBranchWith(inner.contents.above, (s) => {
+        return (
+          s.type === "field" &&
+          templateFieldTypes[s.field_name] === field.type_name
+        );
+      }) || defaultBranch;
+    let oldField;
+    traverseSync(branch, {
+      field(s) {
+        oldField = template_table.getField(s.field_name);
+      },
+    });
+    const newBranch = structuredClone(branch);
+    traverseSync(newBranch, {
+      field(s) {
+        s.field_name = field.name;
+      },
+      blank(s) {
+        if (s.contents === oldField.label) s.contents = field.label;
+      },
+    });
+    inners.push(newBranch);
+  }
+  console.log("inners", inners);
+  
   const cfg = {
-    layout: outer({ type: "blank", contents: "hello world" }),
-    columns: [],
+    layout: outer({ above: inners }),
+    columns,
   };
   //console.log("show cfg", cfg);
 
-  return cfg
+  return cfg;
 };
 module.exports = {
   /** @type {string} */

@@ -212,10 +212,7 @@ const splitLayoutContainerFields = (layout: Layout) => {
   const outer = (newContents: Layout) => {
     const newLayout = structuredClone(layout);
     let replaceIt = (s: any) => {
-      Object.keys(s).forEach((k) => {
-        delete s[k];
-      });
-      Object.assign(s, newContents);
+      s.contents = newContents;
     };
     traverseSync(newLayout, {
       blank(s) {
@@ -240,11 +237,11 @@ const findLayoutBranchWith = (
   pred: (l1: Layout) => boolean
 ) => {
   for (const layout of layouts) {
-    let found: Layout | null = null;
+    let found = false;
     traverseSync(layout, (l: Layout) => {
-      if (pred(l) && !found) found = l;
+      if (pred(l) && !found) found = true;
     });
-    if (found) return found;
+    if (found) return layout;
   }
 };
 
