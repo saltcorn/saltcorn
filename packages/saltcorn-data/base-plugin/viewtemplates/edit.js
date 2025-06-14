@@ -2263,10 +2263,28 @@ const createBasicView = async ({
       },
       blank(s) {
         if (s.contents === oldField.label) s.contents = field.label;
+        if (s.labelFor === oldField.name) s.labelFor = field.name;
       },
     });
     inners.push(newBranch);
     columns.push(newCol);
+  }
+  //clone any actions in inner
+  for (const tmpl_inner of inner.contents.above) {
+    let hasField = false;
+    let hasAction = null;
+    const theActions = [];
+    traverseSync(tmpl_inner, {
+      field() {
+        hasField = true;
+      },
+      action(s) {
+        hasAction = true;
+        theActions.push(s);
+      },
+    });
+    if (hasAction && !hasField) inners.push(tmpl_inner);
+    theActions.forEach((a) => columns.push({ ...a, type: "Action" }));
   }
   const cfg = {
     layout: outer({ above: inners }),
