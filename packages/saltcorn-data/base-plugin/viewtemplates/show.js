@@ -22,6 +22,7 @@ const {
   traverse,
   getStringsForI18n,
   translateLayout,
+  splitLayoutContainerFields,
 } = require("../../models/layout");
 const { check_view_columns } = require("../../plugin-testing");
 
@@ -1111,13 +1112,27 @@ const run_action = async (
 const createBasicView = async ({
   table,
   viewname,
+  template_view,
   template_table,
   all_views_created,
 }) => {
-  const configuration = await initial_config_all_fields(false)({
-    table_id: table.id,
-  });
-  return configuration;
+  if (!template_view) {
+    const configuration = await initial_config_all_fields(false)({
+      table_id: table.id,
+    });
+    return configuration;
+  }
+
+  const { inner, outer } = splitLayoutContainerFields(
+    template_view.configuration.layout
+  );
+  const cfg = {
+    layout: outer({ type: "blank", contents: "hello world" }),
+    columns: [],
+  };
+  //console.log("show cfg", cfg);
+
+  return cfg
 };
 module.exports = {
   /** @type {string} */

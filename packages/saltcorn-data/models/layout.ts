@@ -183,6 +183,58 @@ const translateLayout = (layout: Layout, locale: string): void => {
   });
 };
 
+const countFields = (layout: Layout) => {
+  let count = 0;
+  traverseSync(layout, {
+    field() {
+      count += 1;
+    },
+  });
+
+  return count;
+};
+
+const splitLayoutContainerFields = (layout: Layout) => {
+  let inner;
+  traverseSync(layout, {
+    blank(s) {
+      if (s.customClass === "fields") {
+        inner = s;
+      }
+    },
+  });
+
+  const outer = (newContents: Layout) => {
+    const newLayout = structuredClone(layout);
+    traverseSync(newLayout, {
+      blank(s) {
+        if (s.customClass === "fields") {
+          Object.keys(s).forEach((k) => {
+            delete s[k];
+          });
+          Object.assign(s, newContents);
+        }
+      },
+    });
+    return newLayout;
+  };
+
+  return { outer, inner };
+};
+
+const findLayoutBranchWith = (
+  layouts: Array<Layout>,
+  pred: (l1: Layout) => boolean
+) => {
+  for (const layout of layouts) {
+    let found: Layout | null = null;
+    traverseSync(layout, (l: Layout) => {
+      if (pred(l) && !found) found = l;
+    });
+    if (found) return found;
+  }
+};
+
 export = {
   eachView,
   eachPage,
@@ -191,4 +243,7 @@ export = {
   traverseSync,
   getStringsForI18n,
   translateLayout,
+  countFields,
+  splitLayoutContainerFields,
+  findLayoutBranchWith,
 };
