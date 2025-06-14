@@ -2277,7 +2277,12 @@ const createBasicView = async ({
     cfg.destination_type = "View";
   }
 
-  //console.log("show cfg", cfg);
+  cfg.auto_save = template_view.configuration.auto_save;
+  cfg.confirm_leave = template_view.configuration.confirm_leave;
+  cfg.auto_create = template_view.configuration.auto_create;
+  cfg.delete_unchanged_auto_create =
+    template_view.configuration.delete_unchanged_auto_create;
+  cfg.split_paste = template_view.configuration.split_paste;
 
   return cfg;
 };
