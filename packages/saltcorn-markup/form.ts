@@ -1454,6 +1454,18 @@ const renderFormLayout = (form: Form): string => {
         return mkBtn(
           `onClick="${spinnerStr}submitWithAjax(this)" type="button"`
         );
+
+      if (action_name === "Login") {
+        return mkBtn(
+          `onClick="${spinnerStr}login_from_edit_view(event)" type="button"`
+        );
+      }
+      if (action_name === "Sign up") {
+        console.log("signup_from_edit_view", action_name);
+        return mkBtn(
+          `onClick="${spinnerStr}signup_from_edit_view(event)" type="button"`
+        );
+      }
       if (action_link) return action_link;
 
       if ((isNode && !form.req?.smr) || form.isWorkflow) {
