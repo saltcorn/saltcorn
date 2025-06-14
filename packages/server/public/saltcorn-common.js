@@ -2336,6 +2336,22 @@ function formInEmbed(event) {
   return form;
 }
 
+function login_from_edit_view(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const form = $(e.target).closest("form");
+  form.attr("action", "/auth/login");
+  form.submit();
+}
+
+function signup_from_edit_view(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const form = $(e.target).closest("form");
+  form.attr("action", "/auth/signup");
+  form.submit();
+}
+
 function handle_identical_fields(event) {
   let form = null;
   if (event.srcElement) {

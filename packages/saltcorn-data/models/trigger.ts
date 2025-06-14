@@ -344,7 +344,7 @@ class Trigger implements AbstractTrigger {
    */
   static async runTableTriggers(
     when_trigger: string,
-    table: Table,
+    table: Table | null,
     row: Row,
     resultCollector?: any,
     user?: Row,
@@ -356,7 +356,7 @@ class Trigger implements AbstractTrigger {
     for (const trigger of triggers) {
       state.log(
         4,
-        `Trigger run ${trigger.name} ${trigger.action} on ${when_trigger} ${table.name} id=${row?.id}`
+        `Trigger run ${trigger.name} ${trigger.action} on ${when_trigger} ${table?.name} id=${row?.id}`
       );
 
       try {
@@ -367,14 +367,14 @@ class Trigger implements AbstractTrigger {
           resultCollector.error = (resultCollector.error || "") + e.message;
         Crash.create(e, {
           url: "/",
-          headers: { when_trigger, table: table.name, trigger: trigger.name },
+          headers: { when_trigger, table: table?.name, trigger: trigger.name },
         });
       }
     }
     //intentionally omit await
     EventLog.create({
       event_type: when_trigger,
-      channel: table.name,
+      channel: table?.name,
       user_id: user?.id,
       payload: row,
       occur_at: new Date(),
@@ -490,7 +490,11 @@ class Trigger implements AbstractTrigger {
     );
   }
 
-  static setRunFunctions(triggers: Array<Trigger>, table: Table, user?: Row) {
+  static setRunFunctions(
+    triggers: Array<Trigger>,
+    table: Table | null,
+    user?: Row
+  ) {
     const { getState } = require("../db/state");
     for (const trigger of triggers) {
       if (
@@ -532,15 +536,18 @@ class Trigger implements AbstractTrigger {
    */
   static getTableTriggers(
     when_trigger: string,
-    table: Table,
+    table: Table | null,
     user?: Row
   ): Trigger[] {
     const { getState } = require("../db/state");
-    const triggers = Trigger.find({ when_trigger, table_id: table.id });
+    const triggers = Trigger.find({
+      when_trigger,
+      ...(table ? { table_id: table.id } : {}),
+    });
     Trigger.setRunFunctions(triggers, table, user);
     const virtual_triggers = getState().virtual_triggers.filter(
       (tr: Trigger) =>
-        when_trigger === tr.when_trigger && tr.table_id == table.id
+        when_trigger === tr.when_trigger && tr.table_id == table?.id
     );
     return [...triggers, ...virtual_triggers];
   }
