@@ -202,17 +202,30 @@ const splitLayoutContainerFields = (layout: Layout) => {
         inner = s;
       }
     },
+    container(s) {
+      if (s.customClass === "fields") {
+        inner = s;
+      }
+    },
   });
 
   const outer = (newContents: Layout) => {
     const newLayout = structuredClone(layout);
+    let replaceIt = (s: any) => {
+      Object.keys(s).forEach((k) => {
+        delete s[k];
+      });
+      Object.assign(s, newContents);
+    };
     traverseSync(newLayout, {
       blank(s) {
         if (s.customClass === "fields") {
-          Object.keys(s).forEach((k) => {
-            delete s[k];
-          });
-          Object.assign(s, newContents);
+          replaceIt(s);
+        }
+      },
+      container(s) {
+        if (s.customClass === "fields") {
+          replaceIt(s);
         }
       },
     });
