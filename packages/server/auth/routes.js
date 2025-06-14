@@ -1201,7 +1201,13 @@ router.post(
       req.user
     );
     if (resultCollector.notify) {
-      req.flash("success", resultCollector.notify);
+      req.flash("warning", resultCollector.notify);
+    }
+    if (resultCollector.error) {
+      req.flash("error", resultCollector.error);
+    }
+    if(resultCollector.notify_success) {
+      req.flash("success", resultCollector.notify_success);
     }
     if (resultCollector.goto) {
       res.redirect(resultCollector.goto);
