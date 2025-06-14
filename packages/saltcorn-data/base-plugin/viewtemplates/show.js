@@ -1165,9 +1165,7 @@ const createBasicView = async ({
       },
     });
     inners.push(newBranch);
-  }
-  console.log("inners", inners);
-  
+  }  
   const cfg = {
     layout: outer({ above: inners }),
     columns,
