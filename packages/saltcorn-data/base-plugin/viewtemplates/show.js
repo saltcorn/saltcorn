@@ -1156,16 +1156,23 @@ const createBasicView = async ({
       },
     });
     const newBranch = structuredClone(branch);
+    let newCol = {};
     traverseSync(newBranch, {
       field(s) {
         s.field_name = field.name;
+        newCol = {
+          type: "Field",
+          fieldview: s.fieldview,
+          field_name: field.name,
+        };
       },
       blank(s) {
         if (s.contents === oldField.label) s.contents = field.label;
       },
     });
     inners.push(newBranch);
-  }  
+    columns.push(newCol);
+  }
   const cfg = {
     layout: outer({ above: inners }),
     columns,
