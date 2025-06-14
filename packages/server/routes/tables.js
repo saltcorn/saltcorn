@@ -2472,6 +2472,9 @@ const basicViewForm = async (table, req) => {
         label: "Template table",
         name: "template_table",
         attributes: { options: tables.map((t) => t.name) },
+        help: {
+          topic: "Template tables",
+        },
       },
       ...vts.map((vt) => ({
         type: "Bool",
