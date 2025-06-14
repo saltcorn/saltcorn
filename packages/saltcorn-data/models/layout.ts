@@ -195,37 +195,27 @@ const countFields = (layout: Layout) => {
 };
 
 const splitLayoutContainerFields = (layout: Layout) => {
-  let inner;
-  traverseSync(layout, {
-    blank(s) {
-      if (s.customClass === "all-fields") {
-        inner = s;
-      }
-    },
-    container(s) {
-      if (s.customClass === "all-fields") {
-        inner = s;
-      }
-    },
-  });
-
+  const findAllFieldsContainer = (l: Layout) => {
+    let inner;
+    //all-fields container is last container to have >1 field
+    traverseSync(l, {
+      blank(s) {
+        if (countFields(s) > 1) inner = s;
+      },
+      container(s) {
+        if (countFields(s) > 1) inner = s;
+      },
+    });
+    return inner;
+  };
+  const inner = findAllFieldsContainer(layout);
   const outer = (newContents: Layout) => {
     const newLayout = structuredClone(layout);
     let replaceIt = (s: any) => {
       s.contents = newContents;
     };
-    traverseSync(newLayout, {
-      blank(s) {
-        if (s.customClass === "all-fields") {
-          replaceIt(s);
-        }
-      },
-      container(s) {
-        if (s.customClass === "all-fields") {
-          replaceIt(s);
-        }
-      },
-    });
+    replaceIt(findAllFieldsContainer(newLayout));
+
     return newLayout;
   };
 
