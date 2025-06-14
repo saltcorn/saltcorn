@@ -1,1 +1,9 @@
 Views can be generated based on views from a different table. 
+
+To use this facility create a table with fields of different types and create views on this table that you would like to use as a template for generating basic views for other tables. Saltcorn will attempt to apply the style and the field view choices to the new tables. 
+
+For list views this is relatively straightforward. You may not get the ordering you are desiring and will need to adjust the list view after the generation. 
+
+Show and Edit views make some assumptions about the views you are trying to clone. This works best if there is one container in the template view that contain all of the fields in sub elements. Each field along with its associated labels should be inside its own elements (e.g. a container for each group of elements related to one field).
+
+Use this templating facility to quickly create many different views of a consistent style. If you're doing this across many instances you may want to create a tag for your template table and template views and download this tag's pack and restore it on each application you are building.
