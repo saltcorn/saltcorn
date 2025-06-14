@@ -198,12 +198,12 @@ const splitLayoutContainerFields = (layout: Layout) => {
   let inner;
   traverseSync(layout, {
     blank(s) {
-      if (s.customClass === "fields") {
+      if (s.customClass === "all-fields") {
         inner = s;
       }
     },
     container(s) {
-      if (s.customClass === "fields") {
+      if (s.customClass === "all-fields") {
         inner = s;
       }
     },
@@ -216,12 +216,12 @@ const splitLayoutContainerFields = (layout: Layout) => {
     };
     traverseSync(newLayout, {
       blank(s) {
-        if (s.customClass === "fields") {
+        if (s.customClass === "all-fields") {
           replaceIt(s);
         }
       },
       container(s) {
-        if (s.customClass === "fields") {
+        if (s.customClass === "all-fields") {
           replaceIt(s);
         }
       },
