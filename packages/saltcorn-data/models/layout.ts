@@ -205,6 +205,9 @@ const splitLayoutContainerFields = (layout: Layout) => {
       container(s) {
         if (countFields(s) > 1) inner = s;
       },
+      card(s) {
+        if (countFields(s) > 1) inner = s;
+      },
     });
     return inner;
   };
