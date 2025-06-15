@@ -36,6 +36,9 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
       return;
     }
     if (segment.above) {
+      if (typeof visitors !== "function" && "above" in visitors) {
+        visitors.above(segment);
+      }
       for (const seg of segment.above) go(seg);
       return;
     }
@@ -205,6 +208,12 @@ const splitLayoutContainerFields = (layout: Layout) => {
       container(s) {
         if (countFields(s) > 1) inner = s;
       },
+      card(s) {
+        if (countFields(s) > 1) inner = s;
+      },
+      above(s) {
+        if (countFields(s) > 1) inner = s;
+      },
     });
     return inner;
   };
@@ -212,7 +221,8 @@ const splitLayoutContainerFields = (layout: Layout) => {
   const outer = (newContents: Layout) => {
     const newLayout = structuredClone(layout);
     let replaceIt = (s: any) => {
-      s.contents = newContents;
+      if (s.above) s.above = [newContents];
+      else s.contents = newContents;
     };
     replaceIt(findAllFieldsContainer(newLayout));
 

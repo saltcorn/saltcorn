@@ -1135,15 +1135,18 @@ const createBasicView = async ({
     templateFieldLabels[field.name] = field.label;
   }
 
-  const defaultBranch = findLayoutBranchWith(inner.contents.above, (s) => {
-    return s.type === "field";
-  });
+  const defaultBranch = findLayoutBranchWith(
+    inner.above || inner.contents.above,
+    (s) => {
+      return s.type === "field";
+    }
+  );
   const inners = [],
     columns = [];
   for (const field of table.fields) {
     if (field.primary_key) continue;
     const branch =
-      findLayoutBranchWith(inner.contents.above, (s) => {
+      findLayoutBranchWith(inner.above || inner.contents.above, (s) => {
         return (
           s.type === "field" &&
           templateFieldTypes[s.field_name] === field.type_name
