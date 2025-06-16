@@ -414,12 +414,25 @@ describe("Metadata model", () => {
       written_at: new Date(),
       body: { foo: { bar: 1 }, baz: 7 },
     });
-    const md1: any = await MetaData.findOne({
+    const md1: MetaData = await MetaData.findOne({
       name: "View45",
       type: "PromptSummary",
     });
     assertIsSet(md1);
     expect(md1.body.foo.bar).toBe(1);
     expect(md1.body.baz).toBe(7);
+  });
+  it("should count", async () => {
+    const n = await MetaData.count({ type: "PromptSummary" });
+    expect(n).toBe(1);
+    const n1 = await MetaData.count({ type: "Perfect unit tests" });
+    expect(n1).toBe(0);
+    const mds: Array<MetaData> = await MetaData.find({
+      type: "PromptSummary",
+    });
+    expect(mds.length).toBe(1);
+    await mds[0].delete();
+    const n2 = await MetaData.count({ type: "PromptSummary" });
+    expect(n2).toBe(0);
   });
 });
