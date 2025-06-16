@@ -9,6 +9,7 @@ const {
 } = require("@saltcorn/data/db/connect");
 const packagejson = require("../../package.json");
 const { print_it } = require("../common");
+const si = require("systeminformation");
 
 /**
  * InfoCommand Class
@@ -29,12 +30,15 @@ class InfoCommand extends Command {
     const db = require("@saltcorn/data/db");
     const cliPath = __dirname;
     const conn = getConnectObject();
+    const cpu = await si.cpu();
+
     const res = {
       saltcornVersion: packagejson.version,
       configFilePath,
       nodeVersion: process.version,
       cliPath,
       databaseVendor: db.isSQLite ? "SQLite" : "PostgreSQL",
+      defaultNWorkers: cpu.performanceCores || cpu.physicalCores,
     };
     try {
       res.databaseVersion = await db.getVersion();
