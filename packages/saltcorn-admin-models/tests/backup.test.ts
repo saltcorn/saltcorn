@@ -12,6 +12,7 @@ import config from "@saltcorn/data/models/config";
 const { setConfig, getConfig } = config;
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
+import MetaData from "@saltcorn/data/models/metadata";
 import Role from "@saltcorn/data/models/role";
 import WorkflowStep from "@saltcorn/data/models/workflow_step";
 
@@ -111,7 +112,13 @@ describe("Backup and restore", () => {
       icon: "fa-bar",
       layout: { baz: "bar" },
     });
-
+    await MetaData.create({
+      type: "PromptSummary",
+      name: "View45",
+      user_id: 1,
+      written_at: new Date(),
+      body: { foo: { bar: 1 }, baz: 7 },
+    });
     await Table.create("JoeTable", {
       provider_name: "provtab",
       provider_cfg: { middle_name: "Robinette" },
@@ -186,6 +193,10 @@ describe("Backup and restore", () => {
     expect(mySteps.length).toBe(2);
     const lib = await Library.findOne({ name: "foo" });
     expect(!!lib).toBe(true);
+    const md = await MetaData.findOne({ type: "PromptSummary" });
+    expect(!!md).toBe(true);
+    expect(md.body.foo.bar).toBe(1);
+
     const tp = Table.findOne({ name: "JoeTable" });
     expect(tp?.provider_name).toBe("provtab");
     expect(tp?.provider_cfg?.middle_name).toBe("Robinette");

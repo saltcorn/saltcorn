@@ -9,6 +9,7 @@ const {
 } = require("@saltcorn/data/db/connect");
 const packagejson = require("../../package.json");
 const { print_it } = require("../common");
+const si = require("systeminformation");
 
 /**
  * InfoCommand Class
@@ -29,12 +30,15 @@ class InfoCommand extends Command {
     const db = require("@saltcorn/data/db");
     const cliPath = __dirname;
     const conn = getConnectObject();
+    const cpu = await si.cpu();
+
     const res = {
       saltcornVersion: packagejson.version,
       configFilePath,
       nodeVersion: process.version,
       cliPath,
       databaseVendor: db.isSQLite ? "SQLite" : "PostgreSQL",
+      defaultNWorkers: cpu.performanceCores || cpu.physicalCores,
     };
     try {
       res.databaseVersion = await db.getVersion();
@@ -45,7 +49,7 @@ class InfoCommand extends Command {
     }
     res.environmentVariables = {};
     const envVars =
-      "DATABASE_URL SQLITE_FILEPATH PGDATABASE PGUSER PGHOST PGPORT PGPASSWORD PGDATABASE SALTCORN_SESSION_SECRET SALTCORN_MULTI_TENANT SALTCORN_FILE_STORE SALTCORN_DEFAULT_SCHEMA SALTCORN_FIXED_CONFIGURATION SALTCORN_FIXED_PLUGIN_CONFIGURATION SALTCORN_INHERIT_CONFIGURATION SALTCORN_SERVE_ADDITIONAL_DIR SALTCORN_NWORKERS SALTCORN_DISABLE_UPGRADE PUPPETEER_CHROMIUM_BIN".split(
+      "DATABASE_URL SQLITE_FILEPATH PGDATABASE PGUSER PGHOST PGPORT PGPASSWORD PGDATABASE SALTCORN_SESSION_SECRET SALTCORN_MULTI_TENANT SALTCORN_FILE_STORE SALTCORN_DEFAULT_SCHEMA SALTCORN_FIXED_CONFIGURATION SALTCORN_FIXED_PLUGIN_CONFIGURATION SALTCORN_INHERIT_CONFIGURATION SALTCORN_SERVE_ADDITIONAL_DIR SALTCORN_NWORKERS SALTCORN_DISABLE_UPGRADE PUPPETEER_CHROMIUM_BIN HTTPS_PROXY".split(
         " ",
       );
     envVars.forEach((v) => {

@@ -24,6 +24,7 @@ import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import { existsSync } from "fs";
 import { join } from "path";
+import MetaData from "../models/metadata";
 
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {
@@ -401,5 +402,37 @@ describe("Model", () => {
     expect(inst.is_default).toBe(true);
     await inst.make_default(true);
     expect(inst.is_default).toBe(false);
+  });
+});
+
+describe("Metadata model", () => {
+  it("should create", async () => {
+    const md = await MetaData.create({
+      type: "PromptSummary",
+      name: "View45",
+      user_id: 1,
+      written_at: new Date(),
+      body: { foo: { bar: 1 }, baz: 7 },
+    });
+    const md1: MetaData = await MetaData.findOne({
+      name: "View45",
+      type: "PromptSummary",
+    });
+    assertIsSet(md1);
+    expect(md1.body.foo.bar).toBe(1);
+    expect(md1.body.baz).toBe(7);
+  });
+  it("should count", async () => {
+    const n = await MetaData.count({ type: "PromptSummary" });
+    expect(n).toBe(1);
+    const n1 = await MetaData.count({ type: "Perfect unit tests" });
+    expect(n1).toBe(0);
+    const mds: Array<MetaData> = await MetaData.find({
+      type: "PromptSummary",
+    });
+    expect(mds.length).toBe(1);
+    await mds[0].delete();
+    const n2 = await MetaData.count({ type: "PromptSummary" });
+    expect(n2).toBe(0);
   });
 });
