@@ -1493,42 +1493,32 @@ const createBasicView = async ({
       action_style: "btn-primary",
     });
 
+  const copy_cfg = (keys, parent_field) => {
+    if (parent_field && !configuration[parent_field])
+      configuration[parent_field] = {};
+    for (const key of Array.isArray(keys)
+      ? keys
+      : keys.split(" ").filter(Boolean)) {
+      if (parent_field)
+        configuration[parent_field][key] =
+          template_view.configuration[parent_field][key];
+      else configuration[key] = template_view.configuration[key];
+    }
+  };
+
   // create new row options
+
   if (template_view && all_views_created.Edit) {
-    configuration.create_view_display =
-      template_view.configuration.create_view_display;
-    configuration.create_view_location =
-      template_view.configuration.create_view_location;
-    configuration.create_link_style =
-      template_view.configuration.create_link_style;
-    configuration.create_link_size =
-      template_view.configuration.create_link_size;
+    copy_cfg(
+      "create_view_display create_view_location create_link_style create_link_size"
+    );
   }
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
-    if (!configuration.default_state) configuration.default_state = {};
-    configuration.default_state._rows_per_page =
-      template_view.configuration.default_state._rows_per_page;
-    configuration.default_state._hide_pagination =
-      template_view.configuration.default_state._hide_pagination;
-    configuration.default_state.transpose =
-      template_view.configuration.default_state.transpose;
-    configuration.default_state.transpose_width =
-      template_view.configuration.default_state.transpose_width;
-    configuration.default_state.transpose_width_units =
-      template_view.configuration.default_state.transpose_width_units;
-    configuration.default_state._omit_header =
-      template_view.configuration.default_state._omit_header;
-    configuration.default_state.hide_null_columns =
-      template_view.configuration.default_state.hide_null_columns;
-    configuration.default_state._hover_rows =
-      template_view.configuration.default_state._hover_rows;
-    configuration.default_state._striped_rows =
-      template_view.configuration.default_state._striped_rows;
-    configuration.default_state._card_rows =
-      template_view.configuration.default_state._card_rows;
-    configuration.default_state._borderless =
-      template_view.configuration.default_state._borderless;
+    copy_cfg(
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless",
+      "default_state"
+    );
   }
   //console.log("new cols", configuration.columns);
   return configuration;
