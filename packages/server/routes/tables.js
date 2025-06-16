@@ -2577,6 +2577,12 @@ router.post(
         const isEdit = viewtemplate === "Edit";
         const vtObj = getState().viewtemplates[viewtemplate];
         const name = getName(viewtemplate);
+        const template_view = form.values.template_table
+          ? View.findOne({
+              table_id: Table.findOne(form.values.template_table).id,
+              viewtemplate,
+            })
+          : undefined;
         const configuration = await vtObj.createBasicView({
           table,
           viewname: name,
@@ -2584,18 +2590,14 @@ router.post(
           template_table: form.values.template_table
             ? Table.findOne(form.values.template_table)
             : undefined,
-          template_view: form.values.template_table
-            ? View.findOne({
-                table_id: Table.findOne(form.values.template_table).id,
-                viewtemplate,
-              })
-            : undefined,
+          template_view,
         });
         const view = await View.create({
           name,
           configuration,
           viewtemplate,
           table_id: table.id,
+          attributes: template_view?.attributes,
           min_role: isEdit ? table.min_role_write : table.min_role_read,
         });
         return view;
