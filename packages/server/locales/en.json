@@ -1616,5 +1616,6 @@
 	"Select the page to display during maintenance mode": "Select the page to display during maintenance mode",
 	"Create basic views": "Create basic views",
 	"Create views": "Create views",
-	"Decimal places": "Decimal places"
+	"Decimal places": "Decimal places",
+	"%s view - %s": "%s view - %s"
 }

@@ -416,7 +416,7 @@ router.get(
           class: "mt-0",
           titleAjaxIndicator: true,
           title: req.__(
-            `%s view - %s on %s`,
+            viewrow.table_name ? `%s view - %s on %s` : `%s view - %s`,
             viewname,
             viewrow.viewtemplate,
             viewrow.table_name
