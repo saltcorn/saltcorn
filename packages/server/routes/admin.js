@@ -499,6 +499,7 @@ router.get(
     backupForm.values.backup_s3_access_secret = getState().getConfig(
       "backup_s3_access_secret"
     );
+    backupForm.values.backup_password = getState().getConfig("backup_password");
     backupForm.values.backup_s3_region =
       getState().getConfig("backup_s3_region");
     aBackupFilePrefixForm.values.backup_with_event_log = getState().getConfig(
@@ -1136,6 +1137,19 @@ const autoBackupForm = (req) => {
         label: req.__("S3 Secret Key"),
         fieldview: "password",
         name: "backup_s3_access_secret",
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: "S3",
+        },
+      },
+      {
+        type: "String",
+        label: "Backup password",
+        fieldview: "password",
+        name: "backup_password",
+        sublabel: req.__(
+          "Password to encrypt the backup file. Leave empty for no encryption"
+        ),
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "S3",

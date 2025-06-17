@@ -376,6 +376,7 @@ const zipFolder = async (folder: string, zipFileName: string) => {
     "backup_with_system_zip",
     false
   );
+  const backup_password = getState().getConfig("backup_password", "");
   if (backup_with_system_zip) {
     const backup_system_zip_level = getState().getConfig(
       "backup_system_zip_level",
@@ -385,7 +386,7 @@ const zipFolder = async (folder: string, zipFileName: string) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
       const cmd = `zip ${
         backup_system_zip_level ? `-${backup_system_zip_level} ` : ""
-      }-rq "${absZipPath}" .`;
+      }-rq ${backup_password ? `-P "${backup_password}" ` : ""}"${absZipPath}" .`;
       exec(cmd, { cwd: folder }, (error: any) => {
         if (error) reject(error);
         else resolve(undefined);
@@ -447,9 +448,17 @@ function executableIsAvailable(name: string) {
 const extract = async (fnm: string, dir: string): Promise<void> => {
   const backup_with_system_zip = executableIsAvailable("unzip");
   const state = getState();
+  const backup_password = state.getConfig("backup_password", "");
+
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
-      var subprocess = spawn("unzip", [File.normalise(fnm), "-d", dir]);
+      const passwordArg = backup_password ? `-P "${backup_password}"` : "";
+      const subprocess = spawn("unzip", [
+        passwordArg,
+        File.normalise(fnm),
+        "-d",
+        dir,
+      ]);
       subprocess.stdout.on("data", (data: any) => {
         state.log(6, data.toString());
       });
@@ -461,7 +470,7 @@ const extract = async (fnm: string, dir: string): Promise<void> => {
         else resolve(undefined);
       });
     });
-  } else
+  } else {
     return new Promise(function (resolve, reject) {
       const zip = new Zip(fnm);
       zip.extractAllToAsync(dir, true, false, function (err: any) {
@@ -469,6 +478,7 @@ const extract = async (fnm: string, dir: string): Promise<void> => {
         else resolve();
       });
     });
+  }
 };
 
 /**
