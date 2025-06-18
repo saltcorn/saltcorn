@@ -309,6 +309,9 @@ function apply_showif() {
         qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
       else qss.push(`dereference=${dynwhere.dereference}`);
     }
+    if (!dynwhere.label_formula && dynwhere.summary_field && dynwhere.refname) {
+      qss.push(`fields=${dynwhere.summary_field},${dynwhere.refname}`);
+    }
     const qs = qss.join("&");
     let current = e.attr("data-selected");
     if (current === "null") current = null;
