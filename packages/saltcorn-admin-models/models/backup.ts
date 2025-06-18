@@ -471,13 +471,17 @@ const extract = async (fnm: string, dir: string): Promise<void> => {
       });
     });
   } else {
-    return new Promise(function (resolve, reject) {
-      const zip = new Zip(fnm);
-      zip.extractAllToAsync(dir, true, false, function (err: any) {
-        if (err) reject(new Error("Error opening zip file: " + err));
-        else resolve();
-      });
-    });
+    const zip = new Zip(fnm);
+    try {
+      if (backup_password) {
+        zip.extractAllTo(dir, true, false, backup_password);
+      } else {
+        zip.extractAllTo(dir, true, false);
+      }
+    } catch (error: any) {
+      state.log(1, `Error during extraction: ${error.message}`);
+      throw new Error(`Failed to extract backup: ${error.message}`);
+    }
   }
 };
 

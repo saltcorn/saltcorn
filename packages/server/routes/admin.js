@@ -1152,7 +1152,7 @@ const autoBackupForm = (req) => {
         ),
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
-          auto_backup_destination: "S3",
+          auto_backup_destination: ["Local directory", "S3", "SFTP server", "Saltcorn files"],
         },
       },
       {
