@@ -819,19 +819,10 @@ const get_viewable_fields = (
           label: column.header_label ? text(__(column.header_label)) : "",
           key: (r) => {
             const layout = structuredClone({ ...column, type: "container" });
-            traverseSync(layout, {
-              container(segment) {
-                if (segment.showIfFormula) {
-                  const f = get_expression_function(
-                    segment.showIfFormula,
-                    fields
-                  );
-                  if (!f({ ...dollarizeObject(state || {}), ...r }, req.user))
-                    segment.hide = true;
-                  else segment.hide = false;
-                }
-              },
-            });
+            traverseSync(
+              layout,
+              standardLayoutRowVisitor(viewname, state, table, r, req)
+            );
             return renderLayout({
               blockDispatch: standardBlockDispatch(
                 viewname,
@@ -1348,6 +1339,114 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
         ? "false"
         : "true";
   return `sortby('${text(fname)}', ${desc}, '${statehash}', this)`;
+};
+
+const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
+  const session_id = getSessionId(req);
+  const locale = req.getLocale();
+  const fields = table.fields;
+
+  const evalMaybeExpr = (segment, key, fmlkey) => {
+    if (segment.isFormula && segment.isFormula[fmlkey || key]) {
+      segment[key] = eval_expression(
+        segment[key],
+        { session_id, locale, ...row },
+        req.user,
+        `property ${key} in segment of type ${segment.type}`
+      );
+    }
+  };
+  return {
+    link(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "text");
+      if (
+        req?.generate_email &&
+        req.get_base_url &&
+        segment.url.startsWith("/")
+      ) {
+        const targetPrefix = req.get_base_url();
+        const safePrefix = (targetPrefix || "").endsWith("/")
+          ? targetPrefix.substring(0, targetPrefix.length - 1)
+          : targetPrefix || "";
+        segment.url = safePrefix + segment.url;
+      }
+    },
+    view_link(segment) {
+      evalMaybeExpr(segment, "view_label", "label");
+    },
+    blank(segment) {
+      evalMaybeExpr(segment, "contents", "text");
+    },
+    tabs(segment) {
+      const to_delete = new Set();
+
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(
+            sif,
+            { session_id, ...row },
+            req.user,
+            `Tabs show if formula`
+          );
+          if (!showit) to_delete.add(ix);
+        }
+      });
+
+      // TODO mutation here - potential issue with renderRows
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+
+      (segment.titles || []).forEach((t, ix) => {
+        if (typeof t === "string" && t.includes("{{")) {
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
+        }
+      });
+    },
+    action(segment) {
+      evalMaybeExpr(segment, "action_label");
+    },
+    card(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "title");
+      evalMaybeExpr(segment, "class");
+    },
+    image(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "alt");
+      if (segment.srctype === "Field") {
+        const field = fields.find((f) => f.name === segment.field);
+        if (!field) return;
+        if (field.type.name === "String") segment.url = row[segment.field];
+        if (field.type === "File") {
+          segment.url = `/files/serve/${row[segment.field]}`;
+          segment.fileid = row[segment.field];
+        }
+      }
+    },
+    container(segment) {
+      evalMaybeExpr(segment, "bgColor");
+      evalMaybeExpr(segment, "customClass");
+      evalMaybeExpr(segment, "customId");
+      evalMaybeExpr(segment, "url");
+      if (segment.bgType === "Image Field") {
+        segment.bgType = "Image";
+        segment.bgFileId = row[segment.bgField];
+      }
+
+      if (segment.showIfFormula) {
+        const f = get_expression_function(segment.showIfFormula, fields);
+        if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
+          segment.hide = true;
+        else segment.hide = false;
+      }
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${
+          segment.click_action
+        }', ${table.pk_name}: ${JSON.stringify(row[table.pk_name])}})`;
+      }
+    },
+  };
 };
 
 const standardBlockDispatch = (viewname, state, table, extra, row) => {
@@ -1874,4 +1973,5 @@ module.exports = {
   make_link,
   edit_build_in_actions,
   standardBlockDispatch,
+  standardLayoutRowVisitor,
 };
