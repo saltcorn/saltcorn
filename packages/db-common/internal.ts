@@ -705,7 +705,7 @@ export type SelectOptions = {
   ownership_formula?: string;
   provider_name?: string;
   provider_cfg?: any;
-  fields?: [string];
+  fields?: Array<string>;
   has_sync_info?: boolean;
   description?: string;
   recursive?: boolean; // for File.find()
