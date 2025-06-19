@@ -454,7 +454,7 @@ const extract = async (fnm: string, dir: string): Promise<void> => {
     return await new Promise((resolve, reject) => {
       const passwordArg = backup_password ? `-P "${backup_password}"` : "";
       const subprocess = spawn("unzip", [
-        passwordArg,
+        ...(passwordArg ? [passwordArg] : []),
         File.normalise(fnm),
         "-d",
         dir,
