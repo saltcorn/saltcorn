@@ -2598,6 +2598,24 @@ describe("Table insert/update expanded joinfields", () => {
     expect(prow3?.patient_id).toBe(1);
   });
 });
+describe("aggregation formula", () => {
+  it("gets agg variable", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const aggregations = {};
+    const freeVars = freeVariables("readings$patient_id$temperature");
+    expect([...freeVars]).toStrictEqual(["readings$patient_id$temperature"]);
+    add_free_variables_to_aggregations(freeVars, aggregations, patients);
+    expect(aggregations).toStrictEqual({
+      readings$patient_id$temperature: {
+        table: "readings",
+        ref: "patient_id",
+        field: "temperature",
+        aggregate: "avg",
+      },
+    });
+  });
+});
 
 describe("grandparent join", () => {
   it("should define rows", async () => {
