@@ -6,8 +6,16 @@
 const { post_btn } = require("@saltcorn/markup");
 const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
 const { getState } = require("../../db/state");
-const { link_view, displayType } = require("../../plugin-helper");
-const { eval_expression, freeVariables } = require("../../models/expression");
+const {
+  link_view,
+  displayType,
+  run_action_column,
+} = require("../../plugin-helper");
+const {
+  eval_expression,
+  freeVariables,
+  get_expression_function,
+} = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
@@ -23,9 +31,11 @@ const {
 const db = require("../../db");
 const View = require("../../models/view");
 const Table = require("../../models/table");
-const { isNode, dollarizeObject } = require("../../utils");
+const { isNode, dollarizeObject, getSafeBaseUrl } = require("../../utils");
 const { bool, date } = require("../types");
 const _ = require("underscore");
+const renderLayout = require("@saltcorn/markup/layout");
+const Crash = require("../../models/crash");
 
 const {
   Relation,
@@ -651,12 +661,17 @@ const get_viewable_fields_from_layout = (
     blank: "Text",
     aggregation: "Aggregation",
     dropdown_menu: "DropdownMenu",
+    container: "Container",
   };
   const toArray = (x) =>
     !x ? [] : Array.isArray(x) ? x : x.above ? x.above : [x];
   //console.log("layout cols", layoutCols);
   const newCols = layoutCols.map(({ contents, ...rest }) => {
     if (!contents) contents = rest;
+    if (contents.above) {
+      const newContents = { type: "container", contents: contents };
+      contents = newContents;
+    }
     const col = {
       ...contents,
       ...rest,
@@ -797,6 +812,31 @@ const get_viewable_fields = (
             column.interpolator
               ? column.interpolator(r)
               : text(column.contents),
+        };
+      } else if (column.type === "Container") {
+        return {
+          ...setWidth,
+          label: column.header_label ? text(__(column.header_label)) : "",
+          key: (r) => {
+            const layout = structuredClone({ ...column, type: "container" });
+            traverseSync(
+              layout,
+              standardLayoutRowVisitor(viewname, state, table, r, req)
+            );
+            return renderLayout({
+              blockDispatch: {
+                ...standardBlockDispatch(viewname, state, table, { req }, r),
+                view(column) {
+                  return viewResults[column.view + column.relation]?.(r);
+                },
+              },
+              layout,
+              role,
+              is_owner: false,
+              req,
+              hints: getState().getLayout(req.user).hints || {},
+            });
+          },
         };
       } else if (column.type === "DropdownMenu") {
         return {
@@ -1300,6 +1340,382 @@ const sortlinkForName = (fname, req, viewname, statehash) => {
   return `sortby('${text(fname)}', ${desc}, '${statehash}', this)`;
 };
 
+const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
+  const session_id = getSessionId(req);
+  const locale = req.getLocale();
+  const fields = table.fields;
+
+  const evalMaybeExpr = (segment, key, fmlkey) => {
+    if (segment.isFormula && segment.isFormula[fmlkey || key]) {
+      segment[key] = eval_expression(
+        segment[key],
+        { session_id, locale, ...row },
+        req.user,
+        `property ${key} in segment of type ${segment.type}`
+      );
+    }
+  };
+  return {
+    link(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "text");
+      if (
+        req?.generate_email &&
+        req.get_base_url &&
+        segment.url.startsWith("/")
+      ) {
+        const targetPrefix = req.get_base_url();
+        const safePrefix = (targetPrefix || "").endsWith("/")
+          ? targetPrefix.substring(0, targetPrefix.length - 1)
+          : targetPrefix || "";
+        segment.url = safePrefix + segment.url;
+      }
+    },
+    view_link(segment) {
+      evalMaybeExpr(segment, "view_label", "label");
+    },
+    blank(segment) {
+      evalMaybeExpr(segment, "contents", "text");
+    },
+    tabs(segment) {
+      const to_delete = new Set();
+
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(
+            sif,
+            { session_id, ...row },
+            req.user,
+            `Tabs show if formula`
+          );
+          if (!showit) to_delete.add(ix);
+        }
+      });
+
+      // TODO mutation here - potential issue with renderRows
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+
+      (segment.titles || []).forEach((t, ix) => {
+        if (typeof t === "string" && t.includes("{{")) {
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
+        }
+      });
+    },
+    action(segment) {
+      evalMaybeExpr(segment, "action_label");
+    },
+    card(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "title");
+      evalMaybeExpr(segment, "class");
+    },
+    image(segment) {
+      evalMaybeExpr(segment, "url");
+      evalMaybeExpr(segment, "alt");
+      if (segment.srctype === "Field") {
+        const field = fields.find((f) => f.name === segment.field);
+        if (!field) return;
+        if (field.type.name === "String") segment.url = row[segment.field];
+        if (field.type === "File") {
+          segment.url = `/files/serve/${row[segment.field]}`;
+          segment.fileid = row[segment.field];
+        }
+      }
+    },
+    container(segment) {
+      evalMaybeExpr(segment, "bgColor");
+      evalMaybeExpr(segment, "customClass");
+      evalMaybeExpr(segment, "customId");
+      evalMaybeExpr(segment, "url");
+      if (segment.bgType === "Image Field") {
+        segment.bgType = "Image";
+        segment.bgFileId = row[segment.bgField];
+      }
+
+      if (segment.showIfFormula) {
+        const f = get_expression_function(segment.showIfFormula, fields);
+        if (!f({ ...dollarizeObject(state || {}), ...row }, req.user))
+          segment.hide = true;
+        else segment.hide = false;
+      }
+      if (segment.click_action) {
+        segment.url = `javascript:view_post('${viewname}', 'run_action', {click_action: '${
+          segment.click_action
+        }', ${table.pk_name}: ${JSON.stringify(row[table.pk_name])}})`;
+      }
+    },
+  };
+};
+
+const standardBlockDispatch = (viewname, state, table, extra, row) => {
+  const req = extra.req;
+  const fields = table.fields;
+  const locale = req.getLocale();
+  const role = req.user?.role_id || 100;
+  return {
+    field({ field_name, fieldview, configuration, click_to_edit }) {
+      let field = fields.find((fld) => fld.name === field_name);
+      if (!field) return "";
+
+      let val = row[field_name];
+      let fvrun;
+      if (
+        field &&
+        field.attributes &&
+        field.attributes.localized_by &&
+        field.attributes.localized_by[locale]
+      ) {
+        const localized_fld = field.attributes.localized_by[locale];
+        val = row[localized_fld];
+      }
+      const cfg = {
+        row,
+        ...field.attributes,
+        ...configuration,
+      };
+      if (fieldview && field.type === "File") {
+        if (req.generate_email) cfg.targetPrefix = getSafeBaseUrl();
+        fvrun = val
+          ? getState().fileviews[fieldview].run(
+              val,
+              row[`${field_name}__filename`],
+              cfg
+            )
+          : "";
+      } else if (
+        fieldview &&
+        field.type &&
+        field.type.fieldviews &&
+        field.type.fieldviews[fieldview]
+      )
+        fvrun = field.type.fieldviews[fieldview].run(val, req, cfg);
+      else fvrun = text(val);
+      if (
+        click_to_edit &&
+        (role <= table.min_role_write || table.is_owner(req.user, row))
+      )
+        return div(
+          {
+            "data-inline-edit-fielddata": encodeURIComponent(
+              JSON.stringify({
+                field_name,
+                table_name: table.name,
+                pk: row[table.pk_name],
+                fieldview,
+                configuration,
+              })
+            ),
+            "data-inline-edit-ajax": "true",
+            "data-inline-edit-dest-url": `/api/${table.name}/${
+              row[table.pk_name]
+            }`,
+            class: !isWeb(req) ? "mobile-data-inline-edit" : "",
+          },
+          fvrun
+        );
+      else return fvrun;
+    },
+    join_field(jf) {
+      const {
+        join_field,
+        field_type,
+        fieldview,
+        configuration,
+        target_field_attributes,
+        click_to_edit,
+      } = jf;
+      const keypath = join_field.split(".");
+      let value;
+      if (join_field.includes("->")) {
+        const [relation, target] = join_field.split("->");
+        const [ontable, ref] = relation.split(".");
+        const key =
+          jf.targetNm ||
+          `${ref}_${ontable.replaceAll(" ", "").toLowerCase()}_${target}`;
+        value = row[validSqlId(key)];
+      } else {
+        value = row[join_field.split(".").join("_")];
+      }
+      if (field_type === "File") {
+        return value
+          ? getState().fileviews[fieldview].run(value, "", configuration || {})
+          : "";
+      }
+      let fvRes;
+      if (field_type && fieldview) {
+        const type = getState().types[field_type];
+        if (type && getState().types[field_type]) {
+          fvRes = type.fieldviews[fieldview].run(value, req, {
+            row,
+            ...(target_field_attributes || {}),
+            ...configuration,
+          });
+        } else fvRes = text(value);
+      } else fvRes = text(value);
+      if (
+        click_to_edit &&
+        (role <= table.min_role_write || table.is_owner(req.user, row))
+      )
+        return div(
+          {
+            "data-inline-edit-fielddata": encodeURIComponent(
+              JSON.stringify({
+                field_name: keypath[0],
+                table_name: table.name,
+                pk: row[table.pk_name],
+                fieldview,
+                configuration,
+                join_field: keypath[keypath.length - 1],
+              })
+            ),
+            "data-inline-edit-ajax": "true",
+            "data-inline-edit-dest-url": `/api/${table.name}/${
+              row[table.pk_name]
+            }`,
+            class: !isWeb(req) ? "mobile-data-inline-edit" : "",
+          },
+          fvRes
+        );
+      else return fvRes;
+    },
+    aggregation(column) {
+      const { agg_relation, stat, aggwhere, agg_field } = column;
+      let table, fld, through;
+      if (agg_relation.includes("->")) {
+        let restpath;
+        [through, restpath] = agg_relation.split("->");
+        [table, fld] = restpath.split(".");
+      } else {
+        [table, fld] = agg_relation.split(".");
+      }
+      let targetNm =
+        column.targetNm ||
+        db.sqlsanitize(
+          (
+            stat +
+              "_" +
+              table +
+              "_" +
+              fld +
+              "_" +
+              (agg_field || "").split("@")[0] +
+              "_" +
+              aggwhere || ""
+          ).toLowerCase()
+        );
+      if (targetNm.length > 58) {
+        targetNm = targetNm
+          .split("")
+          .filter((c, i) => i % 2 == 0)
+          .join("");
+      }
+      const val = row[targetNm];
+      if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
+        return val.map((v) => text(v.toString())).join(", ");
+      else if (column.agg_fieldview) {
+        const aggField = Table.findOne(table)?.getField?.(column.agg_field);
+        const outcomeType =
+          stat === "Percent true" || stat === "Percent false"
+            ? "Float"
+            : stat === "Count" || stat === "CountUnique"
+              ? "Integer"
+              : aggField.type?.name;
+        const type = getState().types[outcomeType];
+        if (type?.fieldviews[column.agg_fieldview]) {
+          const readval = type.read(val);
+          return type.fieldviews[column.agg_fieldview].run(
+            readval,
+            req,
+            column?.configuration || {}
+          );
+        }
+      }
+      return text(val);
+    },
+    action(segment) {
+      if (segment.action_style === "on_page_load") {
+        if (extra?.isPreview) return "";
+        run_action_column({
+          col: { ...segment },
+          referrer: req?.get?.("Referrer"),
+          req: req,
+        }).catch((e) => Crash.create(e, req));
+        return "";
+      }
+      let url = action_url(
+        viewname,
+        table,
+        segment.action_name,
+        row,
+        segment.rndid,
+        "rndid",
+        segment.confirm
+      );
+      if (
+        segment.action_name === "Delete" &&
+        segment.configuration?.after_delete_action == "Reload page"
+      ) {
+        url = {
+          javascript: `ajax_post('/delete/${table.name}/${
+            row[table.pk_name]
+          }', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+        };
+        return action_link(url, req, segment);
+      } else if (segment.action_name === "Delete")
+        url = `/delete/${table.name}/${
+          row[table.pk_name]
+        }?redirect=${encodeURIComponent(
+          interpolate(
+            segment.configuration?.after_delete_url || "/",
+            row,
+            req?.user,
+            "delete action: after delete URL"
+          )
+        )}`;
+      return action_link(url, req, segment);
+    },
+    view_link(view) {
+      const prefix =
+        req.generate_email && req.get_base_url ? req.get_base_url() : "";
+      const { key } = view_linker(
+        view,
+        fields,
+        (s) => s,
+        isWeb(req),
+        req.user,
+        prefix,
+        state,
+        req,
+        viewname
+      );
+      return key(row);
+    },
+    tabs(segment, go) {
+      if (segment.tabsStyle !== "Value switch") return false;
+      const rval = row[segment.field];
+      const value = rval?.id || rval; // TODO pkname of join table
+      const ix = segment.titles.findIndex((t) =>
+        typeof t.value === "undefined"
+          ? `${t}` === `${value}`
+          : value === t.value
+      );
+      if (ix === -1) return "";
+      return go(segment.contents[ix]);
+    },
+    blank(segment) {
+      if (segment.isHTML) {
+        return interpolate(
+          segment.contents,
+          { locale, ...row },
+          req?.user,
+          "HTML element"
+        );
+      } else return segment.contents;
+    },
+  };
+};
+
 /**
  * @param {object} column
  * @param {object} f
@@ -1555,4 +1971,6 @@ module.exports = {
   get_view_link_query,
   make_link,
   edit_build_in_actions,
+  standardBlockDispatch,
+  standardLayoutRowVisitor,
 };

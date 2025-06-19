@@ -197,7 +197,7 @@ const ActionSettings = () => {
                   setInitialConfig(setProp, value, getCfgFields(value));
                 }}
               >
-                {options.actions.map((f, ix) =>
+                {options.actions.filter(Boolean).map((f, ix) =>
                   f.optgroup && !f.options.length ? null : f.optgroup ? (
                     <optgroup key={ix} label={f.label}>
                       {f.options.map((a, jx) => (

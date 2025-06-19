@@ -619,7 +619,9 @@ const ToolboxList = ({ expanded }) => {
       !disable_toolbox?.view && (
         <ViewElem connectors={connectors} views={views} />
       ),
-      // <ContainerElem connectors={connectors} />,
+      !disable_toolbox?.dropdown_menu && (
+        <ContainerElem connectors={connectors} />
+      ),
       // <CardElem connectors={connectors} />,
       //  <TabsElem connectors={connectors} />,
       <HTMLElem connectors={connectors} />,
