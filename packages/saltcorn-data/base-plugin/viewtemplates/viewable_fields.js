@@ -11,7 +11,11 @@ const {
   displayType,
   run_action_column,
 } = require("../../plugin-helper");
-const { eval_expression, freeVariables } = require("../../models/expression");
+const {
+  eval_expression,
+  freeVariables,
+  get_expression_function,
+} = require("../../models/expression");
 const Field = require("../../models/field");
 const Form = require("../../models/form");
 const { traverseSync } = require("../../models/layout");
@@ -814,6 +818,20 @@ const get_viewable_fields = (
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
           key: (r) => {
+            const layout = structuredClone({ ...column, type: "container" });
+            traverseSync(layout, {
+              container(segment) {
+                if (segment.showIfFormula) {
+                  const f = get_expression_function(
+                    segment.showIfFormula,
+                    fields
+                  );
+                  if (!f({ ...dollarizeObject(state || {}), ...r }, req.user))
+                    segment.hide = true;
+                  else segment.hide = false;
+                }
+              },
+            });
             return renderLayout({
               blockDispatch: standardBlockDispatch(
                 viewname,
@@ -822,7 +840,7 @@ const get_viewable_fields = (
                 { req },
                 r
               ),
-              layout: { ...column, type: "container" },
+              layout,
               role,
               is_owner: false,
               req,
