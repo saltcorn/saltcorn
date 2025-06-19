@@ -664,6 +664,10 @@ const get_viewable_fields_from_layout = (
   //console.log("layout cols", layoutCols);
   const newCols = layoutCols.map(({ contents, ...rest }) => {
     if (!contents) contents = rest;
+    if (contents.above) {
+      const newContents = { type: "container", contents: contents };
+      contents = newContents;
+    }
     const col = {
       ...contents,
       ...rest,
