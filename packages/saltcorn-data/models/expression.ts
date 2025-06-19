@@ -500,10 +500,15 @@ const add_free_variables_to_aggregations = (
   aggregations: { [nm: string]: AggregationOptions },
   table: Table
 ) => {
+  const cfields = Field.findCached({ reftable_name: table.name }).map(
+    (f) => f.name
+  );
   [...freeVars]
     .filter((v) => v.includes("$"))
     .forEach((v) => {
       const [ctableName, refFieldName, targetFieldName, stat] = v.split("$");
+      if (!targetFieldName) return;
+      if (!cfields.includes(refFieldName)) return;
       aggregations[v] = {
         table: ctableName,
         ref: refFieldName,

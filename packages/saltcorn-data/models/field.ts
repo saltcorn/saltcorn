@@ -44,7 +44,7 @@ import type {
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 //import { fileSync } from "tmp-promise";
 import File from "./file";
-import { FieldView , CalcJoinfield} from "@saltcorn/types/base_types";
+import { FieldView, CalcJoinfield } from "@saltcorn/types/base_types";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -772,6 +772,22 @@ class Field implements AbstractField {
 
     const db_flds = await db.select("_sc_fields", where, selectopts);
     return db_flds.map((dbf: FieldCfg) => new Field(dbf));
+  }
+
+  /**
+   *
+   * @param {object} where
+   * @param {object} [selectopts]
+   * @returns {Field[]}
+   */
+  static findCached(
+    where?: Where,
+    selectopts: SelectOptions = { orderBy: "name", nocase: true }
+  ): Field[] {
+    const { getState } = require("../db/state");
+    return getState()
+      .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
+      .filter(satisfies(where || {}));
   }
 
   /**
