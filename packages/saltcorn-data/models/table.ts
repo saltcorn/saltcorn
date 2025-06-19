@@ -3883,7 +3883,8 @@ ${rejectDetails}`,
     if (opts.starFields) fldNms.push("a.*");
     else
       for (const f of fields.filter((f) => !f.calculated || f.stored)) {
-        fldNms.push(`a."${sqlsanitize(f.name)}"`);
+        if (!opts.fields || opts.fields.includes(f.name))
+          fldNms.push(`a."${sqlsanitize(f.name)}"`);
       }
     const whereObj = prefixFieldsInWhere(opts.where, "a");
     const { where, values } = mkWhere(whereObj, db.isSQLite);
