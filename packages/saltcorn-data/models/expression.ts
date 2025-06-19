@@ -10,7 +10,12 @@ import { Identifier } from "estree";
 import { generate } from "astring";
 import moment from "moment";
 import Table from "./table";
-import { JoinFields, Row, Where } from "@saltcorn/db-common/internal";
+import {
+  AggregationOptions,
+  JoinFields,
+  Row,
+  Where,
+} from "@saltcorn/db-common/internal";
 import Field from "./field";
 import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
@@ -485,6 +490,30 @@ function freeVariablesAST(ast: any): Array<string> {
 }
 
 /**
+ * Add free variables to aggregations
+ * @param freeVars
+ * @param joinFields
+ * @param fields
+ */
+const add_free_variables_to_aggregations = (
+  freeVars: Set<string>,
+  aggregations: { [nm: string]: AggregationOptions },
+  table: Table
+) => {
+  [...freeVars]
+    .filter((v) => v.includes("$"))
+    .forEach((v) => {
+      const [ctableName, refFieldName, targetFieldName, stat] = v.split("$");
+      aggregations[v] = {
+        table: ctableName,
+        ref: refFieldName,
+        field: targetFieldName,
+        aggregate: stat || "array_agg",
+      };
+    });
+};
+
+/**
  * Add free variables to join fields
  * @param freeVars
  * @param joinFields
@@ -855,5 +884,6 @@ export = {
   freeVariables,
   freeVariablesInInterpolation,
   add_free_variables_to_joinfields,
+  add_free_variables_to_aggregations,
   removeComments,
 };

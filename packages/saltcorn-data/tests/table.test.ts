@@ -23,7 +23,8 @@ import {
 import expressionModule from "../models/expression";
 import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
 import { ResultMessage } from "@saltcorn/types/common_types";
-const { freeVariables, jsexprToWhere } = expressionModule;
+const { freeVariables, jsexprToWhere, add_free_variables_to_aggregations } =
+  expressionModule;
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -2599,7 +2600,7 @@ describe("Table insert/update expanded joinfields", () => {
   });
 });
 describe("aggregation formula", () => {
-  it("gets agg variable", async () => {
+  it("gets agg without stat", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
     const aggregations = {};
@@ -2608,6 +2609,21 @@ describe("aggregation formula", () => {
     add_free_variables_to_aggregations(freeVars, aggregations, patients);
     expect(aggregations).toStrictEqual({
       readings$patient_id$temperature: {
+        table: "readings",
+        ref: "patient_id",
+        field: "temperature",
+        aggregate: "array_agg",
+      },
+    });
+  });
+  it("gets agg with stat", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const aggregations = {};
+    const freeVars = freeVariables("readings$patient_id$temperature$avg");
+    add_free_variables_to_aggregations(freeVars, aggregations, patients);
+    expect(aggregations).toStrictEqual({
+      readings$patient_id$temperature$avg: {
         table: "readings",
         ref: "patient_id",
         field: "temperature",
