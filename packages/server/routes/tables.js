@@ -72,6 +72,7 @@ const {
   removeAllWhiteSpace,
   comparingCaseInsensitive,
   validSqlId,
+  interpolate,
 } = require("@saltcorn/data/utils");
 const { EOL } = require("os");
 
@@ -934,14 +935,12 @@ router.get(
       if (user_can_edit_views) {
         let create_basic_link = "";
         if (views.length === 0) {
-          create_basic_link = post_btn(
-            `/table/create-basic-views/${table.id}`,
-            "Create basic views",
-            req.csrfToken(),
+          create_basic_link = a(
             {
-              btnClass: "btn-outline-secondary",
-              formClass: "d-inline me-2",
-            }
+              class: "btn btn-outline-secondary ms-2",
+              href: `javascript:ajax_modal('/table/create-basic-views/${table.id}')`,
+            },
+            req.__("Create basic views")
           );
         }
         viewCard = {
@@ -2452,6 +2451,77 @@ router.post(
   })
 );
 
+const basicViewForm = async (table, req) => {
+  const tables = await Table.find();
+  const vts = viewtemplates_with_create_basic_option();
+  return new Form({
+    submitLabel: req.__("Create views"),
+    action: `/table/create-basic-views/${table.id}`,
+    formStyle: "vert",
+    fields: [
+      {
+        type: "String",
+        label: "View naming convention",
+        name: "naming_convention",
+        attributes: { spellcheck: false },
+        sublabel:
+          "Use <code>{{ }}</code> to access: <code>viewpattern</code>, <code>tablename</code>",
+      },
+      {
+        type: "String",
+        label: "Template table",
+        name: "template_table",
+        attributes: { options: tables.map((t) => t.name) },
+        help: {
+          topic: "Template tables",
+        },
+      },
+      ...vts.map((vt) => ({
+        type: "Bool",
+        label: vt,
+        name: vt,
+        default: true,
+      })),
+    ],
+  });
+};
+
+const viewtemplates_with_create_basic_option = () => {
+  const vts = [];
+  Object.entries(getState().viewtemplates).forEach(([nm, obj]) => {
+    if (obj.createBasicView) vts.push(nm);
+  });
+  return vts;
+};
+
+router.get(
+  "/create-basic-views/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_tables"),
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    const table = Table.findOne({ id });
+    if (!table) {
+      req.flash("error", `Table not found`);
+      res.redirect(`/table`);
+      return;
+    }
+    res.set("Page-Title", req.__("Create basic views"));
+    const form = await basicViewForm(table, req);
+    form.values.naming_convention = getState().getConfig(
+      "viewgen_naming_convention"
+    );
+    form.values.template_table = getState().getConfig(
+      "viewgen_template_table",
+      ""
+    );
+    const page = renderForm(form, req.csrfToken());
+
+    res.send(page);
+  })
+);
+
 router.post(
   "/create-basic-views/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
@@ -2465,68 +2535,76 @@ router.post(
       res.redirect(`/table`);
       return;
     }
+    const form = await basicViewForm(table, req);
+    form.validate(req.body || {});
+    if (form.hasErrors) {
+      req.flash("error", req.__("An error occurred"));
+      res.redirect(`/table/${table.id}`);
+      return;
+    }
+
+    if (
+      form.values.naming_convention &&
+      form.values.naming_convention !==
+        getState().getConfig("viewgen_naming_convention")
+    )
+      await getState().setConfig(
+        "viewgen_naming_convention",
+        form.values.naming_convention
+      );
+    if (
+      form.values.template_table !==
+      getState().getConfig("viewgen_template_table")
+    )
+      await getState().setConfig(
+        "viewgen_template_table",
+        form.values.template_table
+      );
+
     await db.withTransaction(async () => {
+      const getName = (viewtemplate) =>
+        interpolate(form.values.naming_convention, {
+          viewpattern: viewtemplate,
+          tablename: table.name,
+        }).trim();
+      const all_views_created = {};
+      const vts = viewtemplates_with_create_basic_option();
+      vts.forEach((vt) => {
+        if (form.values[vt]) all_views_created[vt] = getName(vt);
+      });
+
       const initial_view = async (table, viewtemplate) => {
-        const configuration = await initial_config_all_fields(
-          viewtemplate === "Edit"
-        )({ table_id: table.id });
-        //console.log(configuration);
-        const name = `${viewtemplate} ${table.name}`;
+        const isEdit = viewtemplate === "Edit";
+        const vtObj = getState().viewtemplates[viewtemplate];
+        const name = getName(viewtemplate);
+        const template_view = form.values.template_table
+          ? View.findOne({
+              table_id: Table.findOne(form.values.template_table).id,
+              viewtemplate,
+            })
+          : undefined;
+        const configuration = await vtObj.createBasicView({
+          table,
+          viewname: name,
+          all_views_created,
+          template_table: form.values.template_table
+            ? Table.findOne(form.values.template_table)
+            : undefined,
+          template_view,
+        });
         const view = await View.create({
           name,
           configuration,
           viewtemplate,
           table_id: table.id,
-          min_role: 100,
+          attributes: template_view?.attributes,
+          min_role: isEdit ? table.min_role_write : table.min_role_read,
         });
         return view;
       };
-      const list = await initial_view(table, "List");
-      const edit = await initial_view(table, "Edit");
-      const show = await initial_view(table, "Show");
-      await View.update(
-        {
-          configuration: {
-            ...list.configuration,
-            columns: [
-              ...list.configuration.columns,
-              {
-                type: "ViewLink",
-                view: `Own:Show ${table.name}`,
-                view_name: `Show ${table.name}`,
-                link_style: "",
-                view_label: "Show",
-                header_label: "Show",
-              },
-              {
-                type: "ViewLink",
-                view: `Own:Edit ${table.name}`,
-                view_name: `Edit ${table.name}`,
-                link_style: "",
-                view_label: "Edit",
-                header_label: "Edit",
-              },
-              {
-                type: "Action",
-                action_name: "Delete",
-                action_style: "btn-primary",
-              },
-            ],
-            view_to_create: `Edit ${table.name}`,
-          },
-        },
-        list.id
-      );
-      await View.update(
-        {
-          configuration: {
-            ...edit.configuration,
-            view_when_done: `List ${table.name}`,
-            destination_type: "View",
-          },
-        },
-        edit.id
-      );
+      for (const vtnm of Object.keys(all_views_created)) {
+        await initial_view(table, vtnm);
+      }
     });
     await getState().refresh_views();
     res.redirect(`/table/${table.id}`);

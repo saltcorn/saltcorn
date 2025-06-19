@@ -405,8 +405,7 @@ const configTypes: ConfigTypes = {
     label: "Development mode",
     excludeFromSnapshot: true,
     default: false,
-    blurb:
-      "Show full error to user on crash, enable editing field type",
+    blurb: "Show full error to user on crash, enable editing field type",
   },
   smtp_host: {
     type: "String",
@@ -1322,7 +1321,19 @@ const configTypes: ConfigTypes = {
     label: "Maintenance mode page",
     default: "",
     blurb: "Select the page to display during maintenance mode",
-  }
+  },
+  viewgen_naming_convention: {
+    type: "String",
+    label: "Naming convention",
+    default: "{{viewpattern}} {{tablename}}",
+    blurb: "",
+    excludeFromMobile: true,
+  },
+  viewgen_template_table: {
+    type: "String",
+    label: "Template table",
+    excludeFromMobile: true,
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

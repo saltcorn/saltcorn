@@ -36,6 +36,9 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
       return;
     }
     if (segment.above) {
+      if (typeof visitors !== "function" && "above" in visitors) {
+        visitors.above(segment);
+      }
       for (const seg of segment.above) go(seg);
       return;
     }
@@ -183,6 +186,65 @@ const translateLayout = (layout: Layout, locale: string): void => {
   });
 };
 
+const countFields = (layout: Layout) => {
+  let count = 0;
+  traverseSync(layout, {
+    field() {
+      count += 1;
+    },
+  });
+
+  return count;
+};
+
+const splitLayoutContainerFields = (layout: Layout) => {
+  const findAllFieldsContainer = (l: Layout) => {
+    let inner;
+    //all-fields container is last container to have >1 field
+    traverseSync(l, {
+      blank(s) {
+        if (countFields(s) > 1) inner = s;
+      },
+      container(s) {
+        if (countFields(s) > 1) inner = s;
+      },
+      card(s) {
+        if (countFields(s) > 1) inner = s;
+      },
+      above(s) {
+        if (countFields(s) > 1) inner = s;
+      },
+    });
+    return inner;
+  };
+  const inner = findAllFieldsContainer(layout);
+  const outer = (newContents: Layout) => {
+    const newLayout = structuredClone(layout);
+    let replaceIt = (s: any) => {
+      if (s.above) s.above = [newContents];
+      else s.contents = newContents;
+    };
+    replaceIt(findAllFieldsContainer(newLayout));
+
+    return newLayout;
+  };
+
+  return { outer, inner };
+};
+
+const findLayoutBranchWith = (
+  layouts: Array<Layout>,
+  pred: (l1: Layout) => boolean
+) => {
+  for (const layout of layouts) {
+    let found = false;
+    traverseSync(layout, (l: Layout) => {
+      if (pred(l) && !found) found = true;
+    });
+    if (found) return layout;
+  }
+};
+
 export = {
   eachView,
   eachPage,
@@ -191,4 +253,7 @@ export = {
   traverseSync,
   getStringsForI18n,
   translateLayout,
+  countFields,
+  splitLayoutContainerFields,
+  findLayoutBranchWith,
 };

@@ -22,6 +22,8 @@ const {
   traverse,
   getStringsForI18n,
   translateLayout,
+  splitLayoutContainerFields,
+  findLayoutBranchWith,
 } = require("../../models/layout");
 const { check_view_columns } = require("../../plugin-testing");
 
@@ -1108,7 +1110,80 @@ const run_action = async (
   }
   return result;
 };
+const createBasicView = async ({
+  table,
+  viewname,
+  template_view,
+  template_table,
+  all_views_created,
+}) => {
+  if (!template_view) {
+    const configuration = await initial_config_all_fields(false)({
+      table_id: table.id,
+    });
+    return configuration;
+  }
 
+  const { inner, outer } = splitLayoutContainerFields(
+    template_view.configuration.layout
+  );
+
+  const templateFieldTypes = {},
+    templateFieldLabels = {};
+  for (const field of template_table.fields) {
+    templateFieldTypes[field.name] = field.type_name;
+    templateFieldLabels[field.name] = field.label;
+  }
+
+  const defaultBranch = findLayoutBranchWith(
+    inner.above || inner.contents.above,
+    (s) => {
+      return s.type === "field";
+    }
+  );
+  const inners = [],
+    columns = [];
+  for (const field of table.fields) {
+    if (field.primary_key) continue;
+    const branch =
+      findLayoutBranchWith(inner.above || inner.contents.above, (s) => {
+        return (
+          s.type === "field" &&
+          templateFieldTypes[s.field_name] === field.type_name
+        );
+      }) || defaultBranch;
+    let oldField;
+    traverseSync(branch, {
+      field(s) {
+        oldField = template_table.getField(s.field_name);
+      },
+    });
+    const newBranch = structuredClone(branch);
+    let newCol = {};
+    traverseSync(newBranch, {
+      field(s) {
+        s.field_name = field.name;
+        newCol = {
+          type: "Field",
+          fieldview: s.fieldview,
+          field_name: field.name,
+        };
+      },
+      blank(s) {
+        if (s.contents === oldField.label) s.contents = field.label;
+      },
+    });
+    inners.push(newBranch);
+    columns.push(newCol);
+  }
+  const cfg = {
+    layout: outer({ above: inners }),
+    columns,
+  };
+  //console.log("show cfg", cfg);
+
+  return cfg;
+};
 module.exports = {
   /** @type {string} */
   name: "Show",
@@ -1120,6 +1195,7 @@ module.exports = {
   runMany,
   renderRows,
   initial_config,
+  createBasicView,
   routes: { run_action },
   /**
    * @param {object} opts

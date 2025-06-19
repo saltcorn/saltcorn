@@ -168,6 +168,8 @@ function add_extra_state(base_url, extra_state_fml, row) {
 
 const apply_showif_fetching_urls = new Set();
 
+const global_fetch_options_cache = {};
+
 function apply_showif() {
   const isNode = getIsNode();
   $("[data-show-if]").each(function (ix, element) {
@@ -309,6 +311,9 @@ function apply_showif() {
         qss.push(...dynwhere.dereference.map((d) => `dereference=${d}`));
       else qss.push(`dereference=${dynwhere.dereference}`);
     }
+    if (!dynwhere.label_formula && dynwhere.summary_field && dynwhere.refname) {
+      qss.push(`fields=${dynwhere.summary_field},${dynwhere.refname}`);
+    }
     const qs = qss.join("&");
     let current = e.attr("data-selected");
     if (current === "null") current = null;
@@ -395,36 +400,27 @@ function apply_showif() {
           e.selectize()[0].selectize.setValue(currentDataOption);
       }
     };
-
-    const cache = e.prop("data-fetch-options-cache") || {};
+    if (!global_fetch_options_cache[dynwhere.table])
+      global_fetch_options_cache[dynwhere.table] = {};
+    const cache = global_fetch_options_cache[dynwhere.table] || {};
     if (cache[qs] === "fetching") {
       // do nothing, this will be activated by someone else
     } else if (cache[qs]) {
       activate(cache[qs], qs);
     } else {
-      e.prop("data-fetch-options-cache", {
-        ...cache,
-        [qs]: "fetching",
-      });
+      cache[qs] = "fetching";
       apply_showif_fetching_urls.add(`/api/${dynwhere.table}?${qs}`);
       $.ajax(`/api/${dynwhere.table}?${qs}`)
         .then((resp) => {
+          const cacheNow = global_fetch_options_cache[dynwhere.table] || {};
           if (resp.success) {
             if (window._sc_loglevel > 4)
               console.log("dynwhere fetch", qs, resp.success);
-
             activate(resp.success, qs);
-            const cacheNow = e.prop("data-fetch-options-cache") || {};
-            e.prop("data-fetch-options-cache", {
-              ...cacheNow,
-              [qs]: resp.success,
-            });
+            cacheNow[qs] = resp.success;
+            apply_showif();
           } else {
-            const cacheNow = e.prop("data-fetch-options-cache") || {};
-            e.prop("data-fetch-options-cache", {
-              ...cacheNow,
-              [qs]: undefined,
-            });
+            cacheNow[qs] = undefined;
           }
         })
         .fail(checkNetworkError)
@@ -2334,6 +2330,22 @@ function formInEmbed(event) {
     el = el.parentElement;
   }
   return form;
+}
+
+function login_from_edit_view(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const form = $(e.target).closest("form");
+  form.attr("action", "/auth/login");
+  form.submit();
+}
+
+function signup_from_edit_view(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  const form = $(e.target).closest("form");
+  form.attr("action", "/auth/signup");
+  form.submit();
 }
 
 function handle_identical_fields(event) {

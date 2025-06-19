@@ -82,6 +82,8 @@ const {
   getStringsForI18n,
   translateLayout,
   traverseSync,
+  splitLayoutContainerFields,
+  findLayoutBranchWith,
 } = require("../../models/layout");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const db = require("../../db");
@@ -2200,6 +2202,112 @@ const tryInsertOrUpdateImpl = async (row, id, table, user) => {
   }
 };
 
+const createBasicView = async ({
+  table,
+  viewname,
+  template_view,
+  template_table,
+  all_views_created,
+}) => {
+  if (!template_view) {
+    const configuration = await initial_config_all_fields(true)({
+      table_id: table.id,
+    });
+    if (all_views_created.List) {
+      configuration.view_when_done = all_views_created.List;
+      configuration.destination_type = "View";
+    }
+
+    return configuration;
+  }
+  const { inner, outer } = splitLayoutContainerFields(
+    template_view.configuration.layout
+  );
+
+  const templateFieldTypes = {},
+    templateFieldLabels = {};
+  for (const field of template_table.fields) {
+    templateFieldTypes[field.name] = field.type_name;
+    templateFieldLabels[field.name] = field.label;
+  }
+  const defaultBranch = findLayoutBranchWith(
+    inner.above || inner.contents.above,
+    (s) => {
+      return s.type === "field";
+    }
+  );
+  const inners = [],
+    columns = [];
+  for (const field of table.fields) {
+    if (field.primary_key) continue;
+    const branch =
+      findLayoutBranchWith(inner.above || inner.contents.above, (s) => {
+        return (
+          s.type === "field" &&
+          templateFieldTypes[s.field_name] === field.type_name
+        );
+      }) || defaultBranch;
+    let oldField;
+    traverseSync(branch, {
+      field(s) {
+        oldField = template_table.getField(s.field_name);
+      },
+    });
+    const newBranch = structuredClone(branch);
+    let newCol = {};
+    traverseSync(newBranch, {
+      field(s) {
+        s.field_name = field.name;
+        newCol = {
+          type: "Field",
+          fieldview: s.fieldview,
+          field_name: field.name,
+        };
+      },
+      blank(s) {
+        if (s.contents === oldField.label) s.contents = field.label;
+        if (s.labelFor === oldField.name) s.labelFor = field.name;
+      },
+    });
+    inners.push(newBranch);
+    columns.push(newCol);
+  }
+  //clone any actions in inner
+  for (const tmpl_inner of inner.above || inner.contents.above) {
+    let hasField = false;
+    let hasAction = null;
+    const theActions = [];
+    traverseSync(tmpl_inner, {
+      field() {
+        hasField = true;
+      },
+      action(s) {
+        hasAction = true;
+        theActions.push(s);
+      },
+    });
+    if (hasAction && !hasField) inners.push(tmpl_inner);
+    theActions.forEach((a) => columns.push({ ...a, type: "Action" }));
+  }
+  const cfg = {
+    layout: outer({ above: inners }),
+    columns,
+  };
+  if (all_views_created.List) {
+    cfg.view_when_done = all_views_created.List;
+    cfg.destination_type = "View";
+  }
+
+  cfg.auto_save = template_view.configuration.auto_save;
+  cfg.confirm_leave = template_view.configuration.confirm_leave;
+  cfg.auto_create = template_view.configuration.auto_create;
+  cfg.delete_unchanged_auto_create =
+    template_view.configuration.delete_unchanged_auto_create;
+  cfg.split_paste = template_view.configuration.split_paste;
+
+  return cfg;
+};
+
 module.exports = {
   /** @type {string} */
   name: "Edit",
@@ -2213,6 +2321,7 @@ module.exports = {
   authorizeDataStream,
   get_state_fields,
   initial_config,
+  createBasicView,
   authorise_post,
   /**
    * @param {object} opts

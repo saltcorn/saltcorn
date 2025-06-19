@@ -4,6 +4,7 @@
  * @module models/workflow_trace
  * @subcategory models
  */
+import { GenObj } from "@saltcorn/types/common_types";
 import db from "../db";
 import type {
   Where,
@@ -23,7 +24,7 @@ class MetaData {
   name: string;
   type: string;
   user_id?: number;
-  body: unknown;
+  body: GenObj;
   written_at: Date;
 
   /**

@@ -1372,6 +1372,157 @@ const run_action = async (
     }
   );
 };
+const createBasicView = async ({
+  table,
+  viewname,
+  template_view,
+  template_table,
+  all_views_created,
+}) => {
+  /* 
+  FROM TEMPLATE TABLE
+
+  - has show link? label, style, hdr label
+  - has edit link? label, style, hdr label
+  */
+
+  const configuration = await initial_config_all_fields(false)({
+    table_id: table.id,
+  });
+  delete configuration.layout;
+  let template_table_views = {};
+  if (template_view) {
+    (
+      await View.find({
+        table_id: template_table.id,
+      })
+    ).forEach((v) => {
+      template_table_views[v.name] = v.viewtemplate;
+    });
+
+    template_view.configuration.columns.forEach((c) => {
+      if (c.type === "Field") {
+        const field = template_table.getField(c.field_name);
+        c.field_type = field.type.name || field.type;
+      }
+    });
+    configuration.columns.forEach((mycol) => {
+      if (mycol.type === "Field") {
+        const field_name = mycol.field_name;
+        const field = table.getField(field_name);
+        const field_type = field.type.name || field.type;
+        const matched = template_view.configuration.columns.find(
+          (c) => c.field_type === field_type
+        );
+        if (matched) {
+          if (matched.configuration)
+            Object.assign(mycol, matched.configuration);
+          Object.assign(mycol, matched);
+          mycol.field_name = field_name;
+        }
+      }
+    });
+  }
+  //show link
+  if (all_views_created.Show) {
+    if (template_view) {
+      //find link to show view
+      const col = template_view.configuration.columns.find(
+        (c) =>
+          c.type === "ViewLink" &&
+          template_table_views[c.view?.split?.(":")[1]] === "Show"
+      );
+      if (col) {
+        configuration.columns.push({
+          ...col,
+          view: `Own:${all_views_created.Show}`,
+          view_name: all_views_created.Show,
+          relation: undefined,
+          view_label: col.view_label || col.label,
+        });
+      }
+    } else
+      configuration.columns.push({
+        type: "ViewLink",
+        view: `Own:${all_views_created.Show}`,
+        view_name: all_views_created.Show,
+        link_style: "",
+        view_label: "Show",
+        header_label: "Show",
+      });
+  }
+
+  //edit link
+  if (all_views_created.Edit) {
+    configuration.view_to_create = all_views_created.Edit;
+    if (template_view) {
+      //find link to show view
+      const col = template_view.configuration.columns.find(
+        (c) =>
+          c.type === "ViewLink" &&
+          template_table_views[c.view?.split?.(":")[1]] === "Edit"
+      );
+      if (col) {
+        configuration.columns.push({
+          ...col,
+          view: `Own:${all_views_created.Edit}`,
+          view_name: all_views_created.Edit,
+          relation: undefined,
+          view_label: col.view_label || col.label,
+        });
+      }
+    } else
+      configuration.columns.push({
+        type: "ViewLink",
+        view: `Own:${all_views_created.Edit}`,
+        view_name: all_views_created.Edit,
+        link_style: "",
+        view_label: "Edit",
+        header_label: "Edit",
+      });
+  }
+  if (template_view) {
+    const matched = template_view.configuration.columns.find(
+      (c) => c.type === "Action" && c.action_name === "Delete"
+    );
+    if (matched) configuration.columns.push(matched);
+  } else
+    configuration.columns.push({
+      type: "Action",
+      action_name: "Delete",
+      action_style: "btn-primary",
+    });
+
+  const copy_cfg = (keys, parent_field) => {
+    if (parent_field && !configuration[parent_field])
+      configuration[parent_field] = {};
+    for (const key of Array.isArray(keys)
+      ? keys
+      : keys.split(" ").filter(Boolean)) {
+      if (parent_field)
+        configuration[parent_field][key] =
+          template_view.configuration[parent_field][key];
+      else configuration[key] = template_view.configuration[key];
+    }
+  };
+
+  // create new row options
+
+  if (template_view && all_views_created.Edit) {
+    copy_cfg(
+      "create_view_display create_view_location create_link_style create_link_size"
+    );
+  }
+  // list layout settings
+  if (template_view && template_view.configuration.default_state) {
+    copy_cfg(
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless",
+      "default_state"
+    );
+  }
+  //console.log("new cols", configuration.columns);
+  return configuration;
+};
 
 module.exports = {
   /** @type {string} */
@@ -1445,6 +1596,7 @@ module.exports = {
     maybeAdd(create_view_label);
     return strings;
   },
+  createBasicView,
   queries: ({
     table_id,
     exttable_name,

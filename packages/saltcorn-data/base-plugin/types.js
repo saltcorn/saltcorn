@@ -1137,6 +1137,7 @@ const string = {
                   class: ["form-control", cls],
                   placeholder: attrs.placeholder,
                   onChange: attrs.onChange,
+                  spellcheck: attrs.spellcheck === false ? "false" : undefined,
                   "data-fieldname": text_attr(field.name),
                   name: text_attr(nm),
                   required: !!(required || attrs.force_required),

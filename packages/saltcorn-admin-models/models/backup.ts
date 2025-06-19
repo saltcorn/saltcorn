@@ -64,6 +64,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import MetaData from "@saltcorn/data/models/metadata";
 
 /**
  * @param [withEventLog] - include event log
@@ -310,6 +311,14 @@ const backup_migrations = async (root_dirpath: string): Promise<void> => {
   );
 };
 
+const backup_metadata = async (root_dirpath: string): Promise<void> => {
+  const metadata = await MetaData.find({});
+  await writeFile(
+    join(root_dirpath, "metadata.json"),
+    JSON.stringify(metadata)
+  );
+};
+
 /**
  * @function
  * @param {string} root_dirpath
@@ -401,6 +410,7 @@ const create_backup = async (fnm?: string): Promise<string> => {
   await backup_config(tmpDir.path);
   await backup_migrations(tmpDir.path);
   await backup_info_file(tmpDir.path);
+  await backup_metadata(tmpDir.path);
 
   const day = dateFormat(new Date(), "yyyy-mm-dd-HH-MM");
 
@@ -610,6 +620,16 @@ const restore_config = async (dirpath: string): Promise<void> => {
   }
 };
 
+const restore_metadata = async (dirpath: string): Promise<void> => {
+  const fnm: string = join(dirpath, "metadata.json");
+  if (!existsSync(fnm)) return;
+  const mds = JSON.parse((await readFile(fnm)).toString()) as Array<MetaData>;
+
+  for (const md of mds) {
+    await MetaData.create(md);
+  }
+};
+
 /**
  * Restore from backup
  * @param fnm
@@ -692,6 +712,9 @@ const restore = async (
   state.log(6, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
+
+  state.log(6, `Restoring metadata`);
+  await restore_metadata(basePath);
 
   if (Object.keys(newLocations).length > 0)
     await correct_fileid_references_to_location(newLocations);

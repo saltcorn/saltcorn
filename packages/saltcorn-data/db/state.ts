@@ -877,7 +877,7 @@ class State {
     if (verifier) {
       this.verifier = verifier;
     }
-    
+
     const existingScripts = new Set(
       Object.values(this.headers)
         .flat(1)
@@ -1368,6 +1368,7 @@ const features = {
   dynamic_auth_parameters: true,
   capacitor: true,
   workflows: true,
+  metadata: true,
 };
 
 export = {

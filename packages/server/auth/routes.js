@@ -1192,10 +1192,27 @@ router.post(
       }
     const session_id = getSessionId(req);
 
-    Trigger.emitEvent("Login", null, req.user, {
-      session_id,
-      old_session_id: req.old_session_id,
-    });
+    const resultCollector = {};
+    await Trigger.runTableTriggers(
+      "Login",
+      null,
+      req.user,
+      resultCollector,
+      req.user
+    );
+    if (resultCollector.notify) {
+      req.flash("warning", resultCollector.notify);
+    }
+    if (resultCollector.error) {
+      req.flash("error", resultCollector.error);
+    }
+    if(resultCollector.notify_success) {
+      req.flash("success", resultCollector.notify_success);
+    }
+    if (resultCollector.goto) {
+      res.redirect(resultCollector.goto);
+      return;
+    }
     res?.cookie?.("loggedin", "true", maxAge ? { maxAge } : undefined);
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.smr) {
