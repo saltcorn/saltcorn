@@ -339,6 +339,7 @@ const configuration_workflow = (req) =>
             roles,
             library,
             pages,
+            allowMultipleElementsPerColumn: true,
             page_groups: groups,
             allowMultiStepAction: true,
             handlesTextStyle,
