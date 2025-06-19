@@ -806,8 +806,6 @@ const get_viewable_fields = (
               : text(column.contents),
         };
       } else if (column.type === "Container") {
-        console.log(column);
-
         return {
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
