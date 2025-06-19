@@ -824,13 +824,12 @@ const get_viewable_fields = (
               standardLayoutRowVisitor(viewname, state, table, r, req)
             );
             return renderLayout({
-              blockDispatch: standardBlockDispatch(
-                viewname,
-                state,
-                table,
-                { req },
-                r
-              ),
+              blockDispatch: {
+                ...standardBlockDispatch(viewname, state, table, { req }, r),
+                view(column) {
+                  return viewResults[column.view + column.relation]?.(r);
+                },
+              },
               layout,
               role,
               is_owner: false,
