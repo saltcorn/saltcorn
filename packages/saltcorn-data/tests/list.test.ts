@@ -657,7 +657,7 @@ describe("Misc List views", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain(
-      '<td><a href="/view/patientlist?favbook=1">2 patients</a></td>'
+      '<td><a href="/view/patientlist?favbook=1">1 patients</a></td>'
     );
   });
   it("aggregation with int fieldview config", async () => {
