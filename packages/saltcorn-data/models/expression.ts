@@ -502,15 +502,15 @@ const add_free_variables_to_aggregations = (
   table: Table
 ) => {
   const Field = require("./field");
-  const cfields = Field.findCached({ reftable_name: table.name }).map(
-    (f: Field) => f.name
-  );
+  const cfields = table
+    ? Field.findCached({ reftable_name: table.name }).map((f: Field) => f.name)
+    : null;
   [...freeVars]
     .filter((v) => v.includes("$"))
     .forEach((v) => {
       const [ctableName, refFieldName, targetFieldName, stat] = v.split("$");
       if (!targetFieldName) return;
-      if (!cfields.includes(refFieldName)) return;
+      if (cfields && !cfields.includes(refFieldName)) return;
       aggregations[db.sqlsanitize(v)] = {
         table: ctableName,
         ref: refFieldName,
