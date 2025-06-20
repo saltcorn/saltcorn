@@ -2630,6 +2630,12 @@ describe("aggregation formula", () => {
         aggregate: "avg",
       },
     });
+    const row = await patients.getJoinedRow({
+      where: { id: 1 },
+      aggregations,
+    });
+    console.log(row);
+    expect(Math.round(row?.readings$patient_id$temperature$avg)).toBe(38);
   });
 });
 

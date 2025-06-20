@@ -634,7 +634,7 @@ describe("Misc List views", () => {
                   label: true,
                 },
                 link_icon: "",
-                view_label: "'Patients for '+author",
+                view_label: "patients$favbook$id$count+' patients'",
               },
               alignment: "Default",
               col_width_units: "px",
@@ -657,7 +657,7 @@ describe("Misc List views", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain(
-      '<td><a href="/view/patientlist?favbook=1">Patients for Herman Melville</a></td>'
+      '<td><a href="/view/patientlist?favbook=1">2 patients</a></td>'
     );
   });
   it("aggregation with int fieldview config", async () => {
