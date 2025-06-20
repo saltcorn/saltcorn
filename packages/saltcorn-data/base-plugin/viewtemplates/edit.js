@@ -34,6 +34,7 @@ const {
   eval_expression,
   freeVariables,
   freeVariablesInInterpolation,
+  add_free_variables_to_aggregations,
 } = require("../../models/expression");
 const {
   InvalidConfiguration,
@@ -2796,10 +2797,13 @@ module.exports = {
     if (state?.[tbl.pk_name]) {
       const freeVars = freeVariablesInInterpolation(title);
       const joinFields = {};
+      const aggregations = {};
       add_free_variables_to_joinfields(freeVars, joinFields, tbl.fields);
+      add_free_variables_to_aggregations(freeVars, aggregations, tbl);
       const row = await tbl.getJoinedRow({
         where: { [tbl.pk_name]: state[tbl.pk_name] },
         joinFields,
+        aggregations,
       });
 
       return interpolate(title, row, null, "Edit view title string");

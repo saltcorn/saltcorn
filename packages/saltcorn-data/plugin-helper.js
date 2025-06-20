@@ -1587,7 +1587,9 @@ const generate_joined_query = ({
       freeVars = new Set([...freeVars, ...freeVariables(fml)]);
     if (freeVars.size > 0) {
       if (!q.joinFields) q.joinFields = {};
+      if (!q.joinFields) q.aggregations = {};
       add_free_variables_to_joinfields(freeVars, q.joinFields, table.fields);
+      add_free_variables_to_aggregations(freeVars, q.aggregations, table);
     }
   }
 
