@@ -1718,8 +1718,10 @@ function press_store_button(clicked, keepOld, disable) {
 }
 
 function restore_old_button(btnId) {
+  if (window.reset_spinners) reset_spinners();
   const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
+  if (!oldText.length) reuturn;
   btn.html(oldText);
   btn.css({ width: "", height: "" }).prop("disabled", false);
   btn.removeData("old-text");
@@ -1743,6 +1745,9 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       for (const current of element) await fn(current);
     else await fn(element);
   };
+  //TODO what if something else is spinning?
+  if (window.reset_spinners) reset_spinners();
+
   const eval_it = async (s) => {
     if (res.row && res.field_names) {
       const f = new Function(`viewname, row, {${res.field_names}}`, s);
