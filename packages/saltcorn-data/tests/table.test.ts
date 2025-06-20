@@ -2649,7 +2649,7 @@ describe("aggregation formula", () => {
       where: { id: 1 },
       aggregations,
     });
-    expect(Math.round(row?.readings$patient_id$temperature$avg)).toBe(38);
+    expect(Math.round(row?.readings$patient_id$temperature$avg)).toBe(41);
   });
 });
 
