@@ -2608,11 +2608,12 @@ describe("aggregation formula", () => {
     expect([...freeVars]).toStrictEqual(["readings$patient_id$temperature"]);
     add_free_variables_to_aggregations(freeVars, aggregations, patients);
     expect(aggregations).toStrictEqual({
-      readings$patient_id$temperature: {
+      readingspatient_idtemperature: {
         table: "readings",
         ref: "patient_id",
         field: "temperature",
         aggregate: "array_agg",
+        rename_to: "readings$patient_id$temperature",
       },
     });
   });
@@ -2623,18 +2624,18 @@ describe("aggregation formula", () => {
     const freeVars = freeVariables("readings$patient_id$temperature$avg");
     add_free_variables_to_aggregations(freeVars, aggregations, patients);
     expect(aggregations).toStrictEqual({
-      readings$patient_id$temperature$avg: {
+      readingspatient_idtemperatureavg: {
         table: "readings",
         ref: "patient_id",
         field: "temperature",
         aggregate: "avg",
+        rename_to: "readings$patient_id$temperature$avg",
       },
     });
     const row = await patients.getJoinedRow({
       where: { id: 1 },
       aggregations,
     });
-    console.log(row);
     expect(Math.round(row?.readings$patient_id$temperature$avg)).toBe(38);
   });
 });

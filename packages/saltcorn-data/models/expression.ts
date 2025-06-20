@@ -511,11 +511,12 @@ const add_free_variables_to_aggregations = (
       const [ctableName, refFieldName, targetFieldName, stat] = v.split("$");
       if (!targetFieldName) return;
       if (!cfields.includes(refFieldName)) return;
-      aggregations[v] = {
+      aggregations[db.sqlsanitize(v)] = {
         table: ctableName,
         ref: refFieldName,
         field: targetFieldName,
         aggregate: stat || "array_agg",
+        rename_to: v,
       };
     });
 };

@@ -135,7 +135,7 @@ const whereFTS = (
 ): string => {
   const { fields, table, schema } = v;
   const prefixMatch = !v.searchTerm?.includes(" ");
-  const actually_use_websearch = v.use_websearch && !prefixMatch
+  const actually_use_websearch = v.use_websearch && !prefixMatch;
   const searchTerm = prefixMatch ? `${v.searchTerm}:*` : v.searchTerm;
   let flds = ftsFieldsSqlExpr(fields, table, schema);
   if (phs.is_sqlite)
@@ -753,6 +753,7 @@ export type AggregationOptions = {
   subselect?: SubselectOptions;
   through?: string;
   orderBy?: string;
+  rename_to?: string;
 };
 
 export type SubselectOptions = {
