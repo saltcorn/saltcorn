@@ -2,6 +2,8 @@
 
 ## 1.3.0 - In beta
 
+* Aggregation formulae: In view formulae, you can now use aggregation formulae. The syntax for this is `{inbound_table}${inboundkey_field}${target_field}${aggrgation}` The aggregation (which should be lower case) can be ommitted and defaults to `array_agg`. Examples: `patients$favbook$id$count` or `patients$favbook$id`. This is useful if you want a count in a view link label without creating a stored calculated field.
+
 * Builder:
     - List columns can have containers in columns, and multiple elements in each column
 
