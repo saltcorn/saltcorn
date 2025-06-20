@@ -27,6 +27,7 @@ import type {
   SelectOptions,
   Row,
   Value,
+  JoinOptions,
 } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
@@ -45,6 +46,7 @@ import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 //import { fileSync } from "tmp-promise";
 import File from "./file";
 import { FieldView, CalcJoinfield } from "@saltcorn/types/base_types";
+import { ForUserRequest } from "@saltcorn/types/model-abstracts/abstract_user";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "") return null;
@@ -283,10 +285,16 @@ class Field implements AbstractField {
     const label_formula = attributes?.label_formula;
     const joinFields = { ...extra_joinfields };
 
-    const table = Table.findOne(table_name);
+    const table: Table = Table.findOne(table_name);
     if (!table) {
       return await db.select(table_name, where);
     }
+    let q: JoinOptions & ForUserRequest = {
+      where,
+      joinFields,
+      forUser: user,
+      forPublic: user?.role_id === 100,
+    };
     if (label_formula) {
       const { add_free_variables_to_joinfields } = require("../plugin-helper");
       const fields = table.getFields();
@@ -295,14 +303,11 @@ class Field implements AbstractField {
         joinFields,
         fields
       );
+    } else if (attributes.summary_field) {
+      q.fields = [table.pk_name, attributes.summary_field as string];
     }
 
-    return await table.getJoinedRows({
-      where,
-      joinFields,
-      forUser: user,
-      forPublic: user?.role_id === 100,
-    });
+    return await table.getJoinedRows(q);
   }
 
   /**

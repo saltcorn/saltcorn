@@ -291,6 +291,19 @@ describe("Table get data", () => {
       `SELECT a."favbook",a."id",a."name",a."parent",(select avg("temperature") from ${schema}"readings"  where "patient_id"=a."id") avg_temp FROM ${schema}"patients" a    order by "a"."id"`
     );
   });
+  it("should get joined rows with limited fields", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const arg = {
+      orderBy: "id",
+      fields: ["id", "name"],
+    };
+    const { sql } = await patients.getJoinedQuery(arg);
+    const schema = db.isSQLite ? "" : `"public".`;
+    expect(sql).toBe(
+      `SELECT a."id",a."name" FROM ${schema}"patients" a    order by "a"."id"`
+    );
+  });
   it("should get joined rows with filtered aggregations", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
