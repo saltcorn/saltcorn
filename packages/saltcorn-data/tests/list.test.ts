@@ -618,6 +618,48 @@ describe("Misc List views", () => {
     const vres1 = await view.run({}, mockReqRes);
     expect(vres1).toContain("<td>MAX:2</td>");
   });
+  it("aggregation in view_link with formula", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "view_link",
+                view: "patientlist",
+                block: false,
+                minRole: 100,
+                relation: ".books.patients$favbook",
+                isFormula: {
+                  label: true,
+                },
+                link_icon: "",
+                view_label: "patients$favbook$id$count+' patients'",
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "ViewLink",
+            view: "show_publisher",
+            block: false,
+            label: "publisher.name",
+            minRole: 100,
+            relation: ".books.publisher",
+            link_icon: "",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain(
+      '<td><a href="/view/patientlist?favbook=1">1 patients</a></td>'
+    );
+  });
   it("aggregation with int fieldview config", async () => {
     const view = await mkViewWithCfg({
       configuration: {

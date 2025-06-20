@@ -4000,9 +4000,24 @@ ${rejectDetails}`,
         }
       });
     }
-    //rename joinfields
-    if (Object.values(joinFields || {}).some((jf: any) => jf.rename_object)) {
+    //rename aggregations and joinfields
+    if (
+      Object.values(joinFields || {}).some((jf: any) => jf.rename_object) ||
+      Object.values(aggregations || {}).some((jf: any) => jf.rename_to)
+    ) {
       let f = (x: any) => x;
+      Object.entries(aggregations || {}).forEach(([k, v]: any) => {
+        if (v.rename_to) {
+          const oldf = f;
+          f = (x: any) => {
+            if (typeof x[k] !== "undefined") {
+              x[v.rename_to] = x[k];
+              delete x[k];
+            }
+            return oldf(x);
+          };
+        }
+      });
       Object.entries(joinFields || {}).forEach(([k, v]: any) => {
         if (v.rename_object) {
           if (v.rename_object.length === 2) {

@@ -780,6 +780,19 @@ class Field implements AbstractField {
   }
 
   /**
+   *
+   * @param {object} where
+   * @param {object} [selectopts]
+   * @returns {Field[]}
+   */
+  static findCached(where?: Where): Field[] {
+    const { getState } = require("../db/state");
+    return getState()
+      .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
+      .filter(satisfies(where || {}));
+  }
+
+  /**
    * @param {object} where
    * @returns {Promise<Field>}
    */

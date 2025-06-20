@@ -23,7 +23,8 @@ import {
 import expressionModule from "../models/expression";
 import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
 import { ResultMessage } from "@saltcorn/types/common_types";
-const { freeVariables, jsexprToWhere } = expressionModule;
+const { freeVariables, jsexprToWhere, add_free_variables_to_aggregations } =
+  expressionModule;
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -2609,6 +2610,46 @@ describe("Table insert/update expanded joinfields", () => {
     await readings.updateRow({ patient_id: 1 }, { id: pid1 } as any);
     const prow3 = await readings.getRow({ id: pid1 });
     expect(prow3?.patient_id).toBe(1);
+  });
+});
+describe("aggregation formula", () => {
+  it("gets agg without stat", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const aggregations = {};
+    const freeVars = freeVariables("readings$patient_id$temperature");
+    expect([...freeVars]).toStrictEqual(["readings$patient_id$temperature"]);
+    add_free_variables_to_aggregations(freeVars, aggregations, patients);
+    expect(aggregations).toStrictEqual({
+      readingspatient_idtemperature: {
+        table: "readings",
+        ref: "patient_id",
+        field: "temperature",
+        aggregate: "array_agg",
+        rename_to: "readings$patient_id$temperature",
+      },
+    });
+  });
+  it("gets agg with stat", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const aggregations = {};
+    const freeVars = freeVariables("readings$patient_id$temperature$avg");
+    add_free_variables_to_aggregations(freeVars, aggregations, patients);
+    expect(aggregations).toStrictEqual({
+      readingspatient_idtemperatureavg: {
+        table: "readings",
+        ref: "patient_id",
+        field: "temperature",
+        aggregate: "avg",
+        rename_to: "readings$patient_id$temperature$avg",
+      },
+    });
+    const row = await patients.getJoinedRow({
+      where: { id: 1 },
+      aggregations,
+    });
+    expect(Math.round(row?.readings$patient_id$temperature$avg)).toBe(41);
   });
 });
 

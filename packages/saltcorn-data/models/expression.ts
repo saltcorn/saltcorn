@@ -10,8 +10,14 @@ import { Identifier } from "estree";
 import { generate } from "astring";
 import moment from "moment";
 import Table from "./table";
-import { JoinFields, Row, Where } from "@saltcorn/db-common/internal";
-import Field from "./field";
+import type Field from "./field";
+
+import {
+  AggregationOptions,
+  JoinFields,
+  Row,
+  Where,
+} from "@saltcorn/db-common/internal";
 import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
 import utils from "../utils";
@@ -485,6 +491,37 @@ function freeVariablesAST(ast: any): Array<string> {
 }
 
 /**
+ * Add free variables to aggregations
+ * @param freeVars
+ * @param joinFields
+ * @param fields
+ */
+const add_free_variables_to_aggregations = (
+  freeVars: Set<string>,
+  aggregations: { [nm: string]: AggregationOptions },
+  table: Table
+) => {
+  const Field = require("./field");
+  const cfields = table
+    ? Field.findCached({ reftable_name: table.name }).map((f: Field) => f.name)
+    : null;
+  [...freeVars]
+    .filter((v) => v.includes("$"))
+    .forEach((v) => {
+      const [ctableName, refFieldName, targetFieldName, stat] = v.split("$");
+      if (!targetFieldName) return;
+      if (cfields && !cfields.includes(refFieldName)) return;
+      aggregations[db.sqlsanitize(v)] = {
+        table: ctableName,
+        ref: refFieldName,
+        field: targetFieldName,
+        aggregate: stat || "array_agg",
+        rename_to: v,
+      };
+    });
+};
+
+/**
  * Add free variables to join fields
  * @param freeVars
  * @param joinFields
@@ -855,5 +892,6 @@ export = {
   freeVariables,
   freeVariablesInInterpolation,
   add_free_variables_to_joinfields,
+  add_free_variables_to_aggregations,
   removeComments,
 };

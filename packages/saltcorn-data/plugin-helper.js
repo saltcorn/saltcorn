@@ -36,6 +36,7 @@ const {
   add_free_variables_to_joinfields,
   eval_expression,
   freeVariablesInInterpolation,
+  add_free_variables_to_aggregations,
 } = require("./models/expression");
 const { traverseSync } = require("./models/layout");
 const { isNode } = require("./utils");
@@ -1586,7 +1587,9 @@ const generate_joined_query = ({
       freeVars = new Set([...freeVars, ...freeVariables(fml)]);
     if (freeVars.size > 0) {
       if (!q.joinFields) q.joinFields = {};
+      if (!q.joinFields) q.aggregations = {};
       add_free_variables_to_joinfields(freeVars, q.joinFields, table.fields);
+      add_free_variables_to_aggregations(freeVars, q.aggregations, table);
     }
   }
 
@@ -1828,6 +1831,7 @@ const picked_fields_to_query = (columns, fields, layout, req, table) => {
     });
   }
   add_free_variables_to_joinfields(freeVars, joinFields, fields);
+  add_free_variables_to_aggregations(freeVars, aggregations, table);
   return { joinFields, aggregations };
 };
 
