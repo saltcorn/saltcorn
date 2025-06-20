@@ -508,18 +508,46 @@ class User {
    * @returns {string}
    */
   static unacceptable_password_reason(pw: string): string | undefined {
-    /**
-     *  if (pw.length < 8) return "Password too short";
-     *  if (check(pw)) return "Password too common";
-     */
     const { getState } = require("../db/state");
-    const passwordPolicy = getState().getConfig("password_policy", {
-      minLength: 8,
-      checkCommon: true,
-    });
-
-    if (pw.length < passwordPolicy.minLength) return "Password too short";
-    if (passwordPolicy.checkCommon && check(pw)) return "Password too common";
+    const minLength = getState().getConfig("min_password_length", 8);
+    if (minLength > 0 && pw.length < minLength) return "Password too short";
+    const checkCommon = getState().getConfig("check_common_passwords", true);
+    if (checkCommon && check(pw)) return "Password too common";
+    const complexityRegex = getState().getConfig("password_complexity", "");
+    const complexityError = getState().getConfig(
+      "password_complexity_error",
+      ""
+    );
+    if (complexityRegex && !new RegExp(complexityRegex).test(pw))
+      return (
+        complexityError || "Password does not match complexity requirements"
+      );
+    if (!complexityRegex) {
+      const requireUppercase = getState().getConfig(
+        "password_require_uppercase",
+        false
+      );
+      if (requireUppercase && !/[A-Z]/.test(pw))
+        return "Password must contain at least one uppercase letter";
+      const requireLowercase = getState().getConfig(
+        "password_require_lowercase",
+        false
+      );
+      if (requireLowercase && !/[a-z]/.test(pw))
+        return "Password must contain at least one lowercase letter";
+      const requireNumber = getState().getConfig(
+        "password_require_number",
+        false
+      );
+      if (requireNumber && !/\d/.test(pw))
+        return "Password must contain at least one number";
+      const requireSpecialChar = getState().getConfig(
+        "password_require_special_char",
+        false
+      );
+      if (requireSpecialChar && !/[!@#$%^&*(),.?:{}|<>]/.test(pw))
+        return "Password must contain at least one special character";
+    }
   }
 
   /**
