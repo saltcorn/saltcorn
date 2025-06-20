@@ -1745,6 +1745,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       for (const current of element) await fn(current);
     else await fn(element);
   };
+  //TODO what if something else is spinning?
   if (window.reset_spinners) reset_spinners();
 
   const eval_it = async (s) => {
