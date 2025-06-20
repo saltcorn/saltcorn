@@ -481,10 +481,19 @@ router.post(
         "success",
         req.__("Password reset. Log in with your new password")
       );
-    } else {
+      res.redirect("/auth/login");
+    } else if (result.error) {
       req.flash("danger", result.error);
+      const form = resetForm(req.body, req);
+      form.errors = { password: result.error };
+      res.sendAuthWrap(req.__(`Reset password`), form, {});
+    } else {
+      req.flash(
+        "danger",
+        req.__("Password reset not enabled. Contact your administrator.")
+      );
+      res.redirect("/auth/login");
     }
-    res.redirect("/auth/login");
   })
 );
 
