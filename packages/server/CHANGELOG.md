@@ -2,6 +2,19 @@
 
 ## 1.3.0 - In beta
 
+* Aggregation formulae: In view formulae, you can now use aggregation formulae. The syntax for this is `{inbound_table}${inboundkey_field}${target_field}${aggrgation}` The aggregation (which should be lower case) can be ommitted and defaults to `array_agg`. Examples: `patients$favbook$id$count` or `patients$favbook$id`. This is useful if you want a count in a view link label without creating a stored calculated field.
+
+* Builder:
+    - List columns can have containers in columns, and multiple elements in each column
+
+* Template generation: generate basic views from template tables. 
+
+* Login and signup from any edit view on users. Login respond to trigger results (goto URL, toast notifications).
+
+* Real-time collaboration foundations. Views patterns must be adapted to take advantage of this. 
+
+* View embeddings in Edit are now live and respond to changes in Key field values if embedded views are based on this relations.
+
 * S3 automated backup destination
 
 * refresh_user_session action: run then the sessions user variable needs to be
