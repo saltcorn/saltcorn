@@ -10,7 +10,8 @@ import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
 import helpers = require("./helpers");
-const { a, text, div, button, hr, time, i, input, text_attr, form, span } = tags;
+const { a, text, div, button, hr, time, i, input, text_attr, form, span } =
+  tags;
 import layoutUtils = require("./layout_utils");
 const { alert, toast, show_icon_and_label, validID } = layoutUtils;
 
@@ -104,7 +105,7 @@ const post_btn = (
           ...(ajax ? { type: "button" } : { type: "submit" }),
           ...(onClick && ajax
             ? {
-                onclick: `${spinner ? "press_store_button(this);" : ""}${buildButtonCallback(
+                onclick: `${spinner ? "spin_action_link(this);" : ""}${buildButtonCallback(
                   reload_on_done,
                   reload_delay
                 )};${onClick}`,
@@ -112,36 +113,40 @@ const post_btn = (
             : {
                 ...(onClick
                   ? {
-                      onclick: `${spinner ? "press_store_button(this);" : ""}${onClick}`,
+                      onclick: `${spinner ? "spin_action_link(this);" : ""}${onClick}`,
                     }
                   : {
                       ...(ajax && confirm
                         ? {
                             onclick: `if(confirm('${req.__("Are you sure?")}')) {${
-                              spinner ? "press_store_button(this);" : ""
+                              spinner ? "spin_action_link(this);" : ""
                             }${buildButtonCallback(reload_on_done, reload_delay)}}`,
                           }
                         : {
                             ...(ajax
                               ? {
-                                  onclick: `${spinner ? "press_store_button(this);" : ""}${buildButtonCallback(
+                                  onclick: `${spinner ? "spin_action_link(this);" : ""}${buildButtonCallback(
                                     reload_on_done,
                                     reload_delay
                                   )}`,
                                 }
                               : {
-                                  ...(confirm
+                                  ...(confirm && spinner
                                     ? {
-                                        onclick: `return confirm('${req.__("Are you sure?")}')`,
+                                        onclick: `if(confirm('${req.__("Are you sure?")}')){spin_action_link(this);return truel}else return false`,
                                       }
-                                    : {
-                                        ...(spinner
-                                          ? {
-                                              onclick:
-                                                "press_store_button(this);",
-                                            }
-                                          : {}),
-                                      }),
+                                    : confirm
+                                      ? {
+                                          onclick: `return confirm('${req.__("Are you sure?")}')`,
+                                        }
+                                      : {
+                                          ...(spinner
+                                            ? {
+                                                onclick:
+                                                  "spin_action_link(this);",
+                                              }
+                                            : {}),
+                                        }),
                                 }),
                           }),
                     }),
@@ -218,21 +223,27 @@ const post_dropdown_item = (
     : "";
 
   return [
-    a({
-      class: "dropdown-item",
-      onclick: `${confirmationScript}$('#${id}').submit()`
-    }, s),
-    form({
-      id,
-      action: text(href),
-      method: "post"
-    }, [
-      input({
-        type: "hidden",
-        name: "_csrf",
-        value: req.csrfToken()
-      })
-    ])
+    a(
+      {
+        class: "dropdown-item",
+        onclick: `${confirmationScript}$('#${id}').submit()`,
+      },
+      s
+    ),
+    form(
+      {
+        id,
+        action: text(href),
+        method: "post",
+      },
+      [
+        input({
+          type: "hidden",
+          name: "_csrf",
+          value: req.csrfToken(),
+        }),
+      ]
+    ),
   ].join("");
 };
 
