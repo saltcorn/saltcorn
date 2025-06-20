@@ -508,8 +508,18 @@ class User {
    * @returns {string}
    */
   static unacceptable_password_reason(pw: string): string | undefined {
-    if (pw.length < 8) return "Password too short";
-    if (check(pw)) return "Password too common";
+    /**
+     *  if (pw.length < 8) return "Password too short";
+     *  if (check(pw)) return "Password too common";
+     */
+    const { getState } = require("../db/state");
+    const passwordPolicy = getState().getConfig("password_policy", {
+      minLength: 8,
+      checkCommon: true,
+    });
+
+    if (pw.length < passwordPolicy.minLength) return "Password too short";
+    if (passwordPolicy.checkCommon && check(pw)) return "Password too common";
   }
 
   /**
