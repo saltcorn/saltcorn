@@ -10,13 +10,14 @@ import { Identifier } from "estree";
 import { generate } from "astring";
 import moment from "moment";
 import Table from "./table";
+import type Field from "./field";
+
 import {
   AggregationOptions,
   JoinFields,
   Row,
   Where,
 } from "@saltcorn/db-common/internal";
-import Field from "./field";
 import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
 import utils from "../utils";
@@ -500,8 +501,9 @@ const add_free_variables_to_aggregations = (
   aggregations: { [nm: string]: AggregationOptions },
   table: Table
 ) => {
+  const Field = require("./field");
   const cfields = Field.findCached({ reftable_name: table.name }).map(
-    (f) => f.name
+    (f: Field) => f.name
   );
   [...freeVars]
     .filter((v) => v.includes("$"))
