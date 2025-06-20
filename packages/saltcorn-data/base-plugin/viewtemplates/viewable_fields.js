@@ -168,6 +168,7 @@ const action_link = (
       req,
       icon: action_icon,
       style,
+      spinner,
       btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
       formClass: !block && "d-inline",
     });
