@@ -1150,10 +1150,6 @@ const autoBackupForm = (req) => {
         sublabel: req.__(
           "Password to encrypt the backup file. Leave empty for no encryption"
         ),
-        showIf: {
-          auto_backup_frequency: ["Daily", "Weekly"],
-          auto_backup_destination: ["Local directory", "S3", "SFTP server", "Saltcorn files"],
-        },
       },
       {
         type: "String",

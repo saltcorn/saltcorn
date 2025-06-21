@@ -372,10 +372,7 @@ const backup_info_file = async (root_dirpath: string): Promise<void> => {
 };
 
 const zipFolder = async (folder: string, zipFileName: string) => {
-  const backup_with_system_zip = getState().getConfig(
-    "backup_with_system_zip",
-    true
-  );
+  const backup_with_system_zip = executableIsAvailable("zip");
   const backup_password = getState().getConfig("backup_password", "");
   if (backup_with_system_zip) {
     const backup_system_zip_level = getState().getConfig(
@@ -459,15 +456,15 @@ const extract = async (
         ...(password ? [`-P${password}`] : []),
         File.normalise(fnm),
         "-d",
-        dir
+        dir,
       ];
-      
+
       const subprocess = spawn("unzip", args);
-      
+
       subprocess.stdout.on("data", (data: any) => {
         state.log(6, data.toString());
       });
-      
+
       subprocess.stderr.on("data", (data: any) => {
         const output = data.toString();
         state.log(1, output);
@@ -475,7 +472,7 @@ const extract = async (
           reject({ requiresPassword: true });
         }
       });
-      
+
       subprocess.on("close", (exitCode: any) => {
         if (exitCode !== 0) reject(new Error("unzip failed"));
         else resolve();
@@ -490,8 +487,11 @@ const extract = async (
         zip.extractAllTo(dir, true, false);
       }
     } catch (error: any) {
-      if (error.message.includes("password") || error.message.includes("encrypted")) {
-        throw { requiresPassword: true };
+      if (
+        error.message.includes("password") ||
+        error.message.includes("encrypted")
+      ) {
+        error.requiresPassword = true;
       }
       throw error;
     }
@@ -674,17 +674,9 @@ const restore = async (
 
   const tmpDir = await dir({ unsafeCleanup: true });
 
-  try {
-    await extract(fnm, tmpDir.path, password);
-  } catch (error: any) {
-    if (error.requiresPassword) {
-      console.log("THROWING REQUIRES PASSWORD HERE");
-      throw { requiresPassword: true };
-    }
-    throw error;
-  }
+  await extract(fnm, tmpDir.path, password);
 
-   state.log(6, `Unzip done`);
+  state.log(6, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
