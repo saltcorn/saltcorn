@@ -851,6 +851,14 @@ const configTypes: ConfigTypes = {
       "The secret access key associated with your Amazon S3 Access Key ID.",
     excludeFromMobile: true,
   },
+  backup_password: {
+    type: "String",
+    input_type: "password",
+    label: "Backup password",
+    default: "",
+    blurb: "Password to encrypt backups. Leave empty for no encryption.",
+    excludeFromMobile: true,
+  },
   plugins_store_endpoint: {
     type: "String",
     input_type: "String",

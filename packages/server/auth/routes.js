@@ -196,6 +196,30 @@ const resetForm = (body, req) => {
 };
 
 /**
+ * Restore System Backup Password Form
+ * @param {object} req
+ * @param {string} fileId
+ * @returns {Form}
+ */
+const restoreBackupPasswordForm = (req) =>
+  new Form({
+    blurb: req.__(
+      "To restore a system backup, please enter the password you set when you created the backup."
+    ),
+    fields: [
+      new Field({
+        label: req.__("Password"),
+        name: "password",
+        type: "String",
+        attributes: { input_type: "password" },
+        validator: (s) => s.length > 0,
+      }),
+    ],
+    action: "/auth/restore_backup_password",
+    submitLabel: req.__("Restore system backup"),
+  });
+
+/**
  * get Auth Links
  * @param {string} current
  * @param {boolean} noMethods
@@ -635,22 +659,42 @@ router.post(
   setTenant, // TODO why is this needed?????
   error_catcher(async (req, res) => {
     const hasUsers = await User.nonEmpty();
-    if (!hasUsers) {
-      const newPath = File.get_new_path();
-      await req.files.file.mv(newPath);
+    if (hasUsers) {
+      req.flash("danger", req.__("Users already present"));
+      return res.redirect("/auth/login");
+    }
+
+    if (!req.files?.file) {
+      req.flash("danger", req.__("No backup file uploaded"));
+      return res.redirect("/auth/create_first_user");
+    }
+
+    const newPath = File.get_new_path();
+    await req.files.file.mv(newPath);
+
+    try {
       const err = await restore(
         newPath,
         (p) => load_plugins.loadAndSaveNewPlugin(p),
         true
       );
+
       if (err) req.flash("error", err);
       else req.flash("success", req.__("Successfully restored backup"));
-      fs.unlink(newPath, function () {});
+
+      fs.unlink(newPath, () => {});
       await getState().refresh_plugins();
-      res.redirect(`/auth/login`);
-    } else {
-      req.flash("danger", req.__("Users already present"));
-      res.redirect("/auth/login");
+      return res.redirect("/auth/login");
+    } catch (error) {
+      if (error.requiresPassword) {
+        // Storing the file path in session
+        req.session.restoreBackupPath = newPath;
+        return res.redirect("/auth/restore_backup_password");
+      }
+
+      fs.unlink(newPath, () => {});
+      req.flash("danger", error.message);
+      return res.redirect("/auth/create_first_user");
     }
   })
 );
@@ -698,6 +742,70 @@ router.post(
     } else {
       req.flash("danger", req.__("Users already present"));
       res.redirect("/auth/login");
+    }
+  })
+);
+
+/**
+ * @name get/restore_backup_password
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.get(
+  "/restore_backup_password",
+  error_catcher(async (req, res) => {
+    if (!req.session.restoreBackupPath) {
+      req.flash("danger", req.__("Backup session expired"));
+      return res.redirect("/auth/create_first_user");
+    }
+
+    res.sendAuthWrap(
+      req.__("Restore system backup"),
+      restoreBackupPasswordForm(req),
+      {}
+    );
+  })
+);
+
+/**
+ * @name post/restore_backup_password
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.post(
+  "/restore_backup_password",
+  error_catcher(async (req, res) => {
+    const { password } = req.body;
+    const backupPath = req.session.restoreBackupPath;
+
+    if (!backupPath) {
+      req.flash("danger", req.__("Backup session expired"));
+      return res.redirect("/auth/create_first_user");
+    }
+
+    try {
+      const err = await restore(
+        backupPath,
+        (p) => load_plugins.loadAndSaveNewPlugin(p),
+        true,
+        password
+      );
+
+      // Cleanup
+      fs.unlink(backupPath, () => {});
+      delete req.session.restoreBackupPath;
+
+      if (err) req.flash("error", err);
+      else req.flash("success", req.__("Successfully restored backup"));
+
+      await getState().refresh_plugins();
+      return res.redirect("/auth/login");
+    } catch (error) {
+      req.flash(
+        "danger",
+        error.message || req.__("Incorrect backup password, try again")
+      );
+      return res.redirect("/auth/restore_backup_password");
     }
   })
 );
@@ -1206,7 +1314,7 @@ router.post(
     if (resultCollector.error) {
       req.flash("error", resultCollector.error);
     }
-    if(resultCollector.notify_success) {
+    if (resultCollector.notify_success) {
       req.flash("success", resultCollector.notify_success);
     }
     if (resultCollector.goto) {
