@@ -374,7 +374,7 @@ const backup_info_file = async (root_dirpath: string): Promise<void> => {
 const zipFolder = async (folder: string, zipFileName: string) => {
   const backup_with_system_zip = getState().getConfig(
     "backup_with_system_zip",
-    false
+    true
   );
   const backup_password = getState().getConfig("backup_password", "");
   if (backup_with_system_zip) {
@@ -445,42 +445,55 @@ function executableIsAvailable(name: string) {
  * @param {string} dir
  * @returns {Promise<void>}
  */
-const extract = async (fnm: string, dir: string): Promise<void> => {
-  const backup_with_system_zip = executableIsAvailable("unzip");
+const extract = async (
+  fnm: string,
+  dir: string,
+  password?: string
+): Promise<void> => {
   const state = getState();
-  const backup_password = state.getConfig("backup_password", "");
+  const backup_with_system_zip = executableIsAvailable("unzip");
 
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
-      const passwordArg = backup_password ? `-P "${backup_password}"` : "";
-      const subprocess = spawn("unzip", [
-        ...(passwordArg ? [passwordArg] : []),
+      const args = [
+        ...(password ? [`-P${password}`] : []),
         File.normalise(fnm),
         "-d",
-        dir,
-      ]);
+        dir
+      ];
+      
+      const subprocess = spawn("unzip", args);
+      
       subprocess.stdout.on("data", (data: any) => {
         state.log(6, data.toString());
       });
+      
       subprocess.stderr.on("data", (data: any) => {
-        state.log(1, data.toString());
+        const output = data.toString();
+        state.log(1, output);
+        if (output.includes("password") || output.includes("encrypted")) {
+          reject({ requiresPassword: true });
+        }
       });
-      subprocess.on("close", function (exitCode: any) {
-        if (exitCode != 0) reject(new Error("unzip failed"));
-        else resolve(undefined);
+      
+      subprocess.on("close", (exitCode: any) => {
+        if (exitCode !== 0) reject(new Error("unzip failed"));
+        else resolve();
       });
     });
   } else {
     const zip = new Zip(fnm);
     try {
-      if (backup_password) {
-        zip.extractAllTo(dir, true, false, backup_password);
+      if (password) {
+        zip.extractAllTo(dir, true, false, password);
       } else {
         zip.extractAllTo(dir, true, false);
       }
     } catch (error: any) {
-      state.log(1, `Error during extraction: ${error.message}`);
-      throw new Error(`Failed to extract backup: ${error.message}`);
+      if (error.message.includes("password") || error.message.includes("encrypted")) {
+        throw { requiresPassword: true };
+      }
+      throw error;
     }
   }
 };
@@ -653,17 +666,25 @@ const restore_metadata = async (dirpath: string): Promise<void> => {
 const restore = async (
   fnm: string,
   loadAndSaveNewPlugin: (plugin: Plugin) => void,
-  restore_first_user?: boolean
+  restore_first_user?: boolean,
+  password?: string
 ): Promise<string | void> => {
   const state = getState();
   state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
 
-  //unzip
-  state.log(6, `Unzipping ${fnm} to ${tmpDir}`);
-  await extract(fnm, tmpDir.path);
-  state.log(6, `Unzip done`);
+  try {
+    await extract(fnm, tmpDir.path, password);
+  } catch (error: any) {
+    if (error.requiresPassword) {
+      console.log("THROWING REQUIRES PASSWORD HERE");
+      throw { requiresPassword: true };
+    }
+    throw error;
+  }
+
+   state.log(6, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
