@@ -1,0 +1,8 @@
+{
+  "editor.guides.bracketPairs": true,
+  "editor.wordWrap": "on",
+  "editor.wordWrapColumn": 120,
+  "editor.formatOnSave": true,
+  "prettier.useEditorConfig": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}

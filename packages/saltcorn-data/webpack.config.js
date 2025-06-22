@@ -109,6 +109,7 @@ module.exports = {
   plugins: [
     new webpack.ProvidePlugin({
       process: "process/browser",
+      Buffer: ["buffer", "Buffer"],
     }),
     new webpack.DefinePlugin({
       "process.env.IGNORE_DYNAMIC_REQUIRE": JSON.stringify("true"),

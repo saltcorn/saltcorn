@@ -372,20 +372,12 @@ const backup_info_file = async (root_dirpath: string): Promise<void> => {
 };
 
 const zipFolder = async (folder: string, zipFileName: string) => {
-  const backup_with_system_zip = getState().getConfig(
-    "backup_with_system_zip",
-    false
-  );
+  const backup_with_system_zip = executableIsAvailable("zip");
+  const backup_password = getState().getConfig("backup_password", "");
   if (backup_with_system_zip) {
-    const backup_system_zip_level = getState().getConfig(
-      "backup_system_zip_level",
-      5
-    );
     return await new Promise((resolve, reject) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
-      const cmd = `zip ${
-        backup_system_zip_level ? `-${backup_system_zip_level} ` : ""
-      }-rq "${absZipPath}" .`;
+      const cmd = `zip -5 -rq ${backup_password ? `-P "${backup_password}" ` : ""}"${absZipPath}" .`;
       exec(cmd, { cwd: folder }, (error: any) => {
         if (error) reject(error);
         else resolve(undefined);
@@ -444,31 +436,60 @@ function executableIsAvailable(name: string) {
  * @param {string} dir
  * @returns {Promise<void>}
  */
-const extract = async (fnm: string, dir: string): Promise<void> => {
-  const backup_with_system_zip = executableIsAvailable("unzip");
+const extract = async (
+  fnm: string,
+  dir: string,
+  password?: string
+): Promise<void> => {
   const state = getState();
+  const backup_with_system_zip = executableIsAvailable("unzip");
+
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
-      var subprocess = spawn("unzip", [File.normalise(fnm), "-d", dir]);
+      const args = [
+        ...(password ? [`-P${password}`] : []),
+        File.normalise(fnm),
+        "-d",
+        dir,
+      ];
+
+      const subprocess = spawn("unzip", args);
+
       subprocess.stdout.on("data", (data: any) => {
         state.log(6, data.toString());
       });
+
       subprocess.stderr.on("data", (data: any) => {
-        state.log(1, data.toString());
+        const output = data.toString();
+        state.log(1, output);
+        if (output.includes("password") || output.includes("encrypted")) {
+          reject({ requiresPassword: true });
+        }
       });
-      subprocess.on("close", function (exitCode: any) {
-        if (exitCode != 0) reject(new Error("unzip failed"));
-        else resolve(undefined);
-      });
-    });
-  } else
-    return new Promise(function (resolve, reject) {
-      const zip = new Zip(fnm);
-      zip.extractAllToAsync(dir, true, false, function (err: any) {
-        if (err) reject(new Error("Error opening zip file: " + err));
+
+      subprocess.on("close", (exitCode: any) => {
+        if (exitCode !== 0) reject(new Error("unzip failed"));
         else resolve();
       });
     });
+  } else {
+    const zip = new Zip(fnm);
+    try {
+      if (password) {
+        zip.extractAllTo(dir, true, false, password);
+      } else {
+        zip.extractAllTo(dir, true, false);
+      }
+    } catch (error: any) {
+      if (
+        error.message.includes("password") ||
+        error.message.includes("encrypted")
+      ) {
+        error.requiresPassword = true;
+      }
+      throw error;
+    }
+  }
 };
 
 /**
@@ -639,16 +660,16 @@ const restore_metadata = async (dirpath: string): Promise<void> => {
 const restore = async (
   fnm: string,
   loadAndSaveNewPlugin: (plugin: Plugin) => void,
-  restore_first_user?: boolean
+  restore_first_user?: boolean,
+  password?: string
 ): Promise<string | void> => {
   const state = getState();
   state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
 
-  //unzip
-  state.log(6, `Unzipping ${fnm} to ${tmpDir}`);
-  await extract(fnm, tmpDir.path);
+  await extract(fnm, tmpDir.path, password);
+
   state.log(6, `Unzip done`);
 
   let basePath = tmpDir.path;

@@ -851,6 +851,14 @@ const configTypes: ConfigTypes = {
       "The secret access key associated with your Amazon S3 Access Key ID.",
     excludeFromMobile: true,
   },
+  backup_password: {
+    type: "String",
+    input_type: "password",
+    label: "Backup password",
+    default: "",
+    blurb: "Password to encrypt backups. Leave empty for no encryption.",
+    excludeFromMobile: true,
+  },
   plugins_store_endpoint: {
     type: "String",
     input_type: "String",
@@ -945,24 +953,6 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Backup with event log",
     default: false,
-    excludeFromMobile: true,
-  },
-  backup_with_system_zip: {
-    type: "Bool",
-    label: "Backup with system zip",
-    sublabel: "Recommended. Executable <code>zip</code> must be installed",
-    default: false,
-    excludeFromMobile: true,
-  },
-  backup_system_zip_level: {
-    type: "Integer",
-    label: "Zip compression level",
-    sublabel: "1=Fast, larger file, 9=Slow, smaller files",
-    default: 5,
-    attributes: {
-      min: 1,
-      max: 9,
-    },
     excludeFromMobile: true,
   },
   snapshots_enabled: {
