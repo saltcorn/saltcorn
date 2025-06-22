@@ -375,15 +375,9 @@ const zipFolder = async (folder: string, zipFileName: string) => {
   const backup_with_system_zip = executableIsAvailable("zip");
   const backup_password = getState().getConfig("backup_password", "");
   if (backup_with_system_zip) {
-    const backup_system_zip_level = getState().getConfig(
-      "backup_system_zip_level",
-      5
-    );
     return await new Promise((resolve, reject) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
-      const cmd = `zip ${
-        backup_system_zip_level ? `-${backup_system_zip_level} ` : ""
-      }-rq ${backup_password ? `-P "${backup_password}" ` : ""}"${absZipPath}" .`;
+      const cmd = `zip -5 -rq ${backup_password ? `-P "${backup_password}" ` : ""}"${absZipPath}" .`;
       exec(cmd, { cwd: folder }, (error: any) => {
         if (error) reject(error);
         else resolve(undefined);

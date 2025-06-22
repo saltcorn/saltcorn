@@ -499,19 +499,12 @@ router.get(
     backupForm.values.backup_s3_access_secret = getState().getConfig(
       "backup_s3_access_secret"
     );
-    backupForm.values.backup_password = getState().getConfig("backup_password");
     backupForm.values.backup_s3_region =
-      getState().getConfig("backup_s3_region");
+    getState().getConfig("backup_s3_region");
     aBackupFilePrefixForm.values.backup_with_event_log = getState().getConfig(
       "backup_with_event_log"
     );
-    aBackupFilePrefixForm.values.backup_with_system_zip = getState().getConfig(
-      "backup_with_system_zip"
-    );
-    aBackupFilePrefixForm.values.backup_system_zip_level = getState().getConfig(
-      "backup_system_zip_level"
-    );
-    //
+    aBackupFilePrefixForm.values.backup_password = getState().getConfig("backup_password");
     const aSnapshotForm = snapshotForm(req);
     aSnapshotForm.values.snapshots_enabled =
       getState().getConfig("snapshots_enabled");
@@ -969,25 +962,13 @@ const backupFilePrefixForm = (req) =>
         name: "backup_with_event_log",
       },
       {
-        type: "Bool",
-        label: req.__("Use system zip"),
+        type: "String",
+        label: "Backup password",
+        fieldview: "password",
+        name: "backup_password",
         sublabel: req.__(
-          "Recommended. Executable <code>zip</code> must be installed"
+          "Password to encrypt the backup file. Leave empty for no encryption"
         ),
-        name: "backup_with_system_zip",
-      },
-      {
-        type: "Integer",
-        label: req.__("Zip compression level"),
-        sublabel: req.__("1=Fast, larger file, 9=Slow, smaller files"),
-        name: "backup_system_zip_level",
-        attributes: {
-          min: 1,
-          max: 9,
-        },
-        showIf: {
-          backup_with_system_zip: true,
-        },
       },
     ],
   });
@@ -1141,15 +1122,6 @@ const autoBackupForm = (req) => {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: "S3",
         },
-      },
-      {
-        type: "String",
-        label: "Backup password",
-        fieldview: "password",
-        name: "backup_password",
-        sublabel: req.__(
-          "Password to encrypt the backup file. Leave empty for no encryption"
-        ),
       },
       {
         type: "String",
