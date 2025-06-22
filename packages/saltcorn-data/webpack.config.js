@@ -75,6 +75,7 @@ module.exports = {
       tls: false,
       dns: false,
       net: false,
+      buffer: require.resolve("buffer/"),
       punycode: require.resolve("punycode/"),
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),
@@ -109,6 +110,7 @@ module.exports = {
   plugins: [
     new webpack.ProvidePlugin({
       process: "process/browser",
+      Buffer: ["buffer", "Buffer"],
     }),
     new webpack.DefinePlugin({
       "process.env.IGNORE_DYNAMIC_REQUIRE": JSON.stringify("true"),
