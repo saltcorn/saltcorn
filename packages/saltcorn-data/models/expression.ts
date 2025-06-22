@@ -519,7 +519,7 @@ const add_free_variables_to_aggregations = (
         ref: refFieldName,
         field: targetFieldName,
         aggregate: stat || "array_agg",
-        rename_to: v,
+        // rename_to: v,
       };
     });
 };

@@ -200,6 +200,8 @@ const resetForm = (body, req) => {
   });
   form.values.email = body && body.email;
   form.values.token = body && body.token;
+  form.values.password = body && body.password;
+  form.values.confirm_password = body && body.confirm_password;
   return form;
 };
 
@@ -479,19 +481,12 @@ router.get(
 router.post(
   "/reset",
   error_catcher(async (req, res) => {
-    console.log({
-      email: (req.body || {}).email,
-      token: (req.body || {}).token,
-      password: (req.body || {}).password,
-      confirm_password: (req.body || {}).confirm_password,
-    })
     const result = await User.resetPasswordWithToken({
       email: (req.body || {}).email,
       reset_password_token: (req.body || {}).token,
       password: (req.body || {}).password,
       confirm_password: (req.body || {}).confirm_password,
     });
-    console.log(result, "result of reset password");
     if (result.success) {
       req.flash(
         "success",
@@ -501,8 +496,7 @@ router.post(
     } else if (result.error) {
       req.flash("danger", result.error);
       const form = resetForm(req.body, req);
-      console.log(result.error, "^^&^&^&^&^&^&");
-      form.errors = { password: result.error, reset_password: result.error };
+      form.errors = { password: result.error, confirm_password: result.error };
       res.sendAuthWrap(req.__(`Reset password`), form, {});
     } else {
       req.flash(
