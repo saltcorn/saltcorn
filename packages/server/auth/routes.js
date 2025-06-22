@@ -179,6 +179,14 @@ const resetForm = (body, req) => {
         input_type: "password",
       }),
       new Field({
+        label: req.__("Confirm password"),
+        name: "confirm_password",
+        input_type: "password",
+        attributes: {
+          autocomplete: "new-password",
+        },
+      }),
+      new Field({
         name: "token",
         input_type: "hidden",
       }),
@@ -471,11 +479,19 @@ router.get(
 router.post(
   "/reset",
   error_catcher(async (req, res) => {
+    console.log({
+      email: (req.body || {}).email,
+      token: (req.body || {}).token,
+      password: (req.body || {}).password,
+      confirm_password: (req.body || {}).confirm_password,
+    })
     const result = await User.resetPasswordWithToken({
       email: (req.body || {}).email,
       reset_password_token: (req.body || {}).token,
       password: (req.body || {}).password,
+      confirm_password: (req.body || {}).confirm_password,
     });
+    console.log(result, "result of reset password");
     if (result.success) {
       req.flash(
         "success",
@@ -485,7 +501,8 @@ router.post(
     } else if (result.error) {
       req.flash("danger", result.error);
       const form = resetForm(req.body, req);
-      form.errors = { password: result.error };
+      console.log(result.error, "^^&^&^&^&^&^&");
+      form.errors = { password: result.error, reset_password: result.error };
       res.sendAuthWrap(req.__(`Reset password`), form, {});
     } else {
       req.flash(

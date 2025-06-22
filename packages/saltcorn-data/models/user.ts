@@ -602,17 +602,32 @@ class User {
    * @param email - email address string
    * @param reset_password_token - reset password token string
    * @param password
+   * @param confirm_password
    * @returns {Promise<{error: string}|{success: boolean}>}
    */
   static async resetPasswordWithToken({
     email,
     reset_password_token,
     password,
+    confirm_password,
   }: {
     email: string;
     reset_password_token: string;
     password: string;
+    confirm_password: string;
   }): Promise<SuccessMessage | ErrorMessage> {
+    console.log(
+      {
+        email,
+        reset_password_token,
+        password,
+        confirm_password,
+      },
+      "resetPasswordWithToken"
+    );
+
+    if (password !== confirm_password)
+      return { error: "Passwords do not match" };
     if (reset_password_token.length < 10)
       return {
         error: "Invalid token or invalid token length or incorrect email",
@@ -626,13 +641,20 @@ class User {
     ) {
       const match = compareSync(reset_password_token, u.reset_password_token);
       if (match) {
+        console.log(
+          {
+            password,
+            confirm_password,
+          },
+          "%^%^%^%^%^%^%"
+        );
         if (User.unacceptable_password_reason(password))
           return {
             error:
               "Password not accepted: " +
               User.unacceptable_password_reason(password),
           };
-        await u.changePasswordTo(password, true);
+        // await u.changePasswordTo(password, true);
         return { success: true };
       } else return { error: "User not found or expired token" };
     } else {
