@@ -466,7 +466,7 @@ router.get(
               window.tabulator_table.on("cellEdited", function(cell){
                 const row = cell.getRow().getData()
                 const fieldName = cell.getColumn().getField()
-                let ident = (row.${pkNm}||"");
+                let ident = encodeURIComponent(row.${pkNm}||"");
                 if(fieldName === "${pkNm}")
                   ident = "";
                 ajax_indicator(true);

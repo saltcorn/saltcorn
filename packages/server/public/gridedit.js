@@ -172,7 +172,7 @@ function delete_tabulator_row(e, cell) {
   }
   $.ajax({
     type: "DELETE",
-    url: `/api/${tableName}/${row[pk_name]}`,
+    url: `/api/${tableName}/${encodeURIComponent(row[pk_name])}`,
     data: row, // to process primary keys different from id
     headers: {
       "CSRF-Token": _sc_globalCsrf,
