@@ -656,7 +656,7 @@ const transformForm = async ({
       }
       if (segment.action_name === "Delete") {
         if (form.values && form.values[table.pk_name]) {
-          segment.action_url = `/delete/${table.name}/${form.values[table.pk_name]}`;
+          segment.action_url = `/delete/${table.name}/${encodeURIComponent(form.values[table.pk_name])}`;
         } else {
           segment.type = "blank";
           segment.contents = "";

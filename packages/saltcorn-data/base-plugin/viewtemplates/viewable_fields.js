@@ -79,7 +79,7 @@ const action_url = (
     return {
       javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${
         !isNode() ? "post" : ""
-      }/delete/${table.name}/${r[pk_name]}?redirect=/view/${viewname}', true)`,
+      }/delete/${table.name}/${encodeURIComponent(r[pk_name])}?redirect=/view/${viewname}', true)`,
     };
   else if (action_name === "GoBack")
     return {
@@ -1658,15 +1658,15 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         segment.configuration?.after_delete_action == "Reload page"
       ) {
         url = {
-          javascript: `ajax_post('/delete/${table.name}/${
+          javascript: `ajax_post('/delete/${table.name}/${encodeURIComponent(
             row[table.pk_name]
-          }', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+          )}', {success:()=>{close_saltcorn_modal();location.reload();}})`,
         };
         return action_link(url, req, segment);
       } else if (segment.action_name === "Delete")
-        url = `/delete/${table.name}/${
+        url = `/delete/${table.name}/${encodeURIComponent(
           row[table.pk_name]
-        }?redirect=${encodeURIComponent(
+        )}?redirect=${encodeURIComponent(
           interpolate(
             segment.configuration?.after_delete_url || "/",
             row,
