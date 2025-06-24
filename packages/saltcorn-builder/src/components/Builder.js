@@ -182,6 +182,16 @@ const SettingsPanel = () => {
         );
         navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
       }
+      if ((event.ctrlKey || event.metaKey) && event.keyCode == 88 && selected) {
+        // cut elem in json format to clipboard
+        const { layout } = craftToSaltcorn(
+          JSON.parse(query.serialize()),
+          selected?.id,
+          options
+        );
+        navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
+        deleteThis();
+      }
       if ((event.ctrlKey || event.metaKey) && event.keyCode == 86) {
         // paste elem from clipboard into container element
 
