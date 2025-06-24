@@ -1602,6 +1602,7 @@ class Table implements AbstractTable {
           [pk_name]: id,
           _version: {
             next_version_by_id: id,
+            pk_name,
           },
           _time: new Date(),
           _userid: user?.id,
@@ -2059,6 +2060,7 @@ class Table implements AbstractTable {
         [pk_name]: id,
         _version: {
           next_version_by_id: id,
+          pk_name,
         },
         _userid: user?.id,
         _time: new Date(),

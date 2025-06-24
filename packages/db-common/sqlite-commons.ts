@@ -68,7 +68,7 @@ export const buildInsertSql = (
       v.next_version_by_id
         ? `coalesce((select max(_version) from "${sqlsanitize(
             tbl
-          )}" where id=${+v.next_version_by_id}), 0)+1`
+          )}" where "${v.pk_name || "id"}"=${+v.next_version_by_id}), 0)+1`
         : reprAsJson(v, opts.jsonCols?.includes(k))
           ? "json(?)"
           : "?"

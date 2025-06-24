@@ -234,7 +234,7 @@ const insert = async (tbl, obj, opts = Object.create(null)) => {
       valPosList.push(
         `coalesce((select max(_version) from "${schema}"."${sqlsanitize(
           tbl
-        )}" where id=$${valList.length}), 0)+1`
+        )}" where "${v.pk_name || "id"}"=$${valList.length}), 0)+1`
       );
     } else {
       valList.push(v);
