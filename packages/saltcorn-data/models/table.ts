@@ -2138,7 +2138,7 @@ class Table implements AbstractTable {
     let v = v0;
     if (refetch && (calc_agg_fields.length || calc_join_agg_fields.length)) {
       v = (await this.getJoinedRow({
-        where: { [pk_name]: v0.id },
+        where: { [pk_name]: v0[pk_name] },
       })) as Row;
     }
 
