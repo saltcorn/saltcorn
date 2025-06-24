@@ -2024,7 +2024,7 @@ const date = {
   name: "Date",
   description: "Dates, with or without time",
   /** @type {string} */
-  sql_name: "timestamptz",
+  sql_name: (opts) => (opts?.day_only ? "date" : "timestamptz"),
   js_type: "Date",
 
   /**
