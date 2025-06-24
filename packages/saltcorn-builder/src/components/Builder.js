@@ -206,6 +206,14 @@ const SettingsPanel = () => {
           );
         });
       }
+      if ((event.ctrlKey || event.metaKey) && event.keyCode == 90) {
+        // undo
+        actions.history.undo();
+      }
+      if ((event.ctrlKey || event.metaKey) && event.keyCode == 89) {
+        // redo
+        actions.history.redo();
+      }
     }
   };
   useEffect(() => {
