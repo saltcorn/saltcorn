@@ -175,12 +175,26 @@ const SettingsPanel = () => {
       // Ctrl+C or Cmd+C pressed?
       if ((event.ctrlKey || event.metaKey) && event.keyCode == 67 && selected) {
         // copy elem in json format to clipboard
-        const layout = craftToSaltcorn(
+        const { layout } = craftToSaltcorn(
           JSON.parse(query.serialize()),
           selected?.id,
           options
         );
         navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
+      }
+      if ((event.ctrlKey || event.metaKey) && event.keyCode == 86) {
+        // paste elem from clipboard into container element
+
+        navigator.clipboard.readText().then((clipText) => {
+          const layout = JSON.parse(clipText);
+          layoutToNodes(
+            layout,
+            query,
+            actions,
+            selected?.id || "ROOT",
+            options
+          );
+        });
       }
     }
   };
