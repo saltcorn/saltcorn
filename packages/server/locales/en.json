@@ -1618,5 +1618,6 @@
 	"Create views": "Create views",
 	"Decimal places": "Decimal places",
 	"%s view - %s": "%s view - %s",
-	"Password to encrypt the backup file. Leave empty for no encryption": "Password to encrypt the backup file. Leave empty for no encryption"
+	"Password to encrypt the backup file. Leave empty for no encryption": "Password to encrypt the backup file. Leave empty for no encryption",
+	"Show full error to user on crash, enable editing field type": "Show full error to user on crash, enable editing field type"
 }

@@ -366,7 +366,7 @@ const run = async (
         extra.req.user ? { ...state, user_id: extra.req.user } : state,
         isWeb(extra.req) ? undefined : optionsQuery,
         undefined,
-        undefined,
+        state[field.name] || undefined,
         extra.req.user || { role_id: 100 }
       );
       segment.field = field;
