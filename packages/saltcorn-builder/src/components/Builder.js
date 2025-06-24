@@ -78,6 +78,8 @@ const { Provider } = optionsCtx;
  * @namespace
  */
 const SettingsPanel = () => {
+  const options = useContext(optionsCtx);
+
   const { actions, selected, query } = useEditor((state, query) => {
     const currentNodeId = state.events.selected;
     let selected;
@@ -170,6 +172,16 @@ const SettingsPanel = () => {
         if (nextSib) actions.selectNode(nextSib);
         event.preventDefault();
       }
+      // Ctrl+C or Cmd+C pressed?
+      if ((event.ctrlKey || event.metaKey) && event.keyCode == 67 && selected) {
+        // copy elem in json format to clipboard
+        const layout = craftToSaltcorn(
+          JSON.parse(query.serialize()),
+          selected?.id,
+          options
+        );
+        navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
+      }
     }
   };
   useEffect(() => {
@@ -223,7 +235,10 @@ const SettingsPanel = () => {
         {selected ? (
           <Fragment>
             {selected.isDeletable && (
-              <button className="btn btn-sm btn-danger delete-element-builder" onClick={deleteThis}>
+              <button
+                className="btn btn-sm btn-danger delete-element-builder"
+                onClick={deleteThis}
+              >
                 <FontAwesomeIcon icon={faTrashAlt} className="me-1" />
                 Delete
               </button>
@@ -293,7 +308,10 @@ const AddColumnButton = () => {
     );
   };
   return (
-    <button className="btn btn-primary mt-2 add-column-builder" onClick={addColumn}>
+    <button
+      className="btn btn-primary mt-2 add-column-builder"
+      onClick={addColumn}
+    >
       <FontAwesomeIcon icon={faPlus} className="me-2" />
       Add column
     </button>
@@ -471,7 +489,9 @@ const Builder = ({ options, layout, mode }) => {
                               ? faCaretSquareLeft
                               : faCaretSquareRight
                           }
-                          className={"float-end fa-lg builder-expand-toggle-left"}
+                          className={
+                            "float-end fa-lg builder-expand-toggle-left"
+                          }
                           onClick={() => setIsLeftEnlarged(!isLeftEnlarged)}
                           title={isLeftEnlarged ? "Shrink" : "Enlarge"}
                         />
@@ -545,7 +565,9 @@ const Builder = ({ options, layout, mode }) => {
                         icon={
                           isEnlarged ? faCaretSquareRight : faCaretSquareLeft
                         }
-                        className={"float-end me-2 mt-1 fa-lg builder-expand-toggle-right"}
+                        className={
+                          "float-end me-2 mt-1 fa-lg builder-expand-toggle-right"
+                        }
                         onClick={() => setIsEnlarged(!isEnlarged)}
                         title={isEnlarged ? "Shrink" : "Enlarge"}
                       />
