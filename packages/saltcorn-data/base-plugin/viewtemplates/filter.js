@@ -366,7 +366,7 @@ const run = async (
         extra.req.user ? { ...state, user_id: extra.req.user } : state,
         isWeb(extra.req) ? undefined : optionsQuery,
         undefined,
-        undefined,
+        state[field.name] || undefined,
         extra.req.user || { role_id: 100 }
       );
       segment.field = field;
@@ -619,7 +619,9 @@ const run = async (
       } = segment;
       const label = action_label || action_name;
 
-      const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
+      const confirmStr = confirm
+        ? `if(confirm('${extra.req.__("Are you sure?")}'))`
+        : "";
 
       if (action_name === "Clear") {
         if (action_style === "btn-link")
