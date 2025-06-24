@@ -2246,7 +2246,7 @@ class Table implements AbstractTable {
             [matching.field]: {
               inSelect: {
                 table: matching.throughTable[0],
-                field: "id",
+                field: Table.findOne(matching.throughTable[0])?.pk_name || "id",
                 tenant: db.isSQLite ? undefined : db.getTenantSchema(),
                 where: { [matching.through[0]]: v[this.pk_name] },
               },
