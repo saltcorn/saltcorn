@@ -1697,6 +1697,7 @@ class Table implements AbstractTable {
 
     const id = await db.insert(this.name + "__history", v1, {
       onConflictDoNothing: true,
+      pk_name: this.pk_name,
     });
     if (!id && retry <= 3) await this.insert_history_row(v1, retry + 1);
   }
