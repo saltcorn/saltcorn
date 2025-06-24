@@ -619,7 +619,9 @@ const run = async (
       } = segment;
       const label = action_label || action_name;
 
-      const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
+      const confirmStr = confirm
+        ? `if(confirm('${extra.req.__("Are you sure?")}'))`
+        : "";
 
       if (action_name === "Clear") {
         if (action_style === "btn-link")

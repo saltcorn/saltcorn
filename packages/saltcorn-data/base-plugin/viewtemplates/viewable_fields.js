@@ -5,7 +5,7 @@
  */
 const { post_btn } = require("@saltcorn/markup");
 const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
-const { getState } = require("../../db/state");
+const { getState, getReq__ } = require("../../db/state");
 const {
   link_view,
   displayType,
@@ -74,7 +74,8 @@ const action_url = (
   colIndex
 ) => {
   const pk_name = table.pk_name;
-  const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
+  const __ = getReq__();
+  const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
   if (action_name === "Delete")
     return {
       javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${

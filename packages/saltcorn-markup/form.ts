@@ -1330,7 +1330,9 @@ const renderFormLayout = (form: Form): string => {
               action_bordercol || "#000000"
             }; color: ${action_textcol || "#000000"}`
           : null;
-      const confirmStr = confirm ? `if(confirm('${"Are you sure?"}'))` : "";
+      const confirmStr = confirm
+        ? `if(confirm('${form.req?.__?.("Are you sure?") || "Are you sure?"}'))`
+        : "";
       const spinnerStr = spinner ? `spin_action_link(this);` : "";
       if (action_name && action_name.startsWith("Login with ")) {
         const method_label = action_name.replace("Login with ", "");
