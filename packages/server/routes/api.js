@@ -391,8 +391,8 @@ router.get(
               aggregations: {
                 _versions: {
                   table: table.name + "__history",
-                  ref: "id",
-                  field: "id",
+                  ref: table.pk_name,
+                  field: table.pk_name,
                   aggregate: "count",
                 },
               },

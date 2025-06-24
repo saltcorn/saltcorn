@@ -65,7 +65,7 @@ router.get(
 
     const fields = table.getFields();
     var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
-
+    const pk_name = table.pk_name;
     tfields.push({
       label: req.__("Version"),
       key: (r) => r._version,
@@ -82,7 +82,7 @@ router.get(
       label: req.__("Restore"),
       key: (r) =>
         post_btn(
-          `/list/_restore/${table.name}/${r.id}/${r._version}`,
+          `/list/_restore/${table.name}/${r[pk_name]}/${r._version}`,
           req.__("Restore"),
           req.csrfToken()
         ),
@@ -281,6 +281,7 @@ router.get(
         field: "_versions",
         title: "Versions",
         formatter: "__versionsFormatter",
+        formatterParams: { pk_name: table.pk_name },
       });
     }
     jsfields.push({

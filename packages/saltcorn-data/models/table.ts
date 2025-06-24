@@ -1602,6 +1602,7 @@ class Table implements AbstractTable {
           [pk_name]: id,
           _version: {
             next_version_by_id: id,
+            pk_name,
           },
           _time: new Date(),
           _userid: user?.id,
@@ -1696,6 +1697,7 @@ class Table implements AbstractTable {
 
     const id = await db.insert(this.name + "__history", v1, {
       onConflictDoNothing: true,
+      pk_name: this.pk_name,
     });
     if (!id && retry <= 3) await this.insert_history_row(v1, retry + 1);
   }
@@ -2059,6 +2061,7 @@ class Table implements AbstractTable {
         [pk_name]: id,
         _version: {
           next_version_by_id: id,
+          pk_name,
         },
         _userid: user?.id,
         _time: new Date(),
@@ -2246,7 +2249,7 @@ class Table implements AbstractTable {
             [matching.field]: {
               inSelect: {
                 table: matching.throughTable[0],
-                field: "id",
+                field: Table.findOne(matching.throughTable[0])?.pk_name || "id",
                 tenant: db.isSQLite ? undefined : db.getTenantSchema(),
                 where: { [matching.through[0]]: v[this.pk_name] },
               },
@@ -2511,7 +2514,7 @@ class Table implements AbstractTable {
     user?: AbstractUser
   ): Promise<void> {
     const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
-      id,
+      [this.pk_name]: id,
       _version: version,
     });
     var r: Row = {};
@@ -2534,14 +2537,14 @@ class Table implements AbstractTable {
   ): Promise<void> {
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
-      { id },
+      { [this.pk_name]: id },
       { orderBy: "_version", orderDesc: true, limit: 1 }
     );
     //get max that is not a restore
     const last_non_restore = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       {
-        id,
+        [this.pk_name]: id,
         _version: {
           lt: current_version_row._restore_of_version
             ? current_version_row._restore_of_version
@@ -2566,7 +2569,7 @@ class Table implements AbstractTable {
   ): Promise<void> {
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
-      { id },
+      { [this.pk_name]: id },
       { orderBy: "_version", orderDesc: true, limit: 1 }
     );
 
@@ -2574,7 +2577,7 @@ class Table implements AbstractTable {
       const next_version = await db.selectMaybeOne(
         `${sqlsanitize(this.name)}__history`,
         {
-          id,
+          [this.pk_name]: id,
           _version: {
             gt: current_version_row._restore_of_version,
           },
@@ -2603,12 +2606,12 @@ class Table implements AbstractTable {
     if (typeof interval_secs === "number" && interval_secs > 0.199) {
       await db.query(`
       delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
-        where (${sqlsanitize(pk)}, _version) in (
+        where ("${sqlsanitize(pk)}", _version) in (
           select h1."${sqlsanitize(pk)}", h1._version
           FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
           JOIN ${schemaPrefix}"${sqlsanitize(
             this.name
-          )}__history" h2 ON h1.${sqlsanitize(pk)} = h2.${sqlsanitize(pk)}
+          )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(pk)}"
           AND h1._version < h2._version
           AND h1._time < h2._time
           AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
@@ -2636,7 +2639,7 @@ class Table implements AbstractTable {
           ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
         )     
         DELETE FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-          where (${sqlsanitize(pk)}, _version) in (select id, this_version from paired where not is_changed);`);
+          where ("${sqlsanitize(pk)}", _version) in (select id, this_version from paired where not is_changed);`);
     }
   }
   /**

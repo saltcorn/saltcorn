@@ -109,7 +109,8 @@ function jsonFormatter(cell, formatterParams, onRendered) {
 function versionsFormatter(cell, formatterParams, onRendered) {
   const value = cell.getValue();
   const row = cell.getRow().getData();
-  return $(`<a href="/list/_versions/${window.tabulator_table_name}/${row.id}">
+  const pk_name = formatterParams?.pk_name || "id";
+  return $(`<a href="/list/_versions/${window.tabulator_table_name}/${row[pk_name]}">
     ${value || 0}&nbsp;<i class="fa-sm fas fa-list"></i></a>`)[0];
 }
 function colorEditor(cell, onRendered, success, cancel) {
