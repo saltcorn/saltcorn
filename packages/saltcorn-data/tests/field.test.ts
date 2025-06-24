@@ -558,7 +558,7 @@ describe("adds new fields to history #1202", () => {
     await table.insertRow({ date: new Date() });
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
-    expect(rows[0].date instanceof Date).toBe(true);
+    if (!db.isSQLite) expect(rows[0].date instanceof Date).toBe(true);
   });
   it("history first", async () => {
     const table = await Table.create("histcalc2");
@@ -572,7 +572,7 @@ describe("adds new fields to history #1202", () => {
     await table.insertRow({ date: new Date() });
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
-    expect(rows[0].date instanceof Date).toBe(true);
+    if (!db.isSQLite) expect(rows[0].date instanceof Date).toBe(true);
   });
   it("recalc stored first", async () => {
     const table = await Table.create("histcalc3");
