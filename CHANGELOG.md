@@ -2,10 +2,13 @@
 
 ## 1.3.0 - In beta
 
+* Date fields with "only day" are now stored with the "date" type in PostgreSQL.
+
 * Aggregation formulae: In view formulae, you can now use aggregation formulae. The syntax for this is `{inbound_table}${inboundkey_field}${target_field}${aggrgation}` The aggregation (which should be lower case) can be ommitted and defaults to `array_agg`. Examples: `patients$favbook$id$count` or `patients$favbook$id`. This is useful if you want a count in a view link label without creating a stored calculated field.
 
 * Builder:
     - List columns can have containers in columns, and multiple elements in each column
+    - Cut, copy and paste the selected element with keyboard (Ctrl- or Cmd-x/c/v)
 
 * Template generation: generate basic views from template tables. 
 
@@ -15,7 +18,7 @@
 
 * View embeddings in Edit are now live and respond to changes in Key field values if embedded views are based on this relations.
 
-* S3 automated backup destination
+* S3 automated backup destination. Optional password for backups
 
 * refresh_user_session action: run then the sessions user variable needs to be
   updated because the users table row has changed.
