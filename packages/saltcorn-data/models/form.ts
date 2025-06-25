@@ -61,6 +61,7 @@ class Form implements AbstractForm {
   tabs?: string;
   __?: any;
   isWorkflow?: boolean;
+  pk_name?: string;
 
   /**
    * Constructor
@@ -96,6 +97,7 @@ class Form implements AbstractForm {
     this.tabs = o.tabs;
     this.isOwner = !!o.isOwner;
     this.isWorkflow = !!o.isWorkflow;
+    this.pk_name = o.pk_name;
     this.req = o.req;
     this.__ = o.__ || (o.req && o.req.__);
     if (o.validate) this.validate(o.validate);
@@ -307,6 +309,7 @@ namespace Form {
     tabs?: any;
     validate?: any;
     isWorkflow?: boolean;
+    pk_name?: string;
     __?: any;
   };
 

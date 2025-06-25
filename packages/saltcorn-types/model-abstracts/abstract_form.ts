@@ -34,4 +34,5 @@ export interface AbstractForm {
   req: any;
   __?: any;
   isWorkflow?: boolean;
+  pk_name?: string;
 }
