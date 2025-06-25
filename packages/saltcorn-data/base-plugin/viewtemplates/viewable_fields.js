@@ -1908,8 +1908,9 @@ const getForm = async (
     fields: tfields,
     layout,
     req,
+    pk_name: table.pk_name,
   });
-  if (id) form.hidden("id");
+  if (id) form.hidden(form.pk_name);
   return form;
 };
 
