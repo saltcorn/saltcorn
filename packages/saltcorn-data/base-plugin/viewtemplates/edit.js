@@ -1021,7 +1021,7 @@ const render = async ({
     viewname,
     columns,
     layout,
-    state.id,
+    state[table.pk_name],
     req,
     isRemote
   );

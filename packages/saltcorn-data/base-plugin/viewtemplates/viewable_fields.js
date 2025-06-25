@@ -1909,7 +1909,7 @@ const getForm = async (
     layout,
     req,
   });
-  if (id) form.hidden("id");
+  if (id) form.hidden(table.pk_name);
   return form;
 };
 
