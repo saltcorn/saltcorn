@@ -2952,6 +2952,7 @@ class Table implements AbstractTable {
       recalc_stored?: boolean;
       skip_first_data_row?: boolean;
       no_table_write?: boolean;
+      no_transaction?: boolean;
       method?: "Auto" | "copy" | "row-by-row";
     }
   ): Promise<ResultMessage> {
@@ -3042,13 +3043,14 @@ class Table implements AbstractTable {
     let i = 1;
     let rejects = 0;
     let rejectDetails = "";
-    const client = db.isSQLite ? db : await db.getClient();
+    const client =
+      db.isSQLite || options?.no_transaction ? db : await db.getClient();
 
     const stats = await stat(filePath);
     const fileSizeInMegabytes = stats.size / (1024 * 1024);
 
     // start sql transaction
-    await client.query("BEGIN");
+    if (!options?.no_transaction) await client.query("BEGIN");
 
     const readStream = createReadStream(filePath);
     const returnedRows: any = [];
@@ -3187,6 +3189,8 @@ class Table implements AbstractTable {
                             pk_name,
                           });
                         } catch (e) {
+                          console.log(e);
+                          
                           if (
                             !((e as ErrorObj)?.message || "").includes(
                               "current transaction is aborted, commands ignored until end of transaction"
@@ -3214,9 +3218,10 @@ class Table implements AbstractTable {
                     rejects += 1;
                   }
                 } catch (e) {
-                  await client.query("ROLLBACK");
+                  if (!options?.no_transaction) await client.query("ROLLBACK");
 
-                  if (!db.isSQLite) await client.release(true);
+                  if (!db.isSQLite && !options?.no_transaction)
+                    await client.release(true);
                   if (e instanceof Error)
                     reject({ error: `${e.message} in row ${i}` });
                 }
@@ -3242,9 +3247,9 @@ ${rejectDetails}`,
       state.log(6, `CSV import rejectDetails: ` + rejectDetails);
 
     // stop sql transaction
-    await client.query("COMMIT");
+    if (!options?.no_transaction) await client.query("COMMIT");
 
-    if (!db.isSQLite) await client.release(true);
+    if (!db.isSQLite && !options?.no_transaction) await client.release(true);
 
     if (options?.no_table_write) {
       return {
