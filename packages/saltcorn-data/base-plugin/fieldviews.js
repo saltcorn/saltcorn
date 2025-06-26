@@ -468,10 +468,12 @@ const select_by_code = {
     where0,
     extraCtx,
     optionsQuery,
-    formFieldNames
+    formFieldNames,
+    user
   ) {
     field.options = await eval_statements(field.attributes.code, {
       ...extraCtx,
+      user,
       Table,
     });
   },
