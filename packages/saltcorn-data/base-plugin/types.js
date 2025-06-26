@@ -42,6 +42,7 @@ const User = require("../models/user");
 const _ = require("underscore");
 const { interpolate } = require("../utils");
 const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
+const { select_by_code } = require("./fieldviews");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -1475,6 +1476,7 @@ const string = {
           ...(isdef(v) && { value: text_attr(v) }),
         }),
     },
+    select_by_code: { ...select_by_code, type: undefined },
   },
   /**
    * @param {*} v
@@ -1739,6 +1741,7 @@ const int = {
         );
       },
     },
+    select_by_code: { ...select_by_code, type: undefined },
   },
   /** @type {object[]}  */
   attributes: [

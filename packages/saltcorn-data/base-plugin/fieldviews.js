@@ -7,7 +7,11 @@
 const View = require("../models/view");
 const Table = require("../models/table");
 const Field = require("../models/field");
-const { eval_expression, jsexprToWhere } = require("../models/expression");
+const {
+  eval_expression,
+  jsexprToWhere,
+  eval_statements,
+} = require("../models/expression");
 const {
   option,
   a,
@@ -426,6 +430,85 @@ const select_from_table = {
   },
 };
 
+const select_by_code = {
+  /** @type {string} */
+  type: "Key",
+  /** @type {boolean} */
+  isEdit: true,
+  blockDisplay: true,
+  description: "Select by drop-down. Available options are set by code.",
+  /**
+   * @type {object[]}
+   */
+  configFields: (field) => [
+    {
+      name: "code",
+      label: "Code",
+      input_type: "code",
+      attributes: { mode: "application/javascript" },
+      class: "validate-statements",
+      sublabel: `Return array of: strings or <code>{ label: string, value: ${field.is_fkey ? "key-value" : field.type?.js_type || "any"} }</code>`,
+      validator(s) {
+        try {
+          let AsyncFunction = Object.getPrototypeOf(
+            async function () {}
+          ).constructor;
+          AsyncFunction(s);
+          return true;
+        } catch (e) {
+          return e.message;
+        }
+      },
+    },
+  ],
+
+  async fill_options(
+    field,
+    force_allow_none,
+    where0,
+    extraCtx,
+    optionsQuery,
+    formFieldNames
+  ) {
+    field.options = await eval_statements(field.attributes.code, {
+      ...extraCtx,
+      Table,
+    });
+  },
+
+  /**
+   * @param {*} nm
+   * @param {*} v
+   * @param {*} attrs
+   * @param {*} cls
+   * @param {*} reqd
+   * @param {*} field
+   * @returns {object}
+   */
+  run: (nm, v, attrs, cls, reqd, field) => {
+    const selOptions = select_options(
+      v,
+      field,
+      (attrs || {}).force_required,
+      (attrs || {}).neutral_label,
+      false
+    );
+
+    return tags.select(
+      {
+        class: `form-control form-select ${cls} ${field.class || ""}`,
+        "data-fieldname": field.form_name,
+        name: text_attr(nm),
+        id: `input${text_attr(nm)}`,
+        disabled: attrs.disabled || attrs.disable,
+        readonly: attrs.readonly,
+        onChange: attrs.onChange,
+        autocomplete: "off",
+      },
+      selOptions
+    );
+  },
+};
 const two_level_select = {
   /** @type {string} */
   type: "Key",
@@ -860,4 +943,5 @@ module.exports = {
   two_level_select,
   search_join_field,
   select_by_view,
+  select_by_code,
 };
