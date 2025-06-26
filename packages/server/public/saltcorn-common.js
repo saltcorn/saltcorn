@@ -2503,11 +2503,13 @@ const subscribeHelper = (config, swReg) => {
   };
 
   return {
-    ensureSubscription: async () => {
+    ensureSubscription: async (force) => {
       const permission = await Notification.requestPermission();
       if (permission !== "granted")
         throw new Error(`Push permission denied ${permission}`);
-      if (!(await swReg.pushManager.getSubscription())) {
+      const currentSub = await swReg.pushManager.getSubscription();
+      if (!currentSub || force) {
+        if (currentSub) await currentSub.unsubscribe();
         const newSub = await subscribe();
         await uploadSubscription(newSub);
       }
@@ -2515,21 +2517,20 @@ const subscribeHelper = (config, swReg) => {
   };
 };
 
-async function initPushNotify(forceLoadCfg) {
+async function initPushNotify(force) {
   if (!isPWA()) {
     console.warn("Push notifications are only available in PWA mode.");
     return;
   }
   console.log("Initializing notifications...");
   try {
-    const webPushConfig = await getWebPushConfig(forceLoadCfg);
+    const webPushConfig = await getWebPushConfig(force);
     const swReg = await navigator.serviceWorker.ready;
     if (!webPushConfig.enabled || !webPushConfig.userEnabled) {
       const currentSub = await swReg.pushManager.getSubscription();
       if (currentSub) await currentSub.unsubscribe();
-    } else {
-      await subscribeHelper(webPushConfig, swReg).ensureSubscription();
-    }
+    } else
+      await subscribeHelper(webPushConfig, swReg).ensureSubscription(force);
   } catch (error) {
     console.error("Error initializing notifications:", error);
   }

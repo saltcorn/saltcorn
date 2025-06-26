@@ -95,7 +95,10 @@ class Notification {
       (await emailModule.getMailTransport())
         .sendMail(email)
         .catch((e) => getState()?.log(1, e.message));
-    } else if (notin.send_method === "Web-push") {
+    } else if (
+      notin.send_method === "Web-push" &&
+      user?._attributes?.notify_web_push
+    ) {
       const state = getState();
       if (state && user) {
         const icon = state.getConfig("push_notification_icon");
@@ -105,15 +108,13 @@ class Notification {
           .filter((sub: any) => sub.user_id === user.id);
         for (const sub of subs) {
           const payload = JSON.stringify({
-            title: "Hello",
-            body: "This is a push notification!",
+            title: o.title,
+            body: o.body,
             icon: `/files/serve/${icon}`,
             badge: `/files/serve/${badge}`,
           });
           try {
-            webpush.sendNotification(sub, payload).catch((error: any) => {
-              console.error("Error sending notification:", error);
-            });
+            await webpush.sendNotification(sub, payload);
           } catch (error) {
             state.log(1, `Error sending web push notification: ${error}`);
           }
