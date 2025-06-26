@@ -14,6 +14,7 @@ import type {
 import User from "./user";
 import state from "../db/state";
 import emailModule from "./email";
+import webpush from "web-push";
 
 const { getState } = state;
 
@@ -30,6 +31,7 @@ class Notification {
   link?: string;
   user_id: number;
   read: boolean;
+  send_method?: "email" | "Web-push";
 
   /**
    * Notification constructor
@@ -43,6 +45,7 @@ class Notification {
     this.link = o.link;
     this.user_id = o.user_id;
     this.read = !!o.read;
+    this.send_method = o.send_method || "email";
   }
   /**
    * @param {*} where
@@ -77,18 +80,45 @@ class Notification {
       read: o.read,
     });
     const user = await User.findOne({ id: o.user_id });
-    if (user?._attributes?.notify_email) {
+    if (
+      (notin.send_method === "email" || !notin.send_method) &&
+      user?._attributes?.notify_email
+    ) {
       const email = {
         from: getState()?.getConfig("email_from"),
         to: user.email,
         subject: o.title,
         text: `${o.body}   
-        ${o.link}`,
+          ${o.link}`,
         html: `${o.body}<br/><a href="${o.link}">${o.link}</a>`,
       };
       (await emailModule.getMailTransport())
         .sendMail(email)
         .catch((e) => getState()?.log(1, e.message));
+    } else if (notin.send_method === "Web-push") {
+      const state = getState();
+      if (state && user) {
+        const icon = state.getConfig("push_notification_icon");
+        const badge = state.getConfig("push_notification_badge");
+        const subs = state
+          .getConfig("push_notification_subscriptions", [])
+          .filter((sub: any) => sub.user_id === user.id);
+        for (const sub of subs) {
+          const payload = JSON.stringify({
+            title: "Hello",
+            body: "This is a push notification!",
+            icon: `/files/serve/${icon}`,
+            badge: `/files/serve/${badge}`,
+          });
+          try {
+            webpush.sendNotification(sub, payload).catch((error: any) => {
+              console.error("Error sending notification:", error);
+            });
+          } catch (error) {
+            state.log(1, `Error sending web push notification: ${error}`);
+          }
+        }
+      }
     }
   }
 

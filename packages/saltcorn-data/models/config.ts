@@ -983,6 +983,12 @@ const configTypes: ConfigTypes = {
     label: "Set colors",
     default: false,
   },
+  pwa_enable_push_notify: {
+    type: "Bool",
+    label: "Enable Web Push",
+    default: true,
+    sublabel: "Enable web push notifications",
+  },
   pwa_theme_color: {
     type: "Color",
     label: "Theme color",
@@ -1322,6 +1328,66 @@ const configTypes: ConfigTypes = {
   viewgen_template_table: {
     type: "String",
     label: "Template table",
+    excludeFromMobile: true,
+  },
+  vapid_public_key: {
+    type: "String",
+    label: "VAPID public key",
+    default: "",
+    blurb: "Public key for VAPID authentication in web push notifications",
+    excludeFromMobile: true,
+    onChange(pubKey: string) {
+      require("../db/state").getState()?.refresh_config();
+    },
+  },
+  vapid_private_key: {
+    type: "String",
+    label: "VAPID private key",
+    default: "",
+    blurb: "Private key for VAPID authentication in web push notifications",
+    input_type: "password",
+    excludeFromMobile: true,
+    onChange(prKey: string) {
+      require("../db/state").getState()?.refresh_config();
+    },
+  },
+  vapid_email: {
+    type: "String",
+    label: "VAPID email",
+    default: "",
+    blurb:
+      "Email address for VAPID authentication in web push notifications. " +
+      "Usually, it is your email address.",
+    excludeFromMobile: true,
+    onChange(email: string) {
+      require("../db/state").getState()?.refresh_config();
+    },
+  },
+  push_notification_icon: {
+    type: "File",
+    name: "push_notification_icon",
+    label: "Web push icon",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 100, mime_super: "image" },
+    },
+    sublabel: "Select a publicly accessible square image file",
+  },
+  push_notification_badge: {
+    type: "File",
+    name: "push_notification_badge",
+    label: "Web push badge",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 100, mime_super: "image" },
+    },
+    sublabel:
+      "Select a publicly accessible monochrome square image file (prefarbly 72x72px)",
+  },
+  push_notification_subscriptions: {
+    type: "hidden",
+    label: "Notify subscriptions",
+    default: [],
     excludeFromMobile: true,
   },
 };

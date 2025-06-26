@@ -2428,3 +2428,109 @@ const observer = new IntersectionObserver(
 document.querySelectorAll("[data-animate]").forEach((element) => {
   observer.observe(element);
 });
+
+function isPWA() {
+  const isStandaloneDisplay = window.matchMedia(
+    "(display-mode: standalone)"
+  ).matches;
+  const isStandaloneNavigator = window.navigator.standalone === true; // iOS Safari
+  const isTrustedDisplayMode = ["fullscreen", "standalone", "minimal-ui"].some(
+    (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
+  );
+  return isStandaloneDisplay || isStandaloneNavigator || isTrustedDisplayMode;
+}
+
+// get the config from session storage or fetch it from the server
+async function getWebPushConfig(forceLoadCfg) {
+  const cachedConfig = sessionStorage.getItem("webPushConfig");
+  if (cachedConfig && !forceLoadCfg) return JSON.parse(cachedConfig);
+  else {
+    const response = await fetch("/notifications/web-push-config", {
+      headers: {
+        "CSRF-Token": _sc_globalCsrf,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch web push config: ${response.statusText}`
+      );
+    }
+    const data = await response.json();
+    sessionStorage.setItem("webPushConfig", JSON.stringify(data.config));
+    return data.config;
+  }
+}
+
+const subscribeHelper = (config, swReg) => {
+  if (!config.vapidPublicKey) throw new Error("VAPID public key is missing");
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, "+")
+      .replace(/_/g, "/");
+
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  const subscribe = async () => {
+    const subscription = await swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey),
+    });
+    return subscription;
+  };
+
+  const uploadSubscription = async (subscription) => {
+    const response = await fetch("/notifications/subscribe", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": _sc_globalCsrf,
+      },
+    });
+    if (response.status === 200) {
+      const data = await response.json();
+      console.log("Subscription uploaded successfully:", data);
+    } else console.error("Failed to upload subscription:", response.statusText);
+  };
+
+  return {
+    ensureSubscription: async () => {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted")
+        throw new Error(`Push permission denied ${permission}`);
+      if (!(await swReg.pushManager.getSubscription())) {
+        const newSub = await subscribe();
+        await uploadSubscription(newSub);
+      }
+    },
+  };
+};
+
+async function initPushNotify(forceLoadCfg) {
+  if (!isPWA()) {
+    console.warn("Push notifications are only available in PWA mode.");
+    return;
+  }
+  console.log("Initializing notifications...");
+  try {
+    const webPushConfig = await getWebPushConfig(forceLoadCfg);
+    const swReg = await navigator.serviceWorker.ready;
+    if (!webPushConfig.enabled || !webPushConfig.userEnabled) {
+      const currentSub = await swReg.pushManager.getSubscription();
+      if (currentSub) await currentSub.unsubscribe();
+    } else {
+      await subscribeHelper(webPushConfig, swReg).ensureSubscription();
+    }
+  } catch (error) {
+    console.error("Error initializing notifications:", error);
+  }
+}

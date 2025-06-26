@@ -63,6 +63,7 @@ import { runInContext, createContext } from "vm";
 import faIcons from "./fa5-icons";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
+import webpush from "web-push";
 
 /**
  * @param v
@@ -448,9 +449,19 @@ class State {
         (this.configs.joined_log_socket_ids?.value || []).length > 0;
       this.hasJoinedRealTimeSockets =
         (this.configs.joined_real_time_socket_ids?.value || []).length > 0;
+      this.initWebPush();
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+
+  initWebPush() {
+    const publicKey = this.getConfig("vapid_public_key");
+    const privateKey = this.getConfig("vapid_private_key");
+    const email = this.getConfig("vapid_email");
+    if (publicKey && privateKey && email) {
+      webpush.setVapidDetails(`mailto:${email}`, publicKey, privateKey);
+    }
   }
 
   async refreshUserLayouts() {

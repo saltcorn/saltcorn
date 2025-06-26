@@ -248,6 +248,76 @@ router.post(
   })
 );
 
+router.post(
+  "/subscribe",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("pwa_enable_push_notify", true);
+    if (!enabled) {
+      res.status(403).json({
+        error: req.__("Notifications are not enabled on this server"),
+      });
+    } else {
+      const subs = getState().getConfig("push_notification_subscriptions", []);
+      const user = req.user;
+      const newSubs = [
+        ...subs,
+        {
+          endpoint: req.body.endpoint,
+          keys: {
+            auth: req.body.keys.auth,
+            p256dh: req.body.keys.p256dh,
+          },
+          user_id: user.id,
+        },
+      ];
+      await getState().setConfig("push_notification_subscriptions", newSubs);
+      res.json({
+        success: "ok",
+        message: req.__("Subscribed to notifications"),
+      });
+    }
+  })
+);
+
+router.get(
+  "/web-push-config",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("pwa_enable_push_notify", true);
+    if (!enabled)
+      res.json({
+        enabled: false,
+      });
+    else {
+      const dbUser = await User.findOne({ id: req.user.id });
+      const userEnabled = dbUser?._attributes?.notify_web_push || false;
+      const vapidPublicKey = getState().getConfig("vapid_public_key");
+      res.json({
+        config: {
+          enabled: true,
+          userEnabled,
+          vapidPublicKey,
+        },
+      });
+    }
+  })
+);
+
+router.post(
+  "/generate-vapid-keys",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const webPush = require("web-push");
+    const vapidKeys = webPush.generateVAPIDKeys();
+    await getState().setConfig("vapid_public_key", vapidKeys.publicKey);
+    await getState().setConfig("vapid_private_key", vapidKeys.privateKey);
+    res.json({
+      success: "ok",
+    });
+  })
+);
+
 router.get(
   "/manifest.json{:opt_cache_bust}",
   error_catcher(async (req, res) => {
