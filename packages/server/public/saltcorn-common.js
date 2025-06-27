@@ -2540,10 +2540,8 @@ const subscribeHelper = (config, swReg) => {
 
 async function initPushNotify(force) {
   if (!isPWA()) {
-    console.warn("Push notifications are only available in PWA mode.");
     return;
   }
-  console.log("Initializing notifications...");
   try {
     const webPushConfig = await getWebPushConfig(force);
     const swReg = await navigator.serviceWorker.ready;
