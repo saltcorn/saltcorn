@@ -103,6 +103,16 @@ class Notification {
       if (state && user) {
         const icon = state.getConfig("push_notification_icon");
         const badge = state.getConfig("push_notification_badge");
+        const publicKey = state.getConfig("vapid_public_key");
+        const privateKey = state.getConfig("vapid_private_key");
+        const email = state.getConfig("vapid_email");
+        if (!publicKey || !privateKey || !email) {
+          state.log(
+            1,
+            "Web push notifications are not configured properly. Missing VAPID keys or email."
+          );
+          return;
+        }
         const subs = state
           .getConfig("push_notification_subscriptions", [])
           .filter((sub: any) => sub.user_id === user.id);
@@ -114,7 +124,13 @@ class Notification {
             badge: `/files/serve/${badge}`,
           });
           try {
-            await webpush.sendNotification(sub, payload);
+            await webpush.sendNotification(sub, payload, {
+              vapidDetails: {
+                subject: `mailto:${email}`,
+                publicKey,
+                privateKey,
+              },
+            });
           } catch (error) {
             state.log(1, `Error sending web push notification: ${error}`);
           }

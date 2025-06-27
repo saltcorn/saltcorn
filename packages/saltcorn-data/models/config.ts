@@ -1336,9 +1336,6 @@ const configTypes: ConfigTypes = {
     default: "",
     blurb: "Public key for VAPID authentication in web push notifications",
     excludeFromMobile: true,
-    onChange(pubKey: string) {
-      require("../db/state").getState()?.refresh_config();
-    },
   },
   vapid_private_key: {
     type: "String",
@@ -1347,9 +1344,6 @@ const configTypes: ConfigTypes = {
     blurb: "Private key for VAPID authentication in web push notifications",
     input_type: "password",
     excludeFromMobile: true,
-    onChange(prKey: string) {
-      require("../db/state").getState()?.refresh_config();
-    },
   },
   vapid_email: {
     type: "String",
@@ -1359,9 +1353,6 @@ const configTypes: ConfigTypes = {
       "Email address for VAPID authentication in web push notifications. " +
       "Usually, it is your email address.",
     excludeFromMobile: true,
-    onChange(email: string) {
-      require("../db/state").getState()?.refresh_config();
-    },
   },
   push_notification_icon: {
     type: "File",

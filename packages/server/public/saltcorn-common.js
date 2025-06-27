@@ -2430,6 +2430,7 @@ document.querySelectorAll("[data-animate]").forEach((element) => {
 });
 
 function isPWA() {
+  if (!window.matchMedia) return false;
   const isStandaloneDisplay = window.matchMedia(
     "(display-mode: standalone)"
   ).matches;
