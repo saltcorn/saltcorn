@@ -1241,24 +1241,14 @@ window.addEventListener("beforeinstallprompt", (e) => {
   defferedPrompt = e;
 });
 
-let isPWAInstallation = false;
 window.addEventListener("appinstalled", async (event) => {
-  isPWAInstallation = true;
   console.log("App was installed.", event);
   await initPushNotify(true);
 });
 
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    if ("serviceWorker" in navigator && isPWA()) {
-      navigator.serviceWorker.ready.then(async () => {
-        if (!isPWAInstallation) {
-          console.log("PWA opened");
-          await initPushNotify(true);
-        }
-      });
-    }
-  }
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!isPWA()) return;
+  await initPushNotify();
 });
 
 function isAndroidMobile() {
