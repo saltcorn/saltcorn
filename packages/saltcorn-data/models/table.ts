@@ -57,6 +57,7 @@ const {
 } = expression;
 
 import type TableConstraint from "./table_constraints";
+import type File from "./file";
 import { validate as isValidUUID } from "uuid";
 
 import csvtojson from "csvtojson";
@@ -97,6 +98,7 @@ import type {
 import { get_formula_examples } from "./internal/table_helper";
 import { getAggAndField, process_aggregations } from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
+import { GenObj } from "@saltcorn/db-common/types";
 
 /**
  * Transponce Objects
@@ -1015,7 +1017,7 @@ class Table implements AbstractTable {
       },
       { cached: true }
     );
-    let rows;
+    let rows: any;
     if (
       calc_agg_fields.length ||
       (user && user.role_id > this.min_role_write && this.ownership_formula)
@@ -1030,7 +1032,7 @@ class Table implements AbstractTable {
     const deleteFileFields = fields.filter(
       (f) => f.type === "File" && f.attributes?.also_delete_file
     );
-    const deleteFiles = [];
+    const deleteFiles: Array<File> = [];
     if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
       const File = require("./file");
 
@@ -1057,41 +1059,57 @@ class Table implements AbstractTable {
         }
       }
     }
-    if (rows) {
-      const delIds = rows.map((r) => r[this.pk_name]);
-      if (!db.isSQLite) {
-        await db.deleteWhere(this.name, {
-          [this.pk_name]: { in: delIds },
-        });
-      } else {
-        await db.query(
-          `delete from "${db.sqlsanitize(this.name)}" where "${db.sqlsanitize(
-            this.pk_name
-          )}" in (${delIds.join(",")})`
-        );
-      }
-      for (const row of rows) await this.auto_update_calc_aggregations(row);
-      if (this.has_sync_info) {
-        const dbTime = await db.time();
-        await this.addDeleteSyncInfo(rows, dbTime);
-      }
-    } else {
-      const delIds = this.has_sync_info
-        ? await db.select(this.name, where, {
-            fields: [this.pk_name],
-          })
-        : null;
+    await db.tryCatchInTransaction(
+      async () => {
+        if (rows) {
+          const delIds = rows.map((r: GenObj) => r[this.pk_name]);
+          if (!db.isSQLite) {
+            await db.deleteWhere(this.name, {
+              [this.pk_name]: { in: delIds },
+            });
+          } else {
+            await db.query(
+              `delete from "${db.sqlsanitize(this.name)}" where "${db.sqlsanitize(
+                this.pk_name
+              )}" in (${delIds.join(",")})`
+            );
+          }
+          for (const row of rows) await this.auto_update_calc_aggregations(row);
+          if (this.has_sync_info) {
+            const dbTime = await db.time();
+            await this.addDeleteSyncInfo(rows, dbTime);
+          }
+        } else {
+          const delIds = this.has_sync_info
+            ? await db.select(this.name, where, {
+                fields: [this.pk_name],
+              })
+            : null;
 
-      await db.deleteWhere(this.name, where);
-      if (this.has_sync_info) {
-        const dbTime = await db.time();
-        await this.addDeleteSyncInfo(delIds, dbTime);
+          await db.deleteWhere(this.name, where);
+          if (this.has_sync_info) {
+            const dbTime = await db.time();
+            await this.addDeleteSyncInfo(delIds, dbTime);
+          }
+        }
+        //if (fields.find((f) => f.primary_key)) await this.resetSequence();
+        for (const file of deleteFiles) {
+          await file.delete();
+        }
+      },
+      (e: any) => {
+        if (+e.code == 23503 && e.table) {
+          const table = Table.findOne(e.table);
+          const field = table?.fields.find(
+            (f) => f.reftable_name === this.name && f.attributes.fkey_error_msg
+          );
+          // TODO there could in theory be multiple key fields onto this table.
+          // check if e.constraint matches tableName_fieldName_fkey. if yes that is field
+          if (field) throw new Error(field.attributes.fkey_error_msg);
+          else throw e;
+        } else throw e;
       }
-    }
-    //if (fields.find((f) => f.primary_key)) await this.resetSequence();
-    for (const file of deleteFiles) {
-      await file.delete();
-    }
+    );
   }
 
   /**
@@ -3190,7 +3208,7 @@ class Table implements AbstractTable {
                           });
                         } catch (e) {
                           console.log(e);
-                          
+
                           if (
                             !((e as ErrorObj)?.message || "").includes(
                               "current transaction is aborted, commands ignored until end of transaction"
