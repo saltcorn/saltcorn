@@ -21,6 +21,7 @@ import {
 import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
 import utils from "../utils";
+import { GenObj } from "@saltcorn/db-common/types";
 const { mergeIntoWhere } = utils;
 
 /**
@@ -661,6 +662,32 @@ function eval_expression(
 /**
  * @param {string} expression
  * @param {object[]} fields
+ * @returns {any}
+ */
+async function eval_statements(
+  expression: string,
+  context: GenObj,
+  errorLocation?: string
+): Promise<any> {
+  try {
+    const { getState } = require("../db/state");
+    const evalStr = `async ()=>{${expression}}`;
+    const f = runInNewContext(evalStr, {
+      ...getState().eval_context,
+      ...context,
+    });
+    return await f();
+  } catch (e: any) {
+    e.message = `In evaluating the statements ${expression.split("\n")}... ${
+      errorLocation ? ` in ${errorLocation}` : ""
+    }:\n\n${e.message}`;
+    throw e;
+  }
+}
+
+/**
+ * @param {string} expression
+ * @param {object[]} fields
  * @param {object} [extraContext = {}]
  * @returns {any}
  */
@@ -668,7 +695,7 @@ function get_async_expression_function(
   expression: string,
   fields: Array<Field>,
   extraContext = {}
-): any {
+): Function {
   const field_names = fields.map((f) => f.name);
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
@@ -884,6 +911,7 @@ export = {
   get_async_expression_function,
   get_expression_function,
   eval_expression,
+  eval_statements,
   recalculate_for_stored,
   transform_for_async,
   apply_calculated_fields_stored,

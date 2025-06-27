@@ -1483,10 +1483,10 @@ const createBasicView = async ({
       });
   }
   if (template_view) {
-    const matched = template_view.configuration.columns.find(
-      (c) => c.type === "Action" && c.action_name === "Delete"
+    const matched = template_view.configuration.columns.filter(
+      (c) => c.type === "Action"
     );
-    if (matched) configuration.columns.push(matched);
+    if (matched.length) configuration.columns.push(...matched);
   } else
     configuration.columns.push({
       type: "Action",

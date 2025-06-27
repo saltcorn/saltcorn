@@ -307,7 +307,7 @@ const fieldFlow = (req) =>
       try {
         await db.withTransaction(async () => {
           if (context.id) {
-            const field = await Field.findOne({ id: context.id });          
+            const field = await Field.findOne({ id: context.id });
             await field.update(fldRow);
             Trigger.emitEvent(
               "AppChange",
@@ -1417,7 +1417,13 @@ router.post(
       return;
     }
 
-    const field = table.getField(fieldName);
+    let field = table.getField(fieldName);
+    if (!field && fieldName.split(".").length === 3) {
+      const [inboundTableName, inboundKey, refField] = fieldName.split(".");
+      const inboundTable = Table.findOne(inboundTableName);
+      field = inboundTable.getField(refField);
+    }
+
     if (!field) {
       res.send(req.query?.accept == "json" ? "[]" : "");
       return;
