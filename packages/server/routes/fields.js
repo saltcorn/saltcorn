@@ -251,6 +251,7 @@ const fieldFlow = (req) =>
       attributes.include_fts = context.include_fts;
       attributes.on_delete_cascade = context.on_delete_cascade;
       attributes.on_delete = context.on_delete;
+      attributes.fkey_error_msg = context.fkey_error_msg;
       attributes.unique_error_msg = context.unique_error_msg;
       if (context.protected) attributes.min_role_write = context.min_role_write;
       else attributes.min_role_write = undefined;
@@ -722,6 +723,15 @@ const fieldFlow = (req) =>
                 sublabel: req.__(
                   "If the parent row is deleted, do this to the child rows."
                 ),
+              }),
+              new Field({
+                name: "fkey_error_msg",
+                label: req.__("Error message"),
+                type: "String",
+                sublabel: req.__(
+                  "Shown to the user if foreign key constraint is violated"
+                ),
+                showIf: { on_delete: "Fail" },
               }),
             ],
           });
