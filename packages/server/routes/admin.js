@@ -4539,7 +4539,7 @@ admin_config_route({
                 id: "generate-vapid-keys-btn",
                 class: "btn btn-primary d-none",
                 onclick:
-                  "if (confirm('Are you sure? The old key will be lost.')) ajax_post_btn('/notifications/generate-vapid-keys', true)",
+                  "if (confirm('Are you sure? The old keys will be lost, and existing subscriptions will be deleted.')) ajax_post_btn('/notifications/generate-vapid-keys', true)",
               },
               "Generate VAPID keys"
             ) +

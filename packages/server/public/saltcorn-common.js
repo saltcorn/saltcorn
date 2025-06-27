@@ -2502,14 +2502,34 @@ const subscribeHelper = (config, swReg) => {
     } else console.error("Failed to upload subscription:", response.statusText);
   };
 
+  const removeSubscription = async (subscription) => {
+    const response = await fetch("/notifications/remove-subscription", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": _sc_globalCsrf,
+      },
+    });
+    if (response.status === 200) {
+      console.log("Subscription removed successfully");
+    } else {
+      console.error("Failed to remove subscription:", response.statusText);
+    }
+  };
+
   return {
     ensureSubscription: async (force) => {
       const permission = await Notification.requestPermission();
       if (permission !== "granted")
         throw new Error(`Push permission denied ${permission}`);
-      const currentSub = await swReg.pushManager.getSubscription();
-      if (!currentSub || force) {
-        if (currentSub) await currentSub.unsubscribe();
+      let currentSub = await swReg.pushManager.getSubscription();
+      if (currentSub && force) {
+        await currentSub.unsubscribe();
+        await removeSubscription(currentSub);
+        currentSub = null;
+      }
+      if (!currentSub) {
         const newSub = await subscribe();
         await uploadSubscription(newSub);
       }
