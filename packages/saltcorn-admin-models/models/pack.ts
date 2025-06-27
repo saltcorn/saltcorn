@@ -659,6 +659,8 @@ const install_pack = async (
       });
   }
 
+  await getState().refresh_pages(true);
+
   for (const pageGroupSpec of pack.page_groups || []) {
     pageGroupSpec.min_role = old_to_new_role(pageGroupSpec.min_role);
     const { members, ...pageGroupNoMembers } = pageGroupSpec;
