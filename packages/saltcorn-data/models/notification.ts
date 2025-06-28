@@ -31,7 +31,7 @@ class Notification {
   link?: string;
   user_id: number;
   read: boolean;
-  send_method?: "email" | "Web-push";
+  send_method?: "Email" | "Web-push";
 
   /**
    * Notification constructor
@@ -45,7 +45,7 @@ class Notification {
     this.link = o.link;
     this.user_id = o.user_id;
     this.read = !!o.read;
-    this.send_method = o.send_method || "email";
+    this.send_method = o.send_method || "Email";
   }
   /**
    * @param {*} where
@@ -81,7 +81,7 @@ class Notification {
     });
     const user = await User.findOne({ id: o.user_id });
     if (
-      (notin.send_method === "email" || !notin.send_method) &&
+      (notin.send_method === "Email" || !notin.send_method) &&
       user?._attributes?.notify_email
     ) {
       const email = {
