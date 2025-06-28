@@ -248,6 +248,130 @@ router.post(
   })
 );
 
+router.post(
+  "/subscribe",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("pwa_enable_push_notify", false);
+    if (!enabled) {
+      res.status(403).json({
+        error: req.__("Notifications are not enabled on this server"),
+      });
+    } else {
+      const subs = getState().getConfig("push_notification_subscriptions", []);
+      const user = req.user;
+      const existingSub = subs.find(
+        (s) =>
+          s.user_id === user.id &&
+          s.endpoint === req.body.endpoint &&
+          s.keys.p256dh === req.body.keys.p256dh &&
+          s.keys.auth === req.body.keys.auth
+      );
+      if (existingSub) {
+        res.json({
+          success: "ok",
+          message: req.__("Subscribed to notifications"),
+        });
+      } else {
+        const newSubs = [
+          ...subs,
+          {
+            endpoint: req.body.endpoint,
+            keys: {
+              auth: req.body.keys.auth,
+              p256dh: req.body.keys.p256dh,
+            },
+            user_id: user.id,
+          },
+        ];
+        await getState().setConfig("push_notification_subscriptions", newSubs);
+        res.json({
+          success: "ok",
+          message: req.__("Subscribed to notifications"),
+        });
+      }
+    }
+  })
+);
+
+router.post(
+  "/remove-subscription",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("pwa_enable_push_notify", false);
+    if (!enabled) {
+      res.status(403).json({
+        error: req.__("Notifications are not enabled on this server"),
+      });
+    } else {
+      const { subscription } = req.body;
+      const user = req.user;
+      const oldSubs = getState().getConfig(
+        "push_notification_subscriptions",
+        []
+      );
+      const newSubs = oldSubs.filter(
+        (s) =>
+          s.user_id !== user.id &&
+          s.endpoint !== subscription.endpoint &&
+          s.keys.p256dh !== subscription.keys.p256dh &&
+          s.keys.auth !== subscription.keys.auth
+      );
+      await getState().setConfig("push_notification_subscriptions", newSubs);
+      res.json({
+        success: "ok",
+        message: req.__("Unsubscribed from notifications"),
+      });
+    }
+  })
+);
+
+router.get(
+  "/web-push-config",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("pwa_enable_push_notify", false);
+    if (!enabled)
+      res.json({
+        enabled: false,
+      });
+    else {
+      const dbUser = await User.findOne({ id: req.user.id });
+      const userEnabled = dbUser?._attributes?.notify_web_push || false;
+      const vapidPublicKey = getState().getConfig("vapid_public_key");
+      res.json({
+        config: {
+          enabled: true,
+          userEnabled,
+          vapidPublicKey,
+        },
+      });
+    }
+  })
+);
+
+router.post(
+  "/generate-vapid-keys",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("pwa_enable_push_notify", false);
+    if (!enabled) {
+      res.status(403).json({
+        error: req.__("Notifications are not enabled on this server"),
+      });
+    } else {
+      const webPush = require("web-push");
+      const vapidKeys = webPush.generateVAPIDKeys();
+      await getState().setConfig("vapid_public_key", vapidKeys.publicKey);
+      await getState().setConfig("vapid_private_key", vapidKeys.privateKey);
+      await getState().setConfig("push_notification_subscriptions", []);
+      res.json({
+        success: "ok",
+      });
+    }
+  })
+);
+
 router.get(
   "/manifest.json{:opt_cache_bust}",
   error_catcher(async (req, res) => {
