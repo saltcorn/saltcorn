@@ -1243,11 +1243,10 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 window.addEventListener("appinstalled", async (event) => {
   console.log("App was installed.", event);
-  await initPushNotify(true);
+  await initPushNotify();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!isPWA()) return;
   await initPushNotify();
 });
 

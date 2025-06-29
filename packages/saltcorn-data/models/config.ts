@@ -983,12 +983,6 @@ const configTypes: ConfigTypes = {
     label: "Set colors",
     default: false,
   },
-  pwa_enable_push_notify: {
-    type: "Bool",
-    label: "Enable Web Push",
-    default: true,
-    sublabel: "Enable web push notifications",
-  },
   pwa_theme_color: {
     type: "Color",
     label: "Theme color",
@@ -1023,6 +1017,12 @@ const configTypes: ConfigTypes = {
         name: "maskable",
       },
     ],
+  },
+  enable_push_notify: {
+    type: "Bool",
+    label: "Enabled",
+    default: true,
+    sublabel: "Push Notifications enabled",
   },
   log_level: {
     input_type: "select",
@@ -1378,7 +1378,7 @@ const configTypes: ConfigTypes = {
   push_notification_subscriptions: {
     type: "hidden",
     label: "Notify subscriptions",
-    default: [],
+    default: {},
     excludeFromMobile: true,
   },
 };

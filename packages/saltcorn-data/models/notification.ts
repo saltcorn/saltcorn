@@ -31,7 +31,6 @@ class Notification {
   link?: string;
   user_id: number;
   read: boolean;
-  send_method?: "Email" | "Web-push";
 
   /**
    * Notification constructor
@@ -45,7 +44,6 @@ class Notification {
     this.link = o.link;
     this.user_id = o.user_id;
     this.read = !!o.read;
-    this.send_method = o.send_method || "Email";
   }
   /**
    * @param {*} where
@@ -80,10 +78,7 @@ class Notification {
       read: o.read,
     });
     const user = await User.findOne({ id: o.user_id });
-    if (
-      (notin.send_method === "Email" || !notin.send_method) &&
-      user?._attributes?.notify_email
-    ) {
+    if (user?._attributes?.notify_email) {
       const email = {
         from: getState()?.getConfig("email_from"),
         to: user.email,
@@ -95,12 +90,10 @@ class Notification {
       (await emailModule.getMailTransport())
         .sendMail(email)
         .catch((e) => getState()?.log(1, e.message));
-    } else if (
-      notin.send_method === "Web-push" &&
-      user?._attributes?.notify_web_push
-    ) {
+    }
+    if (user?._attributes?.notify_push) {
       const state = getState();
-      if (state && user) {
+      if (state && user?.id) {
         const icon = state.getConfig("push_notification_icon");
         const badge = state.getConfig("push_notification_badge");
         const publicKey = state.getConfig("vapid_public_key");
@@ -113,9 +106,8 @@ class Notification {
           );
           return;
         }
-        const subs = state
-          .getConfig("push_notification_subscriptions", [])
-          .filter((sub: any) => sub.user_id === user.id);
+        const subs =
+          state.getConfig("push_notification_subscriptions", {})[user.id] || [];
         for (const sub of subs) {
           const payload = JSON.stringify({
             title: o.title,

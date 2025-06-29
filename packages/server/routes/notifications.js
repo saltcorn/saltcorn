@@ -32,14 +32,23 @@ router.use(
   })
 );
 
-const notificationSettingsForm = () =>
-  new Form({
+const notificationSettingsForm = () => {
+  const fields = [{ name: "notify_email", label: "Email", type: "Bool" }];
+  if (getState().getConfig("enable_push_notify", false))
+    fields.push({
+      name: "notify_push",
+      label: "Push",
+      type: "Bool",
+    });
+
+  return new Form({
     action: `/notifications/settings`,
     noSubmitButton: true,
     onChange: `saveAndContinue(this)`,
     labelCols: 4,
-    fields: [{ name: "notify_email", label: "Email", type: "Bool" }],
+    fields,
   });
+};
 
 router.get(
   "/",
@@ -67,7 +76,10 @@ router.get(
 
     const form = notificationSettingsForm();
     const user = await User.findOne({ id: req.user?.id });
-    form.values = { notify_email: user?._attributes?.notify_email };
+    form.values = {
+      notify_email: user?._attributes?.notify_email,
+      notify_push: user?._attributes?.notify_push,
+    };
     const notifyCards = nots.length
       ? nots.map((not) => ({
           type: "card",
@@ -185,6 +197,16 @@ router.post(
     form.validate(req.body || {});
     const _attributes = { ...user._attributes, ...form.values };
     await user.update({ _attributes });
+    const pushEnabled = !!_attributes.notify_push;
+    const allSubs = getState().getConfig("push_notification_subscriptions", {});
+    const newSubs = { ...allSubs };
+    if (!pushEnabled && newSubs[req.user.id]) {
+      delete newSubs[req.user.id];
+      await getState().setConfig("push_notification_subscriptions", newSubs);
+    } else if (pushEnabled && !newSubs[req.user.id]) {
+      newSubs[req.user.id] = [];
+      await getState().setConfig("push_notification_subscriptions", newSubs);
+    }
     res.json({ success: "ok" });
   })
 );
@@ -252,17 +274,20 @@ router.post(
   "/subscribe",
   loggedIn,
   error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("pwa_enable_push_notify", false);
+    const enabled = getState().getConfig("enable_push_notify", false);
     if (!enabled) {
       res.status(403).json({
         error: req.__("Notifications are not enabled on this server"),
       });
     } else {
-      const subs = getState().getConfig("push_notification_subscriptions", []);
       const user = req.user;
-      const existingSub = subs.find(
+      const allSubs = getState().getConfig(
+        "push_notification_subscriptions",
+        {}
+      );
+      const userSubs = allSubs[user.id] || [];
+      const existingSub = userSubs.find(
         (s) =>
-          s.user_id === user.id &&
           s.endpoint === req.body.endpoint &&
           s.keys.p256dh === req.body.keys.p256dh &&
           s.keys.auth === req.body.keys.auth
@@ -273,18 +298,17 @@ router.post(
           message: req.__("Subscribed to notifications"),
         });
       } else {
-        const newSubs = [
-          ...subs,
-          {
-            endpoint: req.body.endpoint,
-            keys: {
-              auth: req.body.keys.auth,
-              p256dh: req.body.keys.p256dh,
-            },
-            user_id: user.id,
+        userSubs.push({
+          endpoint: req.body.endpoint,
+          keys: {
+            auth: req.body.keys.auth,
+            p256dh: req.body.keys.p256dh,
           },
-        ];
-        await getState().setConfig("push_notification_subscriptions", newSubs);
+        });
+        await getState().setConfig("push_notification_subscriptions", {
+          ...allSubs,
+          [user.id]: userSubs,
+        });
         res.json({
           success: "ok",
           message: req.__("Subscribed to notifications"),
@@ -298,7 +322,7 @@ router.post(
   "/remove-subscription",
   loggedIn,
   error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("pwa_enable_push_notify", false);
+    const enabled = getState().getConfig("enable_push_notify", false);
     if (!enabled) {
       res.status(403).json({
         error: req.__("Notifications are not enabled on this server"),
@@ -308,43 +332,24 @@ router.post(
       const user = req.user;
       const oldSubs = getState().getConfig(
         "push_notification_subscriptions",
-        []
+        {}
       );
-      const newSubs = oldSubs.filter(
-        (s) =>
-          s.user_id !== user.id &&
-          s.endpoint !== subscription.endpoint &&
-          s.keys.p256dh !== subscription.keys.p256dh &&
-          s.keys.auth !== subscription.keys.auth
-      );
-      await getState().setConfig("push_notification_subscriptions", newSubs);
+      let userSubs = oldSubs[user.id];
+      if (userSubs) {
+        userSubs = userSubs.filter(
+          (s) =>
+            s.endpoint !== subscription.endpoint ||
+            s.keys.p256dh !== subscription.keys.p256dh ||
+            s.keys.auth !== subscription.keys.auth
+        );
+        await getState().setConfig("push_notification_subscriptions", {
+          ...oldSubs,
+          [user.id]: userSubs,
+        });
+      }
       res.json({
         success: "ok",
         message: req.__("Unsubscribed from notifications"),
-      });
-    }
-  })
-);
-
-router.get(
-  "/web-push-config",
-  loggedIn,
-  error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("pwa_enable_push_notify", false);
-    if (!enabled)
-      res.json({
-        enabled: false,
-      });
-    else {
-      const dbUser = await User.findOne({ id: req.user.id });
-      const userEnabled = dbUser?._attributes?.notify_web_push || false;
-      const vapidPublicKey = getState().getConfig("vapid_public_key");
-      res.json({
-        config: {
-          enabled: true,
-          userEnabled,
-          vapidPublicKey,
-        },
       });
     }
   })
@@ -354,7 +359,7 @@ router.post(
   "/generate-vapid-keys",
   isAdmin,
   error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("pwa_enable_push_notify", false);
+    const enabled = getState().getConfig("enable_push_notify", false);
     if (!enabled) {
       res.status(403).json({
         error: req.__("Notifications are not enabled on this server"),
@@ -364,7 +369,15 @@ router.post(
       const vapidKeys = webPush.generateVAPIDKeys();
       await getState().setConfig("vapid_public_key", vapidKeys.publicKey);
       await getState().setConfig("vapid_private_key", vapidKeys.privateKey);
-      await getState().setConfig("push_notification_subscriptions", []);
+      const allSubs = getState().setConfig(
+        "push_notification_subscriptions",
+        {}
+      );
+      const newSubs = {};
+      for (const k of Object.keys(allSubs)) {
+        newSubs[k] = [];
+      }
+      await getState().setConfig("push_notification_subscriptions", newSubs);
       res.json({
         success: "ok",
       });

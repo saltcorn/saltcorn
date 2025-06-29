@@ -4501,26 +4501,27 @@ admin_config_route({
       name: "pwa_icons",
       showIf: { pwa_enabled: true },
     },
-    { name: "pwa_enable_push_notify", showIf: { pwa_enabled: true } },
+    { section_header: "Push Notifications" },
+    "enable_push_notify",
     {
       name: "vapid_public_key",
-      showIf: { pwa_enabled: true, pwa_enable_push_notify: true },
+      showIf: { enable_push_notify: true },
     },
     {
       name: "vapid_private_key",
-      showIf: { pwa_enabled: true, pwa_enable_push_notify: true },
+      showIf: { enable_push_notify: true },
     },
     {
       name: "vapid_email",
-      showIf: { pwa_enabled: true, pwa_enable_push_notify: true },
+      showIf: { enable_push_notify: true },
     },
     {
       name: "push_notification_icon",
-      showIf: { pwa_enabled: true, pwa_enable_push_notify: true },
+      showIf: { enable_push_notify: true },
     },
     {
       name: "push_notification_badge",
-      showIf: { pwa_enabled: true, pwa_enable_push_notify: true },
+      showIf: { enable_push_notify: true },
     },
   ],
   response(form, req, res) {
@@ -4546,10 +4547,9 @@ admin_config_route({
             script(
               domReady(`
   const fn = () => {
-    const pushEnabled = document.getElementById("inputpwa_enabled");
-    const pwaEnabled = document.getElementById("inputpwa_enable_push_notify");
+    const pushEnabled = document.getElementById("inputenable_push_notify");
     const generateBtn = document.getElementById("generate-vapid-keys-btn");
-    if (pushEnabled && pushEnabled.checked && pwaEnabled && pwaEnabled.checked) {
+    if (pushEnabled && pushEnabled.checked) {
       generateBtn.classList.remove("d-none");
       generateBtn.classList.add("d-inline");
     }

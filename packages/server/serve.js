@@ -142,6 +142,29 @@ const ensurePluginsFolder = async () => {
   }
 };
 
+/**
+ * Users with push_notify enabled store subscription in push_notification_subscriptions
+ * This function ensures that enabled users at least have an empty array
+ * and disabled users have no entry
+ */
+const ensureNotificationSubscriptions = async () => {
+  const allSubs = await getConfig("push_notification_subscriptions", {});
+  let changed = false;
+  for (const user of await User.find()) {
+    const enabled = user._attributes?.notify_push || false;
+    if (enabled && !allSubs[user.id]) {
+      allSubs[user.id] = [];
+      changed = true;
+    } else if (!enabled && allSubs[user.id]) {
+      delete allSubs[user.id];
+      changed = true;
+    }
+  }
+  if (changed) {
+    await setConfig("push_notification_subscriptions", { ...allSubs });
+  }
+};
+
 // helpful https://gist.github.com/jpoehls/2232358
 /**
  * @param {object} opts
@@ -302,6 +325,7 @@ module.exports =
       ensureJwtSecret();
       await ensureEnginesCache();
       await ensurePluginsFolder();
+      await ensureNotificationSubscriptions();
     }
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");

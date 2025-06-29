@@ -183,13 +183,6 @@ const run_code = async ({
   return await f();
 };
 
-const setWebPushAttr = async (userId, enabled) => {
-  const dbUser = await User.findOne({ id: userId });
-  const attrs = dbUser._attributes || {};
-  attrs.notify_web_push = enabled;
-  await dbUser.update({ _attributes: attrs });
-};
-
 module.exports = {
   /**
    * @namespace
@@ -2171,14 +2164,6 @@ module.exports = {
         label: "Link",
         type: "String",
       },
-      {
-        name: "send_method",
-        label: "Send method",
-        type: "String",
-        attributes: {
-          options: ["Email", "Web-push"],
-        },
-      },
     ],
     /**
      * @param {object} opts
@@ -2190,7 +2175,7 @@ module.exports = {
     run: async ({
       row,
       user,
-      configuration: { title, body, link, user_spec, send_method },
+      configuration: { title, body, link, user_spec },
     }) => {
       const user_where =
         //first two cases are for programmatic use
@@ -2215,7 +2200,6 @@ module.exports = {
           body: interpolate(body, row, user, "notify_user body"),
           link: interpolate(link, row, user, "notify_user link"),
           user_id: user.id,
-          send_method: send_method || "Email",
         });
       }
     },
@@ -2354,71 +2338,6 @@ module.exports = {
       return pwaEnabled
         ? { eval_js: "installPWA()" }
         : { error: req.__("Progressive Web Application is not enabled") };
-    },
-  },
-
-  // disable the user attr and remove all subscription objects
-  unsubscribe_push_notifications: {
-    description: "Unsubscribe from push notifications",
-    configFields: () => [],
-    run: async ({ user, req, res }) => {
-      if (!user?.id)
-        return { error: req.__("You must be logged in to unsubscribe") };
-      const subs = getState().getConfig("push_notification_subscriptions", []);
-      const subsFiltered = subs.filter((s) => s.user_id !== user.id);
-      await getState().setConfig(
-        "push_notification_subscriptions",
-        subsFiltered
-      );
-      await setWebPushAttr(user.id, false);
-      return {
-        eval_js: `return new Promise((resolve,reject) => {
-          initPushNotify(true).then(() => {
-            notifyAlert({ 
-              type: "success", 
-              text: "${req.__("Unsubscribed from push notifications")}"
-            });
-            resolve();
-          }).catch((err) => {
-            notifyAlert({ 
-              type: "danger", 
-              text: "${req.__(
-                "Error unsubscribing from push notifications"
-              )}: " + err.message 
-            });
-            reject(err);
-          });
-        })`,
-      };
-    },
-  },
-  // enable the user attr and tell the client to create a subscription object
-  subscribe_push_notifications: {
-    description: "Subscribe to push notifications",
-    configFields: () => [],
-    run: async ({ user, req, res }) => {
-      if (!user?.id)
-        return { error: req.__("You must be logged in to subscribe") };
-      await setWebPushAttr(user.id, true);
-      return {
-        eval_js: `return new Promise((resolve,reject) => {
-          initPushNotify(true).then(() => {
-            notifyAlert({ 
-              type: "success", 
-              text: "${req.__("Subscribed to push notifications")}"
-            });
-            resolve();
-          }).catch((err) => {
-            notifyAlert({ 
-              type: "danger", 
-              text: "${req.__(
-                "Error subscribing to push notifications"
-              )}: " + err.message 
-            });
-            reject(err);
-          });
-        })`,
-      };
     },
   },
 };

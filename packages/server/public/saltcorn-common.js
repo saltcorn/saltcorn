@@ -2441,27 +2441,6 @@ function isPWA() {
   return isStandaloneDisplay || isStandaloneNavigator || isTrustedDisplayMode;
 }
 
-// get the config from session storage or fetch it from the server
-async function getWebPushConfig(forceLoadCfg) {
-  const cachedConfig = sessionStorage.getItem("webPushConfig");
-  if (cachedConfig && !forceLoadCfg) return JSON.parse(cachedConfig);
-  else {
-    const response = await fetch("/notifications/web-push-config", {
-      headers: {
-        "CSRF-Token": _sc_globalCsrf,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch web push config: ${response.statusText}`
-      );
-    }
-    const data = await response.json();
-    sessionStorage.setItem("webPushConfig", JSON.stringify(data.config));
-    return data.config;
-  }
-}
-
 const subscribeHelper = (config, swReg) => {
   if (!config.vapidPublicKey) throw new Error("VAPID public key is missing");
 
@@ -2520,37 +2499,46 @@ const subscribeHelper = (config, swReg) => {
   };
 
   return {
-    ensureSubscription: async (force) => {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted")
-        throw new Error(`Push permission denied ${permission}`);
+    handle: async () => {
+      const enabled = config?.enabled && config.userEnabled;
       let currentSub = await swReg.pushManager.getSubscription();
-      if (currentSub && force) {
-        await currentSub.unsubscribe();
-        await removeSubscription(currentSub);
-        currentSub = null;
-      }
-      if (!currentSub) {
-        const newSub = await subscribe();
-        await uploadSubscription(newSub);
+      if (!enabled) {
+        if (currentSub) {
+          await currentSub.unsubscribe();
+          await removeSubscription(currentSub);
+        }
+      } else {
+        if (
+          currentSub &&
+          !config.endpoints.find((endpoint) => endpoint === currentSub.endpoint)
+        ) {
+          console.log(
+            "Current subscription does not exist server-side, renewing..."
+          );
+          await currentSub.unsubscribe();
+          currentSub = null;
+        }
+
+        if (!currentSub) {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted")
+            throw new Error(`Push permission denied ${permission}`);
+          const newSub = await subscribe();
+          await uploadSubscription(newSub);
+        }
       }
     },
   };
 };
 
-async function initPushNotify(force) {
-  if (!isPWA()) {
-    return;
-  }
+async function initPushNotify() {
   try {
-    const webPushConfig = await getWebPushConfig(force);
-    const swReg = await navigator.serviceWorker.ready;
-    if (!webPushConfig.enabled || !webPushConfig.userEnabled) {
-      const currentSub = await swReg.pushManager.getSubscription();
-      if (currentSub) await currentSub.unsubscribe();
-    } else
-      await subscribeHelper(webPushConfig, swReg).ensureSubscription(force);
+    const webPushConfig = window.push_notify_cfg;
+    if (webPushConfig) {
+      const swReg = await navigator.serviceWorker.ready;
+      await subscribeHelper(webPushConfig, swReg).handle();
+    }
   } catch (error) {
-    console.error("Error initializing notifications:", error);
+    console.error("Push notification initialization failed:", error);
   }
 }
