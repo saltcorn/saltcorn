@@ -561,16 +561,19 @@ class User {
    * @param email - email address string
    * @param reset_password_token - reset password token string
    * @param password
+   * @param confirm_password
    * @returns {Promise<{error: string}|{success: boolean}>}
    */
   static async resetPasswordWithToken({
     email,
     reset_password_token,
     password,
+    confirm_password,
   }: {
     email: string;
     reset_password_token: string;
     password: string;
+    confirm_password: string;
   }): Promise<SuccessMessage | ErrorMessage> {
     if (reset_password_token.length < 10)
       return {
@@ -581,10 +584,12 @@ class User {
       u &&
       u.reset_password_expiry &&
       new Date() < u.reset_password_expiry &&
-      u.reset_password_token
+      u.reset_password_token 
     ) {
       const match = compareSync(reset_password_token, u.reset_password_token);
       if (match) {
+        if (password !== confirm_password)
+          return { error: "Passwords do not match" };
         if (User.unacceptable_password_reason(password))
           return {
             error:
