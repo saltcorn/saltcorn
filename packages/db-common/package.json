@@ -29,7 +29,7 @@
   "dependencies": {},
   "devDependencies": {
     "jest": "^29.7.0",
-    "@types/node": "^18.11.9",
+    "@types/node": "18.11.9",
     "typescript": "5.1.6"
   },
   "jest": {
