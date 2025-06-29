@@ -115,18 +115,30 @@ const run_code = async ({
     when_trigger: { or: ["API call", "Never"] },
   });
   for (const trigger of trigger_actions) {
-    const state_action = getState().actions[trigger.action];
     Actions[trigger.name] = (args = {}) => {
-      return state_action.run({
-        row,
-        table,
-        configuration: trigger.configuration,
-        user,
-        ...rest,
-        ...args,
-      });
+      if (trigger.action === "Workflow") {
+        return trigger.runWithoutRow({
+          row,
+          table,
+          user,
+          interactive: false,
+          ...rest,
+          ...args,
+        });
+      } else {
+        const state_action = getState().actions[trigger.action];
+        return state_action.run({
+          row,
+          table,
+          configuration: trigger.configuration,
+          user,
+          ...rest,
+          ...args,
+        });
+      }
     };
   }
+  
   const run_js_code = async ({ code, ...restArgs }) => {
     return await run_code({
       row,
