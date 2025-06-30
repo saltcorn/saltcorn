@@ -163,7 +163,7 @@ function set_state_fields(kvs, disable_pjax, e) {
     newhref = invalidate_pagings(newhref);
   }
   Object.entries(kvs).forEach((kv) => {
-    if (kv[1].unset && kv[1].unset === true)
+    if (kv[1]?.unset && kv[1]?.unset === true)
       newhref = removeQueryStringParameter(newhref, kv[0]);
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
