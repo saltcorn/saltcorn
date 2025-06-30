@@ -178,7 +178,7 @@ describe("Stable versioning install", () => {
       name: "@christianhugoch/empty_sc_test_plugin",
     });
     expect(dbPlugin).not.toBe(null);
-    expect(dbPlugin.version).toBe("0.1.0");
+    expect(dbPlugin.version).toBe("0.0.5");
   });
 
   it("installs and downgrades a fixed version", async () => {
