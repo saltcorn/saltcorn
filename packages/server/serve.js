@@ -194,7 +194,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
 /**
  * @param {object} opts
  * @param {object} opts.tenant
- * @param {...*} opts.msg
  * @returns {void}
  */
 const workerDispatchMsg = ({ tenant, ...msg }) => {
