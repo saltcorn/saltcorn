@@ -478,7 +478,7 @@ const run = async (
           });
           if (actionResult?.set_fields) {
             Object.keys(actionResult.set_fields).forEach((k) => {
-              if (actionResult.set_fields[k] == state[k])
+              if (actionResult.set_fields[k] === state[k])
                 delete actionResult.set_fields[k];
             });
           }
