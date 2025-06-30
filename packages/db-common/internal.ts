@@ -141,7 +141,10 @@ const whereFTS = (
   const searchTerm =
     prefixMatch && !no_fts ? `${v.searchTerm}:*` : v.searchTerm;
   let flds = ftsFieldsSqlExpr(fields, table, schema);
-  if (no_fts) return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
+  if (phs.is_sqlite)
+    return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
+  else if (v.disable_fts)
+    return `${flds} ILIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
     return `to_tsvector('${v.language || "english"}', ${flds}) @@ ${
       actually_use_websearch ? "websearch_" : prefixMatch ? "" : `plain`
