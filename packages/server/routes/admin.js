@@ -4501,6 +4501,28 @@ admin_config_route({
       name: "pwa_icons",
       showIf: { pwa_enabled: true },
     },
+    { section_header: "Push Notifications" },
+    "enable_push_notify",
+    {
+      name: "vapid_public_key",
+      showIf: { enable_push_notify: true },
+    },
+    {
+      name: "vapid_private_key",
+      showIf: { enable_push_notify: true },
+    },
+    {
+      name: "vapid_email",
+      showIf: { enable_push_notify: true },
+    },
+    {
+      name: "push_notification_icon",
+      showIf: { enable_push_notify: true },
+    },
+    {
+      name: "push_notification_badge",
+      showIf: { enable_push_notify: true },
+    },
   ],
   response(form, req, res) {
     send_admin_page({
@@ -4511,7 +4533,40 @@ admin_config_route({
         type: "card",
         title: req.__("Notification settings"),
         titleAjaxIndicator: true,
-        contents: [renderForm(form, req.csrfToken())],
+        contents: [
+          renderForm(form, req.csrfToken()) +
+            button(
+              {
+                id: "generate-vapid-keys-btn",
+                class: "btn btn-primary d-none",
+                onclick:
+                  "if (confirm('Are you sure? The old keys will be lost, and existing subscriptions will be deleted.')) ajax_post_btn('/notifications/generate-vapid-keys', true)",
+              },
+              "Generate VAPID keys"
+            ) +
+            script(
+              domReady(`
+  const fn = () => {
+    const pushEnabled = document.getElementById("inputenable_push_notify");
+    const generateBtn = document.getElementById("generate-vapid-keys-btn");
+    if (pushEnabled && pushEnabled.checked) {
+      generateBtn.classList.remove("d-none");
+      generateBtn.classList.add("d-inline");
+    }
+    else {
+      generateBtn.classList.remove("d-inline");
+      generateBtn.classList.add("d-none");
+    }
+  };
+  setTimeout(fn, 0);
+  const mainForm = document.querySelector("form[action='/admin/notifications']");
+  if (mainForm) {
+    mainForm.addEventListener("change", (e) => {
+      fn();
+    });
+  }`)
+            ),
+        ],
       },
     });
   },
