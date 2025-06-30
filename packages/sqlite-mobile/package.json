@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/sqlite-mobile",
-  "version": "1.3.0-beta.12",
+  "version": "1.3.0-beta.13",
   "description": "Saltcorn SQLite structure for the mobile app",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -26,7 +26,7 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
-    "@saltcorn/db-common": "1.3.0-beta.12",
+    "@saltcorn/db-common": "1.3.0-beta.13",
     "@capacitor/core": "^6.2.0",
     "@capacitor-community/sqlite": "^6.0.2"
   },
@@ -35,7 +35,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^18.11.9",
+    "@types/node": "18.11.9",
     "typescript": "5.1.6"
   }
 }

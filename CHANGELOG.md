@@ -2,6 +2,10 @@
 
 ## 1.3.0 - In beta
 
+* select_by_code fieldview for editing Key, String or Integer fields: populate the dropdown options by running code.
+
+* Edit views: in formulae, for instance in show if containers, the variable `_creating` now indicates if a new row is being created (true) or exisitng row being edited (false)
+
 * Date fields with "only day" are now stored with the "date" type in PostgreSQL.
 
 * Aggregation formulae: In view formulae, you can now use aggregation formulae. The syntax for this is `{inbound_table}${inboundkey_field}${target_field}${aggrgation}` The aggregation (which should be lower case) can be ommitted and defaults to `array_agg`. Examples: `patients$favbook$id$count` or `patients$favbook$id`. This is useful if you want a count in a view link label without creating a stored calculated field.

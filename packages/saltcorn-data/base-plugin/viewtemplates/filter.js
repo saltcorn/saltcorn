@@ -617,8 +617,8 @@ const run = async (
         configuration,
         confirm,
       } = segment;
-      const label = action_label || action_name;
-
+      let label = action_label || action_name;
+      if (label === " ") label = "";
       const confirmStr = confirm
         ? `if(confirm('${extra.req.__("Are you sure?")}'))`
         : "";
@@ -632,7 +632,9 @@ const run = async (
               }', this)`,
               href: "javascript:void(0)",
             },
-            action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+            action_icon
+              ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
+              : false,
             label
           );
         else
@@ -645,7 +647,9 @@ const run = async (
                 action_size || ""
               }`,
             },
-            action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+            action_icon
+              ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
+              : false,
             label
           );
       } else {
