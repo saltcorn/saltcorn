@@ -9,7 +9,7 @@ import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
 import moment from "moment";
-import Table from "./table";
+import type Table from "./table";
 import type Field from "./field";
 
 import {
@@ -245,6 +245,7 @@ function jsexprToWhere(
   extraCtx: any = {},
   fields: Field[] = []
 ): Where {
+  const Table = require("./table");
   if (!expression) return {};
   const now = new Date();
   if (!extraCtx.year) extraCtx.year = now.getFullYear();
