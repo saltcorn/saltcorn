@@ -1218,6 +1218,11 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     default: false,
   },
+  search_disable_fts: {
+    label: "Disable full-text search",
+    type: "Bool",
+    default: false,
+  },
   backup_file_prefix: {
     type: "String",
     label: "Backup file prefix",
