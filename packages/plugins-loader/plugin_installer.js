@@ -62,6 +62,7 @@ class PluginInstaller {
     this.pluginDir = join(
       this.rootFolder,
       plugin.source === "git" ? "git_plugins" : "plugins_folder",
+      plugin.version || "unknownversion",
       ...tokens
     );
     this.pckJsonPath = join(this.pluginDir, "package.json");
