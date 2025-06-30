@@ -346,7 +346,8 @@ function jsexprToWhere(
               inSelect: {
                 table: db.sqlsanitize(field.reftable_name),
                 tenant: db.getTenantSchema(),
-                field: "id", //wild guess?
+                field:
+                  Table.findOne({ name: field.reftable_name })?.pk_name || "id",
                 where: { [crightName]: val },
               },
             },
