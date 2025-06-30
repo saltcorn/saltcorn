@@ -251,7 +251,9 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       viewName === "search_table_description" ||
       tableName === "search_table_description" ||
       viewName === "search_results_decoration" ||
-      tableName === "search_results_decoration"
+      tableName === "search_results_decoration" ||
+      viewName === "search_disable_fts" ||
+      tableName === "search_disable_fts"
     )
       continue;
     tablesConfigured += 1;
