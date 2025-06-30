@@ -267,11 +267,13 @@ class PluginInstaller {
       // in jest, downgrad to require
       return require(normalize(join(this.pluginDir, pckJSON.main)));
     } else {
-      const res = await import(
-        `${isWindows ? `file://` : ""}${normalize(
-          join(this.pluginDir, pckJSON.main + (reload ? "?reload=true" : ""))
-        )}`
-      );
+      const url = `${isWindows ? `file://` : ""}${normalize(
+        join(
+          this.pluginDir,
+          pckJSON.main + (reload ? "?reload=true" : `?v=${pckJSON.version}`)
+        )
+      )}`;
+      const res = await import(url);
       return res.default;
     }
   }
