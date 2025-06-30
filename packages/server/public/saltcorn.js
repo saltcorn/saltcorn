@@ -1241,6 +1241,15 @@ window.addEventListener("beforeinstallprompt", (e) => {
   defferedPrompt = e;
 });
 
+window.addEventListener("appinstalled", async (event) => {
+  console.log("App was installed.", event);
+  await initPushNotify();
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await initPushNotify();
+});
+
 function isAndroidMobile() {
   const ua = navigator.userAgent || navigator.vendor || window.opera;
   return /android/i.test(ua) && /mobile/i.test(ua);

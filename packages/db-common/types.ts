@@ -27,7 +27,7 @@ export type DbExportsType = {
   tryCatchInTransaction: <T>(
     fn: () => Promise<T>,
     onError?: (err: Error) => Promise<void> | void
-  ) => Promise<T>;  
+  ) => Promise<T>;
   selectMaybeOne: (table: string, where: Where, opts?: any) => Promise<any>;
   query: (sql: string, params?: any) => Promise<any>;
   withTransaction: (
@@ -53,7 +53,8 @@ export type DbExportsType = {
   add_fts_index: (
     table: string,
     column: string,
-    options?: { tokenize?: string; language?: string }
+    language?: string,
+    disable_fts?: boolean
   ) => Promise<void>;
   add_index: (table: string, columns: string[]) => Promise<void>;
   getRequestContext: () => {

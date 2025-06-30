@@ -2019,11 +2019,13 @@ const stateFieldsToWhere = ({
       const scState = getState();
       const language = scState.pg_ts_config;
       const use_websearch = scState.getConfig("search_use_websearch", false);
+      const disable_fts = scState.getConfig("search_disable_fts", false);
       qstate["_fts"] = {
         searchTerm: v.replace(/\0/g, ""),
         fields,
         language,
         use_websearch,
+        disable_fts,
         table: prefix
           ? prefix.replaceAll(".", "")
           : table

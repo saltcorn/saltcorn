@@ -248,6 +248,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
   const favicon = state.getConfig("favicon_id", null);
   const notification_in_menu = state.getConfig("notification_in_menu");
   const pwa_enabled = state.getConfig("pwa_enabled");
+  const push_notify_enabled = state.getConfig("enable_push_notify", false);
   const is_root = req.user?.role_id === 1;
 
   const iconHeader = favicon
@@ -304,10 +305,27 @@ const get_headers = (req, version_tag, description, extras = []) => {
         is_root ? new Date().valueOf() : ""
       }">`,
     });
+  }
+  if (pwa_enabled || (push_notify_enabled && req.user?.id)) {
     from_cfg.push({
       scriptBody: `if('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/serviceworker.js', { scope: '/' });
       }`,
+    });
+  }
+  if (push_notify_enabled && req.user?.id) {
+    const allSubs = getState().getConfig("push_notification_subscriptions", {});
+    const userSubs = allSubs[req.user.id];
+    const userEnabled = !!userSubs;
+    const vapidPublicKey = getState().getConfig("vapid_public_key");
+    const userEndpoints = userSubs ? userSubs.map((sub) => sub.endpoint) : [];
+    from_cfg.push({
+      scriptBody: `var push_notify_cfg = ${JSON.stringify({
+        enabled: true,
+        userEnabled: userEnabled,
+        vapidPublicKey,
+        endpoints: userEndpoints,
+      })}`,
     });
   }
   return [

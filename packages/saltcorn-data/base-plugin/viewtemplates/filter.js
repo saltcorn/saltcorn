@@ -363,7 +363,9 @@ const run = async (
       await field.fill_fkey_options(
         false,
         undefined,
-        extra.req.user ? { ...state, user_id: extra.req.user } : state,
+        extra.req.user
+          ? { ...state, user_id: extra.req.user, user: extra.req.user }
+          : state,
         isWeb(extra.req) ? undefined : optionsQuery,
         undefined,
         state[field.name] || undefined,
