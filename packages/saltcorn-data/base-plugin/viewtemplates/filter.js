@@ -476,6 +476,12 @@ const run = async (
             row: state,
             table,
           });
+          if (actionResult?.set_fields) {
+            Object.keys(actionResult.set_fields).forEach((k) => {
+              if (actionResult.set_fields[k] == state[k])
+                delete actionResult.set_fields[k];
+            });
+          }
 
           if (actionResult)
             segment.contents = script(
