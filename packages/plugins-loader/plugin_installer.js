@@ -62,8 +62,8 @@ class PluginInstaller {
     this.pluginDir = join(
       this.rootFolder,
       plugin.source === "git" ? "git_plugins" : "plugins_folder",
-      plugin.version || "unknownversion",
-      ...tokens
+      ...tokens,
+      plugin.version || "unknownversion"
     );
     this.pckJsonPath = join(this.pluginDir, "package.json");
     this.tempDir = join(this.tempRootFolder, "temp_install", ...tokens);
@@ -269,10 +269,7 @@ class PluginInstaller {
       return require(normalize(join(this.pluginDir, pckJSON.main)));
     } else {
       const url = `${isWindows ? `file://` : ""}${normalize(
-        join(
-          this.pluginDir,
-          pckJSON.main + (reload ? "?reload=true" : `?v=${pckJSON.version}`)
-        )
+        join(this.pluginDir, pckJSON.main + (reload ? "?reload=true" : ""))
       )}`;
       const res = await import(url);
       return res.default;
