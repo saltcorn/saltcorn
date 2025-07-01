@@ -57,6 +57,7 @@ class PluginsCommand extends Command {
         }
       });
     }
+    require("@saltcorn/data/db/state").getState()?.refresh_config();
     if (flags.upgrade || flags.dryRun) {
       var new_versions = {};
       for (let plugin of plugins) {
@@ -69,9 +70,7 @@ class PluginsCommand extends Command {
           if (version) new_versions[plugin.location] = version;
         } catch (e) {
           plugin.version = oldVersion;
-          console.log(
-            `Unable to find a supported version for '${plugin.location}'`
-          );
+          console.log(`Error checking plugin ${plugin.location}:`, e);
         }
       }
       console.log(new_versions);
