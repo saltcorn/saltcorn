@@ -1234,23 +1234,26 @@ router.get(
         { orderBy: "RANDOM()", forUser: req.user, forPublic: !req.user }
       );
     }
-    let runres;
 
-    try {
-      runres = await trigger.runWithoutRow({
-        console: fakeConsole,
-        table,
-        row,
-        req,
-        interactive: true,
-        ...(row || {}),
-        Table,
-        user: req.user,
-      });
-    } catch (e) {
-      console.error(e);
-      fakeConsole.error(e.message);
-    }
+    const runres = await db.withTransaction(
+      async () => {
+        return await trigger.runWithoutRow({
+          console: fakeConsole,
+          table,
+          row,
+          req,
+          interactive: true,
+          ...(row || {}),
+          Table,
+          user: req.user,
+        });
+      },
+      (e) => {
+        console.error(e);
+        fakeConsole.error(e.message);
+      }
+    );
+
     if (output.length === 0) {
       req.flash(
         "success",
