@@ -1230,9 +1230,7 @@ router.get(
     const mod = await load_plugins.requirePlugin(plugin_db);
     const store_items = await get_store_items();
     const store_item = store_items.find((item) => item.name === name);
-    const update_permitted =
-      db.getTenantSchema() === db.connectObj.default_schema &&
-      plugin_db.source === "npm";
+    const update_permitted = plugin_db.source === "npm";
 
     let latest =
       update_permitted &&
