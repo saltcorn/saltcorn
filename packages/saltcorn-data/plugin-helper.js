@@ -2011,8 +2011,6 @@ const stateFieldsToWhere = ({
   table,
   prefix = "",
 }) => {
-  console.log("qstate", JSON.stringify(state, null, 2));
-
   let qstate = {};
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
@@ -2280,7 +2278,6 @@ const stateFieldsToWhere = ({
       qstate.or.push({ [orField]: qstate[orField] });
       delete qstate[orField];
     });
-  //console.log("qstate", JSON.stringify(qstate, null, 2));
 
   return qstate;
 };
