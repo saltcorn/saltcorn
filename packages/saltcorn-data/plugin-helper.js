@@ -169,7 +169,7 @@ const stateToQueryString = (state, include_id) => {
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        k === "id" && !include_id
+        (k === "id" && !include_id) || typeof v === "undefined"
           ? null
           : `${encodeURIComponent(k)}=${encodeURIComponent(
               k === "_relation_path_" && typeof v !== "string"
@@ -2011,6 +2011,8 @@ const stateFieldsToWhere = ({
   table,
   prefix = "",
 }) => {
+  console.log("qstate", JSON.stringify(state, null, 2));
+
   let qstate = {};
   const orFields = [];
   Object.entries(state || {}).forEach(([k, v]) => {
@@ -2278,6 +2280,7 @@ const stateFieldsToWhere = ({
       qstate.or.push({ [orField]: qstate[orField] });
       delete qstate[orField];
     });
+  //console.log("qstate", JSON.stringify(qstate, null, 2));
 
   return qstate;
 };
