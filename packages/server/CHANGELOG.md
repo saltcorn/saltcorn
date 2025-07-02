@@ -1,6 +1,6 @@
 # Notable changes
 
-## 1.3.0 - In beta
+## 1.3.0 - Released 2 July 2025
 
 * It is no longer necessary to restart the application when upgrading a plugin to a more recent version
 
