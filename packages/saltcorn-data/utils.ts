@@ -331,10 +331,11 @@ const urlStringToObject = (url: string): any => {
  */
 const hashState = (state: any, viewname: string): string => {
   const excluded = ["_page", "_pagesize", "_sortby", "_sortdesc"];
-  const include = (k: string) => !excluded.some((val) => k.endsWith(val));
+  const include = (k: string, v: any) =>
+    !excluded.some((val) => k.endsWith(val)) && typeof v !== "undefined";
   const filteredState: any = {};
   for (const [k, v] of Object.entries(state)) {
-    if (include(k)) filteredState[k] = v;
+    if (include(k, v)) filteredState[k] = v;
   }
   const stringToHash = `${viewname}:${objectToQueryString(filteredState)}`;
   const hash = crypto.createHash("sha1").update(stringToHash).digest("hex");

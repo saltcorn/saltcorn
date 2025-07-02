@@ -169,7 +169,7 @@ const stateToQueryString = (state, include_id) => {
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        k === "id" && !include_id
+        (k === "id" && !include_id) || typeof v === "undefined"
           ? null
           : `${encodeURIComponent(k)}=${encodeURIComponent(
               k === "_relation_path_" && typeof v !== "string"

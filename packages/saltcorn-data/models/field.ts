@@ -852,6 +852,7 @@ class Field implements AbstractField {
       const refTable = Table.findOne(new_field?.reftable_name);
       new_field.reftable = refTable;
       new_field.reftype = refTable.pk_type.name;
+      new_field.refname = refTable.pk_name;
     }
     let new_sql_type = new_field.sql_type;
     let def = "";
