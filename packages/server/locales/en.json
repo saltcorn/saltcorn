@@ -1623,5 +1623,6 @@
 	"Shown to the user if foreign key constraint is violated": "Shown to the user if foreign key constraint is violated",
 	"Button Style": "Button Style",
 	"Disable full-text search": "Disable full-text search",
-	"Use LIKE instead of tsvector. Use to match against phrase in the middle of a word.": "Use LIKE instead of tsvector. Use to match against phrase in the middle of a word."
+	"Use LIKE instead of tsvector. Use to match against phrase in the middle of a word.": "Use LIKE instead of tsvector. Use to match against phrase in the middle of a word.",
+	"Model configuration": "Model configuration"
 }
