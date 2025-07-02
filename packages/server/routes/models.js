@@ -216,8 +216,6 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const model = await Model.findOne({ id });
-    console.log(model);
-
     const table = await Table.findOne({ id: model.table_id });
     const instances = await ModelInstance.find({ model_id: model.id });
     const metrics = model.templateObj.metrics || {};
