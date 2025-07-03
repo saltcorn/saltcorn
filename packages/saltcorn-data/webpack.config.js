@@ -20,6 +20,7 @@ const npmMocks = {
   "fs-extended-attributes": join(mocksDir, "npm", "fs-extended-attributes"),
   tar: join(mocksDir, "npm", "tar"),
   "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
+  "firebase-admin": join(mocksDir, "npm", "firebase-admin"),
 };
 
 const saltcornMocks = {

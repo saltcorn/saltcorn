@@ -79,6 +79,7 @@ type MobileBuilderConfig = {
   keyStorePath?: string;
   keyStoreAlias?: string;
   keyStorePassword?: string;
+  googleServicesFile?: string;
   buildType: "debug" | "release";
 };
 
@@ -115,6 +116,7 @@ export class MobileBuilder {
   keyStoreAlias: string;
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
+  googleServicesFile?: string;
   buildType: "debug" | "release";
   iosParams?: IosCfg;
 
@@ -166,6 +168,7 @@ export class MobileBuilder {
       this.keyStorePassword = "unsecurepassw";
       this.isUnsecureKeyStore = true;
     }
+    this.googleServicesFile = cfg.googleServicesFile;
     this.buildType = cfg.buildType;
     this.iosParams = cfg.iosParams;
     this.capacitorHelper = new CapacitorHelper({
@@ -297,6 +300,17 @@ export class MobileBuilder {
         join(this.buildDir, basename(this.keyStorePath))
       );
     }
+
+    if (this.googleServicesFile) {
+      const dest = join(
+        this.buildDir,
+        "android",
+        "app",
+        "google-services.json"
+      );
+      copySync(this.googleServicesFile, dest);
+    }
+
     await modifyAndroidManifest(this.buildDir, this.allowShareTo);
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);

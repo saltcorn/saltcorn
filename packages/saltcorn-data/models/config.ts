@@ -1359,6 +1359,17 @@ const configTypes: ConfigTypes = {
       "Usually, it is your email address.",
     excludeFromMobile: true,
   },
+  firebase_json_key: {
+    type: "File",
+    name: "firebase_json_key",
+    label: "Firebase JSON key",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 100, mime_super: "application" },
+    },
+    sublabel:
+      "This is your Firebase Service Account JSON key file. ",
+  },
   push_notification_icon: {
     type: "File",
     name: "push_notification_icon",

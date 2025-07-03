@@ -299,6 +299,7 @@ router.post(
         });
       } else {
         userSubs.push({
+          type: "web-push",
           endpoint: req.body.endpoint,
           keys: {
             auth: req.body.keys.auth,
@@ -314,6 +315,47 @@ router.post(
           message: req.__("Subscribed to notifications"),
         });
       }
+    }
+  })
+);
+
+router.post(
+  "/fcm-token",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("enable_push_notify", false);
+    if (!enabled) {
+      res.status(403).json({
+        error: req.__("Notifications are not enabled on this server"),
+      });
+    } else {
+      const { token } = req.body || {};
+      if (!token) {
+        res.status(400).json({
+          error: req.__("FCM token is required"),
+        });
+        return;
+      }
+      const user = req.user;
+      const allSubs = getState().getConfig(
+        "push_notification_subscriptions",
+        {}
+      );
+      const userSubs = [
+        {
+          type: "fcm-push",
+          token: token,
+        },
+      ];
+      await getState().setConfig("push_notification_subscriptions", {
+        ...allSubs,
+        [user.id]: userSubs,
+      });
+
+      res.json({
+        success: "ok",
+        message: req.__("fcm token uploaded"),
+      });
     }
   })
 );

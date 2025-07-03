@@ -58,6 +58,7 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/network@6.0.3",
     "@capacitor-community/sqlite@6.0.2",
     "@capacitor/screen-orientation@6.0.3",
+    "@capacitor/push-notifications@6.0.4",
     "send-intent@6.0.3",
     ...additionalPlugins,
   ];
@@ -230,6 +231,8 @@ export async function modifyAndroidManifest(
       { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
       { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
       { $: { "android:name": "android.permission.INTERNET" } },
+      { $: { "android:name": "android.permission.POST_NOTIFICATIONS" } },
+      { $: { "android:name": "com.google.android.c2dm.permission.RECEIVE" } },
     ];
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
@@ -239,6 +242,17 @@ export async function modifyAndroidManifest(
       "android:networkSecurityConfig": "@xml/network_security_config",
       "android:usesCleartextTraffic": "true",
     };
+
+    parsed.manifest.application[0]["meta-data"] = [
+      ...(parsed.manifest.application[0]["meta-data"] || []),
+      {
+        $: {
+          "android:name":
+            "com.google.firebase.messaging.default_notification_channel_id",
+          "android:value": "default_channel_id",
+        },
+      },
+    ];
 
     if (allowShareTo) {
       // add the send-intent activity

@@ -2360,6 +2360,7 @@ router.get(
     const images = (await File.find({ mime_super: "image" })).filter((image) =>
       image.filename?.endsWith(".png")
     );
+    const files = await File.find({ folder: "/" });
     const keystoreFiles = await File.find({ folder: "keystore_files" });
     const provisioningFiles = await File.find({ folder: "provisioning_files" });
     const withSyncInfo = await Table.find({ has_sync_info: true });
@@ -3245,6 +3246,47 @@ router.get(
                             placeholder: "",
                           })
                         )
+                      ),
+                      // google-services.json file
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-8" },
+                          label(
+                            {
+                              for: "googleServicesInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Google Services File"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Google Services File?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "googleServicesFile",
+                              id: "googleServicesInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...files.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected:
+                                      builderSettings.googleServicesFile ===
+                                      file.location,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          )
+                        )
                       )
                     )
                   ),
@@ -3685,6 +3727,7 @@ router.post(
       keystoreFile,
       keystoreAlias,
       keystorePassword,
+      googleServicesFile,
     } = req.body || {};
     const receiveShareTriggers = Trigger.find({
       when_trigger: "ReceiveMobileShareData",
@@ -3825,6 +3868,8 @@ router.post(
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
     if (keystorePassword)
       spawnParams.push("--androidKeystorePassword", keystorePassword);
+    if (googleServicesFile)
+      spawnParams.push("--googleServicesFile", googleServicesFile);
 
     // if builDir exists, remove it
     if (
@@ -4523,6 +4568,11 @@ admin_config_route({
       name: "push_notification_badge",
       showIf: { enable_push_notify: true },
     },
+    { section_header: "Firebase Cloud messaging" },
+    {
+      name: "firebase_json_key",
+      showIf: { enable_push_notify: true },
+    }
   ],
   response(form, req, res) {
     send_admin_page({
