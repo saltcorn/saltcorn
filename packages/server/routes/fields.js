@@ -629,7 +629,7 @@ const fieldFlow = (req) =>
                 type: "String",
                 class: "validate-expression",
                 fieldview: "textarea",
-                attributes: { rows: 2 },
+                attributes: { rows: 2, unsafe: true },
                 validator: expressionValidator,
                 showIf: { expression_type: "JavaScript expression" },
               }),
