@@ -1331,6 +1331,12 @@ const string = {
           label: "Placeholder",
           type: "String",
         },
+        {
+          name: "unsafe",
+          label: "Disable escaping",
+          sublabel: "Do not escape unsafe HTML fragments",
+          type: "String",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
@@ -1349,7 +1355,7 @@ const string = {
             id: `input${text_attr(nm)}`,
             rows: attrs.rows || 5,
           },
-          text(v) || ""
+          attrs.unsafe ? v || "" : text(v) || ""
         ),
     },
     code_editor: {

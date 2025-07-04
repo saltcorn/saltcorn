@@ -1624,5 +1624,17 @@
 	"Button Style": "Button Style",
 	"Disable full-text search": "Disable full-text search",
 	"Use LIKE instead of tsvector. Use to match against phrase in the middle of a word.": "Use LIKE instead of tsvector. Use to match against phrase in the middle of a word.",
-	"Model configuration": "Model configuration"
+	"Model configuration": "Model configuration",
+	"Push Notifications": "Push Notifications",
+	"Push Notifications enabled": "Push Notifications enabled",
+	"VAPID public key": "VAPID public key",
+	"Public key for VAPID authentication in web push notifications": "Public key for VAPID authentication in web push notifications",
+	"VAPID private key": "VAPID private key",
+	"Private key for VAPID authentication in web push notifications": "Private key for VAPID authentication in web push notifications",
+	"VAPID email": "VAPID email",
+	"Email address for VAPID authentication in web push notifications. Usually, it is your email address.": "Email address for VAPID authentication in web push notifications. Usually, it is your email address.",
+	"Web push icon": "Web push icon",
+	"Select a publicly accessible square image file": "Select a publicly accessible square image file",
+	"Web push badge": "Web push badge",
+	"Select a publicly accessible monochrome square image file (prefarbly 72x72px)": "Select a publicly accessible monochrome square image file (prefarbly 72x72px)"
 }
