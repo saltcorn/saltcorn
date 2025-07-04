@@ -1021,7 +1021,7 @@ const configTypes: ConfigTypes = {
   enable_push_notify: {
     type: "Bool",
     label: "Enabled",
-    default: true,
+    default: false,
     sublabel: "Push Notifications enabled",
   },
   log_level: {
