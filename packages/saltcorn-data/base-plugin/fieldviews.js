@@ -25,8 +25,9 @@ const {
 } = require("@saltcorn/markup/tags");
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
-const { isNode, nubBy } = require("../utils");
+const { isNode, nubBy, objectToQueryString } = require("../utils");
 const { mockReqRes } = require("../tests/mocks");
+const db = require("../db");
 
 /**
  * select namespace
@@ -681,6 +682,14 @@ const search_or_create = {
         options: views.map((v) => v.name),
       },
       {
+        name: "values_formula",
+        label: "Create with values",
+        type: "String",
+        class: "validate-expression",
+        sublabel:
+          "Send these value to the view to create. Javascript object expression, for example <code>{manager: user.id}</code>",
+      },
+      {
         name: "label",
         label: "Label on link to create",
         type: "String",
@@ -709,7 +718,11 @@ const search_or_create = {
    * @param {*} field
    * @returns {object}
    */
-  run: (nm, v, attrs, cls, reqd, field) => {
+  run: (nm, v, attrs, cls, reqd, field, row) => {
+    const user = db.getRequestContext()?.req?.user;
+    const qs = attrs.values_formula
+      ? `?${objectToQueryString(eval_expression(attrs.values_formula, row || {}, user, "search_or_create values formula"))}`
+      : "";
     return (
       tags.select(
         {
@@ -738,7 +751,7 @@ const search_or_create = {
         {
           onclick: `${isNode() ? "ajax_modal" : "mobile_modal"}('/view/${
             attrs.viewname
-          }',{submitReload: false,onClose: soc_process_${nm}(this)})`,
+          }${qs}',{submitReload: false,onClose: soc_process_${nm}(this)})`,
           href: `javascript:void(0)`,
         },
         attrs.label || "Or create new"

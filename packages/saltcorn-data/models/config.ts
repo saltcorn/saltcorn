@@ -1018,6 +1018,12 @@ const configTypes: ConfigTypes = {
       },
     ],
   },
+  enable_push_notify: {
+    type: "Bool",
+    label: "Enabled",
+    default: false,
+    sublabel: "Push Notifications enabled",
+  },
   log_level: {
     input_type: "select",
     label: "System logging verbosity",
@@ -1212,6 +1218,11 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     default: false,
   },
+  search_disable_fts: {
+    label: "Disable full-text search",
+    type: "Bool",
+    default: false,
+  },
   backup_file_prefix: {
     type: "String",
     label: "Backup file prefix",
@@ -1322,6 +1333,57 @@ const configTypes: ConfigTypes = {
   viewgen_template_table: {
     type: "String",
     label: "Template table",
+    excludeFromMobile: true,
+  },
+  vapid_public_key: {
+    type: "String",
+    label: "VAPID public key",
+    default: "",
+    blurb: "Public key for VAPID authentication in web push notifications",
+    excludeFromMobile: true,
+  },
+  vapid_private_key: {
+    type: "String",
+    label: "VAPID private key",
+    default: "",
+    blurb: "Private key for VAPID authentication in web push notifications",
+    input_type: "password",
+    excludeFromMobile: true,
+  },
+  vapid_email: {
+    type: "String",
+    label: "VAPID email",
+    default: "",
+    blurb:
+      "Email address for VAPID authentication in web push notifications. " +
+      "Usually, it is your email address.",
+    excludeFromMobile: true,
+  },
+  push_notification_icon: {
+    type: "File",
+    name: "push_notification_icon",
+    label: "Web push icon",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 100, mime_super: "image" },
+    },
+    sublabel: "Select a publicly accessible square image file",
+  },
+  push_notification_badge: {
+    type: "File",
+    name: "push_notification_badge",
+    label: "Web push badge",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 100, mime_super: "image" },
+    },
+    sublabel:
+      "Select a publicly accessible monochrome square image file (prefarbly 72x72px)",
+  },
+  push_notification_subscriptions: {
+    type: "hidden",
+    label: "Notify subscriptions",
+    default: {},
     excludeFromMobile: true,
   },
 };

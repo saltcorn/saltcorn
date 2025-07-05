@@ -435,7 +435,10 @@ router.get(
               {
                 label: req.__("Subdomain"),
                 key: (r) =>
-                  link(getNewURL(req, r.subdomain, get_cfg_tenant_base_url(req)), text(r.subdomain)),
+                  link(
+                    getNewURL(req, r.subdomain, get_cfg_tenant_base_url(req)),
+                    text(r.subdomain)
+                  ),
               },
               {
                 label: req.__("Description"),
@@ -909,6 +912,7 @@ router.post(
     const { sub } = req.params;
     // todo warning before deletion
     await deleteTenant(sub);
+    await User.destroy_all_tenant_sessions(sub);
     res.redirect(`/tenant/list`);
   })
 );

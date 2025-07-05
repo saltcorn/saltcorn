@@ -133,6 +133,7 @@ class Form implements AbstractForm {
       .map((f) => f.name);
     const extraCtx = { ...this.values };
     if (user && !extraCtx.user_id) extraCtx.user_id = user.id;
+    if (user && !extraCtx.user) extraCtx.user = user;
     for (const f of this.fields) {
       if (hasFieldMembers(f))
         await f.fill_fkey_options(

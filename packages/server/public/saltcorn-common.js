@@ -2428,3 +2428,117 @@ const observer = new IntersectionObserver(
 document.querySelectorAll("[data-animate]").forEach((element) => {
   observer.observe(element);
 });
+
+function isPWA() {
+  if (!window.matchMedia) return false;
+  const isStandaloneDisplay = window.matchMedia(
+    "(display-mode: standalone)"
+  ).matches;
+  const isStandaloneNavigator = window.navigator.standalone === true; // iOS Safari
+  const isTrustedDisplayMode = ["fullscreen", "standalone", "minimal-ui"].some(
+    (mode) => window.matchMedia(`(display-mode: ${mode})`).matches
+  );
+  return isStandaloneDisplay || isStandaloneNavigator || isTrustedDisplayMode;
+}
+
+const subscribeHelper = (config, swReg) => {
+  if (!config.vapidPublicKey) throw new Error("VAPID public key is missing");
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, "+")
+      .replace(/_/g, "/");
+
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  const subscribe = async () => {
+    const subscription = await swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey),
+    });
+    return subscription;
+  };
+
+  const uploadSubscription = async (subscription) => {
+    const response = await fetch("/notifications/subscribe", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": _sc_globalCsrf,
+      },
+    });
+    if (response.status === 200) {
+      const data = await response.json();
+      console.log("Subscription uploaded successfully:", data);
+    } else console.error("Failed to upload subscription:", response.statusText);
+  };
+
+  const removeSubscription = async (subscription) => {
+    const response = await fetch("/notifications/remove-subscription", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": _sc_globalCsrf,
+      },
+    });
+    if (response.status === 200) {
+      console.log("Subscription removed successfully");
+    } else {
+      console.error("Failed to remove subscription:", response.statusText);
+    }
+  };
+
+  return {
+    handle: async () => {
+      const enabled = config?.enabled && config.userEnabled;
+      let currentSub = await swReg.pushManager.getSubscription();
+      if (!enabled) {
+        if (currentSub) {
+          await currentSub.unsubscribe();
+          await removeSubscription(currentSub);
+        }
+      } else {
+        if (
+          currentSub &&
+          !config.endpoints.find((endpoint) => endpoint === currentSub.endpoint)
+        ) {
+          console.log(
+            "Current subscription does not exist server-side, renewing..."
+          );
+          await currentSub.unsubscribe();
+          currentSub = null;
+        }
+
+        if (!currentSub) {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted")
+            throw new Error(`Push permission denied ${permission}`);
+          const newSub = await subscribe();
+          await uploadSubscription(newSub);
+        }
+      }
+    },
+  };
+};
+
+async function initPushNotify() {
+  try {
+    const webPushConfig = window.push_notify_cfg;
+    if (webPushConfig) {
+      const swReg = await navigator.serviceWorker.ready;
+      await subscribeHelper(webPushConfig, swReg).handle();
+    }
+  } catch (error) {
+    console.error("Push notification initialization failed:", error);
+  }
+}

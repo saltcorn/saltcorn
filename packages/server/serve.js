@@ -111,7 +111,8 @@ const ensurePluginsFolder = async () => {
         const pluginDir = path.join(
           rootFolder,
           plugin.source === "git" ? "git_plugins" : "plugins_folder",
-          ...tokens
+          ...tokens,
+          plugin.version || "unknownversion"
         );
         allPluginFolders.add(pluginDir);
       }
@@ -139,6 +140,29 @@ const ensurePluginsFolder = async () => {
     } catch (e) {
       console.log(`Error checking plugin folder: ${e.message || e}`);
     }
+  }
+};
+
+/**
+ * Users with push_notify enabled store subscription in push_notification_subscriptions
+ * This function ensures that enabled users at least have an empty array
+ * and disabled users have no entry
+ */
+const ensureNotificationSubscriptions = async () => {
+  const allSubs = await getConfig("push_notification_subscriptions", {});
+  let changed = false;
+  for (const user of await User.find()) {
+    const enabled = user._attributes?.notify_push || false;
+    if (enabled && !allSubs[user.id]) {
+      allSubs[user.id] = [];
+      changed = true;
+    } else if (!enabled && allSubs[user.id]) {
+      delete allSubs[user.id];
+      changed = true;
+    }
+  }
+  if (changed) {
+    await setConfig("push_notification_subscriptions", { ...allSubs });
   }
 };
 
@@ -194,7 +218,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
 /**
  * @param {object} opts
  * @param {object} opts.tenant
- * @param {...*} opts.msg
  * @returns {void}
  */
 const workerDispatchMsg = ({ tenant, ...msg }) => {
@@ -302,6 +325,7 @@ module.exports =
       ensureJwtSecret();
       await ensureEnginesCache();
       await ensurePluginsFolder();
+      await ensureNotificationSubscriptions();
     }
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");
@@ -594,10 +618,9 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             "joined_real_time_socket_ids"
           );
           socketIds.push(socket.id);
-          await getState().setConfig(
-            "joined_real_time_socket_ids",
-            [...socketIds]
-          );
+          await getState().setConfig("joined_real_time_socket_ids", [
+            ...socketIds,
+          ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);

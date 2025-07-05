@@ -39,7 +39,7 @@ const select_options = (
   force_required?: boolean,
   neutral_label: string = "",
   sort: boolean = true
-): string => {
+): Array<string> => {
   const options0 = hdr.options || [];
   const options1 = force_required
     ? options0.filter((o: any) =>
@@ -52,10 +52,14 @@ const select_options = (
   }));
   if (sort)
     options.sort((a: any, b: any) =>
-      (a.label?.toLowerCase?.() || a.label) >
-      (b.label?.toLowerCase?.() || b.label)
-        ? 1
-        : -1
+      a.value === ""
+        ? -1
+        : b.value === ""
+          ? 1
+          : (a.label?.toLowerCase?.() || a.label) >
+              (b.label?.toLowerCase?.() || b.label)
+            ? 1
+            : -1
     );
   options = options.map((o: any) =>
     o.value === "" ? { ...o, label: neutral_label || o.label } : o

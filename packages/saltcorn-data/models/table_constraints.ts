@@ -26,7 +26,7 @@ class TableConstraint {
   type: TypeOption;
   id?: number | null;
   configuration: any;
-  table?: Table
+  table?: Table;
   /**
    * @param {object} o
    */
@@ -96,7 +96,15 @@ class TableConstraint {
         db.getTenantSchema()
       );
       const language = require("../db/state").getState().pg_ts_config;
-      await db.add_fts_index(table.name, text_fields, language);
+      const search_disable_fts = require("../db/state")
+        .getState()
+        .getConfig("search_disable_fts");
+      await db.add_fts_index(
+        table.name,
+        text_fields,
+        language,
+        search_disable_fts
+      );
     } else if (con.type === "Index") {
       await db.add_index(table.name, con.configuration.field);
     }

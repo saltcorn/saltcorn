@@ -363,7 +363,9 @@ const run = async (
       await field.fill_fkey_options(
         false,
         undefined,
-        extra.req.user ? { ...state, user_id: extra.req.user } : state,
+        extra.req.user
+          ? { ...state, user_id: extra.req.user, user: extra.req.user }
+          : state,
         isWeb(extra.req) ? undefined : optionsQuery,
         undefined,
         state[field.name] || undefined,
@@ -474,6 +476,12 @@ const run = async (
             row: state,
             table,
           });
+          if (actionResult?.set_fields) {
+            Object.keys(actionResult.set_fields).forEach((k) => {
+              if (actionResult.set_fields[k] === state[k])
+                delete actionResult.set_fields[k];
+            });
+          }
 
           if (actionResult)
             segment.contents = script(
@@ -617,8 +625,8 @@ const run = async (
         configuration,
         confirm,
       } = segment;
-      const label = action_label || action_name;
-
+      let label = action_label || action_name;
+      if (label === " ") label = "";
       const confirmStr = confirm
         ? `if(confirm('${extra.req.__("Are you sure?")}'))`
         : "";
@@ -632,7 +640,9 @@ const run = async (
               }', this)`,
               href: "javascript:void(0)",
             },
-            action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+            action_icon
+              ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
+              : false,
             label
           );
         else
@@ -645,7 +655,9 @@ const run = async (
                 action_size || ""
               }`,
             },
-            action_icon ? i({ class: action_icon }) + "&nbsp;" : false,
+            action_icon
+              ? i({ class: action_icon }) + (label ? "&nbsp;" : "")
+              : false,
             label
           );
       } else {

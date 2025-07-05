@@ -71,6 +71,14 @@ const searchConfigForm = (tables, views, req) => {
     input_type: "select",
     options: ["Cards", "Tabs"],
   });
+  fields.push({
+    name: "search_disable_fts",
+    label: req.__("Disable full-text search"),
+    type: "Bool",
+    sublabel: req.__(
+      "Use LIKE instead of tsvector. Use to match against phrase in the middle of a word."
+    ),
+  });
   const blurb1 = req.__(
     `Choose views for <a href="/search">search results</a> for each table.<br/>Set to blank to omit table from global search.`
   );
@@ -111,6 +119,10 @@ router.get(
     form.values.search_results_decoration = getState().getConfig(
       "search_results_decoration",
       "Cards"
+    );
+    form.values.search_disable_fts = getState().getConfig(
+      "search_disable_fts",
+      true
     );
     send_infoarch_page({
       res,
@@ -153,6 +165,10 @@ router.post(
       await getState().setConfig(
         "search_results_decoration",
         result.success.search_results_decoration || "Cards"
+      );
+      await getState().setConfig(
+        "search_disable_fts",
+        result.success.search_disable_fts || false
       );
       await getState().setConfig("search_use_websearch", +dbversion >= 11.0);
       delete result.success.search_table_description;
@@ -235,7 +251,9 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       viewName === "search_table_description" ||
       tableName === "search_table_description" ||
       viewName === "search_results_decoration" ||
-      tableName === "search_results_decoration"
+      tableName === "search_results_decoration" ||
+      viewName === "search_disable_fts" ||
+      tableName === "search_disable_fts"
     )
       continue;
     tablesConfigured += 1;
@@ -367,7 +385,10 @@ router.get(
   "/",
   error_catcher(async (req, res, next) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
 
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");

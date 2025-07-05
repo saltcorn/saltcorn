@@ -158,14 +158,16 @@ function invalidate_pagings(href) {
 
 function set_state_fields(kvs, disable_pjax, e) {
   let newhref = get_current_state_url(e);
+  const oldhref = newhref;
   if (Object.keys(kvs).some((k) => !is_paging_param(k))) {
     newhref = invalidate_pagings(newhref);
   }
   Object.entries(kvs).forEach((kv) => {
-    if (kv[1].unset && kv[1].unset === true)
+    if (kv[1]?.unset && kv[1]?.unset === true)
       newhref = removeQueryStringParameter(newhref, kv[0]);
     else newhref = updateQueryStringParameter(newhref, kv[0], kv[1]);
   });
+  if (newhref === oldhref) return;
   if (disable_pjax) href_to(newhref.replace("&&", "&").replace("?&", "?"));
   else pjax_to(newhref.replace("&&", "&").replace("?&", "?"), e);
 }
@@ -1241,6 +1243,15 @@ window.addEventListener("beforeinstallprompt", (e) => {
   defferedPrompt = e;
 });
 
+window.addEventListener("appinstalled", async (event) => {
+  console.log("App was installed.", event);
+  await initPushNotify();
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await initPushNotify();
+});
+
 function isAndroidMobile() {
   const ua = navigator.userAgent || navigator.vendor || window.opera;
   return /android/i.test(ua) && /mobile/i.test(ua);
@@ -1439,14 +1450,14 @@ function cfu_translate(that) {
         l = function (a, b) {
           d = setTimeout(function () {
             d = !1;
-            if (h || c) e.apply(a, b), c && (j = +new Date());
+            if (h || c) (e.apply(a, b), c && (j = +new Date()));
             i && g.apply(a, b);
           }, f);
         },
         k = function () {
           if (!d || a) {
             if (!d && !h && (!c || +new Date() - j > f))
-              e.apply(this, arguments), c && (j = +new Date());
+              (e.apply(this, arguments), c && (j = +new Date()));
             (a || !c) && clearTimeout(d);
             l(this, arguments);
           }

@@ -748,6 +748,7 @@ const attribBadges = (f) => {
           "summary_field",
           "importance",
           "on_delete_cascade",
+          "fkey_error_msg",
           "on_delete",
           "unique_error_msg",
           "ref",

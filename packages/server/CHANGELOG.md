@@ -1,6 +1,16 @@
 # Notable changes
 
-## 1.3.0 - In beta
+## 1.3.0 - Released 2 July 2025
+
+* It is no longer necessary to restart the application when upgrading a plugin to a more recent version
+
+* Option to disable tsvector full-text search in the search settings. This will use ILIKE to search, which is slower, but can match the middle a phrase in the middle of the word
+
+* Push notifications for PWA and web applications. 
+
+* select_by_code fieldview for editing Key, String or Integer fields: populate the dropdown options by running code.
+
+* Edit views: in formulae, for instance in show if containers, the variable `_creating` now indicates if a new row is being created (true) or exisitng row being edited (false)
 
 * Date fields with "only day" are now stored with the "date" type in PostgreSQL.
 

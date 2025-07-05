@@ -130,16 +130,21 @@ const whereFTS = (
     schema?: string;
     language?: string;
     use_websearch?: boolean;
+    disable_fts?: boolean;
   },
   phs: PlaceHolderStack
 ): string => {
   const { fields, table, schema } = v;
   const prefixMatch = !v.searchTerm?.includes(" ");
   const actually_use_websearch = v.use_websearch && !prefixMatch;
-  const searchTerm = prefixMatch ? `${v.searchTerm}:*` : v.searchTerm;
+  const no_fts = phs.is_sqlite || v.disable_fts;
+  const searchTerm =
+    prefixMatch && !no_fts ? `${v.searchTerm}:*` : v.searchTerm;
   let flds = ftsFieldsSqlExpr(fields, table, schema);
   if (phs.is_sqlite)
     return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
+  else if (v.disable_fts)
+    return `${flds} ILIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else
     return `to_tsvector('${v.language || "english"}', ${flds}) @@ ${
       actually_use_websearch ? "websearch_" : prefixMatch ? "" : `plain`

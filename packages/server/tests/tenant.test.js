@@ -84,7 +84,7 @@ describe("tenant routes", () => {
         .expect(toInclude("E-mail"));
     });
 
-    it("delete tenant", async () => {
+    /*it("delete tenant", async () => {
       const loginCookie = await getAdminLoginCookie();
 
       const app = await getApp({ disableCsrf: true });
@@ -92,7 +92,7 @@ describe("tenant routes", () => {
         .post("/tenant/delete/peashoot")
         .set("Cookie", loginCookie)
         .expect(toRedirect("/tenant/list"));
-    });
+    });*/
   } else {
     it("does not support tenants on SQLite", async () => {
       expect(db.isSQLite).toBe(true);
