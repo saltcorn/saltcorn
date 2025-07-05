@@ -959,12 +959,23 @@ const string = {
           type: "String",
           sublabel: "Optional. If blank, label is URL",
         },
+        {
+          name: "target_blank",
+          label: "Open in new tab",
+          type: "Bool",
+        },
       ],
       description: "Show a link with the field value as the URL.",
       isEdit: false,
       run: (s, req, attrs = {}) =>
         s
-          ? a({ href: text(s || "") }, text_attr(attrs?.link_title || s || ""))
+          ? a(
+              {
+                href: text(s || ""),
+                ...(attrs.target_blank ? { target: "_blank" } : {}),
+              },
+              text_attr(attrs?.link_title || s || "")
+            )
           : "",
     },
     /**
