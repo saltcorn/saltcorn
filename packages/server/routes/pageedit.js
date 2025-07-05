@@ -183,6 +183,9 @@ const pageBuilderData = async (req, context) => {
   triggers.forEach((tr) => {
     actions.push(tr.name);
   });
+  const triggerActions = Trigger.trigger_actions({
+    apiNeverTriggers: true,
+  });
   const actionConfigForms = {};
   for (const name of actions) {
     const action = stateActions[name];
@@ -247,6 +250,7 @@ const pageBuilderData = async (req, context) => {
     page_groups,
     actions: actionsNotRequiringRow,
     builtInActions: ["GoBack"],
+    triggerActions,
     library,
     min_role: context.min_role,
     actionConfigForms,
