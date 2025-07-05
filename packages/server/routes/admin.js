@@ -2378,6 +2378,7 @@ router.get(
     const xcodebuildVersion = xcodeCheckRes.version;
     const layout = getState().getLayout(req.user);
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
+    const pushEnabled = getState().getConfig("enable_push_notify", false);
     send_admin_page({
       res,
       req,
@@ -3248,46 +3249,48 @@ router.get(
                         )
                       ),
                       // google-services.json file
-                      div(
-                        { class: "row pb-3" },
-                        div(
-                          { class: "col-sm-8" },
-                          label(
-                            {
-                              for: "googleServicesInputId",
-                              class: "form-label fw-bold",
-                            },
-                            req.__("Google Services File"),
-                            a(
-                              {
-                                href: "javascript:ajax_modal('/admin/help/Google Services File?')",
-                              },
-                              i({ class: "fas fa-question-circle ps-1" })
-                            )
-                          ),
-                          select(
-                            {
-                              class: "form-select",
-                              name: "googleServicesFile",
-                              id: "googleServicesInputId",
-                            },
-                            [
-                              option({ value: "" }, ""),
-                              ...files.map((file) =>
-                                option(
+                      pushEnabled
+                        ? div(
+                            { class: "row pb-3" },
+                            div(
+                              { class: "col-sm-8" },
+                              label(
+                                {
+                                  for: "googleServicesInputId",
+                                  class: "form-label fw-bold",
+                                },
+                                req.__("Google Services File"),
+                                a(
                                   {
-                                    value: file.location,
-                                    selected:
-                                      builderSettings.googleServicesFile ===
-                                      file.location,
+                                    href: "javascript:ajax_modal('/admin/help/Google Services File?')",
                                   },
-                                  file.filename
+                                  i({ class: "fas fa-question-circle ps-1" })
                                 )
                               ),
-                            ].join("")
+                              select(
+                                {
+                                  class: "form-select",
+                                  name: "googleServicesFile",
+                                  id: "googleServicesInputId",
+                                },
+                                [
+                                  option({ value: "" }, ""),
+                                  ...files.map((file) =>
+                                    option(
+                                      {
+                                        value: file.location,
+                                        selected:
+                                          builderSettings.googleServicesFile ===
+                                          file.location,
+                                      },
+                                      file.filename
+                                    )
+                                  ),
+                                ].join("")
+                              )
+                            )
                           )
-                        )
-                      )
+                        : ""
                     )
                   ),
                   div(

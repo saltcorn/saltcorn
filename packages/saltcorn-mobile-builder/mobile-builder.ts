@@ -195,7 +195,11 @@ export class MobileBuilder {
     try {
       await loadAllPlugins();
       this.pluginsLoaded = true;
-      prepareBuildDir(this.buildDir, this.templateDir);
+      prepareBuildDir(
+        this.buildDir,
+        this.templateDir,
+        !!this.googleServicesFile
+      );
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
         appId: this.appId !== appIdDefault ? this.appId : undefined,
@@ -311,7 +315,11 @@ export class MobileBuilder {
       copySync(this.googleServicesFile, dest);
     }
 
-    await modifyAndroidManifest(this.buildDir, this.allowShareTo);
+    await modifyAndroidManifest(
+      this.buildDir,
+      this.allowShareTo,
+      !!this.googleServicesFile
+    );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
     modifyGradleConfig(this.buildDir, this.appVersion);
