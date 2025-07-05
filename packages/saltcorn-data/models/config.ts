@@ -1341,6 +1341,7 @@ const configTypes: ConfigTypes = {
     default: "",
     blurb: "Public key for VAPID authentication in web push notifications",
     excludeFromMobile: true,
+    helpTopic: "VAPID configuration",
   },
   vapid_private_key: {
     type: "String",
@@ -1369,6 +1370,7 @@ const configTypes: ConfigTypes = {
     },
     sublabel:
       "This is your Firebase Service Account JSON key file. ",
+    helpTopic: "Firebase JSON key",
   },
   push_notification_icon: {
     type: "File",

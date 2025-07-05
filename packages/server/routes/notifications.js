@@ -295,7 +295,7 @@ router.post(
       if (existingSub) {
         res.json({
           success: "ok",
-          message: req.__("Subscribed to notifications"),
+          message: req.__("Already subscribed to notifications"),
         });
       } else {
         userSubs.push({
@@ -341,21 +341,29 @@ router.post(
         "push_notification_subscriptions",
         {}
       );
-      const userSubs = [
-        {
+      const userSubs = allSubs[user.id] || [];
+      const existingSub = userSubs.find(
+        (s) => s.type === "fcm-push" && s.token === token
+      );
+      if (existingSub) {
+        res.json({
+          success: "ok",
+          message: req.__("FCM token already uploaded"),
+        });
+      } else {
+        userSubs.push({
           type: "fcm-push",
           token: token,
-        },
-      ];
-      await getState().setConfig("push_notification_subscriptions", {
-        ...allSubs,
-        [user.id]: userSubs,
-      });
-
-      res.json({
-        success: "ok",
-        message: req.__("fcm token uploaded"),
-      });
+        });
+        await getState().setConfig("push_notification_subscriptions", {
+          ...allSubs,
+          [user.id]: userSubs,
+        });
+        res.json({
+          success: "ok",
+          message: req.__("FCM token uploaded"),
+        });
+      }
     }
   })
 );

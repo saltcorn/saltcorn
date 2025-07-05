@@ -11,7 +11,9 @@ async function uploadFcmToken(token) {
       body: { token },
     });
     const data = response.data;
-    console.log("Token uploaded successfully:", data);
+    if (data.success.success === "ok")
+      console.log("Token uploaded successfully:", data);
+    else console.error("Unable to upload token:", data);
   } catch (error) {
     console.error("Error uploading token:", error);
   }
@@ -38,6 +40,7 @@ export async function initPushNotifications() {
             {
               type: "info",
               msg: notification.body,
+              title: notification.title,
             },
           ]);
         }

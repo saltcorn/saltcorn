@@ -4575,6 +4575,7 @@ admin_config_route({
     {
       name: "firebase_json_key",
       showIf: { enable_push_notify: true },
+      help: { topic: "Firebas JSON key" },
     }
   ],
   response(form, req, res) {
