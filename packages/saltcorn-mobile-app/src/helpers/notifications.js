@@ -1,8 +1,26 @@
-import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
-import { Device } from "@capacitor/device";
 import { apiCall } from "./api";
 import { showAlerts } from "./common";
+
+async function loadNotificationsPlugin() {
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    return PushNotifications;
+  } catch (error) {
+    console.warn("Error loading PushNotifications plugin:", error);
+    return null;
+  }
+}
+
+async function loadDevicePlugin() {
+  try {
+    const { Device } = await import("@capacitor/device");
+    return Device;
+  } catch (error) {
+    console.warn("Error loading Device plugin:", error);
+    return null;
+  }
+}
 
 async function uploadFcmToken(token, deviceId) {
   try {
@@ -21,7 +39,9 @@ async function uploadFcmToken(token, deviceId) {
 }
 
 export async function initPushNotifications() {
-  if (Capacitor.getPlatform() !== "web") {
+  const PushNotifications = await loadNotificationsPlugin();
+  if (Capacitor.getPlatform() !== "web" && PushNotifications) {
+    const { Device } = await loadDevicePlugin();
     const permStatus = await PushNotifications.requestPermissions();
     if (permStatus.receive === "granted") {
       await PushNotifications.register();
@@ -54,7 +74,8 @@ export async function initPushNotifications() {
 }
 
 export async function unregisterPushNotifications() {
-  if (Capacitor.getPlatform() !== "web") {
+  const PushNotifications = await loadNotificationsPlugin();
+  if (Capacitor.getPlatform() !== "web" && PushNotifications) {
     try {
       await PushNotifications.unregister();
       console.log("Push notifications unregistered successfully");
