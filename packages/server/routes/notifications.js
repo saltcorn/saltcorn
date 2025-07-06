@@ -329,7 +329,7 @@ router.post(
         error: req.__("Notifications are not enabled on this server"),
       });
     } else {
-      const { token } = req.body || {};
+      const { token, deviceId } = req.body || {};
       if (!token) {
         res.status(400).json({
           error: req.__("FCM token is required"),
@@ -341,9 +341,10 @@ router.post(
         "push_notification_subscriptions",
         {}
       );
-      const userSubs = allSubs[user.id] || [];
+      let userSubs = allSubs[user.id] || [];
       const existingSub = userSubs.find(
-        (s) => s.type === "fcm-push" && s.token === token
+        (s) =>
+          s.type === "fcm-push" && s.token === token && s.deviceId === deviceId
       );
       if (existingSub) {
         res.json({
@@ -351,9 +352,13 @@ router.post(
           message: req.__("FCM token already uploaded"),
         });
       } else {
+        userSubs = userSubs.filter(
+          (s) => s.type !== "fcm-push" || s.deviceId !== deviceId
+        );
         userSubs.push({
           type: "fcm-push",
           token: token,
+          deviceId: deviceId,
         });
         await getState().setConfig("push_notification_subscriptions", {
           ...allSubs,

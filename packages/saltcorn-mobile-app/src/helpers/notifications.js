@@ -1,14 +1,15 @@
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
+import { Device } from "@capacitor/device";
 import { apiCall } from "./api";
 import { showAlerts } from "./common";
 
-async function uploadFcmToken(token) {
+async function uploadFcmToken(token, deviceId) {
   try {
     const response = await apiCall({
       method: "POST",
       path: "/notifications/fcm-token",
-      body: { token },
+      body: { token, deviceId },
     });
     const data = response.data;
     if (data.success.success === "ok")
@@ -25,7 +26,8 @@ export async function initPushNotifications() {
     if (permStatus.receive === "granted") {
       await PushNotifications.register();
       PushNotifications.addListener("registration", async (token) => {
-        await uploadFcmToken(token.value);
+        const { identifier } = await Device.getId();
+        await uploadFcmToken(token.value, identifier);
       });
 
       PushNotifications.addListener("registrationError", (err) => {

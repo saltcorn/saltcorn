@@ -84,7 +84,7 @@ export class PushMessageHelper {
           }
         }
       } catch (error) {
-        getState()?.log(1, `Error sending push notification: ${error}`);
+        getState()?.log(5, `Error sending push notification: ${error}`);
       }
     }
   }
@@ -116,7 +116,8 @@ export class PushMessageHelper {
     };
     if (this.icon) {
       const baseUrl = getSafeBaseUrl();
-      if (baseUrl) notificationData.imageUrl = `${baseUrl}/${this.icon}`;
+      if (baseUrl)
+        notificationData.imageUrl = `${baseUrl}/files/serve/${this.icon}`;
     }
     const messageId = await admin.messaging(app).send({
       token: sub.token,

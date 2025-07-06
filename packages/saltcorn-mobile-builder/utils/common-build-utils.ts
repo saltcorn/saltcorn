@@ -65,7 +65,9 @@ export function prepareBuildDir(
     "@capacitor/screen-orientation@6.0.3",
     "send-intent@6.0.3",
     ...additionalPlugins,
-    ...(fcmEnabled ? ["@capacitor/push-notifications@6.0.4"] : []),
+    ...(fcmEnabled
+      ? ["@capacitor/device@6.0.2", "@capacitor/push-notifications@6.0.4"]
+      : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
 
