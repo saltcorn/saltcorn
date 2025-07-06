@@ -959,12 +959,23 @@ const string = {
           type: "String",
           sublabel: "Optional. If blank, label is URL",
         },
+        {
+          name: "target_blank",
+          label: "Open in new tab",
+          type: "Bool",
+        },
       ],
       description: "Show a link with the field value as the URL.",
       isEdit: false,
       run: (s, req, attrs = {}) =>
         s
-          ? a({ href: text(s || "") }, text_attr(attrs?.link_title || s || ""))
+          ? a(
+              {
+                href: text(s || ""),
+                ...(attrs.target_blank ? { target: "_blank" } : {}),
+              },
+              text_attr(attrs?.link_title || s || "")
+            )
           : "",
     },
     /**
@@ -1331,6 +1342,12 @@ const string = {
           label: "Placeholder",
           type: "String",
         },
+        {
+          name: "unsafe",
+          label: "Disable escaping",
+          sublabel: "Do not escape unsafe HTML fragments",
+          type: "String",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
@@ -1349,7 +1366,7 @@ const string = {
             id: `input${text_attr(nm)}`,
             rows: attrs.rows || 5,
           },
-          text(v) || ""
+          attrs.unsafe ? v || "" : text(v) || ""
         ),
     },
     code_editor: {

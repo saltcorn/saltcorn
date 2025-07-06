@@ -111,7 +111,8 @@ const ensurePluginsFolder = async () => {
         const pluginDir = path.join(
           rootFolder,
           plugin.source === "git" ? "git_plugins" : "plugins_folder",
-          ...tokens
+          ...tokens,
+          plugin.version || "unknownversion"
         );
         allPluginFolders.add(pluginDir);
       }
@@ -617,10 +618,9 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             "joined_real_time_socket_ids"
           );
           socketIds.push(socket.id);
-          await getState().setConfig(
-            "joined_real_time_socket_ids",
-            [...socketIds]
-          );
+          await getState().setConfig("joined_real_time_socket_ids", [
+            ...socketIds,
+          ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);

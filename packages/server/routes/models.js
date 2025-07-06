@@ -219,6 +219,7 @@ router.get(
     const table = await Table.findOne({ id: model.table_id });
     const instances = await ModelInstance.find({ model_id: model.id });
     const metrics = model.templateObj.metrics || {};
+    const rendered = await model.templateObj.renderModel?.({ table, ...model });
     const metricCols = Object.entries(metrics).map(([k, v]) => ({
       label: k,
       key: (inst) => inst.metric_values?.[k]?.toPrecision(6),
@@ -239,6 +240,16 @@ router.get(
             i({ class: "ms-1 fas fa-edit" })
           ),
         },
+        ...(rendered
+          ? [
+              {
+                type: "card",
+                class: "mt-0 mb-3",
+                title: req.__("Model configuration"),
+                contents: div(rendered),
+              },
+            ]
+          : []),
         {
           type: "card",
           class: "mt-0",

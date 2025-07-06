@@ -126,6 +126,10 @@ const configuration_workflow = (req) =>
             builtInLabel: "Filter Actions",
             builtIns: ["Clear"],
           });
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+          });
           const actionConstraints = {};
           const stateActionsObj = getState().actions;
           for (const action of actions1) {
@@ -220,6 +224,7 @@ const configuration_workflow = (req) =>
             roles,
             builtInActions: ["Clear"],
             actions,
+            triggerActions,
             actionConstraints,
             views,
             pages,
@@ -476,6 +481,12 @@ const run = async (
             row: state,
             table,
           });
+          if (actionResult?.set_fields) {
+            Object.keys(actionResult.set_fields).forEach((k) => {
+              if (actionResult.set_fields[k] === state[k])
+                delete actionResult.set_fields[k];
+            });
+          }
 
           if (actionResult)
             segment.contents = script(
