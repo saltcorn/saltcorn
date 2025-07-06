@@ -4552,6 +4552,15 @@ admin_config_route({
     { section_header: "Push Notifications" },
     "enable_push_notify",
     {
+      name: "push_notification_icon",
+      showIf: { enable_push_notify: true },
+    },
+    {
+      name: "push_notification_badge",
+      showIf: { enable_push_notify: true },
+    },
+    { section_header: "Web push" },
+    {
       name: "vapid_public_key",
       showIf: { enable_push_notify: true },
     },
@@ -4563,20 +4572,12 @@ admin_config_route({
       name: "vapid_email",
       showIf: { enable_push_notify: true },
     },
-    {
-      name: "push_notification_icon",
-      showIf: { enable_push_notify: true },
-    },
-    {
-      name: "push_notification_badge",
-      showIf: { enable_push_notify: true },
-    },
-    { section_header: "Firebase Cloud messaging" },
+    { section_header: "Native Android" },
     {
       name: "firebase_json_key",
       showIf: { enable_push_notify: true },
       help: { topic: "Firebas JSON key" },
-    }
+    },
   ],
   response(form, req, res) {
     send_admin_page({
