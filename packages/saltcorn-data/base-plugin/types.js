@@ -2013,6 +2013,17 @@ const float = {
       if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
       return true;
     },
+
+  /**
+   * check if two float values are equal within a given precision
+   * @param a
+   * @param b
+   * @param opts
+   * @returns true or false
+   */
+  equals: (a, b, { decimal_places }) => {
+    return Math.abs(a - b) < Math.pow(10, -decimal_places) / 2;
+  },
 };
 
 /**
@@ -2257,6 +2268,18 @@ const date = {
    * @returns {boolean}
    */
   validate: () => (v) => v instanceof Date && !isNaN(v),
+  /**
+   * check if two date values are equal
+   * @param a
+   * @param b
+   * @returns true or false
+   */
+  equals: (a, b) => {
+    if (a instanceof Date && b instanceof Date) {
+      return a.getTime() === b.getTime();
+    }
+    return false;
+  },
 };
 
 /**
