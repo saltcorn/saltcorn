@@ -19,7 +19,7 @@
 <h1>Function prepareBuildDir</h1></div>
 <section class="tsd-panel">
 <ul class="tsd-signatures">
-<li class="tsd-signature tsd-anchor-link" id="prepareBuildDir"><span class="tsd-kind-call-signature">prepare<wbr/>Build<wbr/>Dir</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">buildDir</span>, <span class="tsd-kind-parameter">templateDir</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#prepareBuildDir" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
+<li class="tsd-signature tsd-anchor-link" id="prepareBuildDir"><span class="tsd-kind-call-signature">prepare<wbr/>Build<wbr/>Dir</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">buildDir</span>, <span class="tsd-kind-parameter">templateDir</span>, <span class="tsd-kind-parameter">fcmEnabled</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#prepareBuildDir" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><g stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" id="icon-anchor"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5"></path></g></svg></a></li>
 <li class="tsd-description">
 <div class="tsd-comment tsd-typography"><p>copy saltcorn-mobile-app as a template to buildDir
 and install the capacitor and cordova modules to node_modules (cap sync will be run later)</p>
@@ -36,11 +36,16 @@ and install the capacitor and cordova modules to node_modules (cap sync will be 
 <h5><span class="tsd-kind-parameter">templateDir</span>: <span class="tsd-signature-type">string</span></h5>
 <div class="tsd-comment tsd-typography"><p>directory of the template code that will be copied to &#39;buildDir&#39;</p>
 </div>
+<div class="tsd-comment tsd-typography"></div></li>
+<li>
+<h5><span class="tsd-kind-parameter">fcmEnabled</span>: <span class="tsd-signature-type">boolean</span></h5>
+<div class="tsd-comment tsd-typography"><p>is Firebase Cloud Messaging enabled, then add &quot;@capacitor/<a href="mailto:push-notifications@6.0.4">push-notifications@6.0.4</a>&quot;</p>
+</div>
 <div class="tsd-comment tsd-typography"></div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 <div class="tsd-comment tsd-typography"></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/dd72020/packages/saltcorn-mobile-builder/utils/common-build-utils.ts#L34">saltcorn-mobile-builder/utils/common-build-utils.ts:34</a></li></ul></aside></li></ul></section></div>
+<li>Defined in <a href="https://github.com/saltcorn/saltcorn/blob/dee73de/packages/saltcorn-mobile-builder/utils/common-build-utils.ts#L35">saltcorn-mobile-builder/utils/common-build-utils.ts:35</a></li></ul></aside></li></ul></section></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
