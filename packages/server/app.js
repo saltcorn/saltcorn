@@ -75,7 +75,12 @@ const disabledCsurf = (req, res, next) => {
 
 const noCsrfLookup = (state, pluginRoutesHandler) => {
   const disable_csrf_routes = state.getConfig("disable_csrf_routes", "");
-  const result = new Set(disable_csrf_routes.split(",").map((s) => s.trim()));
+  const result = new Set(
+    disable_csrf_routes
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
 
   for (const url of pluginRoutesHandler.noCsrfUrls) {
     result.add(url);
