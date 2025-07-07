@@ -127,7 +127,8 @@ const SettingsPanel = () => {
    */
   const handleUserKeyPress = (event) => {
     const { keyCode, target } = event;
-    if (target.tagName.toLowerCase() === "body" && selected) {
+    const tagName = target.tagName.toLowerCase();
+    if ((tagName === "body" || tagName === "button") && selected) {
       //8 backsp, 46 del
       if ((keyCode === 8 || keyCode === 46) && selected.id === "ROOT") {
         deleteChildren();

@@ -126,6 +126,7 @@ const configuration_workflow = (req) =>
           const actions = Trigger.action_options({
             tableTriggers: table.id,
             apiNeverTriggers: true,
+            forBuilder: true,
             builtInLabel: "Show Actions",
             builtIns: builtInActions,
           });
