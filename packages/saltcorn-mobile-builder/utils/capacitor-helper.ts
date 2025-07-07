@@ -275,11 +275,35 @@ export class CapacitorHelper {
     writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
   }
 
+  private getDockerMode(): "Rootless" | "Rootful" | null {
+    try {
+      const output = execSync('docker info --format "{{.SecurityOptions}}"', {
+        encoding: "utf-8",
+      }).trim();
+      return output.includes("name=rootless") ? "Rootless" : "Rootful";
+    } catch (error: any) {
+      console.error(
+        "Failed to check Docker mode:",
+        error.stderr?.toString() || error.message
+      );
+      return null;
+    }
+  }
+
   private buildWithDocker() {
     console.log("building with docker");
     const state = getState();
+    const dockerMode = this.getDockerMode();
+    const userParams = [];
+    if (dockerMode === "Rootful") {
+      if (process.getuid && process.getgid)
+        userParams.push("--user", `${process.getuid()}:${process.getgid()}`);
+      else
+        console.log("Warning: process.getuid and process.getgid not available");
+    }
     const spawnParams = [
       "run",
+      ...userParams,
       "--network",
       "host",
       "-v",
