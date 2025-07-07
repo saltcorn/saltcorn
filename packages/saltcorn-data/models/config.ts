@@ -290,7 +290,7 @@ const configTypes: ConfigTypes = {
     default: "",
     restart_required: true,
     blurb:
-      "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
+      "Comma-separated list of relative URL route prefixes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
   },
   npm_available_js_code: {
     type: "String",
