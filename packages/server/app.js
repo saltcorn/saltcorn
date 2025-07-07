@@ -429,7 +429,9 @@ const getApp = async (opts = {}) => {
     noCsrf = noCsrfLookup(getState(), pluginRoutesHandler);
     app.use(function (req, res, next) {
       if (
-        noCsrf?.has(req.url) ||
+        [...(noCsrf || [])].some((url_prefix) =>
+          req.url.startsWith(url_prefix)
+        ) ||
         (req.smr &&
           (req.url.startsWith("/api/") ||
             req.url === "/auth/login-with/jwt" ||
