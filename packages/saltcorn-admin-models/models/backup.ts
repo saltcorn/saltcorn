@@ -932,6 +932,12 @@ const auto_backup_now = async () => {
     await tenantModule.eachTenant(async () => {
       try {
         await auto_backup_now_tenant(state);
+        await MetaData.create({
+          type: "Backup",
+          name: "Success",
+          body: {},
+        });
+        state.log(6, `Auto backup for tenant completed successfully`);
       } catch (e: any) {
         console.error(e);
         await Crash.create(e, {
@@ -944,6 +950,12 @@ const auto_backup_now = async () => {
   else
     try {
       await auto_backup_now_tenant(state);
+      await MetaData.create({
+        type: "Backup",
+        name: "Success",
+        body: {},
+      });
+      state.log(6, `Auto backup completed successfully`);
     } catch (e: any) {
       console.error(e);
       await Crash.create(e, {
