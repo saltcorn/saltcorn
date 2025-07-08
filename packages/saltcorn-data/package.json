@@ -59,7 +59,7 @@
     "email-validator": "^2.0.4",
     "env-paths": "^2.2.1",
     "estraverse": "^5.3.0",
-    "firebase-admin": "11.11.1",
+    "firebase-admin": "13.4.0",
     "fs-extended-attributes": "1.0.1",
     "https-proxy-agent": "^7.0.6",
     "i18n": "^0.15.1",
@@ -92,7 +92,8 @@
     "nodemailer": "^6.10.0",
     "mjml": "5.0.0-alpha.6",
     "underscore": "^1.13.1",
-    "unidecode": "1.1.0"
+    "unidecode": "1.1.0",
+    "tough-cookie": "2.5.0"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
