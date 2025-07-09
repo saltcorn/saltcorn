@@ -1636,5 +1636,12 @@
 	"Web push icon": "Web push icon",
 	"Select a publicly accessible square image file": "Select a publicly accessible square image file",
 	"Web push badge": "Web push badge",
-	"Select a publicly accessible monochrome square image file (prefarbly 72x72px)": "Select a publicly accessible monochrome square image file (prefarbly 72x72px)"
+	"Select a publicly accessible monochrome square image file (prefarbly 72x72px)": "Select a publicly accessible monochrome square image file (prefarbly 72x72px)",
+	"Comma-separated list of relative URL route prefixes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>": "Comma-separated list of relative URL route prefixes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
+	"Push icon": "Push icon",
+	"Push badge": "Push badge",
+	"Web push": "Web push",
+	"Native Android": "Native Android",
+	"Firebase JSON key": "Firebase JSON key",
+	"This is your Firebase Service Account JSON key file. ": "This is your Firebase Service Account JSON key file. "
 }

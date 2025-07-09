@@ -1348,11 +1348,16 @@ const string = {
           sublabel: "Do not escape unsafe HTML fragments",
           type: "String",
         },
+        {
+          type: "Bool",
+          name: "monospace",
+          label: "Monospace",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
           {
-            class: ["form-control", cls],
+            class: ["form-control", cls, attrs.monospace && "font-monospace"],
             name: text_attr(nm),
             "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,

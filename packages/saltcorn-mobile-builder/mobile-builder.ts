@@ -79,6 +79,7 @@ type MobileBuilderConfig = {
   keyStorePath?: string;
   keyStoreAlias?: string;
   keyStorePassword?: string;
+  googleServicesFile?: string;
   buildType: "debug" | "release";
 };
 
@@ -115,6 +116,7 @@ export class MobileBuilder {
   keyStoreAlias: string;
   keyStorePassword: string;
   isUnsecureKeyStore: boolean;
+  googleServicesFile?: string;
   buildType: "debug" | "release";
   iosParams?: IosCfg;
 
@@ -166,6 +168,7 @@ export class MobileBuilder {
       this.keyStorePassword = "unsecurepassw";
       this.isUnsecureKeyStore = true;
     }
+    this.googleServicesFile = cfg.googleServicesFile;
     this.buildType = cfg.buildType;
     this.iosParams = cfg.iosParams;
     this.capacitorHelper = new CapacitorHelper({
@@ -192,7 +195,11 @@ export class MobileBuilder {
     try {
       await loadAllPlugins();
       this.pluginsLoaded = true;
-      prepareBuildDir(this.buildDir, this.templateDir);
+      prepareBuildDir(
+        this.buildDir,
+        this.templateDir,
+        !!this.googleServicesFile
+      );
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
         appId: this.appId !== appIdDefault ? this.appId : undefined,
@@ -297,7 +304,22 @@ export class MobileBuilder {
         join(this.buildDir, basename(this.keyStorePath))
       );
     }
-    await modifyAndroidManifest(this.buildDir, this.allowShareTo);
+
+    if (this.googleServicesFile) {
+      const dest = join(
+        this.buildDir,
+        "android",
+        "app",
+        "google-services.json"
+      );
+      copySync(this.googleServicesFile, dest);
+    }
+
+    await modifyAndroidManifest(
+      this.buildDir,
+      this.allowShareTo,
+      !!this.googleServicesFile
+    );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
     modifyGradleConfig(this.buildDir, this.appVersion);

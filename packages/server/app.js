@@ -75,7 +75,12 @@ const disabledCsurf = (req, res, next) => {
 
 const noCsrfLookup = (state, pluginRoutesHandler) => {
   const disable_csrf_routes = state.getConfig("disable_csrf_routes", "");
-  const result = new Set(disable_csrf_routes.split(",").map((s) => s.trim()));
+  const result = new Set(
+    disable_csrf_routes
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
 
   for (const url of pluginRoutesHandler.noCsrfUrls) {
     result.add(url);
@@ -429,7 +434,9 @@ const getApp = async (opts = {}) => {
     noCsrf = noCsrfLookup(getState(), pluginRoutesHandler);
     app.use(function (req, res, next) {
       if (
-        noCsrf?.has(req.url) ||
+        [...(noCsrf || [])].some((url_prefix) =>
+          req.url.startsWith(url_prefix)
+        ) ||
         (req.smr &&
           (req.url.startsWith("/api/") ||
             req.url === "/auth/login-with/jwt" ||

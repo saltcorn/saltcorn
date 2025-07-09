@@ -42,10 +42,10 @@ export function showAlerts(alerts, toast = true) {
     }
     const successIds = [];
     area.innerHTML = "";
-    for (const { type, msg } of alerts) {
+    for (const { type, msg, title } of alerts) {
       if (toast) {
         const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
-        area.innerHTML += saltcorn.markup.toast(type, msg, rndid);
+        area.innerHTML += saltcorn.markup.toast(type, msg, rndid, title);
         if (type === "success") successIds.push(rndid);
       } else area.innerHTML += saltcorn.markup.alert(type, msg);
     }

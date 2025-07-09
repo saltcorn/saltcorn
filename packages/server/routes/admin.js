@@ -2360,6 +2360,7 @@ router.get(
     const images = (await File.find({ mime_super: "image" })).filter((image) =>
       image.filename?.endsWith(".png")
     );
+    const files = await File.find({ folder: "/" });
     const keystoreFiles = await File.find({ folder: "keystore_files" });
     const provisioningFiles = await File.find({ folder: "provisioning_files" });
     const withSyncInfo = await Table.find({ has_sync_info: true });
@@ -2377,6 +2378,7 @@ router.get(
     const xcodebuildVersion = xcodeCheckRes.version;
     const layout = getState().getLayout(req.user);
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
+    const pushEnabled = getState().getConfig("enable_push_notify", false);
     send_admin_page({
       res,
       req,
@@ -3245,7 +3247,50 @@ router.get(
                             placeholder: "",
                           })
                         )
-                      )
+                      ),
+                      // google-services.json file
+                      pushEnabled
+                        ? div(
+                            { class: "row pb-3" },
+                            div(
+                              { class: "col-sm-8" },
+                              label(
+                                {
+                                  for: "googleServicesInputId",
+                                  class: "form-label fw-bold",
+                                },
+                                req.__("Google Services File"),
+                                a(
+                                  {
+                                    href: "javascript:ajax_modal('/admin/help/Google Services File?')",
+                                  },
+                                  i({ class: "fas fa-question-circle ps-1" })
+                                )
+                              ),
+                              select(
+                                {
+                                  class: "form-select",
+                                  name: "googleServicesFile",
+                                  id: "googleServicesInputId",
+                                },
+                                [
+                                  option({ value: "" }, ""),
+                                  ...files.map((file) =>
+                                    option(
+                                      {
+                                        value: file.location,
+                                        selected:
+                                          builderSettings.googleServicesFile ===
+                                          file.location,
+                                      },
+                                      file.filename
+                                    )
+                                  ),
+                                ].join("")
+                              )
+                            )
+                          )
+                        : ""
                     )
                   ),
                   div(
@@ -3685,6 +3730,7 @@ router.post(
       keystoreFile,
       keystoreAlias,
       keystorePassword,
+      googleServicesFile,
     } = req.body || {};
     const receiveShareTriggers = Trigger.find({
       when_trigger: "ReceiveMobileShareData",
@@ -3825,6 +3871,8 @@ router.post(
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
     if (keystorePassword)
       spawnParams.push("--androidKeystorePassword", keystorePassword);
+    if (googleServicesFile)
+      spawnParams.push("--googleServicesFile", googleServicesFile);
 
     // if builDir exists, remove it
     if (
@@ -4504,6 +4552,15 @@ admin_config_route({
     { section_header: "Push Notifications" },
     "enable_push_notify",
     {
+      name: "push_notification_icon",
+      showIf: { enable_push_notify: true },
+    },
+    {
+      name: "push_notification_badge",
+      showIf: { enable_push_notify: true },
+    },
+    { section_header: "Web push" },
+    {
       name: "vapid_public_key",
       showIf: { enable_push_notify: true },
     },
@@ -4515,13 +4572,11 @@ admin_config_route({
       name: "vapid_email",
       showIf: { enable_push_notify: true },
     },
+    { section_header: "Native Android" },
     {
-      name: "push_notification_icon",
+      name: "firebase_json_key",
       showIf: { enable_push_notify: true },
-    },
-    {
-      name: "push_notification_badge",
-      showIf: { enable_push_notify: true },
+      help: { topic: "Firebas JSON key" },
     },
   ],
   response(form, req, res) {

@@ -14,7 +14,7 @@ import type {
 import User from "./user";
 import state from "../db/state";
 import emailModule from "./email";
-import webpush from "web-push";
+import { PushMessageHelper } from "./internal/push_message_helper";
 
 const { getState } = state;
 
@@ -91,43 +91,12 @@ class Notification {
         .sendMail(email)
         .catch((e) => getState()?.log(1, e.message));
     }
-    if (user?._attributes?.notify_push) {
-      const state = getState();
-      if (state && user?.id) {
-        const icon = state.getConfig("push_notification_icon");
-        const badge = state.getConfig("push_notification_badge");
-        const publicKey = state.getConfig("vapid_public_key");
-        const privateKey = state.getConfig("vapid_private_key");
-        const email = state.getConfig("vapid_email");
-        if (!publicKey || !privateKey || !email) {
-          state.log(
-            1,
-            "Web push notifications are not configured properly. Missing VAPID keys or email."
-          );
-          return;
-        }
-        const subs =
-          state.getConfig("push_notification_subscriptions", {})[user.id] || [];
-        for (const sub of subs) {
-          const payload = JSON.stringify({
-            title: o.title,
-            body: o.body,
-            icon: `/files/serve/${icon}`,
-            badge: `/files/serve/${badge}`,
-          });
-          try {
-            await webpush.sendNotification(sub, payload, {
-              vapidDetails: {
-                subject: `mailto:${email}`,
-                publicKey,
-                privateKey,
-              },
-            });
-          } catch (error) {
-            state.log(1, `Error sending web push notification: ${error}`);
-          }
-        }
-      }
+    if (user?.id && user._attributes?.notify_push) {
+      const pushHelper = new PushMessageHelper(
+        getState()?.getConfig("push_notification_subscriptions", {})[user.id] ||
+          []
+      );
+      await pushHelper.send(o);
     }
   }
 

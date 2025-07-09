@@ -290,7 +290,7 @@ const configTypes: ConfigTypes = {
     default: "",
     restart_required: true,
     blurb:
-      "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
+      "Comma-separated list of relative URL route prefixes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
   },
   npm_available_js_code: {
     type: "String",
@@ -1341,6 +1341,7 @@ const configTypes: ConfigTypes = {
     default: "",
     blurb: "Public key for VAPID authentication in web push notifications",
     excludeFromMobile: true,
+    helpTopic: "VAPID configuration",
   },
   vapid_private_key: {
     type: "String",
@@ -1359,10 +1360,21 @@ const configTypes: ConfigTypes = {
       "Usually, it is your email address.",
     excludeFromMobile: true,
   },
+  firebase_json_key: {
+    type: "File",
+    name: "firebase_json_key",
+    label: "Firebase JSON key",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 100, mime_super: "application" },
+    },
+    sublabel: "This is your Firebase Service Account JSON key file. ",
+    helpTopic: "Firebase JSON key",
+  },
   push_notification_icon: {
     type: "File",
     name: "push_notification_icon",
-    label: "Web push icon",
+    label: "Push icon",
     default: 0,
     attributes: {
       select_file_where: { min_role_read: 100, mime_super: "image" },
@@ -1372,7 +1384,7 @@ const configTypes: ConfigTypes = {
   push_notification_badge: {
     type: "File",
     name: "push_notification_badge",
-    label: "Web push badge",
+    label: "Push badge",
     default: 0,
     attributes: {
       select_file_where: { min_role_read: 100, mime_super: "image" },

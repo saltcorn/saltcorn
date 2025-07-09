@@ -2,6 +2,7 @@ import { init } from "./init";
 import * as api from "./helpers/api";
 import * as auth from "./helpers/auth";
 import * as common from "./helpers/common";
+import * as notifications from "./helpers/notifications";
 import * as fileSystem from "./helpers/file_system";
 import * as navigation from "./helpers/navigation";
 import * as offlineMode from "./helpers/offline_mode";
@@ -20,6 +21,7 @@ export const mobileApp = {
   api,
   auth,
   common,
+  notifications,
   fileSystem,
   navigation: { ...navigation, router },
   offlineMode,

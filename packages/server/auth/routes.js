@@ -266,10 +266,15 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
       const user = await User.findOne({ email });
       if (user && user.checkPassword(password)) {
         const now = new Date();
+        const pushEnabled = !!user._attributes?.notify_push;
+        const tokenUser = { ...user.session_object };
+        if (tokenUser.attributes)
+          tokenUser.attributes.notify_push = pushEnabled;
+        else tokenUser._attributes = { notify_push: pushEnabled };
         const token = jwt.sign(
           {
             sub: email,
-            user: user.session_object,
+            user: tokenUser,
             iss: "saltcorn@saltcorn",
             aud: "saltcorn-mobile-app",
             iat: now.valueOf(),

@@ -30,8 +30,13 @@ const resizer = require("resize-with-sharp-or-jimp");
  * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
+ * @param fcmEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications@6.0.4"
  */
-export function prepareBuildDir(buildDir: string, templateDir: string) {
+export function prepareBuildDir(
+  buildDir: string,
+  templateDir: string,
+  fcmEnabled: boolean
+) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
 
@@ -60,6 +65,9 @@ export function prepareBuildDir(buildDir: string, templateDir: string) {
     "@capacitor/screen-orientation@6.0.3",
     "send-intent@6.0.3",
     ...additionalPlugins,
+    ...(fcmEnabled
+      ? ["@capacitor/device@6.0.2", "@capacitor/push-notifications@6.0.4"]
+      : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
 
@@ -211,7 +219,8 @@ export function androidFeatures() {
 
 export async function modifyAndroidManifest(
   buildDir: string,
-  allowShareTo: boolean
+  allowShareTo: boolean,
+  allowFCM: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {
@@ -230,6 +239,16 @@ export async function modifyAndroidManifest(
       { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
       { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
       { $: { "android:name": "android.permission.INTERNET" } },
+      ...(allowFCM
+        ? [
+            { $: { "android:name": "android.permission.POST_NOTIFICATIONS" } },
+            {
+              $: {
+                "android:name": "com.google.android.c2dm.permission.RECEIVE",
+              },
+            },
+          ]
+        : []),
     ];
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
@@ -239,6 +258,19 @@ export async function modifyAndroidManifest(
       "android:networkSecurityConfig": "@xml/network_security_config",
       "android:usesCleartextTraffic": "true",
     };
+
+    if (allowFCM) {
+      parsed.manifest.application[0]["meta-data"] = [
+        ...(parsed.manifest.application[0]["meta-data"] || []),
+        {
+          $: {
+            "android:name":
+              "com.google.firebase.messaging.default_notification_channel_id",
+            "android:value": "default_channel_id",
+          },
+        },
+      ];
+    }
 
     if (allowShareTo) {
       // add the send-intent activity

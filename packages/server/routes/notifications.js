@@ -295,10 +295,11 @@ router.post(
       if (existingSub) {
         res.json({
           success: "ok",
-          message: req.__("Subscribed to notifications"),
+          message: req.__("Already subscribed to notifications"),
         });
       } else {
         userSubs.push({
+          type: "web-push",
           endpoint: req.body.endpoint,
           keys: {
             auth: req.body.keys.auth,
@@ -312,6 +313,60 @@ router.post(
         res.json({
           success: "ok",
           message: req.__("Subscribed to notifications"),
+        });
+      }
+    }
+  })
+);
+
+router.post(
+  "/fcm-token",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const enabled = getState().getConfig("enable_push_notify", false);
+    if (!enabled) {
+      res.status(403).json({
+        error: req.__("Notifications are not enabled on this server"),
+      });
+    } else {
+      const { token, deviceId } = req.body || {};
+      if (!token) {
+        res.status(400).json({
+          error: req.__("FCM token is required"),
+        });
+        return;
+      }
+      const user = req.user;
+      const allSubs = getState().getConfig(
+        "push_notification_subscriptions",
+        {}
+      );
+      let userSubs = allSubs[user.id] || [];
+      const existingSub = userSubs.find(
+        (s) =>
+          s.type === "fcm-push" && s.token === token && s.deviceId === deviceId
+      );
+      if (existingSub) {
+        res.json({
+          success: "ok",
+          message: req.__("FCM token already uploaded"),
+        });
+      } else {
+        userSubs = userSubs.filter(
+          (s) => s.type !== "fcm-push" || s.deviceId !== deviceId
+        );
+        userSubs.push({
+          type: "fcm-push",
+          token: token,
+          deviceId: deviceId,
+        });
+        await getState().setConfig("push_notification_subscriptions", {
+          ...allSubs,
+          [user.id]: userSubs,
+        });
+        res.json({
+          success: "ok",
+          message: req.__("FCM token uploaded"),
         });
       }
     }
