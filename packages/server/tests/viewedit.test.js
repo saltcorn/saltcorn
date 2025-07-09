@@ -541,7 +541,7 @@ describe("viewedit new Edit", () => {
       .send("columns=" + encodeURIComponent(JSON.stringify(colsWithPages)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layoutWithPages)))
       .set("Cookie", loginCookie)
-      .expect(toInclude("Edit options (step 3 / 3)"));
+      .expect(toInclude("Edit options (step 3 / max 4)"));
     // edit_mybook_without_pages
     await request(app)
       .post("/viewedit/config/edit_mybook_without_pages")
@@ -558,7 +558,7 @@ describe("viewedit new Edit", () => {
       .send("columns=" + encodeURIComponent(JSON.stringify(colsWithoutPages)))
       .send("layout=" + encodeURIComponent(JSON.stringify(layoutWithoutPages)))
       .set("Cookie", loginCookie)
-      .expect(toInclude("Fixed and blocked fields (step 2 / max 3)"));
+      .expect(toInclude("Fixed and blocked fields (step 2 / max 4)"));
   });
 
   it("saves new view fixed fields", async () => {
@@ -582,7 +582,7 @@ describe("viewedit new Edit", () => {
       .send("stepName=Fixed+and+blocked+fields")
       .send("pages=2")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Edit options (step 3 / 3)"));
+      .expect(toInclude("Edit options (step 3 / max 4)"));
   });
 
   it("saves view when done", async () => {
@@ -603,7 +603,7 @@ describe("viewedit new Edit", () => {
             })
           )
       )
-      .send("stepName=Edit+options")
+      .send("stepName=Real-time updates")
       .send("destination_type=View")
       .send("view_when_done=authorlist")
       .send("auto_save=on")
@@ -631,7 +631,7 @@ describe("viewedit new Edit", () => {
             })
           )
       )
-      .send("stepName=Edit+options")
+      .send("stepName=Real-time updates")
       .send("destination_type=View")
       .send("view_when_done=authorlist")
       .send("auto_save=on")

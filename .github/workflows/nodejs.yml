@@ -63,6 +63,7 @@ jobs:
           PGUSER: postgres
           PGDATABASE: saltcorn_test
           PGPASSWORD: postgres
+          NODE_OPTIONS: --max-old-space-size=4096
       - run: packages/saltcorn-cli/bin/saltcorn run-tests saltcorn-data
         env:
           SQLITE_FILEPATH: /tmp/testdb.sqlite
@@ -70,6 +71,7 @@ jobs:
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
           SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+          NODE_OPTIONS: --max-old-space-size=4096
       - run: packages/saltcorn-cli/bin/saltcorn run-tests server
         env:
           SQLITE_FILEPATH: /tmp/testdb.sqlite
@@ -77,6 +79,8 @@ jobs:
           SALTCORN_MULTI_TENANT: true
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
           SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+          NODE_OPTIONS: --max-old-space-size=4096
+
       - run: packages/saltcorn-cli/bin/saltcorn run-tests view-queries
         env:
           REMOTE_QUERIES: true
@@ -86,3 +90,4 @@ jobs:
           SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
           # workaround for prepareQueryEnviroment()
           JSON_WEB_TOKEN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBmb28uY29tIiwicm9sZV9pZCI6MSwiaXNzIjoic2FsdGNvcm5Ac2FsdGNvcm4iLCJhdWQiOiJzYWx0Y29ybi1tb2JpbGUtYXBwIiwiaWF0IjoxOTI0OTA1NjAwMDAwLCJleHAiOjE5MjQ5MDU2MDAwMDB9.eE370EdQr90y9woWDzeDzZgGVsUSlfAmtykeAJ_gJjA"
+          NODE_OPTIONS: --max-old-space-size=4096
