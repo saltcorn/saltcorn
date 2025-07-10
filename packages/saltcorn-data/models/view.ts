@@ -48,6 +48,7 @@ import type {
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import { hash } from "bcryptjs";
 
 import { remove_from_menu } from "./config";
 
@@ -712,6 +713,10 @@ class View implements AbstractView {
   ): Promise<any> {
     const { getState } = require("../db/state");
     const state = getState();
+    // Hash password in body
+    if (body?.password) {
+      body.password = await hash(body.password, 10);
+    }
     if (
       !state.mobileConfig ||
       state.mobileConfig.localTableIds.indexOf(this.table_id) >= 0
