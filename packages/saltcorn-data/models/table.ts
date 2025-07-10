@@ -1892,7 +1892,7 @@ class Table implements AbstractTable {
       if (
         typeof row[field.name] !== "undefined" &&
         field.attributes?.min_role_write &&
-        user.role_id > +field.attributes?.min_role_write
+        user.role_id > +this.min_role_write
       )
         return "Not authorized";
     }
