@@ -109,14 +109,6 @@ describe("User", () => {
       confirm_password: "newpaass",
     });
     expect(res1).toEqual({ error: "User not found or expired token" });
-    const res3 = await User.resetPasswordWithToken({
-      email: u.email,
-      reset_password_token: token,
-      password: "newpaass",
-      confirm_password: "newpaass1",
-    });
-    assertIsErrorMsg(res3);
-    expect(res3.error).toBe("Passwords do not match");
     const res2 = await User.resetPasswordWithToken({
       email: u.email,
       reset_password_token: "",
@@ -126,6 +118,20 @@ describe("User", () => {
     expect(res2).toEqual({
       error: "Invalid token or invalid token length or incorrect email",
     });
+  });
+  it("should validate password and confirm password", async () => {
+    const u = await User.findOne({ email: "foo@bar.com" });
+    assertIsSet(u);
+    expect(u.session_object.email).toBe("foo@bar.com");
+    const token = await u.getNewResetToken();
+    const res = await User.resetPasswordWithToken({
+      email: u.email,
+      reset_password_token: token,
+      password: "newpaass",
+      confirm_password: "differentpass",
+    });
+    assertIsErrorMsg(res);
+    expect(res.error).toBe("Passwords do not match");
   });
   it("should reset API token", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
