@@ -971,10 +971,8 @@ class View implements AbstractView {
   emitRealTimeEvent(eventType: string, data: any): void {
     const { getState } = require("../db/state");
     const state = getState();
-    if (state.hasJoinedRealTimeSockets) {
-      const withViewName = this.getRealTimeEventName(eventType);
-      state.emitRealTimeUpdate(db.getTenantSchema(), withViewName, data);
-    }
+    const withViewName = this.getRealTimeEventName(eventType);
+    state.emitRealTimeUpdate(db.getTenantSchema(), withViewName, data);
   }
 
   /**
@@ -983,7 +981,7 @@ class View implements AbstractView {
    * @returns the full event name
    */
   getRealTimeEventName(eventType: string): string {
-    return `${eventType}_${this.name}`;
+    return `${this.name}_${eventType}`;
   }
 }
 

@@ -209,7 +209,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const state = getState();
     if (state) {
       await state.setConfig("joined_log_socket_ids", []);
-      await state.setConfig("joined_real_time_socket_ids", []);
     }
   });
   if (useClusterAdaptor) setupPrimary();
@@ -614,13 +613,6 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           if (view.min_role < role_id)
             throw new Error("Not authorized to join collaboration room");
           socket.join(`_${tenant}_collab_room_`);
-          const socketIds = await getState().getConfig(
-            "joined_real_time_socket_ids"
-          );
-          socketIds.push(socket.id);
-          await getState().setConfig("joined_real_time_socket_ids", [
-            ...socketIds,
-          ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);
