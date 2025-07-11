@@ -1229,6 +1229,7 @@ router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
+    console.log({ reqBody: req.body });
     const v = req.body || {};
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
@@ -1309,6 +1310,17 @@ router.post(
       } else rest.ownership_formula = null;
       await db.withTransaction(async () => {
         await table.update(rest);
+        // Update table field's min_role_write attributes
+        const fields = table.getFields();
+
+        for (const f of fields) {
+          if (f.attributes?.min_role_write) {
+            f.attributes.min_role_write = parseInt(rest.min_role_write);
+            await f.update({
+              attributes: f.attributes,
+            });
+          }
+        }
       });
       await getState().refresh_tables();
       if (!req.xhr) {
