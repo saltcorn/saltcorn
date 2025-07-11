@@ -2358,7 +2358,8 @@ const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
       when_trigger: "Update",
       table_id: table_id,
       run: async (row, { old_row, user }) => {
-        console.log(
+        getState().log(
+          6,
           `Virtual trigger Update for ${viewname} on table ${table.name}`
         );
         // find changed columns within the layout
@@ -2379,16 +2380,29 @@ const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
           },
         });
 
-        // build and emit updates
-        const updateVals = {};
-        for (const fieldName of changedLayoutFields) {
-          const newVal = row[fieldName];
-          updateVals[fieldName] = newVal;
+        if (changedLayoutFields.size === 0) {
+          getState().log(
+            6,
+            "No layout fields changed, skipping real-time update"
+          );
+        } else {
+          // build and emit updates
+          const updateVals = {};
+          for (const fieldName of changedLayoutFields) {
+            const newVal = row[fieldName];
+            updateVals[fieldName] = newVal;
+          }
+          const rowId = row[table.pk_name];
+          getState().log(
+            6,
+            "Emitting real-time update for row",
+            rowId,
+            updateVals
+          );
+          view.emitRealTimeEvent(`UPDATE_EVENT?id=${rowId}`, {
+            updates: updateVals,
+          });
         }
-        const rowId = row[table.pk_name];
-        view.emitRealTimeEvent(`UPDATE_EVENT?id=${rowId}`, {
-          updates: updateVals,
-        });
       },
     },
   ];
