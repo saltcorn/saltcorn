@@ -571,9 +571,9 @@ const isPushEnabled = (user?: User): user is User => {
   const pushPolicy = push_policy_by_role[user.role_id || 100] || "Default on";
   if (pushPolicy === "Always") return true;
   if (pushPolicy === "Never") return false;
-  if (user._attributes?.notify_push === undefined)
-    return pushPolicy === "Default on";
-  return user._attributes?.notify_push;
+  const userAttr = isNode() ? user._attributes : user.attributes;
+  if (userAttr?.notify_push === undefined) return pushPolicy === "Default on";
+  return userAttr?.notify_push;
 };
 
 export = {
