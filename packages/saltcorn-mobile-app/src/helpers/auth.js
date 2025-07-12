@@ -74,7 +74,7 @@ export async function login({ email, password, entryPoint, isSignup }) {
         }
       }
     }
-    if (config.user.attributes?.notify_push) {
+    if (saltcorn.data.utils.isPushEnabled(config.user)) {
       initPushNotifications();
     } else {
       await unregisterPushNotifications();

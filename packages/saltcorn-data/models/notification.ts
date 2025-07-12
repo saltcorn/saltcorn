@@ -15,8 +15,10 @@ import User from "./user";
 import state from "../db/state";
 import emailModule from "./email";
 import { PushMessageHelper } from "./internal/push_message_helper";
+import utils from "../utils";
 
 const { getState } = state;
+const { isPushEnabled } = utils;
 
 /**
  * Notification Class
@@ -91,10 +93,11 @@ class Notification {
         .sendMail(email)
         .catch((e) => getState()?.log(1, e.message));
     }
-    if (user?.id && user._attributes?.notify_push) {
+    if (isPushEnabled(user)) {
       const pushHelper = new PushMessageHelper(
-        getState()?.getConfig("push_notification_subscriptions", {})[user.id] ||
-          []
+        getState()?.getConfig("push_notification_subscriptions", {})[
+          user.id!
+        ] || []
       );
       await pushHelper.send(o);
     }
