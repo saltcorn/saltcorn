@@ -1212,7 +1212,7 @@ const render = async ({
   );
 
   const realTimeCollabScript =
-    enable_realtime && row && !req?.xhr
+    enable_realtime && row && !(req.headers?.pjaxpageload === "true")
       ? script({
           src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
         }) + script(domReady(realTimeScript(viewname, table.id, row)))
