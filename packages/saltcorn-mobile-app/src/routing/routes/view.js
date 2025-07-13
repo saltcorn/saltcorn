@@ -148,7 +148,6 @@ export const getView = async (context) => {
   const { viewname } = context.params;
   const view = saltcorn.data.models.View.findOne({ name: viewname });
   if (!view) throw new Error(req.__("No such view: %s", viewname));
-  const res = new MobileResponse();
   if (
     state.mobileConfig.user.role_id > view.min_role &&
     !(await view.authorise_get({ query, req, ...view }))
@@ -158,45 +157,56 @@ export const getView = async (context) => {
       req.__("Not authorized") + additionalInfos
     );
   }
-  state.queriesCache = {};
   let contents0 = null;
-  try {
-    contents0 = await view.run_possibly_on_page(
-      query,
-      req,
-      res,
-      view.isRemoteTable()
-    );
-  } finally {
-    state.queriesCache = null;
+  if (
+    view.viewtemplateObj?.mobile_render_server_side &&
+    state.mobileConfig.isOfflineMode
+  ) {
+    const response = await apiCall({
+      method: "GET",
+      path: `/view/${encodeURIComponent(viewname)}${context.query ? `?${context.query}` : ""}`,
+    });
+    const data = response.data;
+    contents0 = data;
+  } else {
+    const res = new MobileResponse();
+    state.queriesCache = {};
+    try {
+      contents0 = await view.run_possibly_on_page(
+        query,
+        req,
+        res,
+        view.isRemoteTable()
+      );
+    } finally {
+      state.queriesCache = null;
+    }
+    const wrapped = res.getWrapHtml();
+    if (wrapped)
+      return await wrapContents(
+        wrapped,
+        res.getWrapViewName() || "viewname",
+        context,
+        req
+      );
   }
-  const wrapped = res.getWrapHtml();
-  if (wrapped)
-    return await wrapContents(
-      wrapped,
-      res.getWrapViewName() || "viewname",
-      context,
-      req
-    );
-  else {
-    const contents =
-      typeof contents0 === "string"
-        ? saltcorn.markup.div(
-            {
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-sc-view-source": `/view/${context.params.viewname}${
-                context.query
-                  ? context.query.startsWith("?")
-                    ? context.query
-                    : `?${context.query}`
-                  : ""
-              }`,
-            },
-            contents0
-          )
-        : contents0;
+  const contents =
+    typeof contents0 === "string"
+      ? saltcorn.markup.div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-view-source": `/view/${context.params.viewname}${
+              context.query
+                ? context.query.startsWith("?")
+                  ? context.query
+                  : `?${context.query}`
+                : ""
+            }`,
+          },
+          contents0
+        )
+      : contents0;
 
-    return await wrapContents(contents, viewname, context, req);
-  }
+  return await wrapContents(contents, viewname, context, req);
 };
