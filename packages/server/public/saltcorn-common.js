@@ -2077,7 +2077,15 @@ function init_room(viewname, room_id) {
 }
 
 function init_collab_room(viewname, eventCfgs) {
-  const socket = io({ transports: ["websocket"] });
+  let socket = null;
+  if (parent?.saltcorn?.data?.state) {
+    const { server_path, jwt } =
+      parent.saltcorn.data.state.getState().mobileConfig;
+    socket = io(server_path, {
+      query: `jwt=${jwt}`,
+      transports: ["websocket"],
+    });
+  } else socket = io({ transports: ["websocket"] });
   for (const [event, callback] of Object.entries(eventCfgs.events)) {
     socket.on(event, callback);
   }
