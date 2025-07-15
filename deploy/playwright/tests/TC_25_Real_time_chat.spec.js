@@ -407,7 +407,6 @@ test.describe('E2E Test Suite', () => {
         await page.selectOption(pageobject.destinationview, { label: 'Room.room' });
         // click on next button
         await functions.submit();
-        await functions.submit();
         // go to message_list
         await page.click(pageobject.Msglist);
         // Click on add message link

@@ -377,6 +377,12 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
+                name: "enable_realtime",
+                label: req.__("Enable real-time updates"),
+                type: "Bool",
+                default: false,
+              },
+              {
                 name: "destination_type",
                 label: "Destination type",
                 type: "String",
@@ -457,21 +463,6 @@ const configuration_workflow = (req) =>
                   },
                 ],
               }),
-            ],
-          });
-        },
-      },
-      {
-        name: req.__("Real-time updates"),
-        form: async () => {
-          return new Form({
-            fields: [
-              {
-                name: "enable_realtime",
-                label: req.__("Enable real-time updates"),
-                type: "Bool",
-                default: false,
-              },
             ],
           });
         },

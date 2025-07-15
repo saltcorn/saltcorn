@@ -153,6 +153,7 @@ describe("Edit view Workflow", () => {
         auto_create: false,
         delete_unchanged_auto_create: false,
         split_paste: true,
+        enable_realtime: false,
         destination_type: "View",
         view_when_done: "authorlist",
       });
@@ -167,56 +168,7 @@ describe("Edit view Workflow", () => {
         }),
         stepName: "Edit options",
         destination_type: "View",
-        view_when_done: "authorlist",
-        auto_save: "on",
-        split_paste: "on",
-      },
-      mockReqRes.req
-    );
-    assertIsSet(wfres);
-    expect(wfres.renderForm.values.contextEnc).toContain("edit_mybook");
-    expect(wfres.renderForm.values.stepName).toBe("Real-time updates");
-    expect(wfres.context).toEqual({
-      layout: {
-        above: [{ type: "field", fieldview: "edit", field_name: "author" }],
-      },
-      columns: [{ type: "Field", field_name: "author" }],
-      viewname: "edit_mybook",
-      auto_save: true,
-      auto_create: false,
-      delete_unchanged_auto_create: false,
-      split_paste: true,
-      table_id: 2,
-      view_when_done: "authorlist",
-      destination_type: "View",
-    });
-  });
-
-  it("runs step 4: Edit options", async () => {
-    const view = View.findOne({ name: "authoredit" });
-    assertIsSet(view);
-    const configFlow = await view.get_config_flow(mockReqRes.req);
-    assertIsSet(configFlow);
-    configFlow.onStepSuccess = async (step, context) => {
-      expect(step.name).toBe("Real-time updates");
-      expect(context).toEqual({
-        table_id: 2,
-        viewname: "edit_mybook",
-        layout: view.configuration.layout,
-        columns: view.configuration.columns,
         enable_realtime: false,
-      });
-    };
-    const wfres = await configFlow.run(
-      {
-        contextEnc: JSON.stringify({
-          table_id: view.table_id,
-          viewname: "edit_mybook",
-          layout: view.configuration.layout,
-          columns: view.configuration.columns,
-        }),
-        stepName: "Real-time updates",
-        destination_type: "View",
         view_when_done: "authorlist",
         auto_save: "on",
         split_paste: "on",
@@ -241,7 +193,13 @@ describe("Edit view Workflow", () => {
       },
       columns: [{ type: "Field", field_name: "author" }],
       viewname: "edit_mybook",
+      auto_save: true,
+      auto_create: false,
+      delete_unchanged_auto_create: false,
+      split_paste: true,
       enable_realtime: false,
+      view_when_done: "authorlist",
+      destination_type: "View",
     });
   });
 
@@ -292,7 +250,7 @@ describe("Edit view Workflow", () => {
         _block_publisher: false,
       },
     });
-    expect(wfres.title).toBe("Edit options (step 3 / max 4)");
+    expect(wfres.title).toBe("Edit options (step 3 / 3)");
   });
 
   it("run step 3 with a fixed field", async () => {
@@ -323,9 +281,18 @@ describe("Edit view Workflow", () => {
       mockReqRes.req
     );
     assertIsSet(wfres);
-    expect(wfres.renderForm.values.contextEnc).toContain("edit_mybook");
-    expect(wfres.renderForm.values.stepName).toBe("Real-time updates");
-    expect(wfres.context).toEqual({
+    expect(wfres).toEqual({
+      redirect: "/viewedit",
+      flash: [
+        "success",
+        'View <a href="/view/authoredit">authoredit</a> saved',
+      ],
+    });
+
+    const viewNew = View.findOne({ name: "authoredit" });
+    assertIsSet(viewNew);
+
+    expect(viewNew.configuration).toEqual({
       fixed: {
         pages: 4,
         publisher: null,
@@ -341,7 +308,7 @@ describe("Edit view Workflow", () => {
       auto_create: false,
       delete_unchanged_auto_create: false,
       split_paste: true,
-      table_id: 2,
+      enable_realtime: false,
       view_when_done: "authorlist",
       destination_type: "View",
     });
