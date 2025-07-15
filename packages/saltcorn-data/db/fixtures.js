@@ -151,6 +151,7 @@ module.exports =
           pages: 678,
         },
         view_when_done: "authorlist",
+        enable_realtime: true,
       },
       min_role: 100,
     });

@@ -377,6 +377,13 @@ const configuration_workflow = (req) =>
                 type: "Bool",
               },
               {
+                name: "enable_realtime",
+                label: req.__("Real-time updates"),
+                sublabel: req.__("Enable real-time updates for this view"),
+                type: "Bool",
+                default: false,
+              },
+              {
                 name: "destination_type",
                 label: "Destination type",
                 type: "String",
@@ -980,6 +987,22 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
+const realTimeScript = (viewname, table_id, row) => {
+  const view = View.findOne({ name: viewname });
+  const table = Table.findOne({ id: table_id });
+  const rowId = row[table.pk_name];
+  return `
+  const collabCfg = {
+    events: {
+      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
+        console.log("Update event received for view ${viewname}", data);
+        if (data.updates) common_done({set_fields: data.updates}, "${viewname}")
+      }
+    }
+  };
+  init_collab_room('${viewname}', collabCfg);`;
+};
+
 /**
  * @param {object} opts
  * @param {Table} opts.table
@@ -1015,6 +1038,7 @@ const render = async ({
   isPreview,
   auto_created_row,
   hiddenLoginDest,
+  enable_realtime,
 }) => {
   const form = await getForm(
     table,
@@ -1179,6 +1203,13 @@ const render = async ({
     )
   );
 
+  const realTimeCollabScript =
+    enable_realtime && row && !(req.headers?.pjaxpageload === "true")
+      ? script({
+          src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+        }) + script(domReady(realTimeScript(viewname, table.id, row)))
+      : "";
+
   if (actually_auto_save) {
     for (const field of form.fields) {
       field.in_auto_save = true;
@@ -1201,7 +1232,8 @@ const render = async ({
     reloadAfterCloseInModalScript +
     confirmLeaveScript +
     deleteUnchangedScript +
-    identicalFieldsScript
+    identicalFieldsScript +
+    realTimeCollabScript
   );
 };
 
@@ -2309,6 +2341,65 @@ const createBasicView = async ({
   return cfg;
 };
 
+const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
+  if (!enable_realtime) return [];
+  const table = Table.findOne({ id: table_id });
+  const view = View.findOne({ name: viewname });
+  return [
+    {
+      when_trigger: "Update",
+      table_id: table_id,
+      run: async (row, { old_row, user }) => {
+        getState().log(
+          6,
+          `Virtual trigger Update for ${viewname} on table ${table.name}`
+        );
+        // find changed columns within the layout
+        const fields = table.getFields();
+        const changedFields = fields.filter((f) => {
+          if (f.name === table.pk_name) return false; // no id changes
+          const a = row[f.name];
+          const b = old_row[f.name];
+          if (f.type?.equals) return !f.type.equals(a, b, f.attributes || {});
+          else return row[f.name] !== old_row[f.name];
+        });
+        const changedLayoutFields = new Set();
+        await traverse(view.configuration.layout, {
+          field(segment) {
+            const { field_name } = segment;
+            if (changedFields.find((f) => f.name === field_name))
+              changedLayoutFields.add(field_name);
+          },
+        });
+
+        if (changedLayoutFields.size === 0) {
+          getState().log(
+            6,
+            "No layout fields changed, skipping real-time update"
+          );
+        } else {
+          // build and emit updates
+          const updateVals = {};
+          for (const fieldName of changedLayoutFields) {
+            const newVal = row[fieldName];
+            updateVals[fieldName] = newVal;
+          }
+          const rowId = row[table.pk_name];
+          getState().log(
+            6,
+            "Emitting real-time update for row",
+            rowId,
+            updateVals
+          );
+          view.emitRealTimeEvent(`UPDATE_EVENT?id=${rowId}`, {
+            updates: updateVals,
+          });
+        }
+      },
+    },
+  ];
+};
+
 module.exports = {
   /** @type {string} */
   name: "Edit",
@@ -2324,6 +2415,7 @@ module.exports = {
   initial_config,
   createBasicView,
   authorise_post,
+  virtual_triggers,
   /**
    * @param {object} opts
    * @param {object} opts.query
@@ -2355,6 +2447,7 @@ module.exports = {
       confirm_leave,
       auto_create,
       delete_unchanged_auto_create,
+      enable_realtime,
     },
     req,
     res,
@@ -2448,6 +2541,7 @@ module.exports = {
         isPreview,
         auto_created_row,
         hiddenLoginDest,
+        enable_realtime,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
