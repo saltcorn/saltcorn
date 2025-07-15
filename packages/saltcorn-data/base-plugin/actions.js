@@ -2290,7 +2290,19 @@ module.exports = {
     disableIf: () => !Model.has_templates,
     configFields: async ({ table }) => {
       const models = await Model.find({});
-
+      const explainers = {};
+      for (const model of models) {
+        if (!model.templateObj) continue;
+        const hyperparameter_fields =
+          model.templateObj.hyperparameter_fields?.({
+            table,
+            ...model,
+          }) || [];
+        if (hyperparameter_fields.length)
+          explainers[model.id] =
+            "Hyperparamter fields: " +
+            hyperparameter_fields.map((f) => f.name).join(",");
+      }
       return [
         {
           name: "model_id",
@@ -2301,6 +2313,9 @@ module.exports = {
             label: `${model.name} [${model.modelpattern} on ${Table.findOne({ id: model.table_id }).name}]`,
             value: model.id,
           })),
+          attributes: {
+            explainers,
+          },
         },
         {
           name: "instance_name",
