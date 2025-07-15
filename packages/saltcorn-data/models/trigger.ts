@@ -651,18 +651,20 @@ class Trigger implements AbstractTrigger {
   static get abbreviated_actions() {
     const { getState } = require("../db/state");
 
-    return Object.entries(getState().actions).map(([k, v]: [string, any]) => {
-      const hasConfig = !!v.configFields;
-      const requireRow = !!v.requireRow;
-      const disableInWorkflow = !!v.disableInWorkflow;
-      return {
-        name: k,
-        hasConfig,
-        requireRow,
-        disableInWorkflow,
-        namespace: v.namespace,
-      };
-    });
+    return Object.entries(getState().actions)
+      .filter(([k, v]: [string, any]) => !v.disableIf || !v.disableIf())
+      .map(([k, v]: [string, any]) => {
+        const hasConfig = !!v.configFields;
+        const requireRow = !!v.requireRow;
+        const disableInWorkflow = !!v.disableInWorkflow;
+        return {
+          name: k,
+          hasConfig,
+          requireRow,
+          disableInWorkflow,
+          namespace: v.namespace,
+        };
+      });
   }
 
   static trigger_actions({
