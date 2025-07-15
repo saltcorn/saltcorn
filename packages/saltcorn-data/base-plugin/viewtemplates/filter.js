@@ -117,7 +117,7 @@ const configuration_workflow = (req) =>
             });
           }
           const stateActions = Object.entries(getState().actions).filter(
-            ([k, v]) => !v.disableInBuilder
+            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
           );
           const actions1 = ["Clear", ...stateActions.map(([k, v]) => k)];
           const actions = Trigger.action_options({
