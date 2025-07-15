@@ -337,6 +337,17 @@ const triggerForm = async (req, trigger) => {
         type: "String",
         showIf: { when_trigger: ["API call"], _raw_output: true },
       },
+      {
+        name: "_only_if",
+        label: req.__("Only if"),
+        type: "String",
+        class: "validate-expression",
+        sublabel: req.__(
+          "Optional JavaScript expression to determine if the trigger should run."
+        ),
+        parent_field: "configuration",
+        showIf: { when_trigger: table_triggers },
+      },
     ],
   });
   // if (trigger) {
