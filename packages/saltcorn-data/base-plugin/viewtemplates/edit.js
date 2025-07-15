@@ -378,7 +378,8 @@ const configuration_workflow = (req) =>
               },
               {
                 name: "enable_realtime",
-                label: req.__("Enable real-time updates"),
+                label: req.__("Real-time updates"),
+                sublabel: req.__("Enable real-time updates for this view"),
                 type: "Bool",
                 default: false,
               },
