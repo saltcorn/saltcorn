@@ -128,6 +128,11 @@ const configTypes: ConfigTypes = {
     label: "2FA policy by role",
     default: {},
   },
+  push_policy_by_role: {
+    type: "hidden",
+    label: "Push notifications policy by role",
+    default: {},
+  },
   auth_method_by_role: {
     type: "hidden",
     label: "Authentication method by role",

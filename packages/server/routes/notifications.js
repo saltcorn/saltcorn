@@ -32,14 +32,19 @@ router.use(
   })
 );
 
-const notificationSettingsForm = () => {
+const notificationSettingsForm = (user) => {
   const fields = [{ name: "notify_email", label: "Email", type: "Bool" }];
-  if (getState().getConfig("enable_push_notify", false))
-    fields.push({
-      name: "notify_push",
-      label: "Push",
-      type: "Bool",
-    });
+  if (getState().getConfig("enable_push_notify", false)) {
+    const policyByRole = getState()?.getConfig("push_policy_by_role") || {};
+    const pushPolicy = policyByRole[user?.role_id || 100] || "Default on";
+    if (!["Always", "Never"].includes(pushPolicy)) {
+      fields.push({
+        name: "notify_push",
+        label: "Push",
+        type: "Bool",
+      });
+    }
+  }
 
   return new Form({
     action: `/notifications/settings`,
@@ -74,12 +79,23 @@ router.get(
             }
       );
 
-    const form = notificationSettingsForm();
+    const form = notificationSettingsForm(req.user);
     const user = await User.findOne({ id: req.user?.id });
     form.values = {
       notify_email: user?._attributes?.notify_email,
-      notify_push: user?._attributes?.notify_push,
     };
+
+    if (getState().getConfig("enable_push_notify", false)) {
+      let notifPushAttr = user?._attributes?.notify_push;
+      if (notifPushAttr === undefined) {
+        const policyByRole = getState()?.getConfig("push_policy_by_role") || {};
+        const pushPolicy = policyByRole[user.role_id || 100] || "Default on";
+        if (pushPolicy === "Default on") notifPushAttr = true;
+        else if (pushPolicy === "Default off") notifPushAttr = false;
+      }
+      form.values.notify_push = notifPushAttr;
+    }
+
     const notifyCards = nots.length
       ? nots.map((not) => ({
           type: "card",
@@ -193,11 +209,23 @@ router.post(
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user.id });
-    const form = notificationSettingsForm();
+    const form = notificationSettingsForm(req.user);
     form.validate(req.body || {});
     const _attributes = { ...user._attributes, ...form.values };
+
+    // apply push enabled policy if needed
+    if (getState().getConfig("enable_push_notify", false)) {
+      const policyByRole = getState()?.getConfig("push_policy_by_role") || {};
+      const pushPolicy = policyByRole[user.role_id || 100] || "Default on";
+      if (pushPolicy === "Always") _attributes.notify_push = true;
+      else if (pushPolicy === "Never") _attributes.notify_push = false;
+      else if (_attributes.notify_push === undefined) {
+        _attributes.notify_push = pushPolicy === "Default on";
+      }
+    }
+
     await user.update({ _attributes });
-    const pushEnabled = !!_attributes.notify_push;
+    const pushEnabled = _attributes.notify_push;
     const allSubs = getState().getConfig("push_notification_subscriptions", {});
     const newSubs = { ...allSubs };
     if (!pushEnabled && newSubs[req.user.id]) {
