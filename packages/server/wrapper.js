@@ -8,6 +8,7 @@ const { get_extra_menu } = require("@saltcorn/data/web-mobile-commons");
 const { h3, div, small, domReady } = require("@saltcorn/markup/tags");
 const { renderForm, link } = require("@saltcorn/markup");
 const renderLayout = require("@saltcorn/markup/layout");
+const { isPushEnabled } = require("@saltcorn/data/utils");
 /**
  * get flashes
  * @param req
@@ -316,7 +317,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
   if (push_notify_enabled && req.user?.id) {
     const allSubs = getState().getConfig("push_notification_subscriptions", {});
     const userSubs = allSubs[req.user.id];
-    const userEnabled = !!userSubs;
+    const userEnabled = !!userSubs || isPushEnabled(req.user);
     const vapidPublicKey = getState().getConfig("vapid_public_key");
     const userEndpoints = userSubs ? userSubs.map((sub) => sub.endpoint) : [];
     from_cfg.push({

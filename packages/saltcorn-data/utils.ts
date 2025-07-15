@@ -15,6 +15,7 @@ import type {
 import crypto from "crypto";
 import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
+import type User from "./models/user"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
 import _ from "underscore";
 const unidecode = require("unidecode");
@@ -563,6 +564,18 @@ const jsIdentifierValidator = (s: string) => {
   if (badc) return `Character ${badc} not allowed`;
 };
 
+const isPushEnabled = (user?: User): user is User => {
+  if (!user?.id) return false;
+  const push_policy_by_role =
+    require("./db/state").getState()?.getConfig("push_policy_by_role") || {};
+  const pushPolicy = push_policy_by_role[user.role_id || 100] || "Default on";
+  if (pushPolicy === "Always") return true;
+  if (pushPolicy === "Never") return false;
+  const userAttr = isNode() ? user._attributes : user.attributes;
+  if (userAttr?.notify_push === undefined) return pushPolicy === "Default on";
+  return userAttr?.notify_push;
+};
+
 export = {
   cloneName,
   dollarizeObject,
@@ -617,4 +630,5 @@ export = {
   getFetchProxyOptions,
   jsIdentifierValidator,
   escapeHtml,
+  isPushEnabled,
 };

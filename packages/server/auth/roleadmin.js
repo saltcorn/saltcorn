@@ -104,13 +104,35 @@ const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
     )
   );
 
+const editRolePushPolicyForm = (role, push_policy_by_role, req) =>
+  form(
+    {
+      action: `/roleadmin/setrolepushpolicy/${role.id}`,
+      method: "post",
+    },
+    csrfField(req),
+    select(
+      {
+        name: "policy",
+        onchange: "form.submit()",
+        class: "form-select form-select-sm w-unset d-inline",
+      },
+      ["Always", "Default on", "Default off", "Never"].map((p) =>
+        option(
+          { selected: (push_policy_by_role[role.id] || "Default on") === p },
+          p
+        )
+      )
+    )
+  );
+
 /**
  * @param {object} req
  * @returns {Form}
  */
 const roleForm = (req) =>
   new Form({
-    action: "/roleadmin/edit",    
+    action: "/roleadmin/edit",
     fields: [
       {
         name: "id",
@@ -145,6 +167,8 @@ router.get(
     );
     const layout_by_role = getState().getConfig("layout_by_role");
     const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
+    const push_policy_by_role = getState()?.getConfig("push_policy_by_role") || {};
+    const pushEnabled = getState().getConfig("enable_push_notify");
     const auth_methods = Object.keys(getState().auth_methods);
 
     auth_methods.unshift("Password");
@@ -182,6 +206,21 @@ router.get(
                     ? ""
                     : editRole2FAPolicyForm(role, twofa_policy_by_role, req),
               },
+              ...(pushEnabled
+                ? [
+                    {
+                      label: req.__("Push notifications"),
+                      key: (role) =>
+                        role.id === 100
+                          ? ""
+                          : editRolePushPolicyForm(
+                              role,
+                              push_policy_by_role,
+                              req
+                            ),
+                    },
+                  ]
+                : []),
               ...(auth_methods.length > 1
                 ? [
                     {
@@ -320,6 +359,20 @@ router.post(
     twofa_policy_by_role[+id] = (req.body || {}).policy;
     await getState().setConfig("twofa_policy_by_role", twofa_policy_by_role);
     req.flash("success", req.__(`Saved 2FA policy for role`));
+
+    res.redirect(`/roleadmin`);
+  })
+);
+
+router.post(
+  "/setrolepushpolicy/:id",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+    const push_policy_by_role = getState()?.getConfigCopy("push_policy_by_role") || {};
+    push_policy_by_role[+id] = (req.body || {}).policy;
+    await getState().setConfig("push_policy_by_role", push_policy_by_role);
+    req.flash("success", req.__(`Saved push policy for role`));
 
     res.redirect(`/roleadmin`);
   })
