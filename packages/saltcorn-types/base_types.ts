@@ -239,6 +239,7 @@ export type Action = {
   disableInBuilder?: boolean;
   disableInList?: boolean;
   disableInWorkflow?: boolean;
+  disableIf?: () => boolean;
 };
 
 export type ViewTemplate = {
@@ -536,7 +537,7 @@ type PluginFacilities = {
   authentication?: Record<string, AuthenticationMethod>;
   table_providers?: Record<string, TableProvider>;
   copilot_skills?: Array<CopilotSkill>;
-  icons?: Array<string>
+  icons?: Array<string>;
   exchange?: Record<string, Array<unknown>>;
 };
 
