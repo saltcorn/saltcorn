@@ -123,7 +123,7 @@ const configuration_workflow = (req) =>
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
           const stateActions = Object.entries(getState().actions).filter(
-            ([k, v]) => !v.disableInBuilder
+            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
           );
           const triggerActions = Trigger.trigger_actions({
             tableTriggers: table.id,
