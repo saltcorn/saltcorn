@@ -2288,20 +2288,25 @@ module.exports = {
   train_model_instance: {
     description: "Train a model instance",
     disableIf: () => !Model.has_templates,
-    configFields: async ({ table }) => {
+    configFields: async () => {
       const models = await Model.find({});
       const explainers = {};
       for (const model of models) {
-        if (!model.templateObj) continue;
-        const hyperparameter_fields =
-          model.templateObj.hyperparameter_fields?.({
-            table,
-            ...model,
-          }) || [];
-        if (hyperparameter_fields.length)
-          explainers[model.id] =
-            "Hyperparamter fields: " +
-            hyperparameter_fields.map((f) => f.name).join(",");
+        try {
+          const table = Table.findOne({ id: model.table_id });
+          if (!model.templateObj) continue;
+          const hyperparameter_fields =
+            model.templateObj.hyperparameter_fields?.({
+              table,
+              ...model,
+            }) || [];
+          if (hyperparameter_fields.length)
+            explainers[model.id] =
+              "Hyperparamter fields: " +
+              hyperparameter_fields.map((f) => f.name).join(",");
+        } catch {
+          //ignore
+        }
       }
       return [
         {
