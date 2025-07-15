@@ -1004,7 +1004,7 @@ const realTimeScript = (viewname, table_id, row) => {
     events: {
       '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
         console.log("Update event received for view ${viewname}", data);
-        if (data.updates) set_state_fields(data.updates);
+        if (data.updates) common_done({set_fields: data.updates}, "${viewname}")
       }
     }
   };
