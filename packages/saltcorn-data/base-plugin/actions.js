@@ -2313,6 +2313,7 @@ module.exports = {
         {
           name: "where",
           label: "Where",
+          fieldview: "textarea",
           sublabel: "Where-expression for subset of rows to train on. Optional",
           type: "String",
           class: "validate-expression",
@@ -2322,6 +2323,7 @@ module.exports = {
           label: "Hyperparameters",
           sublabel: "Optional. JavaScript object with hyperparameter values",
           type: "String",
+          fieldview: "textarea",
           class: "validate-expression",
         },
       ];
@@ -2337,18 +2339,17 @@ module.exports = {
         user,
         "train_model_instance instance name"
       );
-      const state = eval_expression(
-        where,
-        row || {},
-        user,
-        "train_model_instance where"
-      );
-      const hpars = eval_expression(
-        hyperparameters,
-        row || {},
-        user,
-        "train_model_instance hyperparameters"
-      );
+      const state = where
+        ? eval_expression(where, row || {}, user, "train_model_instance where")
+        : {};
+      const hpars = hyperparameters
+        ? eval_expression(
+            hyperparameters,
+            row || {},
+            user,
+            "train_model_instance hyperparameters"
+          )
+        : {};
       const model = await Model.findOne({ id: model_id });
       if (!model) throw new Error("model not found");
       await model.train_instance(use_instance_name, hpars, state);
