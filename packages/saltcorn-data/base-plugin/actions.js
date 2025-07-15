@@ -2352,7 +2352,8 @@ module.exports = {
         : {};
       const model = await Model.findOne({ id: model_id });
       if (!model) throw new Error("model not found");
-      await model.train_instance(use_instance_name, hpars, state);
+      const inst = await model.train_instance(use_instance_name, hpars, state);
+      if (typeof inst === "string") throw new Error(inst);
     },
     namespace: "Database",
   },
