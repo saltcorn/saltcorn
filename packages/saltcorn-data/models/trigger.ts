@@ -361,9 +361,9 @@ class Trigger implements AbstractTrigger {
 
       try {
         // Evaluate _only_if condition if it exists
-        if (trigger.configuration._only_if) {
+        if (trigger.configuration?._only_if) {
           const onlyIfResult = eval_expression(
-            trigger.configuration._only_if,
+            trigger.configuration?._only_if,
             row || {},
             extraArgs?.user || {},
             "Trigger _only_if condition"
