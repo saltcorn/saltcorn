@@ -360,21 +360,13 @@ class Trigger implements AbstractTrigger {
       );
 
       try {
-        // Evaluate _only_if condition if it exists
-        if (trigger.configuration?._only_if) {
-          const onlyIfResult = eval_expression(
-            trigger.configuration?._only_if,
-            row || {},
-            extraArgs?.user || {},
-            "Trigger _only_if condition"
+        // Halt if _only_if condition evaluates to falsy
+        if (trigger.haltOnOnlyIf(row, extraArgs?.user)) {
+          state.log(
+            4,
+            `Trigger "${trigger.name}" skipped due to _only_if condition.`
           );
-          if (!onlyIfResult) {
-            state.log(
-              4,
-              `Trigger "${trigger.name}" skipped due to _only_if condition.`
-            );
-            continue;
-          }
+          continue;
         }
 
         const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
@@ -411,21 +403,13 @@ class Trigger implements AbstractTrigger {
       ? require("./table").findOne({ id: this.table_id })
       : undefined;
 
-    // Evaluate _only_if condition
-    if (this.configuration._only_if) {
-      const onlyIfResult = eval_expression(
-        this.configuration._only_if,
-        runargs.row || {},
-        runargs.user || {},
-        "Trigger _only_if condition"
+    // Halt if _only_if condition evaluates to falsy
+    if (this.haltOnOnlyIf(runargs.row, runargs.user)) {
+      state.log(
+        4,
+        `Trigger "${this.name}" skipped due to _only_if condition.`
       );
-      if (!onlyIfResult) {
-        state.log(
-          4,
-          `Trigger "${this.name}" skipped due to _only_if condition.`
-        );
-        return;
-      }
+      return;
     }
 
     if (this.action === "Workflow") {
@@ -523,6 +507,25 @@ class Trigger implements AbstractTrigger {
         trigger_id: this.id,
       })
     );
+  }
+
+  /**
+   * Check if the trigger should halt based on the _only_if condition.
+   * @param row - The row data.
+   * @param user - The user data.
+   * @returns {boolean} - Returns true if the _only_if condition exists and evaluates to falsy.
+   */
+  haltOnOnlyIf(row: Row, user?: Row): boolean {
+    if (this.configuration?._only_if) {
+      const { eval_expression } = require("./expression");
+      return !eval_expression(
+        this.configuration._only_if,
+        row || {},
+        user || {},
+        "Trigger _only_if condition"
+      );
+    }
+    return false;
   }
 
   static setRunFunctions(

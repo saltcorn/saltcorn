@@ -1043,18 +1043,10 @@ class Table implements AbstractTable {
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
-          if (trigger.configuration?._only_if) {
-            const onlyIfResult = eval_expression(
-              trigger.configuration._only_if,
-              row || {},
-              {},
-              "Trigger _only_if condition"
-            );
-            if (!onlyIfResult) {
-              continue;
-            }
+          if (trigger.haltOnOnlyIf(row, user)) {
+            continue;
           }
-          const res = await trigger.run!(row);
+          await trigger.run!(row);
         }
       }
       if (isNode()) {
