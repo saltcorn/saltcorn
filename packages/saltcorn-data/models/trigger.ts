@@ -360,6 +360,23 @@ class Trigger implements AbstractTrigger {
       );
 
       try {
+        // Evaluate _only_if condition if it exists
+        if (trigger.configuration._only_if) {
+          const onlyIfResult = eval_expression(
+            trigger.configuration._only_if,
+            row || {},
+            extraArgs?.user || {},
+            "Trigger _only_if condition"
+          );
+          if (!onlyIfResult) {
+            state.log(
+              4,
+              `Trigger "${trigger.name}" skipped due to _only_if condition.`
+            );
+            continue;
+          }
+        }
+
         const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
         if (res && resultCollector) mergeActionResults(resultCollector, res);
       } catch (e: any) {
@@ -393,6 +410,24 @@ class Trigger implements AbstractTrigger {
     const table = this.table_id
       ? require("./table").findOne({ id: this.table_id })
       : undefined;
+
+    // Evaluate _only_if condition
+    if (this.configuration._only_if) {
+      const onlyIfResult = eval_expression(
+        this.configuration._only_if,
+        runargs.row || {},
+        runargs.user || {},
+        "Trigger _only_if condition"
+      );
+      if (!onlyIfResult) {
+        state.log(
+          4,
+          `Trigger "${this.name}" skipped due to _only_if condition.`
+        );
+        return;
+      }
+    }
+
     if (this.action === "Workflow") {
       const user = runargs?.user || runargs?.req?.user;
       const wfrun = await require("./workflow_run").create({
