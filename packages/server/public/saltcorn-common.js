@@ -175,8 +175,10 @@ function apply_showif() {
   $(".toggle-password-vis")
     .off("click")
     .on("click", function (event) {
-      const eyeIcon = $(event.target).find("i");
+      const $e = $(event.target);
+      const eyeIcon = $e.prop("tagName") === "I" ? $e : $e.find("i");
       const passwordInput = eyeIcon.parent().prev();
+
       const isPassword = passwordInput.attr("type") === "password";
       passwordInput.attr("type", isPassword ? "text" : "password");
       eyeIcon.toggleClass("fa-eye fa-eye-slash");
