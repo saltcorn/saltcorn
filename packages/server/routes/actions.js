@@ -1795,7 +1795,9 @@ router.get(
     try {
       const form = await getWorkflowStepUserForm(run, trigger, step, req);
       if (req.xhr) form.xhrSubmit = true;
-      const title = run.wait_info.output ? "Workflow output" : "Fill form";
+      const title =
+        step.configuration?.popup_title ||
+        (run.wait_info.output ? "Workflow output" : "Fill form");
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } catch (e) {
       console.error(e);

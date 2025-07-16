@@ -172,6 +172,17 @@ const global_fetch_options_cache = {};
 
 function apply_showif() {
   const isNode = getIsNode();
+  $(".toggle-password-vis")
+    .off("click")
+    .on("click", function (event) {
+      const $e = $(event.target);
+      const eyeIcon = $e.prop("tagName") === "I" ? $e : $e.find("i");
+      const passwordInput = eyeIcon.parent().prev();
+
+      const isPassword = passwordInput.attr("type") === "password";
+      passwordInput.attr("type", isPassword ? "text" : "password");
+      eyeIcon.toggleClass("fa-eye fa-eye-slash");
+    });
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
