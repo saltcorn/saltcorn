@@ -361,7 +361,10 @@ class Trigger implements AbstractTrigger {
 
       try {
         // Halt if _only_if condition evaluates to falsy
-        if (trigger.haltOnOnlyIf(row, extraArgs?.user)) {
+        if (
+          typeof trigger.haltOnOnlyIf === "function" &&
+          trigger.haltOnOnlyIf(row, extraArgs?.user)
+        ) {
           state.log(
             4,
             `Trigger "${trigger.name}" skipped due to _only_if condition.`
@@ -405,10 +408,7 @@ class Trigger implements AbstractTrigger {
 
     // Halt if _only_if condition evaluates to falsy
     if (this.haltOnOnlyIf(runargs.row, runargs.user)) {
-      state.log(
-        4,
-        `Trigger "${this.name}" skipped due to _only_if condition.`
-      );
+      state.log(4, `Trigger "${this.name}" skipped due to _only_if condition.`);
       return;
     }
 
