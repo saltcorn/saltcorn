@@ -275,7 +275,7 @@ class WorkflowRun {
         trigger_id: this.trigger_id,
         name: this.current_step_name,
       }));
-    const qTypeToField = (q: any) => {
+    const qTypeToField = (q: any, ix: number) => {
       switch (q.qtype) {
         case "Yes/No":
           return {
@@ -286,7 +286,10 @@ class WorkflowRun {
         case "Checkbox":
           return { type: "Bool" };
         case "Free text":
-          return { type: "String" };
+          return {
+            type: "String",
+            attributes: { autofocus: ix === 0 || undefined },
+          };
         case "Multiple choice":
           let options = q.options;
           if (typeof options === "string" && options.includes("{{")) {
@@ -309,7 +312,10 @@ class WorkflowRun {
             fieldview: noptions > 5 ? undefined : "radio_group",
           };
         case "Integer":
-          return { type: "Integer" };
+          return {
+            type: "Integer",
+            attributes: { autofocus: ix === 0 || undefined },
+          };
         case "Float":
           return { type: "Float" };
         default:
@@ -321,13 +327,16 @@ class WorkflowRun {
     let hasMultiChecks = false;
     const multiCheckOptions: { [key: string]: string[] } = {};
     (step.configuration.user_form_questions || []).forEach(
-      (q: {
-        qtype: string;
-        var_name: string;
-        label: string;
-        options: string[] | string;
-        required?: boolean;
-      }) => {
+      (
+        q: {
+          qtype: string;
+          var_name: string;
+          label: string;
+          options: string[] | string;
+          required?: boolean;
+        },
+        ix: number
+      ) => {
         if (q.qtype === "Multiple checks") {
           hasMultiChecks = true;
           let options = q.options;
@@ -358,7 +367,7 @@ class WorkflowRun {
           formFields.push({
             label: q.label,
             name: q.var_name,
-            ...qTypeToField(q),
+            ...qTypeToField(q, ix),
           } as FieldLike);
       }
     );
