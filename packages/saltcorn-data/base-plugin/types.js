@@ -1483,10 +1483,17 @@ const string = {
      */
     password: {
       isEdit: true,
+      configFields: [
+        {
+          name: "visibility_toggle",
+          label: "Visibility toggle",
+          type: "Bool",
+        },
+      ],
       blockDisplay: true,
       description: "Password input type, characters are hidden when typed",
-      run: (nm, v, attrs, cls, required, field) =>
-        input({
+      run: (nm, v, attrs, cls, required, field) => {
+        const pwinput = input({
           type: "password",
           disabled: attrs.disabled,
           readonly: attrs.readonly,
@@ -1496,7 +1503,18 @@ const string = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
-        }),
+        });
+        if (attrs?.visibility_toggle)
+          return div(
+            { class: "input-group" },
+            pwinput,
+            span(
+              { class: "input-group-text toggle-password-vis" },
+              i({ class: "fas fa-eye toggle-password-vis-icon" })
+            )
+          );
+        else return pwinput;
+      },
     },
     select_by_code: { ...select_by_code, type: undefined },
   },

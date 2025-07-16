@@ -838,3 +838,7 @@ input[type="file"].file-has-existing {
 ::file-selector-button {
   font-size: initial;
 }
+
+.toggle-password-vis {
+  cursor: pointer;
+}
