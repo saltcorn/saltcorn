@@ -39,6 +39,7 @@ const {
   dollarizeObject,
   objectToQueryString,
   interpolate,
+  comparingCaseInsensitive,
 } = require("../utils");
 const db = require("../db");
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
@@ -275,6 +276,99 @@ module.exports = {
         user,
         payload ? JSON.parse(payload) : row
       );
+    },
+    namespace: "Control",
+  },
+
+  loop_rows: {
+    /**
+     * @returns {object[]}
+     */
+    description: "Repeat an action over some or all rows in a table",
+    configFields: async () => {
+      const tables = await Table.find({}, { cached: true });
+      const trigger_actions0 = await Trigger.find({});
+      const trigger_actions = trigger_actions0.sort(
+        comparingCaseInsensitive("name")
+      );
+      const order_options = {};
+      for (const table of tables) {
+        order_options[table.name] = table.fields.map((f) => f.name);
+        order_options[table.name].push("RANDOM()");
+      }
+
+      return [
+        {
+          name: "table_name",
+          label: "Table",
+          sublabel: "Source for rows to loop over",
+          input_type: "select",
+          options: tables.map((t) => t.name),
+        },
+        {
+          name: "where",
+          label: "Recalculate where",
+          sublabel: "Where-expression for subset of rows to loop over",
+          type: "String",
+          class: "validate-expression",
+        },
+        {
+          name: "limit",
+          label: "Limit",
+          type: "Integer",
+          sublabel: "Optional. Max number of rows to loop over",
+        },
+        {
+          name: "orderBy",
+          label: "Order by",
+          type: "String",
+          attributes: {
+            calcOptions: ["table_name", order_options],
+          },
+        },
+        {
+          name: "orderDesc",
+          label: "Descending?",
+          type: "Bool",
+        },
+        {
+          name: "trigger_id",
+          label: "Trigger",
+          sublabel: "The trigger to run for each row",
+          input_type: "select",
+          options: trigger_actions.map((t) => ({ label: t.name, value: t.id })),
+        },
+      ];
+    },
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<void>}
+     */
+    run: async ({
+      row,
+      configuration: {
+        table_name,
+        where,
+        limit,
+        orderBy,
+        orderDesc,
+        trigger_id,
+      },
+      user,
+      ...rest
+    }) => {
+      const table = Table.findOne({ name: table_name });
+      const wh = where ? eval_expression(where, row, user) : {};
+      const selOpts = { orderDesc, orderBy };
+      if (limit) selOpts.limit = limit;
+      const rows = await table.getRows(wh, selOpts);
+      const trigger = Trigger.findOne({ id: trigger_id });
+      for (const row_i of rows) {
+        await trigger.runWithoutRow({ table, row: row_i, user, ...rest });
+      }
     },
     namespace: "Control",
   },
