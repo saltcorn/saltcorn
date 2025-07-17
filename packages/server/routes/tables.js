@@ -1229,7 +1229,6 @@ router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req, res) => {
-    console.log({ reqBody: req.body });
     const v = req.body || {};
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert

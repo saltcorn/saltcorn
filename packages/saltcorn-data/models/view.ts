@@ -713,10 +713,6 @@ class View implements AbstractView {
   ): Promise<any> {
     const { getState } = require("../db/state");
     const state = getState();
-    // Hash password in body
-    if (body?.password) {
-      body.password = await hash(body.password, 10);
-    }
     if (
       !state.mobileConfig ||
       state.mobileConfig.localTableIds.indexOf(this.table_id) >= 0
