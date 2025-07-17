@@ -309,8 +309,9 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       if (
-        file.mimetype === "text/html" ||
-        file.mimetype === "application/xhtml+xml"
+        (file.mimetype === "text/html" ||
+          file.mimetype === "application/xhtml+xml") &&
+        !getState().getConfig("file_serve_html")
       )
         res.type("text/plain");
       else res.type(file.mimetype);
@@ -354,8 +355,9 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       if (
-        file.mimetype === "text/html" ||
-        file.mimetype === "application/xhtml+xml"
+        (file.mimetype === "text/html" ||
+          file.mimetype === "application/xhtml+xml") &&
+        !getState().getConfig("file_serve_html")
       )
         res.type("text/plain");
       const cacheability = file.min_role_read === 100 ? "public" : "private";
@@ -688,6 +690,7 @@ const files_settings_form = async (req) => {
       "file_upload_debug",
       "file_upload_limit",
       "file_upload_timeout",
+      "file_serve_html",
     ],
     action: "/files/settings",
   });
