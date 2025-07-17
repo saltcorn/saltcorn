@@ -1485,6 +1485,7 @@ const changPwForm = (req) =>
         label: req.__("Old password"),
         name: "password",
         input_type: "password",
+        required: true,
         attributes: {
           autocomplete: "current-password",
         },
@@ -1492,6 +1493,7 @@ const changPwForm = (req) =>
       {
         label: req.__("New password"),
         name: "new_password",
+        required: true,
         input_type: "password",
         attributes: {
           autocomplete: "new-password",
