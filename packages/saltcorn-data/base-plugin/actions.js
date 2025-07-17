@@ -40,6 +40,7 @@ const {
   objectToQueryString,
   interpolate,
   comparingCaseInsensitive,
+  mergeActionResults,
 } = require("../utils");
 const db = require("../db");
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
@@ -366,9 +367,22 @@ module.exports = {
       if (limit) selOpts.limit = limit;
       const rows = await table.getRows(wh, selOpts);
       const trigger = Trigger.findOne({ id: trigger_id });
+      let result = {};
+
       for (const row_i of rows) {
-        await trigger.runWithoutRow({ table, row: row_i, user, ...rest });
+        const stepres = await trigger.runWithoutRow({
+          ...rest,
+          table,
+          row: row_i,
+          user,
+        });
+        try {
+          mergeActionResults(result, stepres);
+        } catch (error) {
+          console.error(error);
+        }
       }
+      return result;
     },
     namespace: "Control",
   },
