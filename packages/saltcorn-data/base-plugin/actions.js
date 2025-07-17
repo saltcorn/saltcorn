@@ -39,6 +39,7 @@ const {
   dollarizeObject,
   objectToQueryString,
   interpolate,
+  comparingCaseInsensitive,
 } = require("../utils");
 const db = require("../db");
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
@@ -286,7 +287,10 @@ module.exports = {
     description: "Repeat an action over some or all rows in a table",
     configFields: async () => {
       const tables = await Table.find({}, { cached: true });
-      const trigger_actions = await Trigger.find({});
+      const trigger_actions0 = await Trigger.find({});
+      const trigger_actions = trigger_actions0.sort(
+        comparingCaseInsensitive("name")
+      );
       const order_options = {};
       for (const table of tables) {
         order_options[table.name] = table.fields.map((f) => f.name);
