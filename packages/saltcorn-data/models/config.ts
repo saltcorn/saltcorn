@@ -289,7 +289,6 @@ const configTypes: ConfigTypes = {
     type: "String",
     label: "Password complexity",
     default: "",
-    required: true,
     blurb:
       "The regular expression that passwords must match. Set to empty string to disable password complexity requirements.",
     excludeFromMobile: true,
