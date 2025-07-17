@@ -367,7 +367,7 @@ module.exports = {
       const rows = await table.getRows(wh, selOpts);
       const trigger = Trigger.findOne({ id: trigger_id });
       for (const row_i of rows) {
-        await trigger.runWithoutRow({ table, row: row_i, user, ...rest });
+        await trigger.runWithoutRow({ ...rest, table, row: row_i, user });
       }
     },
     namespace: "Control",
