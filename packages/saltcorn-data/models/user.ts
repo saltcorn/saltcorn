@@ -208,7 +208,7 @@ class User {
       false
     );
 
-    const urecord = {
+    const urecord: UserCfg = {
       email: u.email,
       password: hashpw,
       role_id: u.role_id,
@@ -231,10 +231,13 @@ class User {
       Object.assign(urecord, valResCollector.set_fields);
 
     u.id = await db.insert("users", urecord);
+    urecord.id = u.id;
     await Trigger.runTableTriggers(
       "Insert",
       user_table,
-      plain_password_triggers ? { plain_password: password, ...u } : { ...u }
+      plain_password_triggers
+        ? { plain_password: password, ...urecord }
+        : { ...urecord }
     );
     return u;
   }
