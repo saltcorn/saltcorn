@@ -55,14 +55,17 @@ module.exports = router;
 router.use(
   error_catcher(async (req, res, next) => {
     const state = getState();
-    const maintenanceModeEnabled =  state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
     }
     next();
   })
-)
+);
 
 const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
   res.set("SaltcornModalWidth", "1200px");
@@ -305,7 +308,12 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
-      res.type(file.mimetype);
+      if (
+        file.mimetype === "text/html" ||
+        file.mimetype === "application/xhtml+xml"
+      )
+        res.type("text/plain");
+      else res.type(file.mimetype);
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       const maxAge = getState().getConfig("files_cache_maxage", 86400);
       res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
@@ -345,7 +353,11 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
-      res.type(file.mimetype);
+      if (
+        file.mimetype === "text/html" ||
+        file.mimetype === "application/xhtml+xml"
+      )
+        res.type("text/plain");
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       //TODO s3
