@@ -38,7 +38,7 @@ Many other libraries we depend on are deprecated or have security warnings. We h
 
 You should review the way cookies and sessions are handled and the HTTP headers set. We have disabled some protective measures to allow certain authentication methods.
 
-Our code to use SQLite has received the same degree of scrutiny as that using PostgreSQL as a backend. We recommend using PostgreSQL as a backend for production purposes and only using SQLite for development in desktop environments.
+Our code to use SQLite has not received the same degree of scrutiny as that using PostgreSQL as a backend. We recommend using PostgreSQL as a backend for production purposes and only using SQLite for development in desktop environments.
 
 The windows environment has not received the same amount of scrutiny as deployment options on Linux. We recommend using Linux or another Unix-based system for production deployment. Windows deployments are also likely to be less stable. If you must deploy on Windows we recommend using WSL.
 
