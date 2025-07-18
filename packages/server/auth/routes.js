@@ -494,6 +494,9 @@ router.post(
       );
       res.redirect("/auth/login");
     } else if (result.error) {
+      console.log({
+        result
+      })
       req.flash("danger", result.error);
       const form = resetForm(req.body, req);
       form.errors = { password: result.error, confirm_password: result.error };

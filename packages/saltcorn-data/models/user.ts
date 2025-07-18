@@ -554,6 +554,8 @@ class User {
   //   }
   // }
 
+  
+
   /**
    * Validate email
    * @param email
