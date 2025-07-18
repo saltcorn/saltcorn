@@ -32,7 +32,7 @@ Admin users have full control over the server. You should not give admin rights 
 
 Saltcorn is developed and deployed based on the nodejs and npm ecosystem. We may be vulnerable to open source supply chain attacks and in addition there are many libraries with low quality and a low level of security scrutiny.
 
-The library we use for CSRF protection (csurf) is deprecated. We may be vulnerable to a sophisticated CSRF attack.
+There is [some debate](https://github.com/birdofpreyru/csurf/issues/1) about the library we use for CSRF protection ([@dr.pogodin/csurf](https://www.npmjs.com/package/@dr.pogodin/csurf)).
 
 Many other libraries we depend on are deprecated or have security warnings. We have no reason to believe any of these are exploitable but we could be wrong.
 
