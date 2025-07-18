@@ -260,7 +260,7 @@ const configTypes: ConfigTypes = {
   password_require_uppercase: {
     type: "Bool",
     label: "Require uppercase",
-    default: true,
+    default: false,
     blurb: "Require at least one uppercase letter in the password",
     excludeFromMobile: true,
   },
@@ -274,14 +274,14 @@ const configTypes: ConfigTypes = {
   password_require_number: {
     type: "Bool",
     label: "Require number",
-    default: true,
+    default: false,
     blurb: "Require at least one number in the password",
     excludeFromMobile: true,
   },
   password_require_special_char: {
     type: "Bool",
     label: "Require special character",
-    default: true,
+    default: false,
     blurb: "Require at least one special character in the password",
     excludeFromMobile: true,
   },
