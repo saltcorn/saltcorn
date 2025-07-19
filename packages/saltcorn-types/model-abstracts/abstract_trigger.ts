@@ -1,3 +1,4 @@
+import { Row } from "@saltcorn/db-common/internal";
 import type { AbstractTable } from "./abstract_table";
 import type { AbstractTag } from "./abstract_tag";
 import type { WorkflowStepCfg } from "./abstract_workflow_step";
@@ -20,6 +21,7 @@ export interface AbstractTrigger {
 
   runWithoutRow(runargs: any): Promise<boolean>;
   getTags(): Promise<Array<AbstractTag>>;
+  haltOnOnlyIf: (row: Row, user?: Row) => boolean;
 }
 
 export type TriggerCfg = {

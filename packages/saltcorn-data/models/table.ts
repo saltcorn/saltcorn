@@ -1043,6 +1043,11 @@ class Table implements AbstractTable {
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
+          if (
+            typeof trigger.haltOnOnlyIf === "function" &&
+            trigger.haltOnOnlyIf(row, user)
+          )
+            continue;
           await trigger.run!(row);
         }
       }
