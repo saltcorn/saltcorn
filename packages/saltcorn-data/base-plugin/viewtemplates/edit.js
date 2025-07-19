@@ -1311,6 +1311,9 @@ const runPost = async (
   const safeBody = prepSafeBody(body, columns);
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
+  if (safeBody?.password && table_id === User.table.id) {
+    safeBody.password = await User.hashPassword(safeBody.password);
+  }
   const prepResult = await prepare(
     viewname,
     table,

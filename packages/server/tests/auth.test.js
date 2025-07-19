@@ -166,6 +166,7 @@ describe("AuthTest forgot password", () => {
       .post("/auth/reset")
       .send("email=staff1@foo.com")
       .send("password=bazzRGGR65zoo")
+      .send("confirm_password=bazzRGGR65zoo")
       .send("token=" + token)
       .expect(toRedirect("/auth/login"));
     await request(app)

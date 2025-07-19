@@ -48,6 +48,7 @@ import type {
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import { hash } from "bcryptjs";
 
 import { remove_from_menu } from "./config";
 

@@ -240,6 +240,67 @@ const configTypes: ConfigTypes = {
     default: "80",
     required: true,
   },
+  min_password_length: {
+    type: "Integer",
+    label: "Minimum password length",
+    default: 8,
+    required: true,
+    blurb:
+      "The minimum length of passwords for users. Set to 0 to disable password requirements.",
+    excludeFromMobile: true,
+  },
+  check_common_passwords: {
+    type: "Bool",
+    label: "Check common passwords",
+    default: true,
+    blurb:
+      "Check if the password is in the list of common passwords. If enabled, users will not be able to use common passwords.",
+    excludeFromMobile: true,
+  },
+  password_require_uppercase: {
+    type: "Bool",
+    label: "Require uppercase",
+    default: false,
+    blurb: "Require at least one uppercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_lowercase: {
+    type: "Bool",
+    label: "Require lowercase",
+    default: true,
+    blurb: "Require at least one lowercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_number: {
+    type: "Bool",
+    label: "Require number",
+    default: false,
+    blurb: "Require at least one number in the password",
+    excludeFromMobile: true,
+  },
+  password_require_special_char: {
+    type: "Bool",
+    label: "Require special character",
+    default: false,
+    blurb: "Require at least one special character in the password",
+    excludeFromMobile: true,
+  },
+  password_complexity: {
+    type: "String",
+    label: "Password complexity",
+    default: "",
+    blurb:
+      "The regular expression that passwords must match. Set to empty string to disable password complexity requirements.",
+    excludeFromMobile: true,
+  },
+  password_complexity_error: {
+    type: "String",
+    label: "Password complexity error",
+    default: "",
+    blurb:
+      "The error message to show when password does not match the complexity requirements.",
+    excludeFromMobile: true,
+  },
   min_role_upload: {
     type: "Role",
     label: "Role to upload files",
