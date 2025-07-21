@@ -54,9 +54,6 @@ const runPage = async (page, req, res, tic) => {
     const ms = tock.getTime() - tic.getTime();
 
     if (!isTest()) {
-      // const context = { req, user: req.user, render_time: ms };
-      // await Trigger.runPageTriggers(page.name, context, resultCollector); // Updated call
-
       Trigger.emitEvent("PageLoad", null, req.user, {
         text: req.__("Page '%s' was loaded", page.name),
         type: "page",
