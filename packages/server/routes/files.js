@@ -326,7 +326,7 @@ router.get(
       ) {
         const window = new JSDOM("").window;
         const DOMPurify = createDOMPurify(window);
-        const contents = await fs.promises.readFile(file.location)
+        const contents = await fs.promises.readFile(file.location);
         const clean = DOMPurify.sanitize(contents);
         res.send(clean);
         return;
@@ -373,6 +373,8 @@ router.get(
         !getState().getConfig("file_serve_html")
       )
         res.type("text/plain");
+      else res.type(file.mimetype);
+
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       //TODO s3
