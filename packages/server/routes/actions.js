@@ -179,6 +179,7 @@ const triggerForm = async (req, trigger) => {
     workflow: true,
   });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
+  const additional_triggers = ["Login", "PageLoad"];
   const action_options = {};
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
@@ -346,7 +347,7 @@ const triggerForm = async (req, trigger) => {
           "Optional JavaScript expression to determine if the trigger should run."
         ),
         parent_field: "configuration",
-        showIf: { when_trigger: table_triggers },
+        showIf: { when_trigger: [...table_triggers, ...additional_triggers] },
       },
     ],
   });

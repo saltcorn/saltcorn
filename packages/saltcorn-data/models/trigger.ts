@@ -301,6 +301,20 @@ class Trigger implements AbstractTrigger {
               }
             }
           } else {
+            if (payload?.type === "page" && trigger.configuration?._only_if) {
+              const res = this.evaluatePageExpression(
+                trigger.configuration?._only_if,
+                payload,
+                user
+              );
+              if (!res) {
+                state.log(
+                  4,
+                  `Trigger "${trigger.name}" skipped due to _only_if condition.`
+                );
+                continue;
+              }
+            }
             const action = state.actions[trigger.action];
             action &&
               action.run &&
@@ -361,10 +375,7 @@ class Trigger implements AbstractTrigger {
 
       try {
         // Halt if _only_if condition evaluates to falsy
-        if (
-          typeof trigger.haltOnOnlyIf === "function" &&
-          trigger.haltOnOnlyIf(row, extraArgs?.user)
-        ) {
+        if (trigger.haltOnOnlyIf?.(row, extraArgs?.user)) {
           state.log(
             4,
             `Trigger "${trigger.name}" skipped due to _only_if condition.`
@@ -389,6 +400,80 @@ class Trigger implements AbstractTrigger {
       channel: table?.name,
       user_id: user?.id,
       payload: row,
+      occur_at: new Date(),
+    });
+  }
+
+  /**
+   * Run triggers for a page based on _only_if conditions.
+   * @param pageName - The name of the page.
+   * @param context - The context object to evaluate _only_if conditions.
+   */
+  static async runPageTriggers(
+    pageName: string,
+    context: any,
+    resultCollector = {}
+  ): Promise<void> {
+    const { getState } = require("../db/state");
+    const state = getState();
+    const Table = require("./table");
+    const table = Table.findOne({ name: "_sc_pages" });
+
+    const pageTable = await db.listTables();
+    console.log({
+      pageTable,
+    });
+
+    const tables = await Table.find({});
+    console.log({
+      table,
+      tables,
+    });
+
+    if (!table) {
+      state.log(2, `Table "_sc_pages" not found.`);
+      return;
+    }
+
+    const triggers = Trigger.getTableTriggers("PageLoad", table, context.user);
+
+    for (const trigger of triggers) {
+      state.log(
+        4,
+        `Trigger run ${trigger.name} ${trigger.action} on PageLoad ${table.name} page=${pageName}`
+      );
+
+      try {
+        if (trigger.haltOnOnlyIf?.(context, context.user)) {
+          state.log(
+            4,
+            `Trigger "${trigger.name}" skipped due to _only_if condition.`
+          );
+          continue;
+        }
+
+        const res = await trigger.run!(context);
+        if (res && resultCollector) mergeActionResults(resultCollector, res);
+      } catch (e: any) {
+        // if (resultCollector)
+        //   resultCollector.error = (resultCollector.error || "") + e.message;
+        Crash.create(e, {
+          url: "/",
+          headers: {
+            when_trigger: "PageLoad",
+            table: table.name,
+            trigger: trigger.name,
+          },
+        });
+      }
+    }
+
+    // Log the event
+    EventLog.create({
+      event_type: "PageLoad",
+      channel: table.name,
+      user_id: context.user?.id,
+      payload: { pageName },
       occur_at: new Date(),
     });
   }
@@ -563,6 +648,33 @@ class Trigger implements AbstractTrigger {
             ...(extraArgs || {}),
           });
       }
+    }
+  }
+
+  /**
+   * Evaluate an expression based on the provided payload and user.
+   * This method uses a custom evaluator to handle expressions like `payload.name === "home"`.
+   * @param expression - The expression to evaluate.
+   * @param payload - The payload object.
+   * @param user - The user object.
+   * @returns {boolean} - Returns true if the expression evaluates to true, otherwise false.
+   */
+  static evaluatePageExpression(
+    expression: string,
+    payload: any,
+    user: any
+  ): boolean {
+    try {
+      const context = { payload, user };
+      const keys = Object.keys(context);
+      const values = Object.values(context);
+
+      const evaluator = new Function(...keys, `return (${expression});`);
+
+      return evaluator(...values);
+    } catch (error) {
+      console.error("Error evaluating expression:", error);
+      return false;
     }
   }
 

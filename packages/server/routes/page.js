@@ -46,18 +46,24 @@ const findPageOrGroup = (pagename) => {
 
 const runPage = async (page, req, res, tic) => {
   const role = req.user && req.user.id ? req.user.role_id : 100;
+  // let resultCollector = {};
   if (role <= page.min_role) {
     const contents = await page.run(req.query, { res, req });
     const title = scan_for_page_title(contents, page.title);
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
-    if (!isTest())
+
+    if (!isTest()) {
+      // const context = { req, user: req.user, render_time: ms };
+      // await Trigger.runPageTriggers(page.name, context, resultCollector); // Updated call
+
       Trigger.emitEvent("PageLoad", null, req.user, {
         text: req.__("Page '%s' was loaded", page.name),
         type: "page",
         name: page.name,
         render_time: ms,
       });
+    }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else
       res.sendWrap(
