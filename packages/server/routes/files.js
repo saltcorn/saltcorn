@@ -42,6 +42,8 @@ const path = require("path");
 const Zip = require("adm-zip");
 const stream = require("stream");
 const { extract } = require("@saltcorn/admin-models/models/backup");
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
 /**
  * @type {object}
  * @const
@@ -318,6 +320,17 @@ router.get(
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       const maxAge = getState().getConfig("files_cache_maxage", 86400);
       res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
+      if (
+        file.mimetype === "image/svg+xml" ||
+        file.mimetype === "application/mathml+xml"
+      ) {
+        const window = new JSDOM("").window;
+        const DOMPurify = createDOMPurify(window);
+        const contents = await fs.promises.readFile(file.location)
+        const clean = DOMPurify.sanitize(contents);
+        res.send(clean);
+        return;
+      }
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location, { dotfiles: "allow" });
     } else {
