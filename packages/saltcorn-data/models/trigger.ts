@@ -301,13 +301,8 @@ class Trigger implements AbstractTrigger {
               }
             }
           } else {
-            if (payload?.type === "page" && trigger.configuration?._only_if) {
-              const res = this.evaluatePageExpression(
-                trigger.configuration?._only_if,
-                payload,
-                user
-              );
-              if (!res) {
+            if (trigger.configuration?._only_if) {
+              if (trigger.haltOnOnlyIf(payload, user)) {
                 state.log(
                   4,
                   `Trigger "${trigger.name}" skipped due to _only_if condition.`
@@ -574,33 +569,6 @@ class Trigger implements AbstractTrigger {
             ...(extraArgs || {}),
           });
       }
-    }
-  }
-
-  /**
-   * Evaluate an expression based on the provided payload and user.
-   * This method uses a custom evaluator to handle expressions like `payload.name === "home"`.
-   * @param expression - The expression to evaluate.
-   * @param payload - The payload object.
-   * @param user - The user object.
-   * @returns {boolean} - Returns true if the expression evaluates to true, otherwise false.
-   */
-  static evaluatePageExpression(
-    expression: string,
-    payload: any,
-    user: any
-  ): boolean {
-    try {
-      const context = { payload, user };
-      const keys = Object.keys(context);
-      const values = Object.values(context);
-
-      const evaluator = new Function(...keys, `return (${expression});`);
-
-      return evaluator(...values);
-    } catch (error) {
-      console.error("Error evaluating expression:", error);
-      return false;
     }
   }
 
