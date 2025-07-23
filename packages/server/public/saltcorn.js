@@ -423,6 +423,7 @@ function ajax_modal(url, opts = {}) {
       new bootstrap.Modal($("#scmodal"), {
         focus: false,
       }).show();
+      $("#scmodal .modal-body").find("[autofocus]").first().focus();
       initialize_page();
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {

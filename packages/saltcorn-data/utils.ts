@@ -298,10 +298,12 @@ const mergeConnectedObjects = (
 };
 
 const objectToQueryString = (o: Object): string => {
-  const f = ([k, v]: any) =>
+  const f = ([k, v]: any): string =>
     v?.or
       ? v.or.map((val: any) => f([k, val])).join("&")
-      : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+      : Array.isArray(v)
+        ? v.map((val) => f([k, val])).join("&")
+        : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
 
   return Object.entries(o || {})
     .map(f)

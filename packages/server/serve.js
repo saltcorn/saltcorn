@@ -290,7 +290,8 @@ const onMessageFromWorker =
       ///ie from saltcorn
       //broadcast
       Object.entries(cluster.workers).forEach(([wpid, w]) => {
-        if (wpid !== pid) w.send(msg);
+        //if it is plugin refresh, we need sender to get it as wll
+        if (wpid !== pid || msg?.refresh_plugin_cfg) w.send(msg);
       });
       workerDispatchMsg(msg); //also master
       return true;
