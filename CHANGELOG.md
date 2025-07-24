@@ -10,7 +10,9 @@
 
 * Visibility toggle option for password fieldviews. Click an eye icon to show password
 
-* Enable/disable push notifications per-role in the Users role table. 
+* Enable/disable push notifications per-role in the Users role table.
+
+* Table triggers (Insert, Update, Delete) and Login and PageLoad can now be limited with an only-if formula.
 
 ## 1.3.0 - Released 2 July 2025
 
