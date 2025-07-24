@@ -960,14 +960,22 @@ class State {
           ...this.function_context,
           Table,
           File,
+          View,
           User,
+          Trigger,
           setTimeout,
           fetch,
           sleep,
           interpolate,
+          tryCatchInTransaction: db.tryCatchInTransaction,
+          Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor
           require: (nm: string) => this.codeNPMmodules[nm],
+          setConfig: (k: string, v: any) =>
+            this.isFixedConfig(k) ? undefined : this.setConfig(k, v),
+          getConfig: (k: string) =>
+            this.isFixedConfig(k) ? undefined : this.getConfig(k),
         };
         const funCtxKeys = new Set(Object.keys(myContext));
         const sandbox = createContext(myContext);
