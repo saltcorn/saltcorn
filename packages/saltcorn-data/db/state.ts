@@ -665,6 +665,8 @@ class State {
   getConfig(key: string, def?: any) {
     const fixed = db.connectObj.fixed_configuration[key];
     if (typeof fixed !== "undefined") return fixed;
+    const exposed = db.connectObj.exposed_configuration[key];
+    if (typeof exposed !== "undefined") return exposed;
     if (db.connectObj.inherit_configuration.includes(key)) {
       if (typeof singleton.configs[key] !== "undefined")
         return singleton.configs[key].value;
