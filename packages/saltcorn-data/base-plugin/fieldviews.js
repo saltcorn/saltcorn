@@ -720,8 +720,18 @@ const search_or_create = {
    */
   run: (nm, v, attrs, cls, reqd, field, row) => {
     const user = db.getRequestContext()?.req?.user;
+    const use_row = { ...(row || {}) };
+    if (field?.table_id) {
+      const table = Table.findOne({ id: field.table_id });
+      if (
+        table &&
+        (!Object.keys(use_row).length ||
+          Object.keys(use_row).every((k) => k.startsWith("_") || k === "user"))
+      )
+        table.fields.forEach((f) => (use_row[f.name] = undefined));
+    }
     const qs = attrs.values_formula
-      ? `?${objectToQueryString(eval_expression(attrs.values_formula, row || {}, user, "search_or_create values formula"))}`
+      ? `?${objectToQueryString(eval_expression(attrs.values_formula, use_row, user, "search_or_create values formula"))}`
       : "";
     return (
       tags.select(
