@@ -675,6 +675,7 @@ export type ConnectObjType = {
   file_store?: string;
   default_schema?: string;
   fixed_configuration?: any;
+  exposed_configuration?: any;
   inherit_configuration?: any;
   version_tag?: string;
 };

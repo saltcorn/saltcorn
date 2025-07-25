@@ -261,6 +261,8 @@ function spin_action_link(e) {
 
   $e.attr("data-innerhtml-prespin", $e.html());
   $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width).height(height);
+  $(document).trigger("activate-spinner", $e);
+  $e.trigger("spin");
 }
 
 function reset_spinners() {

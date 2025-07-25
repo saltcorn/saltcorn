@@ -172,6 +172,7 @@ const run_code = async ({
     fetch,
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
+    commitAndRestartTransaction: db.commitAndRestartTransaction,
     URL,
     File,
     User,

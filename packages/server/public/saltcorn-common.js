@@ -1723,6 +1723,8 @@ function press_store_button(clicked, keepOld, disable) {
     .html('<i class="fas fa-spinner fa-spin"></i>')
     .width(width)
     .height(height);
+  $(document).trigger("activate-spinner", $(btn));
+  $(btn).trigger("spin");
   setTimeout(() => {
     $(btn).prop("disabled", true);
   }, 50);
