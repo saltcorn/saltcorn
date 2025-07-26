@@ -475,6 +475,16 @@ class WorkflowRun {
       );
       this.step_start = new Date();
       let do_break = false;
+      let skip_because_only_if = false;
+      if (step?.only_if) {
+        const proceed = eval_expression(
+          step.only_if,
+          this.context,
+          user,
+          `Only if expression in ${step.name} step`
+        );
+        if (!proceed) skip_because_only_if = true;
+      }
       /**
        * Executes a workflow step within a database transaction, handling various workflow actions
        * such as sub-workflows, API responses, user forms, output views, loops, and error handling.
@@ -496,7 +506,11 @@ class WorkflowRun {
        */
       const returnVal = await db.tryCatchInTransaction(
         async () => {
-          if (allWorkflowNames.has(step?.action_name) && !waiting_fulfilled) {
+          if (
+            allWorkflowNames.has(step?.action_name) &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
             const wfTrigger = allWorkflows.find(
               (wf) => wf.name === step?.action_name
             );
@@ -540,7 +554,7 @@ class WorkflowRun {
               }
             }
           }
-          if (step?.action_name === "APIResponse") {
+          if (step?.action_name === "APIResponse" && !skip_because_only_if) {
             const resp = eval_expression(
               step.configuration.response_expression,
               this.context,
@@ -554,8 +568,9 @@ class WorkflowRun {
             return resp;
           }
           if (
-            step?.action_name === "Stop" ||
-            step?.action_name === "TerminateWorkflow"
+            (step?.action_name === "Stop" ||
+              step?.action_name === "TerminateWorkflow") &&
+            !skip_because_only_if
           ) {
             const resp = step.configuration.return_value
               ? eval_expression(
@@ -575,7 +590,8 @@ class WorkflowRun {
           if (
             (step?.action_name === "UserForm" ||
               step?.action_name === "EditViewForm") &&
-            !waiting_fulfilled
+            !waiting_fulfilled &&
+            !skip_because_only_if
           ) {
             let user_id;
             if (step.configuration.user_id_expression) {
@@ -617,7 +633,11 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step?.action_name === "Output" && !waiting_fulfilled) {
+          if (
+            step?.action_name === "Output" &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
             const output = interpolate(
               step.configuration.output_text,
               this.context,
@@ -643,7 +663,11 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step?.action_name === "DataOutput" && !waiting_fulfilled) {
+          if (
+            step?.action_name === "DataOutput" &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
             const output_val = eval_expression(
               step.configuration.output_expr,
               this.context,
@@ -668,7 +692,11 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step?.action_name === "OutputView" && !waiting_fulfilled) {
+          if (
+            step?.action_name === "OutputView" &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
             const View = (await import("./view")).default;
             const view = View.findOne({ name: step.configuration.view });
 
@@ -699,7 +727,11 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step?.action_name === "WaitNextTick" && !waiting_fulfilled) {
+          if (
+            step?.action_name === "WaitNextTick" &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
             await this.update({
               status: "Waiting",
               wait_info: {},
@@ -730,7 +762,11 @@ class WorkflowRun {
             do_break = true;
             return;
           }
-          if (step?.action_name === "WaitUntil" && !waiting_fulfilled) {
+          if (
+            step?.action_name === "WaitUntil" &&
+            !waiting_fulfilled &&
+            !skip_because_only_if
+          ) {
             const resume_at = eval_expression(
               step.configuration.resume_at,
               { moment, ...this.context },
@@ -749,7 +785,7 @@ class WorkflowRun {
             return;
           }
           let result: any;
-          if (step?.action_name === "ForLoop") {
+          if (step?.action_name === "ForLoop" && !skip_because_only_if) {
             const array = eval_expression(
               step.configuration.array_expression,
               this.context,
@@ -782,7 +818,8 @@ class WorkflowRun {
             Object.assign(this.context, result);
             nextUpdate.context = this.context;
           }
-          if (trace) this.createTrace(step?.name as string, user);
+          if (trace && !skip_because_only_if)
+            this.createTrace(step?.name as string, user);
 
           //find next step
           const nextStep = step ? this.get_next_step(step, user) : null;
