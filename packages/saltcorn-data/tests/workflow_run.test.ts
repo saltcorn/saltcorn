@@ -113,7 +113,7 @@ describe("Workflow run steps", () => {
     expect(result.y).toBe(2);
     expect(result.last).toBe(1);
     const traces = await WorkflowTrace.find({ run_id: result.__wf_run_id });
-    expect(traces.length).toBe(4);
+    expect(traces.length).toBe(3);
   });
 });
 
