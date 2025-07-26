@@ -580,6 +580,57 @@ describe("Workflow run userform", () => {
     });
     expect(wfrun.status).toBe("Finished");
   });
+  it("should skip form on only-if", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "uformwf0",
+    });
+
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "first_step",
+      next_step: "second_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: { code: `return {x:1}` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "second_step",
+      next_step: "third",
+      action_name: "UserForm",
+      initial_step: false,
+      only_if: "x>5",
+      configuration: {
+        form_header: "",
+        user_id_expression: "",
+        user_form_questions: [
+          {
+            label: "What is your name",
+            qtype: "Free text",
+            var_name: "name",
+          },
+        ],
+      },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "third",
+      next_step: "",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: { code: `return {x:2}` },
+    });
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id!,
+    });
+    await wfrun.run({ user });
+    expect(wfrun.context.x).toBe(2);
+    expect(wfrun.status).toBe("Finished");
+  });
 });
 
 describe("Workflow step operations", () => {
@@ -677,7 +728,7 @@ describe("Workflow step operations", () => {
     expect(steps[1].name).toBe("findStep2");
   });
 
-// More tests for update, delete, and 'get diagram loop link backs'
+  // More tests for update, delete, and 'get diagram loop link backs'
   it("should update a workflow steop", async () => {
     const trigger = await Trigger.create({
       action: "Workflow",
@@ -776,33 +827,35 @@ describe("Workflow step operations", () => {
     expect(updatedStepA.next_step).toBe("stepC");
   });
 
-  it('should handle reserved names in mermaid diagram generation', async () => {
+  it("should handle reserved names in mermaid diagram generation", async () => {
     const trigger = await Trigger.create({
-      action: 'Workflow',
-      when_trigger: 'Never',
-      name: 'reservedNamesTrigger',
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "reservedNamesTrigger",
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
-      name: 'end',
-      next_step: 'subgraph',
-      action_name: 'SetContext',
+      name: "end",
+      next_step: "subgraph",
+      action_name: "SetContext",
       initial_step: true,
-      configuration: { ctx_values: '{x: 1}' },
+      configuration: { ctx_values: "{x: 1}" },
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
-      name: 'subgraph',
-      action_name: 'SetContext',
+      name: "subgraph",
+      action_name: "SetContext",
       initial_step: false,
-      configuration: { ctx_values: '{y: 2}' },
+      configuration: { ctx_values: "{y: 2}" },
     });
     const steps = await WorkflowStep.find({ trigger_id: trigger.id! });
     const diagram = WorkflowStep.generate_diagram(steps);
-    expect(diagram).toContain('flowchart TD');
+    expect(diagram).toContain("flowchart TD");
     expect(diagram).toContain('_end_["`**end**\n    SetContext`"]:::wfstep');
-    expect(diagram).toContain('_subgraph_["`**subgraph**\n    SetContext`"]:::wfstep');
-    expect(diagram).toContain('_Start--');
-    expect(diagram).toContain('--> _End__subgraph_');
-  })
+    expect(diagram).toContain(
+      '_subgraph_["`**subgraph**\n    SetContext`"]:::wfstep'
+    );
+    expect(diagram).toContain("_Start--");
+    expect(diagram).toContain("--> _End__subgraph_");
+  });
 });
