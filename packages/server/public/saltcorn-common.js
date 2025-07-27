@@ -2057,17 +2057,24 @@ function room_older(viewname, room_id, btn) {
   );
 }
 
-function init_room(viewname, room_id) {
-  let socket = null;
-  if (parent?.saltcorn?.data?.state) {
-    const { server_path, jwt } =
-      parent.saltcorn.data.state.getState().mobileConfig;
-    socket = io(server_path, {
-      query: `jwt=${jwt}`,
-      transports: ["websocket"],
-    });
-  } else socket = io({ transports: ["websocket"] });
+function get_shared_socket() {
+  let socket = window.sharedSocket || null;
+  if (!socket) {
+    if (parent?.saltcorn?.data?.state) {
+      const { server_path, jwt } =
+        parent.saltcorn.data.state.getState().mobileConfig;
+      socket = io(server_path, {
+        query: `jwt=${jwt}`,
+        transports: ["websocket"],
+      });
+    } else socket = io({ transports: ["websocket"] });
+    window.sharedSocket = socket;
+  }
+  return socket;
+}
 
+function init_room(viewname, room_id) {
+  let socket = get_shared_socket();
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
     if (msg.not_for_user_id) {
@@ -2090,30 +2097,37 @@ function init_room(viewname, room_id) {
 }
 
 function init_collab_room(viewname, eventCfgs) {
-  let socket = null;
-  if (parent?.saltcorn?.data?.state) {
-    const { server_path, jwt } =
-      parent.saltcorn.data.state.getState().mobileConfig;
-    socket = io(server_path, {
-      query: `jwt=${jwt}`,
-      transports: ["websocket"],
-    });
-  } else socket = io({ transports: ["websocket"] });
+  let socket = get_shared_socket();
   for (const [event, callback] of Object.entries(eventCfgs.events)) {
     socket.on(event, callback);
   }
-  socket.on("connect", function () {
+  const joinFn = () => {
     socket.emit("join_collab_room", viewname, (ack) => {
-      if (ack && ack.status === "ok") {
+      if (ack && ack.status === "ok")
         console.log(`Joined collaboration room for view '${viewname}'`);
-      } else {
-        console.error("Failed to join collaboration room:", ack);
-      }
+      else console.error("Failed to join collaboration room:", ack);
     });
-  });
+  };
+  if (socket.connected) joinFn();
+  else socket.on("connect", joinFn);
   socket.on("disconnect", function () {
     console.log("Disconnected from the server");
   });
+}
+
+function init_dynamic_update_room() {
+  let socket = get_shared_socket();
+  socket.on("dynamic_update", async (data) => {
+    await common_done(data);
+  });
+  const joinFn = () => {
+    socket.emit("join_dynamic_update_room", (ack) => {
+      if (ack && ack.status === "ok") console.log("Joined dynamic update room");
+      else console.error("Failed to join dynamic update room:", ack);
+    });
+  };
+  if (socket.connected) joinFn();
+  else socket.on("connect", joinFn);
 }
 
 function cancel_form(form) {
@@ -2562,4 +2576,10 @@ async function initPushNotify() {
   } catch (error) {
     console.error("Push notification initialization failed:", error);
   }
+}
+
+if (document.readyState !== "loading") {
+  init_dynamic_update_room();
+} else {
+  document.addEventListener("DOMContentLoaded", init_dynamic_update_room);
 }

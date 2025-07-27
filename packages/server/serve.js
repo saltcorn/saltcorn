@@ -545,9 +545,16 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
       .emit("log_msg", { text: msg, time, level });
   });
 
-  // Real-time collaboration emitter
+  // Real-time collaboration emitter (tied to views)
   getState().setCollabEmitter((tenant, type, data) => {
     io.of("/").to(`_${tenant}_collab_room_`).emit(type, data);
+  });
+
+  // dynamic updates emitter (for run_js_actions)
+  getState().setDynamicUpdateEmitter((tenant, data) => {
+    io.of("/")
+      .to(`_${tenant}_dynamic_update_room`)
+      .emit("dynamic_update", data);
   });
 
   io.of("/").on("connection", (socket) => {
@@ -617,6 +624,24 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);
+          if (typeof callback === "function")
+            callback({ status: "error", msg: err.message || "unknown error" });
+        }
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      else await f();
+    });
+
+    // join_dynamic_update_room for events emitted from run_js_actions
+    socket.on("join_dynamic_update_room", async (callback) => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = async () => {
+        try {
+          socket.join(`_${tenant}_dynamic_update_room`);
+          if (typeof callback === "function") callback({ status: "ok" });
+        } catch (err) {
+          getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }

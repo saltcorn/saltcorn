@@ -77,6 +77,11 @@ const consoleInterceptor = (state) => {
   };
 };
 
+const emit_to_client = (data) => {
+  const state = getState();
+  state.emitDynamicUpdate(db.getTenantSchema(), data);
+};
+
 /**
  * @param opts
  * @param opts.row
@@ -170,6 +175,7 @@ const run_code = async ({
     sleep,
     fetchJSON,
     fetch,
+    emit_to_client,
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
     commitAndRestartTransaction: db.commitAndRestartTransaction,

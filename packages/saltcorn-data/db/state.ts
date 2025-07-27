@@ -1085,16 +1085,41 @@ class State {
     globalLogEmitter = f;
   }
 
+  /**
+   * @param f Function to emit collaborative editing messages
+   */
   setCollabEmitter(f: Function) {
     globalCollabEmitter = f;
+  }
+
+  /**
+   * @param f Function to emit dynamic update messages triggered from run_js_code actions
+   */
+  setDynamicUpdateEmitter(f: Function) {
+    globalDynamicUpdateEmitter = f;
   }
 
   emitLog(ten: string, min_level: number, msg: string) {
     globalLogEmitter(ten, min_level, msg);
   }
 
-  emitRealTimeUpdate(ten: string, type: string, data: any) {
+  /**
+   * For collaborative editing
+   * @param ten
+   * @param type
+   * @param data
+   */
+  emitCollabMessage(ten: string, type: string, data: any) {
     globalCollabEmitter(ten, type, data);
+  }
+
+  /**
+   * For dynamic updates triggered from a run_js_code action
+   * @param ten
+   * @param data
+   */
+  emitDynamicUpdate(ten: string, data: any) {
+    globalDynamicUpdateEmitter(ten, data);
   }
 
   // default auth methods to enabled
@@ -1202,6 +1227,7 @@ class State {
 let globalRoomEmitter: Function = () => {};
 let globalLogEmitter: Function = () => {};
 let globalCollabEmitter: Function = () => {};
+let globalDynamicUpdateEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State("public");
