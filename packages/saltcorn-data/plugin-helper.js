@@ -2126,7 +2126,9 @@ const stateFieldsToWhere = ({
     } else if (field && field.type.name === "String" && v && v.slugify) {
       qstate[k] = v;
     } else if (Array.isArray(v) && field && field.type && field.type.read) {
-      qstate[k] = { or: v.map(field.type.read) };
+      qstate[k] = {
+        or: v.map((val) => field.type.read(val, field.attributes)),
+      };
     } else if (
       Array.isArray(v) &&
       field?.is_fkey &&
@@ -2182,8 +2184,8 @@ const stateFieldsToWhere = ({
       qstate[k] = v;
     } else if (field && field.type && field.type.read)
       qstate[k] = Array.isArray(v)
-        ? { or: v.map(field.type.read) }
-        : field.type.read(v);
+        ? { or: v.map((val) => field.type.read(val, field.attributes)) }
+        : field.type.read(v, field.attributes);
     else if (field) qstate[k] = v;
     else if (k.split("->").length === 3) {
       const [jFieldNm, throughPart, finalPart] = k.split(".");
@@ -2445,7 +2447,7 @@ const readState = (state, fields, req) => {
   const read_key = (f, current) =>
     current === "null" || current === "" || current === null
       ? null
-      : getState().types[f.reftype].read(current);
+      : getState().types[f.reftype].read(current, f.attributes);
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
@@ -2457,7 +2459,9 @@ const readState = (state, fields, req) => {
       ) {
         //ignore (this is or statement)
       } else if (Array.isArray(current) && f.type.read) {
-        state[f.name] = current.map(f.type.read);
+        state[f.name] = current.map((val) =>
+          f.type.read(val, f.attributes)
+        );
       } else if (
         Array.isArray(current) &&
         f.is_fkey &&
@@ -2466,11 +2470,12 @@ const readState = (state, fields, req) => {
         state[f.name] = current.map((v) => read_key(f, v));
       } else if (current && current.slugify)
         state[f.name] = f.type.read
-          ? { slugify: f.type.read(current.slugify) }
+          ? { slugify: f.type.read(current.slugify, f.attributes) }
           : current;
       else if (typeof current === "object") {
         //ignore
-      } else if (f.type?.read) state[f.name] = f.type.read(current);
+      } else if (f.type?.read)
+        state[f.name] = f.type.read(current, f.attributes);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const pname = current.replace("Preset:", "");
         if (Object.prototype.hasOwnProperty.call(f.presets, pname)) {
@@ -2499,7 +2504,7 @@ const readStateStrict = (state, fields) => {
 
     if (typeof current !== "undefined") {
       if (f.type.read) {
-        const readval = f.type.read(current);
+        const readval = f.type.read(current, f.attributes);
         if (typeof readval === "undefined") {
           if (current === "" && !f.required) delete state[f.name];
           else hasErrors = true;
