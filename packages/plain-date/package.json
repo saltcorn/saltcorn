@@ -1,0 +1,32 @@
+{
+  "name": "@saltcorn/plain-date",
+  "version": "0.1.0",
+  "description": "PlainDate class for max compatibility with Date",
+  "homepage": "https://saltcorn.com",
+  "scripts": {
+    "test": "jest ",
+    "tsc": "echo 'No TypeScript build'",
+    "clean": "echo 'No TypeScript build'"
+  },
+  "dependencies": {},
+  "author": "Tom Nielsen",
+  "license": "MIT",
+  "jest": {
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/plugin_packages/",
+      "/plugins_folder/"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/plugin_packages/",
+      "/plugins_folder/"
+    ]
+  },
+  "main": "index.js",
+  "repository": "github:saltcorn/saltcorn",
+  "publishConfig": {
+    "access": "public"
+  }
+}
