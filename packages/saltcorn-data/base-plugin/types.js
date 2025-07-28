@@ -2267,7 +2267,11 @@ const date = {
    * @subcategory types / date
    */
   presets: {
-    Now: () => new Date(),
+    Now: ({ field }) => {
+      if (field?.attributes?.day_only)
+        return new Date().toISOString().split("T")[0];
+      return new Date();
+    },
   },
   /**
    * @param {object} v

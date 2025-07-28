@@ -688,6 +688,7 @@ const run = async (
           ? field.presets[preset_value]({
               user: extra.req.user,
               req: extra.req,
+              field,
             })
           : value;
 
