@@ -767,7 +767,7 @@ const search_or_create = {
         attrs.label || "Or create new"
       ) +
       script(`
-      const soc_process_${nm} = (elem) => ()=> {
+      window.soc_process_${nm} = (elem) => ()=> {
         $.ajax('/api/${field.reftable_name}', {
           success: function (res, textStatus, request) {
             var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${
