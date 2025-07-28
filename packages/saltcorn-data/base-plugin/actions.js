@@ -79,7 +79,10 @@ const consoleInterceptor = (state) => {
 
 const emit_to_client = (data) => {
   const state = getState();
-  state.emitDynamicUpdate(db.getTenantSchema(), data);
+  const enabled = getState().getConfig("enable_dynamic_updates", true);
+  if (!enabled)
+    state.log(5, "emit_to_client called, but dynamic updates are disabled");
+  else state.emitDynamicUpdate(db.getTenantSchema(), data);
 };
 
 /**
