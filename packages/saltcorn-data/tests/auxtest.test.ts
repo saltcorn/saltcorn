@@ -36,6 +36,7 @@ import {
   prepareSimpleTopicPostRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
+const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
 
@@ -449,8 +450,8 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({
       dob: [
-        { gt: new Date(5), day_only: true },
-        { lt: new Date(15), day_only: true },
+        { gt: new PlainDate(5), day_only: true },
+        { lt: new PlainDate(15), day_only: true },
       ],
     });
   });
@@ -461,8 +462,8 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({
       dob: [
-        { gt: new Date("2025-07-24"), equal: true, day_only: true },
-        { lt: new Date("2025-07-27"), equal: true, day_only: true },
+        { gt: new PlainDate("2025-07-24"), equal: true, day_only: true },
+        { lt: new PlainDate("2025-07-27"), equal: true, day_only: true },
       ],
     });
   });
