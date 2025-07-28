@@ -2302,7 +2302,7 @@ const date = {
         }
         try {
           const d = new PlainDate(v);
-          if (d instanceof Date && !isNaN(d)) return d;
+          if (d.isValid()) return d;
           else return null;
         } catch {
           return null;
