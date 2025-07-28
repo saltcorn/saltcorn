@@ -15,6 +15,12 @@ const {
   mkWhere,
   mkSelectOptions,
 } = require("@saltcorn/db-common/internal");
+const PlainDate = require("@saltcorn/plain-date");
+
+var types = require("pg").types;
+types.setTypeParser(types.builtins.DATE, (d) =>
+  d === null ? null : new PlainDate(d)
+);
 
 let getTenantSchema;
 let getRequestContext;
