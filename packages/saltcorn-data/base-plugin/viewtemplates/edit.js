@@ -1203,11 +1203,17 @@ const render = async ({
     )
   );
 
+  const dynamic_updates_enabled = getState().getConfig(
+    "enable_dynamic_updates",
+    true
+  );
   const realTimeCollabScript =
     enable_realtime && row && !(req.headers?.pjaxpageload === "true")
-      ? script({
-          src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
-        }) + script(domReady(realTimeScript(viewname, table.id, row)))
+      ? (!dynamic_updates_enabled
+          ? script({
+              src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+            })
+          : "") + script(domReady(realTimeScript(viewname, table.id, row)))
       : "";
 
   if (actually_auto_save) {
