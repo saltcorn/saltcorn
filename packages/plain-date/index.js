@@ -72,7 +72,10 @@ class PlainDate {
     return this.day;
   }
   getDay() {
-    return this.toDate.getDay();
+    return this.toDate().getDay();
+  }
+  getTime() {
+    return this.toDate().getTime();
   }
 
   toString() {

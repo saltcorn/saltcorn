@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/plain-date",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "PlainDate class for max compatibility with Date",
   "homepage": "https://saltcorn.com",
   "scripts": {
