@@ -135,7 +135,7 @@ export const FormulaTooltip = () => {
   
       <div>
         In view formulae, you can use aggregation formulae. The syntax for this is 
-        <code>{inbound_table}${inboundkey_field}${target_field}${aggrgation}</code> 
+        <code>[inbound_table]$[inboundkey_field]$[target_field]$[aggrgation]</code> 
         The aggregation (which should be lower case) can be ommitted and defaults to 
         <code>array_agg</code>. Examples: <code>patients$favbook$id$count</code> or 
         <code>patients$favbook$id</code>. 
