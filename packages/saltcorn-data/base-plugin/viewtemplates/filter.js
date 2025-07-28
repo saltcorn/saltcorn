@@ -282,7 +282,7 @@ const run = async (
   Object.entries(state).forEach(([k, v]) => {
     if (typeof v === "undefined") return;
     if (k[0] !== "_") {
-      let showv = v;
+      let showv = v?.toString?.() || v;
       if (distinct_values[k]) {
         const realv = distinct_values[k].find((dv) => dv.value === v);
         if (realv) showv = realv.label;
