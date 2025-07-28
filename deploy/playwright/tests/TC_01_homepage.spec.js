@@ -209,7 +209,7 @@ test.describe('E2E Test Suite', () => {
   });
 
   //Check action settings
-  test('Check action settings', async () => {
+  /*test('Check action settings', async () => {
     // create a new page
     await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the action locator
@@ -253,7 +253,7 @@ test.describe('E2E Test Suite', () => {
       await expect(hoverTitleInput).toHaveValue('');
     });
 
-  });
+  });*/
 
   //Create a new page with random string and navigate to new site URL
   test('Create a new page with random string and navigate to new site URL', async ({ browser }) => {

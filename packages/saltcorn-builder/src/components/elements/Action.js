@@ -22,6 +22,7 @@ import {
 } from "./utils";
 import { ntimes } from "./Columns";
 import { ArrayManager } from "./ArrayManager";
+import Select from "react-select";
 
 export /**
  *
@@ -155,6 +156,40 @@ const ActionSettings = () => {
           step_action_names?.[use_setting_action_n]
         )}`
       : "";
+  const setAction = (value0) => {
+    const value = value0.value || value0;
+    setProp((prop) => {
+      prop.name = value;
+      if (options.mode === "filter" && value !== "Clear") {
+        const rowRequired =
+          options.actionConstraints &&
+          options.actionConstraints[value]?.requireRow;
+        if (!action_row_variable) {
+          prop.action_row_variable = rowRequired ? "state" : "none";
+        } else if (rowRequired && action_row_variable === "none") {
+          prop.action_row_variable = "state";
+        }
+      }
+      if (value === "Multi-step action" && !nsteps) prop.nsteps = 1;
+      if (value === "Multi-step action" && !setting_action_n)
+        prop.setting_action_n = 0;
+      if (value === "Multi-step action" && !configuration.steps)
+        prop.configuration = { steps: [] };
+    });
+    setInitialConfig(setProp, value, getCfgFields(value));
+  };
+  const actionOptions = options.actions.filter(Boolean).map((f, ix) =>
+    f.optgroup && !f.options.length
+      ? null
+      : f.optgroup
+        ? {
+            label: f.label,
+            options: f.options.map((a, jx) => ({ label: a, value: a })),
+          }
+        : { label: f, value: f }
+  );
+  const selectedAction = { label: name, value: name };
+
   return (
     <div>
       <table className="w-100">
@@ -163,56 +198,20 @@ const ActionSettings = () => {
             <td>
               <label>Action</label>
             </td>
-            <td>
-              <select
-                value={name}
-                className="form-control form-select"
-                onChange={(e) => {
-                  if (!e.target) return;
-                  const value = e.target.value;
-                  setProp((prop) => {
-                    prop.name = value;
-                    if (options.mode === "filter" && value !== "Clear") {
-                      const rowRequired =
-                        options.actionConstraints &&
-                        options.actionConstraints[value]?.requireRow;
-                      if (!action_row_variable) {
-                        prop.action_row_variable = rowRequired
-                          ? "state"
-                          : "none";
-                      } else if (
-                        rowRequired &&
-                        action_row_variable === "none"
-                      ) {
-                        prop.action_row_variable = "state";
-                      }
-                    }
-                    if (value === "Multi-step action" && !nsteps)
-                      prop.nsteps = 1;
-                    if (value === "Multi-step action" && !setting_action_n)
-                      prop.setting_action_n = 0;
-                    if (value === "Multi-step action" && !configuration.steps)
-                      prop.configuration = { steps: [] };
-                  });
-                  setInitialConfig(setProp, value, getCfgFields(value));
-                }}
-              >
-                {options.actions.filter(Boolean).map((f, ix) =>
-                  f.optgroup && !f.options.length ? null : f.optgroup ? (
-                    <optgroup key={ix} label={f.label}>
-                      {f.options.map((a, jx) => (
-                        <option key={jx} value={a}>
-                          {a}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : (
-                    <option key={ix} value={f}>
-                      {f}
-                    </option>
-                  )
-                )}
-              </select>
+            <td>             
+              {options.inJestTestingMode ? null : (
+                <Select
+                  options={actionOptions}
+                  className="react-select action-selector"
+                  value={selectedAction}
+                  defaultValue={selectedAction}
+                  onChange={setAction}
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 19999 }),
+                  }}
+                ></Select>
+              )}
             </td>
           </tr>
           {name !== "Clear" && options.mode === "filter" ? (
