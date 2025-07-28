@@ -2064,7 +2064,20 @@ const stateFieldsToWhere = ({
     } else if (k.startsWith("_todate_")) {
       const datefield = db.sqlsanitize(k.replace("_todate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
-      if (dfield)
+      //https://stackoverflow.com/a/22061879/19839414
+      if (
+        dfield &&
+        !dfield?.attributes?.day_only &&
+        v?.match?.(/^\d{4}-\d{2}-\d{2}$/)
+      ) {
+        const date = new Date(v);
+        date.setDate(date.getDate() + 1);
+        addOrCreateList(qstate, datefield, {
+          lt: date,
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
+      } else if (dfield)
         addOrCreateList(qstate, datefield, {
           lt: new Date(v),
           equal: true,
