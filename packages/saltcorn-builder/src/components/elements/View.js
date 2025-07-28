@@ -261,6 +261,7 @@ const ViewSettings = () => {
               <Select
                 options={viewOptions}
                 value={selectedView}
+                className="react-select view-selector"
                 onChange={set_view_name}
                 onBlur={set_view_name}
                 menuPortalTarget={document.body}
@@ -302,6 +303,7 @@ const ViewSettings = () => {
             <Select
               options={viewOptions}
               value={selectedView}
+              className="react-select view-selector"
               onChange={(e) => {
                 const target_value = e?.target?.value || e?.value;
                 setProp((prop) => {

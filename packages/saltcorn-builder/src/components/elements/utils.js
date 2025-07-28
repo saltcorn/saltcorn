@@ -1056,6 +1056,7 @@ const ConfigField = ({
         return (
           <Select
             options={seloptions}
+            className="react-select selectized-field"
             value={seloptions.find((so) => value === so.value)}
             onChange={(e) =>
               (e.name && myOnChange(e.name)) ||

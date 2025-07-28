@@ -202,6 +202,7 @@ const ActionSettings = () => {
               {options.inJestTestingMode ? null : (
                 <Select
                   options={actionOptions}
+                  className="react-select action-selector"
                   value={selectedAction}
                   defaultValue={selectedAction}
                   onChange={setAction}
