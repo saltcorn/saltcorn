@@ -191,7 +191,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
     });
 
-    /*test('Show if Container in Edit File view', async () => {
+    test('Show if Container in Edit File view', async () => {
         await functions.views();
         await page.waitForSelector(pageobject.createnewview);
         await page.click(pageobject.createnewview);
@@ -228,5 +228,5 @@ test.describe('E2E Test Suite', () => {
         // await page.waitForSelector(pageobject.containText, { state: 'attached', timeout: 500 });
         await page.goBack();
         await expect(page.locator(pageobject.containText)).toBeVisible();
-    });*/
+    });
 }); 
