@@ -13,6 +13,7 @@ const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
 const mjml = require("@saltcorn/markup/mjml-tags");
+const PlainDate = require("@saltcorn/plain-date");
 const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 const {
   Relation,
@@ -2057,7 +2058,7 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          gt: new Date(v),
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           equal: true,
           day_only: dfield.attributes?.day_only,
         });
@@ -2079,7 +2080,7 @@ const stateFieldsToWhere = ({
         });
       } else if (dfield)
         addOrCreateList(qstate, datefield, {
-          lt: new Date(v),
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           equal: true,
           day_only: dfield.attributes?.day_only,
         });
@@ -2088,7 +2089,7 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          gt: new Date(v),
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_toneqdate_")) {
@@ -2096,7 +2097,7 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          lt: new Date(v),
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_gte_")) {
