@@ -10,6 +10,7 @@ const vm = require("vm");
 const Table = require("../models/table");
 const EventLog = require("../models/eventlog");
 const View = require("../models/view");
+const Model = require("../models/model");
 const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
@@ -38,6 +39,8 @@ const {
   dollarizeObject,
   objectToQueryString,
   interpolate,
+  comparingCaseInsensitive,
+  mergeActionResults,
 } = require("../utils");
 const db = require("../db");
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
@@ -138,7 +141,7 @@ const run_code = async ({
       }
     };
   }
-  
+
   const run_js_code = async ({ code, ...restArgs }) => {
     return await run_code({
       row,
@@ -169,6 +172,7 @@ const run_code = async ({
     fetch,
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
+    commitAndRestartTransaction: db.commitAndRestartTransaction,
     URL,
     File,
     User,
@@ -274,6 +278,112 @@ module.exports = {
         user,
         payload ? JSON.parse(payload) : row
       );
+    },
+    namespace: "Control",
+  },
+
+  loop_rows: {
+    /**
+     * @returns {object[]}
+     */
+    description: "Repeat an action over some or all rows in a table",
+    configFields: async () => {
+      const tables = await Table.find({}, { cached: true });
+      const trigger_actions0 = await Trigger.find({});
+      const trigger_actions = trigger_actions0.sort(
+        comparingCaseInsensitive("name")
+      );
+      const order_options = {};
+      for (const table of tables) {
+        order_options[table.name] = table.fields.map((f) => f.name);
+        order_options[table.name].push("RANDOM()");
+      }
+
+      return [
+        {
+          name: "table_name",
+          label: "Table",
+          sublabel: "Source for rows to loop over",
+          input_type: "select",
+          options: tables.map((t) => t.name),
+        },
+        {
+          name: "where",
+          label: "Recalculate where",
+          sublabel: "Where-expression for subset of rows to loop over",
+          type: "String",
+          class: "validate-expression",
+        },
+        {
+          name: "limit",
+          label: "Limit",
+          type: "Integer",
+          sublabel: "Optional. Max number of rows to loop over",
+        },
+        {
+          name: "orderBy",
+          label: "Order by",
+          type: "String",
+          attributes: {
+            calcOptions: ["table_name", order_options],
+          },
+        },
+        {
+          name: "orderDesc",
+          label: "Descending?",
+          type: "Bool",
+        },
+        {
+          name: "trigger_id",
+          label: "Trigger",
+          sublabel: "The trigger to run for each row",
+          input_type: "select",
+          options: trigger_actions.map((t) => ({ label: t.name, value: t.id })),
+        },
+      ];
+    },
+    /**
+     * @param {object} opts
+     * @param {object} opts.row
+     * @param {object} opts.configuration
+     * @param {object} opts.user
+     * @returns {Promise<void>}
+     */
+    run: async ({
+      row,
+      configuration: {
+        table_name,
+        where,
+        limit,
+        orderBy,
+        orderDesc,
+        trigger_id,
+      },
+      user,
+      ...rest
+    }) => {
+      const table = Table.findOne({ name: table_name });
+      const wh = where ? eval_expression(where, row, user) : {};
+      const selOpts = { orderDesc, orderBy };
+      if (limit) selOpts.limit = limit;
+      const rows = await table.getRows(wh, selOpts);
+      const trigger = Trigger.findOne({ id: trigger_id });
+      let result = {};
+
+      for (const row_i of rows) {
+        const stepres = await trigger.runWithoutRow({
+          ...rest,
+          table,
+          row: row_i,
+          user,
+        });
+        try {
+          mergeActionResults(result, stepres);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      return result;
     },
     namespace: "Control",
   },
@@ -2284,6 +2394,98 @@ module.exports = {
     namespace: "Database",
   },
 
+  train_model_instance: {
+    description: "Train a model instance",
+    disableIf: () => !Model.has_templates,
+    configFields: async () => {
+      const models = await Model.find({});
+      const explainers = {};
+      for (const model of models) {
+        try {
+          const table = Table.findOne({ id: model.table_id });
+          if (!model.templateObj) continue;
+          const hyperparameter_fields =
+            model.templateObj.hyperparameter_fields?.({
+              table,
+              ...model,
+            }) || [];
+          if (hyperparameter_fields.length)
+            explainers[model.id] =
+              "Hyperparamter fields: " +
+              hyperparameter_fields.map((f) => f.name).join(",");
+        } catch {
+          //ignore
+        }
+      }
+      return [
+        {
+          name: "model_id",
+          label: "Model",
+          input_type: "select",
+          required: true,
+          options: models.map((model) => ({
+            label: `${model.name} [${model.modelpattern} on ${Table.findOne({ id: model.table_id }).name}]`,
+            value: model.id,
+          })),
+          attributes: {
+            explainers,
+          },
+        },
+        {
+          name: "instance_name",
+          label: "Instance name",
+          required: true,
+          type: "String",
+          sublabel:
+            "Will overwrite instances with exisitng name. Intepolations (<code>{{ }}</code>) available",
+        },
+        {
+          name: "where",
+          label: "Where",
+          fieldview: "textarea",
+          sublabel: "Where-expression for subset of rows to train on. Optional",
+          type: "String",
+          class: "validate-expression",
+        },
+        {
+          name: "hyperparameters",
+          label: "Hyperparameters",
+          sublabel: "Optional. JavaScript object with hyperparameter values",
+          type: "String",
+          fieldview: "textarea",
+          class: "validate-expression",
+        },
+      ];
+    },
+    run: async ({
+      row,
+      configuration: { model_id, instance_name, where, hyperparameters },
+      user,
+    }) => {
+      const use_instance_name = interpolate(
+        instance_name,
+        row || {},
+        user,
+        "train_model_instance instance name"
+      );
+      const state = where
+        ? eval_expression(where, row || {}, user, "train_model_instance where")
+        : {};
+      const hpars = hyperparameters
+        ? eval_expression(
+            hyperparameters,
+            row || {},
+            user,
+            "train_model_instance hyperparameters"
+          )
+        : {};
+      const model = await Model.findOne({ id: model_id });
+      if (!model) throw new Error("model not found");
+      const inst = await model.train_instance(use_instance_name, hpars, state);
+      if (typeof inst === "string") throw new Error(inst);
+    },
+    namespace: "Database",
+  },
   download_file_to_browser: {
     description: "Download a file to the user's browser",
     configFields: async ({ table, mode }) => {

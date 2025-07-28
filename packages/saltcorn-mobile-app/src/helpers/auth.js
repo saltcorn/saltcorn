@@ -7,6 +7,10 @@ import { router } from "../routing/index";
 import { getLastOfflineSession, deleteOfflineData, sync } from "./offline_mode";
 import { addRoute, replaceIframe } from "../helpers/navigation";
 import { showAlerts } from "./common";
+import {
+  initPushNotifications,
+  unregisterPushNotifications,
+} from "../helpers/notifications";
 
 async function loginRequest({ email, password, isSignup, isPublic }) {
   const opts = isPublic
@@ -69,6 +73,11 @@ export async function login({ email, password, entryPoint, isSignup }) {
           await sync();
         }
       }
+    }
+    if (saltcorn.data.utils.isPushEnabled(config.user)) {
+      initPushNotifications();
+    } else {
+      await unregisterPushNotifications();
     }
     alerts.push({
       type: "success",

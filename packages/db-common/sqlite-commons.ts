@@ -262,6 +262,7 @@ export const tryCatchInTransaction = async (f: Function, onError: Function) => {
   }
 };
 
+export const commitAndRestartTransaction = async () => {};
 /**
  *
  * @param queryFunc

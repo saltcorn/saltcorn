@@ -959,12 +959,23 @@ const string = {
           type: "String",
           sublabel: "Optional. If blank, label is URL",
         },
+        {
+          name: "target_blank",
+          label: "Open in new tab",
+          type: "Bool",
+        },
       ],
       description: "Show a link with the field value as the URL.",
       isEdit: false,
       run: (s, req, attrs = {}) =>
         s
-          ? a({ href: text(s || "") }, text_attr(attrs?.link_title || s || ""))
+          ? a(
+              {
+                href: text(s || ""),
+                ...(attrs.target_blank ? { target: "_blank" } : {}),
+              },
+              text_attr(attrs?.link_title || s || "")
+            )
           : "",
     },
     /**
@@ -1337,11 +1348,16 @@ const string = {
           sublabel: "Do not escape unsafe HTML fragments",
           type: "String",
         },
+        {
+          type: "Bool",
+          name: "monospace",
+          label: "Monospace",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         textarea(
           {
-            class: ["form-control", cls],
+            class: ["form-control", cls, attrs.monospace && "font-monospace"],
             name: text_attr(nm),
             "data-fieldname": text_attr(field.name),
             disabled: attrs.disabled,
@@ -1467,10 +1483,17 @@ const string = {
      */
     password: {
       isEdit: true,
+      configFields: [
+        {
+          name: "visibility_toggle",
+          label: "Visibility toggle",
+          type: "Bool",
+        },
+      ],
       blockDisplay: true,
       description: "Password input type, characters are hidden when typed",
-      run: (nm, v, attrs, cls, required, field) =>
-        input({
+      run: (nm, v, attrs, cls, required, field) => {
+        const pwinput = input({
           type: "password",
           disabled: attrs.disabled,
           readonly: attrs.readonly,
@@ -1480,7 +1503,18 @@ const string = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
-        }),
+        });
+        if (attrs?.visibility_toggle)
+          return div(
+            { class: "input-group" },
+            pwinput,
+            span(
+              { class: "input-group-text toggle-password-vis" },
+              i({ class: "fas fa-eye toggle-password-vis-icon" })
+            )
+          );
+        else return pwinput;
+      },
     },
     select_by_code: { ...select_by_code, type: undefined },
   },
@@ -2002,6 +2036,17 @@ const float = {
       if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
       return true;
     },
+
+  /**
+   * check if two float values are equal within a given precision
+   * @param a
+   * @param b
+   * @param opts
+   * @returns true or false
+   */
+  equals: (a, b, { decimal_places }) => {
+    return Math.abs(a - b) < Math.pow(10, -decimal_places) / 2;
+  },
 };
 
 /**
@@ -2246,6 +2291,18 @@ const date = {
    * @returns {boolean}
    */
   validate: () => (v) => v instanceof Date && !isNaN(v),
+  /**
+   * check if two date values are equal
+   * @param a
+   * @param b
+   * @returns true or false
+   */
+  equals: (a, b) => {
+    if (a instanceof Date && b instanceof Date) {
+      return a.getTime() === b.getTime();
+    }
+    return false;
+  },
 };
 
 /**

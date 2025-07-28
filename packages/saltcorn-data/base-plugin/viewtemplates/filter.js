@@ -117,7 +117,7 @@ const configuration_workflow = (req) =>
             });
           }
           const stateActions = Object.entries(getState().actions).filter(
-            ([k, v]) => !v.disableInBuilder
+            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
           );
           const actions1 = ["Clear", ...stateActions.map(([k, v]) => k)];
           const actions = Trigger.action_options({
@@ -126,6 +126,10 @@ const configuration_workflow = (req) =>
             forBuilder: true,
             builtInLabel: "Filter Actions",
             builtIns: ["Clear"],
+          });
+          const triggerActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
           });
           const actionConstraints = {};
           const stateActionsObj = getState().actions;
@@ -221,6 +225,7 @@ const configuration_workflow = (req) =>
             roles,
             builtInActions: ["Clear"],
             actions,
+            triggerActions,
             actionConstraints,
             views,
             pages,

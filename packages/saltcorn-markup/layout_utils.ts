@@ -442,10 +442,17 @@ const alert = (type: string, s: string): string => {
 /**
  * creates a toast div
  * @param type bootstrap type
- * @param s
+ * @param s message to show
+ * @param id optional id
+ * @param title optional title (if not set, type or error for danger is used)
  * @returns
  */
-const toast = (type: string, s: string, id?: string): string => {
+const toast = (
+  type: string,
+  s: string,
+  id?: string,
+  title?: string
+): string => {
   if (!s || s.length === 0) return "";
   else {
     const realtype = type === "error" ? "danger" : type;
@@ -473,7 +480,10 @@ const toast = (type: string, s: string, id?: string): string => {
       div(
         { class: `toast-header bg-${realtype} text-white py-1` },
         icon ? i({ class: `fas ${icon} me-2` }) : "",
-        strong({ class: "me-auto" }, type === "danger" ? "error" : type),
+        strong(
+          { class: "me-auto" },
+          title ? title : type === "danger" ? "error" : type
+        ),
         button({
           type: "button",
           class: "btn-close btn-close-white",

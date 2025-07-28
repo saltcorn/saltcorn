@@ -128,6 +128,11 @@ const configTypes: ConfigTypes = {
     label: "2FA policy by role",
     default: {},
   },
+  push_policy_by_role: {
+    type: "hidden",
+    label: "Push notifications policy by role",
+    default: {},
+  },
   auth_method_by_role: {
     type: "hidden",
     label: "Authentication method by role",
@@ -235,6 +240,67 @@ const configTypes: ConfigTypes = {
     default: "80",
     required: true,
   },
+  min_password_length: {
+    type: "Integer",
+    label: "Minimum password length",
+    default: 8,
+    required: true,
+    blurb:
+      "The minimum length of passwords for users. Set to 0 to disable password requirements.",
+    excludeFromMobile: true,
+  },
+  check_common_passwords: {
+    type: "Bool",
+    label: "Check common passwords",
+    default: true,
+    blurb:
+      "Check if the password is in the list of common passwords. If enabled, users will not be able to use common passwords.",
+    excludeFromMobile: true,
+  },
+  password_require_uppercase: {
+    type: "Bool",
+    label: "Require uppercase",
+    default: false,
+    blurb: "Require at least one uppercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_lowercase: {
+    type: "Bool",
+    label: "Require lowercase",
+    default: true,
+    blurb: "Require at least one lowercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_number: {
+    type: "Bool",
+    label: "Require number",
+    default: false,
+    blurb: "Require at least one number in the password",
+    excludeFromMobile: true,
+  },
+  password_require_special_char: {
+    type: "Bool",
+    label: "Require special character",
+    default: false,
+    blurb: "Require at least one special character in the password",
+    excludeFromMobile: true,
+  },
+  password_complexity: {
+    type: "String",
+    label: "Password complexity",
+    default: "",
+    blurb:
+      "The regular expression that passwords must match. Set to empty string to disable password complexity requirements.",
+    excludeFromMobile: true,
+  },
+  password_complexity_error: {
+    type: "String",
+    label: "Password complexity error",
+    default: "",
+    blurb:
+      "The error message to show when password does not match the complexity requirements.",
+    excludeFromMobile: true,
+  },
   min_role_upload: {
     type: "Role",
     label: "Role to upload files",
@@ -290,7 +356,7 @@ const configTypes: ConfigTypes = {
     default: "",
     restart_required: true,
     blurb:
-      "Comma-separated list of relative URL routes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
+      "Comma-separated list of relative URL route prefixes where CSRF token checking is disabled. Example: <code>/files/upload, /auth/signup</code>",
   },
   npm_available_js_code: {
     type: "String",
@@ -1341,6 +1407,7 @@ const configTypes: ConfigTypes = {
     default: "",
     blurb: "Public key for VAPID authentication in web push notifications",
     excludeFromMobile: true,
+    helpTopic: "VAPID configuration",
   },
   vapid_private_key: {
     type: "String",
@@ -1359,10 +1426,21 @@ const configTypes: ConfigTypes = {
       "Usually, it is your email address.",
     excludeFromMobile: true,
   },
+  firebase_json_key: {
+    type: "File",
+    name: "firebase_json_key",
+    label: "Firebase JSON key",
+    default: 0,
+    attributes: {
+      select_file_where: { min_role_read: 100, mime_super: "application" },
+    },
+    sublabel: "This is your Firebase Service Account JSON key file. ",
+    helpTopic: "Firebase JSON key",
+  },
   push_notification_icon: {
     type: "File",
     name: "push_notification_icon",
-    label: "Web push icon",
+    label: "Push icon",
     default: 0,
     attributes: {
       select_file_where: { min_role_read: 100, mime_super: "image" },
@@ -1372,7 +1450,7 @@ const configTypes: ConfigTypes = {
   push_notification_badge: {
     type: "File",
     name: "push_notification_badge",
-    label: "Web push badge",
+    label: "Push badge",
     default: 0,
     attributes: {
       select_file_where: { min_role_read: 100, mime_super: "image" },

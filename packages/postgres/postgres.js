@@ -591,6 +591,14 @@ const withTransaction = async (f, onError) => {
   }
 };
 
+const commitAndRestartTransaction = async () => {
+  const client = await getClient();
+  sql_log("COMMIT;");
+  await client.query("COMMIT;");
+  sql_log("BEGIN;");
+  await client.query("BEGIN;");
+};
+
 const tryCatchInTransaction = async (f, onError) => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const reqCon = getRequestContext();
@@ -655,6 +663,7 @@ const postgresExports = {
   truncate,
   withTransaction,
   tryCatchInTransaction,
+  commitAndRestartTransaction,
 };
 
 module.exports = (getConnectObjectPara) => {

@@ -174,7 +174,9 @@ const pageBuilderData = async (req, context) => {
   const actions = [
     "GoBack",
     ...Object.entries(stateActions)
-      .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
+      .filter(
+        ([k, v]) => !v.requireRow && !v.disableInBuilder && !v.disableIf?.()
+      )
       .map(([k, v]) => k),
   ];
   const triggers = await Trigger.find({
@@ -182,6 +184,9 @@ const pageBuilderData = async (req, context) => {
   });
   triggers.forEach((tr) => {
     actions.push(tr.name);
+  });
+  const triggerActions = Trigger.trigger_actions({
+    apiNeverTriggers: true,
   });
   const actionConfigForms = {};
   for (const name of actions) {
@@ -248,6 +253,7 @@ const pageBuilderData = async (req, context) => {
     page_groups,
     actions: actionsNotRequiringRow,
     builtInActions: ["GoBack"],
+    triggerActions,
     library,
     min_role: context.min_role,
     actionConfigForms,

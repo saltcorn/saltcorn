@@ -1433,8 +1433,16 @@ router.post(
       const inboundTable = Table.findOne(inboundTableName);
       field = inboundTable.getField(refField);
     }
-
+    if (
+      !field &&
+      table.name === "users" &&
+      ["passwordRepeat", "password"].includes(fieldName)
+    ) {
+      field = new Field({ name: fieldName, type: "String" });
+    }
     if (!field) {
+      console.log("no field");
+
       res.send(req.query?.accept == "json" ? "[]" : "");
       return;
     }

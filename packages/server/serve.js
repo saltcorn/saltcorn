@@ -209,7 +209,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const state = getState();
     if (state) {
       await state.setConfig("joined_log_socket_ids", []);
-      await state.setConfig("joined_real_time_socket_ids", []);
     }
   });
   if (useClusterAdaptor) setupPrimary();
@@ -291,7 +290,8 @@ const onMessageFromWorker =
       ///ie from saltcorn
       //broadcast
       Object.entries(cluster.workers).forEach(([wpid, w]) => {
-        if (wpid !== pid) w.send(msg);
+        //if it is plugin refresh, we need sender to get it as wll
+        if (wpid !== pid || msg?.refresh_plugin_cfg) w.send(msg);
       });
       workerDispatchMsg(msg); //also master
       return true;
@@ -614,13 +614,6 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           if (view.min_role < role_id)
             throw new Error("Not authorized to join collaboration room");
           socket.join(`_${tenant}_collab_room_`);
-          const socketIds = await getState().getConfig(
-            "joined_real_time_socket_ids"
-          );
-          socketIds.push(socket.id);
-          await getState().setConfig("joined_real_time_socket_ids", [
-            ...socketIds,
-          ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);

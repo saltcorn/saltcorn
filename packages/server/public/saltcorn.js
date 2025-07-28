@@ -261,6 +261,8 @@ function spin_action_link(e) {
 
   $e.attr("data-innerhtml-prespin", $e.html());
   $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width).height(height);
+  $(document).trigger("activate-spinner", $e);
+  $e.trigger("spin");
 }
 
 function reset_spinners() {
@@ -423,6 +425,7 @@ function ajax_modal(url, opts = {}) {
       new bootstrap.Modal($("#scmodal"), {
         focus: false,
       }).show();
+      $("#scmodal .modal-body").find("[autofocus]").first().focus();
       initialize_page();
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {

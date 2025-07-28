@@ -153,6 +153,7 @@ describe("Edit view Workflow", () => {
         auto_create: false,
         delete_unchanged_auto_create: false,
         split_paste: true,
+        enable_realtime: false,
         destination_type: "View",
         view_when_done: "authorlist",
       });
@@ -167,6 +168,7 @@ describe("Edit view Workflow", () => {
         }),
         stepName: "Edit options",
         destination_type: "View",
+        enable_realtime: false,
         view_when_done: "authorlist",
         auto_save: "on",
         split_paste: "on",
@@ -174,6 +176,7 @@ describe("Edit view Workflow", () => {
       mockReqRes.req
     );
     assertIsSet(wfres);
+
     expect(wfres).toEqual({
       redirect: "/viewedit",
       flash: [
@@ -184,7 +187,6 @@ describe("Edit view Workflow", () => {
 
     const viewNew = View.findOne({ name: "authoredit" });
     assertIsSet(viewNew);
-
     expect(viewNew.configuration).toEqual({
       layout: {
         above: [{ type: "field", fieldview: "edit", field_name: "author" }],
@@ -195,6 +197,7 @@ describe("Edit view Workflow", () => {
       auto_create: false,
       delete_unchanged_auto_create: false,
       split_paste: true,
+      enable_realtime: false,
       view_when_done: "authorlist",
       destination_type: "View",
     });
@@ -305,6 +308,7 @@ describe("Edit view Workflow", () => {
       auto_create: false,
       delete_unchanged_auto_create: false,
       split_paste: true,
+      enable_realtime: false,
       view_when_done: "authorlist",
       destination_type: "View",
     });

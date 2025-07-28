@@ -181,7 +181,6 @@ class State {
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
-  hasJoinedRealTimeSockets: boolean;
   queriesCache?: Record<string, any>;
   scVersion: string;
   waitingWorkflows?: boolean;
@@ -243,7 +242,6 @@ class State {
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
     this.hasJoinedLogSockets = false;
-    this.hasJoinedRealTimeSockets = false;
     try {
       this.scVersion = require("../../package.json").version;
     } catch (e) {
@@ -446,8 +444,6 @@ class State {
       await this.refresh_i18n();
       this.hasJoinedLogSockets =
         (this.configs.joined_log_socket_ids?.value || []).length > 0;
-      this.hasJoinedRealTimeSockets =
-        (this.configs.joined_real_time_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
       process_send({ refresh: "config", tenant: db.getTenantSchema() });
@@ -669,6 +665,8 @@ class State {
   getConfig(key: string, def?: any) {
     const fixed = db.connectObj.fixed_configuration[key];
     if (typeof fixed !== "undefined") return fixed;
+    const exposed = db.connectObj.exposed_configuration[key];
+    if (typeof exposed !== "undefined") return exposed;
     if (db.connectObj.inherit_configuration.includes(key)) {
       if (typeof singleton.configs[key] !== "undefined")
         return singleton.configs[key].value;
@@ -715,8 +713,6 @@ class State {
         if (key === "log_level") this.logLevel = +value;
         if (key === "joined_log_socket_ids")
           this.hasJoinedLogSockets = (value || []).length > 0;
-        if (key === "joined_real_time_socket_ids")
-          this.hasJoinedRealTimeSockets = (value || []).length > 0;
         if (db.is_node)
           process_send({ refresh: "config", tenant: db.getTenantSchema() });
         else {
@@ -966,14 +962,23 @@ class State {
           ...this.function_context,
           Table,
           File,
+          View,
           User,
+          Trigger,
           setTimeout,
           fetch,
           sleep,
           interpolate,
+          tryCatchInTransaction: db.tryCatchInTransaction,
+          commitAndRestartTransaction: db.commitAndRestartTransaction,
+          Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor
           require: (nm: string) => this.codeNPMmodules[nm],
+          setConfig: (k: string, v: any) =>
+            this.isFixedConfig(k) ? undefined : this.setConfig(k, v),
+          getConfig: (k: string) =>
+            this.isFixedConfig(k) ? undefined : this.getConfig(k),
         };
         const funCtxKeys = new Set(Object.keys(myContext));
         const sandbox = createContext(myContext);

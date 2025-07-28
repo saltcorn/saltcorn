@@ -144,6 +144,7 @@ class BuildAppCommand extends Command {
         keyStorePath: flags.androidKeystore,
         keyStoreAlias: flags.androidKeyStoreAlias,
         keyStorePassword: flags.androidKeystorePassword,
+        googleServicesFile: flags.googleServicesFile,
       });
       let result;
       switch (flags.mode) {
@@ -335,6 +336,12 @@ BuildAppCommand.flags = {
     name: "android key store password",
     string: "keyStorePassword",
     description: "he password to access the keystore file.",
+  }),
+  googleServicesFile: Flags.string({
+    name: "google services file",
+    string: "googleServicesFile",
+    description:
+      "Path to the google-services.json file for Firebase Push Notifications (Android only)",
   }),
 };
 

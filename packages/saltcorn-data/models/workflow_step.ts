@@ -325,7 +325,7 @@ class WorkflowStep {
     const linkLines = [];
     let step_ix = 0;
     const loopLinks = WorkflowStep.getDiagramLoopLinkBacks(steps);
-    
+
     for (const step of steps) {
       if (step.initial_step)
         linkLines.push(
@@ -643,7 +643,21 @@ class WorkflowStep {
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "TableQuery" },
     });
-
+    actionConfigFields.push({
+      label: "Popup title",
+      sublabel: "Text shown to the use as popup window title, if in a popup",
+      name: "popup_title",
+      type: "String",
+      showIf: {
+        wf_action_name: [
+          "DataOutput",
+          "UserForm",
+          "Output",
+          "EditViewForm",
+          "OutputView",
+        ],
+      },
+    });
     actionConfigFields.push(
       new FieldRepeat({
         name: "user_form_questions",

@@ -179,6 +179,14 @@ const resetForm = (body, req) => {
         input_type: "password",
       }),
       new Field({
+        label: req.__("Confirm password"),
+        name: "confirm_password",
+        input_type: "password",
+        attributes: {
+          autocomplete: "new-password",
+        },
+      }),
+      new Field({
         name: "token",
         input_type: "hidden",
       }),
@@ -192,6 +200,8 @@ const resetForm = (body, req) => {
   });
   form.values.email = body && body.email;
   form.values.token = body && body.token;
+  form.values.password = body && body.password;
+  form.values.confirm_password = body && body.confirm_password;
   return form;
 };
 
@@ -266,10 +276,15 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
       const user = await User.findOne({ email });
       if (user && user.checkPassword(password)) {
         const now = new Date();
+        const pushEnabled = !!user._attributes?.notify_push;
+        const tokenUser = { ...user.session_object };
+        if (tokenUser.attributes)
+          tokenUser.attributes.notify_push = pushEnabled;
+        else tokenUser._attributes = { notify_push: pushEnabled };
         const token = jwt.sign(
           {
             sub: email,
-            user: user.session_object,
+            user: tokenUser,
             iss: "saltcorn@saltcorn",
             aud: "saltcorn-mobile-app",
             iat: now.valueOf(),
@@ -470,16 +485,29 @@ router.post(
       email: (req.body || {}).email,
       reset_password_token: (req.body || {}).token,
       password: (req.body || {}).password,
+      confirm_password: (req.body || {}).confirm_password,
     });
     if (result.success) {
       req.flash(
         "success",
         req.__("Password reset. Log in with your new password")
       );
-    } else {
+      res.redirect("/auth/login");
+    } else if (result.error) {
+      console.log({
+        result
+      })
       req.flash("danger", result.error);
+      const form = resetForm(req.body, req);
+      form.errors = { password: result.error, confirm_password: result.error };
+      res.sendAuthWrap(req.__(`Reset password`), form, {});
+    } else {
+      req.flash(
+        "danger",
+        req.__("Password reset not enabled. Contact your administrator.")
+      );
+      res.redirect("/auth/login");
     }
-    res.redirect("/auth/login");
   })
 );
 

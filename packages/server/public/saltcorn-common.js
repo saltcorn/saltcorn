@@ -172,6 +172,17 @@ const global_fetch_options_cache = {};
 
 function apply_showif() {
   const isNode = getIsNode();
+  $(".toggle-password-vis")
+    .off("click")
+    .on("click", function (event) {
+      const $e = $(event.target);
+      const eyeIcon = $e.prop("tagName") === "I" ? $e : $e.find("i");
+      const passwordInput = eyeIcon.parent().prev();
+
+      const isPassword = passwordInput.attr("type") === "password";
+      passwordInput.attr("type", isPassword ? "text" : "password");
+      eyeIcon.toggleClass("fa-eye fa-eye-slash");
+    });
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
@@ -1712,6 +1723,8 @@ function press_store_button(clicked, keepOld, disable) {
     .html('<i class="fas fa-spinner fa-spin"></i>')
     .width(width)
     .height(height);
+  $(document).trigger("activate-spinner", $(btn));
+  $(btn).trigger("spin");
   setTimeout(() => {
     $(btn).prop("disabled", true);
   }, 50);
@@ -2077,7 +2090,15 @@ function init_room(viewname, room_id) {
 }
 
 function init_collab_room(viewname, eventCfgs) {
-  const socket = io({ transports: ["websocket"] });
+  let socket = null;
+  if (parent?.saltcorn?.data?.state) {
+    const { server_path, jwt } =
+      parent.saltcorn.data.state.getState().mobileConfig;
+    socket = io(server_path, {
+      query: `jwt=${jwt}`,
+      transports: ["websocket"],
+    });
+  } else socket = io({ transports: ["websocket"] });
   for (const [event, callback] of Object.entries(eventCfgs.events)) {
     socket.on(event, callback);
   }
