@@ -2116,7 +2116,7 @@ function init_collab_room(viewname, eventCfgs) {
 }
 
 function init_dynamic_update_room() {
-  if (!window.io) return;
+  if (!window.io || navigator.userAgent.includes("jsdom")) return;
   let socket = get_shared_socket();
   socket.on("dynamic_update", async (data) => {
     await common_done(data);

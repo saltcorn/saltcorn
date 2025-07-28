@@ -172,7 +172,7 @@ var logViewerHelpers = (() => {
         }
       }, 5000);
       try {
-        socket = io({ transports: ["websocket"] });
+        socket = window.get_shared_socket();
       } catch (e) {
         notifyAlert({
           type: "danger",
@@ -180,7 +180,8 @@ var logViewerHelpers = (() => {
         });
       }
       startTrackingMsg();
-      socket.on("connect", () => handleConnect(socket));
+      if (socket.connected) handleConnect(socket);
+      else socket.on("connect", () => handleConnect(socket));
       socket.on("disconnect", handleDisconnect);
       socket.on("log_msg", handleLogMsg);
       socket.on("test_conn_msg", handleTestConnMsg);
