@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
+const PlainDate = require("@saltcorn/plain-date");
 
 const { sleep, plugin_with_routes } = mocks;
 
@@ -555,10 +556,14 @@ describe("adds new fields to history #1202", () => {
       attributes: { day_only: true },
     });
     await table.update({ versioned: true });
-    await table.insertRow({ date: new Date() });
+    await table.insertRow({ date: new PlainDate() });
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
-    if (!db.isSQLite) expect(rows[0].date instanceof Date).toBe(true);
+    if (!db.isSQLite) expect(rows[0].date instanceof PlainDate).toBe(true);
+    const yday = new PlainDate();
+    yday.setDate(yday.getDate() - 1);
+    const rows1 = await table.getRows({ date: { gt: yday } });
+    expect(rows1.length).toBe(1);
   });
   it("history first", async () => {
     const table = await Table.create("histcalc2");
