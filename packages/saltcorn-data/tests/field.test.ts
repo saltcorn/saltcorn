@@ -556,6 +556,7 @@ describe("adds new fields to history #1202", () => {
       attributes: { day_only: true },
     });
     await table.update({ versioned: true });
+
     await table.insertRow({ date: new PlainDate() });
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
@@ -564,6 +565,13 @@ describe("adds new fields to history #1202", () => {
     yday.setDate(yday.getDate() - 1);
     const rows1 = await table.getRows({ date: { gt: yday } });
     expect(rows1.length).toBe(1);
+    const tmrw = new PlainDate();
+    tmrw.setDate(tmrw.getDate() + 1);
+    const rows2 = await table.getRows({ date: { gt: tmrw } });
+    expect(rows2.length).toBe(0);
+    const today = new PlainDate();
+    const rows3 = await table.getRows({ date: { gt: today, equal: true } });
+    expect(rows3.length).toBe(1);
   });
   it("history first", async () => {
     const table = await Table.create("histcalc2");
