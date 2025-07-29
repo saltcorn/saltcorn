@@ -1693,18 +1693,23 @@ module.exports = {
         sublabel: "Optional",
         type: "String",
       },
+      {
+        name: "remove_delay",
+        label: "Remove after (s)",
+        type: "Float",
+      },
     ],
     run: async ({
       row,
       user,
-      configuration: { type, notify_type, text, title },
+      configuration: { type, notify_type, text, title, remove_delay },
     }) => {
       //type is legacy. this name gave react problems
       let text1 = interpolate(text, row, user, "Toast text");
       let toast_title = title
         ? { toast_title: interpolate(title, row, user, "Toast title") }
         : {};
-
+      if (remove_delay) toast_title.remove_delay = remove_delay;
       switch (notify_type || type) {
         case "Error":
           return { error: text1, ...toast_title };
