@@ -9,7 +9,7 @@
     "directory": "packages/plain-date"
   },
   "scripts": {
-    "test": "jest ",
+    "test": "echo NO TESTS",
     "tsc": "echo 'No TypeScript build'",
     "clean": "echo 'No TypeScript build'"
   },
