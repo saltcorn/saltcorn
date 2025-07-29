@@ -1,6 +1,5 @@
 class PlainDate {
   constructor(year, month, day) {
-    this.is_invalid = false;
     if (arguments.length === 0) {
       const now = new Date();
       this.year = now.getFullYear();
@@ -157,6 +156,15 @@ class PlainDate {
   }
   toLocaleString(...args) {
     return this.toDate().toLocaleString(...args);
+  }
+  [Symbol.toPrimitive](hint) {
+    if (hint === "number") {
+      return this.getTime();
+    }
+    if (hint === "string") {
+      return this.toString();
+    }
+    return null;
   }
 }
 
