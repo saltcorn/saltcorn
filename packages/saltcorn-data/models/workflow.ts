@@ -226,7 +226,7 @@ class Workflow implements AbstractWorkflow {
         ) {
           const value =
             instanceOfType(fld.type) && fld.type.read
-              ? fld.type.read(ctxValue)
+              ? fld.type.read(ctxValue, fld.attributes)
               : ctxValue;
           if (fld.parent_field) {
             form.values[`${fld.parent_field}_${fld.name}`] = value;

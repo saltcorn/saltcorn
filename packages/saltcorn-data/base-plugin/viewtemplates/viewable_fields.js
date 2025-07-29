@@ -1762,7 +1762,7 @@ const splitUniques = (fields, state, fuzzyStrings) => {
     )
       uniques[k] = { ilike: v };
     else if (field && field.is_unique)
-      uniques[k] = field.type.read ? field.type.read(v) : v;
+      uniques[k] = field.type.read ? field.type.read(v, field.attributes) : v;
     else nonUniques[k] = v;
   });
   return { uniques, nonUniques };
@@ -1931,7 +1931,12 @@ const fill_presets = async (table, req, fixed) => {
         if (fld) {
           if (table.name === "users" && fld.primary_key)
             fixed[fldnm] = req.user ? req.user.id : null;
-          else fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
+          else
+            fixed[fldnm] = fld.presets[fixed[k]]({
+              user: req.user,
+              req,
+              field: fld,
+            });
         }
       }
       delete fixed[k];

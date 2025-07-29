@@ -1645,5 +1645,6 @@
 	"Firebase JSON key": "Firebase JSON key",
 	"This is your Firebase Service Account JSON key file. ": "This is your Firebase Service Account JSON key file. ",
 	"Real-time updates": "Real-time updates",
-	"Enable real-time updates for this view": "Enable real-time updates for this view"
+	"Enable real-time updates for this view": "Enable real-time updates for this view",
+	"today": "today"
 }
