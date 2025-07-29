@@ -92,9 +92,11 @@ class PlainDate {
   }
 
   toString() {
+    if (this.is_invalid) return "Invalid Date";
     return this.toISODateString();
   }
   toDateString() {
+    if (this.is_invalid) return "Invalid Date";
     return this.toISODateString();
   }
   toISOString() {

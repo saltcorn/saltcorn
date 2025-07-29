@@ -7,7 +7,6 @@ class.
 
 ```javascript
 const PlainDate = require("@saltcorn/plain-date")
-const PlainDate = require("@saltcorn/plain-date")
 
 let today = new PlainDate()
 today
@@ -22,7 +21,7 @@ today.toLocaleDateString()
 // => '7/13/2025'
 ```
 
-run `plain_date.toDate()` to get the Date object corresponding to midnight in the ¯\\\_(ツ)_/¯ timezone. 
+Run `plain_date.toDate()` to get the Date object corresponding to midnight in the ¯\\\_(ツ)_/¯ timezone. 
 
 ### Parsing Dates from pg
 
@@ -35,3 +34,9 @@ types.setTypeParser(types.builtins.DATE, (d) =>
   d === null ? null : new PlainDate(d)
 );
 ```
+
+### Limitations
+
+If you pass timezone information in a date string to PlainDate.parse or new PlainDate, and this is a different timezone to the computer's timezone, you could get a date shift. 
+
+Missing methods: toUTCString
