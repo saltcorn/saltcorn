@@ -2181,6 +2181,13 @@ const date = {
       run: (d, req) => {
         if (!d) return "";
         const loc = locale(req);
+        if (d instanceof PlainDate) {
+          const today = new PlainDate();
+          if (today.equals(d)) return req.__("today");
+          let m = moment(d.toDate());
+          if (loc) return text(m.locale(loc).fromNow());
+          else return text(m.fromNow());
+        }
         if (loc) return text(moment(d).locale(loc).fromNow());
         else return text(moment(d).fromNow());
       },
