@@ -1,5 +1,6 @@
 class PlainDate {
   constructor(year, month, day) {
+    this.is_invalid = false;
     if (arguments.length === 0) {
       const now = new Date();
       this.year = now.getFullYear();
@@ -19,19 +20,25 @@ class PlainDate {
       this.month = now.getMonth() + 1;
       this.day = now.getDate();
     } else if (arguments.length === 1 && year instanceof Date) {
+      if (isNaN(year)) this.is_invalid = true;
       this.year = year.getFullYear();
       this.month = year.getMonth() + 1;
       this.day = year.getDate();
     } else if (arguments.length === 1 && year instanceof PlainDate) {
-      this.year = year.year;
-      this.month = year.month;
-      this.day = year.day;
+      this.copyFromPlainDate(year);
     } else {
       this.year = Number(year);
       this.month = Number(month);
       this.day = Number(day);
     }
-    if (!this.isValid()) throw new Error("Invalid PlainDate");
+    if (!this.isValid()) this.is_invalid = true;
+  }
+
+  copyFromPlainDate(pd) {
+    this.year = pd.year;
+    this.month = pd.month;
+    this.day = pd.day;
+    this.is_invalid = pd.is_invalid;
   }
 
   static from(dateLike) {
@@ -39,7 +46,12 @@ class PlainDate {
       return new PlainDate(dateLike.year, dateLike.month, dateLike.day);
     if (dateLike instanceof Date) return PlainDate.fromDate(dateLike);
     if (typeof dateLike === "string") return new PlainDate(dateLike);
+    if (typeof dateLike === "number") return new PlainDate(dateLike);
     throw new Error("Invalid dateLike");
+  }
+
+  static parse(dateStr) {
+    return new PlainDate(Date.parse(dateStr));
   }
 
   static fromDate(date) {
@@ -47,6 +59,7 @@ class PlainDate {
   }
 
   isValid() {
+    if (this.is_invalid) return false;
     if (
       !Number.isInteger(this.year) ||
       !Number.isInteger(this.month) ||
@@ -88,10 +101,12 @@ class PlainDate {
     return this.toISODateString();
   }
   toISODateString() {
+    if (this.is_invalid) throw new RangeError("Invalid time value");
     return `${String(this.year).padStart(4, "0")}-${String(this.month).padStart(2, "0")}-${String(this.day).padStart(2, "0")}`;
   }
 
   valueOf() {
+    if (this.is_invalid) return NaN;
     return Date.UTC(this.year, this.month - 1, this.day);
   }
 
@@ -109,23 +124,30 @@ class PlainDate {
   setMonth(month, day = this.day) {
     // month: 0-based, like Date
     const d = new Date(this.year, month, day);
-    return PlainDate.fromDate(d);
+    this.copyFromPlainDate(PlainDate.fromDate(d));
+    return this.getTime();
   }
 
   setDate(day) {
-    const d = new Date(this.year, this.month - 1, day);
-    return PlainDate.fromDate(d);
-  }
-
-  toJSON() {
-    return this.toISODateString();
+    const d = this.toDate();
+    d.setDate(day);
+    this.copyFromPlainDate(PlainDate.fromDate(d));
+    return this.getTime();
   }
 
   setYear(year) {
     const d = new Date(year, this.month - 1, this.day);
-    return PlainDate.fromDate(d);
+    this.copyFromPlainDate(PlainDate.fromDate(d));
+    return this.getTime();
   }
+
+  toJSON() {
+    if (this.is_invalid) return null;
+    return this.toISODateString();
+  }
+
   toDate() {
+    if (this.is_invalid) return new Date("Invalid Date");
     return new Date(this.year, this.month - 1, this.day);
   }
   toLocaleDateString(...args) {
