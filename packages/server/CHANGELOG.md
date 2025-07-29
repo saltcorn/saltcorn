@@ -10,7 +10,11 @@
 
 * Visibility toggle option for password fieldviews. Click an eye icon to show password
 
-* Enable/disable push notifications per-role in the Users role table. 
+* Enable/disable push notifications per-role in the Users role table.
+
+* Table triggers (Insert, Update, Delete) and Login and PageLoad can now be limited with an only-if formula.
+
+* Date fields with the day only attribute are now handled internally without time or timezone from the database to the client. This should lead to more reliable date handling.
 
 ## 1.3.0 - Released 2 July 2025
 
