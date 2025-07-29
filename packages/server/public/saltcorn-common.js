@@ -1699,10 +1699,10 @@ function notifyAlert(note, spin) {
   if ($modal.length && $modal.hasClass("show"))
     $("#modal-toasts-area").append(html);
   else $("#toasts-area").append(html);
-  if (type === "success") {
+  if (type === "success" || note.remove_delay) {
     setTimeout(() => {
       $(`#${id}`).removeClass("show");
-    }, 5000);
+    }, note.remove_delay ? note.remove_delay*1000: 5000);
   }
 }
 
@@ -1778,17 +1778,32 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   };
   if (res.notify)
     await handle(res.notify, (text) =>
-      notifyAlert({ type: "info", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "info",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   if (res.error) {
     if (window._sc_loglevel > 4) console.trace("error response", res.error);
     await handle(res.error, (text) =>
-      notifyAlert({ type: "danger", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "danger",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   }
   if (res.notify_success)
     await handle(res.notify_success, (text) =>
-      notifyAlert({ type: "success", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "success",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
     const form =
