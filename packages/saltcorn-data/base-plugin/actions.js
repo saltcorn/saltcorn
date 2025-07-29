@@ -334,6 +334,13 @@ module.exports = {
           type: "Bool",
         },
         {
+          name: "interval",
+          label: "Interval (s)",
+          sublabel: "Delay in seconds between action invocations",
+          type: "Float",
+          attributes: { min: 0 },
+        },
+        {
           name: "trigger_id",
           label: "Trigger",
           sublabel: "The trigger to run for each row",
@@ -358,6 +365,7 @@ module.exports = {
         orderBy,
         orderDesc,
         trigger_id,
+        interval,
       },
       user,
       ...rest
@@ -369,8 +377,9 @@ module.exports = {
       const rows = await table.getRows(wh, selOpts);
       const trigger = Trigger.findOne({ id: trigger_id });
       let result = {};
-
+      let first = true;
       for (const row_i of rows) {
+        if (!first && interval) await sleep(interval * 1000);
         const stepres = await trigger.runWithoutRow({
           ...rest,
           table,
@@ -382,6 +391,7 @@ module.exports = {
         } catch (error) {
           console.error(error);
         }
+        first = false;
       }
       return result;
     },
