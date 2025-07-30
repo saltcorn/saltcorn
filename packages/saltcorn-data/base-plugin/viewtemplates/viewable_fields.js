@@ -240,7 +240,12 @@ const make_link = (
       const attrs = { href };
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = ["dropdown-item"];
-      if (link_style) attrs.class = [...(attrs.class || []), link_style];
+      if (link_style)
+        attrs.class = [
+          ...(attrs.class || []),
+          link_style,
+          link_style.includes("btn") && "d-inline-block",
+        ];
       if (link_size) attrs.class = [...(attrs.class || []), link_size];
       if (in_row_click) attrs.onclick = "event.stopPropagation()";
       if (in_modal)

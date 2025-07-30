@@ -148,7 +148,14 @@ const link_view = (
       {
         ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
         href: url,
-        class: [textStyle, link_style, link_size, extraClass, link_class],
+        class: [
+          textStyle,
+          link_style,
+          link_size,
+          extraClass,
+          link_class,
+          link_style && link_style.includes("btn") && "d-inline-block",
+        ],
         style,
         title: link_title,
         onclick: in_row_click ? "event.stopPropagation()" : undefined,
@@ -2459,9 +2466,7 @@ const readState = (state, fields, req) => {
       ) {
         //ignore (this is or statement)
       } else if (Array.isArray(current) && f.type.read) {
-        state[f.name] = current.map((val) =>
-          f.type.read(val, f.attributes)
-        );
+        state[f.name] = current.map((val) => f.type.read(val, f.attributes));
       } else if (
         Array.isArray(current) &&
         f.is_fkey &&
