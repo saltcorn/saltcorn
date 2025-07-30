@@ -998,24 +998,7 @@ const realTimeScript = (viewname, table_id, row) => {
       '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
         console.log("Update event received for view ${viewname}", data);
         if (data.updates) {
-          const form = $(\`form[data-viewname="${viewname}"]\`);
-          const safeFields = {};
-          if (form.length) {
-            for (const k of Object.keys(data.updates)) {
-              const input = form.find(
-                \`input[name=\${k}], textarea[name=\${k}], select[name=\${k}]\`
-              );
-              if (input.attr("no-real-time-update")) {
-                input.removeAttr("no-real-time-update");
-              }
-              else {
-                safeFields[k] = data.updates[k];
-              }
-            }
-          }
-          if (Object.keys(safeFields).length > 0) {
-            common_done({set_fields: safeFields}, "${viewname}")
-          }
+          common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
         }
       }
     }

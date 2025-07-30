@@ -1841,7 +1841,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
         input.trigger("set_form_field");
       });
     }
-    form.trigger("change");
+    if (!res.no_onchange) form.trigger("change");
   }
 
   if (res.download) {
