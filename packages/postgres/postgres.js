@@ -597,7 +597,7 @@ const withTransaction = async (f, onError) => {
   }
 };
 
-const commitAndRestartTransaction = async () => {
+const commitAndBeginNewTransaction = async () => {
   const client = await getClient();
   sql_log("COMMIT;");
   await client.query("COMMIT;");
@@ -669,7 +669,7 @@ const postgresExports = {
   truncate,
   withTransaction,
   tryCatchInTransaction,
-  commitAndRestartTransaction,
+  commitAndBeginNewTransaction,
 };
 
 module.exports = (getConnectObjectPara) => {

@@ -970,7 +970,7 @@ class State {
           sleep,
           interpolate,
           tryCatchInTransaction: db.tryCatchInTransaction,
-          commitAndRestartTransaction: db.commitAndRestartTransaction,
+          commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
           Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor
