@@ -512,12 +512,10 @@ function saveAndContinue(e, k, event) {
     return;
   var form = $(e).closest("form");
 
-  let inputEl = event?.target || event?.srcElement;
   let focusedEl = null;
   if (!event || !event.srcElement) {
     const el = form.find("select[sc-received-focus]")[0];
     if (el) {
-      inputEl = el;
       el.removeAttribute("sc-received-focus");
       if (el.getAttribute("previous-val") === el.value) return;
     }
@@ -534,7 +532,6 @@ function saveAndContinue(e, k, event) {
   var url = form.attr("action");
   var form_data = form.serialize();
   ajax_indicator(true, e);
-  if (inputEl) inputEl.setAttribute("no-real-time-update", true);
   $.ajax(url, {
     type: "POST",
     headers: {

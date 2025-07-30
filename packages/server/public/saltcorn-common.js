@@ -1838,10 +1838,10 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           input.attr("data-selected", res.set_fields[k]);
         }
 
-        input.trigger("set_form_field");
+        input.trigger("set_form_field", { no_onchange: res.no_onchange });
       });
     }
-    form.trigger("change");
+    if (!res.no_onchange) form.trigger("change");
   }
 
   if (res.download) {
