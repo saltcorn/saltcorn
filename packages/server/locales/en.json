@@ -1664,5 +1664,7 @@
 	"Password complexity": "Password complexity",
 	"The regular expression that passwords must match. Set to empty string to disable password complexity requirements.": "The regular expression that passwords must match. Set to empty string to disable password complexity requirements.",
 	"Password complexity error": "Password complexity error",
-	"The error message to show when password does not match the complexity requirements.": "The error message to show when password does not match the complexity requirements."
+	"The error message to show when password does not match the complexity requirements.": "The error message to show when password does not match the complexity requirements.",
+	"Only if": "Only if",
+	"Optional JavaScript expression to determine if the trigger should run.": "Optional JavaScript expression to determine if the trigger should run."
 }

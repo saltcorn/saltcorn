@@ -383,6 +383,12 @@ module.exports =
               masterState.listeningTo.add(id);
             }
           });
+          getState().sendMessageToWorkers = (msg) => {
+            Object.entries(cluster.workers).forEach(([wpid, w]) => {
+              w.send(msg);
+            });
+          };
+
           if (masterState.listeningTo.size < useNCpus)
             setTimeout(initMasterListeners, 250);
         };
@@ -421,6 +427,11 @@ module.exports =
 
       if (forkAnyWorkers) {
         for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+        getState().sendMessageToWorkers = (msg) => {
+          Object.entries(cluster.workers).forEach(([wpid, w]) => {
+            w.send(msg);
+          });
+        };
 
         cluster.on("exit", (worker, code, signal) => {
           console.log(`worker ${worker.process.pid} died`);

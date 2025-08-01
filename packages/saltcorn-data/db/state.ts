@@ -68,6 +68,8 @@ import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
  * @param v
  */
 const process_send = (v: any) => {
+  if (!process.send) console.log("warning: there is no process send");
+
   if (process.send) process.send(v);
 };
 
@@ -188,6 +190,7 @@ class State {
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
+  sendMessageToWorkers?: Function;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -265,7 +268,9 @@ class State {
   }
 
   processSend(v: any) {
-    process_send(v);
+    if (!process.send) {
+      if (this.sendMessageToWorkers) this.sendMessageToWorkers(v);
+    } else process_send(v);
   }
 
   /**
@@ -446,7 +451,7 @@ class State {
         (this.configs.joined_log_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "config", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   async refreshUserLayouts() {
@@ -517,7 +522,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh views");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "views", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "views", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -530,7 +535,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh triggers");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -544,7 +549,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh pages");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "pages", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
   async refresh_page_groups(noSignal: boolean) {
@@ -560,7 +565,10 @@ class State {
       }
     );
     if (!noSignal && db.is_node)
-      process_send({ refresh: "page_groups", tenant: db.getTenantSchema() });
+      this.processSend({
+        refresh: "page_groups",
+        tenant: db.getTenantSchema(),
+      });
   }
 
   /**
@@ -653,7 +661,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh table");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "tables", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "tables", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -714,7 +722,7 @@ class State {
         if (key === "joined_log_socket_ids")
           this.hasJoinedLogSockets = (value || []).length > 0;
         if (db.is_node)
-          process_send({ refresh: "config", tenant: db.getTenantSchema() });
+          this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
         else {
           await this.refresh_config(true);
         }
@@ -736,7 +744,7 @@ class State {
         delete this.configs[key];
       }
       if (db.is_node)
-        process_send({ refresh: "config", tenant: db.getTenantSchema() });
+        this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
       else {
         await this.refresh_config(true);
       }
@@ -935,7 +943,7 @@ class State {
     delete this.plugins[name];
     await this.refresh_plugins();
     if (!noSignal && db.is_node)
-      process_send({ removePlugin: name, tenant: db.getTenantSchema() });
+      this.processSend({ removePlugin: name, tenant: db.getTenantSchema() });
   }
 
   get eval_context() {
@@ -996,7 +1004,7 @@ class State {
       }
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "codepages", tenant: db.getTenantSchema() });
     this.oldCodePages = code_pages;
     return errMsg;
   }
@@ -1033,7 +1041,7 @@ class State {
     });
     await this.refresh(true);
     if (!noSignal && db.is_node)
-      process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -1191,7 +1199,7 @@ class State {
       }
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
     this.npm_refresh_in_progess = false;
   }
 }

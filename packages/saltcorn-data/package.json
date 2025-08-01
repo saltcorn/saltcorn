@@ -148,6 +148,7 @@
     "access": "public"
   },
   "overrides": {
+    "undici": "7.12.0",
     "parse5": "7.2.1",
     "parse5-htmlparser2-tree-adapter": "7.0.0"
   }
