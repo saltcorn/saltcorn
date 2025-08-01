@@ -26,6 +26,21 @@ const js = async () => {
   const allow_signup = state.getConfig("allow_signup");
   const notification_in_menu = state.getConfig("notification_in_menu");
   const login_menu = state.getConfig("login_menu");
+  const canEditTables = state.getConfig("min_role_edit_tables", 1);
+  const canInspectTables = state.getConfig("min_role_inspect_tables", 1);
+  const canEditViews = state.getConfig("min_role_edit_views", 1);
+  const canEditPages = state.getConfig("min_role_edit_pages", 1);
+  const canEditTriggers = state.getConfig("min_role_edit_triggers", 1);
+  const canEditMenu = state.getConfig("min_role_edit_menu", 1);
+  const canEditFiles = state.getConfig("min_role_edit_files", 1);
+  const canEditSearch = state.getConfig("min_role_edit_search", 1);
+
+  const hasAdmin = Math.max(
+    canEditMenu,
+    canEditTriggers,
+    canEditFiles,
+    canEditSearch
+  );
   const new_items = [
     {
       href: "",
@@ -40,7 +55,7 @@ const js = async () => {
       in_modal: false,
       location: "Standard",
       max_role: "1",
-      min_role: "1",
+      min_role: Math.max(canEditTables, canInspectTables),
       admin_page: "Tables",
       target_blank: false,
       disable_on_mobile: false,
@@ -58,7 +73,7 @@ const js = async () => {
       in_modal: false,
       location: "Standard",
       max_role: "1",
-      min_role: "1",
+      min_role: canEditViews,
       admin_page: "Views",
       target_blank: false,
       disable_on_mobile: false,
@@ -76,7 +91,7 @@ const js = async () => {
       in_modal: false,
       location: "Standard",
       max_role: "1",
-      min_role: "1",
+      min_role: canEditPages,
       admin_page: "Pages",
       target_blank: false,
       disable_on_mobile: false,
@@ -93,7 +108,7 @@ const js = async () => {
       tooltip: "",
       location: "Standard",
       max_role: "1",
-      min_role: "1",
+      min_role: hasAdmin,
       subitems: [
         {
           href: "",
@@ -162,7 +177,7 @@ const js = async () => {
           in_modal: false,
           location: "Standard",
           max_role: "1",
-          min_role: "1",
+          min_role: Math.max(canEditSearch, canEditMenu),
           admin_page: "Site structure",
           target_blank: false,
           disable_on_mobile: false,
@@ -180,7 +195,7 @@ const js = async () => {
           in_modal: false,
           location: "Standard",
           max_role: "1",
-          min_role: "1",
+          min_role: canEditFiles,
           admin_page: "Files",
           target_blank: false,
           disable_on_mobile: false,
@@ -198,7 +213,7 @@ const js = async () => {
           in_modal: false,
           location: "Standard",
           max_role: "1",
-          min_role: "1",
+          min_role: canEditTriggers,
           admin_page: "Events",
           target_blank: false,
           disable_on_mobile: false,
