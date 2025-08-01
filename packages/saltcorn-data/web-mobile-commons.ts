@@ -66,6 +66,7 @@ const get_extra_menu = (
         return {
           label: __(item.label),
           icon: item.icon,
+          isUser: item.user_menu_header,
           location: item.location,
           style: item.style || "",
           target_blank: item.target_blank,
@@ -96,13 +97,17 @@ const get_extra_menu = (
                         ? is_node
                           ? wrapUrl(admin_page_url(item.admin_page))
                           : `javascript:execNavbarLink('${admin_page_url(item.admin_page)}')`
-                        : item.type === "Page Group"
+                        : item.type === "User Page"
                           ? is_node
-                            ? wrapUrl(
-                                `/page/${encodeURIComponent(item.page_group)}`
-                              )
-                            : `javascript:execNavbarLink('/page/${item.page_group}')`
-                          : undefined,
+                            ? wrapUrl(user_page_url(item.user_page))
+                            : `javascript:execNavbarLink('${user_page_url(item.user_page)}')`
+                          : item.type === "Page Group"
+                            ? is_node
+                              ? wrapUrl(
+                                  `/page/${encodeURIComponent(item.page_group)}`
+                                )
+                              : `javascript:execNavbarLink('/page/${item.page_group}')`
+                            : undefined,
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };
       });
@@ -133,6 +138,17 @@ const admin_page_url = (page: string): string => {
       return "/events";
     case "Settings":
       return "/settings";
+
+    default:
+      return "/";
+  }
+};
+const user_page_url = (page: string): string => {
+  switch (page) {
+    case "User settings":
+      return "/auth/settings";
+    case "Logout":
+      return "/auth/logout";
 
     default:
       return "/";
