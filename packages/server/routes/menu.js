@@ -172,6 +172,20 @@ const menuForm = async (req) => {
         showIf: { type: "Admin Page" },
       },
       {
+        name: "user_page",
+        label: req.__("User Page"),
+        input_type: "select",
+        class: "item-menu",
+        options: [
+          "Notifications",
+          "User settings",
+          "Login",
+          "Logout",
+          "Signup",
+        ],
+        showIf: { type: "User Page" },
+      },
+      {
         name: "viewname",
         label: req.__("View"),
         type: "String",
@@ -267,6 +281,16 @@ const menuForm = async (req) => {
         type: "String",
         required: true,
         showIf: { type: "Dynamic" },
+      },
+      {
+        name: "user_menu_header",
+        label: req.__("User menu header"),
+        sublabel: req.__("Some themes display this header differently"),
+        type: "Bool",
+        class: "item-menu",
+        required: false,
+        default: false,
+        showIf: { type: "Header" },
       },
       {
         name: "text",
