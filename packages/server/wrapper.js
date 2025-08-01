@@ -30,9 +30,6 @@ const get_menu = (req) => {
   const state = getState();
   const role = (req.user || {}).role_id || 100;
 
-  const allow_signup = state.getConfig("allow_signup");
-  const notification_in_menu = state.getConfig("notification_in_menu");
-  const login_menu = state.getConfig("login_menu");
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
   const extra_menu = get_extra_menu(role, __, req.user || {}, locale);
