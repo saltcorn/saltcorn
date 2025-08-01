@@ -2912,7 +2912,7 @@ class Table implements AbstractTable {
 
       if (typeof current !== "undefined") {
         if (instanceOfType(f.type) && f.type?.read) {
-          const readval = f.type?.read(current);
+          const readval = f.type?.read(current, f.attributes);
           if (typeof readval === "undefined") {
             if (current === "" && !f.required) delete state[f.name];
             else errorString += `No valid value for required field ${f.name}. `;

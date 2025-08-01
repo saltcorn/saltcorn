@@ -188,7 +188,7 @@ const run_code = async ({
     emit_to_client,
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
-    commitAndRestartTransaction: db.commitAndRestartTransaction,
+    commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
     URL,
     File,
     User,
@@ -350,6 +350,13 @@ module.exports = {
           type: "Bool",
         },
         {
+          name: "interval",
+          label: "Interval (s)",
+          sublabel: "Delay in seconds between action invocations",
+          type: "Float",
+          attributes: { min: 0 },
+        },
+        {
           name: "trigger_id",
           label: "Trigger",
           sublabel: "The trigger to run for each row",
@@ -374,6 +381,7 @@ module.exports = {
         orderBy,
         orderDesc,
         trigger_id,
+        interval,
       },
       user,
       ...rest
@@ -385,8 +393,9 @@ module.exports = {
       const rows = await table.getRows(wh, selOpts);
       const trigger = Trigger.findOne({ id: trigger_id });
       let result = {};
-
+      let first = true;
       for (const row_i of rows) {
+        if (!first && interval) await sleep(interval * 1000);
         const stepres = await trigger.runWithoutRow({
           ...rest,
           table,
@@ -398,6 +407,7 @@ module.exports = {
         } catch (error) {
           console.error(error);
         }
+        first = false;
       }
       return result;
     },
@@ -1699,18 +1709,23 @@ module.exports = {
         sublabel: "Optional",
         type: "String",
       },
+      {
+        name: "remove_delay",
+        label: "Remove after (s)",
+        type: "Float",
+      },
     ],
     run: async ({
       row,
       user,
-      configuration: { type, notify_type, text, title },
+      configuration: { type, notify_type, text, title, remove_delay },
     }) => {
       //type is legacy. this name gave react problems
       let text1 = interpolate(text, row, user, "Toast text");
       let toast_title = title
         ? { toast_title: interpolate(title, row, user, "Toast title") }
         : {};
-
+      if (remove_delay) toast_title.remove_delay = remove_delay;
       switch (notify_type || type) {
         case "Error":
           return { error: text1, ...toast_title };

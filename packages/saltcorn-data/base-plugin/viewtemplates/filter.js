@@ -123,6 +123,7 @@ const configuration_workflow = (req) =>
           const actions = Trigger.action_options({
             tableTriggers: table.id,
             apiNeverTriggers: true,
+            forBuilder: true,
             builtInLabel: "Filter Actions",
             builtIns: ["Clear"],
           });
@@ -281,7 +282,7 @@ const run = async (
   Object.entries(state).forEach(([k, v]) => {
     if (typeof v === "undefined") return;
     if (k[0] !== "_") {
-      let showv = v;
+      let showv = v?.toString?.() || v;
       if (distinct_values[k]) {
         const realv = distinct_values[k].find((dv) => dv.value === v);
         if (realv) showv = realv.label;
@@ -687,6 +688,7 @@ const run = async (
           ? field.presets[preset_value]({
               user: extra.req.user,
               req: extra.req,
+              field,
             })
           : value;
 

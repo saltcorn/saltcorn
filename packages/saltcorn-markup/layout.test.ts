@@ -413,7 +413,7 @@ describe("render", () => {
     };
     const result = render({ blockDispatch, layout: markup });
     expect(result).toBe(
-      '<a href="/test" class="btn btn-primary btn-lg"><i class="fa fa-link"></i>&nbsp;Click Me</a>'
+      '<a href="/test" class="btn btn-primary btn-lg d-inline-block"><i class="fa fa-link"></i>&nbsp;Click Me</a>'
     );
   });
 

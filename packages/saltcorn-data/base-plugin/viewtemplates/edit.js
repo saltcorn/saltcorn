@@ -132,6 +132,7 @@ const configuration_workflow = (req) =>
           const actions = Trigger.action_options({
             tableTriggers: table.id,
             apiNeverTriggers: true,
+            forBuilder: true,
             builtInLabel: "Edit Actions",
             builtIns: edit_build_in_actions,
           });
@@ -996,7 +997,9 @@ const realTimeScript = (viewname, table_id, row) => {
     events: {
       '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
         console.log("Update event received for view ${viewname}", data);
-        if (data.updates) common_done({set_fields: data.updates}, "${viewname}")
+        if (data.updates) {
+          common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+        }
       }
     }
   };
@@ -1105,12 +1108,16 @@ const render = async ({
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
-      form.values[k] = field.type.read ? field.type.read(v) : v;
+      form.values[k] = field.type.read
+        ? field.type.read(v, field.attributes)
+        : v;
     } else {
       const tbl_field = fields.find((f) => f.name === k);
       if (tbl_field && !field) {
         form.fields.push(new Field({ name: k, input_type: "hidden" }));
-        form.values[k] = tbl_field.type.read ? tbl_field.type.read(v) : v;
+        form.values[k] = tbl_field.type.read
+          ? tbl_field.type.read(v, tbl_field.attributes)
+          : v;
       }
     }
   });
@@ -2514,7 +2521,7 @@ module.exports = {
           if (typeof state[f.name] !== "undefined") {
             if (f.type?.read)
               row[f.name] = f.type?.read
-                ? f.type.read(state[f.name])
+                ? f.type.read(state[f.name], f.attributes)
                 : state[f.name];
           } else if (f.required)
             if (

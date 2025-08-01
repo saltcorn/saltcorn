@@ -201,6 +201,7 @@ const pageBuilderData = async (req, context) => {
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     apiNeverTriggers: true,
+    forBuilder: true,
     builtInLabel: "Page Actions",
     builtIns: ["GoBack"],
   });

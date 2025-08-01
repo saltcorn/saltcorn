@@ -18,6 +18,7 @@ export const reprAsJson = (v: any, jsonCol?: boolean): boolean =>
   (jsonCol && (v === true || v === false)) ||
   (typeof v === "object" &&
     v !== null &&
+    v?.constructor?.name !== "PlainDate" &&
     !(v instanceof Date || isDateFromIframe(v)));
 
 const isDate = (value: any): boolean =>
@@ -30,7 +31,11 @@ const isDate = (value: any): boolean =>
  * @returns
  */
 export const mkVal = ([k, v]: [string, any], jsonCol?: boolean): Value =>
-  reprAsJson(v, jsonCol) ? JSON.stringify(v) : isDate(v) ? v.valueOf() : v;
+  reprAsJson(v, jsonCol)
+    ? JSON.stringify(v)
+    : isDate(v) || v?.constructor?.name === "PlainDate"
+      ? v.valueOf()
+      : v;
 
 /**
  * return type of buildInsertSql()
@@ -262,7 +267,7 @@ export const tryCatchInTransaction = async (f: Function, onError: Function) => {
   }
 };
 
-export const commitAndRestartTransaction = async () => {};
+export const commitAndBeginNewTransaction = async () => {};
 /**
  *
  * @param queryFunc

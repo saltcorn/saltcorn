@@ -14,6 +14,8 @@
 
 * Table triggers (Insert, Update, Delete) and Login and PageLoad can now be limited with an only-if formula.
 
+* Date fields with the day only attribute are now handled internally without time or timezone from the database to the client. This should lead to more reliable date handling.
+
 ## 1.3.0 - Released 2 July 2025
 
 * It is no longer necessary to restart the application when upgrading a plugin to a more recent version

@@ -434,6 +434,9 @@ const render = ({
               segment.link_style || "",
               segment.link_size || "",
               segment.link_class || "",
+              segment.link_style &&
+                segment.link_style.includes("btn") &&
+                "d-inline-block",
             ],
             target: isWeb && segment.target_blank ? "_blank" : false,
             title: segment.link_title,

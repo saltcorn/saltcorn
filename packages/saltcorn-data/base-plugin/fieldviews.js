@@ -721,8 +721,9 @@ const search_or_create = {
   run: (nm, v, attrs, cls, reqd, field, row) => {
     const user = db.getRequestContext()?.req?.user;
     const use_row = { ...(row || {}) };
+    let table;
     if (field?.table_id) {
-      const table = Table.findOne({ id: field.table_id });
+      table = Table.findOne({ id: field.table_id });
       if (
         table &&
         (!Object.keys(use_row).length ||
@@ -767,8 +768,8 @@ const search_or_create = {
         attrs.label || "Or create new"
       ) +
       script(`
-      const soc_process_${nm} = (elem) => ()=> {
-        $.ajax('/api/${field.reftable_name}', {
+      window.soc_process_${nm} = (elem) => ()=> {
+        $.ajax('/api/${field.reftable_name}?sortBy=${table?.pk_name || "id"}', {
           success: function (res, textStatus, request) {
             var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${
               attrs.summary_field

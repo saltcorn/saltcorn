@@ -254,6 +254,7 @@ const ViewLinkSettings = () => {
               {options.inJestTestingMode ? null : (
                 <Select
                   options={viewOptions}
+                  className="react-select viewlink-selector"
                   value={selectedView}
                   onChange={set_view_name}
                   onBlur={set_view_name}
