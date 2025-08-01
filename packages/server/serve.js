@@ -551,10 +551,18 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
   });
 
   // dynamic updates emitter (for run_js_actions)
-  getState().setDynamicUpdateEmitter((tenant, data) => {
-    io.of("/")
-      .to(`_${tenant}_dynamic_update_room`)
-      .emit("dynamic_update", data);
+  getState().setDynamicUpdateEmitter((tenant, data, userIds) => {
+    if (userIds) {
+      for (const userId of userIds) {
+        io.of("/")
+          .to(`_${tenant}:${userId}_dynamic_update_room`)
+          .emit("dynamic_update", data);
+      }
+    } else {
+      io.of("/")
+        .to(`_${tenant}_dynamic_update_room`)
+        .emit("dynamic_update", data);
+    }
   });
 
   io.of("/").on("connection", (socket) => {
@@ -638,7 +646,10 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
         get_tenant_from_req(socket.request, subdomainOffset) || "public";
       const f = async () => {
         try {
+          const user = socket.request.user;
+          if (!user) throw new Error("Not authorized");
           socket.join(`_${tenant}_dynamic_update_room`);
+          socket.join(`_${tenant}:${user.id}_dynamic_update_room`);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);

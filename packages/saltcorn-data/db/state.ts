@@ -1117,9 +1117,10 @@ class State {
    * For dynamic updates triggered from a run_js_code action
    * @param ten
    * @param data
+   * @param userIds - optional array of user IDs to send the update to
    */
-  emitDynamicUpdate(ten: string, data: any) {
-    globalDynamicUpdateEmitter(ten, data);
+  emitDynamicUpdate(ten: string, data: any, userIds?: number[]) {
+    globalDynamicUpdateEmitter(ten, data, userIds);
   }
 
   // default auth methods to enabled
