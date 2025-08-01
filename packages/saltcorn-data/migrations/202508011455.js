@@ -281,7 +281,7 @@ const js = async () => {
       max_role: "1",
       min_role: "80",
       subitems: [
-        notification_in_menu
+        ...notification_in_menu
           ? [
               {
                 href: "",
