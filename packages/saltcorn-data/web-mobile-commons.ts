@@ -74,6 +74,7 @@ const get_extra_menu = (
           type: item.type,
           mobile_item_html: item.mobile_item_html,
           tooltip: item.tooltip,
+          altlinks: get_altlinks(item),
           link:
             item.type === "Link" && item.url_formula
               ? expression.eval_expression(item.url, { locale, role }, user)
@@ -112,6 +113,15 @@ const get_extra_menu = (
         };
       });
   return transform(cfg);
+};
+
+const get_altlinks = (item: any) => {
+  if (item.type === "Admin Page" && item.admin_page === "Events")
+    return ["/actions", "/eventlog", "/crashlog"];
+  if (item.type === "Admin Page" && item.admin_page === "Users and security")
+    return ["/roleadmin"];
+  if (item.type === "Admin Page" && item.admin_page === "Site structure")
+    return ["/menu", "/search/config", "/library/list", "/tenant/list"];
 };
 
 const admin_page_url = (page: string): string => {
