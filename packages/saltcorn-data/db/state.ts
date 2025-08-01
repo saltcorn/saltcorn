@@ -270,7 +270,6 @@ class State {
   processSend(v: any) {
     if (!process.send) {
       if (this.sendMessageToWorkers) this.sendMessageToWorkers(v);
-      else console.warn("Trying to send message but here is no process send");
     } else process_send(v);
   }
 
