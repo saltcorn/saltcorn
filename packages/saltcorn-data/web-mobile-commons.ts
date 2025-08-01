@@ -147,9 +147,14 @@ const user_page_url = (page: string): string => {
   switch (page) {
     case "User settings":
       return "/auth/settings";
+    case "Notifications":
+      return "/notifications";
     case "Logout":
       return "/auth/logout";
-
+    case "Login":
+      return "/auth/login";
+    case "Signup":
+      return "/auth/signup";
     default:
       return "/";
   }
