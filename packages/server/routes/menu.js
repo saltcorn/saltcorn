@@ -119,6 +119,8 @@ const menuForm = async (req) => {
           "View",
           "Page",
           "Page Group",
+          "Admin Page",
+          "User Page",
           "Link",
           "Header",
           "Dynamic",
@@ -149,6 +151,25 @@ const menuForm = async (req) => {
         class: "item-menu",
         options: pages.map((r) => r.name),
         showIf: { type: "Page" },
+      },
+      {
+        name: "admin_page",
+        label: req.__("Admin Page"),
+        input_type: "select",
+        class: "item-menu",
+        options: [
+          "Tables",
+          "Views",
+          "Pages",
+          "About application",
+          "Modules",
+          "Users and security",
+          "Site structure",
+          "Files",
+          "Events",
+          "Settings",
+        ],
+        showIf: { type: "Admin Page" },
       },
       {
         name: "viewname",
@@ -263,6 +284,8 @@ const menuForm = async (req) => {
             "Dynamic",
             "Search",
             "Action",
+            "Admin Page",
+            "User Page",
           ],
         },
       },
@@ -274,7 +297,16 @@ const menuForm = async (req) => {
           html: `<button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>`,
         },
         showIf: {
-          type: ["View", "Page", "Page Group", "Link", "Header", "Action"],
+          type: [
+            "View",
+            "Page",
+            "Page Group",
+            "Link",
+            "Header",
+            "Action",
+            "Admin Page",
+            "User Page",
+          ],
         },
       },
       {
@@ -282,7 +314,16 @@ const menuForm = async (req) => {
         class: "item-menu",
         input_type: "hidden",
         showIf: {
-          type: ["View", "Page", "Page Group", "Link", "Header", "Action"],
+          type: [
+            "View",
+            "Page",
+            "Page Group",
+            "Link",
+            "Header",
+            "Action",
+            "Admin Page",
+            "User Page",
+          ],
         },
       },
       {
@@ -301,6 +342,8 @@ const menuForm = async (req) => {
             "Dynamic",
             "Search",
             "Action",
+            "Admin Page",
+            "User Page",
           ],
         },
       },
@@ -343,7 +386,16 @@ const menuForm = async (req) => {
         type: "Bool",
         required: false,
         class: "item-menu",
-        showIf: { type: ["View", "Page", "Page Group", "Link"] },
+        showIf: {
+          type: [
+            "View",
+            "Page",
+            "Page Group",
+            "Link",
+            "Admin Page",
+            "User Page",
+          ],
+        },
       },
       {
         name: "in_modal",
@@ -351,7 +403,16 @@ const menuForm = async (req) => {
         type: "Bool",
         required: false,
         class: "item-menu",
-        showIf: { type: ["View", "Page", "Page Group", "Link"] },
+        showIf: {
+          type: [
+            "View",
+            "Page",
+            "Page Group",
+            "Link",
+            "Admin Page",
+            "User Page",
+          ],
+        },
       },
       {
         name: "style",
@@ -369,6 +430,8 @@ const menuForm = async (req) => {
             "Header",
             "Dynamic",
             "Action",
+            "Admin Page",
+            "User Page",
           ],
         },
         attributes: {
@@ -403,6 +466,8 @@ const menuForm = async (req) => {
             "Search",
             "Separator",
             "Action",
+            "Admin Page",
+            "User Page",
           ],
         },
         sublabel: req.__("Not all themes support all locations"),
@@ -628,14 +693,17 @@ router.post(
   "/action/:rndid",
   error_catcher(async (req, res, next) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
 
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
     }
     next();
-  }),
+  })
 );
 
 const getIcons = () => {
