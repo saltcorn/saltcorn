@@ -1061,7 +1061,7 @@ const render = async ({
       for (const field of file_fields) {
         if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
           const file = await File.findOne({ id: row[field.name] });
-          if (file.id) form.values[field.name] = file.filename;
+          if (file?.id) form.values[field.name] = file.filename;
         }
         if (field.fieldviewObj?.editContent && row[field.name]) {
           const file = await File.findOne(row[field.name]);
