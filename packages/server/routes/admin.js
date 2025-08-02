@@ -4127,6 +4127,8 @@ router.post(
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
     }
     await getState().refresh();
+    await require("@saltcorn/data/standard-menu")();
+
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
 
