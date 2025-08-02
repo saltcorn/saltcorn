@@ -17,6 +17,9 @@ class Test:
     SaltcornSession.reset_to_fixtures()
     self.sess = SaltcornSession(port=3001)
 
+  def teardown_class(self):
+    self.sess.close()
+
   def test_connect(self):
     client = DynamicUpdatesClient()
     client.login(email=adminEmail, password=adminPassword)
