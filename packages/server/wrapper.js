@@ -53,7 +53,9 @@ const get_menu = (req) => {
 const get_headers = (req, version_tag, description, extras = []) => {
   const state = getState();
   const favicon = state.getConfig("favicon_id", null);
-  const notification_in_menu = state.getConfig("notification_in_menu");
+  const notification_in_menu = JSON.stringify(
+    state.getConfig("menu_items", [])
+  ).includes('"Notifications');
   const pwa_enabled = state.getConfig("pwa_enabled");
   const push_notify_enabled = state.getConfig("enable_push_notify", false);
   const is_root = req.user?.role_id === 1;
