@@ -356,7 +356,6 @@ const auth_settings_form = async (req) =>
     req,
     field_names: [
       "allow_signup",
-      "login_menu",
       "allow_forgot",
       {
         section_header: req.__("Signup and login views"),

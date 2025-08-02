@@ -282,7 +282,7 @@ class PageLocators {
     this.idNumberInput = '#inputid';
     this.roleTextInput = '#inputrole';
     this.userNavLink = 'a[data-bs-target="#collapseUser"]';
-    this.userSettingsLink = 'a.collapse-item >> text="User Settings"';
+    this.userSettingsLink = 'a.collapse-item >> text="User settings"';
     this.logout = 'a[href="/auth/logout"]';
     this.TriggerTitle = 'h5:has-text("Triggers")';
     this.CreateTriggerBtn = 'a:has-text("Create trigger")';

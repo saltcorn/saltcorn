@@ -30,190 +30,9 @@ const get_menu = (req) => {
   const state = getState();
   const role = (req.user || {}).role_id || 100;
 
-  const allow_signup = state.getConfig("allow_signup");
-  const notification_in_menu = state.getConfig("notification_in_menu");
-  const login_menu = state.getConfig("login_menu");
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
   const extra_menu = get_extra_menu(role, __, req.user || {}, locale);
-  const authItems = isAuth
-    ? [
-        {
-          label: req.__("User"),
-          icon: "far fa-user",
-          isUser: true,
-          subitems: [
-            { label: small((req.user.email || "").split("@")[0]) },
-            ...(notification_in_menu
-              ? [
-                  {
-                    label: req.__("Notifications"),
-                    icon: "far fa-bell",
-                    class: "notify-menu-item",
-                    link: "/notifications",
-                  },
-                ]
-              : []),
-            {
-              label: req.__("User Settings"),
-              icon: "fas fa-user-cog",
-
-              link: "/auth/settings",
-            },
-            {
-              link: "/auth/logout",
-              icon: "fas fa-sign-out-alt",
-              label: req.__("Logout"),
-            },
-          ],
-        },
-      ]
-    : [
-        ...(allow_signup
-          ? [
-              {
-                link: "/auth/signup",
-                icon: "fas fa-user-plus",
-                label: req.__("Sign up"),
-              },
-            ]
-          : []),
-        ...(login_menu
-          ? [
-              {
-                link: "/auth/login",
-                icon: "fas fa-sign-in-alt",
-                label: req.__("Login"),
-              },
-            ]
-          : []),
-      ];
-  // const schema = db.getTenantSchema();
-  // Admin role id (todo move to common constants)
-
-  const canEditTables = state.getConfig("min_role_edit_tables", 1) >= role;
-  const canInspectTables =
-    state.getConfig("min_role_inspect_tables", 1) >= role;
-  const canEditViews = state.getConfig("min_role_edit_views", 1) >= role;
-  const canEditPages = state.getConfig("min_role_edit_pages", 1) >= role;
-  const canEditTriggers = state.getConfig("min_role_edit_triggers", 1) >= role;
-  const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
-  const canEditFiles = state.getConfig("min_role_edit_files", 1) >= role;
-  const canEditSearch = state.getConfig("min_role_edit_search", 1) >= role;
-  const isAdmin = role === 1;
-  const hasAdmin =
-    isAdmin ||
-    canEditTables ||
-    canInspectTables ||
-    canEditPages ||
-    canEditViews ||
-    canEditMenu ||
-    canEditTriggers ||
-    canEditFiles ||
-    canEditSearch;
-  /*
-   * Admin Menu items
-   *
-   */
-  const adminItems = [];
-  if (hasAdmin) {
-    if (isAdmin || canInspectTables || canEditTables)
-      adminItems.push({
-        link: "/table",
-        icon: "fas fa-table",
-        label: req.__("Tables"),
-      });
-    if (isAdmin || canEditViews)
-      adminItems.push({
-        link: "/viewedit",
-        icon: "far fa-eye",
-        label: req.__("Views"),
-      });
-    if (isAdmin || canEditPages)
-      adminItems.push({
-        link: "/pageedit",
-        icon: "far fa-file",
-        label: req.__("Pages"),
-      });
-    if (canEditTriggers && !canEditMenu && !isAdmin)
-      adminItems.push({
-        link: "/actions",
-        altlinks: ["/events", "/eventlog", "/crashlog"],
-        icon: "fas fa-calendar-check",
-        label: req.__("Triggers"),
-      });
-    if ((canEditMenu || canEditSearch) && !isAdmin) {
-      const subitems = [
-        {
-          link: canEditMenu ? "/menu" : "/search/config",
-          altlinks: [
-            "/site-structure",
-            "/search/config",
-            "/library/list",
-            "/tenant/list",
-          ],
-          icon: "fas fa-compass",
-          label: req.__("Site structure"),
-        },
-      ];
-      if (canEditTriggers)
-        subitems.push({
-          link: "/actions",
-          altlinks: ["/events", "/eventlog", "/crashlog"],
-          icon: "fas fa-calendar-check",
-          label: req.__("Triggers"),
-        });
-      if (canEditFiles)
-        subitems.push({
-          link: "/files",
-          icon: "far fa-images",
-          label: req.__("Files"),
-        });
-      adminItems.push({
-        label: req.__("Settings"),
-        icon: "fas fa-wrench",
-        subitems,
-      });
-    }
-
-    if (isAdmin)
-      adminItems.push({
-        label: req.__("Settings"),
-        icon: "fas fa-wrench",
-        subitems: [
-          {
-            link: "/admin",
-            icon: "fas fa-tools",
-            label: req.__("About application"),
-          },
-          { link: "/plugins", icon: "fas fa-cubes", label: req.__("Modules") },
-          {
-            link: "/useradmin",
-            icon: "fas fa-users-cog",
-            altlinks: ["/roleadmin"],
-            label: req.__("Users and security"),
-          },
-          {
-            link: "/site-structure",
-            altlinks: [
-              "/menu",
-              "/search/config",
-              "/library/list",
-              "/tenant/list",
-            ],
-            icon: "fas fa-compass",
-            label: req.__("Site structure"),
-          },
-          { link: "/files", icon: "far fa-images", label: req.__("Files") },
-          {
-            link: "/events",
-            altlinks: ["/actions", "/eventlog", "/crashlog"],
-            icon: "fas fa-calendar-check",
-            label: req.__("Events"),
-          },
-        ],
-      });
-  }
 
   // return menu
   return [
@@ -221,19 +40,6 @@ const get_menu = (req) => {
       section: req.__("Menu"),
       items: extra_menu,
     },
-    hasAdmin && {
-      section: req.__("Admin"),
-      items: adminItems,
-    },
-    ...(authItems.length
-      ? [
-          {
-            section: req.__("User"),
-            isUser: true,
-            items: authItems,
-          },
-        ]
-      : []),
   ].filter((s) => s);
 };
 /**
@@ -247,7 +53,9 @@ const get_menu = (req) => {
 const get_headers = (req, version_tag, description, extras = []) => {
   const state = getState();
   const favicon = state.getConfig("favicon_id", null);
-  const notification_in_menu = state.getConfig("notification_in_menu");
+  const notification_in_menu = JSON.stringify(
+    state.getConfig("menu_items", [])
+  ).includes('"Notifications');
   const pwa_enabled = state.getConfig("pwa_enabled");
   const push_notify_enabled = state.getConfig("enable_push_notify", false);
   const dynamic_updates_enabled = state.getConfig(

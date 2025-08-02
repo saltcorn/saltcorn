@@ -616,10 +616,18 @@ describe("pack install", () => {
     const tbl = Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(true);
     const menu = getState().getConfig("menu_items", []);
-    expect(menu).toEqual([
-      { label: "List", type: "View", viewname: "List Todos", min_role: 100 },
-      { label: "FooPage", pagename: "FooPage", type: "Page", min_role: 100 },
-    ]);
+    expect(menu).toContainEqual({
+      label: "List",
+      type: "View",
+      viewname: "List Todos",
+      min_role: 100,
+    });
+    expect(menu).toContainEqual({
+      label: "FooPage",
+      pagename: "FooPage",
+      type: "Page",
+      min_role: 100,
+    });
     const pubhome = getState().getConfig("public_home", []);
     expect(pubhome).toBe("FooPage");
     const group = PageGroup.findOne({ name: "FooPageGroup" });
