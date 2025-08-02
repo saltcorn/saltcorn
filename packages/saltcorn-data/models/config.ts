@@ -690,6 +690,12 @@ const configTypes: ConfigTypes = {
     excludeFromSnapshot: true,
     default: null,
   },
+  enable_dynamic_updates: {
+    type: "Bool",
+    label: "Enable dynamic updates",
+    default: true,
+    blurb: "Enable server side updates from within run_js_code actions",
+  },
   default_locale: {
     type: "String",
     label: "Default locale",

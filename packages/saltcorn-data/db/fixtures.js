@@ -2570,6 +2570,54 @@ module.exports =
       min_role: 100,
     });
     await Trigger.create({
+      name: "emit_to_admin",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello admin"}, 1);`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "emit_to_staff",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello admin"}, 2);`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "emit_to_admin_and_staff",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello admin and staff"}, [1, 2]);`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "emit_tenant_wide",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello public"});`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
       name: "MySteps",
       action: "Multi-step action",
       description: "",

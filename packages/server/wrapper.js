@@ -250,6 +250,10 @@ const get_headers = (req, version_tag, description, extras = []) => {
   const notification_in_menu = state.getConfig("notification_in_menu");
   const pwa_enabled = state.getConfig("pwa_enabled");
   const push_notify_enabled = state.getConfig("enable_push_notify", false);
+  const dynamic_updates_enabled = state.getConfig(
+    "enable_dynamic_updates",
+    true
+  );
   const is_root = req.user?.role_id === 1;
 
   const iconHeader = favicon
@@ -282,6 +286,11 @@ const get_headers = (req, version_tag, description, extras = []) => {
     { script: `/static_assets/${version_tag}/saltcorn.js` },
     { script: `/static_assets/${version_tag}/dayjs.min.js` },
   ];
+  if (dynamic_updates_enabled) {
+    stdHeaders.push({
+      script: `/static_assets/${version_tag}/socket.io.min.js`,
+    });
+  }
   if (locale !== "en") {
     stdHeaders.push({
       script: `/static_assets/${version_tag}/dayjslocales/${locale}.js`,

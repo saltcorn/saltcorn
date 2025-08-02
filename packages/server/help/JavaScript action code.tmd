@@ -147,3 +147,14 @@ return { set_fields: {
 Execute JavaScript in the browser.
 
 Example: `return { eval_js: 'alert("Hello world")' }`
+
+### Emit Client events
+
+Use `emit_to_client' to send socket.io events to one or multiple clients. For example, to notify the user with id 1:
+```
+emit_to_client({notify: "hello admin"}, 1);
+```
+This event goes to each tab where the user is logged in. Otherwise, you can use an array or omit the second parameter to emit to all users of the current tenant. All return directives from the block above can be used.
+
+
+The function is not promise-based because if multiple tabs receive the event, it is hard to say when the call has finished.

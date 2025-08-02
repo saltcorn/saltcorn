@@ -77,6 +77,21 @@ const consoleInterceptor = (state) => {
   };
 };
 
+const emit_to_client = (data, userIds) => {
+  const state = getState();
+  const enabled = getState().getConfig("enable_dynamic_updates", true);
+  if (!enabled) {
+    state.log(5, "emit_to_client called, but dynamic updates are disabled");
+    return;
+  }
+  const safeIds = Array.isArray(userIds)
+    ? userIds
+    : userIds
+      ? [userIds]
+      : undefined;
+  state.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
+};
+
 /**
  * @param opts
  * @param opts.row
@@ -170,6 +185,7 @@ const run_code = async ({
     sleep,
     fetchJSON,
     fetch,
+    emit_to_client,
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
     commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,

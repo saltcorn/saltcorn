@@ -387,7 +387,7 @@ describe("actions", () => {
       .send("table_id=2")
       .send("name=mynewaction")
       .send("when_trigger=Insert")
-      .expect(toRedirect("/actions/configure/3"));
+      .expect(toRedirect("/actions/configure/7"));
   });
   it("show edit", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -451,9 +451,9 @@ describe("actions", () => {
       .send("action=run_js_code")
       .send("when_trigger=API+call")
       .send("min_role=1")
-      .expect(toRedirect("/actions/configure/4"));
+      .expect(toRedirect("/actions/configure/8"));
     await request(app)
-      .post("/actions/configure/4")
+      .post("/actions/configure/8")
       .set("Cookie", loginCookie)
       .send("code=return 27")
       .expect(toRedirect("/actions/"));
