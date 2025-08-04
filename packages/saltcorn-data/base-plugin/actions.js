@@ -77,7 +77,7 @@ const consoleInterceptor = (state) => {
   };
 };
 
-const emit_to_client = (data, userIds) => {
+const emit_to_client = (user) => (data, userIds) => {
   const state = getState();
   const enabled = getState().getConfig("enable_dynamic_updates", true);
   if (!enabled) {
@@ -88,7 +88,7 @@ const emit_to_client = (data, userIds) => {
     ? userIds
     : userIds
       ? [userIds]
-      : undefined;
+      : [user?.id] || [];
   state.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
 };
 
@@ -185,7 +185,7 @@ const run_code = async ({
     sleep,
     fetchJSON,
     fetch,
-    emit_to_client,
+    emit_to_client: emit_to_client(user),
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
     commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
@@ -207,6 +207,7 @@ const run_code = async ({
     channel: table ? table.name : channel,
     session_id: rest.req && getSessionId(rest.req),
     request_headers: rest?.req?.headers,
+    page_load_tag: rest?.req?.headers?.["page-load-tag"],
     request_ip: rest?.req?.ip,
     ...(row || {}),
     ...getState().eval_context,
