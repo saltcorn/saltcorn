@@ -1700,9 +1700,12 @@ function notifyAlert(note, spin) {
     $("#modal-toasts-area").append(html);
   else $("#toasts-area").append(html);
   if (type === "success" || note.remove_delay) {
-    setTimeout(() => {
-      $(`#${id}`).removeClass("show");
-    }, note.remove_delay ? note.remove_delay*1000: 5000);
+    setTimeout(
+      () => {
+        $(`#${id}`).removeClass("show");
+      },
+      note.remove_delay ? note.remove_delay * 1000 : 5000
+    );
   }
 }
 
@@ -1753,6 +1756,9 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           .attr("data-sc-embed-viewname");
   if (window._sc_loglevel > 4)
     console.log("ajax result directives", viewname, res);
+
+  if (res.page_load_tag && res.page_load_tag !== _sc_pageloadtag) return;
+
   const handle = async (element, fn) => {
     if (Array.isArray(element))
       for (const current of element) await fn(current);
