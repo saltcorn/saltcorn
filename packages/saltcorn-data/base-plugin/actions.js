@@ -359,7 +359,15 @@ module.exports = {
         {
           name: "trigger_id",
           label: "Trigger",
-          sublabel: "The trigger to run for each row",
+          sublabel:
+            "The trigger to run for each row. " +
+            a(
+              {
+                "data-dyn-href": `\`/actions/configure/\${trigger_id}\``,
+                target: "_blank",
+              },
+              "Configure"
+            ),
           input_type: "select",
           options: trigger_actions.map((t) => ({ label: t.name, value: t.id })),
         },
