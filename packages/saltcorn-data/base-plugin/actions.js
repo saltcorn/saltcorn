@@ -88,7 +88,7 @@ const emit_to_client = (user) => (data, userIds) => {
     ? userIds
     : userIds
       ? [userIds]
-      : user?.id || [];
+      : [user?.id] || [];
   state.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
 };
 
