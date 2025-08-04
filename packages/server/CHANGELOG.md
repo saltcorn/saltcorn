@@ -16,6 +16,13 @@
 
 * Date fields with the day only attribute are now handled internally without time or timezone from the database to the client. This should lead to more reliable date handling.
 
+* The menu can now be fully customized from the menu editor, including the admin items (Tables, Vies, Pages and Settings) and the user items (login/signup and the user menu)
+
+* Events can now be sent from a running server scripts to the user's client page. Run the `emit_to_client()` function with the same objects that can be returned from a run_js_code action. For instance: `emit_to_client({notify: "hello admin"}, 1)` will make a toast appear on any tab loaded by the user with ID=1.
+
+* Link and Action buttons are now always the same height.
+
+
 ## 1.3.0 - Released 2 July 2025
 
 * It is no longer necessary to restart the application when upgrading a plugin to a more recent version
