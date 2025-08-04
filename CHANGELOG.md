@@ -18,7 +18,7 @@
 
 * The menu can now be fully customized from the menu editor, including the admin items (Tables, Vies, Pages and Settings) and the user items (login/signup and the user menu)
 
-* Events can now be sent from a running server scripts to the user's client page. Run the `emit_to_client()` function with the same objects that can be returned from a run_js_code action. For instance: `emit_to_client({notify: "hello admin"}, 1)` will make a toast appear on any tab loaded by the user with ID=1.
+* Events can now be sent from a running server scripts to the user's client page. Run the `emit_to_client()` function with the same objects that can be returned from a run_js_code action. For instance: `emit_to_client({notify: "hello admin"}, 1)` will make a toast appear on any tab loaded by the user with ID=1. This facility can be disabled for high performance, less interactive applications, under Event log settings
 
 * Link and Action buttons are now always the same height.
 
