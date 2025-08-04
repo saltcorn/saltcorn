@@ -2197,7 +2197,7 @@ function check_saltcorn_notifications() {
     .then((resp) => {
       if (resp.success) {
         const n = resp.success;
-        const menu_item = $(`a.notify-menu-item`);
+        const menu_item = $('a[href="/notifications"]');
 
         menu_item.html(
           `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
