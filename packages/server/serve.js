@@ -623,7 +623,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           callback({ status: "error", msg: err.message || "unknown error" });
         }
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
       else await f();
     });
 
@@ -647,7 +647,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             callback({ status: "error", msg: err.message || "unknown error" });
         }
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
       else await f();
     });
 
@@ -668,7 +668,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             callback({ status: "error", msg: err.message || "unknown error" });
         }
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
       else await f();
     });
 
@@ -676,12 +676,21 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
       const tenant =
         get_tenant_from_req(socket.request, subdomainOffset) || "public";
       const f = async () => {
-        const socketIds = await getState().getConfig("joined_log_socket_ids");
-        const newSocketIds = socketIds.filter((id) => id !== socket.id);
-        await getState().setConfig("joined_log_socket_ids", newSocketIds);
+        const state = getState();
+        if (state) {
+          const socketIds = state.getConfig("joined_log_socket_ids");
+          const newSocketIds = socketIds.filter((id) => id !== socket.id);
+          await state.setConfig("joined_log_socket_ids", newSocketIds);
+        }
+        else {
+          console.error("No state found in socket disconnect");
+          console.error("The current tenantSchema is:", db.getTenantSchema());
+          console.error("The current tenant from request is:", tenant);
+          console.error("node version:", process.version);
+        }
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
-      else f();
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
+      else await f();
     });
   });
 
@@ -729,8 +738,8 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             callback({ status: "error", msg: err.message || "unknown error" });
           }
         };
-        if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
-        else f();
+        if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
+        else await f();
       }
     );
     socket.on("write_to_stream", async (data, callback) => {
@@ -792,8 +801,8 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             }
           });
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
-      else f();
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
+      else await f();
     });
   });
 };
