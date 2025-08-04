@@ -270,6 +270,9 @@ class State {
   processSend(v: any) {
     if (!process.send) {
       if (this.sendMessageToWorkers) this.sendMessageToWorkers(v);
+      else if (singleton.sendMessageToWorkers)
+        singleton.sendMessageToWorkers(v);
+      //else console.warn("nowhere to send msg", v);
     } else process_send(v);
   }
 

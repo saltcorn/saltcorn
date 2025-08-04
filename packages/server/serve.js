@@ -387,6 +387,7 @@ module.exports =
             Object.entries(cluster.workers).forEach(([wpid, w]) => {
               w.send(msg);
             });
+            workerDispatchMsg(msg); //also master
           };
 
           if (masterState.listeningTo.size < useNCpus)
@@ -431,6 +432,7 @@ module.exports =
           Object.entries(cluster.workers).forEach(([wpid, w]) => {
             w.send(msg);
           });
+          workerDispatchMsg(msg); //also master
         };
 
         cluster.on("exit", (worker, code, signal) => {
@@ -438,6 +440,9 @@ module.exports =
           addWorker(cluster.fork());
         });
       } else {
+        getState().sendMessageToWorkers = (msg) => {
+          workerDispatchMsg(msg); //also master
+        };
         await nonGreenlockWorkerSetup(appargs, port, host);
         runScheduler({
           port,
@@ -681,8 +686,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           const socketIds = state.getConfig("joined_log_socket_ids");
           const newSocketIds = socketIds.filter((id) => id !== socket.id);
           await state.setConfig("joined_log_socket_ids", newSocketIds);
-        }
-        else {
+        } else {
           console.error("No state found in socket disconnect");
           console.error("The current tenantSchema is:", db.getTenantSchema());
           console.error("The current tenant from request is:", tenant);
