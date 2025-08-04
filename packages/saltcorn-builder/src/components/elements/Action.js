@@ -222,7 +222,12 @@ const ActionSettings = () => {
   };
   useEffect(() => {
     apply_showif();
-  }, [name]);
+  }, [
+    name,
+    step_action_names?.[use_setting_action_n] || "",
+    JSON.stringify(configuration?.steps?.[use_setting_action_n]),
+  ]);
+
   return (
     <div>
       <table className="w-100">
