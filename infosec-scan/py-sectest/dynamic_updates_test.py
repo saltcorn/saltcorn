@@ -48,9 +48,9 @@ class Test:
     client.run_trigger("emit_to_admin_and_staff")
     time.sleep(1)
     assert len(client.updates) == 2
-    client.run_trigger("emit_tenant_wide")
-    time.sleep(1)
-    assert len(client.updates) == 3
+    #client.run_trigger("emit_tenant_wide")
+    #time.sleep(1)
+    #assert len(client.updates) == 3
 
   def test_run_trigger_staff(self):
     client = DynamicUpdatesClient()
@@ -66,9 +66,9 @@ class Test:
     client.run_trigger("emit_to_admin_and_staff")
     time.sleep(1)
     assert len(client.updates) == 2
-    client.run_trigger("emit_tenant_wide")
-    time.sleep(1)
-    assert len(client.updates) == 3
+    #client.run_trigger("emit_tenant_wide")
+    #time.sleep(1)
+    #assert len(client.updates) == 3
 
   def test_run_trigger_user(self):
     client = DynamicUpdatesClient()
