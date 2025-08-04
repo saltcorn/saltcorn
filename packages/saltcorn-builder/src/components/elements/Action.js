@@ -178,6 +178,13 @@ const ActionSettings = () => {
     });
     setInitialConfig(setProp, value, getCfgFields(value));
   };
+  const setMultistepAction = (value0) => {
+    const value = value0.value || value0;
+    setProp((prop) => {
+      if (!prop.step_action_names) prop.step_action_names = [];
+      prop.step_action_names[use_setting_action_n] = value;
+    });
+  };
   const actionOptions = options.actions.filter(Boolean).map((f, ix) =>
     f.optgroup && !f.options.length
       ? null
@@ -189,6 +196,30 @@ const ActionSettings = () => {
         : { label: f, value: f }
   );
   const selectedAction = { label: name, value: name };
+  const multiStepActionOptions = options.actions
+    .filter((f) => f && !(options.builtInActions || []).includes(f))
+    .map((f, ix) =>
+      f.optgroup && !f.options.length
+        ? null
+        : f.optgroup
+          ? {
+              label: f.label,
+              options: f.options
+                .filter(
+                  (f) =>
+                    ![
+                      "Multi-step action",
+                      ...(options.builtInActions || []),
+                    ].includes(f)
+                )
+                .map((a, jx) => ({ label: a, value: a })),
+            }
+          : { label: f, value: f }
+    );
+  const selectedMultiStepAction = {
+    label: step_action_names?.[use_setting_action_n] || "",
+    value: step_action_names?.[use_setting_action_n] || "",
+  };
 
   return (
     <div>
@@ -198,7 +229,7 @@ const ActionSettings = () => {
             <td>
               <label>Action</label>
             </td>
-            <td>             
+            <td>
               {options.inJestTestingMode ? null : (
                 <Select
                   options={actionOptions}
@@ -343,47 +374,19 @@ const ActionSettings = () => {
           ></ArrayManager>
 
           <label>Action</label>
-          <select
-            value={step_action_names?.[use_setting_action_n] || ""}
-            className="form-control form-select"
-            onChange={(e) => {
-              if (!e.target) return;
-              const value = e.target.value;
-              setProp((prop) => {
-                if (!prop.step_action_names) prop.step_action_names = [];
-                prop.step_action_names[use_setting_action_n] = value;
-              });
-            }}
-          >
-            <option value="" disabled>
-              Select action...
-            </option>
-            {options.actions
-              .filter((f) => !(options.builtInActions || []).includes(f))
-              .map((f, ix) =>
-                f.optgroup ? (
-                  <optgroup key={ix} label={f.label}>
-                    {f.options
-                      .filter(
-                        (f) =>
-                          ![
-                            "Multi-step action",
-                            ...(options.builtInActions || []),
-                          ].includes(f)
-                      )
-                      .map((a, jx) => (
-                        <option key={jx} value={a}>
-                          {a}
-                        </option>
-                      ))}
-                  </optgroup>
-                ) : (
-                  <option key={ix} value={f}>
-                    {f}
-                  </option>
-                )
-              )}
-          </select>
+          {options.inJestTestingMode ? null : (
+            <Select
+              options={multiStepActionOptions}
+              className="react-select multistep-action-selector"
+              value={selectedMultiStepAction}
+              defaultValue={selectedMultiStepAction}
+              onChange={setMultistepAction}
+              menuPortalTarget={document.body}
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 19999 }),
+              }}
+            ></Select>
+          )}
           {options.mode !== "page" ? (
             <Fragment>
               <label>Only if... (formula)</label>
