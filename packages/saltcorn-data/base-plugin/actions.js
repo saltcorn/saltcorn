@@ -207,6 +207,7 @@ const run_code = async ({
     channel: table ? table.name : channel,
     session_id: rest.req && getSessionId(rest.req),
     request_headers: rest?.req?.headers,
+    page_load_tag: rest?.req?.headers?.["page-load-tag"],
     request_ip: rest?.req?.ip,
     ...(row || {}),
     ...getState().eval_context,
