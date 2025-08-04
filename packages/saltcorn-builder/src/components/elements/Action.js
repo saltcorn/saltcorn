@@ -5,7 +5,7 @@
  */
 /*global notifyAlert*/
 
-import React, { Fragment, useContext } from "react";
+import React, { Fragment, useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -220,7 +220,9 @@ const ActionSettings = () => {
     label: step_action_names?.[use_setting_action_n] || "",
     value: step_action_names?.[use_setting_action_n] || "",
   };
-
+  useEffect(() => {
+    apply_showif();
+  }, [name]);
   return (
     <div>
       <table className="w-100">
