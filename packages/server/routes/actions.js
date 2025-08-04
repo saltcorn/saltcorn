@@ -179,6 +179,7 @@ const triggerForm = async (req, trigger) => {
     workflow: true,
   });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
+  const additional_triggers = ["Login", "PageLoad"];
   const action_options = {};
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
@@ -336,6 +337,17 @@ const triggerForm = async (req, trigger) => {
         parent_field: "configuration",
         type: "String",
         showIf: { when_trigger: ["API call"], _raw_output: true },
+      },
+      {
+        name: "_only_if",
+        label: req.__("Only if"),
+        type: "String",
+        class: "validate-expression",
+        sublabel: req.__(
+          "Optional JavaScript expression to determine if the trigger should run."
+        ),
+        parent_field: "configuration",
+        showIf: { when_trigger: [...table_triggers, ...additional_triggers] },
       },
     ],
   });
@@ -1795,7 +1807,9 @@ router.get(
     try {
       const form = await getWorkflowStepUserForm(run, trigger, step, req);
       if (req.xhr) form.xhrSubmit = true;
-      const title = run.wait_info.output ? "Workflow output" : "Fill form";
+      const title =
+        step.configuration?.popup_title ||
+        (run.wait_info.output ? "Workflow output" : "Fill form");
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } catch (e) {
       console.error(e);

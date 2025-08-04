@@ -48,6 +48,7 @@ import type {
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import axios from "axios";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+import { hash } from "bcryptjs";
 
 import { remove_from_menu } from "./config";
 
@@ -971,10 +972,8 @@ class View implements AbstractView {
   emitRealTimeEvent(eventType: string, data: any): void {
     const { getState } = require("../db/state");
     const state = getState();
-    if (state.hasJoinedRealTimeSockets) {
-      const withViewName = this.getRealTimeEventName(eventType);
-      state.emitRealTimeUpdate(db.getTenantSchema(), withViewName, data);
-    }
+    const withViewName = this.getRealTimeEventName(eventType);
+    state.emitCollabMessage(db.getTenantSchema(), withViewName, data);
   }
 
   /**
@@ -983,7 +982,7 @@ class View implements AbstractView {
    * @returns the full event name
    */
   getRealTimeEventName(eventType: string): string {
-    return `${eventType}_${this.name}`;
+    return `${this.name}_${eventType}`;
   }
 }
 

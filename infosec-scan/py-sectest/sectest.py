@@ -31,6 +31,11 @@ class Session:
     resp = self.session.post(urljoin(self.base_url, url), data=data, allow_redirects=allow_redirects)
     self.__read_response(resp)
 
+  def apiPost(self, url, data, allow_redirects=False):
+    headers = {'Content-Type': 'application/json'}
+    resp = self.session.post(urljoin(self.base_url, url), json=data, headers=headers, allow_redirects=allow_redirects)
+    self.__read_response(resp)
+
   def follow_redirect(self):
     self.get(self.redirect_url)
 

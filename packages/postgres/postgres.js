@@ -15,6 +15,12 @@ const {
   mkWhere,
   mkSelectOptions,
 } = require("@saltcorn/db-common/internal");
+const PlainDate = require("@saltcorn/plain-date");
+
+var types = require("pg").types;
+types.setTypeParser(types.builtins.DATE, (d) =>
+  d === null ? null : new PlainDate(d)
+);
 
 let getTenantSchema;
 let getRequestContext;
@@ -591,6 +597,14 @@ const withTransaction = async (f, onError) => {
   }
 };
 
+const commitAndBeginNewTransaction = async () => {
+  const client = await getClient();
+  sql_log("COMMIT;");
+  await client.query("COMMIT;");
+  sql_log("BEGIN;");
+  await client.query("BEGIN;");
+};
+
 const tryCatchInTransaction = async (f, onError) => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const reqCon = getRequestContext();
@@ -655,6 +669,7 @@ const postgresExports = {
   truncate,
   withTransaction,
   tryCatchInTransaction,
+  commitAndBeginNewTransaction,
 };
 
 module.exports = (getConnectObjectPara) => {

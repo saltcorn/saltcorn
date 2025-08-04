@@ -209,7 +209,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const state = getState();
     if (state) {
       await state.setConfig("joined_log_socket_ids", []);
-      await state.setConfig("joined_real_time_socket_ids", []);
     }
   });
   if (useClusterAdaptor) setupPrimary();
@@ -291,7 +290,8 @@ const onMessageFromWorker =
       ///ie from saltcorn
       //broadcast
       Object.entries(cluster.workers).forEach(([wpid, w]) => {
-        if (wpid !== pid) w.send(msg);
+        //if it is plugin refresh, we need sender to get it as wll
+        if (wpid !== pid || msg?.refresh_plugin_cfg) w.send(msg);
       });
       workerDispatchMsg(msg); //also master
       return true;
@@ -383,6 +383,12 @@ module.exports =
               masterState.listeningTo.add(id);
             }
           });
+          getState().sendMessageToWorkers = (msg) => {
+            Object.entries(cluster.workers).forEach(([wpid, w]) => {
+              w.send(msg);
+            });
+          };
+
           if (masterState.listeningTo.size < useNCpus)
             setTimeout(initMasterListeners, 250);
         };
@@ -421,6 +427,11 @@ module.exports =
 
       if (forkAnyWorkers) {
         for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+        getState().sendMessageToWorkers = (msg) => {
+          Object.entries(cluster.workers).forEach(([wpid, w]) => {
+            w.send(msg);
+          });
+        };
 
         cluster.on("exit", (worker, code, signal) => {
           console.log(`worker ${worker.process.pid} died`);
@@ -545,9 +556,24 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
       .emit("log_msg", { text: msg, time, level });
   });
 
-  // Real-time collaboration emitter
+  // Real-time collaboration emitter (tied to views)
   getState().setCollabEmitter((tenant, type, data) => {
     io.of("/").to(`_${tenant}_collab_room_`).emit(type, data);
+  });
+
+  // dynamic updates emitter (for run_js_actions)
+  getState().setDynamicUpdateEmitter((tenant, data, userIds) => {
+    if (userIds) {
+      for (const userId of userIds) {
+        io.of("/")
+          .to(`_${tenant}:${userId}_dynamic_update_room`)
+          .emit("dynamic_update", data);
+      }
+    } else {
+      io.of("/")
+        .to(`_${tenant}_dynamic_update_room`)
+        .emit("dynamic_update", data);
+    }
   });
 
   io.of("/").on("connection", (socket) => {
@@ -614,16 +640,30 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           if (view.min_role < role_id)
             throw new Error("Not authorized to join collaboration room");
           socket.join(`_${tenant}_collab_room_`);
-          const socketIds = await getState().getConfig(
-            "joined_real_time_socket_ids"
-          );
-          socketIds.push(socket.id);
-          await getState().setConfig("joined_real_time_socket_ids", [
-            ...socketIds,
-          ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);
+          if (typeof callback === "function")
+            callback({ status: "error", msg: err.message || "unknown error" });
+        }
+      };
+      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      else await f();
+    });
+
+    // join_dynamic_update_room for events emitted from run_js_actions
+    socket.on("join_dynamic_update_room", async (callback) => {
+      const tenant =
+        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const f = async () => {
+        try {
+          const user = socket.request.user;
+          if (!user) throw new Error("Not authorized");
+          socket.join(`_${tenant}_dynamic_update_room`);
+          socket.join(`_${tenant}:${user.id}_dynamic_update_room`);
+          if (typeof callback === "function") callback({ status: "ok" });
+        } catch (err) {
+          getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }

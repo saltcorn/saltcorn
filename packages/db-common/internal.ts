@@ -74,7 +74,9 @@ const sqlitePlaceHolderStack = (): PlaceHolderStack => {
     },
     is_sqlite: true,
     getValues() {
-      return values;
+      return values.map((v) =>
+        v?.constructor?.name === "PlainDate" ? (v.valueOf() as number) : v
+      );
     },
   };
 };

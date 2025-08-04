@@ -28,6 +28,7 @@ export type DbExportsType = {
     fn: () => Promise<T>,
     onError?: (err: Error) => Promise<void> | void
   ) => Promise<T>;
+  commitAndBeginNewTransaction: () => Promise<void>;
   selectMaybeOne: (table: string, where: Where, opts?: any) => Promise<any>;
   query: (sql: string, params?: any) => Promise<any>;
   withTransaction: (

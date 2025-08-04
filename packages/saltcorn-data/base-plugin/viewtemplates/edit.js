@@ -123,7 +123,7 @@ const configuration_workflow = (req) =>
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
           const stateActions = Object.entries(getState().actions).filter(
-            ([k, v]) => !v.disableInBuilder
+            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
           );
           const triggerActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -132,6 +132,7 @@ const configuration_workflow = (req) =>
           const actions = Trigger.action_options({
             tableTriggers: table.id,
             apiNeverTriggers: true,
+            forBuilder: true,
             builtInLabel: "Edit Actions",
             builtIns: edit_build_in_actions,
           });
@@ -375,6 +376,13 @@ const configuration_workflow = (req) =>
                 label: req.__("Split paste"),
                 sublabel: req.__("Separate paste content into separate inputs"),
                 type: "Bool",
+              },
+              {
+                name: "enable_realtime",
+                label: req.__("Real-time updates"),
+                sublabel: req.__("Enable real-time updates for this view"),
+                type: "Bool",
+                default: false,
               },
               {
                 name: "destination_type",
@@ -980,6 +988,24 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
+const realTimeScript = (viewname, table_id, row) => {
+  const view = View.findOne({ name: viewname });
+  const table = Table.findOne({ id: table_id });
+  const rowId = row[table.pk_name];
+  return `
+  const collabCfg = {
+    events: {
+      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
+        console.log("Update event received for view ${viewname}", data);
+        if (data.updates) {
+          common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+        }
+      }
+    }
+  };
+  init_collab_room('${viewname}', collabCfg);`;
+};
+
 /**
  * @param {object} opts
  * @param {Table} opts.table
@@ -1015,6 +1041,7 @@ const render = async ({
   isPreview,
   auto_created_row,
   hiddenLoginDest,
+  enable_realtime,
 }) => {
   const form = await getForm(
     table,
@@ -1034,7 +1061,7 @@ const render = async ({
       for (const field of file_fields) {
         if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
           const file = await File.findOne({ id: row[field.name] });
-          if (file.id) form.values[field.name] = file.filename;
+          if (file?.id) form.values[field.name] = file.filename;
         }
         if (field.fieldviewObj?.editContent && row[field.name]) {
           const file = await File.findOne(row[field.name]);
@@ -1081,12 +1108,16 @@ const render = async ({
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
-      form.values[k] = field.type.read ? field.type.read(v) : v;
+      form.values[k] = field.type.read
+        ? field.type.read(v, field.attributes)
+        : v;
     } else {
       const tbl_field = fields.find((f) => f.name === k);
       if (tbl_field && !field) {
         form.fields.push(new Field({ name: k, input_type: "hidden" }));
-        form.values[k] = tbl_field.type.read ? tbl_field.type.read(v) : v;
+        form.values[k] = tbl_field.type.read
+          ? tbl_field.type.read(v, tbl_field.attributes)
+          : v;
       }
     }
   });
@@ -1179,6 +1210,19 @@ const render = async ({
     )
   );
 
+  const dynamic_updates_enabled = getState().getConfig(
+    "enable_dynamic_updates",
+    true
+  );
+  const realTimeCollabScript =
+    enable_realtime && row && !(req.headers?.pjaxpageload === "true")
+      ? (!dynamic_updates_enabled
+          ? script({
+              src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+            })
+          : "") + script(domReady(realTimeScript(viewname, table.id, row)))
+      : "";
+
   if (actually_auto_save) {
     for (const field of form.fields) {
       field.in_auto_save = true;
@@ -1201,7 +1245,8 @@ const render = async ({
     reloadAfterCloseInModalScript +
     confirmLeaveScript +
     deleteUnchangedScript +
-    identicalFieldsScript
+    identicalFieldsScript +
+    realTimeCollabScript
   );
 };
 
@@ -1279,6 +1324,9 @@ const runPost = async (
   const safeBody = prepSafeBody(body, columns);
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
+  if (safeBody?.password && table_id === User.table.id) {
+    safeBody.password = await User.hashPassword(safeBody.password);
+  }
   const prepResult = await prepare(
     viewname,
     table,
@@ -2309,6 +2357,65 @@ const createBasicView = async ({
   return cfg;
 };
 
+const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
+  if (!enable_realtime) return [];
+  const table = Table.findOne({ id: table_id });
+  const view = View.findOne({ name: viewname });
+  return [
+    {
+      when_trigger: "Update",
+      table_id: table_id,
+      run: async (row, { old_row, user }) => {
+        getState().log(
+          6,
+          `Virtual trigger Update for ${viewname} on table ${table.name}`
+        );
+        // find changed columns within the layout
+        const fields = table.getFields();
+        const changedFields = fields.filter((f) => {
+          if (f.name === table.pk_name) return false; // no id changes
+          const a = row[f.name];
+          const b = old_row[f.name];
+          if (f.type?.equals) return !f.type.equals(a, b, f.attributes || {});
+          else return row[f.name] !== old_row[f.name];
+        });
+        const changedLayoutFields = new Set();
+        await traverse(view.configuration.layout, {
+          field(segment) {
+            const { field_name } = segment;
+            if (changedFields.find((f) => f.name === field_name))
+              changedLayoutFields.add(field_name);
+          },
+        });
+
+        if (changedLayoutFields.size === 0) {
+          getState().log(
+            6,
+            "No layout fields changed, skipping real-time update"
+          );
+        } else {
+          // build and emit updates
+          const updateVals = {};
+          for (const fieldName of changedLayoutFields) {
+            const newVal = row[fieldName];
+            updateVals[fieldName] = newVal;
+          }
+          const rowId = row[table.pk_name];
+          getState().log(
+            6,
+            "Emitting real-time update for row",
+            rowId,
+            updateVals
+          );
+          view.emitRealTimeEvent(`UPDATE_EVENT?id=${rowId}`, {
+            updates: updateVals,
+          });
+        }
+      },
+    },
+  ];
+};
+
 module.exports = {
   /** @type {string} */
   name: "Edit",
@@ -2324,6 +2431,7 @@ module.exports = {
   initial_config,
   createBasicView,
   authorise_post,
+  virtual_triggers,
   /**
    * @param {object} opts
    * @param {object} opts.query
@@ -2355,6 +2463,7 @@ module.exports = {
       confirm_leave,
       auto_create,
       delete_unchanged_auto_create,
+      enable_realtime,
     },
     req,
     res,
@@ -2412,7 +2521,7 @@ module.exports = {
           if (typeof state[f.name] !== "undefined") {
             if (f.type?.read)
               row[f.name] = f.type?.read
-                ? f.type.read(state[f.name])
+                ? f.type.read(state[f.name], f.attributes)
                 : state[f.name];
           } else if (f.required)
             if (
@@ -2448,6 +2557,7 @@ module.exports = {
         isPreview,
         auto_created_row,
         hiddenLoginDest,
+        enable_realtime,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {

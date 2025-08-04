@@ -60,20 +60,38 @@ class ModelInstance {
    */
   static async create(lib_in: ModelInstanceCfg): Promise<ModelInstance> {
     const lib = new ModelInstance(lib_in);
-    const id = await db.insert("_sc_model_instances", {
+    const existing = await ModelInstance.findOne({
       name: lib.name,
       model_id: lib.model_id,
-      state: lib.state,
-      hyperparameters: lib.hyperparameters,
-      parameters: lib.parameters,
-      trained_on: lib.trained_on,
-      report: lib.report,
-      metric_values: lib.metric_values,
-      fit_object: lib.fit_object,
-      is_default: lib.is_default,
     });
-    lib.id = id;
-    return lib;
+    if (existing) {
+      await existing.update({
+        state: lib.state,
+        hyperparameters: lib.hyperparameters,
+        parameters: lib.parameters,
+        trained_on: lib.trained_on,
+        report: lib.report,
+        metric_values: lib.metric_values,
+        fit_object: lib.fit_object,
+        is_default: lib.is_default,
+      });
+      return existing;
+    } else {
+      const id = await db.insert("_sc_model_instances", {
+        name: lib.name,
+        model_id: lib.model_id,
+        state: lib.state,
+        hyperparameters: lib.hyperparameters,
+        parameters: lib.parameters,
+        trained_on: lib.trained_on,
+        report: lib.report,
+        metric_values: lib.metric_values,
+        fit_object: lib.fit_object,
+        is_default: lib.is_default,
+      });
+      lib.id = id;
+      return lib;
+    }
   }
 
   /**
@@ -125,6 +143,7 @@ class ModelInstance {
    */
   async update(row: Partial<ModelInstance>): Promise<void> {
     await db.update("_sc_model_instances", row, this.id);
+    Object.assign(this, row);
   }
 
   async predict(rows: Row[]): Promise<any> {

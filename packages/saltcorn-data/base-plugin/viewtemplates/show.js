@@ -111,7 +111,7 @@ const configuration_workflow = (req) =>
             (f) => f.type && f.type.name === "Bool"
           );
           const stateActions = Object.entries(getState().actions).filter(
-            ([k, v]) => !v.disableInBuilder
+            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
           );
           const builtInActions = [
             "Delete",
@@ -126,6 +126,7 @@ const configuration_workflow = (req) =>
           const actions = Trigger.action_options({
             tableTriggers: table.id,
             apiNeverTriggers: true,
+            forBuilder: true,
             builtInLabel: "Show Actions",
             builtIns: builtInActions,
           });

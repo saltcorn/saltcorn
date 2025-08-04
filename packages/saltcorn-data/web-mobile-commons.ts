@@ -66,6 +66,7 @@ const get_extra_menu = (
         return {
           label: __(item.label),
           icon: item.icon,
+          isUser: item.user_menu_header,
           location: item.location,
           style: item.style || "",
           target_blank: item.target_blank,
@@ -73,34 +74,100 @@ const get_extra_menu = (
           type: item.type,
           mobile_item_html: item.mobile_item_html,
           tooltip: item.tooltip,
+          altlinks: get_altlinks(item),
           link:
             item.type === "Link" && item.url_formula
               ? expression.eval_expression(item.url, { locale, role }, user)
               : item.type === "Link"
-              ? is_node
-                ? wrapUrl(item.url)
-                : `javascript:execNavbarLink('${item.url}')`
-              : item.type === "Action"
-              ? `javascript:${
-                  is_node ? "ajax" : "local"
-                }_post_json('/menu/runaction/${item.action_name}')`
-              : item.type === "View"
-              ? is_node
-                ? wrapUrl(`/view/${encodeURIComponent(item.viewname)}`)
-                : `javascript:execNavbarLink('/view/${item.viewname}')`
-              : item.type === "Page"
-              ? is_node
-                ? wrapUrl(`/page/${encodeURIComponent(item.pagename)}`)
-                : `javascript:execNavbarLink('/page/${item.pagename}')`
-              : item.type === "Page Group"
-              ? is_node
-                ? wrapUrl(`/page/${encodeURIComponent(item.page_group)}`)
-                : `javascript:execNavbarLink('/page/${item.page_group}')`
-              : undefined,
+                ? is_node
+                  ? wrapUrl(item.url)
+                  : `javascript:execNavbarLink('${item.url}')`
+                : item.type === "Action"
+                  ? `javascript:${
+                      is_node ? "ajax" : "local"
+                    }_post_json('/menu/runaction/${item.action_name}')`
+                  : item.type === "View"
+                    ? is_node
+                      ? wrapUrl(`/view/${encodeURIComponent(item.viewname)}`)
+                      : `javascript:execNavbarLink('/view/${item.viewname}')`
+                    : item.type === "Page"
+                      ? is_node
+                        ? wrapUrl(`/page/${encodeURIComponent(item.pagename)}`)
+                        : `javascript:execNavbarLink('/page/${item.pagename}')`
+                      : item.type === "Admin Page"
+                        ? is_node
+                          ? wrapUrl(admin_page_url(item.admin_page))
+                          : `javascript:execNavbarLink('${admin_page_url(item.admin_page)}')`
+                        : item.type === "User Page"
+                          ? is_node
+                            ? wrapUrl(user_page_url(item.user_page))
+                            : `javascript:execNavbarLink('${user_page_url(item.user_page)}')`
+                          : item.type === "Page Group"
+                            ? is_node
+                              ? wrapUrl(
+                                  `/page/${encodeURIComponent(item.page_group)}`
+                                )
+                              : `javascript:execNavbarLink('/page/${item.page_group}')`
+                            : undefined,
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };
       });
   return transform(cfg);
+};
+
+const get_altlinks = (item: any) => {
+  if (item.type === "Admin Page" && item.admin_page === "Events")
+    return ["/actions", "/eventlog", "/crashlog"];
+  if (item.type === "Admin Page" && item.admin_page === "Users and security")
+    return ["/roleadmin"];
+  if (item.type === "Admin Page" && item.admin_page === "Site structure")
+    return ["/menu", "/search/config", "/library/list", "/tenant/list"];
+};
+
+const admin_page_url = (page: string): string => {
+  switch (page) {
+    case "Tables":
+      return "/table";
+    case "Views":
+      return "/viewedit";
+    case "Pages":
+      return "/pageedit";
+    case "Tables":
+      return "/table";
+    case "About application":
+      return "/admin";
+    case "Modules":
+      return "/plugins";
+    case "Users and security":
+      return "/useradmin";
+    case "Site structure":
+      return "/site-structure";
+    case "Files":
+      return "/files";
+    case "Events":
+      return "/events";
+    case "Settings":
+      return "/settings";
+
+    default:
+      return "/";
+  }
+};
+const user_page_url = (page: string): string => {
+  switch (page) {
+    case "User settings":
+      return "/auth/settings";
+    case "Notifications":
+      return "/notifications";
+    case "Logout":
+      return "/auth/logout";
+    case "Login":
+      return "/auth/login";
+    case "Signup":
+      return "/auth/signup";
+    default:
+      return "/";
+  }
 };
 
 /**
@@ -429,7 +496,7 @@ const getWorkflowStepUserForm = async (
     onSubmit: "press_store_button(this)",
     blurb,
     formStyle: run.wait_info.output || req.xhr ? "vert" : undefined,
-    ...await run.userFormFields(step, req.user),
+    ...(await run.userFormFields(step, req.user)),
     isWorkflow: true,
   });
   return form;

@@ -80,6 +80,7 @@ describe("User", () => {
       email: u.email,
       reset_password_token: token,
       password: "passw0rd",
+      confirm_password: "passw0rd",
     });
     assertsIsSuccessMessage(res0);
     expect(!!res0.success).toBe(false);
@@ -87,6 +88,7 @@ describe("User", () => {
       email: u.email,
       reset_password_token: token,
       password: "newpaass",
+      confirm_password: "newpaass",
     });
     assertsIsSuccessMessage(res);
     expect(!!res.success).toBe(true);
@@ -104,12 +106,14 @@ describe("User", () => {
       email: u.email,
       reset_password_token: "somerandomtoken",
       password: "newpaass",
+      confirm_password: "newpaass",
     });
     expect(res1).toEqual({ error: "User not found or expired token" });
     const res2 = await User.resetPasswordWithToken({
       email: u.email,
       reset_password_token: "",
       password: "newpaass",
+      confirm_password: "newpaass",
     });
     expect(res2).toEqual({
       error: "Invalid token or invalid token length or incorrect email",

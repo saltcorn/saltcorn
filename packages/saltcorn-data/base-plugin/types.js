@@ -43,6 +43,7 @@ const _ = require("underscore");
 const { interpolate } = require("../utils");
 const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 const { select_by_code } = require("./fieldviews");
+const PlainDate = require("@saltcorn/plain-date");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -1483,10 +1484,17 @@ const string = {
      */
     password: {
       isEdit: true,
+      configFields: [
+        {
+          name: "visibility_toggle",
+          label: "Visibility toggle",
+          type: "Bool",
+        },
+      ],
       blockDisplay: true,
       description: "Password input type, characters are hidden when typed",
-      run: (nm, v, attrs, cls, required, field) =>
-        input({
+      run: (nm, v, attrs, cls, required, field) => {
+        const pwinput = input({
           type: "password",
           disabled: attrs.disabled,
           readonly: attrs.readonly,
@@ -1496,7 +1504,18 @@ const string = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
-        }),
+        });
+        if (attrs?.visibility_toggle)
+          return div(
+            { class: "input-group" },
+            pwinput,
+            span(
+              { class: "input-group-text toggle-password-vis" },
+              i({ class: "fas fa-eye toggle-password-vis-icon" })
+            )
+          );
+        else return pwinput;
+      },
     },
     select_by_code: { ...select_by_code, type: undefined },
   },
@@ -2018,6 +2037,17 @@ const float = {
       if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
       return true;
     },
+
+  /**
+   * check if two float values are equal within a given precision
+   * @param a
+   * @param b
+   * @param opts
+   * @returns true or false
+   */
+  equals: (a, b, { decimal_places }) => {
+    return Math.abs(a - b) < Math.pow(10, -decimal_places) / 2;
+  },
 };
 
 /**
@@ -2151,6 +2181,13 @@ const date = {
       run: (d, req) => {
         if (!d) return "";
         const loc = locale(req);
+        if (d instanceof PlainDate) {
+          const today = new PlainDate();
+          if (today.equals(d)) return req.__("today");
+          let m = moment(d.toDate());
+          if (loc) return text(m.locale(loc).fromNow());
+          else return text(m.fromNow());
+        }
         if (loc) return text(moment(d).locale(loc).fromNow());
         else return text(moment(d).fromNow());
       },
@@ -2238,30 +2275,70 @@ const date = {
    * @subcategory types / date
    */
   presets: {
-    Now: () => new Date(),
+    Now: ({ field }) => {
+      if (field?.attributes?.day_only) return new PlainDate();
+      return new Date();
+    },
   },
   /**
    * @param {object} v
    * @param {object} attrs
    * @returns {object}
    */
-  read: (v, attrs) => {
-    if (v instanceof Date && !isNaN(v)) return v;
-    if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-      if (attrs && attrs.locale) {
-        const d = moment(v, "L LT", attrs.locale).toDate();
+  read: (v0, attrs) => {
+    const readDate = (v) => {
+      if (v instanceof Date && !isNaN(v)) return v;
+      if (v instanceof PlainDate && v.isValid()) return v.toDate();
+      if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
+        if (attrs && attrs.locale) {
+          const d = moment(v, "L LT", attrs.locale).toDate();
+          if (d instanceof Date && !isNaN(d)) return d;
+        }
+        const d = new Date(v);
         if (d instanceof Date && !isNaN(d)) return d;
+        else return null;
       }
-      const d = new Date(v);
-      if (d instanceof Date && !isNaN(d)) return d;
-      else return null;
-    }
+    };
+    const readPlainDate = (v) => {
+      if (v instanceof Date && !isNaN(v)) return new PlainDate(v);
+      if (v instanceof PlainDate && v.isValid()) return v;
+      if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
+        if (attrs && attrs.locale) {
+          const d = moment(v, "L LT", attrs.locale).toDate();
+          if (d instanceof Date && !isNaN(d)) return new PlainDate(d);
+        }
+        try {
+          const d = new PlainDate(v);
+          if (d.isValid()) return d;
+          else return null;
+        } catch {
+          return null;
+        }
+      }
+    };
+    if (attrs?.day_only) return readPlainDate(v0);
+    else return readDate(v0);
   },
   /**
    * @param {object} param
    * @returns {boolean}
    */
   validate: () => (v) => v instanceof Date && !isNaN(v),
+  /**
+   * check if two date values are equal
+   * @param a
+   * @param b
+   * @returns true or false
+   */
+  equals: (a, b) => {
+    if (
+      (a instanceof Date || a instanceof PlainDate) &&
+      (b instanceof Date || b instanceof PlainDate)
+    ) {
+      return a.getTime() === b.getTime();
+    }
+    return false;
+  },
 };
 
 /**

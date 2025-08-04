@@ -67,7 +67,7 @@ const Link = ({
       <button
         className={`${textStyle} is-builder-link ${
           selected ? "selected-node" : ""
-        } ${isFormula?.text ? "font-monospace" : ""} ${link_style} ${
+        } ${isFormula?.text ? "font-monospace" : ""} ${link_style} ${link_style && link_style.includes("btn") ? "d-inline-block" : ""} ${
           link_size || ""
         } ${block ? "d-block" : ""}`}
         ref={(dom) => connect(drag(dom))}

@@ -174,7 +174,9 @@ const pageBuilderData = async (req, context) => {
   const actions = [
     "GoBack",
     ...Object.entries(stateActions)
-      .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
+      .filter(
+        ([k, v]) => !v.requireRow && !v.disableInBuilder && !v.disableIf?.()
+      )
       .map(([k, v]) => k),
   ];
   const triggers = await Trigger.find({
@@ -199,6 +201,7 @@ const pageBuilderData = async (req, context) => {
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     apiNeverTriggers: true,
+    forBuilder: true,
     builtInLabel: "Page Actions",
     builtIns: ["GoBack"],
   });

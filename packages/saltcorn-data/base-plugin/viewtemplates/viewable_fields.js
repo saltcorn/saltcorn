@@ -240,7 +240,12 @@ const make_link = (
       const attrs = { href };
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = ["dropdown-item"];
-      if (link_style) attrs.class = [...(attrs.class || []), link_style];
+      if (link_style)
+        attrs.class = [
+          ...(attrs.class || []),
+          link_style,
+          link_style.includes("btn") && "d-inline-block",
+        ];
       if (link_size) attrs.class = [...(attrs.class || []), link_size];
       if (in_row_click) attrs.onclick = "event.stopPropagation()";
       if (in_modal)
@@ -1762,7 +1767,7 @@ const splitUniques = (fields, state, fuzzyStrings) => {
     )
       uniques[k] = { ilike: v };
     else if (field && field.is_unique)
-      uniques[k] = field.type.read ? field.type.read(v) : v;
+      uniques[k] = field.type.read ? field.type.read(v, field.attributes) : v;
     else nonUniques[k] = v;
   });
   return { uniques, nonUniques };
@@ -1931,7 +1936,12 @@ const fill_presets = async (table, req, fixed) => {
         if (fld) {
           if (table.name === "users" && fld.primary_key)
             fixed[fldnm] = req.user ? req.user.id : null;
-          else fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
+          else
+            fixed[fldnm] = fld.presets[fixed[k]]({
+              user: req.user,
+              req,
+              field: fld,
+            });
         }
       }
       delete fixed[k];

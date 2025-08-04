@@ -128,6 +128,11 @@ const configTypes: ConfigTypes = {
     label: "2FA policy by role",
     default: {},
   },
+  push_policy_by_role: {
+    type: "hidden",
+    label: "Push notifications policy by role",
+    default: {},
+  },
   auth_method_by_role: {
     type: "hidden",
     label: "Authentication method by role",
@@ -234,6 +239,67 @@ const configTypes: ConfigTypes = {
     blurb: "The initial role of signed up users",
     default: "80",
     required: true,
+  },
+  min_password_length: {
+    type: "Integer",
+    label: "Minimum password length",
+    default: 8,
+    required: true,
+    blurb:
+      "The minimum length of passwords for users. Set to 0 to disable password requirements.",
+    excludeFromMobile: true,
+  },
+  check_common_passwords: {
+    type: "Bool",
+    label: "Check common passwords",
+    default: true,
+    blurb:
+      "Check if the password is in the list of common passwords. If enabled, users will not be able to use common passwords.",
+    excludeFromMobile: true,
+  },
+  password_require_uppercase: {
+    type: "Bool",
+    label: "Require uppercase",
+    default: false,
+    blurb: "Require at least one uppercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_lowercase: {
+    type: "Bool",
+    label: "Require lowercase",
+    default: true,
+    blurb: "Require at least one lowercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_number: {
+    type: "Bool",
+    label: "Require number",
+    default: false,
+    blurb: "Require at least one number in the password",
+    excludeFromMobile: true,
+  },
+  password_require_special_char: {
+    type: "Bool",
+    label: "Require special character",
+    default: false,
+    blurb: "Require at least one special character in the password",
+    excludeFromMobile: true,
+  },
+  password_complexity: {
+    type: "String",
+    label: "Password complexity",
+    default: "",
+    blurb:
+      "The regular expression that passwords must match. Set to empty string to disable password complexity requirements.",
+    excludeFromMobile: true,
+  },
+  password_complexity_error: {
+    type: "String",
+    label: "Password complexity error",
+    default: "",
+    blurb:
+      "The error message to show when password does not match the complexity requirements.",
+    excludeFromMobile: true,
   },
   min_role_upload: {
     type: "Role",
@@ -623,6 +689,12 @@ const configTypes: ConfigTypes = {
     label: "Next weekly event",
     excludeFromSnapshot: true,
     default: null,
+  },
+  enable_dynamic_updates: {
+    type: "Bool",
+    label: "Enable dynamic updates",
+    default: true,
+    blurb: "Enable server side updates from within run_js_code actions",
   },
   default_locale: {
     type: "String",

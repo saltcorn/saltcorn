@@ -83,7 +83,7 @@ class FieldRepeat implements AbstractFieldRepeat {
       const fval = whole_rec[`${f.name}_${ix}`];
       if (typeof fval !== "undefined") {
         if (instanceOfType(f.type) && f.type?.read) {
-          res[f.name] = f.type.read(fval);
+          res[f.name] = f.type.read(fval, f.attributes);
         } else res[f.name] = fval;
         has_any = true;
       }

@@ -172,6 +172,17 @@ const global_fetch_options_cache = {};
 
 function apply_showif() {
   const isNode = getIsNode();
+  $(".toggle-password-vis")
+    .off("click")
+    .on("click", function (event) {
+      const $e = $(event.target);
+      const eyeIcon = $e.prop("tagName") === "I" ? $e : $e.find("i");
+      const passwordInput = eyeIcon.parent().prev();
+
+      const isPassword = passwordInput.attr("type") === "password";
+      passwordInput.attr("type", isPassword ? "text" : "password");
+      eyeIcon.toggleClass("fa-eye fa-eye-slash");
+    });
   $("[data-show-if]").each(function (ix, element) {
     var e = $(element);
     try {
@@ -1688,10 +1699,10 @@ function notifyAlert(note, spin) {
   if ($modal.length && $modal.hasClass("show"))
     $("#modal-toasts-area").append(html);
   else $("#toasts-area").append(html);
-  if (type === "success") {
+  if (type === "success" || note.remove_delay) {
     setTimeout(() => {
       $(`#${id}`).removeClass("show");
-    }, 5000);
+    }, note.remove_delay ? note.remove_delay*1000: 5000);
   }
 }
 
@@ -1712,6 +1723,8 @@ function press_store_button(clicked, keepOld, disable) {
     .html('<i class="fas fa-spinner fa-spin"></i>')
     .width(width)
     .height(height);
+  $(document).trigger("activate-spinner", $(btn));
+  $(btn).trigger("spin");
   setTimeout(() => {
     $(btn).prop("disabled", true);
   }, 50);
@@ -1765,17 +1778,32 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   };
   if (res.notify)
     await handle(res.notify, (text) =>
-      notifyAlert({ type: "info", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "info",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   if (res.error) {
     if (window._sc_loglevel > 4) console.trace("error response", res.error);
     await handle(res.error, (text) =>
-      notifyAlert({ type: "danger", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "danger",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   }
   if (res.notify_success)
     await handle(res.notify_success, (text) =>
-      notifyAlert({ type: "success", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "success",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
     const form =
@@ -1810,10 +1838,10 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           input.attr("data-selected", res.set_fields[k]);
         }
 
-        input.trigger("set_form_field");
+        input.trigger("set_form_field", { no_onchange: res.no_onchange });
       });
     }
-    form.trigger("change");
+    if (!res.no_onchange) form.trigger("change");
   }
 
   if (res.download) {
@@ -2044,17 +2072,24 @@ function room_older(viewname, room_id, btn) {
   );
 }
 
-function init_room(viewname, room_id) {
-  let socket = null;
-  if (parent?.saltcorn?.data?.state) {
-    const { server_path, jwt } =
-      parent.saltcorn.data.state.getState().mobileConfig;
-    socket = io(server_path, {
-      query: `jwt=${jwt}`,
-      transports: ["websocket"],
-    });
-  } else socket = io({ transports: ["websocket"] });
+function get_shared_socket() {
+  let socket = window.sharedSocket || null;
+  if (!socket) {
+    if (parent?.saltcorn?.data?.state) {
+      const { server_path, jwt } =
+        parent.saltcorn.data.state.getState().mobileConfig;
+      socket = io(server_path, {
+        query: `jwt=${jwt}`,
+        transports: ["websocket"],
+      });
+    } else socket = io({ transports: ["websocket"] });
+    window.sharedSocket = socket;
+  }
+  return socket;
+}
 
+function init_room(viewname, room_id) {
+  let socket = get_shared_socket();
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
     if (msg.not_for_user_id) {
@@ -2077,30 +2112,38 @@ function init_room(viewname, room_id) {
 }
 
 function init_collab_room(viewname, eventCfgs) {
-  let socket = null;
-  if (parent?.saltcorn?.data?.state) {
-    const { server_path, jwt } =
-      parent.saltcorn.data.state.getState().mobileConfig;
-    socket = io(server_path, {
-      query: `jwt=${jwt}`,
-      transports: ["websocket"],
-    });
-  } else socket = io({ transports: ["websocket"] });
+  let socket = get_shared_socket();
   for (const [event, callback] of Object.entries(eventCfgs.events)) {
     socket.on(event, callback);
   }
-  socket.on("connect", function () {
+  const joinFn = () => {
     socket.emit("join_collab_room", viewname, (ack) => {
-      if (ack && ack.status === "ok") {
+      if (ack && ack.status === "ok")
         console.log(`Joined collaboration room for view '${viewname}'`);
-      } else {
-        console.error("Failed to join collaboration room:", ack);
-      }
+      else console.error("Failed to join collaboration room:", ack);
     });
-  });
+  };
+  if (socket.connected) joinFn();
+  else socket.on("connect", joinFn);
   socket.on("disconnect", function () {
     console.log("Disconnected from the server");
   });
+}
+
+function init_dynamic_update_room() {
+  if (!window.io || navigator.userAgent.includes("jsdom")) return;
+  let socket = get_shared_socket();
+  socket.on("dynamic_update", async (data) => {
+    await common_done(data);
+  });
+  const joinFn = () => {
+    socket.emit("join_dynamic_update_room", (ack) => {
+      if (ack && ack.status === "ok") console.log("Joined dynamic update room");
+      else console.error("Failed to join dynamic update room:", ack);
+    });
+  };
+  if (socket.connected) joinFn();
+  else socket.on("connect", joinFn);
 }
 
 function cancel_form(form) {
@@ -2549,4 +2592,10 @@ async function initPushNotify() {
   } catch (error) {
     console.error("Push notification initialization failed:", error);
   }
+}
+
+if (document.readyState !== "loading") {
+  init_dynamic_update_room();
+} else {
+  document.addEventListener("DOMContentLoaded", init_dynamic_update_room);
 }

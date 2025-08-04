@@ -500,11 +500,12 @@ router.get(
       "backup_s3_access_secret"
     );
     backupForm.values.backup_s3_region =
-    getState().getConfig("backup_s3_region");
+      getState().getConfig("backup_s3_region");
     aBackupFilePrefixForm.values.backup_with_event_log = getState().getConfig(
       "backup_with_event_log"
     );
-    aBackupFilePrefixForm.values.backup_password = getState().getConfig("backup_password");
+    aBackupFilePrefixForm.values.backup_password =
+      getState().getConfig("backup_password");
     const aSnapshotForm = snapshotForm(req);
     aSnapshotForm.values.snapshots_enabled =
       getState().getConfig("snapshots_enabled");
@@ -4126,6 +4127,8 @@ router.post(
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
     }
     await getState().refresh();
+    await require("@saltcorn/data/standard-menu")();
+
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
 
@@ -4532,7 +4535,6 @@ admin_config_route({
   path: "/notifications",
   super_path: "/admin",
   field_names: [
-    "notification_in_menu",
     { section_header: "Progressive Web Application" },
     "pwa_enabled",
     { name: "pwa_display", showIf: { pwa_enabled: true } },

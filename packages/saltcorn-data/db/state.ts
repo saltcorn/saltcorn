@@ -68,6 +68,8 @@ import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
  * @param v
  */
 const process_send = (v: any) => {
+  if (!process.send) console.log("warning: there is no process send");
+
   if (process.send) process.send(v);
 };
 
@@ -181,7 +183,6 @@ class State {
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
-  hasJoinedRealTimeSockets: boolean;
   queriesCache?: Record<string, any>;
   scVersion: string;
   waitingWorkflows?: boolean;
@@ -189,6 +190,7 @@ class State {
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
+  sendMessageToWorkers?: Function;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -243,7 +245,6 @@ class State {
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
     this.hasJoinedLogSockets = false;
-    this.hasJoinedRealTimeSockets = false;
     try {
       this.scVersion = require("../../package.json").version;
     } catch (e) {
@@ -267,7 +268,9 @@ class State {
   }
 
   processSend(v: any) {
-    process_send(v);
+    if (!process.send) {
+      if (this.sendMessageToWorkers) this.sendMessageToWorkers(v);
+    } else process_send(v);
   }
 
   /**
@@ -446,11 +449,9 @@ class State {
       await this.refresh_i18n();
       this.hasJoinedLogSockets =
         (this.configs.joined_log_socket_ids?.value || []).length > 0;
-      this.hasJoinedRealTimeSockets =
-        (this.configs.joined_real_time_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "config", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
   }
 
   async refreshUserLayouts() {
@@ -521,7 +522,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh views");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "views", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "views", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -534,7 +535,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh triggers");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -548,7 +549,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh pages");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "pages", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
   async refresh_page_groups(noSignal: boolean) {
@@ -564,7 +565,10 @@ class State {
       }
     );
     if (!noSignal && db.is_node)
-      process_send({ refresh: "page_groups", tenant: db.getTenantSchema() });
+      this.processSend({
+        refresh: "page_groups",
+        tenant: db.getTenantSchema(),
+      });
   }
 
   /**
@@ -657,7 +661,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh table");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "tables", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "tables", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -669,6 +673,8 @@ class State {
   getConfig(key: string, def?: any) {
     const fixed = db.connectObj.fixed_configuration[key];
     if (typeof fixed !== "undefined") return fixed;
+    const exposed = db.connectObj.exposed_configuration[key];
+    if (typeof exposed !== "undefined") return exposed;
     if (db.connectObj.inherit_configuration.includes(key)) {
       if (typeof singleton.configs[key] !== "undefined")
         return singleton.configs[key].value;
@@ -715,10 +721,8 @@ class State {
         if (key === "log_level") this.logLevel = +value;
         if (key === "joined_log_socket_ids")
           this.hasJoinedLogSockets = (value || []).length > 0;
-        if (key === "joined_real_time_socket_ids")
-          this.hasJoinedRealTimeSockets = (value || []).length > 0;
         if (db.is_node)
-          process_send({ refresh: "config", tenant: db.getTenantSchema() });
+          this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
         else {
           await this.refresh_config(true);
         }
@@ -740,7 +744,7 @@ class State {
         delete this.configs[key];
       }
       if (db.is_node)
-        process_send({ refresh: "config", tenant: db.getTenantSchema() });
+        this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
       else {
         await this.refresh_config(true);
       }
@@ -939,7 +943,7 @@ class State {
     delete this.plugins[name];
     await this.refresh_plugins();
     if (!noSignal && db.is_node)
-      process_send({ removePlugin: name, tenant: db.getTenantSchema() });
+      this.processSend({ removePlugin: name, tenant: db.getTenantSchema() });
   }
 
   get eval_context() {
@@ -966,14 +970,23 @@ class State {
           ...this.function_context,
           Table,
           File,
+          View,
           User,
+          Trigger,
           setTimeout,
           fetch,
           sleep,
           interpolate,
+          tryCatchInTransaction: db.tryCatchInTransaction,
+          commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+          Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor
           require: (nm: string) => this.codeNPMmodules[nm],
+          setConfig: (k: string, v: any) =>
+            this.isFixedConfig(k) ? undefined : this.setConfig(k, v),
+          getConfig: (k: string) =>
+            this.isFixedConfig(k) ? undefined : this.getConfig(k),
         };
         const funCtxKeys = new Set(Object.keys(myContext));
         const sandbox = createContext(myContext);
@@ -991,7 +1004,7 @@ class State {
       }
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "codepages", tenant: db.getTenantSchema() });
     this.oldCodePages = code_pages;
     return errMsg;
   }
@@ -1028,7 +1041,7 @@ class State {
     });
     await this.refresh(true);
     if (!noSignal && db.is_node)
-      process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -1080,16 +1093,42 @@ class State {
     globalLogEmitter = f;
   }
 
+  /**
+   * @param f Function to emit collaborative editing messages
+   */
   setCollabEmitter(f: Function) {
     globalCollabEmitter = f;
+  }
+
+  /**
+   * @param f Function to emit dynamic update messages triggered from run_js_code actions
+   */
+  setDynamicUpdateEmitter(f: Function) {
+    globalDynamicUpdateEmitter = f;
   }
 
   emitLog(ten: string, min_level: number, msg: string) {
     globalLogEmitter(ten, min_level, msg);
   }
 
-  emitRealTimeUpdate(ten: string, type: string, data: any) {
+  /**
+   * For collaborative editing
+   * @param ten
+   * @param type
+   * @param data
+   */
+  emitCollabMessage(ten: string, type: string, data: any) {
     globalCollabEmitter(ten, type, data);
+  }
+
+  /**
+   * For dynamic updates triggered from a run_js_code action
+   * @param ten
+   * @param data
+   * @param userIds - optional array of user IDs to send the update to
+   */
+  emitDynamicUpdate(ten: string, data: any, userIds?: number[]) {
+    globalDynamicUpdateEmitter(ten, data, userIds);
   }
 
   // default auth methods to enabled
@@ -1186,7 +1225,7 @@ class State {
       }
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
     this.npm_refresh_in_progess = false;
   }
 }
@@ -1197,6 +1236,7 @@ class State {
 let globalRoomEmitter: Function = () => {};
 let globalLogEmitter: Function = () => {};
 let globalCollabEmitter: Function = () => {};
+let globalDynamicUpdateEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State("public");

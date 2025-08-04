@@ -13,6 +13,7 @@ const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
 const mjml = require("@saltcorn/markup/mjml-tags");
+const PlainDate = require("@saltcorn/plain-date");
 const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 const {
   Relation,
@@ -147,7 +148,14 @@ const link_view = (
       {
         ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
         href: url,
-        class: [textStyle, link_style, link_size, extraClass, link_class],
+        class: [
+          textStyle,
+          link_style,
+          link_size,
+          extraClass,
+          link_class,
+          link_style && link_style.includes("btn") && "d-inline-block",
+        ],
         style,
         title: link_title,
         onclick: in_row_click ? "event.stopPropagation()" : undefined,
@@ -2057,16 +2065,29 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          gt: new Date(v),
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           equal: true,
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_todate_")) {
       const datefield = db.sqlsanitize(k.replace("_todate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
-      if (dfield)
+      //https://stackoverflow.com/a/22061879/19839414
+      if (
+        dfield &&
+        !dfield?.attributes?.day_only &&
+        v?.match?.(/^\d{4}-\d{2}-\d{2}$/)
+      ) {
+        const date = new Date(v);
+        date.setDate(date.getDate() + 1);
         addOrCreateList(qstate, datefield, {
-          lt: new Date(v),
+          lt: date,
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
+      } else if (dfield)
+        addOrCreateList(qstate, datefield, {
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           equal: true,
           day_only: dfield.attributes?.day_only,
         });
@@ -2075,7 +2096,7 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          gt: new Date(v),
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_toneqdate_")) {
@@ -2083,7 +2104,7 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          lt: new Date(v),
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_gte_")) {
@@ -2112,7 +2133,9 @@ const stateFieldsToWhere = ({
     } else if (field && field.type.name === "String" && v && v.slugify) {
       qstate[k] = v;
     } else if (Array.isArray(v) && field && field.type && field.type.read) {
-      qstate[k] = { or: v.map(field.type.read) };
+      qstate[k] = {
+        or: v.map((val) => field.type.read(val, field.attributes)),
+      };
     } else if (
       Array.isArray(v) &&
       field?.is_fkey &&
@@ -2168,8 +2191,8 @@ const stateFieldsToWhere = ({
       qstate[k] = v;
     } else if (field && field.type && field.type.read)
       qstate[k] = Array.isArray(v)
-        ? { or: v.map(field.type.read) }
-        : field.type.read(v);
+        ? { or: v.map((val) => field.type.read(val, field.attributes)) }
+        : field.type.read(v, field.attributes);
     else if (field) qstate[k] = v;
     else if (k.split("->").length === 3) {
       const [jFieldNm, throughPart, finalPart] = k.split(".");
@@ -2431,7 +2454,7 @@ const readState = (state, fields, req) => {
   const read_key = (f, current) =>
     current === "null" || current === "" || current === null
       ? null
-      : getState().types[f.reftype].read(current);
+      : getState().types[f.reftype].read(current, f.attributes);
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
@@ -2443,7 +2466,7 @@ const readState = (state, fields, req) => {
       ) {
         //ignore (this is or statement)
       } else if (Array.isArray(current) && f.type.read) {
-        state[f.name] = current.map(f.type.read);
+        state[f.name] = current.map((val) => f.type.read(val, f.attributes));
       } else if (
         Array.isArray(current) &&
         f.is_fkey &&
@@ -2452,11 +2475,12 @@ const readState = (state, fields, req) => {
         state[f.name] = current.map((v) => read_key(f, v));
       } else if (current && current.slugify)
         state[f.name] = f.type.read
-          ? { slugify: f.type.read(current.slugify) }
+          ? { slugify: f.type.read(current.slugify, f.attributes) }
           : current;
       else if (typeof current === "object") {
         //ignore
-      } else if (f.type?.read) state[f.name] = f.type.read(current);
+      } else if (f.type?.read)
+        state[f.name] = f.type.read(current, f.attributes);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const pname = current.replace("Preset:", "");
         if (Object.prototype.hasOwnProperty.call(f.presets, pname)) {
@@ -2485,7 +2509,7 @@ const readStateStrict = (state, fields) => {
 
     if (typeof current !== "undefined") {
       if (f.type.read) {
-        const readval = f.type.read(current);
+        const readval = f.type.read(current, f.attributes);
         if (typeof readval === "undefined") {
           if (current === "" && !f.required) delete state[f.name];
           else hasErrors = true;

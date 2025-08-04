@@ -36,6 +36,7 @@ import {
   prepareSimpleTopicPostRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
+const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
 
@@ -402,6 +403,7 @@ describe("stateFieldsToWhere", () => {
     new Field({ name: "astr", type: "String" }),
     new Field({ name: "age", type: "Integer" }),
     new Field({ name: "dob", type: "Date", attributes: { day_only: true } }),
+    new Field({ name: "tob", type: "Date", attributes: { day_only: false } }),
     new Field({ name: "favbook", type: "Key to books" }),
     { name: "props", type: { name: "JSON" } },
     {
@@ -448,8 +450,32 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({
       dob: [
-        { gt: new Date(5), day_only: true },
-        { lt: new Date(15), day_only: true },
+        { gt: new PlainDate(5), day_only: true },
+        { lt: new PlainDate(15), day_only: true },
+      ],
+    });
+  });
+  it("date bounds inclusive", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { _fromdate_dob: "2025-07-24", _todate_dob: "2025-07-27" },
+    });
+    expect(w).toStrictEqual({
+      dob: [
+        { gt: new PlainDate("2025-07-24"), equal: true, day_only: true },
+        { lt: new PlainDate("2025-07-27"), equal: true, day_only: true },
+      ],
+    });
+  });
+  it("date bounds inclusive with time", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { _fromdate_tob: "2025-07-24", _todate_tob: "2025-07-27" },
+    });
+    expect(w).toStrictEqual({
+      tob: [
+        { gt: new Date("2025-07-24"), equal: true, day_only: false },
+        { lt: new Date("2025-07-28"), equal: true, day_only: false },
       ],
     });
   });
@@ -638,5 +664,6 @@ describe("objectToQueryString", () => {
     expect(objectToQueryString({ a: { or: ["Foo", "Bar"] } })).toBe(
       "a=Foo&a=Bar"
     );
+    expect(objectToQueryString({ a: ["Foo", "Bar"] })).toBe("a=Foo&a=Bar");
   });
 });
