@@ -1453,7 +1453,7 @@ router.post(
  * @param {object} res
  * @returns {void}
  */
-const loginCallback = (req, res) => () => {
+const loginCallback = (req, res) => async () => {
   if (!req.user) return;
   if (!req.user.id) {
     res.redirect("/auth/signup_final_ext");
@@ -1461,7 +1461,28 @@ const loginCallback = (req, res) => () => {
   if (!req.user.email) {
     res.redirect("/auth/set-email");
   } else {
-    Trigger.emitEvent("Login", null, req.user);
+    const resultCollector = {};
+    await Trigger.runTableTriggers(
+      "Login",
+      null,
+      req.user,
+      resultCollector,
+      req.user,
+      { req }
+    );
+    if (resultCollector.notify) {
+      req.flash("warning", resultCollector.notify);
+    }
+    if (resultCollector.error) {
+      req.flash("error", resultCollector.error);
+    }
+    if (resultCollector.notify_success) {
+      req.flash("success", resultCollector.notify_success);
+    }
+    if (resultCollector.goto) {
+      res.redirect(resultCollector.goto);
+      return;
+    }
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.cookies["login_dest"]) {
       res.clearCookie("login_dest");
