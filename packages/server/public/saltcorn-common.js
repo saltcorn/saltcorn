@@ -2144,8 +2144,9 @@ function init_dynamic_update_room() {
   });
   const joinFn = () => {
     socket.emit("join_dynamic_update_room", (ack) => {
-      if (ack && ack.status === "ok") console.log("Joined dynamic update room");
-      else console.error("Failed to join dynamic update room:", ack);
+      if (ack && ack.status === "ok") {
+        if (window._sc_loglevel > 5) console.log("Joined dynamic update room");
+      } else console.error("Failed to join dynamic update room:", ack);
     });
   };
   if (socket.connected) joinFn();
