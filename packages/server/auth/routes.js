@@ -495,8 +495,8 @@ router.post(
       res.redirect("/auth/login");
     } else if (result.error) {
       console.log({
-        result
-      })
+        result,
+      });
       req.flash("danger", result.error);
       const form = resetForm(req.body, req);
       form.errors = { password: result.error, confirm_password: result.error };
@@ -1334,7 +1334,8 @@ router.post(
       null,
       req.user,
       resultCollector,
-      req.user
+      req.user,
+      { req }
     );
     if (resultCollector.notify) {
       req.flash("warning", resultCollector.notify);
