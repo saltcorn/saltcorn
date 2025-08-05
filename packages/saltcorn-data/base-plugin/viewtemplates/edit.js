@@ -612,7 +612,9 @@ const transformForm = async ({
   getRowQuery,
   viewname,
   optionsQuery,
+  state,
 }) => {
+  let originalState = state;
   let pseudo_row = {};
   if (!row) {
     table.fields.forEach((f) => {
@@ -854,7 +856,10 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       } // end edit in edit
-
+      const outerState = {};
+      Object.entries(originalState || {}).forEach(([k, v]) => {
+        if (k.startsWith("_")) outerState[k] = v;
+      });
       let state = {};
       let urlFormula;
       let needFields = new Set();
@@ -880,7 +885,7 @@ const transformForm = async ({
           const type = relation.type;
           if (!row && type == RelationType.OWN) {
             segment.type = "blank";
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -893,7 +898,7 @@ const transformForm = async ({
             type !== RelationType.INDEPENDENT &&
             !relation.isFixedRelation()
           ) {
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -908,7 +913,7 @@ const transformForm = async ({
             relation.isFixedRelation() ? () => userId : (k) => row[k]
           );
 
-          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
+          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
         }
       } else {
         const isIndependent = view_select.type === "Independent";
@@ -921,23 +926,23 @@ const transformForm = async ({
         switch (view_select.type) {
           case "Own":
             state = { id: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "Independent":
             state = {};
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "ChildList":
           case "OneToOneShow":
             state = { [view_select.field_name]: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "ParentShow":
             state = { id: row?.[view_select.field_name] };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add(view_select.field_name);
             break;
         }
@@ -964,7 +969,11 @@ const transformForm = async ({
             `Extra state formula for embedding view ${view.name}`
           )
         : {};
-      const qs = stateToQueryString({ ...state, ...extra_state }, true);
+
+      const qs = stateToQueryString(
+        { ...state, ...outerState, ...extra_state },
+        true
+      );
       segment.contents = div(
         {
           class: "d-inline",
@@ -975,7 +984,7 @@ const transformForm = async ({
           "data-view-source": encodeURIComponent(urlFormula),
         },
         await view.run(
-          { ...state, ...extra_state },
+          { ...state, ...outerState, ...extra_state },
           { req, res },
           view.isRemoteTable()
         )
@@ -1238,6 +1247,7 @@ const render = async ({
     getRowQuery,
     viewname,
     optionsQuery,
+    state,
   });
   form.id = formId;
   return (

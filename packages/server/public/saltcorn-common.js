@@ -151,15 +151,15 @@ function valid_js_var_name(s) {
   return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
 }
 
-function add_extra_state(base_url, extra_state_fml, row) {
+function add_extra_state(base_url, extra_state_fml, row, outerState = {}) {
   //console.log("add_extra_state", { base_url, extra_state_fml, row });
-  if (!extra_state_fml) return base_url;
+  if (!extra_state_fml && !Object.keys(outerState).length) return base_url;
   let extra_state = new Function(
     "row",
     `{${Object.keys(row).join(",")}}`,
-    "return " + extra_state_fml
+    "return " + extra_state_fml||"{}"
   )(row, row);
-  let qs = Object.entries(extra_state)
+  let qs = Object.entries({ ...outerState, ...extra_state })
     .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
     .join("&");
   let sepChar = base_url.includes("?") ? "&" : "?";
