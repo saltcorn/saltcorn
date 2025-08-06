@@ -2671,6 +2671,8 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     },
   };
+  if (methods?.deleteRows) tbl.deleteRows = methods.deleteRows;
+
   return tbl;
 };
 
