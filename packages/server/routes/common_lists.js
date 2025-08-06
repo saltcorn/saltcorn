@@ -729,6 +729,8 @@ const getTriggerList = async (
       )
     );
   };
+  const whenCanHaveTable = (when) =>
+    ["Insert", "Update", "Delete", "Validate", "Never"].includes(when);
   return mkTable(
     [
       { label: req.__("Name"), key: "name" },
@@ -781,7 +783,7 @@ const getTriggerList = async (
       {
         label: req.__("Table or Channel"),
         key: (r) =>
-          r.table_name
+          r.table_name && whenCanHaveTable(r.when_trigger)
             ? user_can_inspect_tables
               ? a({ href: `/table/${r.table_name}` }, r.table_name)
               : r.table_name
