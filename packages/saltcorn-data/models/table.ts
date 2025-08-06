@@ -3224,6 +3224,7 @@ class Table implements AbstractTable {
                     } else
                       try {
                         // TODO check constraints???
+                        delete rec[this.pk_name] // pk value can be set to undefined
                         await db.insert(this.name, rec, {
                           noid: true,
                           client,
