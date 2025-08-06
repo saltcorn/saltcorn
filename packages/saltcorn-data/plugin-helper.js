@@ -2621,7 +2621,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
     },
     async countRows(where, opts) {
       if (methods?.countRows) {
-        return await methods?.countRows(where, opts);
+        return await methods.countRows(where, opts);
       }
       let data_in = await get_json_list(where, opts);
       return data_in.length;
@@ -2653,6 +2653,8 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return null;
     },
     async distinctValues(fldNm, opts) {
+      if (methods?.distinctValues)
+        return await methods.distinctValues(fldNm, opts);
       let data_in = await get_json_list(opts || {});
       const s = new Set(data_in.map((x) => x[fldNm]));
       return [...s];
