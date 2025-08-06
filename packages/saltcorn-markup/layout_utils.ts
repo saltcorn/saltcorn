@@ -117,7 +117,7 @@ const show_icon_and_label = (
             { class: [`fst-normal`, cls] },
             String.fromCharCode(parseInt(icon.substring(8, 12), 16))
           )
-        : i({ class: [icon, cls] })) + (label === " " ? "" : "&nbsp;")
+        : i({ class: [icon, cls] })) + (label === " " || !label ? "" : "&nbsp;")
     : "") + (label === " " && icon ? "" : label);
 
 const navSubItemsIterator = (si: SectionOpts): string =>
