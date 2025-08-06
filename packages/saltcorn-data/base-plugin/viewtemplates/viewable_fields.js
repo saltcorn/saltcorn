@@ -1760,13 +1760,13 @@ const splitUniques = (fields, state, fuzzyStrings) => {
     const field = fields.find((f) => f.name === k);
     if (
       field &&
-      field.is_unique &&
+      (field.is_unique || field.primary_key) &&
       fuzzyStrings &&
       field.type &&
       field.type.name === "String"
     )
       uniques[k] = { ilike: v };
-    else if (field && field.is_unique)
+    else if (field && (field.is_unique || field.primary_key))
       uniques[k] = field.type.read ? field.type.read(v, field.attributes) : v;
     else nonUniques[k] = v;
   });
