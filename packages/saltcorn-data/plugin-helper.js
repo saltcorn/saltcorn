@@ -2547,6 +2547,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
   );
   const getRows = async (where = {}, selopts = {}) => {
     let data_in = await get_json_list(where, selopts);
+    if (methods?.disableFiltering) return data_in;
     const restricts = Object.entries(where);
     const sat =
       (x) =>
