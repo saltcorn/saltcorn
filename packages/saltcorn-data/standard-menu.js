@@ -25,7 +25,7 @@ const create_standard_menu = async () => {
   const new_items = [
     {
       href: "",
-      icon: "bi bi-table",
+      icon: "fas fa-table",
       text: "Tables",
       type: "Admin Page",
       label: "Tables",
@@ -93,7 +93,7 @@ const create_standard_menu = async () => {
       subitems: [
         {
           href: "",
-          icon: "bi bi-tools",
+          icon: "fas fa-tools",
           text: "About application",
           type: "Admin Page",
           label: "About application",

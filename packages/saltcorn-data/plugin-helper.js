@@ -123,6 +123,7 @@ const link_view = (
             !link_style && "btn btn-link",
             extraClass,
             link_class,
+            "d-inline-block",
           ],
           title: link_title,
           type: "button",
