@@ -2682,6 +2682,17 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       }
     };
   }
+  if (methods?.insertRow) {
+    tbl.insertRow = methods.insertRow;
+    tbl.tryInsertRow = async (...args) => {
+      try {
+        const id = await methods.insertRow(...args);
+        return { success: id };
+      } catch (error) {
+        return { error: error?.message || error };
+      }
+    };
+  }
 
   return tbl;
 };
