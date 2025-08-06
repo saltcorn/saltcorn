@@ -7,7 +7,8 @@ cd $SCRIPT_DIR
 PATH=../../packages/saltcorn-cli/bin/:$PATH
 PGDATABASE=saltcorn_test saltcorn reset-schema -f
 PGDATABASE=saltcorn_test saltcorn restore ./backups/guitars_backup.zip
-PGDATABASE=saltcorn_test saltcorn build-app -p web -e guitar_feed -t view -b $BUILD_DIR -u admin@foo.com -s http://localhost:3010
+
+PGDATABASE=saltcorn_test saltcorn build-app -p web -e dashboard -t page -b /tmp/saltcorn_build -u admin@foo.com -s http://localhost:3010 --allowOfflineMode --includedPlugins any-bootstrap-theme flatpickr-date
 
 # put tables.json into test_schema.js like this: var _test_schema_ = [content from tables.json]
 if [ -f $BUILD_DIR/www/data/tables.json ]; then
