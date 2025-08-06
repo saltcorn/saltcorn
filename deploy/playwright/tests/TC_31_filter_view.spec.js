@@ -28,7 +28,7 @@ test.describe('E2E Test Suite', () => {
 
     // Navigate to base URL and perform login
     await functions.navigate_To_Base_URL(baseURL, derivedURL);
-    await functions.login('saltcorn_admin_user@mailinator.com', 'Saltcorn');
+    await functions.login('myproject19july@mailinator.com', 'myproject19july');
     await functions.submit();
   });
 
