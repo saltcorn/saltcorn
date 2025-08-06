@@ -1295,6 +1295,10 @@ Peter Rossi, 212,9,200`;
     assertIsSet(rowDB);
     expect(rowDB.author).toBe("Noam Chomsky");
     expect(rowDB.pages).toBe(541);
+    const rowDB2 = await table.getRow({ author: "Hadas Thier" });
+    assertIsSet(rowDB2);
+    expect(rowDB2.pages).toBe(250);
+
     await table.updateRow({ author: "Herman Melville" }, 1);
   });
   it("fail on required field", async () => {
