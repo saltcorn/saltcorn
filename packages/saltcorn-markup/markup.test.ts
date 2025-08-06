@@ -708,7 +708,7 @@ describe("index", () => {
         '<input type="hidden" name="_csrf" value="csrfToken123">'
       );
       expect(result).toContain(
-        '<button type="submit" class=" btn  btn-primary">Submit</button>'
+        '<button type="submit" class=" btn  btn-primary d-inline-block">Submit</button>'
       );
       expect(result).toContain("</form>");
     });
@@ -723,7 +723,7 @@ describe("index", () => {
         '<input type="hidden" name="_csrf" value="csrfToken123">'
       );
       expect(result).toContain(
-        '<button type="submit" class=" btn  btn-primary">Submit</button>'
+        '<button type="submit" class=" btn  btn-primary d-inline-block">Submit</button>'
       );
       expect(result).toContain("</form>");
     });
