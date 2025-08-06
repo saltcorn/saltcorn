@@ -151,7 +151,7 @@ const post_btn = (
                           }),
                     }),
               }),
-          class: `${klass} btn ${small ? "btn-sm" : ""} ${btnClass}`,
+          class: `${klass} btn ${small ? "btn-sm" : ""} ${btnClass} d-inline-block`,
           ...(style ? { style } : {}),
           ...(title ? { title: text_attr(title) } : {}),
         },
