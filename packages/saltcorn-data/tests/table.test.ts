@@ -1274,6 +1274,29 @@ Peter Rossi, 212,9,200`;
     assertIsSet(rowDB);
     expect(rowDB.author).toBe("Herman Melville");
   });
+  it("should insert on missing id when blank", async () => {
+    const csv = `id,author,Pages
+1, Noam Chomsky, 541
+,Hadas Thier, 250`;
+    const fnm = "/tmp/testmixedid.csv";
+    await writeFile(fnm, csv);
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const impres = await table.import_csv_file(fnm, { no_table_write: true });
+    assertsIsSuccessMessage(impres);
+
+    const rows = impres.rows;
+    assertIsSet(rows);
+    expect(rows.length).toBe(2);
+
+    await table.import_csv_file(fnm);
+
+    const rowDB = await table.getRow({ id: 1 });
+    assertIsSet(rowDB);
+    expect(rowDB.author).toBe("Noam Chomsky");
+    expect(rowDB.pages).toBe(541);
+    await table.updateRow({ author: "Herman Melville" }, 1);
+  });
   it("fail on required field", async () => {
     const csv = `author,Pagez
 Joe Celko, 856
