@@ -740,7 +740,7 @@ class PageLocators {
     this.toaster = '.toast.show';
     this.toastTitle = 'div[data-field-name="title"] input';
     this.toastFieldName = 'div[data-field-name="text"] input';  
-  
+    this.actionDropdown = '.react-select.action-selector';
   }
 }
 
