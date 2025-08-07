@@ -2547,6 +2547,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
   );
   const getRows = async (where = {}, selopts = {}) => {
     let data_in = await get_json_list(where, selopts);
+    if (methods?.disableFiltering) return data_in;
     const restricts = Object.entries(where);
     const sat =
       (x) =>
@@ -2621,7 +2622,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
     },
     async countRows(where, opts) {
       if (methods?.countRows) {
-        return await methods?.countRows(where, opts);
+        return await methods.countRows(where, opts);
       }
       let data_in = await get_json_list(where, opts);
       return data_in.length;
@@ -2653,6 +2654,8 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return null;
     },
     async distinctValues(fldNm, opts) {
+      if (methods?.distinctValues)
+        return await methods.distinctValues(fldNm, opts);
       let data_in = await get_json_list(opts || {});
       const s = new Set(data_in.map((x) => x[fldNm]));
       return [...s];
@@ -2671,6 +2674,29 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     },
   };
+  if (methods?.deleteRows) tbl.deleteRows = methods.deleteRows;
+  if (methods?.updateRow) {
+    tbl.updateRow = methods.updateRow;
+    tbl.tryUpdateRow = async (...args) => {
+      try {
+        return await methods.updateRow(...args);
+      } catch (error) {
+        return { error: error?.message || error };
+      }
+    };
+  }
+  if (methods?.insertRow) {
+    tbl.insertRow = methods.insertRow;
+    tbl.tryInsertRow = async (...args) => {
+      try {
+        const id = await methods.insertRow(...args);
+        return { success: id };
+      } catch (error) {
+        return { error: error?.message || error };
+      }
+    };
+  }
+
   return tbl;
 };
 
