@@ -52,7 +52,7 @@ test.describe('E2E Test Suite', () => {
     // Drag and drop the text source
     await page.waitForSelector(pageobject.ActionLocator);
     await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.target);
-    await page.locator('.css-1wy0on6').click();
+    await page.locator(pageobject.actionDropdown).click();
     await page.waitForTimeout(2000);
 
     // Type 'modify' into the input field
