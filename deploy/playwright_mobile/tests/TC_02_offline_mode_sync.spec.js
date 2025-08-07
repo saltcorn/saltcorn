@@ -149,6 +149,10 @@ test.describe("Login Navigate Upload", () => {
     await expect(calendar).toBeVisible();
 
     // select a date and check the input
+    const yearInput = iframe.locator(".numInput.cur-year");
+    await yearInput.fill("2025");
+    const monthSelect = iframe.locator("select.flatpickr-monthDropdown-months");
+    await monthSelect.selectOption("7");
     const dayToSelect = iframe.locator(
       '.flatpickr-day[aria-label="August 25, 2025"]'
     );

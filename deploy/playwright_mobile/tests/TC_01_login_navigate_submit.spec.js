@@ -133,6 +133,12 @@ test.describe("Login Navigate Upload", () => {
       await expect(calendar).toBeVisible();
 
       // select a date and check the input
+      const yearInput = iframe.locator(".numInput.cur-year");
+      await yearInput.fill("2025");
+      const monthSelect = iframe.locator(
+        "select.flatpickr-monthDropdown-months"
+      );
+      await monthSelect.selectOption("7");
       const dayToSelect = iframe.locator(
         '.flatpickr-day[aria-label="August 25, 2025"]'
       );
@@ -142,16 +148,16 @@ test.describe("Login Navigate Upload", () => {
       expect(inputValue).toBe("2025-08-25");
 
       // select a guitar
-      const guitarInput = iframe.locator('select#inputguitar');
+      const guitarInput = iframe.locator("select#inputguitar");
       await expect(guitarInput).toBeVisible();
-      await guitarInput.selectOption('2');      
-      await expect(guitarInput).toHaveValue('2');
-      
+      await guitarInput.selectOption("2");
+      await expect(guitarInput).toHaveValue("2");
+
       // select a process type
-      const processTypeInput = iframe.locator('select#inputtype');
+      const processTypeInput = iframe.locator("select#inputtype");
       await expect(processTypeInput).toBeVisible();
-      await processTypeInput.selectOption('1');
-      await expect(processTypeInput).toHaveValue('1');
+      await processTypeInput.selectOption("1");
+      await expect(processTypeInput).toHaveValue("1");
     } catch (error) {
       await dumpHTML(page);
       throw error;
@@ -175,10 +181,11 @@ test.describe("Login Navigate Upload", () => {
       const dateElement = processedItem.locator("time");
       await expect(dateElement).toHaveCount(3);
 
-      const timeElement = newIframe.locator('time[datetime="2025-08-25T00:00:00.000Z"]');
+      const timeElement = newIframe.locator(
+        'time[datetime="2025-08-25T00:00:00.000Z"]'
+      );
       await expect(timeElement).toBeVisible();
-    }
-    catch (error) {
+    } catch (error) {
       await dumpHTML(page);
       throw error;
     }
