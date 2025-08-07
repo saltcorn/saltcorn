@@ -79,7 +79,7 @@ test.describe('E2E Test Suite', () => {
         // add new action button on page
         await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.fourthrowcolumn2);
         // Click the input field inside the dropdown
-        await page.locator('.css-1wy0on6').click();
+        await page.locator(pageobject.actionDropdown).click();
         await page.waitForTimeout(2000);
 
         // Type 'modify' into the input field
