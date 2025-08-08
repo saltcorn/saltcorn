@@ -1673,5 +1673,6 @@
 	"Some themes display this header differently": "Some themes display this header differently",
 	"Dynamic server side updates": "Dynamic server side updates",
 	"Enable dynamic updates": "Enable dynamic updates",
-	"Enable server side updates from within run_js_code actions": "Enable server side updates from within run_js_code actions"
+	"Enable server side updates from within run_js_code actions": "Enable server side updates from within run_js_code actions",
+	"Vertical alignment": "Vertical alignment"
 }

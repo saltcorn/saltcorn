@@ -1,3 +1,15 @@
+.table-valign-middle > tbody > tr > td {
+     vertical-align: middle;
+}
+
+.table-valign-top > tbody > tr > td {
+     vertical-align: top;
+}
+
+.table-valign-bottom > tbody > tr > td {
+     vertical-align: bottom;
+}
+
 div.form-repeat {
   border: 1px dashed black;
   padding: 3px;
