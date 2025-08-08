@@ -363,7 +363,7 @@ const render = ({
             }`
           : null;
       return div(
-        { class: "dropdown" },
+        { class: ["dropdown", !segment.block && "d-inline"] },
         button(
           {
             class:
