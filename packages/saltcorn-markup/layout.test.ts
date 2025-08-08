@@ -185,7 +185,7 @@ describe("layout", () => {
     const result = render({ blockDispatch, layout: markup });
 
     expect(result).toMatch(
-      /^<div class="dropdown"><button class="btn btn-primary  dropdown-toggle" data-boundary="viewport" type="button" id="actiondd[a-f0-9]+" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions<\/button><div class="dropdown-menu" aria-labelledby="actiondd[a-f0-9]+"><div class="d-flex flex-column px-2">Option 1Option 2<\/div><\/div><\/div>$/
+      /^<div class="dropdown d-inline"><button class="btn btn-primary  d-inline-block dropdown-toggle" data-boundary="viewport" type="button" id="actiondd[a-f0-9]+" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions<\/button><div class="dropdown-menu" aria-labelledby="actiondd[a-f0-9]+"><div class="d-flex flex-column px-2">Option 1Option 2<\/div><\/div><\/div>$/
     );
   });
 
@@ -306,8 +306,8 @@ describe("render", () => {
       ],
     };
     const result = render({ blockDispatch, layout: markup });
-    expect(result).toContain('<div class="dropdown">');
-    expect(result).toContain('class="btn btn-secondary  dropdown-toggle"');
+    expect(result).toContain('<div class="dropdown d-inline">');
+    expect(result).toContain('class="btn btn-secondary  d-inline-block dropdown-toggle"');
     expect(result).toContain(">Menu</button>");
     expect(result).toContain('<div class="dropdown-menu"');
     expect(result).toContain("Action 1Action 2Action 3</div>");

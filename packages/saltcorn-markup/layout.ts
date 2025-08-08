@@ -363,7 +363,7 @@ const render = ({
             }`
           : null;
       return div(
-        { class: "dropdown" },
+        { class: ["dropdown", !segment.block && "d-inline"] },
         button(
           {
             class:
@@ -371,7 +371,7 @@ const render = ({
                 ? "btn btn-link"
                 : `btn ${segment.action_style || "btn-primary"} ${
                     segment.action_size || ""
-                  } dropdown-toggle`,
+                  } d-inline-block dropdown-toggle`,
 
             "data-boundary": "viewport",
             type: "button",

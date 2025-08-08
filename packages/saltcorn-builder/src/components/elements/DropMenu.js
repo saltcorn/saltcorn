@@ -51,11 +51,11 @@ const DropMenu = ({
   //const [dropWidth, setDropWidth] = useState(200);
   return (
     <div
-      className={`${selected ? "selected-node" : ""} ${block ? "d-block" : ""}`}
+      className={`${selected ? "selected-node" : ""} ${block ? "d-block" : "d-inline"}`}
       ref={(dom) => connect(drag(dom))}
     >
       <button
-        className={`btn ${action_style || "btn-primary"} ${action_size || ""} `}
+        className={`btn ${action_style || "btn-primary"} d-inline-block ${action_size || ""} `}
         style={
           action_style === "btn-custom-color"
             ? {

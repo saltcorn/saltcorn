@@ -208,6 +208,7 @@ describe("viewedit new List", () => {
       .send("contextEnc=" + ctx)
       .send("stepName=Options")
       .send("_row_click_type=Nothing")
+      .send("_cell_valign=Middle")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
@@ -332,6 +333,7 @@ describe("viewedit new List with one field", () => {
       .send("contextEnc=" + ctx)
       .send("stepName=Options")
       .send("_row_click_type=Nothing")
+      .send("_cell_valign=Middle")
       .set("Cookie", loginCookie)
       .expect(toRedirect("/viewedit"));
   });
