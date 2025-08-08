@@ -371,7 +371,7 @@ const render = ({
                 ? "btn btn-link"
                 : `btn ${segment.action_style || "btn-primary"} ${
                     segment.action_size || ""
-                  } dropdown-toggle`,
+                  } d-inline-block dropdown-toggle`,
 
             "data-boundary": "viewport",
             type: "button",
