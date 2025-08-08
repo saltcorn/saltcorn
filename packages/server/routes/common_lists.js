@@ -138,6 +138,7 @@ const tablesList = async (
         hover: true,
         tableClass: listClass(tagId, showList),
         tableId: domId,
+        class: "table-valign-middle",
       }
     ) +
     (tables.length == 0 && !filterOnTag
@@ -442,6 +443,7 @@ const viewsList = async (
         hover: true,
         tableClass: listClass(tagId, showList),
         tableId: domId,
+        class: "table-valign-middle",
       }
     ) +
     (views.length == 0 && !filterOnTag
@@ -625,6 +627,7 @@ const getPageList = async (
       hover: true,
       tableClass: tagId ? `collapse ${showList ? "show" : ""}` : "",
       tableId: domId,
+      class: "table-valign-middle",
     }
   );
 };
@@ -657,6 +660,7 @@ const getPageGroupList = (rows, roles, req) => {
     rows,
     {
       hover: true,
+      class: "table-valign-middle",
     }
   );
 };
@@ -809,6 +813,7 @@ const getTriggerList = async (
       hover: true,
       tableClass: tagId ? `collapse ${showList ? "show" : ""}` : "",
       tableId: domId,
+      class: "table-valign-middle",
     }
   );
 };
