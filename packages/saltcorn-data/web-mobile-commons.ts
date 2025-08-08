@@ -26,7 +26,27 @@ const { getForm } = viewableFields;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
-const disabledMobileMenus = ["Action", "Search"];
+const disabledMobileMenus = ["Action", "Search", "Admin Page", "User Page"];
+
+const legacyMenuChecks = (item: any) => {
+  if (
+    item.type === "Header" &&
+    item.label === "Settings" &&
+    item.subitems?.length > 0 &&
+    item.subitems[0].type === "Admin Page"
+  ) {
+    return false;
+  }
+  if (
+    item.type === "Header" &&
+    item.label === "User" &&
+    item.subitems?.length > 0 &&
+    item.subitems[0].type === "User Page"
+  ) {
+    return false;
+  }
+  return true;
+};
 
 /**
  * Get extra menu
@@ -54,7 +74,8 @@ const get_extra_menu = (
         is_node
           ? true
           : disabledMobileMenus.indexOf(item.type) < 0 &&
-            !item.disable_on_mobile
+            !item.disable_on_mobile &&
+            legacyMenuChecks(item)
       )
       .map((item: any) => {
         const wrapUrl = (url: string) => {
