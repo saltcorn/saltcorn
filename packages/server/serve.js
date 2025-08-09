@@ -80,17 +80,6 @@ const ensureJwtSecret = () => {
 };
 
 /**
- * Ensure the engines cache is up to date with the current sc version
- */
-const ensureEnginesCache = async () => {
-  const cacheScVersion = await getConfig("engines_cache_sc_version", "");
-  if (!cacheScVersion || cacheScVersion !== getState().scVersion) {
-    await setConfig("engines_cache", {});
-    await setConfig("engines_cache_sc_version", getState().scVersion);
-  }
-};
-
-/**
  * validate all plugins folders and remove invalid entries
  * A folder is invalid when it has dependencies but not node_modules directory
  */
@@ -323,7 +312,6 @@ module.exports =
   } = {}) => {
     if (cluster.isMaster) {
       ensureJwtSecret();
-      await ensureEnginesCache();
       await ensurePluginsFolder();
       await ensureNotificationSubscriptions();
     }
