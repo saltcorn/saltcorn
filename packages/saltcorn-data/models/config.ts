@@ -1360,13 +1360,6 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
-  // when this is different from the current version, the engines cache is cleared
-  engines_cache_sc_version: {
-    type: "String",
-    label: "Saltcorn version for engines cache",
-    default: "",
-    excludeFromMobile: true,
-  },
   delete_finished_workflows_days: {
     type: "Integer",
     label: "Delete finished workflows after days",
