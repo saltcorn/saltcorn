@@ -14,6 +14,7 @@ const {
   init_multi_tenant,
   restart_tenant,
   add_tenant,
+  get_other_domain_tenant,
 } = require("@saltcorn/data/db/state");
 const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
 
@@ -525,6 +526,16 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
   getState().processSend("Start");
 };
 
+const tenantFromSocket = (socket, hostPartOffset) => {
+  const header = socket.request.headers.host;
+  const hostOnly = header?.split(":")[0];
+  if (hostOnly) {
+    const tenant = get_other_domain_tenant(hostOnly);
+    if (tenant) return tenant;
+  }
+  return get_tenant_from_req(socket.request, hostPartOffset);
+};
+
 /**
  *
  * @param  {...*} servers
@@ -583,7 +594,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
 
   io.of("/").on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
-      const ten = get_tenant_from_req(socket.request) || "public";
+      const ten = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = () => {
         try {
           const view = View.findOne({ name: viewname });
@@ -603,8 +614,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("join_log_room", async (callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
           const user = socket.request.user;
@@ -634,8 +644,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
 
     // or join the room more generally and later register views ??
     socket.on("join_collab_room", async (viewname, callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
           const view = View.findOne({ name: viewname });
@@ -658,8 +667,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
 
     // join_dynamic_update_room for events emitted from run_js_actions
     socket.on("join_dynamic_update_room", async (callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
           const enabled = getState().getConfig("enable_dynamic_updates", true);
@@ -680,8 +688,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("disconnect", async () => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         const state = getState();
         if (state) {
@@ -706,8 +713,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     socket.on(
       "open_data_stream",
       async ([viewName, id, fieldName, fieldView, targetOpts], callback) => {
-        const tenant =
-          get_tenant_from_req(socket.request, subdomainOffset) || "public";
+        const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
         const f = async () => {
           try {
             const user = socket.request.user;
@@ -786,8 +792,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("disconnect", async () => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         if (dataStream)
           dataStream.close((err) => {
