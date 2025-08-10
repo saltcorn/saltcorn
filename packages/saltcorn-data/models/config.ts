@@ -1336,12 +1336,14 @@ const configTypes: ConfigTypes = {
     label: "Joined log socket ids",
     default: [],
     excludeFromMobile: true,
+    ephemeral: true,
   },
   joined_real_time_socket_ids: {
     type: "hidden",
     label: "Joined real time socket ids",
     default: [],
     excludeFromMobile: true,
+    ephemeral: true,
   },
   prune_session_interval: {
     type: "Integer",
@@ -1522,7 +1524,7 @@ const getAllConfig = async (): Promise<ConfigTypes | void> => {
   const cfgs = await db.select("_sc_config");
   let cfg: ConfigTypes = {};
   cfgs.forEach(({ key, value }: { key: string; value: string | any }) => {
-    if (key === "testMigration")
+    if (key === "testMigration" || configTypes[key]?.ephemeral)
       //legacy invalid cfg
       return;
 

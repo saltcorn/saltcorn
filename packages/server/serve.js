@@ -195,12 +195,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
   }
-  eachTenant(async () => {
-    const state = getState();
-    if (state) {
-      await state.setConfig("joined_log_socket_ids", []);
-    }
-  });
   if (useClusterAdaptor) setupPrimary();
 };
 
@@ -224,7 +218,11 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     console.error("no State for tenant", tenant);
     return;
   }
-  if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
+  if (msg.refresh) {
+    if (msg.refresh === "ephemeral_config")
+      getState().refresh_ephemeral_config(msg.key, msg.value);
+    else getState()[`refresh_${msg.refresh}`](true);
+  }
   if (msg.createTenant) {
     const tenant_template = getState().getConfig("tenant_template");
     add_tenant(msg.createTenant);
