@@ -982,6 +982,22 @@ class State {
           interpolate,
           tryCatchInTransaction: db.tryCatchInTransaction,
           commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+          emit_to_client: (data: any, userIds: number[]) => {
+            const enabled = this.getConfig("enable_dynamic_updates", true);
+            if (!enabled) {
+              this.log(
+                5,
+                "emit_to_client called, but dynamic updates are disabled"
+              );
+              return;
+            }
+            const safeIds = Array.isArray(userIds)
+              ? userIds
+              : userIds
+                ? [userIds]
+                : [];
+            this.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
+          },
           Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor
