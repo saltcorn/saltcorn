@@ -337,6 +337,9 @@ const configuration_workflow = (req) =>
           );
           const pages = await Page.find();
           const groups = await PageGroup.find();
+          const triggers = Trigger.find({
+            when_trigger: "API call",
+          });
           return new Form({
             fields: [
               {
@@ -384,6 +387,25 @@ const configuration_workflow = (req) =>
                 type: "Bool",
                 default: false,
               },
+
+              new FieldRepeat({
+                name: "update_events",
+                showIf: { enable_realtime: true },
+                fields: [
+                  {
+                    type: "String",
+                    name: "event",
+                    label: req.__("Update event"),
+                    sublabel: req.__(
+                      "Custom event for real-time updates (only Api call condition)"
+                    ),
+                    attributes: {
+                      options: triggers.map((t) => t.name),
+                    },
+                  },
+                ],
+              }),
+
               {
                 name: "destination_type",
                 label: "Destination type",
@@ -997,7 +1019,7 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
-const realTimeScript = (viewname, table_id, row) => {
+const realTimeScript = (viewname, table_id, row, events) => {
   const view = View.findOne({ name: viewname });
   const table = Table.findOne({ id: table_id });
   const rowId = row[table.pk_name];
@@ -1008,6 +1030,18 @@ const realTimeScript = (viewname, table_id, row) => {
         console.log("Update event received for view ${viewname}", data);
         if (data.updates) {
           common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+        }
+        ${
+          events
+            ? `
+        // run update events
+        const eventBody = { row: ${JSON.stringify(row)} };
+        if (data.updates) eventBody.updates = data.updates;` +
+              events.map(
+                ({ event }) => `
+        api_action_call("${event}", eventBody)`
+              )
+            : ""
         }
       }
     }
@@ -1051,6 +1085,7 @@ const render = async ({
   auto_created_row,
   hiddenLoginDest,
   enable_realtime,
+  update_events,
 }) => {
   const form = await getForm(
     table,
@@ -1229,7 +1264,8 @@ const render = async ({
           ? script({
               src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
             })
-          : "") + script(domReady(realTimeScript(viewname, table.id, row)))
+          : "") +
+        script(domReady(realTimeScript(viewname, table.id, row, update_events)))
       : "";
 
   if (actually_auto_save) {
@@ -2474,6 +2510,7 @@ module.exports = {
       auto_create,
       delete_unchanged_auto_create,
       enable_realtime,
+      update_events,
     },
     req,
     res,
@@ -2568,6 +2605,7 @@ module.exports = {
         auto_created_row,
         hiddenLoginDest,
         enable_realtime,
+        update_events,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
