@@ -1272,7 +1272,9 @@ const render = async ({
     "enable_dynamic_updates",
     true
   );
-  const rndid = Math.floor(Math.random() * 16777215).toString(16);
+  const rndid = isTest() 
+    ? "test-script-id"
+    : Math.floor(Math.random() * 16777215).toString(16);
   const realTimeCollabScript =
     enable_realtime && row && !(req.headers?.pjaxpageload === "true")
       ? (!dynamic_updates_enabled
