@@ -18,9 +18,15 @@
 
 * The menu can now be fully customized from the menu editor, including the admin items (Tables, Vies, Pages and Settings) and the user items (login/signup and the user menu)
 
-* Events can now be sent from a running server scripts to the user's client page. Run the `emit_to_client()` function with the same objects that can be returned from a run_js_code action. For instance: `emit_to_client({notify: "hello admin"}, 1)` will make a toast appear on any tab loaded by the user with ID=1. This facility can be disabled for high performance, less interactive applications, under Event log settings
+* Events can now be sent from a running server scripts to the user's client page. Run the `emit_to_client()` function with the same objects that can be returned from a run_js_code action. For instance: `emit_to_client({notify: "hello admin"}, 1)` will make a toast appear on any tab loaded by the user with ID=1. This facility can be disabled for high performance, less interactive applications, under Event log settings.
 
-* Link and Action buttons are now always the same height.
+* Link, Action and Dropdonw menu buttons are now always the same height.
+
+* List views have a vertical aligment option under Layout options. Use this to adjust the vertical alignment of each cell. The default is middle.
+
+* Provided tables can no by writable (delete, insert and update). For an example of this see the history-control table provider
+
+* Imported CSVs rows can now have a blank in the primary key column, which will be treated as an insert.
 
 
 ## 1.3.0 - Released 2 July 2025

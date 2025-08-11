@@ -777,6 +777,18 @@ async install_ManyToMany() {
     await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
   });
 }
+ async navigateToUserSettings() {
+    const userLink = this.page
+      .getByRole('link', { name: ' User ' })
+      .filter({ has: this.page.locator('span:has-text("User")') });
+
+    await userLink.click();
+
+    const userSettings = this.page.locator('#collapseUser a[href="/auth/settings"]');
+    await userSettings.waitFor({ state: 'visible' });
+    await userSettings.click();
+  }
+
 
 }
 

@@ -14,6 +14,7 @@ const {
   init_multi_tenant,
   restart_tenant,
   add_tenant,
+  get_other_domain_tenant,
 } = require("@saltcorn/data/db/state");
 const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
 
@@ -76,17 +77,6 @@ const ensureJwtSecret = () => {
         }`
       );
     }
-  }
-};
-
-/**
- * Ensure the engines cache is up to date with the current sc version
- */
-const ensureEnginesCache = async () => {
-  const cacheScVersion = await getConfig("engines_cache_sc_version", "");
-  if (!cacheScVersion || cacheScVersion !== getState().scVersion) {
-    await setConfig("engines_cache", {});
-    await setConfig("engines_cache_sc_version", getState().scVersion);
   }
 };
 
@@ -205,12 +195,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
   }
-  eachTenant(async () => {
-    const state = getState();
-    if (state) {
-      await state.setConfig("joined_log_socket_ids", []);
-    }
-  });
   if (useClusterAdaptor) setupPrimary();
 };
 
@@ -234,7 +218,11 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     console.error("no State for tenant", tenant);
     return;
   }
-  if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
+  if (msg.refresh) {
+    if (msg.refresh === "ephemeral_config")
+      getState().refresh_ephemeral_config(msg.key, msg.value);
+    else getState()[`refresh_${msg.refresh}`](true);
+  }
   if (msg.createTenant) {
     const tenant_template = getState().getConfig("tenant_template");
     add_tenant(msg.createTenant);
@@ -323,7 +311,6 @@ module.exports =
   } = {}) => {
     if (cluster.isMaster) {
       ensureJwtSecret();
-      await ensureEnginesCache();
       await ensurePluginsFolder();
       await ensureNotificationSubscriptions();
     }
@@ -525,6 +512,16 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
   getState().processSend("Start");
 };
 
+const tenantFromSocket = (socket, hostPartOffset) => {
+  const header = socket.request.headers.host;
+  const hostOnly = header?.split(":")[0];
+  if (hostOnly) {
+    const tenant = get_other_domain_tenant(hostOnly);
+    if (tenant) return tenant;
+  }
+  return get_tenant_from_req(socket.request, hostPartOffset);
+};
+
 /**
  *
  * @param  {...*} servers
@@ -583,7 +580,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
 
   io.of("/").on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
-      const ten = get_tenant_from_req(socket.request) || "public";
+      const ten = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = () => {
         try {
           const view = View.findOne({ name: viewname });
@@ -603,8 +600,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("join_log_room", async (callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
           const user = socket.request.user;
@@ -634,8 +630,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
 
     // or join the room more generally and later register views ??
     socket.on("join_collab_room", async (viewname, callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
           const view = View.findOne({ name: viewname });
@@ -658,10 +653,11 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
 
     // join_dynamic_update_room for events emitted from run_js_actions
     socket.on("join_dynamic_update_room", async (callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
+          const enabled = getState().getConfig("enable_dynamic_updates", true);
+          if (!enabled) throw new Error("Dynamic updates are not enabled");
           const user = socket.request.user;
           if (!user) throw new Error("Not authorized");
           socket.join(`_${tenant}_dynamic_update_room`);
@@ -678,8 +674,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("disconnect", async () => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         const state = getState();
         if (state) {
@@ -704,8 +699,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     socket.on(
       "open_data_stream",
       async ([viewName, id, fieldName, fieldView, targetOpts], callback) => {
-        const tenant =
-          get_tenant_from_req(socket.request, subdomainOffset) || "public";
+        const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
         const f = async () => {
           try {
             const user = socket.request.user;
@@ -784,8 +778,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("disconnect", async () => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         if (dataStream)
           dataStream.close((err) => {

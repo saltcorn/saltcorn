@@ -450,11 +450,20 @@ class State {
     if (db.is_node) {
       // TODO ch mobile i18n
       await this.refresh_i18n();
-      this.hasJoinedLogSockets =
-        (this.configs.joined_log_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
       this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+
+  /**
+   * Set a config value that will not persist into the db
+   * @param key config key
+   * @param value config val
+   */
+  refresh_ephemeral_config(key: string, value: any) {
+    this.configs[key] = { value };
+    this.hasJoinedLogSockets =
+      (this.configs.joined_log_socket_ids?.value || []).length > 0;
   }
 
   async refreshUserLayouts() {
@@ -706,7 +715,6 @@ class State {
   }
 
   /**
-   *
    * Set value of config parameter
    * @param key - key of parameter
    * @param value - value of parameter
@@ -718,16 +726,33 @@ class State {
       this.configs[key].value !== value
     ) {
       const fn = async () => {
-        await setConfig(key, value);
+        const isEphemeral = !!configTypes[key]?.ephemeral;
+        if (!isEphemeral) await setConfig(key, value);
         this.configs[key] = { value };
         if (key.startsWith("localizer_")) await this.refresh_i18n();
         if (key === "log_level") this.logLevel = +value;
         if (key === "joined_log_socket_ids")
           this.hasJoinedLogSockets = (value || []).length > 0;
-        if (db.is_node)
-          this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
-        else {
-          await this.refresh_config(true);
+        if (db.is_node) {
+          if (isEphemeral) {
+            // config does not persist, send the whole object
+            this.processSend({
+              refresh: "ephemeral_config",
+              tenant: db.getTenantSchema(),
+              key,
+              value,
+            });
+          } else {
+            // config does persist, just send the key
+            this.processSend({
+              refresh: "config",
+              tenant: db.getTenantSchema(),
+            });
+          }
+        } else {
+          // mobile
+          if (isEphemeral) this.refresh_ephemeral_config(key, value);
+          else await this.refresh_config(true);
         }
       };
       if (db.getTenantSchema() !== this.tenant)
@@ -982,6 +1007,22 @@ class State {
           interpolate,
           tryCatchInTransaction: db.tryCatchInTransaction,
           commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+          emit_to_client: (data: any, userIds: number[]) => {
+            const enabled = this.getConfig("enable_dynamic_updates", true);
+            if (!enabled) {
+              this.log(
+                5,
+                "emit_to_client called, but dynamic updates are disabled"
+              );
+              return;
+            }
+            const safeIds = Array.isArray(userIds)
+              ? userIds
+              : userIds
+                ? [userIds]
+                : [];
+            this.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
+          },
           Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor

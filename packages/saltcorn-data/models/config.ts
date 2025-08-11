@@ -1336,12 +1336,14 @@ const configTypes: ConfigTypes = {
     label: "Joined log socket ids",
     default: [],
     excludeFromMobile: true,
+    ephemeral: true,
   },
   joined_real_time_socket_ids: {
     type: "hidden",
     label: "Joined real time socket ids",
     default: [],
     excludeFromMobile: true,
+    ephemeral: true,
   },
   prune_session_interval: {
     type: "Integer",
@@ -1358,13 +1360,6 @@ const configTypes: ConfigTypes = {
     type: "JSON",
     label: "Cached plugin version infos",
     default: {},
-    excludeFromMobile: true,
-  },
-  // when this is different from the current version, the engines cache is cleared
-  engines_cache_sc_version: {
-    type: "String",
-    label: "Saltcorn version for engines cache",
-    default: "",
     excludeFromMobile: true,
   },
   delete_finished_workflows_days: {
@@ -1529,7 +1524,7 @@ const getAllConfig = async (): Promise<ConfigTypes | void> => {
   const cfgs = await db.select("_sc_config");
   let cfg: ConfigTypes = {};
   cfgs.forEach(({ key, value }: { key: string; value: string | any }) => {
-    if (key === "testMigration")
+    if (key === "testMigration" || configTypes[key]?.ephemeral)
       //legacy invalid cfg
       return;
 

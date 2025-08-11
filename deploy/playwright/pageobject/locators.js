@@ -741,6 +741,9 @@ class PageLocators {
     this.toastTitle = 'div[data-field-name="title"] input';
     this.toastFieldName = 'div[data-field-name="text"] input';  
     this.actionDropdown = '.react-select.action-selector';
+    this.editview2editlink = 'a[href="/view/View2_Edit?id=2"]';
+    this.addresslocator = '#inputaddress';
+    this.namelocator = '#inputfull_name';
   }
 }
 
