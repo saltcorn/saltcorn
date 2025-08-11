@@ -744,6 +744,11 @@ class PageLocators {
     this.editview2editlink = 'a[href="/view/View2_Edit?id=2"]';
     this.addresslocator = '#inputaddress';
     this.namelocator = '#inputfull_name';
+    this.tab4locator = 'div.tabulator-cell[tabulator-field="year_of_birth"]';
+    this.minlocator = '//input[@id="inputmin"]';
+    this.maxlocator = '//input[@id="inputmax"]';
+    this.yearOfBirthLocator = '//input[@id="inputyear_of_birth"]';
+    this.ageLocator = '.col-10.text-start';
   }
 }
 
