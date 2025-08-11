@@ -576,7 +576,15 @@ const run = async (
 const runMany = async (
   table_id,
   viewname,
-  { columns, layout, auto_save, split_paste, confirm_leave },
+  {
+    columns,
+    layout,
+    auto_save,
+    split_paste,
+    confirm_leave,
+    enable_realtime,
+    update_events,
+  },
   state,
   extra,
   { editManyQuery, getRowQuery, optionsQuery }
@@ -610,6 +618,8 @@ const runMany = async (
       split_paste,
       isRemote,
       confirm_leave,
+      enable_realtime,
+      update_events,
     });
     return { html, row };
   });
@@ -1019,7 +1029,7 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
-const realTimeScript = (viewname, table_id, row, events) => {
+const realTimeScript = (viewname, table_id, row, events, scriptId) => {
   const view = View.findOne({ name: viewname });
   const table = Table.findOne({ id: table_id });
   const rowId = row[table.pk_name];
@@ -1029,7 +1039,11 @@ const realTimeScript = (viewname, table_id, row, events) => {
       '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
         console.log("Update event received for view ${viewname}", data);
         if (data.updates) {
-          common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+          const script = document.getElementById('${scriptId}');
+          const closestDiv = script.closest(
+            'div[data-sc-embed-viewname="${viewname}"]'
+          );
+          common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
         }
         ${
           events
@@ -1258,6 +1272,7 @@ const render = async ({
     "enable_dynamic_updates",
     true
   );
+  const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const realTimeCollabScript =
     enable_realtime && row && !(req.headers?.pjaxpageload === "true")
       ? (!dynamic_updates_enabled
@@ -1265,7 +1280,12 @@ const render = async ({
               src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
             })
           : "") +
-        script(domReady(realTimeScript(viewname, table.id, row, update_events)))
+        script(
+          { id: rndid },
+          domReady(
+            realTimeScript(viewname, table.id, row, update_events, rndid)
+          )
+        )
       : "";
 
   if (actually_auto_save) {

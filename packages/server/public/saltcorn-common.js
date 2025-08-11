@@ -1812,10 +1812,14 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
-    const form =
+    let form =
       typeof viewnameOrElem === "string" || res.set_fields._viewname
         ? $(`form[data-viewname="${res.set_fields._viewname || viewname}"]`)
         : $(viewnameOrElem).closest("form[data-viewname]");
+    if (form.length === 0 && viewnameOrElem?.querySelector) {
+      const temp = viewnameOrElem.querySelector("form[data-viewname]");
+      if (temp) form = $(temp);
+    }
     if (form.length === 0 && set_state_fields) {
       // assume this is a filter
       set_state_fields(
@@ -2124,9 +2128,14 @@ function init_collab_room(viewname, eventCfgs) {
   }
   const joinFn = () => {
     socket.emit("join_collab_room", viewname, (ack) => {
-      if (ack && ack.status === "ok")
+      if (ack?.status === "ok")
         console.log(`Joined collaboration room for view '${viewname}'`);
-      else console.error("Failed to join collaboration room:", ack);
+      else if (ack?.status === "already_joined") {
+        if (window._sc_loglevel > 5)
+          console.log(
+            `Already joined collaboration room for view '${viewname}'`
+          );
+      } else console.error("Failed to join collaboration room:", ack);
     });
   };
   if (socket.connected) joinFn();
