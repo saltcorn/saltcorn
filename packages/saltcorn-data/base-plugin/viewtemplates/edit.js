@@ -1040,10 +1040,11 @@ const realTimeScript = (viewname, table_id, row, events, scriptId) => {
         console.log("Update event received for view ${viewname}", data);
         if (data.updates) {
           const script = document.getElementById('${scriptId}');
-          const closestDiv = script.closest(
+          const closestDiv = script?.closest(
             'div[data-sc-embed-viewname="${viewname}"]'
           );
-          common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          if (closestDiv) common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
         }
         ${
           events
@@ -1060,7 +1061,7 @@ const realTimeScript = (viewname, table_id, row, events, scriptId) => {
       }
     }
   };
-  init_collab_room('${viewname}', collabCfg);`;
+  init_collab_room('${viewname}', collabCfg);`.trim();
 };
 
 /**
@@ -1272,7 +1273,7 @@ const render = async ({
     "enable_dynamic_updates",
     true
   );
-  const rndid = isTest() 
+  const rndid = isTest()
     ? "test-script-id"
     : Math.floor(Math.random() * 16777215).toString(16);
   const realTimeCollabScript =
