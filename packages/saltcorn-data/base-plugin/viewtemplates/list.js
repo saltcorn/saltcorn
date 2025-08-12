@@ -765,6 +765,17 @@ const configuration_workflow = (req) =>
             sublabel: req.__("No lines between tables"),
             tab: "Layout options",
           });
+          formfields.push({
+            name: "_cell_valign",
+            label: req.__("Vertical alignment"),
+            type: "String",
+            required: true,
+            attributes: {
+              options: "Middle,Top,Bottom",
+            },
+            tab: "Layout options",
+          });
+
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -1181,6 +1192,8 @@ const run = async (
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
   }
+  page_opts.class += `table-valign-${(default_state?._cell_valign || "Middle").toLowerCase()} `;
+
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
@@ -1518,7 +1531,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign",
       "default_state"
     );
   }
@@ -1569,6 +1582,7 @@ module.exports = {
       _striped_rows,
       _card_rows,
       _borderless,
+      _cell_valign,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));

@@ -151,15 +151,15 @@ function valid_js_var_name(s) {
   return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
 }
 
-function add_extra_state(base_url, extra_state_fml, row) {
+function add_extra_state(base_url, extra_state_fml, row, outerState = {}) {
   //console.log("add_extra_state", { base_url, extra_state_fml, row });
-  if (!extra_state_fml) return base_url;
+  if (!extra_state_fml && !Object.keys(outerState).length) return base_url;
   let extra_state = new Function(
     "row",
     `{${Object.keys(row).join(",")}}`,
-    "return " + extra_state_fml
+    "return " + extra_state_fml||"{}"
   )(row, row);
-  let qs = Object.entries(extra_state)
+  let qs = Object.entries({ ...outerState, ...extra_state })
     .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
     .join("&");
   let sepChar = base_url.includes("?") ? "&" : "?";
@@ -1700,9 +1700,12 @@ function notifyAlert(note, spin) {
     $("#modal-toasts-area").append(html);
   else $("#toasts-area").append(html);
   if (type === "success" || note.remove_delay) {
-    setTimeout(() => {
-      $(`#${id}`).removeClass("show");
-    }, note.remove_delay ? note.remove_delay*1000: 5000);
+    setTimeout(
+      () => {
+        $(`#${id}`).removeClass("show");
+      },
+      note.remove_delay ? note.remove_delay * 1000 : 5000
+    );
   }
 }
 
@@ -1753,6 +1756,9 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           .attr("data-sc-embed-viewname");
   if (window._sc_loglevel > 4)
     console.log("ajax result directives", viewname, res);
+
+  if (res.page_load_tag && res.page_load_tag !== _sc_pageloadtag) return;
+
   const handle = async (element, fn) => {
     if (Array.isArray(element))
       for (const current of element) await fn(current);
@@ -2131,15 +2137,21 @@ function init_collab_room(viewname, eventCfgs) {
 }
 
 function init_dynamic_update_room() {
-  if (!window.io || navigator.userAgent.includes("jsdom")) return;
+  if (
+    !window.io ||
+    navigator.userAgent.includes("jsdom") ||
+    !dynamic_updates_cfg?.enabled
+  )
+    return;
   let socket = get_shared_socket();
   socket.on("dynamic_update", async (data) => {
     await common_done(data);
   });
   const joinFn = () => {
     socket.emit("join_dynamic_update_room", (ack) => {
-      if (ack && ack.status === "ok") console.log("Joined dynamic update room");
-      else console.error("Failed to join dynamic update room:", ack);
+      if (ack && ack.status === "ok") {
+        if (window._sc_loglevel > 5) console.log("Joined dynamic update room");
+      } else console.error("Failed to join dynamic update room:", ack);
     });
   };
   if (socket.connected) joinFn();
@@ -2191,7 +2203,7 @@ function check_saltcorn_notifications() {
     .then((resp) => {
       if (resp.success) {
         const n = resp.success;
-        const menu_item = $(`a.notify-menu-item`);
+        const menu_item = $('a[href="/notifications"]');
 
         menu_item.html(
           `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`

@@ -282,6 +282,8 @@ class Workflow implements AbstractWorkflow {
         6
       );
       options.icons = getState().icons;
+      options.keyframes = getState().keyframes;
+
       return {
         renderBuilder: {
           options,

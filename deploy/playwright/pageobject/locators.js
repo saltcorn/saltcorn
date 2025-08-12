@@ -731,7 +731,19 @@ class PageLocators {
     this.view2relation = 'text=Relation [Checkboxes many-to-many] My_Table';
     this.checkboxAdam = 'input.form-check-input[onchange*="value: \'Adam\'"]';
     this.donaldCheckbox = 'input.form-check-input[onchange*="value: \'Donald\'"]';
-
+    this.fourthrowcolumn2 = '.row:nth-of-type(4) .split-col:nth-of-type(2) .canvas';
+    this.view2modifyoption = 'text=View2_Edit [Edit] csv_Table';
+    this.Dropdownfilter = 'div[title="Dropdown filter"]';
+    this.view2listMyTable = 'text=NewView_List [List] My_Table';
+    this.filterStatus = 'select[name="ddfilterstatus"]';
+    this.clearButton = 'button:has-text("Clear")';
+    this.toaster = '.toast.show';
+    this.toastTitle = 'div[data-field-name="title"] input';
+    this.toastFieldName = 'div[data-field-name="text"] input';  
+    this.actionDropdown = '.react-select.action-selector';
+    this.editview2editlink = 'a[href="/view/View2_Edit?id=2"]';
+    this.addresslocator = '#inputaddress';
+    this.namelocator = '#inputfull_name';
   }
 }
 

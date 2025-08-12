@@ -294,6 +294,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     ...(!isFormData
       ? {
@@ -708,6 +709,7 @@ function ajax_post(url, args) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     ...(args || {}),
   })

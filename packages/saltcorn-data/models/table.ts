@@ -311,10 +311,10 @@ class Table implements AbstractTable {
 
     const provider = getState().table_providers[tbl.provider_name];
     if (!provider) return this;
-    const { getRows, countRows } = provider.get_table(tbl.provider_cfg, tbl);
+   const { getRows, ...methods } = provider.get_table(tbl.provider_cfg, tbl);
 
     const { json_list_to_external_table } = require("../plugin-helper");
-    const t = json_list_to_external_table(getRows, tbl.fields, { countRows });
+    const t = json_list_to_external_table(getRows, tbl.fields, methods || {});
     delete t.min_role_read; //it is a getter
     Object.assign(t, tbl);
     t.update = async (upd_rec: Row) => {
@@ -2914,7 +2914,8 @@ class Table implements AbstractTable {
         if (instanceOfType(f.type) && f.type?.read) {
           const readval = f.type?.read(current, f.attributes);
           if (typeof readval === "undefined") {
-            if (current === "" && !f.required) delete state[f.name];
+            if (current === "" && (!f.required || f.primary_key))
+              delete state[f.name];
             else errorString += `No valid value for required field ${f.name}. `;
           }
           if (f.type && f.type.validate) {
@@ -3223,6 +3224,7 @@ class Table implements AbstractTable {
                     } else
                       try {
                         // TODO check constraints???
+                        delete rec[this.pk_name] // pk value can be set to undefined
                         await db.insert(this.name, rec, {
                           noid: true,
                           client,

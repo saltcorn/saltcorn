@@ -270,6 +270,9 @@ class State {
   processSend(v: any) {
     if (!process.send) {
       if (this.sendMessageToWorkers) this.sendMessageToWorkers(v);
+      else if (singleton.sendMessageToWorkers)
+        singleton.sendMessageToWorkers(v);
+      //else console.warn("nowhere to send msg", v);
     } else process_send(v);
   }
 
@@ -979,6 +982,22 @@ class State {
           interpolate,
           tryCatchInTransaction: db.tryCatchInTransaction,
           commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+          emit_to_client: (data: any, userIds: number[]) => {
+            const enabled = this.getConfig("enable_dynamic_updates", true);
+            if (!enabled) {
+              this.log(
+                5,
+                "emit_to_client called, but dynamic updates are disabled"
+              );
+              return;
+            }
+            const safeIds = Array.isArray(userIds)
+              ? userIds
+              : userIds
+                ? [userIds]
+                : [];
+            this.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
+          },
           Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor

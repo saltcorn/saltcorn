@@ -1,5 +1,4 @@
 const create_standard_menu = async () => {
-
   const { getState } = require("./db/state");
 
   const state = getState();
@@ -25,7 +24,7 @@ const create_standard_menu = async () => {
   const new_items = [
     {
       href: "",
-      icon: "bi bi-table",
+      icon: "fas fa-table",
       text: "Tables",
       type: "Admin Page",
       label: "Tables",
@@ -39,7 +38,7 @@ const create_standard_menu = async () => {
       min_role: Math.max(canEditTables, canInspectTables),
       admin_page: "Tables",
       target_blank: false,
-      disable_on_mobile: false,
+      disable_on_mobile: true,
     },
     {
       href: "",
@@ -57,7 +56,7 @@ const create_standard_menu = async () => {
       min_role: canEditViews,
       admin_page: "Views",
       target_blank: false,
-      disable_on_mobile: false,
+      disable_on_mobile: true,
     },
     {
       href: "",
@@ -75,7 +74,7 @@ const create_standard_menu = async () => {
       min_role: canEditPages,
       admin_page: "Pages",
       target_blank: false,
-      disable_on_mobile: false,
+      disable_on_mobile: true,
     },
     {
       href: "",
@@ -93,7 +92,7 @@ const create_standard_menu = async () => {
       subitems: [
         {
           href: "",
-          icon: "bi bi-tools",
+          icon: "fas fa-tools",
           text: "About application",
           type: "Admin Page",
           label: "About application",
@@ -201,7 +200,7 @@ const create_standard_menu = async () => {
         },
       ],
       user_menu_header: false,
-      disable_on_mobile: false,
+      disable_on_mobile: true,
     },
     ...(allow_signup
       ? [
@@ -221,7 +220,7 @@ const create_standard_menu = async () => {
             min_role: "100",
             user_page: "Signup",
             target_blank: false,
-            disable_on_mobile: false,
+            disable_on_mobile: true,
           },
         ]
       : []),
@@ -243,7 +242,7 @@ const create_standard_menu = async () => {
             min_role: "100",
             user_page: "Login",
             target_blank: false,
-            disable_on_mobile: false,
+            disable_on_mobile: true,
           },
         ]
       : []),
@@ -280,7 +279,7 @@ const create_standard_menu = async () => {
                 min_role: "80",
                 user_page: "Notifications",
                 target_blank: false,
-                disable_on_mobile: false,
+                disable_on_mobile: true,
               },
             ]
           : []),
@@ -300,7 +299,7 @@ const create_standard_menu = async () => {
           min_role: "80",
           user_page: "User settings",
           target_blank: false,
-          disable_on_mobile: false,
+          disable_on_mobile: true,
         },
         {
           href: "",
@@ -318,11 +317,11 @@ const create_standard_menu = async () => {
           min_role: "80",
           user_page: "Logout",
           target_blank: false,
-          disable_on_mobile: false,
+          disable_on_mobile: true,
         },
       ],
       user_menu_header: true,
-      disable_on_mobile: false,
+      disable_on_mobile: true,
     },
   ];
 

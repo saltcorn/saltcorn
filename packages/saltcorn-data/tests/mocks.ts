@@ -229,7 +229,7 @@ const plugin_with_routes = () => ({
       read: (v: any) => {
         switch (typeof v) {
           case "string":
-            return v;
+            return v || null;
           default:
             return undefined;
         }

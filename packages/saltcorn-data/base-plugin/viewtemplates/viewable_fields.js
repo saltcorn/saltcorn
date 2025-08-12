@@ -43,6 +43,7 @@ const {
   RelationType,
   ViewDisplayType,
 } = require("@saltcorn/common-code");
+const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 
 /**
  * formats the column index of a view cfg
@@ -846,6 +847,11 @@ const get_viewable_fields = (
           },
         };
       } else if (column.type === "DropdownMenu") {
+        //console.log(column);
+        const btn_label =
+          column.label == " "
+            ? ""
+            : column.label || (column.action_icon ? "" : req.__("Action"));
         return {
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
@@ -859,7 +865,7 @@ const get_viewable_fields = (
                       ? "btn btn-link"
                       : `btn ${column.action_style || "btn-primary"} ${
                           column.action_size || ""
-                        } dropdown-toggle`,
+                        } d-inline-block dropdown-toggle`,
                   "data-boundary": "viewport",
                   type: "button",
                   id: `actiondd${r.id}_${index}`, //TODO need unique
@@ -876,7 +882,7 @@ const get_viewable_fields = (
                         }; color: ${column.action_textcol || "#000000"}`
                       : null,
                 },
-                column.label || req.__("Action")
+                show_icon_and_label(column.action_icon, btn_label)
               ),
               div(
                 {
@@ -1760,13 +1766,13 @@ const splitUniques = (fields, state, fuzzyStrings) => {
     const field = fields.find((f) => f.name === k);
     if (
       field &&
-      field.is_unique &&
+      (field.is_unique || field.primary_key) &&
       fuzzyStrings &&
       field.type &&
       field.type.name === "String"
     )
       uniques[k] = { ilike: v };
-    else if (field && field.is_unique)
+    else if (field && (field.is_unique || field.primary_key))
       uniques[k] = field.type.read ? field.type.read(v, field.attributes) : v;
     else nonUniques[k] = v;
   });
