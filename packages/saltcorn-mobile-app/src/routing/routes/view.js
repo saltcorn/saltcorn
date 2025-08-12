@@ -158,10 +158,7 @@ export const getView = async (context) => {
     );
   }
   let contents0 = null;
-  if (
-    view.viewtemplateObj?.mobile_render_server_side &&
-    state.mobileConfig.isOfflineMode
-  ) {
+  if (!view.renderLocally()) {
     const response = await apiCall({
       method: "GET",
       path: `/view/${encodeURIComponent(viewname)}${context.query ? `?${context.query}` : ""}`,
