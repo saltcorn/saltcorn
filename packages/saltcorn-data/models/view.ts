@@ -984,6 +984,18 @@ class View implements AbstractView {
   getRealTimeEventName(eventType: string): string {
     return `${this.name}_${eventType}`;
   }
+
+  /**
+   * Should we render on the local machine or get it from a server?
+   * In the normal web mode it's always the server but on mobile, we can render on the device as well
+   */
+  renderLocally() {
+    return (
+      isNode() ||
+      isOfflineMode() ||
+      !this.viewtemplateObj?.mobile_render_server_side
+    );
+  }
 }
 
 function typeWithDefinedMember<T>(object: any, member: string): object is T {
