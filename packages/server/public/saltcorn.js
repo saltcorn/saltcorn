@@ -1129,12 +1129,42 @@ function check_capacitor_builder() {
     success: function (res) {
       window.capacitorBuilderAvailable = !!res.installed;
       if (window.capacitorBuilderAvailable) {
-        $("#dockerBuilderStatusId").html(
-          `<span>
-            installed<i class="ps-2 fas fa-check text-success"></i>
-          </span>
-          `
-        );
+        if (res.version !== res.sc_version) {
+          $("#dockerBuilderStatusId").html(`
+    <div
+      id="mismatchBoxId" class="mt-3 p-3 border rounded bg-light"
+    >
+      <div
+        class="d-flex align-items-center mb-2"
+      >
+        installed<i title="Information" class="ps-2 fas fa-info-circle text-warning"></i>
+      </div>
+      <div
+        class="fw-bold text-danger mb-1"
+      >
+        Version Mismatch:
+      </div>
+      <ul
+        class="list-unstyled mb-0"
+      >
+        <li>
+          <span class="fw-semibold text-muted">Docker tag:</span>1.3.1-beta.0
+        </li>
+        <li>
+          <span class="fw-semibold text-muted">SC version:</span>1.3.1-beta.10
+        </li>
+      </ul>
+    </div>`);
+          $("#dockerBuilderVersionBoxId").removeClass("d-none");
+          $("#dockerBuilderVersionId").html(` ${res.version}`);
+        } else {
+          $("#dockerBuilderStatusId").html(
+            `<span>
+              installed<i class="ps-2 fas fa-check text-success"></i>
+            </span>
+            `
+          );
+        }
       } else {
         $("#dockerBuilderStatusId").html(
           `<span>
