@@ -91,7 +91,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
   const locale = req.getLocale();
   const stdHeaders = [
     {
-      headerTag: `<script>const _sc_loglevel = ${
+      headerTag: `<script>var _sc_loglevel = ${
         state.logLevel
       }, _sc_globalCsrf = "${req.csrfToken()}", _sc_version_tag = "${version_tag}"${
         locale ? `, _sc_locale = "${locale}"` : ""
