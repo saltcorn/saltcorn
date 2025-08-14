@@ -1211,17 +1211,18 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=2': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
         }
       }
@@ -1231,17 +1232,18 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=1': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
         }
       }
@@ -1252,20 +1254,20 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=2': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
         }
-        
       }
     }
   };
@@ -1273,17 +1275,18 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=1': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
         }
       }
@@ -1318,17 +1321,18 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=2': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
         }
       }
@@ -1338,17 +1342,18 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=1': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
         }
       }
@@ -1359,19 +1364,20 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=2': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
-        }       
+        }
       }
     }
   };
@@ -1379,17 +1385,18 @@ describe("Feed view", () => {
     events: {
       'authoredit_UPDATE_EVENT?id=1': async (data) => {
         console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('test-script-id');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="authoredit"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
           }
         }
       }

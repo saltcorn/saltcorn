@@ -1036,17 +1036,18 @@ const realTimeScript = (viewname, table_id, row, scriptId) => {
     events: {
       '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': async (data) => {
         console.log("Update event received for view ${viewname}", data);
+        const script = document.getElementById('${scriptId}');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="${viewname}"]'
+        );
         if (data.updates) {
-          const script = document.getElementById('${scriptId}');
-          const closestDiv = script?.closest(
-            'div[data-sc-embed-viewname="${viewname}"]'
-          );
           if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else await common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
         }
         if (data.actions) {
-          for (const res of data.actions) {
-            await common_done(res);
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "${viewname}");
           }
         }
       }
