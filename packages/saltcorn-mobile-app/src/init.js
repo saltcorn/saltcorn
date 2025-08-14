@@ -30,6 +30,7 @@ import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
 import { jwtDecode } from "jwt-decode";
 
 import { Network } from "@capacitor/network";
+import { App } from '@capacitor/app';
 
 import { defineCustomElements } from "jeep-sqlite/loader";
 
@@ -357,6 +358,11 @@ export async function init(mobileConfig) {
       document.body.appendChild(jeepSqlite);
       await jeepSqlite.componentOnReady();
     }
+
+    App.addListener('backButton', async ({ canGoBack }) => {
+      await saltcorn.mobileApp.navigation.goBack(1, true);
+    });
+
     const lastLocation = takeLastLocation();
     document.addEventListener("resume", onResume, false);
     await addScripts(mobileConfig.version_tag);

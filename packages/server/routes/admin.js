@@ -2269,7 +2269,7 @@ router.get(
 );
 const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   `<script>
-  var capacitorBuilderAvailable = ${capacitorBuilderAvailable};
+  var capacitorBuilderAvailable = ${capacitorBuilderAvailable.installed};
   var isSbadmin2 = ${isSbadmin2};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
@@ -2308,16 +2308,22 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
 `)}
   </script>`;
 
-const imageAvailable = async () => {
+const imageAvailable = async (preferedVersion) => {
+  const docker = new Docker();
   try {
-    const state = getState();
-    const image = new Docker().getImage(
-      `saltcorn/capacitor-builder:${state.scVersion}`
+    const image = docker.getImage(
+      `saltcorn/capacitor-builder:${preferedVersion}`
     );
     await image.inspect();
-    return true;
+    return { installed: true, version: preferedVersion };
   } catch (e) {
-    return false;
+    const images = await docker.listImages({
+      filters: { reference: ["saltcorn/capacitor-builder:*"] },
+    });
+    const tags = images.flatMap((img) => img.RepoTags || []);
+    if (tags.length > 0)
+      return { installed: true, version: tags[0].split(":")[1] };
+    return { installed: false };
   }
 };
 
@@ -2373,7 +2379,8 @@ router.get(
       .map((plugin) => plugin.name);
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
-    const dockerAvailable = await imageAvailable();
+    const scVersion = getState().scVersion;
+    const dockerAvailable = await imageAvailable(scVersion);
     const xcodeCheckRes = await checkXcodebuild();
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
@@ -3133,15 +3140,58 @@ router.get(
                               id: "dockerBuilderStatusId",
                               class: "",
                             },
-                            dockerAvailable
+                            dockerAvailable.installed &&
+                              dockerAvailable.version === scVersion
                               ? span(
                                   req.__("installed"),
                                   i({ class: "ps-2 fas fa-check text-success" })
                                 )
-                              : span(
-                                  req.__("not available"),
-                                  i({ class: "ps-2 fas fa-times text-danger" })
-                                )
+                              : dockerAvailable.installed
+                                ? div(
+                                    {
+                                      id: "mismatchBoxId",
+                                      class: "mt-3 p-3 border rounded bg-light",
+                                    },
+                                    div(
+                                      {
+                                        class: "d-flex align-items-center mb-2",
+                                      },
+                                      req.__("installed"),
+                                      i({
+                                        title: req.__("Information"),
+                                        class:
+                                          "ps-2 fas fa-info-circle text-warning",
+                                      })
+                                    ),
+                                    div(
+                                      { class: "fw-bold text-danger mb-1" },
+                                      "Version Mismatch:"
+                                    ),
+
+                                    ul(
+                                      { class: "list-unstyled mb-0" },
+                                      li(
+                                        span(
+                                          { class: "fw-semibold text-muted" },
+                                          req.__("Docker tag:")
+                                        ),
+                                        dockerAvailable.version
+                                      ),
+                                      li(
+                                        span(
+                                          { class: "fw-semibold text-muted" },
+                                          req.__("SC version:")
+                                        ),
+                                        scVersion
+                                      )
+                                    )
+                                  )
+                                : span(
+                                    req.__("not available"),
+                                    i({
+                                      class: "ps-2 fas fa-times text-danger",
+                                    })
+                                  )
                           )
                         ),
                         div(
@@ -3997,8 +4047,9 @@ router.get(
   "/mobile-app/check-capacitor-builder",
   isAdmin,
   error_catcher(async (req, res) => {
-    const installed = await imageAvailable();
-    res.json({ installed });
+    const state = getState();
+    const { installed, version } = await imageAvailable(state.scVersion);
+    res.json({ installed, version, sc_version: state.scVersion });
   })
 );
 

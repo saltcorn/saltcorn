@@ -2137,12 +2137,17 @@ function init_collab_room(viewname, eventCfgs) {
 }
 
 function init_dynamic_update_room() {
+  const isNode = getIsNode();
   if (
     !window.io ||
     navigator.userAgent.includes("jsdom") ||
-    !dynamic_updates_cfg?.enabled
+    (isNode && !dynamic_updates_cfg?.enabled)
   )
     return;
+  if (!isNode) {
+    const state = parent.saltcorn.data.state.getState();
+    if (!state.getConfig("enable_dynamic_updates", true)) return;
+  }
   let socket = get_shared_socket();
   socket.on("dynamic_update", async (data) => {
     await common_done(data);

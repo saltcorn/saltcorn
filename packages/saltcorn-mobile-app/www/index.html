@@ -20,9 +20,6 @@
         document.addEventListener("deviceready", () => {
           saltcorn.mobileApp.init(_sc_mobile_config);
         });
-        document.addEventListener("backbutton", async () => {
-          await saltcorn.mobileApp.navigation.goBack(1, true);
-        });
       } else {
         saltcorn.mobileApp.init(_sc_mobile_config);
       }
