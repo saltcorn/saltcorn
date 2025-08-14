@@ -1041,8 +1041,8 @@ const realTimeScript = (viewname, table_id, row, scriptId) => {
           const closestDiv = script?.closest(
             'div[data-sc-embed-viewname="${viewname}"]'
           );
-          if (closestDiv) common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
-          else common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
         }
         if (data.actions) {
           for (const res of data.actions) {
@@ -2462,7 +2462,7 @@ const virtual_triggers = (
             updates[fieldName] = newVal;
           }
           const rowId = row[table.pk_name];
-          const role = user.role_id || 100;
+          const role = user?.role_id || 100;
 
           const actionResults = [];
           for (const { event } of update_events || []) {
@@ -2498,7 +2498,7 @@ const virtual_triggers = (
               resp = await action.run({
                 configuration: trigger.configuration,
                 row: {
-                  row,
+                  new_row: row,
                   old_row: old_row,
                   updates: updates,
                 },
