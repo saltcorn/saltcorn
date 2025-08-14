@@ -337,9 +337,7 @@ const configuration_workflow = (req) =>
           );
           const pages = await Page.find();
           const groups = await PageGroup.find();
-          const triggers = Trigger.find({
-            when_trigger: "API call",
-          });
+          const triggers = Trigger.find();
           return new Form({
             fields: [
               {
@@ -1029,14 +1027,14 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
-const realTimeScript = (viewname, table_id, row, events, scriptId) => {
+const realTimeScript = (viewname, table_id, row, scriptId) => {
   const view = View.findOne({ name: viewname });
   const table = Table.findOne({ id: table_id });
   const rowId = row[table.pk_name];
   return `
   const collabCfg = {
     events: {
-      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
+      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': async (data) => {
         console.log("Update event received for view ${viewname}", data);
         if (data.updates) {
           const script = document.getElementById('${scriptId}');
@@ -1046,17 +1044,10 @@ const realTimeScript = (viewname, table_id, row, events, scriptId) => {
           if (closestDiv) common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
           else common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
         }
-        ${
-          events
-            ? `
-        // run update events
-        const eventBody = { row: ${JSON.stringify(row)} };
-        if (data.updates) eventBody.updates = data.updates;` +
-              events.map(
-                ({ event }) => `
-        api_action_call("${event}", eventBody)`
-              )
-            : ""
+        if (data.actions) {
+          for (const res of data.actions) {
+            await common_done(res);
+          }
         }
       }
     }
@@ -1100,7 +1091,6 @@ const render = async ({
   auto_created_row,
   hiddenLoginDest,
   enable_realtime,
-  update_events,
 }) => {
   const form = await getForm(
     table,
@@ -1285,9 +1275,7 @@ const render = async ({
           : "") +
         script(
           { id: rndid },
-          domReady(
-            realTimeScript(viewname, table.id, row, update_events, rndid)
-          )
+          domReady(realTimeScript(viewname, table.id, row, rndid))
         )
       : "";
 
@@ -2426,7 +2414,11 @@ const createBasicView = async ({
   return cfg;
 };
 
-const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
+const virtual_triggers = (
+  table_id,
+  viewname,
+  { enable_realtime, update_events }
+) => {
   if (!enable_realtime) return [];
   const table = Table.findOne({ id: table_id });
   const view = View.findOne({ name: viewname });
@@ -2464,20 +2456,66 @@ const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
           );
         } else {
           // build and emit updates
-          const updateVals = {};
+          const updates = {};
           for (const fieldName of changedLayoutFields) {
             const newVal = row[fieldName];
-            updateVals[fieldName] = newVal;
+            updates[fieldName] = newVal;
           }
           const rowId = row[table.pk_name];
+          const role = user.role_id || 100;
+
+          const actionResults = [];
+          for (const { event } of update_events || []) {
+            const trigger = Trigger.findOne({ name: event });
+            if (!trigger) {
+              getState().log(6, `Trigger '${event}' not found, skipping`);
+              continue;
+            }
+            if (role > trigger.min_role) {
+              getState().log(6, `Trigger '${event}' not authorized`);
+              continue;
+            }
+
+            let resp;
+            if (trigger.action === "Workflow") {
+              resp = await trigger.runWithoutRow({
+                interactive: true,
+                row,
+                user: user || { role_id: 100 },
+              });
+              delete resp.__wf_run_id;
+            } else {
+              const action = getState().actions[trigger.action];
+              if (!action) {
+                getState().log(
+                  6,
+                  `Action '${trigger.action}' for trigger '${event}' not found, skipping`
+                );
+                continue;
+              }
+
+              getState().log(6, `Running trigger '${event}'`);
+              resp = await action.run({
+                configuration: trigger.configuration,
+                row: {
+                  row,
+                  old_row: old_row,
+                  updates: updates,
+                },
+                user: user,
+              });
+            }
+            if (resp) actionResults.push(resp);
+          }
           getState().log(
             6,
             "Emitting real-time update for row",
             rowId,
-            updateVals
+            updates
           );
           view.emitRealTimeEvent(`UPDATE_EVENT?id=${rowId}`, {
-            updates: updateVals,
+            updates: updates,
+            actions: actionResults,
           });
         }
       },
