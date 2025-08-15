@@ -157,16 +157,35 @@ class PlainDate {
   toLocaleString(...args) {
     return this.toDate().toLocaleString(...args);
   }
+
+  toLocaleDate(locale, options = {}) {
+    if (this.is_invalid) return "Invalid Date";
+    const defaultOptions = { year: "numeric", month: "long", day: "numeric" };
+    return this.toDate().toLocaleDateString(locale, {
+      ...defaultOptions,
+      ...options,
+    });
+  }
+
   toUTCString() {
     if (this.is_invalid) return "Invalid Date";
-    return new Date(
-      Date.UTC(this.year, this.month - 1, this.day)
-    ).toUTCString();
+
+    const date = new Date(Date.UTC(this.year, this.month - 1, this.day));
+    return date.toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    });
   }
+
   toUTCDate() {
-    if (this.is_invalid) return new Date("Invalid Date");
-    return new Date(Date.UTC(this.year, this.month - 1, this.day));
+    if (this.is_invalid) return "Invalid Date";
+    const date = new Date(Date.UTC(this.year, this.month - 1, this.day));
+    return date.toISOString().split("T")[0];
   }
+  
   [Symbol.toPrimitive](hint) {
     if (hint === "number") {
       return this.getTime();

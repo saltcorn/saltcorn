@@ -39,15 +39,15 @@ describe("PlainDate", () => {
 
   it("returns UTC string", () => {
     const pd = new PlainDate("2025-07-29");
-    expect(pd.toUTCString()).toBe("Tue, 29 Jul 2025 00:00:00 GMT");
+    expect(pd.toUTCString()).toBe("Tue, 29 Jul 2025");
   });
 
-  it("returns UTC Date object", () => {
+  it('return UTC date string in YYYY-MM-DD format', ()=> {
     const pd = new PlainDate("2025-07-29");
     const utcDate = pd.toUTCDate();
-    expect(utcDate).toBeInstanceOf(Date);
-    expect(utcDate.toISOString()).toBe("2025-07-29T00:00:00.000Z");
-  });
+    expect(typeof utcDate).toBe("string");
+    expect(utcDate).toBe("2025-07-29");
+  })
 
   it("converts to JSON correctly", () => {
     const pd = new PlainDate("2025-08-14");
