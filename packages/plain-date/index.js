@@ -157,6 +157,16 @@ class PlainDate {
   toLocaleString(...args) {
     return this.toDate().toLocaleString(...args);
   }
+  toUTCString() {
+    if (this.is_invalid) return "Invalid Date";
+    return new Date(
+      Date.UTC(this.year, this.month - 1, this.day)
+    ).toUTCString();
+  }
+  toUTCDate() {
+    if (this.is_invalid) return new Date("Invalid Date");
+    return new Date(Date.UTC(this.year, this.month - 1, this.day));
+  }
   [Symbol.toPrimitive](hint) {
     if (hint === "number") {
       return this.getTime();
