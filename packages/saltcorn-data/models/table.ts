@@ -311,7 +311,7 @@ class Table implements AbstractTable {
 
     const provider = getState().table_providers[tbl.provider_name];
     if (!provider) return this;
-   const { getRows, ...methods } = provider.get_table(tbl.provider_cfg, tbl);
+    const { getRows, ...methods } = provider.get_table(tbl.provider_cfg, tbl);
 
     const { json_list_to_external_table } = require("../plugin-helper");
     const t = json_list_to_external_table(getRows, tbl.fields, methods || {});
@@ -1044,7 +1044,7 @@ class Table implements AbstractTable {
         for (const row of rows) {
           // run triggers on delete
           if (trigger.haltOnOnlyIf?.(row, user)) continue;
-          await trigger.run!(row);
+          await trigger.run!(row, { user });
         }
       }
       if (isNode()) {
@@ -3224,7 +3224,7 @@ class Table implements AbstractTable {
                     } else
                       try {
                         // TODO check constraints???
-                        delete rec[this.pk_name] // pk value can be set to undefined
+                        delete rec[this.pk_name]; // pk value can be set to undefined
                         await db.insert(this.name, rec, {
                           noid: true,
                           client,
