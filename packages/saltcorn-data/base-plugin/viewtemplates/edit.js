@@ -65,6 +65,7 @@ const {
   stateToQueryString,
   pathToState,
   displayType,
+  runCollabEvents,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -2463,51 +2464,11 @@ const virtual_triggers = (
             updates[fieldName] = newVal;
           }
           const rowId = row[table.pk_name];
-          const role = user?.role_id || 100;
-
-          const actionResults = [];
-          for (const { event } of update_events || []) {
-            const trigger = Trigger.findOne({ name: event });
-            if (!trigger) {
-              getState().log(6, `Trigger '${event}' not found, skipping`);
-              continue;
-            }
-            if (role > trigger.min_role) {
-              getState().log(6, `Trigger '${event}' not authorized`);
-              continue;
-            }
-
-            let resp;
-            if (trigger.action === "Workflow") {
-              resp = await trigger.runWithoutRow({
-                interactive: true,
-                row,
-                user: user || { role_id: 100 },
-              });
-              delete resp.__wf_run_id;
-            } else {
-              const action = getState().actions[trigger.action];
-              if (!action) {
-                getState().log(
-                  6,
-                  `Action '${trigger.action}' for trigger '${event}' not found, skipping`
-                );
-                continue;
-              }
-
-              getState().log(6, `Running trigger '${event}'`);
-              resp = await action.run({
-                configuration: trigger.configuration,
-                row: {
-                  new_row: row,
-                  old_row: old_row,
-                  updates: updates,
-                },
-                user: user,
-              });
-            }
-            if (resp) actionResults.push(resp);
-          }
+          const actionResults = await runCollabEvents(update_events, user, {
+            new_row: row,
+            old_row: old_row,
+            updates: updates,
+          });
           getState().log(
             6,
             "Emitting real-time update for row",
