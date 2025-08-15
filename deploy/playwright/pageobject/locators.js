@@ -749,6 +749,17 @@ class PageLocators {
     this.maxlocator = '//input[@id="inputmax"]';
     this.yearOfBirthLocator = '//input[@id="inputyear_of_birth"]';
     this.ageLocator = '.col-10.text-start';
+    this.addmultistepbutton = 'button[title="Add"]';
+    this.stepOne = 'button:has-text("1")';
+    this.stepTwo = 'button:has-text("2")';
+    this.stepThree = 'button:has-text("3")';
+    this.multistepdropdown = 'div[class*="multistep-action-selector"] div[class*="control"]';
+    this.FormActionButton = 'select[name="form_action"]';
+    this.reloadDropdown = '.selectized-field .css-yk16xz-control';
+    this.navActionlocator = 'select[name="nav_action"]';
+    this.checkboxInput = 'input[type="checkbox"]';
+    this.multistepactionbutton = 'a.btn.btn-primary';
+    this.tablelocator = 'table tbody tr'; 
   }
 }
 
