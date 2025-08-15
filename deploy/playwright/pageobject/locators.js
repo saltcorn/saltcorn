@@ -758,7 +758,7 @@ class PageLocators {
     this.reloadDropdown = '.selectized-field .css-yk16xz-control';
     this.navActionlocator = 'select[name="nav_action"]';
     this.checkboxInput = 'input[type="checkbox"]';
-    this.multistepactionbutton = 'a.btn.btn-primary', { hasText: 'Multi-step action' };
+    this.multistepactionbutton = 'a.btn.btn-primary';
     this.tablelocator = 'table tbody tr'; 
   }
 }
