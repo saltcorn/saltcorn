@@ -378,6 +378,7 @@ class Trigger implements AbstractTrigger {
           continue;
         }
         if (extraArgs) extraArgs.user = extraArgs.user || user;
+        else if (user) extraArgs = { user };
         const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
         if (res && resultCollector) mergeActionResults(resultCollector, res);
       } catch (e: any) {
