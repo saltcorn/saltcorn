@@ -2903,7 +2903,7 @@ const runCollabEvents = async (events, user, actionData) => {
     if (trigger.action === "Workflow") {
       resp = await trigger.runWithoutRow({
         interactive: true,
-        row,
+        row: actionData,
         user: user || { role_id: 100 },
       });
       delete resp.__wf_run_id;
