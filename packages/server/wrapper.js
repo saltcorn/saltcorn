@@ -158,7 +158,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
   }
   from_cfg.push({
     scriptBody: `var dynamic_updates_cfg = ${JSON.stringify({
-      enabled: dynamic_updates_enabled,
+      enabled: dynamic_updates_enabled && req.user?.id,
     })}`,
   });
   return [
