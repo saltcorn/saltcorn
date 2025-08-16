@@ -169,9 +169,9 @@ class PlainDate {
 
   toUTCString() {
     if (this.is_invalid) return "Invalid Date";
-
+    let locale = Intl.DateTimeFormat().resolvedOptions().locale || "en-GB";
     const date = new Date(Date.UTC(this.year, this.month - 1, this.day));
-    return date.toLocaleDateString("en-GB", {
+    return date.toLocaleDateString(locale, {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -185,7 +185,7 @@ class PlainDate {
     const date = new Date(Date.UTC(this.year, this.month - 1, this.day));
     return date.toISOString().split("T")[0];
   }
-  
+
   [Symbol.toPrimitive](hint) {
     if (hint === "number") {
       return this.getTime();

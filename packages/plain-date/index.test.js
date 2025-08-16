@@ -37,9 +37,17 @@ describe("PlainDate", () => {
     expect(pd.toString()).toBe("Invalid Date");
   });
 
-  it("returns UTC string", () => {
+  it("returns UTC string with dynamic locale", () => {
     const pd = new PlainDate("2025-07-29");
-    expect(pd.toUTCString()).toBe("Tue, 29 Jul 2025");
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale || "en-GB";
+    const expectedDate = new Date(Date.UTC(2025, 6, 29)).toLocaleDateString(locale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+    expect(pd.toUTCString()).toBe(expectedDate);
   });
 
   it('return UTC date string in YYYY-MM-DD format', ()=> {
