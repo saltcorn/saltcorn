@@ -158,7 +158,7 @@ class PlainDate {
     return this.toDate().toLocaleString(...args);
   }
 
-  toLocaleDate(locale, options = {}) {
+  toLocaleDate(locale = Intl.DateTimeFormat().resolvedOptions().locale, options = {}) {
     if (this.is_invalid) return "Invalid Date";
     const defaultOptions = { year: "numeric", month: "long", day: "numeric" };
     return this.toDate().toLocaleDateString(locale, {
