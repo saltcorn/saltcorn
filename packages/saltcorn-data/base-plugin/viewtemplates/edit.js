@@ -396,7 +396,7 @@ const configuration_workflow = (req) =>
                     name: "event",
                     label: req.__("Update event"),
                     sublabel: req.__(
-                      "Custom event for real-time updates (only Api call condition)"
+                      "Custom event for real-time updates"
                     ),
                     attributes: {
                       options: triggers.map((t) => t.name),
