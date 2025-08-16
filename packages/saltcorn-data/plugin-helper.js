@@ -2878,6 +2878,57 @@ const pathToState = (relation, getRowVal) => {
   }
 };
 
+/**
+ * Run custom real-time collaboration events
+ * @param {*} events events from the cfg of a view
+ * @param {*} user
+ * @param {*} actionData data to run the actions on
+ * @returns an array of action results
+ */
+const runCollabEvents = async (events, user, actionData) => {
+  const actionResults = [];
+  const role = user?.role_id || 100;
+  for (const { event } of events || []) {
+    const trigger = Trigger.findOne({ name: event });
+    if (!trigger) {
+      getState().log(6, `Trigger '${event}' not found, skipping`);
+      continue;
+    }
+    if (role > trigger.min_role) {
+      getState().log(6, `Trigger '${event}' not authorized`);
+      continue;
+    }
+
+    let resp;
+    if (trigger.action === "Workflow") {
+      resp = await trigger.runWithoutRow({
+        interactive: true,
+        row: actionData,
+        user: user || { role_id: 100 },
+      });
+      delete resp.__wf_run_id;
+    } else {
+      const action = getState().actions[trigger.action];
+      if (!action) {
+        getState().log(
+          6,
+          `Action '${trigger.action}' for trigger '${event}' not found, skipping`
+        );
+        continue;
+      }
+
+      getState().log(6, `Running trigger '${event}'`);
+      resp = await action.run({
+        configuration: trigger.configuration,
+        row: actionData,
+        user: user,
+      });
+    }
+    if (resp) actionResults.push(resp);
+  }
+  return actionResults;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -2908,4 +2959,5 @@ module.exports = {
   displayType,
   sqlBinOp,
   sqlFun,
+  runCollabEvents,
 };

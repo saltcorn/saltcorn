@@ -1207,8 +1207,92 @@ describe("Feed view", () => {
       create_view_location: null,
 
       response: !remoteQueries
-        ? `<div><div class="row"><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=2"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Leo Tolstoy"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=1"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Herman Melville"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div></div><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Atrue%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div>`
-        : `<div><div class=\"row\"><div class=\"col-sm-12 col-md-6 col-lg-4 col-xl-3\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=2\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"2\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Leo Tolstoy\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div><div class=\"col-sm-12 col-md-6 col-lg-4 col-xl-3\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=1\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"1\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Herman Melville\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div></div><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Atrue%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div>`,
+        ? `<div><div class="row"><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=2"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Leo Tolstoy"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=2': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div><div class="col-sm-12 col-md-6 col-lg-4 col-xl-3"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=1"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Herman Melville"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=1': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div></div><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Atrue%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div>`
+        : `<div><div class=\"row\"><div class=\"col-sm-12 col-md-6 col-lg-4 col-xl-3\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=2\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"2\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Leo Tolstoy\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=2': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div><div class=\"col-sm-12 col-md-6 col-lg-4 col-xl-3\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=1\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"1\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Herman Melville\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=1': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div></div><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Atrue%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div>`,
     });
   });
   it("should render masonry exactly", async () => {
@@ -1233,8 +1317,92 @@ describe("Feed view", () => {
       create_view_display: "Link",
       create_view_location: "Top left",
       response: !remoteQueries
-        ? '<div><a href="/view/authoredit">New book</a><div class="card-columns"><div class="card shadow mt-2"><div class="card-body"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=2"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Leo Tolstoy"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById(\'test-form-id\'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div></div><div class="card shadow mt-2"><div class="card-body"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=1"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Herman Melville"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener(\'DOMContentLoaded\',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById(\'test-form-id\'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div></div></div></div>'
-        : `<div><a href=\"javascript:execLink('/view/authoredit');\">New book</a><div class=\"card-columns\"><div class=\"card shadow mt-2\"><div class=\"card-body\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=2\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"2\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Leo Tolstoy\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div></div><div class=\"card shadow mt-2\"><div class=\"card-body\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=1\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"1\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Herman Melville\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script></div></div></div></div></div>`,
+        ? `<div><a href="/view/authoredit">New book</a><div class="card-columns"><div class="card shadow mt-2"><div class="card-body"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=2"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="2"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Leo Tolstoy"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=2': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div></div><div class="card shadow mt-2"><div class="card-body"><div class="d-inline" data-sc-embed-viewname="authoredit" data-sc-view-source="/view/authoredit?id=1"><form data-viewname="authoredit" action="/view/authoredit" class="form-namespace " method="post" data-row-values="%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22id%22%3A1%2C%22role_id%22%3A1%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D" id="test-form-id"><input type="hidden" name="_csrf" value=""><input type="hidden" class="form-control  " name="id" value="1"><input type="text" class="form-control  " data-fieldname="author" name="author" required id="inputauthor" value="Herman Melville"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=1': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div></div></div></div>`
+        : `<div><a href=\"javascript:execLink('/view/authoredit');\">New book</a><div class=\"card-columns\"><div class=\"card shadow mt-2\"><div class=\"card-body\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=2\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Leo%20Tolstoy%22%2C%22pages%22%3A728%2C%22publisher%22%3A1%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"2\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Leo Tolstoy\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=2': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div></div><div class=\"card shadow mt-2\"><div class=\"card-body\"><div class=\"d-inline\" data-sc-embed-viewname=\"authoredit\" data-sc-view-source=\"/view/authoredit?id=1\"><form data-viewname=\"authoredit\" action=\"javascript:void(0)\" onsubmit=\"javascript:formSubmit(this, '/view/', 'authoredit')\"  class=\"form-namespace \" method=\"post\" data-row-values=\"%7B%22_creating%22%3Afalse%2C%22user%22%3A%7B%22email%22%3A%22admin%40foo.com%22%2C%22id%22%3A1%2C%22role_id%22%3A1%2C%22language%22%3Anull%2C%22tenant%22%3A%22public%22%2C%22attributes%22%3A%7B%7D%7D%2C%22author%22%3A%22Herman%20Melville%22%2C%22pages%22%3A967%2C%22publisher%22%3Anull%7D\" id="test-form-id"><input type=\"hidden\" name=\"_csrf\" value=\"false\"><input type=\"hidden\" class=\"form-control  \" name=\"id\" value=\"1\"><input type=\"text\" class=\"form-control  \" data-fieldname=\"author\" name=\"author\" required id=\"inputauthor\" value=\"Herman Melville\"></form><script>(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const editForm = document.getElementById('test-form-id'); if (editForm) editForm.addEventListener("change", handle_identical_fields, true);});</script><script id="test-script-id">(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){const collabCfg = {
+    events: {
+      'authoredit_UPDATE_EVENT?id=1': async (data) => {
+        console.log("Update event received for view authoredit", data);
+        const script = document.getElementById('test-script-id');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="authoredit"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "authoredit");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "authoredit");
+          }
+        }
+      }
+    }
+  };
+  init_collab_room('authoredit', collabCfg);});</script></div></div></div></div></div>`,
     });
   });
 });

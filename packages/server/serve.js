@@ -639,8 +639,12 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           const role_id = user ? user.role_id : 100;
           if (view.min_role < role_id)
             throw new Error("Not authorized to join collaboration room");
-          socket.join(`_${tenant}_collab_room_`);
-          if (typeof callback === "function") callback({ status: "ok" });
+          const roomName = `_${tenant}_collab_room_`;
+          if (!socket.rooms.has(roomName)) {
+            socket.join(`_${tenant}_collab_room_`);
+            if (typeof callback === "function") callback({ status: "ok" });
+          } else if (typeof callback === "function")
+            callback({ status: "already_joined" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);
           if (typeof callback === "function")
