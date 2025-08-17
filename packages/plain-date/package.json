@@ -9,8 +9,8 @@
     "directory": "packages/plain-date"
   },
   "scripts": {
-    "test": "echo NO TESTS",
-    "tsc": "echo 'No TypeScript build'",
+    "test": "jest",
+    "tsc": "tsc -p tsconfig.json",
     "clean": "echo 'No TypeScript build'"
   },
   "dependencies": {},

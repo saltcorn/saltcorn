@@ -65,6 +65,7 @@ const {
   stateToQueryString,
   pathToState,
   displayType,
+  runCollabEvents,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -337,6 +338,7 @@ const configuration_workflow = (req) =>
           );
           const pages = await Page.find();
           const groups = await PageGroup.find();
+          const triggers = Trigger.find();
           return new Form({
             fields: [
               {
@@ -384,6 +386,25 @@ const configuration_workflow = (req) =>
                 type: "Bool",
                 default: false,
               },
+
+              new FieldRepeat({
+                name: "update_events",
+                showIf: { enable_realtime: true },
+                fields: [
+                  {
+                    type: "String",
+                    name: "event",
+                    label: req.__("Update event"),
+                    sublabel: req.__(
+                      "Custom event for real-time updates"
+                    ),
+                    attributes: {
+                      options: triggers.map((t) => t.name),
+                    },
+                  },
+                ],
+              }),
+
               {
                 name: "destination_type",
                 label: "Destination type",
@@ -554,7 +575,15 @@ const run = async (
 const runMany = async (
   table_id,
   viewname,
-  { columns, layout, auto_save, split_paste, confirm_leave },
+  {
+    columns,
+    layout,
+    auto_save,
+    split_paste,
+    confirm_leave,
+    enable_realtime,
+    update_events,
+  },
   state,
   extra,
   { editManyQuery, getRowQuery, optionsQuery }
@@ -588,6 +617,8 @@ const runMany = async (
       split_paste,
       isRemote,
       confirm_leave,
+      enable_realtime,
+      update_events,
     });
     return { html, row };
   });
@@ -997,22 +1028,33 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
-const realTimeScript = (viewname, table_id, row) => {
+const realTimeScript = (viewname, table_id, row, scriptId) => {
   const view = View.findOne({ name: viewname });
   const table = Table.findOne({ id: table_id });
   const rowId = row[table.pk_name];
   return `
   const collabCfg = {
     events: {
-      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
+      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': async (data) => {
         console.log("Update event received for view ${viewname}", data);
+        const script = document.getElementById('${scriptId}');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="${viewname}"]'
+        );
         if (data.updates) {
-          common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "${viewname}");
+          }
         }
       }
     }
   };
-  init_collab_room('${viewname}', collabCfg);`;
+  init_collab_room('${viewname}', collabCfg);`.trim();
 };
 
 /**
@@ -1223,13 +1265,20 @@ const render = async ({
     "enable_dynamic_updates",
     true
   );
+  const rndid = isTest()
+    ? "test-script-id"
+    : Math.floor(Math.random() * 16777215).toString(16);
   const realTimeCollabScript =
     enable_realtime && row && !(req.headers?.pjaxpageload === "true")
       ? (!dynamic_updates_enabled
           ? script({
               src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
             })
-          : "") + script(domReady(realTimeScript(viewname, table.id, row)))
+          : "") +
+        script(
+          { id: rndid },
+          domReady(realTimeScript(viewname, table.id, row, rndid))
+        )
       : "";
 
   if (actually_auto_save) {
@@ -2367,7 +2416,11 @@ const createBasicView = async ({
   return cfg;
 };
 
-const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
+const virtual_triggers = (
+  table_id,
+  viewname,
+  { enable_realtime, update_events }
+) => {
   if (!enable_realtime) return [];
   const table = Table.findOne({ id: table_id });
   const view = View.findOne({ name: viewname });
@@ -2405,20 +2458,26 @@ const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
           );
         } else {
           // build and emit updates
-          const updateVals = {};
+          const updates = {};
           for (const fieldName of changedLayoutFields) {
             const newVal = row[fieldName];
-            updateVals[fieldName] = newVal;
+            updates[fieldName] = newVal;
           }
           const rowId = row[table.pk_name];
+          const actionResults = await runCollabEvents(update_events, user, {
+            new_row: row,
+            old_row: old_row,
+            updates: updates,
+          });
           getState().log(
             6,
             "Emitting real-time update for row",
             rowId,
-            updateVals
+            updates
           );
           view.emitRealTimeEvent(`UPDATE_EVENT?id=${rowId}`, {
-            updates: updateVals,
+            updates: updates,
+            actions: actionResults,
           });
         }
       },
@@ -2474,6 +2533,7 @@ module.exports = {
       auto_create,
       delete_unchanged_auto_create,
       enable_realtime,
+      update_events,
     },
     req,
     res,
@@ -2568,6 +2628,7 @@ module.exports = {
         auto_created_row,
         hiddenLoginDest,
         enable_realtime,
+        update_events,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {

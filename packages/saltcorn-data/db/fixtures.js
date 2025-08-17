@@ -152,6 +152,7 @@ module.exports =
         },
         view_when_done: "authorlist",
         enable_realtime: true,
+        update_events: [{ event: "custom_update_event" }],
       },
       min_role: 100,
     });
@@ -2614,6 +2615,18 @@ module.exports =
       when_trigger: "API call",
       configuration: {
         code: `emit_to_client({notify: "hello public"});`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "custom_update_event",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      when_trigger: "Never",
+      configuration: {
+        code: `console.log("Custom update event triggered");`,
+        run_where: "Client page",
       },
       min_role: null,
     });
