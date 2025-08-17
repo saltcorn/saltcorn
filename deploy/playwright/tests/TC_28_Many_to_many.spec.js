@@ -66,7 +66,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // click on next button
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on next button
@@ -124,7 +124,7 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
         await customAssert('Select Relation.name→name→full_name in relation dropdown', async () => {
             await page.selectOption(pageobject.inputrelation, { label: 'Relation.name→name→full_name' });
         });
@@ -150,7 +150,7 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click('text=Adam');
         // delete lable for full name
         await page.click(pageobject.deletebutton);
@@ -160,7 +160,7 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2relation, { force: true });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on next button
         await page.click(pageobject.nextoption);
     });
@@ -187,7 +187,7 @@ test.describe('E2E Test Suite', () => {
         // add lable for link
         await page.waitForSelector(pageobject.lebelforfield);
         await functions.fill_Text(pageobject.lebelforfield, 'Show');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on next button
         await page.click(pageobject.nextoption);
         // click next button again

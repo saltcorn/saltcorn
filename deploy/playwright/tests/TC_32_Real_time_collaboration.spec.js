@@ -77,7 +77,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // drag and drop the page source on the page
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.waitForSelector(pageobject.nextoption);
 
         await page.click(pageobject.nextoption);
@@ -99,7 +99,7 @@ test.describe('E2E Test Suite', () => {
 
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the action view link
@@ -119,7 +119,7 @@ test.describe('E2E Test Suite', () => {
         // click on next button
         await functions.submit();
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         console.log('code is working till test case number 3')
     });
 
@@ -147,7 +147,7 @@ test.describe('E2E Test Suite', () => {
         console.log('✅ Address updated in page1');
 
         // Wait briefly to allow the system to auto-save/sync
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(750);
 
         // Now open a new tab AFTER the change
         const page1 = await context.newPage();

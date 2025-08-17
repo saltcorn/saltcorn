@@ -75,22 +75,22 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // drag and drop the page source on the page
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // add new action button on page
         await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.fourthrowcolumn2);
         // Click the input field inside the dropdown
         await page.locator(pageobject.actionDropdown).click();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         // Type 'modify' into the input field
         await page.keyboard.type('modify_row');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
 
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.fill('textarea.field-row_expr', '{full_name:"Sumit"}');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on next page
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
@@ -122,7 +122,7 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on add column button on page
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);
@@ -159,12 +159,12 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.editfieldlink);
         });
         await page.getByRole('link', { name: 'modify_row' }).click();
-         await page.waitForTimeout(1000);
+         await page.waitForTimeout(500);
         await functions.submit();
-         await page.waitForTimeout(1000);
+         await page.waitForTimeout(500);
         await functions.views();
         await page.click(pageobject.newviewlink);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await customAssert('Edit field link should be visible', async () => {
             await expect(page.getByText('Sumit')).toBeVisible();
         });
