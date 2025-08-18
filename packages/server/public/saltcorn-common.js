@@ -55,26 +55,15 @@ function get_current_state_url(e) {
 
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
-  const isMDBLoaded = window.mdb && window.mdb.Dropdown;
-  const isBootstrapLoaded = window.bootstrap && window.bootstrap.Dropdown;
-
-  if (!isMDBLoaded && !isBootstrapLoaded) return;
-
   $("body").on(
     "show.bs.dropdown",
-    "table [data-mdb-toggle=dropdown], table [data-bs-toggle=dropdown]",
+    "table [data-bs-toggle=dropdown]",
     function () {
-      const target = $("#page-inner-content").length
-        ? $("#page-inner-content")
-        : $("body");
-
-      const dropdown = isMDBLoaded
-        ? mdb.Dropdown.getInstance(this)
-        : isBootstrapLoaded
-        ? bootstrap.Dropdown.getInstance(this)
-        : null;
-
-      if (dropdown?._menu) $(dropdown._menu).insertAfter(target);
+      let target;
+      if (!$("#page-inner-content").length) target = $("body");
+      else target = $("#page-inner-content");
+      let dropdown = bootstrap.Dropdown.getInstance(this);
+      $(dropdown._menu).insertAfter(target);
     }
   );
 }
