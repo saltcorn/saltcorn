@@ -1345,6 +1345,13 @@ const configTypes: ConfigTypes = {
     excludeFromMobile: true,
     ephemeral: true,
   },
+  joined_dynamic_update_socket_ids: {
+    type: "hidden",
+    label: "Joined dynamic update socket ids",
+    default: [],
+    excludeFromMobile: true,
+    ephemeral: true,
+  },
   prune_session_interval: {
     type: "Integer",
     label: "Prune session interval (seconds)",

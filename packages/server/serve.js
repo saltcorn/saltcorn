@@ -643,6 +643,14 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           if (!socket.rooms.has(roomName)) {
             socket.join(`_${tenant}_collab_room_`);
             if (typeof callback === "function") callback({ status: "ok" });
+            const socketIds = await getState().getConfig(
+              "joined_real_time_socket_ids",
+              []
+            );
+            socketIds.push(socket.id);
+            await getState().setConfig("joined_real_time_socket_ids", [
+              ...new Set(socketIds),
+            ]);
           } else if (typeof callback === "function")
             callback({ status: "already_joined" });
         } catch (err) {
@@ -666,6 +674,14 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           if (!user) throw new Error("Not authorized");
           socket.join(`_${tenant}_dynamic_update_room`);
           socket.join(`_${tenant}:${user.id}_dynamic_update_room`);
+          const socketIds = await getState().getConfig(
+            "joined_dynamic_update_socket_ids",
+            []
+          );
+          socketIds.push(socket.id);
+          await getState().setConfig("joined_dynamic_update_socket_ids", [
+            ...new Set(socketIds),
+          ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
           getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);
@@ -685,6 +701,30 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           const socketIds = state.getConfig("joined_log_socket_ids");
           const newSocketIds = socketIds.filter((id) => id !== socket.id);
           await state.setConfig("joined_log_socket_ids", newSocketIds);
+
+          const dynamicSocketIds = state.getConfig(
+            "joined_dynamic_update_socket_ids",
+            []
+          );
+          const newDynamicSocketIds = dynamicSocketIds.filter(
+            (id) => id !== socket.id
+          );
+          await state.setConfig(
+            "joined_dynamic_update_socket_ids",
+            newDynamicSocketIds
+          );
+
+          const realTimeSocketIds = state.getConfig(
+            "joined_real_time_socket_ids",
+            []
+          );
+          const newRealTimeSocketIds = realTimeSocketIds.filter(
+            (id) => id !== socket.id
+          );
+          await state.setConfig(
+            "joined_real_time_socket_ids",
+            newRealTimeSocketIds
+          );
         } else {
           console.error("No state found in socket disconnect");
           console.error("The current tenantSchema is:", db.getTenantSchema());
