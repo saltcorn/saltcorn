@@ -79,7 +79,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // click on next button
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on next button
@@ -349,7 +349,7 @@ test.describe('E2E Test Suite', () => {
             // Assert the lable for add row button
             await expect(page.locator(pageobject.addrowlocator)).toHaveText('Add row');
         });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         // click on add row button
         await page.waitForSelector(pageobject.addrowlocator);
         await page.click(pageobject.addrowlocator);

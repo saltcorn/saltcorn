@@ -81,7 +81,7 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(5000); // Wait for 5 seconds
+    await page.waitForTimeout(2500); // Wait for 5 seconds
 
     await page.locator('div.d-inline:has-text("@mailinator.com")').click();
     await customAssert('Click on the checkbox to edit', async () => {
@@ -89,7 +89,7 @@ test.describe('E2E Test Suite', () => {
       await expect(checkboxLocator).toBeVisible();  // Assert checkbox is visible
       await checkboxLocator.click();
     });
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2500);
     await customAssert('Click the next option twice', async () => {
       await page.locator(pageobject.nextoption).click();
       await page.locator(pageobject.nextoption).click();
@@ -105,7 +105,7 @@ test.describe('E2E Test Suite', () => {
       
         // Hover over the email to make the edit icon appear
         await emailEditLocator.hover(); 
-        await page.waitForTimeout(4000)
+        await page.waitForTimeout(2000)
         
         const editIconLocator = emailEditLocator.locator('.editicon');
         // Assertion to check if edit icon is visible
@@ -198,7 +198,7 @@ test.describe('E2E Test Suite', () => {
     await functions.submit();
     await page.click(pageobject.EditlinkLocator);
     // Click on add row button
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(5000);
     await page.click(pageobject.addrowlocator);
     // click on tab cell to activate it
     await page.waitForSelector(pageobject.Nametab);
@@ -211,7 +211,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.addrowlocator);
     await page.click(pageobject.Nametab);
     await page.keyboard.type('Charl');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
   });
   test('Create show view for Employee table', async () => {
     await functions.views();
@@ -234,15 +234,15 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(4000);
-    const nameLocator = page.locator('div.d-inline:has-text("Adam")');
     await page.waitForTimeout(2000);
+    const nameLocator = page.locator('div.d-inline:has-text("Adam")');
+    await page.waitForTimeout(1000);
     await nameLocator.click();
 
     const checkboxLocator = page.locator(pageobject.ClickToEditCheckBox);
     await expect(checkboxLocator).toBeVisible();  // Assert checkbox is visible
     await checkboxLocator.click();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await functions.views();
   });
   // Create List view for employee table and add show Department link
@@ -266,7 +266,7 @@ test.describe('E2E Test Suite', () => {
       await page.selectOption(pageobject.viewtabledropdown, { label: 'Employee' });
     });
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     // click on add column button on page
     await page.waitForSelector(pageobject.addcolumnbutton);
     await page.click(pageobject.addcolumnbutton);
@@ -282,7 +282,7 @@ test.describe('E2E Test Suite', () => {
     // add lable for link
     await page.waitForSelector(pageobject.lebelforfield);
     await functions.fill_Text(pageobject.lebelforfield, 'Show Employee');
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2500);
     // click on next button
     await page.click(pageobject.nextoption);
     await functions.views()
@@ -299,7 +299,7 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Click on the email to edit and check edit icon visibility', async () => {
       const editLocator = page.locator('.text-start:has-text("Adam")');
       await editLocator.hover(); // Hover over the email to make the edit icon appear
-      await page.waitForTimeout(4000)
+      await page.waitForTimeout(2000)
       const editIconLocator = editLocator.locator('.editicon');
 
       // Assertion to check if edit icon is visible

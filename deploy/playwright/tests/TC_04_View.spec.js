@@ -79,7 +79,7 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     // click on add column button on page
     await page.waitForSelector(pageobject.addcolumnbutton);
     await page.click(pageobject.addcolumnbutton);
@@ -116,7 +116,7 @@ test.describe('E2E Test Suite', () => {
     // submit the page
     await functions.submit();
     // drag and drop the page source on the page
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     // select inputbox and delete
     await page.waitForSelector(pageobject.inputDateOfBirth);
     await page.click(pageobject.inputDateOfBirth);
@@ -134,7 +134,7 @@ test.describe('E2E Test Suite', () => {
       // Select 'Date of birth' from the dropdown
       await page.selectOption('select.form-control.form-select', 'date_of_birth');
     });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     await functions.fill_Text(pageobject.richTextEditor, 'I said..');
     // click on delete button
@@ -273,7 +273,7 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     // select full name lable
     await page.click(pageobject.Fullnameshow);
     // delete lable for full name
@@ -283,7 +283,7 @@ test.describe('E2E Test Suite', () => {
         // select text style as Heading 1 for full name
         await page.click("button.style-h1");
     });
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(2000);
     await customAssert('Drag address row on third column', async () => {
         await functions.drag_And_Drop(pageobject.Addresstext, pageobject.thirdrowcolumn2);
     });
@@ -351,7 +351,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.editviewlink);
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click(pageobject.DateTimeUser);
     await customAssert('field view dropdown should be visible', async () => {
       await page.waitForSelector(pageobject.fieldViewdropdown);
@@ -378,7 +378,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.editviewlink);
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click(pageobject.localDateOption);
     await customAssert('field view dropdown should be visible', async () => {
       await page.waitForSelector(pageobject.fieldViewdropdown);
@@ -405,7 +405,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.editviewlink);
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click(pageobject.divYearAgo);
     await customAssert('field view dropdown should be visible', async () => {
       await page.waitForSelector(pageobject.fieldViewdropdown);
@@ -432,14 +432,14 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.view2editlink);
     await page.click(pageobject.editviewlink);
     await functions.submit();
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(1000);
     await page.click(pageobject.DatelocatorByName);
     await customAssert('Select Flatpickr in field view dropdown', async () => {
       await page.waitForSelector(pageobject.fieldViewdropdown);
       // Select 'flatepickr' from the dropdown
       await page.selectOption(pageobject.fieldViewdropdown, { label: 'flatpickr' }); // If using a select dropdown
     });
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2500);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.view2editlink);
@@ -490,21 +490,21 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Select ckeditor4 from field view dropdown', async () => {
       await page.waitForSelector(pageobject.fieldViewdropdown);
       // Select 'CKEditor4' from the dropdown
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(1000);
       await page.selectOption(pageobject.fieldViewdropdown, { label: 'CKEditor4' }); // If using a select dropdown
     });
     await customAssert('Select Reduced from Toolbar dropdown', async () => {
       await page.waitForSelector(pageobject.Toolbardropdown);
       await page.click(pageobject.Toolbardropdown);
       // Select 'Reduced' from the dropdown
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(1000);
       await page.selectOption(pageobject.Toolbardropdown, { label: 'Reduced' }); // If using a select dropdown
     });
     await page.click(pageobject.helloWorldElement);
     await functions.clearText(pageobject.richTextEditor);
     await page.keyboard.type('Bio');
     await page.selectOption(pageobject.optionBio, { label: 'Bio' });
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.newviewlink);
@@ -546,7 +546,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.helloWorldElement);
     await functions.clearText(pageobject.richTextEditor);
     await page.keyboard.type('Bio');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     // drag and drop the action view link
     await page.waitForSelector(pageobject.viewlinksource);
@@ -573,7 +573,7 @@ test.describe('E2E Test Suite', () => {
     await functions.fill_Text(pageobject.searchIconLocator, 'Edit');
     await page.click(pageobject.editIconLocator);
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.newviewlink);
