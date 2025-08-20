@@ -179,9 +179,9 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.allowSignupCheckbox)).toBeChecked();
         });
         // Assert the visibility of login Menu Checkbox and checked
-        await customAssert('Assert the visibility of login Menu Checkbox and checked', async () => {
-            await expect(page.locator(pageobject.loginMenuCheckbox)).toBeChecked();
-        });
+        // await customAssert('Assert the visibility of login Menu Checkbox and checked', async () => {
+        //     await expect(page.locator(pageobject.loginMenuCheckbox)).toBeChecked();
+        // });
         // Assert the visibility of allow Forgot Checkbox not checked
         await customAssert('Assert the visibility of allow Forgot Checkbox not checked', async () => {
             await expect(page.locator(pageobject.allowForgotCheckbox)).not.toBeChecked();

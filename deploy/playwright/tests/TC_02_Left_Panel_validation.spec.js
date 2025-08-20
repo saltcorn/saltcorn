@@ -479,7 +479,7 @@ test.describe('E2E Test Suite', () => {
     });
     await page.click(pageobject.userSettingsLink);
     await customAssert('Assert the lable of User Setting', async () => {
-      await expect(page.locator(pageobject.userSettingsLink)).toHaveText('User Settings');
+      await expect(page.locator(pageobject.userSettingsLink)).toHaveText('User settings');
     });
     await customAssert('page url should be /eventlog', async () => {
       expect(page.url()).toBe(baseURL + derivedURL + 'auth/settings');
