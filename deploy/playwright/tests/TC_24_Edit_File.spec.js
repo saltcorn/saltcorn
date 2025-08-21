@@ -89,7 +89,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator('#inputtable_name').selectText('File');
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.file_link);
         await customAssert('field view dropdown should be visible', async () => {
             await page.waitForSelector(pageobject.fieldViewdropdown);
@@ -127,7 +127,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator('#inputtable_name').selectText('File');
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(2000);
         await page.click(pageobject.choosefilebutton);
         await customAssert('field view dropdown should be visible', async () => {
             await page.waitForSelector(pageobject.fieldViewdropdown);
@@ -163,7 +163,7 @@ test.describe('E2E Test Suite', () => {
         await functions.fill_Text(pageobject.inputdisc, 'test discription');
         await functions.submit();
         await expect(page.locator(pageobject.file1img)).toBeVisible();
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(2000);
     });
 
     test('Create age table', async () => {
@@ -206,7 +206,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator('#inputtable_name').selectText('Age');
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(2000);
 
         await functions.drag_And_Drop(pageobject.containsdraglocator, pageobject.target);
         await page.click(pageobject.show_if_button);

@@ -56,7 +56,7 @@ test.describe('E2E Test Suite', () => {
         await page.waitForSelector(pageobject.textSource);
         await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
         await functions.fill_Text(pageobject.textlocator, 'Hello World');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const TextTitle = page.locator(pageobject.textSource);
         await customAssert('Text box should be visible', async () => await expect(page.locator(pageobject.textlocator)).toBeVisible());
         await page.locator(pageobject.cardBoxClick).click();
@@ -102,7 +102,7 @@ test.describe('E2E Test Suite', () => {
         // await page.waitForSelector(pageobject.textSource);
         await page.locator(pageobject.Library).click();
         await functions.drag_And_Drop(pageobject.dragElement, pageobject.target);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.testPage2);
         // await page.waitForTimeout(5000);
         await customAssert('Page URL should be /testpage2', async () => {
@@ -172,7 +172,7 @@ test.describe('E2E Test Suite', () => {
         await functions.create_New_Page('testpage4');
         await page.locator(pageobject.Library).click();
         await functions.drag_And_Drop(pageobject.dragElement1, pageobject.target);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.testPage4);
         await customAssert('Page URL should be /testpage2', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'page/testpage4');

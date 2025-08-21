@@ -45,7 +45,7 @@ test.describe('E2E Test Suite', () => {
     // Create a new page named 'saltcorn_image' and drag-and-drop the image component
     await functions.create_New_Page('saltcorn_image');
     await functions.drag_And_Drop(pageobject.imageSource, pageobject.target);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     // Verify that 'Image settings' appears on the screen
     await customAssert('Image settings should be visible', async () => {
       await expect(page.getByText('Image settings')).toBeVisible();
@@ -61,7 +61,7 @@ test.describe('E2E Test Suite', () => {
     const fileInput = await page.waitForSelector(pageobject.FileInputForUpload);
     const filePath = 'Csv_file_to_uplaod/images.jpg';
     await fileInput.setInputFiles(filePath);
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(5000);
 
     // Wait for the save button and click to save the uploaded image
     await page.waitForSelector(pageobject.UploadImageSave, { state: 'visible' });

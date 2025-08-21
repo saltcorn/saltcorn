@@ -51,7 +51,7 @@ test.describe('E2E Test Suite', () => {
     });
     await functions.fill_Text(pageobject.inputsitename, 'Saltcorn_new');
     await page.locator(pageobject.inputbase_url).click();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2500);
     await page.reload();
     await customAssert('Assert the site name in Site identity tab is Saltcorn', async () => {
       await expect(page.locator(pageobject.SaltCornButton)).toHaveText('Saltcorn_new');

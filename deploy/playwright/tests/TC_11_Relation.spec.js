@@ -67,7 +67,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         await page.click(pageobject.EditlinkLocator);
         // Click on add row button
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.addrowlocator);
         // click on tab cell to activate it
         await page.waitForSelector(pageobject.Nametab);
@@ -80,7 +80,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.addrowlocator);
         await page.click(pageobject.Nametab);
         await page.keyboard.type('Charl');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
     });
 
     // Create Department table
@@ -131,7 +131,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         await page.click(pageobject.EditlinkLocator);
         // Click on add row button
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.addrowlocator);
         // click on tab cell to activate it
         await page.waitForSelector(pageobject.manageCell);
@@ -140,7 +140,7 @@ test.describe('E2E Test Suite', () => {
         await page.click('text=Adam');
         await page.click(pageobject.Nametab);
         await page.keyboard.type('Earn');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
 
         await page.click(pageobject.addrowlocator);
         // enter value in Second row
@@ -148,7 +148,7 @@ test.describe('E2E Test Suite', () => {
         await page.click('text=Bolt');
         await page.click(pageobject.Nametab);
         await page.keyboard.type('Spend');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
 
         await page.click(pageobject.addrowlocator);
         // enter value in Third row
@@ -156,7 +156,7 @@ test.describe('E2E Test Suite', () => {
         await page.click('text=Charl');
         await page.click(pageobject.Nametab);
         await page.keyboard.type('Collect');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
     });
 
     // Add Department field in Employe table and link with
@@ -193,7 +193,7 @@ test.describe('E2E Test Suite', () => {
         await page.click('text=Spend');
         await page.locator(pageobject.departmentCell1).nth(2).click();
         await page.click('text=Collect');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.click_table();
     });
 
@@ -219,7 +219,7 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.views();
     });
 
@@ -244,7 +244,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption(pageobject.viewtabledropdown, { label: 'Employee' });
         });
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on add column button on page
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);
@@ -260,7 +260,7 @@ test.describe('E2E Test Suite', () => {
         // add lable for link
         await page.waitForSelector(pageobject.lebelforfield);
         await functions.fill_Text(pageobject.lebelforfield, 'Show Department');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views()
@@ -308,7 +308,7 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.views();
     });
 
@@ -332,7 +332,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption(pageobject.viewtabledropdown, { label: 'Department' });
         });
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on add column button on page
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);
@@ -348,7 +348,7 @@ test.describe('E2E Test Suite', () => {
         // add lable for link
         await page.waitForSelector(pageobject.lebelforfield);
         await functions.fill_Text(pageobject.lebelforfield, 'Managed by');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views()
@@ -396,7 +396,7 @@ test.describe('E2E Test Suite', () => {
         // click on save button to delete
         await page.click(pageobject.saveactionbutton);
         await page.click(pageobject.deletebutton);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         // click on next page
         await page.click(pageobject.nextoption);
         // select the auto save to save any changes immediately
@@ -410,7 +410,7 @@ test.describe('E2E Test Suite', () => {
         // visit view page
         await functions.views();
         await page.click(pageobject.configureEmployeelist);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on add column button on page
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the action view link
@@ -425,7 +425,7 @@ test.describe('E2E Test Suite', () => {
         // add lable for link
         await functions.fill_Text(pageobject.lebelforfield, 'Edit');
         await page.click(pageobject.viewtolinkdropdown);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.waitForSelector(pageobject.viewtocreate);
         await page.click(pageobject.viewtocreate);

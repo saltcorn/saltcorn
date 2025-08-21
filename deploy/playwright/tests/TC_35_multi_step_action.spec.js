@@ -104,11 +104,11 @@ test.describe('E2E Test Suite', () => {
 
         // Type 'modify' into the input field
         await page.keyboard.type('Multi-Step Action');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
 
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         const addButton = page.locator(pageobject.addmultistepbutton);
         await addButton.waitFor();
@@ -123,45 +123,45 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(1000);
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.locator(pageobject.FormActionButton).click();
         await page.keyboard.type('save');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
 
         await page.locator(pageobject.stepTwo).click();
         await page.locator(pageobject.multistepdropdown).click();
         await page.keyboard.type('reload_embedded_view');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.locator(pageobject.reloadDropdown).click();
         await page.keyboard.type('NewView_List');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         await page.locator(pageobject.stepThree).click();
         await page.locator(pageobject.multistepdropdown).click();
         await page.keyboard.type('navigate');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.locator(pageobject.navActionlocator).click();
         await page.keyboard.type('Close modal');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
         // Press Enter to select the option
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         // drag and drop the page source on the page
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on finish button

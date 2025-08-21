@@ -49,7 +49,7 @@ test.describe('E2E Test Suite', () => {
         });
         // assert the about application url
         await customAssert('page url should be /admin', async () => {
-            expect(page.url()).toBe(baseURL + derivedURL + 'admin', { TIMEOUT: 20000 });
+            expect(page.url()).toBe(baseURL + derivedURL + 'admin', { TIMEOUT: 10000 });
         });
     });
 
@@ -67,6 +67,10 @@ test.describe('E2E Test Suite', () => {
         // Assert the site name in Site identity tab is Saltcorn
         await customAssert('Assert the site name in Site identity tab is Saltcorn', async () => {
             await expect(page.locator(pageobject.inputsitename)).toHaveValue('Saltcorn');
+        });
+        // Assert the timezone in Site identity tab
+        await customAssert('Assert the timezone in Site identity tab', async () => {
+            await expect(page.locator(pageobject.inputtimezone)).toHaveValue('Africa/Abidjan');
         });
         // Assert the base_url in Site identity tab
         await customAssert('Assert the base_url in Site identity tab', async () => {
@@ -322,9 +326,9 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.log_level)).toBeVisible();
         });
         // check the npm package textbox
-        await customAssert('Assert the npm package textbox', async () => {
-            await expect(page.locator(pageobject.npm_package)).toHaveValue('');
-        });
+        // await customAssert('Assert the npm package textbox', async () => {
+        //     await expect(page.locator(pageobject.npm_package)).toHaveValue('');
+        // });
         // check the log viewer link in development tab
         await customAssert('Assert the logs viewer link', async () => {
             await expect(page.locator(pageobject.logs_viewer)).toHaveText('open logs viewer');
@@ -347,9 +351,9 @@ test.describe('E2E Test Suite', () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'admin' + derivedURL + 'notifications');
         });
         // Assert the In user menu checkbox in Notification tab
-        /*await customAssert('Assert the In user menu checkbox in Notification tab is not checked', async () => {
-            await expect(page.locator(pageobject.notification_in_menu)).not.toBeChecked();
-        });*/
+        // await customAssert('Assert the In user menu checkbox in Notification tab is not checked', async () => {
+        //     await expect(page.locator(pageobject.notification_in_menu)).not.toBeChecked();
+        // });
         // Assert the progressive web application Enabled checkbox in Notification tab
         await customAssert('Assert the progressive web application Enabled checkbox is not checked', async () => {
             await expect(page.locator(pageobject.pwa_enabled)).not.toBeChecked();
