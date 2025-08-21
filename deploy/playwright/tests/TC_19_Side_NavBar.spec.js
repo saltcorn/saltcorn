@@ -113,7 +113,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // click on next button
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on next button
@@ -168,12 +168,12 @@ test.describe('E2E Test Suite', () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'pageedit');
         });
         await functions.create_New_Page('My_project_' + randomString);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         // Drag and drop the text source
         await page.waitForSelector(pageobject.textSource);
         await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
         await functions.fill_Text(pageobject.textlocator, '');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.fill_Text(pageobject.textlocator, 'Testing the placeholder');
         //  check hello world have text testing
         await customAssert('Hello world should have text Testing the placeholder', async () => {
@@ -220,7 +220,7 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on add column button on page
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);

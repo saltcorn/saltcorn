@@ -282,7 +282,7 @@ test.describe('E2E Test Suite', () => {
         });
         await customAssert('Delete button for custom event should be present', async () => {
             // Increase timeout if needed
-            await expect(page.locator(pageobject.deletefieldbutton)).toBeVisible({ timeout: 10000 });
+            await expect(page.locator(pageobject.deletefieldbutton)).toBeVisible({ timeout: 5000 });
             await page.click(pageobject.deletefieldbutton);
         });
     });

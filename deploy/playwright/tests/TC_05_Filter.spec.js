@@ -87,7 +87,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
             await page.selectOption(pageobject.fieldViewdropdown, { label: 'as_text' });
         });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         //await page.click(pageobject.nextoption);
         await functions.views();
         await page.click(pageobject.newviewlink);
@@ -113,7 +113,7 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // add new input box in page
         await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
         // click on field dropdown for field
@@ -137,7 +137,7 @@ test.describe('E2E Test Suite', () => {
     // Create new page for Filter
     test('Create new page for Filter', async () => {
         await functions.create_New_Page('Filtered_page');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select NewView_List in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
@@ -148,7 +148,7 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2Filter, { force: true });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.Save_Page_Project();
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FilterPage);
@@ -191,7 +191,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
             await functions.fill_Text(pageobject.inputValueField, 'Lapsed');
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FilterPage);
@@ -222,7 +222,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Select checkbox_group in field view dropdown', async () => {
             await page.selectOption(pageobject.fieldViewdropdown, { label: 'checkbox_group' });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FilterPage);
@@ -246,7 +246,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Select Status in field dropdown', async () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FilterPage);
@@ -262,7 +262,7 @@ test.describe('E2E Test Suite', () => {
     // Create new page for fixed status
     test('Create new page for Fixed state', async () => {
         await functions.create_New_Page('Fixed_state');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select NewView_List in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
@@ -274,7 +274,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Select member in status dropdown', async () => {
             await page.selectOption(pageobject.statusfixed, { label: 'Member' });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.Save_Page_Project();
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FixedStatePage);

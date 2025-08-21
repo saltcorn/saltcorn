@@ -48,20 +48,20 @@ test.describe('E2E Test Suite', () => {
     await functions.clear_Data();
     // Create a new page 
     await functions.create_New_Page('toast_validation');
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2500);
     // Drag and drop the text source
     await page.waitForSelector(pageobject.ActionLocator);
     await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.target);
     await page.locator(pageobject.actionDropdown).click();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     // Type 'modify' into the input field
     await page.keyboard.type('Toast');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 
     // Press Enter to select the option
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     // Click and type into the "Text" field
     await page.click(pageobject.toastFieldName);

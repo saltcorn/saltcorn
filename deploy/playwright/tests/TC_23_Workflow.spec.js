@@ -137,7 +137,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption('select#inputaction', { label: 'Workflow' });
 
             // Wait for a second to see the selection (optional)
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
 
         await customAssert('Description textbox should be empty', async () => {
@@ -192,7 +192,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption('select#inputwf_action_name', { value: 'UserForm' });
 
             // Optional: Wait to confirm selection
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
 
         // Fill 'Label' field with 'what is your name'
@@ -208,7 +208,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
 
         await customAssert('Add next step 3', async () => {
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(1000);
             await page.waitForSelector('.edgeLabel .label .edgeLabel .add-btw-nodes');
             const addButton = page.locator('.edgeLabel .label .edgeLabel .add-btw-nodes').nth(1);
             await addButton.waitFor({ state: 'visible' });
@@ -247,7 +247,7 @@ test.describe('E2E Test Suite', () => {
             await page.selectOption('select#inputwf_action_name', { value: 'Output' });
 
             // Optional: Wait to confirm selection
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
 
         await customAssert("fill Outbox value", async () => {
@@ -273,7 +273,7 @@ test.describe('E2E Test Suite', () => {
         await submitButton.click();
 
         await customAssert('Verify modal header text', async () => {
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(1000);
             await page.waitForLoadState('networkidle');
             const headerText = await page.locator('.modal-header .modal-title').textContent();
             await page.waitForSelector('.modal-header .modal-title');
@@ -300,7 +300,7 @@ test.describe('E2E Test Suite', () => {
         });
 
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         await customAssert('check previous run checkbox is clickable', async () => { 
             const prevRunCheckbox = page.locator("#inputprev_runs");
@@ -308,10 +308,10 @@ test.describe('E2E Test Suite', () => {
         });
         
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         await page.locator("table.table-sm td").nth(0).click();
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
 
         await customAssert('Page URL should be /actions', async () => {
             expect(page.url()).toBe(`${baseURL}${derivedURL}view/WorkFlowRoom`);
@@ -319,7 +319,7 @@ test.describe('E2E Test Suite', () => {
 
         const randomName = generateRandomName(); // Generate the random name
         await functions.fill_Text(pageobject.InputName, randomName);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.getByRole('button', { name: 'Submit' }).click();
 
         // await functions.submit();

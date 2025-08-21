@@ -105,7 +105,7 @@ test.describe('E2E Test Suite', () => {
         await page.click(pageobject.Tasktable);
         // Click on edit link
         await page.click(pageobject.EditlinkLocator);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await customAssert('Add data on first row in task table ', async () => {
             // Click on add row button
             await page.click(pageobject.addrowlocator);
@@ -114,7 +114,7 @@ test.describe('E2E Test Suite', () => {
             await page.keyboard.type('Buy Milk');
             await page.click(pageobject.Discriptiontab);
             await page.keyboard.type('Remember this is semi skimmed');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
         await customAssert('Add data on Second row in task table ', async () => {
             await page.click(pageobject.addrowlocator);
@@ -122,7 +122,7 @@ test.describe('E2E Test Suite', () => {
             await page.keyboard.type('Take out trash');
             await page.click(pageobject.Discriptiontab);
             await page.keyboard.type('Thursday night');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
         await customAssert('Add data on third row in task table ', async () => {
             await page.click(pageobject.addrowlocator);
@@ -130,7 +130,7 @@ test.describe('E2E Test Suite', () => {
             await page.keyboard.type('Empty Fridge');
             await page.click(pageobject.Discriptiontab);
             await page.keyboard.type('All the smelly stuff');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
         await customAssert('Add status for every task in table ', async () => {
             await page.click(pageobject.statustab);
@@ -139,7 +139,7 @@ test.describe('E2E Test Suite', () => {
             await page.click('text=InProgress');
             await page.locator(pageobject.statustab).nth(2).click();
             await page.click('text=Iteration');
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(1000);
         });
     });
 
@@ -180,7 +180,7 @@ test.describe('E2E Test Suite', () => {
             // select text style as heading 4 for task name
             await page.click("button.style-h4");
         });
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(2000);
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);

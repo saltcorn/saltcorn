@@ -156,7 +156,7 @@ test.describe('E2E Test Suite', () => {
     // submit the page
     await functions.submit();
     // drag and drop the page source on the page
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click(pageobject.inputfeatures);
     await page.selectOption(pageobject.fieldViewdropdown, { label: 'CKEditor4' });
     // click on next page
@@ -179,7 +179,7 @@ test.describe('E2E Test Suite', () => {
     await ListPattern?.selectOption("List");
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click('text="[Link icon]"');
     // Select 'Thumbnail' from the dropdown
     await page.selectOption(pageobject.fieldViewdropdown, { label: 'Thumbnail' }); // If using a select dropdown
@@ -299,11 +299,11 @@ test.describe('E2E Test Suite', () => {
   test('Create a landing Page for Subscription Plans', async () => {
     // Create a new page for landing page
     await functions.create_New_Page('Landing_Page');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     // Drag and drop the text source
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await functions.fill_Text(pageobject.htmltextlocator, `
       <div style="text-align: center; padding: 50px; background: linear-gradient(135deg, #6a11cb, #2575fc); color: white; border-radius: 10px;">
         <h1 style="font-size: 2.5em;">🚀 Welcome to Our Premium Plans!</h1>
@@ -403,7 +403,7 @@ test.describe('E2E Test Suite', () => {
   test('Create a Payment page for subscription', async () => {
     // Create a new page for landing page
     await functions.create_New_Page('Payment_Page');
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(5000);
     // Drag and drop the htmlCodeSource
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
@@ -457,7 +457,7 @@ test.describe('E2E Test Suite', () => {
   test('Create thank you page after payment', async () => {
     // Create a new page for thank you
     await functions.create_New_Page('Thank_you');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     // Drag and drop the text source
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
@@ -482,7 +482,7 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Subscribe button on plan card should be visible and clickable', async () => {
       // click on subscribe button
       await page.click(pageobject.SubscribeButton);
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(1000);
     });
     console.log(await page.url());
     // enter details

@@ -53,7 +53,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Assert the label of Files setting', async () => {
             await expect(page.locator(pageobject.File)).toHaveText('Files');
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await customAssert('Page URL should be /files?sortBy=filename', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
         });
@@ -68,7 +68,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Assert the label of Files tab', async () => {
             await expect(page.locator(pageobject.fileslocator)).toHaveText('Files');
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await customAssert('Page URL should be /files?sortBy=filename', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
         });
