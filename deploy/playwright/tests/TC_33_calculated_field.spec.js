@@ -161,26 +161,12 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // drag and drop the page source on the page
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(500);
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on finish button
         await functions.submit();
     });
-
-    // test.skip('Validate calculated field old case', async () => {
-    //     await functions.views();
-    //     // click on show view 
-    //     await page.waitForSelector(pageobject.view2editlink);
-    //     await page.click(pageobject.view2editlink);
-    //     await page.waitForSelector(pageobject.yearOfBirthLocator);
-    //     await page.click(pageobject.yearOfBirthLocator);
-    //     await page.keyboard.type('2000');
-    //     await page.waitForSelector(pageobject.submitButton);
-    //     await page.click(pageobject.submitButton);
-    //     await page.waitForTimeout(2000);
-    //     await expect(page.locator(pageobject.ageLocator).first()).toContainText('25');
-    // });
 
     test('Validate calculated field', async () => {
     // Generate random year between 1900 and 2025
