@@ -161,7 +161,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // drag and drop the page source on the page
-        await page.waitForTimeout(500);
+        // await page.waitForTimeout(500);
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on finish button
@@ -188,7 +188,7 @@ test.describe('E2E Test Suite', () => {
     // Submit
     await page.waitForSelector(pageobject.submitButton);
     await page.click(pageobject.submitButton);
-    await page.waitForTimeout(2000);
+    // await page.waitForTimeout(2000);
 
     // Assert that the displayed age matches calculation
     await expect(page.locator(pageobject.ageLocator).first())
