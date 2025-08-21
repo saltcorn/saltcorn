@@ -19,27 +19,27 @@ async function loginRequest({ email, password, isSignup, isPublic }) {
         path: "/auth/login-with/jwt",
       }
     : isSignup
-    ? {
-        method: "POST",
-        path: "/auth/signup",
-        body: {
-          email,
-          password,
-        },
-      }
-    : {
-        method: "GET",
-        path: "/auth/login-with/jwt",
-        params: {
-          email,
-          password,
-        },
-      };
+      ? {
+          method: "POST",
+          path: "/auth/signup",
+          body: {
+            email,
+            password,
+          },
+        }
+      : {
+          method: "GET",
+          path: "/auth/login-with/jwt",
+          params: {
+            email,
+            password,
+          },
+        };
   const response = await apiCall(opts);
   return response.data;
 }
 
-export async function login({ email, password, entryPoint, isSignup }) {
+export async function login({ email, password, isSignup }) {
   const loginResult = await loginRequest({
     email,
     password,
@@ -48,7 +48,8 @@ export async function login({ email, password, entryPoint, isSignup }) {
   if (typeof loginResult === "string") {
     // use it as a token
     const decodedJwt = jwtDecode(loginResult);
-    const config = saltcorn.data.state.getState().mobileConfig;
+    const state = saltcorn.data.state.getState();
+    const config = state.mobileConfig;
     config.user = decodedJwt.user;
     config.isPublicUser = false;
     config.isOfflineMode = false;
@@ -86,6 +87,16 @@ export async function login({ email, password, entryPoint, isSignup }) {
         sprintf: [config.user.email],
       }),
     });
+
+    let entryPoint = null;
+    if (config.entryPointType === "byrole") {
+      const homepageByRole = state.getConfig("home_page_by_role", {})[
+        config.user.role_id
+      ];
+      if (homepageByRole) entryPoint = `get/page/${homepageByRole}`;
+      else throw new Error("No homepage defined for this role.");
+    } else entryPoint = config.entry_point;
+
     addRoute({ route: entryPoint, query: undefined });
     const page = await router.resolve({
       pathname: entryPoint,

@@ -2305,6 +2305,24 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   }
   else
     console.error('versionInput not found');
+
+  const entryByRoleBox = document.getElementById('entryPointByRoleBoxId');
+  if (entryByRoleBox) {
+    entryByRoleBox.addEventListener('change', () => {
+      const entryByRole = entryByRoleBox.checked;
+      const entryRow = document.getElementById('entryPointRowId');
+      const selector = document.getElementById('entrySelectorsId');
+      if (entryByRole) {
+        entryRow.classList.remove('border', 'border-2', 'p-3', 'rounded');
+        selector.classList.add('d-none');
+      }
+      else {
+        entryRow.classList.add('border', 'border-2', 'p-3', 'rounded');
+        selector.classList.remove('d-none');
+      }
+    });
+  } else
+    console.error('entryByRoleBox not found');
 `)}
   </script>`;
 
@@ -2387,6 +2405,7 @@ router.get(
     const layout = getState().getLayout(req.user);
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
     const pushEnabled = getState().getConfig("enable_push_notify", false);
+    const isEntrypointByRole = builderSettings.entryPointByRole === "on";
     send_admin_page({
       res,
       req,
@@ -2446,152 +2465,188 @@ router.get(
                     )
                   ),
                   div(
-                    { class: "row" },
+                    { class: "row mb-3" },
                     div(
-                      { class: "col-sm-4" },
-                      // 'view/page' tabs
-                      ul(
-                        { class: "nav nav-pills" },
-                        li(
-                          {
-                            class: "nav-item",
-                            onClick: "showEntrySelect('view')",
-                          },
-                          div(
+                      {
+                        class: `col-sm-4 mt-2 ${isEntrypointByRole ? "" : "border border-2 p-3 rounded"}`,
+                        id: "entryPointRowId",
+                      },
+                      div(
+                        { class: "row pb-2" },
+                        div(
+                          { class: "col-sm-6" },
+                          input({
+                            type: "checkbox",
+                            id: "entryPointByRoleBoxId",
+                            class: "form-check-input me-2",
+                            name: "entryPointByRole",
+                            checked: isEntrypointByRole,
+                          }),
+                          label(
                             {
-                              class: `nav-link ${
-                                !builderSettings.entryPointType ||
-                                builderSettings.entryPointType === "view"
-                                  ? "active"
-                                  : ""
-                              }`,
-                              id: "viewNavLinkID",
+                              for: "entryPointByRole",
+                              class: "form-label",
                             },
-                            req.__("View")
-                          )
-                        ),
-                        li(
-                          {
-                            class: "nav-item",
-                            onClick: "showEntrySelect('page')",
-                          },
-                          div(
-                            {
-                              class: `nav-link ${
-                                builderSettings.entryPointType === "page"
-                                  ? "active"
-                                  : ""
-                              }`,
-                              id: "pageNavLinkID",
-                            },
-                            req.__("Page")
-                          ),
-                          li(
-                            {
-                              class: "nav-item",
-                              onClick: "showEntrySelect('pagegroup')",
-                            },
-                            div(
+                            req.__("Entry point by role"),
+                            a(
                               {
-                                class: `nav-link ${
-                                  builderSettings.entryPointType === "pagegroup"
-                                    ? "active"
-                                    : ""
-                                }`,
-                                id: "pagegroupNavLinkID",
+                                href: "javascript:ajax_modal('/admin/help/Entry point by role?')",
                               },
-                              req.__("Pagegroup")
+                              i({ class: "fas fa-question-circle ps-1" })
                             )
                           )
                         )
                       ),
-                      // select entry-view
-                      select(
+                      // 'view/page/pagegroup' tabs
+                      div(
                         {
-                          class: `form-select ${
-                            builderSettings.entryPointType === "page" ||
-                            builderSettings.entryPointType === "pagegroup"
-                              ? "d-none"
-                              : ""
-                          }`,
-                          ...(!builderSettings.entryPointType ||
-                          builderSettings.entryPointType === "view"
-                            ? { name: "entryPoint" }
-                            : {}),
-                          id: "viewInputID",
+                          id: "entrySelectorsId",
+                          class: isEntrypointByRole ? "d-none" : "",
                         },
-                        views
-                          .map((view) =>
-                            option(
+                        ul(
+                          { class: "nav nav-pills" },
+                          li(
+                            {
+                              class: "nav-item",
+                              onClick: "showEntrySelect('view')",
+                            },
+                            div(
                               {
-                                value: view.name,
-                                selected:
-                                  builderSettings.entryPointType === "view" &&
-                                  builderSettings.entryPoint === view.name,
+                                class: `nav-link ${
+                                  !builderSettings.entryPointType ||
+                                  builderSettings.entryPointType === "view"
+                                    ? "active"
+                                    : ""
+                                }`,
+                                id: "viewNavLinkID",
                               },
-                              view.name
+                              req.__("View")
+                            )
+                          ),
+                          li(
+                            {
+                              class: "nav-item",
+                              onClick: "showEntrySelect('page')",
+                            },
+                            div(
+                              {
+                                class: `nav-link ${
+                                  builderSettings.entryPointType === "page"
+                                    ? "active"
+                                    : ""
+                                }`,
+                                id: "pageNavLinkID",
+                              },
+                              req.__("Page")
+                            ),
+                            li(
+                              {
+                                class: "nav-item",
+                                onClick: "showEntrySelect('pagegroup')",
+                              },
+                              div(
+                                {
+                                  class: `nav-link ${
+                                    builderSettings.entryPointType ===
+                                    "pagegroup"
+                                      ? "active"
+                                      : ""
+                                  }`,
+                                  id: "pagegroupNavLinkID",
+                                },
+                                req.__("Pagegroup")
+                              )
                             )
                           )
-                          .join(",")
-                      ),
-                      // select entry-page
-                      select(
-                        {
-                          class: `form-select ${
-                            !builderSettings.entryPointType ||
-                            builderSettings.entryPointType === "view" ||
-                            builderSettings.entryPointType === "pagegroup"
-                              ? "d-none"
-                              : ""
-                          }`,
-                          ...(builderSettings.entryPointType === "page"
-                            ? { name: "entryPoint" }
-                            : {}),
-                          id: "pageInputID",
-                        },
-                        pages
-                          .map((page) =>
-                            option(
-                              {
-                                value: page.name,
-                                selected:
-                                  builderSettings.entryPointType === "page" &&
-                                  builderSettings.entryPoint === page.name,
-                              },
-                              page.name
+                        ),
+                        // select entry-view
+                        select(
+                          {
+                            class: `form-select ${
+                              builderSettings.entryPointType === "page" ||
+                              builderSettings.entryPointType === "pagegroup"
+                                ? "d-none"
+                                : ""
+                            }`,
+                            ...(!builderSettings.entryPointType ||
+                            builderSettings.entryPointType === "view"
+                              ? { name: "entryPoint" }
+                              : {}),
+                            id: "viewInputID",
+                          },
+                          views
+                            .map((view) =>
+                              option(
+                                {
+                                  value: view.name,
+                                  selected:
+                                    builderSettings.entryPointType === "view" &&
+                                    builderSettings.entryPoint === view.name,
+                                },
+                                view.name
+                              )
                             )
-                          )
-                          .join("")
-                      ),
-                      // select entry-pagegroup
-                      select(
-                        {
-                          class: `form-select ${
-                            !builderSettings.entryPointType ||
-                            builderSettings.entryPointType === "view" ||
-                            builderSettings.entryPointType === "page"
-                              ? "d-none"
-                              : ""
-                          }`,
-                          ...(builderSettings.entryPointType === "pagegroup"
-                            ? { name: "entryPoint" }
-                            : {}),
-                          id: "pagegroupInputID",
-                        },
-                        pageGroups
-                          .map((group) =>
-                            option(
-                              {
-                                value: group.name,
-                                selected:
-                                  builderSettings.entryPointType ===
-                                    "pagegroup" &&
-                                  builderSettings.entryPoint === group.name,
-                              },
-                              group.name
+                            .join(",")
+                        ),
+                        // select entry-page
+                        select(
+                          {
+                            class: `form-select ${
+                              !builderSettings.entryPointType ||
+                              builderSettings.entryPointType === "view" ||
+                              builderSettings.entryPointType === "pagegroup"
+                                ? "d-none"
+                                : ""
+                            }`,
+                            ...(builderSettings.entryPointType === "page"
+                              ? { name: "entryPoint" }
+                              : {}),
+                            id: "pageInputID",
+                          },
+                          pages
+                            .map((page) =>
+                              option(
+                                {
+                                  value: page.name,
+                                  selected:
+                                    builderSettings.entryPointType === "page" &&
+                                    builderSettings.entryPoint === page.name,
+                                },
+                                page.name
+                              )
                             )
-                          )
-                          .join("")
+                            .join("")
+                        ),
+                        // select entry-pagegroup
+                        select(
+                          {
+                            class: `form-select ${
+                              !builderSettings.entryPointType ||
+                              builderSettings.entryPointType === "view" ||
+                              builderSettings.entryPointType === "page"
+                                ? "d-none"
+                                : ""
+                            }`,
+                            ...(builderSettings.entryPointType === "pagegroup"
+                              ? { name: "entryPoint" }
+                              : {}),
+                            id: "pagegroupInputID",
+                          },
+                          pageGroups
+                            .map((group) =>
+                              option(
+                                {
+                                  value: group.name,
+                                  selected:
+                                    builderSettings.entryPointType ===
+                                      "pagegroup" &&
+                                    builderSettings.entryPoint === group.name,
+                                },
+                                group.name
+                              )
+                            )
+                            .join("")
+                        )
                       )
                     ),
                     div(
@@ -3762,6 +3817,7 @@ router.post(
     let {
       entryPoint,
       entryPointType,
+      entryPointByRole,
       androidPlatform,
       iOSPlatform,
       useDocker,
@@ -3865,10 +3921,12 @@ router.post(
     await File.new_folder(outDirName, "/mobile_app");
     const spawnParams = [
       "build-app",
-      "-e",
-      entryPoint,
       "-t",
-      entryPointType === "pagegroup" ? "page" : entryPointType,
+      entryPointByRole
+        ? "byrole"
+        : entryPointType === "pagegroup"
+          ? "page"
+          : entryPointType,
       "-c",
       outDir,
       "-b",
@@ -3876,6 +3934,7 @@ router.post(
       "-u",
       req.user.email, // ensured by isAdmin
     ];
+    if (!entryPointByRole) spawnParams.push("-e", entryPoint);
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) {
