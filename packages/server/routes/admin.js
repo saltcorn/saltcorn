@@ -2335,12 +2335,19 @@ const imageAvailable = async (preferedVersion) => {
     await image.inspect();
     return { installed: true, version: preferedVersion };
   } catch (e) {
-    const images = await docker.listImages({
-      filters: { reference: ["saltcorn/capacitor-builder:*"] },
-    });
-    const tags = images.flatMap((img) => img.RepoTags || []);
-    if (tags.length > 0)
-      return { installed: true, version: tags[0].split(":")[1] };
+    try {
+      const images = await docker.listImages({
+        filters: { reference: ["saltcorn/capacitor-builder:*"] },
+      });
+      const tags = images.flatMap((img) => img.RepoTags || []);
+      if (tags.length > 0)
+        return { installed: true, version: tags[0].split(":")[1] };
+    } catch (err) {
+      getState().log(
+        5,
+        `Error checking for capacitor-builder image: ${err.message || err}`
+      );
+    }
     return { installed: false };
   }
 };
