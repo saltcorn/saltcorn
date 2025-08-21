@@ -120,7 +120,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator(pageobject.multistepdropdown).click();
         // Type 'modify' into the input field
         await page.keyboard.type('form_action');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(1000);
         // Press Enter to select the option
         await page.keyboard.press('Enter');
         await page.waitForTimeout(1000);
