@@ -11,9 +11,14 @@
   "scripts": {
     "test": "jest",
     "tsc": "tsc -p tsconfig.json",
-    "clean": "echo 'No TypeScript build'"
+    "clean": "echo 'No TypeScript build'",
+    "test-cjs": "node test.js",
+    "cjs-build": "esbuild ./index.js --format=cjs --outfile=index.cjs",
+    "esm-build": "esbuild ./index.js --format=esm --outfile=esm/index.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "esbuild": "^0.25.9"
+  },
   "author": "Tom Nielsen",
   "license": "MIT",
   "jest": {
@@ -29,8 +34,23 @@
       "/plugins_folder/"
     ]
   },
-  "main": "index.js",
-  "publishConfig": {
-    "access": "public"
+  "type": "commonjs",
+  "main": "./index.js",
+  "module": "./esm/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./esm/index.js"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      }
+    }
+  },
+  "types": "./index.d.ts",
+  "bugs": {
+    "url": "https://github.com/saltcorn/saltcorn/issues"
   }
 }
