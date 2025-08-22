@@ -592,6 +592,7 @@ export type Tablely = AbstractTable | { external: true };
 export type MobileConfig = {
   version_tag: string;
   entry_point: string;
+  entryPointType: "view" | "page" | "byrole";
   // server_path <=> base_url
   localTableIds: number[];
   synchedTables: string[];

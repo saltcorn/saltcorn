@@ -183,6 +183,8 @@ class State {
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
+  hasJoinedDynamicUpdateSockets: boolean;
+  hasJoinedCollabSockets: boolean;
   queriesCache?: Record<string, any>;
   scVersion: string;
   waitingWorkflows?: boolean;
@@ -245,6 +247,8 @@ class State {
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
     this.hasJoinedLogSockets = false;
+    this.hasJoinedDynamicUpdateSockets = false;
+    this.hasJoinedCollabSockets = false;
     try {
       this.scVersion = require("../../package.json").version;
     } catch (e) {
@@ -464,6 +468,10 @@ class State {
     this.configs[key] = { value };
     this.hasJoinedLogSockets =
       (this.configs.joined_log_socket_ids?.value || []).length > 0;
+    this.hasJoinedDynamicUpdateSockets =
+      (this.configs.joined_dynamic_update_socket_ids?.value || []).length > 0;
+    this.hasJoinedCollabSockets =
+      (this.configs.joined_real_time_socket_ids?.value || []).length > 0;
   }
 
   async refreshUserLayouts() {
@@ -733,6 +741,10 @@ class State {
         if (key === "log_level") this.logLevel = +value;
         if (key === "joined_log_socket_ids")
           this.hasJoinedLogSockets = (value || []).length > 0;
+        if (key === "joined_dynamic_update_socket_ids")
+          this.hasJoinedDynamicUpdateSockets = (value || []).length > 0;
+        if (key === "joined_real_time_socket_ids")
+          this.hasJoinedCollabSockets = (value || []).length > 0;
         if (db.is_node) {
           if (isEphemeral) {
             // config does not persist, send the whole object
@@ -1162,6 +1174,10 @@ class State {
    * @param data
    */
   emitCollabMessage(ten: string, type: string, data: any) {
+    if (!this.hasJoinedCollabSockets) {
+      this.log(5, "emitCollabMessage called, but no clients are joined yet");
+      return;
+    }
     globalCollabEmitter(ten, type, data);
   }
 
@@ -1172,6 +1188,10 @@ class State {
    * @param userIds - optional array of user IDs to send the update to
    */
   emitDynamicUpdate(ten: string, data: any, userIds?: number[]) {
+    if (!this.hasJoinedDynamicUpdateSockets) {
+      this.log(5, "emitDynamicUpdate called, but no clients are joined yet");
+      return;
+    }
     globalDynamicUpdateEmitter(ten, data, userIds);
   }
 

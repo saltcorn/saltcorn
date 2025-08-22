@@ -796,9 +796,7 @@ export function writeCfgFile({
   const wwwDir = join(buildDir, "www");
   let cfg: any = {
     version_tag: db.connectObj.version_tag,
-    entry_point: `get/${
-      entryPointType === "pagegroup" ? "page" : entryPointType
-    }/${entryPoint}`,
+    entryPointType: entryPointType,
     server_path: !serverPath.endsWith("/")
       ? serverPath
       : serverPath.substring(0, serverPath.length - 1),
@@ -808,6 +806,11 @@ export function writeCfgFile({
     allowOfflineMode,
     allowShareTo,
   };
+  if (entryPointType !== "byrole") {
+    cfg.entry_point = `get/${
+      entryPointType === "pagegroup" ? "page" : entryPointType
+    }/${entryPoint}`;
+  }
   if (tenantAppName) cfg.tenantAppName = tenantAppName;
   writeFileSync(
     join(buildDir, "www", "data", "config.js"),
