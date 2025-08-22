@@ -69,7 +69,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.mytable);
     // click on edit table button
     await page.click(pageobject.EditlinkLocator);
-    await page.waitForTimeout(1000);
+    // await page.waitForTimeout(1000);
 
     // Click on add row button
     await customAssert('status field on table should be visible ', async () => {
@@ -88,7 +88,7 @@ test.describe('E2E Test Suite', () => {
 
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(1000);
+    // await page.waitForTimeout(1000);
 
     // click on next button
     await page.waitForSelector(pageobject.nextoption);
@@ -116,7 +116,7 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(1000);
+    // await page.waitForTimeout(1000);
     // add new input box in page
     await functions.drag_And_Drop(pageobject.Dropdownfilter, pageobject.target);
     // click on field dropdown for field
@@ -134,7 +134,7 @@ test.describe('E2E Test Suite', () => {
   });
   test('select and clear filter', async () => {
     // Select the dropdown and choose the "Lapsed" option
-    await page.waitForTimeout(1000);
+    // await page.waitForTimeout(1000);
     await functions.views();
     await page.click(pageobject.Filterview);
     await page.selectOption(pageobject.filterStatus, 'Lapsed');
@@ -150,7 +150,7 @@ test.describe('E2E Test Suite', () => {
     await expect(page.locator('td', { hasText: 'Prospect' })).not.toBeVisible();
 
     await page.locator(pageobject.clearButton).click();
-    await page.waitForTimeout(1000);
+    // await page.waitForTimeout(1000);
 
     // Assert that the filter is cleared and all statuses are visible
     await expect(page.locator('td', { hasText: 'Lapsed' })).toBeVisible();
