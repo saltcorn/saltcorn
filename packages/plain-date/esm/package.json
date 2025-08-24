@@ -1,7 +1,0 @@
-{
-  "type": "module",
-  "name": "plain-date",
-  "exports": {
-    ".": "./index.mjs"
-  }
-}
