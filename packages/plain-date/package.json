@@ -17,6 +17,9 @@
     "prepare": "npm run build"
   },
   "dependencies": {},
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  },
   "author": "Tom Nielsen",
   "license": "MIT",
   "jest": {
