@@ -127,13 +127,14 @@ const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
  */
 const discover_tables = async (
   tableNames: string[],
-  schema0?: string
+  schema0?: string,
+  dbModule: typeof db = db
 ): Promise<{ tables: Array<TablePack> }> => {
-  const schema = schema0 || db.getTenantSchema();
+  const schema = schema0 || dbModule.getTenantSchema();
   const packTables = new Array<TablePack>();
 
   for (const tnm of tableNames) {
-    const { rows } = await db.query(
+    const { rows } = await dbModule.query(
       "select * from information_schema.columns where table_schema=$1 and table_name=$2",
       [schema, tnm]
     );
@@ -145,7 +146,7 @@ const discover_tables = async (
     );
 
     // try to find column name for primary key of table
-    const pkq = await db.query(
+    const pkq = await dbModule.query(
       `SELECT c.column_name, c.column_default
       FROM information_schema.table_constraints tc 
       JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
@@ -170,7 +171,7 @@ const discover_tables = async (
       }
     );
     // try to find foreign keys
-    const fkq = await db.query(
+    const fkq = await dbModule.query(
       `SELECT
       tc.table_schema, 
       tc.constraint_name, 
