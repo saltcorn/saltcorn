@@ -848,7 +848,7 @@ router.get(
                   r.typename +
                     span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
-          ...(table.external || !user_can_edit_tables
+          ...(table.external || !user_can_edit_tables || table.provider_name
             ? []
             : [
                 {
@@ -865,7 +865,7 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: (t) => code(t.name) },
-          ...(table.external || !user_can_edit_tables
+          ...(table.external || !user_can_edit_tables || table.provider_name
             ? []
             : [
                 {
