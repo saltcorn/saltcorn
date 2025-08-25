@@ -201,7 +201,7 @@ const getVersion = async (short) => {
  */
 const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
+  const sql = `delete FROM "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
   sql_log(sql, values);
