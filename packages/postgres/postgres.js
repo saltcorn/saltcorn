@@ -282,7 +282,7 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
   //valList.push(id === "undefined"? obj[opts.pk_name]: id);
   valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
-  const q = `update "${getTenantSchema()}"."${sqlsanitize(
+  const q = `update "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
   sql_log(q, valList);
