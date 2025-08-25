@@ -86,7 +86,12 @@ const ensureJwtSecret = () => {
  */
 const ensurePluginsFolder = async () => {
   const rootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
-  const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
+  const staticDeps = [
+    "@saltcorn/markup",
+    "@saltcorn/data",
+    "@saltcorn/postgres",
+    "jest",
+  ];
   const allPluginFolders = new Set();
   await eachTenant(async () => {
     try {
