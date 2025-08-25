@@ -166,6 +166,7 @@ export const process_aggregations = (
   if (!isNode()) values.unshift(...aggValues);
 };
 
+// TODO this copies a lot of code from above - refactor to share code
 export const aggregation_query_fields = (
   table_name: string,
   aggregations: {
@@ -194,7 +195,7 @@ export const aggregation_query_fields = (
     : options?.groupBy
       ? [options?.groupBy]
       : null;
-  const schema = options?.schema || db.getTenantSchemaPrefix();
+  const schema = options?.schema ?`"${options?.schema}".`: db.getTenantSchemaPrefix();
   const { where, values } = mkWhere(where0, db.isSQLite);
   Object.entries(aggregations).forEach(
     ([nm, { field, valueFormula, aggregate }]) => {
