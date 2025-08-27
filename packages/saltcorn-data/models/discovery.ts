@@ -24,9 +24,13 @@ const { asyncMap } = utils;
  * @param {string} schema0 - current tenant db schema
  * @returns {Promise<object[]>} all tables that can be imported to Saltcorn from current tenant database schema
  */
-const discoverable_tables = async (schema0?: string): Promise<Row[]> => {
-  const schema = schema0 || db.getTenantSchema();
-  const { rows } = await db.query(
+const discoverable_tables = async (
+  schema0?: string,
+  allTables: boolean = false,
+  dbModule: typeof db = db
+): Promise<Row[]> => {
+  const schema = schema0 || dbModule.getTenantSchema();
+  const { rows } = await dbModule.query(
     "select * from information_schema.tables where table_schema=$1 order by table_name",
     [schema]
   );
@@ -35,6 +39,7 @@ const discoverable_tables = async (schema0?: string): Promise<Row[]> => {
   const myTableHistoryNames = myTables
     .filter((t) => t.versioned)
     .map((t) => `${sqlsanitize(t.name)}__history`);
+  if (allTables) return rows;
   const discoverable = rows.filter(
     (t: Row) =>
       !(
