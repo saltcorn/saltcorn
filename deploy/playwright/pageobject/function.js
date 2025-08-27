@@ -788,6 +788,55 @@ async install_ManyToMany() {
     await userSettings.waitFor({ state: 'visible' });
     await userSettings.click();
   }
+async assert_FileList_Table() {
+    // Wait for table to be visible
+    await this.page.waitForSelector(this.locators.table, { timeout: 25000 });
+
+    const table = this.page.locator(this.locators.table);
+
+    // ✅ Assert headers
+    const headers = await table.locator("thead th").allInnerTexts();
+    expect(headers.map(h => h.trim())).toEqual([
+      "",             // icon column
+      "Filename",
+      "Media type",
+      "Size (KiB)",
+      "Role to access",
+      "Created",
+    ]);
+  }
+
+  async upload_file(filePath) {
+    const fileInput = await this.page.waitForSelector(this.locators.FileInputForUpload);
+    await fileInput.setInputFiles(filePath);
+    await this.submit();
+  }
+  async dialog_handle(filename) {
+     //a dialog handler BEFORE the action that triggers it
+        await this.page.once('dialog', async dialog => {
+            console.log(dialog.message());
+            await dialog.accept(filename);
+        });
+  }
+  
+  async rename_file(current_file_name,new_file_name) {
+     await this.page.waitForSelector(this.locators.tablebodylocator);
+        await this.page.locator(this.locators.tablebodylocator).nth(0).click();
+        await this.page.waitForSelector(this.locators.tablebodylocator+" td:nth-child(2)");
+        let fileName = await this.page.textContent(this.locators.tablebodylocator+" td:nth-child(2)");
+        expect(fileName?.trim()).toBe(current_file_name);
+        await this.page.waitForTimeout(2000);
+        await this.dialog_handle(new_file_name); //a dialog handler BEFORE the action that triggers it
+
+        // Wait for the Action dropdown to be visible
+        await this.page.locator(this.locators.actionselector).nth(2).waitFor({ state: "visible" });
+        await this.page.locator(this.locators.actionselector).nth(2).click();
+        await this.page.keyboard.type('Rename');
+        await this.page.keyboard.press('Enter');
+        await this.page.waitForTimeout(2000);
+        fileName = await this.page.textContent(this.locators.tablebodylocator+" td:nth-child(2)");
+        expect(fileName?.trim()).toBe(new_file_name);
+  }
 
 
 }
