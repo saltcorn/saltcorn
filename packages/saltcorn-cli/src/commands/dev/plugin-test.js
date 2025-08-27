@@ -27,6 +27,7 @@ const adminModelsDir = process.env.JEST_SC_ADMIN_MODELS_DIR;
 const modulePath = process.env.TEST_PLUGIN_PACKAGES_DIR;
 const config = {
   moduleNameMapper: {
+    "mjml": "${path.join(location, "mjml.js")}",
     "@saltcorn/sqlite/(.*)": sqliteDir + "/$1",
     "@saltcorn/db-common/(.*)": dbCommonDir + "/$1",
     "@saltcorn/data/(.*)": dataDir + "/$1",
@@ -39,6 +40,11 @@ const config = {
 };
 module.exports = config;`
   );
+};
+
+const writeMockFilesIntoPluginDir = (location) => {
+  const mjmlPath = path.join(location, "mjml.js");
+  if (!fs.existsSync(mjmlPath)) fs.writeFileSync(mjmlPath, "");
 };
 
 const spawnTest = async (installDir, env) => {
@@ -76,6 +82,7 @@ const installPlugin = async (plugin) => {
   removePluginsDir();
   await loadAndSaveNewPlugin(plugin, false, false);
   const location = getPluginLocation(plugin.name);
+  writeMockFilesIntoPluginDir(location);
   writeJestConfigIntoPluginDir(location);
   return location;
 };

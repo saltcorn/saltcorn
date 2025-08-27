@@ -138,7 +138,7 @@ test.describe('E2E Test Suite', () => {
         // Click on next button
         await functions.submit();
         await functions.submit();
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
 
         // click on add field button
         await page.waitForSelector(pageobject.addFieldButtonLocator);
@@ -223,7 +223,7 @@ test.describe('E2E Test Suite', () => {
         // Select key to room as foreign key for room
         await page.selectOption('#inputtype', { label: 'Key to Room' });
 
-        await page.waitForTimeout(500);
+        // await page.waitForTimeout(500);
         // Enter room coulmn
         await functions.fill_Text(pageobject.labelTextboxlocator, 'Room');
         // Click on next button
@@ -277,7 +277,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator('#inputtable_name').selectText('Messages');
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
 
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
@@ -305,11 +305,11 @@ test.describe('E2E Test Suite', () => {
         await page.locator('#inputtable_name').selectText('Messages');
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
     });
 
     test('create view with list view pattern', async () => {
@@ -329,14 +329,14 @@ test.describe('E2E Test Suite', () => {
         await page.locator('#inputtable_name').selectText('Messages');
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
         // click on add column button on page
         await page.waitForSelector(pageobject.addcolumnbutton);
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the action locator for delete button
         await page.waitForSelector(pageobject.ActionLocator);
         await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.newcolumn);
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
@@ -367,13 +367,13 @@ test.describe('E2E Test Suite', () => {
         const roomPattern = await page.$("#inputviewtemplate");
         await roomPattern?.selectOption("Room");
 
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
         await page.click('#inputtable_name');
         // Select Room table for table name
         await page.locator('#inputtable_name').selectOption({ label: 'Room' });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        // await page.waitForTimeout(2000);
 
         // Select Message.room for message relation
         await page.locator('#inputmsg_relation').selectOption({ label: 'Messages.room' });
@@ -415,7 +415,7 @@ test.describe('E2E Test Suite', () => {
         await page.fill(pageobject.inputcontent, 'Hi Testing message');
         // select room for chating
         await page.locator('#inputroom').selectOption({ label: 'Room1' }, { force: true });
-        await page.waitForTimeout(1000);
+        // await page.waitForTimeout(1000);
         // submit the message
         await functions.submit();
 

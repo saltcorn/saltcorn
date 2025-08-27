@@ -35,7 +35,7 @@ import User from "@saltcorn/data/models/user";
 import { CapacitorHelper } from "./utils/capacitor-helper";
 import { removeNonWordChars } from "@saltcorn/data/utils";
 
-type EntryPointType = "view" | "page";
+type EntryPointType = "view" | "page" | "byrole";
 const appIdDefault = "saltcorn.mobile.app";
 const appNameDefault = "SaltcornMobileApp";
 

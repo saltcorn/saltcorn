@@ -224,8 +224,8 @@ const loadOfflineChanges = async (synchedTbls) => {
          from "${saltcorn.data.db.sqlsanitize(
            synchedTbl
          )}_sync_info" as info_tbl left join "${saltcorn.data.db.sqlsanitize(
-        synchedTbl
-      )}" as data_tbl
+           synchedTbl
+         )}" as data_tbl
          on info_tbl.ref = data_tbl."${saltcorn.data.db.sqlsanitize(pkName)}"
          where info_tbl.modified_local = true`
     );
@@ -562,7 +562,7 @@ export async function clearLocalData(inTransaction) {
     const { synchedTables } = saltcorn.data.state.getState().mobileConfig;
     for (const tblName of synchedTables) {
       const table = saltcorn.data.models.Table.findOne({ name: tblName });
-      await table.deleteRows();
+      await table.deleteRows({});
       await saltcorn.data.db.deleteWhere(`${table.name}_sync_info`, {});
     }
     if (!inTransaction) await saltcorn.data.db.query("COMMIT");
