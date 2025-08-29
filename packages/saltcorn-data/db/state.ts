@@ -169,6 +169,7 @@ class State {
   layouts: Record<string, PluginLayout>;
   userLayouts: Record<string, PluginLayout>;
   headers: Record<string, Array<Header>>;
+  assets_by_role: Record<string, Array<Header>>;
   function_context: Record<string, Function>;
   codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
@@ -232,6 +233,7 @@ class State {
     this.layouts = { emergency: emergency_layout };
     this.userLayouts = {};
     this.headers = {};
+    this.assets_by_role = {};
     this.function_context = { moment, today, slugify: db.slugify };
     this.functions = { moment, today, slugify: db.slugify };
     this.plugins_cfg_context = {};
@@ -271,6 +273,67 @@ class State {
       "tada",
     ];
     this.capacitorPlugins = [];
+  }
+
+  async computeAssetsByRole() {
+    this.assets_by_role = {};
+    let roleIds: number[] = [];
+    const Role = (await import("../models/role")).default;
+    const roles = await Role.find({}, { orderBy: "role_id" });
+    roleIds = roles
+      .map((r: any) => +r.id)
+      .filter((n: number) => !Number.isNaN(n));
+
+    if (!roleIds.includes(100)) roleIds.push(100);
+    for (const rid of roleIds) this.assets_by_role[rid] = [];
+
+    const allHeaders = Object.values(this.headers).flat();
+    console.log({ allHeaders }, "HEADERS");
+    for (const h of allHeaders) {
+      if (!h.onlyViews && !h.onlyFieldviews) {
+        for (const rid of roleIds) this.assets_by_role[rid].push(h);
+        continue;
+      }
+
+      const onlyViews = h.onlyViews
+        ? Array.isArray(h.onlyViews)
+          ? h.onlyViews
+          : [h.onlyViews]
+        : [];
+
+      const onlyFieldviews = h.onlyFieldviews
+        ? Array.isArray(h.onlyFieldviews)
+          ? h.onlyFieldviews
+          : [h.onlyFieldviews]
+        : [];
+
+      const matchedViews = this.views.filter((v: any) => {
+        if (onlyViews.length) {
+          const tmplName = v.viewtemplateObj?.name || v.viewtemplate;
+          if (
+            onlyViews.includes(tmplName) ||
+            onlyViews.includes(v.viewtemplate)
+          )
+            return true;
+        }
+        if (onlyFieldviews.length) {
+          // Coming to this later
+        }
+        return false;
+      });
+
+      for (const v of matchedViews) {
+        const min_role = +(v.min_role ?? 100);
+        for (const rid of roleIds) {
+          if (rid <= min_role) this.assets_by_role[rid].push(h);
+        }
+      }
+    }
+
+    for (const ridStr of Object.keys(this.assets_by_role)) {
+      const rid = +ridStr;
+      this.assets_by_role[rid] = Array.from(new Set(this.assets_by_role[rid]));
+    }
   }
 
   processSend(v: any) {
@@ -540,6 +603,12 @@ class State {
         );
         this.virtual_triggers.push(...trs);
       }
+    }
+    // rebuild assets_by_role whenever views change
+    try {
+      await this.computeAssetsByRole();
+    } catch (error) {
+      console.error("Error cpmputing assets byy role", error);
     }
     if (!noSignal) this.log(5, "Refresh views");
 

@@ -60,6 +60,8 @@ export type Header = {
   script?: string;
   css?: string;
   headerTag?: string;
+  onlyViews?: string[];
+  onlyFieldviews?: string[];
 };
 
 type MenuItem = {
