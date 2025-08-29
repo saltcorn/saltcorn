@@ -122,9 +122,16 @@ const get_headers = (req, version_tag, description, extras = []) => {
   if (state.getConfig("log_client_errors", false))
     from_cfg.push({ scriptBody: `enable_error_catcher()` });
   const state_headers = [];
-  for (const hs of Object.values(state.headers)) {
-    state_headers.push(...hs);
+  const assets_by_role = state.assets_by_role || {};
+  const roleHeaders = assets_by_role[req.user?.role_id || 100];
+  if (roleHeaders && roleHeaders.length) {
+    state_headers.push(...roleHeaders);
+  } else {
+    for (const hs of Object.values(state.headers)) {
+      state_headers.push(...hs);
+    }
   }
+
   if (notification_in_menu)
     from_cfg.push({ scriptBody: domReady(`check_saltcorn_notifications()`) });
   if (pwa_enabled) {
