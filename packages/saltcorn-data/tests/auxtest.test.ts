@@ -66,6 +66,8 @@ describe("stateToQueryString", () => {
   });
   it("makes query string with array", async () => {
     expect(stateToQueryString({ x: [5, 6] })).toBe("?x=5&x=6");
+    expect(stateToQueryString({ x: [5] })).toBe("?x=5");
+    expect(stateToQueryString({ x: [5, 6], z: true })).toBe("?x=5&x=6&z=true");
   });
 });
 
