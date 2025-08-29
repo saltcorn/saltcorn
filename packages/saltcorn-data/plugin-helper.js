@@ -178,13 +178,20 @@ const stateToQueryString = (state, include_id) => {
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        (k === "id" && !include_id) || typeof v === "undefined"
-          ? null
-          : `${encodeURIComponent(k)}=${encodeURIComponent(
-              k === "_relation_path_" && typeof v !== "string"
-                ? queryToString(v)
-                : v
-            )}`
+        Array.isArray(v) && k !== "_relation_path_"
+          ? v
+              .map(
+                (val) =>
+                  `${encodeURIComponent(k)}=${encodeURIComponent(`${val}`)}`
+              )
+              .join("&")
+          : (k === "id" && !include_id) || typeof v === "undefined"
+            ? null
+            : `${encodeURIComponent(k)}=${encodeURIComponent(
+                k === "_relation_path_" && typeof v !== "string"
+                  ? queryToString(v)
+                  : v
+              )}`
       )
       .filter((s) => !!s)
       .join("&")
