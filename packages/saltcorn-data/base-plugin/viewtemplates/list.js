@@ -1572,6 +1572,7 @@ module.exports = {
       _hide_pagination,
       _row_click_url_formula,
       _row_click_url_type,
+      _row_click_type,
       _row_click_url_action,
       transpose,
       transpose_width,
@@ -1583,6 +1584,7 @@ module.exports = {
       _card_rows,
       _borderless,
       _cell_valign,
+
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));

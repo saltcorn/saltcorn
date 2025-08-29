@@ -14,7 +14,12 @@ const envPaths = require("env-paths");
 const semver = require("semver");
 const path = require("path");
 
-const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
+const staticDeps = [
+  "@saltcorn/markup",
+  "@saltcorn/data",
+  "@saltcorn/postgres",
+  "jest",
+];
 const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
 
 const isGitCheckout = async () => {

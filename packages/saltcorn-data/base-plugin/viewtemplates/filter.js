@@ -946,7 +946,7 @@ module.exports = {
           const field = fields.find((f) => f.name === col.field_name);
           if (table.external || table.provider_name) {
             distinct_values[col.field_name] = (
-              await table.distinctValues(col.field_name, {
+              await table.distinctValues(col.field_name, {}, {
                 forPublic: !req.user,
                 forUser: req.user,
               })

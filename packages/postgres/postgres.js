@@ -142,7 +142,7 @@ const drop_reset_schema = async (schema) => {
  * @param {object} - whereObj - where object
  * @returns {Promise<number>} count of tables
  */
-const count = async (tbl, whereObj) => {
+const count = async (tbl, whereObj, opts) => {
   const { where, values } = mkWhere(whereObj);
   if (!where) {
     try {
@@ -156,9 +156,9 @@ const count = async (tbl, whereObj) => {
       / pg_catalog.current_setting('block_size')::int)
        )::bigint
 FROM   pg_catalog.pg_class c
-WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
+WHERE  c.oid = '"${opts?.schema || getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
       sql_log(sql);
-      const tq = await getMyClient().query(sql, []);
+      const tq = await getMyClient(opts).query(sql, []);
       const n = +tq.rows[0].int8;
       if (n && n > 10000) return n;
     } catch {
@@ -166,11 +166,11 @@ WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
     }
   }
 
-  const sql = `SELECT COUNT(*) FROM "${getTenantSchema()}"."${sqlsanitize(
+  const sql = `SELECT COUNT(*) FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
   sql_log(sql, values);
-  const tq = await getMyClient().query(sql, values);
+  const tq = await getMyClient(opts).query(sql, values);
 
   return parseInt(tq.rows[0].count);
 };
@@ -201,7 +201,7 @@ const getVersion = async (short) => {
  */
 const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
+  const sql = `delete FROM "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
   sql_log(sql, values);
@@ -282,7 +282,7 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
   //valList.push(id === "undefined"? obj[opts.pk_name]: id);
   valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
-  const q = `update "${getTenantSchema()}"."${sqlsanitize(
+  const q = `update "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
   sql_log(q, valList);

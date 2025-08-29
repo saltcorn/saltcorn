@@ -2681,6 +2681,8 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     },
   };
+  if (methods?.aggregationQuery)
+    tbl.aggregationQuery = methods.aggregationQuery;
   if (methods?.deleteRows) tbl.deleteRows = methods.deleteRows;
   if (methods?.updateRow) {
     tbl.updateRow = methods.updateRow;
