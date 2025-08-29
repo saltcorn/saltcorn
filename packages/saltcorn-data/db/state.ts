@@ -282,7 +282,6 @@ class State {
     for (const rid of roleIds) this.assets_by_role[rid] = [];
 
     const allHeaders = Object.values(this.headers).flat();
-    console.log({ allHeaders }, "HEADERS");
     for (const h of allHeaders) {
       if (!h.onlyViews && !h.onlyFieldviews) {
         for (const rid of roleIds) this.assets_by_role[rid].push(h);
@@ -311,7 +310,7 @@ class State {
             return true;
         }
         if (onlyFieldviews.length) {
-          // Coming to this later
+          // ToDo
         }
         return false;
       });
