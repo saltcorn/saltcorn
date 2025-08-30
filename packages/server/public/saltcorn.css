@@ -1,12 +1,12 @@
-.table-valign-middle > tbody > tr > td {
+.table-valign-middle > tbody > tr > td,th {
      vertical-align: middle;
 }
 
-.table-valign-top > tbody > tr > td {
+.table-valign-top > tbody > tr > td, th {
      vertical-align: top;
 }
 
-.table-valign-bottom > tbody > tr > td {
+.table-valign-bottom > tbody > tr > td,th {
      vertical-align: bottom;
 }
 
