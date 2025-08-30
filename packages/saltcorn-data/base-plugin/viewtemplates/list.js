@@ -696,6 +696,11 @@ const configuration_workflow = (req) =>
             showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
           });
           formfields.push({
+            name: "_header_filters",
+            label: req.__("Header filters"),
+            type: "Bool",
+          });
+          formfields.push({
             name: "transpose",
             label: req.__("Transpose"),
             sublabel: req.__("Display one column per line"),
@@ -1584,7 +1589,7 @@ module.exports = {
       _card_rows,
       _borderless,
       _cell_valign,
-
+      _header_filters,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
