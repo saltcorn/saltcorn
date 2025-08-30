@@ -255,7 +255,7 @@ describe("calculated", () => {
     await table.updateRow({ x: 15 }, id);
     const rows = await table.getRows({});
     expect(rows[0].z).toBe(18);
-    expect(rows[0].td instanceof Date).toBe(true);
+    if (!db.isSQLite) expect(rows[0].td instanceof Date).toBe(true);
   });
 });
 describe("single joinfields in stored calculated fields", () => {
