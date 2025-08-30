@@ -32,7 +32,8 @@
     "@saltcorn/db-common": "1.3.1-beta.12",
     "@saltcorn/data": "1.3.1-beta.12",
     "adm-zip": "0.5.16",
-    "aws-sdk": "^2.1692.0",
+    "@aws-sdk/client-s3": "3.859.0",
+    "@aws-sdk/lib-storage": "3.859.0",
     "chaos-guinea-pig": "0.2.1",
     "csv-stringify": "^6.5.2",
     "csvtojson": "^2.0.10",
@@ -77,6 +78,7 @@
   "overrides": {
     "parse5": "7.2.1",
     "undici": "7.12.0",
-    "parse5-htmlparser2-tree-adapter": "7.0.0"
+    "parse5-htmlparser2-tree-adapter": "7.0.0",
+    "@smithy/core": "3.7.2"
   }
 }
