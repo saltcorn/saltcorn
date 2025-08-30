@@ -1674,5 +1674,6 @@
 	"Dynamic server side updates": "Dynamic server side updates",
 	"Enable dynamic updates": "Enable dynamic updates",
 	"Enable server side updates from within run_js_code actions": "Enable server side updates from within run_js_code actions",
-	"Vertical alignment": "Vertical alignment"
+	"Vertical alignment": "Vertical alignment",
+	"Header filters": "Header filters"
 }

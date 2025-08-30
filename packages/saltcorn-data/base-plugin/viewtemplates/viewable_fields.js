@@ -706,7 +706,7 @@ const get_viewable_fields_from_layout = (
           isShow,
           req,
           __,
-          (state = {}),
+          state,
           srcViewName,
           toArray(contents.contents)
         );
@@ -737,7 +737,7 @@ const get_viewable_fields_from_layout = (
     isShow,
     req,
     __,
-    (state = {}),
+    state,
     srcViewName,
     viewResults,
     in_row_click
@@ -1205,6 +1205,8 @@ const get_viewable_fields = (
         const isNum = f && f.type && f.type.name === "Integer";
         if (isNum && !setWidth.align) setWidth.align = "right";
         let fvrun;
+        let header_filter = headerFilterForField(f, state);
+
         if (
           column.fieldview &&
           f?.type?.fieldviews?.[column.fieldview]?.expandColumns
@@ -1253,6 +1255,7 @@ const get_viewable_fields = (
                       ? (row) => f.type.showAs(row[f_with_val.name])
                       : (row) => text(row[f_with_val.name])
                     : f.listKey,
+            header_filter,
             sortlink:
               !f.calculated || f.stored
                 ? sortlinkForName(f.name, req, viewname, statehash)
@@ -1336,6 +1339,40 @@ const get_viewable_fields = (
   }
   return tfields;
 };
+
+const headerFilterForField = (f, state) => {
+  let fieldviewNames;
+
+  if (f?.type?.name === "String") fieldviewNames = ["edit"];
+  if (f?.type?.name === "Integer" || f?.type?.name === "Float")
+    fieldviewNames = ["above_input", "below_input"];
+
+  if (!fieldviewNames) return "";
+
+  return div(
+    { class: "d-flex" },
+    fieldviewNames
+      .map((fvname) =>
+        f.type.fieldviews[fvname].run(
+          f.name,
+          state[f.name],
+          {
+            onChange: `set_state_field('${encodeURIComponent(
+              f.name
+            )}', this.value, this)`,
+            isFilter: true,
+            ...f.attributes,
+          },
+          "",
+          false,
+          f,
+          state
+        )
+      )
+      .join("")
+  );
+};
+
 /**
  * @param {string} fname
  * @param {object} req
