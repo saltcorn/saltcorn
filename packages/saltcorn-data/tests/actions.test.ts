@@ -368,7 +368,9 @@ describe("base plugin actions", () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     for (const [name, action] of Object.entries(baseactions)) {
+      // @ts-ignore
       if (!action.configFields) continue;
+      // @ts-ignore
       const configFields = await applyAsync(action.configFields, {
         table: books,
       });
