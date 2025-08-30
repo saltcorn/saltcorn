@@ -70,7 +70,8 @@
     "node-gyp": ">=10.2.0",
     "glob": ">=9.3.5",
     "parse5": "7.2.1",
-    "parse5-htmlparser2-tree-adapter": "7.0.0"
+    "parse5-htmlparser2-tree-adapter": "7.0.0",
+    "@smithy/core": "3.7.2"
   },
   "workspaces": [
     "./packages/*"
