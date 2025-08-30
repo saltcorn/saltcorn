@@ -12,7 +12,7 @@
     "test": "jest",
     "tsc": "tsc -p tsconfig.json",
     "clean": "echo 'No TypeScript build'",
-    "build": "esbuild index.js --bundle --platform=node --format=cjs --outfile=dist/cjs/index.cjs && esbuild index.js --bundle --platform=node --format=esm --outfile=dist/esm/index.mjs",
+    "build": "esbuild index.js --bundle --platform=node --format=cjs --outfile=dist/cjs/index.js && esbuild index.js --bundle --platform=node --format=esm --outfile=dist/esm/index.js",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build"
   },
@@ -36,26 +36,22 @@
     ]
   },
   "type": "commonjs",
-  "main": "dist/cjs/index.cjs",
-  "module": "dist/esm/index.mjs",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
   "exports": {
     ".": {
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "import": {
+        "default": "./dist/esm/index.js",
+        "types": "./index.d.ts"
+      },
+      "require": {
+        "default": "./dist/cjs/index.js",
+        "types": "./index.d.ts"
+      }
     },
     "./package.json": "./package.json"
   },
   "types": "index.d.ts",
-  "typesVersions": {
-    "*": {
-      "esm/*": [
-        "esm/*.d.ts"
-      ],
-      "*": [
-        "*.d.ts"
-      ]
-    }
-  },
   "publishConfig": {
     "access": "public"
   }
