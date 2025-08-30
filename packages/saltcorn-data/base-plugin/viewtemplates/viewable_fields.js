@@ -1343,6 +1343,7 @@ const get_viewable_fields = (
 const headerFilterForField = (f, state) => {
   let fieldviewNames;
 
+  if (f?.type?.name === "Bool") fieldviewNames = ["tristate"];
   if (f?.type?.name === "String") fieldviewNames = ["edit"];
   if (f?.type?.name === "Integer" || f?.type?.name === "Float")
     fieldviewNames = ["above_input", "below_input"];
@@ -1352,22 +1353,23 @@ const headerFilterForField = (f, state) => {
   return div(
     { class: "d-flex" },
     fieldviewNames
-      .map((fvname) =>
-        f.type.fieldviews[fvname].run(
-          f.name,
-          state[f.name],
-          {
-            onChange: `set_state_field('${encodeURIComponent(
-              f.name
-            )}', this.value, this)`,
-            isFilter: true,
-            ...f.attributes,
-          },
-          "",
-          false,
-          f,
-          state
-        )
+      .map(
+        (fvname) =>
+          f.type.fieldviews[fvname]?.run(
+            f.name,
+            state[f.name],
+            {
+              onChange: `set_state_field('${encodeURIComponent(
+                f.name
+              )}', this.value, this)`,
+              isFilter: true,
+              ...f.attributes,
+            },
+            "",
+            false,
+            f,
+            state
+          ) || ""
       )
       .join("")
   );
