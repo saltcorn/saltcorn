@@ -173,25 +173,39 @@ const link_view = (
  */
 const stateToQueryString = (state, include_id) => {
   if (!state || Object.keys(state).length === 0) return "";
+  const bounded = (k, v) => {
+    const parts = [];
+    if (v.gt)
+      parts.push(
+        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.gt}`)}`
+      );
+    if (v.lt)
+      parts.push(
+        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.lt}`)}`
+      );
 
+    return parts.join("&");
+  };
   return (
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        Array.isArray(v) && k !== "_relation_path_"
-          ? v
-              .map(
-                (val) =>
-                  `${encodeURIComponent(k)}=${encodeURIComponent(`${val}`)}`
-              )
-              .join("&")
-          : (k === "id" && !include_id) || typeof v === "undefined"
-            ? null
-            : `${encodeURIComponent(k)}=${encodeURIComponent(
-                k === "_relation_path_" && typeof v !== "string"
-                  ? queryToString(v)
-                  : v
-              )}`
+        v?.gt || v?.lt
+          ? bounded(k, v)
+          : Array.isArray(v) && k !== "_relation_path_"
+            ? v
+                .map(
+                  (val) =>
+                    `${encodeURIComponent(k)}=${encodeURIComponent(`${val}`)}`
+                )
+                .join("&")
+            : (k === "id" && !include_id) || typeof v === "undefined"
+              ? null
+              : `${encodeURIComponent(k)}=${encodeURIComponent(
+                  k === "_relation_path_" && typeof v !== "string"
+                    ? queryToString(v)
+                    : v
+                )}`
       )
       .filter((s) => !!s)
       .join("&")

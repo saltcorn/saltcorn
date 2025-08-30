@@ -69,6 +69,15 @@ describe("stateToQueryString", () => {
     expect(stateToQueryString({ x: [5] })).toBe("?x=5");
     expect(stateToQueryString({ x: [5, 6], z: true })).toBe("?x=5&x=6&z=true");
   });
+  it("makes query string with lt/gt", async () => {
+    expect(stateToQueryString({ x: { lt: 5 } })).toBe("?_lt_x=5");
+    expect(stateToQueryString({ x: { lt: 5, gt: 1 } })).toBe(
+      "?_gt_x=1&_lt_x=5"
+    );
+    expect(stateToQueryString({ x: { lt: 5 }, y:"foo" })).toBe("?_lt_x=5&y=foo");
+    expect(stateToQueryString({ x: { gt: 5 } })).toBe("?_gt_x=5");
+    expect(stateToQueryString({ x: { lt: 5, equal: true } })).toBe("?_lte_x=5");
+  });
 });
 
 describe("async_json_stream", () => {
