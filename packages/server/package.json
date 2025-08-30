@@ -83,7 +83,8 @@
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "overrides": {
-    "@smithy/core": "3.7.2"
+    "@smithy/core": "3.7.2",
+    "@types/node": "18.11.9"
   },
   "jest": {
     "transform": {},
