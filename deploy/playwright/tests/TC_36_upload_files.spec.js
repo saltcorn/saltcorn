@@ -203,7 +203,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator(pageobject.actionselector).nth(0).click();
         await page.keyboard.type('admin');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const firstRow = page.locator(pageobject.tablelocator).nth(0);
         const mediaType = firstRow.locator("td").nth(2); // Media type column
         const roleToAccess = firstRow.locator("td").nth(4); // Role to access column
