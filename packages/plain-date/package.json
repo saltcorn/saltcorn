@@ -12,7 +12,7 @@
     "test": "jest",
     "tsc": "tsc -p tsconfig.json",
     "clean": "echo 'No TypeScript build'",
-    "build": "esbuild index.js --bundle --platform=node --format=cjs --outfile=dist/cjs/index.js && esbuild index.js --bundle --platform=node --format=esm --outfile=dist/esm/index.js",
+    "build": "esbuild index.js --bundle --platform=node --format=cjs --outfile=dist/cjs/index.js && esbuild index.js --bundle --platform=node --format=esm --outfile=dist/esm/index.js && node scripts/writeEsmPackage.js",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build"
   },
@@ -40,14 +40,8 @@
   "module": "dist/esm/index.js",
   "exports": {
     ".": {
-      "import": {
-        "default": "./dist/esm/index.js",
-        "types": "./index.d.ts"
-      },
-      "require": {
-        "default": "./dist/cjs/index.js",
-        "types": "./index.d.ts"
-      }
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     },
     "./package.json": "./package.json"
   },
