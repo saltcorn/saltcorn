@@ -760,6 +760,8 @@ class PageLocators {
     this.checkboxInput = 'input[type="checkbox"]';
     this.multistepactionbutton = 'a.btn.btn-primary';
     this.tablelocator = 'table tbody tr'; 
+    this.tablebodylocator= 'div.filelist table tbody tr';
+    this.actionselector="select.form-select"
   }
 }
 
