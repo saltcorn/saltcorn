@@ -2,7 +2,7 @@
      vertical-align: middle;
 }
 
-.table-valign-top > tbody > tr > td, th {
+.table-valign-top > tbody > tr > td,th {
      vertical-align: top;
 }
 
