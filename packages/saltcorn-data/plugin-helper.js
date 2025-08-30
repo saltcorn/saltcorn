@@ -178,13 +178,20 @@ const stateToQueryString = (state, include_id) => {
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        (k === "id" && !include_id) || typeof v === "undefined"
-          ? null
-          : `${encodeURIComponent(k)}=${encodeURIComponent(
-              k === "_relation_path_" && typeof v !== "string"
-                ? queryToString(v)
-                : v
-            )}`
+        Array.isArray(v) && k !== "_relation_path_"
+          ? v
+              .map(
+                (val) =>
+                  `${encodeURIComponent(k)}=${encodeURIComponent(`${val}`)}`
+              )
+              .join("&")
+          : (k === "id" && !include_id) || typeof v === "undefined"
+            ? null
+            : `${encodeURIComponent(k)}=${encodeURIComponent(
+                k === "_relation_path_" && typeof v !== "string"
+                  ? queryToString(v)
+                  : v
+              )}`
       )
       .filter((s) => !!s)
       .join("&")
@@ -2674,6 +2681,8 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     },
   };
+  if (methods?.aggregationQuery)
+    tbl.aggregationQuery = methods.aggregationQuery;
   if (methods?.deleteRows) tbl.deleteRows = methods.deleteRows;
   if (methods?.updateRow) {
     tbl.updateRow = methods.updateRow;

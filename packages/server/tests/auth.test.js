@@ -21,8 +21,12 @@ const { get_reset_link, generate_email } = require("../auth/resetpw");
 const i18n = require("i18n");
 const path = require("path");
 const fs = require("fs");
+const { sleep } = require("@saltcorn/data/utils");
 
-afterAll(db.close);
+afterAll(async () => {
+  await sleep(100);
+  db.close();
+});
 beforeAll(async () => {
   await resetToFixtures();
 });

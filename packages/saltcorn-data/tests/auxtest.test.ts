@@ -15,6 +15,7 @@ const {
   field_picker_fields,
   readState,
   generate_joined_query,
+  stateToQueryString,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
 const {
@@ -55,6 +56,18 @@ describe("string manipulators", () => {
   });
   it("validSqlId", async () => {
     expect(validSqlId("Sr. Søejer")).toBe("sr_soejer");
+  });
+});
+
+describe("stateToQueryString", () => {
+  it("makes query string", async () => {
+    expect(stateToQueryString({ x: "5" })).toBe("?x=5");
+    expect(stateToQueryString({ x: "5", y: "goo" })).toBe("?x=5&y=goo");
+  });
+  it("makes query string with array", async () => {
+    expect(stateToQueryString({ x: [5, 6] })).toBe("?x=5&x=6");
+    expect(stateToQueryString({ x: [5] })).toBe("?x=5");
+    expect(stateToQueryString({ x: [5, 6], z: true })).toBe("?x=5&x=6&z=true");
   });
 });
 

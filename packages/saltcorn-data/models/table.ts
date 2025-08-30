@@ -96,7 +96,11 @@ import type {
   ErrorObj,
 } from "@saltcorn/types/base_types";
 import { get_formula_examples } from "./internal/table_helper";
-import { getAggAndField, process_aggregations } from "./internal/query";
+import {
+  aggregation_query_fields,
+  getAggAndField,
+  process_aggregations,
+} from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
 import { GenObj } from "@saltcorn/db-common/types";
 
@@ -3679,74 +3683,11 @@ ${rejectDetails}`,
       groupBy?: string[] | string;
     }
   ): Promise<Row> {
-    let fldNms: string[] = [];
-    const where0 = options?.where || {};
-    const groupBy = Array.isArray(options?.groupBy)
-      ? options?.groupBy
-      : options?.groupBy
-        ? [options?.groupBy]
-        : null;
-    const schema = db.getTenantSchemaPrefix();
-    const { where, values } = mkWhere(where0, db.isSQLite);
-
-    Object.entries(aggregations).forEach(
-      ([nm, { field, valueFormula, aggregate }]) => {
-        if (
-          field &&
-          (aggregate.startsWith("Percent ") || aggregate.startsWith("Percent "))
-        ) {
-          const targetBoolVal = aggregate.split(" ")[1] === "true";
-
-          fldNms.push(
-            `avg( CASE WHEN "${sqlsanitize(field)}"=${JSON.stringify(
-              !!targetBoolVal
-            )} THEN 100.0 ELSE 0.0 END) as "${sqlsanitize(nm)}"`
-          );
-        } else if (
-          field &&
-          (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
-        ) {
-          const dateField = aggregate.split(" ")[1];
-          const isLatest = aggregate.startsWith("Latest ");
-
-          let newWhere = where;
-          if (groupBy) {
-            const newClauses = groupBy
-              .map((f) => `innertbl."${f}" = a."${f}"`)
-              .join(" AND ");
-            if (!newWhere) newWhere = "where " + newClauses;
-            else newWhere = `${newWhere} AND ${newClauses}`;
-          }
-          fldNms.push(
-            `(select ${
-              field ? `"${sqlsanitize(field)}"` : valueFormula
-            } from ${schema}"${sqlsanitize(
-              this.name
-            )}" innertbl ${newWhere} order by "${sqlsanitize(dateField)}" ${
-              isLatest ? "DESC" : "ASC"
-            } limit 1) as "${sqlsanitize(nm)}"`
-          );
-        } else
-          fldNms.push(
-            `${getAggAndField(
-              aggregate,
-              field === "Formula" ? undefined : field,
-              field === "Formula" ? valueFormula : undefined
-            )} as "${sqlsanitize(nm)}"`
-          );
-      }
+    const { sql, values, groupBy } = aggregation_query_fields(
+      this.name,
+      aggregations,
+      options
     );
-    if (groupBy) {
-      fldNms.push(...groupBy);
-    }
-
-    const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
-      this.name
-    )}" a ${where}${
-      groupBy
-        ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}`
-        : ""
-    }`;
 
     const res = await db.query(sql, values);
     if (groupBy) return res.rows;
