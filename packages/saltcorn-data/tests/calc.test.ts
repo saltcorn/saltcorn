@@ -239,6 +239,14 @@ describe("calculated", () => {
       expression: "1+asyncAdd2(x)",
       stored: true,
     });
+    await Field.create({
+      table,
+      label: "td",
+      type: "Date",
+      calculated: true,
+      expression: "today(-5)",
+      stored: true,
+    });
 
     const id = await table.insertRow({ x: 14 });
     const row0 = await table.getRow({});
@@ -247,6 +255,7 @@ describe("calculated", () => {
     await table.updateRow({ x: 15 }, id);
     const rows = await table.getRows({});
     expect(rows[0].z).toBe(18);
+    expect(rows[0].td instanceof Date).toBe(true);
   });
 });
 describe("single joinfields in stored calculated fields", () => {
