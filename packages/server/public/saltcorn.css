@@ -1,13 +1,20 @@
-.table-valign-middle > tbody > tr > td,th {
-     vertical-align: middle;
+.table-valign-middle > tbody > tr > td,
+th {
+  vertical-align: middle;
 }
 
-.table-valign-top > tbody > tr > td,th {
-     vertical-align: top;
+.table-valign-top > tbody > tr > td,
+th {
+  vertical-align: top;
 }
 
-.table-valign-bottom > tbody > tr > td,th {
-     vertical-align: bottom;
+.table-valign-bottom > tbody > tr > td,
+th {
+  vertical-align: bottom;
+}
+
+i.sortdir {
+  margin-left: 2px;
 }
 
 div.form-repeat {

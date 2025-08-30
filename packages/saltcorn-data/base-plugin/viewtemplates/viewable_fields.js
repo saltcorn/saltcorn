@@ -1786,9 +1786,9 @@ const headerLabelForName = (label, fname, req, __, statehash) => {
     _sortby !== fname
       ? ""
       : _sortdesc
-        ? i({ class: "fas fa-caret-down" })
-        : i({ class: "fas fa-caret-up" });
-  return label + arrow;
+        ? i({ class: "fas fa-caret-down sortdir" })
+        : i({ class: "fas fa-caret-up sortdir" });
+  return arrow ? span({ class: "text-nowrap" }, label + arrow) : label;
 };
 
 /**
