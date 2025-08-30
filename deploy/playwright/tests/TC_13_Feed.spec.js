@@ -222,9 +222,12 @@ test.describe('E2E Test Suite', () => {
             await functions.fill_Text(pageobject.AddressInput, 'HN 01, WN 26 noida india ');
             await page.click(pageobject.saveactionbutton);
         });
+        await page.waitForTimeout(250);
 
         await functions.views();
+        await page.waitForTimeout(250);
         await page.click(pageobject.Feedviewlink);
+        await page.waitForTimeout(250);
         await customAssert('Newly added record should be present', async () => {
             await expect(page.getByText('Edward').first()).toBeVisible();
         });
