@@ -123,32 +123,35 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     );
   }
 }
+
+const today = (
+  offset?:
+    | number
+    | { startOf: moment.unitOfTime.StartOf }
+    | { endOf: moment.unitOfTime.StartOf }
+) => {
+  let default_locale: string | undefined;
+  const get_locale = (): string => {
+    if (!default_locale) {
+      const { getState } = require("../db/state");
+      default_locale = getState().getConfig("default_locale", "en");
+    }
+    return default_locale as string;
+  };
+  let d = new Date();
+  if (typeof offset === "number") d.setDate(d.getDate() + offset);
+  else if (offset && "startOf" in offset) {
+    d = moment().locale(get_locale()).startOf(offset.startOf).toDate();
+  } else if (offset && "endOf" in offset) {
+    d = moment().locale(get_locale()).endOf(offset.endOf).toDate();
+  }
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
+
 function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
   const keys = new Set(Object.keys(extraCtx));
   const field_names = new Set(fields.map((f) => f.name));
-  let default_locale: string | undefined;
-  const today = (
-    offset?:
-      | number
-      | { startOf: moment.unitOfTime.StartOf }
-      | { endOf: moment.unitOfTime.StartOf }
-  ) => {
-    const get_locale = (): string => {
-      if (!default_locale) {
-        const { getState } = require("../db/state");
-        default_locale = getState().getConfig("default_locale", "en");
-      }
-      return default_locale as string;
-    };
-    let d = new Date();
-    if (typeof offset === "number") d.setDate(d.getDate() + offset);
-    else if (offset && "startOf" in offset) {
-      d = moment().locale(get_locale()).startOf(offset.startOf).toDate();
-    } else if (offset && "endOf" in offset) {
-      d = moment().locale(get_locale()).endOf(offset.endOf).toDate();
-    }
-    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-  };
+
   replace(ast, {
     // @ts-ignore
     leave: function (node) {
@@ -924,4 +927,5 @@ export = {
   add_free_variables_to_joinfields,
   add_free_variables_to_aggregations,
   removeComments,
+  today,
 };

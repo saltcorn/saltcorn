@@ -201,6 +201,8 @@ class State {
    * @param {string} tenant description
    */
   constructor(tenant: string) {
+    const { today } = require("../models/expression");
+
     this.tenant = tenant;
     this.views = [];
     this.triggers = [];
@@ -230,8 +232,8 @@ class State {
     this.layouts = { emergency: emergency_layout };
     this.userLayouts = {};
     this.headers = {};
-    this.function_context = { moment, slugify: db.slugify };
-    this.functions = { moment, slugify: db.slugify };
+    this.function_context = { moment, today, slugify: db.slugify };
+    this.functions = { moment, today, slugify: db.slugify };
     this.plugins_cfg_context = {};
     this.keyFieldviews = {};
     this.external_tables = {};
