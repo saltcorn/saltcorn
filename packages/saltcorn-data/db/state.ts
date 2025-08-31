@@ -280,15 +280,12 @@ class State {
     let roleIds: number[] = [];
     const Role = (await import("../models/role")).default;
     const roles = await Role.find({}, { orderBy: "role_id" });
-    roleIds = roles
-      .map((r: any) => +r.id)
-      .filter((n: number) => !Number.isNaN(n));
+    roleIds = roles.map((r) => +r.id).filter((n: number) => !Number.isNaN(n));
 
     if (!roleIds.includes(100)) roleIds.push(100);
     for (const rid of roleIds) this.assets_by_role[rid] = [];
 
     const allHeaders = Object.values(this.headers).flat();
-    console.log({ allHeaders }, "HEADERS");
     for (const h of allHeaders) {
       if (!h.onlyViews && !h.onlyFieldviews) {
         for (const rid of roleIds) this.assets_by_role[rid].push(h);
@@ -307,7 +304,7 @@ class State {
           : [h.onlyFieldviews]
         : [];
 
-      const matchedViews = this.views.filter((v: any) => {
+      const matchedViews = this.views.filter((v) => {
         if (onlyViews.length) {
           const tmplName = v.viewtemplateObj?.name || v.viewtemplate;
           if (
@@ -317,7 +314,21 @@ class State {
             return true;
         }
         if (onlyFieldviews.length) {
-          // Coming to this later
+          const columns = Array.isArray(v.configuration?.columns)
+            ? v.configuration!.columns
+            : [];
+          const colFieldviews = columns
+            .map(
+              (col: {
+                type: string; // "Field" | "Action"
+                field_name: string;
+                fieldview: string;
+                configuration: any;
+              }) => (col?.type === "Field" ? col.fieldview : null)
+            )
+            .filter((fv: string) => !!fv);
+          if (colFieldviews.some((fv: string) => onlyFieldviews.includes(fv)))
+            return true;
         }
         return false;
       });
@@ -608,7 +619,7 @@ class State {
     try {
       await this.computeAssetsByRole();
     } catch (error) {
-      console.error("Error cpmputing assets byy role", error);
+      console.error("Error computing assets by role", error);
     }
     if (!noSignal) this.log(5, "Refresh views");
 
