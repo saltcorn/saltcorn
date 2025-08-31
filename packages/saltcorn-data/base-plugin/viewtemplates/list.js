@@ -77,6 +77,7 @@ const {
   extractFromColumns,
   extractViewToCreate,
 } = require("../../diagram/node_extract_utils");
+const { validID } = require("@saltcorn/markup/layout_utils");
 
 /**
  * @param {object} context
@@ -1214,6 +1215,7 @@ const run = async (
   page_opts.header_filters = (default_state || {})._header_filters;
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
+  page_opts.tableId = `${validID(viewname)}_${statehash}`;
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";

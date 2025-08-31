@@ -51,6 +51,7 @@ namespace TableExports {
     tableId?: string;
     grouped?: string;
     header_filters?: boolean;
+    responsiveCollapse?: boolean;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
