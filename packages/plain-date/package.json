@@ -11,9 +11,15 @@
   "scripts": {
     "test": "jest",
     "tsc": "tsc -p tsconfig.json",
-    "clean": "echo 'No TypeScript build'"
+    "clean": "echo 'No TypeScript build'",
+    "build": "esbuild index.js --bundle --platform=node --format=cjs --outfile=dist/cjs/index.js && esbuild index.js --bundle --platform=node --format=esm --outfile=dist/esm/index.js && node scripts/writeEsmPackage.js",
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
   },
   "dependencies": {},
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  },
   "author": "Tom Nielsen",
   "license": "MIT",
   "jest": {
@@ -29,7 +35,17 @@
       "/plugins_folder/"
     ]
   },
-  "main": "index.js",
+  "type": "commonjs",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "index.d.ts",
   "publishConfig": {
     "access": "public"
   }
