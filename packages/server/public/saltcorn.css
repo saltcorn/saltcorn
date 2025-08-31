@@ -16,6 +16,12 @@
 i.sortdir {
   margin-left: 2px;
 }
+div.hdrfilterdate i.fas {
+  visibility: hidden;
+}
+div.hdrfilterdate:hover i.fas {
+  visibility: visible;
+}
 
 div.form-repeat {
   border: 1px dashed black;

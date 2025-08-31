@@ -1368,13 +1368,24 @@ const headerFilterForField = (f, state, path) => {
           }"],`
         : "";
     return (
-      input({
-        type: "text",
-        class: "form-control",
-        name: `daterangefilter${f.name}`,
-        id: `daterangefilter${f.name}`,
-        //placeholder: ,
-      }) +
+      div(
+        { class: "input-group hdrfilterdate" },
+        input({
+          type: "text",
+          class: "form-control",
+          name: `daterangefilter${f.name}`,
+          id: `daterangefilter${f.name}`,
+          //placeholder: ,
+        }),
+        button(
+          {
+            class: "btn btn-outline-secondary",
+            style: { paddingLeft: "3px", paddingRight: "3px" },
+            onclick: `set_state_fields({_fromdate_${f.name}: {unset: true}, _todate_${f.name}: {unset: true} })`,
+          },
+          i({ class: "fas fa-times" })
+        )
+      ) +
       script(
         domReady(
           `ensure_script_loaded("/static_assets/${db.connectObj.version_tag}/flatpickr.min.js");
