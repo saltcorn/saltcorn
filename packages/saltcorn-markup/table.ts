@@ -65,6 +65,7 @@ namespace TableExports {
     grouped?: string;
     header_filters?: boolean;
     responsiveCollapse?: boolean;
+    collapse_breakpoint_px?: number;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
@@ -173,8 +174,7 @@ const mkTable = (
     opts.responsiveCollapse &&
       opts.tableId &&
       style(`@media 
-only screen and (max-width: 760px),
-(min-device-width: 768px) and (max-device-width: 1024px)  {
+only screen and (max-width: ${opts.collapse_breakpoint_px || 760}px) {
 	#${opts.tableId} table, #${opts.tableId} thead, #${opts.tableId} tbody, #${opts.tableId} th, #${opts.tableId} td, #${opts.tableId} tr { 
 		display: block; 
 	}

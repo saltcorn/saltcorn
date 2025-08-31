@@ -788,6 +788,14 @@ const configuration_workflow = (req) =>
             sublabel: req.__("Horizontal display on smaller screens"),
             tab: "Layout options",
           });
+          formfields.push({
+            name: "_collapse_breakpoint_px",
+            label: req.__("Collapse breakpoint (px)"),
+            type: "Integer",
+            tab: "Layout options",
+            default: 760,
+            showIf: { _responsive_collapse: true },
+          });
 
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -1207,6 +1215,7 @@ const run = async (
   }
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
+    page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
     page_opts.tableId = `${validID(viewname)}_${statehash}`;
   }
 
@@ -1550,7 +1559,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _responsive_collapse",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _responsive_collapse _collapse_breakpoint_px",
       "default_state"
     );
   }
@@ -1604,6 +1613,7 @@ module.exports = {
       _borderless,
       _cell_valign,
       _responsive_collapse,
+      _collapse_breakpoint_px,
       _header_filters,
       ...ds
     } = default_state;
