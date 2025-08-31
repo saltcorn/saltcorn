@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/plain-date",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "PlainDate: Date without time and timezone, drop-in compatible with Date",
   "homepage": "https://github.com/saltcorn/saltcorn/tree/master/packages/plain-date",
   "repository": {
