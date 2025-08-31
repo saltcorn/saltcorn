@@ -279,7 +279,7 @@ class State {
     this.assets_by_role = {};
     let roleIds: number[] = [];
     const Role = (await import("../models/role")).default;
-    const roles = await Role.find({}, { orderBy: "role_id" });
+    const roles = await Role.find({}, { orderBy: "id" });
     roleIds = roles.map((r) => +r.id).filter((n: number) => !Number.isNaN(n));
 
     if (!roleIds.includes(100)) roleIds.push(100);
