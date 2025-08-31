@@ -1056,6 +1056,13 @@ const get_viewable_fields = (
             column
           );
         }
+        let header_filter;
+        if (!column.join_field.includes("->") && keypath.length == 2)
+          header_filter = headerFilterForField(
+            field,
+            state,
+            `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`
+          );
         let gofv =
           fieldview && type && type.fieldviews && type.fieldviews[fieldview]
             ? (row) =>
@@ -1076,6 +1083,7 @@ const get_viewable_fields = (
                 })
               : "";
         }
+
         fvrun = {
           ...setWidth,
           label: headerLabelForName(
@@ -1088,6 +1096,7 @@ const get_viewable_fields = (
             statehash
           ),
           row_key: key,
+          header_filter,
           key: gofv ? gofv : (row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
         };
@@ -1350,7 +1359,7 @@ const get_viewable_fields = (
   return tfields;
 };
 
-const headerFilterForField = (f, state, column) => {
+const headerFilterForField = (f, state, path) => {
   if (f?.type?.name === "Date") {
     const set_initial =
       state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
@@ -1387,10 +1396,10 @@ const headerFilterForField = (f, state, column) => {
   }
 
   let fieldviewObjs;
-  if (f.is_fkey) {
+  /*if (f.is_fkey) {
     fieldviewObjs = [getState().keyFieldviews.select];
-  } else if (f?.type?.name === "Bool")
-    fieldviewObjs = [f.type.fieldviews.tristate];
+  } else */
+  if (f?.type?.name === "Bool") fieldviewObjs = [f.type.fieldviews.tristate];
   else if (f?.type?.name === "String") fieldviewObjs = [f.type.fieldviews.edit];
   else if (f?.type?.name === "Integer" || f?.type?.name === "Float")
     fieldviewObjs = [
@@ -1407,13 +1416,12 @@ const headerFilterForField = (f, state, column) => {
         (fvObj) =>
           fvObj?.run(
             f.name,
-            state[f.name],
+            state[path || f.name],
             {
               onChange: `set_state_field('${encodeURIComponent(
-                f.name
+                path || f.name
               )}', this.value, this)`,
               isFilter: true,
-              ...(column || {}),
               ...f.attributes,
             },
             "",
