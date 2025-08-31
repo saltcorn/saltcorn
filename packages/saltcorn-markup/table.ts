@@ -4,8 +4,22 @@
  */
 
 import tags = require("./tags");
-const { a, td, tr, th, text, div, table, thead, tbody, ul, li, span, h4 } =
-  tags;
+const {
+  a,
+  td,
+  tr,
+  th,
+  text,
+  div,
+  table,
+  thead,
+  tbody,
+  ul,
+  li,
+  span,
+  h4,
+  style,
+} = tags;
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 const { pagination } = helpers;
@@ -17,9 +31,8 @@ const { pagination } = helpers;
 const headerCell = (hdr: any): string =>
   th(
     (hdr.align || hdr.width) && {
-      style:
-        (hdr.align ? `text-align: ${hdr.align};` : "") +
-        (hdr.width ? `width: ` + hdr.width : ""),
+      style: hdr.width ? `width: ` + hdr.width : "",
+      ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
     },
     hdr.sortlink
       ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
@@ -106,9 +119,9 @@ const mkTable = (
         td(
           {
             style: {
-              ...(hdr.align ? { "text-align": hdr.align } : {}),
               ...(hdr.width && opts.noHeader ? { width: hdr.width } : {}),
             },
+            ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
           },
           typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
         )
@@ -141,7 +154,10 @@ const mkTable = (
         thead(
           tr(hdrs.map((hdr: HeadersParams) => headerCell(hdr))),
           opts.header_filters
-            ? tr(hdrs.map((hdr: HeadersParams) => headerFilter(hdr)))
+            ? tr(
+                { class: "header-filters" },
+                hdrs.map((hdr: HeadersParams) => headerFilter(hdr))
+              )
             : null
         ),
       tbody(
@@ -152,7 +168,53 @@ const mkTable = (
             : (vs || []).map(val_row)
       )
     ),
-    opts.pagination && pagination(opts.pagination)
+    opts.pagination && pagination(opts.pagination),
+    //https://css-tricks.com/responsive-data-tables/
+    opts.responsiveCollapse &&
+      opts.tableId &&
+      style(`@media 
+only screen and (max-width: 760px),
+(min-device-width: 768px) and (max-device-width: 1024px)  {
+	#${opts.tableId} table, #${opts.tableId} thead, #${opts.tableId} tbody, #${opts.tableId} th, #${opts.tableId} td, #${opts.tableId} tr { 
+		display: block; 
+	}
+
+  #${opts.tableId} tr.header-filter {
+    display: none;
+  }
+  #${opts.tableId} td.text-align-right,
+  #${opts.tableId} td.text-align-right,
+  #${opts.tableId} th.text-align-center,
+  #${opts.tableId} th.text-align-center {
+     text-align: left !important;
+  }
+
+	#${opts.tableId} thead tr { 
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+	
+	#${opts.tableId} tr { border: 1px solid #ccc; }
+	
+	#${opts.tableId} td { 
+		border: none;
+		border-bottom: 1px solid #eee; 
+		position: relative;
+		padding-left: 50%; 
+	}
+	
+	#${opts.tableId} td:before { 
+		position: absolute;
+		top: 6px;
+		left: 6px;
+		width: 45%; 
+		padding-right: 10px; 
+		white-space: nowrap;
+	}
+
+  ${hdrs.map((hdr: HeadersParams, ix: number) => `#${opts.tableId} td:nth-of-type(${ix + 1}):before { content: "${hdr.label}"; }`).join("\n")}	
+}`)
   );
 };
 
