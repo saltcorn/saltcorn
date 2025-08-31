@@ -1675,5 +1675,7 @@
 	"Enable dynamic updates": "Enable dynamic updates",
 	"Enable server side updates from within run_js_code actions": "Enable server side updates from within run_js_code actions",
 	"Vertical alignment": "Vertical alignment",
-	"Header filters": "Header filters"
+	"Header filters": "Header filters",
+	"Update event": "Update event",
+	"Custom event for real-time updates": "Custom event for real-time updates"
 }

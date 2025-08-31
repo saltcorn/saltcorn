@@ -1,15 +1,15 @@
 .table-valign-middle > tbody > tr > td,
-th {
+.table-valign-middle > thead > tr > th {
   vertical-align: middle;
 }
 
 .table-valign-top > tbody > tr > td,
-th {
+.table-valign-top > thead > tr > th {
   vertical-align: top;
 }
 
 .table-valign-bottom > tbody > tr > td,
-th {
+.table-valign-bottom > thead > tr > th {
   vertical-align: bottom;
 }
 

@@ -4,7 +4,17 @@
  * @subcategory base-plugin
  */
 const { post_btn } = require("@saltcorn/markup");
-const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
+const {
+  text,
+  a,
+  i,
+  div,
+  button,
+  span,
+  script,
+  domReady,
+  input,
+} = require("@saltcorn/markup/tags");
 const { getState, getReq__ } = require("../../db/state");
 const {
   link_view,
@@ -1341,6 +1351,41 @@ const get_viewable_fields = (
 };
 
 const headerFilterForField = (f, state) => {
+  if (f?.type?.name === "Date") {
+    const set_initial =
+      state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
+        ? `defaultDate: ["${state[`_fromdate_${f.name}`]}", "${
+            state[`_todate_${f.name}`]
+          }"],`
+        : "";
+    return (
+      input({
+        type: "text",
+        class: "form-control",
+        name: `daterangefilter${f.name}`,
+        id: `daterangefilter${f.name}`,
+        //placeholder: ,
+      }) +
+      script(
+        domReady(
+          `ensure_script_loaded("/static_assets/${db.connectObj.version_tag}/flatpickr.min.js");
+      ensure_css_loaded("/static_assets/${db.connectObj.version_tag}/flatpickr.min.css");
+      $('#daterangefilter${f.name}').flatpickr({mode:'range',
+        dateFormat: "Y-m-d",${set_initial}    
+        onChange: function(selectedDates, dateStr, instance) {
+            if(selectedDates.length==2) {
+          
+               set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') })
+              
+                
+            }            
+        },
+    });`
+        )
+      )
+    );
+  }
+
   let fieldviewNames;
 
   if (f?.type?.name === "Bool") fieldviewNames = ["tristate"];
