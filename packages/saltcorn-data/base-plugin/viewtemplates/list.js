@@ -1207,6 +1207,7 @@ const run = async (
   }
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
+    page_opts.tableId = `${validID(viewname)}_${statehash}`;
   }
 
   page_opts.class += `table-valign-${(default_state?._cell_valign || "Middle").toLowerCase()} `;
@@ -1215,7 +1216,6 @@ const run = async (
   page_opts.header_filters = (default_state || {})._header_filters;
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
-  page_opts.tableId = `${validID(viewname)}_${statehash}`;
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";
