@@ -35,6 +35,7 @@ namespace TableExports {
     key: string | Function;
     width?: string;
     align?: string;
+    header_filter?: string;
   };
 
   export type OptsParams = {
@@ -49,6 +50,7 @@ namespace TableExports {
     tableClass?: string;
     tableId?: string;
     grouped?: string;
+    header_filters?: boolean;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
