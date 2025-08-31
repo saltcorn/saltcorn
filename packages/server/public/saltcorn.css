@@ -31,6 +31,16 @@ div.hdrfilterdate input {
   border-right: none;
 }
 
+.text-align-right {
+  text-align: right;
+}
+.text-align-left {
+  text-align: left;
+}
+.text-align-center {
+  text-align: center;
+}
+
 div.form-repeat {
   border: 1px dashed black;
   padding: 3px;

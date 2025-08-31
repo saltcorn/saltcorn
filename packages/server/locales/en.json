@@ -1677,5 +1677,8 @@
 	"Vertical alignment": "Vertical alignment",
 	"Header filters": "Header filters",
 	"Update event": "Update event",
-	"Custom event for real-time updates": "Custom event for real-time updates"
+	"Custom event for real-time updates": "Custom event for real-time updates",
+	"Responsve collapse": "Responsve collapse",
+	"Horizontal display on smaller screens": "Horizontal display on smaller screens",
+	"Collapse breakpoint (px)": "Collapse breakpoint (px)"
 }
