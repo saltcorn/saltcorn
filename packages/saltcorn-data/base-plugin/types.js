@@ -1050,7 +1050,15 @@ const string = {
           name: "input_type",
           label: "Input type",
           input_type: "select",
-          options: ["text", "email", "url", "tel", "password", "hidden"],
+          options: [
+            "text",
+            "email",
+            "url",
+            "tel",
+            "password",
+            "search",
+            "hidden",
+          ],
         },
         {
           name: "autofocus",
@@ -1144,7 +1152,8 @@ const string = {
                   option({ value: "" }, "")
                 )
               : input({
-                  type: attrs.input_type || "text",
+                  type:
+                    attrs.input_type || (attrs.isFilter ? "search" : "text"),
                   disabled: attrs.disabled,
                   readonly: attrs.readonly,
                   class: ["form-control", cls],

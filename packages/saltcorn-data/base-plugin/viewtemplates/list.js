@@ -696,6 +696,11 @@ const configuration_workflow = (req) =>
             showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
           });
           formfields.push({
+            name: "_header_filters",
+            label: req.__("Header filters"),
+            type: "Bool",
+          });
+          formfields.push({
             name: "transpose",
             label: req.__("Transpose"),
             sublabel: req.__("Display one column per line"),
@@ -1195,6 +1200,7 @@ const run = async (
   page_opts.class += `table-valign-${(default_state?._cell_valign || "Middle").toLowerCase()} `;
 
   page_opts.transpose = (default_state || {}).transpose;
+  page_opts.header_filters = (default_state || {})._header_filters;
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
@@ -1584,7 +1590,7 @@ module.exports = {
       _card_rows,
       _borderless,
       _cell_valign,
-
+      _header_filters,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));

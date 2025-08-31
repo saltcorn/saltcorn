@@ -26,6 +26,8 @@ const headerCell = (hdr: any): string =>
       : hdr.label
   );
 
+const headerFilter = (hdr: any): string => th(hdr.header_filter || null);
+
 // declaration merging
 namespace TableExports {
   export type HeadersParams = {
@@ -133,13 +135,18 @@ const mkTable = (
       },
       !opts.noHeader &&
         !opts.transpose &&
-        thead(tr(hdrs.map((hdr: HeadersParams) => headerCell(hdr)))),
+        thead(
+          tr(hdrs.map((hdr: HeadersParams) => headerCell(hdr))),
+          opts.header_filters
+            ? tr(hdrs.map((hdr: HeadersParams) => headerFilter(hdr)))
+            : null
+        ),
       tbody(
         opts.transpose
           ? transposedBody(hdrs, vs, opts)
           : opts.grouped
-          ? groupedBody(vs)
-          : (vs || []).map(val_row)
+            ? groupedBody(vs)
+            : (vs || []).map(val_row)
       )
     ),
     opts.pagination && pagination(opts.pagination)
