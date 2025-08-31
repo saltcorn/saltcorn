@@ -780,6 +780,13 @@ const configuration_workflow = (req) =>
             },
             tab: "Layout options",
           });
+          formfields.push({
+            name: "_responsive_collapse",
+            label: req.__("Responsve collapse"),
+            type: "Bool",
+            sublabel: req.__("Horizontal display on smaller screens"),
+            tab: "Layout options",
+          });
 
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -1197,6 +1204,10 @@ const run = async (
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
   }
+  if (default_state?._responsive_collapse) {
+    page_opts.responsiveCollapse = true;
+  }
+
   page_opts.class += `table-valign-${(default_state?._cell_valign || "Middle").toLowerCase()} `;
 
   page_opts.transpose = (default_state || {}).transpose;
@@ -1537,7 +1548,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _responsive_collapse",
       "default_state"
     );
   }
@@ -1590,6 +1601,7 @@ module.exports = {
       _card_rows,
       _borderless,
       _cell_valign,
+      _responsive_collapse,
       _header_filters,
       ...ds
     } = default_state;
