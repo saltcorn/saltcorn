@@ -1350,7 +1350,7 @@ const get_viewable_fields = (
   return tfields;
 };
 
-const headerFilterForField = (f, state) => {
+const headerFilterForField = (f, state, column) => {
   if (f?.type?.name === "Date") {
     const set_initial =
       state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
