@@ -30,7 +30,7 @@ import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
 import { jwtDecode } from "jwt-decode";
 
 import { Network } from "@capacitor/network";
-import { App } from '@capacitor/app';
+import { App } from "@capacitor/app";
 
 import { defineCustomElements } from "jeep-sqlite/loader";
 
@@ -60,7 +60,7 @@ async function addScript(scriptObj) {
       if (!scriptObj.name || moduleAvailable()) return resolve();
       waitForModule();
     };
-    script.src = scriptObj.src;
+    script.src = scriptObj.src || scriptObj.script;
   });
 }
 
@@ -118,27 +118,33 @@ const prepareHeader = (header) => {
 /*
   A plugin exports headers either as array, as key values object, or
   as a function with a configuration parameter that returns an Array.
+
+  If mobile_top_scope is set, the script is added to the index.html <head>
+  otherwise it will be added to the iframe headers
 */
-const collectPluginHeaders = (pluginRows) => {
+const handlePluginHeaders = async (plugins) => {
   const config = saltcorn.data.state.getState().mobileConfig;
   config.pluginHeaders = [];
-  for (const row of pluginRows) {
-    const pluginHeaders = saltcorn[row.name].headers;
+
+  const handler = async (header) => {
+    if (header.mobile_top_scope) await addScript(prepareHeader(header));
+    else config.pluginHeaders.push(prepareHeader(header));
+  };
+
+  for (const plugin of plugins) {
+    const pluginHeaders = saltcorn[plugin.name].headers;
     if (pluginHeaders) {
-      if (Array.isArray(pluginHeaders))
-        for (const header of pluginHeaders) {
-          config.pluginHeaders.push(prepareHeader(header));
-        }
-      else if (typeof pluginHeaders === "function") {
-        const headerResult = pluginHeaders(row.configuration || {});
+      if (Array.isArray(pluginHeaders)) {
+        for (const header of pluginHeaders) await handler(header);
+      } else if (typeof pluginHeaders === "function") {
+        const headerResult = pluginHeaders(plugin.configuration || {});
         if (Array.isArray(headerResult)) {
-          for (const header of headerResult)
-            config.pluginHeaders.push(prepareHeader(header));
+          for (const header of headerResult) await handler(header);
         }
-      } else
-        for (const value of Object.values(pluginHeaders)) {
-          config.pluginHeaders.push(prepareHeader(value));
-        }
+      } else {
+        for (const header of Object.values(pluginHeaders))
+          await handler(header);
+      }
     }
   }
 };
@@ -359,7 +365,7 @@ export async function init(mobileConfig) {
       await jeepSqlite.componentOnReady();
     }
 
-    App.addListener('backButton', async ({ canGoBack }) => {
+    App.addListener("backButton", async ({ canGoBack }) => {
       await saltcorn.mobileApp.navigation.goBack(1, true);
     });
 
@@ -379,7 +385,7 @@ export async function init(mobileConfig) {
     state.mobileConfig.user = {};
     state.registerPlugin("base", saltcorn.base_plugin);
     state.registerPlugin("sbadmin2", saltcorn.sbadmin2);
-    collectPluginHeaders(await loadPlugins(state));
+    await handlePluginHeaders(await loadPlugins(state));
     if (updateNeeded) {
       await updateDb(tablesJSON);
     }
