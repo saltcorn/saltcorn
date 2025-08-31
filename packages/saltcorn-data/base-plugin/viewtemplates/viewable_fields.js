@@ -1386,21 +1386,26 @@ const headerFilterForField = (f, state) => {
     );
   }
 
-  let fieldviewNames;
+  let fieldviewObjs;
+  if (f.is_fkey) {
+    fieldviewObjs = [getState().keyFieldviews.select];
+  } else if (f?.type?.name === "Bool")
+    fieldviewObjs = [f.type.fieldviews.tristate];
+  else if (f?.type?.name === "String") fieldviewObjs = [f.type.fieldviews.edit];
+  else if (f?.type?.name === "Integer" || f?.type?.name === "Float")
+    fieldviewObjs = [
+      f.type.fieldviews.above_input,
+      f.type.fieldviews.below_input,
+    ];
 
-  if (f?.type?.name === "Bool") fieldviewNames = ["tristate"];
-  if (f?.type?.name === "String") fieldviewNames = ["edit"];
-  if (f?.type?.name === "Integer" || f?.type?.name === "Float")
-    fieldviewNames = ["above_input", "below_input"];
-
-  if (!fieldviewNames) return "";
+  if (!fieldviewObjs) return "";
 
   return div(
     { class: "d-flex" },
-    fieldviewNames
+    fieldviewObjs
       .map(
-        (fvname) =>
-          f.type.fieldviews[fvname]?.run(
+        (fvObj) =>
+          fvObj?.run(
             f.name,
             state[f.name],
             {
@@ -1408,6 +1413,7 @@ const headerFilterForField = (f, state) => {
                 f.name
               )}', this.value, this)`,
               isFilter: true,
+              ...(column || {}),
               ...f.attributes,
             },
             "",
