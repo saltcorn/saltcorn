@@ -23,6 +23,14 @@ div.hdrfilterdate:hover i.fas {
   visibility: visible;
 }
 
+div.hdrfilterdate button.btn {
+  border-left: none;
+}
+
+div.hdrfilterdate input {
+  border-right: none;
+}
+
 div.form-repeat {
   border: 1px dashed black;
   padding: 3px;
