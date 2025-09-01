@@ -2644,7 +2644,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
     },
     async getJoinedRows(opts = {}) {
       if (methods?.getJoinedRows) {
-        return await methods.getJoinedRows(where, opts);
+        return await methods.getJoinedRows(opts);
       }
       const { where, ...rest } = opts;
       return await getRows(where || {}, rest || {});
