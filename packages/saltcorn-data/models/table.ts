@@ -1837,6 +1837,12 @@ class Table implements AbstractTable {
     if (row) await this.updateRow({ [field_name]: !row[field_name] }, id, user);
   }
 
+  get composite_pk_names(): string[] | null {
+    const pkFields = this.fields?.filter((f: Field) => f.primary_key);
+    if (pkFields.length < 2) return null;
+    return pkFields.map((f) => f.name);
+  }
+
   /**
    * Get primary key field name
    * @type {string}

@@ -2615,8 +2615,13 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     else return data_filtered;
   };
+  const composite_pk_names = fields
+    .filter((f) => f.primary_key)
+    .map((f) => f.name);
   const tbl = {
     pk_name: fields.find((f) => f.primary_key)?.name,
+    composite_pk_names:
+      composite_pk_names.length < 2 ? null : composite_pk_names,
     getFields() {
       return fields;
     },
