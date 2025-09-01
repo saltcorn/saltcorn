@@ -1380,7 +1380,7 @@ class Table implements AbstractTable {
    */
   async updateRow(
     v_in: Row,
-    id: PrimaryKeyValue,
+    id_in: PrimaryKeyValue | Row,
     user?: AbstractUser,
     noTrigger?:
       | boolean
@@ -1414,6 +1414,15 @@ class Table implements AbstractTable {
     let existing: Row | undefined | null;
     let changedFromCalc = new Set([]);
     let v = { ...v_in };
+    if (typeof id_in === "undefined")
+      throw new Error(
+        this.name + " updateRow called without primary key value"
+      );
+    if (id_in === null)
+      throw new Error(
+        this.name + " updateRow called with null as primary key value"
+      );
+    const id = typeof id_in === "object" ? id_in[this.pk_name] : id_in;
     //these may have changed
     let changedFieldNames = new Set([
       ...Object.keys(v_in),
@@ -1433,17 +1442,8 @@ class Table implements AbstractTable {
             .map((f) => f.name),
         }
       : {};
-    if (typeof id === "undefined")
-      throw new Error(
-        this.name + " updateRow called without primary key value"
-      );
-    if (id === null)
-      throw new Error(
-        this.name + " updateRow called with null as primary key value"
-      );
 
     // normalise id passed from expanded join field
-    if (typeof id === "object") id = id[this.pk_name];
 
     this.normalise_fkey_values(v);
 

@@ -69,13 +69,16 @@ describe("Composite PK table properties", () => {
     const tc = Table.findOne("tstcomppk");
     assertIsSet(tc);
     await tc.insertRow({ name: "Alex", age: 38 });
-    db.set_sql_logging(true)
-    await tc.updateRow({ name: "Sammy" }, {
-      name: "Sam",
-      age: 38,
-    } as unknown as PrimaryKeyValue);
+    db.set_sql_logging(true);
+    await tc.updateRow(
+      { name: "Sammy" },
+      {
+        name: "Sam",
+        age: 38,
+      }
+    );
 
-    const rows = await tc.getRows({ });
+    const rows = await tc.getRows({});
     //expect(rows.length).toBe(2);
     const names = rows.map((r) => r.name);
     expect(names).toContain("Alex");
