@@ -2420,6 +2420,10 @@ class Table implements AbstractTable {
    */
   getField(path: string): Field | undefined {
     const fields = this.fields;
+    if (typeof path !== "string") {
+      // Prevent type confusion if not a string
+      return undefined;
+    }
     if (path.includes("->")) {
       const joinPath = path.split(".");
       const tableName = joinPath[0];
