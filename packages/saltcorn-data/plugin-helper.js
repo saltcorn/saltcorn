@@ -2689,7 +2689,30 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return [];
     },
     get_join_field_options() {
-      return [];
+      const result = [];
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const table = Table.findOne({ name: f.reftable_name });
+          const subOne = {
+            name: f.name,
+            table: table.name,
+            subFields: new Array(),
+            fieldPath: f.name,
+          };
+          for (const pf of table.fields.filter(
+            (f) => !f.calculated || f.stored
+          )) {
+            const subTwo = {
+              name: pf.name,
+              subFields: new Array(),
+              fieldPath: `${f.name}.${pf.name}`,
+            };
+            subOne.subFields.push(subTwo);
+          }
+          result.push(subOne);
+        }
+      }
+      return result;
     },
     slug_options() {
       return [];
