@@ -871,7 +871,9 @@ const initial_config = async ({ table_id, exttable_name }) => {
     table_id ? { id: table_id } : { name: exttable_name }
   );
 
-  const fields = table.getFields().filter((f) => !f.primary_key);
+  const fields = table
+    .getFields()
+    .filter((f) => !f.primary_key || f?.attributes?.NonSerial);
   const columns = [];
   const layoutCols = [];
   fields.forEach((f) => {
