@@ -2629,6 +2629,10 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return fields.filter((f) => f.is_fkey && f.type !== "File");
     },
     getField(fnm) {
+      if (typeof fnm !== "string") {
+        // Prevent type confusion if not a string
+        return undefined;
+      }
       if (fnm.includes(".")) {
         const [myfld, ...rest] = fnm.split(".");
         const f = fields.find((f) => f.name === myfld);
