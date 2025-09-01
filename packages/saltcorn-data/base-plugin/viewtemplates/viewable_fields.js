@@ -1734,7 +1734,7 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
       }
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
-        return val.map((v) => text(v.toString())).join(", ");
+        return val.map((v) => text(v?.toString?.())).join(", ");
       else if (column.agg_fieldview) {
         const aggField = Table.findOne(table)?.getField?.(column.agg_field);
         const outcomeType =
