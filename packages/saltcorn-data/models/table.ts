@@ -3738,7 +3738,9 @@ ${rejectDetails}`,
     let joinTables: string[] = [];
     let joinFields: JoinFields = opts.joinFields || {};
     let aggregations = opts.aggregations || {};
-    const schema = db.getTenantSchemaPrefix();
+    const schema = opts.schema
+      ? `"${opts.schema}".`
+      : db.getTenantSchemaPrefix();
     const { forUser, forPublic } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     if (role && role > this.min_role_read && this.ownership_formula) {
