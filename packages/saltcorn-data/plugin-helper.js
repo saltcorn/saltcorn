@@ -2342,7 +2342,7 @@ const initial_config_all_fields =
 
     const fields = table
       .getFields()
-      .filter((f) => !f.primary_key && (!isEdit || !f.calculated));
+      .filter((f) => (!f.primary_key || f?.attributes?.NonSerial) && (!isEdit || !f.calculated));
     let cfg = { columns: [] };
     let aboves = [null];
     const style = {
