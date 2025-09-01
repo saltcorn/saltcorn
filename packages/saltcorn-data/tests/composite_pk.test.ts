@@ -39,7 +39,7 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
   await db.query(
-    `create table tstcomppk ( name text, age int, primary key(name,age));`
+    `create table tstcomppk ( name text, age int, address text, primary key(name,age));`
   );
   const pack = await discover_tables(["tstcomppk"]);
   await implement_discovery(pack);
@@ -82,5 +82,27 @@ describe("Composite PK table properties", () => {
     const names = rows.map((r) => r.name);
     expect(names).toContain("Alex");
     expect(names).toContain("Sammy");
+  });
+  it("should create Edit view", async () => {
+    const tc = Table.findOne("tstcomppk");
+    assertIsSet(tc);
+    const view = await createDefaultView(tc, "Edit", 1);
+    expect(view.configuration.columns.length).toBe(3);
+    await view.runPost(
+      {},
+      { name: "Fred", age: 10, address: "29 Park Road" },
+      mockReqRes
+    );
+    const rows = await tc.getRows({ name: "Fred" });
+    expect(rows.length).toBe(1);
+    expect(rows[0].address).toBe("29 Park Road");
+    await view.runPost(
+      {},
+      { name: "Fred", age: 10, address: "25 Park Road" },
+      mockReqRes
+    );
+    const rows1 = await tc.getRows({ name: "Fred" });
+    expect(rows1.length).toBe(1);
+    expect(rows1[0].address).toBe("25 Park Road");
   });
 });
