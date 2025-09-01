@@ -99,6 +99,7 @@ import { get_formula_examples } from "./internal/table_helper";
 import {
   aggregation_query_fields,
   getAggAndField,
+  joinfield_renamer,
   process_aggregations,
 } from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
@@ -3978,71 +3979,7 @@ ${rejectDetails}`,
       Object.values(joinFields || {}).some((jf: any) => jf.rename_object) ||
       Object.values(aggregations || {}).some((jf: any) => jf.rename_to)
     ) {
-      let f = (x: any) => x;
-      Object.entries(aggregations || {}).forEach(([k, v]: any) => {
-        if (v.rename_to) {
-          const oldf = f;
-          f = (x: any) => {
-            if (typeof x[k] !== "undefined") {
-              x[v.rename_to] = x[k];
-              delete x[k];
-            }
-            return oldf(x);
-          };
-        }
-      });
-      Object.entries(joinFields || {}).forEach(([k, v]: any) => {
-        if (v.rename_object) {
-          if (v.rename_object.length === 2) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: x[k],
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-              return oldf(x);
-            };
-          } else if (v.rename_object.length === 3) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: {
-                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
-                  [v.rename_object[2]]: x[k],
-                },
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-              return oldf(x);
-            };
-          } else if (v.rename_object.length === 4) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: {
-                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
-                  [v.rename_object[2]]: {
-                    ...x[v.rename_object[0]]?.[v.rename_object[1]]?.[
-                      v.rename_object[2]
-                    ],
-                    [v.rename_object[3]]: x[k],
-                  },
-                },
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-
-              return oldf(x);
-            };
-          }
-        }
-      });
-
+      const f = joinfield_renamer(joinFields, aggregations);
       calcRow = calcRow.map(f);
     }
 
