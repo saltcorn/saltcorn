@@ -2423,6 +2423,7 @@ class Table implements AbstractTable {
       const fields = joinTable.getFields();
       return fields.find((f) => f.name === joinedField);
     } else if (path.includes(".")) {
+      //TODO the recusive implementation in json_list_to_external_table is better
       const keypath = path.split(".");
       let field,
         theFields = fields;

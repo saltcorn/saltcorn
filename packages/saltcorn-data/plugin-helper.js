@@ -2342,7 +2342,11 @@ const initial_config_all_fields =
 
     const fields = table
       .getFields()
-      .filter((f) => (!f.primary_key || f?.attributes?.NonSerial) && (!isEdit || !f.calculated));
+      .filter(
+        (f) =>
+          (!f.primary_key || f?.attributes?.NonSerial) &&
+          (!isEdit || !f.calculated)
+      );
     let cfg = { columns: [] };
     let aboves = [null];
     const style = {
@@ -2620,6 +2624,12 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return fields.filter((f) => f.is_fkey && f.type !== "File");
     },
     getField(fnm) {
+      if (fnm.includes(".")) {
+        const [myfld, ...rest] = fnm.split(".");
+        const f = fields.find((f) => f.name === myfld);
+        const tbl = Table.findOne(f.reftable_name);
+        return tbl.getField(rest.join("."));
+      }
       return fields.find((f) => f.name === fnm);
     },
     fields,
@@ -2652,7 +2662,25 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return { child_relations: [], child_field_list: [] };
     },
     get_parent_relations() {
-      return { parent_relations: [], parent_field_list: [] };
+      let parent_relations = [];
+      let parent_field_list = [];
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const table = Table.findOne({ name: f.reftable_name });
+          if (!table)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+          if (!table.fields)
+            throw new Error(`The table '${f.reftable_name} has no fields.`);
+
+          for (const pf of table.fields.filter(
+            (f) => !f.calculated || f.stored
+          )) {
+            parent_field_list.push(`${f.name}.${pf.name}`);
+            parent_relations.push({ key_field: f, table });
+          }
+        }
+      }
+      return { parent_relations, parent_field_list };
     },
     get_relation_options() {
       return [];
