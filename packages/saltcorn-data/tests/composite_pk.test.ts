@@ -69,7 +69,6 @@ describe("Composite PK table properties", () => {
     const tc = Table.findOne("tstcomppk");
     assertIsSet(tc);
     await tc.insertRow({ name: "Alex", age: 38 });
-    db.set_sql_logging(true);
     await tc.updateRow(
       { name: "Sammy" },
       {

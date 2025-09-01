@@ -1422,7 +1422,13 @@ class Table implements AbstractTable {
       throw new Error(
         this.name + " updateRow called with null as primary key value"
       );
-    const id = typeof id_in === "object" ? id_in[this.pk_name] : id_in;
+
+    const composite_pk_names = this.composite_pk_names;
+    const id: PrimaryKeyValue | Row = composite_pk_names
+      ? id_in
+      : typeof id_in === "object"
+        ? id_in[this.pk_name]
+        : id_in;
     //these may have changed
     let changedFieldNames = new Set([
       ...Object.keys(v_in),
@@ -1667,10 +1673,14 @@ class Table implements AbstractTable {
     });
 
     if (this.has_sync_info) {
-      const oldInfo = await this.latestSyncInfo(id);
+      const oldInfo = await this.latestSyncInfo(id as PrimaryKeyValue);
       if (oldInfo && !oldInfo.deleted)
-        await this.updateSyncInfo(id, oldInfo.last_modified, syncTimestamp);
-      else await this.insertSyncInfo(id, syncTimestamp);
+        await this.updateSyncInfo(
+          id as PrimaryKeyValue,
+          oldInfo.last_modified,
+          syncTimestamp
+        );
+      else await this.insertSyncInfo(id as PrimaryKeyValue, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (really_changed_field_names.size > 0) {
