@@ -2642,9 +2642,12 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       const roles = getState().getConfig("exttables_min_role_read", {});
       return roles[tbl.name] || 100;
     },
-    getJoinedRows(opts = {}) {
+    async getJoinedRows(opts = {}) {
+      if (methods?.getJoinedRows) {
+        return await methods.getJoinedRows(where, opts);
+      }
       const { where, ...rest } = opts;
-      return getRows(where || {}, rest || {});
+      return await getRows(where || {}, rest || {});
     },
     async getJoinedRow(opts = {}) {
       const { where, ...rest } = opts;
