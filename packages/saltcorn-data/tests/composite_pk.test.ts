@@ -77,12 +77,22 @@ describe("Composite PK table properties", () => {
       }
     );
 
-    const rows = await tc.getRows({});
-    //expect(rows.length).toBe(2);
+    const rows = await tc.getRows({ age: 38 });
+    expect(rows.length).toBe(2);
     const names = rows.map((r) => r.name);
     expect(names).toContain("Alex");
     expect(names).toContain("Sammy");
   });
+  it("should delete", async () => {
+    const tc = Table.findOne("tstcomppk");
+    assertIsSet(tc);
+    await tc.deleteRows({ name: "Sammy", age: 38 });
+
+    const rows = await tc.getRows({ age: 38 });
+    expect(rows.length).toBe(1);
+    expect(rows[0].name).toBe("Alex");
+  });
+
   it("should create Edit view", async () => {
     const tc = Table.findOne("tstcomppk");
     assertIsSet(tc);
