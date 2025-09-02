@@ -2046,8 +2046,8 @@ const prepare = async (
   let id;
   if (table.composite_pk_names) {
     id = {};
-    table.composite_pk_names.forEach((k) => {
-      id[k] = pk.type.read(body[k]);
+    table.fields.filter(f=>f.primary_key).forEach((f) => {
+      id[f.name] = f.type.read(body[f.name]);
     });
   } else {
     id = pk.type.read(body[pk.name]);
@@ -2306,6 +2306,7 @@ const tryInsertOrUpdateImpl = async (row, id, table, user) => {
   const exists = await table.getRow(
     typeof id === "object" ? id : { [table.pk_name]: id }
   );
+  console.log("tryInsertOrUpdateImpl", { row, id, exists });
   if (exists) {
     const upd_res = await table.tryUpdateRow(
       row,
