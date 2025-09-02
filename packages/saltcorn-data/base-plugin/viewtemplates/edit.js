@@ -2306,7 +2306,6 @@ const tryInsertOrUpdateImpl = async (row, id, table, user) => {
   const exists = await table.getRow(
     typeof id === "object" ? id : { [table.pk_name]: id }
   );
-  console.log("tryInsertOrUpdateImpl", { row, id, exists });
   if (exists) {
     const upd_res = await table.tryUpdateRow(
       row,
