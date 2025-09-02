@@ -1,6 +1,6 @@
 import * as multiTenant from "./multi-tenant";
 import { ReadStream, WriteStream } from "fs";
-import { Row, Where, SelectOptions } from "./internal";
+import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal";
 
 export type DbExportsType = {
   tenant: typeof multiTenant;
@@ -14,7 +14,7 @@ export type DbExportsType = {
   update: (
     table: string,
     data: Row,
-    id: number | string | undefined,
+    id: PrimaryKeyValue | Row | undefined,
     opts?: any
   ) => Promise<any>;
   delete: (table: string, where: Where) => Promise<any>;
