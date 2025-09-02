@@ -106,6 +106,15 @@ describe("Composite PK table properties", () => {
         { name: "Fred", age: 10, address: "29 Park Road" },
         mockReqRes
       );
+      await view.runPost(
+        {},
+        { name: "Peter", age: 10, address: "4 Beach Road" },
+        mockReqRes
+      );
+      const rows0 = await tc.getRows({ name: "Peter" });
+      expect(rows0.length).toBe(1);
+      expect(rows0[0].address).toBe("4 Beach Road");
+
       const rows = await tc.getRows({ name: "Fred" });
       expect(rows.length).toBe(1);
       expect(rows[0].address).toBe("29 Park Road");
@@ -117,6 +126,9 @@ describe("Composite PK table properties", () => {
       const rows1 = await tc.getRows({ name: "Fred" });
       expect(rows1.length).toBe(1);
       expect(rows1[0].address).toBe("25 Park Road");
+      const rows2 = await tc.getRows({ name: "Peter" });
+      expect(rows2.length).toBe(1);
+      expect(rows2[0].address).toBe("4 Beach Road");
     });
   } else
     it("should add 2 and 2", async () => {
