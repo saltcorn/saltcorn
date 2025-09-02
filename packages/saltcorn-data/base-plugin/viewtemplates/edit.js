@@ -395,9 +395,7 @@ const configuration_workflow = (req) =>
                     type: "String",
                     name: "event",
                     label: req.__("Update event"),
-                    sublabel: req.__(
-                      "Custom event for real-time updates"
-                    ),
+                    sublabel: req.__("Custom event for real-time updates"),
                     attributes: {
                       options: triggers.map((t) => t.name),
                     },
@@ -1433,7 +1431,12 @@ const runPost = async (
             ins_upd_error = ins_res.error;
           }
         } else {
-          if (table.getField(table.pk_name).attributes.NonSerial) {
+          if (
+            table.composite_pk_names ||
+            table.getField(table.pk_name).attributes.NonSerial
+          ) {
+            //console.log("edit", { id });
+
             const upd_res = await tryInsertOrUpdateImpl(
               row,
               id,
@@ -2040,7 +2043,15 @@ const prepare = async (
   }
   let row;
   const pk = fields.find((f) => f.primary_key);
-  let id = pk.type.read(body[pk.name]);
+  let id;
+  if (table.composite_pk_names) {
+    id = {};
+    table.composite_pk_names.forEach((k) => {
+      id[k] = pk.type.read(body[k]);
+    });
+  } else {
+    id = pk.type.read(body[pk.name]);
+  }
   if (typeof id === "undefined") {
     const use_fixed = await fill_presets(table, req, fixed);
     row = { ...use_fixed, ...form.values };
@@ -2292,7 +2303,9 @@ const tryUpdateImpl = async (row, id, table, user) => {
 
 const tryInsertOrUpdateImpl = async (row, id, table, user) => {
   const result = {};
-  const exists = await table.getRow({ [table.pk_name]: id });
+  const exists = await table.getRow(
+    typeof id === "object" ? id : { [table.pk_name]: id }
+  );
   if (exists) {
     const upd_res = await table.tryUpdateRow(
       row,
@@ -2802,13 +2815,10 @@ module.exports = {
     },
     async getRowByIdQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow(
-        { id },
-        {
-          forUser: req.user,
-          forPublic: !req.user,
-        }
-      );
+      return await table.getRow(typeof id === "object" ? id : { id }, {
+        forUser: req.user,
+        forPublic: !req.user,
+      });
     },
     async actionQuery() {
       const {
