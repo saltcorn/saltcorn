@@ -25,4 +25,4 @@ every time the row changes.
 Stored fields that are defined by an aggregation are automatically updated 
 when one of the child rows is updated. Stored fields that are based on 
 JavaScript expressions involving join felds are not automatically updated. 
-You need to run the recalculate stored fields action to update them 
+You need to run the recalculate stored fields action to update them. 

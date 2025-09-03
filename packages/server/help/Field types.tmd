@@ -4,8 +4,8 @@ then it cannot take the value `"Simon"` but the value `17` is admissible.
 
 When building your table, you must therefore think carefully about not only which fields
 to include but also what the types are. Sometimes this is easy - you know that names 
-should be stored as as `String` type. But at other times you need to think ahead a bit 
-and think carefully about what data your table will hold
+should be stored as a `String` type. But at other times you need to think ahead a bit 
+and think carefully about what data your table will hold.
 
 Some types are more general than others. The `String` type and the `JSON` 
 type (from the json module) can hold values that can be represented by more specific types.
@@ -27,7 +27,7 @@ These types are available in your current installation:
 * {{ ty.name }}{{ty.description ? `: ${ty.description}` : ""}}
 {{# } }}
 
-Further types can be installed from moduels in the [Module store](/plugins)
+Further types can be installed from modules in the [Module store](/plugins).
 
 In addition, a field can have types File and Key to a table.
 
