@@ -560,7 +560,8 @@ describe("adds new fields to history #1202", () => {
     await table.insertRow({ date: new PlainDate().toString() });
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
-    if (!db.isSQLite) expect(rows[0].date instanceof PlainDate).toBe(true);
+       
+    if (!db.isSQLite) expect(rows[0].date.constructor.name).toBe("_PlainDate");
     const yday = new PlainDate();
     yday.setDate(yday.getDate() - 1);
     const rows1 = await table.getRows({ date: { gt: yday.toString() } });
