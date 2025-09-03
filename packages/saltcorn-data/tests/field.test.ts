@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
-import PlainDate from "@saltcorn/plain-date";
+const PlainDate = require("@saltcorn/plain-date");
 
 const { sleep, plugin_with_routes } = mocks;
 
