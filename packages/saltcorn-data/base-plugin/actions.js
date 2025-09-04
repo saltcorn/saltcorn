@@ -1285,6 +1285,10 @@ module.exports = {
             "Expression for JavaScript object. Example: <code>{first_name: name.split(' ')[0]}</code>",
           type: "String",
           fieldview: "textarea",
+          class: "validate-expression",
+          attributes: {
+            spellcheck: false,
+          },
         },
         ...(mode === "workflow"
           ? [
