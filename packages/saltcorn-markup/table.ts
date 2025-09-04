@@ -66,6 +66,9 @@ const transposedBody = (
 ): string[] =>
   hdrs.map((hdr: HeadersParams, ix) =>
     tr(
+      {
+        "data-row-id": ix,
+      },
       !opts.noHeader && th(hdr.label),
       (vs || []).map((v: any) =>
         td(
@@ -94,9 +97,12 @@ const mkTable = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string => {
-  const val_row = (v: any) =>
+  const val_row = (v: any, index: number) =>
     tr(
-      mkClickHandler(opts, v),
+      {
+        "data-row-id": index,
+        ...mkClickHandler(opts, v),
+      },
       hdrs.map((hdr: HeadersParams) =>
         td(
           {
