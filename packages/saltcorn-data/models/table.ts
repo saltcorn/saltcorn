@@ -99,6 +99,7 @@ import { get_formula_examples } from "./internal/table_helper";
 import {
   aggregation_query_fields,
   getAggAndField,
+  joinfield_renamer,
   process_aggregations,
 } from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
@@ -1379,7 +1380,7 @@ class Table implements AbstractTable {
    */
   async updateRow(
     v_in: Row,
-    id: PrimaryKeyValue,
+    id_in: PrimaryKeyValue | Row,
     user?: AbstractUser,
     noTrigger?:
       | boolean
@@ -1413,6 +1414,21 @@ class Table implements AbstractTable {
     let existing: Row | undefined | null;
     let changedFromCalc = new Set([]);
     let v = { ...v_in };
+    if (typeof id_in === "undefined")
+      throw new Error(
+        this.name + " updateRow called without primary key value"
+      );
+    if (id_in === null)
+      throw new Error(
+        this.name + " updateRow called with null as primary key value"
+      );
+
+    const composite_pk_names = this.composite_pk_names;
+    const id: PrimaryKeyValue | Row = composite_pk_names
+      ? id_in
+      : typeof id_in === "object"
+        ? id_in[this.pk_name]
+        : id_in;
     //these may have changed
     let changedFieldNames = new Set([
       ...Object.keys(v_in),
@@ -1432,17 +1448,8 @@ class Table implements AbstractTable {
             .map((f) => f.name),
         }
       : {};
-    if (typeof id === "undefined")
-      throw new Error(
-        this.name + " updateRow called without primary key value"
-      );
-    if (id === null)
-      throw new Error(
-        this.name + " updateRow called with null as primary key value"
-      );
 
     // normalise id passed from expanded join field
-    if (typeof id === "object") id = id[this.pk_name];
 
     this.normalise_fkey_values(v);
 
@@ -1666,10 +1673,14 @@ class Table implements AbstractTable {
     });
 
     if (this.has_sync_info) {
-      const oldInfo = await this.latestSyncInfo(id);
+      const oldInfo = await this.latestSyncInfo(id as PrimaryKeyValue);
       if (oldInfo && !oldInfo.deleted)
-        await this.updateSyncInfo(id, oldInfo.last_modified, syncTimestamp);
-      else await this.insertSyncInfo(id, syncTimestamp);
+        await this.updateSyncInfo(
+          id as PrimaryKeyValue,
+          oldInfo.last_modified,
+          syncTimestamp
+        );
+      else await this.insertSyncInfo(id as PrimaryKeyValue, syncTimestamp);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (really_changed_field_names.size > 0) {
@@ -1834,6 +1845,12 @@ class Table implements AbstractTable {
   ): Promise<void> {
     const row = await this.getRow({ [this.pk_name]: id });
     if (row) await this.updateRow({ [field_name]: !row[field_name] }, id, user);
+  }
+
+  get composite_pk_names(): string[] | null {
+    const pkFields = this.fields?.filter((f: Field) => f.primary_key);
+    if (pkFields.length < 2) return null;
+    return pkFields.map((f) => f.name);
   }
 
   /**
@@ -2413,6 +2430,10 @@ class Table implements AbstractTable {
    */
   getField(path: string): Field | undefined {
     const fields = this.fields;
+    if (typeof path !== "string") {
+      // Prevent type confusion if not a string
+      return undefined;
+    }
     if (path.includes("->")) {
       const joinPath = path.split(".");
       const tableName = joinPath[0];
@@ -2423,6 +2444,7 @@ class Table implements AbstractTable {
       const fields = joinTable.getFields();
       return fields.find((f) => f.name === joinedField);
     } else if (path.includes(".")) {
+      //TODO the recusive implementation in json_list_to_external_table is better
       const keypath = path.split(".");
       let field,
         theFields = fields;
@@ -3737,7 +3759,9 @@ ${rejectDetails}`,
     let joinTables: string[] = [];
     let joinFields: JoinFields = opts.joinFields || {};
     let aggregations = opts.aggregations || {};
-    const schema = db.getTenantSchemaPrefix();
+    const schema = opts.schema
+      ? `"${opts.schema}".`
+      : db.getTenantSchemaPrefix();
     const { forUser, forPublic } = opts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     if (role && role > this.min_role_read && this.ownership_formula) {
@@ -3975,71 +3999,7 @@ ${rejectDetails}`,
       Object.values(joinFields || {}).some((jf: any) => jf.rename_object) ||
       Object.values(aggregations || {}).some((jf: any) => jf.rename_to)
     ) {
-      let f = (x: any) => x;
-      Object.entries(aggregations || {}).forEach(([k, v]: any) => {
-        if (v.rename_to) {
-          const oldf = f;
-          f = (x: any) => {
-            if (typeof x[k] !== "undefined") {
-              x[v.rename_to] = x[k];
-              delete x[k];
-            }
-            return oldf(x);
-          };
-        }
-      });
-      Object.entries(joinFields || {}).forEach(([k, v]: any) => {
-        if (v.rename_object) {
-          if (v.rename_object.length === 2) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: x[k],
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-              return oldf(x);
-            };
-          } else if (v.rename_object.length === 3) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: {
-                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
-                  [v.rename_object[2]]: x[k],
-                },
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-              return oldf(x);
-            };
-          } else if (v.rename_object.length === 4) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: {
-                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
-                  [v.rename_object[2]]: {
-                    ...x[v.rename_object[0]]?.[v.rename_object[1]]?.[
-                      v.rename_object[2]
-                    ],
-                    [v.rename_object[3]]: x[k],
-                  },
-                },
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-
-              return oldf(x);
-            };
-          }
-        }
-      });
-
+      const f = joinfield_renamer(joinFields, aggregations);
       calcRow = calcRow.map(f);
     }
 

@@ -71,7 +71,7 @@ test.describe('E2E Test Suite', () => {
             await functions.drag_And_Drop(pageobject.Column2FullName, pageobject.Column0Address);
             await functions.drag_And_Drop(pageobject.Column2DOB, pageobject.Column1Address);
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(5000);
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
@@ -107,7 +107,7 @@ test.describe('E2E Test Suite', () => {
             // Select 'Date of birth' from the dropdown
             await page.selectOption('select.form-control.form-select', 'Address');
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(5000);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views();
@@ -129,7 +129,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // select full name lable
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(4000);
         await page.click(pageobject.Fullnameshow);
         // delete lable for full name
         await page.click(pageobject.deletebutton);
@@ -141,7 +141,7 @@ test.describe('E2E Test Suite', () => {
 
             // select text style as Heading 1 for full name
             await page.click("button.style-h1");
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(2000);
         });
 
         await customAssert('Drag address row on third column', async () => {
@@ -165,7 +165,7 @@ test.describe('E2E Test Suite', () => {
         await functions.drag_And_Drop(pageobject.addresslabel, pageobject.thirdrowcolumn1);
         await page.click(pageobject.firstrowcolumn1);
         await functions.fill_Text(pageobject.NumberInput, '6');
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(5000);
         // click on next button
         await page.click(pageobject.nextoption);
     });
@@ -222,12 +222,9 @@ test.describe('E2E Test Suite', () => {
             await functions.fill_Text(pageobject.AddressInput, 'HN 01, WN 26 noida india ');
             await page.click(pageobject.saveactionbutton);
         });
-        await page.waitForTimeout(250);
 
         await functions.views();
-        await page.waitForTimeout(250);
         await page.click(pageobject.Feedviewlink);
-        await page.waitForTimeout(250);
         await customAssert('Newly added record should be present', async () => {
             await expect(page.getByText('Edward').first()).toBeVisible();
         });

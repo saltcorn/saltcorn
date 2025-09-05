@@ -1412,6 +1412,33 @@ function cfu_translate(that) {
   }
 }
 
+function ensure_script_loaded(src) {
+  //https://stackoverflow.com/questions/26331600/load-js-script-only-when-it-has-not-been-loaded-already-and-then-only-once
+  let scripts = Array.from(document.querySelectorAll("script")).map(
+    (scr) => scr.src
+  );
+
+  if (!scripts.includes(src)) {
+    var tag = document.createElement("script");
+    tag.src = src;
+    document.getElementsByTagName("body")[0].appendChild(tag);
+  }
+}
+
+function ensure_css_loaded(src) {
+  let links = Array.from(document.querySelectorAll("link[rel=stylesheet]")).map(
+    (scr) => scr.href
+  );
+
+  if (!links.includes(src)) {
+    var fileref = document.createElement("link");
+    fileref.rel = "stylesheet";
+    fileref.type = "text/css";
+    fileref.href = src;
+    document.getElementsByTagName("head")[0].appendChild(fileref);
+  }
+}
+
 (() => {
   const e = document.querySelector("[data-sidebar-toggler]");
   let closed = localStorage.getItem("sidebarClosed") === "true";

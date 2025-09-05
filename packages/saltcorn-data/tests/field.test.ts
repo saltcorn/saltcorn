@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import mocks from "./mocks";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
-const PlainDate = require("@saltcorn/plain-date");
+import PlainDate from "@saltcorn/plain-date";
 
 const { sleep, plugin_with_routes } = mocks;
 
@@ -557,20 +557,22 @@ describe("adds new fields to history #1202", () => {
     });
     await table.update({ versioned: true });
 
-    await table.insertRow({ date: new PlainDate() });
+    await table.insertRow({ date: new PlainDate().toString() });
     const rows = await table.getRows({});
     expect(rows.length).toBe(1);
     if (!db.isSQLite) expect(rows[0].date instanceof PlainDate).toBe(true);
     const yday = new PlainDate();
     yday.setDate(yday.getDate() - 1);
-    const rows1 = await table.getRows({ date: { gt: yday } });
+    const rows1 = await table.getRows({ date: { gt: yday.toString() } });
     expect(rows1.length).toBe(1);
     const tmrw = new PlainDate();
     tmrw.setDate(tmrw.getDate() + 1);
-    const rows2 = await table.getRows({ date: { gt: tmrw } });
+    const rows2 = await table.getRows({ date: { gt: tmrw.toString() } });
     expect(rows2.length).toBe(0);
     const today = new PlainDate();
-    const rows3 = await table.getRows({ date: { gt: today, equal: true } });
+    const rows3 = await table.getRows({
+      date: { gt: today.toString(), equal: true },
+    });
     expect(rows3.length).toBe(1);
   });
   it("history first", async () => {

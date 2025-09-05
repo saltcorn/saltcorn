@@ -281,10 +281,23 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   let valList = kvs.map(([k, v]) => v);
   // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
   //valList.push(id === "undefined"? obj[opts.pk_name]: id);
-  valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
+  let whereS;
+  if (id && typeof id == "object") {
+    let n = kvs.length + 1;
+    const whereStrs = [];
+    Object.keys(id).forEach((k) => {
+      valList.push(id[k]);
+      whereStrs.push(`"${k}"=$${n}`);
+      n += 1;
+    });
+    whereS = whereStrs.join(" and ");
+  } else {
+    valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
+    whereS = `${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
+  }
   const q = `update "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${whereS}`;
   sql_log(q, valList);
   await getMyClient(opts).query(q, valList);
 };

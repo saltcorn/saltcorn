@@ -1,13 +1,44 @@
-.table-valign-middle > tbody > tr > td {
-     vertical-align: middle;
+.table-valign-middle > tbody > tr > td,
+.table-valign-middle > thead > tr > th {
+  vertical-align: middle;
 }
 
-.table-valign-top > tbody > tr > td {
-     vertical-align: top;
+.table-valign-top > tbody > tr > td,
+.table-valign-top > thead > tr > th {
+  vertical-align: top;
 }
 
-.table-valign-bottom > tbody > tr > td {
-     vertical-align: bottom;
+.table-valign-bottom > tbody > tr > td,
+.table-valign-bottom > thead > tr > th {
+  vertical-align: bottom;
+}
+
+i.sortdir {
+  margin-left: 2px;
+}
+div.hdrfilterdate i.fas {
+  visibility: hidden;
+}
+div.hdrfilterdate:hover i.fas {
+  visibility: visible;
+}
+
+div.hdrfilterdate button.btn {
+  border-left: none;
+}
+
+div.hdrfilterdate input {
+  border-right: none;
+}
+
+.text-align-right {
+  text-align: right;
+}
+.text-align-left {
+  text-align: left;
+}
+.text-align-center {
+  text-align: center;
 }
 
 div.form-repeat {

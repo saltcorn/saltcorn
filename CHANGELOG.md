@@ -1,8 +1,12 @@
 # Notable changes
 
-## 1.3.1 - In development
+## 1.3.1 - Released 31 August 2025
 
-* Real time collaboration for Edit views. Form fields will update in real time as they change in the database.
+* Reduce client assets for some plugins - if a view is not available for a role, its assets can be omitted. 
+
+* List view have options for header filters and responsive collapse (under layout options). Header filters place small filters in the table header. Responsive collapse lets you set a breakpoint where the list transitions to a vertical display.
+
+* Real time collaboration for Edit views. Form fields will update in real time as they change in the database. An event can be chosen to run on update.
 
 * loop_rows action: repeat an action for a all or some rows in a table, including an option for a random selection of rows.
 

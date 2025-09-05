@@ -2342,7 +2342,11 @@ const initial_config_all_fields =
 
     const fields = table
       .getFields()
-      .filter((f) => !f.primary_key && (!isEdit || !f.calculated));
+      .filter(
+        (f) =>
+          (!f.primary_key || f?.attributes?.NonSerial) &&
+          (!isEdit || !f.calculated)
+      );
     let cfg = { columns: [] };
     let aboves = [null];
     const style = {
@@ -2611,8 +2615,13 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     else return data_filtered;
   };
+  const composite_pk_names = fields
+    .filter((f) => f.primary_key)
+    .map((f) => f.name);
   const tbl = {
     pk_name: fields.find((f) => f.primary_key)?.name,
+    composite_pk_names:
+      composite_pk_names.length < 2 ? null : composite_pk_names,
     getFields() {
       return fields;
     },
@@ -2620,6 +2629,16 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return fields.filter((f) => f.is_fkey && f.type !== "File");
     },
     getField(fnm) {
+      if (typeof fnm !== "string") {
+        // Prevent type confusion if not a string
+        return undefined;
+      }
+      if (fnm.includes(".")) {
+        const [myfld, ...rest] = fnm.split(".");
+        const f = fields.find((f) => f.name === myfld);
+        const tbl = Table.findOne(f.reftable_name);
+        return tbl.getField(rest.join("."));
+      }
       return fields.find((f) => f.name === fnm);
     },
     fields,
@@ -2632,9 +2651,12 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       const roles = getState().getConfig("exttables_min_role_read", {});
       return roles[tbl.name] || 100;
     },
-    getJoinedRows(opts = {}) {
+    async getJoinedRows(opts = {}) {
+      if (methods?.getJoinedRows) {
+        return await methods.getJoinedRows(opts);
+      }
       const { where, ...rest } = opts;
-      return getRows(where || {}, rest || {});
+      return await getRows(where || {}, rest || {});
     },
     async getJoinedRow(opts = {}) {
       const { where, ...rest } = opts;
@@ -2652,7 +2674,25 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return { child_relations: [], child_field_list: [] };
     },
     get_parent_relations() {
-      return { parent_relations: [], parent_field_list: [] };
+      let parent_relations = [];
+      let parent_field_list = [];
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const table = Table.findOne({ name: f.reftable_name });
+          if (!table)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+          if (!table.fields)
+            throw new Error(`The table '${f.reftable_name} has no fields.`);
+
+          for (const pf of table.fields.filter(
+            (f) => !f.calculated || f.stored
+          )) {
+            parent_field_list.push(`${f.name}.${pf.name}`);
+            parent_relations.push({ key_field: f, table });
+          }
+        }
+      }
+      return { parent_relations, parent_field_list };
     },
     get_relation_options() {
       return [];
@@ -2661,7 +2701,30 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return [];
     },
     get_join_field_options() {
-      return [];
+      const result = [];
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const table = Table.findOne({ name: f.reftable_name });
+          const subOne = {
+            name: f.name,
+            table: table.name,
+            subFields: new Array(),
+            fieldPath: f.name,
+          };
+          for (const pf of table.fields.filter(
+            (f) => !f.calculated || f.stored
+          )) {
+            const subTwo = {
+              name: pf.name,
+              subFields: new Array(),
+              fieldPath: `${f.name}.${pf.name}`,
+            };
+            subOne.subFields.push(subTwo);
+          }
+          result.push(subOne);
+        }
+      }
+      return result;
     },
     slug_options() {
       return [];

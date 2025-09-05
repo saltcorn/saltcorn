@@ -52,6 +52,10 @@ For your login session the user object is:
 {{# const userkey = oneOf(Object.keys(user)) }}
 
 For example to use the `{{userkey}}` field on the user object, write `user.{{userkey}}`
+It should be taken into account that if the users table row has changed,
+you should call `refresh_user_session` action to update the session variables
+(or the user should re-login).
+
 {{# if(srcTable) { }}
 You can also use variables from the currently displayed row in the value expressions, 
 in this case the table {{srcTable.name}}:
