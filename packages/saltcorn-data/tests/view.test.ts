@@ -217,7 +217,7 @@ describe("Misc view tests", () => {
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toBe(
-      '<div class="table-responsive"><table class="table table-sm table-valign-middle "><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th><span onclick="sortby(\'count_books_publisher_id_\', false, \'249ab\', this)" class="link-style">Count books</span></th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
+      '<div class="table-responsive"><table class="table table-sm table-valign-middle "><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th><span onclick="sortby(\'count_books_publisher_id_\', false, \'249ab\', this)" class="link-style">Count books</span></th></tr></thead><tbody><tr data-row-id="0"><td>Herman Melville</td><td>0</td></tr><tr data-row-id="1"><td>Leo Tolstoy</td><td>1</td></tr><tr data-row-id="2"><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
     );
   });
   it("should interpolate titles string in Show", async () => {
