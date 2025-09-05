@@ -2765,7 +2765,9 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
     tbl.updateRow = methods.updateRow;
     tbl.tryUpdateRow = async (...args) => {
       try {
-        return await methods.updateRow(...args);
+        const maybe_err = await methods.updateRow(...args);
+        if (typeof maybe_err === "string") return { error: maybe_err };
+        else return { success: true };
       } catch (error) {
         return { error: error?.message || error };
       }
