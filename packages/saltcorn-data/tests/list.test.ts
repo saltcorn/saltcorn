@@ -492,7 +492,7 @@ describe("Misc List views", () => {
     expect(vres1).toContain("<td>Herman Melville</td>");
     expect(vres1).not.toContain("<td>Leo Tolstoy</td>");
     expect(vres1).toContain(
-      `<tr onclick="location.href='/view/authorshow?id=1'">`
+      `<tr data-row-id="0" onclick="location.href='/view/authorshow?id=1'">`
     );
   });
   it("field with fieldview config", async () => {
@@ -824,7 +824,7 @@ describe("List sort options", () => {
     });
     const tBodyAuthors = (authors: string[]) =>
       `<tbody>${authors
-        .map((nm) => `<tr><td>${nm}</td></tr>`)
+        .map((nm, ix) => `<tr data-row-id="${ix}"><td>${nm}</td></tr>`)
         .join("")}</tbody>`;
 
     const vres1 = await viewAsc.run({}, mockReqRes);
